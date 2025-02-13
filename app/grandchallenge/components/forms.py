@@ -23,7 +23,7 @@ from grandchallenge.components.backends.exceptions import (
 )
 from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
-    InterfaceFormField,
+    InterfaceFormFieldFactory,
 )
 from grandchallenge.components.models import CIVData, ComponentInterface
 from grandchallenge.core.forms import SaveFormInitMixin
@@ -108,7 +108,7 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 
 
 class MultipleCIVForm(Form):
-    _possible_widgets = InterfaceFormField._possible_widgets
+    _possible_widgets = InterfaceFormFieldFactory._possible_widgets
 
     def __init__(self, *args, instance, base_obj, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -138,7 +138,7 @@ class MultipleCIVForm(Form):
                     interface__slug=slug
                 ).first()
 
-            self.fields[prefixed_interface_slug] = InterfaceFormField(
+            self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
                 interface=interface,
                 user=self.user,
                 required=False,
@@ -168,7 +168,7 @@ class MultipleCIVForm(Form):
                 else:
                     current_value = self.data[slug]
 
-                self.fields[slug] = InterfaceFormField(
+                self.fields[slug] = InterfaceFormFieldFactory(
                     interface=interface,
                     user=self.user,
                     required=False,
@@ -232,7 +232,7 @@ class CIVSetUpdateFormMixin:
 
 class SingleCIVForm(Form):
     _possible_widgets = {
-        *InterfaceFormField._possible_widgets,
+        *InterfaceFormFieldFactory._possible_widgets,
         autocomplete.ModelSelect2,
         Select,
     }
@@ -310,7 +310,7 @@ class SingleCIVForm(Form):
         if selected_interface is not None:
             self.fields[
                 f"{INTERFACE_FORM_FIELD_PREFIX}{selected_interface.slug}"
-            ] = InterfaceFormField(
+            ] = InterfaceFormFieldFactory(
                 interface=selected_interface,
                 user=user,
                 required=selected_interface.value_required,

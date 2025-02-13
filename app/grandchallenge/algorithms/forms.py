@@ -57,7 +57,7 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.algorithms.tasks import import_remote_algorithm_image
 from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
-    InterfaceFormField,
+    InterfaceFormFieldFactory,
 )
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
@@ -160,7 +160,7 @@ class JobCreateForm(SaveFormInitMixin, Form):
             else:
                 initial = None
 
-            self.fields[prefixed_interface_slug] = InterfaceFormField(
+            self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
                 interface=inp,
                 user=self._user,
                 required=True,

@@ -44,7 +44,7 @@ def _join_with_br(a, b):
 INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
 
 
-class InterfaceFormField:
+class InterfaceFormFieldFactory:
     _possible_widgets = {
         UserUploadMultipleWidget,
         UserUploadSingleWidget,

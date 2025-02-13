@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageField, ImageWidgetChoices
-from grandchallenge.components.form_fields import InterfaceFormField
+from grandchallenge.components.form_fields import InterfaceFormFieldFactory
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.uploads.models import UserUpload
@@ -186,6 +186,6 @@ def test_flexible_image_widget_prepopulated_value():
     im = ImageFactory(name="test_image")
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
     civ = ComponentInterfaceValueFactory(interface=ci, image=im)
-    field = InterfaceFormField(interface=ci, user=user, initial=civ)
+    field = InterfaceFormFieldFactory(interface=ci, user=user, initial=civ)
     assert field.field.widget.attrs["current_value"] == civ.image
     assert field.field.initial == civ.image.pk
