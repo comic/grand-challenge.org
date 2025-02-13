@@ -45,7 +45,7 @@ INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
 
 
 class InterfaceFormFieldFactory:
-    _possible_widgets = {
+    possible_widgets = {
         UserUploadMultipleWidget,
         UserUploadSingleWidget,
         JSONEditorWidget,

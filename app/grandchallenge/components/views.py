@@ -193,7 +193,7 @@ class MultipleCIVProcessingBaseView(
         context = super().get_context_data(*args, **kwargs)
         media = Media()
         for form_class in self.included_form_classes:
-            for widget in form_class._possible_widgets:
+            for widget in form_class.possible_widgets:
                 media = media + widget().media
         if hasattr(self, "object"):
             object = self.object

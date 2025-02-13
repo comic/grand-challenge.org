@@ -108,7 +108,7 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 
 
 class MultipleCIVForm(Form):
-    _possible_widgets = InterfaceFormFieldFactory._possible_widgets
+    possible_widgets = InterfaceFormFieldFactory.possible_widgets
 
     def __init__(self, *args, instance, base_obj, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -231,8 +231,8 @@ class CIVSetUpdateFormMixin:
 
 
 class SingleCIVForm(Form):
-    _possible_widgets = {
-        *InterfaceFormFieldFactory._possible_widgets,
+    possible_widgets = {
+        *InterfaceFormFieldFactory.possible_widgets,
         autocomplete.ModelSelect2,
         Select,
     }
