@@ -115,7 +115,6 @@ class InterfaceFormFieldFactory:
                 )
 
         self.kwargs["widget"] = FlexibleImageWidget(
-            help_text=self.help_text,
             user=self.user,
             current_value=current_value,
         )
@@ -127,6 +126,7 @@ class InterfaceFormFieldFactory:
         return FlexibleImageField(
             upload_queryset=upload_queryset,
             image_queryset=image_queryset,
+            help_text=self.help_text,
             **self.kwargs,
         )
 
@@ -182,13 +182,13 @@ class InterfaceFormFieldFactory:
                 )
 
         self.kwargs["widget"] = FlexibleFileWidget(
-            help_text=self.help_text,
             user=self.user,
             current_value=current_value,
         )
         return FlexibleFileField(
             user=self.user,
             interface=self.interface,
+            help_text=self.help_text,
             **self.kwargs,
         )
 
@@ -206,7 +206,6 @@ class FlexibleFileField(MultiValueField):
         *args,
         user=None,
         interface=None,
-        disabled=False,
         **kwargs,
     ):
         self.user = user
@@ -229,8 +228,6 @@ class FlexibleFileField(MultiValueField):
             require_all_fields=False,
             **kwargs,
         )
-        if disabled:
-            self.widget.disabled = True
 
     def compress(self, values):
         if values:

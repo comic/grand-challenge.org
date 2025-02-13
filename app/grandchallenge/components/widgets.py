@@ -37,10 +37,8 @@ class FlexibleFileWidget(MultiWidget):
     def __init__(
         self,
         *args,
-        help_text=None,
         user=None,
         current_value=None,
-        disabled=False,
         **kwargs,
     ):
         widgets = (
@@ -49,8 +47,6 @@ class FlexibleFileWidget(MultiWidget):
         )
         super().__init__(widgets)
         self.attrs = {
-            "help_text": help_text,
-            "disabled": disabled,
             "user": user,
             "current_value": current_value,
             "widget_choices": {

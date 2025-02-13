@@ -43,10 +43,8 @@ class FlexibleImageWidget(MultiWidget):
     def __init__(
         self,
         *args,
-        help_text=None,
         user=None,
         current_value=None,
-        disabled=False,
         **kwargs,
     ):
         widgets = (
@@ -55,8 +53,6 @@ class FlexibleImageWidget(MultiWidget):
         )
         super().__init__(widgets)
         self.attrs = {
-            "help_text": help_text,
-            "disabled": disabled,
             "user": user,
             "current_value": current_value,
             "widget_choices": {
@@ -97,7 +93,6 @@ class FlexibleImageField(MultiValueField):
         require_all_fields=False,
         image_queryset=None,
         upload_queryset=None,
-        disabled=False,
         **kwargs,
     ):
         list_fields = [
@@ -106,8 +101,6 @@ class FlexibleImageField(MultiValueField):
         ]
         super().__init__(*args, fields=list_fields, **kwargs)
         self.require_all_fields = require_all_fields
-        if disabled:
-            self.widget.disabled = True
 
     def compress(self, values):
         if values:
