@@ -1968,7 +1968,7 @@ def test_get_valid_jobs_for_interfaces_and_archive_items(
             archive_items_and_jobs_for_interfaces.interface1,
             archive_items_and_jobs_for_interfaces.interface2,
         ],
-        jobs=Job.objects.all(),
+        algorithm_image=archive_items_and_jobs_for_interfaces.algorithm_image,
         valid_archive_items_per_interface=valid_job_inputs,
     )
     assert jobs_per_interface == {

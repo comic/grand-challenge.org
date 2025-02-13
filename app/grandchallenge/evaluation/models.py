@@ -161,12 +161,25 @@ def get_archive_items_for_interfaces(*, algorithm_interfaces, archive_items):
 
 def get_valid_jobs_for_interfaces_and_archive_items(
     *,
+    algorithm_image,
     algorithm_interfaces,
-    jobs,
     valid_archive_items_per_interface,
+    algorithm_model=None,
+    successful_jobs_only=False,
 ):
-    # get jobs whose inputs match those of the given algorithm interfaces
-    # regardless of job status
+    if algorithm_model:
+        extra_filter = {"algorithm_model": algorithm_model}
+    else:
+        extra_filter = {"algorithm_model__isnull": True}
+
+    if successful_jobs_only:
+        extra_filter["status"] = Job.SUCCESS
+
+    jobs = Job.objects.filter(
+        algorithm_image=algorithm_image,
+        creator=None,
+        **extra_filter,
+    )
 
     jobs_per_interface = {}
     for interface in algorithm_interfaces:
@@ -174,6 +187,9 @@ def get_valid_jobs_for_interfaces_and_archive_items(
         jobs_for_interface = (
             jobs.filter(
                 algorithm_interface=interface,
+                inputs__archive_items__in=valid_archive_items_per_interface[
+                    interface
+                ],
             )
             .distinct()
             .prefetch_related("inputs")
@@ -1726,31 +1742,17 @@ class Evaluation(ComponentJob):
 
     @cached_property
     def successful_jobs_per_interface(self):
-        if self.submission.algorithm_model:
-            extra_filter = {"algorithm_model": self.submission.algorithm_model}
-        else:
-            extra_filter = {"algorithm_model__isnull": True}
-
         algorithm_interfaces = (
             self.submission.phase.algorithm_interfaces.prefetch_related(
                 "inputs"
             )
         )
 
-        # subset to relevant jobs only to avoid querying
-        # the full table again for each interface
-        relevant_jobs = Job.objects.filter(
-            algorithm_image=self.submission.algorithm_image,
-            status=Job.SUCCESS,
-            algorithm_interface__in=algorithm_interfaces,
-            creator=None,
-            inputs__archive_items__archive=self.submission.phase.archive,
-            **extra_filter,
-        )
-
         successful_jobs_per_interface = get_valid_jobs_for_interfaces_and_archive_items(
+            successful_jobs_only=True,
+            algorithm_image=self.submission.algorithm_image,
+            algorithm_model=self.submission.algorithm_model,
             algorithm_interfaces=algorithm_interfaces,
-            jobs=relevant_jobs,
             valid_archive_items_per_interface=self.submission.phase.valid_archive_items_per_interface,
         )
 
