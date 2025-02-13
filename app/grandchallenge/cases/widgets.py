@@ -87,8 +87,6 @@ class FlexibleImageField(MultiValueField):
         initial=None,
         **kwargs,
     ):
-        self.user = user
-
         # The `current_value` is added to the widget attrs to display in the initial dropdown.
         # We get the object so we can present the user with the image name rather than the pk.
         self.current_value = None
@@ -108,10 +106,10 @@ class FlexibleImageField(MultiValueField):
                 raise TypeError(f"Unknown type for initial value: {initial}")
 
         upload_queryset = get_objects_for_user(
-            self.user,
+            user,
             "uploads.change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
-        image_queryset = get_objects_for_user(self.user, "cases.view_image")
+        image_queryset = get_objects_for_user(user, "cases.view_image")
         list_fields = [
             ModelChoiceField(queryset=image_queryset, required=False),
             ModelMultipleChoiceField(queryset=upload_queryset, required=False),

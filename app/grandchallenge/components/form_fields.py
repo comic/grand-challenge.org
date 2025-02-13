@@ -145,9 +145,6 @@ class FlexibleFileField(MultiValueField):
         initial=None,
         **kwargs,
     ):
-        self.user = user
-        self.interface = interface
-
         # The `current_value` is added to the widget attrs to display in the initial dropdown.
         # We get the object so we can present the user with the filename rather than the pk.
         self.current_value = None
@@ -172,11 +169,11 @@ class FlexibleFileField(MultiValueField):
                 raise TypeError(f"Unknown type for initial value: {initial}")
 
         file_search_queryset = get_component_interface_values_for_user(
-            user=self.user,
-            interface=self.interface,
+            user=user,
+            interface=interface,
         )
         upload_queryset = get_objects_for_user(
-            self.user,
+            user,
             "uploads.change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
         fields = [
