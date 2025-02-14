@@ -1,7 +1,4 @@
-{% spaceless %}
-    {% load humanize %}
-    {% load url %}
-{% endspaceless %}
+{% load humanize url %}
 Your challenge {{ challenge.short_name }} has {{ num_is_overdue }} onboarding task{{ num_is_overdue|pluralize }} that {{ num_is_overdue|pluralize:"is,are" }} overdue.
 
 Please complete them as soon as possible: the due date was {{ min_deadline|naturaltime }}.
