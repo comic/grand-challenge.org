@@ -188,14 +188,13 @@ class InterfaceFormField(forms.Field):
         )
 
         self.kwargs["widget"] = FlexibleFileWidget(
-            help_text=self.help_text,
+            help_text=_join_with_br(self.help_text, extra_help),
             user=self.user,
             current_value=current_value,
         )
         return FlexibleFileField(
             user=self.user,
             interface=self.instance,
-            help_text=_join_with_br(self.help_text, extra_help),
             **self.kwargs,
         )
 
