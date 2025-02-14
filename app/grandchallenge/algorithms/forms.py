@@ -178,7 +178,7 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 instance=inp,
                 initial=initial if initial else inp.default_value,
                 user=self._user,
-                required=True,
+                required=inp.value_required,
                 help_text=clean(inp.description) if inp.description else "",
                 form_data=self.data,
             ).field
