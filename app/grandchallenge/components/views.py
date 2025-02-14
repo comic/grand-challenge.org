@@ -502,7 +502,7 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
         prefixed_interface_slug = self.request.GET.get(
             "prefixed-interface-slug"
         )
-        get_object_or_404(
+        interface = get_object_or_404(
             ComponentInterface,
             slug=prefixed_interface_slug.replace(
                 INTERFACE_FORM_FIELD_PREFIX, ""
@@ -532,7 +532,7 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                         value=None,
                         attrs={
                             "id": prefixed_interface_slug,
-                            "help_text": file_upload_text,
+                            "help_text": f"{file_upload_text} {interface.file_extension}",
                         },
                     )
                 )
