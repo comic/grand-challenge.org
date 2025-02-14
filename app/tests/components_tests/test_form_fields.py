@@ -13,10 +13,6 @@ from grandchallenge.components.models import (
     InterfaceKind,
     InterfaceKindChoices,
 )
-from grandchallenge.serving.models import (
-    get_component_interface_values_for_user,
-)
-
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
