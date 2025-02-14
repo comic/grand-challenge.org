@@ -16,8 +16,8 @@ class FileSearchWidget(ChoiceWidget, HiddenInput):
         if name:
             self.name = name
 
-    def get_context(self, *args, **kwargs):
-        context = super().get_context(*args, **kwargs)
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
         if self.name:
             context["widget"]["name"] = self.name
         return context
