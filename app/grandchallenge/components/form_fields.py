@@ -7,12 +7,13 @@ from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
     FlexibleImageField,
     FlexibleImageWidget,
+    ImageSearchWidget,
 )
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.widgets import (
+    FileSearchWidget,
     FlexibleFileWidget,
-    SelectUploadWidget,
 )
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
@@ -20,7 +21,6 @@ from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.serving.models import (
     get_component_interface_values_for_user,
 )
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import (
     UserUploadMultipleWidget,
@@ -50,6 +50,9 @@ class InterfaceFormField(forms.Field):
         UserUploadSingleWidget,
         JSONEditorWidget,
         FlexibleImageWidget,
+        ImageSearchWidget,
+        FlexibleFileWidget,
+        FileSearchWidget,
     }
 
     def __init__(self, *, instance=None, user=None, form_data=None, **kwargs):
@@ -98,7 +101,12 @@ class InterfaceFormField(forms.Field):
 
         if self.initial:
             if isinstance(self.initial, ComponentInterfaceValue):
+                # This can happen on display set or archive item update forms, the value is then taken from the model
+                # instance unless the value is in the form data.
                 current_value = self.initial.image
+            # Otherwise the value is taken from the form data and will always take the form of a pk for either
+            # an Image object or a UserUpload object.
+            # We get the object so we can present the user with the image name rather than the pk.
             elif Image.objects.filter(pk=self.initial).exists():
                 current_value = Image.objects.get(pk=self.initial)
             elif UserUpload.objects.filter(pk=self.initial).exists():
@@ -112,8 +120,6 @@ class InterfaceFormField(forms.Field):
             help_text=self.help_text,
             user=self.user,
             current_value=current_value,
-            # also passing the CIV as current value here so that we can
-            # show the image name to the user rather than its pk
         )
         upload_queryset = get_objects_for_user(
             self.user,
@@ -144,42 +150,42 @@ class InterfaceFormField(forms.Field):
         )
 
     def get_file_field(self):
-        key = f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{self.instance.slug}"
-        if key in self.form_data.keys():
-            value_type = self.form_data[key]
-        elif self.civs_for_user_for_interface.exists():
-            value_type = "civ"
-        else:
-            value_type = "uuid"
+        current_value = None
 
-        if value_type == "uuid":
-            extra_help = f"{file_upload_text} {self.instance.file_extension}"
-            return ModelChoiceField(
-                queryset=get_objects_for_user(
-                    self.user,
-                    "uploads.change_userupload",
-                ).filter(status=UserUpload.StatusChoices.COMPLETED),
-                widget=UserUploadSingleWidget(
-                    allowed_file_types=self.instance.allowed_file_types,
-                ),
-                help_text=_join_with_br(self.help_text, extra_help),
-                **self.kwargs,
-            )
-        elif value_type == "civ":
-            file_upload_link = reverse(
-                "components:file-upload",
-                kwargs={
-                    "interface_slug": self.instance.slug,
-                },
-            )
+        if self.initial:
+            if isinstance(self.initial, ComponentInterfaceValue):
+                # This can happen on display set or archive item update forms, the value is then taken from the model
+                # instance unless the value is in the form data.
+                current_value = self.initial
+            # Otherwise the value is taken from the form data and will always take the form of a pk for either
+            # a ComponentInterfaceValue object (in this case the pk is a digit) or
+            # a UserUpload object (then the pk is a UUID).
+            # We get the object so we can present the user with the image name rather than the pk.
+            elif (
+                isinstance(self.initial, int) or self.initial.isdigit()
+            ) and ComponentInterfaceValue.objects.filter(
+                pk=self.initial
+            ).exists():
+                current_value = ComponentInterfaceValue.objects.get(
+                    pk=self.initial
+                )
+            elif UserUpload.objects.filter(pk=self.initial).exists():
+                current_value = UserUpload.objects.get(pk=self.initial)
+            else:
+                raise RuntimeError(
+                    f"Unknown type for initial value: {self.initial}"
+                )
 
-            return ModelChoiceField(
-                queryset=self.civs_for_user_for_interface,
-                widget=SelectUploadWidget(
-                    attrs={"upload_link": file_upload_link}
-                ),
-                **self.kwargs,
-            )
+        self.kwargs["widget"] = FlexibleFileWidget(
+            help_text=self.help_text,
+            user=self.user,
+            current_value=current_value,
+        )
+        return FlexibleFileField(
+            user=self.user,
+            interface=self.instance,
+            **self.kwargs,
+        )
 
     @cached_property
     def civs_for_user_for_interface(self):
@@ -199,11 +205,21 @@ class FlexibleFileField(MultiValueField):
     def __init__(
         self,
         *args,
-        file_search_queryset=None,
-        upload_queryset=None,
+        user=None,
+        interface=None,
         disabled=False,
         **kwargs,
     ):
+        self.user = user
+        self.interface = interface
+        file_search_queryset = get_component_interface_values_for_user(
+            user=self.user,
+            interface=self.interface,
+        )
+        upload_queryset = get_objects_for_user(
+            self.user,
+            "uploads.change_userupload",
+        ).filter(status=UserUpload.StatusChoices.COMPLETED)
         fields = [
             ModelChoiceField(queryset=file_search_queryset, required=False),
             ModelChoiceField(queryset=upload_queryset, required=False),
