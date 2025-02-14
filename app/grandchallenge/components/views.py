@@ -506,7 +506,7 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
         prefixed_interface_slug = self.request.GET.get(
             "prefixed-interface-slug"
         )
-        interface = get_object_or_404(
+        get_object_or_404(
             ComponentInterface,
             slug=prefixed_interface_slug.replace(
                 INTERFACE_FORM_FIELD_PREFIX, ""
@@ -545,7 +545,7 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                             name=prefixed_interface_slug,
                             value=None,
                             attrs={
-                                "id": interface,
+                                "id": prefixed_interface_slug,
                                 "help_text": _join_with_br(
                                     help_text if help_text else None,
                                     file_upload_text,
@@ -597,20 +597,25 @@ class FileSearchResultView(
     model = ComponentInterfaceValue
     paginate_by = 50
 
-    def __init__(self, *, interface_slug=None):
+    def __init__(self):
         super().__init__()
-        self.interface_slug = interface_slug
+        self.interface = None
 
     def get_queryset(self):
         return get_component_interface_values_for_user(
-            user=self.request.user
-        ).filter(interface__slug=self.interface_slug)
+            user=self.request.user,
+            interface=self.interface,
+        )
 
     def get(self, request, *args, **kwargs):
         prefixed_interface_slug = request.GET.get("prefixed-interface-slug")
-        self.interface_slug = prefixed_interface_slug.replace(
-            INTERFACE_FORM_FIELD_PREFIX, ""
+        self.interface = get_object_or_404(
+            ComponentInterface,
+            slug=prefixed_interface_slug.replace(
+                INTERFACE_FORM_FIELD_PREFIX, ""
+            ),
         )
+
         qs = self.get_queryset()
         query = request.GET.get("query-" + prefixed_interface_slug)
         if query:

@@ -5,7 +5,8 @@
 <div class="form-group mb-1"
      id="search-file-{{ widget.name }}"
      hx-get="{% url 'components:file-search' %}"
-     hx-trigger="load once, keyup[target.value.length > 1] delay:500ms from:#query-{{ widget.name }}, click[keyCode==8] delay:500ms from:#query-{{ widget.name }}"
+     hx-trigger="load once, keyup[target.value.length > 1] delay:500ms from:#query-{{ widget.name }},
+     click[keyCode==8] delay:500ms from:#query-{{ widget.name }}"
      hx-target="#selected-file-{{ widget.name }}"
      hx-swap="outerHTML"
      hx-include="[id='file-input-group-{{ widget.name }}']"
@@ -25,9 +26,7 @@
 
     <small class="form-text text-muted">
         Select an existing file that you have access to.
-        This could be from data that you have previously uploaded,
-        archives that you have permission to use,
-        or public algorithm results that you have access to.
+        This could be from algorithms, archives or reader studies that you have access to.
     </small>
 </div>
 
