@@ -29,7 +29,6 @@ from grandchallenge.cases.serializers import (
     RawImageUploadSessionSerializer,
 )
 from grandchallenge.cases.widgets import ImageSearchWidget, ImageWidgetChoices
-from grandchallenge.components.form_fields import _join_with_br
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
@@ -109,7 +108,6 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         interface = request.GET.get("interface_slug")
         widget_choice = request.GET.get(f"WidgetChoice-{interface}")
-        help_text = request.GET.get("help_text")
         current_value = request.GET.get("current_value")
 
         if widget_choice == ImageWidgetChoices.IMAGE_SEARCH.name:
@@ -117,11 +115,7 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                 ImageSearchWidget.template_name,
                 {
                     "widget": ImageSearchWidget().get_context(
-                        name=interface,
-                        value=None,
-                        attrs={
-                            "help_text": help_text if help_text else None,
-                        },
+                        name=interface, value=None, attrs={}
                     )["widget"],
                 },
             )
@@ -135,10 +129,7 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                         value=None,
                         attrs={
                             "id": interface,
-                            "help_text": _join_with_br(
-                                help_text if help_text else None,
-                                IMAGE_UPLOAD_HELP_TEXT,
-                            ),
+                            "help_text": IMAGE_UPLOAD_HELP_TEXT,
                         },
                     )["widget"],
                 },

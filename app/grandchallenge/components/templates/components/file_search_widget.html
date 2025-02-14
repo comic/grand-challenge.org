@@ -1,6 +1,5 @@
 {% load url %}
 {% load static %}
-{% load clean from bleach %}
 
 <div class="form-group mb-1"
      id="search-file-{{ widget.name }}"
@@ -29,7 +28,3 @@
         This could be from algorithms, archives or reader studies that you have access to.
     </small>
 </div>
-
-{% if widget.attrs.help_text and widget.attrs.help_text != "" %}
-    <small id="hint_{{ widget.attrs.id }}" class="form-text text-muted">{{ widget.attrs.help_text|clean }}</small>
-{% endif %}

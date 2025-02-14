@@ -30,7 +30,6 @@ from grandchallenge.archives.models import Archive
 from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
     FileWidgetChoices,
-    _join_with_br,
     file_upload_text,
 )
 from grandchallenge.components.forms import CIVSetDeleteForm, SingleCIVForm
@@ -516,7 +515,6 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
             widget_choice = FileWidgetChoices(widget_choice_name)
         except ValueError:
             raise Http404(f"Widget choice {widget_choice_name} not found")
-        help_text = request.GET.get("help-text")
         current_value = request.GET.get("current-value")
 
         match widget_choice:
@@ -525,9 +523,6 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                     FileSearchWidget().render(
                         name=prefixed_interface_slug,
                         value=None,
-                        attrs={
-                            "help_text": help_text if help_text else None,
-                        },
                     )
                 )
             case FileWidgetChoices.FILE_UPLOAD:
@@ -537,10 +532,7 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                         value=None,
                         attrs={
                             "id": prefixed_interface_slug,
-                            "help_text": _join_with_br(
-                                help_text if help_text else None,
-                                file_upload_text,
-                            ),
+                            "help_text": file_upload_text,
                         },
                     )
                 )
