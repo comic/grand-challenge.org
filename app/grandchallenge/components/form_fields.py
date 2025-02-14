@@ -33,13 +33,6 @@ file_upload_text = (
 )
 
 
-def _join_with_br(a, b):
-    if a:
-        return f"{a}<br>{b}"
-    else:
-        return b
-
-
 INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
 
 
