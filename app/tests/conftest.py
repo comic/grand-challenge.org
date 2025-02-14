@@ -610,11 +610,11 @@ def get_interface_form_data(
     if ci.is_image_kind:
         if existing_data:
             form_data[
-                f"WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
             ] = ImageWidgetChoices.IMAGE_SEARCH.name
         else:
             form_data[
-                f"WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
             ] = ImageWidgetChoices.IMAGE_UPLOAD.name
     elif ci.requires_file:
         if existing_data:

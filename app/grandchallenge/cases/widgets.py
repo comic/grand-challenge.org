@@ -70,7 +70,7 @@ class FlexibleImageWidget(MultiWidget):
         except KeyError:
             # this happens if the data comes from the DS create / update form
             try:
-                value = data[f"WidgetChoice-{name}"]
+                value = data[f"widget-choice-{name}"]
             except KeyError:
                 value = None
         return self.decompress(value)

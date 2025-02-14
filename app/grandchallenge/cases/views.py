@@ -106,16 +106,18 @@ class RawImageUploadSessionViewSet(
 
 class ImageWidgetSelectView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        interface = request.GET.get("interface_slug")
-        widget_choice = request.GET.get(f"WidgetChoice-{interface}")
-        current_value = request.GET.get("current_value")
+        prefixed_interface_slug = request.GET.get("prefixed-interface-slug")
+        widget_choice = request.GET.get(
+            f"widget-choice-{prefixed_interface_slug}"
+        )
+        current_value = request.GET.get("current-value")
 
         if widget_choice == ImageWidgetChoices.IMAGE_SEARCH.name:
             html_content = render_to_string(
                 ImageSearchWidget.template_name,
                 {
                     "widget": ImageSearchWidget().get_context(
-                        name=interface, value=None, attrs={}
+                        name=prefixed_interface_slug, value=None, attrs={}
                     )["widget"],
                 },
             )
@@ -125,10 +127,10 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                 UserUploadMultipleWidget.template_name,
                 {
                     "widget": UserUploadMultipleWidget().get_context(
-                        name=interface,
+                        name=prefixed_interface_slug,
                         value=None,
                         attrs={
-                            "id": interface,
+                            "id": prefixed_interface_slug,
                             "help_text": IMAGE_UPLOAD_HELP_TEXT,
                         },
                     )["widget"],
@@ -152,7 +154,7 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                 HiddenInput.template_name,
                 {
                     "widget": {
-                        "name": interface,
+                        "name": prefixed_interface_slug,
                         "value": current_value,
                         "type": "hidden",
                     },
@@ -178,8 +180,8 @@ class ImageSearchResultView(LoginRequiredMixin, ListView):
 
     def get(self, request, *args, **kwargs):
         qs = self.get_queryset()
-        interface = request.GET.get("interface_slug")
-        query = request.GET.get("query-" + interface)
+        prefixed_interface_slug = request.GET.get("prefixed-interface-slug")
+        query = request.GET.get("query-" + prefixed_interface_slug)
         if query:
             q = reduce(
                 or_,

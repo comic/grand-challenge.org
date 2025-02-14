@@ -121,7 +121,7 @@ def test_flexible_image_widget(client):
         client=client,
         user=user,
         data={
-            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.IMAGE_SEARCH.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SEARCH.name,
             "interface_slug": ci.slug,
         },
     )
@@ -132,7 +132,7 @@ def test_flexible_image_widget(client):
         client=client,
         user=user,
         data={
-            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.IMAGE_UPLOAD.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_UPLOAD.name,
             "interface_slug": ci.slug,
         },
     )
@@ -143,7 +143,7 @@ def test_flexible_image_widget(client):
         client=client,
         user=user,
         data={
-            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.UNDEFINED.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.UNDEFINED.name,
             "interface_slug": ci.slug,
         },
     )
@@ -155,7 +155,7 @@ def test_flexible_image_widget(client):
         client=client,
         user=user,
         data={
-            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
             "interface_slug": ci.slug,
             "current_value": image.pk,
         },
@@ -170,7 +170,7 @@ def test_flexible_image_widget(client):
         client=client,
         user=user,
         data={
-            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
             "interface_slug": ci.slug,
             "current_value": user_upload.pk,
         },
