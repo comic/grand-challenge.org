@@ -1,9 +1,18 @@
+import json
+from urllib.parse import quote
+
 import pytest
 from django.core.exceptions import ValidationError
 from factory.fuzzy import FuzzyChoice
 
-from grandchallenge.components.form_fields import FlexibleFileField
-from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.form_fields import (
+    FlexibleFileField,
+    InterfaceFormField,
+)
+from grandchallenge.components.models import (
+    INTERFACE_TYPE_JSON_EXAMPLES,
+    InterfaceKind,
+)
 from grandchallenge.serving.models import (
     get_component_interface_values_for_user,
 )
@@ -300,3 +309,24 @@ def test_flexible_file_field_validation_with_archive_items():
     )
     with pytest.raises(ValidationError):
         field.clean(parsed_value_for_file_without_permission)
+
+
+@pytest.mark.parametrize(
+    "component_interface_kind",
+    [kind for kind in INTERFACE_TYPE_JSON_EXAMPLES.keys()],
+)
+@pytest.mark.parametrize("store_in_db", [True, False])
+@pytest.mark.django_db
+def test_interface_form_field_help_text_example_download_link(
+    component_interface_kind, store_in_db
+):
+    user = UserFactory()
+    ci = ComponentInterfaceFactory(
+        kind=component_interface_kind, store_in_database=store_in_db
+    )
+    field = InterfaceFormField(instance=ci, user=user, form_data={})
+
+    encoded_example = quote(json.dumps(ci.json_kind_example.value, indent=2))
+
+    assert "Download example" in field.field.help_text
+    assert encoded_example in field.field.help_text
