@@ -809,16 +809,23 @@ class TestJobCreateForm:
 
 
 @pytest.mark.django_db
-def test_all_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
+def test_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
     ci_json_in_db_without_schema = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY,
         store_in_database=True,
     )
     interface = AlgorithmInterfaceFactory(
-        inputs=[ci_json_in_db_without_schema],
+        inputs=[
+            ci_json_in_db_without_schema,
+            algorithm_with_multiple_inputs.ci_bool,
+            algorithm_with_multiple_inputs.ci_str,
+            algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
+            algorithm_with_multiple_inputs.ci_existing_img,
+            algorithm_with_multiple_inputs.ci_json_file,
+        ],
         outputs=[ComponentInterfaceFactory()],
     )
-    algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
+    algorithm_with_multiple_inputs.algorithm.interfaces.set([interface])
 
     form = JobCreateForm(
         algorithm=algorithm_with_multiple_inputs.algorithm,
@@ -828,7 +835,14 @@ def test_all_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
     )
 
     for name, field in form.fields.items():
-        if name not in ["algorithm_model", "creator"]:
+        # boolean and json inputs that allow None should not be required,
+        # all other inputs should be
+        if name not in [
+            "algorithm_model",
+            "creator",
+            f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_with_multiple_inputs.ci_bool.slug}",
+            f"{INTERFACE_FORM_FIELD_PREFIX}{ci_json_in_db_without_schema.slug}",
+        ]:
             assert field.required
 
 
