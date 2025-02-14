@@ -145,7 +145,7 @@ def test_image_search_view(client):
         client=client,
         user=user,
         data={
-            "interface_slug": ci.slug,
+            "prefixed-interface-slug": ci.slug,
             f"query-{ci.slug}": "test",
         },
     )
@@ -158,7 +158,7 @@ def test_image_search_view(client):
         client=client,
         user=user,
         data={
-            "interface_slug": ci.slug,
+            "prefixed-interface-slug": ci.slug,
             f"query-{ci.slug}": "",
         },
     )

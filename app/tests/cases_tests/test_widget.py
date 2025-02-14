@@ -122,7 +122,7 @@ def test_flexible_image_widget(client):
         user=user,
         data={
             f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SEARCH.name,
-            "interface_slug": ci.slug,
+            "prefixed-interface-slug": ci.slug,
         },
     )
     assert '<input class="form-control" type="search"' in str(response.content)
@@ -133,7 +133,7 @@ def test_flexible_image_widget(client):
         user=user,
         data={
             f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_UPLOAD.name,
-            "interface_slug": ci.slug,
+            "prefixed-interface-slug": ci.slug,
         },
     )
     assert 'class="user-upload"' in str(response2.content)
@@ -144,7 +144,7 @@ def test_flexible_image_widget(client):
         user=user,
         data={
             f"widget-choice-{ci.slug}": ImageWidgetChoices.UNDEFINED.name,
-            "interface_slug": ci.slug,
+            "prefixed-interface-slug": ci.slug,
         },
     )
     assert response3.content == b""
@@ -156,8 +156,8 @@ def test_flexible_image_widget(client):
         user=user,
         data={
             f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
-            "interface_slug": ci.slug,
-            "current_value": image.pk,
+            "prefixed-interface-slug": ci.slug,
+            "current-value": image.pk,
         },
     )
     assert format_html(
@@ -171,8 +171,8 @@ def test_flexible_image_widget(client):
         user=user,
         data={
             f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
-            "interface_slug": ci.slug,
-            "current_value": user_upload.pk,
+            "prefixed-interface-slug": ci.slug,
+            "current-value": user_upload.pk,
         },
     )
     assert format_html(
