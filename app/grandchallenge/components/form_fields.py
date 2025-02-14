@@ -183,10 +183,10 @@ class InterfaceFormField(forms.Field):
                 )
 
         extra_help = _join_with_br(
-                f"{file_upload_text} {self.instance.file_extension}",
-                self.example_download_link,
-            )
-        
+            f"{file_upload_text} {self.instance.file_extension}",
+            self.example_download_link,
+        )
+
         self.kwargs["widget"] = FlexibleFileWidget(
             help_text=_join_with_br(self.help_text, extra_help),
             user=self.user,
