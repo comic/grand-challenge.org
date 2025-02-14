@@ -33,7 +33,7 @@
                             {% include "algorithms/job_status_detail.html" with object=job %}
                         </td>
                         <td>
-                            {% include "algorithms/job_error_message.html" with object=job %}
+                            {{ job.error_message }}
                         </td>
                     </tr>
                 {% endfor %}
