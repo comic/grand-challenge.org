@@ -6,7 +6,7 @@
      hx-get="{% url 'cases:image-search' %}"
      hx-trigger="load once, input delay:500ms from:#query-{{ widget.name }}"
      hx-target="#selected-image-{{ widget.name }}"
-     hx-swap="outerHTML"
+     hx-swap="innerHTML"
      hx-include="[id='image-input-group-{{ widget.name }}']"
 >
     <div class="input-group" id="image-input-group-{{ widget.name }}">
@@ -15,7 +15,8 @@
                id="query-{{ widget.name }}"
                placeholder="Search by pk or image name"
         >
-        <select class="custom-select" name="image"
+        <select class="custom-select"
+                name="{{ widget.name }}"
                 id="selected-image-{{ widget.name }}">
             <option value="">No image selected</option>
         </select>

@@ -189,7 +189,6 @@ class ImageSearchResultView(LoginRequiredMixin, ListView):
             qs = qs.filter(q).order_by("name")
         self.object_list = qs
         context = self.get_context_data(**kwargs)
-        context["interface"] = interface
         return TemplateResponse(
             request=request,
             template=self.template_name,
