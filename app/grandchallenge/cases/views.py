@@ -4,9 +4,8 @@ from operator import or_
 from django.conf import settings
 from django.db.models import Q
 from django.forms import HiddenInput
-from django.http import HttpResponse
-from django.template.loader import render_to_string
-from django.template.response import TemplateResponse
+from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404
 from django.views import View
 from django.views.generic import DetailView, ListView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -29,6 +28,8 @@ from grandchallenge.cases.serializers import (
     RawImageUploadSessionSerializer,
 )
 from grandchallenge.cases.widgets import ImageSearchWidget, ImageWidgetChoices
+from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
@@ -106,67 +107,67 @@ class RawImageUploadSessionViewSet(
 
 class ImageWidgetSelectView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        prefixed_interface_slug = request.GET.get("prefixed-interface-slug")
-        widget_choice = request.GET.get(
+        prefixed_interface_slug = self.request.GET.get(
+            "prefixed-interface-slug"
+        )
+        get_object_or_404(
+            ComponentInterface,
+            slug=prefixed_interface_slug.replace(
+                INTERFACE_FORM_FIELD_PREFIX, ""
+            ),
+        )
+        widget_choice_name = request.GET.get(
             f"widget-choice-{prefixed_interface_slug}"
         )
+        try:
+            widget_choice = ImageWidgetChoices(widget_choice_name)
+        except ValueError:
+            raise Http404(f"Widget choice {widget_choice_name} not found")
         current_value = request.GET.get("current-value")
 
-        if widget_choice == ImageWidgetChoices.IMAGE_SEARCH.name:
-            html_content = render_to_string(
-                ImageSearchWidget.template_name,
-                {
-                    "widget": ImageSearchWidget().get_context(
-                        name=prefixed_interface_slug, value=None, attrs={}
-                    )["widget"],
-                },
-            )
-            return HttpResponse(html_content)
-        elif widget_choice == ImageWidgetChoices.IMAGE_UPLOAD.name:
-            html_content = render_to_string(
-                UserUploadMultipleWidget.template_name,
-                {
-                    "widget": UserUploadMultipleWidget().get_context(
+        match widget_choice:
+            case ImageWidgetChoices.IMAGE_SEARCH:
+                return HttpResponse(
+                    ImageSearchWidget().render(
+                        name=prefixed_interface_slug,
+                        value=None,
+                    )
+                )
+            case ImageWidgetChoices.IMAGE_UPLOAD:
+                return HttpResponse(
+                    UserUploadMultipleWidget().render(
                         name=prefixed_interface_slug,
                         value=None,
                         attrs={
                             "id": prefixed_interface_slug,
                             "help_text": IMAGE_UPLOAD_HELP_TEXT,
                         },
-                    )["widget"],
-                },
-            )
-            return HttpResponse(html_content)
-        elif (
-            widget_choice == ImageWidgetChoices.IMAGE_SELECTED.name
-            and current_value
-            and (
-                Image.objects.filter(pk=current_value).exists()
-                or UserUpload.objects.filter(pk=current_value).exists()
-            )
-        ):
-            # this can happen on the display set update view or redisplay of
-            # form upon validation, where one of the options is the current
-            # image, this enables switching back from one of the above widgets
-            # to the chosen image. This makes sure the form element with the
-            # right name is available on resubmission.
-            html_content = render_to_string(
-                HiddenInput.template_name,
-                {
-                    "widget": {
-                        "name": prefixed_interface_slug,
-                        "value": current_value,
-                        "type": "hidden",
-                    },
-                },
-            )
-            return HttpResponse(html_content)
-        elif widget_choice == ImageWidgetChoices.UNDEFINED.name:
-            # this happens when switching back from one of the
-            # above widgets to the "Choose data source" option
-            return HttpResponse()
-        else:
-            raise RuntimeError("Unknown widget type")
+                    )
+                )
+            case ImageWidgetChoices.IMAGE_SELECTED:
+                if current_value and (
+                    Image.objects.filter(pk=current_value).exists()
+                    or UserUpload.objects.filter(pk=current_value).exists()
+                ):
+                    # this can happen on the display set update view or redisplay of
+                    # form upon validation, where one of the options is the current
+                    # image, this enables switching back from one of the above widgets
+                    # to the chosen image. This makes sure the form element with the
+                    # right name is available on resubmission.
+                    return HttpResponse(
+                        HiddenInput().render(
+                            name=prefixed_interface_slug,
+                            value=current_value,
+                        )
+                    )
+                raise Http404(f"Selected image {current_value} not found")
+            case ImageWidgetChoices.UNDEFINED:
+                # this happens when switching back from one of the
+                # above widgets to the "Choose data source" option
+                return HttpResponse()
+        raise NotImplementedError(
+            f"Response for widget choice {widget_choice} not implemented"
+        )
 
 
 class ImageSearchResultView(LoginRequiredMixin, ListView):
@@ -190,9 +191,4 @@ class ImageSearchResultView(LoginRequiredMixin, ListView):
             )
             qs = qs.filter(q).order_by("name")
         self.object_list = qs
-        context = self.get_context_data(**kwargs)
-        return TemplateResponse(
-            request=request,
-            template=self.template_name,
-            context=context,
-        )
+        return self.render_to_response(self.get_context_data(**kwargs))
