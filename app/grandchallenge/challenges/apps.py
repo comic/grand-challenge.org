@@ -27,6 +27,3 @@ class ChallengesConfig(AppConfig):
 
     def ready(self):
         post_migrate.connect(init_reviewers_group, sender=self)
-
-        # noinspection PyUnresolvedReferences
-        import grandchallenge.challenges.signals  # noqa: F401

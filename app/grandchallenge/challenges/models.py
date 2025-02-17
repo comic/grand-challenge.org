@@ -38,7 +38,7 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
-from django.utils.timezone import now
+from django.utils.timezone import now, timedelta
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -503,6 +503,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
                 self.add_admin(user=self.creator)
             self.create_forum_permissions()
             self.create_default_pages()
+            self.create_default_onboarding_tasks()
 
         if adding or self.hidden != self._hidden_orig:
             on_commit(
@@ -662,6 +663,65 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             ),
             challenge=self,
             permission_level=Page.ALL,
+        )
+
+    def create_default_onboarding_tasks(self):
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Create Phases",
+            description="Define, name and create the different phases of the challenge.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=1),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Define Inputs and Outputs",
+            description="To support, communicate the required input and output data formats for participant's algorithms.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=3),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Create Archives",
+            description="Create an archive per algorithm-type phase for the challenge.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
+            deadline=self.created + timedelta(weeks=3),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Upload Data",
+            description="Prepare and upload necessary datasets to archives, contact support if no archives are available.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=5),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Example Algorithm",
+            description="Implement and document a baseline example algorithm for participants to use as a reference.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=6, seconds=0),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Evaluation Method",
+            description="Implement and document the evaluation method for assessing participant submissions.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=6, seconds=1),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Scoring",
+            description="Configure the leaderboard scoring to accurately interpret the evaluation results.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=6, seconds=2),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Test Evaluation",
+            description="Run test evaluations using sample submissions to ensure the scoring system and "
+            "evaluation method function correctly before launching the challenge.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=6, seconds=3),
         )
 
     def is_admin(self, user) -> bool:
