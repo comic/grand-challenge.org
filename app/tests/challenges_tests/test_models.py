@@ -234,10 +234,10 @@ def test_onboarding_tasks_overdue_status_annotations(
     mocker,
 ):
 
-    OnboardingTaskFactory(deadline=deadline)
+    task = OnboardingTaskFactory(deadline=deadline)
 
     mocker.patch("grandchallenge.challenges.models.now", return_value=mock_now)
 
-    task = OnboardingTask.objects.with_overdue_status().get()
+    task = OnboardingTask.objects.with_overdue_status().get(pk=task.pk)
     assert task.is_overdue == expected_is_overdue
     assert task.is_overdue_soon == expected_is_overdue_soon
