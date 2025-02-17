@@ -1128,7 +1128,7 @@ READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 ###############################################################################
 
 CHALLENGES_DEFAULT_ACTIVE_MONTHS = 12
-CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF = timedelta(hours=72)
+CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF = timedelta(days=7)
 
 ###############################################################################
 #
@@ -1235,6 +1235,10 @@ CELERY_BEAT_SCHEDULE = {
     "update_site_statistics": {
         "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
         "schedule": crontab(hour=5, minute=30),
+    },
+    "send_onboarding_task_reminder_emails": {
+        "task": "grandchallenge.challenges.tasks.send_onboarding_task_reminder_emails",
+        "schedule": crontab(day_of_week="mon", hour=6, minute=0),
     },
     "delete_users_who_dont_login": {
         "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",

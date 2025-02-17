@@ -1425,11 +1425,8 @@ class TaskResponsiblePartyChoices(models.TextChoices):
 
 class OnboardingTaskQuerySet(models.QuerySet):
     def with_overdue_status(self):
-        _now = now()
-        soon_cutoff = (
-            _now + settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF
-        )
 
+        _now = now()
         return self.annotate(
             is_overdue=Case(
                 When(complete=False, deadline__lt=_now, then=Value(True)),
@@ -1440,7 +1437,8 @@ class OnboardingTaskQuerySet(models.QuerySet):
                 When(
                     complete=False,
                     is_overdue=False,
-                    deadline__lt=soon_cutoff,
+                    deadline__lt=_now
+                    + settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF,
                     then=Value(True),
                 ),
                 default=Value(False),
