@@ -20,6 +20,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -242,6 +243,18 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         to=AlgorithmInterface,
         related_name="algorithm_interfaces",
         through="algorithms.AlgorithmAlgorithmInterface",
+    )
+    inputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface, related_name="algorithm_inputs", blank=False
+        )
+    )
+    outputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface,
+            related_name="algorithm_outputs",
+            blank=False,
+        )
     )
     publications = models.ManyToManyField(
         Publication,
