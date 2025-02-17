@@ -1,0 +1,42 @@
+{% load url %}
+{% load profiles %}
+{% load static %}
+
+{{ object.created }}
+
+<split></split>
+
+{{ object.phase.title }}
+
+<split></split>
+
+{{ object.creator|user_profile_link }}
+
+<split></split>
+
+{{ object.comment }}
+
+<split></split>
+
+<ul class="list-unstyled">
+    {% for evaluation in object.evaluation_set.all %}
+        <li>
+            {% include 'evaluation/evaluation_status_detail.html' with object=evaluation %}
+            {% if evaluation.status == evaluation.SUCCESS %}
+                {% if evaluation.published %}
+                    <a href="{{ evaluation.get_absolute_url }}">Result</a>
+                {% else %}
+                    Evaluation is under review by the challenge admins.
+                {% endif %}
+            {% elif evaluation.status == evaluation.FAILURE %}
+                {% firstof evaluation.error_message evaluation.get_status_display %}
+            {% endif %}
+        </li>
+    {% empty %}
+        <li>
+            {% if object.user_upload and not object.predictions_file %}
+                <span class="badge badge-info">Preparing</span>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>

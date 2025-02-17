@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "datatables/list_base.html" %}
 {% load url %}
 {% load profiles %}
 {% load static %}
@@ -32,60 +32,5 @@
         <div class="alert alert-danger">There are no active submission phases for this challenge.</div>
     {% endif %}
 
-    <div class="table-responsive">
-        <table class="table sortable table-hover table-borderless table-sm w-100" id="submissionsTable">
-            <thead class="thead-light">
-            <tr>
-                <th>Created</th>
-                <th>Phase</th>
-                <th>User</th>
-                <th>Comment</th>
-                <th>Evaluations</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for submission in object_list %}
-                <tr>
-                    <td data-order="{{ submission.created|date:"U" }}">{{ submission.created }}</td>
-                    <td>{{ submission.phase.title }}</td>
-                    <td>
-                        {{ submission.creator|user_profile_link }}
-                    </td>
-                    <td>{{ submission.comment }}</td>
-                    <td>
-                        <ul class="list-unstyled">
-                            {% for evaluation in submission.evaluation_set.all %}
-                                <li>
-                                    {% include 'evaluation/evaluation_status_detail.html' with object=evaluation %}
-                                    {% if evaluation.status == evaluation.SUCCESS %}
-                                        {% if evaluation.published %}
-                                            <a href="{{ evaluation.get_absolute_url }}">Result</a>
-                                        {% else %}
-                                            Evaluation is under review by the challenge admins.
-                                        {% endif %}
-                                    {% elif evaluation.status == evaluation.FAILURE %}
-                                        {% firstof evaluation.error_message evaluation.get_status_display %}
-                                    {% endif %}
-                                </li>
-                            {% empty %}
-                                <li>
-                                    {% if submission.user_upload and not submission.predictions_file %}
-                                        <span class="badge badge-info">Preparing</span>
-                                    {% endif %}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-{% endblock %}
-
-{% block script %}
     {{ block.super }}
-
-    <script type="module" src="{% static "js/evaluation/submissions_table.mjs" %}"></script>
-
 {% endblock %}
