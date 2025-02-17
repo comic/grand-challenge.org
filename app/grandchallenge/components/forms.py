@@ -26,7 +26,6 @@ from grandchallenge.components.form_fields import (
     InterfaceFormField,
 )
 from grandchallenge.components.models import CIVData, ComponentInterface
-from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.evaluation.models import Method
@@ -109,10 +108,7 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 
 
 class MultipleCIVForm(Form):
-    _possible_widgets = {
-        *InterfaceFormField._possible_widgets,
-        SelectUploadWidget,
-    }
+    _possible_widgets = InterfaceFormField._possible_widgets
 
     def __init__(self, *args, instance, base_obj, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -129,7 +125,10 @@ class MultipleCIVForm(Form):
             prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{slug}"
 
             if prefixed_interface_slug in self.data:
-                if interface.kind == ComponentInterface.Kind.ANY:
+                if (
+                    not interface.requires_file
+                    and interface.kind == ComponentInterface.Kind.ANY
+                ):
                     current_value = self.data.getlist(prefixed_interface_slug)
                 else:
                     current_value = self.data[prefixed_interface_slug]
@@ -138,18 +137,6 @@ class MultipleCIVForm(Form):
                 current_value = instance.values.filter(
                     interface__slug=slug
                 ).first()
-
-            if (
-                interface.requires_file
-                and prefixed_interface_slug in self.data.keys()
-            ):
-                # file interfaces are special because their widget can change from
-                # a select to an upload widget, so if there is data, we need to pass
-                # the value from the data dict to the init function rather than
-                # the existing CIV
-                type_key = f"value_type_{prefixed_interface_slug}"
-                value = self.data[prefixed_interface_slug]
-                current_value = f"{self.data[type_key]}_{value}"
 
             self.fields[prefixed_interface_slug] = InterfaceFormField(
                 instance=interface,
@@ -173,8 +160,10 @@ class MultipleCIVForm(Form):
                     slug=interface_slug
                 ).get()
 
-                current_value = None
-                if interface.kind == ComponentInterface.Kind.ANY:
+                if (
+                    not interface.requires_file
+                    and interface.kind == ComponentInterface.Kind.ANY
+                ):
                     current_value = self.data.getlist(slug)
                 else:
                     current_value = self.data[slug]

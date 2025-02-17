@@ -4,9 +4,6 @@ from factory.fuzzy import FuzzyChoice
 
 from grandchallenge.components.form_fields import FlexibleFileField
 from grandchallenge.components.models import InterfaceKind
-from grandchallenge.serving.models import (
-    get_component_interface_values_for_user,
-)
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
@@ -29,11 +26,8 @@ def test_flexible_file_field_validation_empty_data_and_missing_values():
         kind=FuzzyChoice(InterfaceKind.interface_type_file())
     )
     field = FlexibleFileField(
-        file_search_queryset=get_component_interface_values_for_user(
-            user=user,
-            interface=ci,
-        ),
-        upload_queryset=UserUpload.objects.filter(creator=user).all(),
+        user=user,
+        interface=ci,
     )
 
     parsed_value_for_empty_data = field.widget.value_from_datadict(
@@ -55,14 +49,15 @@ def test_flexible_file_field_validation_user_uploads():
         kind=FuzzyChoice(InterfaceKind.interface_type_file())
     )
     field = FlexibleFileField(
-        file_search_queryset=get_component_interface_values_for_user(
-            user=user,
-            interface=ci,
-        ),
-        upload_queryset=UserUpload.objects.filter(creator=user).all(),
+        user=user,
+        interface=ci,
     )
     upload1 = UserUploadFactory(creator=user)
+    upload1.status = UserUpload.StatusChoices.COMPLETED
+    upload1.save()
     upload2 = UserUploadFactory()
+    upload2.status = UserUpload.StatusChoices.COMPLETED
+    upload2.save()
 
     parsed_value_for_upload_from_user = field.widget.value_from_datadict(
         data={ci.slug: str(upload1.pk)}, name=ci.slug, files={}
@@ -106,11 +101,8 @@ def test_flexible_file_field_validation_with_algorithm_job_inputs():
     job_with_perm.inputs.set([civ1])
     job_without_perm.inputs.set([civ2])
     field = FlexibleFileField(
-        file_search_queryset=get_component_interface_values_for_user(
-            user=user,
-            interface=ci,
-        ),
-        upload_queryset=UserUpload.objects.filter(creator=user).all(),
+        user=user,
+        interface=ci,
     )
 
     parsed_value_for_file_with_permission = field.widget.value_from_datadict(
@@ -158,11 +150,8 @@ def test_flexible_file_field_validation_with_algorithm_job_outputs():
     job_with_perm.outputs.set([civ1])
     job_without_perm.outputs.set([civ2])
     field = FlexibleFileField(
-        file_search_queryset=get_component_interface_values_for_user(
-            user=user,
-            interface=ci,
-        ),
-        upload_queryset=UserUpload.objects.filter(creator=user).all(),
+        user=user,
+        interface=ci,
     )
 
     parsed_value_for_file_with_permission = field.widget.value_from_datadict(
@@ -174,10 +163,7 @@ def test_flexible_file_field_validation_with_algorithm_job_outputs():
     assert (
         parsed_value_for_file_with_permission
         == decompressed_value_for_file_with_permission
-        == [
-            civ1.pk,
-            None,
-        ]
+        == [civ1.pk, None]
     )
     assert field.clean(parsed_value_for_file_with_permission) == civ1
 
@@ -212,11 +198,8 @@ def test_flexible_file_field_validation_with_display_sets():
     display_set_with_perm.values.add(civ1)
     display_set_without_perm.values.add(civ2)
     field = FlexibleFileField(
-        file_search_queryset=get_component_interface_values_for_user(
-            user=user,
-            interface=ci,
-        ),
-        upload_queryset=UserUpload.objects.filter(creator=user).all(),
+        user=user,
+        interface=ci,
     )
 
     parsed_value_for_file_with_permission = field.widget.value_from_datadict(
@@ -266,11 +249,8 @@ def test_flexible_file_field_validation_with_archive_items():
     archive_item_with_perm.values.set([civ1])
     archive_item_without_perm.values.set([civ2])
     field = FlexibleFileField(
-        file_search_queryset=get_component_interface_values_for_user(
-            user=user,
-            interface=ci,
-        ),
-        upload_queryset=UserUpload.objects.filter(creator=user).all(),
+        user=user,
+        interface=ci,
     )
 
     parsed_value_for_file_with_permission = field.widget.value_from_datadict(
