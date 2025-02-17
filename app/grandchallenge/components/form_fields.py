@@ -146,10 +146,10 @@ class InterfaceFormField(forms.Field):
             JSONValidator(schema=self.instance.schema),
         ]
 
-        extra_help = ""
-
         if self.instance.default_field == forms.JSONField:
             extra_help = self.example_download_link
+        else:
+            extra_help = ""
 
         return field_type(
             help_text=_join_with_br(self.help_text, extra_help), **self.kwargs
