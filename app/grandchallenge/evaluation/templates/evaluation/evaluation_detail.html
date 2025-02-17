@@ -56,6 +56,13 @@
             {% include 'evaluation/evaluation_status_detail.html' %}
         </dd>
 
+        {% if object.error_message %}
+            <dt>Error Message</dt>
+            <dd>
+                {{ object.error_message }}
+            </dd>
+        {% endif %}
+
         <dt>User</dt>
         <dd>
             {{ object.submission.creator|user_profile_link }}
@@ -204,21 +211,6 @@
             {% endif %}
 
             {% include "evaluation/evaluation_incomplete_jobs_detail.html" %}
-
-            {% if object.status != object.SUCCESS or incomplete_jobs %}
-                <div class="card-body">
-                    <h3 class="card-title">Error Message</h3>
-
-                    {% if not incomplete_jobs %}
-                        All prerequisite jobs succeeded.
-                        {% if object.error_message %}
-                            Evaluation failed due to the following error: {{ object.error_message }}
-                        {% endif %}
-                    {% else %}
-                        Some jobs are incomplete. Check the status and error messages of the prerequisite jobs above.
-                    {% endif %}
-                </div>
-            {% endif %}
 
             <div class="card-body">
                 <h3 class="card-title">Predictions</h3>
