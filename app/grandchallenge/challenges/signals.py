@@ -59,8 +59,7 @@ def create_onboarding_tasks(sender, instance, created, **__):
             ),
         ]
 
-        for t in tasks:  # Ensure sync between challenge and task creation
+        for t in tasks:
             t.challenge = instance
             t.created = instance.created
-
-        OnboardingTask.objects.bulk_create(tasks)
+            t.save()  # Don't use bulk creation since save() has permission setters
