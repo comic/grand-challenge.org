@@ -609,6 +609,7 @@ LOCAL_APPS = [
     "grandchallenge.direct_messages",
     "grandchallenge.incentives",
     "grandchallenge.browser_sessions",
+    "grandchallenge.well_known",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
