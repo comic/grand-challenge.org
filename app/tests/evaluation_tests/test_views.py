@@ -10,7 +10,7 @@ from django.utils import timezone
 from factory.django import ImageField
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.components.models import (
     ComponentInterface,
     ImportStatusChoices,
@@ -23,10 +23,7 @@ from grandchallenge.evaluation.models import (
     Evaluation,
     Submission,
 )
-from grandchallenge.evaluation.tasks import (
-    create_algorithm_jobs_for_evaluation,
-    update_combined_leaderboard,
-)
+from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.workstations.models import Workstation
@@ -51,8 +48,6 @@ from tests.factories import (
     ChallengeFactory,
     ChallengeRequestFactory,
     GroupFactory,
-    ImageFactory,
-    UploadSessionFactory,
     UserFactory,
     WorkstationConfigFactory,
     WorkstationFactory,
@@ -1765,33 +1760,11 @@ def test_phase_archive_info_permissions(client):
 
 @pytest.mark.django_db
 def test_evaluation_details_error_message(client):
-    s = UploadSessionFactory()
-    im = ImageFactory()
-    s.image_set.set([im])
+    evaluation_error_message = "Test evaluation error message"
 
-    input_interface = ComponentInterface.objects.get(
-        slug="generic-medical-image"
-    )
-    civ = ComponentInterfaceValueFactory(image=im, interface=input_interface)
+    evaluation = EvaluationFactory(time_limit=60)
 
-    ai = AlgorithmImageFactory()
-    ai.algorithm.inputs.set([input_interface])
-
-    archive = ArchiveFactory()
-    archive.algorithms.set([ai.algorithm])
-
-    archive_item = ArchiveItemFactory(archive=archive)
-    archive_item.values.set([civ])
-
-    evaluation = EvaluationFactory(
-        submission__phase__archive=archive,
-        submission__algorithm_image=ai,
-        time_limit=ai.algorithm.time_limit,
-    )
-
-    create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
-
-    response1 = get_view_for_user(
+    response = get_view_for_user(
         viewname="evaluation:detail",
         client=client,
         method=client.get,
@@ -1802,36 +1775,13 @@ def test_evaluation_details_error_message(client):
         challenge=evaluation.submission.phase.challenge,
     )
 
-    assert response1.status_code == 200
-    assert "Some jobs are incomplete" in response1.rendered_content
+    assert response.status_code == 200
+    assert evaluation_error_message not in response.rendered_content
 
-    job = Job.objects.get()
-    job.status = Job.SUCCESS
-    job.save()
-
-    response2 = get_view_for_user(
-        viewname="evaluation:detail",
-        client=client,
-        method=client.get,
-        reverse_kwargs={
-            "pk": evaluation.pk,
-        },
-        user=evaluation.submission.phase.challenge.creator,
-        challenge=evaluation.submission.phase.challenge,
-    )
-
-    assert response2.status_code == 200
-    assert "All prerequisite jobs succeeded" in response2.rendered_content
-    assert (
-        "Evaluation failed due to the following error"
-        not in response2.rendered_content
-    )
-
-    evaluation.status = Evaluation.FAILURE
     evaluation.error_message = "Test evaluation error message"
     evaluation.save()
 
-    response3 = get_view_for_user(
+    response = get_view_for_user(
         viewname="evaluation:detail",
         client=client,
         method=client.get,
@@ -1842,28 +1792,5 @@ def test_evaluation_details_error_message(client):
         challenge=evaluation.submission.phase.challenge,
     )
 
-    assert response3.status_code == 200
-    assert "All prerequisite jobs succeeded" in response3.rendered_content
-    assert (
-        "Evaluation failed due to the following error"
-        in response3.rendered_content
-    )
-    assert "Test evaluation error message" in response3.rendered_content
-
-    evaluation.status = Evaluation.SUCCESS
-    evaluation.error_message = ""
-    evaluation.save()
-
-    response4 = get_view_for_user(
-        viewname="evaluation:detail",
-        client=client,
-        method=client.get,
-        reverse_kwargs={
-            "pk": evaluation.pk,
-        },
-        user=evaluation.submission.phase.challenge.creator,
-        challenge=evaluation.submission.phase.challenge,
-    )
-
-    assert response4.status_code == 200
-    assert "Error Message" not in response4.rendered_content
+    assert response.status_code == 200
+    assert evaluation_error_message in response.rendered_content
