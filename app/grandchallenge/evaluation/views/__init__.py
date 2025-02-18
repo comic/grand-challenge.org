@@ -379,7 +379,7 @@ class SubmissionList(
         Column(title="Evaluations"),
     ]
 
-    default_sort_column = 1
+    default_sort_column = 0
 
     def get_queryset(self):
         queryset = super().get_queryset()
