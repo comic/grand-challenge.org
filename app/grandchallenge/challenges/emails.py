@@ -1,10 +1,10 @@
-from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.mail import mail_managers
 from django.template.defaultfilters import pluralize
 from django.template.loader import render_to_string
 from django.utils.html import format_html
 from django.utils.timezone import now
+from guardian.shortcuts import get_users_with_perms
 from humanize import naturaltime
 
 from grandchallenge.emails.emails import send_standard_email_batch
@@ -24,12 +24,8 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
         request_title=challengerequest.title,
         update_url=update_url,
     )
-    reviewers = (
-        get_user_model()
-        .objects.filter(
-            groups__permissions__codename="change_challengerequest"
-        )
-        .distinct()
+    reviewers = get_users_with_perms(
+        challengerequest, only_with_perms_in=["change_challengerequest"]
     )
     site = Site.objects.get_current()
     send_standard_email_batch(
