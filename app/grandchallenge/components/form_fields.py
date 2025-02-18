@@ -15,6 +15,7 @@ from grandchallenge.components.widgets import (
     FlexibleFileWidget,
 )
 from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.serving.models import (
@@ -65,7 +66,7 @@ class InterfaceFormFieldFactory:
 
         kwargs = {
             "required": required,
-            "help_text": help_text,
+            "help_text": clean(interface.description),
             "disabled": disabled,
             "label": interface.title.title(),
         }

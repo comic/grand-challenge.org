@@ -79,7 +79,6 @@ from grandchallenge.core.forms import (
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import get_objects_for_user
-from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
@@ -165,7 +164,6 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 user=self._user,
                 required=True,
                 initial=initial if initial else algorithm_input.default_value,
-                help_text=clean(algorithm_input.description),
             )
 
     @cached_property
