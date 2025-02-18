@@ -1,9 +1,8 @@
 import pytest
 from django.core.exceptions import ValidationError
-from django.utils.html import format_html
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.cases.widgets import FlexibleImageField, ImageWidgetChoices
+from grandchallenge.cases.widgets import FlexibleImageField
 from grandchallenge.components.form_fields import InterfaceFormFieldFactory
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.uploads.models import UserUpload
@@ -13,7 +12,6 @@ from tests.components_tests.factories import (
 )
 from tests.factories import ImageFactory, UserFactory
 from tests.uploads_tests.factories import UserUploadFactory
-from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
@@ -110,74 +108,6 @@ def test_flexible_image_field_validation():
     )
     with pytest.raises(ValidationError):
         field.clean(parsed_value_for_missing_value)
-
-
-@pytest.mark.django_db
-def test_flexible_image_widget(client):
-    user = UserFactory()
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
-    response = get_view_for_user(
-        viewname="cases:select-image-widget",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SEARCH.name,
-            "prefixed-interface-slug": ci.slug,
-        },
-    )
-    assert '<input class="form-control" type="search"' in str(response.content)
-
-    response2 = get_view_for_user(
-        viewname="cases:select-image-widget",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_UPLOAD.name,
-            "prefixed-interface-slug": ci.slug,
-        },
-    )
-    assert 'class="user-upload"' in str(response2.content)
-
-    response3 = get_view_for_user(
-        viewname="cases:select-image-widget",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.UNDEFINED.name,
-            "prefixed-interface-slug": ci.slug,
-        },
-    )
-    assert response3.content == b""
-
-    image = ImageFactory()
-    response4 = get_view_for_user(
-        viewname="cases:select-image-widget",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
-            "prefixed-interface-slug": ci.slug,
-            "current-value": image.pk,
-        },
-    )
-    assert format_html(
-        '<input type="hidden" name="{}" value="{}">', ci.slug, image.pk
-    ) in str(response4.content)
-
-    user_upload = UserUploadFactory()
-    response5 = get_view_for_user(
-        viewname="cases:select-image-widget",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
-            "prefixed-interface-slug": ci.slug,
-            "current-value": user_upload.pk,
-        },
-    )
-    assert format_html(
-        '<input type="hidden" name="{}" value="{}">', ci.slug, user_upload.pk
-    ) in str(response5.content)
 
 
 @pytest.mark.django_db
