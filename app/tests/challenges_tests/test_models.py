@@ -249,7 +249,7 @@ def test_default_onboarding_tasks_creation():
 
     # Expected task details
     expected_tasks = [
-        ("Create and Configure Phases", "ORG"),
+        ("Create Phases", "ORG"),
         ("Define Inputs and Outputs", "ORG"),
         ("Plan Onboarding Meeting", "SUP"),
         ("Have Onboarding Meeting", "ORG"),

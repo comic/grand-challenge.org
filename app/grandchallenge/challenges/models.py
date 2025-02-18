@@ -668,8 +668,8 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     def create_default_onboarding_tasks(self):
         OnboardingTask.objects.create(
             challenge=self,
-            title="Create and Configure Phases",
-            description="Define, name and create the different phases of the challenge.",
+            title="Create Phases",
+            description="Create and configure the different phases of the challenge.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
             deadline=self.created + timedelta(weeks=1),
         )
