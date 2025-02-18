@@ -117,12 +117,6 @@ http {
     location / {
         rewrite ^ https://$host$request_uri? permanent;
     }
-
-    # for certbot challenges
-    location ~ /.well-known/acme-challenge {
-        allow all;
-        root /data/letsencrypt;
-    }
   }
 
   server {
