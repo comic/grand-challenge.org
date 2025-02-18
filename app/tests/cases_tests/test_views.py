@@ -3,6 +3,7 @@ from django.utils.html import format_html
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.cases.widgets import ImageWidgetChoices
+from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
@@ -209,32 +210,77 @@ def test_image_widget_select_view(client):
     )
     assert response3.content == b""
 
+
+@pytest.mark.django_db
+def test_image_widget_select_view_image_selected_object_permission(client):
+    user_with_perm, user_wo_perm = UserFactory.create_batch(2)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
     image = ImageFactory()
-    response4 = get_view_for_user(
+    assign_perm("cases.view_image", user_with_perm, image)
+
+    response_user_with_perm = get_view_for_user(
         viewname="cases:select-image-widget",
         client=client,
-        user=user,
+        user=user_with_perm,
         data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
-            "prefixed-interface-slug": ci.slug,
+            f"widget-choice-{prefixed_interface_slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
             "current-value": image.pk,
         },
     )
     assert format_html(
-        '<input type="hidden" name="{}" value="{}">', ci.slug, image.pk
-    ) in str(response4.content)
+        '<input type="hidden" name="{}" value="{}">',
+        prefixed_interface_slug,
+        image.pk,
+    ) in str(response_user_with_perm.content)
 
-    user_upload = UserUploadFactory()
-    response5 = get_view_for_user(
+    response_user_wo_perm = get_view_for_user(
         viewname="cases:select-image-widget",
         client=client,
-        user=user,
+        user=user_wo_perm,
         data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
-            "prefixed-interface-slug": ci.slug,
+            f"widget-choice-{prefixed_interface_slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
+            "current-value": image.pk,
+        },
+    )
+    assert response_user_wo_perm.status_code == 404
+
+
+@pytest.mark.django_db
+def test_file_widget_select_view_file_selected_object_permission_user_upload(
+    client,
+):
+    user, creator = UserFactory.create_batch(2)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
+    user_upload = UserUploadFactory(creator=creator)
+
+    response_creator = get_view_for_user(
+        viewname="cases:select-image-widget",
+        client=client,
+        user=creator,
+        data={
+            f"widget-choice-{prefixed_interface_slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
             "current-value": user_upload.pk,
         },
     )
     assert format_html(
-        '<input type="hidden" name="{}" value="{}">', ci.slug, user_upload.pk
-    ) in str(response5.content)
+        '<input type="hidden" name="{}" value="{}">',
+        prefixed_interface_slug,
+        user_upload.pk,
+    ) in str(response_creator.content)
+
+    response_user = get_view_for_user(
+        viewname="cases:select-image-widget",
+        client=client,
+        user=user,
+        data={
+            f"widget-choice-{prefixed_interface_slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
+            "current-value": user_upload.pk,
+        },
+    )
+    assert response_user.status_code == 404

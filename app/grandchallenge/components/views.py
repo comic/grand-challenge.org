@@ -44,6 +44,7 @@ from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    filter_by_permission,
     get_objects_for_user,
 )
 from grandchallenge.core.templatetags.bleach import clean
@@ -468,7 +469,6 @@ class FileAccessRequiredMixin(AccessMixin):
 class FileUploadFormFieldView(
     LoginRequiredMixin, FileAccessRequiredMixin, View
 ):
-
     @cached_property
     def interface(self):
         return get_object_or_404(
@@ -537,11 +537,17 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
             )
         elif widget_choice == FileWidgetChoices.FILE_SELECTED:
             if current_value and (
-                ComponentInterfaceValue.objects.filter(
-                    pk=current_value
+                get_component_interface_values_for_user(
+                    user=request.user, civ_pk=current_value
                 ).exists()
                 if current_value.isdigit()
-                else UserUpload.objects.filter(pk=current_value).exists()
+                else filter_by_permission(
+                    queryset=UserUpload.objects.all(),
+                    user=request.user,
+                    codename="change_userupload",
+                )
+                .filter(pk=current_value)
+                .exists()
             ):
                 # this can happen on the display set update view or redisplay of
                 # form upon validation, where one of the options is the current
