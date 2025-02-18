@@ -18,7 +18,7 @@
 
 <split></split>
 
-<ul class="list-unstyled">
+<ul class="list-unstyled mb-0 text-left">
     {% for evaluation in object.evaluation_set.all %}
         <li>
             {% include 'evaluation/evaluation_status_detail.html' with object=evaluation %}
