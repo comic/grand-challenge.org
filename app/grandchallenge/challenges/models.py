@@ -683,6 +683,13 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
         OnboardingTask.objects.create(
             challenge=self,
+            title="Plan Onboarding Meeting",
+            description="Create a Challenge Pack and have an onboarding meeting with challenge organizers.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
+            deadline=self.created + timedelta(weeks=2),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
             title="Have Onboarding Meeting",
             description="Receive a Challenge Pack and have an onboarding meeting with support staff.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
@@ -698,7 +705,8 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         OnboardingTask.objects.create(
             challenge=self,
             title="Upload Data to Archives",
-            description="Archives must be created by support before preparing and uploading the necessary datasets.",
+            description="Add data to the relevant archives. Archives must be created by support. Please "
+            "e-mail support@grand-challenge.org if that is delayed.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
             deadline=self.created + timedelta(weeks=5),
         )

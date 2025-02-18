@@ -249,13 +249,15 @@ def test_default_onboarding_tasks_creation():
 
     # Expected task details
     expected_tasks = [
-        ("Create Phases", "ORG"),
+        ("Create and Configure Phases", "ORG"),
         ("Define Inputs and Outputs", "ORG"),
+        ("Plan Onboarding Meeting", "SUP"),
+        ("Have Onboarding Meeting", "ORG"),
         ("Create Archives", "SUP"),
-        ("Upload Data", "ORG"),
-        ("Example Algorithm", "ORG"),
-        ("Evaluation Method", "ORG"),
-        ("Scoring", "ORG"),
+        ("Upload Data to Archives", "ORG"),
+        ("Create Example Algorithm", "ORG"),
+        ("Create Evaluation Method", "ORG"),
+        ("Configure Scoring", "ORG"),
         ("Test Evaluation", "ORG"),
     ]
 
@@ -270,9 +272,5 @@ def test_default_onboarding_tasks_creation():
     for task, (expected_title, expected_responsible_party) in zip(
         tasks, expected_tasks, strict=True
     ):
-        assert (
-            task.title == expected_title
-        ), f"Expected title {expected_title:!r}, got {task.title:!r}"
-        assert (
-            task.responsible_party == expected_responsible_party
-        ), f"Expected responsible party'{expected_responsible_party:!r}, got {task.responsible_party:!r}"
+        assert task.title == expected_title
+        assert task.responsible_party == expected_responsible_party
