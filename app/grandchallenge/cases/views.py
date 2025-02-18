@@ -125,46 +125,45 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
             raise Http404(f"Widget choice {widget_choice_name} not found")
         current_value = request.GET.get("current-value")
 
-        match widget_choice:
-            case ImageWidgetChoices.IMAGE_SEARCH:
+        if widget_choice == ImageWidgetChoices.IMAGE_SEARCH:
+            return HttpResponse(
+                ImageSearchWidget().render(
+                    name=prefixed_interface_slug,
+                    value=None,
+                )
+            )
+        elif widget_choice == ImageWidgetChoices.IMAGE_UPLOAD:
+            return HttpResponse(
+                UserUploadMultipleWidget().render(
+                    name=prefixed_interface_slug,
+                    value=None,
+                    attrs={
+                        "id": prefixed_interface_slug,
+                        "help_text": IMAGE_UPLOAD_HELP_TEXT,
+                    },
+                )
+            )
+        elif widget_choice == ImageWidgetChoices.IMAGE_SELECTED:
+            if current_value and (
+                Image.objects.filter(pk=current_value).exists()
+                or UserUpload.objects.filter(pk=current_value).exists()
+            ):
+                # this can happen on the display set update view or redisplay of
+                # form upon validation, where one of the options is the current
+                # image, this enables switching back from one of the above widgets
+                # to the chosen image. This makes sure the form element with the
+                # right name is available on resubmission.
                 return HttpResponse(
-                    ImageSearchWidget().render(
+                    HiddenInput().render(
                         name=prefixed_interface_slug,
-                        value=None,
+                        value=current_value,
                     )
                 )
-            case ImageWidgetChoices.IMAGE_UPLOAD:
-                return HttpResponse(
-                    UserUploadMultipleWidget().render(
-                        name=prefixed_interface_slug,
-                        value=None,
-                        attrs={
-                            "id": prefixed_interface_slug,
-                            "help_text": IMAGE_UPLOAD_HELP_TEXT,
-                        },
-                    )
-                )
-            case ImageWidgetChoices.IMAGE_SELECTED:
-                if current_value and (
-                    Image.objects.filter(pk=current_value).exists()
-                    or UserUpload.objects.filter(pk=current_value).exists()
-                ):
-                    # this can happen on the display set update view or redisplay of
-                    # form upon validation, where one of the options is the current
-                    # image, this enables switching back from one of the above widgets
-                    # to the chosen image. This makes sure the form element with the
-                    # right name is available on resubmission.
-                    return HttpResponse(
-                        HiddenInput().render(
-                            name=prefixed_interface_slug,
-                            value=current_value,
-                        )
-                    )
-                raise Http404(f"Selected image {current_value} not found")
-            case ImageWidgetChoices.UNDEFINED:
-                # this happens when switching back from one of the
-                # above widgets to the "Choose data source" option
-                return HttpResponse()
+            raise Http404(f"Selected image {current_value} not found")
+        elif widget_choice == ImageWidgetChoices.UNDEFINED:
+            # this happens when switching back from one of the
+            # above widgets to the "Choose data source" option
+            return HttpResponse()
         raise NotImplementedError(
             f"Response for widget choice {widget_choice} not implemented"
         )

@@ -517,49 +517,48 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
             raise Http404(f"Widget choice {widget_choice_name} not found")
         current_value = request.GET.get("current-value")
 
-        match widget_choice:
-            case FileWidgetChoices.FILE_SEARCH:
+        if widget_choice == FileWidgetChoices.FILE_SEARCH:
+            return HttpResponse(
+                FileSearchWidget().render(
+                    name=prefixed_interface_slug,
+                    value=None,
+                )
+            )
+        elif widget_choice == FileWidgetChoices.FILE_UPLOAD:
+            return HttpResponse(
+                UserUploadSingleWidget().render(
+                    name=prefixed_interface_slug,
+                    value=None,
+                    attrs={
+                        "id": prefixed_interface_slug,
+                        "help_text": f"{file_upload_text} {interface.file_extension}",
+                    },
+                )
+            )
+        elif widget_choice == FileWidgetChoices.FILE_SELECTED:
+            if current_value and (
+                ComponentInterfaceValue.objects.filter(
+                    pk=current_value
+                ).exists()
+                if current_value.isdigit()
+                else UserUpload.objects.filter(pk=current_value).exists()
+            ):
+                # this can happen on the display set update view or redisplay of
+                # form upon validation, where one of the options is the current
+                # file, this enables switching back from one of the above widgets
+                # to the chosen file. This makes sure the form element with the
+                # right name is available on resubmission.
                 return HttpResponse(
-                    FileSearchWidget().render(
+                    HiddenInput().render(
                         name=prefixed_interface_slug,
-                        value=None,
+                        value=current_value,
                     )
                 )
-            case FileWidgetChoices.FILE_UPLOAD:
-                return HttpResponse(
-                    UserUploadSingleWidget().render(
-                        name=prefixed_interface_slug,
-                        value=None,
-                        attrs={
-                            "id": prefixed_interface_slug,
-                            "help_text": f"{file_upload_text} {interface.file_extension}",
-                        },
-                    )
-                )
-            case FileWidgetChoices.FILE_SELECTED:
-                if current_value and (
-                    ComponentInterfaceValue.objects.filter(
-                        pk=current_value
-                    ).exists()
-                    if current_value.isdigit()
-                    else UserUpload.objects.filter(pk=current_value).exists()
-                ):
-                    # this can happen on the display set update view or redisplay of
-                    # form upon validation, where one of the options is the current
-                    # file, this enables switching back from one of the above widgets
-                    # to the chosen file. This makes sure the form element with the
-                    # right name is available on resubmission.
-                    return HttpResponse(
-                        HiddenInput().render(
-                            name=prefixed_interface_slug,
-                            value=current_value,
-                        )
-                    )
-                raise Http404(f"Selected file {current_value} not found")
-            case FileWidgetChoices.UNDEFINED:
-                # this happens when switching back from one of the
-                # above widgets to the "Choose data source" option
-                return HttpResponse()
+            raise Http404(f"Selected file {current_value} not found")
+        elif widget_choice == FileWidgetChoices.UNDEFINED:
+            # this happens when switching back from one of the
+            # above widgets to the "Choose data source" option
+            return HttpResponse()
         raise NotImplementedError(
             f"Response for widget choice {widget_choice} not implemented"
         )
