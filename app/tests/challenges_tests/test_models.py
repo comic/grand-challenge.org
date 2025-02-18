@@ -234,10 +234,43 @@ def test_onboarding_tasks_overdue_status_annotations(
     mocker,
 ):
 
-    OnboardingTaskFactory(deadline=deadline)
+    task = OnboardingTaskFactory(deadline=deadline)
 
     mocker.patch("grandchallenge.challenges.models.now", return_value=mock_now)
 
-    task = OnboardingTask.objects.with_overdue_status().get()
+    task = OnboardingTask.objects.with_overdue_status().get(pk=task.pk)
     assert task.is_overdue == expected_is_overdue
     assert task.is_overdue_soon == expected_is_overdue_soon
+
+
+@pytest.mark.django_db
+def test_default_onboarding_tasks_creation():
+    challenge = ChallengeFactory()
+
+    # Expected task details
+    expected_tasks = [
+        ("Create Phases", "ORG"),
+        ("Define Inputs and Outputs", "ORG"),
+        ("Plan Onboarding Meeting", "SUP"),
+        ("Have Onboarding Meeting", "ORG"),
+        ("Create Archives", "SUP"),
+        ("Upload Data to Archives", "ORG"),
+        ("Create Example Algorithm", "ORG"),
+        ("Create Evaluation Method", "ORG"),
+        ("Configure Scoring", "ORG"),
+        ("Test Evaluation", "ORG"),
+    ]
+
+    tasks = list(
+        OnboardingTask.objects.filter(challenge=challenge).order_by("deadline")
+    )
+
+    assert len(tasks) == len(
+        expected_tasks
+    ), "Unexpected number of onboarding tasks."
+
+    for task, (expected_title, expected_responsible_party) in zip(
+        tasks, expected_tasks, strict=True
+    ):
+        assert task.title == expected_title
+        assert task.responsible_party == expected_responsible_party

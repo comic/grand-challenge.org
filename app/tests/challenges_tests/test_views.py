@@ -554,6 +554,8 @@ def test_pages_inaccessible_when_inactive(client, viewname, add_phase):
 @pytest.mark.django_db
 def test_onboarding_task_list_view_permissions(client):
     ch = ChallengeFactory()
+    ch.onboarding_tasks.all().delete()
+
     admin, participant, user = UserFactory.create_batch(3)
     ch.add_admin(admin)
     ch.add_participant(participant)
