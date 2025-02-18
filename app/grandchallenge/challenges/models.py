@@ -668,7 +668,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     def create_default_onboarding_tasks(self):
         OnboardingTask.objects.create(
             challenge=self,
-            title="Create Phases",
+            title="Create and Configure Phases",
             description="Define, name and create the different phases of the challenge.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
             deadline=self.created + timedelta(weeks=1),
@@ -676,7 +676,15 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         OnboardingTask.objects.create(
             challenge=self,
             title="Define Inputs and Outputs",
-            description="To support, communicate the required input and output data formats for participant's algorithms.",
+            description="E-mail support@grand-challenge.org and communicate the required input "
+            "and output data formats for participant's algorithms.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=2),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Have Onboarding Meeting",
+            description="Receive a Challenge Pack and have an onboarding meeting with support staff.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
             deadline=self.created + timedelta(weeks=3),
         )
@@ -689,28 +697,30 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
         OnboardingTask.objects.create(
             challenge=self,
-            title="Upload Data",
-            description="Prepare and upload necessary datasets to archives, contact support if no archives are available.",
+            title="Upload Data to Archives",
+            description="Archives must be created by support before preparing and uploading the necessary datasets.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
             deadline=self.created + timedelta(weeks=5),
         )
         OnboardingTask.objects.create(
             challenge=self,
-            title="Example Algorithm",
-            description="Implement and document a baseline example algorithm for participants to use as a reference.",
+            title="Create Example Algorithm",
+            description="Implement and document a baseline example algorithm for participants to use as a reference. "
+            "Use the provided challenge pack as a starting point.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
             deadline=self.created + timedelta(weeks=6, seconds=0),
         )
         OnboardingTask.objects.create(
             challenge=self,
-            title="Evaluation Method",
-            description="Implement and document the evaluation method for assessing participant submissions.",
+            title="Create Evaluation Method",
+            description="Implement and document the evaluation method for assessing participant submissions. "
+            "Use the provided challenge pack as a starting point.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
             deadline=self.created + timedelta(weeks=6, seconds=1),
         )
         OnboardingTask.objects.create(
             challenge=self,
-            title="Scoring",
+            title="Configure Scoring",
             description="Configure the leaderboard scoring to accurately interpret the evaluation results.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
             deadline=self.created + timedelta(weeks=6, seconds=2),
