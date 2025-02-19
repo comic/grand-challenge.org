@@ -515,7 +515,7 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
             widget_choice = FileWidgetChoices(widget_choice_name)
         except ValueError:
             raise Http404(f"Widget choice {widget_choice_name} not found")
-        current_value = request.GET.get("current-value")
+        current_value_pk = request.GET.get("current-value-pk")
 
         if widget_choice == FileWidgetChoices.FILE_SEARCH:
             return HttpResponse(
@@ -536,17 +536,17 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                 )
             )
         elif widget_choice == FileWidgetChoices.FILE_SELECTED:
-            if current_value and (
+            if current_value_pk and (
                 get_component_interface_values_for_user(
-                    user=request.user, civ_pk=current_value
+                    user=request.user, civ_pk=current_value_pk
                 ).exists()
-                if current_value.isdigit()
+                if current_value_pk.isdigit()
                 else filter_by_permission(
                     queryset=UserUpload.objects.all(),
                     user=request.user,
                     codename="change_userupload",
                 )
-                .filter(pk=current_value)
+                .filter(pk=current_value_pk)
                 .exists()
             ):
                 # this can happen on the display set update view or redisplay of
@@ -557,10 +557,10 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                 return HttpResponse(
                     HiddenInput().render(
                         name=prefixed_interface_slug,
-                        value=current_value,
+                        value=current_value_pk,
                     )
                 )
-            raise Http404(f"Selected file {current_value} not found")
+            raise Http404(f"Selected file {current_value_pk} not found")
         elif widget_choice == FileWidgetChoices.UNDEFINED:
             # this happens when switching back from one of the
             # above widgets to the "Choose data source" option
