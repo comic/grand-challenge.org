@@ -14,7 +14,7 @@ from grandchallenge.components.widgets import (
     FileSearchWidget,
     FlexibleFileWidget,
 )
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.widgets import JSONEditorWidget
@@ -158,9 +158,10 @@ class FlexibleFileField(MultiValueField):
             user=user,
             interface=interface,
         )
-        upload_queryset = get_objects_for_user(
-            user,
-            "uploads.change_userupload",
+        upload_queryset = filter_by_permission(
+            queryset=UserUpload.objects.all(),
+            user=user,
+            codename="change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
         fields = [
             ModelChoiceField(queryset=file_search_queryset, required=False),

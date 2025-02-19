@@ -11,7 +11,7 @@ from django.forms.widgets import ChoiceWidget
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 
@@ -77,7 +77,6 @@ class FlexibleImageWidget(MultiWidget):
 
 
 class FlexibleImageField(MultiValueField):
-
     widget = FlexibleImageWidget
 
     def __init__(
@@ -105,13 +104,18 @@ class FlexibleImageField(MultiValueField):
             else:
                 raise TypeError(f"Unknown type for initial value: {initial}")
 
-        upload_queryset = get_objects_for_user(
-            user,
-            "uploads.change_userupload",
+        image_search_queryset = filter_by_permission(
+            queryset=Image.objects.all(),
+            user=user,
+            codename="view_image",
+        )
+        upload_queryset = filter_by_permission(
+            queryset=UserUpload.objects.all(),
+            user=user,
+            codename="change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
-        image_queryset = get_objects_for_user(user, "cases.view_image")
         list_fields = [
-            ModelChoiceField(queryset=image_queryset, required=False),
+            ModelChoiceField(queryset=image_search_queryset, required=False),
             ModelMultipleChoiceField(queryset=upload_queryset, required=False),
         ]
         super().__init__(
