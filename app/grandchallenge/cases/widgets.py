@@ -112,10 +112,12 @@ class FlexibleImageField(MultiValueField):
                 initial = initial.image.pk
             # Otherwise the value is taken from the form data and will always take
             # the form of a pk for either an Image object or a UserUpload object.
-            elif image_search_queryset.filter(pk=initial).exists():
+            if image_search_queryset.filter(pk=initial).exists():
                 self.current_value = image_search_queryset.get(pk=initial)
             elif upload_queryset.filter(pk=initial).exists():
                 self.current_value = upload_queryset.get(pk=initial)
+            else:
+                initial = None
 
         super().__init__(
             *args,

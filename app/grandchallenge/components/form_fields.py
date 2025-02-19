@@ -164,6 +164,8 @@ class FlexibleFileField(MultiValueField):
                 self.current_value = file_search_queryset.get(pk=initial)
             elif upload_queryset.filter(pk=initial).exists():
                 self.current_value = upload_queryset.get(pk=initial)
+            else:
+                initial = None
 
         super().__init__(
             *args,
