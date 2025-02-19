@@ -1,19 +1,71 @@
 import pytest
+from guardian.shortcuts import assign_perm
 
+from grandchallenge.cases.models import Image
 from grandchallenge.serving.models import (
     get_component_interface_values_for_user,
+    get_object_if_allowed,
 )
+from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.factories import UserFactory
+from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     ReaderStudyFactory,
 )
+from tests.uploads_tests.factories import UserUploadFactory
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "model, factory, codename",
+    [
+        (Image, ImageFactory, "view_image"),
+        (UserUpload, UserUploadFactory, "change_userupload"),
+    ],
+)
+def test_get_object_if_allowed(model, factory, codename):
+    user_with_perm, user_without_perm = UserFactory.create_batch(2)
+    obj = factory()
+    assign_perm(codename, user_with_perm, obj)
+
+    assert (
+        get_object_if_allowed(
+            model=model, pk=obj.pk, user=user_with_perm, codename=codename
+        )
+        == obj
+    )
+    assert (
+        get_object_if_allowed(
+            model=model, pk=obj.pk, user=user_without_perm, codename=codename
+        )
+        is None
+    )
+
+
+@pytest.mark.django_db
+def test_get_object_if_allowed_upload():
+    creator, user = UserFactory.create_batch(2)
+    codename = "change_userupload"
+    upload = UserUploadFactory(creator=creator)
+
+    assert (
+        get_object_if_allowed(
+            model=UserUpload, pk=upload.pk, user=creator, codename=codename
+        )
+        == upload
+    )
+    assert (
+        get_object_if_allowed(
+            model=UserUpload, pk=upload.pk, user=user, codename=codename
+        )
+        is None
+    )
 
 
 @pytest.mark.django_db

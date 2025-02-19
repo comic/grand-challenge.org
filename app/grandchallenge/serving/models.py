@@ -52,6 +52,16 @@ class Download(models.Model):
     )
 
 
+def get_object_if_allowed(*, model, pk, user, codename):
+    try:
+        obj = model.objects.get(pk=pk)
+    except model.DoesNotExist:
+        return
+
+    if user.has_perm(codename, obj):
+        return obj
+
+
 def get_component_interface_values_for_user(
     *,
     user,
