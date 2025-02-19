@@ -20,6 +20,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -243,11 +244,17 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         related_name="algorithm_interfaces",
         through="algorithms.AlgorithmAlgorithmInterface",
     )
-    inputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="algorithm_inputs", blank=False
+    inputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface, related_name="algorithm_inputs", blank=False
+        )
     )
-    outputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="algorithm_outputs", blank=False
+    outputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface,
+            related_name="algorithm_outputs",
+            blank=False,
+        )
     )
     publications = models.ManyToManyField(
         Publication,
@@ -562,7 +569,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
     @cached_property
     def linked_component_interfaces(self):
-        return (self.inputs.all() | self.outputs.all()).distinct()
+        return {
+            ci
+            for interface in self.interfaces.all()
+            for ci in (interface.inputs.all() | interface.outputs.all())
+        }
 
     @cached_property
     def user_statistics(self):

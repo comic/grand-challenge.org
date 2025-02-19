@@ -51,11 +51,7 @@ class AlgorithmAdminForm(ModelForm):
 
 @admin.register(Algorithm)
 class AlgorithmAdmin(GuardedModelAdmin):
-    readonly_fields = (
-        "algorithm_forge_json",
-        "inputs",
-        "outputs",
-    )
+    readonly_fields = ("algorithm_forge_json",)
     list_display = (
         "title",
         "created",

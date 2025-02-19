@@ -10,7 +10,10 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from tests.algorithms_tests.factories import AlgorithmJobFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmInterfaceFactory,
+    AlgorithmJobFactory,
+)
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests import RESOURCE_PATH
 from tests.evaluation_tests.factories import (
@@ -170,7 +173,8 @@ def test_civ_file_download(client):
 
     # test algorithm
     job = AlgorithmJobFactory(creator=user1, time_limit=60)
-    job.algorithm_image.algorithm.outputs.add(detection_interface)
+    interface = AlgorithmInterfaceFactory(outputs=[detection_interface])
+    job.algorithm_image.algorithm.interfaces.add(interface)
     job.outputs.add(output_civ)
 
     has_correct_access(user1, user2, job.outputs.first().file.url)

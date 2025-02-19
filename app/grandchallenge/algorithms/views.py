@@ -797,7 +797,7 @@ class DisplaySetFromJobCreate(
 
 
 class AlgorithmViewSet(ReadOnlyModelViewSet):
-    queryset = Algorithm.objects.all().prefetch_related("outputs", "inputs")
+    queryset = Algorithm.objects.all().prefetch_related("interfaces")
     serializer_class = AlgorithmSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
@@ -1132,8 +1132,7 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
     queryset = Algorithm.objects.prefetch_related(
-        "inputs",
-        "outputs",
+        "interfaces",
     )
 
     def get(self, *_, **__):

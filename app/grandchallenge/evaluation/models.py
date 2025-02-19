@@ -18,6 +18,7 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from django.utils.timezone import localtime
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -546,17 +547,21 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     outputs = models.ManyToManyField(
         to=ComponentInterface, related_name="evaluation_outputs"
     )
-    algorithm_inputs = models.ManyToManyField(
-        to=ComponentInterface,
-        related_name="+",
-        blank=True,
-        help_text="The input interfaces that the algorithms for this phase must use",
+    algorithm_inputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface,
+            related_name="+",
+            blank=True,
+            help_text="The input interfaces that the algorithms for this phase must use",
+        )
     )
-    algorithm_outputs = models.ManyToManyField(
-        to=ComponentInterface,
-        related_name="+",
-        blank=True,
-        help_text="The output interfaces that the algorithms for this phase must use",
+    algorithm_outputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface,
+            related_name="+",
+            blank=True,
+            help_text="The output interfaces that the algorithms for this phase must use",
+        )
     )
     algorithm_selectable_gpu_type_choices = models.JSONField(
         default=get_default_gpu_type_choices,
@@ -955,9 +960,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     @cached_property
     def linked_component_interfaces(self):
-        return (
-            self.algorithm_inputs.all() | self.algorithm_outputs.all()
-        ).distinct()
+        return {
+            ci
+            for interface in self.algorithm_interfaces.all()
+            for ci in (
+                interface.inputs.order_by("pk")
+                | interface.outputs.order_by("pk")
+            )
+        }
 
     def assign_permissions(self):
         assign_perm("view_phase", self.challenge.admins_group, self)
@@ -1735,10 +1745,6 @@ class Evaluation(ComponentJob):
     @property
     def output_interfaces(self):
         return self.submission.phase.outputs
-
-    @cached_property
-    def algorithm_inputs(self):
-        return self.submission.phase.algorithm_inputs.all()
 
     @cached_property
     def successful_jobs_per_interface(self):
