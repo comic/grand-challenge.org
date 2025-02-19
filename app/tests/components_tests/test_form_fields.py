@@ -291,6 +291,23 @@ def test_flexible_file_field_validation_with_archive_items():
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "ci_kind, initial_pk",
+    [
+        (FuzzyChoice(InterfaceKind.interface_type_file()), "abc"),
+        (InterfaceKind.InterfaceKindChoices.IMAGE, "999"),
+    ],
+)
+def test_interface_form_field_factory_wrong_pk_type(ci_kind, initial_pk):
+    user = UserFactory()
+    ci = ComponentInterfaceFactory(kind=ci_kind)
+
+    with pytest.raises(ValidationError) as e:
+        InterfaceFormFieldFactory(interface=ci, user=user, initial=initial_pk)
+    assert str(e.value) == f"['“{initial_pk}” is not a valid UUID.']"
+
+
+@pytest.mark.django_db
 def test_flexible_file_widget_prepopulated_value_algorithm_job():
     creator, user = UserFactory.create_batch(2)
     ci = ComponentInterfaceFactory(
