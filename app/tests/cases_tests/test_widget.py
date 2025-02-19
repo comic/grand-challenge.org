@@ -117,10 +117,18 @@ def test_flexible_image_widget_prepopulated_value():
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
     civ = ComponentInterfaceValueFactory(interface=ci, image=im)
     field = InterfaceFormFieldFactory(interface=ci, user=user, initial=civ)
+    assert field.widget.attrs["current_value"] == civ.image
+    assert field.initial == civ.image.pk
+
+    field = InterfaceFormFieldFactory(
+        interface=ci, user=user, initial=civ.image.pk
+    )
     assert field.widget.attrs["current_value"] is None
     assert field.initial is None
 
     assign_perm("cases.view_image", user, im)
-    field = InterfaceFormFieldFactory(interface=ci, user=user, initial=civ)
+    field = InterfaceFormFieldFactory(
+        interface=ci, user=user, initial=civ.image.pk
+    )
     assert field.widget.attrs["current_value"] == civ.image
     assert field.initial == civ.image.pk
