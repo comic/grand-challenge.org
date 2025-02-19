@@ -12,6 +12,7 @@ from django.forms.widgets import ChoiceWidget
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.guardian import filter_by_permission
+from grandchallenge.serving.models import get_object_if_allowed
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 
@@ -116,15 +117,15 @@ class FlexibleImageField(MultiValueField):
                     initial = None
             # Otherwise the value is taken from the form data and will always take
             # the form of a pk for either an Image object or a UserUpload object.
-            elif Image.objects.filter(pk=initial).exists() and user.has_perm(
-                "view_image", image := Image.objects.get(pk=initial)
+            elif image := get_object_if_allowed(
+                model=Image, pk=initial, user=user, codename="view_image"
             ):
                 self.current_value = image
-            elif UserUpload.objects.filter(
-                pk=initial
-            ).exists() and user.has_perm(
-                "change_userupload",
-                upload := UserUpload.objects.get(pk=initial),
+            elif upload := get_object_if_allowed(
+                model=UserUpload,
+                pk=initial,
+                user=user,
+                codename="change_userupload",
             ):
                 self.current_value = upload
             else:

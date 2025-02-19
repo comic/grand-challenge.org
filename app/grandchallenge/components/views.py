@@ -51,6 +51,7 @@ from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.serving.models import (
     get_component_interface_values_for_user,
+    get_object_if_allowed,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload
@@ -540,10 +541,11 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                     user=request.user, civ_pk=current_value_pk
                 ).exists()
                 if current_value_pk.isdigit()
-                else UserUpload.objects.filter(pk=current_value_pk).exists()
-                and request.user.has_perm(
-                    "change_userupload",
-                    UserUpload.objects.get(pk=current_value_pk),
+                else get_object_if_allowed(
+                    model=UserUpload,
+                    pk=current_value_pk,
+                    user=request.user,
+                    codename="change_userupload",
                 )
             ):
                 # this can happen on the display set update view or redisplay of

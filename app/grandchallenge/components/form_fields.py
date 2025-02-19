@@ -20,6 +20,7 @@ from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.serving.models import (
     get_component_interface_values_for_user,
+    get_object_if_allowed,
 )
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import (
@@ -158,19 +159,21 @@ class FlexibleFileField(MultiValueField):
             # the form of a pk for either
             # a ComponentInterfaceValue object (in this case the pk is a digit) or
             # a UserUpload object (then the pk is a UUID).
-            if (
-                isinstance(initial, int) or initial.isdigit()
-            ) and file_search_queryset.filter(pk=initial).exists():
-                self.current_value = file_search_queryset.get(pk=initial)
-            elif UserUpload.objects.filter(
-                pk=initial
-            ).exists() and user.has_perm(
-                "change_userupload",
-                upload := UserUpload.objects.get(pk=initial),
-            ):
-                self.current_value = upload
+            if isinstance(initial, int) or initial.isdigit():
+                if file_search_queryset.filter(pk=initial).exists():
+                    self.current_value = file_search_queryset.get(pk=initial)
+                else:
+                    initial = None
             else:
-                initial = None
+                if upload := get_object_if_allowed(
+                    model=UserUpload,
+                    pk=initial,
+                    user=user,
+                    codename="change_userupload",
+                ):
+                    self.current_value = upload
+                else:
+                    initial = None
 
         super().__init__(
             *args,

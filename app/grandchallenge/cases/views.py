@@ -37,6 +37,7 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.serving.models import get_object_if_allowed
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
@@ -145,14 +146,17 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
             )
         elif widget_choice == ImageWidgetChoices.IMAGE_SELECTED:
             if current_value_pk and (
-                Image.objects.filter(pk=current_value_pk).exists()
-                and request.user.has_perm(
-                    "view_image", Image.objects.get(pk=current_value_pk)
+                get_object_if_allowed(
+                    model=Image,
+                    pk=current_value_pk,
+                    user=request.user,
+                    codename="view_image",
                 )
-                or UserUpload.objects.filter(pk=current_value_pk).exists()
-                and request.user.has_perm(
-                    "change_userupload",
-                    UserUpload.objects.get(pk=current_value_pk),
+                or get_object_if_allowed(
+                    model=UserUpload,
+                    pk=current_value_pk,
+                    user=request.user,
+                    codename="change_userupload",
                 )
             ):
                 # this can happen on the display set update view or redisplay of
