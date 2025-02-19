@@ -41,7 +41,7 @@ from django.urls import Resolver404, resolve
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import format_lazy
-from django_select2.forms import Select2MultipleWidget
+from django_select2.forms import Select2MultipleWidget, Select2Widget
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -78,13 +78,17 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import (
+    filter_by_permission,
+    get_objects_for_user,
+)
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
 )
+from grandchallenge.evaluation.models import Phase
 from grandchallenge.evaluation.utils import SubmissionKindChoices, get
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
@@ -244,6 +248,49 @@ class AlgorithmIOValidationMixin:
             )
 
         return cleaned_data
+
+
+class PhaseSelectForm(Form):
+    phase = ModelChoiceField(
+        label="Please select the phase for which you are creating an algorithm for",
+        queryset=Phase.objects.none(),
+        required=True,
+        widget=Select2Widget,
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._user = user
+
+        self.fields["phase"].queryset = filter_by_permission(
+            queryset=Phase.objects.filter(
+                submission_kind=SubmissionKindChoices.ALGORITHM
+            ).order_by("challenge", "title"),
+            codename="create_phase_submission",
+            user=self._user,
+        )
+
+        self.helper = FormHelper(self)
+        self.helper.layout.append(
+            Submit("save", "Create an Algorithm for this Phase")
+        )
+
+    def clean_phase(self):
+        phase = self.cleaned_data["phase"]
+
+        # The determination for if a user can create an algorithm for a phase
+        # is quite complex, so just do a basic check here, the redirected
+        # view will do the actual check
+        if (
+            not phase.challenge.is_admin(self._user)
+            and not phase.open_for_submissions
+        ):
+            raise ValidationError(
+                "This phase is not currently open for submissions, please try again later."
+            )
+
+        return phase
 
 
 class AlgorithmForm(

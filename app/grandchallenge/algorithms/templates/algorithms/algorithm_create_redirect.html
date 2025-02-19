@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load url %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Create Algorithm - Algorithms - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Create Algorithm</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Create an Algorithm for a Challenge</h2>
+
+    {% if form.fields.phase.queryset %}
+        {% crispy form %}
+    {% else %}
+        <p>
+            You are not currently participating in any challenges with active algorithm submission phases.
+            Please <a href="{% url "challenges:list" %}">find and join one</a>
+            or come back later when the submissions have opened.
+        </p>
+    {% endif %}
+
+    {% if perms.algorithms.add_algorithm %}
+        <h2>Create a Custom Algorithm</h2>
+
+        <p>
+            If you're algorithm is not for a specific challenge then you can follow the link below to create
+            an algorithm with completely custom interfaces.
+        </p>
+
+        <p>
+            <a href="{% url "algorithms:custom-create" %}"
+               class="btn btn-primary">
+                <i class="fa fa-plus"></i> Add a Custom Algorithm
+            </a>
+        </p>
+    {% endif %}
+{% endblock %}

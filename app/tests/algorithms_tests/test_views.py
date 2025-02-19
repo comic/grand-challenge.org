@@ -56,18 +56,20 @@ from tests.verification_tests.factories import VerificationFactory
 def test_create_link_view(client, settings):
     user = UserFactory()
 
+    VerificationFactory(user=user, is_verified=True)
+
     response = get_view_for_user(
-        viewname="algorithms:list", client=client, user=user
+        viewname="algorithms:create-redirect", client=client, user=user
     )
-    assert reverse("algorithms:create") not in response.rendered_content
+    assert reverse("algorithms:custom-create") not in response.rendered_content
 
     g = Group.objects.get(name=settings.ALGORITHMS_CREATORS_GROUP_NAME)
     g.user_set.add(user)
 
     response = get_view_for_user(
-        viewname="algorithms:list", client=client, user=user
+        viewname="algorithms:create-redirect", client=client, user=user
     )
-    assert reverse("algorithms:create") in response.rendered_content
+    assert reverse("algorithms:custom-create") in response.rendered_content
 
 
 @pytest.mark.django_db
@@ -354,7 +356,7 @@ class TestObjectPermissionRequiredViews:
         VerificationFactory(user=u, is_verified=True)
 
         for view_name, kwargs, permission, obj, redirect in [
-            ("create", {}, "algorithms.add_algorithm", None, None),
+            ("custom-create", {}, "algorithms.add_algorithm", None, None),
             (
                 "detail",
                 {"slug": ai.algorithm.slug},
