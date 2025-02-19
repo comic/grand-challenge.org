@@ -112,23 +112,32 @@ def test_flexible_image_field_validation():
 
 @pytest.mark.django_db
 def test_flexible_image_widget_prepopulated_value():
-    user = UserFactory()
+    user_with_perm, user_without_perm = UserFactory.create_batch(2)
     im = ImageFactory(name="test_image")
+    assign_perm("cases.view_image", user_with_perm, im)
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
     civ = ComponentInterfaceValueFactory(interface=ci, image=im)
-    field = InterfaceFormFieldFactory(interface=ci, user=user, initial=civ)
+
+    field = InterfaceFormFieldFactory(
+        interface=ci, user=user_with_perm, initial=civ
+    )
     assert field.widget.attrs["current_value"] == civ.image
     assert field.initial == civ.image.pk
 
     field = InterfaceFormFieldFactory(
-        interface=ci, user=user, initial=civ.image.pk
+        interface=ci, user=user_with_perm, initial=civ.image.pk
+    )
+    assert field.widget.attrs["current_value"] == civ.image
+    assert field.initial == civ.image.pk
+
+    field = InterfaceFormFieldFactory(
+        interface=ci, user=user_without_perm, initial=civ
     )
     assert field.widget.attrs["current_value"] is None
     assert field.initial is None
 
-    assign_perm("cases.view_image", user, im)
     field = InterfaceFormFieldFactory(
-        interface=ci, user=user, initial=civ.image.pk
+        interface=ci, user=user_without_perm, initial=civ.image.pk
     )
-    assert field.widget.attrs["current_value"] == civ.image
-    assert field.initial == civ.image.pk
+    assert field.widget.attrs["current_value"] is None
+    assert field.initial is None
