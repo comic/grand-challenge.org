@@ -226,7 +226,7 @@ def test_image_widget_select_view_image_selected_object_permission(client):
         data={
             f"widget-choice-{prefixed_interface_slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
             "prefixed-interface-slug": prefixed_interface_slug,
-            "current-value": image.pk,
+            "current-value-pk": image.pk,
         },
     )
     assert format_html(
@@ -242,7 +242,7 @@ def test_image_widget_select_view_image_selected_object_permission(client):
         data={
             f"widget-choice-{prefixed_interface_slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
             "prefixed-interface-slug": prefixed_interface_slug,
-            "current-value": image.pk,
+            "current-value-pk": image.pk,
         },
     )
     assert response_user_wo_perm.status_code == 404
@@ -264,7 +264,7 @@ def test_file_widget_select_view_file_selected_object_permission_user_upload(
         data={
             f"widget-choice-{prefixed_interface_slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
             "prefixed-interface-slug": prefixed_interface_slug,
-            "current-value": user_upload.pk,
+            "current-value-pk": user_upload.pk,
         },
     )
     assert format_html(
@@ -280,7 +280,7 @@ def test_file_widget_select_view_file_selected_object_permission_user_upload(
         data={
             f"widget-choice-{prefixed_interface_slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
             "prefixed-interface-slug": prefixed_interface_slug,
-            "current-value": user_upload.pk,
+            "current-value-pk": user_upload.pk,
         },
     )
     assert response_user.status_code == 404
