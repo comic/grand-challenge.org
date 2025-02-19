@@ -567,7 +567,7 @@ def test_file_widget_select_view_file_selected_object_permission(client):
     job.inputs.set([civ])
 
     response_creator = get_view_for_user(
-        viewname="components:file-widget-select",
+        viewname="components:select-file-widget",
         client=client,
         user=creator,
         data={
@@ -583,7 +583,7 @@ def test_file_widget_select_view_file_selected_object_permission(client):
     ) in str(response_creator.content)
 
     response_user = get_view_for_user(
-        viewname="components:file-widget-select",
+        viewname="components:select-file-widget",
         client=client,
         user=user,
         data={
@@ -607,7 +607,7 @@ def test_file_widget_select_view_file_selected_object_permission_user_upload(
     user_upload = UserUploadFactory(creator=creator)
 
     response_creator = get_view_for_user(
-        viewname="components:file-widget-select",
+        viewname="components:select-file-widget",
         client=client,
         user=creator,
         data={
@@ -623,7 +623,7 @@ def test_file_widget_select_view_file_selected_object_permission_user_upload(
     ) in str(response_creator.content)
 
     response_user = get_view_for_user(
-        viewname="components:file-widget-select",
+        viewname="components:select-file-widget",
         client=client,
         user=user,
         data={
@@ -643,7 +643,7 @@ def test_file_widget_select_view(client):
     )
     prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
     response = get_view_for_user(
-        viewname="components:file-widget-select",
+        viewname="components:select-file-widget",
         client=client,
         user=user,
         data={
@@ -654,7 +654,7 @@ def test_file_widget_select_view(client):
     assert '<input class="form-control" type="search"' in str(response.content)
 
     response2 = get_view_for_user(
-        viewname="components:file-widget-select",
+        viewname="components:select-file-widget",
         client=client,
         user=user,
         data={
@@ -665,7 +665,7 @@ def test_file_widget_select_view(client):
     assert 'class="user-upload"' in str(response2.content)
 
     response3 = get_view_for_user(
-        viewname="components:file-widget-select",
+        viewname="components:select-file-widget",
         client=client,
         user=user,
         data={
@@ -676,7 +676,7 @@ def test_file_widget_select_view(client):
     assert response3.content == b""
 
     response4 = get_view_for_user(
-        viewname="components:file-widget-select",
+        viewname="components:select-file-widget",
         client=client,
         user=user,
         data={
@@ -689,7 +689,7 @@ def test_file_widget_select_view(client):
 
     ci.delete()
     response5 = get_view_for_user(
-        viewname="components:file-widget-select",
+        viewname="components:select-file-widget",
         client=client,
         user=user,
         data={
