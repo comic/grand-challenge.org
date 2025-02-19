@@ -153,17 +153,23 @@ class FlexibleFileField(MultiValueField):
                 # This can happen on display set or archive item update forms,
                 # the value is then taken from the model instance
                 # unless the value is in the form data.
+                self.current_value = initial
                 initial = initial.pk
             # Otherwise, the value is taken from the form data and will always take
             # the form of a pk for either
             # a ComponentInterfaceValue object (in this case the pk is a digit) or
             # a UserUpload object (then the pk is a UUID).
-            if (
+            elif (
                 isinstance(initial, int) or initial.isdigit()
             ) and file_search_queryset.filter(pk=initial).exists():
                 self.current_value = file_search_queryset.get(pk=initial)
-            elif upload_queryset.filter(pk=initial).exists():
-                self.current_value = upload_queryset.get(pk=initial)
+            elif UserUpload.objects.filter(
+                pk=initial
+            ).exists() and user.has_perm(
+                "change_userupload",
+                upload := UserUpload.objects.get(pk=initial),
+            ):
+                self.current_value = upload
             else:
                 initial = None
 

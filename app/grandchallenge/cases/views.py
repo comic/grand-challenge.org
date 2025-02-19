@@ -33,7 +33,6 @@ from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
-    filter_by_permission,
     get_objects_for_user,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
@@ -146,20 +145,15 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
             )
         elif widget_choice == ImageWidgetChoices.IMAGE_SELECTED:
             if current_value_pk and (
-                filter_by_permission(
-                    queryset=Image.objects.all(),
-                    user=request.user,
-                    codename="view_image",
+                Image.objects.filter(pk=current_value_pk).exists()
+                and request.user.has_perm(
+                    "view_image", Image.objects.get(pk=current_value_pk)
                 )
-                .filter(pk=current_value_pk)
-                .exists()
-                or filter_by_permission(
-                    queryset=UserUpload.objects.all(),
-                    user=request.user,
-                    codename="change_userupload",
+                or UserUpload.objects.filter(pk=current_value_pk).exists()
+                and request.user.has_perm(
+                    "change_userupload",
+                    UserUpload.objects.get(pk=current_value_pk),
                 )
-                .filter(pk=current_value_pk)
-                .exists()
             ):
                 # this can happen on the display set update view or redisplay of
                 # form upon validation, where one of the options is the current

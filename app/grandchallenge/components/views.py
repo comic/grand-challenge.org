@@ -44,7 +44,6 @@ from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
-    filter_by_permission,
     get_objects_for_user,
 )
 from grandchallenge.core.templatetags.bleach import clean
@@ -541,13 +540,11 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                     user=request.user, civ_pk=current_value_pk
                 ).exists()
                 if current_value_pk.isdigit()
-                else filter_by_permission(
-                    queryset=UserUpload.objects.all(),
-                    user=request.user,
-                    codename="change_userupload",
+                else UserUpload.objects.filter(pk=current_value_pk).exists()
+                and request.user.has_perm(
+                    "change_userupload",
+                    UserUpload.objects.get(pk=current_value_pk),
                 )
-                .filter(pk=current_value_pk)
-                .exists()
             ):
                 # this can happen on the display set update view or redisplay of
                 # form upon validation, where one of the options is the current

@@ -109,13 +109,21 @@ class FlexibleImageField(MultiValueField):
                 # This can happen on display set or archive item update forms,
                 # the value is then taken from the model instance
                 # unless the value is in the form data.
+                self.current_value = initial.image
                 initial = initial.image.pk
             # Otherwise the value is taken from the form data and will always take
             # the form of a pk for either an Image object or a UserUpload object.
-            if image_search_queryset.filter(pk=initial).exists():
-                self.current_value = image_search_queryset.get(pk=initial)
-            elif upload_queryset.filter(pk=initial).exists():
-                self.current_value = upload_queryset.get(pk=initial)
+            elif Image.objects.filter(pk=initial).exists() and user.has_perm(
+                "view_image", image := Image.objects.get(pk=initial)
+            ):
+                self.current_value = image
+            elif UserUpload.objects.filter(
+                pk=initial
+            ).exists() and user.has_perm(
+                "change_userupload",
+                upload := UserUpload.objects.get(pk=initial),
+            ):
+                self.current_value = upload
             else:
                 initial = None
 
