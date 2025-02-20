@@ -32,6 +32,13 @@ class Download(models.Model):
     submission = models.ForeignKey(
         Submission, null=True, on_delete=models.CASCADE, editable=False
     )
+    submission_supplementary = models.ForeignKey(
+        Submission,
+        null=True,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name="supplementary_file_downloads",
+    )
     component_interface_value = models.ForeignKey(
         ComponentInterfaceValue,
         null=True,
