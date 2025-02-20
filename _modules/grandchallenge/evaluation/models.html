@@ -87,7 +87,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">private_s3_storage</span><span class="p">,</span>
     <span class="n">protected_s3_storage</span><span class="p">,</span>
-    <span class="n">public_s3_storage</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.templatetags.remove_whitespace</span><span class="w"> </span><span class="kn">import</span> <span class="n">oxford_comma</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.validators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -1320,8 +1319,9 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">submission_supplementary_file_path</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="c1"># Must match the protected serving url</span>
     <span class="k">return</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;evaluation-supplementary/&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">EVALUATION_SUPPLEMENTARY_FILES_SUBDIRECTORY</span><span class="si">}</span><span class="s2">/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2">/&quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">get_valid_filename</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -1378,7 +1378,7 @@
     <span class="p">)</span>
     <span class="n">supplementary_file</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span>
         <span class="n">upload_to</span><span class="o">=</span><span class="n">submission_supplementary_file_path</span><span class="p">,</span>
-        <span class="n">storage</span><span class="o">=</span><span class="n">public_s3_storage</span><span class="p">,</span>
+        <span class="n">storage</span><span class="o">=</span><span class="n">protected_s3_storage</span><span class="p">,</span>
         <span class="n">validators</span><span class="o">=</span><span class="p">[</span>
             <span class="n">MimeTypeValidator</span><span class="p">(</span><span class="n">allowed_types</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;text/plain&quot;</span><span class="p">,</span> <span class="s2">&quot;application/pdf&quot;</span><span class="p">))</span>
         <span class="p">],</span>
