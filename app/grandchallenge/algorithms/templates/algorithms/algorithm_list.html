@@ -10,14 +10,12 @@
 {% endblock %}
 
 {% block content %}
-    {% if perms.algorithms.add_algorithm %}
-        <p>
-            <a href="{% url "algorithms:create" %}"
-               class="btn btn-primary">
-                <i class="fa fa-plus"></i> Add a new algorithm
-            </a>
-        </p>
-    {% endif %}
+    <p>
+        <a href="{% url "algorithms:create-redirect" %}"
+           class="btn btn-primary">
+            <i class="fa fa-plus"></i> Add a new algorithm
+        </a>
+    </p>
 
     {% include "grandchallenge/partials/filters.html" with filter=filter filters_applied=filters_applied %}
 

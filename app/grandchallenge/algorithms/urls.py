@@ -2,6 +2,7 @@ from django.urls import path
 
 from grandchallenge.algorithms.views import (
     AlgorithmCreate,
+    AlgorithmCreateRedirect,
     AlgorithmDescriptionUpdate,
     AlgorithmDetail,
     AlgorithmImageActivate,
@@ -41,7 +42,8 @@ app_name = "algorithms"
 
 urlpatterns = [
     path("", AlgorithmList.as_view(), name="list"),
-    path("create/", AlgorithmCreate.as_view(), name="create"),
+    path("create/", AlgorithmCreateRedirect.as_view(), name="create-redirect"),
+    path("custom-create/", AlgorithmCreate.as_view(), name="custom-create"),
     path("import/", AlgorithmImportView.as_view(), name="import"),
     path("<slug>/", AlgorithmDetail.as_view(), name="detail"),
     path(
