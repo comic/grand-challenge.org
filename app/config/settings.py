@@ -190,6 +190,7 @@ STORAGES = {
 # Subdirectories on root for various files
 IMAGE_FILES_SUBDIRECTORY = "images"
 EVALUATION_FILES_SUBDIRECTORY = "evaluation"
+EVALUATION_SUPPLEMENTARY_FILES_SUBDIRECTORY = "evaluation-supplementary"
 COMPONENTS_FILES_SUBDIRECTORY = "components"
 
 # Minio differs from s3, we know:
@@ -1356,7 +1357,7 @@ DISALLOWED_CHALLENGE_NAMES = {
     "mugshots",
     "docker",
     EVALUATION_FILES_SUBDIRECTORY,
-    "evaluation-supplementary",
+    EVALUATION_SUPPLEMENTARY_FILES_SUBDIRECTORY,
     "favicon",
     "i",
     "cache",

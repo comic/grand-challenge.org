@@ -49,7 +49,6 @@ from grandchallenge.core.models import (
 from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
-    public_s3_storage,
 )
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import (
@@ -1270,8 +1269,9 @@ def submission_file_path(instance, filename):
 
 
 def submission_supplementary_file_path(instance, filename):
+    # Must match the protected serving url
     return (
-        f"evaluation-supplementary/"
+        f"{settings.EVALUATION_SUPPLEMENTARY_FILES_SUBDIRECTORY}/"
         f"{instance.phase.challenge.pk}/"
         f"{instance.pk}/"
         f"{get_valid_filename(filename)}"
@@ -1328,7 +1328,7 @@ class Submission(FieldChangeMixin, UUIDModel):
     )
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,
-        storage=public_s3_storage,
+        storage=protected_s3_storage,
         validators=[
             MimeTypeValidator(allowed_types=("text/plain", "application/pdf"))
         ],

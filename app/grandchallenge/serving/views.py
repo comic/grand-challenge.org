@@ -12,8 +12,9 @@ from grandchallenge.algorithms.models import AlgorithmImage, AlgorithmModel
 from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.storage import internal_protected_s3_storage
-from grandchallenge.evaluation.models import Submission
+from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.serving.models import (
     Download,
     get_component_interface_values_for_user,
@@ -40,11 +41,12 @@ def protected_storage_redirect(*, name, **kwargs):
     return response
 
 
-def _create_download(
+def _create_download(  # noqa: C901
     *,
     creator,
     image=None,
     submission=None,
+    submission_supplementary=None,
     component_interface_value=None,
     challenge_request=None,
     feedback=None,
@@ -61,6 +63,9 @@ def _create_download(
 
     if submission is not None:
         kwargs["submission"] = submission
+
+    if submission_supplementary is not None:
+        kwargs["submission_supplementary"] = submission_supplementary
 
     if component_interface_value is not None:
         kwargs["component_interface_value"] = component_interface_value
@@ -119,6 +124,33 @@ def serve_submissions(request, *, submission_pk, **_):
             name=submission.predictions_file.name,
             creator=request.user,
             submission=submission,
+        )
+
+    raise PermissionDenied
+
+
+def serve_submission_supplementary_file(request, *, submission_pk, **_):
+    """
+    The supplementary files are available to anyone who can view
+    the submission or one of the submissions evaluations.
+    """
+    try:
+        submission = Submission.objects.get(pk=submission_pk)
+    except Submission.DoesNotExist:
+        raise Http404("Submission not found.")
+
+    if (
+        request.user.has_perm("view_submission", submission)
+        or filter_by_permission(
+            queryset=Evaluation.objects.filter(submission__pk=submission_pk),
+            codename="view_evaluation",
+            user=request.user,
+        ).exists()
+    ):
+        return protected_storage_redirect(
+            name=submission.supplementary_file.name,
+            creator=request.user,
+            submission_supplementary=submission,
         )
 
     raise PermissionDenied
