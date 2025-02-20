@@ -161,7 +161,7 @@ def test_algorithm_create(client, uploaded_image):
 
     def try_create_algorithm():
         return get_view_for_user(
-            viewname="algorithms:create",
+            viewname="algorithms:custom-create",
             client=client,
             method=client.post,
             data={

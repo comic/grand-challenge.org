@@ -376,7 +376,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
         # main domain robots.txt
         robots_url = "/robots.txt"
         robots_url_project = reverse(
-            "subdomain_robots_txt",
+            "well_known:robots_txt",
             kwargs={"challenge_short_name": self.testchallenge.short_name},
         )
         self._test_url_can_be_viewed(None, robots_url)  # None = not logged in

@@ -1,6 +1,6 @@
 import random
-from datetime import datetime, timedelta
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 import pytest
 from actstream.actions import is_following
@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 from dateutil.utils import today
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
-from django.utils.timezone import now
+from django.utils.timezone import datetime, now, timedelta
 from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.challenges.models import Challenge, OnboardingTask
@@ -201,22 +201,22 @@ def test_onboarding_tasks_registering_completion_time():
     [
         # Test case 1: Task deadline is far away, so it's neither overdue nor almost overdue
         (
-            datetime(2025, 1, 29, 12, 0, 0),
-            datetime(2025, 1, 29, 11, 0, 0),
+            datetime(2025, 1, 30, 11, 0, 0, tzinfo=ZoneInfo("UTC")),
+            datetime(2025, 1, 29, 11, 0, 0, tzinfo=ZoneInfo("UTC")),
             False,
             False,
         ),
         # Test case 2: Task is almost overdue (within the 1-hour cutoff)
         (
-            datetime(2025, 1, 29, 12, 0, 0),
-            datetime(2025, 1, 29, 11, 30, 0),
+            datetime(2025, 1, 29, 12, 0, 0, tzinfo=ZoneInfo("UTC")),
+            datetime(2025, 1, 29, 11, 30, 0, tzinfo=ZoneInfo("UTC")),
             False,
             True,
         ),
         # Test case 3: Task is overdue
         (
-            datetime(2025, 1, 29, 11, 0, 0),
-            datetime(2025, 1, 29, 12, 0, 0),
+            datetime(2025, 1, 29, 11, 0, 0, tzinfo=ZoneInfo("UTC")),
+            datetime(2025, 1, 29, 12, 0, 0, tzinfo=ZoneInfo("UTC")),
             True,
             False,
         ),
@@ -227,12 +227,50 @@ def test_onboarding_tasks_registering_completion_time():
     new=timedelta(hours=1),
 )
 def test_onboarding_tasks_overdue_status_annotations(
-    deadline, mock_now, expected_is_overdue, expected_is_overdue_soon, mocker
+    deadline,
+    mock_now,
+    expected_is_overdue,
+    expected_is_overdue_soon,
+    mocker,
 ):
-    OnboardingTaskFactory(deadline=deadline)
-    with mocker.patch(
-        "grandchallenge.challenges.models.now", return_value=mock_now
+
+    task = OnboardingTaskFactory(deadline=deadline)
+
+    mocker.patch("grandchallenge.challenges.models.now", return_value=mock_now)
+
+    task = OnboardingTask.objects.with_overdue_status().get(pk=task.pk)
+    assert task.is_overdue == expected_is_overdue
+    assert task.is_overdue_soon == expected_is_overdue_soon
+
+
+@pytest.mark.django_db
+def test_default_onboarding_tasks_creation():
+    challenge = ChallengeFactory()
+
+    # Expected task details
+    expected_tasks = [
+        ("Create Phases", "ORG"),
+        ("Define Inputs and Outputs", "ORG"),
+        ("Plan Onboarding Meeting", "SUP"),
+        ("Have Onboarding Meeting", "ORG"),
+        ("Create Archives", "SUP"),
+        ("Upload Data to Archives", "ORG"),
+        ("Create Example Algorithm", "ORG"),
+        ("Create Evaluation Method", "ORG"),
+        ("Configure Scoring", "ORG"),
+        ("Test Evaluation", "ORG"),
+    ]
+
+    tasks = list(
+        OnboardingTask.objects.filter(challenge=challenge).order_by("deadline")
+    )
+
+    assert len(tasks) == len(
+        expected_tasks
+    ), "Unexpected number of onboarding tasks."
+
+    for task, (expected_title, expected_responsible_party) in zip(
+        tasks, expected_tasks, strict=True
     ):
-        task = OnboardingTask.objects.with_overdue_status().get()
-        assert task.is_overdue == expected_is_overdue
-        assert task.is_overdue_soon == expected_is_overdue_soon
+        assert task.title == expected_title
+        assert task.responsible_party == expected_responsible_party
