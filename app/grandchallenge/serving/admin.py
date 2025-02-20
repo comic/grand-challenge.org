@@ -11,6 +11,7 @@ class DownloadAdmin(admin.ModelAdmin):
         "creator",
         "image",
         "submission",
+        "submission_supplementary",
         "component_interface_value",
         "challenge_request",
         "feedback",
