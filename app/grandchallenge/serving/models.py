@@ -76,6 +76,9 @@ def get_component_interface_values_for_user(
 
     civs = ComponentInterfaceValue.objects.filter(**extra_filter_kwargs)
 
+    if not civs:
+        return civs
+
     job_query = filter_by_permission(
         queryset=Job.objects.all(),
         user=user,
