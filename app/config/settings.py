@@ -245,6 +245,7 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
     ),
+    "custom_domain": os.environ.get("PUBLIC_S3_CUSTOM_DOMAIN"),
     # Public bucket so do not use querystring_auth
     "querystring_auth": False,
     "default_acl": "public-read",
