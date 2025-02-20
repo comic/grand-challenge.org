@@ -252,7 +252,7 @@ class AlgorithmIOValidationMixin:
 
 class PhaseSelectForm(Form):
     phase = ModelChoiceField(
-        label="Please select the phase for which you are creating an algorithm for",
+        label="Please select the phase for which you are creating an algorithm",
         queryset=Phase.objects.none(),
         required=True,
         widget=Select2Widget,
