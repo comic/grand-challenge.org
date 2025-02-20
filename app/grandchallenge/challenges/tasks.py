@@ -1,18 +1,28 @@
 import functools
 import random
 import time
+from typing import NamedTuple
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Count, Max
+from django.db.models import Count, Max, Min, Q
+from django.utils.timezone import datetime
 from psycopg.errors import LockNotAvailable
 
 from grandchallenge.challenges.costs import (
     annotate_compute_costs_and_storage_size,
     annotate_job_duration_and_compute_costs,
 )
-from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.celery import acks_late_2xlarge_task
+from grandchallenge.challenges.emails import (
+    send_onboarding_task_due_reminder,
+    send_onboarding_task_overdue_alert,
+    send_onboarding_task_support_overdue_alert,
+)
+from grandchallenge.challenges.models import Challenge, OnboardingTask
+from grandchallenge.core.celery import (
+    acks_late_2xlarge_task,
+    acks_late_micro_short_task,
+)
 from grandchallenge.evaluation.models import Evaluation, Phase
 
 
@@ -116,3 +126,92 @@ def update_compute_costs_and_storage_size():
                 )
 
             save_phase()
+
+
+class OnboardingTaskInfo(NamedTuple):
+    challenge: str
+    num_is_overdue: int
+    num_is_overdue_soon: int
+    min_deadline: datetime
+    num_support_is_overdue: int
+    min_support_deadline: datetime
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def send_onboarding_task_reminder_emails():
+    onboarding_task_info = (
+        OnboardingTask.objects.with_overdue_status()
+        .values("challenge")
+        .annotate(
+            num_is_overdue=Count(
+                "pk",
+                filter=Q(
+                    is_overdue=True,
+                    responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+                ),
+            ),
+            num_is_overdue_soon=Count(
+                "pk",
+                filter=Q(
+                    is_overdue_soon=True,
+                    responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+                ),
+            ),
+            min_deadline=Min(
+                "deadline",
+                filter=Q(
+                    is_overdue=True,
+                    responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+                ),
+            ),
+            num_support_is_overdue=Count(
+                "pk",
+                filter=Q(
+                    is_overdue=True,
+                    responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
+                ),
+            ),
+            min_support_deadline=Min(
+                "deadline",
+                filter=Q(
+                    is_overdue=True,
+                    responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
+                ),
+            ),
+        )
+        .exclude(
+            num_is_overdue=0,
+            num_is_overdue_soon=0,
+            num_support_is_overdue=0,
+        )
+    )
+
+    onboarding_task_info_by_challenge = {
+        str(v["challenge"]): OnboardingTaskInfo(**v)
+        for v in onboarding_task_info
+    }
+
+    challenges = Challenge.objects.filter(
+        pk__in=onboarding_task_info_by_challenge.keys()
+    )
+
+    for c in challenges:
+        task_info = onboarding_task_info_by_challenge[str(c.pk)]
+
+        if task_info.num_is_overdue:
+            send_onboarding_task_overdue_alert(
+                challenge=c,
+                task_info=task_info,
+            )
+
+        if task_info.num_is_overdue_soon:
+            send_onboarding_task_due_reminder(
+                challenge=c,
+                task_info=task_info,
+            )
+
+        if task_info.num_support_is_overdue:
+            send_onboarding_task_support_overdue_alert(
+                challenge=c, task_info=task_info
+            )

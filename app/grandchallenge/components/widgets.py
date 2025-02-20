@@ -1,5 +1,5 @@
 from django.db.models import TextChoices
-from django.forms import HiddenInput, MultiWidget, Select
+from django.forms import HiddenInput, MultiWidget
 from django.forms.widgets import ChoiceWidget
 
 from grandchallenge.components.models import ComponentInterfaceValue
@@ -12,12 +12,6 @@ class FileWidgetChoices(TextChoices):
     FILE_UPLOAD = "FILE_UPLOAD"
     FILE_SELECTED = "FILE_SELECTED"
     UNDEFINED = "UNDEFINED"
-
-
-class ParentObjectTypeChoices(TextChoices):
-    JOB = "JOB"
-    DISPLAY_SET = "DISPLAY_SET"
-    ARCHIVE_ITEM = "ARCHIVE_ITEM"
 
 
 class FileSearchWidget(ChoiceWidget, HiddenInput):
@@ -34,9 +28,6 @@ class FileSearchWidget(ChoiceWidget, HiddenInput):
         context = super().get_context(*args, **kwargs)
         if self.name:
             context["widget"]["name"] = self.name
-        context["widget"]["parent_object_type_choices"] = {
-            choice.name: choice.value for choice in ParentObjectTypeChoices
-        }
         return context
 
 
@@ -81,16 +72,5 @@ class FlexibleFileWidget(MultiWidget):
             return [None, None]
 
     def value_from_datadict(self, data, files, name):
-        try:
-            value = data[name]
-        except KeyError:
-            # this happens if the data comes from the DS create / update form
-            try:
-                value = data[f"widget-choice-{name}"]
-            except KeyError:
-                value = None
+        value = data.get(name)
         return self.decompress(value)
-
-
-class SelectUploadWidget(Select):
-    template_name = "components/select_upload_widget.html"

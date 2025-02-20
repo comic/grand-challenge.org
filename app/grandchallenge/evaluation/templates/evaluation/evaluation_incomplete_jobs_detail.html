@@ -21,6 +21,7 @@
                 <th>ID</th>
                 <th>Created</th>
                 <th>Status</th>
+                <th>Error Message</th>
             </tr>
             </thead>
             <tbody>
@@ -30,6 +31,9 @@
                         <td>{{ job.created }}</td>
                         <td>
                             {% include "algorithms/job_status_detail.html" with object=job %}
+                        </td>
+                        <td>
+                            {{ job.error_message }}
                         </td>
                     </tr>
                 {% endfor %}

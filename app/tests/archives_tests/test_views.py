@@ -1004,7 +1004,9 @@ def test_archive_item_add_json_file(
                 user=editor,
                 data={
                     **get_interface_form_data(
-                        interface_slug=ci.slug, data=civ.pk, existing_data=True
+                        interface_slug=ci.slug,
+                        data=civ.pk,
+                        existing_data=True,
                     )
                 },
             )
@@ -1160,7 +1162,8 @@ def test_archive_item_create_view(
                     existing_data=True,
                 ),
                 **get_interface_form_data(
-                    interface_slug=ci_json.slug, data=str(upload.pk)
+                    interface_slug=ci_json.slug,
+                    data=str(upload.pk),
                 ),
                 **get_interface_form_data(
                     interface_slug=ci_json2.slug, data='{"some": "content"}'
