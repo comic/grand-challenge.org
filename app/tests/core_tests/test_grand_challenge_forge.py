@@ -24,7 +24,7 @@ def test_get_challenge_pack_context():
     challenge = ChallengeFactory()
     inputs = [
         ComponentInterfaceFactory(kind=ComponentInterface.Kind.INTEGER),
-        ComponentInterfaceFactory(),
+        ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE),
     ]
     outputs = [
         ComponentInterfaceFactory(),
@@ -99,12 +99,12 @@ def test_get_challenge_pack_context():
                     assert ci_key in component_interface
 
     # Test assigned example value
-    example_values = {
+    example_values = [
         input["example_value"]
         for input in context["challenge"]["phases"][0]["algorithm_inputs"]
         if input["example_value"]
-    }
-    assert example_values == {87}
+    ]
+    assert example_values == [87]
 
     # Quick check on CI input and outputs
     input_slugs = [
