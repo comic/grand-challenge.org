@@ -123,43 +123,46 @@ class InterfaceFormField(forms.Field):
         )
 
     def _gen_json_schema(self):
-        print("### TEST", bool(self.instance.schema), self.required)
-        if not self.instance.schema and not self.required:
-            return {
-                **INTERFACE_VALUE_SCHEMA,
-                "allOf": [
-                    {"$ref": f"#/definitions/{self.instance.kind}"},
-                ],
-            }
-        elif not self.instance.schema and self.required:
-            return {
-                **INTERFACE_VALUE_SCHEMA,
-                "anyOf": [
-                    {"type": "null"},
-                    {"$ref": f"#/definitions/{self.instance.kind}"},
-                ],
-            }
-        elif self.instance.schema and not self.required:
-            return {
-                **INTERFACE_VALUE_SCHEMA,
-                "oneOf": [
-                    {"type": "null"},
-                    {
-                        "allOF": [
-                            {"$ref": f"#/definitions/{self.instance.kind}"},
-                            self.instance.schema,
-                        ],
-                    },
-                ],
-            }
-        elif self.instance.schema and self.required:
-            return {
-                **INTERFACE_VALUE_SCHEMA,
-                "allOf": [
-                    {"$ref": f"#/definitions/{self.instance.kind}"},
-                    self.instance.schema,
-                ],
-            }
+        if self.instance.schema:
+            if self.required:
+                return {
+                    **INTERFACE_VALUE_SCHEMA,
+                    "allOf": [
+                        self.instance.schema,
+                        {"$ref": f"#/definitions/{self.instance.kind}"},
+                    ],
+                }
+            else:
+                return {
+                    **INTERFACE_VALUE_SCHEMA,
+                    "oneOf": [
+                        {"type": "null"},
+                        {
+                            "allOf": [
+                                self.instance.schema,
+                                {
+                                    "$ref": f"#/definitions/{self.instance.kind}"
+                                },
+                            ],
+                        },
+                    ],
+                }
+        else:
+            if self.required:
+                return {
+                    **INTERFACE_VALUE_SCHEMA,
+                    "allOf": [
+                        {"$ref": f"#/definitions/{self.instance.kind}"},
+                    ],
+                }
+            else:
+                return {
+                    **INTERFACE_VALUE_SCHEMA,
+                    "oneOf": [
+                        {"type": "null"},
+                        {"$ref": f"#/definitions/{self.instance.kind}"},
+                    ],
+                }
 
     def get_json_field(self):
         field_type = self.instance.default_field
