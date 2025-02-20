@@ -135,7 +135,7 @@ def serve_submission_supplementary_file(request, *, submission_pk, **_):
     the submission or one of the submissions evaluations.
     """
     try:
-        submission = Submission.objects.filter(pk=submission_pk)
+        submission = Submission.objects.get(pk=submission_pk)
     except Submission.DoesNotExist:
         raise Http404("Submission not found.")
 
