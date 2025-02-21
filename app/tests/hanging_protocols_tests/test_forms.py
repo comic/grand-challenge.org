@@ -52,9 +52,7 @@ def test_view_content_mixin():
 
     assert not form.is_valid()
     assert form.errors == {
-        "__all__": [
-            "Unknown interfaces in view content for viewport main: test"
-        ]
+        "__all__": ["Unknown sockets in view content for viewport main: test"]
     }
 
     i = ComponentInterfaceFactory(
@@ -450,7 +448,7 @@ def make_ci_list(
             0,
             0,
             (
-                "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
+                "No sockets of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one socket of those types is needed to configure the viewer. "
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
         ),
@@ -460,8 +458,8 @@ def make_ci_list(
             0,
             1,
             (
-                "The following interfaces are used in your {}: test-ci-overlay-0 and test-ci-undisplayable-0. "
-                "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
+                "The following sockets are used in your {}: test-ci-overlay-0 and test-ci-undisplayable-0. "
+                "No sockets of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one socket of those types is needed to configure the viewer. "
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
         ),
@@ -471,7 +469,7 @@ def make_ci_list(
             1,
             1,
             (
-                "The following interfaces are used in your {}: test-ci-isolated-0, test-ci-image-0, test-ci-overlay-0, and test-ci-undisplayable-0. "
+                "The following sockets are used in your {}: test-ci-isolated-0, test-ci-image-0, test-ci-overlay-0, and test-ci-undisplayable-0. "
                 'Example usage: {{"main": ["test-ci-isolated-0"], "secondary": ["test-ci-image-0", "test-ci-overlay-0"]}}. '
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
@@ -522,7 +520,7 @@ def test_archive_and_reader_study_forms_view_content_help_text(
             0,
             0,
             (
-                "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
+                "No sockets of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one socket of those types is needed to configure the viewer. "
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
         ),
@@ -532,7 +530,7 @@ def test_archive_and_reader_study_forms_view_content_help_text(
             0,
             1,
             (
-                "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
+                "No sockets of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one socket of those types is needed to configure the viewer. "
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
         ),
@@ -586,7 +584,7 @@ def test_algorithm_form_view_content_help_text(
             0,
             0,
             (
-                "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
+                "No sockets of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one socket of those types is needed to configure the viewer. "
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
         ),
@@ -596,7 +594,7 @@ def test_algorithm_form_view_content_help_text(
             0,
             1,
             (
-                "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
+                "No sockets of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one socket of those types is needed to configure the viewer. "
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
         ),
