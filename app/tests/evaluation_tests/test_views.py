@@ -1794,3 +1794,35 @@ def test_evaluation_details_error_message(client):
 
     assert response.status_code == 200
     assert evaluation_error_message in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_submission_list_row_template_ajax_renders(client):
+    editor = UserFactory()
+
+    phase = PhaseFactory()
+    phase.challenge.add_admin(editor)
+    SubmissionFactory(phase=phase)
+
+    headers = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
+
+    response = get_view_for_user(
+        viewname="evaluation:submission-list",
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        user=editor,
+        data={
+            "draw": "1",
+            "length": "25",
+        },
+        **headers,
+    )
+    response_content = json.loads(response.content.decode("utf-8"))
+
+    assert response.status_code == 200
+    assert response_content["recordsTotal"] == 1
+    assert len(response_content["data"][0]) == 5
+    assert phase.title in response_content["data"][0][1]
