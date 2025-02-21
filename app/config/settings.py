@@ -190,6 +190,7 @@ STORAGES = {
 # Subdirectories on root for various files
 IMAGE_FILES_SUBDIRECTORY = "images"
 EVALUATION_FILES_SUBDIRECTORY = "evaluation"
+EVALUATION_SUPPLEMENTARY_FILES_SUBDIRECTORY = "evaluation-supplementary"
 COMPONENTS_FILES_SUBDIRECTORY = "components"
 
 # Minio differs from s3, we know:
@@ -244,6 +245,7 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
     ),
+    "custom_domain": os.environ.get("PUBLIC_S3_CUSTOM_DOMAIN"),
     # Public bucket so do not use querystring_auth
     "querystring_auth": False,
     "default_acl": "public-read",
@@ -1356,7 +1358,7 @@ DISALLOWED_CHALLENGE_NAMES = {
     "mugshots",
     "docker",
     EVALUATION_FILES_SUBDIRECTORY,
-    "evaluation-supplementary",
+    EVALUATION_SUPPLEMENTARY_FILES_SUBDIRECTORY,
     "favicon",
     "i",
     "cache",

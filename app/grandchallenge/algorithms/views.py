@@ -60,6 +60,7 @@ from grandchallenge.algorithms.forms import (
     JobCreateForm,
     JobForm,
     JobInterfaceSelectForm,
+    PhaseSelectForm,
     UsersForm,
     ViewersForm,
 )
@@ -105,6 +106,31 @@ from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.verifications.views import VerificationRequiredMixin
 
 logger = logging.getLogger(__name__)
+
+
+class AlgorithmCreateRedirect(
+    LoginRequiredMixin,
+    VerificationRequiredMixin,
+    FormView,
+):
+    form_class = PhaseSelectForm
+    template_name = "algorithms/algorithm_create_redirect.html"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        phase = form.cleaned_data["phase"]
+        self.success_url = reverse(
+            "evaluation:phase-algorithm-create",
+            kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+            },
+        )
+        return super().form_valid(form=form)
 
 
 class AlgorithmCreate(
