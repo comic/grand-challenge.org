@@ -6,19 +6,19 @@
 
 {% block title %}
     {% if object_type == object_type_options.ALGORITHM %}
-        {{ list_type|title }} - Interface Options - {{ block.super }}
+        {{ list_type|title }} - Socket Options - {{ block.super }}
     {% else %}
-        Interface Options - {{ block.super }}
+        Socket Options - {{ block.super }}
     {% endif %}
 {% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         {% if object_type == object_type_options.ALGORITHM %}
-            <li class="breadcrumb-item"><a href="{% url 'components:component-interface-list-algorithms' %}">Interface Options</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'components:component-interface-list-algorithms' %}">Socket Options</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ list_type|title }}</li>
         {% else %}
-            <li class="breadcrumb-item active" aria-current="page">Interface Options</li>
+            <li class="breadcrumb-item active" aria-current="page">Socket Options</li>
         {% endif %}
     </ol>
 {% endblock %}
@@ -39,7 +39,7 @@
             times within one {{ list_type|lower }}.
         {% endif %}
         If an option does not exist for your use case please contact support with the title, description, and kind
-        for your new interface option.
+        for your new socket option.
     </p>
 
     <div class="table-responsive">
