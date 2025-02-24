@@ -683,3 +683,47 @@ SELECTABLE_GPU_TYPES_SCHEMA = {
     },
     "uniqueItems": True,
 }
+
+
+def generate_component_json_schema(*, component_interface, required):
+    """Generates a JSON Schema that a value can be validated against, if flagged not required it allows for null values"""
+    if component_interface.schema:
+        if required:
+            return {
+                **INTERFACE_VALUE_SCHEMA,
+                "allOf": [
+                    component_interface.schema,
+                    {"$ref": f"#/definitions/{component_interface.kind}"},
+                ],
+            }
+        else:
+            return {
+                **INTERFACE_VALUE_SCHEMA,
+                "oneOf": [
+                    {"type": "null"},
+                    {
+                        "allOf": [
+                            component_interface.schema,
+                            {
+                                "$ref": f"#/definitions/{component_interface.kind}"
+                            },
+                        ],
+                    },
+                ],
+            }
+    else:
+        if required:
+            return {
+                **INTERFACE_VALUE_SCHEMA,
+                "allOf": [
+                    {"$ref": f"#/definitions/{component_interface.kind}"},
+                ],
+            }
+        else:
+            return {
+                **INTERFACE_VALUE_SCHEMA,
+                "oneOf": [
+                    {"type": "null"},
+                    {"$ref": f"#/definitions/{component_interface.kind}"},
+                ],
+            }

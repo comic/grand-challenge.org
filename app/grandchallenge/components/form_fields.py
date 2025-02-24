@@ -8,7 +8,7 @@ from grandchallenge.cases.widgets import (
     FlexibleImageWidget,
 )
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
+from grandchallenge.components.schemas import generate_component_json_schema
 from grandchallenge.components.widgets import SelectUploadWidget
 from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.core.validators import JSONValidator
@@ -122,56 +122,18 @@ class InterfaceFormField(forms.Field):
             **self.kwargs,
         )
 
-    def _gen_json_schema(self):
-        if self.instance.schema:
-            if self.required:
-                return {
-                    **INTERFACE_VALUE_SCHEMA,
-                    "allOf": [
-                        self.instance.schema,
-                        {"$ref": f"#/definitions/{self.instance.kind}"},
-                    ],
-                }
-            else:
-                return {
-                    **INTERFACE_VALUE_SCHEMA,
-                    "oneOf": [
-                        {"type": "null"},
-                        {
-                            "allOf": [
-                                self.instance.schema,
-                                {
-                                    "$ref": f"#/definitions/{self.instance.kind}"
-                                },
-                            ],
-                        },
-                    ],
-                }
-        else:
-            if self.required:
-                return {
-                    **INTERFACE_VALUE_SCHEMA,
-                    "allOf": [
-                        {"$ref": f"#/definitions/{self.instance.kind}"},
-                    ],
-                }
-            else:
-                return {
-                    **INTERFACE_VALUE_SCHEMA,
-                    "oneOf": [
-                        {"type": "null"},
-                        {"$ref": f"#/definitions/{self.instance.kind}"},
-                    ],
-                }
-
     def get_json_field(self):
         field_type = self.instance.default_field
 
-        schema = self._gen_json_schema()
+        schema = generate_component_json_schema(
+            component_interface=self.instance,
+            required=self.required,
+        )
 
         if field_type == forms.JSONField:
             self.kwargs["widget"] = JSONEditorWidget(schema=schema)
         self.kwargs["validators"] = [JSONValidator(schema=schema)]
+
         extra_help = ""
         return field_type(
             help_text=_join_with_br(self.help_text, extra_help), **self.kwargs

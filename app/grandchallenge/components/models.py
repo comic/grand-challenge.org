@@ -46,8 +46,8 @@ from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
 from grandchallenge.components.schemas import (
-    INTERFACE_VALUE_SCHEMA,
     GPUTypeChoices,
+    generate_component_json_schema,
 )
 from grandchallenge.components.tasks import (
     _repo_login_and_run,
@@ -683,12 +683,9 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     def validate_against_schema(self, *, value):
         """Validates values against both default and custom schemas"""
-        schema = {
-            **INTERFACE_VALUE_SCHEMA,
-            "allOf": [{"$ref": f"#/definitions/{self.kind}"}],
-        }
-        if self.schema:
-            schema["allOf"].append(self.schema)
+        schema = generate_component_json_schema(
+            component_interface=self, required=True
+        )
         JSONValidator(schema=schema)(value=value)
 
     @cached_property
