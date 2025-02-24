@@ -1,9 +1,10 @@
 {% load static %}
-
 <div id="jsoneditor_{{ widget.attrs.id }}"
      class="jsoneditorWidget"
      data-widget-id="{{ widget.attrs.id }}"
      style="width: 100%"></div>
+
+<p id="jsoneditor_feedback_{{ widget.attrs.id }}" class="invalid-feedback"></p>
 
 {# taken from https://github.com/django/django/blob/main/django/forms/widgets.py #}
 <textarea class="d-none form-control"
