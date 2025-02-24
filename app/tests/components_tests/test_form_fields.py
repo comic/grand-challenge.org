@@ -1,13 +1,23 @@
+import json
+from urllib.parse import quote
+
 import pytest
 from django.core.exceptions import ValidationError
 from factory.fuzzy import FuzzyChoice
 
-from grandchallenge.components.form_fields import FlexibleFileField
-from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.form_fields import (
+    FlexibleFileField,
+    InterfaceFormField,
+)
+from grandchallenge.components.models import (
+    InterfaceKind,
+    InterfaceKindChoices,
+)
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
+    ComponentInterfaceExampleValueFactory,
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
@@ -284,3 +294,84 @@ def test_flexible_file_field_validation_with_archive_items():
     )
     with pytest.raises(ValidationError):
         field.clean(parsed_value_for_file_without_permission)
+
+
+@pytest.mark.parametrize(
+    "component_interface_kind, store_in_db, example_json, download_link_is_present",
+    (
+        (
+            InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+            True,
+            {
+                "name": "Region of interest 2",
+                "type": "2D bounding box",
+                "corners": [
+                    [130.8, 148.8, 0.5],
+                    [69.7, 148.8, 0.5],
+                    [69.7, 73.1, 0.5],
+                    [130.8, 73.1, 0.5],
+                ],
+                "probability": 0.95,
+                "version": {"major": 1, "minor": 0},
+            },
+            True,
+        ),
+        (
+            InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+            False,
+            {
+                "name": "Region of interest 2",
+                "type": "2D bounding box",
+                "corners": [
+                    [130.8, 148.8, 0.5],
+                    [69.7, 148.8, 0.5],
+                    [69.7, 73.1, 0.5],
+                    [130.8, 73.1, 0.5],
+                ],
+                "probability": 0.95,
+                "version": {"major": 1, "minor": 0},
+            },
+            True,
+        ),
+        (
+            InterfaceKindChoices.STRING,
+            True,
+            "test string",
+            False,
+        ),
+        (
+            InterfaceKindChoices.IMAGE,
+            False,
+            None,
+            False,
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_interface_form_field_help_text_example_download_link(
+    component_interface_kind,
+    store_in_db,
+    example_json,
+    download_link_is_present,
+):
+    user = UserFactory()
+
+    ci = ComponentInterfaceFactory(
+        kind=component_interface_kind, store_in_database=store_in_db
+    )
+
+    ComponentInterfaceExampleValueFactory(
+        interface=ci,
+        value=example_json,
+    )
+
+    field = InterfaceFormField(instance=ci, user=user, form_data={})
+
+    encoded_example = quote(json.dumps(ci.json_kind_example.value, indent=2))
+
+    assert (
+        "Download example" in field.field.help_text
+    ) is download_link_is_present
+    assert (
+        encoded_example in field.field.help_text
+    ) is download_link_is_present

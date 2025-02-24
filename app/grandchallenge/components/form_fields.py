@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import ModelChoiceField, MultiValueField
+from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 
 from grandchallenge.cases.models import Image
@@ -144,7 +145,12 @@ class InterfaceFormField(forms.Field):
             JSONValidator(schema=default_schema),
             JSONValidator(schema=self.instance.schema),
         ]
-        extra_help = ""
+
+        if self.instance.default_field == forms.JSONField:
+            extra_help = self.example_download_link
+        else:
+            extra_help = ""
+
         return field_type(
             help_text=_join_with_br(self.help_text, extra_help), **self.kwargs
         )
@@ -176,8 +182,13 @@ class InterfaceFormField(forms.Field):
                     f"Unknown type for initial value: {self.initial}"
                 )
 
+        extra_help = _join_with_br(
+            f"{file_upload_text} {self.instance.file_extension}",
+            self.example_download_link,
+        )
+
         self.kwargs["widget"] = FlexibleFileWidget(
-            help_text=self.help_text,
+            help_text=_join_with_br(self.help_text, extra_help),
             user=self.user,
             current_value=current_value,
         )
@@ -196,6 +207,13 @@ class InterfaceFormField(forms.Field):
     @property
     def field(self):
         return self._field
+
+    @property
+    def example_download_link(self):
+        return render_to_string(
+            "components/partials/example_download_link.html",
+            {"object": self.instance},
+        )
 
 
 class FlexibleFileField(MultiValueField):
