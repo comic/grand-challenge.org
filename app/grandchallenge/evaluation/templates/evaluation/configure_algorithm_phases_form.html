@@ -20,6 +20,9 @@
 
 {% block content %}
     <h3>Configure algorithm submission phases</h3>
+    <p>Select the phases you would like to turn into algorithm submission phases.</p>
+    <p>This will create an archive for each selected phase, and populate the inference time limit, gpu type choices and memory requirements based on the corresponding challenge request.</p>
+    <p>To configure algorithm interfaces for each phase, please visit the phase settings after this step.</p>
     {% crispy form %}
 {% endblock %}
 

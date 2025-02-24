@@ -3,39 +3,40 @@
 {% load static %}
 
 {% block title %}
-    Interface Options - {{ block.super }}
+    Socket Options - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item active" aria-current="page">Interface Options</li>
+        <li class="breadcrumb-item active" aria-current="page">Socket Options</li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Algorithm Interface Options</h2>
+    <h2>Algorithm Socket Options</h2>
 
     <p>
-        You will need to define the inputs to, and the outputs from, your algorithm.
-        The set of inputs and outputs that your algorithm uses is known as its interface.
-        You can build up your algorithm's interface by selecting from the current set of interface options.
-        Use the links below to see the options that are available for your algorithm's interface.
+        You will need to define the inputs and outputs for your algorithm.
+        A set of inputs and outputs that your algorithm uses is known as its interface.
+        The inputs and outputs that make up an algorithm interface are called sockets.
+        You can build up an algorithm interface by selecting from the current set of socket options.
+        Use the links below to see the socket options that are available.
     </p>
 
     <p>
         For example, lets say that you are developing an algorithm that predicts COVID-19 from a CT scan,
         which also produces a segmentation of COVID-19 lesions.
-        You would look in the list of interface options and select the ones to use.
-        You would then define an algorithm that has one input, a <code>ct-image</code>,
+        You would look in the list of socket options and select the ones to use.
+        You would then define an algorithm that has one interface with one input, a <code>ct-image</code>,
         and two outputs, <code>probability-covid-19</code> (a number)
         and <code>covid-19-lesion-segementation</code> (a segmentation of covid 19 lesions).
     </p>
 
-    <img src="{% static 'components/images/example-algorithm.drawio.svg' %}" class="mx-auto d-block" alt="Example algorithm with one input interface and two output interfaces">
+    <img src="{% static 'components/images/example-algorithm.drawio.svg' %}" class="mx-auto d-block" alt="Example algorithm with one interface consisting of one input and two output sockets">
 
     <p>
-        You can select as many inputs and outputs as your algorithm needs.
-        However, the same interface option cannot be used for both input to and output from your algorithm.
+        You can select as many inputs and outputs for a single interface as you need.
+        However, the same socket option cannot be used for both input to and output from your algorithm.
         All inputs and outputs are required to be set when your algorithm runs.
         The inputs will be set by the user running your algorithm.
         Your algorithm must write valid data to all the outputs you set.
@@ -57,7 +58,7 @@
 
     <p>
         If an option does not exist for your use case please contact support with the title, description, and
-        kind for your new interface option.
+        kind for your new socket option.
     </p>
 
 {% endblock %}

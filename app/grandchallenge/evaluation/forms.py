@@ -21,16 +21,12 @@ from django.forms import (
 )
 from django.utils.html import format_html
 from django.utils.text import format_lazy
-from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from grandchallenge.components.forms import ContainerImageForm
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ImportStatusChoices,
-)
+from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
@@ -41,7 +37,6 @@ from grandchallenge.core.guardian import (
     filter_by_permission,
     get_objects_for_user,
 )
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
@@ -308,7 +303,10 @@ class SubmissionForm(
         label="Predictions File",
         queryset=None,
     )
-    algorithm = AlgorithmChoiceField(queryset=None)
+    algorithm = AlgorithmChoiceField(
+        queryset=None,
+        help_text="Select one of your algorithms to submit as a solution to this phase. See above for information regarding the necessary configuration of the algorithm.",
+    )
     confirm_submission = forms.BooleanField(
         required=True,
         label="I understand that by submitting my algorithm image and model "
@@ -427,24 +425,6 @@ class SubmissionForm(
             self.fields["algorithm_image"].required = False
             self.fields["algorithm_model"].widget = HiddenInput()
 
-            self._algorithm_inputs = self._phase.algorithm_inputs.all()
-            self._algorithm_outputs = self._phase.algorithm_outputs.all()
-            self.fields["algorithm"].help_text = format_lazy(
-                "Select one of your algorithms to submit as a solution to this "
-                "challenge. The algorithms need to work with the following inputs: {} "
-                "and the following outputs: {}. If you have not created your "
-                "algorithm yet you can "
-                "do so <a href={}>on this page</a>.",
-                oxford_comma(self._algorithm_inputs),
-                oxford_comma(self._algorithm_outputs),
-                reverse(
-                    "evaluation:phase-algorithm-create",
-                    kwargs={
-                        "slug": phase.slug,
-                        "challenge_short_name": phase.challenge.short_name,
-                    },
-                ),
-            )
             if (
                 not self._phase.active_image
                 and not self._phase.external_evaluation
@@ -486,7 +466,7 @@ class SubmissionForm(
         if (
             phase.submission_kind == SubmissionKindChoices.ALGORITHM
             and not phase.external_evaluation
-            and phase.count_valid_archive_items == 0
+            and phase.jobs_to_schedule_per_submission == 0
         ):
             self.add_error(
                 None,
@@ -741,14 +721,6 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
     phases = ModelMultipleChoiceField(
         queryset=None,
         widget=CheckboxSelectMultiple,
-    )
-    algorithm_inputs = ModelMultipleChoiceField(
-        queryset=ComponentInterface.objects.all(),
-        widget=Select2MultipleWidget,
-    )
-    algorithm_outputs = ModelMultipleChoiceField(
-        queryset=ComponentInterface.objects.all(),
-        widget=Select2MultipleWidget,
     )
     algorithm_time_limit = IntegerField(
         widget=forms.HiddenInput(),

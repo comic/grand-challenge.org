@@ -1,6 +1,6 @@
 import logging
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from rest_framework import serializers
 from rest_framework.fields import (
     CharField,
@@ -16,13 +16,15 @@ from rest_framework.relations import (
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    AlgorithmInterface,
     AlgorithmModel,
     Job,
+    annotate_input_output_counts,
 )
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
-from grandchallenge.components.models import CIVData, ComponentInterface
+from grandchallenge.components.models import CIVData
 from grandchallenge.components.serializers import (
     ComponentInterfaceSerializer,
     ComponentInterfaceValuePostSerializer,
@@ -30,6 +32,7 @@ from grandchallenge.components.serializers import (
     HyperlinkedComponentInterfaceValueSerializer,
 )
 from grandchallenge.core.guardian import filter_by_permission
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
@@ -37,12 +40,25 @@ from grandchallenge.hanging_protocols.serializers import (
 logger = logging.getLogger(__name__)
 
 
-class AlgorithmSerializer(serializers.ModelSerializer):
-    average_duration = SerializerMethodField()
+class AlgorithmInterfaceSerializer(serializers.ModelSerializer):
+    """Serializer without hyperlinks for internal use"""
+
     inputs = ComponentInterfaceSerializer(many=True, read_only=True)
     outputs = ComponentInterfaceSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = AlgorithmInterface
+        fields = [
+            "inputs",
+            "outputs",
+        ]
+
+
+class AlgorithmSerializer(serializers.ModelSerializer):
+    average_duration = SerializerMethodField()
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
+    interfaces = AlgorithmInterfaceSerializer(many=True, read_only=True)
 
     class Meta:
         model = Algorithm
@@ -55,8 +71,7 @@ class AlgorithmSerializer(serializers.ModelSerializer):
             "logo",
             "slug",
             "average_duration",
-            "inputs",
-            "outputs",
+            "interfaces",
         ]
 
     def get_average_duration(self, obj: Algorithm) -> float | None:
@@ -158,7 +173,6 @@ class HyperlinkedJobSerializer(JobSerializer):
         view_name="api:algorithm-detail",
         read_only=True,
     )
-
     inputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
     outputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
 
@@ -215,45 +229,10 @@ class JobPostSerializer(JobSerializer):
                 "You have run out of algorithm credits"
             )
 
-        # validate that no inputs are provided that are not configured for the
-        # algorithm and that all interfaces without defaults are provided
-        algorithm_input_pks = {a.pk for a in self._algorithm.inputs.all()}
-        input_pks = {i["interface"].pk for i in data["inputs"]}
-
-        # surplus inputs: provided but interfaces not configured for the algorithm
-        surplus = ComponentInterface.objects.filter(
-            id__in=list(input_pks - algorithm_input_pks)
-        )
-        if surplus:
-            titles = ", ".join(ci.title for ci in surplus)
-            raise serializers.ValidationError(
-                f"Provided inputs(s) {titles} are not defined for this algorithm"
-            )
-
-        # missing inputs
-        missing = self._algorithm.inputs.filter(
-            id__in=list(algorithm_input_pks - input_pks),
-            default_value__isnull=True,
-        )
-        if missing:
-            titles = ", ".join(ci.title for ci in missing)
-            raise serializers.ValidationError(
-                f"Interface(s) {titles} do not have a default value and should be provided."
-            )
-
         inputs = data.pop("inputs")
-
-        default_inputs = self._algorithm.inputs.filter(
-            id__in=list(algorithm_input_pks - input_pks),
-            default_value__isnull=False,
+        data["algorithm_interface"] = (
+            self.validate_inputs_and_return_matching_interface(inputs=inputs)
         )
-        # Use default interface values if not present
-        for interface in default_inputs:
-            if interface.default_value:
-                inputs.append(
-                    {"interface": interface, "value": interface.default_value}
-                )
-
         self.inputs = self.reformat_inputs(serialized_civs=inputs)
 
         if Job.objects.get_jobs_with_same_inputs(
@@ -297,6 +276,29 @@ class JobPostSerializer(JobSerializer):
                 logger.error(e, exc_info=True)
 
         return job
+
+    def validate_inputs_and_return_matching_interface(self, *, inputs):
+        """
+        Validates that the provided inputs match one of the configured interfaces of
+        the algorithm and returns that AlgorithmInterface
+        """
+        provided_inputs = {i["interface"] for i in inputs}
+        annotated_qs = annotate_input_output_counts(
+            self._algorithm.interfaces, inputs=provided_inputs
+        )
+        try:
+            interface = annotated_qs.get(
+                relevant_input_count=len(provided_inputs),
+                input_count=len(provided_inputs),
+            )
+            return interface
+        except ObjectDoesNotExist:
+            raise serializers.ValidationError(
+                f"The set of inputs provided does not match "
+                f"any of the algorithm's interfaces. This algorithm supports the "
+                f"following input combinations: "
+                f"{oxford_comma([f'Interface {n}: {oxford_comma(interface.inputs.all())}' for n, interface in enumerate(self._algorithm.interfaces.all(), start=1)])}"
+            )
 
     @staticmethod
     def reformat_inputs(*, serialized_civs):

@@ -497,7 +497,7 @@ def test_view_content_validation():
     with pytest.raises(ValidationError) as err:
         hp.full_clean()
 
-    assert "Unknown interfaces in view content for viewport main: test" in str(
+    assert "Unknown sockets in view content for viewport main: test" in str(
         err.value
     )
 
@@ -553,7 +553,7 @@ def test_at_most_two_images():
         hp.full_clean()
 
     assert (
-        "Maximum of one image interface is allowed per viewport, got 2 for viewport main:"
+        "Maximum of one image socket is allowed per viewport, got 2 for viewport main:"
         in str(err.value)
     )
 
@@ -591,7 +591,7 @@ def test_interfaces_that_must_be_isolated(interface_kind):
         hp.full_clean()
 
     assert (
-        "Some of the selected interfaces can only be displayed in isolation, found 2 for viewport main"
+        "Some of the selected sockets can only be displayed in isolation, found 2 for viewport main"
         in str(err.value)
     )
 
@@ -603,7 +603,7 @@ def test_interfaces_that_must_be_isolated(interface_kind):
         hp.full_clean()
 
     assert (
-        "Some of the selected interfaces can only be displayed in isolation, found 1 for viewport main"
+        "Some of the selected sockets can only be displayed in isolation, found 1 for viewport main"
         in str(err.value)
     )
 
@@ -625,7 +625,7 @@ def test_interfaces_that_cannot_be_displayed(interface_kind):
         hp.full_clean()
 
     assert (
-        "Some of the selected interfaces cannot be displayed, found 1 for viewport main:"
+        "Some of the selected sockets cannot be displayed, found 1 for viewport main:"
         in str(err.value)
     )
 

@@ -9,7 +9,11 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 
-from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmImage,
+    AlgorithmInterface,
+)
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.challenges.models import Challenge
@@ -122,9 +126,10 @@ def _create_challenge(
     p = Phase.objects.create(
         challenge=c, title="Phase 1", algorithm_time_limit=300
     )
-
-    p.algorithm_inputs.set(inputs)
-    p.algorithm_outputs.set(outputs)
+    interface = AlgorithmInterface.objects.create(
+        inputs=inputs, outputs=outputs
+    )
+    p.algorithm_interfaces.set([interface])
 
     p.title = "Algorithm Evaluation"
     p.submission_kind = SubmissionKindChoices.ALGORITHM
@@ -146,8 +151,10 @@ def _create_algorithm(*, creator, inputs, outputs, suffix):
         title=f"Test Algorithm Evaluation {suffix}",
         logo=create_uploaded_image(),
     )
-    algorithm.inputs.set(inputs)
-    algorithm.outputs.set(outputs)
+    interface = AlgorithmInterface.objects.create(
+        inputs=inputs, outputs=outputs
+    )
+    algorithm.interfaces.set([interface])
     algorithm.add_editor(creator)
 
     algorithm_image = AlgorithmImage(creator=creator, algorithm=algorithm)

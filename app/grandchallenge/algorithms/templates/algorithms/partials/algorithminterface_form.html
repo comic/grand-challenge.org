@@ -1,0 +1,15 @@
+{% load crispy_forms_tags %}
+{% load meta_attr %}
+
+<h2>Create An Algorithm Interface</h2>
+<p>
+    Create an interface: define any combination of inputs and outputs, and optionally mark the interface as default for the {{ base_obj|verbose_name }}.</p>
+<p>
+    Please see the <a href="{% url 'components:component-interface-list-input' %}">list of input options</a> and the <a href="{% url 'components:component-interface-list-output' %}">
+    list of output options </a> for more information and examples.
+</p>
+<p>
+    If you cannot find suitable inputs or outputs, please contact <a href="mailto:support@grand-challenge.org">support@grand-challenge.org</a>.
+</p>
+
+{% crispy form %}

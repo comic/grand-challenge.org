@@ -2,24 +2,8 @@ import pytest
 
 from grandchallenge.evaluation.admin import PhaseAdmin
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import ChallengeFactory
-
-
-@pytest.mark.django_db
-def test_disjoint_interfaces():
-    i = ComponentInterfaceFactory()
-    p = PhaseFactory(challenge=ChallengeFactory())
-    form = PhaseAdmin.form(
-        instance=p,
-        data={"algorithm_inputs": [i.pk], "algorithm_outputs": [i.pk]},
-    )
-    assert form.is_valid() is False
-    assert (
-        "The sets of Algorithm Inputs and Algorithm Outputs must be unique"
-        in str(form.errors)
-    )
 
 
 @pytest.mark.django_db
@@ -34,8 +18,7 @@ def test_read_only_fields_disabled():
     form = PhaseAdmin.form(
         instance=p1,
     )
-    assert form.fields["algorithm_inputs"].disabled
-    assert form.fields["algorithm_outputs"].disabled
+    assert form.fields["algorithm_interfaces"].disabled
     assert form.fields["submission_kind"].disabled
 
     p3, p4 = PhaseFactory.create_batch(

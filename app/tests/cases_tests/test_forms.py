@@ -46,7 +46,7 @@ def test_upload_some_images(
         response = get_view_for_user(
             data={
                 "user_uploads": [user_upload.pk],
-                "interface": ComponentInterface.objects.first().pk,
+                "socket": ComponentInterface.objects.first().pk,
             },
             client=client,
             viewname="reader-studies:display-sets-create",

@@ -1,0 +1,20 @@
+{% load remove_whitespace %}
+
+<h2>Confirm Algorithm Interface Deletion</h2>
+<form action="" method="post">
+    {% csrf_token %}
+    <p>Are you sure that you want to delete the following algorithm interface from this {{ base_obj.verbose_name }}?</p>
+    <ul>
+        <li>Inputs: {{ object.interface.inputs.all|oxford_comma }}</li>
+        <li>Outputs: {{ object.interface.outputs.all|oxford_comma }}</li>
+    </ul>
+    <p>
+        <b class="text-danger">WARNING: You are not able to undo this action. Once the interface is deleted, it is deleted forever.</b>
+    </p>
+    <a href="{{ base_obj.algorithm_interface_list_url }}"
+       type="button"
+       class="btn btn-secondary">Cancel</a>
+    <input type="submit"
+           value="I understand, delete interface"
+           class="btn btn-danger"/>
+</form>

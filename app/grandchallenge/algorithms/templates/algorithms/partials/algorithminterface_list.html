@@ -1,0 +1,12 @@
+{% load crispy_forms_tags %}
+{% load remove_whitespace %}
+{% load meta_attr %}
+
+<h2>Algorithm Interfaces for {{ base_obj }}</h2>
+
+<p>The following interfaces (i.e. input-output combinations) are configured for your {{ base_obj|verbose_name }}:</p>
+<p>
+    <a class="btn btn-primary" href="{{ base_obj.algorithm_interface_create_url }}">Add new interface</a>
+</p>
+
+{% include 'algorithms/partials/algorithminterface_table.html' with base_obj=base_obj interfaces=interfaces delete_option=True %}

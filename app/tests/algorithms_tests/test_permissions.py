@@ -18,6 +18,7 @@ from grandchallenge.evaluation.tasks import (
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
@@ -313,7 +314,10 @@ class TestJobPermissions:
             kind=InterfaceKind.InterfaceKindChoices.ANY,
             store_in_database=True,
         )
-        algorithm_image.algorithm.inputs.set([ci])
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci], outputs=[ComponentInterfaceFactory()]
+        )
+        algorithm_image.algorithm.interfaces.add(interface)
 
         response = get_view_for_user(
             viewname="algorithms:job-create",
@@ -321,6 +325,7 @@ class TestJobPermissions:
             method=client.post,
             reverse_kwargs={
                 "slug": algorithm_image.algorithm.slug,
+                "interface_pk": algorithm_image.algorithm.interfaces.first().pk,
             },
             user=user,
             follow=True,
@@ -346,18 +351,21 @@ class TestJobPermissions:
             is_in_registry=True,
             is_desired_version=True,
         )
-        interfaces = {
-            ComponentInterfaceFactory(
-                kind=ComponentInterface.Kind.STRING,
-                title="TestInterface 1",
-                default_value="default",
-            ),
-        }
-        algorithm_image.algorithm.inputs.set(interfaces)
+        ci = ComponentInterfaceFactory(
+            kind=ComponentInterface.Kind.STRING,
+            title="TestInterface 1",
+            default_value="default",
+        )
+
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        algorithm_image.algorithm.interfaces.add(interface)
         algorithm_image.algorithm.add_user(user)
         algorithm_image.algorithm.add_editor(UserFactory())
 
-        job = {"algorithm": algorithm_image.algorithm.api_url, "inputs": []}
+        job = {
+            "algorithm": algorithm_image.algorithm.api_url,
+            "inputs": [{"interface": ci.slug, "value": "foo"}],
+        }
 
         # test
         request = rf.get("/foo")
@@ -391,12 +399,10 @@ class TestJobPermissions:
         im = ImageFactory()
         s.image_set.set([im])
 
-        input_interface = ComponentInterface.objects.get(
-            slug="generic-medical-image"
-        )
-        civ = ComponentInterfaceValueFactory(
-            image=im, interface=input_interface
-        )
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        ai.algorithm.interfaces.add(interface)
+        civ = ComponentInterfaceValueFactory(image=im, interface=ci)
 
         archive_item = ArchiveItemFactory(archive=archive)
         with django_capture_on_commit_callbacks(execute=True):
@@ -451,12 +457,10 @@ class TestJobPermissions:
         im = ImageFactory()
         s.image_set.set([im])
 
-        input_interface = ComponentInterface.objects.get(
-            slug="generic-medical-image"
-        )
-        civ = ComponentInterfaceValueFactory(
-            image=im, interface=input_interface
-        )
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        ai.algorithm.interfaces.add(interface)
+        civ = ComponentInterfaceValueFactory(image=im, interface=ci)
 
         archive_item = ArchiveItemFactory(archive=archive)
         with django_capture_on_commit_callbacks(execute=True):
@@ -509,15 +513,14 @@ class TestJobPermissions:
         im = ImageFactory()
         s.image_set.set([im])
 
-        input_interface = ComponentInterface.objects.get(
-            slug="generic-medical-image"
-        )
-        civ = ComponentInterfaceValueFactory(
-            image=im, interface=input_interface
-        )
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        civ = ComponentInterfaceValueFactory(image=im, interface=ci)
         archive_item = ArchiveItemFactory(archive=archive)
         with django_capture_on_commit_callbacks(execute=True):
             archive_item.values.add(civ)
+
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        ai.algorithm.interfaces.add(interface)
 
         create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
 

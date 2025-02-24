@@ -279,7 +279,7 @@ class SingleCIVForm(Form):
             widget = autocomplete.ModelSelect2
             attrs.update(
                 {
-                    "data-placeholder": "Search for an interface ...",
+                    "data-placeholder": "Search for a socket ...",
                     "data-minimum-input-length": 3,
                     "data-theme": settings.CRISPY_TEMPLATE_PACK,
                     "data-html": True,
@@ -296,12 +296,12 @@ class SingleCIVForm(Form):
             initial=selected_interface,
             queryset=qs,
             widget=widget(**widget_kwargs),
-            label="Interface",
+            label="Socket",
             help_text=format_lazy(
                 (
-                    'See the <a href="{}">list of interfaces</a> for more '
-                    "information about each interface. "
-                    "Please contact support if your desired interface is missing."
+                    'See the <a href="{}">list of sockets</a> for more '
+                    "information about each socket. "
+                    "Please contact support if your desired socket is missing."
                 ),
                 reverse_lazy(base_obj.interface_viewname),
             ),

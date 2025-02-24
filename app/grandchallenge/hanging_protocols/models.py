@@ -316,10 +316,10 @@ class HangingProtocolMixin(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         help_text=(
-            "Indicate which Component Interfaces need to be displayed in "
-            'which image port. E.g. {"main": ["interface1"]}. The first '
-            "item in the list of interfaces will be the main image in "
-            "the image port. The first overlay type interface thereafter "
+            "Indicate which sockets need to be displayed in "
+            'which image port. E.g. {"main": ["socket1"]}. The first '
+            "item in the list of sockets will be the main image in "
+            "the image port. The first overlay type socket thereafter "
             "will be rendered as an overlay. For now, any other items "
             "will be ignored by the viewer."
         ),
@@ -356,7 +356,7 @@ class HangingProtocolMixin(models.Model):
 
             if set(slugs) != {i.slug for i in viewport_interfaces}:
                 raise ValidationError(
-                    f"Unknown interfaces in view content for viewport {viewport}: {', '.join(slugs)}"
+                    f"Unknown sockets in view content for viewport {viewport}: {', '.join(slugs)}"
                 )
 
             image_interfaces = [
@@ -367,7 +367,7 @@ class HangingProtocolMixin(models.Model):
 
             if len(image_interfaces) > 1:
                 raise ValidationError(
-                    "Maximum of one image interface is allowed per viewport, "
+                    "Maximum of one image socket is allowed per viewport, "
                     f"got {len(image_interfaces)} for viewport {viewport}: "
                     f"{', '.join(i.slug for i in image_interfaces)}"
                 )
@@ -383,7 +383,7 @@ class HangingProtocolMixin(models.Model):
                 and len(viewport_interfaces) > 1
             ):
                 raise ValidationError(
-                    "Some of the selected interfaces can only be displayed in isolation, "
+                    "Some of the selected sockets can only be displayed in isolation, "
                     f"found {len(mandatory_isolation_interfaces)} for viewport {viewport}: "
                     f"{', '.join(i.slug for i in mandatory_isolation_interfaces)}"
                 )
@@ -396,7 +396,7 @@ class HangingProtocolMixin(models.Model):
 
             if len(undisplayable_interfaces) > 0:
                 raise ValidationError(
-                    "Some of the selected interfaces cannot be displayed, "
+                    "Some of the selected sockets cannot be displayed, "
                     f"found {len(undisplayable_interfaces)} for viewport {viewport}: "
                     f"{', '.join(i.slug for i in undisplayable_interfaces)}"
                 )

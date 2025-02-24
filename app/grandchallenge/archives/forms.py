@@ -206,14 +206,14 @@ class ArchiveItemsToReaderStudyForm(SaveFormInitMixin, Form):
 
 
 class AddCasesForm(UploadRawImagesForm):
-    interface = ModelChoiceField(
+    socket = ModelChoiceField(
         queryset=ComponentInterface.objects.filter(
             kind__in=InterfaceKind.interface_type_image()
         ).order_by("title"),
         widget=autocomplete.ModelSelect2(
             url="components:component-interface-autocomplete",
             attrs={
-                "data-placeholder": "Search for an interface ...",
+                "data-placeholder": "Search for a socket ...",
                 "data-minimum-input-length": 3,
                 "data-theme": settings.CRISPY_TEMPLATE_PACK,
                 "data-html": True,
@@ -223,18 +223,18 @@ class AddCasesForm(UploadRawImagesForm):
 
     def __init__(self, *args, interface_viewname, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["interface"].help_text = format_lazy(
+        self.fields["socket"].help_text = format_lazy(
             (
-                'See the <a href="{}">list of interfaces</a> for more '
-                "information about each interface. "
-                "Please contact support if your desired interface is missing."
+                'See the <a href="{}">list of sockets</a> for more '
+                "information about each socket. "
+                "Please contact support if your desired socket is missing."
             ),
             reverse_lazy(interface_viewname),
         )
 
     def save(self, *args, **kwargs):
         self._linked_task.kwargs.update(
-            {"interface_pk": self.cleaned_data["interface"].pk}
+            {"interface_pk": self.cleaned_data["socket"].pk}
         )
         return super().save(*args, **kwargs)
 

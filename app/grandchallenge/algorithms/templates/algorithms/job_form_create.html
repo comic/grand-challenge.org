@@ -36,59 +36,66 @@
 {% block content %}
     <h2>Try-out Algorithm</h2>
 
-    {{ algorithm.job_create_page_markdown|md2html }}
-
     {% get_obj_perms request.user for algorithm as "algorithm_perms" %}
 
-    {% if not algorithm.active_image %}
-        <p>
-            This algorithm is not ready to be used.
-            {% if 'change_algorithm' in algorithm_perms %}
-                Please upload a valid container image for this algorithm.
-            {% endif %}
-        </p>
-    {% elif form.jobs_limit < 1 %}
-        <p>
-            You have run out of credits to try this algorithm.
-            You can request more credits by sending an e-mail to
-            <a href="{{ 'mailto:support@grand-challenge.org'|random_encode|safe }}" class="text-radboud">
-                support@grand-challenge.org</a>.
-        </p>
+    {% if not algorithm.interfaces.all and 'change_algorithm' in algorithm_perms %}
+        <p>Your algorithm does not have any interfaces yet. You need to define at least one interface (i.e. input - output combination) before you can try it out.</p>
+        <p>To define an interface, navigate <a href="{% url 'algorithms:interface-list' slug=algorithm.slug %}">here</a>.</p>
+    {% elif not algorithm.interfaces.all %}
+        <p>This algorithm is not fully configured yet and hence cannot be used.</p>
     {% else %}
-        <p>
-            Select the data that you would like to run the algorithm on.
-        </p>
-        <p>
-            {% if 'change_algorithm' in algorithm_perms %}
-                As an editor for this algorithm you can test and debug your algorithm in total {{ editors_job_limit }} times per unique algorithm image.
-                You share these credits with all other editors of this algorithm.
-                Once you have reached the limit, any extra jobs will be deducted from your personal algorithm credits,
-                of which you get {{ request.user.user_credit.credits }} per month.
-            {% else %}
-                You receive {{ request.user.user_credit.credits }} credits per month.
-            {% endif %}
-            Using this algorithm requires {{ algorithm.credits_per_job }}
-            credit{{ algorithm.credits_per_job|pluralize }} per job.
-            You can currently create up to {{ form.jobs_limit }} job{{ form.jobs_limit|pluralize }} for this algorithm.
-        </p>
+        {{ algorithm.job_create_page_markdown|md2html }}
 
-        <form method="POST">
-            {% csrf_token %}
-            {{ form|crispy }}
-            <input type="submit" name="save" value="Submit" class="btn btn-primary" id="submit-id-save">
-        </form>
+        {% if not algorithm.active_image %}
+            <p>
+                This algorithm is not ready to be used.
+                {% if 'change_algorithm' in algorithm_perms %}
+                    Please upload a valid container image for this algorithm.
+                {% endif %}
+            </p>
+        {% elif form.jobs_limit < 1 %}
+            <p>
+                You have run out of credits to try this algorithm.
+                You can request more credits by sending an e-mail to
+                <a href="{{ 'mailto:support@grand-challenge.org'|random_encode|safe }}" class="text-radboud">
+                    support@grand-challenge.org</a>.
+            </p>
+        {% else %}
+            <p>
+                Select the data that you would like to run the algorithm on.
+            </p>
+            <p>
+                {% if 'change_algorithm' in algorithm_perms %}
+                    As an editor for this algorithm you can test and debug your algorithm in total {{ editors_job_limit }} times per unique algorithm image.
+                    You share these credits with all other editors of this algorithm.
+                    Once you have reached the limit, any extra jobs will be deducted from your personal algorithm credits,
+                    of which you get {{ request.user.user_credit.credits }} per month.
+                {% else %}
+                    You receive {{ request.user.user_credit.credits }} credits per month.
+                {% endif %}
+                Using this algorithm requires {{ algorithm.credits_per_job }}
+                credit{{ algorithm.credits_per_job|pluralize }} per job.
+                You can currently create up to {{ form.jobs_limit }} job{{ form.jobs_limit|pluralize }} for this algorithm.
+            </p>
 
-        <p>
-            By running this algorithm you agree to the
-            <a href="{% url 'policies:detail' slug='terms-of-service' %}"> General
-                Terms of Service</a>{% if algorithm.additional_terms_markdown %},
-            as well as this algorithm's specific Terms of Service:
-            {% else %}.
-            {% endif %}
-        </p>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <input type="submit" name="save" value="Submit" class="btn btn-primary" id="submit-id-save">
+            </form>
 
-        {{ algorithm.additional_terms_markdown|md2html }}
+            <p>
+                By running this algorithm you agree to the
+                <a href="{% url 'policies:detail' slug='terms-of-service' %}"> General
+                    Terms of Service</a>{% if algorithm.additional_terms_markdown %},
+                as well as this algorithm's specific Terms of Service:
+                {% else %}.
+                {% endif %}
+            </p>
 
+            {{ algorithm.additional_terms_markdown|md2html }}
+
+        {% endif %}
     {% endif %}
 
 {% endblock %}

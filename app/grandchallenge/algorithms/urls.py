@@ -13,6 +13,9 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageTemplate,
     AlgorithmImageUpdate,
     AlgorithmImportView,
+    AlgorithmInterfaceForAlgorithmCreate,
+    AlgorithmInterfaceForAlgorithmDelete,
+    AlgorithmInterfacesForAlgorithmList,
     AlgorithmList,
     AlgorithmModelCreate,
     AlgorithmModelDetail,
@@ -30,6 +33,7 @@ from grandchallenge.algorithms.views import (
     EditorsUpdate,
     JobCreate,
     JobDetail,
+    JobInterfaceSelect,
     JobProgressDetail,
     JobsList,
     JobStatusDetail,
@@ -55,6 +59,21 @@ urlpatterns = [
         "<slug>/description-update/",
         AlgorithmDescriptionUpdate.as_view(),
         name="description-update",
+    ),
+    path(
+        "<slug>/interfaces/",
+        AlgorithmInterfacesForAlgorithmList.as_view(),
+        name="interface-list",
+    ),
+    path(
+        "<slug>/interfaces/create/",
+        AlgorithmInterfaceForAlgorithmCreate.as_view(),
+        name="interface-create",
+    ),
+    path(
+        "<slug>/interfaces/<uuid:interface_pk>/delete/",
+        AlgorithmInterfaceForAlgorithmDelete.as_view(),
+        name="interface-delete",
     ),
     path(
         "<slug>/repository/",
@@ -127,7 +146,16 @@ urlpatterns = [
         name="model-update",
     ),
     path("<slug>/jobs/", JobsList.as_view(), name="job-list"),
-    path("<slug>/jobs/create/", JobCreate.as_view(), name="job-create"),
+    path(
+        "<slug:slug>/jobs/interface-select/",
+        JobInterfaceSelect.as_view(),
+        name="job-interface-select",
+    ),
+    path(
+        "<slug:slug>/<uuid:interface_pk>/jobs/create/",
+        JobCreate.as_view(),
+        name="job-create",
+    ),
     path("<slug>/jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
     path(
         "<slug>/jobs/<uuid:pk>/status/",
