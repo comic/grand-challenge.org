@@ -59,6 +59,16 @@ class Download(models.Model):
     )
 
 
+def get_object_if_allowed(*, model, pk, user, codename):
+    try:
+        obj = model.objects.get(pk=pk)
+    except model.DoesNotExist:
+        return
+
+    if user.has_perm(codename, obj):
+        return obj
+
+
 def get_component_interface_values_for_user(
     *,
     user,
@@ -72,6 +82,9 @@ def get_component_interface_values_for_user(
         extra_filter_kwargs["pk"] = civ_pk
 
     civs = ComponentInterfaceValue.objects.filter(**extra_filter_kwargs)
+
+    if not civs:
+        return civs
 
     job_query = filter_by_permission(
         queryset=Job.objects.all(),

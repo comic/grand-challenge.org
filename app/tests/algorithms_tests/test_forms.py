@@ -208,14 +208,14 @@ def test_algorithm_create(client, uploaded_image):
             "generic-overlay",
             [
                 '<select class="custom-select"',
-                f'name="WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}generic-overlay"',
+                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}generic-overlay"',
             ],
         ),
         (
             "generic-medical-image",
             [
                 '<select class="custom-select"',
-                f'name="WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}generic-medical-image"',
+                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}generic-medical-image"',
             ],
         ),
         (

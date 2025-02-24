@@ -23,7 +23,7 @@ from grandchallenge.components.backends.exceptions import (
 )
 from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
-    InterfaceFormField,
+    InterfaceFormFieldFactory,
 )
 from grandchallenge.components.models import CIVData, ComponentInterface
 from grandchallenge.core.forms import SaveFormInitMixin
@@ -108,7 +108,7 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 
 
 class MultipleCIVForm(Form):
-    _possible_widgets = InterfaceFormField._possible_widgets
+    possible_widgets = InterfaceFormFieldFactory.possible_widgets
 
     def __init__(self, *args, instance, base_obj, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -138,13 +138,12 @@ class MultipleCIVForm(Form):
                     interface__slug=slug
                 ).first()
 
-            self.fields[prefixed_interface_slug] = InterfaceFormField(
-                instance=interface,
-                initial=current_value,
-                required=False,
+            self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
+                interface=interface,
                 user=self.user,
-                form_data=self.data,
-            ).field
+                required=False,
+                initial=current_value,
+            )
 
         # Add fields for dynamically added new interfaces:
         # These are sent along as form data like all other fields, so we can't
@@ -168,13 +167,12 @@ class MultipleCIVForm(Form):
                 else:
                     current_value = self.data[slug]
 
-                self.fields[slug] = InterfaceFormField(
-                    instance=interface,
-                    initial=current_value,
-                    required=False,
+                self.fields[slug] = InterfaceFormFieldFactory(
+                    interface=interface,
                     user=self.user,
-                    form_data=self.data,
-                ).field
+                    required=False,
+                    initial=current_value,
+                )
 
     def process_object_data(self):
         civs = []
@@ -231,8 +229,8 @@ class CIVSetUpdateFormMixin:
 
 
 class SingleCIVForm(Form):
-    _possible_widgets = {
-        *InterfaceFormField._possible_widgets,
+    possible_widgets = {
+        *InterfaceFormFieldFactory.possible_widgets,
         autocomplete.ModelSelect2,
         Select,
     }
@@ -310,12 +308,11 @@ class SingleCIVForm(Form):
         if selected_interface is not None:
             self.fields[
                 f"{INTERFACE_FORM_FIELD_PREFIX}{selected_interface.slug}"
-            ] = InterfaceFormField(
-                instance=selected_interface,
+            ] = InterfaceFormFieldFactory(
+                interface=selected_interface,
                 user=user,
                 required=selected_interface.value_required,
-                form_data=self.data,
-            ).field
+            )
 
 
 class CIVSetDeleteForm(Form):
