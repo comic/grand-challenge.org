@@ -1756,3 +1756,41 @@ def test_phase_archive_info_permissions(client):
         user=editor,
     )
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_evaluation_details_error_message(client):
+    evaluation_error_message = "Test evaluation error message"
+
+    evaluation = EvaluationFactory(time_limit=60)
+
+    response = get_view_for_user(
+        viewname="evaluation:detail",
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "pk": evaluation.pk,
+        },
+        user=evaluation.submission.phase.challenge.creator,
+        challenge=evaluation.submission.phase.challenge,
+    )
+
+    assert response.status_code == 200
+    assert evaluation_error_message not in response.rendered_content
+
+    evaluation.error_message = "Test evaluation error message"
+    evaluation.save()
+
+    response = get_view_for_user(
+        viewname="evaluation:detail",
+        client=client,
+        method=client.get,
+        reverse_kwargs={
+            "pk": evaluation.pk,
+        },
+        user=evaluation.submission.phase.challenge.creator,
+        challenge=evaluation.submission.phase.challenge,
+    )
+
+    assert response.status_code == 200
+    assert evaluation_error_message in response.rendered_content

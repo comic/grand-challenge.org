@@ -35,7 +35,7 @@ def test_onboarding_task_mark_complete_action():
 
 
 @pytest.mark.django_db
-def test_onboarding_task_move_dealine_action():
+def test_onboarding_task_move_deadline_action():
     ch = ChallengeFactory()
     deadline = now()
     tasks = OnboardingTaskFactory.create_batch(

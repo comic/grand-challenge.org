@@ -161,7 +161,7 @@ def test_algorithm_create(client, uploaded_image):
 
     def try_create_algorithm():
         return get_view_for_user(
-            viewname="algorithms:create",
+            viewname="algorithms:custom-create",
             client=client,
             method=client.post,
             data={
@@ -306,8 +306,8 @@ def test_algorithm_create(client, uploaded_image):
         (
             "anything",
             [
-                'class="user-upload"',
-                f'<div id="X_id_{INTERFACE_FORM_FIELD_PREFIX}anything-drag-drop"',
+                '<select class="custom-select"',
+                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}anything"',
             ],
         ),
     ),

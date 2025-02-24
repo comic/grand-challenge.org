@@ -1,0 +1,10 @@
+{% extends 'admin/base.html' %}
+{% load static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+
+    {% if not DEBUG %}
+        <link href="{% static "css/django_admin/django_admin.css" %}" rel="stylesheet">
+    {% endif %}
+{% endblock %}

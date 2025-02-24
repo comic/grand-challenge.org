@@ -16,6 +16,7 @@ from grandchallenge.cases.widgets import ImageWidgetChoices
 from grandchallenge.components.backends import docker_client
 from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.widgets import FileWidgetChoices
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
 from tests.algorithms_tests.factories import (
@@ -596,7 +597,12 @@ def algorithm_with_multiple_inputs():
     )
 
 
-def get_interface_form_data(*, interface_slug, data, existing_data=False):
+def get_interface_form_data(
+    *,
+    interface_slug,
+    data,
+    existing_data=False,
+):
     ci = ComponentInterface.objects.get(slug=interface_slug)
     form_data = {f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": data}
     if ci.is_image_kind:
@@ -611,11 +617,11 @@ def get_interface_form_data(*, interface_slug, data, existing_data=False):
     elif ci.requires_file:
         if existing_data:
             form_data[
-                f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
-            ] = "civ"
+                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+            ] = FileWidgetChoices.FILE_SEARCH.name
         else:
             form_data[
-                f"value_type_{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
-            ] = "uuid"
+                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+            ] = FileWidgetChoices.FILE_UPLOAD.name
 
     return form_data

@@ -190,6 +190,7 @@ STORAGES = {
 # Subdirectories on root for various files
 IMAGE_FILES_SUBDIRECTORY = "images"
 EVALUATION_FILES_SUBDIRECTORY = "evaluation"
+EVALUATION_SUPPLEMENTARY_FILES_SUBDIRECTORY = "evaluation-supplementary"
 COMPONENTS_FILES_SUBDIRECTORY = "components"
 
 # Minio differs from s3, we know:
@@ -244,6 +245,7 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
     ),
+    "custom_domain": os.environ.get("PUBLIC_S3_CUSTOM_DOMAIN"),
     # Public bucket so do not use querystring_auth
     "querystring_auth": False,
     "default_acl": "public-read",
@@ -509,6 +511,7 @@ DJANGO_APPS = [
     "whitenoise.runserver_nostatic",  # Keep whitenoise above staticfiles
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "grandchallenge.django_admin",  # Keep above django.contrib.admin
     "django.contrib.admin",
     "django.contrib.postgres",
     "django.contrib.flatpages",
@@ -608,6 +611,7 @@ LOCAL_APPS = [
     "grandchallenge.direct_messages",
     "grandchallenge.incentives",
     "grandchallenge.browser_sessions",
+    "grandchallenge.well_known",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -634,7 +638,7 @@ AUTHENTICATION_BACKENDS = [
 ACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.AccountAdapter"
 ACCOUNT_SIGNUP_FORM_CLASS = "grandchallenge.profiles.forms.SignupForm"
 
-ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_LOGIN_METHODS = {"email", "username"}
 ACCOUNT_EMAIL_NOTIFICATIONS = True
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
@@ -1127,6 +1131,7 @@ READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 ###############################################################################
 
 CHALLENGES_DEFAULT_ACTIVE_MONTHS = 12
+CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF = timedelta(days=7)
 
 ###############################################################################
 #
@@ -1192,6 +1197,11 @@ WORKSTATIONS_GRACE_MINUTES = 5
 # Extra domains to broadcast workstation control messages to. Used in tests.
 WORKSTATIONS_EXTRA_BROADCAST_DOMAINS = []
 
+# The limit on concurrent API requests for each workstation session
+WORKSTATIONS_MAX_CONCURRENT_API_REQUESTS = int(
+    os.environ.get("WORKSTATIONS_MAX_CONCURRENT_API_REQUESTS", 10)
+)
+
 INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = json.loads(
     os.environ.get("INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS", "null")
 )
@@ -1228,6 +1238,10 @@ CELERY_BEAT_SCHEDULE = {
     "update_site_statistics": {
         "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
         "schedule": crontab(hour=5, minute=30),
+    },
+    "send_onboarding_task_reminder_emails": {
+        "task": "grandchallenge.challenges.tasks.send_onboarding_task_reminder_emails",
+        "schedule": crontab(day_of_week="mon", hour=6, minute=0),
     },
     "delete_users_who_dont_login": {
         "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
@@ -1344,7 +1358,7 @@ DISALLOWED_CHALLENGE_NAMES = {
     "mugshots",
     "docker",
     EVALUATION_FILES_SUBDIRECTORY,
-    "evaluation-supplementary",
+    EVALUATION_SUPPLEMENTARY_FILES_SUBDIRECTORY,
     "favicon",
     "i",
     "cache",

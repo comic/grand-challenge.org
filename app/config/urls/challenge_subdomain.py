@@ -1,19 +1,18 @@
 from django.conf import settings
 from django.urls import include, path
-from django.views.generic import TemplateView
 
-from grandchallenge.challenges.views import ChallengeUpdate
+from grandchallenge.challenges.views import (
+    ChallengeUpdate,
+    OnboardingTaskComplete,
+    OnboardingTaskList,
+)
 
 handler500 = "grandchallenge.core.views.handler500"
 
 
 urlpatterns = [
     path(
-        "robots.txt",
-        TemplateView.as_view(
-            template_name="robots.txt", content_type="text/plain"
-        ),
-        name="subdomain_robots_txt",
+        "", include("grandchallenge.well_known.urls", namespace="well-known")
     ),
     path(
         "evaluation/",
@@ -26,6 +25,16 @@ urlpatterns = [
     ),
     path("admins/", include("grandchallenge.admins.urls", namespace="admins")),
     path("update/", ChallengeUpdate.as_view(), name="challenge-update"),
+    path(
+        "onboarding-tasks/",
+        OnboardingTaskList.as_view(),
+        name="challenge-onboarding-task-list",
+    ),
+    path(
+        "onboarding-tasks/<uuid:pk>/complete/",
+        OnboardingTaskComplete.as_view(),
+        name="challenge-onboarding-task-complete",
+    ),
     path("markdownx/", include("markdownx.urls")),
     path("", include("grandchallenge.pages.urls", namespace="pages")),
 ]

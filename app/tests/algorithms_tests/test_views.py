@@ -25,6 +25,8 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
@@ -43,6 +45,7 @@ from tests.components_tests.factories import (
 from tests.conftest import get_interface_form_data
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import ImageFactory, UserFactory
+from tests.invoices_tests.factories import InvoiceFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
@@ -56,18 +59,20 @@ from tests.verification_tests.factories import VerificationFactory
 def test_create_link_view(client, settings):
     user = UserFactory()
 
+    VerificationFactory(user=user, is_verified=True)
+
     response = get_view_for_user(
-        viewname="algorithms:list", client=client, user=user
+        viewname="algorithms:create-redirect", client=client, user=user
     )
-    assert reverse("algorithms:create") not in response.rendered_content
+    assert reverse("algorithms:custom-create") not in response.rendered_content
 
     g = Group.objects.get(name=settings.ALGORITHMS_CREATORS_GROUP_NAME)
     g.user_set.add(user)
 
     response = get_view_for_user(
-        viewname="algorithms:list", client=client, user=user
+        viewname="algorithms:create-redirect", client=client, user=user
     )
-    assert reverse("algorithms:create") in response.rendered_content
+    assert reverse("algorithms:custom-create") in response.rendered_content
 
 
 @pytest.mark.django_db
@@ -354,7 +359,7 @@ class TestObjectPermissionRequiredViews:
         VerificationFactory(user=u, is_verified=True)
 
         for view_name, kwargs, permission, obj, redirect in [
-            ("create", {}, "algorithms.add_algorithm", None, None),
+            ("custom-create", {}, "algorithms.add_algorithm", None, None),
             (
                 "detail",
                 {"slug": ai.algorithm.slug},
@@ -2240,3 +2245,76 @@ def test_algorithm_statistics_view(client):
     assert f"<dd>{len(failed_jobs)}</dd>" in response2.rendered_content
     assert top_user_profile in response2.rendered_content
     assert f"{total_jobs} jobs" in response2.rendered_content
+
+
+@pytest.mark.django_db
+def test_algorithm_create_redirect(client):
+    user = UserFactory()
+    VerificationFactory(user=user, is_verified=True)
+
+    open_phase, closed_phase, non_public_phase, non_participant_phase = (
+        PhaseFactory.create_batch(
+            4,
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            submissions_limit_per_user_per_period=1,
+        )
+    )
+
+    open_phase.challenge.add_participant(user=user)
+    closed_phase.challenge.add_participant(user=user)
+
+    non_public_phase.challenge.add_participant(user=user)
+    non_public_phase.public = False
+    non_public_phase.save()
+
+    InvoiceFactory(
+        challenge=open_phase.challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+
+    response = get_view_for_user(
+        viewname="algorithms:create-redirect",
+        client=client,
+        user=user,
+    )
+
+    assert response.status_code == 200
+    assert {*response.context["form"].fields["phase"].queryset} == {
+        open_phase,
+        closed_phase,
+    }
+
+    response = get_view_for_user(
+        viewname="algorithms:create-redirect",
+        client=client,
+        user=user,
+        method=client.post,
+        data={"phase": open_phase.pk},
+    )
+
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "evaluation:phase-algorithm-create",
+        kwargs={
+            "challenge_short_name": open_phase.challenge.short_name,
+            "slug": open_phase.slug,
+        },
+    )
+
+    response = get_view_for_user(
+        viewname="algorithms:create-redirect",
+        client=client,
+        user=user,
+        method=client.post,
+        data={"phase": closed_phase.pk},
+    )
+
+    assert response.status_code == 200
+    assert response.context["form"].errors == {
+        "phase": [
+            "This phase is not currently open for submissions, please try again later."
+        ]
+    }

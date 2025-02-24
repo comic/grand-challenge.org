@@ -17,7 +17,19 @@ from django.core.validators import (
     validate_slug,
 )
 from django.db import models
-from django.db.models import ExpressionWrapper, F, OuterRef, Q, Subquery, Sum
+from django.db.models import (
+    BooleanField,
+    Case,
+    Count,
+    ExpressionWrapper,
+    F,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+    Value,
+    When,
+)
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -26,7 +38,7 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
-from django.utils.timezone import now
+from django.utils.timezone import now, timedelta
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -52,6 +64,7 @@ from grandchallenge.components.schemas import (
     GPUTypeChoices,
     get_default_gpu_type_choices,
 )
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
@@ -490,6 +503,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
                 self.add_admin(user=self.creator)
             self.create_forum_permissions()
             self.create_default_pages()
+            self.create_default_onboarding_tasks()
 
         if adding or self.hidden != self._hidden_orig:
             on_commit(
@@ -649,6 +663,83 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             ),
             challenge=self,
             permission_level=Page.ALL,
+        )
+
+    def create_default_onboarding_tasks(self):
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Create Phases",
+            description="Create and configure the different phases of the challenge.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=1),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Define Inputs and Outputs",
+            description="E-mail support@grand-challenge.org and communicate the required input "
+            "and output data formats for participant's algorithms.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=2),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Plan Onboarding Meeting",
+            description="Create a Challenge Pack and have an onboarding meeting with challenge organizers.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
+            deadline=self.created + timedelta(weeks=2),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Have Onboarding Meeting",
+            description="Receive a Challenge Pack and have an onboarding meeting with support staff.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=3),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Create Archives",
+            description="Create an archive per algorithm-type phase for the challenge.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
+            deadline=self.created + timedelta(weeks=3),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Upload Data to Archives",
+            description="Add data to the relevant archives. Archives must be created by support. Please "
+            "e-mail support@grand-challenge.org if that is delayed.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=5),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Create Example Algorithm",
+            description="Implement and document a baseline example algorithm for participants to use as a reference. "
+            "Use the provided challenge pack as a starting point.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=6, seconds=0),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Create Evaluation Method",
+            description="Implement and document the evaluation method for assessing participant submissions. "
+            "Use the provided challenge pack as a starting point.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=6, seconds=1),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Configure Scoring",
+            description="Configure the leaderboard scoring to accurately interpret the evaluation results.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=6, seconds=2),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Test Evaluation",
+            description="Run test evaluations using sample submissions to ensure the scoring system and "
+            "evaluation method function correctly before launching the challenge.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=6, seconds=3),
         )
 
     def is_admin(self, user) -> bool:
@@ -1410,13 +1501,49 @@ class TaskResponsiblePartyChoices(models.TextChoices):
     CHALLENGE_ORGANIZERS = "ORG", "Challenge Organizers"
 
 
+class OnboardingTaskQuerySet(models.QuerySet):
+    def with_overdue_status(self):
+
+        _now = now()
+        return self.annotate(
+            is_overdue=Case(
+                When(complete=False, deadline__lt=_now, then=Value(True)),
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
+            is_overdue_soon=Case(
+                When(
+                    complete=False,
+                    is_overdue=False,
+                    deadline__lt=_now
+                    + settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF,
+                    then=Value(True),
+                ),
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
+        )
+
+    def updatable_by(self, user):
+        return filter_by_permission(
+            queryset=self,
+            user=user,
+            codename="change_onboardingtask",
+            accept_user_perms=False,
+        )
+
+    @property
+    def status_aggregates(self):
+        return self.aggregate(
+            num_is_overdue=Count("pk", filter=Q(is_overdue=True)),
+            num_is_overdue_soon=Count("pk", filter=Q(is_overdue_soon=True)),
+        )
+
+
 class OnboardingTask(FieldChangeMixin, UUIDModel):
     ResponsiblePartyChoices = TaskResponsiblePartyChoices
 
-    class Meta:
-        permissions = [
-            ("complete_onboaringtask", "Can mark this task as completed")
-        ]
+    objects = OnboardingTaskQuerySet.as_manager()
 
     created = models.DateTimeField(editable=False)
     challenge = models.ForeignKey(
@@ -1472,11 +1599,17 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
             == self.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS
         ):
             assign_perm(
-                "complete_onboaringtask", self.challenge.admins_group, self
+                "change_onboardingtask", self.challenge.admins_group, self
+            )
+            assign_perm(
+                "view_onboardingtask", self.challenge.admins_group, self
             )
         else:
             remove_perm(
-                "complete_onboaringtask", self.challenge.admins_group, self
+                "change_onboardingtask", self.challenge.admins_group, self
+            )
+            remove_perm(
+                "view_onboardingtask", self.challenge.admins_group, self
             )
 
 
