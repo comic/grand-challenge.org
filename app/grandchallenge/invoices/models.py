@@ -6,6 +6,7 @@ class PaymentStatusChoices(models.TextChoices):
     ISSUED = "ISSUED", "Issued"
     COMPLIMENTARY = "COMPLIMENTARY", "Complimentary"
     PAID = "PAID", "Paid"
+    POSTPAID = "POSTPAID", "Postpaid"
 
 
 class Invoice(models.Model):
