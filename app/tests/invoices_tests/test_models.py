@@ -1,7 +1,10 @@
 import pytest
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.invoices.models import (
+    PaymentStatusChoices,
+    PaymentTypeChoices,
+)
 from tests.evaluation_tests.factories import PhaseFactory, SubmissionFactory
 from tests.factories import ChallengeFactory
 from tests.invoices_tests.factories import InvoiceFactory
@@ -49,14 +52,14 @@ def test_approved_compute_costs_euro_millicents_complimentary_invoices():
         support_costs_euros=0,
         compute_costs_euros=10,
         storage_costs_euros=0,
-        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
     InvoiceFactory(
         challenge=challenge,
         support_costs_euros=0,
         compute_costs_euros=10,
         storage_costs_euros=0,
-        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
 
     challenge = Challenge.objects.with_available_compute().first()
@@ -111,7 +114,7 @@ def test_approved_compute_costs_euro_millicents_filter_invoices():
         support_costs_euros=50,
         compute_costs_euros=0,
         storage_costs_euros=0,
-        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
 
     challenge = Challenge.objects.with_available_compute().first()

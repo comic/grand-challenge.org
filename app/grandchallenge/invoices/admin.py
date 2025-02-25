@@ -12,6 +12,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "internal_client_number",
         "contact_email",
         "total_amount_euros",
+        "payment_type",
         "payment_status",
         "paid_on",
         "last_checked_on",

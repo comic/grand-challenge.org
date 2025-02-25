@@ -87,7 +87,10 @@ from grandchallenge.evaluation.utils import (
     SubmissionKindChoices,
 )
 from grandchallenge.incentives.models import Incentive
-from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.invoices.models import (
+    PaymentStatusChoices,
+    PaymentTypeChoices,
+)
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
@@ -106,10 +109,11 @@ class ChallengeSet(models.QuerySet):
                 Sum(
                     "invoices__compute_costs_euros",
                     filter=Q(
-                        invoices__payment_status__in=[
-                            PaymentStatusChoices.COMPLIMENTARY,
-                            PaymentStatusChoices.PAID,
-                        ]
+                        invoices__payment_type=PaymentTypeChoices.COMPLIMENTARY
+                    )
+                    | (
+                        Q(invoices__payment_type=PaymentTypeChoices.PAID)
+                        & Q(invoices__payment_status=PaymentStatusChoices.PAID)
                     ),
                     output_field=models.PositiveBigIntegerField(),
                     default=0,

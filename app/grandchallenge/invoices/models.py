@@ -4,6 +4,10 @@ from django.db import models
 class PaymentStatusChoices(models.TextChoices):
     INITIALIZED = "INITIALIZED", "Initialized"
     ISSUED = "ISSUED", "Issued"
+    PAID = "PAID", "Paid"
+
+
+class PaymentTypeChoices(models.TextChoices):
     COMPLIMENTARY = "COMPLIMENTARY", "Complimentary"
     PAID = "PAID", "Paid"
 
@@ -70,6 +74,12 @@ class Invoice(models.Model):
         blank=True,
     )
 
+    PaymentTypeChoices = PaymentTypeChoices
+    payment_type = models.CharField(
+        max_length=13,
+        choices=PaymentTypeChoices.choices,
+        default=PaymentTypeChoices.PAID,
+    )
     PaymentStatusChoices = PaymentStatusChoices
     payment_status = models.CharField(
         max_length=13,
