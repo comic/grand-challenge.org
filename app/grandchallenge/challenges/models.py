@@ -102,20 +102,52 @@ logger = logging.getLogger(__name__)
 class ChallengeSet(models.QuerySet):
     def with_available_compute(self):
         return self.annotate(
-            approved_compute_costs_euro_millicents=(
+            complimentary_compute_costs=(
                 Sum(
                     "invoices__compute_costs_euros",
                     filter=Q(
-                        invoices__payment_status__in=[
-                            PaymentStatusChoices.COMPLIMENTARY,
-                            PaymentStatusChoices.PAID,
-                        ]
+                        invoices__payment_status=PaymentStatusChoices.COMPLIMENTARY
                     ),
                     output_field=models.PositiveBigIntegerField(),
                     default=0,
                 )
+            ),
+            paid_compute_costs=(
+                Sum(
+                    "invoices__compute_costs_euros",
+                    filter=Q(
+                        invoices__payment_status=PaymentStatusChoices.PAID
+                    ),
+                    output_field=models.PositiveBigIntegerField(),
+                    default=0,
+                )
+            ),
+            postpaid_compute_costs_if_anything_paid=(
+                Case(
+                    When(
+                        paid_compute_costs__gt=0,
+                        then=Sum(
+                            "invoices__compute_costs_euros",
+                            filter=Q(
+                                invoices__payment_status=PaymentStatusChoices.POSTPAID
+                            ),
+                            output_field=models.PositiveBigIntegerField(),
+                            default=0,
+                        ),
+                    ),
+                    default=0,
+                    output_field=models.PositiveBigIntegerField(),
+                )
+            ),
+            approved_compute_costs_euro_millicents=ExpressionWrapper(
+                (
+                    F("complimentary_compute_costs")
+                    + F("paid_compute_costs")
+                    + F("postpaid_compute_costs_if_anything_paid")
+                )
                 * 1000
-                * 100
+                * 100,
+                output_field=models.PositiveBigIntegerField(),
             ),
             available_compute_euro_millicents=ExpressionWrapper(
                 F("approved_compute_costs_euro_millicents")
