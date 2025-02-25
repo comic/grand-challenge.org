@@ -112,7 +112,7 @@ class ChallengeSet(models.QuerySet):
                         invoices__payment_type=PaymentTypeChoices.COMPLIMENTARY
                     )
                     | (
-                        Q(invoices__payment_type=PaymentTypeChoices.PAID)
+                        Q(invoices__payment_type=PaymentTypeChoices.PREPAID)
                         & Q(invoices__payment_status=PaymentStatusChoices.PAID)
                     ),
                     output_field=models.PositiveBigIntegerField(),
