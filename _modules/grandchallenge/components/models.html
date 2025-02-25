@@ -84,8 +84,8 @@
     <span class="n">CIVNotEditableException</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">INTERFACE_VALUE_SCHEMA</span><span class="p">,</span>
     <span class="n">GPUTypeChoices</span><span class="p">,</span>
+    <span class="n">generate_component_json_schema</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">_repo_login_and_run</span><span class="p">,</span>
@@ -758,15 +758,10 @@
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterface.validate_against_schema">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_against_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates values against both default and custom schemas&quot;&quot;&quot;</span>
-        <span class="n">JSONValidator</span><span class="p">(</span>
-            <span class="n">schema</span><span class="o">=</span><span class="p">{</span>
-                <span class="o">**</span><span class="n">INTERFACE_VALUE_SCHEMA</span><span class="p">,</span>
-                <span class="s2">&quot;anyOf&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;$ref&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;#/definitions/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}],</span>
-            <span class="p">}</span>
-        <span class="p">)(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">:</span>
-            <span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">)(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span></div>
+        <span class="n">schema</span> <span class="o">=</span> <span class="n">generate_component_json_schema</span><span class="p">(</span>
+            <span class="n">component_interface</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">)(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span></div>
 
 
     <span class="nd">@cached_property</span>
