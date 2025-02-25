@@ -3,6 +3,7 @@ from django.db import models
 
 class PaymentStatusChoices(models.TextChoices):
     INITIALIZED = "INITIALIZED", "Initialized"
+    REQUESTED = "REQUESTED", "Invoice Requested"
     ISSUED = "ISSUED", "Issued"
     COMPLIMENTARY = "COMPLIMENTARY", "Complimentary"
     PAID = "PAID", "Paid"
@@ -75,4 +76,10 @@ class Invoice(models.Model):
         max_length=13,
         choices=PaymentStatusChoices.choices,
         default=PaymentStatusChoices.INITIALIZED,
+    )
+    budget_preapproved = models.BooleanField(
+        default=False,
+        help_text="Preapproval will make the budget immediately available, "
+        "regardless of the payment status, but only if there is another "
+        "invoice in the paid state.",
     )
