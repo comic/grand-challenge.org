@@ -10,7 +10,7 @@ from grandchallenge.cases.widgets import (
     ImageSearchWidget,
 )
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
+from grandchallenge.components.schemas import generate_component_json_schema
 from grandchallenge.components.widgets import (
     FileSearchWidget,
     FlexibleFileWidget,
@@ -134,16 +134,16 @@ class InterfaceFormField(forms.Field):
 
     def get_json_field(self):
         field_type = self.instance.default_field
-        default_schema = {
-            **INTERFACE_VALUE_SCHEMA,
-            "anyOf": [{"$ref": f"#/definitions/{self.instance.kind}"}],
-        }
+
+        schema = generate_component_json_schema(
+            component_interface=self.instance,
+            required=self.required,
+        )
+
         if field_type == forms.JSONField:
-            self.kwargs["widget"] = JSONEditorWidget(schema=default_schema)
-        self.kwargs["validators"] = [
-            JSONValidator(schema=default_schema),
-            JSONValidator(schema=self.instance.schema),
-        ]
+            self.kwargs["widget"] = JSONEditorWidget(schema=schema)
+        self.kwargs["validators"] = [JSONValidator(schema=schema)]
+
         extra_help = ""
         return field_type(
             help_text=_join_with_br(self.help_text, extra_help), **self.kwargs
