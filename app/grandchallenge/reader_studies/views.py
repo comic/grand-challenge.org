@@ -175,6 +175,28 @@ class ReaderStudyCreate(
         return response
 
 
+class ReaderStudyGroundTruth(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = ReaderStudy
+    permission_required = (
+        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
+    )
+    raise_exception = True
+    template_name = "reader_studies/readerstudy_ground_truth.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "example_ground_truth": self.object.get_example_ground_truth_csv_text(
+                    limit=2
+                )
+            }
+        )
+        return context
+
+
 class ReaderStudyExampleGroundTruth(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
@@ -262,9 +284,6 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                     "num_readers": self.object.readers_group.user_set.count(),
                     "reader_remove_form": reader_remove_form,
                     "editor_remove_form": editor_remove_form,
-                    "example_ground_truth": self.object.get_example_ground_truth_csv_text(
-                        limit=2
-                    ),
                     "pending_permission_requests": pending_permission_requests,
                 }
             )

@@ -24,6 +24,7 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyDetail,
     ReaderStudyDisplaySetList,
     ReaderStudyExampleGroundTruth,
+    ReaderStudyGroundTruth,
     ReaderStudyLeaderBoard,
     ReaderStudyList,
     ReaderStudyPermissionRequestCreate,
@@ -63,6 +64,11 @@ urlpatterns = [
         "<slug>/remove-answers/<username>/",
         AnswersRemoveForUser.as_view(),
         name="answers-remove",
+    ),
+    path(
+        "<slug>/ground-truth/",
+        ReaderStudyGroundTruth.as_view(),
+        name="ground-truth",
     ),
     path(
         "<slug>/remove-ground-truth/",
