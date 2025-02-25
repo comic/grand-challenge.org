@@ -7,97 +7,151 @@ from tests.factories import ChallengeFactory
 from tests.invoices_tests.factories import InvoiceFactory
 
 
-@pytest.mark.flaky(reruns=3)
 @pytest.mark.django_db
-def test_approved_compute_costs_euro_millicents():
-    c1, c2, c3, c4 = ChallengeFactory.create_batch(4)
+def test_approved_compute_costs_euro_millicents_no_invoices():
+    ChallengeFactory()
+    expected_budget = 0
+
+    challenge = Challenge.objects.with_available_compute().first()
+    assert (
+        challenge.approved_compute_costs_euro_millicents
+        == expected_budget * 1000 * 100
+    )
+
+
+@pytest.mark.django_db
+def test_approved_compute_costs_euro_millicents_paid_invoice():
+    challenge = ChallengeFactory()
+    expected_budget = 1
 
     InvoiceFactory(
-        challenge=c1,
+        challenge=challenge,
         support_costs_euros=0,
-        compute_costs_euros=1,
+        compute_costs_euros=expected_budget,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
     )
 
+    challenge = Challenge.objects.with_available_compute().first()
+    assert (
+        challenge.approved_compute_costs_euro_millicents
+        == expected_budget * 1000 * 100
+    )
+
+
+@pytest.mark.django_db
+def test_approved_compute_costs_euro_millicents_complimentary_invoices():
+    challenge = ChallengeFactory()
+    expected_budget = 20
+
     InvoiceFactory(
-        challenge=c2,
+        challenge=challenge,
         support_costs_euros=0,
         compute_costs_euros=10,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.COMPLIMENTARY,
     )
     InvoiceFactory(
-        challenge=c2,
+        challenge=challenge,
         support_costs_euros=0,
         compute_costs_euros=10,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.COMPLIMENTARY,
     )
 
+    challenge = Challenge.objects.with_available_compute().first()
+    assert (
+        challenge.approved_compute_costs_euro_millicents
+        == expected_budget * 1000 * 100
+    )
+
+
+@pytest.mark.django_db
+def test_approved_compute_costs_euro_millicents_filter_invoices():
+    challenge = ChallengeFactory()
+    expected_budget = 20
+
     InvoiceFactory(
-        challenge=c3,
+        challenge=challenge,
         support_costs_euros=50,
         compute_costs_euros=0,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
     )
     InvoiceFactory(
-        challenge=c3,
+        challenge=challenge,
         support_costs_euros=50,
         compute_costs_euros=10,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.ISSUED,
     )
     InvoiceFactory(
-        challenge=c3,
+        challenge=challenge,
         support_costs_euros=50,
         compute_costs_euros=10,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.INITIALIZED,
     )
     InvoiceFactory(
-        challenge=c3,
+        challenge=challenge,
         support_costs_euros=50,
-        compute_costs_euros=30,
+        compute_costs_euros=expected_budget,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
     )
     InvoiceFactory(
-        challenge=c3,
+        challenge=challenge,
         support_costs_euros=50,
         compute_costs_euros=30,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.ISSUED,
     )
     InvoiceFactory(
-        challenge=c3,
+        challenge=challenge,
         support_costs_euros=50,
         compute_costs_euros=0,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.COMPLIMENTARY,
     )
 
-    p2a = PhaseFactory(challenge=c2)
-    SubmissionFactory(phase=p2a)
-    p2b = PhaseFactory(challenge=c2)
-    SubmissionFactory(phase=p2b)
-    s2 = SubmissionFactory(phase=p2b)
+    challenge = Challenge.objects.with_available_compute().first()
+    assert (
+        challenge.approved_compute_costs_euro_millicents
+        == expected_budget * 1000 * 100
+    )
 
-    p4 = PhaseFactory(challenge=c4)
-    s4 = SubmissionFactory(phase=p4)
 
-    for challenge, expected_budget, expected_datetime in zip(
-        Challenge.objects.filter(pk__in=[c1.pk, c2.pk, c3.pk, c4.pk])
-        .order_by("short_name")
-        .with_available_compute()
-        .with_most_recent_submission_datetime(),
-        [1, 20, 30, 0],
-        [None, s2.created, None, s4.created],
-        strict=True,
-    ):
-        assert (
-            challenge.approved_compute_costs_euro_millicents
-            == expected_budget * 1000 * 100
-        )
-        assert challenge.most_recent_submission_datetime == expected_datetime
+@pytest.mark.django_db
+def test_most_recent_submission_datetime_no_submissions():
+    ChallengeFactory()
+
+    challenge = (
+        Challenge.objects.with_most_recent_submission_datetime().first()
+    )
+    assert challenge.most_recent_submission_datetime is None
+
+
+@pytest.mark.django_db
+def test_most_recent_submission_datetime_single_submission():
+    submission = SubmissionFactory()
+
+    challenge = (
+        Challenge.objects.with_most_recent_submission_datetime().first()
+    )
+    assert challenge.most_recent_submission_datetime == submission.created
+
+
+@pytest.mark.django_db
+def test_most_recent_submission_datetime_multiple_submissions():
+    challenge = ChallengeFactory()
+
+    phase1 = PhaseFactory(challenge=challenge)
+    SubmissionFactory(phase=phase1)
+    phase2 = PhaseFactory(challenge=challenge)
+    SubmissionFactory(phase=phase2)
+    last_submission = SubmissionFactory(phase=phase2)
+
+    challenge = (
+        Challenge.objects.with_most_recent_submission_datetime().first()
+    )
+    assert challenge.most_recent_submission_datetime == last_submission.created
