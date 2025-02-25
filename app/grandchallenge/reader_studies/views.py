@@ -710,7 +710,7 @@ class UsersProgress(
 
 
 class AnswerBatchDelete(LoginRequiredMixin, FormView):
-    permission_required = "reader_studies.delete_readerstudy"
+    permission_required = "reader_studies.delete_answer"
     raise_exception = True
     success_message = "Answers removed"
     form_class = Form
@@ -1193,7 +1193,7 @@ class QuestionInteractiveAlgorithmsView(
 
 class DisplaySetDetailView(CIVSetDetail):
     model = DisplaySet
-    permission_required = "reader_studies.view_readerstudy"
+    permission_required = "reader_studies.view_displayset"
 
 
 class DisplaySetUpdateView(
@@ -1201,7 +1201,7 @@ class DisplaySetUpdateView(
     MultipleCIVProcessingBaseView,
 ):
     form_class = DisplaySetUpdateForm
-    permission_required = "reader_studies.change_readerstudy"
+    permission_required = "reader_studies.change_displayset"
     included_form_classes = (
         DisplaySetUpdateForm,
         *MultipleCIVProcessingBaseView.included_form_classes,
