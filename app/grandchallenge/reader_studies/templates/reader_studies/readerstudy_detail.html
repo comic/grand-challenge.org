@@ -61,15 +61,14 @@
                    aria-selected="false"><i class="fas fa-question fa-fw"></i>&nbsp;Questions&nbsp;<span
                         class="badge badge-pill badge-secondary align-middle">{{ object.questions.all.count }}</span>
                 </a>
-                <a class="nav-link"
-                   href="{% url 'reader-studies:ground-truth' slug=object.slug %}"
-                   aria-selected="false"><i class="fas fa-check fa-fw"></i>&nbsp;Ground
-                    Truth
-                </a>
-                <a class="nav-link"
-                   href="{% url 'reader-studies:leaderboard' slug=object.slug %}"><i
-                        class="fas fa-trophy fa-fw"></i>&nbsp;Leaderboard
-                </a>
+                {% if object.is_educational %}
+                    <a class="nav-link" href="{% url 'reader-studies:ground-truth' slug=object.slug %}">
+                        <i class="fas fa-check fa-fw"></i>&nbsp;Ground&nbsp;Truth
+                    </a>
+                    <a class="nav-link" href="{% url 'reader-studies:leaderboard' slug=object.slug %}">
+                       <i class="fas fa-trophy fa-fw"></i>&nbsp;Leaderboard
+                    </a>
+                {% endif %}
                 <a class="nav-link"
                    href="{% url 'reader-studies:statistics' slug=object.slug %}"><i
                         class="fas fa-chart-bar fa-fw"></i>&nbsp;Statistics
