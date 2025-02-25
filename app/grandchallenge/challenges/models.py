@@ -141,7 +141,7 @@ class ChallengeSet(models.QuerySet):
                     ),
                     default=0,
                     output_field=models.PositiveBigIntegerField(),
-                ),
+                )
             ),
             approved_compute_costs_euro_millicents=ExpressionWrapper(
                 (
