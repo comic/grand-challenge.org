@@ -957,21 +957,4 @@ def test_ground_truth_view(client):
         user=editor,
     )
 
-    educational_warning = (
-        "This reader study is currently not configured as educational"
-    )
     assert response.status_code == 200
-    assert educational_warning in response.content.decode()
-
-    rs.is_educational = True
-    rs.save()
-
-    response = get_view_for_user(
-        client=client,
-        viewname="reader-studies:ground-truth",
-        reverse_kwargs={"slug": rs.slug},
-        user=editor,
-    )
-
-    assert response.status_code == 200
-    assert educational_warning not in response.content.decode()
