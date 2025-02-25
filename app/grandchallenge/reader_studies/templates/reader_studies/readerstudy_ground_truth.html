@@ -20,7 +20,7 @@
 <h2>Ground Truth</h2>
 {% if not object.is_educational %}
 <div class="alert alert-warning" role="alert">
-        <i class="fa fa-info-triangle pr-1" aria-hidden="true"></i>
+        <i class="fa fa-exclamation-triangle pr-1" aria-hidden="true"></i>
         This reader study is currently not configured as educational: any ground truth is not utilized.
         Mark the reader study as educational via the <a href="{% url 'reader-studies:update' slug=object.slug %}">settings</a>.
     </div>
