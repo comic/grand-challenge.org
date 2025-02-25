@@ -122,6 +122,112 @@ def test_approved_compute_costs_euro_millicents_filter_invoices():
 
 
 @pytest.mark.django_db
+def test_approved_compute_costs_budget_preapproved_no_paid_invoices():
+    InvoiceFactory(
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.INITIALIZED,
+        budget_preapproved=True,
+    )
+
+    challenge = Challenge.objects.with_available_compute().first()
+    assert challenge.approved_compute_costs_euro_millicents == 0
+
+
+@pytest.mark.django_db
+def test_approved_compute_costs_budget_preapproved_only_complimentary_invoice():
+    challenge = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.INITIALIZED,
+        budget_preapproved=True,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+    )
+
+    challenge = Challenge.objects.with_available_compute().first()
+    assert challenge.approved_compute_costs_euro_millicents == 1 * 1000 * 100
+
+
+@pytest.mark.django_db
+def test_approved_compute_costs_budget_preapproved_with_paid_invoice():
+    challenge = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.INITIALIZED,
+        budget_preapproved=True,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+
+    challenge = Challenge.objects.with_available_compute().first()
+    assert challenge.approved_compute_costs_euro_millicents == 2 * 1000 * 100
+
+
+@pytest.mark.django_db
+def test_approved_compute_costs_budget_preapproved_and_complimentary():
+    challenge = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        budget_preapproved=True,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+    )
+
+    challenge = Challenge.objects.with_available_compute().first()
+    assert challenge.approved_compute_costs_euro_millicents == 2 * 1000 * 100
+
+
+@pytest.mark.django_db
+def test_approved_compute_costs_budget_preapproved_and_paid():
+    challenge = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+        budget_preapproved=True,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+
+    challenge = Challenge.objects.with_available_compute().first()
+    assert challenge.approved_compute_costs_euro_millicents == 2 * 1000 * 100
+
+
+@pytest.mark.django_db
 def test_most_recent_submission_datetime_no_submissions():
     ChallengeFactory()
 
