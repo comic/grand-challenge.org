@@ -91,14 +91,13 @@ class InterfaceFormFieldFactory:
             return cls.get_json_field(
                 interface=interface,
                 initial=initial,
-                required=required,
                 **kwargs,
             )
         else:
             raise RuntimeError(f"Unknown interface kind: {interface}")
 
     @staticmethod
-    def get_json_field(interface, initial, required, **kwargs):
+    def get_json_field(interface, initial, **kwargs):
         if isinstance(initial, ComponentInterfaceValue):
             initial = initial.value
         kwargs["initial"] = initial
@@ -106,7 +105,7 @@ class InterfaceFormFieldFactory:
 
         schema = generate_component_json_schema(
             component_interface=interface,
-            required=required,
+            required=kwargs["required"],
         )
 
         if field_type == forms.JSONField:
