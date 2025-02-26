@@ -89,6 +89,14 @@ class Invoice(models.Model):
         default=PaymentStatusChoices.INITIALIZED,
     )
 
+    @property
+    def total_amount_euros(self):
+        return (
+            self.support_costs_euros
+            + self.compute_costs_euros
+            + self.storage_costs_euros
+        )
+
     class Meta:
         constraints = [
             models.CheckConstraint(
