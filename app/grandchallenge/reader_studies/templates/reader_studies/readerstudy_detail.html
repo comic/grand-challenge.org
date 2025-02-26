@@ -68,11 +68,10 @@
                     <a class="nav-link" href="{% url 'reader-studies:leaderboard' slug=object.slug %}">
                        <i class="fas fa-trophy fa-fw"></i>&nbsp;Leaderboard
                     </a>
+                    <a class="nav-link" href="{% url 'reader-studies:statistics' slug=object.slug %}">
+                        <i class="fas fa-chart-bar fa-fw"></i>&nbsp;Statistics
+                    </a>
                 {% endif %}
-                <a class="nav-link"
-                   href="{% url 'reader-studies:statistics' slug=object.slug %}"><i
-                        class="fas fa-chart-bar fa-fw"></i>&nbsp;Statistics
-                </a>
                 <a class="nav-link" id="v-pills-export-tab" data-toggle="pill"
                    href="#export" role="tab" aria-controls="v-pills-export"
                    aria-selected="false"><i class="fas fa-download fa-fw"></i>&nbsp;Export
