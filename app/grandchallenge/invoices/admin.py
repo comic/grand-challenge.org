@@ -1,6 +1,7 @@
+import textwrap
+
 from django.contrib import admin
 
-from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.invoices.models import Invoice
 
 
@@ -50,24 +51,16 @@ class InvoiceAdmin(admin.ModelAdmin):
 
         invoice_request_details = f"See below for the billing information for the recently accepted {obj.challenge.short_name!r} challenge.\n\n"
 
-        invoice_request_details += "<table>\n"
         for key, value in required.items():
-            value = value.replace("\n", "<br>")
-            invoice_request_details += (
-                f"<tr>\n"
-                f"  <td><b>{key}:</b></td>\n"
-                f"  <td>{value}</td>\n"
-                f"</tr>\n"
+            invoice_request_details += f"{key}:\n"
+            invoice_request_details += textwrap.indent(
+                f"{value}\n\n\n", prefix="    "
             )
         for key, value in optional.items():
             if value:
-                value = value.replace("\n", "<br>")
-                invoice_request_details += (
-                    f"<tr>\n"
-                    f"  <td><b>{key}:</b></td>\n"
-                    f"  <td>{value}</td>\n"
-                    f"</tr>\n"
+                invoice_request_details += f"{key}:\n"
+                invoice_request_details += textwrap.indent(
+                    f"{value}\n\n\n", prefix="    "
                 )
-        invoice_request_details += "</table>\n"
 
-        return md2html(warning_text + invoice_request_details)
+        return warning_text + invoice_request_details
