@@ -356,10 +356,30 @@ class SubmissionCreate(
         )
 
 
-class SubmissionList(LoginRequiredMixin, PermissionListMixin, ListView):
+class SubmissionList(
+    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView
+):
     model = Submission
+    row_template = "evaluation/submission_list_row.html"
     permission_required = "view_submission"
     login_url = reverse_lazy("account_login")
+
+    search_fields = [
+        "created",
+        "phase__title",
+        "creator__username",
+        "comment",
+    ]
+
+    columns = [
+        Column(title="Created", sort_field="created"),
+        Column(title="Phase", sort_field="phase__title"),
+        Column(title="User", sort_field="creator__username"),
+        Column(title="Comment", sort_field="comment"),
+        Column(title="Evaluations"),
+    ]
+
+    default_sort_column = 0
 
     def get_queryset(self):
         queryset = super().get_queryset()

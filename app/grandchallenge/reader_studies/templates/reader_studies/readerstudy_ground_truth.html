@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load url %}
+{% load static %}
+
+{% block title %}
+    Ground Truth - {{ object }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
+            Studies</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Ground Truth</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Ground Truth</h2>
+
+    <p>
+        If you wish to assess the performance of the readers you
+        can upload the CSV file containing the ground truth for
+        this reader study here.
+    </p>
+    <p>
+        The first row of the CSV file must contain the headings
+        <code>case</code>, followed by the question text for
+        each of the questions in the reader study (excluding those
+        of type <code>heading</code>).
+    </p>
+    <p>
+        The consecutive lines contain the id per case.
+        Then include the answer for the question
+        corresponding to the question text defined in the header for that
+        column. All answers must be enclosed in single quotes. Strings
+        must be enclosed in both single and double quotes, i.e.
+        <code>'"answer"'</code>. For choice type questions, the
+        options text(s) must be provided as a string. For optional
+        questions, use <code>null</code> if you do not widh to
+        provide ground truth for that question.
+    </p>
+    <p>
+        An example of the first two lines of the csv for this reader study is:
+        <code>
+            {{ example_ground_truth|linebreaks }}
+        </code>
+    </p>
+    <div class="d-flex justify-content-between">
+        <div>
+            <a class="btn btn-primary"
+                href="{% url 'reader-studies:add-ground-truth' slug=object.slug %}">
+                <i class="fas fa-upload"></i> Upload Ground Truth
+            </a>
+            <a class="btn btn-secondary"
+                href="{% url 'reader-studies:example-ground-truth' slug=object.slug %}">
+                <i class="fas fa-download"></i> Download Example CSV
+            </a>
+        </div>
+        <button class="btn btn-danger" hx-post="{% url 'reader-studies:ground-truth-remove' slug=object.slug %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'>
+            <i class="fas fa-trash-alt"></i> Delete ground truth
+        </button>
+    </div>
+{% endblock %}

@@ -9,7 +9,7 @@ from grandchallenge.cases.widgets import (
     ImageSearchWidget,
 )
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
+from grandchallenge.components.schemas import generate_component_json_schema
 from grandchallenge.components.widgets import (
     FileSearchWidget,
     FlexibleFileWidget,
@@ -91,27 +91,28 @@ class InterfaceFormFieldFactory:
             return cls.get_json_field(
                 interface=interface,
                 initial=initial,
+                required=required,
                 **kwargs,
             )
         else:
             raise RuntimeError(f"Unknown interface kind: {interface}")
 
     @staticmethod
-    def get_json_field(interface, initial, **kwargs):
+    def get_json_field(interface, initial, required, **kwargs):
         if isinstance(initial, ComponentInterfaceValue):
             initial = initial.value
         kwargs["initial"] = initial
         field_type = interface.default_field
-        default_schema = {
-            **INTERFACE_VALUE_SCHEMA,
-            "anyOf": [{"$ref": f"#/definitions/{interface.kind}"}],
-        }
+
+        schema = generate_component_json_schema(
+            component_interface=interface,
+            required=required,
+        )
+
         if field_type == forms.JSONField:
-            kwargs["widget"] = JSONEditorWidget(schema=default_schema)
-        kwargs["validators"] = [
-            JSONValidator(schema=default_schema),
-            JSONValidator(schema=interface.schema),
-        ]
+            kwargs["widget"] = JSONEditorWidget(schema=schema)
+        kwargs["validators"] = [JSONValidator(schema=schema)]
+
         return field_type(**kwargs)
 
 
