@@ -33,11 +33,11 @@ from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    get_object_if_allowed,
     get_objects_for_user,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
-from grandchallenge.serving.models import get_object_if_allowed
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget

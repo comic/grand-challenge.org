@@ -44,6 +44,7 @@ from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    get_object_if_allowed,
     get_objects_for_user,
 )
 from grandchallenge.core.templatetags.bleach import clean
@@ -51,7 +52,6 @@ from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.serving.models import (
     get_component_interface_values_for_user,
-    get_object_if_allowed,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.uploads.models import UserUpload

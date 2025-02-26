@@ -11,8 +11,10 @@ from django.forms.widgets import ChoiceWidget
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.core.guardian import filter_by_permission
-from grandchallenge.serving.models import get_object_if_allowed
+from grandchallenge.core.guardian import (
+    filter_by_permission,
+    get_object_if_allowed,
+)
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 

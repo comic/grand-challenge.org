@@ -2,9 +2,9 @@ import pytest
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import Image
+from grandchallenge.core.guardian import get_object_if_allowed
 from grandchallenge.serving.models import (
     get_component_interface_values_for_user,
-    get_object_if_allowed,
 )
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory

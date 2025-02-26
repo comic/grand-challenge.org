@@ -14,13 +14,15 @@ from grandchallenge.components.widgets import (
     FileSearchWidget,
     FlexibleFileWidget,
 )
-from grandchallenge.core.guardian import filter_by_permission
+from grandchallenge.core.guardian import (
+    filter_by_permission,
+    get_object_if_allowed,
+)
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.serving.models import (
     get_component_interface_values_for_user,
-    get_object_if_allowed,
 )
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import (
