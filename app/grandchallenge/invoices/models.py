@@ -88,3 +88,15 @@ class Invoice(models.Model):
         choices=PaymentStatusChoices.choices,
         default=PaymentStatusChoices.INITIALIZED,
     )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(payment_type__in=PaymentTypeChoices),
+                name="payment_type_in_choices",
+            ),
+            models.CheckConstraint(
+                check=models.Q(payment_status__in=PaymentStatusChoices),
+                name="payment_status_in_choices",
+            ),
+        ]
