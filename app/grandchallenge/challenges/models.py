@@ -118,8 +118,7 @@ class ChallengeSet(models.QuerySet):
             prepaid_compute_costs=(
                 Sum(
                     "invoices__compute_costs_euros",
-                    filter=Q(invoices__payment_type=PaymentTypeChoices.PREPAID)
-                    & Q(invoices__payment_status=PaymentStatusChoices.PAID),
+                    filter=Q(invoices__payment_type=PaymentTypeChoices.PREPAID, invoices__payment_status=PaymentStatusChoices.PAID),
                     output_field=models.PositiveBigIntegerField(),
                     default=0,
                 )
