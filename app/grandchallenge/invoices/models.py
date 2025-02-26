@@ -84,7 +84,7 @@ class Invoice(models.Model):
     )
     PaymentStatusChoices = PaymentStatusChoices
     payment_status = models.CharField(
-        max_length=13,
+        max_length=11,
         choices=PaymentStatusChoices.choices,
         default=PaymentStatusChoices.INITIALIZED,
     )

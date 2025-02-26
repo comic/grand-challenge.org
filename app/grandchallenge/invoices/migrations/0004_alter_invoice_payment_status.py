@@ -20,20 +20,7 @@ class Migration(migrations.Migration):
                     ("PAID", "Paid"),
                 ],
                 default="INITIALIZED",
-                max_length=13,
-            ),
-        ),
-        migrations.AlterField(
-            model_name="invoice",
-            name="payment_type",
-            field=models.CharField(
-                choices=[
-                    ("COMPLIMENTARY", "Complimentary"),
-                    ("PREPAID", "Prepaid"),
-                    ("POSTPAID", "Postpaid"),
-                ],
-                default="PREPAID",
-                max_length=13,
+                max_length=11,
             ),
         ),
     ]

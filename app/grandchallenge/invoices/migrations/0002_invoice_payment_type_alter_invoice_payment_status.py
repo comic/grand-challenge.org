@@ -13,8 +13,12 @@ class Migration(migrations.Migration):
             model_name="invoice",
             name="payment_type",
             field=models.CharField(
-                choices=[("COMPLIMENTARY", "Complimentary"), ("PAID", "Paid")],
-                default="PAID",
+                choices=[
+                    ("COMPLIMENTARY", "Complimentary"),
+                    ("PREPAID", "Prepaid"),
+                    ("POSTPAID", "Postpaid"),
+                ],
+                default="PREPAID",
                 max_length=13,
             ),
         ),
@@ -24,7 +28,9 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ("INITIALIZED", "Initialized"),
+                    ("REQUESTED", "Invoice Requested"),
                     ("ISSUED", "Issued"),
+                    ("COMPLIMENTARY", "Complimentary"),
                     ("PAID", "Paid"),
                 ],
                 default="INITIALIZED",
