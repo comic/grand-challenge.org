@@ -1,3 +1,5 @@
+import textwrap
+
 from django.contrib import admin
 
 from grandchallenge.invoices.models import Invoice
@@ -50,9 +52,15 @@ class InvoiceAdmin(admin.ModelAdmin):
         invoice_request_details = f"See below for the billing information for the recently accepted {obj.challenge.short_name!r} challenge.\n\n"
 
         for key, value in required.items():
-            invoice_request_details += f"{key}: {value}\n\n"
+            invoice_request_details += f"{key}:\n"
+            invoice_request_details += textwrap.indent(
+                f"{value}\n\n\n", prefix="    "
+            )
         for key, value in optional.items():
             if value:
-                invoice_request_details += f"{key}: {value}\n\n"
+                invoice_request_details += f"{key}:\n"
+                invoice_request_details += textwrap.indent(
+                    f"{value}\n\n\n", prefix="    "
+                )
 
         return warning_text + invoice_request_details
