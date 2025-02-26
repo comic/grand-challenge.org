@@ -137,16 +137,16 @@ def serve_component_interface_value(
             pk=component_interface_value_pk
         )
     except (MultipleObjectsReturned, ComponentInterfaceValue.DoesNotExist):
-        pass
-    else:
-        if get_component_interface_values_for_user(
-            user=user, civ_pk=civ.pk
-        ).exists():
-            return protected_storage_redirect(
-                name=civ.file.name, creator=user, component_interface_value=civ
-            )
+        raise Http404
 
-    raise Http404("No ComponentInterfaceValue found.")
+    if get_component_interface_values_for_user(
+        user=user, civ_pk=civ.pk
+    ).exists():
+        return protected_storage_redirect(
+            name=civ.file.name, creator=user, component_interface_value=civ
+        )
+
+    raise Http404
 
 
 def serve_structured_challenge_submission_form(
