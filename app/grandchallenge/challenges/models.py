@@ -105,7 +105,7 @@ logger = logging.getLogger(__name__)
 class ChallengeSet(models.QuerySet):
     def with_available_compute(self):
         return self.annotate(
-            complimentary_compute_costs=(
+            complimentary_compute_costs_euros=(
                 Sum(
                     "invoices__compute_costs_euros",
                     filter=Q(
@@ -115,7 +115,7 @@ class ChallengeSet(models.QuerySet):
                     default=0,
                 )
             ),
-            prepaid_compute_costs=(
+            prepaid_compute_costs_euros=(
                 Sum(
                     "invoices__compute_costs_euros",
                     filter=Q(
@@ -126,10 +126,10 @@ class ChallengeSet(models.QuerySet):
                     default=0,
                 )
             ),
-            postpaid_compute_costs_if_anything_paid=(
+            postpaid_compute_costs_euros_if_anything_paid=(
                 Case(
                     When(
-                        prepaid_compute_costs__gt=0,
+                        prepaid_compute_costs_euros__gt=0,
                         then=Sum(
                             "invoices__compute_costs_euros",
                             filter=Q(
@@ -145,9 +145,9 @@ class ChallengeSet(models.QuerySet):
             ),
             approved_compute_costs_euro_millicents=ExpressionWrapper(
                 (
-                    F("complimentary_compute_costs")
-                    + F("prepaid_compute_costs")
-                    + F("postpaid_compute_costs_if_anything_paid")
+                    F("complimentary_compute_costs_euros")
+                    + F("prepaid_compute_costs_euros")
+                    + F("postpaid_compute_costs_euros_if_anything_paid")
                 )
                 * 1000
                 * 100,
