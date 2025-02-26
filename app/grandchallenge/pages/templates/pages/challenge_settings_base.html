@@ -37,7 +37,7 @@
               <li class="nav-item">
                   <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'challenge-invoice-list' %} active {% endif %}"
                     href="{% url 'challenge-invoice-list' challenge_short_name=challenge.short_name %}">
-                      <i class="fas fa-tasks fa-fw"></i>&nbsp;Invoices&nbsp;
+                      <i class="fas fa-file-invoice-dollar fa-fw"></i>&nbsp;Invoices&nbsp;
                       {% if num_outstanding_invoices > 0 %}
                             <span class="badge badge-pill badge-warning align-middle" title="Outstanding invoices">
                                 {{ num_outstanding_invoices }}
