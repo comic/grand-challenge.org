@@ -3,13 +3,15 @@ from django.db import models
 
 class PaymentStatusChoices(models.TextChoices):
     INITIALIZED = "INITIALIZED", "Initialized"
-    ISSUED = "ISSUED", "Issued"
+    REQUESTED = "REQUESTED", "Invoice Requested"
+    ISSUED = "ISSUED", "Invoice Issued"
     PAID = "PAID", "Paid"
 
 
 class PaymentTypeChoices(models.TextChoices):
     COMPLIMENTARY = "COMPLIMENTARY", "Complimentary"
-    PAID = "PAID", "Paid"
+    PREPAID = "PREPAID", "Prepaid"
+    POSTPAID = "POSTPAID", "Postpaid"
 
 
 class Invoice(models.Model):
@@ -78,7 +80,7 @@ class Invoice(models.Model):
     payment_type = models.CharField(
         max_length=13,
         choices=PaymentTypeChoices.choices,
-        default=PaymentTypeChoices.PAID,
+        default=PaymentTypeChoices.PREPAID,
     )
     PaymentStatusChoices = PaymentStatusChoices
     payment_status = models.CharField(
