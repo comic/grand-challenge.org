@@ -20,6 +20,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     )
     list_filter = ("payment_status",)
     autocomplete_fields = ("challenge",)
+    readonly_fields = ["invoice_request_text"]
 
     def total_amount_euros(self, obj):
         return (
@@ -27,3 +28,31 @@ class InvoiceAdmin(admin.ModelAdmin):
             + obj.compute_costs_euros
             + obj.storage_costs_euros
         )
+
+    def invoice_request_text(self, obj):
+        required = {
+            "Amount": f"{self.total_amount_euros(obj)} Euro",
+            "Billing address": obj.billing_address,
+            "Contact person": obj.contact_name,
+            "Contact email": obj.contact_email,
+            "VAT number": obj.vat_number,
+        }
+        optional = {
+            "Payment reference identifier": obj.external_reference,
+        }
+
+        warning_text = ""
+        for key, value in required.items():
+            if not value:
+                warning_text += f"Warning: {key} is not provided.\n"
+        warning_text += "\n\n" if warning_text else ""
+
+        invoice_request_details = f"See below for the billing information for the recently accepted {obj.challenge.short_name!r} challenge.\n\n"
+
+        for key, value in required.items():
+            invoice_request_details += f"{key}: {value}\n\n"
+        for key, value in optional.items():
+            if value:
+                invoice_request_details += f"{key}: {value}\n\n"
+
+        return warning_text + invoice_request_details
