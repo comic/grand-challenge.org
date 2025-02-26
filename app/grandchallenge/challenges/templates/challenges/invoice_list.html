@@ -21,6 +21,13 @@
 
 {% block content %}
     <h2>Invoices</h2>
+
+    {% if outstanding_invoices %}
+    <p>
+        <i class="fas fa-exclamation-triangle text-warning"></i> There are outstanding invoices.
+    </p>
+    {% endif %}
+
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm w-100" id="challengeCostsOverviewTable">
             <thead class="thead-light">
