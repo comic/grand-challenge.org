@@ -64,6 +64,7 @@
                         <th>Compute Costs</th>
                         <th>Storage Costs</th>
                         <th>Reference</th>
+                        <th>Type</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -76,6 +77,7 @@
                             <td>€ {{ invoice.compute_costs_euros }}</td>
                             <td>€ {{ invoice.storage_costs_euros }}</td>
                             <td>{{ invoice.external_reference }}</td>
+                            <td>{{ invoice.get_payment_type_display }}</td>
                             <td><span class="badge {% if invoice.payment_type != invoice.PaymentTypeChoices.COMPLIMENTARY and invoice.payment_status == invoice.PaymentStatusChoices.INITIALIZED %}badge-info{% elif invoice.payment_type != invoice.PaymentTypeChoices.COMPLIMENTARY and invoice.payment_status == invoice.PaymentStatusChoices.ISSUED %}badge-warning{% else %}badge-success{% endif %}">{{ invoice.get_payment_status_display }}</span></td>
                         </tr>
                     {% endfor %}
