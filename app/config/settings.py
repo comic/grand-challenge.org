@@ -825,6 +825,7 @@ MACHINA_MARKUP_LANGUAGE = (
     "grandchallenge.core.templatetags.bleach.md2html",
     {"link_blank_target": True},
 )
+MACHINA_ATTACHMENT_MAX_FILES_PER_POST = 0
 
 AUTH_PASSWORD_VALIDATORS = [
     {
