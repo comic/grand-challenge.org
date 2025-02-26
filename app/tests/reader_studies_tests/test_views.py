@@ -931,3 +931,30 @@ def test_display_set_upload_corrupt_image(
     notification = Notification.objects.get()
     assert notification.user == editor
     assert "1 file could not be imported" in notification.description
+
+
+@pytest.mark.django_db
+def test_ground_truth_view(client):
+    rs = ReaderStudyFactory()
+
+    editor, reader, a_user = UserFactory.create_batch(3)
+    rs.add_editor(editor)
+    rs.add_reader(reader)
+
+    for usr in [reader, a_user]:
+        response = get_view_for_user(
+            client=client,
+            viewname="reader-studies:ground-truth",
+            reverse_kwargs={"slug": rs.slug},
+            user=usr,
+        )
+        assert response.status_code == 403
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:ground-truth",
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+    )
+
+    assert response.status_code == 200
