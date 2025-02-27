@@ -3,10 +3,11 @@ import random
 import time
 from typing import NamedTuple
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, Max, Min, Q
-from django.utils.timezone import datetime
+from django.utils.timezone import datetime, now
 from psycopg.errors import LockNotAvailable
 
 from grandchallenge.challenges.costs import (
@@ -17,6 +18,7 @@ from grandchallenge.challenges.emails import (
     send_onboarding_task_due_reminder,
     send_onboarding_task_overdue_alert,
     send_onboarding_task_support_overdue_alert,
+    send_outstanding_invoice_alert,
 )
 from grandchallenge.challenges.models import Challenge, OnboardingTask
 from grandchallenge.core.celery import (
@@ -24,6 +26,7 @@ from grandchallenge.core.celery import (
     acks_late_micro_short_task,
 )
 from grandchallenge.evaluation.models import Evaluation, Phase
+from grandchallenge.invoices.models import Invoice
 
 
 @acks_late_2xlarge_task
@@ -215,3 +218,19 @@ def send_onboarding_task_reminder_emails():
             send_onboarding_task_support_overdue_alert(
                 challenge=c, task_info=task_info
             )
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def send_invoice_reminder_emails():
+    _now = now()
+    outstanding_invoices = Invoice.objects.filter(
+        payment_type__in=[
+            Invoice.PaymentTypeChoices.PREPAID,
+            Invoice.PaymentTypeChoices.POSTPAID,
+        ],
+        payment_status=Invoice.PaymentStatusChoices.ISSUED,
+        issued_on__lt=_now - settings.CHALLENGE_INVOICE_OUTSTANDING_CUTOFF,
+    )
+    for invoice in outstanding_invoices:
+        send_outstanding_invoice_alert(invoice)
