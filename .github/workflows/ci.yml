@@ -45,7 +45,7 @@ jobs:
             - name: Run the django tests
               run: |
                   make minio
-                  docker compose run --rm celery_worker pytest tests/algorithms_tests/test_views.py::test_import_view --durations 10
+                  docker compose run --rm celery_worker pytest --durations 10
 
     docs:
         runs-on: ubuntu-latest

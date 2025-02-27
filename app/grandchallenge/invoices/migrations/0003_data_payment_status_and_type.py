@@ -15,10 +15,7 @@ def move_complimentary_status_to_type(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        (
-            "invoices",
-            "0002_invoice_payment_type_alter_invoice_payment_status_and_more",
-        ),
+        ("invoices", "0002_invoice_payment_type_alter_invoice_payment_status"),
     ]
 
     operations = [migrations.RunPython(move_complimentary_status_to_type)]
