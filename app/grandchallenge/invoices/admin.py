@@ -1,3 +1,5 @@
+import textwrap
+
 from django.contrib import admin
 
 from grandchallenge.invoices.models import Invoice
@@ -12,17 +14,46 @@ class InvoiceAdmin(admin.ModelAdmin):
         "internal_client_number",
         "contact_email",
         "total_amount_euros",
+        "payment_type",
         "payment_status",
         "paid_on",
         "last_checked_on",
         "internal_comments",
     )
-    list_filter = ("payment_status",)
+    list_filter = ("payment_status", "payment_type")
     autocomplete_fields = ("challenge",)
+    readonly_fields = ["invoice_request_text"]
 
-    def total_amount_euros(self, obj):
-        return (
-            obj.support_costs_euros
-            + obj.compute_costs_euros
-            + obj.storage_costs_euros
-        )
+    def invoice_request_text(self, obj):
+        required = {
+            "Amount": f"{obj.total_amount_euros} Euro",
+            "Billing address": obj.billing_address,
+            "Contact person": obj.contact_name,
+            "Contact email": obj.contact_email,
+            "VAT number": obj.vat_number,
+        }
+        optional = {
+            "Payment reference identifier": obj.external_reference,
+        }
+
+        warning_text = ""
+        for key, value in required.items():
+            if not value:
+                warning_text += f"Warning: {key} is not provided.\n"
+        warning_text += "\n\n" if warning_text else ""
+
+        invoice_request_details = f"See below for the billing information for the recently accepted {obj.challenge.short_name!r} challenge.\n\n"
+
+        for key, value in required.items():
+            invoice_request_details += f"{key}:\n"
+            invoice_request_details += textwrap.indent(
+                f"{value}\n\n\n", prefix="    "
+            )
+        for key, value in optional.items():
+            if value:
+                invoice_request_details += f"{key}:\n"
+                invoice_request_details += textwrap.indent(
+                    f"{value}\n\n\n", prefix="    "
+                )
+
+        return warning_text + invoice_request_details

@@ -87,7 +87,10 @@ from grandchallenge.evaluation.utils import (
     SubmissionKindChoices,
 )
 from grandchallenge.incentives.models import Incentive
-from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.invoices.models import (
+    PaymentStatusChoices,
+    PaymentTypeChoices,
+)
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
@@ -102,20 +105,53 @@ logger = logging.getLogger(__name__)
 class ChallengeSet(models.QuerySet):
     def with_available_compute(self):
         return self.annotate(
-            approved_compute_costs_euro_millicents=(
+            complimentary_compute_costs_euros=(
                 Sum(
                     "invoices__compute_costs_euros",
                     filter=Q(
-                        invoices__payment_status__in=[
-                            PaymentStatusChoices.COMPLIMENTARY,
-                            PaymentStatusChoices.PAID,
-                        ]
+                        invoices__payment_type=PaymentTypeChoices.COMPLIMENTARY
                     ),
                     output_field=models.PositiveBigIntegerField(),
                     default=0,
                 )
+            ),
+            prepaid_compute_costs_euros=(
+                Sum(
+                    "invoices__compute_costs_euros",
+                    filter=Q(
+                        invoices__payment_type=PaymentTypeChoices.PREPAID,
+                        invoices__payment_status=PaymentStatusChoices.PAID,
+                    ),
+                    output_field=models.PositiveBigIntegerField(),
+                    default=0,
+                )
+            ),
+            postpaid_compute_costs_euros_if_anything_paid=(
+                Case(
+                    When(
+                        prepaid_compute_costs_euros__gt=0,
+                        then=Sum(
+                            "invoices__compute_costs_euros",
+                            filter=Q(
+                                invoices__payment_type=PaymentTypeChoices.POSTPAID
+                            ),
+                            output_field=models.PositiveBigIntegerField(),
+                            default=0,
+                        ),
+                    ),
+                    default=0,
+                    output_field=models.PositiveBigIntegerField(),
+                )
+            ),
+            approved_compute_costs_euro_millicents=ExpressionWrapper(
+                (
+                    F("complimentary_compute_costs_euros")
+                    + F("prepaid_compute_costs_euros")
+                    + F("postpaid_compute_costs_euros_if_anything_paid")
+                )
                 * 1000
-                * 100
+                * 100,
+                output_field=models.PositiveBigIntegerField(),
             ),
             available_compute_euro_millicents=ExpressionWrapper(
                 F("approved_compute_costs_euro_millicents")

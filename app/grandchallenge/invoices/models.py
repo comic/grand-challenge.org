@@ -3,9 +3,15 @@ from django.db import models
 
 class PaymentStatusChoices(models.TextChoices):
     INITIALIZED = "INITIALIZED", "Initialized"
-    ISSUED = "ISSUED", "Issued"
-    COMPLIMENTARY = "COMPLIMENTARY", "Complimentary"
+    REQUESTED = "REQUESTED", "Invoice Requested"
+    ISSUED = "ISSUED", "Invoice Issued"
     PAID = "PAID", "Paid"
+
+
+class PaymentTypeChoices(models.TextChoices):
+    COMPLIMENTARY = "COMPLIMENTARY", "Complimentary"
+    PREPAID = "PREPAID", "Prepaid"
+    POSTPAID = "POSTPAID", "Postpaid"
 
 
 class Invoice(models.Model):
@@ -70,9 +76,35 @@ class Invoice(models.Model):
         blank=True,
     )
 
+    PaymentTypeChoices = PaymentTypeChoices
+    payment_type = models.CharField(
+        max_length=13,
+        choices=PaymentTypeChoices.choices,
+        default=PaymentTypeChoices.PREPAID,
+    )
     PaymentStatusChoices = PaymentStatusChoices
     payment_status = models.CharField(
-        max_length=13,
+        max_length=11,
         choices=PaymentStatusChoices.choices,
         default=PaymentStatusChoices.INITIALIZED,
     )
+
+    @property
+    def total_amount_euros(self):
+        return (
+            self.support_costs_euros
+            + self.compute_costs_euros
+            + self.storage_costs_euros
+        )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(payment_type__in=PaymentTypeChoices),
+                name="payment_type_in_choices",
+            ),
+            models.CheckConstraint(
+                check=models.Q(payment_status__in=PaymentStatusChoices),
+                name="payment_status_in_choices",
+            ),
+        ]
