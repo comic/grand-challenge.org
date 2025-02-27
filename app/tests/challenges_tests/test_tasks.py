@@ -466,3 +466,53 @@ def test_challenge_invoice_alert_emails(
     else:
         assert not any(staff_user.email in m.to for m in mail.outbox)
         assert not any(challenge_admin.email in m.to for m in mail.outbox)
+
+
+@pytest.mark.django_db
+def test_challenge_invoice_alert_emails_contact_person(mocker):
+    challenge = ChallengeFactory()
+    challenge_admin = challenge.creator
+
+    contact_email = "contact_person@example.com"
+
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_type=Invoice.PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.ISSUED,
+        issued_on=_fixed_now - timedelta(weeks=5),
+        contact_email=contact_email,
+        contact_name="John Doe",
+    )
+
+    mocker.patch(
+        "grandchallenge.challenges.tasks.now",
+        return_value=_fixed_now,
+    )
+
+    send_invoice_reminder_emails()
+
+    expected_subject = (
+        "[{challenge_name}] Outstanding Invoice Reminder".format(
+            challenge_name=challenge.short_name,
+        )
+    )
+
+    expected_body_organizer = (
+        "we have an outstanding invoice for {amount} Euro".format(
+            amount=invoice.total_amount_euros,
+        )
+    )
+
+    organizer_mail = next(
+        m for m in mail.outbox if challenge_admin.email in m.to
+    )
+    assert expected_subject in organizer_mail.subject
+    assert expected_body_organizer in organizer_mail.body
+
+    contact_person_mail = next(m for m in mail.outbox if contact_email in m.to)
+    assert expected_subject in contact_person_mail.subject
+    assert "Dear John Doe" in contact_person_mail.body
+    assert expected_body_organizer in contact_person_mail.body
