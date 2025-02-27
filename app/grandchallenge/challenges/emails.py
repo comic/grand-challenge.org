@@ -222,3 +222,36 @@ def send_onboarding_task_due_reminder(challenge, task_info):
         recipients=[*challenge.get_admins()],
         subscription_type=EmailSubscriptionTypes.SYSTEM,
     )
+
+
+def send_outstanding_invoice_alert(invoice):
+    challenge = invoice.challenge
+
+    subject = format_html(
+        "[{challenge_name}] Outstanding Invoice Reminder",
+        challenge_name=challenge.short_name,
+    )
+    challenge_admins_message = render_to_string(
+        "challenges/partials/challenge_invoice_alert_email.md",
+        context={
+            "amount": invoice.total_amount_euros,
+        },
+    )
+    send_standard_email_batch(
+        site=Site.objects.get_current(),
+        subject=subject,
+        markdown_message=challenge_admins_message,
+        recipients=[*challenge.get_admins()],
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
+    )
+
+    managers_message = format_html(
+        "An invoice alert has been sent for the {challenge_name} challenge regarding "
+        "the invoice issued on {issued_on}.",
+        challenge_name=challenge.short_name,
+        issued_on=invoice.issued_on,
+    )
+    mail_managers(
+        subject=subject,
+        message=managers_message,
+    )
