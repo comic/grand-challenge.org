@@ -597,6 +597,24 @@ class ReaderStudy(
             gt_count=Count("answer", filter=Q(answer__is_ground_truth=True))
         ).filter(gt_count__gte=1)
 
+    @property
+    def ground_truth_is_complete(self):
+        gt_answer_count = (
+            Answer.objects.filter(
+                question__in=self.answerable_questions,
+                is_ground_truth=True,
+            )
+            .values("display_set", "question")
+            .distinct()
+            .count()
+        )
+
+        expected_gt_count = (
+            self.display_sets.count() * self.answerable_question_count
+        )
+
+        return gt_answer_count == expected_gt_count
+
     def score_for_user(self, user):
         """Returns the average and total score for answers given by ``user``."""
 
