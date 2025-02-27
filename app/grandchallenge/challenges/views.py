@@ -361,7 +361,7 @@ class OnboardingTaskComplete(
 
 class InvoiceList(
     LoginRequiredMixin,
-    PermissionRequiredMixin,
+    ObjectPermissionRequiredMixin,
     ListView,
 ):
     model = Invoice
@@ -369,6 +369,9 @@ class InvoiceList(
     template_name = "challenges/invoice_list.html"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+
+    def get_permission_object(self):
+        return self.request.challenge
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
