@@ -61,20 +61,17 @@
                    aria-selected="false"><i class="fas fa-question fa-fw"></i>&nbsp;Questions&nbsp;<span
                         class="badge badge-pill badge-secondary align-middle">{{ object.questions.all.count }}</span>
                 </a>
-                <a class="nav-link" id="v-pills-ground-truth-tab" data-toggle="pill"
-                   href="#ground-truth" role="tab"
-                   aria-controls="v-pills-ground-truth"
-                   aria-selected="false"><i class="fas fa-check fa-fw"></i>&nbsp;Ground
-                    Truth
-                </a>
-                <a class="nav-link"
-                   href="{% url 'reader-studies:leaderboard' slug=object.slug %}"><i
-                        class="fas fa-trophy fa-fw"></i>&nbsp;Leaderboard
-                </a>
-                <a class="nav-link"
-                   href="{% url 'reader-studies:statistics' slug=object.slug %}"><i
-                        class="fas fa-chart-bar fa-fw"></i>&nbsp;Statistics
-                </a>
+                {% if object.is_educational %}
+                    <a class="nav-link" href="{% url 'reader-studies:ground-truth' slug=object.slug %}">
+                        <i class="fas fa-check fa-fw"></i>&nbsp;Ground&nbsp;Truth
+                    </a>
+                    <a class="nav-link" href="{% url 'reader-studies:leaderboard' slug=object.slug %}">
+                       <i class="fas fa-trophy fa-fw"></i>&nbsp;Leaderboard
+                    </a>
+                    <a class="nav-link" href="{% url 'reader-studies:statistics' slug=object.slug %}">
+                        <i class="fas fa-chart-bar fa-fw"></i>&nbsp;Statistics
+                    </a>
+                {% endif %}
                 <a class="nav-link" id="v-pills-export-tab" data-toggle="pill"
                    href="#export" role="tab" aria-controls="v-pills-export"
                    aria-selected="false"><i class="fas fa-download fa-fw"></i>&nbsp;Export
@@ -289,59 +286,6 @@
 
                 {% url 'reader-studies:readers-update' slug=object.slug as readers_update_url %}
                 {% include "groups/partials/user_list.html" with role_name="readers" edit_url=readers_update_url form=editor_remove_form users=readers display_direct_message_link=True %}
-            </div>
-
-            <div class="tab-pane fade"
-                 id="ground-truth"
-                 role="tabpanel"
-                 aria-labelledby="v-pills-ground-truth-tab">
-
-                <h2>Ground Truth</h2>
-
-                <p>
-                    If you wish to assess the performance of the readers you
-                    can upload the CSV file containing the ground truth for
-                    this reader study here.
-                </p>
-                <p>
-                    The first row of the CSV file must contain the headings
-                    <code>case</code>, followed by the question text for
-                    each of the questions in the reader study (excluding those
-                    of type <code>heading</code>).
-                </p>
-                <p>
-                    The consecutive lines contain the id per case.
-                    Then include the answer for the question
-                    corresponding to the question text defined in the header for that
-                    column. All answers must be enclosed in single quotes. Strings
-                    must be enclosed in both single and double quotes, i.e.
-                    <code>'"answer"'</code>. For choice type questions, the
-                    options text(s) must be provided as a string. For optional
-                    questions, use <code>null</code> if you do not widh to
-                    provide ground truth for that question.
-                </p>
-                <p>
-                    An example of the first two lines of the csv for this reader study is:
-                    <code>
-                        {{ example_ground_truth|linebreaks }}
-                    </code>
-                </p>
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <a class="btn btn-primary"
-                           href="{% url 'reader-studies:add-ground-truth' slug=object.slug %}">
-                            <i class="fas fa-upload"></i> Upload Ground Truth
-                        </a>
-                        <a class="btn btn-secondary"
-                           href="{% url 'reader-studies:example-ground-truth' slug=object.slug %}">
-                            <i class="fas fa-download"></i> Download Example CSV
-                        </a>
-                    </div>
-                    <button class="btn btn-danger" hx-post="{% url 'reader-studies:ground-truth-remove' slug=object.slug %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'>
-                        <i class="fas fa-trash-alt"></i> Delete ground truth
-                    </button>
-                </div>
-
             </div>
 
             <div class="tab-pane fade"

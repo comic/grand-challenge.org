@@ -124,9 +124,7 @@ class HttpResponseSeeOther(HttpResponseRedirect):
 
 class ReaderStudyList(FilterMixin, PermissionListMixin, ListView):
     model = ReaderStudy
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.view_readerstudy"
     ordering = "-created"
     filter_class = ReaderStudyFilter
     paginate_by = 40
@@ -175,13 +173,31 @@ class ReaderStudyCreate(
         return response
 
 
+class ReaderStudyGroundTruth(
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
+):
+    model = ReaderStudy
+    permission_required = "reader_studies.change_readerstudy"
+    raise_exception = True
+    template_name = "reader_studies/readerstudy_ground_truth.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "example_ground_truth": self.object.get_example_ground_truth_csv_text(
+                    limit=2
+                )
+            }
+        )
+        return context
+
+
 class ReaderStudyExampleGroundTruth(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     model = ReaderStudy
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
 
     def get(self, request, *args, **kwargs):
@@ -205,9 +221,7 @@ class ReaderStudyExampleGroundTruth(
 
 class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
     model = ReaderStudy
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.view_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.view_readerstudy"
     raise_exception = True
     queryset = ReaderStudy.objects.prefetch_related(
         "optional_hanging_protocols"
@@ -262,9 +276,6 @@ class ReaderStudyDetail(ObjectPermissionRequiredMixin, DetailView):
                     "num_readers": self.object.readers_group.user_set.count(),
                     "reader_remove_form": reader_remove_form,
                     "editor_remove_form": editor_remove_form,
-                    "example_ground_truth": self.object.get_example_ground_truth_csv_text(
-                        limit=2
-                    ),
                     "pending_permission_requests": pending_permission_requests,
                 }
             )
@@ -323,9 +334,7 @@ class ReaderStudyUpdate(
 ):
     model = ReaderStudy
     form_class = ReaderStudyUpdateForm
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
     success_message = "Reader study successfully updated"
 
@@ -337,9 +346,7 @@ class ReaderStudyDelete(
     DeleteView,
 ):
     model = ReaderStudy
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
     success_message = "Reader study was successfully deleted"
 
@@ -360,9 +367,7 @@ class ReaderStudyLeaderBoard(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     model = ReaderStudy
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
     template_name = "reader_studies/readerstudy_leaderboard.html"
 
@@ -371,9 +376,7 @@ class ReaderStudyStatistics(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     model = ReaderStudy
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
     template_name = "reader_studies/readerstudy_statistics.html"
     # TODO: this view also contains the ground truth answer values.
@@ -382,7 +385,7 @@ class ReaderStudyStatistics(
 
 class ReaderStudyDisplaySetList(CivSetListView):
     model = DisplaySet
-    permission_required = f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"  # change instead of view permission so that readers don't get access
+    permission_required = "reader_studies.change_displayset"  # change instead of view permission so that readers don't get access
 
     default_sort_column = 4
 
@@ -433,9 +436,7 @@ class QuestionUpdate(
     model = Question
     form_class = QuestionForm
     template_name = "reader_studies/readerstudy_update_object.html"
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
 
     def get_permission_object(self):
@@ -467,9 +468,7 @@ class BaseAddObjectToReaderStudyMixin(
     of the reader study.
     """
 
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
 
     def get_permission_object(self):
@@ -515,8 +514,8 @@ class ReaderStudyCopy(
     # Note: these are explicitly checked in the check_permission function
     # and only left here for reference.
     permission_required = (
-        f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}",
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}",
+        "reader_studies.add_readerstudy",
+        "reader_studies.change_readerstudy",
     )
     reader_study = None
 
@@ -526,13 +525,8 @@ class ReaderStudyCopy(
     def check_permissions(self, request):
         obj = self.get_permission_object()
         if not (
-            request.user.has_perm(
-                f"{ReaderStudy._meta.app_label}.add_{ReaderStudy._meta.model_name}"
-            )
-            and request.user.has_perm(
-                f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}",
-                obj,
-            )
+            request.user.has_perm("reader_studies.add_readerstudy")
+            and request.user.has_perm("reader_studies.change_readerstudy", obj)
         ):
             raise PermissionDenied
 
@@ -657,9 +651,7 @@ class AddQuestionToReaderStudy(BaseAddObjectToReaderStudyMixin, CreateView):
 
 class ReaderStudyUserGroupUpdateMixin(UserGroupUpdateMixin):
     template_name = "reader_studies/readerstudy_user_groups_form.html"
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_readerstudy"
 
     @property
     def obj(self):
@@ -689,9 +681,7 @@ class UsersProgress(
 ):
     model = ReaderStudy
     template_name = "reader_studies/readerstudy_progress.html"
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
 
     def get_context_data(self, **kwargs):
@@ -720,9 +710,7 @@ class UsersProgress(
 
 
 class AnswerBatchDelete(LoginRequiredMixin, FormView):
-    permission_required = (
-        f"{Answer._meta.app_label}.delete_{Answer._meta.model_name}"
-    )
+    permission_required = "reader_studies.delete_answer"
     raise_exception = True
     success_message = "Answers removed"
     form_class = Form
@@ -834,9 +822,7 @@ class ReaderStudyPermissionRequestList(
     ObjectPermissionRequiredMixin, ListView
 ):
     model = ReaderStudyPermissionRequest
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
 
     @property
@@ -867,9 +853,7 @@ class ReaderStudyPermissionRequestUpdate(PermissionRequestUpdate):
     base_model = ReaderStudy
     redirect_namespace = "reader-studies"
     user_check_attrs = ["is_reader", "is_editor"]
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_readerstudy"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1149,9 +1133,7 @@ class QuestionDelete(
     DeleteView,
 ):
     model = Question
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
     success_message = "Question was successfully deleted"
 
@@ -1211,9 +1193,7 @@ class QuestionInteractiveAlgorithmsView(
 
 class DisplaySetDetailView(CIVSetDetail):
     model = DisplaySet
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.view_{DisplaySet._meta.model_name}"
-    )
+    permission_required = "reader_studies.view_displayset"
 
 
 class DisplaySetUpdateView(
@@ -1221,9 +1201,7 @@ class DisplaySetUpdateView(
     MultipleCIVProcessingBaseView,
 ):
     form_class = DisplaySetUpdateForm
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{DisplaySet._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_displayset"
     included_form_classes = (
         DisplaySetUpdateForm,
         *MultipleCIVProcessingBaseView.included_form_classes,
@@ -1309,9 +1287,7 @@ class DisplaySetCreate(
     MultipleCIVProcessingBaseView,
 ):
     form_class = DisplaySetCreateForm
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
-    )
+    permission_required = "reader_studies.change_readerstudy"
     included_form_classes = (
         DisplaySetCreateForm,
         *MultipleCIVProcessingBaseView.included_form_classes,
@@ -1352,9 +1328,7 @@ class DisplaySetCreate(
 
 class DisplaySetDelete(CIVSetDelete):
     model = DisplaySet
-    permission_required = (
-        f"{ReaderStudy._meta.app_label}.delete_{DisplaySet._meta.model_name}"
-    )
+    permission_required = "reader_studies.delete_displayset"
 
 
 class DisplaySetBulkDelete(CIVSetBulkDelete):
