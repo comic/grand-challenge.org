@@ -36,7 +36,7 @@ class Migration(migrations.Migration):
                     ("PAID", "Paid"),
                 ],
                 default="INITIALIZED",
-                max_length=11,
+                max_length=13,
             ),
         ),
         migrations.AddConstraint(
