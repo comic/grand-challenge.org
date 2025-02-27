@@ -234,7 +234,8 @@ def send_outstanding_invoice_alert(invoice):
     challenge_admins_message = render_to_string(
         "challenges/partials/challenge_invoice_alert_email.md",
         context={
-            "amount": invoice.total_amount_euros,
+            "challenge": challenge,
+            "invoice": invoice,
         },
     )
     send_standard_email_batch(
