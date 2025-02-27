@@ -10,11 +10,12 @@ from grandchallenge.challenges.models import (
     OnboardingTask,
 )
 from grandchallenge.challenges.tasks import (
+    send_invoice_reminder_emails,
     send_onboarding_task_reminder_emails,
     update_challenge_results_cache,
     update_compute_costs_and_storage_size,
 )
-from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.invoices.models import Invoice, PaymentStatusChoices
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import (
     ChallengeFactory,
@@ -377,4 +378,91 @@ def test_challenge_onboarding_task_due_emails(
         )
         assert expected_subject in organizer_mail.subject
     else:
+        assert not any(challenge_admin.email in m.to for m in mail.outbox)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "invoice_kwargs, send_email",
+    [
+        (  # Case: no invoices
+            {},
+            False,
+        ),
+        (  # Case: invoice, but of complimentary type
+            dict(
+                payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
+                payment_status=Invoice.PaymentStatusChoices.ISSUED,
+            ),
+            False,
+        ),
+        (  # Case: invoice, but not long outstanding
+            dict(
+                payment_type=Invoice.PaymentTypeChoices.PREPAID,
+                payment_status=Invoice.PaymentStatusChoices.ISSUED,
+                issued_on=_fixed_now - timedelta(weeks=2),
+            ),
+            False,
+        ),
+        (  # Case: invoice outstanding
+            dict(
+                payment_type=Invoice.PaymentTypeChoices.PREPAID,
+                payment_status=Invoice.PaymentStatusChoices.ISSUED,
+                issued_on=_fixed_now - timedelta(weeks=5),
+            ),
+            True,
+        ),
+    ],
+)
+def test_challenge_invoice_alert_emails(
+    invoice_kwargs,
+    send_email,
+    settings,
+    mocker,
+):
+    challenge = ChallengeFactory()
+    challenge_admin = UserFactory()
+    challenge.add_admin(challenge_admin)
+
+    staff_user = UserFactory(is_staff=True)
+    settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
+
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        **invoice_kwargs,
+    )
+
+    mocker.patch(
+        "grandchallenge.challenges.tasks.now",
+        return_value=_fixed_now,
+    )
+
+    send_invoice_reminder_emails()
+
+    if send_email:
+        expected_subject = (
+            "[{challenge_name}] Outstanding Invoice Reminder".format(
+                challenge_name=challenge.short_name,
+            )
+        )
+
+        expected_body_organizer = (
+            "we have an outstanding invoice for {amount} Euro".format(
+                amount=invoice.total_amount_euros,
+            )
+        )
+
+        staff_email = next(m for m in mail.outbox if staff_user.email in m.to)
+        assert expected_subject in staff_email.subject
+
+        organizer_mail = next(
+            m for m in mail.outbox if challenge_admin.email in m.to
+        )
+        assert expected_subject in organizer_mail.subject
+        assert expected_body_organizer in organizer_mail.body
+    else:
+        assert not any(staff_user.email in m.to for m in mail.outbox)
         assert not any(challenge_admin.email in m.to for m in mail.outbox)
