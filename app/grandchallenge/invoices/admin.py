@@ -48,8 +48,9 @@ class InvoiceAdmin(admin.ModelAdmin):
         warning_text = ""
         for key, value in required.items():
             if not value:
-                warning_text += f"Warning: {key} is not provided.\n"
-        warning_text += "\n\n" if warning_text else ""
+                warning_text += f"Warning: {key} is not provided.<br>"
+        if warning_text:
+            warning_text = f'<div class="errornote">{warning_text}</div>'
 
         invoice_request_details = '<div class="invoice-example-text">'
 
