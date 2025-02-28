@@ -16,7 +16,7 @@
 {% block content %}
     <div class="row col-12 m-0 p-0">
         <h3 class="col-9 p-0">Hanging Protocols</h3>
-        <div class="col-3 p-0 text-right"><a class="btn btn-primary" href="{% url 'hanging-protocols:create' %}">Add a hanging protocol</a></div>
+        <div class="col-3 p-0 text-right"><a class="btn btn-primary" href="{% url 'hanging-protocols:create' %}"> <i class="fas fa-plus"></i> Add a new Hanging Protocol</a></div>
     </div>
     <br>
     <div class="card-columns">
@@ -49,6 +49,7 @@
             <p>No hanging protocols available.</p>
         {% endfor %}
     </div>
+    {% include "grandchallenge/partials/pagination.html" %}
 {% endblock %}
 
 {% block script %}

@@ -11,7 +11,7 @@ from grandchallenge.subdomains.utils import reverse
 
 class HangingProtocolList(LoginRequiredMixin, ListView):
     model = HangingProtocol
-    paginate_by = 50
+    paginate_by = 48
 
 
 class HangingProtocolCreate(
