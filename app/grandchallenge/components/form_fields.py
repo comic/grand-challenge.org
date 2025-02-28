@@ -1,9 +1,8 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import TextChoices
 from django.forms import ModelChoiceField, MultiValueField
-from django.utils.functional import cached_property
 
-from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
     FlexibleImageField,
     FlexibleImageWidget,
@@ -15,7 +14,11 @@ from grandchallenge.components.widgets import (
     FileSearchWidget,
     FlexibleFileWidget,
 )
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import (
+    filter_by_permission,
+    get_object_if_allowed,
+)
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.serving.models import (
@@ -34,18 +37,11 @@ file_upload_text = (
 )
 
 
-def _join_with_br(a, b):
-    if a:
-        return f"{a}<br>{b}"
-    else:
-        return b
-
-
 INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
 
 
-class InterfaceFormField(forms.Field):
-    _possible_widgets = {
+class InterfaceFormFieldFactory:
+    possible_widgets = {
         UserUploadMultipleWidget,
         UserUploadSingleWidget,
         JSONEditorWidget,
@@ -55,147 +51,75 @@ class InterfaceFormField(forms.Field):
         FileSearchWidget,
     }
 
-    def __init__(self, *, instance=None, user=None, form_data=None, **kwargs):
-        self.instance = instance
-        self.user = user
-        self.form_data = form_data
-        super().__init__(**kwargs)
+    def __new__(
+        cls,
+        *,
+        interface=None,
+        user=None,
+        required=True,
+        initial=None,
+        help_text="",
+        disabled=False,
+    ):
+        if (
+            isinstance(initial, ComponentInterfaceValue)
+            and not initial.has_value
+        ):
+            initial = None
 
-        self.kwargs = {
-            "required": self.required,
-            "disabled": self.disabled,
-            "initial": self.get_initial_value(),
-            "label": instance.title.title(),
+        kwargs = {
+            "required": required,
+            "help_text": clean(interface.description),
+            "disabled": disabled,
+            "label": interface.title.title(),
         }
 
-        if instance.is_image_kind:
-            self._field = self.get_image_field()
-        elif instance.requires_file:
-            self._field = self.get_file_field()
-        elif instance.is_json_kind:
-            self._field = self.get_json_field()
+        if interface.is_image_kind:
+            return FlexibleImageField(
+                user=user,
+                initial=initial,
+                **kwargs,
+            )
+        elif interface.requires_file:
+            return FlexibleFileField(
+                user=user,
+                interface=interface,
+                initial=initial,
+                **kwargs,
+            )
+        elif interface.is_json_kind:
+            return cls.get_json_field(
+                interface=interface,
+                initial=initial,
+                **kwargs,
+            )
         else:
-            raise RuntimeError(f"Unknown interface kind: {instance}")
+            raise RuntimeError(f"Unknown interface kind: {interface}")
 
-    def get_initial_value(self):
-        if (
-            isinstance(self.initial, ComponentInterfaceValue)
-            and self.initial.has_value
-        ):
-            if self.instance.is_image_kind:
-                return self.initial.image.pk
-            elif self.instance.requires_file:
-                return self.initial.pk
-            else:
-                return self.initial.value
-        elif (
-            isinstance(self.initial, ComponentInterfaceValue)
-            and not self.initial.has_value
-        ):
-            return None
-        else:
-            return self.initial
-
-    def get_image_field(self):
-        current_value = None
-
-        if self.initial:
-            if isinstance(self.initial, ComponentInterfaceValue):
-                # This can happen on display set or archive item update forms, the value is then taken from the model
-                # instance unless the value is in the form data.
-                current_value = self.initial.image
-            # Otherwise the value is taken from the form data and will always take the form of a pk for either
-            # an Image object or a UserUpload object.
-            # We get the object so we can present the user with the image name rather than the pk.
-            elif Image.objects.filter(pk=self.initial).exists():
-                current_value = Image.objects.get(pk=self.initial)
-            elif UserUpload.objects.filter(pk=self.initial).exists():
-                current_value = UserUpload.objects.get(pk=self.initial)
-            else:
-                raise RuntimeError(
-                    f"Unknown type for initial value: {self.initial}"
-                )
-
-        self.kwargs["widget"] = FlexibleImageWidget(
-            help_text=self.help_text,
-            user=self.user,
-            current_value=current_value,
-        )
-        upload_queryset = get_objects_for_user(
-            self.user,
-            "uploads.change_userupload",
-        ).filter(status=UserUpload.StatusChoices.COMPLETED)
-        image_queryset = get_objects_for_user(self.user, "cases.view_image")
-        return FlexibleImageField(
-            upload_queryset=upload_queryset,
-            image_queryset=image_queryset,
-            **self.kwargs,
-        )
-
-    def get_json_field(self):
-        field_type = self.instance.default_field
+    @staticmethod
+    def get_json_field(interface, initial, **kwargs):
+        if isinstance(initial, ComponentInterfaceValue):
+            initial = initial.value
+        kwargs["initial"] = initial
+        field_type = interface.default_field
 
         schema = generate_component_json_schema(
-            component_interface=self.instance,
-            required=self.required,
+            component_interface=interface,
+            required=kwargs["required"],
         )
 
         if field_type == forms.JSONField:
-            self.kwargs["widget"] = JSONEditorWidget(schema=schema)
-        self.kwargs["validators"] = [JSONValidator(schema=schema)]
+            kwargs["widget"] = JSONEditorWidget(schema=schema)
+        kwargs["validators"] = [JSONValidator(schema=schema)]
 
-        extra_help = ""
-        return field_type(
-            help_text=_join_with_br(self.help_text, extra_help), **self.kwargs
-        )
+        return field_type(**kwargs)
 
-    def get_file_field(self):
-        current_value = None
 
-        if self.initial:
-            if isinstance(self.initial, ComponentInterfaceValue):
-                # This can happen on display set or archive item update forms, the value is then taken from the model
-                # instance unless the value is in the form data.
-                current_value = self.initial
-            # Otherwise the value is taken from the form data and will always take the form of a pk for either
-            # a ComponentInterfaceValue object (in this case the pk is a digit) or
-            # a UserUpload object (then the pk is a UUID).
-            # We get the object so we can present the user with the image name rather than the pk.
-            elif (
-                isinstance(self.initial, int) or self.initial.isdigit()
-            ) and ComponentInterfaceValue.objects.filter(
-                pk=self.initial
-            ).exists():
-                current_value = ComponentInterfaceValue.objects.get(
-                    pk=self.initial
-                )
-            elif UserUpload.objects.filter(pk=self.initial).exists():
-                current_value = UserUpload.objects.get(pk=self.initial)
-            else:
-                raise RuntimeError(
-                    f"Unknown type for initial value: {self.initial}"
-                )
-
-        self.kwargs["widget"] = FlexibleFileWidget(
-            help_text=self.help_text,
-            user=self.user,
-            current_value=current_value,
-        )
-        return FlexibleFileField(
-            user=self.user,
-            interface=self.instance,
-            **self.kwargs,
-        )
-
-    @cached_property
-    def civs_for_user_for_interface(self):
-        return get_component_interface_values_for_user(
-            user=self.user, interface=self.instance
-        )
-
-    @property
-    def field(self):
-        return self._field
+class FileWidgetChoices(TextChoices):
+    FILE_SEARCH = "FILE_SEARCH"
+    FILE_UPLOAD = "FILE_UPLOAD"
+    FILE_SELECTED = "FILE_SELECTED"
+    UNDEFINED = "UNDEFINED"
 
 
 class FlexibleFileField(MultiValueField):
@@ -207,31 +131,67 @@ class FlexibleFileField(MultiValueField):
         *args,
         user=None,
         interface=None,
-        disabled=False,
+        initial=None,
         **kwargs,
     ):
-        self.user = user
-        self.interface = interface
         file_search_queryset = get_component_interface_values_for_user(
-            user=self.user,
-            interface=self.interface,
+            user=user,
+            interface=interface,
         )
-        upload_queryset = get_objects_for_user(
-            self.user,
-            "uploads.change_userupload",
+        upload_queryset = filter_by_permission(
+            queryset=UserUpload.objects.all(),
+            user=user,
+            codename="change_userupload",
         ).filter(status=UserUpload.StatusChoices.COMPLETED)
         fields = [
             ModelChoiceField(queryset=file_search_queryset, required=False),
             ModelChoiceField(queryset=upload_queryset, required=False),
         ]
+
+        # The `current_value` is added to the widget attrs to display in the initial dropdown.
+        # We get the object so we can present the user with the filename rather than the pk.
+        self.current_value = None
+        if initial:
+            if isinstance(initial, ComponentInterfaceValue):
+                # This can happen on display set or archive item update forms,
+                # the value is then taken from the model instance
+                # unless the value is in the form data.
+                initial = initial.pk
+            # Otherwise, the value is taken from the form data and will always take
+            # the form of a pk for either
+            # a ComponentInterfaceValue object (in this case the pk is a digit) or
+            # a UserUpload object (then the pk is a UUID).
+            if isinstance(initial, int) or initial.isdigit():
+                if file_search_queryset.filter(pk=initial).exists():
+                    self.current_value = file_search_queryset.get(pk=initial)
+                else:
+                    initial = None
+            else:
+                if upload := get_object_if_allowed(
+                    model=UserUpload,
+                    pk=initial,
+                    user=user,
+                    codename="change_userupload",
+                ):
+                    self.current_value = upload
+                else:
+                    initial = None
+
         super().__init__(
             *args,
             fields=fields,
             require_all_fields=False,
+            initial=initial,
             **kwargs,
         )
-        if disabled:
-            self.widget.disabled = True
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        attrs["current_value"] = self.current_value
+        attrs["widget_choices"] = {
+            choice.name: choice.value for choice in FileWidgetChoices
+        }
+        return attrs
 
     def compress(self, values):
         if values:

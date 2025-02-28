@@ -169,7 +169,7 @@ def serve_component_interface_value(
             pk=component_interface_value_pk
         )
     except (MultipleObjectsReturned, ComponentInterfaceValue.DoesNotExist):
-        raise Http404("No ComponentInterfaceValue found.")
+        raise Http404
 
     if get_component_interface_values_for_user(
         user=user, civ_pk=civ.pk
@@ -178,7 +178,7 @@ def serve_component_interface_value(
             name=civ.file.name, creator=user, component_interface_value=civ
         )
 
-    raise PermissionDenied
+    raise Http404
 
 
 def serve_structured_challenge_submission_form(

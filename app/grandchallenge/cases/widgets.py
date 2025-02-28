@@ -10,6 +10,12 @@ from django.forms import (
 from django.forms.widgets import ChoiceWidget
 
 from grandchallenge.cases.models import Image
+from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.core.guardian import (
+    filter_by_permission,
+    get_object_if_allowed,
+)
+from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 
 
@@ -30,8 +36,8 @@ class ImageSearchWidget(ChoiceWidget, HiddenInput):
         if name:
             self.name = name
 
-    def get_context(self, *args, **kwargs):
-        context = super().get_context(*args, **kwargs)
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
         if self.name:
             context["widget"]["name"] = self.name
         return context
@@ -42,27 +48,13 @@ class FlexibleImageWidget(MultiWidget):
 
     def __init__(
         self,
-        *args,
-        help_text=None,
-        user=None,
-        current_value=None,
-        disabled=False,
-        **kwargs,
+        attrs=None,
     ):
         widgets = (
             ImageSearchWidget(),
             UserUploadMultipleWidget(),
         )
-        super().__init__(widgets)
-        self.attrs = {
-            "help_text": help_text,
-            "disabled": disabled,
-            "user": user,
-            "current_value": current_value,
-            "widget_choices": {
-                choice.name: choice.value for choice in ImageWidgetChoices
-            },
-        }
+        super().__init__(widgets, attrs)
 
     def decompress(self, value):
         if value:
@@ -81,33 +73,81 @@ class FlexibleImageWidget(MultiWidget):
         except KeyError:
             # this happens if the data comes from the DS create / update form
             try:
-                value = data[f"WidgetChoice-{name}"]
+                value = data[f"widget-choice-{name}"]
             except KeyError:
                 value = None
         return self.decompress(value)
 
 
 class FlexibleImageField(MultiValueField):
-
     widget = FlexibleImageWidget
 
     def __init__(
         self,
         *args,
-        require_all_fields=False,
-        image_queryset=None,
-        upload_queryset=None,
-        disabled=False,
+        user=None,
+        initial=None,
         **kwargs,
     ):
+        image_search_queryset = filter_by_permission(
+            queryset=Image.objects.all(),
+            user=user,
+            codename="view_image",
+        )
+        upload_queryset = filter_by_permission(
+            queryset=UserUpload.objects.all(),
+            user=user,
+            codename="change_userupload",
+        ).filter(status=UserUpload.StatusChoices.COMPLETED)
         list_fields = [
-            ModelChoiceField(queryset=image_queryset),
-            ModelMultipleChoiceField(queryset=upload_queryset),
+            ModelChoiceField(queryset=image_search_queryset, required=False),
+            ModelMultipleChoiceField(queryset=upload_queryset, required=False),
         ]
-        super().__init__(*args, fields=list_fields, **kwargs)
-        self.require_all_fields = require_all_fields
-        if disabled:
-            self.widget.disabled = True
+
+        # The `current_value` is added to the widget attrs to display in the initial dropdown.
+        # We get the object so we can present the user with the image name rather than the pk.
+        self.current_value = None
+        if initial:
+            if isinstance(initial, ComponentInterfaceValue):
+                # This can happen on display set or archive item update forms,
+                # the value is then taken from the model instance
+                # unless the value is in the form data.
+                if user.has_perm("view_image", initial.image):
+                    self.current_value = initial.image
+                    initial = initial.image.pk
+                else:
+                    initial = None
+            # Otherwise the value is taken from the form data and will always take
+            # the form of a pk for either an Image object or a UserUpload object.
+            elif image := get_object_if_allowed(
+                model=Image, pk=initial, user=user, codename="view_image"
+            ):
+                self.current_value = image
+            elif upload := get_object_if_allowed(
+                model=UserUpload,
+                pk=initial,
+                user=user,
+                codename="change_userupload",
+            ):
+                self.current_value = upload
+            else:
+                initial = None
+
+        super().__init__(
+            *args,
+            fields=list_fields,
+            initial=initial,
+            require_all_fields=False,
+            **kwargs,
+        )
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        attrs["current_value"] = self.current_value
+        attrs["widget_choices"] = {
+            choice.name: choice.value for choice in ImageWidgetChoices
+        }
+        return attrs
 
     def compress(self, values):
         if values:
