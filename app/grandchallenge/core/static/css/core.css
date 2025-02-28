@@ -242,9 +242,3 @@ a[aria-expanded="false"] .fa-chevron-down {
 .htmx-request.htmx-indicator {
     display: inline-block;
 }
-
-/* hide register form scroll bar due to the honeypot field*/
-div.overflow-auto form[action="/accounts/signup/"] {
-    position: relative;
-    overflow: hidden;
-}
