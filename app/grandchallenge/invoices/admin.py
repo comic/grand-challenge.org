@@ -24,11 +24,14 @@ class InvoiceAdmin(admin.ModelAdmin):
     readonly_fields = ["invoice_request_text"]
 
     def total_amount_euros(self, obj):
-        return (
-            obj.support_costs_euros
-            + obj.compute_costs_euros
-            + obj.storage_costs_euros
-        )
+        try:
+            return (
+                obj.support_costs_euros
+                + obj.compute_costs_euros
+                + obj.storage_costs_euros
+            )
+        except TypeError:
+            return
 
     def invoice_request_text(self, obj):
         required = {
