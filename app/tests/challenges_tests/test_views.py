@@ -12,7 +12,7 @@ from grandchallenge.challenges.models import (
     ChallengeRequest,
     OnboardingTask,
 )
-from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.invoices.models import PaymentTypeChoices
 from grandchallenge.verifications.models import Verification
 from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import (
@@ -289,7 +289,7 @@ def test_challenge_card_status(
     InvoiceFactory(
         challenge=ch,
         compute_costs_euros=10,
-        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
 
     phase1.submissions_limit_per_user_per_period = (

@@ -3,3 +3,13 @@ html,
     --primary: #c44133;
     --secondary: #e74c3c;
 }
+
+div.invoice-example-text {
+    padding: 1em;
+}
+
+div.invoice-example-text,
+.invoice-example-text pre {
+    color: black;
+    background: white;
+}
