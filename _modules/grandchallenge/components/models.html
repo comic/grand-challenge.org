@@ -78,7 +78,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">panimg.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MAXIMUM_SEGMENTS_LENGTH</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.cases.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span><span class="p">,</span> <span class="n">RawImageUploadSession</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.cases.widgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlexibleImageField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.charts.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">components_line</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.backends.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CIVNotEditableException</span><span class="p">,</span>
@@ -603,7 +602,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ModelChoiceField</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">FlexibleImageField</span>
+            <span class="k">return</span> <span class="n">ModelChoiceField</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">,</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">,</span>
