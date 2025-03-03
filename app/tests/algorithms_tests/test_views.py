@@ -962,22 +962,21 @@ def test_create_job_with_json_file(
             creator=editor, file_path=Path(file.name)
         )
         with django_capture_on_commit_callbacks(execute=True):
-            with django_capture_on_commit_callbacks(execute=True):
-                response = get_view_for_user(
-                    viewname="algorithms:job-create",
-                    client=client,
-                    method=client.post,
-                    reverse_kwargs={
-                        "slug": ai.algorithm.slug,
-                    },
-                    user=editor,
-                    follow=True,
-                    data={
-                        **get_interface_form_data(
-                            interface_slug=ci.slug, data=upload.pk
-                        )
-                    },
-                )
+            response = get_view_for_user(
+                viewname="algorithms:job-create",
+                client=client,
+                method=client.post,
+                reverse_kwargs={
+                    "slug": ai.algorithm.slug,
+                },
+                user=editor,
+                follow=True,
+                data={
+                    **get_interface_form_data(
+                        interface_slug=ci.slug, data=upload.pk
+                    )
+                },
+            )
         assert response.status_code == 200
         assert (
             file.name.split("/")[-1]

@@ -598,7 +598,7 @@ def test_display_set_update(
             reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
             data={
                 ci_img.slug: str(im2.pk),
-                f"WidgetChoice-{ci_img.slug}": ImageWidgetChoices.IMAGE_SEARCH.name,
+                f"widget-choice-{ci_img.slug}": ImageWidgetChoices.IMAGE_SEARCH.name,
                 "order": 12,
                 "title": "foobar_foobar",
             },

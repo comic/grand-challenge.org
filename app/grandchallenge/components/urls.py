@@ -62,9 +62,9 @@ urlpatterns = [
         name="file-upload",
     ),
     path(
-        "file-widget-select/",
+        "select-file-widget/",
         FileWidgetSelectView.as_view(),
-        name="file-widget-select",
+        name="select-file-widget",
     ),
     path("files/search/", FileSearchResultView.as_view(), name="file-search"),
 ]

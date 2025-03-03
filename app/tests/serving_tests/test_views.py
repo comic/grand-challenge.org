@@ -164,7 +164,7 @@ def test_civ_file_download(client):
     user1, user2 = UserFactory(), UserFactory()
 
     def has_correct_access(user_allowed, user_denied, url):
-        tests = [(403, None), (302, user_allowed), (403, user_denied)]
+        tests = [(404, None), (302, user_allowed), (404, user_denied)]
 
         for test in tests:
             response = get_view_for_user(url=url, client=client, user=test[1])
@@ -187,24 +187,24 @@ def test_civ_file_download(client):
     group.user_set.add(user1)
     assign_perm("view_evaluation", group, evaluation)
 
-    # Evaluation inputs and outputs should always be denied
+    # Evaluation inputs and outputs should always return 404.
     assert (
         get_view_for_user(
             url=evaluation.outputs.first().file.url, client=client, user=None
         ).status_code
-        == 403
+        == 404
     )
     assert (
         get_view_for_user(
             url=evaluation.outputs.first().file.url, client=client, user=user1
         ).status_code
-        == 403
+        == 404
     )
     assert (
         get_view_for_user(
             url=evaluation.outputs.first().file.url, client=client, user=user2
         ).status_code
-        == 403
+        == 404
     )
     evaluation.outputs.remove(output_civ)
 
