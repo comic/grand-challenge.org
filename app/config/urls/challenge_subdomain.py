@@ -3,10 +3,10 @@ from django.urls import include, path
 
 from grandchallenge.challenges.views import (
     ChallengeUpdate,
-    InvoiceList,
     OnboardingTaskComplete,
     OnboardingTaskList,
 )
+from grandchallenge.invoices.views import InvoiceList
 
 handler500 = "grandchallenge.core.views.handler500"
 
