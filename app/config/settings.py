@@ -248,7 +248,7 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "custom_domain": os.environ.get("PUBLIC_S3_CUSTOM_DOMAIN"),
     # Public bucket so do not use querystring_auth
     "querystring_auth": False,
-    "default_acl": "public-read",
+    "default_acl": os.environ.get("PUBLIC_S3_DEFAULT_ACL", "public-read"),
 }
 
 UPLOADS_S3_BUCKET_NAME = os.environ.get(
@@ -825,6 +825,7 @@ MACHINA_MARKUP_LANGUAGE = (
     "grandchallenge.core.templatetags.bleach.md2html",
     {"link_blank_target": True},
 )
+MACHINA_ATTACHMENT_MAX_FILES_PER_POST = 0
 
 AUTH_PASSWORD_VALIDATORS = [
     {
