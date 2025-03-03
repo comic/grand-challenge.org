@@ -25,7 +25,7 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.invoices.models import PaymentTypeChoices
 from grandchallenge.workstations.models import Workstation
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -473,7 +473,7 @@ def test_submission_time_limit(client, two_challenge_sets):
     InvoiceFactory(
         challenge=phase.challenge,
         compute_costs_euros=10,
-        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
 
     SubmissionFactory(
@@ -667,7 +667,7 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
     InvoiceFactory(
         challenge=phase.challenge,
         compute_costs_euros=10,
-        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
 
     # admin can make a submission only if they are verified
@@ -988,7 +988,7 @@ def test_create_algorithm_for_phase_limits(client):
     InvoiceFactory(
         challenge=phase.challenge,
         compute_costs_euros=10,
-        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
 
     u1, u2, u3 = UserFactory.create_batch(3)
@@ -1618,7 +1618,7 @@ def test_submission_create_sets_limits_correctly_with_algorithm(client):
     InvoiceFactory(
         challenge=phase.challenge,
         compute_costs_euros=10,
-        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
 
     MethodFactory(
@@ -1666,7 +1666,7 @@ def test_submission_create_sets_limits_correctly_with_predictions(client):
     InvoiceFactory(
         challenge=phase.challenge,
         compute_costs_euros=10,
-        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
 
     MethodFactory(
