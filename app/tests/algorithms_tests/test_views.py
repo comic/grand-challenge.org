@@ -993,6 +993,7 @@ def test_create_job_with_json_file(
                 method=client.post,
                 reverse_kwargs={
                     "slug": ai.algorithm.slug,
+                    "interface_pk": interface.pk,
                 },
                 user=editor,
                 follow=True,
