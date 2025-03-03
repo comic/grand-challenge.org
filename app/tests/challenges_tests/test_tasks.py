@@ -10,12 +10,12 @@ from grandchallenge.challenges.models import (
     OnboardingTask,
 )
 from grandchallenge.challenges.tasks import (
-    send_invoice_reminder_emails,
     send_onboarding_task_reminder_emails,
     update_challenge_results_cache,
     update_compute_costs_and_storage_size,
 )
 from grandchallenge.invoices.models import Invoice, PaymentStatusChoices
+from grandchallenge.invoices.tasks import send_invoice_reminder_emails
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import (
     ChallengeFactory,
