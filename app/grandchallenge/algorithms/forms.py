@@ -185,7 +185,7 @@ class JobCreateForm(SaveFormInitMixin, Form):
                 user=self._user,
                 required=algorithm_input.value_required,
                 initial=initial if initial else algorithm_input.default_value,
-            ).field
+            )
 
     @cached_property
     def jobs_limit(self):
