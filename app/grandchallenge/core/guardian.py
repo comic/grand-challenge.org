@@ -116,3 +116,13 @@ def filter_by_permission(*, queryset, user, codename, accept_user_perms=True):
         return queryset.filter(pk__in=pks)
     else:
         return queryset.filter(**group_filter_kwargs)
+
+
+def get_object_if_allowed(*, model, pk, user, codename):
+    try:
+        obj = model.objects.get(pk=pk)
+    except model.DoesNotExist:
+        return
+
+    if user.has_perm(codename, obj):
+        return obj

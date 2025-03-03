@@ -15,9 +15,11 @@ from requests import put
 from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.widgets import ImageWidgetChoices
 from grandchallenge.components.backends import docker_client
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FileWidgetChoices,
+)
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
-from grandchallenge.components.widgets import FileWidgetChoices
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
 from tests.algorithms_tests.factories import (
@@ -619,11 +621,11 @@ def get_interface_form_data(
     if ci.is_image_kind:
         if existing_data:
             form_data[
-                f"WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
             ] = ImageWidgetChoices.IMAGE_SEARCH.name
         else:
             form_data[
-                f"WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
             ] = ImageWidgetChoices.IMAGE_UPLOAD.name
     elif ci.requires_file:
         if existing_data:

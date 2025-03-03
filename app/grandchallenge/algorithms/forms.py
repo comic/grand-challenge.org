@@ -62,7 +62,7 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.algorithms.tasks import import_remote_algorithm_image
 from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
-    InterfaceFormField,
+    InterfaceFormFieldFactory,
 )
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
@@ -87,7 +87,6 @@ from grandchallenge.core.guardian import (
     filter_by_permission,
     get_objects_for_user,
 )
-from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
@@ -163,15 +162,15 @@ class JobCreateForm(SaveFormInitMixin, Form):
             )
             self.fields["algorithm_model"].initial = active_model
 
-        for inp in interface.inputs.all():
+        for algorithm_input in interface.inputs.all():
             prefixed_interface_slug = (
-                f"{INTERFACE_FORM_FIELD_PREFIX}{inp.slug}"
+                f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_input.slug}"
             )
 
             if prefixed_interface_slug in self.data:
                 if (
-                    not inp.requires_file
-                    and inp.kind == ComponentInterface.Kind.ANY
+                    not algorithm_input.requires_file
+                    and algorithm_input.kind == ComponentInterface.Kind.ANY
                 ):
                     # interfaces for which the data can be a list need
                     # to be retrieved with getlist() from the QueryDict
@@ -181,13 +180,11 @@ class JobCreateForm(SaveFormInitMixin, Form):
             else:
                 initial = None
 
-            self.fields[prefixed_interface_slug] = InterfaceFormField(
-                instance=inp,
-                initial=initial if initial else inp.default_value,
+            self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
+                interface=algorithm_input,
                 user=self._user,
-                required=inp.value_required,
-                help_text=clean(inp.description) if inp.description else "",
-                form_data=self.data,
+                required=algorithm_input.value_required,
+                initial=initial if initial else algorithm_input.default_value,
             ).field
 
     @cached_property
