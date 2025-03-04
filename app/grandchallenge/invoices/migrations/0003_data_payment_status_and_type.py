@@ -1,11 +1,16 @@
 from django.db import migrations
 
+from grandchallenge.invoices.models import (
+    PaymentStatusChoices,
+    PaymentTypeChoices,
+)
+
 
 def move_complimentary_status_to_type(apps, schema_editor):
     Invoice = apps.get_model("invoices", "Invoice")  # noqa: N806
     for invoice in Invoice.objects.filter(payment_status="COMPLIMENTARY"):
-        invoice.payment_type = invoice.PaymentTypeChoices.COMPLIMENTARY
-        invoice.payment_status = invoice.PaymentStatusChoices.PAID
+        invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
+        invoice.payment_status = PaymentStatusChoices.PAID
         invoice.save()
 
 
