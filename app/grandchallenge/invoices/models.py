@@ -92,11 +92,11 @@ class Invoice(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                check=models.Q(payment_type__in=PaymentTypeChoices),
+                check=models.Q(payment_type__in=PaymentTypeChoices.values),
                 name="payment_type_in_choices",
             ),
             models.CheckConstraint(
-                check=models.Q(payment_status__in=PaymentStatusChoices),
+                check=models.Q(payment_status__in=PaymentStatusChoices.values),
                 name="payment_status_in_choices",
             ),
         ]

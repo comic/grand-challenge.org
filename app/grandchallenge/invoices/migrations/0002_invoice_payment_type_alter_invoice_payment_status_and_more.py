@@ -2,8 +2,6 @@
 
 from django.db import migrations, models
 
-import grandchallenge.invoices.models
-
 
 class Migration(migrations.Migration):
     dependencies = [
@@ -37,30 +35,6 @@ class Migration(migrations.Migration):
                 ],
                 default="INITIALIZED",
                 max_length=13,
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="invoice",
-            constraint=models.CheckConstraint(
-                check=models.Q(
-                    (
-                        "payment_type__in",
-                        grandchallenge.invoices.models.PaymentTypeChoices,
-                    )
-                ),
-                name="payment_type_in_choices",
-            ),
-        ),
-        migrations.AddConstraint(
-            model_name="invoice",
-            constraint=models.CheckConstraint(
-                check=models.Q(
-                    (
-                        "payment_status__in",
-                        grandchallenge.invoices.models.PaymentStatusChoices,
-                    )
-                ),
-                name="payment_status_in_choices",
             ),
         ),
     ]
