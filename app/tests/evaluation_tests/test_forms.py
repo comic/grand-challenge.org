@@ -17,7 +17,7 @@ from grandchallenge.evaluation.forms import (
 )
 from grandchallenge.evaluation.models import Evaluation, Phase, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.invoices.models import PaymentTypeChoices
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.verifications.models import (
     Verification,
@@ -409,7 +409,7 @@ class TestSubmissionForm:
         InvoiceFactory(
             challenge=p.challenge,
             compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
         )
 
         # Fetch from the db to get the cost annotations
@@ -467,7 +467,7 @@ class TestSubmissionForm:
         InvoiceFactory(
             challenge=p.challenge,
             compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
         )
 
         # Fetch from the db to get the cost annotations
@@ -532,7 +532,7 @@ class TestSubmissionForm:
         InvoiceFactory(
             challenge=phase.challenge,
             compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
         )
 
         # Fetch from the db to get the cost annotations
@@ -582,7 +582,7 @@ class TestSubmissionForm:
             InvoiceFactory(
                 challenge=p.challenge,
                 compute_costs_euros=10,
-                payment_status=PaymentStatusChoices.COMPLIMENTARY,
+                payment_type=PaymentTypeChoices.COMPLIMENTARY,
             )
         # Fetch from the db to get the cost annotations
         # Maybe this is solved with GeneratedField (Django 5)?
@@ -677,7 +677,7 @@ class TestSubmissionForm:
         InvoiceFactory(
             challenge=p.challenge,
             compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
         )
 
         # Fetch from the db to get the cost annotations
@@ -771,7 +771,7 @@ class TestSubmissionForm:
         InvoiceFactory(
             challenge=p.challenge,
             compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
         )
 
         # Fetch from the db to get the cost annotations
@@ -831,7 +831,7 @@ class TestSubmissionForm:
         InvoiceFactory(
             challenge=phase.challenge,
             compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
         )
         phase = Phase.objects.get(pk=phase.pk)
         form = SubmissionForm(

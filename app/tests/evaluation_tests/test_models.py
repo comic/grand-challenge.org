@@ -27,7 +27,7 @@ from grandchallenge.evaluation.tasks import (
     update_combined_leaderboard,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.invoices.models import PaymentTypeChoices
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmInterfaceFactory,
@@ -263,7 +263,7 @@ class TestPhaseLimits:
         InvoiceFactory(
             challenge=phase.challenge,
             compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
         )
 
         # Fetch from the db to get the cost annotations
@@ -484,7 +484,7 @@ def test_open_for_submission(
     InvoiceFactory(
         challenge=phase.challenge,
         compute_costs_euros=compute_costs_euros,
-        payment_status=PaymentStatusChoices.COMPLIMENTARY,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
 
     # Fetch from the db to get the cost annotations
