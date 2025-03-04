@@ -1513,7 +1513,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             and self.interface not in self.allowed_component_interfaces
         ):
             raise ValidationError(
-                f"The interface {self.interface} is not allowed for this "
+                f"The socket {self.interface} is not allowed for this "
                 f"question type ({self.answer_type})"
             )
 

@@ -5,18 +5,21 @@ import pytest
 from actstream.models import Follow
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs,
     create_algorithm_jobs_for_archive,
     execute_algorithm_job_for_inputs,
-    filter_civs_for_algorithm,
+    filter_archive_items_for_algorithm,
     send_failed_job_notification,
 )
+from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
+    InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import (
@@ -27,6 +30,7 @@ from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
@@ -36,6 +40,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.conftest import get_interface_form_data
 from tests.factories import (
     GroupFactory,
     ImageFactory,
@@ -44,6 +49,7 @@ from tests.factories import (
     UserFactory,
 )
 from tests.utils import get_view_for_user, recurse_callbacks
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
@@ -54,9 +60,12 @@ class TestCreateAlgorithmJobs:
 
     def test_no_images_does_nothing(self):
         ai = AlgorithmImageFactory()
+        interface = AlgorithmInterfaceFactory()
+        ai.algorithm.interfaces.set([interface])
+
         create_algorithm_jobs(
             algorithm_image=ai,
-            civ_sets=[],
+            archive_items=ArchiveItem.objects.none(),
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=GPUTypeChoices.NO_GPU,
             requires_memory_gb=4,
@@ -67,7 +76,7 @@ class TestCreateAlgorithmJobs:
         with pytest.raises(RuntimeError):
             create_algorithm_jobs(
                 algorithm_image=None,
-                civ_sets=[],
+                archive_items=ArchiveItem.objects.none(),
                 time_limit=60,
                 requires_gpu_type=GPUTypeChoices.NO_GPU,
                 requires_memory_gb=4,
@@ -76,15 +85,18 @@ class TestCreateAlgorithmJobs:
     def test_creates_job_correctly(self):
         ai = AlgorithmImageFactory()
         image = ImageFactory()
-        interface = ComponentInterface.objects.get(
-            slug="generic-medical-image"
-        )
-        ai.algorithm.inputs.set([interface])
-        civ = ComponentInterfaceValueFactory(image=image, interface=interface)
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        ai.algorithm.interfaces.set([interface])
+
+        civ = ComponentInterfaceValueFactory(image=image, interface=ci)
+        item = ArchiveItemFactory()
+        item.values.add(civ)
+
         assert Job.objects.count() == 0
         jobs = create_algorithm_jobs(
             algorithm_image=ai,
-            civ_sets=[{civ}],
+            archive_items=ArchiveItem.objects.all(),
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
@@ -93,25 +105,94 @@ class TestCreateAlgorithmJobs:
         j = Job.objects.first()
         assert j.algorithm_image == ai
         assert j.creator is None
+        assert j.algorithm_interface == interface
         assert (
             j.inputs.get(interface__slug="generic-medical-image").image
             == image
         )
         assert j.pk == jobs[0].pk
 
+    def test_creates_job_for_multiple_interfaces_correctly(self):
+        ai = AlgorithmImageFactory()
+        image = ImageFactory()
+        ci1 = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+        ci2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.IMAGE)
+        ci3 = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+
+        interface1 = AlgorithmInterfaceFactory(inputs=[ci1])
+        interface2 = AlgorithmInterfaceFactory(inputs=[ci2])
+        interface3 = AlgorithmInterfaceFactory(inputs=[ci3])
+        interface4 = AlgorithmInterfaceFactory(inputs=[ci1, ci3])
+        interface5 = AlgorithmInterfaceFactory(inputs=[ci1, ci2, ci3])
+        ai.algorithm.interfaces.set(
+            [interface1, interface2, interface3, interface4, interface5]
+        )
+
+        civ1 = ComponentInterfaceValueFactory(value=False, interface=ci1)
+        civ2 = ComponentInterfaceValueFactory(image=image, interface=ci2)
+        civ3 = ComponentInterfaceValueFactory(value="foo", interface=ci3)
+        civ4 = ComponentInterfaceValueFactory()
+
+        archive = ArchiveFactory()
+        item1, item2, item3, item4, item5, item6 = (
+            ArchiveItemFactory.create_batch(6, archive=archive)
+        )
+        item1.values.add(civ1)  # item for interface 1 only
+        item2.values.add(civ2)  # item for interface 2 only
+        item3.values.add(civ3)  # item for interface 3 only
+        item4.values.set([civ1, civ3])  # item for interface 4 only
+        item5.values.set([civ4])  # not a match for any interface
+        item6.values.set([civ2, civ3])  # not a match for any interface
+
+        assert Job.objects.count() == 0
+        create_algorithm_jobs(
+            algorithm_image=ai,
+            archive_items=ArchiveItem.objects.all(),
+            time_limit=ai.algorithm.time_limit,
+            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
+            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+        )
+        assert Job.objects.count() == 4
+
+        for j in Job.objects.all():
+            assert j.algorithm_image == ai
+            assert j.creator is None
+
+        assert not (
+            Job.objects.get(algorithm_interface=interface1).inputs.get().value
+        )
+        assert (
+            Job.objects.get(algorithm_interface=interface2).inputs.get().image
+            == image
+        )
+        assert (
+            Job.objects.get(algorithm_interface=interface3).inputs.get().value
+            == "foo"
+        )
+        assert (
+            Job.objects.get(algorithm_interface=interface4).inputs.count() == 2
+        )
+        assert [False, "foo"] == list(
+            Job.objects.get(algorithm_interface=interface4).inputs.values_list(
+                "value", flat=True
+            )
+        )
+
     def test_is_idempotent(self):
         ai = AlgorithmImageFactory()
         image = ImageFactory()
-        interface = ComponentInterface.objects.get(
-            slug="generic-medical-image"
-        )
-        civ = ComponentInterfaceValueFactory(image=image, interface=interface)
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        ai.algorithm.interfaces.set([interface])
+        civ = ComponentInterfaceValueFactory(image=image, interface=ci)
+        item = ArchiveItemFactory()
+        item.values.add(civ)
 
         assert Job.objects.count() == 0
 
         create_algorithm_jobs(
             algorithm_image=ai,
-            civ_sets=[{civ}],
+            archive_items=ArchiveItem.objects.all(),
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
@@ -121,7 +202,7 @@ class TestCreateAlgorithmJobs:
 
         jobs = create_algorithm_jobs(
             algorithm_image=ai,
-            civ_sets=[{civ}],
+            archive_items=ArchiveItem.objects.all(),
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
@@ -132,14 +213,16 @@ class TestCreateAlgorithmJobs:
 
     def test_extra_viewer_groups(self):
         ai = AlgorithmImageFactory()
-        interface = ComponentInterface.objects.get(
-            slug="generic-medical-image"
-        )
-        civ = ComponentInterfaceValueFactory(interface=interface)
+        ci = ComponentInterface.objects.get(slug="generic-medical-image")
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        ai.algorithm.interfaces.set([interface])
+        civ = ComponentInterfaceValueFactory(interface=ci)
+        item = ArchiveItemFactory()
+        item.values.add(civ)
         groups = (GroupFactory(), GroupFactory(), GroupFactory())
         jobs = create_algorithm_jobs(
             algorithm_image=ai,
-            civ_sets=[{civ}],
+            archive_items=ArchiveItem.objects.all(),
             extra_viewer_groups=groups,
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
@@ -155,7 +238,7 @@ def test_no_jobs_workflow(django_capture_on_commit_callbacks):
     with django_capture_on_commit_callbacks() as callbacks:
         create_algorithm_jobs(
             algorithm_image=ai,
-            civ_sets=[],
+            archive_items=ArchiveItem.objects.none(),
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
@@ -167,15 +250,19 @@ def test_no_jobs_workflow(django_capture_on_commit_callbacks):
 def test_jobs_workflow(django_capture_on_commit_callbacks):
     ai = AlgorithmImageFactory()
     images = [ImageFactory(), ImageFactory()]
-    interface = ComponentInterface.objects.get(slug="generic-medical-image")
-    civ_sets = [
-        {ComponentInterfaceValueFactory(image=im, interface=interface)}
-        for im in images
-    ]
+    ci = ComponentInterface.objects.get(slug="generic-medical-image")
+    archive = ArchiveFactory()
+    for im in images:
+        item = ArchiveItemFactory(archive=archive)
+        item.values.add(ComponentInterfaceValueFactory(image=im, interface=ci))
+
+    interface = AlgorithmInterfaceFactory(inputs=[ci])
+    ai.algorithm.interfaces.set([interface])
+
     with django_capture_on_commit_callbacks() as callbacks:
         create_algorithm_jobs(
             algorithm_image=ai,
-            civ_sets=civ_sets,
+            archive_items=ArchiveItem.objects.all(),
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
@@ -186,7 +273,7 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
 @pytest.mark.flaky(reruns=3)
 @pytest.mark.django_db
 def test_algorithm(
-    algorithm_image, settings, django_capture_on_commit_callbacks
+    algorithm_image, client, settings, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -201,6 +288,10 @@ def test_algorithm(
         with open(algorithm_image, "rb") as f:
             ai.image.save(algorithm_image, ContentFile(f.read()))
 
+    user = UserFactory()
+    ai.algorithm.add_editor(user)
+    VerificationFactory(user=user, is_verified=True)
+
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
@@ -211,6 +302,7 @@ def test_algorithm(
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
+    assign_perm("cases.view_image", user, image_file.image)
 
     input_interface = ComponentInterface.objects.get(
         slug="generic-medical-image"
@@ -219,20 +311,29 @@ def test_algorithm(
         slug="results-json-file"
     )
     heatmap_interface = ComponentInterface.objects.get(slug="generic-overlay")
-    ai.algorithm.inputs.set([input_interface])
-    ai.algorithm.outputs.set([json_result_interface, heatmap_interface])
-
-    civ = ComponentInterfaceValueFactory(
-        image=image_file.image, interface=input_interface, file=None
+    interface = AlgorithmInterfaceFactory(
+        inputs=[input_interface],
+        outputs=[json_result_interface, heatmap_interface],
     )
+    ai.algorithm.interfaces.add(interface)
 
     with django_capture_on_commit_callbacks() as callbacks:
-        create_algorithm_jobs(
-            algorithm_image=ai,
-            civ_sets=[{civ}],
-            time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
-            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+        get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            method=client.post,
+            user=user,
+            reverse_kwargs={
+                "slug": ai.algorithm.slug,
+                "interface_pk": interface.pk,
+            },
+            follow=True,
+            data={
+                **get_interface_form_data(
+                    interface_slug=input_interface.slug,
+                    data=image_file.image.pk,
+                ),
+            },
         )
 
     recurse_callbacks(
@@ -273,22 +374,37 @@ def test_algorithm(
         slug="detection-json-file",
         kind=ComponentInterface.Kind.ANY,
     )
-    ai.algorithm.outputs.add(detection_interface)
-    ai.save()
+    interface2 = AlgorithmInterfaceFactory(
+        inputs=[input_interface],
+        outputs=[
+            json_result_interface,
+            heatmap_interface,
+            detection_interface,
+        ],
+    )
+    ai.algorithm.interfaces.add(interface2)
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
-    civ = ComponentInterfaceValueFactory(
-        image=image_file.image, interface=input_interface, file=None
-    )
+    assign_perm("cases.view_image", user, image_file.image)
 
     with django_capture_on_commit_callbacks() as callbacks:
-        create_algorithm_jobs(
-            algorithm_image=ai,
-            civ_sets=[{civ}],
-            time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
-            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+        get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            method=client.post,
+            user=user,
+            reverse_kwargs={
+                "slug": ai.algorithm.slug,
+                "interface_pk": interface2.pk,
+            },
+            follow=True,
+            data={
+                **get_interface_form_data(
+                    interface_slug=input_interface.slug,
+                    data=image_file.image.pk,
+                ),
+            },
         )
 
     recurse_callbacks(
@@ -312,7 +428,7 @@ def test_algorithm(
 
 @pytest.mark.django_db
 def test_algorithm_with_invalid_output(
-    algorithm_image, settings, django_capture_on_commit_callbacks
+    algorithm_image, client, settings, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -326,6 +442,10 @@ def test_algorithm_with_invalid_output(
 
         with open(algorithm_image, "rb") as f:
             ai.image.save(algorithm_image, ContentFile(f.read()))
+
+    user = UserFactory()
+    ai.algorithm.add_editor(user)
+    VerificationFactory(user=user, is_verified=True)
 
     recurse_callbacks(
         callbacks=callbacks,
@@ -343,26 +463,35 @@ def test_algorithm_with_invalid_output(
         slug="detection-json-file",
         kind=ComponentInterface.Kind.ANY,
     )
-    ai.algorithm.inputs.add(input_interface)
-    ai.algorithm.outputs.add(detection_interface)
-    ai.save()
+    interface = AlgorithmInterfaceFactory(
+        inputs=[input_interface], outputs=[detection_interface]
+    )
+    ai.algorithm.interfaces.add(interface)
 
     image_file = ImageFileFactory(
         file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
     )
-
-    civ = ComponentInterfaceValueFactory(
-        image=image_file.image, interface=input_interface, file=None
-    )
+    assign_perm("cases.view_image", user, image_file.image)
 
     with django_capture_on_commit_callbacks() as callbacks:
-        create_algorithm_jobs(
-            algorithm_image=ai,
-            civ_sets=[{civ}],
-            time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
-            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+        get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            method=client.post,
+            user=user,
+            reverse_kwargs={
+                "slug": ai.algorithm.slug,
+                "interface_pk": interface.pk,
+            },
+            follow=True,
+            data={
+                **get_interface_form_data(
+                    interface_slug=input_interface.slug,
+                    data=image_file.image.pk,
+                ),
+            },
         )
+
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
@@ -422,11 +551,15 @@ def test_execute_algorithm_job_for_missing_inputs(settings):
     # create the job without value for the ComponentInterfaceValues
     ci = ComponentInterface.objects.get(slug="generic-medical-image")
     ComponentInterfaceValue.objects.create(interface=ci)
-    alg.algorithm.inputs.add(ci)
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci], outputs=[ComponentInterfaceFactory()]
+    )
+    alg.algorithm.interfaces.add(interface)
     job = AlgorithmJobFactory(
         creator=creator,
         algorithm_image=alg,
         time_limit=alg.algorithm.time_limit,
+        algorithm_interface=interface,
     )
     execute_algorithm_job_for_inputs(job_pk=job.pk)
 
@@ -438,120 +571,93 @@ def test_execute_algorithm_job_for_missing_inputs(settings):
 
 @pytest.mark.django_db
 class TestJobCreation:
-    def test_unmatched_interface_filter(self):
-        ai = AlgorithmImageFactory()
-        cis = ComponentInterfaceFactory.create_batch(2)
-        ai.algorithm.inputs.set(cis)
+    def test_interface_matching(self):
+        ai1, ai2, ai3, ai4 = AlgorithmImageFactory.create_batch(4)
+        ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+        interface1 = AlgorithmInterfaceFactory(inputs=[ci1])
+        interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci2])
+        interface3 = AlgorithmInterfaceFactory(inputs=[ci2, ci3, ci4])
+        interface4 = AlgorithmInterfaceFactory(inputs=[ci2])
 
-        civ_sets = [
-            {},  # No interfaces
-            {
-                ComponentInterfaceValueFactory(interface=cis[0])
-            },  # Missing interface
-            {
-                # OK
-                ComponentInterfaceValueFactory(interface=cis[0]),
-                ComponentInterfaceValueFactory(interface=cis[1]),
-            },
-            {
-                # Unmatched interface
-                ComponentInterfaceValueFactory(interface=cis[0]),
+        ai1.algorithm.interfaces.set([interface1])
+        ai2.algorithm.interfaces.set([interface1, interface2])
+        ai3.algorithm.interfaces.set([interface1, interface3, interface4])
+        ai4.algorithm.interfaces.set([interface4])
+
+        archive = ArchiveFactory()
+        i1, i2, i3, i4 = ArchiveItemFactory.create_batch(4, archive=archive)
+        i1.values.add(
+            ComponentInterfaceValueFactory(interface=ci1)
+        )  # Valid for interface 1
+        i2.values.set(
+            [
+                ComponentInterfaceValueFactory(interface=ci1),
+                ComponentInterfaceValueFactory(interface=ci2),
+            ]
+        )  # valid for interface 2
+        i3.values.set(
+            [
+                ComponentInterfaceValueFactory(interface=ci1),
                 ComponentInterfaceValueFactory(
                     interface=ComponentInterfaceFactory()
                 ),
-            },
-        ]
-
-        filtered_civ_sets = filter_civs_for_algorithm(
-            civ_sets=civ_sets, algorithm_image=ai, algorithm_model=None
-        )
-
-        assert filtered_civ_sets == [civ_sets[2]]
-
-    def test_unmatched_interface_filter_subset(self):
-        ai = AlgorithmImageFactory()
-        cis = ComponentInterfaceFactory.create_batch(2)
-        ai.algorithm.inputs.set(cis)
-
-        civ_sets = [
-            {
-                # Extra interface
-                ComponentInterfaceValueFactory(interface=cis[0]),
-                ComponentInterfaceValueFactory(interface=cis[1]),
+            ]
+        )  # valid for no interface, because of additional / mismatching interface
+        i4.values.set(
+            [
+                ComponentInterfaceValueFactory(interface=ci2),
                 ComponentInterfaceValueFactory(
                     interface=ComponentInterfaceFactory()
                 ),
-            }
-        ]
+            ]
+        )  # valid for no interface, because of additional / mismatching interface
 
-        filtered_civ_sets = filter_civs_for_algorithm(
-            civ_sets=civ_sets, algorithm_image=ai, algorithm_model=None
+        # filtered archive items depend on defined interfaces and archive item values
+        filtered_archive_items = filter_archive_items_for_algorithm(
+            archive_items=ArchiveItem.objects.all(),
+            algorithm_image=ai1,
+            algorithm_model=None,
         )
+        assert filtered_archive_items.keys() == {interface1}
+        assert filtered_archive_items[interface1] == [i1]
 
-        assert len(filtered_civ_sets) == 1
-        assert {civ.interface for civ in filtered_civ_sets[0]} == {*cis}
+        filtered_archive_items = filter_archive_items_for_algorithm(
+            archive_items=ArchiveItem.objects.all(),
+            algorithm_image=ai2,
+            algorithm_model=None,
+        )
+        assert filtered_archive_items.keys() == {interface1, interface2}
+        assert filtered_archive_items[interface1] == [i1]
+        assert filtered_archive_items[interface2] == [i2]
 
-    def test_existing_jobs(self):
+        filtered_archive_items = filter_archive_items_for_algorithm(
+            archive_items=ArchiveItem.objects.all(),
+            algorithm_image=ai3,
+            algorithm_model=None,
+        )
+        assert filtered_archive_items.keys() == {
+            interface1,
+            interface3,
+            interface4,
+        }
+        assert filtered_archive_items[interface1] == [i1]
+        assert filtered_archive_items[interface3] == []
+        assert filtered_archive_items[interface4] == []
+
+        filtered_archive_items = filter_archive_items_for_algorithm(
+            archive_items=ArchiveItem.objects.all(),
+            algorithm_image=ai4,
+            algorithm_model=None,
+        )
+        assert filtered_archive_items.keys() == {interface4}
+        assert filtered_archive_items[interface4] == []
+
+    def test_jobs_with_creator_ignored(self):
         alg = AlgorithmFactory()
         ai = AlgorithmImageFactory(algorithm=alg)
-        am = AlgorithmModelFactory(algorithm=alg)
         cis = ComponentInterfaceFactory.create_batch(2)
-        ai.algorithm.inputs.set(cis)
-
-        civs1 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
-        civs2 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
-        civs3 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
-
-        j1 = AlgorithmJobFactory(
-            creator=None,
-            algorithm_image=ai,
-            time_limit=ai.algorithm.time_limit,
-        )
-        j1.inputs.set(civs1)
-        j2 = AlgorithmJobFactory(
-            algorithm_image=ai, time_limit=ai.algorithm.time_limit
-        )
-        j2.inputs.set(civs2)
-        j3 = AlgorithmJobFactory(
-            creator=None,
-            algorithm_image=ai,
-            algorithm_model=am,
-            time_limit=ai.algorithm.time_limit,
-        )
-        j3.inputs.set(civs3)
-
-        civ_sets = [
-            {civ for civ in civs1},  # Job already exists (system job)
-            {
-                civ for civ in civs2
-            },  # Job already exists but with a creator set and hence should be ignored
-            {
-                civ for civ in civs3
-            },  # Job exists but with an algorithm model set and should be ignored
-            {
-                # New values
-                ComponentInterfaceValueFactory(interface=cis[0]),
-                ComponentInterfaceValueFactory(interface=cis[1]),
-            },
-            {
-                # Changed values
-                civs1[0],
-                ComponentInterfaceValueFactory(interface=cis[1]),
-            },
-        ]
-
-        filtered_civ_sets = filter_civs_for_algorithm(
-            civ_sets=civ_sets, algorithm_image=ai, algorithm_model=None
-        )
-
-        assert sorted(filtered_civ_sets) == sorted(civ_sets[1:])
-
-    def test_existing_jobs_with_algorithm_model(self):
-        alg = AlgorithmFactory()
-        ai = AlgorithmImageFactory(algorithm=alg)
-        am = AlgorithmModelFactory(algorithm=alg)
-        cis = ComponentInterfaceFactory.create_batch(2)
-        ai.algorithm.inputs.set(cis)
+        interface = AlgorithmInterfaceFactory(inputs=cis)
+        ai.algorithm.interfaces.set([interface])
 
         civs1 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
         civs2 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
@@ -559,30 +665,93 @@ class TestJobCreation:
         j1 = AlgorithmJobFactory(
             creator=None,
             algorithm_image=ai,
+            algorithm_interface=interface,
+            time_limit=ai.algorithm.time_limit,
+        )
+        j1.inputs.set(civs1)
+        # non-system job
+        j2 = AlgorithmJobFactory(
+            creator=UserFactory(),
+            algorithm_image=ai,
+            algorithm_interface=interface,
+            time_limit=ai.algorithm.time_limit,
+        )
+        j2.inputs.set(civs2)
+
+        archive = ArchiveFactory()
+        item1, item2 = ArchiveItemFactory.create_batch(2, archive=archive)
+        item1.values.set(civs1)  # non-system job already exists
+        item2.values.set(civs2)  # non-system job should be ignored
+
+        filtered_civ_sets = filter_archive_items_for_algorithm(
+            archive_items=ArchiveItem.objects.all(),
+            algorithm_image=ai,
+        )
+
+        assert filtered_civ_sets.keys() == {interface}
+        assert filtered_civ_sets[interface] == [item2]
+
+    def test_existing_jobs(self, archive_items_and_jobs_for_interfaces):
+        # image used for all jobs
+        image = archive_items_and_jobs_for_interfaces.jobs_for_interface1[
+            0
+        ].algorithm_image
+
+        filtered_civ_sets = filter_archive_items_for_algorithm(
+            archive_items=ArchiveItem.objects.all(),
+            algorithm_image=image,
+        )
+        # this should return 1 archive item per interface
+        # for which there is no job yet
+        assert filtered_civ_sets == {
+            archive_items_and_jobs_for_interfaces.interface1: [
+                archive_items_and_jobs_for_interfaces.items_for_interface1[1]
+            ],
+            archive_items_and_jobs_for_interfaces.interface2: [
+                archive_items_and_jobs_for_interfaces.items_for_interface2[1]
+            ],
+        }
+
+    def test_model_filter_for_jobs_works(self):
+        alg = AlgorithmFactory()
+        ai = AlgorithmImageFactory(algorithm=alg)
+        am = AlgorithmModelFactory(algorithm=alg)
+        cis = ComponentInterfaceFactory.create_batch(2)
+        interface = AlgorithmInterfaceFactory(inputs=cis)
+        ai.algorithm.interfaces.set([interface])
+
+        civs1 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
+        civs2 = [ComponentInterfaceValueFactory(interface=c) for c in cis]
+
+        j1 = AlgorithmJobFactory(
+            creator=None,
+            algorithm_image=ai,
             algorithm_model=am,
+            algorithm_interface=interface,
             time_limit=ai.algorithm.time_limit,
         )
         j1.inputs.set(civs1)
         j2 = AlgorithmJobFactory(
             creator=None,
             algorithm_image=ai,
+            algorithm_interface=interface,
             time_limit=ai.algorithm.time_limit,
         )
         j2.inputs.set(civs2)
 
-        civ_sets = [
-            {civ for civ in civs1},  # Job already exists with image and model
-            {
-                civ
-                for civ in civs2  # Job exists but only with image, so should be ignored
-            },
-        ]
+        archive = ArchiveFactory()
+        item1, item2 = ArchiveItemFactory.create_batch(2, archive=archive)
+        item1.values.set(civs1)  # Job already exists with image and model
+        item2.values.set(civs2)  # Job exists but only with image
 
-        filtered_civ_sets = filter_civs_for_algorithm(
-            civ_sets=civ_sets, algorithm_image=ai, algorithm_model=am
+        filtered_civ_sets = filter_archive_items_for_algorithm(
+            archive_items=ArchiveItem.objects.all(),
+            algorithm_image=ai,
+            algorithm_model=am,
         )
 
-        assert filtered_civ_sets == sorted(civ_sets[1:])
+        assert filtered_civ_sets.keys() == {interface}
+        assert filtered_civ_sets[interface] == [item2]
 
 
 @pytest.mark.django_db
@@ -715,10 +884,11 @@ def test_archive_job_gets_gpu_and_memory_set(
     im = ImageFactory()
     session.image_set.set([im])
 
-    input_interface = ComponentInterface.objects.get(
-        slug="generic-medical-image"
-    )
-    civ = ComponentInterfaceValueFactory(image=im, interface=input_interface)
+    ci = ComponentInterface.objects.get(slug="generic-medical-image")
+    interface = AlgorithmInterfaceFactory(inputs=[ci])
+    algorithm_image.algorithm.interfaces.set([interface])
+
+    civ = ComponentInterfaceValueFactory(image=im, interface=ci)
 
     archive_item = ArchiveItemFactory(archive=archive)
     with django_capture_on_commit_callbacks(execute=True):

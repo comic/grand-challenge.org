@@ -159,7 +159,7 @@ class ViewContentExampleMixin:
             if len(interface_slugs) > 0:
                 self.fields[
                     "view_content"
-                ].help_text += f"The following interfaces are used in your {self.instance._meta.verbose_name}: {oxford_comma(interface_slugs)}. "
+                ].help_text += f"The following sockets are used in your {self.instance._meta.verbose_name}: {oxford_comma(interface_slugs)}. "
 
             view_content_example = self.generate_view_content_example()
 
@@ -170,7 +170,7 @@ class ViewContentExampleMixin:
             else:
                 self.fields[
                     "view_content"
-                ].help_text += "No interfaces of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one interface of those types is needed to configure the viewer. "
+                ].help_text += "No sockets of type image, chart, pdf, mp4, thumbnail_jpg or thumbnail_png are used. At least one socket of those types is needed to configure the viewer. "
 
         self.fields["view_content"].help_text += format_lazy(
             'Refer to the <a href="{}">documentation</a> for more information',
@@ -183,20 +183,24 @@ class ViewContentExampleMixin:
         )
 
     def _get_interface_lists(self):
+        sorted_interfaces = sorted(
+            list(self.instance.linked_component_interfaces),
+            key=lambda x: x.slug,
+        )
         images = [
             interface.slug
-            for interface in self.instance.linked_component_interfaces
+            for interface in sorted_interfaces
             if interface.kind == InterfaceKindChoices.IMAGE
         ]
         mandatory_isolation_interfaces = [
             interface.slug
-            for interface in self.instance.linked_component_interfaces
+            for interface in sorted_interfaces
             if interface.kind
             in InterfaceKind.interface_type_mandatory_isolation()
         ]
         overlays = [
             interface.slug
-            for interface in self.instance.linked_component_interfaces
+            for interface in sorted_interfaces
             if interface.kind
             not in (
                 *InterfaceKind.interface_type_undisplayable(),
@@ -266,7 +270,6 @@ class ViewContentExampleMixin:
 
     def generate_view_content_example(self):
         interface_lists = self._get_interface_lists()
-
         if (
             not interface_lists.images
             and not interface_lists.mandatory_isolation_interfaces

@@ -6,14 +6,18 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
+from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError
 from django.test import TestCase
 from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import (
     Algorithm,
+    AlgorithmAlgorithmInterface,
+    AlgorithmInterface,
     AlgorithmUserCredit,
     Job,
+    get_existing_interface_for_inputs_and_outputs,
 )
 from grandchallenge.components.models import (
     CIVData,
@@ -24,6 +28,7 @@ from grandchallenge.components.schemas import GPUTypeChoices
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     AlgorithmUserCreditFactory,
@@ -70,14 +75,6 @@ def test_group_deletion_reverse(group):
 
     with pytest.raises(ProtectedError):
         getattr(algorithm, group).delete()
-
-
-@pytest.mark.django_db
-def test_no_default_interfaces_created():
-    a = AlgorithmFactory()
-
-    assert {i.kind for i in a.inputs.all()} == set()
-    assert {o.kind for o in a.outputs.all()} == set()
 
 
 @pytest.mark.django_db
@@ -651,7 +648,9 @@ class TestGetJobsWithSameInputs:
         data = self.get_civ_data(civs=civs)
 
         j = AlgorithmJobFactory(
-            algorithm_image=alg.active_image, time_limit=10
+            algorithm_image=alg.active_image,
+            time_limit=10,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(civs)
 
@@ -673,6 +672,7 @@ class TestGetJobsWithSameInputs:
             algorithm_image=AlgorithmImageFactory(),
             algorithm_model=alg.active_model,
             time_limit=10,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
@@ -693,6 +693,7 @@ class TestGetJobsWithSameInputs:
             algorithm_model=alg.active_model,
             algorithm_image=alg.active_image,
             time_limit=10,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
@@ -714,6 +715,7 @@ class TestGetJobsWithSameInputs:
             algorithm_model=AlgorithmModelFactory(),
             algorithm_image=AlgorithmImageFactory(),
             time_limit=10,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
@@ -734,10 +736,13 @@ class TestGetJobsWithSameInputs:
             algorithm_model=alg.active_model,
             algorithm_image=alg.active_image,
             time_limit=10,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
-            inputs=data, algorithm_image=alg.active_image, algorithm_model=None
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=None,
         )
         assert len(jobs) == 0
 
@@ -749,11 +754,15 @@ class TestGetJobsWithSameInputs:
         data = self.get_civ_data(civs=civs)
 
         j = AlgorithmJobFactory(
-            algorithm_image=alg.active_image, time_limit=10
+            algorithm_image=alg.active_image,
+            time_limit=10,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(civs)
         jobs = Job.objects.get_jobs_with_same_inputs(
-            inputs=data, algorithm_image=alg.active_image, algorithm_model=None
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=None,
         )
         assert j in jobs
         assert len(jobs) == 1
@@ -766,7 +775,9 @@ class TestGetJobsWithSameInputs:
         data = self.get_civ_data(civs=civs)
 
         j = AlgorithmJobFactory(
-            algorithm_image=alg.active_image, time_limit=10
+            algorithm_image=alg.active_image,
+            time_limit=10,
+            algorithm_interface=alg.interfaces.first(),
         )
         j.inputs.set(
             [
@@ -775,7 +786,46 @@ class TestGetJobsWithSameInputs:
             ]
         )
         jobs = Job.objects.get_jobs_with_same_inputs(
-            inputs=data, algorithm_image=alg.active_image, algorithm_model=None
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=None,
+        )
+        assert len(jobs) == 0
+
+    def test_job_with_partially_overlapping_input(
+        self, algorithm_with_image_and_model_and_two_inputs
+    ):
+        alg = algorithm_with_image_and_model_and_two_inputs.algorithm
+        civs = algorithm_with_image_and_model_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+
+        j = AlgorithmJobFactory(
+            algorithm_image=alg.active_image,
+            time_limit=10,
+            algorithm_interface=alg.interfaces.first(),
+        )
+        j.inputs.set(
+            [
+                civs[0],
+                ComponentInterfaceValueFactory(),
+            ]
+        )
+        j2 = AlgorithmJobFactory(
+            algorithm_image=alg.active_image,
+            time_limit=10,
+            algorithm_interface=alg.interfaces.first(),
+        )
+        j2.inputs.set(
+            [
+                civs[0],
+                civs[1],
+                ComponentInterfaceValueFactory(),
+            ]
+        )
+        jobs = Job.objects.get_jobs_with_same_inputs(
+            inputs=data,
+            algorithm_image=alg.active_image,
+            algorithm_model=None,
         )
         assert len(jobs) == 0
 
@@ -977,8 +1027,15 @@ def test_inputs_complete():
     ci1, ci2, ci3 = ComponentInterfaceFactory.create_batch(
         3, kind=ComponentInterface.Kind.STRING
     )
-    alg.inputs.set([ci1, ci2, ci3])
-    job = AlgorithmJobFactory(algorithm_image__algorithm=alg, time_limit=10)
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci1, ci2, ci3], outputs=[ComponentInterfaceFactory()]
+    )
+    alg.interfaces.add(interface)
+    job = AlgorithmJobFactory(
+        algorithm_image__algorithm=alg,
+        time_limit=10,
+        algorithm_interface=alg.interfaces.first(),
+    )
     civ_with_value_1 = ComponentInterfaceValueFactory(
         interface=ci1, value="Foo"
     )
@@ -1379,3 +1436,103 @@ class TestAlgorithmImageCredits:
             algorithm_image.get_remaining_non_complimentary_jobs(user=user)
             == 5
         )
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_cannot_be_deleted():
+    interface, _, _ = AlgorithmInterfaceFactory.create_batch(3)
+
+    with pytest.raises(ValidationError):
+        interface.delete()
+
+    with pytest.raises(NotImplementedError):
+        AlgorithmInterface.objects.delete()
+
+
+@pytest.mark.django_db
+def test_algorithmalgorithminterface_unique_constraints():
+    interface1, interface2 = AlgorithmInterfaceFactory.create_batch(2)
+    algorithm = AlgorithmFactory()
+
+    AlgorithmAlgorithmInterface.objects.create(
+        interface=interface1, algorithm=algorithm
+    )
+
+    # cannot add a second time the same interface for the same algorithm
+    with pytest.raises(IntegrityError):
+        with transaction.atomic():
+            AlgorithmAlgorithmInterface.objects.create(
+                interface=interface1, algorithm=algorithm
+            )
+
+
+@pytest.mark.parametrize(
+    "inputs, outputs, expected_output",
+    (
+        ([1], [2], 1),
+        ([1, 2], [3, 4], 2),
+        ([3, 4, 5], [6], 3),
+        ([1], [3, 4, 6], 4),
+        ([5, 6], [2], 5),
+        ([1], [3], None),
+        ([1], [3, 4], None),
+        ([2], [6], None),
+        ([2], [1], None),
+        ([3, 4, 5], [1], None),
+        ([1], [3, 4], None),
+        ([1, 3], [4], None),
+    ),
+)
+@pytest.mark.django_db
+def test_get_existing_interface_for_inputs_and_outputs(
+    inputs, outputs, expected_output
+):
+    io1, io2, io3, io4, io5, io6 = AlgorithmInterfaceFactory.create_batch(6)
+    ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
+
+    interfaces = [io1, io2, io3, io4, io5, io6]
+    cis = [ci1, ci2, ci3, ci4, ci5, ci6]
+
+    io1.inputs.set([ci1])
+    io2.inputs.set([ci1, ci2])
+    io3.inputs.set([ci3, ci4, ci5])
+    io4.inputs.set([ci1])
+    io5.inputs.set([ci5, ci6])
+    io6.inputs.set([ci1, ci2])
+
+    io1.outputs.set([ci2])
+    io2.outputs.set([ci3, ci4])
+    io3.outputs.set([ci6])
+    io4.outputs.set([ci3, ci4, ci6])
+    io5.outputs.set([ci2])
+    io6.outputs.set([ci4])
+
+    inputs = [cis[i - 1] for i in inputs]
+    outputs = [cis[i - 1] for i in outputs]
+
+    existing_interface = get_existing_interface_for_inputs_and_outputs(
+        inputs=inputs, outputs=outputs
+    )
+
+    if expected_output:
+        assert existing_interface == interfaces[expected_output - 1]
+    else:
+        assert not existing_interface
+
+
+@pytest.mark.django_db
+def test_algorithminterface_create():
+    inputs = [ComponentInterfaceFactory(), ComponentInterfaceFactory()]
+    outputs = [ComponentInterfaceFactory(), ComponentInterfaceFactory()]
+
+    with pytest.raises(TypeError) as e:
+        AlgorithmInterface.objects.create()
+
+    assert (
+        "AlgorithmInterfaceManager.create() missing 2 required keyword-only arguments: 'inputs' and 'outputs'"
+        in str(e)
+    )
+
+    io = AlgorithmInterface.objects.create(inputs=inputs, outputs=outputs)
+    assert list(io.inputs.all()) == inputs
+    assert list(io.outputs.all()) == outputs

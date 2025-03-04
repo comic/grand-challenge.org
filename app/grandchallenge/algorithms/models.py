@@ -20,6 +20,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -67,6 +68,96 @@ from grandchallenge.workstations.models import Workstation
 logger = logging.getLogger(__name__)
 
 JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
+
+
+def annotate_input_output_counts(queryset, inputs=None, outputs=None):
+    return queryset.annotate(
+        input_count=Count("inputs", distinct=True),
+        output_count=Count("outputs", distinct=True),
+        relevant_input_count=Count(
+            "inputs",
+            filter=Q(inputs__in=inputs) if inputs is not None else Q(),
+            distinct=True,
+        ),
+        relevant_output_count=Count(
+            "outputs",
+            filter=Q(outputs__in=outputs) if outputs is not None else Q(),
+            distinct=True,
+        ),
+    )
+
+
+class AlgorithmInterfaceManager(models.Manager):
+
+    def create(
+        self,
+        *,
+        inputs,
+        outputs,
+        **kwargs,
+    ):
+        if not inputs or not outputs:
+            raise ValidationError(
+                "An interface must have at least one input and one output."
+            )
+
+        obj = get_existing_interface_for_inputs_and_outputs(
+            inputs=inputs, outputs=outputs
+        )
+        if not obj:
+            obj = super().create(**kwargs)
+            obj.inputs.set(inputs)
+            obj.outputs.set(outputs)
+
+        return obj
+
+    def delete(self):
+        raise NotImplementedError("Bulk delete is not allowed.")
+
+
+class AlgorithmInterface(UUIDModel):
+    inputs = models.ManyToManyField(
+        to=ComponentInterface,
+        related_name="inputs",
+        through="algorithms.AlgorithmInterfaceInput",
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterface,
+        related_name="outputs",
+        through="algorithms.AlgorithmInterfaceOutput",
+    )
+
+    objects = AlgorithmInterfaceManager()
+
+    def delete(self, *args, **kwargs):
+        raise ValidationError("AlgorithmInterfaces cannot be deleted.")
+
+
+class AlgorithmInterfaceInput(models.Model):
+    input = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
+    interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
+
+
+class AlgorithmInterfaceOutput(models.Model):
+    output = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
+    interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
+
+
+def get_existing_interface_for_inputs_and_outputs(
+    *, inputs, outputs, model=AlgorithmInterface
+):
+    annotated_qs = annotate_input_output_counts(
+        model.objects.all(), inputs=inputs, outputs=outputs
+    )
+    try:
+        return annotated_qs.get(
+            relevant_input_count=len(inputs),
+            relevant_output_count=len(outputs),
+            input_count=len(inputs),
+            output_count=len(outputs),
+        )
+    except ObjectDoesNotExist:
+        return None
 
 
 class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
@@ -148,11 +239,22 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             "{% endfor %}"
         ),
     )
-    inputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="algorithm_inputs", blank=False
+    interfaces = models.ManyToManyField(
+        to=AlgorithmInterface,
+        related_name="algorithm_interfaces",
+        through="algorithms.AlgorithmAlgorithmInterface",
     )
-    outputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="algorithm_outputs", blank=False
+    inputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface, related_name="algorithm_inputs", blank=False
+        )
+    )
+    outputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface,
+            related_name="algorithm_outputs",
+            blank=False,
+        )
     )
     publications = models.ManyToManyField(
         Publication,
@@ -425,6 +527,28 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
         return w
 
+    @property
+    def algorithm_interface_manager(self):
+        return self.interfaces
+
+    @property
+    def algorithm_interface_through_model_manager(self):
+        return AlgorithmAlgorithmInterface.objects.filter(algorithm=self)
+
+    @property
+    def algorithm_interface_create_url(self):
+        return reverse(
+            "algorithms:interface-create", kwargs={"slug": self.slug}
+        )
+
+    @property
+    def algorithm_interface_delete_viewname(self):
+        return "algorithms:interface-delete"
+
+    @property
+    def algorithm_interface_list_url(self):
+        return reverse("algorithms:interface-list", kwargs={"slug": self.slug})
+
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()
 
@@ -445,7 +569,11 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
     @cached_property
     def linked_component_interfaces(self):
-        return (self.inputs.all() | self.outputs.all()).distinct()
+        return {
+            ci
+            for interface in self.interfaces.all()
+            for ci in (interface.inputs.all() | interface.outputs.all())
+        }
 
     @cached_property
     def user_statistics(self):
@@ -523,6 +651,22 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         else:
             title += " (Active model: None)"
         return title
+
+
+class AlgorithmAlgorithmInterface(models.Model):
+    algorithm = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
+    interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["algorithm", "interface"],
+                name="unique_algorithm_interface_combination",
+            ),
+        ]
+
+    def __str__(self):
+        return str(self.interface)
 
 
 class AlgorithmUserObjectPermission(UserObjectPermissionBase):
@@ -857,21 +1001,23 @@ class JobManager(ComponentJobManager):
         unique_kwargs = {
             "algorithm_image": algorithm_image,
         }
-        input_interface_count = algorithm_image.algorithm.inputs.count()
+        input_interface_count = len(inputs)
 
         if algorithm_model:
             unique_kwargs["algorithm_model"] = algorithm_model
         else:
             unique_kwargs["algorithm_model__isnull"] = True
 
-        existing_jobs = (
-            Job.objects.filter(**unique_kwargs)
-            .annotate(
-                inputs_match_count=Count(
-                    "inputs", filter=Q(inputs__in=existing_civs)
-                )
-            )
-            .filter(inputs_match_count=input_interface_count)
+        # annotate the number of inputs and the number of inputs that match
+        # the existing civs and filter on both counts so as to not include jobs
+        # with partially overlapping inputs
+        # or jobs with more inputs than the existing civs
+        annotated_qs = annotate_input_output_counts(
+            queryset=Job.objects.filter(**unique_kwargs), inputs=existing_civs
+        )
+        existing_jobs = annotated_qs.filter(
+            input_count=input_interface_count,
+            relevant_input_count=input_interface_count,
         )
 
         return existing_jobs
@@ -962,6 +1108,9 @@ class Job(CIVForObjectMixin, ComponentJob):
     algorithm_model = models.ForeignKey(
         AlgorithmModel, on_delete=models.PROTECT, null=True, blank=True
     )
+    algorithm_interface = models.ForeignKey(
+        AlgorithmInterface, on_delete=models.PROTECT, null=True, blank=True
+    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
@@ -1008,14 +1157,17 @@ class Job(CIVForObjectMixin, ComponentJob):
 
     @property
     def output_interfaces(self):
-        return self.algorithm_image.algorithm.outputs
+        return self.algorithm_interface.outputs.all()
 
     @cached_property
     def inputs_complete(self):
         # check if all inputs are present and if they all have a value
+        # interfaces that do not require a value will be considered complete regardless
         return {
-            civ.interface for civ in self.inputs.all() if civ.has_value
-        } == {*self.algorithm_image.algorithm.inputs.all()}
+            civ.interface
+            for civ in self.inputs.all()
+            if civ.has_value or not civ.interface.value_required
+        } == {*self.algorithm_interface.inputs.all()}
 
     @cached_property
     def rendered_result_text(self) -> str:

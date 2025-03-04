@@ -36,6 +36,13 @@
 
             {% if "change_algorithm" in algorithm_perms %}
                 {% if perms.algorithms.add_algorithm %}
+                    <a class="nav-link"
+                        href="{% url 'algorithms:interface-list' slug=object.slug %}"
+                    ><i class="fas fa-sliders-h fa-fw"></i>&nbsp;Interfaces
+                    {% if not object.interfaces.all %}&nbsp;
+                        <i class="fas fa-exclamation-triangle text-danger"></i>
+                    {% endif %}
+                   </a>
                     <a class="nav-link" id="v-pills-templates-tab" data-toggle="pill"
                         href="#templates" role="tab"
                         aria-controls="v-pills-templates"
@@ -75,7 +82,7 @@
 
             {% if "execute_algorithm" in algorithm_perms and object.active_image %}
                 <a class="nav-link"
-                   href="{% url 'algorithms:job-create' slug=object.slug %}">
+                   href="{% url 'algorithms:job-interface-select' slug=object.slug %}">
                     <i class="fas fa-file-import fa-fw"></i>&nbsp;Try-out Algorithm
                 </a>
             {% endif %}
@@ -121,7 +128,7 @@
 
         {% if object.public and not object.public_test_case %}
             <div class="alert alert-danger" role="alert">
-                <i class="fas fa-exclamation-triangle mr-1"></i> Please upload a public test case for your latest algorithm image <a href="{% url 'algorithms:job-create' slug=object.slug %}">here</a>.
+                <i class="fas fa-exclamation-triangle mr-1"></i> Please upload a public test case for your latest algorithm image <a href="{% url 'algorithms:job-interface-select' slug=object.slug %}">here</a>.
             </div>
         {% endif %}
     {% endif %}
@@ -220,29 +227,10 @@
                 </div>
             {% endif %}
 
-            <div class="row mb-2">
-                <div class="col-3 font-weight-bold">Inputs:</div>
-                <div class="col-9">
-                    <ul class="pl-3 pb-0 mb-0">
-                        {% for input in object.inputs.all %}
-                            <li>{{ input.title }}&nbsp;{% if input.description %}
-                                <span class="text-muted"> ({{ input.description }})</span>{% endif %}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
+            <h3 class="mt-5">Interfaces</h3>
+            <p>This algorithm implements all of the following input-output combinations: </p>
+            {% include 'algorithms/partials/algorithminterface_table.html' with base_obj=object interfaces=object.interfaces.all delete_option=False %}
 
-            <div class="row mb-2">
-                <div class="col-3 font-weight-bold">Outputs:</div>
-                <div class="col-9">
-                    <ul class="pl-3 pb-0 mb-0">
-                        {% for output in object.outputs.all %}
-                            <li>{{ output.title }}&nbsp;{% if output.description %}
-                                <span class="text-muted"> ({{ output.description }})</span>{% endif %}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
 
             {% if best_evaluation_per_phase %}
                 <h3>Challenge Performance</h3>
@@ -602,7 +590,7 @@
                     <div class="col-12 d-flex justify-content-center">
                         <a type="button" class="btn btn-sm btn-secondary mr-1" href="{% url 'algorithms:update' slug=object.slug %}">Update Settings</a>
                         <a type="button" class="btn btn-sm btn-secondary mr-1" href="{% url 'algorithms:description-update' slug=object.slug %}">Update Description</a>
-                        <a type="button" class="btn btn-sm btn-secondary" href="{% url 'algorithms:job-create' slug=object.slug %}">Add Test Case</a>
+                        <a type="button" class="btn btn-sm btn-secondary" href="{% url 'algorithms:job-interface-select' slug=object.slug %}">Add Test Case</a>
                     </div>
                     <div class="col-12 d-flex justify-content-center">
                         <a type="button" class="btn btn-sm btn-primary {% if not object.mechanism or not object.summary or not object.public_test_case or not object.contact_email or not object.display_editors %}disabled{% endif %}" hx-post="{% url 'algorithms:publish' slug=object.slug %}" hx-vals='{"public": true}'>Publish algorithm</a>

@@ -5,7 +5,12 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
 
-from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmImage,
+    AlgorithmInterface,
+    Job,
+)
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.challenges.models import Challenge
@@ -134,9 +139,10 @@ def _create_challenge(
         c.add_participant(participant)
 
     p = Phase.objects.create(challenge=c, title="Phase 1")
-
-    p.algorithm_inputs.set(inputs)
-    p.algorithm_outputs.set(outputs)
+    interface = AlgorithmInterface.objects.create(
+        inputs=inputs, outputs=outputs
+    )
+    p.algorithm_interfaces.set([interface])
 
     p.title = f"Type 2 {suffix}"
     p.submission_kind = SubmissionKindChoices.ALGORITHM
@@ -158,8 +164,10 @@ def _create_algorithm(*, creator, inputs, outputs, suffix):
         title=f"Test Algorithm Type 2 {suffix}",
         logo=create_uploaded_image(),
     )
-    algorithm.inputs.set(inputs)
-    algorithm.outputs.set(outputs)
+    interface = AlgorithmInterface.objects.create(
+        inputs=inputs, outputs=outputs
+    )
+    algorithm.interfaces.set([interface])
     algorithm.add_editor(creator)
 
     algorithm_image = AlgorithmImage(creator=creator, algorithm=algorithm)
@@ -176,6 +184,7 @@ def _create_submission(algorithm, challenge, archive_items):
     for _ in range(archive_items):
         job = Job.objects.create(
             algorithm_image=ai,
+            algorithm_interface=algorithm.interfaces.first(),
             started_at=now() - timedelta(minutes=random.randint(5, 120)),
             completed_at=now(),
             status=Job.SUCCESS,

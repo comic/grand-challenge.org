@@ -15,7 +15,13 @@ from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
-from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmAlgorithmInterface,
+    AlgorithmImage,
+    AlgorithmInterface,
+    Job,
+)
 from grandchallenge.algorithms.views import JobsList
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -33,6 +39,7 @@ from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     AlgorithmPermissionRequestFactory,
@@ -355,6 +362,11 @@ class TestObjectPermissionRequiredViews:
             time_limit=ai.algorithm.time_limit,
         )
         p = AlgorithmPermissionRequestFactory(algorithm=ai.algorithm)
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ComponentInterfaceFactory()],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        ai.algorithm.interfaces.add(interface)
 
         VerificationFactory(user=u, is_verified=True)
 
@@ -428,7 +440,10 @@ class TestObjectPermissionRequiredViews:
             ),
             (
                 "job-create",
-                {"slug": ai.algorithm.slug},
+                {
+                    "slug": ai.algorithm.slug,
+                    "interface_pk": ai.algorithm.interfaces.first().pk,
+                },
                 "execute_algorithm",
                 ai.algorithm,
                 None,
@@ -718,105 +733,109 @@ def test_import_view(
                         "logo": "https://public.grand-challenge-user-content.org/logos/algorithm/0d11fc7b-c63f-4fd7-b80b-51d2e21492c0/square_logo.x20.jpeg",
                         "slug": "the-pi-cai-challenge-baseline-nndetection",
                         "average_duration": 363.50596,
-                        "inputs": [
+                        "interfaces": [
                             {
-                                "title": "Coronal T2 Prostate MRI",
-                                "description": "Coronal T2 MRI of the Prostate",
-                                "slug": "coronal-t2-prostate-mri",
-                                "kind": "Image",
-                                "pk": 31,
-                                "default_value": None,
-                                "super_kind": "Image",
-                                "relative_path": "images/coronal-t2-prostate-mri",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                            {
-                                "title": "Transverse T2 Prostate MRI",
-                                "description": "Transverse T2 MRI of the Prostate",
-                                "slug": "transverse-t2-prostate-mri",
-                                "kind": "Image",
-                                "pk": 32,
-                                "default_value": None,
-                                "super_kind": "Image",
-                                "relative_path": "images/transverse-t2-prostate-mri",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                            {
-                                "title": "Sagittal T2 Prostate MRI",
-                                "description": "Sagittal T2 MRI of the Prostate",
-                                "slug": "sagittal-t2-prostate-mri",
-                                "kind": "Image",
-                                "pk": 33,
-                                "default_value": None,
-                                "super_kind": "Image",
-                                "relative_path": "images/sagittal-t2-prostate-mri",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                            {
-                                "title": "Transverse HBV Prostate MRI",
-                                "description": "Transverse High B-Value Prostate MRI",
-                                "slug": "transverse-hbv-prostate-mri",
-                                "kind": "Image",
-                                "pk": 47,
-                                "default_value": None,
-                                "super_kind": "Image",
-                                "relative_path": "images/transverse-hbv-prostate-mri",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                            {
-                                "title": "Transverse ADC Prostate MRI",
-                                "description": "Transverse Apparent Diffusion Coefficient Prostate MRI",
-                                "slug": "transverse-adc-prostate-mri",
-                                "kind": "Image",
-                                "pk": 48,
-                                "default_value": None,
-                                "super_kind": "Image",
-                                "relative_path": "images/transverse-adc-prostate-mri",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                            {
-                                "title": "Clinical Information Prostate MRI",
-                                "description": "Clinical information to support clinically significant prostate cancer detection in prostate MRI. Provided information: patient age at time of examination (patient_age), PSA level in ng/mL as reported (PSA_report), PSA density in ng/mL^2 as reported (PSAD_report), prostate volume as reported (prostate_volume_report), prostate volume derived from automatic whole-gland segmentation (prostate_volume_automatic), scanner manufacturer (scanner_manufacturer), scanner model name (scanner_model_name), diffusion b-value of (calculated) high b-value diffusion map (diffusion_high_bvalue). Values acquired from radiology reports will be missing, if not reported.",
-                                "slug": "clinical-information-prostate-mri",
-                                "kind": "Anything",
-                                "pk": 156,
-                                "default_value": None,
-                                "super_kind": "Value",
-                                "relative_path": "clinical-information-prostate-mri.json",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                        ],
-                        "outputs": [
-                            {
-                                "title": "Case-level Cancer Likelihood Prostate MRI",
-                                "description": "Case-level likelihood of harboring clinically significant prostate cancer, in range [0,1].",
-                                "slug": "prostate-cancer-likelihood",
-                                "kind": "Float",
-                                "pk": 144,
-                                "default_value": None,
-                                "super_kind": "Value",
-                                "relative_path": "cspca-case-level-likelihood.json",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
-                            {
-                                "title": "Transverse Cancer Detection Map Prostate MRI",
-                                "description": "Single-class, detection map of clinically significant prostate cancer lesions in 3D, where each voxel represents a floating point in range [0,1].",
-                                "slug": "cspca-detection-map",
-                                "kind": "Heat Map",
-                                "pk": 151,
-                                "default_value": None,
-                                "super_kind": "Image",
-                                "relative_path": "images/cspca-detection-map",
-                                "overlay_segments": [],
-                                "look_up_table": None,
-                            },
+                                "inputs": [
+                                    {
+                                        "title": "Coronal T2 Prostate MRI",
+                                        "description": "Coronal T2 MRI of the Prostate",
+                                        "slug": "coronal-t2-prostate-mri",
+                                        "kind": "Image",
+                                        "pk": 31,
+                                        "default_value": None,
+                                        "super_kind": "Image",
+                                        "relative_path": "images/coronal-t2-prostate-mri",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                    {
+                                        "title": "Transverse T2 Prostate MRI",
+                                        "description": "Transverse T2 MRI of the Prostate",
+                                        "slug": "transverse-t2-prostate-mri",
+                                        "kind": "Image",
+                                        "pk": 32,
+                                        "default_value": None,
+                                        "super_kind": "Image",
+                                        "relative_path": "images/transverse-t2-prostate-mri",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                    {
+                                        "title": "Sagittal T2 Prostate MRI",
+                                        "description": "Sagittal T2 MRI of the Prostate",
+                                        "slug": "sagittal-t2-prostate-mri",
+                                        "kind": "Image",
+                                        "pk": 33,
+                                        "default_value": None,
+                                        "super_kind": "Image",
+                                        "relative_path": "images/sagittal-t2-prostate-mri",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                    {
+                                        "title": "Transverse HBV Prostate MRI",
+                                        "description": "Transverse High B-Value Prostate MRI",
+                                        "slug": "transverse-hbv-prostate-mri",
+                                        "kind": "Image",
+                                        "pk": 47,
+                                        "default_value": None,
+                                        "super_kind": "Image",
+                                        "relative_path": "images/transverse-hbv-prostate-mri",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                    {
+                                        "title": "Transverse ADC Prostate MRI",
+                                        "description": "Transverse Apparent Diffusion Coefficient Prostate MRI",
+                                        "slug": "transverse-adc-prostate-mri",
+                                        "kind": "Image",
+                                        "pk": 48,
+                                        "default_value": None,
+                                        "super_kind": "Image",
+                                        "relative_path": "images/transverse-adc-prostate-mri",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                    {
+                                        "title": "Clinical Information Prostate MRI",
+                                        "description": "Clinical information to support clinically significant prostate cancer detection in prostate MRI. Provided information: patient age at time of examination (patient_age), PSA level in ng/mL as reported (PSA_report), PSA density in ng/mL^2 as reported (PSAD_report), prostate volume as reported (prostate_volume_report), prostate volume derived from automatic whole-gland segmentation (prostate_volume_automatic), scanner manufacturer (scanner_manufacturer), scanner model name (scanner_model_name), diffusion b-value of (calculated) high b-value diffusion map (diffusion_high_bvalue). Values acquired from radiology reports will be missing, if not reported.",
+                                        "slug": "clinical-information-prostate-mri",
+                                        "kind": "Anything",
+                                        "pk": 156,
+                                        "default_value": None,
+                                        "super_kind": "Value",
+                                        "relative_path": "clinical-information-prostate-mri.json",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                ],
+                                "outputs": [
+                                    {
+                                        "title": "Case-level Cancer Likelihood Prostate MRI",
+                                        "description": "Case-level likelihood of harboring clinically significant prostate cancer, in range [0,1].",
+                                        "slug": "prostate-cancer-likelihood",
+                                        "kind": "Float",
+                                        "pk": 144,
+                                        "default_value": None,
+                                        "super_kind": "Value",
+                                        "relative_path": "cspca-case-level-likelihood.json",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                    {
+                                        "title": "Transverse Cancer Detection Map Prostate MRI",
+                                        "description": "Single-class, detection map of clinically significant prostate cancer lesions in 3D, where each voxel represents a floating point in range [0,1].",
+                                        "slug": "cspca-detection-map",
+                                        "kind": "Heat Map",
+                                        "pk": 151,
+                                        "default_value": None,
+                                        "super_kind": "Image",
+                                        "relative_path": "images/cspca-detection-map",
+                                        "overlay_segments": [],
+                                        "look_up_table": None,
+                                    },
+                                ],
+                            }
                         ],
                     }
                 ],
@@ -893,7 +912,10 @@ def test_import_view(
         "logos/algorithm/0d11fc7b-c63f-4fd7-b80b-51d2e21492c0/square_logo"
     )
     assert "Imported from [grand-challenge.org]" in algorithm.summary
-    assert {i.slug for i in algorithm.inputs.all()} == {
+
+    assert algorithm.interfaces.count() == 1
+    interface = algorithm.interfaces.get()
+    assert {i.slug for i in interface.inputs.all()} == {
         "clinical-information-prostate-mri",
         "coronal-t2-prostate-mri",
         "sagittal-t2-prostate-mri",
@@ -901,7 +923,7 @@ def test_import_view(
         "transverse-hbv-prostate-mri",
         "transverse-t2-prostate-mri",
     }
-    assert {i.slug for i in algorithm.outputs.all()} == {
+    assert {i.slug for i in interface.outputs.all()} == {
         "cspca-detection-map",
         "prostate-cancer-likelihood",
     }
@@ -953,7 +975,10 @@ def test_create_job_with_json_file(
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
     )
-    ai.algorithm.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci],
+    )
+    ai.algorithm.interfaces.add(interface)
 
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
         json.dump('{"Foo": "bar"}', file)
@@ -968,6 +993,7 @@ def test_create_job_with_json_file(
                 method=client.post,
                 reverse_kwargs={
                     "slug": ai.algorithm.slug,
+                    "interface_pk": interface.pk,
                 },
                 user=editor,
                 follow=True,
@@ -1005,7 +1031,10 @@ def test_algorithm_job_create_with_image_input(
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.IMAGE, store_in_database=False
     )
-    ai.algorithm.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci],
+    )
+    ai.algorithm.interfaces.add(interface)
 
     image1, image2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", editor, image1)
@@ -1020,6 +1049,7 @@ def test_algorithm_job_create_with_image_input(
                 method=client.post,
                 reverse_kwargs={
                     "slug": ai.algorithm.slug,
+                    "interface_pk": interface.pk,
                 },
                 user=editor,
                 follow=True,
@@ -1044,6 +1074,7 @@ def test_algorithm_job_create_with_image_input(
                 method=client.post,
                 reverse_kwargs={
                     "slug": ai.algorithm.slug,
+                    "interface_pk": interface.pk,
                 },
                 user=editor,
                 follow=True,
@@ -1071,6 +1102,7 @@ def test_algorithm_job_create_with_image_input(
                 method=client.post,
                 reverse_kwargs={
                     "slug": ai.algorithm.slug,
+                    "interface_pk": interface.pk,
                 },
                 user=editor,
                 follow=True,
@@ -1110,6 +1142,7 @@ class TestJobCreateView:
                     user=user,
                     reverse_kwargs={
                         "slug": algorithm.slug,
+                        "interface_pk": algorithm.interfaces.first().pk,
                     },
                     follow=True,
                     data=inputs,
@@ -1148,16 +1181,18 @@ class TestJobCreateView:
         algorithm_with_multiple_inputs,
     ):
         # configure multiple inputs
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [
+        interface = AlgorithmInterfaceFactory(
+            inputs=[
                 algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
                 algorithm_with_multiple_inputs.ci_existing_img,
                 algorithm_with_multiple_inputs.ci_str,
                 algorithm_with_multiple_inputs.ci_bool,
                 algorithm_with_multiple_inputs.ci_json_file,
                 algorithm_with_multiple_inputs.ci_img_upload,
-            ]
+            ],
+            outputs=[ComponentInterfaceFactory()],
         )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
 
         assert ComponentInterfaceValue.objects.count() == 0
 
@@ -1217,7 +1252,7 @@ class TestJobCreateView:
         assert sorted(
             [
                 int.pk
-                for int in algorithm_with_multiple_inputs.algorithm.inputs.all()
+                for int in algorithm_with_multiple_inputs.algorithm.interfaces.first().inputs.all()
             ]
         ) == sorted([civ.interface.pk for civ in job.inputs.all()])
 
@@ -1244,15 +1279,17 @@ class TestJobCreateView:
         algorithm_with_multiple_inputs,
     ):
         # configure multiple inputs
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [
+        interface = AlgorithmInterfaceFactory(
+            inputs=[
                 algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
                 algorithm_with_multiple_inputs.ci_existing_img,
                 algorithm_with_multiple_inputs.ci_str,
                 algorithm_with_multiple_inputs.ci_bool,
                 algorithm_with_multiple_inputs.ci_json_file,
-            ]
+            ],
+            outputs=[ComponentInterfaceFactory()],
         )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
 
         civ1, civ2, civ3, civ4, civ5 = self.create_existing_civs(
             interface_data=algorithm_with_multiple_inputs
@@ -1318,14 +1355,16 @@ class TestJobCreateView:
         algorithm_with_multiple_inputs,
     ):
         # configure multiple inputs
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [
+        interface = AlgorithmInterfaceFactory(
+            inputs=[
                 algorithm_with_multiple_inputs.ci_str,
                 algorithm_with_multiple_inputs.ci_bool,
                 algorithm_with_multiple_inputs.ci_existing_img,
                 algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
-            ]
+            ],
+            outputs=[ComponentInterfaceFactory()],
         )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
         civ1, civ2, civ3, civ4, civ5 = self.create_existing_civs(
             interface_data=algorithm_with_multiple_inputs
         )
@@ -1382,9 +1421,11 @@ class TestJobCreateView:
         algorithm_with_multiple_inputs,
     ):
         # configure file input
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [algorithm_with_multiple_inputs.ci_json_file]
+        interface = AlgorithmInterfaceFactory(
+            inputs=[algorithm_with_multiple_inputs.ci_json_file],
+            outputs=[ComponentInterfaceFactory()],
         )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
         file_upload = UserUploadFactory(
             filename="file.json", creator=algorithm_with_multiple_inputs.editor
         )
@@ -1429,9 +1470,11 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [algorithm_with_multiple_inputs.ci_json_in_db_with_schema]
+        interface = AlgorithmInterfaceFactory(
+            inputs=[algorithm_with_multiple_inputs.ci_json_in_db_with_schema],
+            outputs=[ComponentInterfaceFactory()],
         )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
         response = self.create_job(
             client=client,
             django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
@@ -1459,9 +1502,11 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [algorithm_with_multiple_inputs.ci_img_upload]
+        interface = AlgorithmInterfaceFactory(
+            inputs=[algorithm_with_multiple_inputs.ci_img_upload],
+            outputs=[ComponentInterfaceFactory()],
         )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
         user_upload = create_upload_from_file(
             creator=algorithm_with_multiple_inputs.editor,
             file_path=RESOURCE_PATH / "corrupt.png",
@@ -1512,12 +1557,10 @@ class TestJobCreateView:
             ]
             ci.save()
 
-        algorithm_with_multiple_inputs.algorithm.inputs.set(
-            [
-                ci1,
-                ci2,
-            ]
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci1, ci2], outputs=[ComponentInterfaceFactory()]
         )
+        algorithm_with_multiple_inputs.algorithm.interfaces.add(interface)
 
         assert ComponentInterfaceValue.objects.count() == 0
 
@@ -1654,31 +1697,6 @@ def test_algorithm_image_activate(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("interfaces_editable", (True, False))
-def test_algorithm_interfaces_editable(client, interfaces_editable):
-    creator = UserFactory()
-    VerificationFactory(user=creator, is_verified=True)
-
-    if interfaces_editable:
-        assign_perm("algorithms.add_algorithm", creator)
-
-    alg = AlgorithmFactory()
-    alg.add_editor(user=creator)
-
-    response = get_view_for_user(
-        viewname="algorithms:update",
-        client=client,
-        reverse_kwargs={"slug": alg.slug},
-        user=creator,
-    )
-
-    assert ("inputs" in response.context["form"].fields) is interfaces_editable
-    assert (
-        "outputs" in response.context["form"].fields
-    ) is interfaces_editable
-
-
-@pytest.mark.django_db
 def test_job_time_limit(client):
     algorithm = AlgorithmFactory(time_limit=600)
     algorithm_image = AlgorithmImageFactory(
@@ -1694,7 +1712,10 @@ def test_job_time_limit(client):
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
     )
-    algorithm.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci], outputs=[ComponentInterfaceFactory()]
+    )
+    algorithm.interfaces.add(interface)
 
     response = get_view_for_user(
         viewname="algorithms:job-create",
@@ -1702,6 +1723,7 @@ def test_job_time_limit(client):
         method=client.post,
         reverse_kwargs={
             "slug": algorithm.slug,
+            "interface_pk": algorithm.interfaces.first().pk,
         },
         user=user,
         follow=True,
@@ -1741,7 +1763,10 @@ def test_job_gpu_type_set(client, settings):
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
     )
-    algorithm.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci], outputs=[ComponentInterfaceFactory()]
+    )
+    algorithm.interfaces.add(interface)
 
     response = get_view_for_user(
         viewname="algorithms:job-create",
@@ -1749,6 +1774,7 @@ def test_job_gpu_type_set(client, settings):
         method=client.post,
         reverse_kwargs={
             "slug": algorithm.slug,
+            "interface_pk": algorithm.interfaces.first().pk,
         },
         user=user,
         follow=True,
@@ -1791,7 +1817,10 @@ def test_job_gpu_type_set_with_api(client, settings):
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
     )
-    algorithm.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci],
+    )
+    algorithm.interfaces.add(interface)
 
     response = get_view_for_user(
         viewname="api:algorithms-job-list",
@@ -1815,6 +1844,7 @@ def test_job_gpu_type_set_with_api(client, settings):
 
     job = Job.objects.get()
 
+    assert job.algorithm_interface == interface
     assert job.algorithm_image == algorithm_image
     assert job.requires_gpu_type == GPUTypeChoices.A10G
     assert job.requires_memory_gb == 64
@@ -1831,9 +1861,18 @@ def test_job_create_view_for_verified_users_only(client):
     alg.add_user(user)
     alg.add_user(editor)
 
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterfaceFactory()],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    alg.interfaces.add(interface)
+
     response = get_view_for_user(
         viewname="algorithms:job-create",
-        reverse_kwargs={"slug": alg.slug},
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": alg.interfaces.first().pk,
+        },
         client=client,
         user=user,
     )
@@ -1841,7 +1880,10 @@ def test_job_create_view_for_verified_users_only(client):
 
     response2 = get_view_for_user(
         viewname="algorithms:job-create",
-        reverse_kwargs={"slug": alg.slug},
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": alg.interfaces.first().pk,
+        },
         client=client,
         user=editor,
     )
@@ -1939,7 +1981,10 @@ def test_job_create_denied_for_same_input_model_and_image(client):
     ci = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.IMAGE
     )
-    alg.inputs.set([ci])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci], outputs=[ComponentInterfaceFactory()]
+    )
+    alg.interfaces.add(interface)
     ai = AlgorithmImageFactory(
         algorithm=alg,
         is_manifest_valid=True,
@@ -1962,6 +2007,7 @@ def test_job_create_denied_for_same_input_model_and_image(client):
         method=client.post,
         reverse_kwargs={
             "slug": alg.slug,
+            "interface_pk": alg.interfaces.first().pk,
         },
         user=creator,
         data={
@@ -2181,6 +2227,246 @@ def test_algorithm_template_download(client):
         assert (
             file_name in zip_file.namelist()
         ), f"{file_name} is in the ZIP file"
+
+
+@pytest.mark.parametrize(
+    "viewname", ["algorithms:interface-list", "algorithms:interface-create"]
+)
+@pytest.mark.django_db
+def test_algorithm_interface_view_permission(client, viewname):
+    (
+        user_with_alg_add_perm,
+        user_without_alg_add_perm,
+        algorithm_editor_with_alg_add,
+        algorithm_editor_without_alg_add,
+    ) = UserFactory.create_batch(4)
+    assign_perm("algorithms.add_algorithm", user_with_alg_add_perm)
+    assign_perm("algorithms.add_algorithm", algorithm_editor_with_alg_add)
+
+    alg = AlgorithmFactory()
+    alg.add_editor(algorithm_editor_with_alg_add)
+    alg.add_editor(algorithm_editor_without_alg_add)
+
+    for user, status in [
+        [user_with_alg_add_perm, 403],
+        [user_without_alg_add_perm, 403],
+        [algorithm_editor_with_alg_add, 200],
+        [algorithm_editor_without_alg_add, 403],
+    ]:
+        response = get_view_for_user(
+            viewname=viewname,
+            client=client,
+            reverse_kwargs={"slug": alg.slug},
+            user=user,
+        )
+        assert response.status_code == status
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_delete_permission(client):
+    (
+        user_with_alg_add_perm,
+        user_without_alg_add_perm,
+        algorithm_editor_with_alg_add,
+        algorithm_editor_without_alg_add,
+    ) = UserFactory.create_batch(4)
+    assign_perm("algorithms.add_algorithm", user_with_alg_add_perm)
+    assign_perm("algorithms.add_algorithm", algorithm_editor_with_alg_add)
+
+    alg = AlgorithmFactory()
+    alg.add_editor(algorithm_editor_with_alg_add)
+    alg.add_editor(algorithm_editor_without_alg_add)
+
+    int1, int2 = AlgorithmInterfaceFactory.create_batch(2)
+    alg.interfaces.add(int1)
+    alg.interfaces.add(int2)
+
+    for user, status in [
+        [user_with_alg_add_perm, 403],
+        [user_without_alg_add_perm, 403],
+        [algorithm_editor_with_alg_add, 200],
+        [algorithm_editor_without_alg_add, 403],
+    ]:
+        response = get_view_for_user(
+            viewname="algorithms:interface-delete",
+            client=client,
+            reverse_kwargs={
+                "slug": alg.slug,
+                "interface_pk": int2.pk,
+            },
+            user=user,
+        )
+        assert response.status_code == status
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_create(client):
+    user = UserFactory()
+    assign_perm("algorithms.add_algorithm", user)
+    alg = AlgorithmFactory()
+    alg.add_editor(user)
+
+    ci_1 = ComponentInterfaceFactory()
+    ci_2 = ComponentInterfaceFactory()
+
+    response = get_view_for_user(
+        viewname="algorithms:interface-create",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": alg.slug},
+        data={
+            "inputs": [ci_1.pk],
+            "outputs": [ci_2.pk],
+        },
+        user=user,
+    )
+    assert response.status_code == 302
+
+    assert AlgorithmInterface.objects.count() == 1
+    io = AlgorithmInterface.objects.get()
+    assert io.inputs.get() == ci_1
+    assert io.outputs.get() == ci_2
+
+    assert AlgorithmAlgorithmInterface.objects.count() == 1
+    io_through = AlgorithmAlgorithmInterface.objects.get()
+    assert io_through.algorithm == alg
+    assert io_through.interface == io
+
+
+@pytest.mark.django_db
+def test_algorithm_interfaces_list_queryset(client):
+    user = UserFactory()
+    assign_perm("algorithms.add_algorithm", user)
+    alg, alg2 = AlgorithmFactory.create_batch(2)
+    alg.add_editor(user)
+    VerificationFactory(user=user, is_verified=True)
+
+    io1, io2, io3, io4 = AlgorithmInterfaceFactory.create_batch(4)
+
+    alg.interfaces.set([io1, io2])
+    alg2.interfaces.set([io3, io4])
+
+    iots = AlgorithmAlgorithmInterface.objects.order_by("id").all()
+
+    response = get_view_for_user(
+        viewname="algorithms:interface-list",
+        client=client,
+        reverse_kwargs={"slug": alg.slug},
+        user=user,
+    )
+    assert response.status_code == 200
+    assert response.context["object_list"].count() == 2
+    assert iots[0] in response.context["object_list"]
+    assert iots[1] in response.context["object_list"]
+    assert iots[2] not in response.context["object_list"]
+    assert iots[3] not in response.context["object_list"]
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_delete(client):
+    user = UserFactory()
+    assign_perm("algorithms.add_algorithm", user)
+    alg = AlgorithmFactory()
+    alg.add_editor(user)
+
+    int1, int2 = AlgorithmInterfaceFactory.create_batch(2)
+    alg.interfaces.add(int1)
+    alg.interfaces.add(int2)
+
+    response = get_view_for_user(
+        viewname="algorithms:interface-delete",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": int2.pk,
+        },
+        user=user,
+    )
+    assert response.status_code == 302
+    # no interface was deleted
+    assert AlgorithmInterface.objects.count() == 2
+    # only the relation between interface and algorithm was deleted
+    assert AlgorithmAlgorithmInterface.objects.count() == 1
+    assert alg.interfaces.count() == 1
+    assert alg.interfaces.get() == int1
+
+
+@pytest.mark.django_db
+def test_interface_select_for_job_view_permission(client):
+    verified_user, unverified_user = UserFactory.create_batch(2)
+    VerificationFactory(user=verified_user, is_verified=True)
+    alg = AlgorithmFactory()
+    alg.add_user(verified_user)
+    alg.add_user(unverified_user)
+
+    interface1 = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterfaceFactory()],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    interface2 = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterfaceFactory()],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    alg.interfaces.add(interface1)
+    alg.interfaces.add(interface2)
+
+    response = get_view_for_user(
+        viewname="algorithms:job-interface-select",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=unverified_user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="algorithms:job-interface-select",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=verified_user,
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_interface_select_automatic_redirect(client):
+    verified_user = UserFactory()
+    VerificationFactory(user=verified_user, is_verified=True)
+    alg = AlgorithmFactory()
+    alg.add_user(verified_user)
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterfaceFactory()],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    alg.interfaces.add(interface)
+
+    # with just 1 interface, user gets redirected immediately
+    response = get_view_for_user(
+        viewname="algorithms:job-interface-select",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=verified_user,
+    )
+    assert response.status_code == 302
+    assert response.url == reverse(
+        "algorithms:job-create",
+        kwargs={"slug": alg.slug, "interface_pk": interface.pk},
+    )
+
+    # with more than 1 interfaces, user has to choose the interface
+    interface2 = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterfaceFactory()],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    alg.interfaces.add(interface2)
+    response = get_view_for_user(
+        viewname="algorithms:job-interface-select",
+        reverse_kwargs={"slug": alg.slug},
+        client=client,
+        user=verified_user,
+    )
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db
