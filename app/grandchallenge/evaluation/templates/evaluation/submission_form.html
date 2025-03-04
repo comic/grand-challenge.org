@@ -80,8 +80,9 @@
                 As an admin for this challenge you can create as many submissions as you like as long as there is budget available.
             </p>
         </div>
-
-        {% include 'evaluation/partials/algorithm_interfaces_information.html' with phase=phase form=form %}
+        {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+            {% include 'evaluation/partials/algorithm_interfaces_information.html' with phase=phase form=form %}
+        {% endif %}
 
         {% crispy form %}
 
@@ -145,8 +146,9 @@
                 This phase is dependent on phase "{{ phase.parent }}". This means that you can only submit active containers that have a successful submission to phase "{{ phase.parent }}".
             </div>
         {% endif %}
-
-            {% include 'evaluation/partials/algorithm_interfaces_information.html' with phase=phase form=form %}
+            {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+                {% include 'evaluation/partials/algorithm_interfaces_information.html' with phase=phase form=form %}
+            {% endif %}
 
             {% crispy form %}
 
