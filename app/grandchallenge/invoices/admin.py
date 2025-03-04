@@ -19,7 +19,10 @@ class InvoiceAdmin(admin.ModelAdmin):
         "last_checked_on",
         "internal_comments",
     )
-    list_filter = ("payment_status",)
+    list_filter = (
+        "payment_status",
+        "payment_type",
+    )
     autocomplete_fields = ("challenge",)
     readonly_fields = ["invoice_request_text"]
 
