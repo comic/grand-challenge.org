@@ -16,7 +16,7 @@ from grandchallenge.challenges.tasks import (
 )
 from grandchallenge.invoices.models import Invoice, PaymentStatusChoices
 from grandchallenge.invoices.tasks import (
-    send_challenge_invoice_reminder_emails,
+    send_challenge_outstanding_invoice_reminder_emails,
 )
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import (
@@ -416,7 +416,7 @@ def test_challenge_onboarding_task_due_emails(
         ),
     ],
 )
-def test_challenge_invoice_alert_emails(
+def test_challenge_outstanding_invoice_reminder_emails(
     invoice_kwargs,
     send_email,
     settings,
@@ -442,7 +442,7 @@ def test_challenge_invoice_alert_emails(
         return_value=_fixed_now,
     )
 
-    send_challenge_invoice_reminder_emails()
+    send_challenge_outstanding_invoice_reminder_emails()
 
     if send_email:
         expected_subject = (
@@ -471,7 +471,7 @@ def test_challenge_invoice_alert_emails(
 
 
 @pytest.mark.django_db
-def test_challenge_invoice_alert_emails_contact_person(mocker):
+def test_challenge_outstanding_invoice_reminder_emails_contact_person(mocker):
     challenge = ChallengeFactory()
     challenge_admin = challenge.creator
 
@@ -494,7 +494,7 @@ def test_challenge_invoice_alert_emails_contact_person(mocker):
         return_value=_fixed_now,
     )
 
-    send_challenge_invoice_reminder_emails()
+    send_challenge_outstanding_invoice_reminder_emails()
 
     expected_subject = (
         "[{challenge_name}] Outstanding Invoice Reminder".format(
