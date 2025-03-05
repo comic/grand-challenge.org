@@ -548,7 +548,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     outputs = models.ManyToManyField(
         to=ComponentInterface,
         related_name="evaluation_outputs",
-        blank=True,
     )
     algorithm_inputs = deprecate_field(
         models.ManyToManyField(

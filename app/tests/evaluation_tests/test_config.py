@@ -3,10 +3,9 @@ import pytest
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKind,
 )
 from grandchallenge.evaluation.models import Evaluation
-from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
+from tests.evaluation_tests.factories import EvaluationFactory
 from tests.utils import get_view_for_user
 
 
@@ -98,15 +97,3 @@ def test_setting_display_all_metrics(client, challenge_set):
     assert str(metrics["public"]) in response.rendered_content
     assert str(metrics["extra"]) in response.rendered_content
     assert str(metrics["secret"]) not in response.rendered_content
-
-
-@pytest.mark.django_db
-def test_default_interfaces_created():
-    p = PhaseFactory()
-
-    assert {i.kind for i in p.inputs.all()} == {
-        InterfaceKind.InterfaceKindChoices.CSV
-    }
-    assert {o.kind for o in p.outputs.all()} == {
-        InterfaceKind.InterfaceKindChoices.ANY
-    }

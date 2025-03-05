@@ -1,12 +1,11 @@
 from django.db import migrations, models
 
 
-def remove_phase_inputs_and_outputs(apps, _schema_editor):
+def remove_phase_inputs(apps, _schema_editor):
     Phase = apps.get_model("evaluation", "Phase")  # noqa: N806
 
     for phase in Phase.objects.all():
         phase.inputs.clear()
-        phase.outputs.clear()
 
 
 class Migration(migrations.Migration):
@@ -25,14 +24,5 @@ class Migration(migrations.Migration):
                 to="components.componentinterface",
             ),
         ),
-        migrations.AlterField(
-            model_name="phase",
-            name="outputs",
-            field=models.ManyToManyField(
-                blank=True,
-                related_name="evaluation_outputs",
-                to="components.componentinterface",
-            ),
-        ),
-        migrations.RunPython(remove_phase_inputs_and_outputs, elidable=True),
+        migrations.RunPython(remove_phase_inputs, elidable=True),
     ]
