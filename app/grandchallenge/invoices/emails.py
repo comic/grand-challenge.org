@@ -9,21 +9,8 @@ from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.profiles.models import EmailSubscriptionTypes
 
 
-def send_outstanding_invoice_alert(invoice):
-    challenge = invoice.challenge
-
-    subject = format_html(
-        "[{challenge_name}] Outstanding Invoice Reminder",
-        challenge_name=challenge.short_name,
-    )
-    challenge_admins_message = render_to_string(
-        "invoices/partials/challenge_invoice_alert_email.md",
-        context={
-            "challenge": challenge,
-            "invoice": invoice,
-        },
-    )
-    challenge_admins_recipients = [*challenge.get_admins()]
+def get_challenge_invoice_recipients(invoice):
+    recipients = [*invoice.challenge.get_admins()]
 
     if invoice.contact_email:
         username = (
@@ -41,7 +28,23 @@ def send_outstanding_invoice_alert(invoice):
             email=invoice.contact_email,
             user_profile=user_profile,
         )
-        challenge_admins_recipients.append(contact_user)
+        recipients.append(contact_user)
+
+    return recipients
+
+
+def send_challenge_outstanding_invoice_alert(invoice):
+    subject = format_html(
+        "[{challenge_name}] Outstanding Invoice Reminder",
+        challenge_name=invoice.challenge.short_name,
+    )
+    challenge_admins_message = render_to_string(
+        "invoices/partials/challenge_invoice_alert_email.md",
+        context={
+            "invoice": invoice,
+        },
+    )
+    challenge_admins_recipients = get_challenge_invoice_recipients(invoice)
 
     send_standard_email_batch(
         site=Site.objects.get_current(),
@@ -54,10 +57,32 @@ def send_outstanding_invoice_alert(invoice):
     managers_message = format_html(
         "An invoice alert has been sent for the {challenge_name} challenge regarding "
         "the invoice issued on {issued_on}.",
-        challenge_name=challenge.short_name,
+        challenge_name=invoice.challenge.short_name,
         issued_on=invoice.issued_on,
     )
     mail_managers(
         subject=subject,
         message=managers_message,
+    )
+
+
+def send_challenge_invoice_issued_notification(invoice):
+    subject = format_html(
+        "[{challenge_name}] Invoice issued notification",
+        challenge_name=invoice.challenge.short_name,
+    )
+    message = render_to_string(
+        "invoices/partials/challenge_invoice_issued_email.md",
+        context={
+            "invoice": invoice,
+        },
+    )
+    recipients = get_challenge_invoice_recipients(invoice)
+
+    send_standard_email_batch(
+        site=Site.objects.get_current(),
+        subject=subject,
+        markdown_message=message,
+        recipients=recipients,
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
     )

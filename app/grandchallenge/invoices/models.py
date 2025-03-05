@@ -1,4 +1,8 @@
 from django.db import models
+from django.db.transaction import on_commit
+
+from grandchallenge.core.models import FieldChangeMixin
+from grandchallenge.invoices.tasks import send_challenge_invoice_issued_emails
 
 
 class PaymentStatusChoices(models.TextChoices):
@@ -14,7 +18,7 @@ class PaymentTypeChoices(models.TextChoices):
     POSTPAID = "POSTPAID", "Postpaid"
 
 
-class Invoice(models.Model):
+class Invoice(models.Model, FieldChangeMixin):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -111,3 +115,15 @@ class Invoice(models.Model):
                 name="payment_status_in_choices",
             ),
         ]
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if (
+            self.has_changed("payment_status")
+            and self.payment_status == PaymentStatusChoices.ISSUED
+        ):
+            on_commit(
+                send_challenge_invoice_issued_emails.signature(
+                    kwargs={"pk": self.pk}
+                ).apply_async
+            )
