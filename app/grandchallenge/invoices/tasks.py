@@ -7,12 +7,13 @@ from grandchallenge.invoices.emails import (
     send_challenge_invoice_issued_notification,
     send_challenge_outstanding_invoice_alert,
 )
-from grandchallenge.invoices.models import Invoice
 
 
 @acks_late_micro_short_task
 @transaction.atomic
 def send_challenge_invoice_reminder_emails():
+    from grandchallenge.invoices.models import Invoice
+
     _now = now()
     outstanding_invoices = Invoice.objects.filter(
         payment_type__in=[
@@ -29,5 +30,7 @@ def send_challenge_invoice_reminder_emails():
 @acks_late_micro_short_task
 @transaction.atomic
 def send_challenge_invoice_issued_emails(*, pk):
+    from grandchallenge.invoices.models import Invoice
+
     invoice = Invoice.objects.get(pk=pk)
     send_challenge_invoice_issued_notification(invoice)
