@@ -541,10 +541,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         help_text="The interfaces that an algorithm for this phase must implement.",
     )
     inputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="evaluation_inputs"
+        to=ComponentInterface,
+        related_name="evaluation_inputs",
+        blank=True,
     )
     outputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="evaluation_outputs"
+        to=ComponentInterface,
+        related_name="evaluation_outputs",
+        blank=True,
     )
     algorithm_inputs = deprecate_field(
         models.ManyToManyField(
@@ -747,7 +751,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         super().save(*args, **kwargs)
 
         if adding:
-            self.set_default_interfaces()
             self.assign_permissions()
             for admin in self.challenge.get_admins():
                 if not is_following(admin, self):
@@ -948,14 +951,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 and self.submissions_open_at < self.parent.submissions_open_at
             ):
                 raise ValidationError(SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT)
-
-    def set_default_interfaces(self):
-        self.inputs.set(
-            [ComponentInterface.objects.get(slug="predictions-csv-file")]
-        )
-        self.outputs.set(
-            [ComponentInterface.objects.get(slug="metrics-json-file")]
-        )
 
     @cached_property
     def linked_component_interfaces(self):
