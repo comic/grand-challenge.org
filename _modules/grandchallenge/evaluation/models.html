@@ -581,10 +581,13 @@
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The interfaces that an algorithm for this phase must implement.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">inputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
-        <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterface</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;evaluation_inputs&quot;</span>
+        <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterface</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;evaluation_inputs&quot;</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">outputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
-        <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterface</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;evaluation_outputs&quot;</span>
+        <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterface</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;evaluation_outputs&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">algorithm_inputs</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
         <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
@@ -996,9 +999,6 @@
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">set_default_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="s2">&quot;predictions-csv-file&quot;</span><span class="p">)]</span>
-        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
             <span class="p">[</span><span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="s2">&quot;metrics-json-file&quot;</span><span class="p">)]</span>
         <span class="p">)</span>
