@@ -33,13 +33,13 @@ def get_challenge_invoice_recipients(invoice):
     return recipients
 
 
-def send_challenge_outstanding_invoice_alert(invoice):
+def send_challenge_outstanding_invoice_reminder(invoice):
     subject = format_html(
         "[{challenge_name}] Outstanding Invoice Reminder",
         challenge_name=invoice.challenge.short_name,
     )
     challenge_admins_message = render_to_string(
-        "invoices/partials/challenge_invoice_alert_email.md",
+        "invoices/partials/challenge_outstanding_invoice_reminder_email.md",
         context={
             "invoice": invoice,
         },

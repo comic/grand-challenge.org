@@ -5,13 +5,13 @@ from django.utils.timezone import now
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.invoices.emails import (
     send_challenge_invoice_issued_notification,
-    send_challenge_outstanding_invoice_alert,
+    send_challenge_outstanding_invoice_reminder,
 )
 
 
 @acks_late_micro_short_task
 @transaction.atomic
-def send_challenge_invoice_reminder_emails():
+def send_challenge_outstanding_invoice_reminder_emails():
     from grandchallenge.invoices.models import Invoice
 
     _now = now()
@@ -24,7 +24,7 @@ def send_challenge_invoice_reminder_emails():
         issued_on__lt=_now - settings.CHALLENGE_INVOICE_OUTSTANDING_CUTOFF,
     )
     for invoice in outstanding_invoices:
-        send_challenge_outstanding_invoice_alert(invoice)
+        send_challenge_outstanding_invoice_reminder(invoice)
 
 
 @acks_late_micro_short_task
