@@ -438,7 +438,7 @@ def test_challenge_invoice_alert_emails(
     )
 
     mocker.patch(
-        "grandchallenge.challenges.tasks.now",
+        "grandchallenge.invoices.tasks.now",
         return_value=_fixed_now,
     )
 
@@ -490,7 +490,7 @@ def test_challenge_invoice_alert_emails_contact_person(mocker):
     )
 
     mocker.patch(
-        "grandchallenge.challenges.tasks.now",
+        "grandchallenge.invoices.tasks.now",
         return_value=_fixed_now,
     )
 
