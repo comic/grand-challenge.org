@@ -53,7 +53,12 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):  # noqa: C901
 
     if submission.phase.external_evaluation:
         external_evaluation, created = Evaluation.objects.get_or_create(
-            submission=submission
+            submission=submission,
+            defaults={
+                "time_limit": submission.phase.evaluation_time_limit,
+                "requires_gpu_type": submission.phase.evaluation_requires_gpu_type,
+                "requires_memory_gb": submission.phase.evaluation_requires_memory_gb,
+            },
         )
         if not created:
             logger.info(
