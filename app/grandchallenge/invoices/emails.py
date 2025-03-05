@@ -68,11 +68,11 @@ def send_challenge_outstanding_invoice_reminder(invoice):
 
 def send_challenge_invoice_issued_notification(invoice):
     subject = format_html(
-        "[{challenge_name}] Invoice issued notification",
+        "[{challenge_name}] Invoice Issued Notification",
         challenge_name=invoice.challenge.short_name,
     )
     message = render_to_string(
-        "invoices/partials/challenge_invoice_issued_email.md",
+        "invoices/partials/challenge_invoice_issued_notification_email.md",
         context={
             "invoice": invoice,
         },

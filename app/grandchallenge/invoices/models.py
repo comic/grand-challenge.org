@@ -4,7 +4,9 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import FieldChangeMixin
-from grandchallenge.invoices.tasks import send_challenge_invoice_issued_emails
+from grandchallenge.invoices.tasks import (
+    send_challenge_invoice_issued_notification_emails,
+)
 
 
 class PaymentStatusChoices(models.TextChoices):
@@ -117,7 +119,7 @@ class Invoice(models.Model, FieldChangeMixin):
             and self.payment_status == PaymentStatusChoices.ISSUED
         ):
             on_commit(
-                send_challenge_invoice_issued_emails.signature(
+                send_challenge_invoice_issued_notification_emails.signature(
                     kwargs={"pk": self.pk}
                 ).apply_async
             )

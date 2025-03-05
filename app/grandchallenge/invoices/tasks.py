@@ -29,7 +29,7 @@ def send_challenge_outstanding_invoice_reminder_emails():
 
 @acks_late_micro_short_task
 @transaction.atomic
-def send_challenge_invoice_issued_emails(*, pk):
+def send_challenge_invoice_issued_notification_emails(*, pk):
     from grandchallenge.invoices.models import Invoice
 
     invoice = Invoice.objects.get(pk=pk)
