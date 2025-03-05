@@ -1,6 +1,10 @@
 from django.db import models
+from django.db.transaction import on_commit
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
+
+from grandchallenge.core.models import FieldChangeMixin
+from grandchallenge.invoices.tasks import send_challenge_invoice_issued_emails
 
 
 class PaymentStatusChoices(models.TextChoices):
@@ -16,7 +20,7 @@ class PaymentTypeChoices(models.TextChoices):
     POSTPAID = "POSTPAID", "Postpaid"
 
 
-class Invoice(models.Model):
+class Invoice(models.Model, FieldChangeMixin):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -108,6 +112,15 @@ class Invoice(models.Model):
         super().save(*args, **kwargs)
         if adding:
             self.assign_permissions()
+        if (
+            self.has_changed("payment_status")
+            and self.payment_status == PaymentStatusChoices.ISSUED
+        ):
+            on_commit(
+                send_challenge_invoice_issued_emails.signature(
+                    kwargs={"pk": self.pk}
+                ).apply_async
+            )
 
     def assign_permissions(self):
         assign_perm(

@@ -15,7 +15,9 @@ from grandchallenge.challenges.tasks import (
     update_compute_costs_and_storage_size,
 )
 from grandchallenge.invoices.models import Invoice, PaymentStatusChoices
-from grandchallenge.invoices.tasks import send_invoice_reminder_emails
+from grandchallenge.invoices.tasks import (
+    send_challenge_invoice_reminder_emails,
+)
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import (
     ChallengeFactory,
@@ -440,7 +442,7 @@ def test_challenge_invoice_alert_emails(
         return_value=_fixed_now,
     )
 
-    send_invoice_reminder_emails()
+    send_challenge_invoice_reminder_emails()
 
     if send_email:
         expected_subject = (
@@ -492,7 +494,7 @@ def test_challenge_invoice_alert_emails_contact_person(mocker):
         return_value=_fixed_now,
     )
 
-    send_invoice_reminder_emails()
+    send_challenge_invoice_reminder_emails()
 
     expected_subject = (
         "[{challenge_name}] Outstanding Invoice Reminder".format(
