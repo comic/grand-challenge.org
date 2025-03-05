@@ -1286,7 +1286,7 @@ class AlgorithmInterfaceForPhaseMixin:
         return get_object_or_404(
             Phase,
             challenge=self.request.challenge,
-            challenge__phase__submission_kind=SubmissionKindChoices.ALGORITHM,
+            submission_kind=SubmissionKindChoices.ALGORITHM,
             slug=self.kwargs["slug"],
         )
 
