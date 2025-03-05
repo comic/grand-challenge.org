@@ -198,8 +198,12 @@ def test_challenge_invoice_issued_notification_emails():
 
 @pytest.mark.django_db
 def test_challenge_invoice_issued_notification_emails_on_save(
+    settings,
     django_capture_on_commit_callbacks,
 ):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     challenge = ChallengeFactory()
     challenge_admin = challenge.creator
 
