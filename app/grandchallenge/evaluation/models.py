@@ -541,10 +541,13 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         help_text="The interfaces that an algorithm for this phase must implement.",
     )
     inputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="evaluation_inputs"
+        to=ComponentInterface,
+        related_name="evaluation_inputs",
+        blank=True,
     )
     outputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="evaluation_outputs"
+        to=ComponentInterface,
+        related_name="evaluation_outputs",
     )
     algorithm_inputs = deprecate_field(
         models.ManyToManyField(
@@ -950,9 +953,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 raise ValidationError(SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT)
 
     def set_default_interfaces(self):
-        self.inputs.set(
-            [ComponentInterface.objects.get(slug="predictions-csv-file")]
-        )
         self.outputs.set(
             [ComponentInterface.objects.get(slug="metrics-json-file")]
         )
