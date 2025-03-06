@@ -319,11 +319,8 @@ class OverlaySegmentsMixin(models.Model):
             '{"name": "tissue", "visible": true, "voxel_value": 1}]. '
             "If a categorical overlay is shown, "
             "it is possible to show toggles to change the visibility of the different overlay categories. "
-            "To do so, configure the categories that should be displayed. Data from the "
-            "algorithm's output.json can be added as an extra label to each "
-            "toggle using jinja templating. "
-            'For example: [{"name": "Level 0", "visible": false, "voxel_value": 0, '
-            '"metric_template": "{{metrics.volumes[0]}} mm³"}]. '
+            "To do so, configure the categories that should be displayed. "
+            'For example: [{"name": "Level 0", "visible": false, "voxel_value": 0].'
         ),
         validators=[JSONValidator(schema=OVERLAY_SEGMENTS_SCHEMA)],
     )
