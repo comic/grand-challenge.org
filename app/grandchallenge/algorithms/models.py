@@ -24,8 +24,6 @@ from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
-from jinja2 import sandbox
-from jinja2.exceptions import TemplateError
 from stdimage import JPEGField
 
 from grandchallenge.algorithms.tasks import update_algorithm_average_duration
@@ -50,13 +48,11 @@ from grandchallenge.core.storage import (
     protected_s3_storage,
     public_s3_storage,
 )
-from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
 from grandchallenge.core.validators import ExtensionValidator
-from grandchallenge.evaluation.utils import get
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
@@ -66,8 +62,6 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
 
 logger = logging.getLogger(__name__)
-
-JINJA_ENGINE = sandbox.ImmutableSandboxedEnvironment()
 
 
 def annotate_input_output_counts(queryset, inputs=None, outputs=None):
@@ -224,19 +218,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             "By using this algorithm, users agree to the site wide "
             "terms of service. If your algorithm has any additional "
             "terms of usage, define them here."
-        ),
-    )
-    result_template = models.TextField(
-        blank=True,
-        default="<pre>{{ results|tojson(indent=2) }}</pre>",
-        help_text=(
-            "Define the jinja template to render the content of the "
-            "results.json to html. For example, the following template will "
-            "print out all the keys and values of the result.json. "
-            "Use results to access the json root. "
-            "{% for key, value in results.metrics.items() -%}"
-            "{{ key }}  {{ value }}"
-            "{% endfor %}"
         ),
     )
     interfaces = models.ManyToManyField(
@@ -1168,28 +1149,6 @@ class Job(CIVForObjectMixin, ComponentJob):
             for civ in self.inputs.all()
             if civ.has_value or not civ.interface.value_required
         } == {*self.algorithm_interface.inputs.all()}
-
-    @cached_property
-    def rendered_result_text(self) -> str:
-        try:
-            results = get(
-                [
-                    o.value
-                    for o in self.outputs.all()
-                    if o.interface.slug == "results-json-file"
-                ]
-            )
-        except ObjectDoesNotExist:
-            return ""
-
-        try:
-            template_output = JINJA_ENGINE.from_string(
-                self.algorithm_image.algorithm.result_template
-            ).render(results=results)
-        except (TemplateError, TypeError, ValueError):
-            return "Jinja template is invalid"
-
-        return md2html(template_output)
 
     def get_absolute_url(self):
         return reverse(

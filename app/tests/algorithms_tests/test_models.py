@@ -19,11 +19,7 @@ from grandchallenge.algorithms.models import (
     Job,
     get_existing_interface_for_inputs_and_outputs,
 )
-from grandchallenge.components.models import (
-    CIVData,
-    ComponentInterface,
-    ComponentInterfaceValue,
-)
+from grandchallenge.components.models import CIVData, ComponentInterface
 from grandchallenge.components.schemas import GPUTypeChoices
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -75,40 +71,6 @@ def test_group_deletion_reverse(group):
 
     with pytest.raises(ProtectedError):
         getattr(algorithm, group).delete()
-
-
-@pytest.mark.django_db
-def test_rendered_result_text():
-    def create_result(jb, result: dict):
-        interface = ComponentInterface.objects.get(slug="results-json-file")
-
-        try:
-            output_civ = jb.outputs.get(interface=interface)
-            output_civ.value = result
-            output_civ.save()
-        except ObjectDoesNotExist:
-            output_civ = ComponentInterfaceValue.objects.create(
-                interface=interface, value=result
-            )
-            jb.outputs.add(output_civ)
-
-    job = AlgorithmJobFactory(time_limit=60)
-    job.algorithm_image.algorithm.result_template = (
-        "foo score: {{results.foo}}"
-    )
-
-    assert job.rendered_result_text == ""
-    create_result(job, {"foo": 13.37})
-    del job.rendered_result_text
-    assert job.rendered_result_text == "<p>foo score: 13.37</p>"
-
-    job.algorithm_image.algorithm.result_template = "{% for key, value in dict.metrics.items() -%}{{ key }}  {{ value }}{% endfor %}"
-    del job.rendered_result_text
-    assert job.rendered_result_text == "Jinja template is invalid"
-
-    job.algorithm_image.algorithm.result_template = "{{ str.__add__('test')}}"
-    del job.rendered_result_text
-    assert job.rendered_result_text == "Jinja template is invalid"
 
 
 @pytest.mark.django_db

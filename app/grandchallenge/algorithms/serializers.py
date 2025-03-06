@@ -142,6 +142,8 @@ class JobSerializer(serializers.ModelSerializer):
         source="algorithm_image.algorithm.view_content", read_only=True
     )
 
+    rendered_result_text = SerializerMethodField()
+
     class Meta:
         model = Job
         fields = [
@@ -159,6 +161,10 @@ class JobSerializer(serializers.ModelSerializer):
             "optional_hanging_protocols",
             "view_content",
         ]
+
+    def get_rendered_result_text(self, obj: Job) -> str:
+        # Deprecated field, to be removed when removed from CIRRUS
+        return ""
 
 
 class HyperlinkedJobSerializer(JobSerializer):
