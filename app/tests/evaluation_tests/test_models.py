@@ -1,6 +1,5 @@
 from collections import namedtuple
 from datetime import timedelta
-from itertools import chain
 
 import pytest
 from django.core import mail
@@ -23,7 +22,6 @@ from grandchallenge.evaluation.models import (
 from grandchallenge.evaluation.tasks import (
     calculate_ranks,
     create_algorithm_jobs_for_evaluation,
-    create_evaluation,
     update_combined_leaderboard,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
@@ -94,13 +92,14 @@ def test_algorithm_submission_creates_one_job_per_test_set_image(
         phase=algorithm_submission.method.phase,
         algorithm_image=algorithm_submission.algorithm_image,
     )
+    eval = EvaluationFactory(
+        submission=s, method=algorithm_submission.method, time_limit=60
+    )
 
-    with django_capture_on_commit_callbacks() as callbacks:
-        create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
-
-    # Execute the callbacks non-recursively
-    for c in callbacks:
-        c()
+    with django_capture_on_commit_callbacks(execute=True):
+        create_algorithm_jobs_for_evaluation(
+            evaluation_pk=eval.pk, max_jobs=None
+        )
 
     assert Job.objects.count() == 2
     assert [
@@ -121,17 +120,14 @@ def test_create_evaluation_is_idempotent(
         algorithm_image=algorithm_submission.algorithm_image,
     )
 
-    with django_capture_on_commit_callbacks(execute=False) as callbacks1:
-        create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
+    with django_capture_on_commit_callbacks(execute=True):
+        s.create_evaluation()
 
-    with django_capture_on_commit_callbacks(execute=False) as callbacks2:
-        create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
+    with django_capture_on_commit_callbacks(execute=True):
+        s.create_evaluation()
 
-    # Execute the callbacks non-recursively
-    for c in chain(callbacks1, callbacks2):
-        c()
-
-    assert Job.objects.count() == 2
+    # max_inital_jobs is set to 1, so only one job should be created
+    assert Job.objects.count() == 1
 
 
 @pytest.mark.django_db
@@ -146,7 +142,7 @@ def test_create_evaluation_sets_gpu_and_memory():
 
     submission = SubmissionFactory(phase=method.phase)
 
-    create_evaluation(submission_pk=submission.pk, max_initial_jobs=None)
+    submission.create_evaluation()
 
     evaluation = Evaluation.objects.get()
 
@@ -226,15 +222,16 @@ def test_create_evaluation_uniqueness_checks(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        create_evaluation(submission_pk=sub.pk, max_initial_jobs=None)
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 1
 
     gt = EvaluationGroundTruthFactory(phase=sub.phase, is_desired_version=True)
+    del sub.phase.active_ground_truth
     assert sub.phase.active_ground_truth == gt
 
     with django_capture_on_commit_callbacks(execute=True):
-        create_evaluation(submission_pk=sub.pk, max_initial_jobs=None)
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 2
 
@@ -242,17 +239,42 @@ def test_create_evaluation_uniqueness_checks(
         phase=sub.phase, is_in_registry=True, is_manifest_valid=True
     )
     m.mark_desired_version()
+    del sub.phase.active_image
     assert sub.phase.active_image == m
 
     with django_capture_on_commit_callbacks(execute=True):
-        create_evaluation(submission_pk=sub.pk, max_initial_jobs=None)
+        sub.create_evaluation()
 
     assert Evaluation.objects.count() == 3
+
+    sub.phase.evaluation_time_limit = 45
+    sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        create_evaluation(submission_pk=sub.pk, max_initial_jobs=None)
+        sub.create_evaluation()
 
-    assert Evaluation.objects.count() == 3
+    assert Evaluation.objects.count() == 4
+
+    sub.phase.evaluation_requires_gpu_type = GPUTypeChoices.A10G
+    sub.phase.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sub.create_evaluation()
+
+    assert Evaluation.objects.count() == 5
+
+    sub.phase.evaluation_requires_memory_gb = 16
+    sub.phase.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sub.create_evaluation()
+
+    assert Evaluation.objects.count() == 6
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sub.create_evaluation()
+
+    assert Evaluation.objects.count() == 6
 
 
 @pytest.mark.django_db

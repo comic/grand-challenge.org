@@ -654,7 +654,9 @@ class SubmissionForm(
             self.instance.algorithm_requires_gpu_type = GPUTypeChoices.NO_GPU
             self.instance.algorithm_requires_memory_gb = 0
 
-        return super().save(*args, **kwargs)
+        instance = super().save(*args, **kwargs)
+        instance.create_evaluation()
+        return instance
 
     class Meta:
         model = Submission

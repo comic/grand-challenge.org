@@ -64,7 +64,6 @@ from grandchallenge.evaluation.models import (
     PhaseAlgorithmInterface,
     Submission,
 )
-from grandchallenge.evaluation.tasks import create_evaluation
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
@@ -480,9 +479,7 @@ class EvaluationCreate(
 
     def form_valid(self, form):
         redirect = super().form_valid(form)
-        create_evaluation.apply_async(
-            kwargs={"submission_pk": str(form.cleaned_data["submission"].pk)}
-        )
+        self.submission.create_evaluation()
         return redirect
 
 
