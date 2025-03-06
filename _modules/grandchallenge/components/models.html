@@ -383,11 +383,8 @@
             <span class="s1">&#39;{&quot;name&quot;: &quot;tissue&quot;, &quot;visible&quot;: true, &quot;voxel_value&quot;: 1}]. &#39;</span>
             <span class="s2">&quot;If a categorical overlay is shown, &quot;</span>
             <span class="s2">&quot;it is possible to show toggles to change the visibility of the different overlay categories. &quot;</span>
-            <span class="s2">&quot;To do so, configure the categories that should be displayed. Data from the &quot;</span>
-            <span class="s2">&quot;algorithm&#39;s output.json can be added as an extra label to each &quot;</span>
-            <span class="s2">&quot;toggle using jinja templating. &quot;</span>
-            <span class="s1">&#39;For example: [{&quot;name&quot;: &quot;Level 0&quot;, &quot;visible&quot;: false, &quot;voxel_value&quot;: 0, &#39;</span>
-            <span class="s1">&#39;&quot;metric_template&quot;: &quot;{{metrics.volumes[0]}} mm³&quot;}]. &#39;</span>
+            <span class="s2">&quot;To do so, configure the categories that should be displayed. &quot;</span>
+            <span class="s1">&#39;For example: [{&quot;name&quot;: &quot;Level 0&quot;, &quot;visible&quot;: false, &quot;voxel_value&quot;: 0].&#39;</span>
         <span class="p">),</span>
         <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">OVERLAY_SEGMENTS_SCHEMA</span><span class="p">)],</span>
     <span class="p">)</span>
