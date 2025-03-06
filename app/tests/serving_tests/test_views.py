@@ -10,14 +10,19 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from tests.algorithms_tests.factories import AlgorithmJobFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmInterfaceFactory,
+    AlgorithmJobFactory,
+)
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests import RESOURCE_PATH
 from tests.evaluation_tests.factories import (
     EvaluationFactory,
+    PhaseFactory,
     SubmissionFactory,
 )
 from tests.factories import (
+    ChallengeFactory,
     ChallengeRequestFactory,
     GroupFactory,
     ImageFileFactory,
@@ -162,7 +167,7 @@ def test_civ_file_download(client):
     user1, user2 = UserFactory(), UserFactory()
 
     def has_correct_access(user_allowed, user_denied, url):
-        tests = [(403, None), (302, user_allowed), (403, user_denied)]
+        tests = [(404, None), (302, user_allowed), (404, user_denied)]
 
         for test in tests:
             response = get_view_for_user(url=url, client=client, user=test[1])
@@ -170,7 +175,8 @@ def test_civ_file_download(client):
 
     # test algorithm
     job = AlgorithmJobFactory(creator=user1, time_limit=60)
-    job.algorithm_image.algorithm.outputs.add(detection_interface)
+    interface = AlgorithmInterfaceFactory(outputs=[detection_interface])
+    job.algorithm_image.algorithm.interfaces.add(interface)
     job.outputs.add(output_civ)
 
     has_correct_access(user1, user2, job.outputs.first().file.url)
@@ -185,24 +191,24 @@ def test_civ_file_download(client):
     group.user_set.add(user1)
     assign_perm("view_evaluation", group, evaluation)
 
-    # Evaluation inputs and outputs should always be denied
+    # Evaluation inputs and outputs should always return 404.
     assert (
         get_view_for_user(
             url=evaluation.outputs.first().file.url, client=client, user=None
         ).status_code
-        == 403
+        == 404
     )
     assert (
         get_view_for_user(
             url=evaluation.outputs.first().file.url, client=client, user=user1
         ).status_code
-        == 403
+        == 404
     )
     assert (
         get_view_for_user(
             url=evaluation.outputs.first().file.url, client=client, user=user2
         ).status_code
-        == 403
+        == 404
     )
     evaluation.outputs.remove(output_civ)
 
@@ -275,6 +281,87 @@ def test_session_feedback_screenshot_download(client):
     for test in tests:
         response = get_view_for_user(
             url=feedback.screenshot.url,
+            client=client,
+            user=test[1],
+        )
+        assert response.status_code == test[0]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "evaluation_is_published",
+    [True, False],
+)
+@pytest.mark.parametrize(
+    "phase_is_public",
+    [True, False],
+)
+@pytest.mark.parametrize(
+    "challenge_is_public",
+    [True, False],
+)
+def test_supplementary_file_serving(
+    client,
+    settings,
+    django_capture_on_commit_callbacks,
+    evaluation_is_published,
+    phase_is_public,
+    challenge_is_public,
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    user = UserFactory()
+    challenge_admin = UserFactory()
+    challenge_participant = UserFactory()
+
+    challenge = ChallengeFactory(hidden=True)
+    phase = PhaseFactory(
+        public=False, challenge=challenge, auto_publish_new_results=False
+    )
+    submission = SubmissionFactory(phase=phase)
+    submission.supplementary_file.save(
+        "test.pdf", ContentFile(b"foo,\nbar,\n")
+    )
+    evaluation = EvaluationFactory(time_limit=60, submission=submission)
+
+    challenge.add_admin(user=challenge_admin)
+    challenge.add_participant(user=challenge_participant)
+
+    # Truth table about who should have view permissions
+    anon_should_view = (
+        evaluation_is_published and phase_is_public and challenge_is_public
+    )
+    user_should_view = (
+        evaluation_is_published and phase_is_public and challenge_is_public
+    )
+    creator_should_view = phase_is_public
+    participant_should_view = evaluation_is_published and phase_is_public
+
+    with django_capture_on_commit_callbacks(execute=True):
+        if challenge_is_public:
+            challenge.hidden = False
+            challenge.save()
+
+        if phase_is_public:
+            phase.public = True
+            phase.save()
+
+        if evaluation_is_published:
+            evaluation.published = True
+            evaluation.save()
+
+    tests = [
+        (302 if anon_should_view else 403, None),
+        (302 if user_should_view else 403, user),
+        (302, challenge_admin),
+        (302 if creator_should_view else 403, submission.creator),
+        (302 if participant_should_view else 403, challenge_participant),
+    ]
+
+    for test in tests:
+        response = get_view_for_user(
+            url=submission.supplementary_file.url,
             client=client,
             user=test[1],
         )

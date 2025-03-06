@@ -69,9 +69,9 @@
             </p>
             {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not phase.external_evaluation %}
                 <p>
-                    For each submission, {{ phase.count_valid_archive_items }}
-                    algorithm job{{ phase.count_valid_archive_items|pluralize }} will be created
-                    from the {{ phase.count_valid_archive_items }} valid item{{ phase.count_valid_archive_items|pluralize }}
+                    For each submission, {{ phase.jobs_to_schedule_per_submission }}
+                    algorithm job{{ phase.jobs_to_schedule_per_submission|pluralize }} will be created
+                    from the {{ phase.jobs_to_schedule_per_submission }} valid item{{ phase.jobs_to_schedule_per_submission|pluralize }}
                     in <a href="{{ phase.archive.get_absolute_url }}">{{ phase.archive }}</a>.
                     Each individual algorithm job will have a time limit of {{ phase.algorithm_time_limit|naturaldelta }}.
                 </p>
@@ -80,6 +80,9 @@
                 As an admin for this challenge you can create as many submissions as you like as long as there is budget available.
             </p>
         </div>
+        {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+            {% include 'evaluation/partials/algorithm_interfaces_information.html' with phase=phase form=form %}
+        {% endif %}
 
         {% crispy form %}
 
@@ -112,19 +115,6 @@
                 {% endif %}
             </div>
 
-        {% elif phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not form.fields.algorithm_image.queryset.exists %}
-
-            <p>
-                Currently, you do not have any Algorithm Image that can be submitted to this phase.
-                Either upload a new Algorithm Image to one of your existing Algorithms, or create a new Algorithm.
-                As soon as your new Algorithm Image is active you can return to this page to submit it to this phase.
-            </p>
-
-            <a class="btn btn-primary"
-               href="{% url 'evaluation:phase-algorithm-create' slug=phase.slug challenge_short_name=challenge.short_name %}">
-                <i class="fa fa-plus"></i> Add a new Algorithm
-            </a>
-
         {% else %}
 
             <div class="alert alert-info" role="alert">
@@ -156,6 +146,9 @@
                 This phase is dependent on phase "{{ phase.parent }}". This means that you can only submit active containers that have a successful submission to phase "{{ phase.parent }}".
             </div>
         {% endif %}
+            {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+                {% include 'evaluation/partials/algorithm_interfaces_information.html' with phase=phase form=form %}
+            {% endif %}
 
             {% crispy form %}
 

@@ -1,23 +1,17 @@
-import json
-from urllib.parse import quote
-
+import factory.django
 import pytest
 from django.core.exceptions import ValidationError
 from factory.fuzzy import FuzzyChoice
 
 from grandchallenge.components.form_fields import (
     FlexibleFileField,
-    InterfaceFormField,
+    InterfaceFormFieldFactory,
 )
-from grandchallenge.components.models import (
-    InterfaceKind,
-    InterfaceKindChoices,
-)
+from grandchallenge.components.models import InterfaceKind
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
-    ComponentInterfaceExampleValueFactory,
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
@@ -296,82 +290,133 @@ def test_flexible_file_field_validation_with_archive_items():
         field.clean(parsed_value_for_file_without_permission)
 
 
-@pytest.mark.parametrize(
-    "component_interface_kind, store_in_db, example_json, download_link_is_present",
-    (
-        (
-            InterfaceKindChoices.TWO_D_BOUNDING_BOX,
-            True,
-            {
-                "name": "Region of interest 2",
-                "type": "2D bounding box",
-                "corners": [
-                    [130.8, 148.8, 0.5],
-                    [69.7, 148.8, 0.5],
-                    [69.7, 73.1, 0.5],
-                    [130.8, 73.1, 0.5],
-                ],
-                "probability": 0.95,
-                "version": {"major": 1, "minor": 0},
-            },
-            True,
-        ),
-        (
-            InterfaceKindChoices.TWO_D_BOUNDING_BOX,
-            False,
-            {
-                "name": "Region of interest 2",
-                "type": "2D bounding box",
-                "corners": [
-                    [130.8, 148.8, 0.5],
-                    [69.7, 148.8, 0.5],
-                    [69.7, 73.1, 0.5],
-                    [130.8, 73.1, 0.5],
-                ],
-                "probability": 0.95,
-                "version": {"major": 1, "minor": 0},
-            },
-            True,
-        ),
-        (
-            InterfaceKindChoices.STRING,
-            True,
-            "test string",
-            False,
-        ),
-        (
-            InterfaceKindChoices.IMAGE,
-            False,
-            None,
-            False,
-        ),
-    ),
-)
 @pytest.mark.django_db
-def test_interface_form_field_help_text_example_download_link(
-    component_interface_kind,
-    store_in_db,
-    example_json,
-    download_link_is_present,
-):
+@pytest.mark.parametrize(
+    "ci_kind, initial_pk",
+    [
+        (FuzzyChoice(InterfaceKind.interface_type_file()), "abc"),
+        (InterfaceKind.InterfaceKindChoices.IMAGE, "999"),
+    ],
+)
+def test_interface_form_field_factory_wrong_pk_type(ci_kind, initial_pk):
     user = UserFactory()
+    ci = ComponentInterfaceFactory(kind=ci_kind)
 
+    with pytest.raises(ValidationError) as e:
+        InterfaceFormFieldFactory(interface=ci, user=user, initial=initial_pk)
+    assert str(e.value) == f"['“{initial_pk}” is not a valid UUID.']"
+
+
+@pytest.mark.django_db
+def test_flexible_file_widget_prepopulated_value_algorithm_job():
+    creator, user = UserFactory.create_batch(2)
     ci = ComponentInterfaceFactory(
-        kind=component_interface_kind, store_in_database=store_in_db
+        kind=FuzzyChoice(InterfaceKind.interface_type_file())
     )
-
-    ComponentInterfaceExampleValueFactory(
-        interface=ci,
-        value=example_json,
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, file=factory.django.FileField()
     )
+    job = AlgorithmJobFactory(creator=creator, time_limit=60)
+    job.inputs.set([civ])
 
-    field = InterfaceFormField(instance=ci, user=user, form_data={})
+    field = InterfaceFormFieldFactory(interface=ci, user=creator, initial=civ)
+    assert field.widget.attrs["current_value"] == civ
+    assert field.initial == civ.pk
 
-    encoded_example = quote(json.dumps(ci.json_kind_example.value, indent=2))
+    field = InterfaceFormFieldFactory(
+        interface=ci, user=creator, initial=civ.pk
+    )
+    assert field.widget.attrs["current_value"] == civ
+    assert field.initial == civ.pk
 
-    assert (
-        "Download example" in field.field.help_text
-    ) is download_link_is_present
-    assert (
-        encoded_example in field.field.help_text
-    ) is download_link_is_present
+    field = InterfaceFormFieldFactory(interface=ci, user=user, initial=civ)
+    assert field.widget.attrs["current_value"] is None
+    assert field.initial is None
+
+    field = InterfaceFormFieldFactory(interface=ci, user=user, initial=civ.pk)
+    assert field.widget.attrs["current_value"] is None
+    assert field.initial is None
+
+
+@pytest.mark.django_db
+def test_flexible_file_widget_prepopulated_value_display_set():
+    editor, user = UserFactory.create_batch(2)
+    ci = ComponentInterfaceFactory(
+        kind=FuzzyChoice(InterfaceKind.interface_type_file())
+    )
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, file=factory.django.FileField()
+    )
+    display_set = DisplaySetFactory()
+    display_set.reader_study.add_editor(editor)
+    display_set.values.set([civ])
+
+    field = InterfaceFormFieldFactory(interface=ci, user=editor, initial=civ)
+    assert field.widget.attrs["current_value"] == civ
+    assert field.initial == civ.pk
+
+    field = InterfaceFormFieldFactory(
+        interface=ci, user=editor, initial=civ.pk
+    )
+    assert field.widget.attrs["current_value"] == civ
+    assert field.initial == civ.pk
+
+    field = InterfaceFormFieldFactory(interface=ci, user=user, initial=civ)
+    assert field.widget.attrs["current_value"] is None
+    assert field.initial is None
+
+    field = InterfaceFormFieldFactory(interface=ci, user=user, initial=civ.pk)
+    assert field.widget.attrs["current_value"] is None
+    assert field.initial is None
+
+
+@pytest.mark.django_db
+def test_flexible_file_widget_prepopulated_value_archive_item():
+    editor, user = UserFactory.create_batch(2)
+    ci = ComponentInterfaceFactory(
+        kind=FuzzyChoice(InterfaceKind.interface_type_file())
+    )
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, file=factory.django.FileField()
+    )
+    archive_item = ArchiveItemFactory()
+    archive_item.archive.add_editor(editor)
+    archive_item.values.set([civ])
+
+    field = InterfaceFormFieldFactory(interface=ci, user=editor, initial=civ)
+    assert field.widget.attrs["current_value"] == civ
+    assert field.initial == civ.pk
+
+    field = InterfaceFormFieldFactory(
+        interface=ci, user=editor, initial=civ.pk
+    )
+    assert field.widget.attrs["current_value"] == civ
+    assert field.initial == civ.pk
+
+    field = InterfaceFormFieldFactory(interface=ci, user=user, initial=civ)
+    assert field.widget.attrs["current_value"] is None
+    assert field.initial is None
+
+    field = InterfaceFormFieldFactory(interface=ci, user=user, initial=civ.pk)
+    assert field.widget.attrs["current_value"] is None
+    assert field.initial is None
+
+
+@pytest.mark.django_db
+def test_flexible_file_widget_prepopulated_value_user_upload():
+    creator, user = UserFactory.create_batch(2)
+    ci = ComponentInterfaceFactory(
+        kind=FuzzyChoice(InterfaceKind.interface_type_file())
+    )
+    upload = UserUploadFactory(creator=creator)
+    initial = str(upload.pk)
+
+    field = InterfaceFormFieldFactory(
+        interface=ci, user=creator, initial=initial
+    )
+    assert field.widget.attrs["current_value"] == upload
+    assert field.initial == initial
+
+    field = InterfaceFormFieldFactory(interface=ci, user=user, initial=initial)
+    assert field.widget.attrs["current_value"] is None
+    assert field.initial is None

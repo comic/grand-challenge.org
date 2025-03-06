@@ -38,7 +38,7 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
-from django.utils.timezone import now
+from django.utils.timezone import now, timedelta
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -87,7 +87,10 @@ from grandchallenge.evaluation.utils import (
     SubmissionKindChoices,
 )
 from grandchallenge.incentives.models import Incentive
-from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.invoices.models import (
+    PaymentStatusChoices,
+    PaymentTypeChoices,
+)
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.pages.models import Page
@@ -102,20 +105,53 @@ logger = logging.getLogger(__name__)
 class ChallengeSet(models.QuerySet):
     def with_available_compute(self):
         return self.annotate(
-            approved_compute_costs_euro_millicents=(
+            complimentary_compute_costs_euros=(
                 Sum(
                     "invoices__compute_costs_euros",
                     filter=Q(
-                        invoices__payment_status__in=[
-                            PaymentStatusChoices.COMPLIMENTARY,
-                            PaymentStatusChoices.PAID,
-                        ]
+                        invoices__payment_type=PaymentTypeChoices.COMPLIMENTARY
                     ),
                     output_field=models.PositiveBigIntegerField(),
                     default=0,
                 )
+            ),
+            prepaid_compute_costs_euros=(
+                Sum(
+                    "invoices__compute_costs_euros",
+                    filter=Q(
+                        invoices__payment_type=PaymentTypeChoices.PREPAID,
+                        invoices__payment_status=PaymentStatusChoices.PAID,
+                    ),
+                    output_field=models.PositiveBigIntegerField(),
+                    default=0,
+                )
+            ),
+            postpaid_compute_costs_euros_if_anything_paid=(
+                Case(
+                    When(
+                        prepaid_compute_costs_euros__gt=0,
+                        then=Sum(
+                            "invoices__compute_costs_euros",
+                            filter=Q(
+                                invoices__payment_type=PaymentTypeChoices.POSTPAID
+                            ),
+                            output_field=models.PositiveBigIntegerField(),
+                            default=0,
+                        ),
+                    ),
+                    default=0,
+                    output_field=models.PositiveBigIntegerField(),
+                )
+            ),
+            approved_compute_costs_euro_millicents=ExpressionWrapper(
+                (
+                    F("complimentary_compute_costs_euros")
+                    + F("prepaid_compute_costs_euros")
+                    + F("postpaid_compute_costs_euros_if_anything_paid")
+                )
                 * 1000
-                * 100
+                * 100,
+                output_field=models.PositiveBigIntegerField(),
             ),
             available_compute_euro_millicents=ExpressionWrapper(
                 F("approved_compute_costs_euro_millicents")
@@ -503,6 +539,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
                 self.add_admin(user=self.creator)
             self.create_forum_permissions()
             self.create_default_pages()
+            self.create_default_onboarding_tasks()
 
         if adding or self.hidden != self._hidden_orig:
             on_commit(
@@ -662,6 +699,83 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             ),
             challenge=self,
             permission_level=Page.ALL,
+        )
+
+    def create_default_onboarding_tasks(self):
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Create Phases",
+            description="Create and configure the different phases of the challenge.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=1),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Define Inputs and Outputs",
+            description="E-mail support@grand-challenge.org and communicate the required input "
+            "and output data formats for participant's algorithms.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=2),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Plan Onboarding Meeting",
+            description="Create a Challenge Pack and have an onboarding meeting with challenge organizers.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
+            deadline=self.created + timedelta(weeks=2),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Have Onboarding Meeting",
+            description="Receive a Challenge Pack and have an onboarding meeting with support staff.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=3),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Create Archives",
+            description="Create an archive per algorithm-type phase for the challenge.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
+            deadline=self.created + timedelta(weeks=3),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Upload Data to Archives",
+            description="Add data to the relevant archives. Archives must be created by support. Please "
+            "e-mail support@grand-challenge.org if that is delayed.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=5),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Create Example Algorithm",
+            description="Implement and document a baseline example algorithm for participants to use as a reference. "
+            "Use the provided challenge pack as a starting point.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=6, seconds=0),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Create Evaluation Method",
+            description="Implement and document the evaluation method for assessing participant submissions. "
+            "Use the provided challenge pack as a starting point.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=6, seconds=1),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Configure Scoring",
+            description="Configure the leaderboard scoring to accurately interpret the evaluation results.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=6, seconds=2),
+        )
+        OnboardingTask.objects.create(
+            challenge=self,
+            title="Test Evaluation",
+            description="Run test evaluations using sample submissions to ensure the scoring system and "
+            "evaluation method function correctly before launching the challenge.",
+            responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
+            deadline=self.created + timedelta(weeks=6, seconds=3),
         )
 
     def is_admin(self, user) -> bool:
@@ -1425,11 +1539,8 @@ class TaskResponsiblePartyChoices(models.TextChoices):
 
 class OnboardingTaskQuerySet(models.QuerySet):
     def with_overdue_status(self):
-        _now = now()
-        soon_cutoff = (
-            _now + settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF
-        )
 
+        _now = now()
         return self.annotate(
             is_overdue=Case(
                 When(complete=False, deadline__lt=_now, then=Value(True)),
@@ -1440,7 +1551,8 @@ class OnboardingTaskQuerySet(models.QuerySet):
                 When(
                     complete=False,
                     is_overdue=False,
-                    deadline__lt=soon_cutoff,
+                    deadline__lt=_now
+                    + settings.CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF,
                     then=Value(True),
                 ),
                 default=Value(False),

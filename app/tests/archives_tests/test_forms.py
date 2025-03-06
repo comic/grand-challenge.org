@@ -20,6 +20,7 @@ from grandchallenge.core.utils.access_requests import (
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
 )
 from tests.archives_tests.factories import (
     ArchiveFactory,
@@ -336,13 +337,14 @@ def test_archive_item_update_triggers_algorithm_jobs(
     assert Job.objects.count() == 0
 
     alg = AlgorithmFactory()
+    interface = AlgorithmInterfaceFactory(inputs=[ci])
+    alg.interfaces.add(interface)
     AlgorithmImageFactory(
         algorithm=alg,
         is_manifest_valid=True,
         is_in_registry=True,
         is_desired_version=True,
     )
-    alg.inputs.set([ci])
     with django_capture_on_commit_callbacks(execute=True):
         archive.algorithms.add(alg)
 

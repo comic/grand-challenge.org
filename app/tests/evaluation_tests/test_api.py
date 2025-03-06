@@ -14,6 +14,7 @@ from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
 )
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -42,9 +43,9 @@ def generate_claimable_evaluation():
         2, challenge=challenge, submission_kind=SubmissionKindChoices.ALGORITHM
     )
     ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+    interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
     for phase in [p1, p2]:
-        phase.algorithm_outputs.set([ci1])
-        phase.algorithm_inputs.set([ci2])
+        phase.algorithm_interfaces.set([interface])
     p2.external_evaluation = True
     p2.parent = p1
     p2.save()
@@ -54,8 +55,7 @@ def generate_claimable_evaluation():
         is_in_registry=True,
         is_desired_version=True,
     )
-    ai.algorithm.inputs.set([ci1])
-    ai.algorithm.inputs.set([ci2])
+    ai.algorithm.interfaces.set([interface])
 
     eval = EvaluationFactory(
         submission__algorithm_image=ai,

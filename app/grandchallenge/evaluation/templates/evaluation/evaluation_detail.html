@@ -56,6 +56,13 @@
             {% include 'evaluation/evaluation_status_detail.html' %}
         </dd>
 
+        {% if object.error_message %}
+            <dt>Error Message</dt>
+            <dd>
+                {{ object.error_message }}
+            </dd>
+        {% endif %}
+
         <dt>User</dt>
         <dd>
             {{ object.submission.creator|user_profile_link }}

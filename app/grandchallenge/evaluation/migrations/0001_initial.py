@@ -441,7 +441,7 @@ class Migration(migrations.Migration):
                     "supplementary_file",
                     models.FileField(
                         blank=True,
-                        storage=grandchallenge.core.storage.PublicS3Storage(),
+                        storage=grandchallenge.core.storage.ProtectedS3Storage(),
                         upload_to=grandchallenge.evaluation.models.submission_supplementary_file_path,
                         validators=[
                             grandchallenge.core.validators.MimeTypeValidator(

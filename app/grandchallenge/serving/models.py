@@ -32,6 +32,13 @@ class Download(models.Model):
     submission = models.ForeignKey(
         Submission, null=True, on_delete=models.CASCADE, editable=False
     )
+    submission_supplementary = models.ForeignKey(
+        Submission,
+        null=True,
+        on_delete=models.CASCADE,
+        editable=False,
+        related_name="supplementary_file_downloads",
+    )
     component_interface_value = models.ForeignKey(
         ComponentInterfaceValue,
         null=True,
@@ -65,6 +72,9 @@ def get_component_interface_values_for_user(
         extra_filter_kwargs["pk"] = civ_pk
 
     civs = ComponentInterfaceValue.objects.filter(**extra_filter_kwargs)
+
+    if not civs:
+        return civs
 
     job_query = filter_by_permission(
         queryset=Job.objects.all(),

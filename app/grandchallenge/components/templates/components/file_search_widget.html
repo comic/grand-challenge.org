@@ -1,14 +1,12 @@
 {% load url %}
 {% load static %}
-{% load clean from bleach %}
 
 <div class="form-group mb-1"
      id="search-file-{{ widget.name }}"
      hx-get="{% url 'components:file-search' %}"
-     hx-trigger="load once, keyup[target.value.length > 1] delay:500ms from:#query-{{ widget.name }},
-     click[keyCode==8] delay:500ms from:#query-{{ widget.name }}"
+     hx-trigger="load once, input delay:500ms from:#query-{{ widget.name }}"
      hx-target="#selected-file-{{ widget.name }}"
-     hx-swap="outerHTML"
+     hx-swap="innerHTML"
      hx-include="[id='file-input-group-{{ widget.name }}']"
 >
     <div class="input-group" id="file-input-group-{{ widget.name }}">
@@ -17,7 +15,8 @@
                id="query-{{ widget.name }}"
                placeholder="Search by pk or file name"
         >
-        <select class="custom-select" name="file"
+        <select class="custom-select"
+                name="{{ widget.name }}"
                 id="selected-file-{{ widget.name }}">
             <option value="">No file selected</option>
         </select>
@@ -29,9 +28,3 @@
         This could be from algorithms, archives or reader studies that you have access to.
     </small>
 </div>
-
-<div id="search-{{ widget.name }}"></div>
-
-{% if widget.attrs.help_text and widget.attrs.help_text != "" %}
-    <small id="hint_{{ widget.attrs.id }}" class="form-text text-muted">{{ widget.attrs.help_text|clean }}</small>
-{% endif %}

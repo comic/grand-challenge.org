@@ -1,12 +1,10 @@
 import pytest
 from django.core.exceptions import ValidationError
-from django.utils.html import format_html
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.cases.widgets import FlexibleImageField, ImageWidgetChoices
-from grandchallenge.components.form_fields import InterfaceFormField
+from grandchallenge.cases.widgets import FlexibleImageField
+from grandchallenge.components.form_fields import InterfaceFormFieldFactory
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.core.guardian import get_objects_for_user
 from grandchallenge.uploads.models import UserUpload
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -14,21 +12,21 @@ from tests.components_tests.factories import (
 )
 from tests.factories import ImageFactory, UserFactory
 from tests.uploads_tests.factories import UserUploadFactory
-from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
 def test_flexible_image_field_validation():
     user = UserFactory()
     upload1 = UserUploadFactory(creator=user)
+    upload1.status = UserUpload.StatusChoices.COMPLETED
+    upload1.save()
     upload2 = UserUploadFactory()
+    upload2.status = UserUpload.StatusChoices.COMPLETED
+    upload2.save()
     im1, im2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", user, im1)
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
-    field = FlexibleImageField(
-        image_queryset=get_objects_for_user(user, "cases.view_image"),
-        upload_queryset=UserUpload.objects.filter(creator=user).all(),
-    )
+    field = FlexibleImageField(user=user)
     parsed_value_for_empty_data = field.widget.value_from_datadict(
         data={}, name=ci.slug, files={}
     )
@@ -113,79 +111,33 @@ def test_flexible_image_field_validation():
 
 
 @pytest.mark.django_db
-def test_flexible_image_widget(client):
-    user = UserFactory()
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
-    response = get_view_for_user(
-        viewname="cases:select-image-widget",
-        client=client,
-        user=user,
-        data={
-            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.IMAGE_SEARCH.name,
-            "interface_slug": ci.slug,
-        },
-    )
-    assert '<input class="form-control" type="search"' in str(response.content)
-
-    response2 = get_view_for_user(
-        viewname="cases:select-image-widget",
-        client=client,
-        user=user,
-        data={
-            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.IMAGE_UPLOAD.name,
-            "interface_slug": ci.slug,
-        },
-    )
-    assert 'class="user-upload"' in str(response2.content)
-
-    response3 = get_view_for_user(
-        viewname="cases:select-image-widget",
-        client=client,
-        user=user,
-        data={
-            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.UNDEFINED.name,
-            "interface_slug": ci.slug,
-        },
-    )
-    assert response3.content == b""
-
-    image = ImageFactory()
-    response4 = get_view_for_user(
-        viewname="cases:select-image-widget",
-        client=client,
-        user=user,
-        data={
-            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
-            "interface_slug": ci.slug,
-            "current_value": image.pk,
-        },
-    )
-    assert format_html(
-        '<input type="hidden" name="{}" value="{}">', ci.slug, image.pk
-    ) in str(response4.content)
-
-    user_upload = UserUploadFactory()
-    response5 = get_view_for_user(
-        viewname="cases:select-image-widget",
-        client=client,
-        user=user,
-        data={
-            f"WidgetChoice-{ci.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
-            "interface_slug": ci.slug,
-            "current_value": user_upload.pk,
-        },
-    )
-    assert format_html(
-        '<input type="hidden" name="{}" value="{}">', ci.slug, user_upload.pk
-    ) in str(response5.content)
-
-
-@pytest.mark.django_db
 def test_flexible_image_widget_prepopulated_value():
-    user = UserFactory()
+    user_with_perm, user_without_perm = UserFactory.create_batch(2)
     im = ImageFactory(name="test_image")
+    assign_perm("cases.view_image", user_with_perm, im)
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
     civ = ComponentInterfaceValueFactory(interface=ci, image=im)
-    field = InterfaceFormField(instance=ci, user=user, initial=civ)
-    assert field.field.widget.attrs["current_value"] == civ.image
-    assert field.field.initial == civ.image.pk
+
+    field = InterfaceFormFieldFactory(
+        interface=ci, user=user_with_perm, initial=civ
+    )
+    assert field.widget.attrs["current_value"] == civ.image
+    assert field.initial == civ.image.pk
+
+    field = InterfaceFormFieldFactory(
+        interface=ci, user=user_with_perm, initial=civ.image.pk
+    )
+    assert field.widget.attrs["current_value"] == civ.image
+    assert field.initial == civ.image.pk
+
+    field = InterfaceFormFieldFactory(
+        interface=ci, user=user_without_perm, initial=civ
+    )
+    assert field.widget.attrs["current_value"] is None
+    assert field.initial is None
+
+    field = InterfaceFormFieldFactory(
+        interface=ci, user=user_without_perm, initial=civ.image.pk
+    )
+    assert field.widget.attrs["current_value"] is None
+    assert field.initial is None

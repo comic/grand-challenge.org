@@ -5,6 +5,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import (
+    AccessMixin,
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
@@ -21,6 +22,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.views.generic import (
     CreateView,
+    DeleteView,
     DetailView,
     FormView,
     ListView,
@@ -46,23 +48,27 @@ from grandchallenge.algorithms.forms import (
     AlgorithmImageForm,
     AlgorithmImageUpdateForm,
     AlgorithmImportForm,
+    AlgorithmInterfaceForm,
     AlgorithmModelForm,
     AlgorithmModelUpdateForm,
     AlgorithmModelVersionControlForm,
     AlgorithmPermissionRequestUpdateForm,
     AlgorithmPublishForm,
     AlgorithmRepoForm,
-    AlgorithmUpdateForm,
     DisplaySetFromJobForm,
     ImageActivateForm,
     JobCreateForm,
     JobForm,
+    JobInterfaceSelectForm,
+    PhaseSelectForm,
     UsersForm,
     ViewersForm,
 )
 from grandchallenge.algorithms.models import (
     Algorithm,
+    AlgorithmAlgorithmInterface,
     AlgorithmImage,
+    AlgorithmInterface,
     AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
@@ -100,6 +106,31 @@ from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.verifications.views import VerificationRequiredMixin
 
 logger = logging.getLogger(__name__)
+
+
+class AlgorithmCreateRedirect(
+    LoginRequiredMixin,
+    VerificationRequiredMixin,
+    FormView,
+):
+    form_class = PhaseSelectForm
+    template_name = "algorithms/algorithm_create_redirect.html"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        phase = form.cleaned_data["phase"]
+        self.success_url = reverse(
+            "evaluation:phase-algorithm-create",
+            kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+            },
+        )
+        return super().form_valid(form=form)
 
 
 class AlgorithmCreate(
@@ -260,25 +291,9 @@ class AlgorithmUpdate(
     UpdateView,
 ):
     model = Algorithm
-    form_class = AlgorithmUpdateForm
+    form_class = AlgorithmForm
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-
-        # Only users with the add_algorithm permission can change
-        # the input and output interfaces, other users must use
-        # the interfaces pre-set by the Phase
-        kwargs.update(
-            {
-                "interfaces_editable": self.request.user.has_perm(
-                    "algorithms.add_algorithm"
-                )
-            }
-        )
-
-        return kwargs
 
 
 class AlgorithmDescriptionUpdate(
@@ -497,28 +512,84 @@ class AlgorithmImageActivate(
         return self.algorithm.get_absolute_url()
 
 
+class JobCreatePermissionMixin(
+    LoginRequiredMixin, VerificationRequiredMixin, AccessMixin
+):
+    @cached_property
+    def algorithm(self) -> Algorithm:
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.has_perm(
+            "algorithms.execute_algorithm", self.algorithm
+        ):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class JobInterfaceSelect(
+    JobCreatePermissionMixin,
+    FormView,
+):
+    form_class = JobInterfaceSelectForm
+    template_name = "algorithms/job_form_create.html"
+    selected_interface = None
+
+    def get(self, request, *args, **kwargs):
+        if self.algorithm.interfaces.count() == 1:
+            self.selected_interface = self.algorithm.interfaces.get()
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return super().get(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"algorithm": self.algorithm})
+        return kwargs
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "algorithm": self.algorithm,
+                "editors_job_limit": settings.ALGORITHM_IMAGES_COMPLIMENTARY_EDITOR_JOBS,
+            }
+        )
+        return context
+
+    def form_valid(self, form):
+        self.selected_interface = form.cleaned_data["algorithm_interface"]
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "algorithms:job-create",
+            kwargs={
+                "slug": self.algorithm.slug,
+                "interface_pk": self.selected_interface.pk,
+            },
+        )
+
+
 class JobCreate(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    VerificationRequiredMixin,
+    JobCreatePermissionMixin,
     UserFormKwargsMixin,
     FormView,
 ):
     form_class = JobCreateForm
     template_name = "algorithms/job_form_create.html"
-    permission_required = "algorithms.execute_algorithm"
-    raise_exception = True
 
     @cached_property
-    def algorithm(self) -> Algorithm:
-        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
-
-    def get_permission_object(self):
-        return self.algorithm
+    def interface(self):
+        return get_object_or_404(
+            AlgorithmInterface, pk=self.kwargs["interface_pk"]
+        )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"algorithm": self.algorithm})
+        kwargs.update(
+            {"algorithm": self.algorithm, "interface": self.interface}
+        )
         return kwargs
 
     def get_context_data(self, *args, **kwargs):
@@ -752,7 +823,7 @@ class DisplaySetFromJobCreate(
 
 
 class AlgorithmViewSet(ReadOnlyModelViewSet):
-    queryset = Algorithm.objects.all().prefetch_related("outputs", "inputs")
+    queryset = Algorithm.objects.all().prefetch_related("interfaces")
     serializer_class = AlgorithmSerializer
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
@@ -1087,8 +1158,7 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
     queryset = Algorithm.objects.prefetch_related(
-        "inputs",
-        "outputs",
+        "interfaces",
     )
 
     def get(self, *_, **__):
@@ -1114,3 +1184,106 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
                 filename=f"{algorithm.slug}-template.zip",
                 content_type="application/zip",
             )
+
+
+class AlgorithmInterfacePermissionMixin(AccessMixin):
+    @property
+    def algorithm(self):
+        return get_object_or_404(Algorithm, slug=self.kwargs["slug"])
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.has_perm(
+            "change_algorithm", self.algorithm
+        ) and request.user.has_perm("algorithms.add_algorithm"):
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return self.handle_no_permission()
+
+
+class AlgorithmInterfaceCreateBase(CreateView):
+    model = AlgorithmInterface
+    form_class = AlgorithmInterfaceForm
+    success_message = "Algorithm interface successfully added"
+
+    def get_success_url(self):
+        return NotImplementedError
+
+    @property
+    def base_obj(self):
+        return NotImplementedError
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update({"base_obj": self.base_obj})
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"base_obj": self.base_obj})
+        return kwargs
+
+
+class AlgorithmInterfaceForAlgorithmCreate(
+    AlgorithmInterfacePermissionMixin, AlgorithmInterfaceCreateBase
+):
+    @property
+    def base_obj(self):
+        return self.algorithm
+
+    def get_success_url(self):
+        return reverse(
+            "algorithms:interface-list",
+            kwargs={"slug": self.algorithm.slug},
+        )
+
+
+class AlgorithmInterfacesForAlgorithmList(
+    AlgorithmInterfacePermissionMixin, ListView
+):
+    model = AlgorithmAlgorithmInterface
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(algorithm=self.algorithm)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "algorithm": self.algorithm,
+                "interfaces": [obj.interface for obj in self.object_list],
+            }
+        )
+        return context
+
+
+class AlgorithmInterfaceForAlgorithmDelete(
+    AlgorithmInterfacePermissionMixin, DeleteView
+):
+    model = AlgorithmAlgorithmInterface
+
+    @property
+    def algorithm_interface(self):
+        return get_object_or_404(
+            klass=AlgorithmAlgorithmInterface,
+            algorithm=self.algorithm,
+            interface__pk=self.kwargs["interface_pk"],
+        )
+
+    def get_object(self, queryset=None):
+        return self.algorithm_interface
+
+    def get_success_url(self):
+        return reverse(
+            "algorithms:interface-list",
+            kwargs={"slug": self.algorithm.slug},
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "algorithm": self.algorithm,
+            }
+        )
+        return context

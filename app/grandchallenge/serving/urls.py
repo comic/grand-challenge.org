@@ -8,6 +8,7 @@ from grandchallenge.serving.views import (
     serve_images,
     serve_session_feedback_screenshot,
     serve_structured_challenge_submission_form,
+    serve_submission_supplementary_file,
     serve_submissions,
 )
 
@@ -45,6 +46,15 @@ urlpatterns = [
             f"<path:path>"
         ),
         serve_submissions,
+    ),
+    path(
+        (
+            f"{settings.EVALUATION_SUPPLEMENTARY_FILES_SUBDIRECTORY}/"
+            f"<int:challenge_pk>/"
+            f"<uuid:submission_pk>/"
+            f"<path:path>"
+        ),
+        serve_submission_supplementary_file,
     ),
     path(
         (

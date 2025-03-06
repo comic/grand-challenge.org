@@ -18,16 +18,18 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from django.utils.timezone import localtime
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
+    AlgorithmInterface,
     AlgorithmModel,
     Job,
 )
-from grandchallenge.archives.models import Archive, ArchiveItem
+from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.models import (
     ComponentImage,
@@ -49,7 +51,6 @@ from grandchallenge.core.models import (
 from grandchallenge.core.storage import (
     private_s3_storage,
     protected_s3_storage,
-    public_s3_storage,
 )
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import (
@@ -137,6 +138,79 @@ EXTRA_RESULT_COLUMNS_SCHEMA = {
         },
     },
 }
+
+
+def get_archive_items_for_interfaces(*, algorithm_interfaces, archive_items):
+    valid_archive_items_per_interface = {}
+    for interface in algorithm_interfaces:
+        inputs = interface.inputs.all()
+        valid_archive_items_per_interface[interface] = (
+            archive_items.annotate(
+                input_count=Count("values", distinct=True),
+                relevant_input_count=Count(
+                    "values",
+                    filter=Q(values__interface__in=inputs),
+                    distinct=True,
+                ),
+            )
+            .filter(input_count=len(inputs), relevant_input_count=len(inputs))
+            .prefetch_related("values")
+        )
+    return valid_archive_items_per_interface
+
+
+def get_valid_jobs_for_interfaces_and_archive_items(
+    *,
+    algorithm_image,
+    algorithm_interfaces,
+    valid_archive_items_per_interface,
+    algorithm_model=None,
+    successful_jobs_only=False,
+):
+    if algorithm_model:
+        extra_filter = {"algorithm_model": algorithm_model}
+    else:
+        extra_filter = {"algorithm_model__isnull": True}
+
+    if successful_jobs_only:
+        extra_filter["status"] = Job.SUCCESS
+
+    jobs = Job.objects.filter(
+        algorithm_image=algorithm_image,
+        creator=None,
+        **extra_filter,
+    )
+
+    jobs_per_interface = {}
+    for interface in algorithm_interfaces:
+        jobs_per_interface[interface] = []
+        jobs_for_interface = (
+            jobs.filter(
+                algorithm_interface=interface,
+                inputs__archive_items__in=valid_archive_items_per_interface[
+                    interface
+                ],
+            )
+            .distinct()
+            .prefetch_related("inputs")
+            .select_related("algorithm_image__algorithm")
+        )
+
+        archive_item_value_sets = {
+            frozenset(value.pk for value in item.values.all())
+            for item in valid_archive_items_per_interface[interface]
+        }
+
+        for job in jobs_for_interface:
+            # subset to jobs whose input set exactly matches
+            # one of the valid archive items' value sets
+            if (
+                frozenset(inpt.pk for inpt in job.inputs.all())
+                in archive_item_value_sets
+            ):
+                jobs_per_interface[interface].append(job)
+
+    return jobs_per_interface
 
 
 class PhaseManager(models.Manager):
@@ -460,24 +534,36 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "metrics.json over the API."
         ),
     )
-
+    algorithm_interfaces = models.ManyToManyField(
+        to=AlgorithmInterface,
+        through="evaluation.PhaseAlgorithmInterface",
+        blank=True,
+        help_text="The interfaces that an algorithm for this phase must implement.",
+    )
     inputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="evaluation_inputs"
+        to=ComponentInterface,
+        related_name="evaluation_inputs",
+        blank=True,
     )
     outputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="evaluation_outputs"
-    )
-    algorithm_inputs = models.ManyToManyField(
         to=ComponentInterface,
-        related_name="+",
-        blank=True,
-        help_text="The input interfaces that the algorithms for this phase must use",
+        related_name="evaluation_outputs",
     )
-    algorithm_outputs = models.ManyToManyField(
-        to=ComponentInterface,
-        related_name="+",
-        blank=True,
-        help_text="The output interfaces that the algorithms for this phase must use",
+    algorithm_inputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface,
+            related_name="+",
+            blank=True,
+            help_text="The input interfaces that the algorithms for this phase must use",
+        )
+    )
+    algorithm_outputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface,
+            related_name="+",
+            blank=True,
+            help_text="The output interfaces that the algorithms for this phase must use",
+        )
     )
     algorithm_selectable_gpu_type_choices = models.JSONField(
         default=get_default_gpu_type_choices,
@@ -719,15 +805,11 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             if (
                 self.submissions_limit_per_user_per_period > 0
                 and not self.external_evaluation
-                and (
-                    not self.archive
-                    or not self.algorithm_inputs
-                    or not self.algorithm_outputs
-                )
+                and (not self.archive or not self.algorithm_interfaces)
             ):
                 raise ValidationError(
                     "To change the submission limit to above 0, you need to first link an archive containing the secret "
-                    "test data to this phase and define the inputs and outputs that the submitted algorithms need to "
+                    "test data to this phase and define the interfaces (input-output combinations) that the submitted algorithms need to "
                     "read/write. To configure these settings, please get in touch with support@grand-challenge.org."
                 )
         if (
@@ -843,7 +925,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     def read_only_fields_for_dependent_phases(self):
         common_fields = ["submission_kind"]
         if self.submission_kind == SubmissionKindChoices.ALGORITHM:
-            common_fields += ["algorithm_inputs", "algorithm_outputs"]
+            common_fields += ["algorithm_interfaces"]
         return common_fields
 
     def _clean_parent_phase(self):
@@ -858,7 +940,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                     f"the current phase's children set as its parent."
                 )
 
-            if self.parent.count_valid_archive_items < 1:
+            if self.parent.jobs_to_schedule_per_submission < 1:
                 raise ValidationError(
                     "The parent phase needs to have at least 1 valid archive item."
                 )
@@ -871,18 +953,20 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 raise ValidationError(SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT)
 
     def set_default_interfaces(self):
-        self.inputs.set(
-            [ComponentInterface.objects.get(slug="predictions-csv-file")]
-        )
         self.outputs.set(
             [ComponentInterface.objects.get(slug="metrics-json-file")]
         )
 
     @cached_property
     def linked_component_interfaces(self):
-        return (
-            self.algorithm_inputs.all() | self.algorithm_outputs.all()
-        ).distinct()
+        return {
+            ci
+            for interface in self.algorithm_interfaces.all()
+            for ci in (
+                interface.inputs.order_by("pk")
+                | interface.outputs.order_by("pk")
+            )
+        }
 
     def assign_permissions(self):
         assign_perm("view_phase", self.challenge.admins_group, self)
@@ -1092,23 +1176,33 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         ).exists()
 
     @cached_property
-    def valid_archive_items(self):
-        """Returns the archive items that are valid for this phase"""
-        if self.archive and self.algorithm_inputs:
-            return self.archive.items.annotate(
-                interface_match_count=Count(
-                    "values",
-                    filter=Q(
-                        values__interface__in={*self.algorithm_inputs.all()}
-                    ),
-                )
-            ).filter(interface_match_count=len(self.algorithm_inputs.all()))
+    def valid_archive_items_per_interface(self):
+        """
+        Returns the archive items that are valid for
+        each interface configured for this phase
+        """
+        if self.archive and self.algorithm_interfaces:
+            return get_archive_items_for_interfaces(
+                algorithm_interfaces=self.algorithm_interfaces.prefetch_related(
+                    "inputs"
+                ),
+                archive_items=self.archive.items.prefetch_related(
+                    "values__interface"
+                ),
+            )
         else:
-            return ArchiveItem.objects.none()
+            return {}
 
     @cached_property
-    def count_valid_archive_items(self):
-        return self.valid_archive_items.count()
+    def valid_archive_item_count_per_interface(self):
+        return {
+            interface: len(valid_archive_items)
+            for interface, valid_archive_items in self.valid_archive_items_per_interface.items()
+        }
+
+    @cached_property
+    def jobs_to_schedule_per_submission(self):
+        return sum(self.valid_archive_item_count_per_interface.values())
 
     def send_give_algorithm_editors_job_view_permissions_changed_email(self):
         message = format_html(
@@ -1159,29 +1253,20 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         extra_filters = {}
         extra_annotations = {}
         if self.submission_kind == SubmissionKindChoices.ALGORITHM:
-            algorithm_inputs = self.algorithm_inputs.all()
-            algorithm_outputs = self.algorithm_outputs.all()
+            algorithm_interfaces = self.algorithm_interfaces.all()
             extra_annotations = {
-                "total_input_count": Count("algorithm_inputs", distinct=True),
-                "total_output_count": Count(
-                    "algorithm_outputs", distinct=True
+                "total_interface_count": Count(
+                    "algorithm_interfaces", distinct=True
                 ),
-                "relevant_input_count": Count(
-                    "algorithm_inputs",
-                    filter=Q(algorithm_inputs__in=algorithm_inputs),
-                    distinct=True,
-                ),
-                "relevant_output_count": Count(
-                    "algorithm_outputs",
-                    filter=Q(algorithm_outputs__in=algorithm_outputs),
+                "relevant_interface_count": Count(
+                    "algorithm_interfaces",
+                    filter=Q(algorithm_interfaces__in=algorithm_interfaces),
                     distinct=True,
                 ),
             }
             extra_filters = {
-                "total_input_count": len(algorithm_inputs),
-                "total_output_count": len(algorithm_outputs),
-                "relevant_input_count": len(algorithm_inputs),
-                "relevant_output_count": len(algorithm_outputs),
+                "total_interface_count": len(algorithm_interfaces),
+                "relevant_interface_count": len(algorithm_interfaces),
             }
         return (
             Phase.objects.annotate(**extra_annotations)
@@ -1198,6 +1283,32 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             )
         )
 
+    @property
+    def algorithm_interface_manager(self):
+        return self.algorithm_interfaces
+
+    @property
+    def algorithm_interface_through_model_manager(self):
+        return PhaseAlgorithmInterface.objects.filter(phase=self)
+
+    @property
+    def algorithm_interface_create_url(self):
+        return reverse(
+            "evaluation:interface-create",
+            kwargs={"challenge_short_name": self.challenge, "slug": self.slug},
+        )
+
+    @property
+    def algorithm_interface_delete_viewname(self):
+        return "evaluation:interface-delete"
+
+    @property
+    def algorithm_interface_list_url(self):
+        return reverse(
+            "evaluation:interface-list",
+            kwargs={"challenge_short_name": self.challenge, "slug": self.slug},
+        )
+
 
 class PhaseUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Phase, on_delete=models.CASCADE)
@@ -1205,6 +1316,19 @@ class PhaseUserObjectPermission(UserObjectPermissionBase):
 
 class PhaseGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Phase, on_delete=models.CASCADE)
+
+
+class PhaseAlgorithmInterface(models.Model):
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
+    interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["phase", "interface"],
+                name="unique_phase_interface_combination",
+            ),
+        ]
 
 
 class Method(UUIDModel, ComponentImage):
@@ -1270,8 +1394,9 @@ def submission_file_path(instance, filename):
 
 
 def submission_supplementary_file_path(instance, filename):
+    # Must match the protected serving url
     return (
-        f"evaluation-supplementary/"
+        f"{settings.EVALUATION_SUPPLEMENTARY_FILES_SUBDIRECTORY}/"
         f"{instance.phase.challenge.pk}/"
         f"{instance.pk}/"
         f"{get_valid_filename(filename)}"
@@ -1328,7 +1453,7 @@ class Submission(FieldChangeMixin, UUIDModel):
     )
     supplementary_file = models.FileField(
         upload_to=submission_supplementary_file_path,
-        storage=public_s3_storage,
+        storage=protected_s3_storage,
         validators=[
             MimeTypeValidator(allowed_types=("text/plain", "application/pdf"))
         ],
@@ -1622,63 +1747,50 @@ class Evaluation(ComponentJob):
         return self.submission.phase.outputs
 
     @cached_property
-    def algorithm_inputs(self):
-        return self.submission.phase.algorithm_inputs.all()
+    def successful_jobs_per_interface(self):
+        algorithm_interfaces = (
+            self.submission.phase.algorithm_interfaces.prefetch_related(
+                "inputs"
+            )
+        )
+
+        successful_jobs_per_interface = get_valid_jobs_for_interfaces_and_archive_items(
+            successful_jobs_only=True,
+            algorithm_image=self.submission.algorithm_image,
+            algorithm_model=self.submission.algorithm_model,
+            algorithm_interfaces=algorithm_interfaces,
+            valid_archive_items_per_interface=self.submission.phase.valid_archive_items_per_interface,
+        )
+
+        return successful_jobs_per_interface
 
     @cached_property
-    def valid_archive_item_values(self):
+    def successful_job_count_per_interface(self):
         return {
-            i.values.all()
-            for i in self.submission.phase.archive.items.annotate(
-                interface_match_count=Count(
-                    "values",
-                    filter=Q(values__interface__in=self.algorithm_inputs),
-                )
-            )
-            .filter(interface_match_count=len(self.algorithm_inputs))
-            .prefetch_related("values")
+            interface: len(successful_jobs)
+            for interface, successful_jobs in self.successful_jobs_per_interface.items()
         }
 
     @cached_property
-    def successful_jobs(self):
-        if self.submission.algorithm_model:
-            extra_filter = {"algorithm_model": self.submission.algorithm_model}
-        else:
-            extra_filter = {"algorithm_model__isnull": True}
+    def total_successful_jobs(self):
+        return sum(self.successful_job_count_per_interface.values())
 
-        successful_jobs = (
-            Job.objects.filter(
-                algorithm_image=self.submission.algorithm_image,
-                status=Job.SUCCESS,
-                **extra_filter,
-            )
-            .annotate(
-                inputs_match_count=Count(
-                    "inputs",
-                    filter=Q(
-                        inputs__in={
-                            civ
-                            for civ_set in self.valid_archive_item_values
-                            for civ in civ_set
-                        }
-                    ),
-                ),
-            )
-            .filter(
-                inputs_match_count=self.algorithm_inputs.count(),
-                creator=None,
-            )
-            .distinct()
-            .prefetch_related("outputs__interface", "inputs__interface")
-            .select_related("algorithm_image__algorithm")
+    @cached_property
+    def successful_jobs(self):
+        return Job.objects.filter(
+            pk__in=[
+                j.pk
+                for sublist in self.successful_jobs_per_interface.values()
+                for j in sublist
+            ]
         )
-        return successful_jobs
 
     @cached_property
     def inputs_complete(self):
         if self.submission.algorithm_image:
-            return self.successful_jobs.count() == len(
-                self.valid_archive_item_values
+            return (
+                self.total_successful_jobs
+                == self.submission.phase.jobs_to_schedule_per_submission
             )
         elif self.submission.predictions_file:
             return True

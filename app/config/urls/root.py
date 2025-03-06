@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.decorators import login_required
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
-from django.views.generic import RedirectView, TemplateView
+from django.views.generic import RedirectView
 from machina import urls as machina_urls
 
 from grandchallenge.algorithms.sitemaps import AlgorithmsSitemap
@@ -41,17 +41,14 @@ sitemaps = {
 }
 
 urlpatterns = [
+    path(
+        "", include("grandchallenge.well_known.urls", namespace="well-known")
+    ),
     path("", HomeTemplate.as_view(), name="home"),
     path(
         "challenge-suspended/",
         ChallengeSuspendedView.as_view(),
         name="challenge-suspended",
-    ),
-    path(
-        "robots.txt",
-        TemplateView.as_view(
-            template_name="robots.txt", content_type="text/plain"
-        ),
     ),
     path(
         "sitemap.xml",

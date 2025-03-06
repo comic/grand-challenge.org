@@ -36,16 +36,21 @@ from django.forms import (
     TextInput,
     URLField,
 )
-from django.forms.widgets import MultipleHiddenInput, PasswordInput
+from django.forms.widgets import (
+    MultipleHiddenInput,
+    PasswordInput,
+    RadioSelect,
+)
 from django.urls import Resolver404, resolve
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import format_lazy
-from django_select2.forms import Select2MultipleWidget
+from django_select2.forms import Select2MultipleWidget, Select2Widget
 
 from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
+    AlgorithmInterface,
     AlgorithmModel,
     AlgorithmPermissionRequest,
     Job,
@@ -57,7 +62,7 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.algorithms.tasks import import_remote_algorithm_image
 from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
-    InterfaceFormField,
+    InterfaceFormFieldFactory,
 )
 from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
@@ -78,13 +83,16 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
-from grandchallenge.core.guardian import get_objects_for_user
-from grandchallenge.core.templatetags.bleach import clean
+from grandchallenge.core.guardian import (
+    filter_by_permission,
+    get_objects_for_user,
+)
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
 )
+from grandchallenge.evaluation.models import Phase
 from grandchallenge.evaluation.utils import SubmissionKindChoices, get
 from grandchallenge.groups.forms import UserGroupForm
 from grandchallenge.hanging_protocols.forms import ViewContentExampleMixin
@@ -113,9 +121,17 @@ class JobCreateForm(SaveFormInitMixin, Form):
     creator = ModelChoiceField(
         queryset=None, disabled=True, required=False, widget=HiddenInput
     )
+    algorithm_interface = ModelChoiceField(
+        queryset=None,
+        disabled=True,
+        required=True,
+        widget=HiddenInput,
+    )
 
-    def __init__(self, *args, algorithm, user, **kwargs):
+    def __init__(self, *args, algorithm, user, interface, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self._algorithm = algorithm
 
         self.helper = FormHelper()
 
@@ -125,7 +141,11 @@ class JobCreateForm(SaveFormInitMixin, Form):
         )
         self.fields["creator"].initial = self._user
 
-        self._algorithm = algorithm
+        self.fields["algorithm_interface"].queryset = (
+            self._algorithm.interfaces.all()
+        )
+        self.fields["algorithm_interface"].initial = interface
+
         self._algorithm_image = self._algorithm.active_image
 
         active_model = self._algorithm.active_model
@@ -142,15 +162,15 @@ class JobCreateForm(SaveFormInitMixin, Form):
             )
             self.fields["algorithm_model"].initial = active_model
 
-        for inp in self._algorithm.inputs.all():
+        for algorithm_input in interface.inputs.all():
             prefixed_interface_slug = (
-                f"{INTERFACE_FORM_FIELD_PREFIX}{inp.slug}"
+                f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_input.slug}"
             )
 
             if prefixed_interface_slug in self.data:
                 if (
-                    not inp.requires_file
-                    and inp.kind == ComponentInterface.Kind.ANY
+                    not algorithm_input.requires_file
+                    and algorithm_input.kind == ComponentInterface.Kind.ANY
                 ):
                     # interfaces for which the data can be a list need
                     # to be retrieved with getlist() from the QueryDict
@@ -160,14 +180,12 @@ class JobCreateForm(SaveFormInitMixin, Form):
             else:
                 initial = None
 
-            self.fields[prefixed_interface_slug] = InterfaceFormField(
-                instance=inp,
-                initial=initial if initial else inp.default_value,
+            self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
+                interface=algorithm_input,
                 user=self._user,
-                required=True,
-                help_text=clean(inp.description) if inp.description else "",
-                form_data=self.data,
-            ).field
+                required=algorithm_input.value_required,
+                initial=initial if initial else algorithm_input.default_value,
+            )
 
     @cached_property
     def jobs_limit(self):
@@ -229,61 +247,55 @@ NON_ALGORITHM_INTERFACES = [
 ]
 
 
-class AlgorithmIOValidationMixin:
-    def clean(self):
-        cleaned_data = super().clean()
+class PhaseSelectForm(Form):
+    phase = ModelChoiceField(
+        label="Please select the phase for which you are creating an algorithm",
+        queryset=Phase.objects.none(),
+        required=True,
+        widget=Select2Widget,
+    )
 
-        duplicate_interfaces = {*cleaned_data.get("inputs", [])}.intersection(
-            {*cleaned_data.get("outputs", [])}
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._user = user
+
+        self.fields["phase"].queryset = filter_by_permission(
+            queryset=Phase.objects.filter(
+                submission_kind=SubmissionKindChoices.ALGORITHM
+            ).order_by("challenge", "title"),
+            codename="create_phase_submission",
+            user=self._user,
         )
 
-        if duplicate_interfaces:
+        self.helper = FormHelper(self)
+        self.helper.layout.append(
+            Submit("save", "Create an Algorithm for this Phase")
+        )
+
+    def clean_phase(self):
+        phase = self.cleaned_data["phase"]
+
+        # The determination for if a user can create an algorithm for a phase
+        # is quite complex, so just do a basic check here, the redirected
+        # view will do the actual check
+        if (
+            not phase.challenge.is_admin(self._user)
+            and not phase.open_for_submissions
+        ):
             raise ValidationError(
-                f"The sets of Inputs and Outputs must be unique: "
-                f"{oxford_comma(duplicate_interfaces)} present in both"
+                "This phase is not currently open for submissions, please try again later."
             )
 
-        return cleaned_data
+        return phase
 
 
 class AlgorithmForm(
-    AlgorithmIOValidationMixin,
     WorkstationUserFilterMixin,
     SaveFormInitMixin,
     ViewContentExampleMixin,
     ModelForm,
 ):
-    inputs = ModelMultipleChoiceField(
-        queryset=ComponentInterface.objects.exclude(
-            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
-        ),
-        widget=Select2MultipleWidget,
-        help_text=format_lazy(
-            (
-                "The inputs to this algorithm. "
-                'See the <a href="{}">list of interfaces</a> for more '
-                "information about each interface. "
-                "Please contact support if your desired input is missing."
-            ),
-            reverse_lazy("components:component-interface-list-algorithms"),
-        ),
-    )
-    outputs = ModelMultipleChoiceField(
-        queryset=ComponentInterface.objects.exclude(
-            slug__in=NON_ALGORITHM_INTERFACES
-        ),
-        widget=Select2MultipleWidget,
-        help_text=format_lazy(
-            (
-                "The outputs to this algorithm. "
-                'See the <a href="{}">list of interfaces</a> for more '
-                "information about each interface. "
-                "Please contact support if your desired output is missing."
-            ),
-            reverse_lazy("components:component-interface-list-algorithms"),
-        ),
-    )
-
     class Meta:
         model = Algorithm
         fields = (
@@ -303,20 +315,16 @@ class AlgorithmForm(
             "hanging_protocol",
             "optional_hanging_protocols",
             "view_content",
-            "inputs",
-            "outputs",
             "minimum_credits_per_job",
             "job_requires_gpu_type",
             "job_requires_memory_gb",
             "additional_terms_markdown",
             "job_create_page_markdown",
-            "result_template",
         )
         widgets = {
             "description": TextInput,
             "job_create_page_markdown": MarkdownEditorInlineWidget,
             "additional_terms_markdown": MarkdownEditorInlineWidget,
-            "result_template": MarkdownEditorInlineWidget,
             "publications": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
@@ -393,33 +401,22 @@ class AlgorithmForm(
         qs = get_objects_for_user(
             self._user, "evaluation.create_phase_submission"
         )
-        inputs = self.instance.inputs.all()
-        outputs = self.instance.outputs.all()
+        interfaces = self.instance.interfaces.all()
         return (
             qs.annotate(
-                total_algorithm_input_count=Count(
-                    "algorithm_inputs", distinct=True
+                total_algorithm_interface_count=Count(
+                    "algorithm_interfaces", distinct=True
                 ),
-                total_algorithm_output_count=Count(
-                    "algorithm_outputs", distinct=True
-                ),
-                relevant_algorithm_input_count=Count(
-                    "algorithm_inputs",
-                    filter=Q(algorithm_inputs__in=inputs),
-                    distinct=True,
-                ),
-                relevant_algorithm_output_count=Count(
-                    "algorithm_outputs",
-                    filter=Q(algorithm_outputs__in=outputs),
+                relevant_algorithm_interface_count=Count(
+                    "algorithm_interfaces",
+                    filter=Q(algorithm_interfaces__in=interfaces),
                     distinct=True,
                 ),
             )
             .filter(
                 submission_kind=SubmissionKindChoices.ALGORITHM,
-                total_algorithm_input_count=len(inputs),
-                total_algorithm_output_count=len(outputs),
-                relevant_algorithm_input_count=len(inputs),
-                relevant_algorithm_output_count=len(outputs),
+                total_algorithm_interface_count=len(interfaces),
+                relevant_algorithm_interface_count=len(interfaces),
             )
             .aggregate(
                 max_memory=Max("algorithm_maximum_settable_memory_gb"),
@@ -482,32 +479,31 @@ class UserAlgorithmsForPhaseMixin:
         self._user = user
         self._phase = phase
 
-    def get_phase_algorithm_inputs_outputs(self):
-        return (
-            self._phase.algorithm_inputs.all(),
-            self._phase.algorithm_outputs.all(),
-        )
-
     @cached_property
     def user_algorithms_for_phase(self):
-        inputs, outputs = self.get_phase_algorithm_inputs_outputs()
+        interfaces = self._phase.algorithm_interfaces.all()
         desired_image_subquery = AlgorithmImage.objects.filter(
             algorithm=OuterRef("pk"), is_desired_version=True
         )
         desired_model_subquery = AlgorithmModel.objects.filter(
             algorithm=OuterRef("pk"), is_desired_version=True
         )
+
         return (
             get_objects_for_user(self._user, "algorithms.change_algorithm")
             .annotate(
-                total_input_count=Count("inputs", distinct=True),
-                total_output_count=Count("outputs", distinct=True),
-                relevant_input_count=Count(
-                    "inputs", filter=Q(inputs__in=inputs), distinct=True
+                interface_count=Count("interfaces", distinct=True),
+                relevant_interfaces_count=Count(
+                    "interfaces",
+                    filter=Q(interfaces__in=interfaces),
+                    distinct=True,
                 ),
-                relevant_output_count=Count(
-                    "outputs", filter=Q(outputs__in=outputs), distinct=True
-                ),
+            )
+            .filter(
+                interface_count=len(interfaces),
+                relevant_interfaces_count=len(interfaces),
+            )
+            .annotate(
                 has_active_image=Exists(desired_image_subquery),
                 active_image_pk=desired_image_subquery.values_list(
                     "pk", flat=True
@@ -521,12 +517,6 @@ class UserAlgorithmsForPhaseMixin:
                 active_model_comment=desired_model_subquery.values_list(
                     "comment", flat=True
                 ),
-            )
-            .filter(
-                total_input_count=len(inputs),
-                total_output_count=len(outputs),
-                relevant_input_count=len(inputs),
-                relevant_output_count=len(outputs),
             )
         )
 
@@ -545,8 +535,7 @@ class AlgorithmForPhaseForm(
             "description",
             "modalities",
             "structures",
-            "inputs",
-            "outputs",
+            "interfaces",
             "workstation",
             "workstation_config",
             "hanging_protocol",
@@ -568,8 +557,7 @@ class AlgorithmForPhaseForm(
             "display_editors": HiddenInput(),
             "contact_email": HiddenInput(),
             "workstation": HiddenInput(),
-            "inputs": MultipleHiddenInput(),
-            "outputs": MultipleHiddenInput(),
+            "interfaces": MultipleHiddenInput(),
             "modalities": MultipleHiddenInput(),
             "structures": MultipleHiddenInput(),
             "logo": HiddenInput(),
@@ -592,8 +580,7 @@ class AlgorithmForPhaseForm(
         display_editors,
         contact_email,
         workstation,
-        inputs,
-        outputs,
+        interfaces,
         structures,
         modalities,
         logo,
@@ -624,10 +611,8 @@ class AlgorithmForPhaseForm(
             )
         )
         self.fields["workstation"].disabled = True
-        self.fields["inputs"].initial = inputs
-        self.fields["inputs"].disabled = True
-        self.fields["outputs"].initial = outputs
-        self.fields["outputs"].disabled = True
+        self.fields["interfaces"].initial = interfaces
+        self.fields["interfaces"].disabled = True
         self.fields["modalities"].initial = modalities
         self.fields["modalities"].disabled = True
         self.fields["structures"].initial = structures
@@ -723,15 +708,6 @@ class AlgorithmDescriptionForm(ModelForm):
             ),
             ButtonHolder(Submit("save", "Save")),
         )
-
-
-class AlgorithmUpdateForm(AlgorithmForm):
-    def __init__(self, *args, interfaces_editable, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if not interfaces_editable:
-            for field_key in ("inputs", "outputs"):
-                self.fields.pop(field_key)
 
 
 class AlgorithmImageForm(ContainerImageForm):
@@ -1021,7 +997,8 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         self.algorithm_serializer = None
         self.algorithm_image_serializer = None
         self.algorithm = None
-        self.new_interfaces = None
+        self.algorithm_interfaces = []
+        self.new_component_interfaces = []
 
     @property
     def remote_instance_client(self):
@@ -1127,27 +1104,16 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
         self.algorithm_image_serializer = algorithm_image_serializer
 
     def _build_interfaces(self):
-        remote_interfaces = {
-            interface["slug"]: interface
-            for interface in chain(
-                self.algorithm_serializer.initial_data["inputs"],
-                self.algorithm_serializer.initial_data["outputs"],
+        for remote_interface in self.algorithm_serializer.initial_data[
+            "interfaces"
+        ]:
+            self._validate_interface_inputs_and_outputs(
+                remote_interface=remote_interface
             )
-        }
 
-        self.new_interfaces = []
-        for slug, remote_interface in remote_interfaces.items():
-            try:
-                self._validate_existing_interface(
-                    slug=slug, remote_interface=remote_interface
-                )
-            except ObjectDoesNotExist:
-                # The remote interface does not exist locally, create it
-                self._create_new_interface(
-                    slug=slug, remote_interface=remote_interface
-                )
-
-    def _validate_existing_interface(self, *, remote_interface, slug):
+    def _validate_existing_component_interface(
+        self, *, remote_component_interface, slug
+    ):
         serialized_local_interface = ComponentInterfaceSerializer(
             instance=ComponentInterface.objects.get(slug=slug)
         )
@@ -1156,27 +1122,72 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
             # Check all the values match, some are allowed to differ
             if (
                 key not in {"pk", "description"}
-                and value != remote_interface[key]
+                and value != remote_component_interface[key]
             ):
                 raise ValidationError(
                     f"Interface {key} does not match for `{slug}`"
                 )
 
-    def _create_new_interface(self, *, remote_interface, slug):
-        new_interface = ComponentInterfaceSerializer(data=remote_interface)
+    def _create_new_component_interface(
+        self, *, remote_component_interface, slug
+    ):
+        new_interface = ComponentInterfaceSerializer(
+            data=remote_component_interface
+        )
 
         if not new_interface.is_valid():
             raise ValidationError(f"New interface {slug!r} is invalid")
 
-        self.new_interfaces.append(new_interface)
+        self.new_component_interfaces.append(new_interface)
+
+    def _validate_interface_inputs_and_outputs(self, *, remote_interface):
+        for input in remote_interface["inputs"]:
+            try:
+                self._validate_existing_component_interface(
+                    remote_component_interface=input, slug=input["slug"]
+                )
+            except ObjectDoesNotExist:
+                self._create_new_component_interface(
+                    remote_component_interface=input, slug=input["slug"]
+                )
+
+        for output in remote_interface["outputs"]:
+            try:
+                self._validate_existing_component_interface(
+                    remote_component_interface=output, slug=output["slug"]
+                )
+            except ObjectDoesNotExist:
+                self._create_new_component_interface(
+                    remote_component_interface=output, slug=output["slug"]
+                )
 
     def save(self):
+        # first save new ComponentInterfaces
+        self._save_new_component_interfaces()
+        # then get or create algorithm interfaces
         self._save_new_interfaces()
         self._save_new_algorithm()
         self._save_new_algorithm_image()
 
     def _save_new_interfaces(self):
-        for interface in self.new_interfaces:
+        for interface in self.algorithm_serializer.initial_data["interfaces"]:
+            inputs = [
+                ComponentInterface.objects.get(slug=input["slug"])
+                for input in interface["inputs"]
+            ]
+            outputs = [
+                ComponentInterface.objects.get(slug=output["slug"])
+                for output in interface["outputs"]
+            ]
+            # either get or create an AlgorithmInterface
+            # with the given inputs / outputs using the custom model manager
+            interface = AlgorithmInterface.objects.create(
+                inputs=inputs, outputs=outputs
+            )
+            self.algorithm_interfaces.append(interface)
+
+    def _save_new_component_interfaces(self):
+        for interface in self.new_component_interfaces:
             interface.save(
                 # The interface kind is a read only display value, this could
                 # be better solved with a custom DRF Field but deadlines...
@@ -1209,26 +1220,7 @@ class AlgorithmImportForm(SaveFormInitMixin, Form):
 
         self.algorithm.add_editor(user=self.user)
 
-        self.algorithm.inputs.set(
-            ComponentInterface.objects.filter(
-                slug__in={
-                    interface["slug"]
-                    for interface in self.algorithm_serializer.initial_data[
-                        "inputs"
-                    ]
-                }
-            )
-        )
-        self.algorithm.outputs.set(
-            ComponentInterface.objects.filter(
-                slug__in={
-                    interface["slug"]
-                    for interface in self.algorithm_serializer.initial_data[
-                        "outputs"
-                    ]
-                }
-            )
-        )
+        self.algorithm.interfaces.set(self.algorithm_interfaces)
 
         if logo_url := self.algorithm_serializer.initial_data["logo"]:
             response = requests.get(
@@ -1376,6 +1368,7 @@ class AlgorithmModelVersionControlForm(Form):
         )
 
         if hide_algorithm_model_input:
+
             self.fields["algorithm_model"].widget = HiddenInput()
         self.helper = FormHelper(self)
         if activate:
@@ -1404,3 +1397,124 @@ class AlgorithmModelVersionControlForm(Form):
             raise ValidationError("Model updating already in progress.")
 
         return algorithm_model
+
+
+class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
+    inputs = ModelMultipleChoiceField(
+        queryset=ComponentInterface.objects.exclude(
+            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
+        ),
+        widget=Select2MultipleWidget,
+    )
+    outputs = ModelMultipleChoiceField(
+        queryset=ComponentInterface.objects.exclude(
+            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
+        ),
+        widget=Select2MultipleWidget,
+    )
+
+    class Meta:
+        model = AlgorithmInterface
+        fields = (
+            "inputs",
+            "outputs",
+        )
+
+    def __init__(self, *args, base_obj, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._base_obj = base_obj
+
+    def clean_inputs(self):
+        inputs = self.cleaned_data.get("inputs", [])
+
+        if not inputs:
+            raise ValidationError("You must provide at least 1 input.")
+
+        if (
+            self._base_obj.algorithm_interface_through_model_manager.annotate(
+                input_count=Count("interface__inputs", distinct=True),
+                relevant_input_count=Count(
+                    "interface__inputs",
+                    filter=Q(interface__inputs__in=inputs),
+                    distinct=True,
+                ),
+            )
+            .filter(input_count=len(inputs), relevant_input_count=len(inputs))
+            .exists()
+        ):
+            raise ValidationError(
+                f"An AlgorithmInterface for this {self._base_obj._meta.verbose_name} with the "
+                "same inputs already exists. "
+                "Algorithm interfaces need to have unique sets of inputs."
+            )
+        return inputs
+
+    def clean_outputs(self):
+        outputs = self.cleaned_data.get("outputs", [])
+
+        if not outputs:
+            raise ValidationError("You must provide at least 1 output.")
+
+        return outputs
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # there should always be at least one input and one output,
+        # this is checked in the individual fields clean methods
+        inputs = cleaned_data.get("inputs")
+        outputs = cleaned_data.get("outputs")
+
+        # if either of the two fields is not provided, no need to check for
+        # duplicates here
+        if inputs and outputs:
+            duplicate_interfaces = {*inputs}.intersection({*outputs})
+
+            if duplicate_interfaces:
+                raise ValidationError(
+                    f"The sets of Inputs and Outputs must be unique: "
+                    f"{oxford_comma(duplicate_interfaces)} present in both"
+                )
+
+        return cleaned_data
+
+    def save(self):
+        interface = AlgorithmInterface.objects.create(
+            inputs=self.cleaned_data["inputs"],
+            outputs=self.cleaned_data["outputs"],
+        )
+        self._base_obj.algorithm_interface_manager.add(interface)
+        return interface
+
+
+class JobInterfaceSelectForm(SaveFormInitMixin, Form):
+    algorithm_interface = ModelChoiceField(
+        queryset=None,
+        required=True,
+        help_text="Select an input-output combination to use for this job.",
+        widget=RadioSelect,
+    )
+
+    def __init__(self, *args, algorithm, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._algorithm = algorithm
+
+        self.fields["algorithm_interface"].queryset = (
+            self._algorithm.interfaces.all()
+        )
+        self.fields["algorithm_interface"].initial = (
+            self._algorithm.interfaces.first()
+        )
+        self.fields["algorithm_interface"].widget.choices = {
+            (
+                interface.pk,
+                format_html(
+                    "<div><b>Inputs</b>: {inputs}</div>"
+                    "<div class='mb-3'><b>Outputs</b>: {outputs}</div>",
+                    inputs=oxford_comma(interface.inputs.all()),
+                    outputs=oxford_comma(interface.outputs.all()),
+                ),
+            )
+            for interface in self._algorithm.interfaces.all()
+        }

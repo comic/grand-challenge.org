@@ -17,7 +17,7 @@ from grandchallenge.evaluation.forms import (
 )
 from grandchallenge.evaluation.models import Evaluation, Phase, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.invoices.models import PaymentTypeChoices
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.verifications.models import (
     Verification,
@@ -26,6 +26,7 @@ from grandchallenge.verifications.models import (
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
 )
@@ -101,12 +102,12 @@ class TestSubmissionForm:
         alg2.add_editor(editor)
         alg4.add_editor(editor)
         ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
-        alg1.inputs.set([ci1, ci2])
-        alg1.outputs.set([ci3, ci4])
-        alg3.inputs.set([ci1, ci2])
-        alg3.outputs.set([ci3, ci4])
-        alg4.inputs.set([ci1, ci2])
-        alg4.outputs.set([ci3, ci4])
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci1, ci2], outputs=[ci3, ci4]
+        )
+        alg1.interfaces.set([interface])
+        alg3.interfaces.set([interface])
+        alg4.interfaces.set([interface])
         for alg in [alg1, alg2, alg3]:
             AlgorithmImageFactory(
                 algorithm=alg,
@@ -116,8 +117,7 @@ class TestSubmissionForm:
             )
         AlgorithmImageFactory(algorithm=alg4)
         p = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
-        p.algorithm_inputs.set([ci1, ci2])
-        p.algorithm_outputs.set([ci3, ci4])
+        p.algorithm_interfaces.set([interface])
         form = SubmissionForm(
             user=editor,
             phase=p,
@@ -134,6 +134,9 @@ class TestSubmissionForm:
             AlgorithmFactory.create_batch(10)
         )
         ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ci1, ci2], outputs=[ci3, ci4]
+        )
         for alg in [
             alg1,
             alg2,
@@ -147,8 +150,7 @@ class TestSubmissionForm:
             alg10,
         ]:
             alg.add_editor(editor)
-            alg.inputs.set([ci1, ci2])
-            alg.outputs.set([ci3, ci4])
+            alg.interfaces.set([interface])
             AlgorithmImageFactory(
                 algorithm=alg,
                 is_in_registry=True,
@@ -164,6 +166,7 @@ class TestSubmissionForm:
             AlgorithmJobFactory(
                 algorithm_image=alg.active_image,
                 algorithm_model=alg.active_model,
+                algorithm_interface=interface,
                 status=Job.SUCCESS,
                 time_limit=alg.time_limit,
             )
@@ -174,8 +177,7 @@ class TestSubmissionForm:
             challenge=ChallengeFactory(),
         )
         for p in [p_parent, p_child]:
-            p.algorithm_inputs.set([ci1, ci2])
-            p.algorithm_outputs.set([ci3, ci4])
+            p.algorithm_interfaces.set([interface])
         p_child.parent = p_parent
         p_child.save()
 
@@ -234,6 +236,7 @@ class TestSubmissionForm:
         AlgorithmJobFactory(
             algorithm_image=alg.active_image,
             algorithm_model=alg.active_model,
+            algorithm_interface=interface,
             status=Job.FAILURE,
             time_limit=alg.time_limit,
         )
@@ -248,6 +251,7 @@ class TestSubmissionForm:
         AlgorithmJobFactory(
             algorithm_image=AlgorithmImageFactory(algorithm=alg8),
             algorithm_model=alg.active_model,
+            algorithm_interface=interface,
             status=Job.SUCCESS,
             time_limit=alg.time_limit,
         )
@@ -262,6 +266,7 @@ class TestSubmissionForm:
         AlgorithmJobFactory(
             algorithm_image=alg9.active_image,
             algorithm_model=AlgorithmModelFactory(algorithm=alg9),
+            algorithm_interface=interface,
             status=Job.SUCCESS,
             time_limit=alg9.time_limit,
         )
@@ -388,16 +393,15 @@ class TestSubmissionForm:
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
         ci2 = ComponentInterfaceFactory()
-        alg.inputs.set([ci1])
-        alg.outputs.set([ci2])
+        interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+        alg.interfaces.set([interface])
         archive = ArchiveFactory()
         p = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             submissions_limit_per_user_per_period=10,
             archive=archive,
         )
-        p.algorithm_inputs.set([ci1])
-        p.algorithm_outputs.set([ci2])
+        p.algorithm_interfaces.set([interface])
         civ = ComponentInterfaceValueFactory(interface=ci1)
         i = ArchiveItemFactory(archive=p.archive)
         i.values.add(civ)
@@ -405,7 +409,7 @@ class TestSubmissionForm:
         InvoiceFactory(
             challenge=p.challenge,
             compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
         )
 
         # Fetch from the db to get the cost annotations
@@ -419,7 +423,10 @@ class TestSubmissionForm:
             algorithm=alg,
         )
         AlgorithmJobFactory(
-            algorithm_image=ai, status=4, time_limit=ai.algorithm.time_limit
+            algorithm_image=ai,
+            algorithm_interface=interface,
+            status=4,
+            time_limit=ai.algorithm.time_limit,
         )
         MethodFactory(
             is_manifest_valid=True,
@@ -444,16 +451,15 @@ class TestSubmissionForm:
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
         ci2 = ComponentInterfaceFactory()
-        alg.inputs.set([ci1])
-        alg.outputs.set([ci2])
+        interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+        alg.interfaces.set([interface])
         archive = ArchiveFactory()
         p = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             submissions_limit_per_user_per_period=10,
             archive=archive,
         )
-        p.algorithm_inputs.set([ci1])
-        p.algorithm_outputs.set([ci2])
+        p.algorithm_interfaces.set([interface])
         civ = ComponentInterfaceValueFactory(interface=ci1)
         i = ArchiveItemFactory(archive=p.archive)
         i.values.add(civ)
@@ -461,7 +467,7 @@ class TestSubmissionForm:
         InvoiceFactory(
             challenge=p.challenge,
             compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
         )
 
         # Fetch from the db to get the cost annotations
@@ -477,6 +483,7 @@ class TestSubmissionForm:
         am = AlgorithmModelFactory(algorithm=alg, is_desired_version=True)
         AlgorithmJobFactory(
             algorithm_image=ai,
+            algorithm_interface=interface,
             status=Job.SUCCESS,
             time_limit=ai.algorithm.time_limit,
         )
@@ -525,7 +532,7 @@ class TestSubmissionForm:
         InvoiceFactory(
             challenge=phase.challenge,
             compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
         )
 
         # Fetch from the db to get the cost annotations
@@ -549,16 +556,15 @@ class TestSubmissionForm:
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
         ci2 = ComponentInterfaceFactory()
-        alg.inputs.set([ci1])
-        alg.outputs.set([ci2])
+        interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+        alg.interfaces.set([interface])
         archive = ArchiveFactory()
         p_alg = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             submissions_limit_per_user_per_period=10,
             archive=archive,
         )
-        p_alg.algorithm_inputs.set([ci1])
-        p_alg.algorithm_outputs.set([ci2])
+        p_alg.algorithm_interfaces.set([interface])
         MethodFactory(
             phase=p_alg,
             is_manifest_valid=True,
@@ -576,7 +582,7 @@ class TestSubmissionForm:
             InvoiceFactory(
                 challenge=p.challenge,
                 compute_costs_euros=10,
-                payment_status=PaymentStatusChoices.COMPLIMENTARY,
+                payment_type=PaymentTypeChoices.COMPLIMENTARY,
             )
         # Fetch from the db to get the cost annotations
         # Maybe this is solved with GeneratedField (Django 5)?
@@ -590,7 +596,10 @@ class TestSubmissionForm:
             algorithm=alg,
         )
         AlgorithmJobFactory(
-            algorithm_image=ai, status=4, time_limit=ai.algorithm.time_limit
+            algorithm_image=ai,
+            algorithm_interface=interface,
+            status=4,
+            time_limit=ai.algorithm.time_limit,
         )
 
         upload = UserUploadFactory(creator=user)
@@ -652,16 +661,15 @@ class TestSubmissionForm:
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
         ci2 = ComponentInterfaceFactory()
-        alg.inputs.set([ci1])
-        alg.outputs.set([ci2])
+        interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+        alg.interfaces.set([interface])
         archive = ArchiveFactory()
         p = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             submissions_limit_per_user_per_period=10,
             archive=archive,
         )
-        p.algorithm_inputs.set([ci1])
-        p.algorithm_outputs.set([ci2])
+        p.algorithm_interfaces.set([interface])
         civ = ComponentInterfaceValueFactory(interface=ci1)
         i = ArchiveItemFactory(archive=p.archive)
         i.values.add(civ)
@@ -669,7 +677,7 @@ class TestSubmissionForm:
         InvoiceFactory(
             challenge=p.challenge,
             compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
         )
 
         # Fetch from the db to get the cost annotations
@@ -683,7 +691,10 @@ class TestSubmissionForm:
             algorithm=alg,
         )
         AlgorithmJobFactory(
-            algorithm_image=ai, status=4, time_limit=ai.algorithm.time_limit
+            algorithm_image=ai,
+            algorithm_interface=interface,
+            status=4,
+            time_limit=ai.algorithm.time_limit,
         )
         SubmissionFactory(
             phase=p,
@@ -744,16 +755,15 @@ class TestSubmissionForm:
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
         ci2 = ComponentInterfaceFactory()
-        alg.inputs.set([ci1])
-        alg.outputs.set([ci2])
+        interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+        alg.interfaces.set([interface])
         archive = ArchiveFactory()
         p = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             submissions_limit_per_user_per_period=10,
             archive=archive,
         )
-        p.algorithm_inputs.set([ci1])
-        p.algorithm_outputs.set([ci2])
+        p.algorithm_interfaces.set([interface])
         civ = ComponentInterfaceValueFactory(interface=ci1)
         i = ArchiveItemFactory(archive=p.archive)
         i.values.add(civ)
@@ -761,7 +771,7 @@ class TestSubmissionForm:
         InvoiceFactory(
             challenge=p.challenge,
             compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
         )
 
         # Fetch from the db to get the cost annotations
@@ -821,7 +831,7 @@ class TestSubmissionForm:
         InvoiceFactory(
             challenge=phase.challenge,
             compute_costs_euros=10,
-            payment_status=PaymentStatusChoices.COMPLIMENTARY,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
         )
         phase = Phase.objects.get(pk=phase.pk)
         form = SubmissionForm(
@@ -894,8 +904,7 @@ def test_algorithm_for_phase_form():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory.build(),
-        inputs=[ComponentInterfaceFactory.build()],
-        outputs=[ComponentInterfaceFactory.build()],
+        interfaces=[AlgorithmInterfaceFactory.build()],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
@@ -903,8 +912,7 @@ def test_algorithm_for_phase_form():
         user=UserFactory.build(),
     )
 
-    assert form.fields["inputs"].disabled
-    assert form.fields["outputs"].disabled
+    assert form.fields["interfaces"].disabled
     assert form.fields["workstation_config"].disabled
     assert form.fields["hanging_protocol"].disabled
     assert form.fields["optional_hanging_protocols"].disabled
@@ -922,8 +930,7 @@ def test_algorithm_for_phase_form():
     assert not form.fields["job_requires_memory_gb"].disabled
 
     assert {
-        form.fields["inputs"],
-        form.fields["outputs"],
+        form.fields["interfaces"],
         form.fields["workstation_config"],
         form.fields["hanging_protocol"],
         form.fields["optional_hanging_protocols"],
@@ -951,12 +958,15 @@ def test_algorithm_for_phase_form_validation():
     phase = PhaseFactory()
     alg1, alg2, alg3 = AlgorithmFactory.create_batch(3)
     ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
-    phase.algorithm_inputs.set([ci1, ci2])
-    phase.algorithm_outputs.set([ci3, ci4])
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci1, ci2], outputs=[ci3, ci4]
+    )
+
+    phase.algorithm_interfaces.set([interface])
     for alg in [alg1, alg2]:
         alg.add_editor(user)
-        alg.inputs.set([ci1, ci2])
-        alg.outputs.set([ci3, ci4])
+        alg.interfaces.set([interface])
 
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory(),
@@ -966,8 +976,7 @@ def test_algorithm_for_phase_form_validation():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory(),
-        inputs=[ci1, ci2],
-        outputs=[ci3, ci4],
+        interfaces=[interface],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
@@ -984,8 +993,7 @@ def test_algorithm_for_phase_form_validation():
     )
 
     alg3.add_editor(user)
-    alg3.inputs.set([ci1, ci2])
-    alg3.outputs.set([ci3, ci4])
+    alg3.interfaces.set([interface])
 
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory(),
@@ -995,8 +1003,7 @@ def test_algorithm_for_phase_form_validation():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory(),
-        inputs=[ci1, ci2],
-        outputs=[ci3, ci4],
+        interfaces=[interface],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
@@ -1014,6 +1021,68 @@ def test_algorithm_for_phase_form_validation():
 
 
 @pytest.mark.django_db
+def test_user_algorithms_for_phase():
+
+    def populate_form(interfaces):
+        return AlgorithmForPhaseForm(
+            workstation_config=WorkstationConfigFactory(),
+            hanging_protocol=HangingProtocolFactory(),
+            optional_hanging_protocols=[HangingProtocolFactory()],
+            view_content=None,
+            display_editors=True,
+            contact_email="test@test.com",
+            workstation=WorkstationFactory(),
+            interfaces=interfaces,
+            structures=[],
+            modalities=[],
+            logo=ImageField(filename="test.jpeg"),
+            phase=phase,
+            user=user,
+            data={
+                "title": "foo",
+            },
+        )
+
+    user = UserFactory()
+    phase = PhaseFactory()
+    alg1, alg2, alg3, alg4, alg5 = AlgorithmFactory.create_batch(5)
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+
+    interface1 = AlgorithmInterfaceFactory(
+        inputs=[ci1, ci2], outputs=[ci3, ci4]
+    )
+    interface2 = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci3])
+    interface3 = AlgorithmInterfaceFactory(inputs=[ci3], outputs=[ci1, ci4])
+
+    for alg in [alg1, alg2, alg3, alg4, alg5]:
+        alg.add_editor(user)
+
+    # phase has 1 interface
+    phase.algorithm_interfaces.set([interface1])
+    # only algorithms that have this interface set only should match
+    # partial matches are not valid
+    alg1.interfaces.set([interface1])  # exact match
+    alg2.interfaces.set(
+        [interface3]
+    )  # same number of interfaces, but different interface
+    alg3.interfaces.set([interface1, interface3])  # additional interface
+    alg4.interfaces.set([interface2, interface3])  # diff num, diff interfaces
+
+    form = populate_form(interfaces=[interface1])
+    assert list(form.user_algorithms_for_phase) == [alg1]
+
+    # phase with 2 interfaces
+    phase.algorithm_interfaces.set([interface1, interface3])
+    form = populate_form(interfaces=[interface1, interface3])
+    assert list(form.user_algorithms_for_phase) == [alg3]
+
+    # user needs to be owner of algorithm
+    alg3.remove_editor(user)
+    form = populate_form(interfaces=[interface1, interface3])
+    assert list(form.user_algorithms_for_phase) == []
+
+
+@pytest.mark.django_db
 def test_configure_algorithm_phases_form():
     ch = ChallengeFactory()
     p1, p2, p3 = PhaseFactory.create_batch(
@@ -1023,7 +1092,6 @@ def test_configure_algorithm_phases_form():
     SubmissionFactory(phase=p1)
     MethodFactory(phase=p2)
     PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
-    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
 
     form = ConfigureAlgorithmPhasesForm(challenge=ch)
     assert list(form.fields["phases"].queryset) == [p3]
@@ -1032,8 +1100,6 @@ def test_configure_algorithm_phases_form():
         challenge=ch,
         data={
             "phases": [p3],
-            "algorithm_inputs": [ci1],
-            "algorithm_outputs": [ci2],
         },
     )
     assert form3.is_valid()

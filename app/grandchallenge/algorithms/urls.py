@@ -2,6 +2,7 @@ from django.urls import path
 
 from grandchallenge.algorithms.views import (
     AlgorithmCreate,
+    AlgorithmCreateRedirect,
     AlgorithmDescriptionUpdate,
     AlgorithmDetail,
     AlgorithmImageActivate,
@@ -12,6 +13,9 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageTemplate,
     AlgorithmImageUpdate,
     AlgorithmImportView,
+    AlgorithmInterfaceForAlgorithmCreate,
+    AlgorithmInterfaceForAlgorithmDelete,
+    AlgorithmInterfacesForAlgorithmList,
     AlgorithmList,
     AlgorithmModelCreate,
     AlgorithmModelDetail,
@@ -29,6 +33,7 @@ from grandchallenge.algorithms.views import (
     EditorsUpdate,
     JobCreate,
     JobDetail,
+    JobInterfaceSelect,
     JobProgressDetail,
     JobsList,
     JobStatusDetail,
@@ -41,7 +46,8 @@ app_name = "algorithms"
 
 urlpatterns = [
     path("", AlgorithmList.as_view(), name="list"),
-    path("create/", AlgorithmCreate.as_view(), name="create"),
+    path("create/", AlgorithmCreateRedirect.as_view(), name="create-redirect"),
+    path("custom-create/", AlgorithmCreate.as_view(), name="custom-create"),
     path("import/", AlgorithmImportView.as_view(), name="import"),
     path("<slug>/", AlgorithmDetail.as_view(), name="detail"),
     path(
@@ -53,6 +59,21 @@ urlpatterns = [
         "<slug>/description-update/",
         AlgorithmDescriptionUpdate.as_view(),
         name="description-update",
+    ),
+    path(
+        "<slug>/interfaces/",
+        AlgorithmInterfacesForAlgorithmList.as_view(),
+        name="interface-list",
+    ),
+    path(
+        "<slug>/interfaces/create/",
+        AlgorithmInterfaceForAlgorithmCreate.as_view(),
+        name="interface-create",
+    ),
+    path(
+        "<slug>/interfaces/<uuid:interface_pk>/delete/",
+        AlgorithmInterfaceForAlgorithmDelete.as_view(),
+        name="interface-delete",
     ),
     path(
         "<slug>/repository/",
@@ -125,7 +146,16 @@ urlpatterns = [
         name="model-update",
     ),
     path("<slug>/jobs/", JobsList.as_view(), name="job-list"),
-    path("<slug>/jobs/create/", JobCreate.as_view(), name="job-create"),
+    path(
+        "<slug:slug>/jobs/interface-select/",
+        JobInterfaceSelect.as_view(),
+        name="job-interface-select",
+    ),
+    path(
+        "<slug:slug>/<uuid:interface_pk>/jobs/create/",
+        JobCreate.as_view(),
+        name="job-create",
+    ),
     path("<slug>/jobs/<uuid:pk>/", JobDetail.as_view(), name="job-detail"),
     path(
         "<slug>/jobs/<uuid:pk>/status/",

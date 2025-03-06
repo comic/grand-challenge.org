@@ -24,53 +24,20 @@
     <h2>Create An Algorithm Container Image</h2>
 
     <p>
-        Upload a container image that implements the selected inputs and outputs.
-        In order to work this container will need to read the following input:
+        Upload a container image that implements all of the configured interfaces (i.e. input-output combinations):
     </p>
 
-    <ul>
-        {% for interface in algorithm.inputs.all %}
-            <li>
-                {{ interface }} at
-                {% if interface.is_image_kind %}
-                    <code>/input/{{ interface.relative_path }}/&lt;uuid&gt;.mha</code> or
-                    <code>/input/{{ interface.relative_path }}/&lt;uuid&gt;.tif</code>
-                {% else %}
-                    <code>/input/{{ interface.relative_path }}</code>
-                {% endif %}
-            </li>
-        {% endfor %}
-    </ul>
+    {% include 'algorithms/partials/algorithminterface_table.html' with base_obj=algorithm interfaces=algorithm.interfaces.all delete_option=False read_write_paths=True %}
 
-    <p>
-        Please see the <a href="{% url 'components:component-interface-list-input' %}">
-            list of input options
-        </a> more information and examples.
-    </p>
-
-    <p>
-        The container will also need to write the following output:
-    </p>
-
-    <ul>
-        {% for interface in algorithm.outputs.all %}
-            <li>
-                {{ interface }} to
-                {% if interface.is_image_kind %}
-                    <code>/output/{{ interface.relative_path }}/&lt;uuid&gt;.mha</code> or
-                    <code>/output/{{ interface.relative_path }}/&lt;uuid&gt;.tif</code>
-                {% else %}
-                    <code>/output/{{ interface.relative_path }}</code>
-                {% endif %}
-            </li>
-        {% endfor %}
-    </ul>
-
-    <p>
-        Please see the <a href="{% url 'components:component-interface-list-output' %}">
-            list of output options
-        </a> more information and examples.
-    </p>
+    {% if perms.algorithms.add_algorithm %}
+        <p>
+            To add or update interfaces for your algorithm, go <a href="{% url 'algorithms:interface-list' slug=algorithm.slug %}">here</a>.
+        </p>
+    {% else %}
+        <p>
+            To add or update interfaces for your algorithm, please contact <a href="mailto:support@grand-challenge.org">support@grand-challenge.org</a>.
+        </p>
+    {% endif %}
 
     <h3>Container Image Options</h3>
 

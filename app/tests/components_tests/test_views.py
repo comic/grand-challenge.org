@@ -7,12 +7,14 @@ from django.utils.html import format_html
 from factory.fuzzy import FuzzyChoice
 
 from grandchallenge.archives.models import ArchiveItem
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FileWidgetChoices,
+)
 from grandchallenge.components.models import (
     InterfaceKind,
     InterfaceKindChoices,
 )
-from grandchallenge.components.widgets import FileWidgetChoices
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
@@ -554,112 +556,148 @@ def test_interfaces_list_link_in_new_interface_form(
 
 
 @pytest.mark.django_db
-def test_file_widget_select_view(client):
-    user = UserFactory()
+def test_file_widget_select_view_file_selected_object_permission(client):
+    user, creator = UserFactory.create_batch(2)
     ci = ComponentInterfaceFactory(
         kind=FuzzyChoice(InterfaceKind.interface_type_file())
     )
-    response = get_view_for_user(
-        viewname="components:file-widget-select",
+    prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
+    civ = ComponentInterfaceValueFactory(interface=ci)
+    job = AlgorithmJobFactory(creator=creator, time_limit=60)
+    job.inputs.set([civ])
+
+    response_creator = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=creator,
+        data={
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SELECTED.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
+            "current-value-pk": civ.pk,
+        },
+    )
+    assert format_html(
+        '<input type="hidden" name="{}" value="{}">',
+        prefixed_interface_slug,
+        civ.pk,
+    ) in str(response_creator.content)
+
+    response_user = get_view_for_user(
+        viewname="components:select-file-widget",
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SEARCH.name,
-            "prefixed-interface-slug": ci.slug,
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SELECTED.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
+            "current-value-pk": civ.pk,
+        },
+    )
+    assert response_user.status_code == 404
+
+
+@pytest.mark.django_db
+def test_file_widget_select_view_file_selected_object_permission_user_upload(
+    client,
+):
+    user, creator = UserFactory.create_batch(2)
+    ci = ComponentInterfaceFactory(
+        kind=FuzzyChoice(InterfaceKind.interface_type_file())
+    )
+    prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
+    user_upload = UserUploadFactory(creator=creator)
+
+    response_creator = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=creator,
+        data={
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SELECTED.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
+            "current-value-pk": user_upload.pk,
+        },
+    )
+    assert format_html(
+        '<input type="hidden" name="{}" value="{}">',
+        prefixed_interface_slug,
+        user_upload.pk,
+    ) in str(response_creator.content)
+
+    response_user = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=user,
+        data={
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SELECTED.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
+            "current-value-pk": user_upload.pk,
+        },
+    )
+    assert response_user.status_code == 404
+
+
+@pytest.mark.django_db
+def test_file_widget_select_view(client):
+    user, editor = UserFactory.create_batch(2)
+    ci = ComponentInterfaceFactory(
+        kind=FuzzyChoice(InterfaceKind.interface_type_file())
+    )
+    prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
+    response = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=user,
+        data={
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SEARCH.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
         },
     )
     assert '<input class="form-control" type="search"' in str(response.content)
 
     response2 = get_view_for_user(
-        viewname="components:file-widget-select",
+        viewname="components:select-file-widget",
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_UPLOAD.name,
-            "prefixed-interface-slug": ci.slug,
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_UPLOAD.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
         },
     )
     assert 'class="user-upload"' in str(response2.content)
 
     response3 = get_view_for_user(
-        viewname="components:file-widget-select",
+        viewname="components:select-file-widget",
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.UNDEFINED.name,
-            "prefixed-interface-slug": ci.slug,
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.UNDEFINED.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
         },
     )
     assert response3.content == b""
 
-    civ = ComponentInterfaceValueFactory(interface=ci)
     response4 = get_view_for_user(
-        viewname="components:file-widget-select",
+        viewname="components:select-file-widget",
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SELECTED.name,
-            "prefixed-interface-slug": ci.slug,
-            "current-value": civ.pk,
-        },
-    )
-    assert format_html(
-        '<input type="hidden" name="{}" value="{}">', ci.slug, civ.pk
-    ) in str(response4.content)
-
-    user_upload = UserUploadFactory()
-    response5 = get_view_for_user(
-        viewname="components:file-widget-select",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SELECTED.name,
-            "prefixed-interface-slug": ci.slug,
-            "current-value": user_upload.pk,
-        },
-    )
-    assert format_html(
-        '<input type="hidden" name="{}" value="{}">', ci.slug, user_upload.pk
-    ) in str(response5.content)
-
-    civ_pk = civ.pk
-    civ.delete()
-    response6 = get_view_for_user(
-        viewname="components:file-widget-select",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SELECTED.name,
-            "prefixed-interface-slug": ci.slug,
-            "current-value": civ_pk,
-        },
-    )
-    assert response6.status_code == 404
-
-    response7 = get_view_for_user(
-        viewname="components:file-widget-select",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{ci.slug}": FileWidgetChoices.FILE_SEARCH.name
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SEARCH.name
             + "foobar",
-            "prefixed-interface-slug": ci.slug,
+            "prefixed-interface-slug": prefixed_interface_slug,
         },
     )
-    assert response7.status_code == 404
+    assert response4.status_code == 404
 
-    ci_slug = ci.slug
     ci.delete()
-    response8 = get_view_for_user(
-        viewname="components:file-widget-select",
+    response5 = get_view_for_user(
+        viewname="components:select-file-widget",
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci_slug}": FileWidgetChoices.FILE_SEARCH.name,
-            "prefixed-interface-slug": ci_slug,
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SEARCH.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
         },
     )
-    assert response8.status_code == 404
+    assert response5.status_code == 404
 
 
 @pytest.mark.django_db
@@ -700,7 +738,6 @@ def test_file_search_result_view_no_files(client):
         user=user,
     )
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert "No files match your search criteria." in response.rendered_content
 
 
@@ -735,7 +772,6 @@ def test_file_search_result_view_all_parent_object_types(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert "No files match your search criteria." in response.rendered_content
 
     job = AlgorithmJobFactory(creator=user, time_limit=60)
@@ -758,7 +794,6 @@ def test_file_search_result_view_all_parent_object_types(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert (
         f"{civ_for_job.title} ({civ_for_job.pk})" in response.rendered_content
     )
@@ -793,7 +828,6 @@ def test_file_search_result_view_algorithm_job(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert "No files match your search criteria." in response.rendered_content
 
     job = AlgorithmJobFactory(creator=user, time_limit=60)
@@ -810,7 +844,6 @@ def test_file_search_result_view_algorithm_job(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ.title} ({civ.pk})" in response.rendered_content
 
 
@@ -835,7 +868,6 @@ def test_file_search_result_view_display_set(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert "No files match your search criteria." in response.rendered_content
 
     display_set = DisplaySetFactory(reader_study=reader_study)
@@ -852,7 +884,6 @@ def test_file_search_result_view_display_set(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ.title} ({civ.pk})" in response.rendered_content
 
 
@@ -877,7 +908,6 @@ def test_file_search_result_view_archive_item(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert "No files match your search criteria." in response.rendered_content
 
     archive_item = ArchiveItemFactory(archive=archive)
@@ -894,7 +924,6 @@ def test_file_search_result_view_archive_item(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ.title} ({civ.pk})" in response.rendered_content
 
 
@@ -924,7 +953,6 @@ def test_file_search_result_view_filter_by_pk(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ1.title} ({civ1.pk})" in response.rendered_content
     assert f"{civ2.title} ({civ2.pk})" in response.rendered_content
     assert f"{civ3.title} ({civ3.pk})" in response.rendered_content
@@ -936,13 +964,12 @@ def test_file_search_result_view_filter_by_pk(client):
         method=client.get,
         data={
             "prefixed-interface-slug": prefixed_interface_slug,
-            f"query-{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}": f"{civ1.pk}",
+            f"query-{prefixed_interface_slug}": f"{civ1.pk}",
         },
         user=user,
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ1.title} ({civ1.pk})" in response.rendered_content
     assert f"{civ2.title} ({civ2.pk})" not in response.rendered_content
     assert f"{civ3.title} ({civ3.pk})" not in response.rendered_content
@@ -982,7 +1009,6 @@ def test_file_search_result_view_filter_by_name(client):
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ1.title} ({civ1.pk})" in response.rendered_content
     assert f"{civ2.title} ({civ2.pk})" in response.rendered_content
     assert f"{civ3.title} ({civ3.pk})" in response.rendered_content
@@ -993,13 +1019,12 @@ def test_file_search_result_view_filter_by_name(client):
         method=client.get,
         data={
             "prefixed-interface-slug": prefixed_interface_slug,
-            f"query-{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}": "foobar",
+            f"query-{prefixed_interface_slug}": "foobar",
         },
         user=user,
     )
 
     assert response.status_code == 200
-    assert ci.slug in response.rendered_content
     assert f"{civ1.title} ({civ1.pk})" in response.rendered_content
     assert f"{civ2.title} ({civ2.pk})" in response.rendered_content
     assert f"{civ3.title} ({civ3.pk})" not in response.rendered_content

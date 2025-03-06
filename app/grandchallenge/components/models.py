@@ -40,14 +40,13 @@ from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
-from grandchallenge.cases.widgets import FlexibleImageField
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
 from grandchallenge.components.schemas import (
-    INTERFACE_VALUE_SCHEMA,
     GPUTypeChoices,
+    generate_component_json_schema,
 )
 from grandchallenge.components.tasks import (
     _repo_login_and_run,
@@ -533,7 +532,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         if self.requires_file:
             return ModelChoiceField
         elif self.is_image_kind:
-            return FlexibleImageField
+            return ModelChoiceField
         elif self.kind in {
             InterfaceKind.InterfaceKindChoices.STRING,
             InterfaceKind.InterfaceKindChoices.CHOICE,
@@ -683,15 +682,10 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     def validate_against_schema(self, *, value):
         """Validates values against both default and custom schemas"""
-        JSONValidator(
-            schema={
-                **INTERFACE_VALUE_SCHEMA,
-                "anyOf": [{"$ref": f"#/definitions/{self.kind}"}],
-            }
-        )(value=value)
-
-        if self.schema:
-            JSONValidator(schema=self.schema)(value=value)
+        schema = generate_component_json_schema(
+            component_interface=self, required=True
+        )
+        JSONValidator(schema=schema)(value=value)
 
     @cached_property
     def value_required(self):

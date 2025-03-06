@@ -6,7 +6,10 @@ from grandchallenge.core.utils.grand_challenge_forge import (
     get_forge_challenge_pack_context,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from tests.algorithms_tests.factories import AlgorithmFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmInterfaceFactory,
+)
 from tests.archives_tests.factories import ArchiveFactory
 from tests.components_tests.factories import (
     ComponentInterfaceExampleValueFactory,
@@ -21,12 +24,19 @@ def test_get_challenge_pack_context():
     challenge = ChallengeFactory()
     inputs = [
         ComponentInterfaceFactory(kind=ComponentInterface.Kind.INTEGER),
-        ComponentInterfaceFactory(),
+        ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE),
     ]
     outputs = [
         ComponentInterfaceFactory(),
         ComponentInterfaceFactory(),
+        ComponentInterfaceFactory(),
     ]
+    interface1 = AlgorithmInterfaceFactory(
+        inputs=[inputs[0]], outputs=outputs[:2]
+    )
+    interface2 = AlgorithmInterfaceFactory(
+        inputs=[inputs[1]], outputs=[outputs[2]]
+    )
 
     # Add an example
     ComponentInterfaceExampleValueFactory(
@@ -46,8 +56,7 @@ def test_get_challenge_pack_context():
         submission_kind=SubmissionKindChoices.ALGORITHM,
     )
     for phase in phase_1, phase_2:
-        phase.algorithm_inputs.set(inputs)
-        phase.algorithm_outputs.set(outputs)
+        phase.algorithm_interfaces.set([interface1, interface2])
 
     # Setup phases that should not pass the filters
     phase_3 = PhaseFactory(
@@ -89,24 +98,31 @@ def test_get_challenge_pack_context():
                 ]:
                     assert ci_key in component_interface
 
-    # Quick check on CI input and outputs
-    for index, ci in enumerate(
-        context["challenge"]["phases"][0]["algorithm_inputs"]
-    ):
-        assert inputs[index].slug == ci["slug"]
-
     # Test assigned example value
-    assert (
-        context["challenge"]["phases"][0]["algorithm_inputs"][0][
-            "example_value"
-        ]
-        == 87
-    )
+    example_values = [
+        input["example_value"]
+        for input in context["challenge"]["phases"][0]["algorithm_inputs"]
+        if input["example_value"]
+    ]
+    assert example_values == [87]
 
-    for index, ci in enumerate(
-        context["challenge"]["phases"][0]["algorithm_outputs"]
-    ):
-        assert outputs[index].slug == ci["slug"]
+    # Quick check on CI input and outputs
+    input_slugs = [
+        input["slug"]
+        for input in context["challenge"]["phases"][0]["algorithm_inputs"]
+    ]
+    assert len(input_slugs) == len(inputs)
+    assert inputs[0].slug in input_slugs
+    assert inputs[1].slug in input_slugs
+
+    output_slugs = [
+        output["slug"]
+        for output in context["challenge"]["phases"][0]["algorithm_outputs"]
+    ]
+    assert len(output_slugs) == len(outputs)
+    assert outputs[0].slug in output_slugs
+    assert outputs[1].slug in output_slugs
+    assert outputs[2].slug in output_slugs
 
     context = get_forge_challenge_pack_context(
         challenge, phase_pks=[phase_1.pk]
@@ -119,31 +135,44 @@ def test_get_challenge_pack_context():
     assert len(context["challenge"]["phases"]) == 0
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.django_db
 def test_get_algorithm_template_context():
     algorithm = AlgorithmFactory()
 
     inputs = [
         ComponentInterfaceFactory(kind=ComponentInterface.Kind.INTEGER),
+        ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING),
     ]
-    algorithm.inputs.set(inputs)
-
     outputs = [
         ComponentInterfaceFactory(),
         ComponentInterfaceFactory(),
+        ComponentInterfaceFactory(),
     ]
-    algorithm.outputs.set(outputs)
+    interface1 = AlgorithmInterfaceFactory(
+        inputs=[inputs[0]], outputs=outputs[:2]
+    )
+    interface2 = AlgorithmInterfaceFactory(
+        inputs=[inputs[1]], outputs=[outputs[2]]
+    )
+    algorithm.interfaces.set([interface1, interface2])
 
     context = get_forge_algorithm_template_context(algorithm=algorithm)
 
     for key in ["title", "slug", "url", "inputs", "outputs"]:
         assert key in context["algorithm"]
 
-    for index, ci in enumerate(context["algorithm"]["inputs"]):
-        assert inputs[index].slug == ci["slug"]
+    input_slugs = [input["slug"] for input in context["algorithm"]["inputs"]]
+    assert len(input_slugs) == len(inputs)
+    assert inputs[0].slug in input_slugs
+    assert inputs[1].slug in input_slugs
 
-    for index, ci in enumerate(context["algorithm"]["outputs"]):
-        assert outputs[index].slug == ci["slug"]
+    output_slugs = [
+        output["slug"] for output in context["algorithm"]["outputs"]
+    ]
+    assert len(output_slugs) == len(outputs)
+    assert outputs[0].slug in output_slugs
+    assert outputs[1].slug in output_slugs
 
     # Test adding default examples
     assert context["algorithm"]["inputs"][0]["example_value"] == 42

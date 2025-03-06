@@ -190,6 +190,7 @@ STORAGES = {
 # Subdirectories on root for various files
 IMAGE_FILES_SUBDIRECTORY = "images"
 EVALUATION_FILES_SUBDIRECTORY = "evaluation"
+EVALUATION_SUPPLEMENTARY_FILES_SUBDIRECTORY = "evaluation-supplementary"
 COMPONENTS_FILES_SUBDIRECTORY = "components"
 
 # Minio differs from s3, we know:
@@ -244,9 +245,10 @@ PUBLIC_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
     ),
+    "custom_domain": os.environ.get("PUBLIC_S3_CUSTOM_DOMAIN"),
     # Public bucket so do not use querystring_auth
     "querystring_auth": False,
-    "default_acl": "public-read",
+    "default_acl": os.environ.get("PUBLIC_S3_DEFAULT_ACL", "public-read"),
 }
 
 UPLOADS_S3_BUCKET_NAME = os.environ.get(
@@ -609,6 +611,7 @@ LOCAL_APPS = [
     "grandchallenge.direct_messages",
     "grandchallenge.incentives",
     "grandchallenge.browser_sessions",
+    "grandchallenge.well_known",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
@@ -822,6 +825,7 @@ MACHINA_MARKUP_LANGUAGE = (
     "grandchallenge.core.templatetags.bleach.md2html",
     {"link_blank_target": True},
 )
+MACHINA_ATTACHMENT_MAX_FILES_PER_POST = 0
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -1128,7 +1132,7 @@ READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 ###############################################################################
 
 CHALLENGES_DEFAULT_ACTIVE_MONTHS = 12
-CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF = timedelta(hours=72)
+CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF = timedelta(days=7)
 
 ###############################################################################
 #
@@ -1235,6 +1239,10 @@ CELERY_BEAT_SCHEDULE = {
     "update_site_statistics": {
         "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
         "schedule": crontab(hour=5, minute=30),
+    },
+    "send_onboarding_task_reminder_emails": {
+        "task": "grandchallenge.challenges.tasks.send_onboarding_task_reminder_emails",
+        "schedule": crontab(day_of_week="mon", hour=6, minute=0),
     },
     "delete_users_who_dont_login": {
         "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
@@ -1351,7 +1359,7 @@ DISALLOWED_CHALLENGE_NAMES = {
     "mugshots",
     "docker",
     EVALUATION_FILES_SUBDIRECTORY,
-    "evaluation-supplementary",
+    EVALUATION_SUPPLEMENTARY_FILES_SUBDIRECTORY,
     "favicon",
     "i",
     "cache",

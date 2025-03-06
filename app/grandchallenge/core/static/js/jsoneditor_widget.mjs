@@ -7,27 +7,36 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
     );
     const jsoneditorWidget = document.getElementById(jsoneditorWidgetID);
 
+    // Prevents validation on textarea itself
+    jsoneditorWidget.removeAttribute("required");
+
+    const feedback = document.getElementById(
+        `jsoneditor_feedback_${jsoneditorWidgetID}`,
+    );
+
+    let validityErrors = false;
+
     if (jsoneditorWidget.disabled) {
         jsoneditorWidget.classList.remove("d-none");
     } else {
         const options = {
             mode: "tree",
             modes: ["code", "tree"],
+            allowSchemaSuggestions: true,
+            showErrorTable: ["code"],
             onChangeText: jsonString => {
-                const widget = document.getElementById(jsoneditorWidgetID);
-                // There is only a text area if in "code" mode
-                // That also happens to be the only mode that can contain
-                // faulty JSON
-                const aceTextArea = container.querySelector("textarea");
-                try {
-                    JSON.parse(jsonString);
-                    widget.value = jsonString;
-                    aceTextArea?.setCustomValidity("");
-                } catch (err) {
-                    aceTextArea?.setCustomValidity("JSON is invalid");
-                }
+                jsoneditorWidget.value = jsonString;
+            },
+            onValidationError: errors => {
+                // Note: only fires when the errors change
+                // Invalid JSON always fire off this event
+                validityErrors = errors.length > 0;
             },
         };
+
+        if (schema !== undefined) {
+            options.schema = schema;
+        }
 
         const editor = new JSONEditor(container, options);
 
@@ -47,9 +56,17 @@ function initialize_jsoneditor_widget(jsoneditorWidgetID) {
             editor.expandAll();
         }
 
-        if (schema !== undefined) {
-            editor.setSchema(schema);
-        }
+        jsoneditorWidget.checkValidity = () => {
+            if (validityErrors) {
+                feedback.innerHTML = "<strong>Invalid JSON format</strong>";
+                container.scrollIntoView();
+                editor.focus();
+            } else {
+                feedback.innerText = "";
+            }
+
+            return !validityErrors;
+        };
     }
 }
 
