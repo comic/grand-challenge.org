@@ -247,10 +247,34 @@ def test_create_evaluation_uniqueness_checks(
 
     assert Evaluation.objects.count() == 3
 
+    sub.phase.evaluation_time_limit = 45
+    sub.phase.save()
+
     with django_capture_on_commit_callbacks(execute=True):
         sub.create_evaluation()
 
-    assert Evaluation.objects.count() == 3
+    assert Evaluation.objects.count() == 4
+
+    sub.phase.evaluation_requires_gpu_type = GPUTypeChoices.A10G
+    sub.phase.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sub.create_evaluation()
+
+    assert Evaluation.objects.count() == 5
+
+    sub.phase.evaluation_requires_memory_gb = 16
+    sub.phase.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sub.create_evaluation()
+
+    assert Evaluation.objects.count() == 6
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sub.create_evaluation()
+
+    assert Evaluation.objects.count() == 6
 
 
 @pytest.mark.django_db

@@ -1551,10 +1551,10 @@ class Submission(FieldChangeMixin, UUIDModel):
                 submission=self,
                 method=method,
                 ground_truth=self.phase.active_ground_truth,
+                time_limit=self.phase.evaluation_time_limit,
+                requires_gpu_type=self.phase.evaluation_requires_gpu_type,
+                requires_memory_gb=self.phase.evaluation_requires_memory_gb,
                 defaults={
-                    "time_limit": self.phase.evaluation_time_limit,
-                    "requires_gpu_type": self.phase.evaluation_requires_gpu_type,
-                    "requires_memory_gb": self.phase.evaluation_requires_memory_gb,
                     "status": Evaluation.VALIDATING_INPUTS,
                 },
             )
@@ -1725,7 +1725,14 @@ class Evaluation(ComponentJob):
     )
 
     class Meta(UUIDModel.Meta, ComponentJob.Meta):
-        unique_together = ("submission", "method", "ground_truth")
+        unique_together = (
+            "submission",
+            "method",
+            "ground_truth",
+            "time_limit",
+            "requires_gpu_type",
+            "requires_memory_gb",
+        )
         permissions = [("claim_evaluation", "Can claim evaluation")]
 
     def save(self, *args, **kwargs):
