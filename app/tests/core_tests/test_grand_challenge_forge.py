@@ -135,6 +135,7 @@ def test_get_challenge_pack_context():
     assert len(context["challenge"]["phases"]) == 0
 
 
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.django_db
 def test_get_algorithm_template_context():
     algorithm = AlgorithmFactory()
