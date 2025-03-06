@@ -35,7 +35,6 @@ from grandchallenge.evaluation.models import (
     SubmissionGroupObjectPermission,
     SubmissionUserObjectPermission,
 )
-from grandchallenge.evaluation.tasks import create_evaluation
 
 
 class PhaseAdminForm(ModelForm):
@@ -113,9 +112,7 @@ class PhaseAdmin(admin.ModelAdmin):
 def reevaluate_submissions(modeladmin, request, queryset):
     """Creates a new evaluation for an existing submission"""
     for submission in queryset:
-        create_evaluation.apply_async(
-            kwargs={"submission_pk": str(submission.pk)}
-        )
+        submission.create_evaluation()
 
 
 @admin.register(Submission)

@@ -98,6 +98,12 @@ class ChallengeFactory(factory.django.DjangoModelFactory):
     short_name = factory.Sequence(lambda n: f"test-challenge-{n}")
     creator = factory.SubFactory(UserFactory)
 
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        obj = super()._create(model_class, *args, **kwargs)
+        # Get a fresh copy with annotations
+        return Challenge.objects.with_available_compute().get(pk=obj.pk)
+
 
 class ChallengeRequestFactory(factory.django.DjangoModelFactory):
     class Meta:

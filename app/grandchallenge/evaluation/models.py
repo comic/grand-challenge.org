@@ -63,7 +63,7 @@ from grandchallenge.evaluation.tasks import (
     assign_evaluation_permissions,
     assign_submission_permissions,
     calculate_ranks,
-    create_evaluation,
+    prepare_and_execute_evaluation,
     update_combined_leaderboard,
 )
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
@@ -1519,10 +1519,56 @@ class Submission(FieldChangeMixin, UUIDModel):
                     send_action=False,
                 )
 
-            e = create_evaluation.signature(
-                kwargs={"submission_pk": self.pk}, immutable=True
+    def create_evaluation(self):
+        if self.phase.external_evaluation:
+            evaluation, created = Evaluation.objects.get_or_create(
+                submission=self,
+                defaults={
+                    "time_limit": self.phase.evaluation_time_limit,
+                    "requires_gpu_type": self.phase.evaluation_requires_gpu_type,
+                    "requires_memory_gb": self.phase.evaluation_requires_memory_gb,
+                },
             )
-            on_commit(e.apply_async)
+            if not created:
+                logger.info(
+                    "External evaluation already created for this submission."
+                )
+            return
+        else:
+            method = self.phase.active_image
+            if not method:
+                logger.error("No method ready for this submission")
+                Notification.send(
+                    kind=NotificationType.NotificationTypeChoices.MISSING_METHOD,
+                    message="missing method",
+                    actor=self.creator,
+                    action_object=self,
+                    target=self.phase,
+                )
+                return
+
+            evaluation, created = Evaluation.objects.get_or_create(
+                submission=self,
+                method=method,
+                ground_truth=self.phase.active_ground_truth,
+                defaults={
+                    "time_limit": self.phase.evaluation_time_limit,
+                    "requires_gpu_type": self.phase.evaluation_requires_gpu_type,
+                    "requires_memory_gb": self.phase.evaluation_requires_memory_gb,
+                    "status": Evaluation.VALIDATING_INPUTS,
+                },
+            )
+
+            if not created:
+                logger.error(
+                    "Evaluation already created for this submission, method and ground truth."
+                )
+                return
+
+        e = prepare_and_execute_evaluation.signature(
+            kwargs={"evaluation_pk": evaluation.pk}, immutable=True
+        )
+        on_commit(e.apply_async)
 
     def assign_permissions(self):
         assign_perm("view_submission", self.phase.challenge.admins_group, self)

@@ -15,12 +15,14 @@ from grandchallenge.components.tasks import (
     push_container_image,
     validate_docker_image,
 )
-from grandchallenge.evaluation.models import Evaluation, Method
+from grandchallenge.evaluation.models import Evaluation, Method, Submission
 from grandchallenge.evaluation.tasks import (
     cancel_external_evaluations_past_timeout,
     create_algorithm_jobs_for_evaluation,
     set_evaluation_inputs,
 )
+from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.invoices.models import PaymentTypeChoices
 from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from tests.algorithms_tests.factories import (
@@ -38,10 +40,14 @@ from tests.evaluation_tests.factories import (
     EvaluationFactory,
     MethodFactory,
     PhaseFactory,
-    SubmissionFactory,
 )
 from tests.factories import ChallengeFactory, UserFactory
-from tests.utils import recurse_callbacks
+from tests.invoices_tests.factories import InvoiceFactory
+from tests.uploads_tests.factories import (
+    create_completed_upload,
+    create_upload_from_file,
+)
+from tests.utils import get_view_for_user, recurse_callbacks
 
 
 @pytest.mark.django_db
@@ -49,6 +55,7 @@ def test_submission_evaluation(
     evaluation_image,
     submission_file,
     settings,
+    client,
     django_capture_on_commit_callbacks,
 ):
     # Override the celery settings
@@ -57,8 +64,14 @@ def test_submission_evaluation(
 
     # Upload a submission and create an evaluation
     eval_container, sha256 = evaluation_image
+    phase = PhaseFactory(
+        submission_kind=SubmissionKindChoices.CSV,
+        submissions_limit_per_user_per_period=10,
+    )
+
     with django_capture_on_commit_callbacks() as callbacks:
-        method = MethodFactory(image__from_path=eval_container)
+        method = MethodFactory(phase=phase, image__from_path=eval_container)
+
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
@@ -68,16 +81,40 @@ def test_submission_evaluation(
     with pytest.raises(NotImplementedError):
         _ = method.image.url
 
-    # This will create an evaluation, and we'll wait for it to be executed
-    with django_capture_on_commit_callbacks() as callbacks:
-        submission = SubmissionFactory(
-            predictions_file__from_path=submission_file, phase=method.phase
+    InvoiceFactory(
+        challenge=phase.challenge,
+        compute_costs_euros=10,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
+    )
+
+    participant = UserFactory()
+    phase.challenge.add_participant(user=participant)
+
+    user_upload = create_upload_from_file(
+        creator=participant, file_path=Path(submission_file)
+    )
+    user_upload.status = user_upload.StatusChoices.COMPLETED
+    user_upload.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            user=participant,
+            viewname="evaluation:submission-create",
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+            },
+            data={
+                "creator": participant.pk,
+                "phase": phase.pk,
+                "user_upload": user_upload.pk,
+            },
         )
 
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
+    assert response.status_code == 302
+    submission = Submission.objects.get()
 
     # The evaluation method should return the correct answer
     assert len(submission.evaluation_set.all()) == 1
@@ -96,19 +133,31 @@ def test_submission_evaluation(
     )
 
     # Try with a csv file
-    with django_capture_on_commit_callbacks() as callbacks:
-        submission = SubmissionFactory(
-            predictions_file__from_path=Path(__file__).parent
-            / "resources"
-            / "submission.csv",
-            phase=method.phase,
-        )
-
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    user_upload = create_upload_from_file(
+        creator=participant,
+        file_path=Path(__file__).parent / "resources" / "submission.csv",
     )
+    user_upload.status = user_upload.StatusChoices.COMPLETED
+    user_upload.save()
 
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            user=participant,
+            viewname="evaluation:submission-create",
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+            },
+            data={
+                "creator": participant.pk,
+                "phase": phase.pk,
+                "user_upload": user_upload.pk,
+            },
+        )
+    assert response.status_code == 302
+    submission = Submission.objects.last()
     evaluation = submission.evaluation_set.first()
     assert len(submission.evaluation_set.all()) == 1
     assert evaluation.status == evaluation.SUCCESS
@@ -517,25 +566,54 @@ def test_non_zip_submission_failure(
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    # Upload a submission and create an evaluation
-    eval_container, sha256 = evaluation_image
-    method = MethodFactory(
-        image__from_path=eval_container,
-        image_sha256=sha256,
+    phase = PhaseFactory(
+        submission_kind=SubmissionKindChoices.CSV,
+        submissions_limit_per_user_per_period=1,
+    )
+
+    InvoiceFactory(
+        challenge=phase.challenge,
+        compute_costs_euros=10,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
+    )
+
+    MethodFactory(
+        phase=phase,
         is_manifest_valid=True,
         is_in_registry=True,
         is_desired_version=True,
     )
 
-    # Try with a 7z file
+    participant = UserFactory()
+    phase.challenge.add_participant(user=participant)
+
+    user_upload = create_upload_from_file(
+        creator=participant,
+        file_path=Path(__file__).parent / "resources" / "submission.7z",
+    )
+    user_upload.status = user_upload.StatusChoices.COMPLETED
+    user_upload.save()
+
     with django_capture_on_commit_callbacks(execute=True):
-        submission = SubmissionFactory(
-            predictions_file__from_path=Path(__file__).parent
-            / "resources"
-            / "submission.7z",
-            phase=method.phase,
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            user=participant,
+            viewname="evaluation:submission-create",
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+            },
+            data={
+                "creator": participant.pk,
+                "phase": phase.pk,
+                "user_upload": user_upload.pk,
+            },
         )
 
+    assert response.status_code == 302
+
+    submission = Submission.objects.get()
     # The evaluation method should return the correct answer
     assert len(submission.evaluation_set.all()) == 1
     evaluation = submission.evaluation_set.first()
@@ -557,43 +635,58 @@ def test_evaluation_notifications(
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    # Try to upload a submission without a method in place
-    with django_capture_on_commit_callbacks(execute=True):
-        submission = SubmissionFactory(
-            predictions_file__from_path=submission_file
-        )
-    # Missing should result in notification for admins of the challenge
-    # There are 2 notifications here. The second is about admin addition to the
-    # challenge, both notifications are for the admin.
-    for notification in Notification.objects.all():
-        assert notification.user == submission.phase.challenge.creator
-    assert (
-        "there is no valid evaluation method"
-        in Notification.objects.filter(message="missing method")
-        .get()
-        .print_notification(user=submission.phase.challenge.creator)
+    # Try to upload a submission
+    phase = PhaseFactory(
+        submission_kind=SubmissionKindChoices.CSV,
+        submissions_limit_per_user_per_period=10,
     )
 
     # Add method and upload a submission
     eval_container, sha256 = evaluation_image
     with django_capture_on_commit_callbacks() as callbacks:
-        method = MethodFactory(image__from_path=eval_container)
+        MethodFactory(phase=phase, image__from_path=eval_container)
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
     )
 
-    # clear notifications for easier testing later
-    Notification.objects.all().delete()
-    # create submission and wait for it to be evaluated
-    with django_capture_on_commit_callbacks() as callbacks:
-        submission = SubmissionFactory(
-            predictions_file__from_path=submission_file, phase=method.phase
-        )
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    InvoiceFactory(
+        challenge=phase.challenge,
+        compute_costs_euros=10,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
+
+    participant = UserFactory()
+    phase.challenge.add_participant(user=participant)
+
+    user_upload = create_upload_from_file(
+        creator=participant, file_path=Path(submission_file)
+    )
+    user_upload.status = user_upload.StatusChoices.COMPLETED
+    user_upload.save()
+
+    Notification.objects.all().delete()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            user=participant,
+            viewname="evaluation:submission-create",
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+            },
+            data={
+                "creator": participant.pk,
+                "phase": phase.pk,
+                "user_upload": user_upload.pk,
+            },
+        )
+
+    assert response.status_code == 302
+    submission = Submission.objects.get()
+
     # creator of submission and admins of challenge should get notification
     # about successful submission
     recipients = list(submission.phase.challenge.get_admins())
@@ -760,13 +853,20 @@ def test_cancel_external_evaluations_past_timeout(settings):
     (300, 43200),
 )
 def test_evaluation_time_limit_set(
-    django_capture_on_commit_callbacks, evaluation_time_limit
+    django_capture_on_commit_callbacks, client, evaluation_time_limit
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    phase = PhaseFactory(
+        submission_kind=SubmissionKindChoices.CSV,
+        submissions_limit_per_user_per_period=1,
+        evaluation_time_limit=evaluation_time_limit,
+    )
 
-    phase = PhaseFactory(evaluation_time_limit=evaluation_time_limit)
+    InvoiceFactory(
+        challenge=phase.challenge,
+        compute_costs_euros=10,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
+    )
+
     MethodFactory(
         phase=phase,
         is_manifest_valid=True,
@@ -774,9 +874,30 @@ def test_evaluation_time_limit_set(
         is_desired_version=True,
     )
 
-    with django_capture_on_commit_callbacks(execute=True):
-        submission = SubmissionFactory(phase=phase)
+    participant = UserFactory()
+    phase.challenge.add_participant(user=participant)
 
+    user_upload = create_completed_upload(user=participant)
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        user=participant,
+        viewname="evaluation:submission-create",
+        reverse_kwargs={
+            "challenge_short_name": phase.challenge.short_name,
+            "slug": phase.slug,
+        },
+        data={
+            "creator": participant.pk,
+            "phase": phase.pk,
+            "user_upload": user_upload.pk,
+        },
+    )
+
+    assert response.status_code == 302
+
+    submission = Submission.objects.get()
     evaluation = submission.evaluation_set.get()
     assert evaluation.time_limit == evaluation_time_limit
 
