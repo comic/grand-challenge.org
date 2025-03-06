@@ -123,16 +123,14 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if "interface" not in attrs:
-            raise serializers.ValidationError(
-                "An interface must be specified"
-            )
-        
+            raise serializers.ValidationError("An interface must be specified")
+
         interface = attrs["interface"]
-        
+
         attributes = [
             attribute for attribute in attrs if attribute != "interface"
         ]
-        
+
         if len(attributes) > 1:
             raise serializers.ValidationError(
                 "Only one of image, value, user_upload and "
