@@ -34,7 +34,6 @@ OVERLAY_SEGMENTS_SCHEMA = {
                 "name": "Metastasis",
                 "voxel_value": 1,
                 "visible": True,
-                "metric_template": "{{metrics.volumes[0]}} mm³",
             }
         ],
         "required": ["voxel_value", "name", "visible"],
@@ -64,14 +63,6 @@ OVERLAY_SEGMENTS_SCHEMA = {
                 "description": "Whether this segment is visible by default.",
                 "default": True,
                 "examples": [True],
-            },
-            "metric_template": {
-                "$id": "#/items/properties/metric_template",
-                "type": "string",
-                "title": "The Metric Template Schema",
-                "description": "The jinja template to determine which property from the results.json should be used as the label text.",
-                "default": "",
-                "examples": ["{{metrics.volumes[0]}} mm³"],
             },
         },
     },
@@ -268,11 +259,8 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
             '{"name": "tissue", "visible": true, "voxel_value": 1}]. '
             "If a categorical overlay is shown, "
             "it is possible to show toggles to change the visibility of the different overlay categories. "
-            "To do so, configure the categories that should be displayed. Data from the "
-            "algorithm's output.json can be added as an extra label to each "
-            "toggle using jinja templating. "
-            'For example: [{"name": "Level 0", "visible": false, "voxel_value": 0, '
-            '"metric_template": "{{metrics.volumes[0]}} mm³"}]. '
+            "To do so, configure the categories that should be displayed. "
+            'For example: [{"name": "Level 0", "visible": false, "voxel_value": 0].'
         ),
     )
 
