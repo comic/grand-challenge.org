@@ -23,13 +23,6 @@ _fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
             {},
             False,
         ),
-        (  # Case: invoice, but of complimentary type
-            dict(
-                payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
-                payment_status=Invoice.PaymentStatusChoices.ISSUED,
-            ),
-            False,
-        ),
         (  # Case: invoice, but not long outstanding
             dict(
                 payment_type=Invoice.PaymentTypeChoices.PREPAID,
@@ -46,6 +39,22 @@ _fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
             ),
             True,
         ),
+        (  # Case: postpaid invoice outstanding
+            dict(
+                payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+                payment_status=Invoice.PaymentStatusChoices.ISSUED,
+                issued_on=_fixed_now - timedelta(weeks=5),
+            ),
+            True,
+        ),
+        (  # Case: invoice, but of complimentary type
+            dict(
+                payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
+                payment_status=Invoice.PaymentStatusChoices.ISSUED,
+                issued_on=_fixed_now - timedelta(weeks=5),
+            ),
+            False,
+        ),
     ],
 )
 def test_challenge_outstanding_invoice_reminder_emails(
@@ -61,13 +70,14 @@ def test_challenge_outstanding_invoice_reminder_emails(
     staff_user = UserFactory(is_staff=True)
     settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
 
-    invoice = InvoiceFactory(
-        challenge=challenge,
-        support_costs_euros=0,
-        compute_costs_euros=10,
-        storage_costs_euros=0,
-        **invoice_kwargs,
-    )
+    if invoice_kwargs:
+        invoice = InvoiceFactory(
+            challenge=challenge,
+            support_costs_euros=0,
+            compute_costs_euros=10,
+            storage_costs_euros=0,
+            **invoice_kwargs,
+        )
 
     mocker.patch(
         "grandchallenge.invoices.tasks.now",
@@ -100,6 +110,57 @@ def test_challenge_outstanding_invoice_reminder_emails(
     else:
         assert not any(staff_user.email in m.to for m in mail.outbox)
         assert not any(challenge_admin.email in m.to for m in mail.outbox)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "payment_type",
+    [
+        Invoice.PaymentTypeChoices.COMPLIMENTARY,
+        Invoice.PaymentTypeChoices.PREPAID,
+        Invoice.PaymentTypeChoices.POSTPAID,
+    ],
+)
+@pytest.mark.parametrize(
+    "payment_status",
+    [
+        Invoice.PaymentStatusChoices.INITIALIZED,
+        Invoice.PaymentStatusChoices.REQUESTED,
+        Invoice.PaymentStatusChoices.PAID,
+    ],
+)
+def test_challenge_outstanding_invoice_reminder_emails_not_sent(
+    payment_type,
+    payment_status,
+    settings,
+    mocker,
+):
+    challenge = ChallengeFactory()
+    challenge_admin = UserFactory()
+    challenge.add_admin(challenge_admin)
+
+    staff_user = UserFactory(is_staff=True)
+    settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
+
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_type=payment_type,
+        payment_status=payment_status,
+        issued_on=_fixed_now - timedelta(weeks=5),
+    )
+
+    mocker.patch(
+        "grandchallenge.invoices.tasks.now",
+        return_value=_fixed_now,
+    )
+
+    send_challenge_outstanding_invoice_reminder_emails()
+
+    assert not any(staff_user.email in m.to for m in mail.outbox)
+    assert not any(challenge_admin.email in m.to for m in mail.outbox)
 
 
 @pytest.mark.django_db
