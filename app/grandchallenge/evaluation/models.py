@@ -1581,7 +1581,6 @@ class Submission(FieldChangeMixin, UUIDModel):
             e = prepare_and_execute_evaluation.signature(
                 kwargs={"evaluation_pk": evaluation.pk}, immutable=True
             )
-
             on_commit(e.apply_async)
 
     def assign_permissions(self):
@@ -1893,7 +1892,6 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
         linked_task = prepare_and_execute_evaluation.signature(
             kwargs={
-                "submission_pk": self.submission.pk,
                 "evaluation_pk": self.pk,
             },
             immutable=True,
