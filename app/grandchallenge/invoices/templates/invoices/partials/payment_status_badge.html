@@ -1,0 +1,14 @@
+<span class="badge
+        {% if invoice.payment_type == invoice.PaymentTypeChoices.COMPLIMENTARY or invoice.payment_status == invoice.PaymentStatusChoices.PAID %}
+            badge-success
+        {% elif invoice.payment_type != invoice.PaymentTypeChoices.COMPLIMENTARY and invoice.payment_status == invoice.PaymentStatusChoices.ISSUED %}
+            badge-warning
+        {% else %}
+            badge-info
+        {% endif %}">
+    {% if invoice.payment_type == invoice.PaymentTypeChoices.COMPLIMENTARY %}
+        {{ invoice.PaymentStatusChoices.PAID.label }}
+    {% else %}
+        {{ invoice.get_payment_status_display }}
+    {% endif %}
+</span>
