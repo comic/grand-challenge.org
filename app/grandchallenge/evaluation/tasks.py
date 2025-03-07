@@ -49,8 +49,15 @@ def prepare_and_execute_evaluation(
     evaluation = Evaluation.objects.get(pk=evaluation_pk)
     submission = evaluation.submission
 
+    if not evaluation.additional_inputs_complete:
+        logger.info("Nothing to do, inputs are still being validated.")
+        return
+
     if evaluation.status != evaluation.VALIDATING_INPUTS:
-        raise RuntimeError("Evaluation is not ready to be executed.")
+        # this task can be called multiple times with complete inputs,
+        # and might have been queued for execution already, so ignore
+        logger.info("Evaluation has already been scheduled for execution.")
+        return
 
     if not submission.predictions_file and submission.user_upload:
         submission.user_upload.copy_object(

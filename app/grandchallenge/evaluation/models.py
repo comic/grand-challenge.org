@@ -1857,6 +1857,11 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         else:
             return False
 
+    @cached_property
+    def additional_inputs_complete(self):
+        phase_input_count = self.submission.phase.inputs.count()
+        return self.inputs.count() == phase_input_count
+
     @property
     def is_editable(self):
         # staying with display set and archive item terminology here

@@ -15,6 +15,10 @@ urlpatterns = [
         "", include("grandchallenge.well_known.urls", namespace="well-known")
     ),
     path(
+        "cases/",
+        include("grandchallenge.cases.urls", namespace="cases"),
+    ),
+    path(
         "components/",
         include("grandchallenge.components.urls", namespace="components"),
     ),

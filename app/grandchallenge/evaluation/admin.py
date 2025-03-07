@@ -113,11 +113,12 @@ def reevaluate_submissions(modeladmin, request, queryset):
     """Creates a new evaluation for an existing submission"""
     for submission in queryset:
         if submission.phase.inputs.exists():
-            messages.error(
+            modeladmin.message_user(
                 request,
                 f"Submission {submission.pk} cannot be reevaluated in the admin "
                 f"because it requires additional inputs. "
                 f"Please reschedule through the challenge UI.",
+                messages.WARNING,
             )
         else:
             submission.create_evaluation()
