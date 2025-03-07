@@ -6,7 +6,6 @@ from grandchallenge.challenges.views import (
     OnboardingTaskComplete,
     OnboardingTaskList,
 )
-from grandchallenge.invoices.views import InvoiceList
 
 handler500 = "grandchallenge.core.views.handler500"
 
@@ -23,6 +22,10 @@ urlpatterns = [
         "evaluation/",
         include("grandchallenge.evaluation.urls", namespace="evaluation"),
     ),
+    path(
+        "invoices/",
+        include("grandchallenge.invoices.urls", namespace="invoices"),
+    ),
     path("teams/", include("grandchallenge.teams.urls", namespace="teams")),
     path(
         "participants/",
@@ -30,11 +33,6 @@ urlpatterns = [
     ),
     path("admins/", include("grandchallenge.admins.urls", namespace="admins")),
     path("update/", ChallengeUpdate.as_view(), name="challenge-update"),
-    path(
-        "invoices/",
-        InvoiceList.as_view(),
-        name="challenge-invoice-list",
-    ),
     path(
         "onboarding-tasks/",
         OnboardingTaskList.as_view(),

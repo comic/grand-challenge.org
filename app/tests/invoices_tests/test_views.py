@@ -27,7 +27,7 @@ def test_invoice_list_view_permissions(
         challenge.add_admin(user)
 
     response = get_view_for_user(
-        viewname="challenge-invoice-list",
+        viewname="invoices:list",
         client=client,
         challenge=challenge,
         user=user,
@@ -50,7 +50,7 @@ def test_invoice_list_view_num_invoices_shown(client):
             )
 
         response = get_view_for_user(
-            viewname="challenge-invoice-list",
+            viewname="invoices:list",
             client=client,
             challenge=challenge,
             user=challenge_admin,
@@ -102,7 +102,7 @@ def test_invoice_list_view_content(client, invoice_kwargs, badge_and_status):
     )
 
     response = get_view_for_user(
-        viewname="challenge-invoice-list",
+        viewname="invoices:list",
         client=client,
         challenge=challenge,
         user=challenge_admin,
@@ -133,7 +133,7 @@ def test_invoice_list_view_content_complimentary_status_always_paid(
     )
 
     response = get_view_for_user(
-        viewname="challenge-invoice-list",
+        viewname="invoices:list",
         client=client,
         challenge=challenge,
         user=challenge_admin,
