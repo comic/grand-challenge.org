@@ -2296,6 +2296,8 @@ class TestSubmissionCreationWithExtraInputs:
         )
         file_upload.save()
 
+        old_civ_count = ComponentInterfaceValue.objects.count()
+
         response = self.create_submission(
             client=client,
             django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
@@ -2324,7 +2326,7 @@ class TestSubmissionCreationWithExtraInputs:
             algorithm_phase_with_multiple_inputs.ci_json_file.title: "JSON does not fulfill schema: instance is not of type 'array'"
         }
         # and no CIVs should have been created
-        assert ComponentInterfaceValue.objects.count() == 0
+        assert ComponentInterfaceValue.objects.count() == old_civ_count
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_faulty_json_input(
@@ -2380,6 +2382,8 @@ class TestSubmissionCreationWithExtraInputs:
             file_path=RESOURCE_PATH / "corrupt.png",
         )
 
+        old_civ_count = ComponentInterfaceValue.objects.count()
+
         response = self.create_submission(
             client=client,
             django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
@@ -2408,4 +2412,4 @@ class TestSubmissionCreationWithExtraInputs:
             eval.detailed_error_message
         )
         # and no CIVs should have been created
-        assert ComponentInterfaceValue.objects.count() == 0
+        assert ComponentInterfaceValue.objects.count() == old_civ_count

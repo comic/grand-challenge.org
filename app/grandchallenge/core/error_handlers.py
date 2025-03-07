@@ -10,22 +10,10 @@ class ErrorHandler(ABC):
         pass
 
 
-class JobCIVErrorHandler(ErrorHandler):
-    """
-    Error handler for CIV validation errors on job creation.
-    Handle_error() updates an algorithm job.
-    """
+class ComponentJobCIVErrorHandler(ErrorHandler):
 
     def __init__(self, *args, job, **kwargs):
         super().__init__(*args, **kwargs)
-
-        from grandchallenge.algorithms.models import Job
-
-        if not job or not isinstance(job, Job):
-            raise RuntimeError(
-                "You need to provide a Job instance to this error handler."
-            )
-
         self._job = job
 
     def handle_error(self, *, error_message, interface=None, user=None):
@@ -42,6 +30,40 @@ class JobCIVErrorHandler(ErrorHandler):
         else:
             self._job.update_status(
                 status=self._job.CANCELLED, error_message=error_message
+            )
+
+
+class JobCIVErrorHandler(ComponentJobCIVErrorHandler):
+    """
+    Error handler for CIV validation errors on job creation.
+    Handle_error() updates an algorithm job.
+    """
+
+    def __init__(self, *args, job, **kwargs):
+        super().__init__(*args, job=job, **kwargs)
+
+        from grandchallenge.algorithms.models import Job
+
+        if not job or not isinstance(job, Job):
+            raise RuntimeError(
+                "You need to provide a Job instance to this error handler."
+            )
+
+
+class EvaluationCIVErrorHandler(ComponentJobCIVErrorHandler):
+    """
+    Error handler for CIV validation errors on evaluation creation.
+    Handle_error() updates an evaluation.
+    """
+
+    def __init__(self, *args, job, **kwargs):
+        super().__init__(*args, job=job, **kwargs)
+
+        from grandchallenge.evaluation.models import Evaluation
+
+        if not job or not isinstance(job, Evaluation):
+            raise RuntimeError(
+                "You need to provide a Evaluation instance to this error handler."
             )
 
 
