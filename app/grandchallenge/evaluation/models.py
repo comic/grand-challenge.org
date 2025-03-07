@@ -1488,17 +1488,11 @@ class Submission(FieldChangeMixin, UUIDModel):
         active_image = self.phase.active_image
         active_ground_truth = self.phase.active_ground_truth
         if active_image:
-            if self.phase.inputs.exists():
-                # for phases with additional inputs,
-                # always show the option to re-evaluate
-                # and check the additional input in the form
-                return False
-            else:
-                return Evaluation.objects.filter(
-                    submission=self,
-                    method=active_image,
-                    ground_truth=active_ground_truth,
-                ).exists()
+            return Evaluation.objects.filter(
+                submission=self,
+                method=active_image,
+                ground_truth=active_ground_truth,
+            ).exists()
         else:
             # No active image, so nothing to do to evaluate with it
             return True
