@@ -15,6 +15,37 @@ from tests.utils import get_view_for_user
         ("admin", 200),
     ),
 )
+def test_invoice_detail_view_permissions(
+    client, user_type, response_status_code
+):
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(challenge=challenge)
+
+    user = UserFactory()
+    if user_type == "participant":
+        challenge.add_participant(user)
+    elif user_type == "admin":
+        challenge.add_admin(user)
+
+    response = get_view_for_user(
+        viewname="invoices:detail",
+        client=client,
+        challenge=challenge,
+        user=user,
+        reverse_kwargs={"pk": invoice.pk},
+    )
+    assert response.status_code == response_status_code
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_type, response_status_code",
+    (
+        ("user", 403),
+        ("participant", 403),
+        ("admin", 200),
+    ),
+)
 def test_invoice_list_view_permissions(
     client, user_type, response_status_code
 ):
