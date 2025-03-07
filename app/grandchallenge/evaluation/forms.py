@@ -25,8 +25,16 @@ from django.utils.text import format_lazy
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    InterfaceFormFieldFactory,
+)
 from grandchallenge.components.forms import ContainerImageForm
-from grandchallenge.components.models import ImportStatusChoices
+from grandchallenge.components.models import (
+    CIVData,
+    ComponentInterface,
+    ImportStatusChoices,
+)
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
@@ -285,8 +293,51 @@ class AlgorithmChoiceField(ModelChoiceField):
         return obj.form_field_label()
 
 
+class AdditionalInputsMixin:
+    def init_additional_inputs(self, *, inputs):
+        for input in inputs:
+            prefixed_interface_slug = (
+                f"{INTERFACE_FORM_FIELD_PREFIX}{input.slug}"
+            )
+
+            if prefixed_interface_slug in self.data:
+                if (
+                    not input.requires_file
+                    and input.kind == ComponentInterface.Kind.ANY
+                ):
+                    # interfaces for which the data can be a list need
+                    # to be retrieved with getlist() from the QueryDict
+                    initial = self.data.getlist(prefixed_interface_slug)
+                else:
+                    initial = self.data[prefixed_interface_slug]
+            else:
+                initial = None
+
+            self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
+                interface=input,
+                user=self._user,
+                required=input.value_required,
+                initial=initial if initial else input.default_value,
+            )
+
+    def clean_additional_inputs(self):
+        civs = []
+        for key, value in self.cleaned_data.items():
+            if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
+                civs.append(
+                    CIVData(
+                        interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
+                        value=value,
+                    )
+                )
+        return civs
+
+
 class SubmissionForm(
-    UserAlgorithmsForPhaseMixin, SaveFormInitMixin, forms.ModelForm
+    UserAlgorithmsForPhaseMixin,
+    SaveFormInitMixin,
+    AdditionalInputsMixin,
+    forms.ModelForm,
 ):
     user_upload = ModelChoiceField(
         widget=UserUploadSingleWidget(
@@ -443,6 +494,8 @@ class SubmissionForm(
             if not self._phase.active_image:
                 self.fields["user_upload"].disabled = True
 
+        self.init_additional_inputs(inputs=self._phase.inputs.all())
+
     def clean(self):
         cleaned_data = super().clean()
         if (
@@ -459,6 +512,9 @@ class SubmissionForm(
             raise ValidationError(
                 "You must confirm that you want to submit to this phase."
             )
+
+        cleaned_data["additional_inputs"] = self.clean_additional_inputs()
+
         return cleaned_data
 
     def clean_phase(self):
@@ -655,7 +711,11 @@ class SubmissionForm(
             self.instance.algorithm_requires_memory_gb = 0
 
         instance = super().save(*args, **kwargs)
-        instance.create_evaluation()
+
+        instance.create_evaluation(
+            additional_inputs=self.cleaned_data["additional_inputs"]
+        )
+
         return instance
 
     class Meta:
@@ -685,7 +745,7 @@ class CombinedLeaderboardForm(SaveFormInitMixin, forms.ModelForm):
         widgets = {"phases": forms.CheckboxSelectMultiple}
 
 
-class EvaluationForm(SaveFormInitMixin, forms.Form):
+class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
     submission = ModelChoiceField(
         queryset=None, disabled=True, widget=HiddenInput()
     )
@@ -693,12 +753,14 @@ class EvaluationForm(SaveFormInitMixin, forms.Form):
     def __init__(self, submission, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self._user = user
         self.fields["submission"].queryset = filter_by_permission(
             queryset=Submission.objects.filter(pk=submission.pk),
             user=user,
             codename="view_submission",
         )
         self.fields["submission"].initial = submission
+        self.init_additional_inputs(inputs=submission.phase.inputs.all())
 
     def clean(self):
         cleaned_data = super().clean()

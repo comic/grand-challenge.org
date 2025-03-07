@@ -32,6 +32,7 @@ from grandchallenge.algorithms.models import (
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.models import (
+    CIVForObjectMixin,
     ComponentImage,
     ComponentInterface,
     ComponentJob,
@@ -1487,11 +1488,17 @@ class Submission(FieldChangeMixin, UUIDModel):
         active_image = self.phase.active_image
         active_ground_truth = self.phase.active_ground_truth
         if active_image:
-            return Evaluation.objects.filter(
-                submission=self,
-                method=active_image,
-                ground_truth=active_ground_truth,
-            ).exists()
+            if self.phase.inputs.exists():
+                # for phases with additional inputs,
+                # always show the option to re-evaluate
+                # and check the additional input in the form
+                return False
+            else:
+                return Evaluation.objects.filter(
+                    submission=self,
+                    method=active_image,
+                    ground_truth=active_ground_truth,
+                ).exists()
         else:
             # No active image, so nothing to do to evaluate with it
             return True
@@ -1519,7 +1526,7 @@ class Submission(FieldChangeMixin, UUIDModel):
                     send_action=False,
                 )
 
-    def create_evaluation(self):
+    def create_evaluation(self, *, additional_inputs=None):
         if self.phase.external_evaluation:
             evaluation, created = Evaluation.objects.get_or_create(
                 submission=self,
@@ -1565,10 +1572,17 @@ class Submission(FieldChangeMixin, UUIDModel):
                 )
                 return
 
-        e = prepare_and_execute_evaluation.signature(
-            kwargs={"evaluation_pk": evaluation.pk}, immutable=True
-        )
-        on_commit(e.apply_async)
+        if additional_inputs:
+            evaluation.validate_values_and_execute_linked_task(
+                values=additional_inputs,
+                user=self.creator,
+            )
+        else:
+            e = prepare_and_execute_evaluation.signature(
+                kwargs={"evaluation_pk": evaluation.pk}, immutable=True
+            )
+
+            on_commit(e.apply_async)
 
     def assign_permissions(self):
         assign_perm("view_submission", self.phase.challenge.admins_group, self)
@@ -1694,7 +1708,7 @@ class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
-class Evaluation(ComponentJob):
+class Evaluation(CIVForObjectMixin, ComponentJob):
     """Stores information about a evaluation for a given submission."""
 
     submission = models.ForeignKey("Submission", on_delete=models.PROTECT)
@@ -1849,6 +1863,44 @@ class Evaluation(ComponentJob):
             return True
         else:
             return False
+
+    @property
+    def is_editable(self):
+        # staying with display set and archive item terminology here
+        # since this property is checked in create_civ()
+        if self.status == self.VALIDATING_INPUTS:
+            return True
+        else:
+            return False
+
+    def add_civ(self, *, civ):
+        super().add_civ(civ=civ)
+        return self.inputs.add(civ)
+
+    def remove_civ(self, *, civ):
+        super().remove_civ(civ=civ)
+        return self.inputs.remove(civ)
+
+    def get_civ_for_interface(self, interface):
+        return self.inputs.get(interface=interface)
+
+    def validate_values_and_execute_linked_task(
+        self, *, values, user, linked_task=None
+    ):
+        from grandchallenge.evaluation.tasks import (
+            prepare_and_execute_evaluation,
+        )
+
+        linked_task = prepare_and_execute_evaluation.signature(
+            kwargs={
+                "submission_pk": self.submission.pk,
+                "evaluation_pk": self.pk,
+            },
+            immutable=True,
+        )
+        return super().validate_values_and_execute_linked_task(
+            values=values, user=user, linked_task=linked_task
+        )
 
     @property
     def executor_kwargs(self):
