@@ -1,0 +1,51 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load url %}
+
+{% block title %}
+    Invoice - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Invoice</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Invoice {{ invoice.internal_invoice_number }} for {{ challenge.short_name }}</h2>
+
+    <dl class="row">
+        <dt class="col-3 mb-2">Payment type</dt>
+        <dd class="col-9">{{ invoice.get_payment_type_display }}</dd>
+
+        <dt class="col-3 mb-2 align-content-center">Payment status</dt>
+        <dd class="col-9">{% include "invoices/partials/payment_status_badge.html" with extra_classes="p-2" %}</dd>
+
+        <dt class="col-3 mb-2">Issued on</dt>
+        <dd class="col-9">{{ invoice.issued_on }}</dd>
+
+        <dt class="col-3 mb-2">Support costs</dt>
+        <dd class="col-9">€ {{ invoice.support_costs_euros }}</dd>
+
+        <dt class="col-3 mb-2">Compute costs</dt>
+        <dd class="col-9">€ {{ invoice.compute_costs_euros }}</dd>
+
+        <dt class="col-3 mb-2">Storage costs</dt>
+        <dd class="col-9">€ {{ invoice.storage_costs_euros }}</dd>
+
+        <dt class="col-3 mb-2">External reference</dt>
+        <dd class="col-9">{{ invoice.external_reference }}</dd>
+
+        <dt class="col-3 mb-2">Contact person</dt>
+        <dd class="col-9">{{ invoice.contact_name }}</dd>
+    </dl>
+
+{% endblock %}
