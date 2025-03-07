@@ -111,6 +111,16 @@ class InterfaceFormFieldFactory:
 
         if field_type == forms.JSONField:
             kwargs["widget"] = JSONEditorWidget(schema=schema)
+            extra_help_text = render_to_string(
+                "components/partials/example_download_link.html",
+                {"object": interface},
+            )
+            if kwargs["help_text"]:
+                kwargs["help_text"] = (
+                    f"{kwargs['help_text']}<br>{extra_help_text}"
+                )
+            else:
+                kwargs["help_text"] = extra_help_text
         kwargs["validators"] = [JSONValidator(schema=schema)]
 
         return field_type(**kwargs)
@@ -121,13 +131,6 @@ class FileWidgetChoices(TextChoices):
     FILE_UPLOAD = "FILE_UPLOAD"
     FILE_SELECTED = "FILE_SELECTED"
     UNDEFINED = "UNDEFINED"
-
-    @property
-    def example_download_link(self):
-        return render_to_string(
-            "components/partials/example_download_link.html",
-            {"object": self.instance},
-        )
 
 
 class FlexibleFileField(MultiValueField):
