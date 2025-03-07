@@ -244,6 +244,7 @@ NON_ALGORITHM_INTERFACES = [
     "predictions-json-file",
     "predictions-zip-file",
     "metrics-json-file",
+    "results-json-file",
 ]
 
 
@@ -1402,13 +1403,13 @@ class AlgorithmModelVersionControlForm(Form):
 class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
-            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
+            slug__in=NON_ALGORITHM_INTERFACES
         ),
         widget=Select2MultipleWidget,
     )
     outputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
-            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
+            slug__in=NON_ALGORITHM_INTERFACES
         ),
         widget=Select2MultipleWidget,
     )
