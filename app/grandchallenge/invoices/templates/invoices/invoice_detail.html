@@ -15,7 +15,7 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Invoice</li>
+            aria-current="page">Invoice {{ invoice.internal_invoice_number }}</li>
     </ol>
 {% endblock %}
 
