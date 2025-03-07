@@ -1,4 +1,4 @@
-<span class="badge
+<span class="badge {{ extra_classes }}
         {% if invoice.payment_type == invoice.PaymentTypeChoices.COMPLIMENTARY or invoice.payment_status == invoice.PaymentStatusChoices.PAID %}
             badge-success
         {% elif invoice.payment_type != invoice.PaymentTypeChoices.COMPLIMENTARY and invoice.payment_status == invoice.PaymentStatusChoices.ISSUED %}
