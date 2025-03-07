@@ -1,3 +1,6 @@
+import json
+from urllib.parse import quote
+
 import factory.django
 import pytest
 from django.core.exceptions import ValidationError
@@ -7,11 +10,15 @@ from grandchallenge.components.form_fields import (
     FlexibleFileField,
     InterfaceFormFieldFactory,
 )
-from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.models import (
+    InterfaceKind,
+    InterfaceKindChoices,
+)
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
+    ComponentInterfaceExampleValueFactory,
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
@@ -420,3 +427,57 @@ def test_flexible_file_widget_prepopulated_value_user_upload():
     field = InterfaceFormFieldFactory(interface=ci, user=user, initial=initial)
     assert field.widget.attrs["current_value"] is None
     assert field.initial is None
+
+
+@pytest.mark.parametrize(
+    "component_interface_kind, example_json, download_link_is_present",
+    (
+        (
+            InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+            {
+                "name": "Region of interest 2",
+                "type": "2D bounding box",
+                "corners": [
+                    [130.8, 148.8, 0.5],
+                    [69.7, 148.8, 0.5],
+                    [69.7, 73.1, 0.5],
+                    [130.8, 73.1, 0.5],
+                ],
+                "probability": 0.95,
+                "version": {"major": 1, "minor": 0},
+            },
+            True,
+        ),
+        (
+            InterfaceKindChoices.STRING,
+            "test string",
+            False,
+        ),
+        (
+            InterfaceKindChoices.IMAGE,
+            None,
+            False,
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_interface_form_field_help_text_example_download_link(
+    component_interface_kind,
+    example_json,
+    download_link_is_present,
+):
+    user = UserFactory()
+
+    ci = ComponentInterfaceFactory(kind=component_interface_kind)
+
+    ComponentInterfaceExampleValueFactory(
+        interface=ci,
+        value=example_json,
+    )
+
+    field = InterfaceFormFieldFactory(interface=ci, user=user)
+
+    encoded_example = quote(json.dumps(ci.json_kind_example.value, indent=2))
+
+    assert ("Download example" in field.help_text) is download_link_is_present
+    assert (encoded_example in field.help_text) is download_link_is_present
