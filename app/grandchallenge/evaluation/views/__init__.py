@@ -479,17 +479,8 @@ class EvaluationCreate(
 
     def form_valid(self, form):
         redirect = super().form_valid(form)
-        self.submission.create_evaluation(
-            additional_inputs=form.cleaned_data["additional_inputs"]
-        )
+        self.submission.create_evaluation()
         return redirect
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data()
-        context.update(
-            {"submission": self.submission, "phase": self.submission.phase}
-        )
-        return context
 
 
 class EvaluationList(

@@ -7,15 +7,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db.models import (
-    BooleanField,
-    Case,
-    Count,
-    Exists,
-    OuterRef,
-    Q,
-    When,
-)
+from django.db.models import BooleanField, Case, Exists, OuterRef, When
 from django.db.transaction import on_commit
 from django.forms import (
     CheckboxInput,
@@ -753,7 +745,7 @@ class CombinedLeaderboardForm(SaveFormInitMixin, forms.ModelForm):
         widgets = {"phases": forms.CheckboxSelectMultiple}
 
 
-class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
+class EvaluationForm(SaveFormInitMixin, forms.Form):
     submission = ModelChoiceField(
         queryset=None, disabled=True, widget=HiddenInput()
     )
@@ -761,14 +753,12 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
     def __init__(self, submission, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._user = user
         self.fields["submission"].queryset = filter_by_permission(
             queryset=Submission.objects.filter(pk=submission.pk),
             user=user,
             codename="view_submission",
         )
         self.fields["submission"].initial = submission
-        self.init_additional_inputs(inputs=submission.phase.inputs.all())
 
     def clean(self):
         cleaned_data = super().clean()
@@ -785,33 +775,6 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
 
         if challenge.available_compute_euro_millicents <= 0:
             raise ValidationError("This challenge has exceeded its budget")
-
-        cleaned_data["additional_inputs"] = self.clean_additional_inputs()
-
-        # check that there isn't any evaluation with
-        # this combination of additional inputs yet
-        if (
-            Evaluation.objects.filter(
-                submission=self.instance,
-                method=self.instance.phase.active_method,
-                ground_truth=self.instance.phase.active_ground_truth,
-            )
-            .annotate(
-                input_count=Count("inputs", distinct=True),
-                relevant_input_count=Count(
-                    "inputs",
-                    filter=Q(inputs__in=cleaned_data["additional_inputs"]),
-                ),
-            )
-            .filter(
-                input_count=len(cleaned_data["additional_inputs"]),
-                relevant_input_count=len(cleaned_data["additional_inputs"]),
-            )
-            .exists()
-        ):
-            raise ValidationError(
-                "An evaluation with the same inputs, method and ground truth already exists"
-            )
 
         return cleaned_data
 
