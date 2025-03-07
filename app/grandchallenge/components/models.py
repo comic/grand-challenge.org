@@ -63,6 +63,7 @@ from grandchallenge.components.validators import (
 )
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_handlers import (
+    EvaluationCIVErrorHandler,
     FallbackCIVValidationErrorHandler,
     JobCIVErrorHandler,
     RawImageUploadSessionErrorHandler,
@@ -2556,6 +2557,7 @@ class CIVForObjectMixin:
         # local imports to prevent circular dependency
         from grandchallenge.algorithms.models import Job
         from grandchallenge.archives.models import ArchiveItem
+        from grandchallenge.evaluation.models import Evaluation
         from grandchallenge.reader_studies.models import DisplaySet
 
         if linked_object and isinstance(linked_object, RawImageUploadSession):
@@ -2565,6 +2567,8 @@ class CIVForObjectMixin:
             )
         elif isinstance(self, Job):
             return JobCIVErrorHandler(job=self)
+        elif isinstance(self, Evaluation):
+            return EvaluationCIVErrorHandler(job=self)
         elif linked_object and isinstance(linked_object, UserUpload):
             return UserUploadCIVErrorHandler(
                 user_upload=linked_object,
