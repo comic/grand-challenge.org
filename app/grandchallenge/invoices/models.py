@@ -1,4 +1,11 @@
 from django.db import models
+from django.db.transaction import on_commit
+
+from grandchallenge.core.models import FieldChangeMixin
+from grandchallenge.invoices.tasks import (
+    send_challenge_invoice_issued_notification_emails,
+)
+from grandchallenge.subdomains.utils import reverse
 
 
 class PaymentStatusChoices(models.TextChoices):
@@ -14,7 +21,7 @@ class PaymentTypeChoices(models.TextChoices):
     POSTPAID = "POSTPAID", "Postpaid"
 
 
-class Invoice(models.Model):
+class Invoice(models.Model, FieldChangeMixin):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -89,6 +96,17 @@ class Invoice(models.Model):
         default=PaymentStatusChoices.INITIALIZED,
     )
 
+    @property
+    def total_amount_euros(self):
+        try:
+            return (
+                self.support_costs_euros
+                + self.compute_costs_euros
+                + self.storage_costs_euros
+            )
+        except TypeError:
+            return
+
     class Meta:
         constraints = [
             models.CheckConstraint(
@@ -100,3 +118,24 @@ class Invoice(models.Model):
                 name="payment_status_in_choices",
             ),
         ]
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if (
+            self.has_changed("payment_status")
+            and self.payment_status == PaymentStatusChoices.ISSUED
+        ):
+            on_commit(
+                send_challenge_invoice_issued_notification_emails.signature(
+                    kwargs={"pk": self.pk}
+                ).apply_async
+            )
+
+    def get_absolute_url(self):
+        return reverse(
+            "invoices:detail",
+            kwargs={
+                "challenge_short_name": self.challenge.short_name,
+                "pk": self.pk,
+            },
+        )
