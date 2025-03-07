@@ -46,6 +46,11 @@
         >
     {% endif %}
     {% if widget.attrs.help_text %}
-        <small id="hint_{{ widget.attrs.id }}" class="form-text text-muted">{{ widget.attrs.help_text|clean }}</small>
+        <small id="hint_{{ widget.attrs.id }}" class="form-text text-muted">{{ widget.attrs.help_text|clean }}
+            {% if widget.attrs.interface %}
+                <br>
+                {% include "components/partials/example_download_link.html" with object=widget.attrs.interface %}
+            {% endif %}
+        </small>
     {% endif %}
 </div>
