@@ -1,4 +1,5 @@
 import pytest
+from pytest_django.asserts import assertInHTML
 
 from grandchallenge.invoices.models import Invoice
 from tests.factories import ChallengeFactory, UserFactory
@@ -140,7 +141,7 @@ def test_invoice_list_view_content(client, invoice_kwargs, badge_and_status):
     )
     assert response.status_code == 200
     assert len(response.context_data["object_list"]) == 1
-    assert badge_and_status in response.rendered_content
+    assertInHTML(badge_and_status, response.rendered_content)
 
 
 @pytest.mark.django_db
@@ -171,7 +172,7 @@ def test_invoice_list_view_content_complimentary_status_always_paid(
     )
     assert response.status_code == 200
     assert len(response.context_data["object_list"]) == 1
-    assert (
-        '<td><span class="badge badge-success">Paid</span></td>'
-        in response.rendered_content
+    assertInHTML(
+        '<td><span class="badge badge-success">Paid</span></td>',
+        response.rendered_content,
     )
