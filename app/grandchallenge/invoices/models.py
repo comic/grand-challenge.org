@@ -122,7 +122,8 @@ class Invoice(models.Model, FieldChangeMixin):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if (
-            self.has_changed("payment_status")
+            self.payment_type != PaymentTypeChoices.COMPLIMENTARY
+            and self.has_changed("payment_status")
             and self.payment_status == PaymentStatusChoices.ISSUED
         ):
             on_commit(
