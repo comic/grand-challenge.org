@@ -36,9 +36,45 @@
             <p class="mb-0">
                 This reader study has ground truth
             </p>
-            <button class="btn btn-danger" hx-post="{% url 'reader-studies:ground-truth-remove' slug=object.slug %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'>
+            <button class="btn btn-danger" data-toggle="modal" data-target="#warningModal">
                 <i class="fas fa-trash-alt fa-fw pr-1"></i>Delete Ground&nbsp;Truth
             </button>
+
+            <div class="modal fade" id="warningModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Delete Ground Truth</h5>
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                <div class="modal-body">
+                    <p>
+                        This will delete all the Ground Truth for the reader study '{{object.title | title}}'.
+                    </p>
+                    <p class="text-danger">
+                        This action cannot be undone! <strong>Are you sure that you want to continue?</strong>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-dismiss="modal"
+                    >
+                        Cancel
+                    </button>
+                    <button class="btn btn-danger"
+                            hx-post="{% url 'reader-studies:ground-truth-remove' slug=object.slug %}"
+                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'
+                    >
+                        <i class="fas fa-trash-alt fa-fw pr-1"></i> Continue&nbsp;Deleting&nbsp;Ground&nbsp;Truth
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
         </div>
 
         <hr>
@@ -59,7 +95,6 @@
                     href="{% url 'reader-studies:add-ground-truth-csv' slug=object.slug %}">
                     <i class="fas fa-upload"></i> Upload Ground Truth via CSV
                 </a>
-
             </div>
         </div>
     {% endif %}

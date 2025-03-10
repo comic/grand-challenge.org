@@ -773,7 +773,7 @@ class AnswersRemoveForUser(AnswerBatchDelete):
 
 
 class AnswersRemoveGroundTruth(AnswerBatchDelete):
-    success_message = "Ground truth removed"
+    success_message = "Ground Truth deleted"
 
     def get_queryset(self):
         return Answer.objects.filter(
