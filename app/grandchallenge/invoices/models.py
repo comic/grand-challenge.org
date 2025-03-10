@@ -115,7 +115,8 @@ class Invoice(models.Model, FieldChangeMixin):
         if adding:
             self.assign_permissions()
         if (
-            self.has_changed("payment_status")
+            self.payment_type != PaymentTypeChoices.COMPLIMENTARY
+            and self.has_changed("payment_status")
             and self.payment_status == PaymentStatusChoices.ISSUED
         ):
             on_commit(
