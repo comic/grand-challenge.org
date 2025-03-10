@@ -55,10 +55,11 @@ def send_challenge_outstanding_invoice_reminder(invoice):
     )
 
     managers_message = format_html(
-        "An invoice alert has been sent for the {challenge_name} challenge regarding "
-        "the invoice issued on {issued_on}.",
+        "An outstanding invoice alert has been sent for the {challenge_name} challenge "
+        "regarding invoice {invoice_pk} issued on {issued_on}.",
         challenge_name=invoice.challenge.short_name,
         issued_on=invoice.issued_on,
+        invoice_pk=invoice.pk,
     )
     mail_managers(
         subject=subject,
