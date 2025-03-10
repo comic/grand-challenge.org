@@ -52,7 +52,6 @@
                    aria-selected="false"><i class="fas fa-terminal fa-fw"></i>&nbsp;Logs
                 </a>
             {% endif %}
-
             {% if object.status == object.SUCCESS and perms.reader_studies.add_readerstudy %}
                 <a class="nav-link"
                    href="{% url "algorithms:display-set-from-job-create" slug=object.algorithm_image.algorithm.slug pk=object.pk %}">
@@ -69,16 +68,12 @@
              aria-labelledby="v-pills-info-tab">
             <h2>Algorithm Result</h2>
 
-            {{ object.rendered_result_text }}
-
             <dl>
                 {% for output in object.outputs.all|sort_civs %}
-                    {% if output.interface.slug != 'results-json-file' or not object.rendered_result_text %}
-                        <dt class="mt-3">{{ output.interface.title }}</dt>
-                        <dd>
-                            {% include 'components/partials/civ.html' with object=output only %}
-                        </dd>
-                    {% endif %}
+                    <dt class="mt-3">{{ output.interface.title }}</dt>
+                    <dd>
+                        {% include 'components/partials/civ.html' with object=output only %}
+                    </dd>
                 {% endfor %}
             </dl>
 

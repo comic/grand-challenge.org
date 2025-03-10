@@ -8,13 +8,14 @@ from django.forms import ModelForm
 from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
 
-from grandchallenge.algorithms.forms import AlgorithmIOValidationMixin
 from grandchallenge.algorithms.models import (
     Algorithm,
+    AlgorithmAlgorithmInterface,
     AlgorithmGroupObjectPermission,
     AlgorithmImage,
     AlgorithmImageGroupObjectPermission,
     AlgorithmImageUserObjectPermission,
+    AlgorithmInterface,
     AlgorithmModel,
     AlgorithmModelGroupObjectPermission,
     AlgorithmModelUserObjectPermission,
@@ -36,12 +37,13 @@ from grandchallenge.core.admin import (
     UserObjectPermissionAdmin,
 )
 from grandchallenge.core.templatetags.costs import millicents_to_euro
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.grand_challenge_forge import (
     get_forge_algorithm_template_context,
 )
 
 
-class AlgorithmAdminForm(AlgorithmIOValidationMixin, ModelForm):
+class AlgorithmAdminForm(ModelForm):
     class Meta:
         model = Algorithm
         fields = "__all__"
@@ -208,6 +210,7 @@ class JobAdmin(GuardedModelAdmin):
         "task_on_success",
         "task_on_failure",
         "runtime_metrics",
+        "algorithm_interface",
         "time_limit",
     )
     search_fields = (
@@ -234,6 +237,57 @@ class AlgorithmModelAdmin(GuardedModelAdmin):
     list_filter = ("is_desired_version",)
     search_fields = ("algorithm__title", "comment")
     readonly_fields = ("creator", "algorithm", "sha256", "size_in_storage")
+
+
+@admin.register(AlgorithmInterface)
+class AlgorithmInterfaceAdmin(GuardedModelAdmin):
+    readonly_fields = ("algorithm_inputs", "algorithm_outputs")
+    list_display = (
+        "pk",
+        "algorithm_inputs",
+        "algorithm_outputs",
+    )
+    search_fields = (
+        "pk",
+        "inputs__slug",
+        "outputs__slug",
+    )
+
+    def algorithm_inputs(self, obj):
+        return oxford_comma(obj.inputs.all())
+
+    def algorithm_outputs(self, obj):
+        return oxford_comma(obj.outputs.all())
+
+    def has_change_permission(self, request, obj=None):
+        # interfaces cannot be modified
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # interfaces cannot be deleted
+        return False
+
+    def has_add_permission(self, request, obj=None):
+        # interfaces should only be created through the UI
+        return False
+
+
+@admin.register(AlgorithmAlgorithmInterface)
+class AlgorithmAlgorithmInterfaceAdmin(GuardedModelAdmin):
+    list_display = (
+        "pk",
+        "interface",
+        "algorithm",
+    )
+    list_filter = ("algorithm",)
+
+    def has_add_permission(self, request, obj=None):
+        # through table entries should only be created through the UI
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        # through table entries should only be updated through the UI
+        return False
 
 
 admin.site.register(AlgorithmUserObjectPermission, UserObjectPermissionAdmin)

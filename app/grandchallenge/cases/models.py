@@ -153,7 +153,7 @@ class RawImageUploadSession(UUIDModel):
         if detailed_error_message:
             notification_description = oxford_comma(
                 [
-                    f"Image validation for interface {key} failed with error: {val}. "
+                    f"Image validation for socket {key} failed with error: {val}. "
                     for key, val in detailed_error_message.items()
                 ]
             )

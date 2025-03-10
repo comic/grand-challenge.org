@@ -29,6 +29,7 @@ from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.algorithms.views import AlgorithmInterfaceCreateBase
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.components.models import ImportStatusChoices
@@ -60,6 +61,7 @@ from grandchallenge.evaluation.models import (
     EvaluationGroundTruth,
     Method,
     Phase,
+    PhaseAlgorithmInterface,
     Submission,
 )
 from grandchallenge.evaluation.tasks import create_evaluation
@@ -137,8 +139,7 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
             return self.handle_no_permission()
         elif (
             not self.phase.submission_kind == SubmissionKindChoices.ALGORITHM
-            or not self.phase.algorithm_inputs
-            or not self.phase.algorithm_outputs
+            or not self.phase.algorithm_interfaces
             or not self.phase.archive
         ):
             error_message = (
@@ -909,8 +910,7 @@ class PhaseAlgorithmCreate(
                 "display_editors": True,
                 "contact_email": self.request.user.email,
                 "workstation": self.phase.workstation,
-                "inputs": self.phase.algorithm_inputs.all(),
-                "outputs": self.phase.algorithm_outputs.all(),
+                "interfaces": self.phase.algorithm_interfaces.all(),
                 "modalities": self.phase.challenge.modalities.all(),
                 "structures": self.phase.challenge.structures.all(),
                 "logo": self.phase.challenge.logo,
@@ -1042,9 +1042,14 @@ class CombinedLeaderboardDelete(
         return self.get_object().challenge
 
 
-class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
-    form_class = ConfigureAlgorithmPhasesForm
+class ConfigureAlgorithmPhasesPermissionMixin(PermissionRequiredMixin):
     permission_required = "evaluation.configure_algorithm_phase"
+
+
+class ConfigureAlgorithmPhasesView(
+    ConfigureAlgorithmPhasesPermissionMixin, FormView
+):
+    form_class = ConfigureAlgorithmPhasesForm
     template_name = "evaluation/configure_algorithm_phases_form.html"
     raise_exception = True
 
@@ -1057,8 +1062,6 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
         for phase in form.cleaned_data["phases"]:
             self.turn_phase_into_algorithm_phase(
                 phase=phase,
-                inputs=form.cleaned_data["algorithm_inputs"],
-                outputs=form.cleaned_data["algorithm_outputs"],
                 algorithm_time_limit=form.cleaned_data["algorithm_time_limit"],
                 algorithm_selectable_gpu_type_choices=form.cleaned_data[
                     "algorithm_selectable_gpu_type_choices"
@@ -1079,8 +1082,6 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
         self,
         *,
         phase,
-        inputs,
-        outputs,
         algorithm_time_limit,
         algorithm_selectable_gpu_type_choices,
         algorithm_maximum_settable_memory_gb,
@@ -1117,8 +1118,6 @@ class ConfigureAlgorithmPhasesView(PermissionRequiredMixin, FormView):
         phase.submission_kind = phase.SubmissionKindChoices.ALGORITHM
         phase.creator_must_be_verified = True
         phase.save()
-        phase.algorithm_outputs.add(*outputs)
-        phase.algorithm_inputs.add(*inputs)
 
 
 class EvaluationGroundTruthCreate(
@@ -1278,3 +1277,95 @@ class PhaseArchiveInfo(
             challenge=self.request.challenge,
             slug=self.kwargs["slug"],
         )
+
+
+class AlgorithmInterfaceForPhaseMixin:
+
+    @property
+    def phase(self):
+        return get_object_or_404(
+            Phase,
+            challenge=self.request.challenge,
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            slug=self.kwargs["slug"],
+        )
+
+
+class AlgorithmInterfaceForPhaseCreate(
+    ConfigureAlgorithmPhasesPermissionMixin,
+    AlgorithmInterfaceForPhaseMixin,
+    AlgorithmInterfaceCreateBase,
+):
+    template_name = "evaluation/algorithminterface_for_phase_form.html"
+
+    @property
+    def base_obj(self):
+        return self.phase
+
+    def get_success_url(self):
+        return reverse(
+            "evaluation:interface-list",
+            kwargs={
+                "slug": self.phase.slug,
+                "challenge_short_name": self.request.challenge.short_name,
+            },
+        )
+
+
+class AlgorithmInterfacesForPhaseList(
+    ConfigureAlgorithmPhasesPermissionMixin,
+    AlgorithmInterfaceForPhaseMixin,
+    ListView,
+):
+    model = PhaseAlgorithmInterface
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(phase=self.phase)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "phase": self.phase,
+                "interfaces": [obj.interface for obj in self.object_list],
+            }
+        )
+        return context
+
+
+class AlgorithmInterfaceForPhaseDelete(
+    ConfigureAlgorithmPhasesPermissionMixin,
+    AlgorithmInterfaceForPhaseMixin,
+    DeleteView,
+):
+    model = PhaseAlgorithmInterface
+
+    @property
+    def algorithm_interface(self):
+        return get_object_or_404(
+            klass=PhaseAlgorithmInterface,
+            phase=self.phase,
+            interface__pk=self.kwargs["interface_pk"],
+        )
+
+    def get_object(self, queryset=None):
+        return self.algorithm_interface
+
+    def get_success_url(self):
+        return reverse(
+            "evaluation:interface-list",
+            kwargs={
+                "slug": self.phase.slug,
+                "challenge_short_name": self.request.challenge.short_name,
+            },
+        )
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "phase": self.phase,
+            }
+        )
+        return context

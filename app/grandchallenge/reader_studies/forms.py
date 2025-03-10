@@ -615,10 +615,11 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
 
     interface = DynamicField(
         ModelChoiceField,
+        label="Socket",
         queryset=interface_choices,
         initial=None,
         required=False,
-        help_text="Select component interface to use as a default answer for this "
+        help_text="Select socket to use as a default answer for this "
         "question.",
     )
 

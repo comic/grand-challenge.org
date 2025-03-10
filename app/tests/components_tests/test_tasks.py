@@ -423,7 +423,7 @@ def test_add_image_to_object_updates_upload_session_on_validation_fail(
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind="IMG")
 
-    error_message = f"Image validation for interface {ci.title} failed with error: Image imports should result in a single image. "
+    error_message = f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image. "
 
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
@@ -458,7 +458,7 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind="IMG")
 
-    error_message = f"Image validation for interface {ci.title} failed with error: Image imports should result in a single image. "
+    error_message = f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image. "
 
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
@@ -597,7 +597,7 @@ def test_add_file_to_object_sends_notification_on_validation_fail(
     us.refresh_from_db()
     assert Notification.objects.count() == 1
     assert (
-        f"Validation for interface {ci.title} failed."
+        f"Validation for socket {ci.title} failed."
         in Notification.objects.first().message
     )
     assert "some_async_task" not in str(callbacks)

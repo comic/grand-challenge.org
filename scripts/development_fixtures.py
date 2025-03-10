@@ -17,7 +17,12 @@ from knox.models import AuthToken, hash_token
 from knox.settings import CONSTANTS
 from machina.apps.forum.models import Forum
 
-from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmImage,
+    AlgorithmInterface,
+    Job,
+)
 from grandchallenge.anatomy.models import BodyRegion, BodyStructure
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.challenges.models import Challenge, ChallengeSeries
@@ -352,16 +357,14 @@ def _create_algorithm_demo(users):
         repo_name="github-username/repo-name",
         contact_email="example@example.org",
         display_editors=True,
-        result_template="{% for key, value in results.items() %}\n{{ key }}:  {{ value }}\n{% endfor %}",
     )
     algorithm.editors_group.user_set.add(users["algorithm"], users["demo"])
     algorithm.users_group.user_set.add(users["algorithmuser"])
-    algorithm.inputs.set(
-        [ComponentInterface.objects.get(slug="generic-medical-image")]
+    interface = AlgorithmInterface.objects.create(
+        inputs=[ComponentInterface.objects.get(slug="generic-medical-image")],
+        outputs=[ComponentInterface.objects.get(slug="results-json-file")],
     )
-    algorithm.outputs.set(
-        [ComponentInterface.objects.get(slug="results-json-file")]
-    )
+    algorithm.interfaces.set([interface])
 
     algorithm_image = AlgorithmImage(
         creator=users["algorithm"], algorithm=algorithm
@@ -380,6 +383,7 @@ def _create_algorithm_demo(users):
         algorithms_job = Job.objects.create(
             creator=users["algorithm"],
             algorithm_image=algorithm_image,
+            algorithm_interface=interface,
             status=Evaluation.SUCCESS,
             time_limit=60,
             requires_gpu_type=algorithm_image.algorithm.job_requires_gpu_type,

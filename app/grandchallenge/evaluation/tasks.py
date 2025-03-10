@@ -53,7 +53,12 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):  # noqa: C901
 
     if submission.phase.external_evaluation:
         external_evaluation, created = Evaluation.objects.get_or_create(
-            submission=submission
+            submission=submission,
+            defaults={
+                "time_limit": submission.phase.evaluation_time_limit,
+                "requires_gpu_type": submission.phase.evaluation_requires_gpu_type,
+                "requires_memory_gb": submission.phase.evaluation_requires_memory_gb,
+            },
         )
         if not created:
             logger.info(
@@ -212,20 +217,17 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     jobs = create_algorithm_jobs(
         algorithm_image=evaluation.submission.algorithm_image,
         algorithm_model=evaluation.submission.algorithm_model,
-        civ_sets=[
-            {*ai.values.all()}
-            for ai in evaluation.submission.phase.archive.items.prefetch_related(
-                "values__interface"
+        archive_items=evaluation.submission.phase.archive.items.prefetch_related(
+            "values__interface"
+        )
+        .annotate(
+            has_title=Case(
+                When(title="", then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField(),
             )
-            .annotate(
-                has_title=Case(
-                    When(title="", then=Value(1)),
-                    default=Value(0),
-                    output_field=IntegerField(),
-                )
-            )
-            .order_by("has_title", "title", "created")
-        ],
+        )
+        .order_by("has_title", "title", "created"),
         extra_viewer_groups=viewer_groups,
         extra_logs_viewer_groups=viewer_groups,
         task_on_success=task_on_success,

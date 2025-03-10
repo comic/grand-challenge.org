@@ -8,6 +8,7 @@ from factory.django import ImageField
 from grandchallenge.algorithms.forms import (
     AlgorithmForm,
     AlgorithmForPhaseForm,
+    AlgorithmInterfaceForm,
     AlgorithmModelForm,
     AlgorithmModelVersionControlForm,
     AlgorithmPublishForm,
@@ -36,6 +37,7 @@ from grandchallenge.verifications.models import Verification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     AlgorithmPermissionRequestFactory,
@@ -157,7 +159,6 @@ def test_algorithm_create(client, uploaded_image):
     VerificationFactory(user=creator, is_verified=True)
 
     ws = WorkstationFactory()
-    ci = ComponentInterface.objects.get(slug="generic-medical-image")
 
     def try_create_algorithm():
         return get_view_for_user(
@@ -168,8 +169,7 @@ def test_algorithm_create(client, uploaded_image):
                 "title": "foo bar",
                 "logo": uploaded_image(),
                 "workstation": ws.pk,
-                "inputs": [ci.pk],
-                "outputs": [ComponentInterfaceFactory().pk],
+                "interfaces": AlgorithmInterfaceFactory(),
                 "minimum_credits_per_job": 20,
                 "job_requires_gpu_type": GPUTypeChoices.NO_GPU,
                 "job_requires_memory_gb": 4,
@@ -208,14 +208,14 @@ def test_algorithm_create(client, uploaded_image):
             "generic-overlay",
             [
                 '<select class="custom-select"',
-                f'name="WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}generic-overlay"',
+                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}generic-overlay"',
             ],
         ),
         (
             "generic-medical-image",
             [
                 '<select class="custom-select"',
-                f'name="WidgetChoice-{INTERFACE_FORM_FIELD_PREFIX}generic-medical-image"',
+                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}generic-medical-image"',
             ],
         ),
         (
@@ -320,7 +320,10 @@ def test_create_job_input_fields(
     response = get_view_for_user(
         viewname="algorithms:job-create",
         client=client,
-        reverse_kwargs={"slug": alg.slug},
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": alg.interfaces.first().pk,
+        },
         follow=True,
         user=creator,
     )
@@ -352,7 +355,10 @@ def test_create_job_json_input_field_validation(
     response = get_view_for_user(
         viewname="algorithms:job-create",
         client=client,
-        reverse_kwargs={"slug": alg.slug},
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": alg.interfaces.first().pk,
+        },
         method=client.post,
         follow=True,
         user=creator,
@@ -383,7 +389,10 @@ def test_create_job_simple_input_field_validation(
     response = get_view_for_user(
         viewname="algorithms:job-create",
         client=client,
-        reverse_kwargs={"slug": alg.slug},
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": alg.interfaces.first().pk,
+        },
         method=client.post,
         follow=True,
         user=creator,
@@ -399,7 +408,11 @@ def create_algorithm_with_input(slug):
     VerificationFactory(user=creator, is_verified=True)
     alg = AlgorithmFactory()
     alg.add_editor(user=creator)
-    alg.inputs.set([ComponentInterface.objects.get(slug=slug)])
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ComponentInterface.objects.get(slug=slug)],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    alg.interfaces.add(interface)
     AlgorithmImageFactory(
         algorithm=alg,
         is_manifest_valid=True,
@@ -407,16 +420,6 @@ def create_algorithm_with_input(slug):
         is_desired_version=True,
     )
     return alg, creator
-
-
-@pytest.mark.django_db
-def test_disjoint_interfaces():
-    i = ComponentInterfaceFactory()
-    form = AlgorithmForm(
-        user=UserFactory(), data={"inputs": [i.pk], "outputs": [i.pk]}
-    )
-    assert form.is_valid() is False
-    assert "The sets of Inputs and Outputs must be unique" in str(form.errors)
 
 
 @pytest.mark.django_db
@@ -509,13 +512,34 @@ def test_only_publish_successful_jobs():
 
 @pytest.mark.django_db
 class TestJobCreateLimits:
+
+    def create_form(self, algorithm, user, algorithm_image=None):
+        ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
+        interface = AlgorithmInterfaceFactory(inputs=[ci])
+        algorithm.interfaces.add(interface)
+
+        algorithm_image_kwargs = {}
+        if algorithm_image:
+            algorithm_image_kwargs = {
+                "algorithm_image": str(algorithm_image.pk)
+            }
+
+        return JobCreateForm(
+            algorithm=algorithm,
+            user=user,
+            interface=interface,
+            data={
+                **algorithm_image_kwargs,
+                **get_interface_form_data(interface_slug=ci.slug, data="Foo"),
+            },
+        )
+
     def test_form_invalid_without_enough_credits(self, settings):
         algorithm = AlgorithmFactory(
             minimum_credits_per_job=(
                 settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
             ),
         )
-        algorithm.inputs.clear()
         user = UserFactory()
         AlgorithmImageFactory(
             algorithm=algorithm,
@@ -523,13 +547,11 @@ class TestJobCreateLimits:
             is_in_registry=True,
             is_desired_version=True,
         )
-
-        form = JobCreateForm(algorithm=algorithm, user=user, data={})
-
+        form = self.create_form(algorithm=algorithm, user=user)
         assert not form.is_valid()
-        assert form.errors == {
-            "__all__": ["You have run out of algorithm credits"],
-        }
+        assert "You have run out of algorithm credits" in str(
+            form.errors["__all__"]
+        )
 
     def test_form_valid_for_editor(self, settings):
         algorithm = AlgorithmFactory(
@@ -537,7 +559,6 @@ class TestJobCreateLimits:
                 settings.ALGORITHMS_GENERAL_CREDITS_PER_MONTH_PER_USER + 1
             ),
         )
-        algorithm.inputs.clear()
         algorithm_image = AlgorithmImageFactory(
             algorithm=algorithm,
             is_manifest_valid=True,
@@ -548,17 +569,15 @@ class TestJobCreateLimits:
 
         algorithm.add_editor(user=user)
 
-        form = JobCreateForm(
+        form = self.create_form(
             algorithm=algorithm,
             user=user,
-            data={"algorithm_image": str(algorithm_image.pk)},
+            algorithm_image=algorithm_image,
         )
-
         assert form.is_valid()
 
     def test_form_valid_with_credits(self):
         algorithm = AlgorithmFactory(minimum_credits_per_job=1)
-        algorithm.inputs.clear()
         algorithm_image = AlgorithmImageFactory(
             algorithm=algorithm,
             is_manifest_valid=True,
@@ -567,12 +586,11 @@ class TestJobCreateLimits:
         )
         user = UserFactory()
 
-        form = JobCreateForm(
+        form = self.create_form(
             algorithm=algorithm,
             user=user,
-            data={"algorithm_image": str(algorithm_image.pk)},
+            algorithm_image=algorithm_image,
         )
-
         assert form.is_valid()
 
 
@@ -719,7 +737,12 @@ class TestJobCreateForm:
     ):
         algorithm = algorithm_with_image_and_model_and_two_inputs.algorithm
         editor = algorithm.editors_group.user_set.first()
-        form = JobCreateForm(algorithm=algorithm, user=editor, data={})
+        form = JobCreateForm(
+            algorithm=algorithm,
+            user=editor,
+            interface=algorithm.interfaces.first(),
+            data={},
+        )
         assert list(form.fields["creator"].queryset.all()) == [editor]
         assert form.fields["creator"].initial == editor
 
@@ -735,7 +758,12 @@ class TestJobCreateForm:
             is_manifest_valid=True,
             is_in_registry=True,
         )
-        form = JobCreateForm(algorithm=algorithm, user=editor, data={})
+        form = JobCreateForm(
+            algorithm=algorithm,
+            user=editor,
+            interface=algorithm.interfaces.first(),
+            data={},
+        )
         ai_qs = form.fields["algorithm_image"].queryset.all()
         assert algorithm.active_image in ai_qs
         assert inactive_image not in ai_qs
@@ -754,12 +782,14 @@ class TestJobCreateForm:
             algorithm_model=algorithm.active_model,
             status=Job.SUCCESS,
             time_limit=123,
+            algorithm_interface=algorithm.interfaces.first(),
         )
         job.inputs.set(civs)
 
         form = JobCreateForm(
             algorithm=algorithm,
             user=editor,
+            interface=algorithm.interfaces.first(),
             data={
                 "algorithm_image": algorithm.active_image,
                 "algorithm_model": algorithm.active_model,
@@ -779,23 +809,40 @@ class TestJobCreateForm:
 
 
 @pytest.mark.django_db
-def test_all_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
+def test_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
     ci_json_in_db_without_schema = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY,
         store_in_database=True,
     )
-    algorithm_with_multiple_inputs.algorithm.inputs.add(
-        ci_json_in_db_without_schema
+    interface = AlgorithmInterfaceFactory(
+        inputs=[
+            ci_json_in_db_without_schema,
+            algorithm_with_multiple_inputs.ci_bool,
+            algorithm_with_multiple_inputs.ci_str,
+            algorithm_with_multiple_inputs.ci_json_in_db_with_schema,
+            algorithm_with_multiple_inputs.ci_existing_img,
+            algorithm_with_multiple_inputs.ci_json_file,
+        ],
+        outputs=[ComponentInterfaceFactory()],
     )
+    algorithm_with_multiple_inputs.algorithm.interfaces.set([interface])
 
     form = JobCreateForm(
         algorithm=algorithm_with_multiple_inputs.algorithm,
         user=algorithm_with_multiple_inputs.editor,
+        interface=interface,
         data={},
     )
 
     for name, field in form.fields.items():
-        if name not in ["algorithm_model", "creator"]:
+        # boolean and json inputs that allow None should not be required,
+        # all other inputs should be
+        if name not in [
+            "algorithm_model",
+            "creator",
+            f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_with_multiple_inputs.ci_bool.slug}",
+            f"{INTERFACE_FORM_FIELD_PREFIX}{ci_json_in_db_without_schema.slug}",
+        ]:
             assert field.required
 
 
@@ -820,8 +867,8 @@ def test_algorithm_form_gpu_choices_from_phases():
     ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
     inputs = [ci1, ci2]
     outputs = [ci3, ci4]
-    algorithm.inputs.set(inputs)
-    algorithm.outputs.set(outputs)
+    interface = AlgorithmInterfaceFactory(inputs=inputs, outputs=outputs)
+    algorithm.interfaces.set([interface])
 
     def assert_gpu_type_choices(expected_choices):
         form = AlgorithmForm(instance=algorithm, user=user)
@@ -852,8 +899,7 @@ def test_algorithm_form_gpu_choices_from_phases():
                 GPUTypeChoices.T4,
             ],
         )
-        phase.algorithm_inputs.set(inputs)
-        phase.algorithm_outputs.set(outputs)
+        phase.algorithm_interfaces.set([interface])
         phase.challenge.add_participant(user)
         phases.append(phase)
 
@@ -903,7 +949,19 @@ def test_algorithm_form_gpu_choices_from_phases():
         ]
     )
 
-    phases[0].algorithm_inputs.set([ci1, ci5])
+    interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci5], outputs=outputs)
+    # add additional interface
+    phases[0].algorithm_interfaces.add(interface2)
+
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
+    # replace with different interface
+    phases[0].algorithm_interfaces.set([interface2])
 
     assert_gpu_type_choices(
         [
@@ -921,12 +979,21 @@ def test_algorithm_form_gpu_choices_from_phases():
             (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
         ]
     )
-
-    phases[3].algorithm_outputs.set([ci4, ci6])
+    interface3 = AlgorithmInterfaceFactory(inputs=inputs, outputs=[ci4, ci6])
+    phases[3].algorithm_interfaces.add(interface3)
 
     assert_gpu_type_choices(
         [
             (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        ]
+    )
+
+    algorithm.interfaces.add(interface3)
+    assert_gpu_type_choices(
+        [
+            (GPUTypeChoices.NO_GPU, "No GPU"),
+            (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
             (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
         ]
     )
@@ -993,8 +1060,9 @@ def test_algorithm_form_gpu_choices_from_organizations_and_phases():
     ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
     inputs = [ci1, ci2]
     outputs = [ci3, ci4]
-    algorithm.inputs.set(inputs)
-    algorithm.outputs.set(outputs)
+    interface = AlgorithmInterfaceFactory(inputs=inputs, outputs=outputs)
+    algorithm.interfaces.set([interface])
+
     org1 = OrganizationFactory(
         algorithm_selectable_gpu_type_choices=[
             GPUTypeChoices.NO_GPU,
@@ -1037,8 +1105,7 @@ def test_algorithm_form_gpu_choices_from_organizations_and_phases():
                 GPUTypeChoices.T4,
             ],
         )
-        phase.algorithm_inputs.set(inputs)
-        phase.algorithm_outputs.set(outputs)
+        phase.algorithm_interfaces.set([interface])
         phase.challenge.add_participant(user)
         phases.append(phase)
 
@@ -1075,8 +1142,7 @@ def test_algorithm_for_phase_form_gpu_limited_choices():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory.build(),
-        inputs=[ComponentInterfaceFactory.build()],
-        outputs=[ComponentInterfaceFactory.build()],
+        interfaces=[AlgorithmInterfaceFactory.build()],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
@@ -1103,8 +1169,7 @@ def test_algorithm_for_phase_form_gpu_additional_choices():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory.build(),
-        inputs=[ComponentInterfaceFactory.build()],
-        outputs=[ComponentInterfaceFactory.build()],
+        interfaces=[AlgorithmInterfaceFactory.build()],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
@@ -1155,16 +1220,16 @@ def test_algorithm_form_max_memory_from_phases_for_admins():
     ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
     inputs = [ci1, ci2]
     outputs = [ci3, ci4]
-    algorithm.inputs.set(inputs)
-    algorithm.outputs.set(outputs)
+    interface = AlgorithmInterfaceFactory(inputs=inputs, outputs=outputs)
+    algorithm.interfaces.set([interface])
+
     phases = []
     for max_memory in [42, 100, 200, 300, 400]:
         phase = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             algorithm_maximum_settable_memory_gb=max_memory,
         )
-        phase.algorithm_inputs.set(inputs)
-        phase.algorithm_outputs.set(outputs)
+        phase.algorithm_interfaces.set([interface])
         phase.challenge.add_admin(user)
         phases.append(phase)
 
@@ -1195,11 +1260,13 @@ def test_algorithm_form_max_memory_from_phases_for_admins():
 
     assert_max_value_validator(200)
 
-    phases[2].algorithm_inputs.set([ci1, ci5])
+    interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci5], outputs=outputs)
+    phases[2].algorithm_interfaces.set([interface2])
 
     assert_max_value_validator(100)
 
-    phases[1].algorithm_outputs.set([ci4, ci6])
+    interface3 = AlgorithmInterfaceFactory(inputs=inputs, outputs=[ci4, ci6])
+    phases[1].algorithm_interfaces.set([interface3])
 
     assert_max_value_validator(42)
 
@@ -1211,16 +1278,16 @@ def test_algorithm_form_max_memory_from_phases():
     ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
     inputs = [ci1, ci2]
     outputs = [ci3, ci4]
-    algorithm.inputs.set(inputs)
-    algorithm.outputs.set(outputs)
+    interface = AlgorithmInterfaceFactory(inputs=inputs, outputs=outputs)
+    algorithm.interfaces.set([interface])
+
     phases = []
     for max_memory in [42, 100, 200, 300, 400, 500]:
         phase = PhaseFactory(
             submission_kind=SubmissionKindChoices.ALGORITHM,
             algorithm_maximum_settable_memory_gb=max_memory,
         )
-        phase.algorithm_inputs.set(inputs)
-        phase.algorithm_outputs.set(outputs)
+        phase.algorithm_interfaces.set([interface])
         phase.challenge.add_participant(user)
         phases.append(phase)
 
@@ -1251,13 +1318,22 @@ def test_algorithm_form_max_memory_from_phases():
 
     assert_max_value_validator(200)
 
-    phases[2].algorithm_inputs.set([ci1, ci5])
-
+    interface2 = AlgorithmInterfaceFactory(inputs=[ci1, ci5], outputs=outputs)
+    # adding an interface
+    phases[2].algorithm_interfaces.add(interface2)
+    assert_max_value_validator(100)
+    # replacing the interface
+    phases[2].algorithm_interfaces.set([interface2])
     assert_max_value_validator(100)
 
-    phases[1].algorithm_outputs.set([ci4, ci6])
+    interface3 = AlgorithmInterfaceFactory(inputs=inputs, outputs=[ci4, ci6])
+    phases[1].algorithm_interfaces.set([interface3])
 
     assert_max_value_validator(42)
+
+    # updating the algorithm's interface
+    algorithm.interfaces.set([interface3])
+    assert_max_value_validator(100)
 
 
 @pytest.mark.django_db
@@ -1295,8 +1371,8 @@ def test_algorithm_form_max_memory_from_organizations_and_phases():
     ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(6)
     inputs = [ci1, ci2]
     outputs = [ci3, ci4]
-    algorithm.inputs.set(inputs)
-    algorithm.outputs.set(outputs)
+    interface = AlgorithmInterfaceFactory(inputs=inputs, outputs=outputs)
+    algorithm.interfaces.set([interface])
     org1 = OrganizationFactory(algorithm_maximum_settable_memory_gb=42)
     org2 = OrganizationFactory(algorithm_maximum_settable_memory_gb=1337)
 
@@ -1318,8 +1394,7 @@ def test_algorithm_form_max_memory_from_organizations_and_phases():
             submission_kind=SubmissionKindChoices.ALGORITHM,
             algorithm_maximum_settable_memory_gb=max_memory,
         )
-        phase.algorithm_inputs.set(inputs)
-        phase.algorithm_outputs.set(outputs)
+        phase.algorithm_interfaces.set([interface])
         phase.challenge.add_participant(user)
 
     assert_max_value_validator(42)
@@ -1339,8 +1414,7 @@ def test_algorithm_for_phase_form_memory_limited():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory.build(),
-        inputs=[ComponentInterfaceFactory.build()],
-        outputs=[ComponentInterfaceFactory.build()],
+        interfaces=[AlgorithmInterfaceFactory.build()],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
@@ -1363,6 +1437,33 @@ def test_algorithm_for_phase_form_memory_limited():
     assert max_validator.limit_value == 32
 
 
+@pytest.mark.django_db
+def test_algorithm_interface_disjoint_interfaces():
+    ci = ComponentInterfaceFactory()
+    form = AlgorithmInterfaceForm(
+        base_obj=AlgorithmFactory(), data={"inputs": [ci], "outputs": [ci]}
+    )
+    assert form.is_valid() is False
+    assert "The sets of Inputs and Outputs must be unique" in str(form.errors)
+
+
+@pytest.mark.django_db
+def test_algorithm_interface_unique_inputs_required():
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+    alg = AlgorithmFactory()
+    interface = AlgorithmInterfaceFactory(inputs=[ci1])
+    alg.interfaces.add(interface)
+
+    form = AlgorithmInterfaceForm(
+        base_obj=alg, data={"inputs": [ci1], "outputs": [ci2]}
+    )
+    assert form.is_valid() is False
+    assert (
+        "An AlgorithmInterface for this algorithm with the same inputs already exists"
+        in str(form.errors)
+    )
+
+
 def test_algorithm_for_phase_form_memory():
     form = AlgorithmForPhaseForm(
         workstation_config=WorkstationConfigFactory.build(),
@@ -1372,8 +1473,7 @@ def test_algorithm_for_phase_form_memory():
         display_editors=True,
         contact_email="test@test.com",
         workstation=WorkstationFactory.build(),
-        inputs=[ComponentInterfaceFactory.build()],
-        outputs=[ComponentInterfaceFactory.build()],
+        interfaces=[AlgorithmInterfaceFactory.build()],
         structures=[],
         modalities=[],
         logo=ImageField(filename="test.jpeg"),
@@ -1388,3 +1488,27 @@ def test_algorithm_for_phase_form_memory():
     )
     assert max_validator is not None
     assert max_validator.limit_value == 42
+
+
+class TestAlgorithmInterfaceForm:
+    @pytest.mark.django_db
+    def test_existing_io_is_reused(self):
+        inp = ComponentInterfaceFactory()
+        out = ComponentInterfaceFactory()
+        io = AlgorithmInterfaceFactory()
+        io.inputs.set([inp])
+        io.outputs.set([out])
+
+        alg = AlgorithmFactory()
+
+        form = AlgorithmInterfaceForm(
+            base_obj=alg,
+            data={
+                "inputs": [inp.pk],
+                "outputs": [out.pk],
+            },
+        )
+        assert form.is_valid()
+        new_io = form.save()
+
+        assert io == new_io

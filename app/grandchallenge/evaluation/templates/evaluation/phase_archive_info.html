@@ -23,24 +23,35 @@
 
     <p>The (hidden) input data for this phase needs to be uploaded to an archive on Grand Challenge.</p>
 
-    {% if object.archive and object.submission_kind == object.SubmissionKindChoices.ALGORITHM and not object.external_evaluation %}
+
+    {% if object.archive and object.submission_kind == object.SubmissionKindChoices.ALGORITHM %}
         <p>This phase is linked to archive <a href="{{ object.archive.get_absolute_url }}">{{ object.archive }}</a>.</p>
 
-        {% if object.algorithm_inputs.all %}
-            <p> Each item in the archive needs to contain data for the following interfaces, which are defined as algorithm inputs:</p>
-            <ul>
-                {% for input in object.algorithm_inputs.all %}
-                    <li>{{ input }}</li>
-                {% endfor %}
-            </ul>
+        {% if object.algorithm_interfaces.all %}
+            <p> Each item in the archive needs to contain data for one of the configured interfaces (i.e. input combinations):</p>
+            {% for interface in object.algorithm_interfaces.all %}
+                <ul>
+                    <li><b>Interface {{ forloop.counter }}</b></li>
+                    <ul>
+                        {% for input in interface.inputs.all %}
+                            <li>{{ input }}</li>
+                        {% endfor %}
+                    </ul>
+                </ul>
+            {% endfor %}
             <p>
-                For each submission, {{ object.count_valid_archive_items }}
-                algorithm job{{ object.count_valid_archive_items|pluralize }} will be created
-                from the {{ object.count_valid_archive_items }} valid item{{ object.count_valid_archive_items|pluralize }}.
+                Currently, for each submission, {{ object.jobs_to_schedule_per_submission }}
+                algorithm job{{ object.jobs_to_schedule_per_submission|pluralize }} will be created from the {{ object.jobs_to_schedule_per_submission }} valid archive item{{ object.jobs_to_schedule_per_submission|pluralize }}. </p>
+            <p> The jobs are spread across the configured algorithm interfaces as follows:
+                <ul>
+                    {% for interface, count in object.valid_archive_item_count_per_interface.items %}
+                        <li>Interface {{ forloop.counter }}: {{ count }} job{{ count|pluralize }}</li>
+                    {% endfor %}
+                </ul>
             </p>
             <a class="btn btn-primary" href="{% url 'archives:items-list' slug=object.archive.slug %}"> <i class="fa fa-upload mr-1"></i> Upload data to {{ object.archive }}</a>
         {% else %}
-            <p> Before you can upload data to your archive, <b>you need to define the algorithm inputs and outputs</b>. Contact <a href="mailto:support@grand-challenge.org"> Grand Challenge Support</a> for help with getting this set up.</p>
+            <p> Before you can upload data to your archive, <b>you need to define the interfaces (i.e. possible input and output combinations) for algorithms submitted to this phase</b>. Contact <a href="mailto:support@grand-challenge.org"> Grand Challenge Support</a> for help with getting this set up.</p>
         {% endif %}
 
     {% elif object.submission_kind == object.SubmissionKindChoices.ALGORITHM and not object.external_evaluation and not object.archive %}

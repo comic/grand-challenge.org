@@ -100,8 +100,8 @@ class UserUploadCIVErrorHandler(ErrorHandler):
     def handle_error(self, *, error_message, user, interface):
         Notification.send(
             kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            message=f"Validation for interface {interface.title} failed.",
-            description=f"Validation for interface {interface.title} failed: {error_message}",
+            message=f"Validation for socket {interface.title} failed.",
+            description=f"Validation for socket {interface.title} failed: {error_message}",
             actor=user,
         )
 
@@ -118,8 +118,8 @@ class FallbackCIVValidationErrorHandler(ErrorHandler):
         if interface:
             Notification.send(
                 kind=NotificationType.NotificationTypeChoices.CIV_VALIDATION,
-                message=f"Validation for interface {interface.title} failed.",
-                description=f"Validation for interface {interface.title} failed: {error_message}",
+                message=f"Validation for socket {interface.title} failed.",
+                description=f"Validation for socket {interface.title} failed: {error_message}",
                 actor=user,
             )
         else:

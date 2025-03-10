@@ -749,7 +749,7 @@ def test_question_interface():
         q.clean()
 
     assert e.value.message == (
-        f"The interface {ci_img} is not allowed for this "
+        f"The socket {ci_img} is not allowed for this "
         f"question type ({AnswerType.TEXT})"
     )
 

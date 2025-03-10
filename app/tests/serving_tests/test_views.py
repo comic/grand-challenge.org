@@ -10,7 +10,10 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from tests.algorithms_tests.factories import AlgorithmJobFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmInterfaceFactory,
+    AlgorithmJobFactory,
+)
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests import RESOURCE_PATH
 from tests.evaluation_tests.factories import (
@@ -164,7 +167,7 @@ def test_civ_file_download(client):
     user1, user2 = UserFactory(), UserFactory()
 
     def has_correct_access(user_allowed, user_denied, url):
-        tests = [(403, None), (302, user_allowed), (403, user_denied)]
+        tests = [(404, None), (302, user_allowed), (404, user_denied)]
 
         for test in tests:
             response = get_view_for_user(url=url, client=client, user=test[1])
@@ -172,7 +175,8 @@ def test_civ_file_download(client):
 
     # test algorithm
     job = AlgorithmJobFactory(creator=user1, time_limit=60)
-    job.algorithm_image.algorithm.outputs.add(detection_interface)
+    interface = AlgorithmInterfaceFactory(outputs=[detection_interface])
+    job.algorithm_image.algorithm.interfaces.add(interface)
     job.outputs.add(output_civ)
 
     has_correct_access(user1, user2, job.outputs.first().file.url)
@@ -187,24 +191,24 @@ def test_civ_file_download(client):
     group.user_set.add(user1)
     assign_perm("view_evaluation", group, evaluation)
 
-    # Evaluation inputs and outputs should always be denied
+    # Evaluation inputs and outputs should always return 404.
     assert (
         get_view_for_user(
             url=evaluation.outputs.first().file.url, client=client, user=None
         ).status_code
-        == 403
+        == 404
     )
     assert (
         get_view_for_user(
             url=evaluation.outputs.first().file.url, client=client, user=user1
         ).status_code
-        == 403
+        == 404
     )
     assert (
         get_view_for_user(
             url=evaluation.outputs.first().file.url, client=client, user=user2
         ).status_code
-        == 403
+        == 404
     )
     evaluation.outputs.remove(output_civ)
 
