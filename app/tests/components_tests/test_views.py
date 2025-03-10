@@ -1,4 +1,5 @@
 import json
+from urllib.parse import quote
 
 import factory.django
 import pytest
@@ -1028,3 +1029,42 @@ def test_file_search_result_view_filter_by_name(client):
     assert f"{civ1.title} ({civ1.pk})" in response.rendered_content
     assert f"{civ2.title} ({civ2.pk})" in response.rendered_content
     assert f"{civ3.title} ({civ3.pk})" not in response.rendered_content
+
+
+@pytest.mark.django_db
+def test_file_widget_select_view_download_example_link(client):
+    user = UserFactory()
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+        store_in_database=False,
+    )
+    example_json = {
+        "name": "Region of interest 2",
+        "type": "2D bounding box",
+        "corners": [
+            [130.8, 148.8, 0.5],
+            [69.7, 148.8, 0.5],
+            [69.7, 73.1, 0.5],
+            [130.8, 73.1, 0.5],
+        ],
+        "version": {"major": 1, "minor": 0},
+        "probability": 0.95,
+    }
+    ComponentInterfaceExampleValueFactory(
+        interface=ci,
+        value=example_json,
+    )
+    encoded_example = quote(json.dumps(ci.json_kind_example.value, indent=2))
+
+    prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
+    response = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=user,
+        data={
+            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_UPLOAD.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
+        },
+    )
+    assert "Download example" in str(response.content)
+    assert encoded_example in str(response.content)
