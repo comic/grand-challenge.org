@@ -368,6 +368,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     def api_url(self) -> str:
         return reverse("api:algorithm-detail", kwargs={"pk": self.pk})
 
+    @property
+    def algorithm_interfaces_locked(self):
+        return False
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
