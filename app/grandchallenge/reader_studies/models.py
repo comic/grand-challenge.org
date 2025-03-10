@@ -359,7 +359,9 @@ class ReaderStudy(
 
     @property
     def ground_truth_file_headers(self):
-        return ["case"] + [q.question_text for q in self.answerable_questions]
+        return ["case"] + [
+            q.question_text for q in self.ground_truth_applicable_questions
+        ]
 
     def get_ground_truth_csv_dict(self):
         if self.display_sets.count() == 0:
@@ -367,7 +369,7 @@ class ReaderStudy(
         result = []
         answers = {
             q.question_text: q.example_answer
-            for q in self.answerable_questions
+            for q in self.ground_truth_applicable_questions
         }
         for images in self.image_groups:
             _answers = answers.copy()
