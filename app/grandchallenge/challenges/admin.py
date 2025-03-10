@@ -227,6 +227,10 @@ class OnboardingTaskAdmin(ModelAdmin):
     def on_time(self, obj):
         return not obj.is_overdue
 
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.with_overdue_status()
+
 
 admin.site.register(ChallengeUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(ChallengeGroupObjectPermission, GroupObjectPermissionAdmin)
