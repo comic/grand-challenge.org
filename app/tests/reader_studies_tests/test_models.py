@@ -1159,53 +1159,40 @@ def test_clean_question_interactive_algorithms(
 @pytest.mark.django_db
 def test_ground_truth_complete():
     rs = ReaderStudyFactory()
-    reader, alt_reader = UserFactory.create_batch(2)
-    rs.add_reader(reader)
-    rs.add_reader(alt_reader)
 
     ds1, ds2 = DisplaySetFactory.create_batch(2, reader_study=rs)
-    q1, q2 = QuestionFactory.create_batch(2, reader_study=rs)
+    q1, q2 = QuestionFactory.create_batch(
+        2,
+        reader_study=rs,
+        answer_type=AnswerType.TEXT,  # Answerable and Ground Truth applicable
+    )
 
+    # Sanity
+    assert not rs.ground_truth_is_complete
+
+    # Add two questions that are not ground truth applicable
     QuestionFactory(
         reader_study=rs,
-        answer_type=Question.AnswerType.HEADING,  # Not answerable
+        answer_type=Question.AnswerType.HEADING,
+    )
+    QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.AnswerType.BOUNDING_BOX_2D,
     )
 
-    AnswerFactory(
-        creator=reader,
-        display_set=ds1,
-        question=q1,
-        is_ground_truth=True,
-    )
-    AnswerFactory(
-        creator=reader,
-        display_set=ds1,
-        question=q2,
-        is_ground_truth=True,
-    )
-    AnswerFactory(
-        creator=reader,
-        display_set=ds2,
-        question=q1,
-        is_ground_truth=True,
-    )
-
-    # Note: still missing the second display set, second question answer
+    # Creating ground truth answers: note missing the second display set, second question answer
+    AnswerFactory(display_set=ds1, question=q1, is_ground_truth=True)
+    AnswerFactory(display_set=ds1, question=q2, is_ground_truth=True)
+    AnswerFactory(display_set=ds2, question=q1, is_ground_truth=True)
 
     # Sanity, add a technically allowed duplicate GT answer
-    AnswerFactory(
-        creator=alt_reader,
-        display_set=ds1,
-        question=q1,
-        is_ground_truth=True,
-    )
-
-    assert not rs.ground_truth_is_complete, "One GT answer should be missing"
+    AnswerFactory(display_set=ds1, question=q1, is_ground_truth=True)
+    assert (
+        not rs.ground_truth_is_complete
+    ), "One GT answer should (still) be missing"
 
     AnswerFactory(display_set=ds2, question=q2, is_ground_truth=False)
-
     assert not rs.ground_truth_is_complete, "Non GT answer does not count"
 
     AnswerFactory(display_set=ds2, question=q2, is_ground_truth=True)
-
     assert rs.ground_truth_is_complete, "All GT answers are given"

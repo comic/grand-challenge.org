@@ -86,7 +86,7 @@ from grandchallenge.reader_studies.filters import (
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
-    GroundTruthForm,
+    GroundTruthCSVForm,
     QuestionForm,
     ReadersForm,
     ReaderStudyCopyForm,
@@ -181,19 +181,8 @@ class ReaderStudyGroundTruth(
     raise_exception = True
     template_name = "reader_studies/readerstudy_ground_truth.html"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            {
-                "example_ground_truth": self.object.get_example_ground_truth_csv_text(
-                    limit=2
-                )
-            }
-        )
-        return context
 
-
-class ReaderStudyExampleGroundTruth(
+class ReaderStudyExampleGroundTruthCSV(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     model = ReaderStudy
@@ -486,17 +475,33 @@ class BaseAddObjectToReaderStudyMixin(
         return context
 
 
-class AddGroundTruthToReaderStudy(BaseAddObjectToReaderStudyMixin, FormView):
-    form_class = GroundTruthForm
-    template_name = "reader_studies/readerstudy_add_object.html"
-    type_to_add = "ground truth"
+class AddGroundTruthViaCSVToReaderStudy(
+    BaseAddObjectToReaderStudyMixin, FormView
+):
+    form_class = GroundTruthCSVForm
+    template_name = "reader_studies/ground_truth_via_csv.html"
+    type_to_add = "Ground Truth"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update(
-            {"user": self.request.user, "reader_study": self.reader_study}
+            {
+                "user": self.request.user,
+                "reader_study": self.reader_study,
+            }
         )
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "example_ground_truth": self.reader_study.get_example_ground_truth_csv_text(
+                    limit=2
+                )
+            }
+        )
+        return context
 
     def form_valid(self, form):
         form.save_answers()

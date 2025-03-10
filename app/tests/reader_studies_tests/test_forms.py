@@ -900,7 +900,7 @@ def test_reader_study_delete(client):
 
 
 @pytest.mark.django_db
-def test_reader_study_add_ground_truth(client, settings):
+def test_reader_study_add_ground_truth_via_csv(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -970,7 +970,7 @@ def test_reader_study_add_ground_truth(client, settings):
     rs.readers_group.user_set.add(reader)
 
     response = get_view_for_user(
-        viewname="reader-studies:add-ground-truth",
+        viewname="reader-studies:add-ground-truth-csv",
         client=client,
         method=client.get,
         reverse_kwargs={"slug": rs.slug},
@@ -981,7 +981,7 @@ def test_reader_study_add_ground_truth(client, settings):
     assert response.status_code == 403
 
     response = get_view_for_user(
-        viewname="reader-studies:add-ground-truth",
+        viewname="reader-studies:add-ground-truth-csv",
         client=client,
         method=client.get,
         reverse_kwargs={"slug": rs.slug},
@@ -994,7 +994,7 @@ def test_reader_study_add_ground_truth(client, settings):
 
     with open(RESOURCE_PATH / "ground_truth.csv") as gt:
         response = get_view_for_user(
-            viewname="reader-studies:add-ground-truth",
+            viewname="reader-studies:add-ground-truth-csv",
             client=client,
             method=client.post,
             reverse_kwargs={"slug": rs.slug},
@@ -1014,7 +1014,7 @@ def test_reader_study_add_ground_truth(client, settings):
 
     with open(RESOURCE_PATH / "ground_truth_invalid.csv") as gt:
         response = get_view_for_user(
-            viewname="reader-studies:add-ground-truth",
+            viewname="reader-studies:add-ground-truth-csv",
             client=client,
             method=client.post,
             reverse_kwargs={"slug": rs.slug},
@@ -1030,7 +1030,7 @@ def test_reader_study_add_ground_truth(client, settings):
 
     with open(RESOURCE_PATH / "ground_truth.csv") as gt:
         response = get_view_for_user(
-            viewname="reader-studies:add-ground-truth",
+            viewname="reader-studies:add-ground-truth-csv",
             client=client,
             method=client.post,
             reverse_kwargs={"slug": rs.slug},
@@ -1060,7 +1060,7 @@ def test_reader_study_add_ground_truth(client, settings):
 
     with open(RESOURCE_PATH / "ground_truth_new.csv") as gt:
         response = get_view_for_user(
-            viewname="reader-studies:add-ground-truth",
+            viewname="reader-studies:add-ground-truth-csv",
             client=client,
             method=client.post,
             reverse_kwargs={"slug": rs.slug},
@@ -1117,7 +1117,7 @@ def test_reader_study_add_ground_truth_ds(client, settings):
     gt.seek(0)
 
     response = get_view_for_user(
-        viewname="reader-studies:add-ground-truth",
+        viewname="reader-studies:add-ground-truth-csv",
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
