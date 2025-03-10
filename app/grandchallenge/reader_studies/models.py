@@ -359,7 +359,9 @@ class ReaderStudy(
 
     @property
     def ground_truth_file_headers(self):
-        return ["case"] + [q.question_text for q in self.answerable_questions]
+        return ["case"] + [
+            q.question_text for q in self.ground_truth_applicable_questions
+        ]
 
     def get_ground_truth_csv_dict(self):
         if self.display_sets.count() == 0:
@@ -367,7 +369,7 @@ class ReaderStudy(
         result = []
         answers = {
             q.question_text: q.example_answer
-            for q in self.answerable_questions
+            for q in self.ground_truth_applicable_questions
         }
         for images in self.image_groups:
             _answers = answers.copy()
@@ -547,7 +549,9 @@ class ReaderStudy(
         All questions for this ``ReaderStudy`` except those with answer type
         `heading`.
         """
-        return self.questions.exclude(answer_type=Question.AnswerType.HEADING)
+        return self.questions.exclude(
+            answer_type__in=AnswerType.get_non_answerable_types()
+        )
 
     @cached_property
     def answerable_question_count(self):
@@ -592,17 +596,43 @@ class ReaderStudy(
         }
 
     @cached_property
-    def questions_with_ground__truth(self):
+    def questions_with_ground_truth(self):
         return self.questions.annotate(
             gt_count=Count("answer", filter=Q(answer__is_ground_truth=True))
         ).filter(gt_count__gte=1)
+
+    @cached_property
+    def ground_truth_applicable_questions(self):
+        return self.answerable_questions.exclude(
+            answer_type__in=AnswerType.get_annotation_types()
+        ).all()
+
+    @property
+    def ground_truth_count(self):
+        return (
+            Answer.objects.filter(
+                question__in=self.ground_truth_applicable_questions,
+                is_ground_truth=True,
+            )
+            .values("display_set", "question")
+            .distinct()
+            .count()
+        )
+
+    @property
+    def ground_truth_is_complete(self):
+        count_gt_viable_questions = len(self.ground_truth_applicable_questions)
+        return (
+            self.ground_truth_count
+            == self.display_sets.count() * count_gt_viable_questions
+        )
 
     def score_for_user(self, user):
         """Returns the average and total score for answers given by ``user``."""
 
         return Answer.objects.filter(
             creator=user,
-            question__in=self.questions_with_ground__truth,
+            question__in=self.questions_with_ground_truth,
             is_ground_truth=False,
         ).aggregate(Sum("score"), Avg("score"))
 
@@ -611,7 +641,7 @@ class ReaderStudy(
         """The average and total scores for this ``ReaderStudy`` grouped by user."""
         return (
             Answer.objects.filter(
-                question__in=self.questions_with_ground__truth,
+                question__in=self.questions_with_ground_truth,
                 is_ground_truth=False,
             )
             .order_by("creator_id")
@@ -1022,6 +1052,10 @@ class AnswerType(models.TextChoices):
             AnswerType.TEXT,
             AnswerType.CHOICE,
         ]
+
+    @staticmethod
+    def get_non_answerable_types():
+        return [AnswerType.HEADING]
 
 
 ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
