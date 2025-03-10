@@ -25,7 +25,10 @@ from django.utils.text import format_lazy
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
-from grandchallenge.components.forms import ContainerImageForm
+from grandchallenge.components.forms import (
+    AdditionalInputsMixin,
+    ContainerImageForm,
+)
 from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import assign_tarball_from_upload
@@ -286,7 +289,10 @@ class AlgorithmChoiceField(ModelChoiceField):
 
 
 class SubmissionForm(
-    UserAlgorithmsForPhaseMixin, SaveFormInitMixin, forms.ModelForm
+    UserAlgorithmsForPhaseMixin,
+    SaveFormInitMixin,
+    AdditionalInputsMixin,
+    forms.ModelForm,
 ):
     user_upload = ModelChoiceField(
         widget=UserUploadSingleWidget(
@@ -443,6 +449,8 @@ class SubmissionForm(
             if not self._phase.active_image:
                 self.fields["user_upload"].disabled = True
 
+        self.init_additional_inputs(inputs=self._phase.inputs.all())
+
     def clean(self):
         cleaned_data = super().clean()
         if (
@@ -459,6 +467,9 @@ class SubmissionForm(
             raise ValidationError(
                 "You must confirm that you want to submit to this phase."
             )
+
+        cleaned_data["additional_inputs"] = self.clean_additional_inputs()
+
         return cleaned_data
 
     def clean_phase(self):
@@ -655,7 +666,11 @@ class SubmissionForm(
             self.instance.algorithm_requires_memory_gb = 0
 
         instance = super().save(*args, **kwargs)
-        instance.create_evaluation()
+
+        instance.create_evaluation(
+            additional_inputs=self.cleaned_data["additional_inputs"]
+        )
+
         return instance
 
     class Meta:
