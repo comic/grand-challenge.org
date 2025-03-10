@@ -384,6 +384,11 @@ def test_hanging_protocol_clientside():
             False,
             "Hanging protocol definition is invalid. Have a look at the example in the helptext.",
         ),
+        (
+            '[{"viewport_name": "main", "label": "~test"}]',
+            False,
+            "JSON does not fulfill schema: instance '~test' does not match '^[a-zA-Z0-9 -]*$'",
+        ),
     ),
 )
 def test_hanging_protocol_form_json_validation(
