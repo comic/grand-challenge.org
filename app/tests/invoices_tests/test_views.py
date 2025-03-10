@@ -149,7 +149,7 @@ def test_invoice_list_view_content(client, invoice_kwargs, badge_and_status):
     "payment_status",
     Invoice.PaymentStatusChoices.values,
 )
-def test_invoice_list_view_content_complimentary_status_always_paid(
+def test_invoice_list_view_content_complimentary_no_payment_status(
     client, payment_status
 ):
     challenge = ChallengeFactory()
@@ -173,6 +173,6 @@ def test_invoice_list_view_content_complimentary_status_always_paid(
     assert response.status_code == 200
     assert len(response.context_data["object_list"]) == 1
     assertInHTML(
-        '<td><span class="badge badge-success">Paid</span></td>',
+        "<td>Complimentary</td><td>-</td>",
         response.rendered_content,
     )
