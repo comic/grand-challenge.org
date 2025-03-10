@@ -532,6 +532,7 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                     attrs={
                         "id": prefixed_interface_slug,
                         "help_text": f"{file_upload_text} {interface.file_extension}",
+                        "interface": interface,
                     },
                 )
             )
