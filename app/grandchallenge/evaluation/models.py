@@ -1847,6 +1847,9 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
     @cached_property
     def inputs_complete(self):
+        if not self.additional_inputs_complete:
+            return False
+
         if self.submission.algorithm_image:
             return (
                 self.total_successful_jobs
@@ -1859,8 +1862,12 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
     @cached_property
     def additional_inputs_complete(self):
-        phase_input_count = self.submission.phase.inputs.count()
-        return self.inputs.count() == phase_input_count
+        phase_input_slugs = self.submission.phase.inputs.values_list(
+            "slug", flat=True
+        )
+        return self.inputs.filter(
+            interface__slug__in=phase_input_slugs
+        ).count() == len(phase_input_slugs)
 
     @property
     def is_editable(self):
