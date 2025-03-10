@@ -467,17 +467,14 @@ def test_interface_form_field_help_text_example_download_link(
     download_link_is_present,
 ):
     user = UserFactory()
-
     ci = ComponentInterfaceFactory(kind=component_interface_kind)
-
     ComponentInterfaceExampleValueFactory(
         interface=ci,
         value=example_json,
     )
+    encoded_example = quote(json.dumps(ci.json_kind_example.value, indent=2))
 
     field = InterfaceFormFieldFactory(interface=ci, user=user)
-
-    encoded_example = quote(json.dumps(ci.json_kind_example.value, indent=2))
 
     assert ("Download example" in field.help_text) is download_link_is_present
     assert (encoded_example in field.help_text) is download_link_is_present
