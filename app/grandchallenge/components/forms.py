@@ -107,6 +107,53 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
         fields = ("user_upload", "creator", "comment")
 
 
+class AdditionalInputsMixin:
+    def init_additional_inputs(self, *, inputs):
+        for input in inputs:
+            prefixed_interface_slug = (
+                f"{INTERFACE_FORM_FIELD_PREFIX}{input.slug}"
+            )
+
+            if prefixed_interface_slug in self.data:
+                if (
+                    not input.requires_file
+                    and input.kind == ComponentInterface.Kind.ANY
+                ):
+                    # interfaces for which the data can be a list need
+                    # to be retrieved with getlist() from the QueryDict
+                    initial = self.data.getlist(prefixed_interface_slug)
+                else:
+                    initial = self.data[prefixed_interface_slug]
+            else:
+                initial = None
+
+            self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
+                interface=input,
+                user=self._user,
+                required=input.value_required,
+                initial=initial if initial else input.default_value,
+            )
+
+    def clean_additional_inputs(self):
+        keys_to_remove = []
+        inputs = []
+
+        for key, value in self.cleaned_data.items():
+            if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
+                keys_to_remove.append(key)
+                inputs.append(
+                    CIVData(
+                        interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
+                        value=value,
+                    )
+                )
+
+        for key in keys_to_remove:
+            self.cleaned_data.pop(key)
+
+        return inputs
+
+
 class MultipleCIVForm(Form):
     possible_widgets = InterfaceFormFieldFactory.possible_widgets
 

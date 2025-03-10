@@ -25,16 +25,11 @@ from django.utils.text import format_lazy
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
-from grandchallenge.components.form_fields import (
-    INTERFACE_FORM_FIELD_PREFIX,
-    InterfaceFormFieldFactory,
+from grandchallenge.components.forms import (
+    AdditionalInputsMixin,
+    ContainerImageForm,
 )
-from grandchallenge.components.forms import ContainerImageForm
-from grandchallenge.components.models import (
-    CIVData,
-    ComponentInterface,
-    ImportStatusChoices,
-)
+from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
@@ -291,46 +286,6 @@ class MethodUpdateForm(SaveFormInitMixin, forms.ModelForm):
 class AlgorithmChoiceField(ModelChoiceField):
     def label_from_instance(self, obj):
         return obj.form_field_label()
-
-
-class AdditionalInputsMixin:
-    def init_additional_inputs(self, *, inputs):
-        for input in inputs:
-            prefixed_interface_slug = (
-                f"{INTERFACE_FORM_FIELD_PREFIX}{input.slug}"
-            )
-
-            if prefixed_interface_slug in self.data:
-                if (
-                    not input.requires_file
-                    and input.kind == ComponentInterface.Kind.ANY
-                ):
-                    # interfaces for which the data can be a list need
-                    # to be retrieved with getlist() from the QueryDict
-                    initial = self.data.getlist(prefixed_interface_slug)
-                else:
-                    initial = self.data[prefixed_interface_slug]
-            else:
-                initial = None
-
-            self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
-                interface=input,
-                user=self._user,
-                required=input.value_required,
-                initial=initial if initial else input.default_value,
-            )
-
-    def clean_additional_inputs(self):
-        civs = []
-        for key, value in self.cleaned_data.items():
-            if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
-                civs.append(
-                    CIVData(
-                        interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
-                        value=value,
-                    )
-                )
-        return civs
 
 
 class SubmissionForm(
