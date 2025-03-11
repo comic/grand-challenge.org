@@ -1091,7 +1091,6 @@ def test_read_only_fields_for_dependent_phases():
     )
     assert p1.read_only_fields_for_dependent_phases == [
         "submission_kind",
-        "algorithm_interfaces",
     ]
     assert p2.read_only_fields_for_dependent_phases == ["submission_kind"]
 

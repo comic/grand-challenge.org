@@ -906,6 +906,13 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
         return scoring_method
 
+    @property
+    def algorithm_interfaces_locked(self):
+        if self.parent or self.children.exists():
+            return True
+        else:
+            return False
+
     @cached_property
     def valid_metrics(self):
         return (
@@ -924,10 +931,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     @property
     def read_only_fields_for_dependent_phases(self):
-        common_fields = ["submission_kind"]
-        if self.submission_kind == SubmissionKindChoices.ALGORITHM:
-            common_fields += ["algorithm_interfaces"]
-        return common_fields
+        return ["submission_kind"]
 
     def _clean_parent_phase(self):
         if self.parent:
@@ -935,7 +939,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 raise ValidationError(
                     f"This phase cannot be selected as parent phase for the current "
                     f"phase. The parent phase needs to match the current phase in "
-                    f"all of the following settings: "
+                    f"all of the following settings: algorithm interfaces, "
                     f"{oxford_comma(self.read_only_fields_for_dependent_phases)}. "
                     f"The parent phase cannot have the current phase or any of "
                     f"the current phase's children set as its parent."

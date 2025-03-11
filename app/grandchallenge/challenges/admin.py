@@ -28,6 +28,7 @@ from grandchallenge.core.templatetags.costs import millicents_to_euro
 from grandchallenge.core.utils.grand_challenge_forge import (
     get_forge_challenge_pack_context,
 )
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -38,6 +39,7 @@ class ChallengeAdmin(ModelAdmin):
         "creator",
         "challenge_forge_json",
         "algorithm_phase_configuration_link",
+        "algorithm_interface_configuration_links",
     )
     autocomplete_fields = ("publications",)
     ordering = ("-created",)
@@ -80,6 +82,26 @@ class ChallengeAdmin(ModelAdmin):
                 kwargs={"challenge_short_name": obj.short_name},
             ),
         )
+
+    @staticmethod
+    def algorithm_interface_configuration_links(obj):
+        phases = []
+        for phase in obj.phase_set.filter(
+            submission_kind=SubmissionKindChoices.ALGORITHM
+        ).all():
+            phases.append(
+                format_html(
+                    '<a href="{link}">{link}</a>',
+                    link=reverse(
+                        "evaluation:interface-list",
+                        kwargs={
+                            "challenge_short_name": obj.short_name,
+                            "slug": phase.slug,
+                        },
+                    ),
+                )
+            )
+        return format_html("<br>".join(phases)) if phases else "-"
 
 
 @admin.register(ChallengeRequest)
@@ -226,6 +248,10 @@ class OnboardingTaskAdmin(ModelAdmin):
     @admin.display(boolean=True)
     def on_time(self, obj):
         return not obj.is_overdue
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.with_overdue_status()
 
 
 admin.site.register(ChallengeUserObjectPermission, UserObjectPermissionAdmin)

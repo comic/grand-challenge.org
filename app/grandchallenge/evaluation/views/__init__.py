@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import (
+    AccessMixin,
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
@@ -1043,6 +1044,19 @@ class ConfigureAlgorithmPhasesPermissionMixin(PermissionRequiredMixin):
     permission_required = "evaluation.configure_algorithm_phase"
 
 
+class LockParentAndChildPhasesMixin(AccessMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if self.phase.algorithm_interfaces_locked:
+            messages.error(
+                request,
+                "This phase either has a parent phase or is a parent phase to "
+                "another phase. Interfaces for such phases cannot be updated."
+                "To update them, first unlink the phases.",
+            )
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
 class ConfigureAlgorithmPhasesView(
     ConfigureAlgorithmPhasesPermissionMixin, FormView
 ):
@@ -1290,6 +1304,7 @@ class AlgorithmInterfaceForPhaseMixin:
 
 class AlgorithmInterfaceForPhaseCreate(
     ConfigureAlgorithmPhasesPermissionMixin,
+    LockParentAndChildPhasesMixin,
     AlgorithmInterfaceForPhaseMixin,
     AlgorithmInterfaceCreateBase,
 ):
@@ -1333,6 +1348,7 @@ class AlgorithmInterfacesForPhaseList(
 
 class AlgorithmInterfaceForPhaseDelete(
     ConfigureAlgorithmPhasesPermissionMixin,
+    LockParentAndChildPhasesMixin,
     AlgorithmInterfaceForPhaseMixin,
     DeleteView,
 ):

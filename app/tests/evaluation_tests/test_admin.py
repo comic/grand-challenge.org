@@ -27,7 +27,6 @@ def test_read_only_fields_disabled():
     form = PhaseAdmin.form(
         instance=p1,
     )
-    assert form.fields["algorithm_interfaces"].disabled
     assert form.fields["submission_kind"].disabled
 
     p3, p4 = PhaseFactory.create_batch(

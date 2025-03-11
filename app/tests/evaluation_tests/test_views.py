@@ -2413,3 +2413,46 @@ class TestSubmissionCreationWithExtraInputs:
         )
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == old_civ_count
+
+
+@pytest.mark.django_db
+def test_parent_phase_algorithm_interfaces_locked(client):
+    challenge = ChallengeFactory()
+    phase, parent_phase = PhaseFactory.create_batch(
+        2, challenge=challenge, submission_kind=SubmissionKindChoices.ALGORITHM
+    )
+    phase.parent = parent_phase
+    phase.save()
+
+    user = UserFactory()
+    phase.challenge.add_admin(user)
+
+    assert phase.algorithm_interfaces_locked
+    assert parent_phase.algorithm_interfaces_locked
+
+    interface = AlgorithmInterfaceFactory()
+
+    for p in [phase, parent_phase]:
+        p.algorithm_interfaces.set([interface])
+        response = get_view_for_user(
+            viewname="evaluation:interface-create",
+            client=client,
+            user=user,
+            reverse_kwargs={
+                "challenge_short_name": p.challenge.short_name,
+                "slug": p.slug,
+            },
+        )
+        assert response.status_code == 403
+
+        response = get_view_for_user(
+            viewname="evaluation:interface-delete",
+            client=client,
+            user=user,
+            reverse_kwargs={
+                "challenge_short_name": p.challenge.short_name,
+                "slug": p.slug,
+                "interface_pk": interface.pk,
+            },
+        )
+        assert response.status_code == 403

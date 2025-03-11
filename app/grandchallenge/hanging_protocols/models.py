@@ -109,6 +109,7 @@ HANGING_PROTOCOL_SCHEMA = {
             },
             "label": {
                 "type": "string",
+                "pattern": "^[a-zA-Z0-9 -]*$",
             },
             "orientation": {
                 "type": "string",
