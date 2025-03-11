@@ -57,7 +57,7 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         Job.objects.active()
         .filter(algorithm_image=job.algorithm_image)
         .count()
-        >= settings.ALGORITHMS_JOB_BATCH_LIMIT
+        >= settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM
     ):
         raise TooManyJobsScheduled
 
