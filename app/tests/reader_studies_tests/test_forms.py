@@ -1884,7 +1884,7 @@ def test_question_form_interactive_algorithm_field(answer_type, choices):
 
 
 @pytest.mark.django_db
-def test_interactive_algorithm_field_permissions(client):
+def test_interactive_algorithm_field_permissions():
     editor, editor_with_permission = UserFactory.create_batch(2)
     rs = ReaderStudyFactory()
 
@@ -1925,7 +1925,7 @@ def test_interactive_algorithm_field_permissions(client):
 
 
 @pytest.mark.django_db
-def test_ground_view_from_answers(client):
+def test_ground_view_copy_answers_form():
     rs = ReaderStudyFactory()
 
     reader = UserFactory()
