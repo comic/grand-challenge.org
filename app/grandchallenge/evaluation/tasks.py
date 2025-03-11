@@ -125,13 +125,21 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     max_jobs
         The maximum number of jobs to create
     """
-    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-        raise TooManyJobsScheduled
-
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
     evaluation = Evaluation.objects.get(pk=evaluation_pk)
+
+    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
+        raise TooManyJobsScheduled
+
+    if (
+        Job.objects.active()
+        .filter(algorithm_image=evaluation.submission.algorithm_image)
+        .count()
+        >= settings.ALGORITHMS_JOB_BATCH_LIMIT
+    ):
+        raise TooManyJobsScheduled
 
     if evaluation.status not in {
         evaluation.PENDING,
