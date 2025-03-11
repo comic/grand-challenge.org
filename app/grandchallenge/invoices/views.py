@@ -12,12 +12,9 @@ class InvoiceList(
     ListView,
 ):
     model = Invoice
-    permission_required = "change_challenge"
+    permission_required = "view_invoice"
     raise_exception = True
     login_url = reverse_lazy("account_login")
-
-    def get_permission_object(self):
-        return self.request.challenge
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -42,9 +39,6 @@ class InvoiceDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     model = Invoice
-    permission_required = "change_challenge"
+    permission_required = "view_invoice"
     raise_exception = True
     login_url = reverse_lazy("account_login")
-
-    def get_permission_object(self):
-        return self.request.challenge
