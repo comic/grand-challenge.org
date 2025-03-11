@@ -12,6 +12,7 @@ concurrency:
 jobs:
     precommit:
         runs-on: ubuntu-latest
+        timeout-minutes: 5
         steps:
             - name: Install Python ${{ env.PYTHON_VERSION }}
               uses: actions/setup-python@v5
@@ -28,6 +29,7 @@ jobs:
 
     django-tests:
         runs-on: ubuntu-latest
+        timeout-minutes: 15
         steps:
             - name: Set up Python ${{ env.PYTHON_VERSION }}
               uses: actions/setup-python@v5
@@ -49,6 +51,7 @@ jobs:
 
     docs:
         runs-on: ubuntu-latest
+        timeout-minutes: 10
         steps:
             - uses: actions/checkout@v4
             - name: Build the test container
@@ -70,6 +73,7 @@ jobs:
     deploy:
         needs: [django-tests]
         runs-on: ubuntu-latest
+        timeout-minutes: 15
         permissions:
             # These permissions are needed to interact with GitHub's OIDC Token endpoint.
             id-token: write
