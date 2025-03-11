@@ -2,6 +2,7 @@ from django.urls import path
 
 from grandchallenge.reader_studies.views import (
     AddDisplaySetsToReaderStudy,
+    AddGroundTruthViaAnswersToReaderStudy,
     AddGroundTruthViaCSVToReaderStudy,
     AddQuestionToReaderStudy,
     AnswersRemoveForUser,
@@ -84,6 +85,11 @@ urlpatterns = [
         "<slug:slug>/ground-truth/csv/example/",
         ReaderStudyExampleGroundTruthCSV.as_view(),
         name="example-ground-truth-csv",
+    ),
+    path(
+        "<slug:slug>/ground-truth/copy-answers/",
+        AddGroundTruthViaAnswersToReaderStudy.as_view(),
+        name="add-ground-truth-answers",
     ),
     path(
         "<slug:slug>/display-sets/create/",

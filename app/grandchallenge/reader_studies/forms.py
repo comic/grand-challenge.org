@@ -14,6 +14,7 @@ from crispy_forms.layout import (
     Submit,
 )
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import (
@@ -34,7 +35,7 @@ from django.forms.models import inlineformset_factory
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import format_lazy
-from django_select2.forms import Select2MultipleWidget
+from django_select2.forms import Select2MultipleWidget, Select2Widget
 from dynamic_forms import DynamicField, DynamicFormMixin
 
 from grandchallenge.components.forms import (
@@ -686,6 +687,54 @@ class ReadersForm(UserGroupForm):
 class ReaderStudyPermissionRequestUpdateForm(PermissionRequestUpdateForm):
     class Meta(PermissionRequestUpdateForm.Meta):
         model = ReaderStudyPermissionRequest
+
+
+class GroundTruthCopyAnswersForm(SaveFormInitMixin, Form):
+    user = ModelChoiceField(
+        queryset=get_user_model().objects.none(),
+        required=True,
+        help_text="Select a user who's answers will be one-time copied.",
+        widget=Select2Widget,
+    )
+
+    def __init__(self, *args, reader_study, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._reader_study = reader_study
+
+        self.fields["user"].queryset = (
+            get_user_model()
+            .objects.filter(answer__question__reader_study=reader_study)
+            .distinct()
+        )
+
+    def clean(self):
+        if self._reader_study.has_ground_truth:
+            raise ValidationError(
+                "Reader study already has ground truth. Ground truth cannot be updated. "
+                "Please, first remove the ground truth."
+            )
+
+        super().clean()
+
+    def clean_user(self):
+        user = self.cleaned_data["user"]
+
+        progress = self._reader_study.get_progress_for_user(user)
+        if progress["diff"] != 0:
+            raise ValidationError("User has not completed the reader study!")
+
+        return user
+
+    def create_ground_truth(self):
+        answers = Answer.objects.filter(
+            question__reader_study=self._reader_study,
+            creator=self.cleaned_data["user"],
+        )
+        for answer in answers:
+            answer.pk = None
+            answer.is_ground_truth = True
+            answer.save()
 
 
 class GroundTruthCSVForm(SaveFormInitMixin, Form):

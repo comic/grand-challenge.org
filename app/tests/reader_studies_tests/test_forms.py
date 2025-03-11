@@ -25,6 +25,7 @@ from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
+    GroundTruthCopyAnswersForm,
     QuestionForm,
 )
 from grandchallenge.reader_studies.models import (
@@ -1921,3 +1922,59 @@ def test_interactive_algorithm_field_permissions(client):
         form.cleaned_data["interactive_algorithm"]
         == InteractiveAlgorithmChoices.ULS23_BASELINE
     )
+
+
+@pytest.mark.django_db
+def test_ground_view_from_answers(client):
+    rs = ReaderStudyFactory()
+
+    reader = UserFactory()
+    rs.add_reader(reader)
+
+    ds = DisplaySetFactory(reader_study=rs)
+    q1 = QuestionFactory(
+        reader_study=rs,
+        question_text="q1",
+        answer_type=Question.AnswerType.BOOL,
+    )
+    q2 = QuestionFactory(
+        reader_study=rs,
+        question_text="q2",
+        answer_type=Question.AnswerType.BOOL,
+    )
+
+    form = GroundTruthCopyAnswersForm(
+        reader_study=rs,
+        data={"user": str(reader.pk)},
+    )
+    assert not form.is_valid()
+
+    # Answer 1 of 2 questions
+    AnswerFactory(question=q1, display_set=ds, creator=reader, answer=True)
+
+    form = GroundTruthCopyAnswersForm(
+        reader_study=rs,
+        data={"user": str(reader.pk)},
+    )
+    assert (
+        not form.is_valid()
+    ), "With only one answer the user is a valid source"
+
+    # Answer 2 of 2 questions
+    AnswerFactory(question=q2, display_set=ds, creator=reader, answer=True)
+
+    form = GroundTruthCopyAnswersForm(
+        reader_study=rs,
+        data={"user": str(reader.pk)},
+    )
+    assert form.is_valid(), "With both answers the user is a valid source"
+
+    form.create_ground_truth()
+
+    form = GroundTruthCopyAnswersForm(
+        reader_study=rs,
+        data={"user": str(reader.pk)},
+    )
+    assert (
+        not form.is_valid()
+    ), "With existing ground truth, the form is no longer valid"

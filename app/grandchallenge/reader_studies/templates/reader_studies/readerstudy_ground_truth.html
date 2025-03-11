@@ -92,7 +92,12 @@
             <div>
                 <a class="btn btn-primary"
                     href="{% url 'reader-studies:add-ground-truth-csv' slug=object.slug %}">
-                    <i class="fas fa-upload"></i> Upload Ground Truth via CSV
+                    <i class="fas fa-upload"></i> Upload via CSV
+                </a>
+                or
+                <a class="btn btn-primary"
+                    href="{% url 'reader-studies:add-ground-truth-answers' slug=object.slug %}">
+                    <i class="fas fa-copy"></i> Copy from Existing Answers
                 </a>
             </div>
         </div>
