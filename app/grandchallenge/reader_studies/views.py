@@ -479,7 +479,7 @@ class AddGroundTruthViaCSVToReaderStudy(
     BaseAddObjectToReaderStudyMixin, FormView
 ):
     form_class = GroundTruthCSVForm
-    template_name = "reader_studies/ground_truth_via_csv.html"
+    template_name = "reader_studies/ground_truth_csv_form.html"
     type_to_add = "Ground Truth"
 
     def get_form_kwargs(self):

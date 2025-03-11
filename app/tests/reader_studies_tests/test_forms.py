@@ -900,7 +900,7 @@ def test_reader_study_delete(client):
 
 
 @pytest.mark.django_db
-def test_reader_study_add_ground_truth_via_csv(client, settings):
+def test_reader_study_add_ground_truth_csv(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
