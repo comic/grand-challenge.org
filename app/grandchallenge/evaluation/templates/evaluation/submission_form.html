@@ -84,11 +84,7 @@
             {% include 'evaluation/partials/algorithm_interfaces_information.html' with phase=phase form=form %}
         {% endif %}
 
-        <form method="POST">
-            {% csrf_token %}
-            {{ form|crispy }}
-            <input type="submit" name="save" value="Submit" class="btn btn-primary">
-        </form>
+        {% crispy form %}
 
     {% else %}
 
@@ -154,18 +150,9 @@
                 {% include 'evaluation/partials/algorithm_interfaces_information.html' with phase=phase form=form %}
             {% endif %}
 
-            <form method="POST">
-                {% csrf_token %}
-                {{ form|crispy }}
-                <input type="submit" name="save" value="Submit" class="btn btn-primary">
-            </form>
+            {% crispy form %}
 
         {% endif %}
 
     {% endif %}
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-    {{ form.media }}
 {% endblock %}

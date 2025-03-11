@@ -109,7 +109,7 @@ class ModelFactsTextField(Field):
     template = "algorithms/model_facts_field.html"
 
 
-class JobCreateForm(SaveFormInitMixin, AdditionalInputsMixin, Form):
+class JobCreateForm(AdditionalInputsMixin, Form):
     algorithm_image = ModelChoiceField(
         queryset=None, disabled=True, required=True, widget=HiddenInput
     )
@@ -130,8 +130,6 @@ class JobCreateForm(SaveFormInitMixin, AdditionalInputsMixin, Form):
         super().__init__(*args, **kwargs)
 
         self._algorithm = algorithm
-
-        self.helper = FormHelper()
 
         self._user = user
         self.fields["creator"].queryset = get_user_model().objects.filter(
@@ -161,6 +159,9 @@ class JobCreateForm(SaveFormInitMixin, AdditionalInputsMixin, Form):
             self.fields["algorithm_model"].initial = active_model
 
         self.init_additional_inputs(inputs=interface.inputs.all())
+
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Save"))
 
     @cached_property
     def jobs_limit(self):

@@ -290,7 +290,6 @@ class AlgorithmChoiceField(ModelChoiceField):
 
 class SubmissionForm(
     UserAlgorithmsForPhaseMixin,
-    SaveFormInitMixin,
     AdditionalInputsMixin,
     forms.ModelForm,
 ):
@@ -450,6 +449,9 @@ class SubmissionForm(
                 self.fields["user_upload"].disabled = True
 
         self.init_additional_inputs(inputs=self._phase.inputs.all())
+
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Save"))
 
     def clean(self):
         cleaned_data = super().clean()
