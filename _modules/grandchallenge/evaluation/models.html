@@ -951,6 +951,13 @@
 
         <span class="k">return</span> <span class="n">scoring_method</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">algorithm_interfaces_locked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">valid_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -969,10 +976,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">read_only_fields_for_dependent_phases</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">common_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;submission_kind&quot;</span><span class="p">]</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
-            <span class="n">common_fields</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;algorithm_interfaces&quot;</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">common_fields</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s2">&quot;submission_kind&quot;</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_parent_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>
@@ -980,7 +984,7 @@
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;This phase cannot be selected as parent phase for the current &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;phase. The parent phase needs to match the current phase in &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;all of the following settings: &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;all of the following settings: algorithm interfaces, &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">oxford_comma</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">read_only_fields_for_dependent_phases</span><span class="p">)</span><span class="si">}</span><span class="s2">. &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;The parent phase cannot have the current phase or any of &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;the current phase&#39;s children set as its parent.&quot;</span>
