@@ -76,12 +76,12 @@ urlpatterns = [
         name="ground-truth-remove",
     ),
     path(
-        "<slug:slug>/ground-truth/add/csv/",
+        "<slug:slug>/ground-truth/csv/create/",
         AddGroundTruthViaCSVToReaderStudy.as_view(),
         name="add-ground-truth-csv",
     ),
     path(
-        "<slug:slug>/ground-truth/add/csv/example/",
+        "<slug:slug>/ground-truth/csv/example/",
         ReaderStudyExampleGroundTruthCSV.as_view(),
         name="example-ground-truth-csv",
     ),
