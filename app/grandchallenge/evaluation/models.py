@@ -1524,7 +1524,12 @@ class Submission(FieldChangeMixin, UUIDModel):
                     send_action=False,
                 )
 
-    def create_evaluation(self, *, additional_inputs=None):
+    def create_evaluation(self, *, additional_inputs):
+        if self.phase.inputs.exists() and not additional_inputs:
+            raise RuntimeError(
+                "Additional inputs are required to create an evaluation for this phase"
+            )
+
         if self.phase.external_evaluation:
             evaluation, created = Evaluation.objects.get_or_create(
                 submission=self,

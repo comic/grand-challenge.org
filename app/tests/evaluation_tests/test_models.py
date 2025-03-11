@@ -121,10 +121,10 @@ def test_create_evaluation_is_idempotent(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        s.create_evaluation()
+        s.create_evaluation(additional_inputs=None)
 
     with django_capture_on_commit_callbacks(execute=True):
-        s.create_evaluation()
+        s.create_evaluation(additional_inputs=None)
 
     # max_inital_jobs is set to 1, so only one job should be created
     assert Job.objects.count() == 1
@@ -142,7 +142,7 @@ def test_create_evaluation_sets_gpu_and_memory():
 
     submission = SubmissionFactory(phase=method.phase)
 
-    submission.create_evaluation()
+    submission.create_evaluation(additional_inputs=None)
 
     evaluation = Evaluation.objects.get()
 
@@ -222,7 +222,7 @@ def test_create_evaluation_uniqueness_checks(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 1
 
@@ -231,7 +231,7 @@ def test_create_evaluation_uniqueness_checks(
     assert sub.phase.active_ground_truth == gt
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 2
 
@@ -243,7 +243,7 @@ def test_create_evaluation_uniqueness_checks(
     assert sub.phase.active_image == m
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 3
 
@@ -251,7 +251,7 @@ def test_create_evaluation_uniqueness_checks(
     sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 4
 
@@ -259,7 +259,7 @@ def test_create_evaluation_uniqueness_checks(
     sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 5
 
@@ -267,12 +267,12 @@ def test_create_evaluation_uniqueness_checks(
     sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 6
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 6
 

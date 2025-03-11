@@ -121,7 +121,7 @@ def reevaluate_submissions(modeladmin, request, queryset):
                 messages.WARNING,
             )
         else:
-            submission.create_evaluation()
+            submission.create_evaluation(additional_inputs=None)
 
 
 @admin.register(Submission)
