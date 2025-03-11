@@ -974,7 +974,7 @@ def test_ground_view_from_answers(client):
         question_text="q1",
         answer_type=Question.AnswerType.BOOL,
     )
-    AnswerFactory(
+    answer = AnswerFactory(
         question=q,
         display_set=ds,
         creator=reader,
@@ -1013,3 +1013,8 @@ def test_ground_view_from_answers(client):
     assert response.status_code == 200, "Editor can post form"
 
     assert rs.has_ground_truth
+
+    answer.delete()
+    assert (
+        rs.has_ground_truth
+    ), "Ground Truth exists seperately from the copied answers"
