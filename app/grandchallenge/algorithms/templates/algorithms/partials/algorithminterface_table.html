@@ -46,10 +46,13 @@
                     </td>
                      {% if delete_option %}
                         <td class="align-middle">
-                            <a class="btn btn-sm btn-danger m-0"
-                               href="{% url base_obj.algorithm_interface_delete_viewname slug=base_obj.slug interface_pk=interface.pk %}">
+                        <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="{% if base_obj.algorithm_interfaces_locked %}Disabled because this phase is a parent or has a parent phase.{% endif %}">
+                            <a class="btn btn-sm btn-danger m-0 {% if base_obj.algorithm_interfaces_locked %} disabled {% endif %}"
+                               href="{% url base_obj.algorithm_interface_delete_viewname slug=base_obj.slug interface_pk=interface.pk %}"
+                            >
                                 <i class="fas fa-trash"></i>
                             </a>
+                        </span>
                         </td>
                      {% endif %}
                  </tr>
