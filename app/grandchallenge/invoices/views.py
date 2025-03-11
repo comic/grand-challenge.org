@@ -13,7 +13,6 @@ class InvoiceList(
 ):
     model = Invoice
     permission_required = "change_challenge"
-    template_name_suffix = "_list"
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
@@ -44,7 +43,6 @@ class InvoiceDetail(
 ):
     model = Invoice
     permission_required = "change_challenge"
-    template_name_suffix = "_detail"
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
