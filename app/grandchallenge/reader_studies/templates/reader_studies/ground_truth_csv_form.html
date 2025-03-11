@@ -1,0 +1,54 @@
+{% extends "reader_studies/reader_study_object_form.html" %}
+
+{% load static %}
+
+{% block title %}
+    Add {{ type_to_add|title }} - {{ object }} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
+            Studies</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Add {{ type_to_add|title }}
+        </li>
+    </ol>
+{% endblock %}
+
+
+{% block form_heading %}
+    <h2>Add {{ type_to_add }} to {{ object }}</h2>
+
+    <p>
+        The first row of the CSV file must contain the headings
+        <code>case</code>, followed by the question text for
+        each of the questions in the reader study (excluding those
+        of type <code>heading</code> or <code>annotations</code>).
+    </p>
+
+    <p>
+        The consecutive lines contain the id per case.
+        Then include the answer for the question
+        corresponding to the question text defined in the header for that
+        column. All answers must be enclosed in single quotes. Strings
+        must be enclosed in both single and double quotes (i.e.
+        <code>'"answer"'</code>). For choice type questions, the
+        options text(s) must be provided as a string. For optional
+        questions, use <code>null</code> if you do not wish to
+        provide ground truth for that question.
+    </p>
+
+    <p>
+        An example of the first two lines of the CSV for this reader study is:
+        <code>
+            {{ example_ground_truth|linebreaks }}
+        </code>
+
+        <a class="btn btn-secondary"
+           href="{% url 'reader-studies:example-ground-truth-csv' slug=object.slug %}">
+           <i class="fas fa-download"></i> Download Example CSV
+        </a>
+    </p>
+
+{% endblock %}
