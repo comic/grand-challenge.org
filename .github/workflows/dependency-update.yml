@@ -15,7 +15,6 @@ concurrency:
 jobs:
     dependency-update:
         name: Dependency Update
-        timeout-minutes: 45
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
