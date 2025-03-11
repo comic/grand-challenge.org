@@ -2,6 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
 from django.forms import ModelChoiceField, MultiValueField
+from django.template.loader import render_to_string
 
 from grandchallenge.cases.widgets import (
     FlexibleImageField,
@@ -110,6 +111,16 @@ class InterfaceFormFieldFactory:
 
         if field_type == forms.JSONField:
             kwargs["widget"] = JSONEditorWidget(schema=schema)
+            extra_help_text = render_to_string(
+                "components/partials/example_download_link.html",
+                {"object": interface},
+            )
+            if kwargs["help_text"]:
+                kwargs["help_text"] = (
+                    f"{kwargs['help_text']}<br>{extra_help_text}"
+                )
+            else:
+                kwargs["help_text"] = extra_help_text
         kwargs["validators"] = [JSONValidator(schema=schema)]
 
         return field_type(**kwargs)
