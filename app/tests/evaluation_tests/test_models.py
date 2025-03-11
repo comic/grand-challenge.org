@@ -2000,3 +2000,34 @@ def test_get_valid_jobs_for_interfaces_and_archive_items(
             archive_items_and_jobs_for_interfaces.jobs_for_interface2[0]
         ],
     }
+
+
+@pytest.mark.django_db
+def test_additional_inputs_complete():
+    phase = PhaseFactory()
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+    phase.inputs.set([ci1, ci2])
+
+    civ1 = ComponentInterfaceValueFactory(interface=ci1)
+    civ2 = ComponentInterfaceValueFactory(interface=ci2)
+    civ3 = ComponentInterfaceValueFactory(interface=ci3)
+    civ4 = ComponentInterfaceValueFactory(interface=ci3)
+
+    eval = EvaluationFactory(submission__phase=phase, time_limit=10)
+
+    assert not eval.additional_inputs_complete
+
+    # add required inputs
+    eval.inputs.set([civ1, civ2])
+    del eval.additional_inputs_complete
+    assert eval.additional_inputs_complete
+
+    # it should not matter if other inputs are present as well
+    eval.inputs.set([civ1, civ2, civ3])
+    del eval.additional_inputs_complete
+    assert eval.additional_inputs_complete
+
+    # or if multiple inputs of the same type are present
+    eval.inputs.set([civ1, civ2, civ3, civ4])
+    del eval.additional_inputs_complete
+    assert eval.additional_inputs_complete
