@@ -1,4 +1,5 @@
 from django.db import models
+from guardian.shortcuts import assign_perm
 
 
 class PaymentStatusChoices(models.TextChoices):
@@ -100,3 +101,13 @@ class Invoice(models.Model):
                 name="payment_status_in_choices",
             ),
         ]
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self._state.adding:
+            assign_perm(
+                f"view_{self._meta.model_name}",
+                self.challenge.admins_group,
+                self,
+            )
