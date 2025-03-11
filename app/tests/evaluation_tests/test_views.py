@@ -2323,7 +2323,7 @@ class TestSubmissionCreationWithExtraInputs:
             == eval.error_message
         )
         assert eval.detailed_error_message == {
-            algorithm_phase_with_multiple_inputs.ci_json_file.title: "JSON does not fulfill schema: instance is not of type 'array'"
+            algorithm_phase_with_multiple_inputs.ci_json_file.title: "Input validation failed"
         }
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == old_civ_count
@@ -2408,9 +2408,7 @@ class TestSubmissionCreationWithExtraInputs:
             "One or more of the inputs failed validation."
             == eval.error_message
         )
-        assert "1 file could not be imported" in str(
-            eval.detailed_error_message
-        )
+        assert "Input validation failed" in str(eval.detailed_error_message)
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == old_civ_count
 
