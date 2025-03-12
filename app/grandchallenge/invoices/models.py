@@ -1,4 +1,5 @@
 from django.db import models
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 
@@ -114,3 +115,16 @@ class Invoice(models.Model):
             self.challenge.admins_group,
             self,
         )
+
+
+class InvoiceUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        raise RuntimeError(
+            "User permissions should not be assigned for this model"
+        )
+
+
+class InvoiceGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Invoice, on_delete=models.CASCADE)

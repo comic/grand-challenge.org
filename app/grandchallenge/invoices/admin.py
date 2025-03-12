@@ -1,7 +1,15 @@
 from django.contrib import admin
 
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
+)
 from grandchallenge.core.templatetags.bleach import md2html
-from grandchallenge.invoices.models import Invoice
+from grandchallenge.invoices.models import (
+    Invoice,
+    InvoiceGroupObjectPermission,
+    InvoiceUserObjectPermission,
+)
 
 
 @admin.register(Invoice)
@@ -70,3 +78,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         invoice_request_details += "</div>"
 
         return md2html(warning_text + invoice_request_details)
+
+
+admin.site.register(InvoiceUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(InvoiceGroupObjectPermission, GroupObjectPermissionAdmin)
