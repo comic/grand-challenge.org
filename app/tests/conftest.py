@@ -21,8 +21,6 @@ from grandchallenge.components.form_fields import (
 )
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.core.fixtures import create_uploaded_image
-from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.invoices.models import PaymentStatusChoices
 from grandchallenge.reader_studies.models import Question
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -47,7 +45,6 @@ from tests.evaluation_tests.factories import (
     SubmissionFactory,
 )
 from tests.factories import ChallengeFactory, ImageFactory, UserFactory
-from tests.invoices_tests.factories import InvoiceFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     CategoricalOptionFactory,
@@ -889,146 +886,4 @@ def submission_with_model_for_optional_inputs(jobs_for_optional_inputs):
         civs_for_interface1=jobs_for_optional_inputs.civs_for_interface1,
         civs_for_interface2=jobs_for_optional_inputs.civs_for_interface2,
         output_civs=jobs_for_optional_inputs.output_civs,
-    )
-
-
-class PhaseWithInputs(NamedTuple):
-    phase: PhaseFactory
-    admin: UserFactory
-    algorithm: AlgorithmFactory
-    ci_str: ComponentInterfaceFactory
-    ci_bool: ComponentInterfaceFactory
-    ci_img_upload: ComponentInterfaceFactory
-    ci_existing_img: ComponentInterfaceFactory
-    ci_json_in_db_with_schema: ComponentInterfaceFactory
-    ci_json_file: ComponentInterfaceFactory
-    im_upload_through_api: RawImageUploadSessionFactory
-    im_upload_through_ui: UserUploadFactory
-    file_upload: UserUploadFactory
-    image_1: ImageFactory
-    image_2: ImageFactory
-
-
-@pytest.fixture
-def algorithm_phase_with_multiple_inputs():
-    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
-    algorithm = AlgorithmFactory()
-    ai = AlgorithmImageFactory(
-        algorithm=algorithm,
-        is_desired_version=True,
-        is_manifest_valid=True,
-        is_in_registry=True,
-    )
-    AlgorithmModelFactory(
-        algorithm=algorithm,
-        is_desired_version=True,
-    )
-
-    alg_in = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.STRING
-    )
-    interface = AlgorithmInterfaceFactory(
-        inputs=[alg_in],
-        outputs=[ComponentInterfaceFactory()],
-    )
-    ai.algorithm.interfaces.add(interface)
-
-    admin = UserFactory()
-    VerificationFactory(user=admin, is_verified=True)
-    algorithm.add_editor(admin)
-    phase.challenge.add_admin(user=admin)
-    phase.algorithm_interfaces.add(interface)
-
-    MethodFactory(
-        phase=phase,
-        is_manifest_valid=True,
-        is_in_registry=True,
-        is_desired_version=True,
-    )
-
-    archive = ArchiveFactory()
-    phase.archive = archive
-    phase.save()
-
-    item = ArchiveItemFactory(archive=archive)
-    item.values.add(
-        ComponentInterfaceValueFactory(interface=alg_in, value="foo")
-    )
-
-    InvoiceFactory(
-        challenge=phase.challenge,
-        support_costs_euros=0,
-        compute_costs_euros=10,
-        storage_costs_euros=0,
-        payment_status=PaymentStatusChoices.PAID,
-    )
-
-    # create interfaces of different kinds
-    ci_str = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.STRING
-    )
-    ci_bool = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
-    ci_img_upload = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE
-    )
-    ci_existing_img = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE
-    )
-    ci_json_in_db_with_schema = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY,
-        store_in_database=True,
-        schema={
-            "$schema": "http://json-schema.org/draft-07/schema",
-            "type": "array",
-        },
-    )
-    ci_json_file = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY,
-        store_in_database=False,
-        schema={
-            "$schema": "http://json-schema.org/draft-07/schema",
-            "type": "array",
-        },
-    )
-
-    # Create inputs
-    im_upload_through_api = RawImageUploadSessionFactory(creator=admin)
-    image_1, image_2 = ImageFactory.create_batch(2)
-    mhd1, mhd2 = ImageFileFactoryWithMHDFile.create_batch(2)
-    image_1.files.set([mhd1])
-    image_2.files.set([mhd2])
-    for im in [image_1, image_2]:
-        assign_perm("cases.view_image", admin, im)
-    im_upload_through_api.image_set.set([image_1])
-
-    im_upload_through_ui = create_upload_from_file(
-        file_path=RESOURCE_PATH / "image10x10x10.mha",
-        creator=admin,
-    )
-
-    file_upload = UserUploadFactory(filename="file.json", creator=admin)
-    presigned_urls = file_upload.generate_presigned_urls(part_numbers=[1])
-    response = put(presigned_urls["1"], data=b'["Foo", "bar"]')
-    file_upload.complete_multipart_upload(
-        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
-    )
-    file_upload.save()
-
-    return PhaseWithInputs(
-        phase=phase,
-        algorithm=ai.algorithm,
-        admin=admin,
-        ci_str=ci_str,
-        ci_bool=ci_bool,
-        ci_img_upload=ci_img_upload,
-        ci_existing_img=ci_existing_img,
-        ci_json_in_db_with_schema=ci_json_in_db_with_schema,
-        ci_json_file=ci_json_file,
-        im_upload_through_api=im_upload_through_api,
-        im_upload_through_ui=im_upload_through_ui,
-        file_upload=file_upload,
-        image_1=image_1,
-        image_2=image_2,
     )

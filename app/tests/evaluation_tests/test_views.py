@@ -1,6 +1,7 @@
 import json
 from datetime import timedelta
 from pathlib import Path
+from typing import NamedTuple
 from unittest.mock import patch
 
 import factory
@@ -20,6 +21,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
     ImportStatusChoices,
+    InterfaceKind,
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -32,7 +34,10 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.invoices.models import PaymentTypeChoices
+from grandchallenge.invoices.models import (
+    PaymentStatusChoices,
+    PaymentTypeChoices,
+)
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstations.models import Workstation
 from tests.algorithms_tests.factories import (
@@ -40,9 +45,14 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
+    AlgorithmModelFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests import RESOURCE_PATH
+from tests.cases_tests.factories import (
+    ImageFileFactoryWithMHDFile,
+    RawImageUploadSessionFactory,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -60,6 +70,7 @@ from tests.factories import (
     ChallengeFactory,
     ChallengeRequestFactory,
     GroupFactory,
+    ImageFactory,
     UserFactory,
     WorkstationConfigFactory,
     WorkstationFactory,
@@ -72,6 +83,148 @@ from tests.uploads_tests.factories import (
 )
 from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
+
+
+class PhaseWithInputs(NamedTuple):
+    phase: PhaseFactory
+    admin: UserFactory
+    algorithm: AlgorithmFactory
+    ci_str: ComponentInterfaceFactory
+    ci_bool: ComponentInterfaceFactory
+    ci_img_upload: ComponentInterfaceFactory
+    ci_existing_img: ComponentInterfaceFactory
+    ci_json_in_db_with_schema: ComponentInterfaceFactory
+    ci_json_file: ComponentInterfaceFactory
+    im_upload_through_api: RawImageUploadSessionFactory
+    im_upload_through_ui: UserUploadFactory
+    file_upload: UserUploadFactory
+    image_1: ImageFactory
+    image_2: ImageFactory
+
+
+@pytest.fixture
+def algorithm_phase_with_multiple_inputs():
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    algorithm = AlgorithmFactory()
+    ai = AlgorithmImageFactory(
+        algorithm=algorithm,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+    AlgorithmModelFactory(
+        algorithm=algorithm,
+        is_desired_version=True,
+    )
+
+    alg_in = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.STRING
+    )
+    interface = AlgorithmInterfaceFactory(
+        inputs=[alg_in],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    ai.algorithm.interfaces.add(interface)
+
+    admin = UserFactory()
+    VerificationFactory(user=admin, is_verified=True)
+    algorithm.add_editor(admin)
+    phase.challenge.add_admin(user=admin)
+    phase.algorithm_interfaces.add(interface)
+
+    MethodFactory(
+        phase=phase,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+
+    archive = ArchiveFactory()
+    phase.archive = archive
+    phase.save()
+
+    item = ArchiveItemFactory(archive=archive)
+    item.values.add(
+        ComponentInterfaceValueFactory(interface=alg_in, value="foo")
+    )
+
+    InvoiceFactory(
+        challenge=phase.challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+
+    # create interfaces of different kinds
+    ci_str = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.STRING
+    )
+    ci_bool = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+    ci_img_upload = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    ci_existing_img = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    ci_json_in_db_with_schema = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        store_in_database=True,
+        schema={
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "type": "array",
+        },
+    )
+    ci_json_file = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        store_in_database=False,
+        schema={
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "type": "array",
+        },
+    )
+
+    # Create inputs
+    im_upload_through_api = RawImageUploadSessionFactory(creator=admin)
+    image_1, image_2 = ImageFactory.create_batch(2)
+    mhd1, mhd2 = ImageFileFactoryWithMHDFile.create_batch(2)
+    image_1.files.set([mhd1])
+    image_2.files.set([mhd2])
+    for im in [image_1, image_2]:
+        assign_perm("cases.view_image", admin, im)
+    im_upload_through_api.image_set.set([image_1])
+
+    im_upload_through_ui = create_upload_from_file(
+        file_path=RESOURCE_PATH / "image10x10x10.mha",
+        creator=admin,
+    )
+
+    file_upload = UserUploadFactory(filename="file.json", creator=admin)
+    presigned_urls = file_upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'["Foo", "bar"]')
+    file_upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    file_upload.save()
+
+    return PhaseWithInputs(
+        phase=phase,
+        algorithm=ai.algorithm,
+        admin=admin,
+        ci_str=ci_str,
+        ci_bool=ci_bool,
+        ci_img_upload=ci_img_upload,
+        ci_existing_img=ci_existing_img,
+        ci_json_in_db_with_schema=ci_json_in_db_with_schema,
+        ci_json_file=ci_json_file,
+        im_upload_through_api=im_upload_through_api,
+        im_upload_through_ui=im_upload_through_ui,
+        file_upload=file_upload,
+        image_1=image_1,
+        image_2=image_2,
+    )
 
 
 @pytest.mark.django_db
