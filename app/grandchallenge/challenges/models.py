@@ -715,28 +715,28 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             description="E-mail support@grand-challenge.org and communicate the required input "
             "and output data formats for participant's algorithms.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
-            deadline=self.created + timedelta(weeks=2),
+            deadline=self.created + timedelta(weeks=2, seconds=0),
         )
         OnboardingTask.objects.create(
             challenge=self,
             title="Plan Onboarding Meeting",
             description="Create a Challenge Pack and have an onboarding meeting with challenge organizers.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
-            deadline=self.created + timedelta(weeks=2),
+            deadline=self.created + timedelta(weeks=2, seconds=1),
         )
         OnboardingTask.objects.create(
             challenge=self,
             title="Have Onboarding Meeting",
             description="Receive a Challenge Pack and have an onboarding meeting with support staff.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
-            deadline=self.created + timedelta(weeks=3),
+            deadline=self.created + timedelta(weeks=3, seconds=0),
         )
         OnboardingTask.objects.create(
             challenge=self,
             title="Create Archives",
             description="Create an archive per algorithm-type phase for the challenge.",
             responsible_party=OnboardingTask.ResponsiblePartyChoices.SUPPORT,
-            deadline=self.created + timedelta(weeks=3),
+            deadline=self.created + timedelta(weeks=3, seconds=1),
         )
         OnboardingTask.objects.create(
             challenge=self,
