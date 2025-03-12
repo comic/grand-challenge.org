@@ -9,6 +9,7 @@ from subprocess import CalledProcessError
 
 import sentry_sdk
 from celery.schedules import crontab
+from corsheaders.defaults import default_headers
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
@@ -974,6 +975,13 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 # SESSION_COOKIE_SAMESITE should be set to "lax" so won't send credentials
 # across domains, but this will allow workstations to access the api
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+    "hx-trigger",
+    "hx-target",
+    "hx-current-url",
+    "hx-request",
+)
 
 ###############################################################################
 #
