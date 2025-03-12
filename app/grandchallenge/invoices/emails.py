@@ -1,5 +1,6 @@
 from collections import namedtuple
 
+from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.mail import mail_managers
 from django.template.loader import render_to_string
@@ -13,21 +14,26 @@ def get_challenge_invoice_recipients(invoice):
     recipients = [*invoice.challenge.get_admins()]
 
     if invoice.contact_email:
-        username = (
-            invoice.contact_name
-            if invoice.contact_name
-            else invoice.contact_email
-        )
-        user_profile = namedtuple("UserProfile", ["get_unsubscribe_link"])(
-            get_unsubscribe_link=lambda *_, **__: None
-        )
-        contact_user = namedtuple(
-            "User", ["username", "email", "user_profile"]
-        )(
-            username=username,
-            email=invoice.contact_email,
-            user_profile=user_profile,
-        )
+        try:
+            contact_user = get_user_model().objects.get(
+                email=invoice.contact_email
+            )
+        except get_user_model().DoesNotExist:
+            username = (
+                invoice.contact_name
+                if invoice.contact_name
+                else invoice.contact_email
+            )
+            user_profile = namedtuple("UserProfile", ["get_unsubscribe_link"])(
+                get_unsubscribe_link=lambda *_, **__: None
+            )
+            contact_user = namedtuple(
+                "User", ["username", "email", "user_profile"]
+            )(
+                username=username,
+                email=invoice.contact_email,
+                user_profile=user_profile,
+            )
         recipients.append(contact_user)
 
     return recipients
