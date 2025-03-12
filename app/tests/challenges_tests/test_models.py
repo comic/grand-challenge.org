@@ -233,7 +233,6 @@ def test_onboarding_tasks_overdue_status_annotations(
     expected_is_overdue_soon,
     mocker,
 ):
-
     task = OnboardingTaskFactory(deadline=deadline)
 
     mocker.patch("grandchallenge.challenges.models.now", return_value=mock_now)
@@ -248,7 +247,7 @@ def test_default_onboarding_tasks_creation():
     challenge = ChallengeFactory()
 
     # Expected task details
-    expected_tasks = [
+    expected_tasks = {
         ("Create Phases", "ORG"),
         ("Define Inputs and Outputs", "ORG"),
         ("Plan Onboarding Meeting", "SUP"),
@@ -259,18 +258,16 @@ def test_default_onboarding_tasks_creation():
         ("Create Evaluation Method", "ORG"),
         ("Configure Scoring", "ORG"),
         ("Test Evaluation", "ORG"),
-    ]
+    }
 
-    tasks = list(
-        OnboardingTask.objects.filter(challenge=challenge).order_by("deadline")
-    )
+    tasks = list(OnboardingTask.objects.filter(challenge=challenge))
 
     assert len(tasks) == len(
         expected_tasks
     ), "Unexpected number of onboarding tasks."
 
-    for task, (expected_title, expected_responsible_party) in zip(
-        tasks, expected_tasks, strict=True
-    ):
-        assert task.title == expected_title
-        assert task.responsible_party == expected_responsible_party
+    tasks_title_and_responsible_party = {
+        (task.title, task.responsible_party) for task in tasks
+    }
+
+    assert tasks_title_and_responsible_party == expected_tasks
