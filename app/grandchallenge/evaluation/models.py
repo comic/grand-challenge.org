@@ -1869,14 +1869,20 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         else:
             return False
 
-    @cached_property
-    def additional_inputs_complete(self):
+    @property
+    def additional_inputs(self):
+        # additional inputs as currently defined on the phase
         phase_input_slugs = self.submission.phase.inputs.values_list(
             "slug", flat=True
         )
-        return self.inputs.filter(
-            interface__slug__in=phase_input_slugs
-        ).count() == len(phase_input_slugs)
+        return self.inputs.filter(interface__slug__in=phase_input_slugs)
+
+    @cached_property
+    def additional_inputs_complete(self):
+        return (
+            self.additional_inputs.count()
+            == self.submission.phase.inputs.count()
+        )
 
     @property
     def is_editable(self):
