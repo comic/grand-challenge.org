@@ -103,11 +103,14 @@ class Invoice(models.Model):
         ]
 
     def save(self, *args, **kwargs):
+        adding = self._state.adding
         super().save(*args, **kwargs)
+        if adding:
+            self.assign_permissions()
 
-        if self._state.adding:
-            assign_perm(
-                f"view_{self._meta.model_name}",
-                self.challenge.admins_group,
-                self,
-            )
+    def assign_permissions(self):
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.challenge.admins_group,
+            self,
+        )
