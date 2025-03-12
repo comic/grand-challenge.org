@@ -176,7 +176,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         Job.objects.active()
         .filter(algorithm_image=evaluation.submission.algorithm_image)
         .count()
-        >= settings.ALGORITHMS_JOB_BATCH_LIMIT
+        >= settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM
     ):
         raise TooManyJobsScheduled
 
