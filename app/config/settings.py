@@ -981,6 +981,7 @@ CORS_ALLOW_HEADERS = (
     "hx-target",
     "hx-current-url",
     "hx-request",
+    "hx-trigger-name",
 )
 
 ###############################################################################
