@@ -1,4 +1,5 @@
 from django.contrib import admin
+from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
@@ -13,7 +14,7 @@ from grandchallenge.invoices.models import (
 
 
 @admin.register(Invoice)
-class InvoiceAdmin(admin.ModelAdmin):
+class InvoiceAdmin(GuardedModelAdmin):
     list_display = (
         "challenge",
         "issued_on",
