@@ -244,6 +244,7 @@ NON_ALGORITHM_INTERFACES = [
     "predictions-json-file",
     "predictions-zip-file",
     "metrics-json-file",
+    "results-json-file",
 ]
 
 
@@ -320,13 +321,11 @@ class AlgorithmForm(
             "job_requires_memory_gb",
             "additional_terms_markdown",
             "job_create_page_markdown",
-            "result_template",
         )
         widgets = {
             "description": TextInput,
             "job_create_page_markdown": MarkdownEditorInlineWidget,
             "additional_terms_markdown": MarkdownEditorInlineWidget,
-            "result_template": MarkdownEditorInlineWidget,
             "publications": Select2MultipleWidget,
             "modalities": Select2MultipleWidget,
             "structures": Select2MultipleWidget,
@@ -1404,13 +1403,13 @@ class AlgorithmModelVersionControlForm(Form):
 class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
-            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
+            slug__in=NON_ALGORITHM_INTERFACES
         ),
         widget=Select2MultipleWidget,
     )
     outputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
-            slug__in=[*NON_ALGORITHM_INTERFACES, "results-json-file"]
+            slug__in=NON_ALGORITHM_INTERFACES
         ),
         widget=Select2MultipleWidget,
     )

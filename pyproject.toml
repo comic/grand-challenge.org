@@ -77,7 +77,6 @@ citeproc-py = "*"
 pyswot = "*"
 django-redis = "*"
 django-allauth = {version = "*", extras = ["mfa", "socialaccount"]}
-jinja2 = "*"
 requests = "*"
 Pillow = "*"
 panimg = ">=0.12.0,!=0.15.1"

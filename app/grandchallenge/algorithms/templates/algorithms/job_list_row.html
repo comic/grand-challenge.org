@@ -19,6 +19,7 @@
 <split></split>
 
 {{ object.created|naturaltime }}
+
 <split></split>
 
 {% block column_2 %}
@@ -28,6 +29,7 @@
 <split></split>
 
 {% include "algorithms/job_status_detail.html" %}
+
 <split></split>
 
 {% if object.public %}
@@ -43,59 +45,19 @@
            title="Result and images are private"></i>
     {% endif %}
 {% endif %}
+
 <split></split>
 
 {{ object.comment }}
 
 <split></split>
-{% if object.rendered_result_text %}
-  <div  class="modal"
-        id="renderedResultModal-{{ object.pk }}"
-        tabindex="-1"
-        role="dialog"
-        aria-labelledby="statusfoModalTitle"
-        aria-hidden="true"
-    >
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        Result
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal"
-                            aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="text-left modal-body">
-                    {{ object.rendered_result_text }}
-                </div>
-                <div class="modal-footer">
-                    <a class="btn btn-primary" href="{{ object.get_absolute_url }}">
-                        <i class="fa fa-info-circle mr-1"></i>View Result Details
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
 
-
-    <a class="badge badge-primary"
-        href="#renderedResultModal-{{ object.pk }}"
-        data-toggle="modal"
-        data-target="#renderedResultModal-{{ object.pk }}"
-    >
-        <i class="fa fa-fw fa-eye"></i>
-        Result
-    </a>
-{% else %}
 <a class="badge badge-primary"
     href="{% url 'algorithms:job-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}"
     title="View result details">
     <i class="fa fa-fw fa-info-circle"></i>
     Result
 </a>
-{% endif %}
 
 <split></split>
 
@@ -108,6 +70,7 @@
         <span class="text-muted">Empty</span>
     {% endfor %}
 </ul>
+
 <split></split>
 
 {% if object.status == object.SUCCESS %}
@@ -120,4 +83,5 @@
         </button>
     {% endwith %}
 {% endif %}
+
 <split></split>

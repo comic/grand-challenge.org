@@ -16,49 +16,85 @@
 {% endblock %}
 
 {% block content %}
-    <h2>Ground Truth</h2>
+    <h2>Ground Truth of {{ object }}</h2>
 
     <p>
-        If you wish to assess the performance of the readers you
-        can upload the CSV file containing the ground truth for
-        this reader study here.
+        The ground truth consists of the correct answers to the questions for each case, it serves as a
+        reference for verifying and assessing the performance of the readers in this reader study.
     </p>
-    <p>
-        The first row of the CSV file must contain the headings
-        <code>case</code>, followed by the question text for
-        each of the questions in the reader study (excluding those
-        of type <code>heading</code>).
-    </p>
-    <p>
-        The consecutive lines contain the id per case.
-        Then include the answer for the question
-        corresponding to the question text defined in the header for that
-        column. All answers must be enclosed in single quotes. Strings
-        must be enclosed in both single and double quotes, i.e.
-        <code>'"answer"'</code>. For choice type questions, the
-        options text(s) must be provided as a string. For optional
-        questions, use <code>null</code> if you do not widh to
-        provide ground truth for that question.
-    </p>
-    <p>
-        An example of the first two lines of the csv for this reader study is:
-        <code>
-            {{ example_ground_truth|linebreaks }}
-        </code>
-    </p>
-    <div class="d-flex justify-content-between">
-        <div>
-            <a class="btn btn-primary"
-                href="{% url 'reader-studies:add-ground-truth' slug=object.slug %}">
-                <i class="fas fa-upload"></i> Upload Ground Truth
-            </a>
-            <a class="btn btn-secondary"
-                href="{% url 'reader-studies:example-ground-truth' slug=object.slug %}">
-                <i class="fas fa-download"></i> Download Example CSV
-            </a>
+
+    {% if not object.ground_truth_is_complete %}
+        <div class="alert alert-warning" role="alert">
+            <i class="fa fa-exclamation-triangle pr-1" aria-hidden="true"></i>The ground truth is incomplete.
+            Some case questions that are ground-truth applicable have no ground truth assigned.
         </div>
-        <button class="btn btn-danger" hx-post="{% url 'reader-studies:ground-truth-remove' slug=object.slug %}" hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'>
-            <i class="fas fa-trash-alt"></i> Delete ground truth
-        </button>
+    {% endif %}
+
+    {% if object.has_ground_truth %}
+        <div class="d-flex justify-content-between align-items-center py-3">
+            <p class="mb-0">
+                This reader study has ground truth
+            </p>
+            <button class="btn btn-danger" data-toggle="modal" data-target="#warningModal">
+                <i class="fas fa-trash-alt fa-fw pr-1"></i>Delete Ground&nbsp;Truth
+            </button>
+
+            <div class="modal fade" id="warningModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Delete Ground Truth</h5>
+                        <button type="button" class="close" data-dismiss="modal"
+                                aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                <div class="modal-body">
+                    <p>
+                        This will delete all the Ground Truth for the reader study '{{object.title | title}}'.
+                    </p>
+                    <p class="text-danger">
+                        This action cannot be undone! <strong>Are you sure that you want to continue?</strong>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-dismiss="modal"
+                    >
+                        Cancel
+                    </button>
+                    <button class="btn btn-danger"
+                            hx-post="{% url 'reader-studies:ground-truth-remove' slug=object.slug %}"
+                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'
+                    >
+                        <i class="fas fa-trash-alt fa-fw pr-1"></i> Continue&nbsp;Deleting&nbsp;Ground&nbsp;Truth
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
+        </div>
+
+        <hr>
+
+        <h3>Update Ground Truth</h3>
+        <p>
+            The ground truth can’t be updated directly. Please delete the current and create a new one.
+        </p>
+    {% else %}
+
+        <hr>
+
+        <h3>Create Ground Truth</h3>
+
+        <div class="d-flex justify-content-between">
+            <div>
+                <a class="btn btn-primary"
+                    href="{% url 'reader-studies:add-ground-truth-csv' slug=object.slug %}">
+                    <i class="fas fa-upload"></i> Upload Ground Truth via CSV
+                </a>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}

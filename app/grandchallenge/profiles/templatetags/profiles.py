@@ -22,7 +22,7 @@ def user_profile_link(user: AbstractUser | None) -> str:
         )
         mugshot = format_html(
             (
-                '<img class="rounded-circle align-middle" loading="lazy" '
+                '<img class="rounded-circle border align-middle" loading="lazy" '
                 'src="{0}" alt="User Mugshot" '
                 # Match the "fa-lg" class style
                 'style="height: 1.33em;"/>'

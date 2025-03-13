@@ -541,10 +541,13 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         help_text="The interfaces that an algorithm for this phase must implement.",
     )
     inputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="evaluation_inputs"
+        to=ComponentInterface,
+        related_name="evaluation_inputs",
+        blank=True,
     )
     outputs = models.ManyToManyField(
-        to=ComponentInterface, related_name="evaluation_outputs"
+        to=ComponentInterface,
+        related_name="evaluation_outputs",
     )
     algorithm_inputs = deprecate_field(
         models.ManyToManyField(
@@ -902,6 +905,13 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
         return scoring_method
 
+    @property
+    def algorithm_interfaces_locked(self):
+        if self.parent or self.children.exists():
+            return True
+        else:
+            return False
+
     @cached_property
     def valid_metrics(self):
         return (
@@ -920,10 +930,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     @property
     def read_only_fields_for_dependent_phases(self):
-        common_fields = ["submission_kind"]
-        if self.submission_kind == SubmissionKindChoices.ALGORITHM:
-            common_fields += ["algorithm_interfaces"]
-        return common_fields
+        return ["submission_kind"]
 
     def _clean_parent_phase(self):
         if self.parent:
@@ -931,7 +938,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 raise ValidationError(
                     f"This phase cannot be selected as parent phase for the current "
                     f"phase. The parent phase needs to match the current phase in "
-                    f"all of the following settings: "
+                    f"all of the following settings: algorithm interfaces, "
                     f"{oxford_comma(self.read_only_fields_for_dependent_phases)}. "
                     f"The parent phase cannot have the current phase or any of "
                     f"the current phase's children set as its parent."
@@ -950,9 +957,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 raise ValidationError(SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT)
 
     def set_default_interfaces(self):
-        self.inputs.set(
-            [ComponentInterface.objects.get(slug="predictions-csv-file")]
-        )
         self.outputs.set(
             [ComponentInterface.objects.get(slug="metrics-json-file")]
         )

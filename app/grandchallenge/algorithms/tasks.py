@@ -56,6 +56,7 @@ def execute_algorithm_job_for_inputs(*, job_pk):
     job.task_on_success = linked_task
     job.status = job.PENDING
     job.save()
+
     on_commit(job.execute)
 
 

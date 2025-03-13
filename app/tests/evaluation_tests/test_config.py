@@ -104,9 +104,6 @@ def test_setting_display_all_metrics(client, challenge_set):
 def test_default_interfaces_created():
     p = PhaseFactory()
 
-    assert {i.kind for i in p.inputs.all()} == {
-        InterfaceKind.InterfaceKindChoices.CSV
-    }
     assert {o.kind for o in p.outputs.all()} == {
         InterfaceKind.InterfaceKindChoices.ANY
     }

@@ -53,7 +53,12 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):  # noqa: C901
 
     if submission.phase.external_evaluation:
         external_evaluation, created = Evaluation.objects.get_or_create(
-            submission=submission
+            submission=submission,
+            defaults={
+                "time_limit": submission.phase.evaluation_time_limit,
+                "requires_gpu_type": submission.phase.evaluation_requires_gpu_type,
+                "requires_memory_gb": submission.phase.evaluation_requires_memory_gb,
+            },
         )
         if not created:
             logger.info(
@@ -159,13 +164,21 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     max_jobs
         The maximum number of jobs to create
     """
-    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-        raise TooManyJobsScheduled
-
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
     evaluation = Evaluation.objects.get(pk=evaluation_pk)
+
+    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
+        raise TooManyJobsScheduled
+
+    if (
+        Job.objects.active()
+        .filter(algorithm_image=evaluation.submission.algorithm_image)
+        .count()
+        >= settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM
+    ):
+        raise TooManyJobsScheduled
 
     if evaluation.status not in {
         evaluation.PENDING,

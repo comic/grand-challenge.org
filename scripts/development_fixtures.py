@@ -357,7 +357,6 @@ def _create_algorithm_demo(users):
         repo_name="github-username/repo-name",
         contact_email="example@example.org",
         display_editors=True,
-        result_template="{% for key, value in results.items() %}\n{{ key }}:  {{ value }}\n{% endfor %}",
     )
     algorithm.editors_group.user_set.add(users["algorithm"], users["demo"])
     algorithm.users_group.user_set.add(users["algorithmuser"])

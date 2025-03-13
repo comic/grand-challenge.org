@@ -1,7 +1,7 @@
 <li class="nav-item">
     <a class="nav-link px-4 py-1 mb-1"
        data-toggle="collapse"
-       data-target="#{{ combined_leaderboard.slug }}-collapse"
+       data-target="#collapse-{{ combined_leaderboard.slug }}"
        aria-expanded={% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-delete' and request.resolver_match.kwargs.slug == combined_leaderboard.slug %}"true"{% else %}"false"{% endif %}
       >
         <i class="fas fa-chevron-right fa-fw"></i>
@@ -9,7 +9,7 @@
         {{ combined_leaderboard.title }}
     </a>
     <div class="collapse {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-delete' and request.resolver_match.kwargs.slug == combined_leaderboard.slug %}show{% endif %}"
-         id="{{ combined_leaderboard.slug }}-collapse"
+         id="collapse-{{ combined_leaderboard.slug }}"
     >
         <ul class="nav nav-pills flex-column">
             <li class="nav-item pl-4">

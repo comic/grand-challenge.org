@@ -1,5 +1,7 @@
 from django.db import models
 from django.db.transaction import on_commit
+from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.invoices.tasks import (
@@ -120,7 +122,10 @@ class Invoice(models.Model, FieldChangeMixin):
         ]
 
     def save(self, *args, **kwargs):
+        adding = self._state.adding
         super().save(*args, **kwargs)
+        if adding:
+            self.assign_permissions()
         if (
             self.payment_type != PaymentTypeChoices.COMPLIMENTARY
             and self.has_changed("payment_status")
@@ -132,6 +137,13 @@ class Invoice(models.Model, FieldChangeMixin):
                 ).apply_async
             )
 
+    def assign_permissions(self):
+        assign_perm(
+            f"view_{self._meta.model_name}",
+            self.challenge.admins_group,
+            self,
+        )
+
     def get_absolute_url(self):
         return reverse(
             "invoices:detail",
@@ -140,3 +152,16 @@ class Invoice(models.Model, FieldChangeMixin):
                 "pk": self.pk,
             },
         )
+
+
+class InvoiceUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey(Invoice, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        raise RuntimeError(
+            "User permissions should not be assigned for this model"
+        )
+
+
+class InvoiceGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(Invoice, on_delete=models.CASCADE)

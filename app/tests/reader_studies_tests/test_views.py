@@ -70,7 +70,7 @@ def test_example_ground_truth(client, tmpdir):
     rs.save()
 
     response = get_view_for_user(
-        viewname="reader-studies:example-ground-truth",
+        viewname="reader-studies:example-ground-truth-csv",
         client=client,
         method=client.get,
         reverse_kwargs={"slug": rs.slug},
@@ -80,7 +80,7 @@ def test_example_ground_truth(client, tmpdir):
     assert response.status_code == 403
 
     response = get_view_for_user(
-        viewname="reader-studies:example-ground-truth",
+        viewname="reader-studies:example-ground-truth-csv",
         client=client,
         method=client.get,
         reverse_kwargs={"slug": rs.slug},
@@ -94,7 +94,7 @@ def test_example_ground_truth(client, tmpdir):
     gt.write(response.content)
     gt.seek(0)
     response = get_view_for_user(
-        viewname="reader-studies:add-ground-truth",
+        viewname="reader-studies:add-ground-truth-csv",
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
