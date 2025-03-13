@@ -8,17 +8,20 @@ def assign_perms_challenge_admins(apps, schema_editor):
     )
     Permission = apps.get_model("auth", "Permission")  # noqa: N806
 
-    view_permission = Permission.objects.get(
-        codename="view_invoice",
-        content_type__app_label="invoices",
-    )
+    invoices = Invoice.objects.all()
 
-    for invoice in Invoice.objects.all():
-        InvoiceGroupObjectPermission.objects.create(
-            content_object=invoice,
-            group=invoice.challenge.admins_group,
-            permission=view_permission,
+    if invoices.exists():
+        view_permission = Permission.objects.get(
+            codename="view_invoice",
+            content_type__app_label="invoices",
         )
+
+        for invoice in invoices:
+            InvoiceGroupObjectPermission.objects.create(
+                content_object=invoice,
+                group=invoice.challenge.admins_group,
+                permission=view_permission,
+            )
 
 
 class Migration(migrations.Migration):
