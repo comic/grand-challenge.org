@@ -36,6 +36,7 @@ from grandchallenge.components.models import (
     ComponentImage,
     ComponentInterface,
     ComponentJob,
+    ComponentJobManager,
     ImportStatusChoices,
     Tarball,
 )
@@ -1546,6 +1547,8 @@ class Submission(FieldChangeMixin, UUIDModel):
             return
         else:
             method = self.phase.active_image
+            ground_truth = self.phase.active_ground_truth
+
             if not method:
                 logger.error("No method ready for this submission")
                 Notification.send(
@@ -1557,23 +1560,26 @@ class Submission(FieldChangeMixin, UUIDModel):
                 )
                 return
 
-            evaluation, created = Evaluation.objects.get_or_create(
+            if Evaluation.objects.get_evaluations_with_same_inputs(
+                inputs=additional_inputs,
                 submission=self,
                 method=method,
-                ground_truth=self.phase.active_ground_truth,
+                ground_truth=ground_truth,
+            ):
+                logger.error(
+                    "Evaluation already created for this submission, method, ground truth and inputs."
+                )
+                return
+
+            evaluation = Evaluation.objects.create(
+                submission=self,
+                method=method,
+                ground_truth=ground_truth,
                 time_limit=self.phase.evaluation_time_limit,
                 requires_gpu_type=self.phase.evaluation_requires_gpu_type,
                 requires_memory_gb=self.phase.evaluation_requires_memory_gb,
-                defaults={
-                    "status": Evaluation.VALIDATING_INPUTS,
-                },
+                status=Evaluation.VALIDATING_INPUTS,
             )
-
-            if not created:
-                logger.error(
-                    "Evaluation already created for this submission, method and ground truth."
-                )
-                return
 
         if additional_inputs:
             evaluation.validate_values_and_execute_linked_task(
@@ -1710,6 +1716,62 @@ class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
+class EvaluationManager(ComponentJobManager):
+    def get_evaluations_with_same_inputs(
+        self, *, inputs, submission, method, ground_truth
+    ):
+        existing_civs = self.retrieve_existing_civs(civ_data=inputs)
+        unique_kwargs = {
+            "submission": submission,
+            "method": method,
+        }
+        input_interface_count = len(inputs)
+        configured_input_interface_slugs = submission.phase.inputs.values_list(
+            "slug", flat=True
+        )
+
+        if ground_truth:
+            unique_kwargs["ground_truth"] = ground_truth
+        else:
+            unique_kwargs["ground_truth__isnull"] = True
+
+        # annotate the number of inputs and the number of inputs that match
+        # the existing civs and filter on both counts so as to not include evaluations
+        # with partially overlapping inputs
+        # or evaluations with more inputs than the existing civs
+        existing_evaluations = (
+            Evaluation.objects.filter(**unique_kwargs)
+            .annotate(
+                additional_input_count=Count(
+                    "inputs",
+                    filter=(
+                        Q(
+                            inputs__interface__slug__in=configured_input_interface_slugs
+                        )
+                        if configured_input_interface_slugs is not None
+                        else Q()
+                    ),
+                    distinct=True,
+                ),
+                relevant_additional_input_count=Count(
+                    "inputs",
+                    filter=(
+                        Q(inputs__in=existing_civs)
+                        if existing_civs is not None
+                        else Q()
+                    ),
+                    distinct=True,
+                ),
+            )
+            .filter(
+                additional_input_count=input_interface_count,
+                relevant_additional_input_count=input_interface_count,
+            )
+        )
+
+        return existing_evaluations
+
+
 class Evaluation(CIVForObjectMixin, ComponentJob):
     """Stores information about a evaluation for a given submission."""
 
@@ -1740,15 +1802,9 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         related_name="claimed_evaluations",
     )
 
+    objects = EvaluationManager.as_manager()
+
     class Meta(UUIDModel.Meta, ComponentJob.Meta):
-        unique_together = (
-            "submission",
-            "method",
-            "ground_truth",
-            "time_limit",
-            "requires_gpu_type",
-            "requires_memory_gb",
-        )
         permissions = [("claim_evaluation", "Can claim evaluation")]
 
     def save(self, *args, **kwargs):

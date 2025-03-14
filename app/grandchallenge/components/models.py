@@ -1554,6 +1554,52 @@ class ComponentJobManager(models.QuerySet):
             ]
         )
 
+    @staticmethod
+    def retrieve_existing_civs(*, civ_data):
+        """
+        Checks if there are existing CIVs for the provided data and returns those.
+
+        Parameters
+        ----------
+        civ_data
+            A list of CIVData objects.
+
+        Returns
+        -------
+        A list of ComponentInterfaceValues
+
+        """
+        existing_civs = []
+        for civ in civ_data:
+            if (
+                civ.user_upload
+                or civ.upload_session
+                or civ.user_upload_queryset
+            ):
+                # uploads will create new CIVs, so ignore these
+                continue
+            elif civ.image:
+                try:
+                    civs = ComponentInterfaceValue.objects.filter(
+                        interface__slug=civ.interface_slug, image=civ.image
+                    ).all()
+                    existing_civs.extend(civs)
+                except ObjectDoesNotExist:
+                    continue
+            elif civ.file_civ:
+                existing_civs.append(civ.file_civ)
+            else:
+                # values can be of different types, including None and False
+                try:
+                    civs = ComponentInterfaceValue.objects.filter(
+                        interface__slug=civ.interface_slug, value=civ.value
+                    ).all()
+                    existing_civs.extend(civs)
+                except ObjectDoesNotExist:
+                    continue
+
+        return existing_civs
+
 
 class ComponentJob(FieldChangeMixin, UUIDModel):
     # The job statuses come directly from celery.result.AsyncResult.status:
