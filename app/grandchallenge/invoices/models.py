@@ -172,14 +172,15 @@ class Invoice(models.Model, FieldChangeMixin):
         return state
 
     def clean(self):
-        # Assert total amount unchanged
-        if (
-            self._current_state["total_amount_euros"]
-            != self._initial_state["total_amount_euros"]
-        ):
-            raise ValidationError(
-                "The total amount may not change. (You may only redistribute costs.)"
-            )
+        if not self._state.adding:
+            # Assert total amount unchanged
+            if (
+                self._current_state["total_amount_euros"]
+                != self._initial_state["total_amount_euros"]
+            ):
+                raise ValidationError(
+                    "The total amount may not change. (You may only redistribute costs.)"
+                )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
