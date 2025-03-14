@@ -1,4 +1,9 @@
+import datetime
+
 import pytest
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
+from factory import fuzzy
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.invoices.models import (
@@ -254,3 +259,100 @@ def test_most_recent_submission_datetime_multiple_submissions():
         Challenge.objects.with_most_recent_submission_datetime().first()
     )
     assert challenge.most_recent_submission_datetime == last_submission.created
+
+
+@pytest.mark.django_db
+def test_payment_status_issued_requires_issued_on():
+    invoice = InvoiceFactory()
+
+    invoice.payment_status = invoice.PaymentStatusChoices.ISSUED
+    with pytest.raises(IntegrityError) as e, transaction.atomic():
+        invoice.save()
+    assert (
+        'violates check constraint "issued_on_date_required_for_issued_payment_status"'
+    ) in str(e.value)
+
+    invoice.issued_on = fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz()
+    invoice.save()
+
+    invoice.paid_on = None
+    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
+    invoice.save()
+
+
+@pytest.mark.django_db
+def test_payment_status_paid_requires_paid_on():
+    invoice = InvoiceFactory()
+
+    invoice.payment_status = invoice.PaymentStatusChoices.PAID
+    with pytest.raises(IntegrityError) as e, transaction.atomic():
+        invoice.save()
+    assert (
+        'violates check constraint "paid_on_date_required_for_paid_payment_status"'
+    ) in str(e.value)
+
+    invoice.paid_on = fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz()
+    invoice.save()
+
+    invoice.paid_on = None
+    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
+    invoice.save()
+
+
+@pytest.mark.django_db
+def test_payment_type_complimentary_requires_internal_comments():
+    with pytest.raises(IntegrityError) as e, transaction.atomic():
+        InvoiceFactory(
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
+            internal_comments="",
+        )
+    assert (
+        'violates check constraint "comments_required_for_complimentary_payment_type"'
+    ) in str(e.value)
+
+    InvoiceFactory(
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
+        internal_comments="some explanation",
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "payment_type", (PaymentTypeChoices.PREPAID, PaymentTypeChoices.POSTPAID)
+)
+@pytest.mark.parametrize(
+    "required_field_name",
+    ("contact_name", "contact_email", "billing_address", "vat_number"),
+)
+def test_payment_type_non_complimentary_requires_details(
+    payment_type, required_field_name
+):
+    with pytest.raises(IntegrityError) as e, transaction.atomic():
+        InvoiceFactory(
+            payment_type=payment_type,
+            **{required_field_name: ""},
+        )
+    assert (
+        f'violates check constraint "{required_field_name}_required_for_non_complimentary_payment_type"'
+    ) in str(e.value)
+
+    InvoiceFactory(
+        payment_type=payment_type,
+        **{required_field_name: "not empty"},
+    )
+
+
+@pytest.mark.django_db
+def test_total_amount_cannot_change():
+    invoice = InvoiceFactory(
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=2,
+    )
+    invoice.support_costs_euros = 1
+    with pytest.raises(ValidationError) as e, transaction.atomic():
+        invoice.clean()
+    assert ("The total amount may not change") in e.value.message
+
+    invoice.storage_costs_euros = 1
+    invoice.clean()
