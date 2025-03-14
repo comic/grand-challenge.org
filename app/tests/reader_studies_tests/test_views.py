@@ -1,6 +1,7 @@
 import io
 
 import pytest
+from django.conf import settings
 from django.forms import JSONField
 from guardian.shortcuts import assign_perm
 from requests import put
@@ -958,3 +959,67 @@ def test_ground_truth_view(client):
     )
 
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_ground_view_from_answers(client):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    rs = ReaderStudyFactory()
+
+    editor, reader, a_user = UserFactory.create_batch(3)
+    rs.add_editor(editor)
+    rs.add_reader(reader)
+
+    ds = DisplaySetFactory(reader_study=rs)
+    q = QuestionFactory(
+        reader_study=rs,
+        question_text="q1",
+        answer_type=Question.AnswerType.BOOL,
+    )
+    answer = AnswerFactory(
+        question=q,
+        display_set=ds,
+        creator=reader,
+        answer=True,
+    )
+
+    # Sanity
+    assert not rs.has_ground_truth
+
+    for usr in [reader, a_user]:
+        response = get_view_for_user(
+            client=client,
+            viewname="reader-studies:add-ground-truth-answers",
+            reverse_kwargs={"slug": rs.slug},
+            user=usr,
+        )
+        assert response.status_code == 403, "Readers and users cannot get form"
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:add-ground-truth-answers",
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+    )
+    assert response.status_code == 200, "Editor can get form"
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:add-ground-truth-answers",
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        follow=True,
+        data={"user": str(reader.pk)},
+        user=editor,
+    )
+    assert response.status_code == 200, "Editor can post form"
+
+    assert rs.has_ground_truth
+
+    answer.delete()
+    assert (
+        rs.has_ground_truth
+    ), "Ground Truth exists seperately from the copied answers"

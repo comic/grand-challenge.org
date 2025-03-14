@@ -86,6 +86,7 @@ from grandchallenge.reader_studies.filters import (
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
+    GroundTruthCopyAnswersForm,
     GroundTruthCSVForm,
     QuestionForm,
     ReadersForm,
@@ -112,6 +113,7 @@ from grandchallenge.reader_studies.serializers import (
 from grandchallenge.reader_studies.tasks import (
     copy_reader_study_display_sets,
     create_display_sets_for_upload_session,
+    create_ground_truth_from_answers,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
@@ -505,6 +507,36 @@ class AddGroundTruthViaCSVToReaderStudy(
 
     def form_valid(self, form):
         form.save_answers()
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return self.reader_study.get_absolute_url()
+
+
+class AddGroundTruthViaAnswersToReaderStudy(
+    BaseAddObjectToReaderStudyMixin, FormView
+):
+    form_class = GroundTruthCopyAnswersForm
+    template_name = "reader_studies/ground_truth_copy_answers_form.html"
+    type_to_add = "Ground Truth"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"reader_study": self.reader_study})
+        return kwargs
+
+    def form_valid(self, form):
+        create_ground_truth_from_answers.apply_async(
+            kwargs={
+                "reader_study_pk": str(self.reader_study.pk),
+                "user_pk": str(form.cleaned_data["user"].pk),
+            }
+        )
+        messages.add_message(
+            self.request,
+            messages.INFO,
+            "Ground truth will be copied from the answers asynchronously.",
+        )
         return super().form_valid(form)
 
     def get_success_url(self):
