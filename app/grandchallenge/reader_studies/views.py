@@ -525,9 +525,10 @@ class AddGroundTruthViaAnswersToReaderStudy(
         return kwargs
 
     def form_valid(self, form):
-        is_valid = super().form_valid(form)
-        if is_valid:
-            form.create_ground_truth()
+        response = super().form_valid(form)
+        
+        form.create_ground_truth()
+        
         return is_valid
 
     def get_success_url(self):
