@@ -274,6 +274,10 @@ def test_payment_status_issued_requires_issued_on():
     invoice.issued_on = fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz()
     invoice.save()
 
+    invoice.paid_on = None
+    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
+    invoice.save()
+
 
 @pytest.mark.django_db
 def test_payment_status_paid_requires_paid_on():
@@ -287,4 +291,8 @@ def test_payment_status_paid_requires_paid_on():
     ) in str(e.value)
 
     invoice.paid_on = fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz()
+    invoice.save()
+
+    invoice.paid_on = None
+    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
     invoice.save()
