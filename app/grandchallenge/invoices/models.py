@@ -118,6 +118,13 @@ class Invoice(models.Model):
                 violation_error_message="When setting the payment status to 'Paid',"
                 " you must set the 'Paid on' date.",
             ),
+            models.CheckConstraint(
+                name="comments_required_for_complimentary_payment_type",
+                check=Q(internal_comments__gt="")
+                | ~Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
+                violation_error_message="Please explain why the invoice is "
+                "complimentary in the internal comments.",
+            ),
         ]
 
     def save(self, *args, **kwargs):

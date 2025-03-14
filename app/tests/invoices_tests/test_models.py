@@ -296,3 +296,20 @@ def test_payment_status_paid_requires_paid_on():
     invoice.paid_on = None
     invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
     invoice.save()
+
+
+@pytest.mark.django_db
+def test_payment_type_complimentary_requires_internal_comments():
+    with pytest.raises(IntegrityError) as e, transaction.atomic():
+        InvoiceFactory(
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
+            internal_comments="",
+        )
+    assert (
+        'violates check constraint "comments_required_for_complimentary_payment_type"'
+    ) in str(e.value)
+
+    InvoiceFactory(
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
+        internal_comments="some explanation",
+    )
