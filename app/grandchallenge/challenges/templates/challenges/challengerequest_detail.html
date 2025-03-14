@@ -61,13 +61,6 @@
                 <tr><td class="font-weight-bold">{{ field|title }}</td> <td>{{ value|linebreaks }}</td></tr>
             {% endif %}
         {% endfor %}
-        {% if object.long_term_commitment %}
-            <tr><td class="font-weight-bold">Long-term support</td> <td><i class="fas fa-check-circle text-success pr-2"></i> The organizers agree to support this challenge for up to 5 years.</td></tr>
-        {% elif object.long_term_commitment == None %}
-            <tr><td class="font-weight-bold">Long-term support</td> <td>Unknown</td></tr>
-        {% else %}
-            <tr><td class="font-weight-bold">Long-term support</td> <td><i class="fas fa-exclamation-circle text-danger pr-2"></i>  The organizers do not agree to support this challenge for up to 5 years for the following reason: <br><span class="ml-4">{{ object.long_term_commitment_extra }}</span></td></tr>
-        {% endif %}
         {% if object.data_license %}
             <tr><td class="font-weight-bold">Public data license</td> <td><i class="fas fa-check-circle text-success pr-2"></i>  The organizers agree to publish their public data set under a CC-BY license.</td></tr>
         {% elif object.data_license == None %}
