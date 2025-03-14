@@ -9,7 +9,11 @@ from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import ArchiveItem
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import (
+    CIVData,
+    ComponentInterface,
+    InterfaceKindChoices,
+)
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.models import (
     SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT,
@@ -275,6 +279,23 @@ def test_create_evaluation_uniqueness_checks(
         sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 6
+
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    sub.phase.inputs.set([ci])
+    ComponentInterfaceValueFactory(interface=ci, value="foo")
+    with django_capture_on_commit_callbacks(execute=True):
+        sub.create_evaluation(
+            additional_inputs=[CIVData(interface_slug=ci.slug, value="foo")]
+        )
+
+    assert Evaluation.objects.count() == 7
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sub.create_evaluation(
+            additional_inputs=[CIVData(interface_slug=ci.slug, value="foo")]
+        )
+
+    assert Evaluation.objects.count() == 7
 
 
 @pytest.mark.django_db
