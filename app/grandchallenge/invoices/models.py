@@ -109,6 +109,13 @@ class Invoice(models.Model):
                 violation_error_message="When setting the payment status to 'Issued',"
                 " you must set the 'Issued on' date.",
             ),
+            models.CheckConstraint(
+                name="paid_on_date_required_for_paid_payment_status",
+                check=Q(paid_on__isnull=False)
+                | ~Q(payment_status=PaymentStatusChoices.PAID),
+                violation_error_message="When setting the payment status to 'Paid',"
+                " you must set the 'Paid on' date.",
+            ),
         ]
 
     def save(self, *args, **kwargs):

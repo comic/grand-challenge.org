@@ -273,3 +273,18 @@ def test_payment_status_issued_requires_issued_on():
 
     invoice.issued_on = fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz()
     invoice.save()
+
+
+@pytest.mark.django_db
+def test_payment_status_paid_requires_paid_on():
+    invoice = InvoiceFactory()
+
+    invoice.payment_status = invoice.PaymentStatusChoices.PAID
+    with pytest.raises(IntegrityError) as e, transaction.atomic():
+        invoice.save()
+    assert (
+        'violates check constraint "paid_on_date_required_for_paid_payment_status"'
+    ) in str(e.value)
+
+    invoice.paid_on = fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz()
+    invoice.save()
