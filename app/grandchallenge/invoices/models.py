@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
@@ -94,12 +95,19 @@ class Invoice(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                check=models.Q(payment_type__in=PaymentTypeChoices.values),
+                check=Q(payment_type__in=PaymentTypeChoices.values),
                 name="payment_type_in_choices",
             ),
             models.CheckConstraint(
-                check=models.Q(payment_status__in=PaymentStatusChoices.values),
+                check=Q(payment_status__in=PaymentStatusChoices.values),
                 name="payment_status_in_choices",
+            ),
+            models.CheckConstraint(
+                name="issued_on_date_required_for_issued_payment_status",
+                check=Q(issued_on__isnull=False)
+                | ~Q(payment_status=PaymentStatusChoices.ISSUED),
+                violation_error_message="When setting the payment status to 'Issued',"
+                " you must set the 'Issued on' date.",
             ),
         ]
 

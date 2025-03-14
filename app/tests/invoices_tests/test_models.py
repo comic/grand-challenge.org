@@ -1,4 +1,8 @@
+import datetime
+
 import pytest
+from django.db import IntegrityError, transaction
+from factory import fuzzy
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.invoices.models import (
@@ -254,3 +258,18 @@ def test_most_recent_submission_datetime_multiple_submissions():
         Challenge.objects.with_most_recent_submission_datetime().first()
     )
     assert challenge.most_recent_submission_datetime == last_submission.created
+
+
+@pytest.mark.django_db
+def test_payment_status_issued_requires_issued_on():
+    invoice = InvoiceFactory()
+
+    invoice.payment_status = invoice.PaymentStatusChoices.ISSUED
+    with pytest.raises(IntegrityError) as e, transaction.atomic():
+        invoice.save()
+    assert (
+        'violates check constraint "issued_on_date_required_for_issued_payment_status"'
+    ) in str(e.value)
+
+    invoice.issued_on = fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz()
+    invoice.save()
