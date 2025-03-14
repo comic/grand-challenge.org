@@ -693,7 +693,7 @@ class GroundTruthCopyAnswersForm(SaveFormInitMixin, Form):
     user = ModelChoiceField(
         queryset=get_user_model().objects.none(),
         required=True,
-        help_text="Select a user who's answers will be copied.",
+        help_text="Select a user whose answers will be copied.",
         widget=Select2Widget,
     )
 
