@@ -526,10 +526,8 @@ class AddGroundTruthViaAnswersToReaderStudy(
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        
         form.create_ground_truth()
-        
-        return is_valid
+        return response
 
     def get_success_url(self):
         return self.reader_study.get_absolute_url()
