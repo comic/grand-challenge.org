@@ -53,17 +53,10 @@ def execute_algorithm_job_for_inputs(*, job_pk):
     if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
         raise TooManyJobsScheduled
 
-    if (
-        Job.objects.active()
-        .filter(algorithm_image=job.algorithm_image)
-        .count()
-        >= settings.ALGORITHMS_JOB_BATCH_LIMIT
-    ):
-        raise TooManyJobsScheduled
-
     job.task_on_success = linked_task
     job.status = job.PENDING
     job.save()
+
     on_commit(job.execute)
 
 

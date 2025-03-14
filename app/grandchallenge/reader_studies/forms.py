@@ -688,14 +688,10 @@ class ReaderStudyPermissionRequestUpdateForm(PermissionRequestUpdateForm):
         model = ReaderStudyPermissionRequest
 
 
-class GroundTruthForm(SaveFormInitMixin, Form):
+class GroundTruthCSVForm(SaveFormInitMixin, Form):
     ground_truth = FileField(
         required=True,
-        help_text="A csv file with a headers row containing the header `images`"
-        " and the question text for each of the questions in this study."
-        " The subsequent rows should then be filled with the image file"
-        " names (separated by semicolons) and the answer corresponding to"
-        " the question text provided in the header.",
+        help_text="A CSV file representing the ground truth.",
     )
 
     def __init__(self, *args, user, reader_study, **kwargs):
