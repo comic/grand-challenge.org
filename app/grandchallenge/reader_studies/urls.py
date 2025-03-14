@@ -87,7 +87,7 @@ urlpatterns = [
         name="example-ground-truth-csv",
     ),
     path(
-        "<slug:slug>/ground-truth/copy-answers/",
+        "<slug:slug>/ground-truth/answers/create/",
         AddGroundTruthViaAnswersToReaderStudy.as_view(),
         name="add-ground-truth-answers",
     ),
