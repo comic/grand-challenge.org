@@ -1,6 +1,7 @@
 import datetime
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from factory import fuzzy
 
@@ -339,3 +340,19 @@ def test_payment_type_non_complimentary_requires_details(
         payment_type=payment_type,
         **{required_field_name: "not empty"},
     )
+
+
+@pytest.mark.django_db
+def test_total_amount_cannot_change():
+    invoice = InvoiceFactory(
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=2,
+    )
+    invoice.support_costs_euros = 1
+    with pytest.raises(ValidationError) as e, transaction.atomic():
+        invoice.clean()
+    assert ("The total amount may not change") in e.value.message
+
+    invoice.storage_costs_euros = 1
+    invoice.clean()

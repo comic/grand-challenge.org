@@ -1,7 +1,10 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
+
+from grandchallenge.core.models import FieldChangeMixin
 
 
 class PaymentStatusChoices(models.TextChoices):
@@ -17,7 +20,7 @@ class PaymentTypeChoices(models.TextChoices):
     POSTPAID = "POSTPAID", "Postpaid"
 
 
-class Invoice(models.Model):
+class Invoice(models.Model, FieldChangeMixin):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -150,6 +153,33 @@ class Invoice(models.Model):
                 violation_error_message="VAT number is required for non-complimentary invoices.",
             ),
         ]
+
+    @property
+    def total_amount_euros(self):
+        try:
+            return (
+                self.support_costs_euros
+                + self.compute_costs_euros
+                + self.storage_costs_euros
+            )
+        except TypeError:
+            return
+
+    @property
+    def _current_state(self):
+        state = super()._current_state
+        state["total_amount_euros"] = self.total_amount_euros
+        return state
+
+    def clean(self):
+        # Assert total amount unchanged
+        if (
+            self._current_state["total_amount_euros"]
+            != self._initial_state["total_amount_euros"]
+        ):
+            raise ValidationError(
+                "The total amount may not change. (You may only redistribute costs.)"
+            )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
