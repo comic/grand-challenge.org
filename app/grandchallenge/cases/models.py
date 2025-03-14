@@ -174,12 +174,12 @@ class RawImageUploadSession(UUIDModel):
                 description=self.error_message,
                 action_object=self,
             )
-        from grandchallenge.algorithms.models import Job
+        from grandchallenge.components.models import ComponentJob
 
         if (
             self.error_message
             and linked_object
-            and isinstance(linked_object, Job)
+            and isinstance(linked_object, ComponentJob)
         ):
             detailed_error_message_dict = copy.deepcopy(
                 linked_object.detailed_error_message

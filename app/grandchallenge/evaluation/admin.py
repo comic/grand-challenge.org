@@ -1,6 +1,6 @@
 import json
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.forms import ModelForm
 from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
@@ -112,7 +112,16 @@ class PhaseAdmin(admin.ModelAdmin):
 def reevaluate_submissions(modeladmin, request, queryset):
     """Creates a new evaluation for an existing submission"""
     for submission in queryset:
-        submission.create_evaluation()
+        if submission.phase.inputs.exists():
+            modeladmin.message_user(
+                request,
+                f"Submission {submission.pk} cannot be reevaluated in the admin "
+                f"because it requires additional inputs. "
+                f"Please reschedule through the challenge UI.",
+                messages.WARNING,
+            )
+        else:
+            submission.create_evaluation(additional_inputs=None)
 
 
 @admin.register(Submission)

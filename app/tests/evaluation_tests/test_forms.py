@@ -2,11 +2,20 @@ from pathlib import Path
 
 import pytest
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.forms import CharField
 from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.models import ImportStatusChoices
+from grandchallenge.cases.widgets import FlexibleImageField
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FlexibleFileField,
+)
+from grandchallenge.components.models import (
+    ImportStatusChoices,
+    InterfaceKindChoices,
+)
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.forms import (
     ConfigureAlgorithmPhasesForm,
@@ -1268,3 +1277,31 @@ def test_phase_update_form_gpu_type_with_additional_selectable_gpu_types():
     assert choices is not None
     choice = GPUTypeChoices.V100
     assert (choice.value, choice.label) in choices
+
+
+@pytest.mark.django_db
+def test_additional_inputs_on_submission_form():
+    phase = PhaseFactory()
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.IMAGE)
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_file = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=False
+    )
+    phase.inputs.set([ci_img, ci_str, ci_file])
+
+    form = SubmissionForm(
+        user=UserFactory(),
+        phase=phase,
+    )
+
+    assert isinstance(
+        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}"],
+        FlexibleImageField,
+    )
+    assert isinstance(
+        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}"],
+        FlexibleFileField,
+    )
+    assert isinstance(
+        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_str.slug}"], CharField
+    )

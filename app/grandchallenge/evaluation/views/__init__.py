@@ -480,7 +480,7 @@ class EvaluationCreate(
 
     def form_valid(self, form):
         redirect = super().form_valid(form)
-        self.submission.create_evaluation()
+        self.submission.create_evaluation(additional_inputs=None)
         return redirect
 
 

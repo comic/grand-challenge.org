@@ -121,10 +121,10 @@ def test_create_evaluation_is_idempotent(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        s.create_evaluation()
+        s.create_evaluation(additional_inputs=None)
 
     with django_capture_on_commit_callbacks(execute=True):
-        s.create_evaluation()
+        s.create_evaluation(additional_inputs=None)
 
     # max_inital_jobs is set to 1, so only one job should be created
     assert Job.objects.count() == 1
@@ -142,7 +142,7 @@ def test_create_evaluation_sets_gpu_and_memory():
 
     submission = SubmissionFactory(phase=method.phase)
 
-    submission.create_evaluation()
+    submission.create_evaluation(additional_inputs=None)
 
     evaluation = Evaluation.objects.get()
 
@@ -222,7 +222,7 @@ def test_create_evaluation_uniqueness_checks(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 1
 
@@ -231,7 +231,7 @@ def test_create_evaluation_uniqueness_checks(
     assert sub.phase.active_ground_truth == gt
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 2
 
@@ -243,7 +243,7 @@ def test_create_evaluation_uniqueness_checks(
     assert sub.phase.active_image == m
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 3
 
@@ -251,7 +251,7 @@ def test_create_evaluation_uniqueness_checks(
     sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 4
 
@@ -259,7 +259,7 @@ def test_create_evaluation_uniqueness_checks(
     sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 5
 
@@ -267,12 +267,12 @@ def test_create_evaluation_uniqueness_checks(
     sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 6
 
     with django_capture_on_commit_callbacks(execute=True):
-        sub.create_evaluation()
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 6
 
@@ -2000,3 +2000,34 @@ def test_get_valid_jobs_for_interfaces_and_archive_items(
             archive_items_and_jobs_for_interfaces.jobs_for_interface2[0]
         ],
     }
+
+
+@pytest.mark.django_db
+def test_additional_inputs_complete():
+    phase = PhaseFactory()
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+    phase.inputs.set([ci1, ci2])
+
+    civ1 = ComponentInterfaceValueFactory(interface=ci1)
+    civ2 = ComponentInterfaceValueFactory(interface=ci2)
+    civ3 = ComponentInterfaceValueFactory(interface=ci3)
+    civ4 = ComponentInterfaceValueFactory(interface=ci3)
+
+    eval = EvaluationFactory(submission__phase=phase, time_limit=10)
+
+    assert not eval.additional_inputs_complete
+
+    # add required inputs
+    eval.inputs.set([civ1, civ2])
+    del eval.additional_inputs_complete
+    assert eval.additional_inputs_complete
+
+    # it should not matter if other inputs are present as well
+    eval.inputs.set([civ1, civ2, civ3])
+    del eval.additional_inputs_complete
+    assert eval.additional_inputs_complete
+
+    # or if multiple inputs of the same type are present
+    eval.inputs.set([civ1, civ2, civ3, civ4])
+    del eval.additional_inputs_complete
+    assert eval.additional_inputs_complete

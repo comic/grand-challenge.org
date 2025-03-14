@@ -12,7 +12,6 @@
 
 {% block script %}
     {{ block.super }}
-    {{ form.media }}
     {# always load the uppy css and js because an upload widget might be added dynamically through htmx #}
     <link href="/static/vendored/uppy/uppy.min.css" media="all" rel="stylesheet">
     <script src="{% static 'vendored/uppy/uppy.min.js' %}"></script>
@@ -78,11 +77,7 @@
                 You can currently create up to {{ form.jobs_limit }} job{{ form.jobs_limit|pluralize }} for this algorithm.
             </p>
 
-            <form method="POST">
-                {% csrf_token %}
-                {{ form|crispy }}
-                <input type="submit" name="save" value="Submit" class="btn btn-primary" id="submit-id-save">
-            </form>
+            {% crispy form %}
 
             <p>
                 By running this algorithm you agree to the
