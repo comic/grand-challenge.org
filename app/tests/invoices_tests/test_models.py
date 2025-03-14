@@ -313,3 +313,29 @@ def test_payment_type_complimentary_requires_internal_comments():
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         internal_comments="some explanation",
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "payment_type", (PaymentTypeChoices.PREPAID, PaymentTypeChoices.POSTPAID)
+)
+@pytest.mark.parametrize(
+    "required_field_name",
+    ("contact_name", "contact_email", "billing_address", "vat_number"),
+)
+def test_payment_type_non_complimentary_requires_details(
+    payment_type, required_field_name
+):
+    with pytest.raises(IntegrityError) as e, transaction.atomic():
+        InvoiceFactory(
+            payment_type=payment_type,
+            **{required_field_name: ""},
+        )
+    assert (
+        f'violates check constraint "{required_field_name}_required_for_non_complimentary_payment_type"'
+    ) in str(e.value)
+
+    InvoiceFactory(
+        payment_type=payment_type,
+        **{required_field_name: "not empty"},
+    )

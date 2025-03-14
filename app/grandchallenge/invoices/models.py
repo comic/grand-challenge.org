@@ -125,6 +125,30 @@ class Invoice(models.Model):
                 violation_error_message="Please explain why the invoice is "
                 "complimentary in the internal comments.",
             ),
+            models.CheckConstraint(
+                name="contact_name_required_for_non_complimentary_payment_type",
+                check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                | Q(contact_name__gt=""),
+                violation_error_message="Contact name is required for non-complimentary invoices.",
+            ),
+            models.CheckConstraint(
+                name="contact_email_required_for_non_complimentary_payment_type",
+                check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                | Q(contact_email__gt=""),
+                violation_error_message="Contact email is required for non-complimentary invoices.",
+            ),
+            models.CheckConstraint(
+                name="billing_address_required_for_non_complimentary_payment_type",
+                check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                | Q(billing_address__gt=""),
+                violation_error_message="Billing address is required for non-complimentary invoices.",
+            ),
+            models.CheckConstraint(
+                name="vat_number_required_for_non_complimentary_payment_type",
+                check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                | Q(vat_number__gt=""),
+                violation_error_message="VAT number is required for non-complimentary invoices.",
+            ),
         ]
 
     def save(self, *args, **kwargs):
