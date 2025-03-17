@@ -107,24 +107,26 @@ class Invoice(models.Model, FieldChangeMixin):
             ),
             models.CheckConstraint(
                 name="issued_on_date_required_for_issued_payment_status",
-                check=Q(issued_on__isnull=False)
-                | ~Q(payment_status=PaymentStatusChoices.ISSUED)
+                check=~Q(payment_status=PaymentStatusChoices.ISSUED)
+                | Q(issued_on__isnull=False)
                 | Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
                 violation_error_message="When setting the payment status to 'Issued',"
                 " you must set the 'Issued on' date.",
             ),
             models.CheckConstraint(
                 name="paid_on_date_required_for_paid_payment_status",
-                check=Q(paid_on__isnull=False)
-                | ~Q(payment_status=PaymentStatusChoices.PAID)
+                check=~Q(payment_status=PaymentStatusChoices.PAID)
+                | Q(paid_on__isnull=False)
                 | Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
                 violation_error_message="When setting the payment status to 'Paid',"
                 " you must set the 'Paid on' date.",
             ),
             models.CheckConstraint(
                 name="comments_required_for_complimentary_payment_type",
-                check=Q(internal_comments__gt="")
-                | ~Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
+                check=~(
+                    Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                    & Q(internal_comments__gt="")
+                ),
                 violation_error_message="Please explain why the invoice is "
                 "complimentary in the internal comments.",
             ),
