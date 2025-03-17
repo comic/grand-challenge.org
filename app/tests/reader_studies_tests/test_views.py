@@ -1,7 +1,6 @@
 import io
 
 import pytest
-from django.conf import settings
 from django.forms import JSONField
 from guardian.shortcuts import assign_perm
 from requests import put
@@ -963,10 +962,6 @@ def test_ground_truth_view(client):
 
 @pytest.mark.django_db
 def test_ground_view_from_answers(client):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
     rs = ReaderStudyFactory()
 
     editor, reader, a_user = UserFactory.create_batch(3)

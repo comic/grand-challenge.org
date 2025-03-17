@@ -1969,13 +1969,7 @@ def test_ground_view_copy_answers_form():
     )
     assert form.is_valid(), "With both answers the user is a valid source"
 
-    AnswerFactory(
-        question=q2,
-        display_set=ds,
-        creator=reader,
-        answer=True,
-        is_ground_truth=True,
-    )
+    form.create_ground_truth()
 
     form = GroundTruthCopyAnswersForm(
         reader_study=rs,

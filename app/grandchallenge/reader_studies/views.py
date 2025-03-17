@@ -113,7 +113,6 @@ from grandchallenge.reader_studies.serializers import (
 from grandchallenge.reader_studies.tasks import (
     copy_reader_study_display_sets,
     create_display_sets_for_upload_session,
-    create_ground_truth_from_answers,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
@@ -526,18 +525,9 @@ class AddGroundTruthViaAnswersToReaderStudy(
         return kwargs
 
     def form_valid(self, form):
-        create_ground_truth_from_answers.apply_async(
-            kwargs={
-                "reader_study_pk": str(self.reader_study.pk),
-                "user_pk": str(form.cleaned_data["user"].pk),
-            }
-        )
-        messages.add_message(
-            self.request,
-            messages.INFO,
-            "Ground truth will be copied from the answers asynchronously.",
-        )
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        form.create_ground_truth()
+        return response
 
     def get_success_url(self):
         return self.reader_study.get_absolute_url()

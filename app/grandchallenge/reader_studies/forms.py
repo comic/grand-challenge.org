@@ -726,6 +726,16 @@ class GroundTruthCopyAnswersForm(SaveFormInitMixin, Form):
 
         return user
 
+    def create_ground_truth(self):
+        answers = Answer.objects.filter(
+            question__reader_study=self._reader_study,
+            creator=self.cleaned_data["user"],
+        )
+        for answer in answers:
+            answer.pk = None
+            answer.is_ground_truth = True
+            answer.save()
+
 
 class GroundTruthCSVForm(SaveFormInitMixin, Form):
     ground_truth = FileField(

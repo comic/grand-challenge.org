@@ -128,20 +128,3 @@ def copy_reader_study_display_sets(*, orig_pk, new_pk):
                 title=ds.title,
             )
             new_ds.values.set(ds.values.all())
-
-
-@acks_late_2xlarge_task
-@transaction.atomic
-def create_ground_truth_from_answers(
-    *,
-    reader_study_pk,
-    user_pk,
-):
-    answers = Answer.objects.filter(
-        question__reader_study=reader_study_pk,
-        creator=user_pk,
-    )
-    for answer in answers:
-        answer.pk = None
-        answer.is_ground_truth = True
-        answer.save()
