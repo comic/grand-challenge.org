@@ -35,6 +35,7 @@
                     <th>Detail</th>
                     <th>Number</th>
                     <th>Issued on</th>
+                    <th>Due date</th>
                     <th>Amount</th>
                     <th>Type</th>
                     <th>Status</th>
@@ -51,6 +52,7 @@
                         </td>
                         <td>{{ invoice.internal_invoice_number }}</td>
                         <td>{{ invoice.issued_on }}</td>
+                        <td>{{ invoice.due_date }}</td>
                         <td>€ {{ invoice.total_amount_euros }}</td>
                         <td>{{ invoice.get_payment_type_display }}</td>
                         <td>{% include "invoices/partials/payment_status_badge.html" %}</td>

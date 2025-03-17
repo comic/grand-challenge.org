@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.transaction import on_commit
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
@@ -108,6 +109,10 @@ class Invoice(models.Model, FieldChangeMixin):
             )
         except TypeError:
             return
+
+    @property
+    def due_date(self):
+        return self.issued_on + settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF
 
     class Meta:
         constraints = [
