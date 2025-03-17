@@ -119,8 +119,6 @@ general_information_items_1 = (
     "abstract",
     "start_date",
     "end_date",
-    "long_term_commitment",
-    "long_term_commitment_extra",
     "organizers",
     "affiliated_event",
 )
@@ -195,7 +193,6 @@ class ChallengeRequestForm(forms.ModelForm):
         }
         labels = {
             "short_name": "Acronym",
-            "long_term_commitment": "We agree to support this challenge for up to 5 years. ",
             "data_license": "We agree to publish the data set for this challenge under a CC-BY license.",
             "phase_1_number_of_submissions_per_team": "Expected number of submissions per team to Phase 1",
             "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
@@ -273,18 +270,6 @@ class ChallengeRequestForm(forms.ModelForm):
                 "This time estimate should account for everything that needs to happen "
                 "for an algorithm container to process <u>one single image, including "
                 "model loading, i/o, preprocessing and inference.</u>"
-            ),
-            "long_term_commitment": (
-                "High-quality challenges typically remain relevant for years. "
-                "Only when the submitted results to a challenge are hard to improve "
-                "upon, or when a new challenge has been set up for a similar task "
-                "that is more attractive to the research community, may it make sense "
-                "to close a challenge. We have designed grand-challenge.org to keep "
-                "algorithms and challenges long-term available. We expect the life "
-                "cycle of a challenge to last between 3-5 years. Would you be willing "
-                "to commit support for such a period? The amount of work would be "
-                "minimal, but it would require that the organizing team remains "
-                "responsive, and answers questions and queries in the forum. "
             ),
             "data_license": (
                 "In the spirit of open science, we ask that the <b>public training "

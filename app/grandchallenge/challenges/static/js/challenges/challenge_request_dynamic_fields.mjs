@@ -18,24 +18,11 @@ function updateExtraField(fieldName, helpText) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const longTermCommitmentCheckbox = document.getElementById(
-        "id_long_term_commitment",
-    );
-    longTermCommitmentCheckbox.addEventListener("change", () => {
-        updateExtraField(
-            "long_term_commitment",
-            "support this challenge long-term",
-        );
-    });
-
     const dataLicenseCheckbox = document.getElementById("id_data_license");
+
     dataLicenseCheckbox.addEventListener("change", () => {
         updateExtraField("data_license", "use a CC-BY license for your data");
     });
 
-    updateExtraField(
-        "long_term_commitment",
-        "support this challenge long-term",
-    );
     updateExtraField("data_license", "use a CC-BY license for your data");
 });
