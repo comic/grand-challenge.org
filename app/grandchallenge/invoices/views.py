@@ -22,12 +22,8 @@ class InvoiceList(
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
 
-        context["outstanding_invoices"] = any(
-            (
-                obj.payment_type != obj.PaymentTypeChoices.COMPLIMENTARY
-                and obj.payment_status == obj.PaymentStatusChoices.ISSUED
-            )
-            for obj in context["object_list"]
+        context["num_is_due"] = sum(
+            obj.is_due for obj in context["object_list"]
         )
 
         return context

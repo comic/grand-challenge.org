@@ -22,9 +22,9 @@
 {% block content %}
     <h2>Invoices for {{ challenge.short_name }}</h2>
 
-    {% if outstanding_invoices %}
+    {% if num_is_due %}
     <p>
-        <i class="fas fa-exclamation-triangle text-warning"></i> There are outstanding invoices.
+        <i class="fas fa-exclamation-triangle text-warning"></i> There {{ num_is_due|pluralize:"is,are" }} {{ num_is_due }} invoice{{ num_is_due|pluralize }} due.
     </p>
     {% endif %}
 
