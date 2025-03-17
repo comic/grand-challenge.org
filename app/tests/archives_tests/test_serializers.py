@@ -23,7 +23,6 @@ from tests.serializer_helpers import (
                     "title",
                     "api_url",
                     "url",
-                    "algorithms",
                     "logo",
                     "description",
                 ),
