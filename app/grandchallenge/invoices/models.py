@@ -108,14 +108,23 @@ class Invoice(models.Model):
 
     @property
     def due_date(self):
-        return self.issued_on + settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF
+        if self.issued_on:
+            return self.issued_on + settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF
 
     @property
     def is_due(self):
         return (
             self.payment_type != PaymentTypeChoices.COMPLIMENTARY
             and self.payment_status == PaymentStatusChoices.ISSUED
-            and now().date() >= self.issued_on
+            and self.due_date >= now().date() >= self.issued_on
+        )
+
+    @property
+    def is_overdue(self):
+        return (
+            self.payment_type != PaymentTypeChoices.COMPLIMENTARY
+            and self.payment_status == PaymentStatusChoices.ISSUED
+            and now().date() > self.due_date
         )
 
     class Meta:

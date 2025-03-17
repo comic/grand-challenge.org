@@ -22,6 +22,11 @@
 {% block content %}
     <h2>Invoices for {{ challenge.short_name }}</h2>
 
+    {% if num_is_overdue %}
+    <p>
+        <i class="fas fa-exclamation-triangle text-danger"></i> There {{ num_is_overdue|pluralize:"is,are" }} {{ num_is_overdue }} invoice{{ num_is_overdue|pluralize }} overdue.
+    </p>
+    {% endif %}
     {% if num_is_due %}
     <p>
         <i class="fas fa-exclamation-triangle text-warning"></i> There {{ num_is_due|pluralize:"is,are" }} {{ num_is_due }} invoice{{ num_is_due|pluralize }} due.
@@ -55,7 +60,13 @@
                         <td>{{ invoice.due_date }}</td>
                         <td>€ {{ invoice.total_amount_euros }}</td>
                         <td>{{ invoice.get_payment_type_display }}</td>
-                        <td>{% if invoice.is_due %}<i class="fas fa-exclamation-triangle text-warning"></i> {% endif %}{% include "invoices/partials/payment_status_badge.html" %}</td>
+                        <td>{% if invoice.is_overdue %}
+                                <i class="fas fa-exclamation-triangle text-danger" title="Invoice is overdue"></i>
+                            {% elif invoice.is_due %}
+                                <i class="fas fa-exclamation-triangle text-warning" title="Invoice is due"></i>
+                            {% endif %}
+                            {% include "invoices/partials/payment_status_badge.html" %}
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
