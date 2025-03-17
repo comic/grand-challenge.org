@@ -2679,7 +2679,7 @@ def test_reschedule_evaluation_with_additional_inputs(
 
     assert response.status_code == 302
 
-    eval2 = Evaluation.objects.last()
+    eval2 = Evaluation.objects.exclude(pk=eval1.pk).get()
     evaluation_count = Evaluation.objects.count()
 
     assert evaluation_count == 2
