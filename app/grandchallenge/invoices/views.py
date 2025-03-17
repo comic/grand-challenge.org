@@ -25,6 +25,9 @@ class InvoiceList(
         context["num_is_due"] = sum(
             obj.is_due for obj in context["object_list"]
         )
+        context["num_is_overdue"] = sum(
+            obj.is_overdue for obj in context["object_list"]
+        )
 
         return context
 
