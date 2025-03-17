@@ -7,7 +7,7 @@ from django.utils.timezone import datetime, timedelta
 from grandchallenge.invoices.models import Invoice
 from grandchallenge.invoices.tasks import (
     send_challenge_invoice_issued_notification_emails,
-    send_challenge_outstanding_invoice_reminder_emails,
+    send_challenge_invoice_overdue_reminder_emails,
 )
 from tests.factories import ChallengeFactory, UserFactory
 from tests.invoices_tests.factories import InvoiceFactory
@@ -23,7 +23,7 @@ _fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
             {},
             False,
         ),
-        (  # Case: invoice, but not long outstanding
+        (  # Case: invoice due, but not overdue
             dict(
                 payment_type=Invoice.PaymentTypeChoices.PREPAID,
                 payment_status=Invoice.PaymentStatusChoices.ISSUED,
@@ -31,7 +31,7 @@ _fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
             ),
             False,
         ),
-        (  # Case: invoice outstanding
+        (  # Case: invoice due
             dict(
                 payment_type=Invoice.PaymentTypeChoices.PREPAID,
                 payment_status=Invoice.PaymentStatusChoices.ISSUED,
@@ -39,7 +39,7 @@ _fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
             ),
             True,
         ),
-        (  # Case: postpaid invoice outstanding
+        (  # Case: postpaid invoice due
             dict(
                 payment_type=Invoice.PaymentTypeChoices.POSTPAID,
                 payment_status=Invoice.PaymentStatusChoices.ISSUED,
@@ -47,7 +47,7 @@ _fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
             ),
             True,
         ),
-        (  # Case: invoice, but of complimentary type
+        (  # Case: invoice issued, but of complimentary type
             dict(
                 payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
                 payment_status=Invoice.PaymentStatusChoices.ISSUED,
@@ -57,7 +57,7 @@ _fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
         ),
     ],
 )
-def test_challenge_outstanding_invoice_reminder_emails(
+def test_challenge_invoice_overdue_reminder_emails(
     invoice_kwargs,
     send_email,
     settings,
@@ -84,7 +84,7 @@ def test_challenge_outstanding_invoice_reminder_emails(
         return_value=_fixed_now,
     )
 
-    send_challenge_outstanding_invoice_reminder_emails()
+    send_challenge_invoice_overdue_reminder_emails()
 
     if send_email:
         expected_subject = (
@@ -129,7 +129,7 @@ def test_challenge_outstanding_invoice_reminder_emails(
         Invoice.PaymentStatusChoices.PAID,
     ],
 )
-def test_challenge_outstanding_invoice_reminder_emails_not_sent(
+def test_challenge_invoice_overdue_reminder_emails_not_sent(
     payment_type,
     payment_status,
     settings,
@@ -157,14 +157,14 @@ def test_challenge_outstanding_invoice_reminder_emails_not_sent(
         return_value=_fixed_now,
     )
 
-    send_challenge_outstanding_invoice_reminder_emails()
+    send_challenge_invoice_overdue_reminder_emails()
 
     assert not any(staff_user.email in m.to for m in mail.outbox)
     assert not any(challenge_admin.email in m.to for m in mail.outbox)
 
 
 @pytest.mark.django_db
-def test_challenge_outstanding_invoice_reminder_emails_contact_person(mocker):
+def test_challenge_invoice_overdue_reminder_emails_contact_person(mocker):
     challenge = ChallengeFactory()
     challenge_admin = challenge.creator
 
@@ -187,7 +187,7 @@ def test_challenge_outstanding_invoice_reminder_emails_contact_person(mocker):
         return_value=_fixed_now,
     )
 
-    send_challenge_outstanding_invoice_reminder_emails()
+    send_challenge_invoice_overdue_reminder_emails()
 
     expected_subject = (
         "[{challenge_name}] Outstanding Invoice Reminder".format(
