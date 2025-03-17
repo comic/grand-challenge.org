@@ -712,7 +712,7 @@ class GroundTruthCopyAnswersForm(SaveFormInitMixin, Form):
         if self._reader_study.has_ground_truth:
             raise ValidationError(
                 "Reader study already has ground truth. Ground truth cannot be updated. "
-                "Please, first remove the ground truth."
+                "Please, first delete the ground truth."
             )
 
         super().clean()
@@ -731,10 +731,12 @@ class GroundTruthCopyAnswersForm(SaveFormInitMixin, Form):
             question__reader_study=self._reader_study,
             creator=self.cleaned_data["user"],
         )
+
         for answer in answers:
-            answer.pk = None
+            answer.pk = None  # Ensures new ones are created
             answer.is_ground_truth = True
-            answer.save()
+
+        Answer.objects.bulk_create(answers)
 
 
 class GroundTruthCSVForm(SaveFormInitMixin, Form):
