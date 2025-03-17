@@ -26,15 +26,6 @@
         <dt class="col-3 mb-2">Payment type</dt>
         <dd class="col-9">{{ invoice.get_payment_type_display }}</dd>
 
-        <dt class="col-3 mb-2 align-content-center">Payment status</dt>
-        <dd class="col-9">{% include "invoices/partials/payment_status_badge.html" with extra_classes="p-2" %}</dd>
-
-        <dt class="col-3 mb-2">Issued on</dt>
-        <dd class="col-9">{{ invoice.issued_on }}</dd>
-
-        <dt class="col-3 mb-2">Due date</dt>
-        <dd class="col-9">{{ invoice.due_date }}</dd>
-
         <dt class="col-3 mb-2">Support costs</dt>
         <dd class="col-9">€ {{ invoice.support_costs_euros }}</dd>
 
@@ -44,11 +35,23 @@
         <dt class="col-3 mb-2">Storage costs</dt>
         <dd class="col-9">€ {{ invoice.storage_costs_euros }}</dd>
 
-        <dt class="col-3 mb-2">External reference</dt>
-        <dd class="col-9">{{ invoice.external_reference }}</dd>
+        {% if invoice.payment_type != invoice.PaymentTypeChoices.COMPLIMENTARY %}
 
-        <dt class="col-3 mb-2">Contact person</dt>
-        <dd class="col-9">{{ invoice.contact_name }}</dd>
+            <dt class="col-3 mb-2 align-content-center">Payment status</dt>
+            <dd class="col-9">{% include "invoices/partials/payment_status_badge.html" with extra_classes="p-2" %}</dd>
+
+            <dt class="col-3 mb-2">Issued on</dt>
+            <dd class="col-9">{{ invoice.issued_on }}</dd>
+
+            <dt class="col-3 mb-2">Due date</dt>
+            <dd class="col-9">{{ invoice.due_date }}</dd>
+
+            <dt class="col-3 mb-2">External reference</dt>
+            <dd class="col-9">{{ invoice.external_reference }}</dd>
+
+            <dt class="col-3 mb-2">Contact person</dt>
+            <dd class="col-9">{{ invoice.contact_name }}</dd>
+        {% endif %}
     </dl>
 
 {% endblock %}
