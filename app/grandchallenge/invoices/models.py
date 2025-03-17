@@ -125,7 +125,7 @@ class Invoice(models.Model, FieldChangeMixin):
                 name="comments_required_for_complimentary_payment_type",
                 check=~(
                     Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
-                    & Q(internal_comments__gt="")
+                    & Q(internal_comments="")
                 ),
                 violation_error_message="Please explain why the invoice is "
                 "complimentary in the internal comments.",
