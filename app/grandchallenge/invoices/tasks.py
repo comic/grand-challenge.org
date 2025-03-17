@@ -21,7 +21,7 @@ def send_challenge_outstanding_invoice_reminder_emails():
             Invoice.PaymentTypeChoices.POSTPAID,
         ],
         payment_status=Invoice.PaymentStatusChoices.ISSUED,
-        issued_on__lt=_now - settings.CHALLENGE_INVOICE_OUTSTANDING_CUTOFF,
+        issued_on__lt=_now - settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF,
     )
     for invoice in outstanding_invoices:
         send_challenge_outstanding_invoice_reminder(invoice)
