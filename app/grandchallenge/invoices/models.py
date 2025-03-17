@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
@@ -103,6 +104,10 @@ class Invoice(models.Model):
             )
         except TypeError:
             return
+
+    @property
+    def due_date(self):
+        return self.issued_on + settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF
 
     class Meta:
         constraints = [
