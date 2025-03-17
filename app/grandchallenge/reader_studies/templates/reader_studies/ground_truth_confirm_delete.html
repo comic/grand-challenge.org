@@ -1,0 +1,19 @@
+{% extends "reader_studies/readerstudy_ground_truth.html" %}
+{% load url %}
+{% block content %}
+    <h2>Confirm Deletion</h2>
+    <form action="" method="post">
+        {% csrf_token %}
+        <p>Are you sure that you want to delete the ground truth for "{{ object }}"? <br>
+            <b class="text-danger">WARNING:
+                You are not able to undo this action. Once the ground truth is deleted
+                it is deleted forever.</b>
+        </p>
+        <a href="{% url 'reader-studies:ground-truth' slug=object.slug %}"
+           type="button"
+           class="btn btn-secondary">Cancel</a>
+        <input type="submit"
+               value="I understand, delete the ground truth for '{{ object }}'"
+               class="btn btn-danger"/>
+    </form>
+{% endblock %}

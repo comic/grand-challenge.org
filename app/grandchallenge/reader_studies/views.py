@@ -32,6 +32,7 @@ from django.views.generic import (
     DetailView,
     FormView,
     ListView,
+    TemplateView,
     UpdateView,
     View,
 )
@@ -794,13 +795,45 @@ class AnswersRemoveForUser(AnswerBatchDelete):
         )
 
 
-class AnswersRemoveGroundTruth(AnswerBatchDelete):
-    success_message = "Ground Truth deleted"
+class ReaderStudyGroundTruthDelete(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    TemplateView,
+):
+    permission_required = "reader_studies.change_readerstudy"
+    raise_exception = True
+    template_name = "reader_studies/ground_truth_confirm_delete.html"
 
-    def get_queryset(self):
-        return Answer.objects.filter(
+    @cached_property
+    def reader_study(self):
+        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.reader_study
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["object"] = self.reader_study
+        return context
+
+    def post(self, request, slug):
+        ground_truth = Answer.objects.filter(
             question__reader_study=self.reader_study,
             is_ground_truth=True,
+        )
+        ground_truth.delete()
+
+        messages.add_message(
+            request,
+            messages.SUCCESS,
+            "Ground truth successfully deleted",
+        )
+
+        return HttpResponseRedirect(
+            redirect_to=reverse(
+                "reader-studies:ground-truth",
+                kwargs={"slug": slug},
+            )
         )
 
 
