@@ -60,56 +60,6 @@ def execute_algorithm_job_for_inputs(*, job_pk):
     on_commit(job.execute)
 
 
-@acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)
-def create_algorithm_jobs_for_archive(
-    *,
-    archive_pks,
-    archive_item_pks=None,
-    algorithm_pks=None,
-):
-    from grandchallenge.algorithms.models import Algorithm, Job
-    from grandchallenge.archives.models import Archive
-
-    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-        raise TooManyJobsScheduled
-
-    for archive in Archive.objects.filter(pk__in=archive_pks).all():
-        # Only the archive groups should be able to view the job
-        # Can be shared with the algorithm editor if needed
-        archive_groups = [
-            archive.editors_group,
-            archive.uploaders_group,
-            archive.users_group,
-        ]
-
-        if algorithm_pks is not None:
-            algorithms = Algorithm.objects.filter(pk__in=algorithm_pks).all()
-        else:
-            algorithms = archive.algorithms.all()
-
-        if archive_item_pks is not None:
-            archive_items = archive.items.filter(pk__in=archive_item_pks)
-        else:
-            archive_items = archive.items.all()
-
-        for algorithm in algorithms:
-            if algorithm.active_image:
-                create_algorithm_jobs(
-                    algorithm_image=algorithm.active_image,
-                    algorithm_model=algorithm.active_model,
-                    archive_items=archive_items.prefetch_related(
-                        "values__interface"
-                    ),
-                    extra_viewer_groups=archive_groups,
-                    # NOTE: no emails in case the logs leak data
-                    # to the algorithm editors
-                    task_on_success=None,
-                    time_limit=algorithm.time_limit,
-                    requires_gpu_type=algorithm.job_requires_gpu_type,
-                    requires_memory_gb=algorithm.job_requires_memory_gb,
-                )
-
-
 def create_algorithm_jobs(
     *,
     algorithm_image,
