@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.db.transaction import on_commit
+from django.utils.timezone import now
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
@@ -113,6 +114,14 @@ class Invoice(models.Model, FieldChangeMixin):
     @property
     def due_date(self):
         return self.issued_on + settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF
+
+    @property
+    def is_due(self):
+        return (
+            self.payment_type != PaymentTypeChoices.COMPLIMENTARY
+            and self.payment_status == PaymentStatusChoices.ISSUED
+            and now().date() >= self.issued_on
+        )
 
     class Meta:
         constraints = [

@@ -55,7 +55,7 @@
                         <td>{{ invoice.due_date }}</td>
                         <td>€ {{ invoice.total_amount_euros }}</td>
                         <td>{{ invoice.get_payment_type_display }}</td>
-                        <td>{% include "invoices/partials/payment_status_badge.html" %}</td>
+                        <td>{% if invoice.is_due %}<i class="fas fa-exclamation-triangle text-warning"></i> {% endif %}{% include "invoices/partials/payment_status_badge.html" %}</td>
                     </tr>
                 {% endfor %}
             </tbody>
