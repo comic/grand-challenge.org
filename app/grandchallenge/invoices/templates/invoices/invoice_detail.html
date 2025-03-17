@@ -34,8 +34,20 @@
             <dt class="col-3 mb-2">Issued on</dt>
             <dd class="col-9">{{ invoice.issued_on }}</dd>
 
-            <dt class="col-3 mb-2">Due date</dt>
-            <dd class="col-9">{{ invoice.due_date }}</dd>
+            {% if invoice.is_due %}
+                <dt class="col-3 mb-2">Due date</dt>
+                <dd class="col-9">
+                    {% if invoice.is_overdue %}
+                        <i class="fas fa-exclamation-triangle text-danger" title="Invoice is overdue"></i>
+                    {% else %}
+                        <i class="fas fa-exclamation-triangle text-warning" title="Invoice is due"></i>
+                    {% endif %}
+                    {{ invoice.due_date }}
+                </dd>
+            {% endif %}
+
+            <dt class="col-3 mb-2">Paid on</dt>
+            <dd class="col-9">{{ invoice.paid_on }}</dd>
 
             <dt class="col-3 mb-2">External reference</dt>
             <dd class="col-9">{{ invoice.external_reference }}</dd>
