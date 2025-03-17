@@ -747,6 +747,13 @@ class EvaluationForm(AdditionalInputsMixin, forms.Form):
             submission=cleaned_data["submission"],
             method=cleaned_data["submission"].phase.active_image,
             ground_truth=cleaned_data["submission"].phase.active_ground_truth,
+            time_limit=cleaned_data["submission"].phase.evaluation_time_limit,
+            requires_gpu_type=cleaned_data[
+                "submission"
+            ].phase.evaluation_requires_gpu_type,
+            requires_memory_gb=cleaned_data[
+                "submission"
+            ].phase.evaluation_requires_memory_gb,
         ):
             raise ValidationError(
                 "A result for these inputs with the current method "
