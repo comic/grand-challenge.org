@@ -10,7 +10,6 @@ from guardian.shortcuts import (
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.serializers import JobPostSerializer
-from grandchallenge.algorithms.tasks import create_algorithm_jobs_for_archive
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.evaluation.tasks import (
     create_algorithm_jobs_for_evaluation,
@@ -382,57 +381,6 @@ class TestJobPermissions:
         self._validate_created_job_perms(
             algorithm_image=algorithm_image, job=job, user=user
         )
-
-    def test_job_permissions_for_archive(
-        self, django_capture_on_commit_callbacks
-    ):
-        ai = AlgorithmImageFactory(
-            is_manifest_valid=True,
-            is_in_registry=True,
-            is_desired_version=True,
-        )
-        archive = ArchiveFactory()
-
-        # Fake an image upload via a session
-        u = UserFactory()
-        s = UploadSessionFactory(creator=u)
-        im = ImageFactory()
-        s.image_set.set([im])
-
-        ci = ComponentInterface.objects.get(slug="generic-medical-image")
-        interface = AlgorithmInterfaceFactory(inputs=[ci])
-        ai.algorithm.interfaces.add(interface)
-        civ = ComponentInterfaceValueFactory(image=im, interface=ci)
-
-        archive_item = ArchiveItemFactory(archive=archive)
-        with django_capture_on_commit_callbacks(execute=True):
-            archive_item.values.add(civ)
-
-        archive.algorithms.set([ai.algorithm])
-
-        create_algorithm_jobs_for_archive(archive_pks=[archive.pk])
-
-        job = Job.objects.get()
-
-        # The archive editors, users and uploaders and job
-        # viewers should be able to view the job.
-        # NOTE: NOT THE ALGORITHM EDITORS, if they need
-        # access the job can be shared with them.
-        assert get_groups_with_set_perms(job) == {
-            archive.editors_group: {"view_job"},
-            archive.users_group: {"view_job"},
-            archive.uploaders_group: {"view_job"},
-            job.viewers: {"view_job"},
-        }
-        # No-one should be able to change the job
-        assert (
-            get_users_with_perms(
-                job, attach_perms=True, with_group_users=False
-            )
-            == {}
-        )
-        # No-one should be in the viewers group
-        assert {*job.viewers.user_set.all()} == set()
 
     def test_job_permissions_for_normal_phase(
         self, django_capture_on_commit_callbacks

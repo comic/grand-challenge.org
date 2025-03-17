@@ -2,39 +2,29 @@ import pytest
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 
-from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.forms import (
     ArchiveForm,
     ArchiveItemCreateForm,
     ArchiveItemUpdateForm,
 )
 from grandchallenge.archives.models import Archive, ArchivePermissionRequest
-from grandchallenge.components.models import (
-    ComponentInterface,
-    ComponentInterfaceValue,
-    InterfaceKind,
-)
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
-    AlgorithmInterfaceFactory,
 )
 from tests.archives_tests.factories import (
     ArchiveFactory,
     ArchiveItemFactory,
     ArchivePermissionRequestFactory,
 )
-from tests.components_tests.factories import (
-    ComponentInterfaceFactory,
-    ComponentInterfaceValueFactory,
-)
-from tests.conftest import get_interface_form_data
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
-from tests.utils import get_view_for_user, recurse_callbacks
+from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
@@ -311,101 +301,6 @@ def test_archive_item_update_permissions(client):
         user=editor,
     )
     assert response.status_code == 200
-
-
-@pytest.mark.django_db
-def test_archive_item_update_triggers_algorithm_jobs(
-    client, settings, django_capture_on_commit_callbacks
-):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    archive = ArchiveFactory()
-    editor = UserFactory()
-    archive.add_editor(editor)
-
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
-    civ = ComponentInterfaceValueFactory(
-        interface=ci, value=True, file=None, image=None
-    )
-    ai = ArchiveItemFactory(archive=archive)
-    ai.values.add(civ)
-
-    assert Job.objects.count() == 0
-
-    alg = AlgorithmFactory()
-    interface = AlgorithmInterfaceFactory(inputs=[ci])
-    alg.interfaces.add(interface)
-    AlgorithmImageFactory(
-        algorithm=alg,
-        is_manifest_valid=True,
-        is_in_registry=True,
-        is_desired_version=True,
-    )
-    with django_capture_on_commit_callbacks(execute=True):
-        archive.algorithms.add(alg)
-
-    assert Job.objects.count() == 1
-
-    civ_count = ComponentInterfaceValue.objects.count()
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        get_view_for_user(
-            viewname="archives:item-edit",
-            client=client,
-            method=client.post,
-            reverse_kwargs={
-                "slug": archive.slug,
-                "pk": ai.pk,
-            },
-            data={
-                **get_interface_form_data(interface_slug=ci.slug, data=False)
-            },
-            user=editor,
-        )
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    assert ai.values.filter(pk=civ.pk).count() == 0
-    # This should create a new CIV as they are immutable
-    assert ComponentInterfaceValue.objects.count() == civ_count + 1
-
-    # A new job should have been created, because the value for 'bool'
-    # has changed
-    assert Job.objects.count() == 2
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        get_view_for_user(
-            viewname="archives:item-edit",
-            client=client,
-            method=client.post,
-            reverse_kwargs={
-                "slug": archive.slug,
-                "pk": ai.pk,
-            },
-            data={
-                **get_interface_form_data(interface_slug=ci.slug, data=True)
-            },
-            user=editor,
-        )
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    # No new jobs should be created since no new CIV was created
-    assert Job.objects.count() == 2
-    assert ComponentInterfaceValue.objects.count() == civ_count + 1
-
-    # A change to the title should not fire-off a new job
-    ai.title = "A new title"
-    ai.save()
-    assert Job.objects.count() == 2
 
 
 @pytest.mark.django_db

@@ -9,7 +9,6 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from stdimage import JPEGField
 
-from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
     CIVForObjectMixin,
@@ -99,11 +98,6 @@ class Archive(
         related_name="optional_for_archive",
         blank=True,
         help_text="Optional alternative hanging protocols for this archive",
-    )
-    algorithms = models.ManyToManyField(
-        Algorithm,
-        blank=True,
-        help_text="Algorithms that will be executed on all images in this archive",
     )
     publications = models.ManyToManyField(
         Publication,

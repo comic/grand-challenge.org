@@ -10,7 +10,6 @@ from guardian.shortcuts import assign_perm
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs,
-    create_algorithm_jobs_for_archive,
     execute_algorithm_job_for_inputs,
     filter_archive_items_for_algorithm,
     send_failed_job_notification,
@@ -45,7 +44,6 @@ from tests.factories import (
     GroupFactory,
     ImageFactory,
     ImageFileFactory,
-    UploadSessionFactory,
     UserFactory,
 )
 from tests.utils import get_view_for_user, recurse_callbacks
@@ -865,40 +863,3 @@ def test_importing_same_sha_fails(
         "This container image has already been uploaded. "
         "Please re-activate the existing container image or upload a new version."
     )
-
-
-@pytest.mark.django_db
-def test_archive_job_gets_gpu_and_memory_set(
-    django_capture_on_commit_callbacks,
-):
-    algorithm_image = AlgorithmImageFactory(
-        is_manifest_valid=True,
-        is_in_registry=True,
-        is_desired_version=True,
-        algorithm__job_requires_gpu_type=GPUTypeChoices.V100,
-        algorithm__job_requires_memory_gb=1337,
-    )
-    archive = ArchiveFactory()
-
-    session = UploadSessionFactory()
-    im = ImageFactory()
-    session.image_set.set([im])
-
-    ci = ComponentInterface.objects.get(slug="generic-medical-image")
-    interface = AlgorithmInterfaceFactory(inputs=[ci])
-    algorithm_image.algorithm.interfaces.set([interface])
-
-    civ = ComponentInterfaceValueFactory(image=im, interface=ci)
-
-    archive_item = ArchiveItemFactory(archive=archive)
-    with django_capture_on_commit_callbacks(execute=True):
-        archive_item.values.add(civ)
-
-    archive.algorithms.set([algorithm_image.algorithm])
-
-    create_algorithm_jobs_for_archive(archive_pks=[archive.pk])
-
-    job = Job.objects.get()
-
-    assert job.requires_gpu_type == GPUTypeChoices.V100
-    assert job.requires_memory_gb == 1337
