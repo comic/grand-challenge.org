@@ -2607,3 +2607,113 @@ def test_parent_phase_algorithm_interfaces_locked(client):
             },
         )
         assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_reschedule_evaluation_with_additional_inputs(
+    client, settings, django_capture_on_commit_callbacks
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    # create phase with inputs
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    phase.inputs.set([ci_str, ci_bool])
+
+    user = UserFactory()
+    phase.challenge.add_admin(user)
+    InvoiceFactory(
+        challenge=phase.challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    method = MethodFactory(
+        phase=phase,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+
+    algorithm = AlgorithmFactory()
+    algorithm.add_editor(user)
+    ai = AlgorithmImageFactory(algorithm=algorithm)
+
+    civ_str = ComponentInterfaceValueFactory(interface=ci_str, value="Foo")
+    civ_bool = ComponentInterfaceValueFactory(interface=ci_bool, value=True)
+
+    submission = SubmissionFactory(
+        phase=phase, creator=user, algorithm_image=ai
+    )
+    eval1 = EvaluationFactory(
+        submission=submission,
+        method=method,
+        status=Evaluation.SUCCESS,
+        time_limit=10,
+    )
+    eval1.inputs.set([civ_str, civ_bool])
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="evaluation:evaluation-create",
+            client=client,
+            method=client.post,
+            user=user,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci_str.slug, data="Bar"
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_bool.slug, data=False
+                ),
+            },
+        )
+
+    assert response.status_code == 302
+
+    eval2 = Evaluation.objects.last()
+    evaluation_count = Evaluation.objects.count()
+
+    assert evaluation_count == 2
+    assert eval2.inputs.count() == 2
+    assert civ_str not in eval2.inputs.all()
+    assert civ_bool not in eval2.inputs.all()
+    assert eval2.inputs.get(interface=ci_str).value == "Bar"
+    assert not eval2.inputs.get(interface=ci_bool).value
+
+    # try rerunning with identical inputs, that should fail
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="evaluation:evaluation-create",
+            client=client,
+            method=client.post,
+            user=user,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci_str.slug, data="Bar"
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_bool.slug, data=False
+                ),
+            },
+        )
+
+    assert response.status_code == 200
+    assert (
+        "A result for these inputs with the current method and ground truth already exists."
+        in str(response.content)
+    )
+    assert Evaluation.objects.count() == evaluation_count
