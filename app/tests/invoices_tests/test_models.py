@@ -38,6 +38,7 @@ def test_approved_compute_costs_euro_millicents_paid_invoice():
         compute_costs_euros=expected_budget,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
+        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
 
     challenge = Challenge.objects.with_available_compute().first()
@@ -85,6 +86,7 @@ def test_approved_compute_costs_euro_millicents_filter_invoices():
         compute_costs_euros=0,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
+        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
     InvoiceFactory(
         challenge=challenge,
@@ -92,6 +94,7 @@ def test_approved_compute_costs_euro_millicents_filter_invoices():
         compute_costs_euros=10,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.ISSUED,
+        issued_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
     InvoiceFactory(
         challenge=challenge,
@@ -106,6 +109,7 @@ def test_approved_compute_costs_euro_millicents_filter_invoices():
         compute_costs_euros=expected_budget,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
+        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
     InvoiceFactory(
         challenge=challenge,
@@ -113,6 +117,7 @@ def test_approved_compute_costs_euro_millicents_filter_invoices():
         compute_costs_euros=30,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.ISSUED,
+        issued_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
     InvoiceFactory(
         challenge=challenge,
@@ -151,6 +156,7 @@ def test_approved_compute_costs_postpaid_with_paid_invoice():
         compute_costs_euros=1,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
+        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
     InvoiceFactory(
         challenge=challenge,
@@ -173,6 +179,7 @@ def test_approved_compute_costs_postpaid_paid():
         compute_costs_euros=1,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
+        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
         payment_type=PaymentTypeChoices.POSTPAID,
     )
 
@@ -189,6 +196,7 @@ def test_approved_compute_costs_postpaid_paid_with_paid_invoice():
         compute_costs_euros=1,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
+        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
         payment_type=PaymentTypeChoices.POSTPAID,
     )
     InvoiceFactory(
@@ -197,6 +205,7 @@ def test_approved_compute_costs_postpaid_paid_with_paid_invoice():
         compute_costs_euros=1,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
+        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
 
     challenge = Challenge.objects.with_available_compute().first()
