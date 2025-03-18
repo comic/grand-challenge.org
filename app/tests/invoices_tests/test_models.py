@@ -2,7 +2,6 @@ import datetime
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, transaction
 from factory import fuzzy
 
 from grandchallenge.challenges.models import Challenge
@@ -275,11 +274,13 @@ def test_payment_status_issued_requires_issued_on():
     invoice = InvoiceFactory()
 
     invoice.payment_status = invoice.PaymentStatusChoices.ISSUED
-    with pytest.raises(IntegrityError) as e, transaction.atomic():
-        invoice.save()
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
     assert (
-        'violates check constraint "issued_on_date_required_for_issued_payment_status"'
-    ) in str(e.value)
+        "When setting the payment status to 'Issued', you must set the 'Issued on' date."
+        == e.value.messages[0]
+    )
 
     invoice.issued_on = fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz()
     invoice.save()
@@ -292,13 +293,14 @@ def test_payment_status_issued_requires_issued_on():
 @pytest.mark.django_db
 def test_payment_status_paid_requires_paid_on():
     invoice = InvoiceFactory()
-
     invoice.payment_status = invoice.PaymentStatusChoices.PAID
-    with pytest.raises(IntegrityError) as e, transaction.atomic():
-        invoice.save()
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
     assert (
-        'violates check constraint "paid_on_date_required_for_paid_payment_status"'
-    ) in str(e.value)
+        "When setting the payment status to 'Paid', you must set the 'Paid on' date."
+        == e.value.messages[0]
+    )
 
     invoice.paid_on = fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz()
     invoice.save()
@@ -310,14 +312,16 @@ def test_payment_status_paid_requires_paid_on():
 
 @pytest.mark.django_db
 def test_payment_type_complimentary_requires_internal_comments():
-    with pytest.raises(IntegrityError) as e, transaction.atomic():
-        InvoiceFactory(
-            payment_type=PaymentTypeChoices.COMPLIMENTARY,
-            internal_comments="",
-        )
+    invoice = InvoiceFactory()
+    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
+    invoice.internal_comments = ""
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
     assert (
-        'violates check constraint "comments_required_for_complimentary_payment_type"'
-    ) in str(e.value)
+        "Please explain why the invoice is complimentary in the internal comments."
+        == e.value.messages[0]
+    )
 
     InvoiceFactory(
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
@@ -330,20 +334,35 @@ def test_payment_type_complimentary_requires_internal_comments():
     "payment_type", (PaymentTypeChoices.PREPAID, PaymentTypeChoices.POSTPAID)
 )
 @pytest.mark.parametrize(
-    "required_field_name",
-    ("contact_name", "contact_email", "billing_address", "vat_number"),
+    "required_field_name, expected_error_message",
+    (
+        (
+            "contact_name",
+            "Contact name is required for non-complimentary invoices.",
+        ),
+        (
+            "contact_email",
+            "Contact email is required for non-complimentary invoices.",
+        ),
+        (
+            "billing_address",
+            "Billing address is required for non-complimentary invoices.",
+        ),
+        (
+            "vat_number",
+            "VAT number is required for non-complimentary invoices.",
+        ),
+    ),
 )
 def test_payment_type_non_complimentary_requires_details(
-    payment_type, required_field_name
+    payment_type, required_field_name, expected_error_message
 ):
-    with pytest.raises(IntegrityError) as e, transaction.atomic():
-        InvoiceFactory(
-            payment_type=payment_type,
-            **{required_field_name: ""},
-        )
-    assert (
-        f'violates check constraint "{required_field_name}_required_for_non_complimentary_payment_type"'
-    ) in str(e.value)
+    invoice = InvoiceFactory()
+    setattr(invoice, required_field_name, "")
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert expected_error_message == e.value.messages[0]
 
     InvoiceFactory(
         payment_type=payment_type,
@@ -359,7 +378,7 @@ def test_total_amount_cannot_change():
         storage_costs_euros=2,
     )
     invoice.support_costs_euros = 1
-    with pytest.raises(ValidationError) as e, transaction.atomic():
+    with pytest.raises(ValidationError) as e:
         invoice.clean()
     assert ("The total amount may not change") in e.value.message
 
