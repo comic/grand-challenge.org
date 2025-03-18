@@ -1017,7 +1017,7 @@ def test_ground_view_from_answers_workflow(client):
     answer.delete()
     assert (
         rs.has_ground_truth
-    ), "Ground Truth exists seperately from the copied answers"
+    ), "Sanity: ground Truth exists seperately from the copied answers"
 
     response = get_view_for_user(
         viewname="api:reader-study-ground-truth",
