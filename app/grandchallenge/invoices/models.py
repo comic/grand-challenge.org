@@ -120,7 +120,7 @@ class Invoice(models.Model, FieldChangeMixin):
         return (
             self.payment_type != PaymentTypeChoices.COMPLIMENTARY
             and self.payment_status == PaymentStatusChoices.ISSUED
-            and now().date() >= self.issued_on
+            and self.due_date >= now().date() >= self.issued_on
         )
 
     @property
