@@ -737,10 +737,13 @@ class GroundTruthViaAnswersForm(SaveFormInitMixin, Form):
         answers = self.answers
 
         for answer in answers:
-            answer.pk = None  # Ensures new ones are created
             answer.is_ground_truth = True
 
-        Answer.objects.bulk_create(answers)
+            answer.pk = None  # Ensures new ones are created
+            answers.id = None  # Required to ensure inheritence works correctly
+            answer._state.adding = True
+
+            answer.save()
 
 
 class GroundTruthCSVForm(SaveFormInitMixin, Form):
