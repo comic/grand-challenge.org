@@ -97,6 +97,17 @@ class Invoice(models.Model, FieldChangeMixin):
         default=PaymentStatusChoices.INITIALIZED,
     )
 
+    @property
+    def total_amount_euros(self):
+        try:
+            return (
+                self.support_costs_euros
+                + self.compute_costs_euros
+                + self.storage_costs_euros
+            )
+        except TypeError:
+            return
+
     class Meta:
         constraints = [
             models.CheckConstraint(
