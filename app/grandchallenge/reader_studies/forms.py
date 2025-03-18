@@ -744,7 +744,7 @@ class GroundTruthViaAnswersForm(SaveFormInitMixin, Form):
             answer.is_ground_truth = True
 
             answer.pk = None  # Ensures new ones are created
-            answers.id = None  # Required to ensure inheritence works correctly
+            answer.id = None  # Required to ensure inheritence works correctly
             answer._state.adding = True
 
             answer.save()
