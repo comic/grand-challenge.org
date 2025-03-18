@@ -4,8 +4,6 @@ from django.utils.timezone import now
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.subdomains.utils import reverse
-
 
 class PaymentStatusChoices(models.TextChoices):
     INITIALIZED = "INITIALIZED", "Initialized"
@@ -164,12 +162,3 @@ class InvoiceUserObjectPermission(UserObjectPermissionBase):
 
 class InvoiceGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Invoice, on_delete=models.CASCADE)
-
-    def get_absolute_url(self):
-        return reverse(
-            "invoices:detail",
-            kwargs={
-                "challenge_short_name": self.challenge.short_name,
-                "pk": self.pk,
-            },
-        )
