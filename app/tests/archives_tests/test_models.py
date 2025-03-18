@@ -1,5 +1,6 @@
 import pytest
-from django.db import IntegrityError, transaction
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
@@ -84,25 +85,23 @@ def test_archive_item_set_title():
         title="Another archive item title",
     )
 
-    # Duplication attempt via edit
-    ai1.title = ai0.title
-    with transaction.atomic():
-        with pytest.raises(IntegrityError):
-            ai1.save()
-
-    # Duplication attempt via save
-    with transaction.atomic():
-        with pytest.raises(IntegrityError):
-            ArchiveItemFactory(
-                archive=archive,
-                title=ai1.title,
-            )
-
     # Other archive no problem
     ArchiveItemFactory(
         archive=ArchiveFactory(),
         title=ai0.title,
     )
+
+    # Duplication attempt
+    ai1.title = ai0.title
+    with pytest.raises(ValidationError):
+        ai1.full_clean()
+
+    # Duplication attempt via save
+    with pytest.raises(IntegrityError):
+        ArchiveItemFactory(
+            archive=archive,
+            title=ai1.title,
+        )
 
 
 @pytest.mark.django_db
