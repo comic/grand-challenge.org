@@ -771,7 +771,7 @@ class AnswerBatchDelete(LoginRequiredMixin, FormView):
             },
         )
 
-    @property
+    @cached_property
     def reader_study(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
@@ -794,24 +794,9 @@ class AnswersRemoveForUser(AnswerBatchDelete):
         )
 
 
-class ReaderStudyGroundTruthDelete(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    SuccessMessageMixin,
-    FormView,
-):
-    permission_required = "reader_studies.change_readerstudy"
-    raise_exception = True
+class ReaderStudyGroundTruthDelete(AnswerBatchDelete):
     template_name = "reader_studies/ground_truth_confirm_delete.html"
     success_message = "Ground truth successfully deleted"
-    form_class = Form
-
-    @cached_property
-    def reader_study(self):
-        return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
-
-    def get_permission_object(self):
-        return self.reader_study
 
     def get_success_url(self):
         return reverse(
@@ -824,13 +809,11 @@ class ReaderStudyGroundTruthDelete(
         context["object"] = self.reader_study
         return context
 
-    def form_valid(self, form):
-        ground_truth = Answer.objects.filter(
+    def get_queryset(self):
+        return Answer.objects.filter(
             question__reader_study=self.reader_study,
             is_ground_truth=True,
         )
-        ground_truth.delete()
-        return super().form_valid(form)
 
 
 class ReaderStudyPermissionRequestCreate(

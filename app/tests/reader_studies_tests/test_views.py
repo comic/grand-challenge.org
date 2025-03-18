@@ -215,7 +215,7 @@ def test_ground_truth_delete(client):
         client=client,
         method=client.post,
     )
-    assert response.status_code == 302
+    assert response.status_code == 200
     assert Answer.objects.filter(answer=f"a-{rs1.title}").exists()
     assert not Answer.objects.filter(answer=f"gt-{rs1.title}").exists()
     assert Answer.objects.filter(answer=f"a-{rs2.title}").exists()
@@ -1040,7 +1040,7 @@ def test_ground_view_from_answers_workflow(client):
         client=client,
         method=client.post,
     )
-    assert response.status_code == 302, "Can remove ground truth"
+    assert response.status_code == 200, "Can remove ground truth"
 
     assert (
         not rs.has_ground_truth
