@@ -1,7 +1,7 @@
 import logging
 
 from rest_framework import serializers
-from rest_framework.fields import JSONField, ReadOnlyField, URLField
+from rest_framework.fields import JSONField, URLField
 from rest_framework.relations import HyperlinkedRelatedField
 
 from grandchallenge.archives.models import Archive, ArchiveItem
@@ -49,14 +49,11 @@ class ArchiveItemSerializer(serializers.ModelSerializer):
 class ArchiveSerializer(serializers.ModelSerializer):
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
-    # Include the read only name for legacy clients
-    name = ReadOnlyField()
 
     class Meta:
         model = Archive
         fields = (
             "pk",
-            "name",
             "title",
             "logo",
             "description",

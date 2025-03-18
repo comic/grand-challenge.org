@@ -137,11 +137,6 @@ class Archive(
     def __str__(self):
         return f"{self.title}"
 
-    @property
-    def name(self) -> str:
-        # Include the read only name for legacy clients
-        return self.title
-
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
