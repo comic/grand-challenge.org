@@ -46,7 +46,7 @@ def challenge(request):
         )
         .with_overdue_status()
         .status_aggregates,
-        "num_outstanding_invoices": Invoice.objects.filter(challenge=challenge)
+        "num_invoices_overdue": Invoice.objects.filter(challenge=challenge)
         .exclude(payment_type=PaymentTypeChoices.COMPLIMENTARY)
         .filter(payment_status=PaymentStatusChoices.ISSUED)
         .count(),
