@@ -53,12 +53,18 @@
                         <td>{{ invoice.due_date }}</td>
                         <td>€ {{ invoice.total_amount_euros }}</td>
                         <td>{{ invoice.get_payment_type_display }}</td>
-                        <td>{% if invoice.is_overdue %}
-                                <i class="fas fa-exclamation-triangle text-danger" title="Invoice is overdue"></i>
+                        <td>
+                            {% if invoice.payment_type == invoice.PaymentTypeChoices.COMPLIMENTARY %}
+                                -
+                            {% elif invoice.is_overdue %}
+                                <span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Overdue</span>
                             {% elif invoice.is_due %}
-                                <i class="fas fa-exclamation-triangle text-warning" title="Invoice is due"></i>
+                                <span class="badge badge-warning"><i class="fas fa-exclamation-triangle"></i> Due</span>
+                            {% elif invoice.payment_status == invoice.PaymentStatusChoices.PAID %}
+                                <span class="badge badge-success">Paid</span>
+                            {% else %}
+                                <span class="badge badge-info">Initialized</span>
                             {% endif %}
-                            {% include "invoices/partials/payment_status_badge.html" %}
                         </td>
                     </tr>
                 {% endfor %}
