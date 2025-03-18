@@ -58,7 +58,6 @@
             <table class="table table-hover table-borderless table-sm w-100" id="challengeCostsOverviewTable">
                 <thead class="thead-light">
                     <tr>
-                        <th>Detail</th>
                         <th>Number</th>
                         <th>Issued on</th>
                         <th>Support Costs</th>
@@ -72,12 +71,6 @@
                 <tbody>
                     {% for invoice in challenge.invoices.all %}
                         <tr>
-                            <td>
-                                <a class="btn btn-primary btn-sm"
-                                   href="{% url 'invoices:detail' challenge_short_name=challenge.short_name pk=invoice.pk %}">
-                                    <i class="fas fa-info-circle"></i>
-                                </a>
-                            </td>
                             <td>{{ invoice.internal_invoice_number }}</td>
                             <td>{{ invoice.issued_on }}</td>
                             <td>€ {{ invoice.support_costs_euros }}</td>

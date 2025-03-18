@@ -1,4 +1,4 @@
-from django.views.generic import DetailView, ListView
+from django.views.generic import ListView
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
@@ -35,12 +35,3 @@ class InvoiceList(
         queryset = super().get_queryset()
         queryset = queryset.filter(challenge=self.request.challenge)
         return queryset
-
-
-class InvoiceDetail(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
-):
-    model = Invoice
-    permission_required = "view_invoice"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")

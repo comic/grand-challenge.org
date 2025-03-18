@@ -9,7 +9,6 @@ from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.invoices.tasks import (
     send_challenge_invoice_issued_notification_emails,
 )
-from grandchallenge.subdomains.utils import reverse
 
 
 class PaymentStatusChoices(models.TextChoices):
@@ -165,15 +164,6 @@ class Invoice(models.Model, FieldChangeMixin):
             f"view_{self._meta.model_name}",
             self.challenge.admins_group,
             self,
-        )
-
-    def get_absolute_url(self):
-        return reverse(
-            "invoices:detail",
-            kwargs={
-                "challenge_short_name": self.challenge.short_name,
-                "pk": self.pk,
-            },
         )
 
 
