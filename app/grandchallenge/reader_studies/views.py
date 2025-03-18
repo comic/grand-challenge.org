@@ -86,8 +86,8 @@ from grandchallenge.reader_studies.filters import (
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
-    GroundTruthCopyAnswersForm,
     GroundTruthCSVForm,
+    GroundTruthViaAnswersForm,
     QuestionForm,
     ReadersForm,
     ReaderStudyCopyForm,
@@ -515,7 +515,7 @@ class AddGroundTruthViaCSVToReaderStudy(
 class AddGroundTruthViaAnswersToReaderStudy(
     BaseAddObjectToReaderStudyMixin, FormView
 ):
-    form_class = GroundTruthCopyAnswersForm
+    form_class = GroundTruthViaAnswersForm
     template_name = "reader_studies/ground_truth_copy_answers_form.html"
     type_to_add = "Ground Truth"
 

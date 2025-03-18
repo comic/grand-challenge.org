@@ -689,7 +689,7 @@ class ReaderStudyPermissionRequestUpdateForm(PermissionRequestUpdateForm):
         model = ReaderStudyPermissionRequest
 
 
-class GroundTruthCopyAnswersForm(SaveFormInitMixin, Form):
+class GroundTruthViaAnswersForm(SaveFormInitMixin, Form):
     user = ModelChoiceField(
         queryset=get_user_model().objects.none(),
         required=True,
@@ -708,14 +708,21 @@ class GroundTruthCopyAnswersForm(SaveFormInitMixin, Form):
             .distinct()
         )
 
+    @cached_property
+    def answers(self):
+        return Answer.objects.filter(
+            question__in=self._reader_study.ground_truth_applicable_questions,
+            creator=self.cleaned_data["user"],
+        )
+
     def clean(self):
+        super().clean()
+
         if self._reader_study.has_ground_truth:
             raise ValidationError(
                 "Reader study already has ground truth. Ground truth cannot be updated. "
                 "Please, first delete the ground truth."
             )
-
-        super().clean()
 
     def clean_user(self):
         user = self.cleaned_data["user"]
@@ -727,10 +734,7 @@ class GroundTruthCopyAnswersForm(SaveFormInitMixin, Form):
         return user
 
     def create_ground_truth(self):
-        answers = Answer.objects.filter(
-            question__reader_study=self._reader_study,
-            creator=self.cleaned_data["user"],
-        )
+        answers = self.answers
 
         for answer in answers:
             answer.pk = None  # Ensures new ones are created

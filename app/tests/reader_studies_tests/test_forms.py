@@ -25,7 +25,7 @@ from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
-    GroundTruthCopyAnswersForm,
+    GroundTruthViaAnswersForm,
     QuestionForm,
 )
 from grandchallenge.reader_studies.models import (
@@ -1943,7 +1943,19 @@ def test_ground_view_copy_answers_form():
         answer_type=Question.AnswerType.BOOL,
     )
 
-    form = GroundTruthCopyAnswersForm(
+    # Not ground truth applicable
+    AnswerFactory(
+        question=QuestionFactory(
+            reader_study=rs,
+            question_text="BB",
+            answer_type=Question.AnswerType.BOUNDING_BOX_2D,
+        ),
+        display_set=ds,
+        creator=reader,
+        answer="Foo",
+    )
+
+    form = GroundTruthViaAnswersForm(
         reader_study=rs,
         data={"user": str(reader.pk)},
     )
@@ -1952,7 +1964,7 @@ def test_ground_view_copy_answers_form():
     # Answer 1 of 2 questions
     AnswerFactory(question=q1, display_set=ds, creator=reader, answer=True)
 
-    form = GroundTruthCopyAnswersForm(
+    form = GroundTruthViaAnswersForm(
         reader_study=rs,
         data={"user": str(reader.pk)},
     )
@@ -1963,7 +1975,7 @@ def test_ground_view_copy_answers_form():
     # Answer 2 of 2 questions
     AnswerFactory(question=q2, display_set=ds, creator=reader, answer=True)
 
-    form = GroundTruthCopyAnswersForm(
+    form = GroundTruthViaAnswersForm(
         reader_study=rs,
         data={"user": str(reader.pk)},
     )
@@ -1971,7 +1983,12 @@ def test_ground_view_copy_answers_form():
 
     form.create_ground_truth()
 
-    form = GroundTruthCopyAnswersForm(
+    assert not Answer.objects.filter(
+        question__answer_type=Question.AnswerType.BOUNDING_BOX_2D,
+        is_ground_truth=True,
+    ).exists(), "Non applicable gt answer does not get copied"
+
+    form = GroundTruthViaAnswersForm(
         reader_study=rs,
         data={"user": str(reader.pk)},
     )
