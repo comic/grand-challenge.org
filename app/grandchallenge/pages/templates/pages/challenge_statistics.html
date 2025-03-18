@@ -78,7 +78,22 @@
                             <td>€ {{ invoice.storage_costs_euros }}</td>
                             <td>{{ invoice.external_reference }}</td>
                             <td>{{ invoice.get_payment_type_display }}</td>
-                            <td>{% include "invoices/partials/payment_status_badge.html" %}</td>
+                            <td>
+                                {% if invoice.payment_type == invoice.PaymentTypeChoices.COMPLIMENTARY %}
+                                    -
+                                {% else %}
+                                    <span class="badge
+                                            {% if invoice.payment_status == invoice.PaymentStatusChoices.PAID %}
+                                                badge-success
+                                            {% elif invoice.payment_status == invoice.PaymentStatusChoices.ISSUED %}
+                                                badge-warning
+                                            {% else %}
+                                                badge-info
+                                            {% endif %}">
+                                        {{ invoice.get_payment_status_display }}
+                                    </span>
+                                {% endif %}
+                            </td>
                         </tr>
                     {% endfor %}
                 </tbody>
