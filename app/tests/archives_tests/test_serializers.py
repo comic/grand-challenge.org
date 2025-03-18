@@ -19,7 +19,6 @@ from tests.serializer_helpers import (
                 "serializer": ArchiveSerializer,
                 "fields": (
                     "pk",
-                    "name",
                     "title",
                     "api_url",
                     "url",
