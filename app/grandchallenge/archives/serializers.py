@@ -47,9 +47,6 @@ class ArchiveItemSerializer(serializers.ModelSerializer):
 
 
 class ArchiveSerializer(serializers.ModelSerializer):
-    algorithms = HyperlinkedRelatedField(
-        read_only=True, many=True, view_name="api:algorithm-detail"
-    )
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
     # Include the read only name for legacy clients
@@ -61,7 +58,6 @@ class ArchiveSerializer(serializers.ModelSerializer):
             "pk",
             "name",
             "title",
-            "algorithms",
             "logo",
             "description",
             "api_url",
