@@ -32,7 +32,6 @@ from django.views.generic import (
     DetailView,
     FormView,
     ListView,
-    TemplateView,
     UpdateView,
     View,
 )
@@ -798,11 +797,14 @@ class AnswersRemoveForUser(AnswerBatchDelete):
 class ReaderStudyGroundTruthDelete(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
-    TemplateView,
+    SuccessMessageMixin,
+    FormView,
 ):
     permission_required = "reader_studies.change_readerstudy"
     raise_exception = True
     template_name = "reader_studies/ground_truth_confirm_delete.html"
+    success_message = "Ground truth successfully deleted"
+    form_class = Form
 
     @cached_property
     def reader_study(self):
@@ -811,30 +813,24 @@ class ReaderStudyGroundTruthDelete(
     def get_permission_object(self):
         return self.reader_study
 
+    def get_success_url(self):
+        return reverse(
+            "reader-studies:ground-truth",
+            kwargs={"slug": self.reader_study.slug},
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["object"] = self.reader_study
         return context
 
-    def post(self, request, slug):
+    def form_valid(self, form):
         ground_truth = Answer.objects.filter(
             question__reader_study=self.reader_study,
             is_ground_truth=True,
         )
         ground_truth.delete()
-
-        messages.add_message(
-            request,
-            messages.SUCCESS,
-            "Ground truth successfully deleted",
-        )
-
-        return HttpResponseRedirect(
-            redirect_to=reverse(
-                "reader-studies:ground-truth",
-                kwargs={"slug": slug},
-            )
-        )
+        return super().form_valid(form)
 
 
 class ReaderStudyPermissionRequestCreate(
