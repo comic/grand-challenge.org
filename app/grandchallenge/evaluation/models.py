@@ -28,6 +28,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmInterface,
     AlgorithmModel,
     Job,
+    annotate_input_output_counts,
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
@@ -35,6 +36,7 @@ from grandchallenge.components.models import (
     CIVForObjectMixin,
     ComponentImage,
     ComponentInterface,
+    ComponentInterfaceValue,
     ComponentJob,
     ImportStatusChoices,
     Tarball,
@@ -1710,6 +1712,46 @@ class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
+class EvaluationInputSetManager(models.Manager):
+    def create(
+        self,
+        *,
+        inputs,
+        **kwargs,
+    ):
+        obj = get_existing_evaluation_input_set_for_inputs(
+            inputs=inputs,
+        )
+        if not obj:
+            obj = super().create(**kwargs)
+            obj.values.set(inputs)
+
+        return obj
+
+
+class EvaluationInputSet(UUIDModel):
+    values = models.ManyToManyField(
+        ComponentInterfaceValue, blank=True, related_name="eval_inputs"
+    )
+
+    objects = EvaluationInputSetManager()
+
+
+def get_existing_evaluation_input_set_for_inputs(
+    *, inputs, model=EvaluationInputSet
+):
+    annotated_qs = annotate_input_output_counts(
+        model.objects.all(), inputs=inputs
+    )
+    try:
+        return annotated_qs.get(
+            relevant_input_count=len(inputs),
+            input_count=len(inputs),
+        )
+    except ObjectDoesNotExist:
+        return None
+
+
 class Evaluation(CIVForObjectMixin, ComponentJob):
     """Stores information about a evaluation for a given submission."""
 
@@ -1719,6 +1761,10 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     )
     ground_truth = models.ForeignKey(
         EvaluationGroundTruth, null=True, blank=True, on_delete=models.PROTECT
+    )
+    inputs = None
+    inputs = models.ForeignKey(
+        EvaluationInputSet, null=True, blank=True, on_delete=models.PROTECT
     )
 
     published = models.BooleanField(default=True, db_index=True)
