@@ -1,15 +1,10 @@
 import logging
 
 from django.conf import settings
-from django.utils.timezone import now
 from guardian.shortcuts import get_perms
 from guardian.utils import get_anonymous_user
 
 from grandchallenge.hanging_protocols.models import ViewportNames
-from grandchallenge.invoices.models import (
-    PaymentStatusChoices,
-    PaymentTypeChoices,
-)
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.policies.models import Policy
 from grandchallenge.profiles.forms import NewsletterSignupForm
@@ -46,23 +41,7 @@ def challenge(request):
         )
         .with_overdue_status()
         .status_aggregates,
-        "num_invoices_due": challenge.invoices.exclude(
-            payment_type=PaymentTypeChoices.COMPLIMENTARY
-        )
-        .filter(
-            payment_status=PaymentStatusChoices.ISSUED,
-            issued_on__lte=now(),
-            issued_on__gte=now() - settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF,
-        )
-        .count(),
-        "num_invoices_overdue": challenge.invoices.exclude(
-            payment_type=PaymentTypeChoices.COMPLIMENTARY
-        )
-        .filter(
-            payment_status=PaymentStatusChoices.ISSUED,
-            issued_on__lt=now() - settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF,
-        )
-        .count(),
+        "invoice_aggregates": challenge.invoices.with_overdue_status().status_aggregates,
     }
 
 

@@ -54,7 +54,7 @@ def test_challenge_invoice_overdue_reminder_emails_sent(
     )
 
     mocker.patch(
-        "grandchallenge.invoices.tasks.now",
+        "grandchallenge.invoices.models.now",
         return_value=_fixed_now,
     )
 
@@ -178,7 +178,7 @@ def test_challenge_invoice_overdue_reminder_emails_not_sent(
     )
 
     mocker.patch(
-        "grandchallenge.invoices.tasks.now",
+        "grandchallenge.invoices.models.now",
         return_value=_fixed_now,
     )
 
@@ -208,7 +208,7 @@ def test_challenge_invoice_overdue_reminder_emails_contact_person(mocker):
     )
 
     mocker.patch(
-        "grandchallenge.invoices.tasks.now",
+        "grandchallenge.invoices.models.now",
         return_value=_fixed_now,
     )
 
