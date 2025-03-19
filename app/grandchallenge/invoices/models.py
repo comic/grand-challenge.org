@@ -126,7 +126,6 @@ class Invoice(models.Model):
         )
 
     class Meta:
-        ordering = ["created"]
         constraints = [
             models.CheckConstraint(
                 check=models.Q(payment_type__in=PaymentTypeChoices.values),
