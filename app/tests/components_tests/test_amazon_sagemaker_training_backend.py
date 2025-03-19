@@ -142,7 +142,7 @@ def test_transform_job_name(model, container, container_model, key):
     assert job_params.attempt == 0
 
 
-def test_execute(settings):
+def test_invocation_json(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
     settings.COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN = (
         "arn:aws:iam::123456789012:role/service-role/ExecutionRole"
@@ -200,7 +200,7 @@ def test_execute(settings):
                 "RemoteDebugConfig": {"EnableRemoteDebug": False},
             },
         )
-        executor.execute(input_civs=[], input_prefixes={})
+        executor.provision(input_civs=[], input_prefixes={})
 
     with io.BytesIO() as fileobj:
         executor._s3_client.download_fileobj(
