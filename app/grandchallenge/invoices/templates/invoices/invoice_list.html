@@ -32,6 +32,10 @@
             <i class="fas fa-exclamation-triangle"></i> There {{ num_is_due|pluralize:"is,are" }} {{ num_is_due }} invoice{{ num_is_due|pluralize }} due.
         </p>
     {% endif %}
+    <p>
+        If an invoice has been paid recently, the status will be updated soon. For any questions, contact us at
+        <a href="mailto:support@grand-challenge.org">support@grand-challenge.org</a>.
+    </p>
 
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm w-100">
