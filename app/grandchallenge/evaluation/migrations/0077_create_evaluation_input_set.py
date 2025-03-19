@@ -29,9 +29,9 @@ def update_evaluation_inputs(apps, _schema_editor):
             input_set = EvaluationInputSet.objects.create()
             input_set.values.set(inputs)
 
-        evaluation.inputs = input_set
+        evaluation.input_set = input_set
 
-    evaluations.bulk_update(evaluations, ["inputs"])
+    evaluations.bulk_update(evaluations, ["input_set"])
 
 
 class Migration(migrations.Migration):
@@ -68,27 +68,10 @@ class Migration(migrations.Migration):
                 "abstract": False,
             },
         ),
-        migrations.AlterUniqueTogether(
-            name="evaluation",
-            unique_together={
-                (
-                    "submission",
-                    "method",
-                    "inputs",
-                    "ground_truth",
-                    "time_limit",
-                    "requires_gpu_type",
-                    "requires_memory_gb",
-                )
-            },
-        ),
-        migrations.RemoveField(
-            model_name="evaluation",
-            name="inputs",
-        ),
+        # Add the temporary field with a different name
         migrations.AddField(
             model_name="evaluation",
-            name="inputs",
+            name="input_set",  # Temporary field name
             field=models.ForeignKey(
                 blank=True,
                 null=True,
