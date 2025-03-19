@@ -20,7 +20,11 @@ from django.utils.functional import cached_property
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
 
 from grandchallenge.cases.tasks import import_images
-from grandchallenge.components.backends.exceptions import ComponentException
+from grandchallenge.components.backends.exceptions import (
+    ComponentException,
+    UncleanExit,
+)
+from grandchallenge.components.backends.utils import user_error
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
@@ -70,9 +74,12 @@ class Executor(ABC):
             input_civs=input_civs, input_prefixes=input_prefixes
         )
         self._provision_auxilliary_data()
+        self._create_invocation_json(
+            input_civs=input_civs, input_prefixes=input_prefixes
+        )
 
     @abstractmethod
-    def execute(self, *, input_civs, input_prefixes): ...
+    def execute(self): ...
 
     @abstractmethod
     def handle_event(self, *, event): ...
@@ -193,6 +200,20 @@ class Executor(ABC):
         return safe_join("/io", *self.job_path_parts)
 
     @property
+    def _invocation_prefix(self):
+        return safe_join("/invocations", *self.job_path_parts)
+
+    @property
+    def _invocation_key(self):
+        return safe_join(self._invocation_prefix, "invocation.json")
+
+    @property
+    def _result_key(self):
+        return safe_join(
+            self._io_prefix, ".sagemaker_shim", "inference_result.json"
+        )
+
+    @property
     def _s3_client(self):
         if self.__s3_client is None:
             self.__s3_client = boto3.client(
@@ -275,12 +296,14 @@ class Executor(ABC):
                 }
             )
 
-        return {
-            "pk": self._job_id,
-            "inputs": inputs,
-            "output_bucket_name": settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            "output_prefix": self._io_prefix,
-        }
+        return [
+            {
+                "pk": self._job_id,
+                "inputs": inputs,
+                "output_bucket_name": settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                "output_prefix": self._io_prefix,
+            }
+        ]
 
     def _provision_inputs(self, *, input_civs, input_prefixes):
         for civ in input_civs:
@@ -312,12 +335,76 @@ class Executor(ABC):
                 src=self._ground_truth, dest_key=self._ground_truth_key
             )
 
+    def _create_invocation_json(self, *, input_civs, input_prefixes):
+        f = io.BytesIO(
+            json.dumps(
+                self._get_invocation_json(
+                    input_civs=input_civs, input_prefixes=input_prefixes
+                )
+            ).encode("utf-8")
+        )
+        self._s3_client.upload_fileobj(
+            f, settings.COMPONENTS_INPUT_BUCKET_NAME, self._invocation_key
+        )
+
     def _copy_input_file(self, *, src, dest_key):
         self._s3_client.copy(
             CopySource={"Bucket": src.storage.bucket.name, "Key": src.name},
             Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
             Key=dest_key,
         )
+
+    def _get_task_return_code(self):
+        with io.BytesIO() as fileobj:
+            try:
+                self._s3_client.download_fileobj(
+                    Fileobj=fileobj,
+                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                    Key=self._result_key,
+                )
+            except botocore.exceptions.ClientError as error:
+                if error.response["Error"]["Code"] == "404":
+                    raise UncleanExit(
+                        "The invocation request did not return a result"
+                    ) from error
+                else:
+                    raise
+
+            fileobj.seek(0)
+
+            try:
+                result = json.loads(
+                    fileobj.read().decode("utf-8"),
+                )
+            except JSONDecodeError:
+                raise ComponentException(
+                    "The invocation request did not return valid json"
+                )
+
+            logger.info(f"{result=}")
+
+            if result["pk"] != self._job_id:
+                raise RuntimeError("Wrong result key for this job")
+
+            try:
+                return int(result["return_code"])
+            except (KeyError, ValueError):
+                raise ComponentException(
+                    "The invocation response object is not valid"
+                )
+
+    def _handle_completed_job(self):
+        users_process_exit_code = self._get_task_return_code()
+
+        if users_process_exit_code == 0:
+            # Job's a good un
+            return
+        elif users_process_exit_code == 137:
+            raise ComponentException(
+                "The container was killed as it exceeded its memory limit"
+            )
+        else:
+            raise ComponentException(user_error(self.stderr))
 
     def _create_images_result(self, *, interface):
         prefix = safe_join(self._io_prefix, interface.relative_path)

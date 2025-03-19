@@ -727,12 +727,7 @@ def execute_job(  # noqa: C901
 
     try:
         # This call is potentially very long
-        executor.execute(
-            input_civs=job.inputs.prefetch_related(
-                "interface", "image__files"
-            ).all(),
-            input_prefixes=job.input_prefixes,
-        )
+        executor.execute()
     except RetryStep:
         job.update_status(status=job.PROVISIONED)
         raise

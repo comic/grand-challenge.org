@@ -1,5 +1,3 @@
-import io
-import json
 import logging
 import re
 import time
@@ -12,7 +10,6 @@ import boto3
 import botocore
 from django.conf import settings
 from django.db.models import TextChoices
-from django.utils._os import safe_join
 from django.utils.functional import cached_property
 
 from grandchallenge.components.backends.base import Executor, JobParams
@@ -27,7 +24,6 @@ from grandchallenge.components.backends.utils import (
     SourceChoices,
     ms_timestamp_to_datetime,
     parse_structured_log,
-    user_error,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.utils import get
@@ -536,20 +532,6 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         return self.__runtime_metrics
 
     @property
-    def _invocation_prefix(self):
-        return safe_join("/invocations", *self.job_path_parts)
-
-    @property
-    def _invocation_key(self):
-        return safe_join(self._invocation_prefix, "invocation.json")
-
-    @property
-    def _result_key(self):
-        return safe_join(
-            self._io_prefix, ".sagemaker_shim", "inference_result.json"
-        )
-
-    @property
     def _sagemaker_job_name(self):
         # SageMaker requires job names to be less than 63 chars
         job_name = f"{settings.COMPONENTS_REGISTRY_PREFIX}-{self._job_id}"
@@ -610,10 +592,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         else:
             return required_gb
 
-    def execute(self, *, input_civs, input_prefixes):
-        self._create_invocation_json(
-            input_civs=input_civs, input_prefixes=input_prefixes
-        )
+    def execute(self):
         self._create_sagemaker_job()
 
     def handle_event(self, *, event):
@@ -640,18 +619,6 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         self._delete_objects(
             bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
             prefix=self._invocation_prefix,
-        )
-
-    def _create_invocation_json(self, *, input_civs, input_prefixes):
-        f = io.BytesIO(
-            json.dumps(
-                self._get_invocation_json(
-                    input_civs=input_civs, input_prefixes=input_prefixes
-                )
-            ).encode("utf-8")
-        )
-        self._s3_client.upload_fileobj(
-            f, settings.COMPONENTS_INPUT_BUCKET_NAME, self._invocation_key
         )
 
     def _create_sagemaker_job(self):
@@ -792,58 +759,6 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             },
             "metrics": runtime_metrics,
         }
-
-    def _get_task_return_code(self):
-        with io.BytesIO() as fileobj:
-            try:
-                self._s3_client.download_fileobj(
-                    Fileobj=fileobj,
-                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                    Key=self._result_key,
-                )
-            except botocore.exceptions.ClientError as error:
-                if error.response["Error"]["Code"] == "404":
-                    raise UncleanExit(
-                        "The invocation request did not return a result"
-                    ) from error
-                else:
-                    raise
-
-            fileobj.seek(0)
-
-            try:
-                result = json.loads(
-                    fileobj.read().decode("utf-8"),
-                )
-            except JSONDecodeError:
-                raise ComponentException(
-                    "The invocation request did not return valid json"
-                )
-
-            logger.info(f"{result=}")
-
-            if result["pk"] != self._job_id:
-                raise RuntimeError("Wrong result key for this job")
-
-            try:
-                return int(result["return_code"])
-            except (KeyError, ValueError):
-                raise ComponentException(
-                    "The invocation response object is not valid"
-                )
-
-    def _handle_completed_job(self):
-        users_process_exit_code = self._get_task_return_code()
-
-        if users_process_exit_code == 0:
-            # Job's a good un
-            return
-        elif users_process_exit_code == 137:
-            raise ComponentException(
-                "The container was killed as it exceeded its memory limit"
-            )
-        else:
-            raise ComponentException(user_error(self.stderr))
 
     @abstractmethod
     def _handle_stopped_job(self, *, event):
