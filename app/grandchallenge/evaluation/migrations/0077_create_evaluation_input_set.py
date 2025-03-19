@@ -80,4 +80,29 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.RunPython(update_evaluation_inputs, elidable=True),
+        # Remove the old field
+        migrations.RemoveField(
+            model_name="evaluation",
+            name="inputs",
+        ),
+        # Rename the temporary field to the final name
+        migrations.RenameField(
+            model_name="evaluation",
+            old_name="input_set",
+            new_name="inputs",
+        ),
+        migrations.AlterUniqueTogether(
+            name="evaluation",
+            unique_together={
+                (
+                    "submission",
+                    "method",
+                    "inputs",
+                    "ground_truth",
+                    "time_limit",
+                    "requires_gpu_type",
+                    "requires_memory_gb",
+                )
+            },
+        ),
     ]

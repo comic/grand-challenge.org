@@ -1770,7 +1770,6 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     ground_truth = models.ForeignKey(
         EvaluationGroundTruth, null=True, blank=True, on_delete=models.PROTECT
     )
-    inputs = None
     inputs = models.ForeignKey(
         EvaluationInputSet, null=True, blank=True, on_delete=models.PROTECT
     )
