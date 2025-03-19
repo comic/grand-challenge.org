@@ -5,7 +5,6 @@ from zipfile import ZipInfo
 
 import pytest
 from django.template.defaultfilters import title
-from django.utils._os import safe_join
 
 from grandchallenge.components.backends.docker_client import _get_cpuset_cpus
 from grandchallenge.components.backends.utils import (
@@ -154,7 +153,7 @@ def test_inputs_json(settings):
         executor._s3_client.download_fileobj(
             Fileobj=fileobj,
             Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
-            Key=safe_join(executor._io_prefix, "inputs.json"),
+            Key="/io/test/test/test/inputs.json",
         )
         fileobj.seek(0)
         result = json.loads(fileobj.read().decode("utf-8"))
