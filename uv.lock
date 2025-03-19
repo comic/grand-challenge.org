@@ -1294,7 +1294,6 @@ dependencies = [
     { name = "panimg" },
     { name = "pillow" },
     { name = "psycopg", extra = ["c"] },
-    { name = "pycurl" },
     { name = "pygments" },
     { name = "pyjwt" },
     { name = "pymdown-extensions" },
@@ -1381,7 +1380,6 @@ requires-dist = [
     { name = "panimg", specifier = ">=0.12.0,!=0.15.1" },
     { name = "pillow" },
     { name = "psycopg", extras = ["c"], specifier = ">3.1.8" },
-    { name = "pycurl", specifier = "<7.45.3" },
     { name = "pygments" },
     { name = "pyjwt" },
     { name = "pymdown-extensions" },
@@ -2054,9 +2052,19 @@ wheels = [
 
 [[package]]
 name = "pycurl"
-version = "7.45.2"
+version = "7.45.6"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a8/af/24d3acfa76b867dbd8f1166853c18eefc890fc5da03a48672b38ea77ddae/pycurl-7.45.2.tar.gz", hash = "sha256:5730590be0271364a5bddd9e245c9cc0fb710c4cbacbdd95264a3122d23224ca", size = 234245 }
+sdist = { url = "https://files.pythonhosted.org/packages/71/35/fe5088d914905391ef2995102cf5e1892cf32cab1fa6ef8130631c89ec01/pycurl-7.45.6.tar.gz", hash = "sha256:2b73e66b22719ea48ac08a93fc88e57ef36d46d03cb09d972063c9aa86bb74e6", size = 239470 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/85/45/0cc7060dd0a69dbe4806c71460e7a388e2b19097298eb2b4ac4acddea2a1/pycurl-7.45.6-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:6f57ad26d6ab390391ad5030790e3f1a831c1ee54ad3bf969eb378f5957eeb0a", size = 3498594 },
+    { url = "https://files.pythonhosted.org/packages/f4/a9/07a54c81b3fc6d5634e7298f657f9b8fd3d907b1245ef0d16f3b60f67835/pycurl-7.45.6-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:c6fd295f03c928da33a00f56c91765195155d2ac6f12878f6e467830b5dce5f5", size = 3640087 },
+    { url = "https://files.pythonhosted.org/packages/59/bc/fb422d2f7568e5ebdbbf34ecfb3e80303d4fa4679319f7d068fb769c521e/pycurl-7.45.6-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:334721ce1ccd71ff8e405470768b3d221b4393570ccc493fcbdbef4cd62e91ed", size = 4884164 },
+    { url = "https://files.pythonhosted.org/packages/9e/5a/d6708fbf2727a256983513828250c097aff6a99fc222071a030f108f41ba/pycurl-7.45.6-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:0cd6b7794268c17f3c660162ed6381769ce0ad260331ef49191418dfc3a2d61a", size = 4566286 },
+    { url = "https://files.pythonhosted.org/packages/0a/31/01e3ae56940c9aff2886f06a660641ec779d7265aef8b3bd981add67f3a9/pycurl-7.45.6-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:c872d4074360964697c39c1544fe8c91bfecbff27c1cdda1fee5498e5fdadcda", size = 3499118 },
+    { url = "https://files.pythonhosted.org/packages/02/b2/365423ac0f8d13afffb28e6f3d6bf1aae242934f16ae3eda5f3615c0e978/pycurl-7.45.6-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:56d1197eadd5774582b259cde4364357da71542758d8e917f91cc6ed7ed5b262", size = 3640501 },
+    { url = "https://files.pythonhosted.org/packages/67/d6/7d24b60ee878167e3cef6d37fad7d15cf660c0d510539d1417fd59665d1b/pycurl-7.45.6-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:8a99e56d2575aa74c48c0cd08852a65d5fc952798f76a34236256d5589bf5aa0", size = 4893499 },
+    { url = "https://files.pythonhosted.org/packages/24/8c/c84df085310f2489e293adc7880f82339f50dcd6cf9dba2750b81eaf11d4/pycurl-7.45.6-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:c04230b9e9cfdca9cf3eb09a0bec6cf2f084640f1f1ca1929cca51411af85de2", size = 4576761 },
+]
 
 [[package]]
 name = "pydantic"

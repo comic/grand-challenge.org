@@ -105,6 +105,12 @@ WORKDIR /opt/grand-challenge
 COPY --chown=django:django pyproject.toml /opt/grand-challenge
 COPY --chown=django:django uv.lock /opt/grand-challenge
 
+# Fix the installation of pycurl
+ENV PYCURL_SSL_LIBRARY=openssl\
+    PYCURL_CURL_CONFIG=/usr/bin/curl-config\
+    LDFLAGS="-L/usr/lib/x86_64-linux-gnu"\
+    CPPFLAGS="-I/usr/include"
+
 RUN python -m pip install -U pip \
     && python -m pip install -U uv \
     && uv sync --no-progress --no-dev
