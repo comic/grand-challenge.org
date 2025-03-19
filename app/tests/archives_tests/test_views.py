@@ -8,16 +8,12 @@ from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
 from grandchallenge.archives.models import ArchiveItem
-from grandchallenge.archives.views import (
-    ArchiveItemJobListView,
-    ArchiveItemsList,
-)
+from grandchallenge.archives.views import ArchiveItemsList
 from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.notifications.models import Notification
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
-from tests.algorithms_tests.factories import AlgorithmJobFactory, Job
 from tests.archives_tests.factories import (
     ArchiveFactory,
     ArchiveItemFactory,
@@ -30,7 +26,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.conftest import get_interface_form_data
-from tests.factories import GroupFactory, ImageFactory, UserFactory
+from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
@@ -1219,150 +1215,7 @@ def test_archive_item_bulk_delete_permissions(client):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "job_civs_generator, expect_selected",
-    (
-        # Same CIVs, should be selected
-        (lambda ai_civs: ai_civs, True),
-        # Different CIV, 0 overlap
-        (lambda _: [ComponentInterfaceValueFactory()], False),
-        # Partial CIVs, subset
-        (lambda ai_civs: [ai_civs[0]], False),
-        # Extra CIVs, superset
-        (lambda ai_civs: [*ai_civs, ComponentInterfaceValueFactory()], False),
-    ),
-)
-def test_archive_item_job_list_filter(
-    job_civs_generator, expect_selected, client
-):
-    archive = ArchiveFactory()
-    editor = UserFactory()
-    archive.add_editor(editor)
-
-    ai = ArchiveItemFactory(archive=archive)
-    civs = [
-        ComponentInterfaceValueFactory(),
-        ComponentInterfaceValueFactory(),
-    ]
-    ai.values.set(civs)
-
-    job = AlgorithmJobFactory(public=True, time_limit=60)
-    job_civs = job_civs_generator(civs)
-    job.inputs.set(job_civs)
-
-    # Sanity
-    sort_column = 1
-    assert ArchiveItemJobListView.columns[sort_column].sort_field == "created"
-
-    response = get_view_for_user(
-        viewname="archives:item-job-list",
-        client=client,
-        method=client.get,
-        reverse_kwargs={
-            "slug": archive.slug,
-            "pk": ai.pk,
-        },
-        user=editor,
-        follow=True,
-        data={
-            "length": 10,
-            "draw": 1,
-            "order[0][dir]": "asc",
-            "order[0][column]": sort_column,
-        },
-        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
-    )
-
-    assert response.status_code == 200  # Sanity
-
-    resp = response.json()
-
-    data = resp["data"]
-
-    if expect_selected:
-        assert len(data) == 1, "is selected"
-        num_items = 1
-    else:
-        assert len(data) == 0, "is not selected"
-        num_items = 0
-
-    # Sanity checks for any red herrings
-    assert resp["recordsTotal"] == num_items, "page length has all items"
-    detail_column = 0
-    assert ArchiveItemJobListView.columns[detail_column].title == "Detail"
-
-    if expect_selected:
-        assert str(job.pk) in resp["data"][0][detail_column]
-
-
-@pytest.mark.django_db
-def test_archive_item_job_list_permissions_filter(client):
-    archive = ArchiveFactory()
-    editor = UserFactory()
-    archive.add_editor(editor)
-
-    group = GroupFactory()
-    editor.groups.add(group)
-
-    ai = ArchiveItemFactory(archive=archive)
-    civs = [
-        ComponentInterfaceValueFactory(),
-        ComponentInterfaceValueFactory(),
-    ]
-    ai.values.set(civs)
-
-    jobs = AlgorithmJobFactory.create_batch(3, time_limit=60)
-    for aj in jobs:
-        aj.inputs.set(ai.values.all())
-
-    def get_resp():
-        response = get_view_for_user(
-            viewname="archives:item-job-list",
-            client=client,
-            method=client.get,
-            reverse_kwargs={
-                "slug": archive.slug,
-                "pk": ai.pk,
-            },
-            user=editor,
-            follow=True,
-            data={
-                "length": 10,
-                "draw": 1,
-                "order[0][dir]": ArchiveItemJobListView.default_sort_order,
-                "order[0][column]": ArchiveItemJobListView.default_sort_column,
-            },
-            **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
-        )
-        assert response.status_code == 200  # Sanity
-        return response.json()
-
-    resp_json = get_resp()
-    assert len(resp_json["data"]) == 0, "Empty without permissions"
-
-    for aj in jobs:
-        assign_perm("view_job", group, aj)
-
-    resp_json = get_resp()
-    assert len(resp_json["data"]) == 3, "Full with permissions"
-
-    for aj in jobs:
-        remove_perm("view_job", group, aj)
-    resp_json = get_resp()
-    assert len(resp_json["data"]) == 0, "Empty with permissions removed"
-
-    for aj in jobs:
-        aj.public = True
-        aj.save()
-
-    resp_json = get_resp()
-    assert len(resp_json["data"]) == 3, "Full with public algorithms"
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "viewname", ("archives:item-job-list", "archives:item-detail")
-)
+@pytest.mark.parametrize("viewname", ("archives:item-detail",))
 def test_archive_item_permissions_detail_and_list(viewname, client):
     archive = ArchiveFactory()
 
@@ -1450,61 +1303,6 @@ def test_archive_item_list_database_hits(
     with django_assert_max_num_queries(expected_queries):
         resp = make_request()
         assert len(resp.json()["data"]) == 4
-
-
-@pytest.mark.django_db
-def test_item_job_list_row_template_ajax_renders(client):
-    archive = ArchiveFactory()
-    editor = UserFactory()
-    archive.add_editor(editor)
-
-    archive_item = ArchiveItemFactory(archive=archive)
-
-    image = ImageFactory()
-    ci_img = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE
-    )
-    civ = ComponentInterfaceValueFactory(interface=ci_img, image=image)
-
-    archive_item.values.set([civ])
-
-    job = AlgorithmJobFactory(
-        creator=editor, status=Job.SUCCESS, time_limit=60
-    )
-    job.inputs.set([civ])
-
-    headers = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
-
-    response = get_view_for_user(
-        viewname="archives:item-job-list",
-        client=client,
-        method=client.get,
-        reverse_kwargs={
-            "pk": archive_item.pk,
-            "slug": archive.slug,
-        },
-        user=editor,
-        data={
-            "draw": "1",
-            "order[0][column]": "1",
-            "order[0][dir]": "desc",
-            "start": "0",
-            "length": "25",
-        },
-        **headers,
-    )
-
-    job_details_url = reverse(
-        "algorithms:job-detail",
-        kwargs={"slug": job.algorithm_image.algorithm.slug, "pk": job.pk},
-    )
-
-    response_content = json.loads(response.content.decode("utf-8"))
-
-    assert response.status_code == 200
-    assert response_content["recordsTotal"] == 1
-    assert len(response_content["data"]) == 1
-    assert job_details_url in response_content["data"][0][0]
 
 
 @pytest.mark.django_db
