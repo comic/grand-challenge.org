@@ -10,7 +10,7 @@ from grandchallenge.evaluation.models import (
     Phase,
     Submission,
 )
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.factories import ChallengeFactory, UserFactory, hash_sha256
 
 
@@ -80,5 +80,5 @@ class EvaluationInputSetFactory(factory.django.DjangoModelFactory):
         manager = cls._get_manager(model_class)
         inputs = kwargs.pop("inputs", None)
         if not inputs:
-            inputs = [ComponentInterfaceFactory()]
+            inputs = [ComponentInterfaceValueFactory()]
         return manager.create(*args, inputs=inputs, **kwargs)

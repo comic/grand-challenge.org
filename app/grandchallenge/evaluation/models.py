@@ -1977,8 +1977,19 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
     def remove_civ(self, *, civ):
         super().remove_civ(civ=civ)
-        # this does not make sense for evaluations, so do nothing
-        return
+
+        if self.inputs:
+            valid_remaining_inputs = self.inputs.values.filter(
+                pk=civ.pk
+            ).values_list("pk", flat=True)
+            input_set = EvaluationInputSet.objects.create(
+                inputs=ComponentInterfaceValue.objects.filter(
+                    pk__in=valid_remaining_inputs
+                )
+            )
+
+            self.inputs = input_set
+            self.save()
 
     def get_civ_for_interface(self, interface):
         if self.inputs:

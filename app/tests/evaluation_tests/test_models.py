@@ -17,6 +17,7 @@ from grandchallenge.evaluation.models import (
     Evaluation,
     Phase,
     get_archive_items_for_interfaces,
+    get_existing_evaluation_input_set_for_inputs,
     get_valid_jobs_for_interfaces_and_archive_items,
 )
 from grandchallenge.evaluation.tasks import (
@@ -2038,3 +2039,42 @@ def test_additional_inputs_complete():
     eval.save()
     del eval.additional_inputs_complete
     assert eval.additional_inputs_complete
+
+
+@pytest.mark.parametrize(
+    "inputs, expected_output",
+    (
+        ([1], 1),
+        ([1, 2], 2),
+        ([3, 4, 5], 3),
+        ([5, 6], 4),
+        ([2], None),
+        ([1, 3], None),
+        ([1, 2, 3], None),
+    ),
+)
+@pytest.mark.django_db
+def test_get_existing_evaluation_input_set_for_inputs(inputs, expected_output):
+    i1, i2, i3, i4 = EvaluationInputSetFactory.create_batch(4)
+    ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceValueFactory.create_batch(
+        6
+    )
+
+    input_sets = [i1, i2, i3, i4]
+    cis = [ci1, ci2, ci3, ci4, ci5, ci6]
+
+    i1.values.set([ci1])
+    i2.values.set([ci1, ci2])
+    i3.values.set([ci3, ci4, ci5])
+    i4.values.set([ci5, ci6])
+
+    inputs = [cis[i - 1] for i in inputs]
+
+    existing_interface = get_existing_evaluation_input_set_for_inputs(
+        inputs=inputs,
+    )
+
+    if expected_output:
+        assert existing_interface == input_sets[expected_output - 1]
+    else:
+        assert not existing_interface
