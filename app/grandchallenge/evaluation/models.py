@@ -1822,6 +1822,13 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         )
 
     @property
+    def input_civs(self):
+        if self.inputs:
+            return self.inputs.values
+        else:
+            return ComponentInterfaceValue.objects.none()
+
+    @property
     def title(self):
         return f"#{self.rank} {self.submission.creator.username}"
 
@@ -1978,7 +1985,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     def remove_civ(self, *, civ):
         super().remove_civ(civ=civ)
 
-        if self.inputs:
+        if self.inputs and civ:
             valid_remaining_inputs = self.inputs.values.filter(
                 pk=civ.pk
             ).values_list("pk", flat=True)

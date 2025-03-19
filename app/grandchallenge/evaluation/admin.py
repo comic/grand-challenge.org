@@ -23,6 +23,7 @@ from grandchallenge.evaluation.models import (
     Evaluation,
     EvaluationGroundTruth,
     EvaluationGroupObjectPermission,
+    EvaluationInputSet,
     EvaluationUserObjectPermission,
     Method,
     MethodGroupObjectPermission,
@@ -231,6 +232,19 @@ class PhaseAlgorithmInterfaceAdmin(GuardedModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         # through table entries should only be updated through the UI
+        return False
+
+
+@admin.register(EvaluationInputSet)
+class EvaluationInputSetAdmin(GuardedModelAdmin):
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False
 
 

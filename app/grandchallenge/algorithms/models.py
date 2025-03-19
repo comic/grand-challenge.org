@@ -1144,6 +1144,10 @@ class Job(CIVForObjectMixin, ComponentJob):
     def output_interfaces(self):
         return self.algorithm_interface.outputs.all()
 
+    @property
+    def input_civs(self):
+        return self.inputs
+
     @cached_property
     def inputs_complete(self):
         # check if all inputs are present and if they all have a value

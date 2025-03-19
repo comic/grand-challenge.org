@@ -670,7 +670,7 @@ def provision_job(
 
     try:
         executor.provision(
-            input_civs=job.inputs.prefetch_related(
+            input_civs=job.input_civs.prefetch_related(
                 "interface", "image__files"
             ).all(),
             input_prefixes=job.input_prefixes,
@@ -728,7 +728,7 @@ def execute_job(  # noqa: C901
     try:
         # This call is potentially very long
         executor.execute(
-            input_civs=job.inputs.prefetch_related(
+            input_civs=job.input_civs.prefetch_related(
                 "interface", "image__files"
             ).all(),
             input_prefixes=job.input_prefixes,
