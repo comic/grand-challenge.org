@@ -33,7 +33,10 @@ jobs:
               id: dependency-update
               timeout-minutes: 5
               run: |
-                  uv lock --upgrade --no-progress
+                  LOCK_OUTPUT=$(uv lock --upgrade --no-progress)
+                  echo "LOCK_OUTPUT<<EOF" >> $GITHUB_ENV
+                  echo "$LOCK_OUTPUT" >> $GITHUB_ENV
+                  echo "EOF" >> $GITHUB_ENV
             - name: Set DOCKER_GID
               run: |
                   echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
@@ -61,4 +64,9 @@ jobs:
                   branch-suffix: "short-commit-hash"
                   delete-branch: true
                   title: "Update dependencies"
-                  body: "Automated dependency update, see changes to `uv.lock`."
+                  body: |
+                    Automated dependency update:
+
+                    ```
+                    ${{ env.LOCK_OUTPUT }}
+                    ```

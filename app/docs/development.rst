@@ -216,7 +216,7 @@ Versions are unpinned in the ``pyproject.toml`` file, to update the resolved dep
 
 .. code-block:: console
 
-    $ uv update <whatever>
+    $ uv lock --upgrade-package <whatever>
 
 and commit the updated ``uv.lock``.
 
