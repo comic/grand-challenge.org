@@ -114,6 +114,22 @@ class Invoice(models.Model, FieldChangeMixin):
                 " you must set the 'Issued on' date.",
             ),
             models.CheckConstraint(
+                name="internal_invoice_number_required_for_issued_payment_status",
+                check=~Q(payment_status=PaymentStatusChoices.ISSUED)
+                | ~Q(internal_invoice_number="")
+                | Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
+                violation_error_message="When setting the payment status to 'Issued',"
+                " you must specify the internal invoice number.",
+            ),
+            models.CheckConstraint(
+                name="internal_client_number_required_for_issued_payment_status",
+                check=~Q(payment_status=PaymentStatusChoices.ISSUED)
+                | ~Q(internal_client_number="")
+                | Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
+                violation_error_message="When setting the payment status to 'Issued',"
+                " you must specify the internal client number.",
+            ),
+            models.CheckConstraint(
                 name="paid_on_date_required_for_paid_payment_status",
                 check=~Q(payment_status=PaymentStatusChoices.PAID)
                 | Q(paid_on__isnull=False)

@@ -278,6 +278,46 @@ def test_payment_status_issued_requires_issued_on():
 
 
 @pytest.mark.django_db
+def test_payment_status_issued_requires_internal_invoice_number():
+    invoice = InvoiceFactory(
+        payment_status=PaymentStatusChoices.ISSUED,
+    )
+
+    invoice.internal_invoice_number = ""
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert (
+        "When setting the payment status to 'Issued', you must specify the internal invoice number."
+        == e.value.messages[0]
+    )
+
+    # should work with complimentary type
+    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
+    invoice.save()
+
+
+@pytest.mark.django_db
+def test_payment_status_issued_requires_internal_client_number():
+    invoice = InvoiceFactory(
+        payment_status=PaymentStatusChoices.ISSUED,
+    )
+
+    invoice.internal_client_number = ""
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert (
+        "When setting the payment status to 'Issued', you must specify the internal client number."
+        == e.value.messages[0]
+    )
+
+    # should work with complimentary type
+    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
+    invoice.save()
+
+
+@pytest.mark.django_db
 def test_payment_status_paid_requires_paid_on():
     invoice = InvoiceFactory(
         payment_status=PaymentStatusChoices.PAID,
