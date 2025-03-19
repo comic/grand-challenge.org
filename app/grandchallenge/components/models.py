@@ -59,6 +59,7 @@ from grandchallenge.components.validators import (
     validate_biom_format,
     validate_newick_tree_format,
     validate_no_slash_at_ends,
+    validate_relative_path_not_reserved,
     validate_safe_path,
 )
 from grandchallenge.core.celery import acks_late_2xlarge_task
@@ -438,6 +439,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         validators=[
             validate_safe_path,
             validate_no_slash_at_ends,
+            validate_relative_path_not_reserved,
             # No uuids in path
             RegexValidator(
                 regex=r".*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}.*",
