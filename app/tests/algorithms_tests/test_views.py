@@ -12,7 +12,6 @@ from django.core.files.base import ContentFile
 from django.test import override_settings
 from django.utils import timezone
 from django.utils.text import slugify
-from factory import fuzzy
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
@@ -2559,7 +2558,6 @@ def test_algorithm_create_redirect(client):
         compute_costs_euros=10,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
-        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
 
     response = get_view_for_user(

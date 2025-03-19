@@ -9,6 +9,10 @@ class InvoiceFactory(factory.django.DjangoModelFactory):
     support_costs_euros = 0
     compute_costs_euros = 0
     storage_costs_euros = 0
+    issued_on = factory.Faker("past_date")
+    paid_on = factory.Faker("past_date")
+    internal_invoice_number = factory.Faker("numerify", text="#########")
+    internal_client_number = factory.Faker("bothify", text="H######")
     internal_comments = factory.Faker("text")
     contact_name = factory.Faker("name")
     contact_email = factory.Faker("email")

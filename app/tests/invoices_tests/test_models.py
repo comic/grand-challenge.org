@@ -1,8 +1,5 @@
-import datetime
-
 import pytest
 from django.core.exceptions import ValidationError
-from factory import fuzzy
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.invoices.models import (
@@ -37,7 +34,6 @@ def test_approved_compute_costs_euro_millicents_paid_invoice():
         compute_costs_euros=expected_budget,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
-        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
 
     challenge = Challenge.objects.with_available_compute().first()
@@ -85,7 +81,6 @@ def test_approved_compute_costs_euro_millicents_filter_invoices():
         compute_costs_euros=0,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
-        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
     InvoiceFactory(
         challenge=challenge,
@@ -93,7 +88,6 @@ def test_approved_compute_costs_euro_millicents_filter_invoices():
         compute_costs_euros=10,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.ISSUED,
-        issued_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
     InvoiceFactory(
         challenge=challenge,
@@ -108,7 +102,6 @@ def test_approved_compute_costs_euro_millicents_filter_invoices():
         compute_costs_euros=expected_budget,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
-        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
     InvoiceFactory(
         challenge=challenge,
@@ -116,7 +109,6 @@ def test_approved_compute_costs_euro_millicents_filter_invoices():
         compute_costs_euros=30,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.ISSUED,
-        issued_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
     InvoiceFactory(
         challenge=challenge,
@@ -155,7 +147,6 @@ def test_approved_compute_costs_postpaid_with_paid_invoice():
         compute_costs_euros=1,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
-        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
     InvoiceFactory(
         challenge=challenge,
@@ -178,7 +169,6 @@ def test_approved_compute_costs_postpaid_paid():
         compute_costs_euros=1,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
-        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
         payment_type=PaymentTypeChoices.POSTPAID,
     )
 
@@ -195,7 +185,6 @@ def test_approved_compute_costs_postpaid_paid_with_paid_invoice():
         compute_costs_euros=1,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
-        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
         payment_type=PaymentTypeChoices.POSTPAID,
     )
     InvoiceFactory(
@@ -204,7 +193,6 @@ def test_approved_compute_costs_postpaid_paid_with_paid_invoice():
         compute_costs_euros=1,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
-        paid_on=fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz(),
     )
 
     challenge = Challenge.objects.with_available_compute().first()
@@ -271,9 +259,11 @@ def test_most_recent_submission_datetime_multiple_submissions():
 
 @pytest.mark.django_db
 def test_payment_status_issued_requires_issued_on():
-    invoice = InvoiceFactory()
+    invoice = InvoiceFactory(
+        payment_status=PaymentStatusChoices.ISSUED,
+    )
 
-    invoice.payment_status = invoice.PaymentStatusChoices.ISSUED
+    invoice.issued_on = None
     with pytest.raises(ValidationError) as e:
         invoice.full_clean()
     assert len(e.value.messages) == 1
@@ -282,18 +272,18 @@ def test_payment_status_issued_requires_issued_on():
         == e.value.messages[0]
     )
 
-    invoice.issued_on = fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz()
-    invoice.save()
-
-    invoice.paid_on = None
+    # should work with complimentary type
     invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
     invoice.save()
 
 
 @pytest.mark.django_db
 def test_payment_status_paid_requires_paid_on():
-    invoice = InvoiceFactory()
-    invoice.payment_status = invoice.PaymentStatusChoices.PAID
+    invoice = InvoiceFactory(
+        payment_status=PaymentStatusChoices.PAID,
+    )
+
+    invoice.paid_on = None
     with pytest.raises(ValidationError) as e:
         invoice.full_clean()
     assert len(e.value.messages) == 1
@@ -302,10 +292,7 @@ def test_payment_status_paid_requires_paid_on():
         == e.value.messages[0]
     )
 
-    invoice.paid_on = fuzzy.FuzzyDate(datetime.date(1970, 1, 1)).fuzz()
-    invoice.save()
-
-    invoice.paid_on = None
+    # should work with complimentary type
     invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
     invoice.save()
 

@@ -1,10 +1,8 @@
-from datetime import date
 from zoneinfo import ZoneInfo
 
 import pytest
 from django.core import mail
 from django.utils.timezone import datetime, timedelta
-from factory import fuzzy
 
 from grandchallenge.challenges.models import (
     Challenge,
@@ -157,7 +155,6 @@ def test_challenge_budget_alert_email(settings):
         compute_costs_euros=10,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
-        paid_on=fuzzy.FuzzyDate(date(1970, 1, 1)).fuzz(),
     )
     phase = PhaseFactory(challenge=challenge)
     EvaluationFactory(
@@ -242,7 +239,6 @@ def test_challenge_budget_alert_two_thresholds_one_email(settings):
         compute_costs_euros=10,
         storage_costs_euros=0,
         payment_status=PaymentStatusChoices.PAID,
-        paid_on=fuzzy.FuzzyDate(date(1970, 1, 1)).fuzz(),
     )
     phase = PhaseFactory(challenge=challenge)
     EvaluationFactory(
