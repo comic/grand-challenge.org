@@ -258,79 +258,47 @@ def test_most_recent_submission_datetime_multiple_submissions():
 
 
 @pytest.mark.django_db
-def test_payment_status_issued_requires_issued_on():
+@pytest.mark.parametrize(
+    "payment_status, required_field_name, field_value, expected_error_message",
+    (
+        (
+            PaymentStatusChoices.ISSUED,
+            "issued_on",
+            None,
+            "When setting the payment status to 'Issued', you must set the 'Issued on' date.",
+        ),
+        (
+            PaymentStatusChoices.ISSUED,
+            "internal_invoice_number",
+            "",
+            "When setting the payment status to 'Issued', you must specify the internal invoice number.",
+        ),
+        (
+            PaymentStatusChoices.ISSUED,
+            "internal_client_number",
+            "",
+            "When setting the payment status to 'Issued', you must specify the internal client number.",
+        ),
+        (
+            PaymentStatusChoices.PAID,
+            "paid_on",
+            None,
+            "When setting the payment status to 'Paid', you must set the 'Paid on' date.",
+        ),
+    ),
+)
+def test_payment_status_required_fields(
+    payment_status, required_field_name, field_value, expected_error_message
+):
     invoice = InvoiceFactory(
-        payment_status=PaymentStatusChoices.ISSUED,
+        payment_status=payment_status,
     )
 
-    invoice.issued_on = None
+    setattr(invoice, required_field_name, field_value)
     with pytest.raises(ValidationError) as e:
         invoice.full_clean()
     assert len(e.value.messages) == 1
-    assert (
-        "When setting the payment status to 'Issued', you must set the 'Issued on' date."
-        == e.value.messages[0]
-    )
-
-    # should work with complimentary type
-    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
-    invoice.save()
-
-
-@pytest.mark.django_db
-def test_payment_status_issued_requires_internal_invoice_number():
-    invoice = InvoiceFactory(
-        payment_status=PaymentStatusChoices.ISSUED,
-    )
-
-    invoice.internal_invoice_number = ""
-    with pytest.raises(ValidationError) as e:
-        invoice.full_clean()
-    assert len(e.value.messages) == 1
-    assert (
-        "When setting the payment status to 'Issued', you must specify the internal invoice number."
-        == e.value.messages[0]
-    )
-
-    # should work with complimentary type
-    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
-    invoice.save()
-
-
-@pytest.mark.django_db
-def test_payment_status_issued_requires_internal_client_number():
-    invoice = InvoiceFactory(
-        payment_status=PaymentStatusChoices.ISSUED,
-    )
-
-    invoice.internal_client_number = ""
-    with pytest.raises(ValidationError) as e:
-        invoice.full_clean()
-    assert len(e.value.messages) == 1
-    assert (
-        "When setting the payment status to 'Issued', you must specify the internal client number."
-        == e.value.messages[0]
-    )
-
-    # should work with complimentary type
-    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
-    invoice.save()
-
-
-@pytest.mark.django_db
-def test_payment_status_paid_requires_paid_on():
-    invoice = InvoiceFactory(
-        payment_status=PaymentStatusChoices.PAID,
-    )
-
-    invoice.paid_on = None
-    with pytest.raises(ValidationError) as e:
-        invoice.full_clean()
-    assert len(e.value.messages) == 1
-    assert (
-        "When setting the payment status to 'Paid', you must set the 'Paid on' date."
-        == e.value.messages[0]
-    )
+    assert e.value.messages[0] == expected_error_message
 
     # should work with complimentary type
     invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
