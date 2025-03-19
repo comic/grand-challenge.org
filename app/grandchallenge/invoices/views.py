@@ -13,6 +13,7 @@ class InvoiceList(
 ):
     model = Invoice
     permission_required = "change_challenge"
+    ordering = "created"
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
@@ -34,4 +35,9 @@ class InvoiceList(
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.filter(challenge=self.request.challenge)
+        ordering = self.get_ordering()
+        if ordering:
+            if isinstance(ordering, str):
+                ordering = (ordering,)
+            queryset = queryset.order_by(*ordering)
         return queryset

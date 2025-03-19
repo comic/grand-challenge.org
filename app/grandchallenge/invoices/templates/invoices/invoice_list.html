@@ -50,7 +50,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for invoice in challenge.invoices.all %}
+                {% for invoice in object_list %}
                     <tr>
                         <td>{{ invoice.internal_invoice_number }}</td>
                         <td>{{ invoice.issued_on|default_if_none:"-" }}</td>
