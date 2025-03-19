@@ -213,7 +213,14 @@ def test_invocation_json(settings):
 
     assert result == [
         {
-            "inputs": [],
+            "inputs": [
+                {
+                    "bucket_key": f"/io/algorithms/job/{pk}/inputs.json",
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": "inputs.json",
+                },
+            ],
             "output_bucket_name": "grand-challenge-components-outputs",
             "output_prefix": f"/io/algorithms/job/{pk}",
             "pk": f"algorithms-job-{pk}",

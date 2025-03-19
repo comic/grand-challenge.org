@@ -25,7 +25,15 @@ from grandchallenge.components.backends.exceptions import (
     UncleanExit,
 )
 from grandchallenge.components.backends.utils import user_error
+from grandchallenge.components.models import (
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceKindChoices,
+)
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.components.serializers import (
+    ComponentInterfaceValueSerializer,
+)
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
 )
@@ -281,7 +289,7 @@ class Executor(ABC):
     def _provision_inputs(self, *, input_civs, input_prefixes):
         invocation_inputs = []
 
-        for civ in input_civs:
+        for civ in self._with_inputs_json(input_civs=input_civs):
             key, relative_path = self._get_key_and_relative_path(
                 civ=civ, input_prefixes=input_prefixes
             )
@@ -310,6 +318,22 @@ class Executor(ABC):
             )
 
         self._create_invocation_json(inputs=invocation_inputs)
+
+    def _with_inputs_json(self, *, input_civs):
+        """
+        An iterator over all inputs along with the special inputs.json,
+        which serialises the metadata for all the other inputs such as
+        the socket description.
+        """
+        yield from input_civs
+
+        serializer = ComponentInterfaceValueSerializer(input_civs, many=True)
+        yield ComponentInterfaceValue(
+            value=serializer.data,
+            interface=ComponentInterface(
+                relative_path="inputs.json", kind=InterfaceKindChoices.ANY
+            ),
+        )
 
     def _create_invocation_json(self, *, inputs):
         f = io.BytesIO(
