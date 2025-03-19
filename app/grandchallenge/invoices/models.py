@@ -25,10 +25,14 @@ class Invoice(models.Model, FieldChangeMixin):
     updated = models.DateTimeField(auto_now=True)
 
     issued_on = models.DateField(
-        help_text="The date when the invoice was issued", blank=True, null=True
+        help_text="The date when the invoice was issued (required for issued invoices)",
+        blank=True,
+        null=True,
     )
     paid_on = models.DateField(
-        help_text="The date when the invoice was paid", blank=True, null=True
+        help_text="The date when the invoice was paid (required for paid invoices)",
+        blank=True,
+        null=True,
     )
     last_checked_on = models.DateField(
         help_text="The date when the invoice status was last checked",
@@ -53,29 +57,37 @@ class Invoice(models.Model, FieldChangeMixin):
     )
 
     internal_invoice_number = models.CharField(
-        max_length=16, help_text="The internal invoice number", blank=True
+        max_length=16,
+        help_text="The internal invoice number (required for issued invoices)",
+        blank=True,
     )
     internal_client_number = models.CharField(
-        max_length=8, help_text="The internal client number", blank=True
+        max_length=8,
+        help_text="The internal client number (required for issued invoices)",
+        blank=True,
     )
     internal_comments = models.TextField(
-        help_text="Internal comments about the invoice", blank=True
+        help_text="Internal comments about the invoice (required for complimentary invoices)",
+        blank=True,
     )
 
     contact_name = models.CharField(
         max_length=32,
-        help_text="Name of the person the invoice should be sent to",
+        help_text="Name of the person the invoice should be sent to (required for non-complimentary invoices)",
         blank=True,
     )
     contact_email = models.EmailField(
-        help_text="Email of the person the invoice should be sent to",
+        help_text="Email of the person the invoice should be sent to (required for non-complimentary invoices)",
         blank=True,
     )
     billing_address = models.TextField(
-        help_text="The physical address of the client", blank=True
+        help_text="The physical address of the client (required for non-complimentary invoices)",
+        blank=True,
     )
     vat_number = models.CharField(
-        max_length=32, help_text="The VAT number of the client", blank=True
+        max_length=32,
+        help_text="The VAT number of the client (required for non-complimentary invoices)",
+        blank=True,
     )
     external_reference = models.TextField(
         help_text="Optional reference to be included with the invoice for the client",
