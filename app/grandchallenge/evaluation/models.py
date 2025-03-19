@@ -1741,7 +1741,7 @@ def get_existing_evaluation_input_set_for_inputs(
     *, inputs, model=EvaluationInputSet
 ):
     annotated_qs = model.objects.annotate(
-        input_count=Count("values", distinct=True),
+        input_count=Coalesce(Count("values", distinct=True), 0),
         relevant_input_count=Coalesce(
             Count(
                 "values",

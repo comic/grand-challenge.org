@@ -2048,6 +2048,7 @@ def test_additional_inputs_complete():
         ([1, 2], 2),
         ([3, 4, 5], 3),
         ([5, 6], 4),
+        ([], 5),
         ([2], None),
         ([1, 3], None),
         ([1, 2, 3], None),
@@ -2055,18 +2056,19 @@ def test_additional_inputs_complete():
 )
 @pytest.mark.django_db
 def test_get_existing_evaluation_input_set_for_inputs(inputs, expected_output):
-    i1, i2, i3, i4 = EvaluationInputSetFactory.create_batch(4)
+    i1, i2, i3, i4, i5 = EvaluationInputSetFactory.create_batch(5)
     ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceValueFactory.create_batch(
         6
     )
 
-    input_sets = [i1, i2, i3, i4]
+    input_sets = [i1, i2, i3, i4, i5]
     cis = [ci1, ci2, ci3, ci4, ci5, ci6]
 
     i1.values.set([ci1])
     i2.values.set([ci1, ci2])
     i3.values.set([ci3, ci4, ci5])
     i4.values.set([ci5, ci6])
+    i5.values.clear()
 
     inputs = [cis[i - 1] for i in inputs]
 
