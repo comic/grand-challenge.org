@@ -74,9 +74,6 @@ class Executor(ABC):
             input_civs=input_civs, input_prefixes=input_prefixes
         )
         self._provision_auxilliary_data()
-        self._create_invocation_json(
-            input_civs=input_civs, input_prefixes=input_prefixes
-        )
 
     @abstractmethod
     def execute(self): ...
@@ -281,33 +278,11 @@ class Executor(ABC):
 
         return key, relative_path
 
-    def _get_invocation_json(self, *, input_civs, input_prefixes):
-        inputs = []
+    def _provision_inputs(self, *, input_civs, input_prefixes):
+        invocation_inputs = []
+
         for civ in input_civs:
             key, relative_path = self._get_key_and_relative_path(
-                civ=civ, input_prefixes=input_prefixes
-            )
-            inputs.append(
-                {
-                    "relative_path": relative_path,
-                    "bucket_name": settings.COMPONENTS_INPUT_BUCKET_NAME,
-                    "bucket_key": key,
-                    "decompress": civ.decompress,
-                }
-            )
-
-        return [
-            {
-                "pk": self._job_id,
-                "inputs": inputs,
-                "output_bucket_name": settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                "output_prefix": self._io_prefix,
-            }
-        ]
-
-    def _provision_inputs(self, *, input_civs, input_prefixes):
-        for civ in input_civs:
-            key, _ = self._get_key_and_relative_path(
                 civ=civ, input_prefixes=input_prefixes
             )
 
@@ -325,6 +300,34 @@ class Executor(ABC):
                         Key=key,
                     )
 
+            invocation_inputs.append(
+                {
+                    "relative_path": relative_path,
+                    "bucket_name": settings.COMPONENTS_INPUT_BUCKET_NAME,
+                    "bucket_key": key,
+                    "decompress": civ.decompress,
+                }
+            )
+
+        self._create_invocation_json(inputs=invocation_inputs)
+
+    def _create_invocation_json(self, *, inputs):
+        f = io.BytesIO(
+            json.dumps(
+                [
+                    {
+                        "pk": self._job_id,
+                        "inputs": inputs,
+                        "output_bucket_name": settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                        "output_prefix": self._io_prefix,
+                    }
+                ]
+            ).encode("utf-8")
+        )
+        self._s3_client.upload_fileobj(
+            f, settings.COMPONENTS_INPUT_BUCKET_NAME, self._invocation_key
+        )
+
     def _provision_auxilliary_data(self):
         if self._algorithm_model:
             self._copy_input_file(
@@ -334,18 +337,6 @@ class Executor(ABC):
             self._copy_input_file(
                 src=self._ground_truth, dest_key=self._ground_truth_key
             )
-
-    def _create_invocation_json(self, *, input_civs, input_prefixes):
-        f = io.BytesIO(
-            json.dumps(
-                self._get_invocation_json(
-                    input_civs=input_civs, input_prefixes=input_prefixes
-                )
-            ).encode("utf-8")
-        )
-        self._s3_client.upload_fileobj(
-            f, settings.COMPONENTS_INPUT_BUCKET_NAME, self._invocation_key
-        )
 
     def _copy_input_file(self, *, src, dest_key):
         self._s3_client.copy(
