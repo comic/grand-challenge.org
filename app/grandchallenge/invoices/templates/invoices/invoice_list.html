@@ -23,14 +23,14 @@
     <h2>Invoices for {{ challenge.short_name }}</h2>
 
     {% if num_is_overdue %}
-    <p>
-        <i class="fas fa-exclamation-triangle text-danger"></i> There {{ num_is_overdue|pluralize:"is,are" }} {{ num_is_overdue }} invoice{{ num_is_overdue|pluralize }} overdue.
-    </p>
+        <p class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i> There {{ num_is_overdue|pluralize:"is,are" }} {{ num_is_overdue }} invoice{{ num_is_overdue|pluralize }} overdue.
+        </p>
     {% endif %}
     {% if num_is_due %}
-    <p>
-        <i class="fas fa-exclamation-triangle text-warning"></i> There {{ num_is_due|pluralize:"is,are" }} {{ num_is_due }} invoice{{ num_is_due|pluralize }} due.
-    </p>
+        <p class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i> There {{ num_is_due|pluralize:"is,are" }} {{ num_is_due }} invoice{{ num_is_due|pluralize }} due.
+        </p>
     {% endif %}
 
     <div class="table-responsive">
@@ -50,16 +50,23 @@
                     <tr>
                         <td>{{ invoice.internal_invoice_number }}</td>
                         <td>{{ invoice.issued_on|default_if_none:"-" }}</td>
-                        <td>{{ invoice.due_date|default_if_none:"-" }}</td>
+                        <td>
+                            {{ invoice.due_date|default_if_none:"-" }}
+                            {% if invoice.is_overdue %}
+                                <i class="fas fa-exclamation-triangle text-danger" title="Invoice is overdue."></i>
+                            {% elif invoice.is_due %}
+                                <i class="fas fa-exclamation-triangle text-warning" title="Invoice is due."></i>
+                            {% endif %}
+                        </td>
                         <td>€ {{ invoice.total_amount_euros }}</td>
                         <td>{{ invoice.get_payment_type_display }}</td>
                         <td>
                             {% if invoice.payment_type == invoice.PaymentTypeChoices.COMPLIMENTARY %}
                                 -
                             {% elif invoice.is_overdue %}
-                                <span class="badge badge-danger"><i class="fas fa-exclamation-triangle"></i> Overdue</span>
+                                <span class="badge badge-danger">Overdue</span>
                             {% elif invoice.is_due %}
-                                <span class="badge badge-warning"><i class="fas fa-exclamation-triangle"></i> Due</span>
+                                <span class="badge badge-warning">Due</span>
                             {% elif invoice.payment_status == invoice.PaymentStatusChoices.PAID %}
                                 <span class="badge badge-success">Paid</span>
                             {% else %}
