@@ -133,25 +133,25 @@ class Invoice(models.Model, FieldChangeMixin):
             models.CheckConstraint(
                 name="contact_name_required_for_non_complimentary_payment_type",
                 check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
-                | Q(contact_name__gt=""),
+                | ~Q(contact_name=""),
                 violation_error_message="Contact name is required for non-complimentary invoices.",
             ),
             models.CheckConstraint(
                 name="contact_email_required_for_non_complimentary_payment_type",
                 check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
-                | Q(contact_email__gt=""),
+                | ~Q(contact_email=""),
                 violation_error_message="Contact email is required for non-complimentary invoices.",
             ),
             models.CheckConstraint(
                 name="billing_address_required_for_non_complimentary_payment_type",
                 check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
-                | Q(billing_address__gt=""),
+                | ~Q(billing_address=""),
                 violation_error_message="Billing address is required for non-complimentary invoices.",
             ),
             models.CheckConstraint(
                 name="vat_number_required_for_non_complimentary_payment_type",
                 check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
-                | Q(vat_number__gt=""),
+                | ~Q(vat_number=""),
                 violation_error_message="VAT number is required for non-complimentary invoices.",
             ),
         ]
