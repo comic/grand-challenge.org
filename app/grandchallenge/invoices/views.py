@@ -22,19 +22,14 @@ class InvoiceList(
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-
-        context["num_is_due"] = sum(
-            obj.is_due for obj in context["object_list"]
-        )
-        context["num_is_overdue"] = sum(
-            obj.is_overdue for obj in context["object_list"]
-        )
-
+        context.update(context["object_list"].status_aggregates)
         return context
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(challenge=self.request.challenge)
+        queryset = queryset.filter(
+            challenge=self.request.challenge
+        ).with_overdue_status()
         ordering = self.get_ordering()
         if ordering:
             if isinstance(ordering, str):
