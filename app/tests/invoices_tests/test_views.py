@@ -1,4 +1,8 @@
+from datetime import timedelta
+
 import pytest
+from django.conf import settings
+from django.utils.timezone import now
 from pytest_django.asserts import assertInHTML
 
 from grandchallenge.invoices.models import Invoice
@@ -74,13 +78,23 @@ def test_invoice_list_view_num_invoices_shown(client):
             dict(
                 payment_status=Invoice.PaymentStatusChoices.REQUESTED,
             ),
-            '<td><span class="badge badge-info">Invoice Requested</span></td>',
+            '<td><span class="badge badge-info">Initialized</span></td>',
         ),
         (
             dict(
                 payment_status=Invoice.PaymentStatusChoices.ISSUED,
+                issued_on=now() - settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF,
             ),
-            '<td><span class="badge badge-warning">Invoice Issued</span></td>',
+            '<td><span class="badge badge-warning">Due</span></td>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.ISSUED,
+                issued_on=now()
+                - settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF
+                - timedelta(days=1),
+            ),
+            '<td><span class="badge badge-danger">Overdue</span></td>',
         ),
         (
             dict(
