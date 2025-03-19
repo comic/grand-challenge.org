@@ -1750,3 +1750,14 @@ def test_component_interface_custom_queue(kind, expected_kwargs, mocker):
     del mock_task.signature.call_args.kwargs["kwargs"]
 
     assert mock_task.signature.call_args.kwargs == expected_kwargs
+
+
+def test_inputs_json_reserved():
+    ci = ComponentInterface(relative_path="inputs.json")
+
+    with pytest.raises(ValidationError) as error:
+        ci.full_clean()
+
+    assert "'relative_path': ['This relative path is reserved']" in str(
+        error.value
+    )
