@@ -108,7 +108,10 @@ def prepare_and_execute_evaluation(
             return
 
         civ.save()
-        evaluation.inputs.add(civ)
+
+        evaluation.inputs = evaluation.get_or_create_input_set(
+            additional_civ_pks=[civ.pk]
+        )
         evaluation.status = Evaluation.PENDING
         evaluation.save()
         on_commit(evaluation.execute)
@@ -335,7 +338,9 @@ def set_evaluation_inputs(*, evaluation_pk):
             for o in j.outputs.all()
         }
 
-        evaluation.inputs.add(*[civ.pk, *output_to_job.keys()])
+        evaluation.inputs = evaluation.get_or_create_input_set(
+            additional_civ_pks=[civ.pk, *output_to_job.keys()]
+        )
         evaluation.input_prefixes = {
             str(o): f"{j}/output/" for o, j in output_to_job.items()
         }

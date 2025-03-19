@@ -1790,6 +1790,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         unique_together = (
             "submission",
             "method",
+            "inputs",
             "ground_truth",
             "time_limit",
             "requires_gpu_type",
@@ -1939,16 +1940,34 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         else:
             return False
 
+    def get_or_create_input_set(self, *, additional_civ_pks):
+        input_civ_pks = [
+            *self.inputs.values.values_list("pk", flat=True),
+            *additional_civ_pks,
+        ]
+
+        input_set = get_existing_evaluation_input_set_for_inputs(
+            inputs=ComponentInterfaceValue.objects.filter(pk__in=input_civ_pks)
+        )
+        if not input_set:
+            input_set = EvaluationInputSet.objects.create()
+            input_set.values.set(input_civ_pks)
+
+        return input_set
+
     def add_civ(self, *, civ):
         super().add_civ(civ=civ)
-        return self.inputs.add(civ)
+
+        self.inputs = self.get_or_create_input_set(additional_civ_pks=[civ.pk])
+        self.save()
 
     def remove_civ(self, *, civ):
         super().remove_civ(civ=civ)
-        return self.inputs.remove(civ)
+        # this does not make sense for evaluations, so do nothing
+        return
 
     def get_civ_for_interface(self, interface):
-        return self.inputs.get(interface=interface)
+        return self.inputs.values.get(interface=interface)
 
     def validate_values_and_execute_linked_task(
         self, *, values, user, linked_task=None
