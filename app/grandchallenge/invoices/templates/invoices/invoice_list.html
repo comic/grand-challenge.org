@@ -49,8 +49,8 @@
                 {% for invoice in challenge.invoices.all %}
                     <tr>
                         <td>{{ invoice.internal_invoice_number }}</td>
-                        <td>{{ invoice.issued_on }}</td>
-                        <td>{{ invoice.due_date }}</td>
+                        <td>{{ invoice.issued_on|default_if_none:"-" }}</td>
+                        <td>{{ invoice.due_date|default_if_none:"-" }}</td>
                         <td>€ {{ invoice.total_amount_euros }}</td>
                         <td>{{ invoice.get_payment_type_display }}</td>
                         <td>
