@@ -1731,7 +1731,7 @@ class EvaluationInputSetManager(models.Manager):
 
 class EvaluationInputSet(UUIDModel):
     values = models.ManyToManyField(
-        ComponentInterfaceValue, blank=True, related_name="eval_inputs"
+        ComponentInterfaceValue, related_name="eval_inputs"
     )
 
     objects = EvaluationInputSetManager()

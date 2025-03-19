@@ -58,7 +58,6 @@ class Migration(migrations.Migration):
                 (
                     "values",
                     models.ManyToManyField(
-                        blank=True,
                         related_name="eval_inputs",
                         to="components.componentinterfacevalue",
                     ),
