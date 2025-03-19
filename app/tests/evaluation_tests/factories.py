@@ -5,10 +5,12 @@ from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
     EvaluationGroundTruth,
+    EvaluationInputSet,
     Method,
     Phase,
     Submission,
 )
+from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.factories import ChallengeFactory, UserFactory, hash_sha256
 
 
@@ -67,3 +69,16 @@ class EvaluationGroundTruthFactory(factory.django.DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)
     ground_truth = factory.django.FileField()
     sha256 = factory.sequence(lambda n: hash_sha256(f"ground_truth{n}"))
+
+
+class EvaluationInputSetFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = EvaluationInputSet
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        manager = cls._get_manager(model_class)
+        inputs = kwargs.pop("inputs", None)
+        if not inputs:
+            inputs = [ComponentInterfaceFactory()]
+        return manager.create(*args, inputs=inputs, **kwargs)

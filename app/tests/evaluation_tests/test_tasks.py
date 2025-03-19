@@ -286,7 +286,7 @@ class TestSetEvaluationInputs:
         eval.refresh_from_db()
         assert eval.status == eval.PENDING
         assert eval.error_message == ""
-        assert eval.inputs.count() == 5
+        assert eval.inputs.values.count() == 5
         assert eval.input_prefixes == {
             str(civ.pk): f"{alg.pk}/output/"
             for alg, civ in zip(
@@ -315,7 +315,7 @@ class TestSetEvaluationInputs:
         set_evaluation_inputs(evaluation_pk=eval.pk)
         eval.refresh_from_db()
         assert eval.status == eval.EXECUTING_PREREQUISITES
-        assert eval.inputs.count() == 0
+        assert not eval.inputs == 0
         assert eval.input_prefixes == {}
 
     def test_has_pending_jobs_with_image_and_model(
@@ -341,7 +341,7 @@ class TestSetEvaluationInputs:
             evaluation_with_model.status
             == evaluation_with_model.EXECUTING_PREREQUISITES
         )
-        assert evaluation_with_model.inputs.count() == 0
+        assert not evaluation_with_model.inputs
         assert evaluation_with_model.input_prefixes == {}
 
     def test_has_pending_jobs_with_image_but_without_model(
@@ -367,7 +367,7 @@ class TestSetEvaluationInputs:
             evaluation_with_model.status
             == evaluation_with_model.EXECUTING_PREREQUISITES
         )
-        assert evaluation_with_model.inputs.count() == 0
+        assert not evaluation_with_model.inputs
         assert evaluation_with_model.input_prefixes == {}
 
         # add jobs, 2 for each interface with a model
@@ -434,7 +434,7 @@ class TestSetEvaluationInputs:
         set_evaluation_inputs(evaluation_pk=evaluation_with_model.pk)
         evaluation_with_model.refresh_from_db()
         assert evaluation_with_model.status == evaluation_with_model.PENDING
-        assert evaluation_with_model.inputs.count() == 5
+        assert evaluation_with_model.inputs.values.count() == 5
         assert evaluation_with_model.input_prefixes == {
             str(civ.pk): f"{alg.pk}/output/"
             for alg, civ in zip(
@@ -467,7 +467,7 @@ class TestSetEvaluationInputs:
         set_evaluation_inputs(evaluation_pk=eval.pk)
         eval.refresh_from_db()
         assert eval.status == eval.PENDING
-        assert eval.inputs.count() == 5
+        assert eval.inputs.values.count() == 5
         assert eval.input_prefixes == {
             str(civ.pk): f"{alg.pk}/output/"
             for alg, civ in zip(
@@ -550,7 +550,7 @@ class TestSetEvaluationInputs:
         set_evaluation_inputs(evaluation_pk=eval.pk)
         eval.refresh_from_db()
         assert eval.status == eval.EXECUTING_PREREQUISITES
-        assert eval.inputs.count() == 0
+        assert not eval.inputs
         assert eval.input_prefixes == {}
 
 

@@ -2317,7 +2317,7 @@ class TestSubmissionCreationWithExtraInputs:
             == algorithm_phase_with_multiple_inputs.algorithm.active_model
         )
         assert eval.time_limit == 3600
-        assert eval.inputs.count() == 6
+        assert eval.inputs.values.count() == 6
 
         assert not UserUpload.objects.filter(
             pk=algorithm_phase_with_multiple_inputs.file_upload.pk
@@ -2328,15 +2328,17 @@ class TestSubmissionCreationWithExtraInputs:
                 int.pk
                 for int in algorithm_phase_with_multiple_inputs.phase.inputs.all()
             ]
-        ) == sorted([civ.interface.pk for civ in eval.inputs.all()])
+        ) == sorted([civ.interface.pk for civ in eval.inputs.values.all()])
 
-        value_inputs = [civ.value for civ in eval.inputs.all() if civ.value]
+        value_inputs = [
+            civ.value for civ in eval.inputs.values.all() if civ.value
+        ]
         assert "Foo" in value_inputs
         assert True in value_inputs
         assert ["Foo", "bar"] in value_inputs
 
         image_inputs = [
-            civ.image.name for civ in eval.inputs.all() if civ.image
+            civ.image.name for civ in eval.inputs.values.all() if civ.image
         ]
         assert (
             algorithm_phase_with_multiple_inputs.image_1.name in image_inputs
@@ -2346,7 +2348,9 @@ class TestSubmissionCreationWithExtraInputs:
             algorithm_phase_with_multiple_inputs.file_upload.filename.split(
                 "."
             )[0]
-            in [civ.file for civ in eval.inputs.all() if civ.file][0].name
+            in [civ.file for civ in eval.inputs.values.all() if civ.file][
+                0
+            ].name
         )
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
@@ -2420,9 +2424,9 @@ class TestSubmissionCreationWithExtraInputs:
         assert Submission.objects.count() == 1
         assert Evaluation.objects.count() == 1
         eval = Evaluation.objects.last()
-        assert eval.inputs.count() == 5
+        assert eval.inputs.values.count() == 5
         for civ in [civ1, civ2, civ3, civ4, civ5]:
-            assert civ in eval.inputs.all()
+            assert civ in eval.inputs.values.all()
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_faulty_file_input(

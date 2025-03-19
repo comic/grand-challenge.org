@@ -41,6 +41,7 @@ from tests.evaluation_tests.factories import (
     CombinedLeaderboardFactory,
     EvaluationFactory,
     EvaluationGroundTruthFactory,
+    EvaluationInputSetFactory,
     MethodFactory,
     PhaseFactory,
     SubmissionFactory,
@@ -2018,16 +2019,22 @@ def test_additional_inputs_complete():
     assert not eval.additional_inputs_complete
 
     # add required inputs
-    eval.inputs.set([civ1, civ2])
+    input_set = EvaluationInputSetFactory(inputs=[civ1, civ2])
+    eval.inputs = input_set
+    eval.save()
     del eval.additional_inputs_complete
     assert eval.additional_inputs_complete
 
     # it should not matter if other inputs are present as well
-    eval.inputs.set([civ1, civ2, civ3])
+    input_set = EvaluationInputSetFactory(inputs=[civ1, civ2, civ3])
+    eval.inputs = input_set
+    eval.save()
     del eval.additional_inputs_complete
     assert eval.additional_inputs_complete
 
     # or if multiple inputs of the same type are present
-    eval.inputs.set([civ1, civ2, civ3, civ4])
+    input_set = EvaluationInputSetFactory(inputs=[civ1, civ2, civ3, civ4])
+    eval.inputs = input_set
+    eval.save()
     del eval.additional_inputs_complete
     assert eval.additional_inputs_complete
