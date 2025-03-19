@@ -624,10 +624,10 @@ class EvaluationDetail(
             metrics = None
 
         try:
-            predictions = self.object.inputs.get(
+            predictions = self.object.inputs.values.get(
                 interface__slug="predictions-json-file"
             ).value
-        except ObjectDoesNotExist:
+        except (AttributeError, ObjectDoesNotExist):
             predictions = None
 
         context.update(

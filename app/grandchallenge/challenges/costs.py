@@ -10,7 +10,11 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.cases.models import ImageFile
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.evaluation.models import Evaluation, Method
+from grandchallenge.evaluation.models import (
+    Evaluation,
+    EvaluationInputSet,
+    Method,
+)
 
 
 def annotate_job_duration_and_compute_costs(*, phase):
@@ -67,6 +71,9 @@ def annotate_compute_costs_and_storage_size(*, challenge):
 def update_size_in_storage_and_registry(
     *, challenge, algorithm_jobs, evaluation_jobs
 ):
+    evaluation_inputs = EvaluationInputSet.objects.filter(
+        evaluation__in=evaluation_jobs
+    )
     archive_image_storage = (
         ImageFile.objects.filter(
             image__componentinterfacevalue__archive_items__archive__phase__challenge=challenge
@@ -103,14 +110,14 @@ def update_size_in_storage_and_registry(
 
     output_image_storage = (
         ImageFile.objects.filter(
-            image__componentinterfacevalue__evaluation_evaluations_as_input__in=evaluation_jobs
+            image__componentinterfacevalue__eval_inputs__in=evaluation_inputs
         )
         .distinct()
         .aggregate(Sum("size_in_storage"))
     )
     output_file_storage = (
         ComponentInterfaceValue.objects.filter(
-            evaluation_evaluations_as_input__in=evaluation_jobs
+            eval_inputs__in=evaluation_inputs
         )
         .distinct()
         .aggregate(Sum("size_in_storage"))

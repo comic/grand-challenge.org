@@ -12,6 +12,7 @@ from django.core.mail import mail_managers
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, Q
+from django.db.models.functions import Coalesce
 from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -28,7 +29,6 @@ from grandchallenge.algorithms.models import (
     AlgorithmInterface,
     AlgorithmModel,
     Job,
-    annotate_input_output_counts,
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
@@ -1740,8 +1740,16 @@ class EvaluationInputSet(UUIDModel):
 def get_existing_evaluation_input_set_for_inputs(
     *, inputs, model=EvaluationInputSet
 ):
-    annotated_qs = annotate_input_output_counts(
-        model.objects.all(), inputs=inputs
+    annotated_qs = model.objects.annotate(
+        input_count=Count("values", distinct=True),
+        relevant_input_count=Coalesce(
+            Count(
+                "values",
+                filter=Q(values__in=inputs),
+                distinct=True,
+            ),
+            0,
+        ),
     )
     try:
         return annotated_qs.get(
@@ -1922,7 +1930,12 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         phase_input_slugs = self.submission.phase.inputs.values_list(
             "slug", flat=True
         )
-        return self.inputs.filter(interface__slug__in=phase_input_slugs)
+        if self.inputs:
+            return self.inputs.values.filter(
+                interface__slug__in=phase_input_slugs
+            )
+        else:
+            return ComponentInterfaceValue.objects.none()
 
     @cached_property
     def additional_inputs_complete(self):
@@ -1941,17 +1954,19 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
             return False
 
     def get_or_create_input_set(self, *, additional_civ_pks):
+        if self.inputs:
+            current_inputs = self.inputs.values.values_list("pk", flat=True)
+        else:
+            current_inputs = []
+
         input_civ_pks = [
-            *self.inputs.values.values_list("pk", flat=True),
+            *current_inputs,
             *additional_civ_pks,
         ]
 
-        input_set = get_existing_evaluation_input_set_for_inputs(
+        input_set = EvaluationInputSet.objects.create(
             inputs=ComponentInterfaceValue.objects.filter(pk__in=input_civ_pks)
         )
-        if not input_set:
-            input_set = EvaluationInputSet.objects.create()
-            input_set.values.set(input_civ_pks)
 
         return input_set
 
@@ -1967,7 +1982,10 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         return
 
     def get_civ_for_interface(self, interface):
-        return self.inputs.values.get(interface=interface)
+        if self.inputs:
+            return self.inputs.values.get(interface=interface)
+        else:
+            return None
 
     def validate_values_and_execute_linked_task(
         self, *, values, user, linked_task=None
