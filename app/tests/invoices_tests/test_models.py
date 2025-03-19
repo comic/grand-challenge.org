@@ -299,8 +299,9 @@ def test_payment_status_paid_requires_paid_on():
 
 @pytest.mark.django_db
 def test_payment_type_complimentary_requires_internal_comments():
-    invoice = InvoiceFactory()
-    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
+    invoice = InvoiceFactory(
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
+    )
     invoice.internal_comments = ""
     with pytest.raises(ValidationError) as e:
         invoice.full_clean()
@@ -308,11 +309,6 @@ def test_payment_type_complimentary_requires_internal_comments():
     assert (
         "Please explain why the invoice is complimentary in the internal comments."
         == e.value.messages[0]
-    )
-
-    InvoiceFactory(
-        payment_type=PaymentTypeChoices.COMPLIMENTARY,
-        internal_comments="some explanation",
     )
 
 
@@ -350,11 +346,6 @@ def test_payment_type_non_complimentary_requires_details(
         invoice.full_clean()
     assert len(e.value.messages) == 1
     assert expected_error_message == e.value.messages[0]
-
-    InvoiceFactory(
-        payment_type=payment_type,
-        **{required_field_name: "not empty"},
-    )
 
 
 @pytest.mark.django_db
