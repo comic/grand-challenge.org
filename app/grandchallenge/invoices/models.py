@@ -152,8 +152,7 @@ class Invoice(models.Model, FieldChangeMixin):
             models.CheckConstraint(
                 name="paid_payment_status_for_paid_on_date_filled",
                 check=Q(paid_on__isnull=True)
-                | Q(payment_status=PaymentStatusChoices.PAID)
-                | Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
+                | Q(payment_status=PaymentStatusChoices.PAID),
                 violation_error_message="When the 'Paid on' date is provided,"
                 " the payment status should be 'Paid',",
             ),
