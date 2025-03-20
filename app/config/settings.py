@@ -1142,6 +1142,7 @@ READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 
 CHALLENGES_DEFAULT_ACTIVE_MONTHS = 12
 CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF = timedelta(days=7)
+CHALLENGE_INVOICE_OVERDUE_CUTOFF = timedelta(weeks=4)
 
 ###############################################################################
 #
@@ -1252,6 +1253,10 @@ CELERY_BEAT_SCHEDULE = {
     "send_onboarding_task_reminder_emails": {
         "task": "grandchallenge.challenges.tasks.send_onboarding_task_reminder_emails",
         "schedule": crontab(day_of_week="mon", hour=6, minute=0),
+    },
+    "send_challenge_invoice_overdue_reminder_emails": {
+        "task": "grandchallenge.invoices.tasks.send_challenge_invoice_overdue_reminder_emails",
+        "schedule": crontab(day_of_month=1, hour=6, minute=0),
     },
     "delete_users_who_dont_login": {
         "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
