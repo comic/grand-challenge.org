@@ -17,49 +17,24 @@ _fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "invoice_kwargs, send_email",
+    "invoice_kwargs",
     [
-        (  # Case: no invoices
-            {},
-            False,
+        # Case: invoice due
+        dict(
+            payment_type=Invoice.PaymentTypeChoices.PREPAID,
+            payment_status=Invoice.PaymentStatusChoices.ISSUED,
+            issued_on=_fixed_now - timedelta(weeks=5),
         ),
-        (  # Case: invoice due, but not overdue
-            dict(
-                payment_type=Invoice.PaymentTypeChoices.PREPAID,
-                payment_status=Invoice.PaymentStatusChoices.ISSUED,
-                issued_on=_fixed_now - timedelta(weeks=2),
-            ),
-            False,
-        ),
-        (  # Case: invoice due
-            dict(
-                payment_type=Invoice.PaymentTypeChoices.PREPAID,
-                payment_status=Invoice.PaymentStatusChoices.ISSUED,
-                issued_on=_fixed_now - timedelta(weeks=5),
-            ),
-            True,
-        ),
-        (  # Case: postpaid invoice due
-            dict(
-                payment_type=Invoice.PaymentTypeChoices.POSTPAID,
-                payment_status=Invoice.PaymentStatusChoices.ISSUED,
-                issued_on=_fixed_now - timedelta(weeks=5),
-            ),
-            True,
-        ),
-        (  # Case: invoice issued, but of complimentary type
-            dict(
-                payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
-                payment_status=Invoice.PaymentStatusChoices.ISSUED,
-                issued_on=_fixed_now - timedelta(weeks=5),
-            ),
-            False,
+        # Case: postpaid invoice due
+        dict(
+            payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+            payment_status=Invoice.PaymentStatusChoices.ISSUED,
+            issued_on=_fixed_now - timedelta(weeks=5),
         ),
     ],
 )
-def test_challenge_invoice_overdue_reminder_emails(
+def test_challenge_invoice_overdue_reminder_emails_sent(
     invoice_kwargs,
-    send_email,
     settings,
     mocker,
 ):
@@ -70,14 +45,13 @@ def test_challenge_invoice_overdue_reminder_emails(
     staff_user = UserFactory(is_staff=True)
     settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
 
-    if invoice_kwargs:
-        invoice = InvoiceFactory(
-            challenge=challenge,
-            support_costs_euros=0,
-            compute_costs_euros=10,
-            storage_costs_euros=0,
-            **invoice_kwargs,
-        )
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        **invoice_kwargs,
+    )
 
     mocker.patch(
         "grandchallenge.invoices.tasks.now",
@@ -86,30 +60,81 @@ def test_challenge_invoice_overdue_reminder_emails(
 
     send_challenge_invoice_overdue_reminder_emails()
 
-    if send_email:
-        expected_subject = (
-            "[{challenge_name}] Outstanding Invoice Reminder".format(
-                challenge_name=challenge.short_name,
-            )
+    expected_subject = (
+        "[{challenge_name}] Outstanding Invoice Reminder".format(
+            challenge_name=challenge.short_name,
         )
+    )
 
-        expected_body_organizer = (
-            "we have an outstanding invoice for {amount} Euro".format(
-                amount=invoice.total_amount_euros,
-            )
+    expected_body_organizer = (
+        "we have an outstanding invoice for {amount} Euro".format(
+            amount=invoice.total_amount_euros,
         )
+    )
 
-        staff_email = next(m for m in mail.outbox if staff_user.email in m.to)
-        assert expected_subject in staff_email.subject
+    staff_email = next(m for m in mail.outbox if staff_user.email in m.to)
+    assert expected_subject in staff_email.subject
 
-        organizer_mail = next(
-            m for m in mail.outbox if challenge_admin.email in m.to
-        )
-        assert expected_subject in organizer_mail.subject
-        assert expected_body_organizer in organizer_mail.body
-    else:
-        assert not any(staff_user.email in m.to for m in mail.outbox)
-        assert not any(challenge_admin.email in m.to for m in mail.outbox)
+    organizer_mail = next(
+        m for m in mail.outbox if challenge_admin.email in m.to
+    )
+    assert expected_subject in organizer_mail.subject
+    assert expected_body_organizer in organizer_mail.body
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "invoice_kwargs",
+    [
+        # Case: invoice due, but not overdue
+        dict(
+            payment_type=Invoice.PaymentTypeChoices.PREPAID,
+            payment_status=Invoice.PaymentStatusChoices.ISSUED,
+            issued_on=_fixed_now - timedelta(weeks=2),
+        ),
+        # Case: invoice issued, but of complimentary type
+        dict(
+            payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
+            payment_status=Invoice.PaymentStatusChoices.ISSUED,
+            issued_on=_fixed_now - timedelta(weeks=5),
+        ),
+    ],
+)
+def test_challenge_invoice_not_overdue_reminder_emails_not_send(
+    invoice_kwargs,
+    settings,
+    mocker,
+):
+    challenge = ChallengeFactory()
+    challenge_admin = UserFactory()
+    challenge.add_admin(challenge_admin)
+
+    staff_user = UserFactory(is_staff=True)
+    settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
+
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        **invoice_kwargs,
+    )
+
+    mocker.patch(
+        "grandchallenge.invoices.tasks.now",
+        return_value=_fixed_now,
+    )
+
+    send_challenge_invoice_overdue_reminder_emails()
+
+    assert not any(staff_user.email in m.to for m in mail.outbox)
+    assert not any(challenge_admin.email in m.to for m in mail.outbox)
+
+
+@pytest.mark.django_db
+def test_no_invoices_reminder_emails_not_send():
+    send_challenge_invoice_overdue_reminder_emails()
+    assert len(mail.outbox) == 0
 
 
 @pytest.mark.django_db
