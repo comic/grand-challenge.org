@@ -3,6 +3,7 @@ from django.contrib.admin import AdminSite
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
 
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.evaluation.admin import (
     PhaseAdmin,
     PhaseAdminForm,
@@ -144,3 +145,15 @@ def test_disjoint_inputs_and_algorithm_sockets():
     assert ci2.slug in str(form.errors)
     assert ci3.slug not in str(form.errors)
     assert ci4.slug not in str(form.errors)
+
+
+@pytest.mark.django_db
+def test_non_evaluation_interfaces():
+    ci = ComponentInterface.objects.get(slug="predictions-json-file")
+
+    form = PhaseAdminForm(instance=PhaseFactory(), data={"inputs": [ci.pk]})
+    assert not form.is_valid()
+    assert (
+        form.errors["inputs"][0]
+        == "Evaluation inputs cannot be of the following types: predictions-csv-file, predictions-json-file, predictions-zip-file, metrics-json-file, results-json-file"
+    )

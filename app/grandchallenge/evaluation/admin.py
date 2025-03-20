@@ -12,7 +12,6 @@ from grandchallenge.components.admin import (
     deprovision_jobs,
     requeue_jobs,
 )
-from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
     UserObjectPermissionAdmin,
@@ -55,15 +54,25 @@ class PhaseAdminForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["inputs"].queryset = ComponentInterface.objects.exclude(
-            slug__in=NON_EVALUATION_INTERFACES
-        )
         self.fields["parent"].queryset = self.instance.parent_phase_choices
         if self.instance.parent or self.instance.children.exists():
             for (
                 field_name
             ) in self.instance.read_only_fields_for_dependent_phases:
                 self.fields[field_name].disabled = True
+
+    def clean_inputs(self):
+        inputs = self.cleaned_data["inputs"]
+
+        if any(
+            elem in NON_EVALUATION_INTERFACES
+            for elem in inputs.values_list("slug", flat=True)
+        ):
+            raise ValidationError(
+                f'Evaluation inputs cannot be of the following types: {", ".join(NON_EVALUATION_INTERFACES)}'
+            )
+
+        return inputs
 
     def clean(self):
         cleaned_data = super().clean()
