@@ -1299,6 +1299,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         return PhaseAlgorithmInterface.objects.filter(phase=self)
 
     @property
+    def additional_inputs_field(self):
+        return self.inputs
+
+    @property
+    def additional_outputs_field(self):
+        return self.outputs
+
+    @property
     def algorithm_interface_create_url(self):
         return reverse(
             "evaluation:interface-create",

@@ -1387,6 +1387,11 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
         if not inputs:
             raise ValidationError("You must provide at least 1 input.")
 
+        if self._base_obj.additional_inputs_field:
+            self.check_for_overlapping_sockets(
+                sockets=inputs,
+            )
+
         if (
             self._base_obj.algorithm_interface_through_model_manager.annotate(
                 input_count=Count("interface__inputs", distinct=True),
@@ -1412,7 +1417,36 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
         if not outputs:
             raise ValidationError("You must provide at least 1 output.")
 
+        if self._base_obj.additional_outputs_field:
+            self.check_for_overlapping_sockets(
+                sockets=outputs,
+            )
+
         return outputs
+
+    def check_for_overlapping_sockets(self, *, sockets):
+        overlapping_input_sockets = (
+            self._base_obj.additional_inputs_field.filter(
+                slug__in=sockets.values_list("slug", flat=True)
+            )
+        )
+        overlapping_output_sockets = (
+            self._base_obj.additional_outputs_field.filter(
+                slug__in=sockets.values_list("slug", flat=True)
+            )
+        )
+        overlapping_sockets = list(
+            chain(overlapping_input_sockets, overlapping_output_sockets)
+        )
+
+        if overlapping_sockets:
+            overlapping_names = ", ".join(
+                str(obj) for obj in overlapping_sockets
+            )
+            raise ValidationError(
+                "The following sockets are already configured as sockets on"
+                f" {self._base_obj}: {overlapping_names}"
+            )
 
     def clean(self):
         cleaned_data = super().clean()

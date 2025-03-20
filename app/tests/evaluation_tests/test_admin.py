@@ -5,11 +5,13 @@ from django.contrib.sessions.middleware import SessionMiddleware
 
 from grandchallenge.evaluation.admin import (
     PhaseAdmin,
+    PhaseAdminForm,
     SubmissionAdmin,
     reevaluate_submissions,
 )
 from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
+from tests.algorithms_tests.factories import AlgorithmInterfaceFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import (
     MethodFactory,
@@ -119,3 +121,25 @@ def test_reevaluate_submission_idempotent(rf):
     )
 
     assert Evaluation.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_disjoint_inputs_and_algorithm_sockets():
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+    interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    phase.algorithm_interfaces.set([interface])
+
+    form = PhaseAdminForm(
+        instance=phase, data={"inputs": [ci1.pk, ci2.pk, ci3.pk, ci4.pk]}
+    )
+
+    assert not form.is_valid()
+    assert (
+        "The following sockets are already defined as algorithm inputs or outputs for this phase:"
+        in str(form.errors["inputs"])
+    )
+    assert ci1.slug in str(form.errors["inputs"])
+    assert ci2.slug in str(form.errors["inputs"])
+    assert ci3.slug not in str(form.errors["inputs"])
+    assert ci4.slug not in str(form.errors["inputs"])
