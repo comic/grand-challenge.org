@@ -1,6 +1,7 @@
 import json
 
 from django.contrib import admin, messages
+from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
@@ -35,6 +36,15 @@ from grandchallenge.evaluation.models import (
     SubmissionGroupObjectPermission,
     SubmissionUserObjectPermission,
 )
+from grandchallenge.evaluation.utils import SubmissionKindChoices
+
+NON_EVALUATION_INTERFACES = [
+    "predictions-csv-file",
+    "predictions-json-file",
+    "predictions-zip-file",
+    "metrics-json-file",
+    "results-json-file",
+]
 
 
 class PhaseAdminForm(ModelForm):
@@ -50,6 +60,68 @@ class PhaseAdminForm(ModelForm):
                 field_name
             ) in self.instance.read_only_fields_for_dependent_phases:
                 self.fields[field_name].disabled = True
+
+    def clean_inputs(self):
+        inputs = self.cleaned_data["inputs"]
+
+        if any(
+            elem in NON_EVALUATION_INTERFACES
+            for elem in inputs.values_list("slug", flat=True)
+        ):
+            raise ValidationError(
+                f'Evaluation inputs cannot be of the following types: {", ".join(NON_EVALUATION_INTERFACES)}'
+            )
+
+        return inputs
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if self.instance.submission_kind == SubmissionKindChoices.ALGORITHM:
+            input_slugs = (
+                set(
+                    cleaned_data.get("inputs", []).values_list(
+                        "slug", flat=True
+                    )
+                )
+                if "inputs" in cleaned_data
+                else set()
+            )
+            output_slugs = (
+                set(
+                    cleaned_data.get("outputs", []).values_list(
+                        "slug", flat=True
+                    )
+                )
+                if "outputs" in cleaned_data
+                else set()
+            )
+
+            evaluation_socket_slugs = input_slugs | output_slugs
+
+            algorithm_socket_slugs = set(
+                self.instance.algorithm_interfaces.values_list(
+                    "inputs__slug", flat=True
+                )
+            ) | set(
+                self.instance.algorithm_interfaces.values_list(
+                    "outputs__slug", flat=True
+                )
+            )
+
+            overlapping_slugs = set(evaluation_socket_slugs) & set(
+                algorithm_socket_slugs
+            )
+
+            if overlapping_slugs:
+                conflicting_slugs = ", ".join(overlapping_slugs)
+                raise ValidationError(
+                    f"The following sockets cannot be defined as evaluation "
+                    f"inputs or outputs because they are already defined as "
+                    f"algorithm inputs or outputs for this phase: {conflicting_slugs}"
+                )
+
+        return cleaned_data
 
 
 @admin.register(Phase)
