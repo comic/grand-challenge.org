@@ -1,0 +1,85 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% load url %}
+
+{% block title %}
+    Invoices - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Invoices</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Invoices for {{ challenge.short_name }}</h2>
+
+    {% if num_is_overdue %}
+        <p class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i> There {{ num_is_overdue|pluralize:"is,are" }} {{ num_is_overdue }} invoice{{ num_is_overdue|pluralize }} overdue.
+        </p>
+    {% endif %}
+    {% if num_is_due %}
+        <p class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i> There {{ num_is_due|pluralize:"is,are" }} {{ num_is_due }} invoice{{ num_is_due|pluralize }} due.
+        </p>
+    {% endif %}
+    <p>
+        If an invoice has been paid recently, the status will be updated soon. For any questions, contact us at
+        <a href="mailto:support@grand-challenge.org">support@grand-challenge.org</a>.
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-borderless table-sm w-100">
+            <thead class="thead-light">
+                <tr>
+                    <th>Number</th>
+                    <th>Issued on</th>
+                    <th>Due date</th>
+                    <th>Amount</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in object_list %}
+                    <tr>
+                        <td>{{ invoice.internal_invoice_number }}</td>
+                        <td>{{ invoice.issued_on|default_if_none:"-" }}</td>
+                        <td>
+                            {{ invoice.due_date|default_if_none:"-" }}
+                            {% if invoice.is_overdue %}
+                                <i class="fas fa-exclamation-triangle text-danger" title="Invoice is overdue."></i>
+                            {% elif invoice.is_due %}
+                                <i class="fas fa-exclamation-triangle text-warning" title="Invoice is due."></i>
+                            {% endif %}
+                        </td>
+                        <td>€ {{ invoice.total_amount_euros }}</td>
+                        <td>{{ invoice.get_payment_type_display }}</td>
+                        <td>
+                            {% if invoice.payment_type == invoice.PaymentTypeChoices.COMPLIMENTARY %}
+                                -
+                            {% elif invoice.is_overdue %}
+                                <span class="badge badge-danger">Overdue</span>
+                            {% elif invoice.is_due %}
+                                <span class="badge badge-warning">Due</span>
+                            {% elif invoice.payment_status == invoice.PaymentStatusChoices.PAID %}
+                                <span class="badge badge-success">Paid</span>
+                            {% else %}
+                                <span class="badge badge-info">Initialized</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
