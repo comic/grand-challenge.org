@@ -2,9 +2,15 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Count, ExpressionWrapper, F, Q
 from django.db.models.functions import Cast
+from django.db.transaction import on_commit
 from django.utils.timezone import now
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
+
+from grandchallenge.core.models import FieldChangeMixin
+from grandchallenge.invoices.tasks import (
+    send_challenge_invoice_issued_notification_emails,
+)
 
 
 class PaymentStatusChoices(models.TextChoices):
@@ -66,7 +72,7 @@ class InvoiceQuerySet(models.QuerySet):
         )
 
 
-class Invoice(models.Model):
+class Invoice(models.Model, FieldChangeMixin):
     objects = InvoiceQuerySet.as_manager()
 
     created = models.DateTimeField(auto_now_add=True)
@@ -171,6 +177,16 @@ class Invoice(models.Model):
         super().save(*args, **kwargs)
         if adding:
             self.assign_permissions()
+        if (
+            self.payment_type != PaymentTypeChoices.COMPLIMENTARY
+            and (self.has_changed("payment_status") or adding)
+            and self.payment_status == PaymentStatusChoices.ISSUED
+        ):
+            on_commit(
+                send_challenge_invoice_issued_notification_emails.signature(
+                    kwargs={"pk": self.pk}
+                ).apply_async
+            )
 
     def assign_permissions(self):
         assign_perm(
