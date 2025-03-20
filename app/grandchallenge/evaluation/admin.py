@@ -107,7 +107,7 @@ class PhaseAdminForm(ModelForm):
             if overlapping_slugs:
                 conflicting_slugs = ", ".join(overlapping_slugs)
                 raise ValidationError(
-                    f"The following sockets cannot be defined as evaluation"
+                    f"The following sockets cannot be defined as evaluation "
                     f"inputs or outputs because they are already defined as "
                     f"algorithm inputs or outputs for this phase: {conflicting_slugs}"
                 )

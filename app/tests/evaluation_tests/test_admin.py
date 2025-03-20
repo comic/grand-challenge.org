@@ -136,10 +136,11 @@ def test_disjoint_inputs_and_algorithm_sockets():
 
     assert not form.is_valid()
     assert (
-        "The following sockets are already defined as algorithm inputs or outputs for this phase:"
-        in str(form.errors["inputs"])
+        "The following sockets cannot be defined as evaluation inputs or "
+        "outputs because they are already defined as algorithm inputs or "
+        "outputs for this phase" in str(form.errors)
     )
-    assert ci1.slug in str(form.errors["inputs"])
-    assert ci2.slug in str(form.errors["inputs"])
-    assert ci3.slug not in str(form.errors["inputs"])
-    assert ci4.slug not in str(form.errors["inputs"])
+    assert ci1.slug in str(form.errors)
+    assert ci2.slug in str(form.errors)
+    assert ci3.slug not in str(form.errors)
+    assert ci4.slug not in str(form.errors)
