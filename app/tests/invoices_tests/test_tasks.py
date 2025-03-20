@@ -121,7 +121,7 @@ def test_challenge_invoice_not_overdue_reminder_emails_not_send(
     )
 
     mocker.patch(
-        "grandchallenge.invoices.tasks.now",
+        "grandchallenge.invoices.models.now",
         return_value=_fixed_now,
     )
 
