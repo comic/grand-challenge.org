@@ -8,10 +8,14 @@ from grandchallenge.evaluation.admin import (
     SubmissionAdmin,
     reevaluate_submissions,
 )
-from grandchallenge.evaluation.models import Submission
+from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from tests.components_tests.factories import ComponentInterfaceFactory
-from tests.evaluation_tests.factories import PhaseFactory, SubmissionFactory
+from tests.evaluation_tests.factories import (
+    MethodFactory,
+    PhaseFactory,
+    SubmissionFactory,
+)
 from tests.factories import ChallengeFactory
 
 
@@ -87,3 +91,31 @@ def test_reevaluate_submission_only_for_evaluations_without_inputs(rf):
         messages[0]
         == f"Submission {s1.pk} cannot be reevaluated in the admin because it requires additional inputs. Please reschedule through the challenge UI."
     )
+
+
+@pytest.mark.django_db
+def test_reevaluate_submission_idempotent(rf):
+    submission = SubmissionFactory()
+    MethodFactory(
+        phase=submission.phase,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+
+    modeladmin = SubmissionAdmin(Submission, AdminSite)
+    request = rf.get("/foo")
+
+    reevaluate_submissions(
+        request=request,
+        modeladmin=modeladmin,
+        queryset=Submission.objects.all(),
+    )
+
+    reevaluate_submissions(
+        request=request,
+        modeladmin=modeladmin,
+        queryset=Submission.objects.all(),
+    )
+
+    assert Evaluation.objects.count() == 1

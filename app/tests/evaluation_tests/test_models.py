@@ -124,6 +124,12 @@ def test_create_evaluation_is_idempotent(
         phase=algorithm_submission.method.phase,
         algorithm_image=algorithm_submission.algorithm_image,
     )
+    MethodFactory(
+        phase=s.phase,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
 
     with django_capture_on_commit_callbacks(execute=True):
         s.create_evaluation(additional_inputs=None)
@@ -131,6 +137,7 @@ def test_create_evaluation_is_idempotent(
     with django_capture_on_commit_callbacks(execute=True):
         s.create_evaluation(additional_inputs=None)
 
+    assert Evaluation.objects.count() == 1
     # max_inital_jobs is set to 1, so only one job should be created
     assert Job.objects.count() == 1
 

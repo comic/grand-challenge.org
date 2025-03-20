@@ -2656,7 +2656,7 @@ def test_reschedule_evaluation_with_additional_inputs(
     )
     eval1.inputs.set([civ_str, civ_bool])
 
-    with django_capture_on_commit_callbacks(execute=True):
+    with django_capture_on_commit_callbacks(execute=False):
         response = get_view_for_user(
             viewname="evaluation:evaluation-create",
             client=client,
