@@ -702,7 +702,7 @@ class CombinedLeaderboardForm(SaveFormInitMixin, forms.ModelForm):
         widgets = {"phases": forms.CheckboxSelectMultiple}
 
 
-class EvaluationForm(SaveFormInitMixin, forms.Form):
+class EvaluationForm(AdditionalInputsMixin, forms.Form):
     submission = ModelChoiceField(
         queryset=None, disabled=True, widget=HiddenInput()
     )
@@ -710,12 +710,19 @@ class EvaluationForm(SaveFormInitMixin, forms.Form):
     def __init__(self, submission, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self._user = user
+
         self.fields["submission"].queryset = filter_by_permission(
             queryset=Submission.objects.filter(pk=submission.pk),
             user=user,
             codename="view_submission",
         )
         self.fields["submission"].initial = submission
+
+        self.init_additional_inputs(inputs=submission.phase.inputs.all())
+
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Save"))
 
     def clean(self):
         cleaned_data = super().clean()
@@ -732,6 +739,26 @@ class EvaluationForm(SaveFormInitMixin, forms.Form):
 
         if challenge.available_compute_euro_millicents <= 0:
             raise ValidationError("This challenge has exceeded its budget")
+
+        cleaned_data["additional_inputs"] = self.clean_additional_inputs()
+
+        if Evaluation.objects.get_evaluations_with_same_inputs(
+            inputs=cleaned_data["additional_inputs"],
+            submission=cleaned_data["submission"],
+            method=cleaned_data["submission"].phase.active_image,
+            ground_truth=cleaned_data["submission"].phase.active_ground_truth,
+            time_limit=cleaned_data["submission"].phase.evaluation_time_limit,
+            requires_gpu_type=cleaned_data[
+                "submission"
+            ].phase.evaluation_requires_gpu_type,
+            requires_memory_gb=cleaned_data[
+                "submission"
+            ].phase.evaluation_requires_memory_gb,
+        ):
+            raise ValidationError(
+                "A result for these inputs with the current method "
+                "and ground truth already exists."
+            )
 
         return cleaned_data
 

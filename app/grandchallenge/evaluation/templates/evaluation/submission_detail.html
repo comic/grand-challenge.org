@@ -154,29 +154,52 @@
                 </dl>
             </div>
 
-            {% if not object.is_evaluated_with_active_image_and_ground_truth %}
-                <div class="card-body">
-                    <h4 class="card-title">Re-Evaluate Submission with Active Method and Active Ground Truth (if applicable)</h4>
+            {% with object.phase.inputs.all as additional_inputs_required %}
 
-                    <p>
-                        This submission has not been evaluated with the active evaluation method and active ground truth for this phase.
-                        {% if challenge.available_compute_euro_millicents <= 0 %}
-                            However, an evaluation cannot be created as this challenge has exceeded its budget.
+                {% if not object.is_evaluated_with_active_image_and_ground_truth or additional_inputs_required %}
+                    <div class="card-body">
+                        <h4 class="card-title">Re-Evaluate Submission with
+                            {% if not object.is_evaluated_with_active_image_and_ground_truth %} Active Method and Active Ground Truth {% endif %}
+                            {% if additional_inputs_required %}
+                                {% if not object.is_evaluated_with_active_image_and_ground_truth %} and {% endif %}
+                                different inputs
+                            {% endif %}
+                            (if applicable)
+                        </h4>
+
+                        <p>
+                            This submission has
+                            {% if not object.is_evaluated_with_active_image_and_ground_truth %} not {% endif %}
+                            been evaluated with the active evaluation method and active ground truth for this phase
+                            {% if additional_inputs_required %}, and can be re-evaluated with different inputs {% endif %}.
+                            {% if challenge.available_compute_euro_millicents <= 0 %}
+                                However, an evaluation cannot be created as this challenge has exceeded its budget.
+                            {% endif %}
+                        </p>
+
+                        {% if challenge.available_compute_euro_millicents > 0 %}
+                            {% if additional_inputs_required %}
+                                <a class="btn btn-sm btn-primary"
+                                    href="{% url 'evaluation:evaluation-create' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">
+                                    Re-Evaluate with different inputs
+                                    {% if not object.is_evaluated_with_active_image_and_ground_truth %}
+                                        and with the Active Method and Active Ground Truth
+                                    {% endif %}
+                                </a>
+                            {% else %}
+                                <form method="post"
+                                      action="{% url 'evaluation:evaluation-create' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="submission" value="{{ object.pk }}">
+                                    <button type="submit" class="btn btn-xs btn-primary">
+                                        Re-Evaluate with the Active Method and Active Ground Truth
+                                    </button>
+                                </form>
+                            {% endif %}
                         {% endif %}
-                    </p>
-
-                    {% if challenge.available_compute_euro_millicents > 0 %}
-                        <form method="post"
-                              action="{% url 'evaluation:evaluation-create' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="submission" value="{{ object.pk }}">
-                            <button type="submit" class="btn btn-xs btn-primary">
-                                Re-Evaluate with the Active Method and Active Ground Truth
-                            </button>
-                        </form>
-                    {% endif %}
-                </div>
-            {% endif %}
+                    </div>
+                {% endif %}
+            {% endwith %}
         </div>
     {% endif %}
 {% endblock %}
