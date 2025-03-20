@@ -30,6 +30,11 @@ def validate_no_slash_at_ends(value):
         raise ValidationError("Path must not begin or end with '/'")
 
 
+def validate_relative_path_not_reserved(value):
+    if value.casefold() == "inputs.json".casefold():
+        raise ValidationError("This relative path is reserved")
+
+
 def _newick_parser(tree):
     return NewickIO.Parser.from_string(tree)
 
