@@ -336,3 +336,54 @@ def test_challenge_invoice_issued_notification_emails_on_save(
     assert expected_subject in contact_person_mail.subject
     assert "Dear John Doe" in contact_person_mail.body
     assert expected_body in contact_person_mail.body
+
+
+@pytest.mark.django_db
+def test_challenge_invoice_issued_notification_emails_on_create(
+    settings,
+    django_capture_on_commit_callbacks,
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    challenge = ChallengeFactory()
+    challenge_admin = challenge.creator
+
+    contact_email = "contact_person@example.com"
+
+    with django_capture_on_commit_callbacks(execute=True):
+        InvoiceFactory(
+            challenge=challenge,
+            support_costs_euros=0,
+            compute_costs_euros=10,
+            storage_costs_euros=0,
+            payment_type=Invoice.PaymentTypeChoices.PREPAID,
+            payment_status=Invoice.PaymentStatusChoices.ISSUED,
+            issued_on=datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC")),
+            contact_email=contact_email,
+            contact_name="John Doe",
+        )
+
+    assert len(mail.outbox) > 0
+
+    expected_subject = "[{challenge_name}] Invoice Issued Notification".format(
+        challenge_name=challenge.short_name,
+    )
+
+    expected_body = (
+        "We would like to inform you that an invoice has been issued on March 1, 2025 "
+        "for your challenge {challenge_name}.".format(
+            challenge_name=challenge.short_name,
+        )
+    )
+
+    organizer_mail = next(
+        m for m in mail.outbox if challenge_admin.email in m.to
+    )
+    assert expected_subject in organizer_mail.subject
+    assert expected_body in organizer_mail.body
+
+    contact_person_mail = next(m for m in mail.outbox if contact_email in m.to)
+    assert expected_subject in contact_person_mail.subject
+    assert "Dear John Doe" in contact_person_mail.body
+    assert expected_body in contact_person_mail.body
