@@ -202,23 +202,23 @@ This will create the docs in the ``docs/_build/html`` directory.
 Adding new dependencies
 -----------------------
 
-Poetry is used to manage the dependencies of the platform.
+`uv` is used to manage the dependencies of the platform.
 To add a new dependency use
 
 .. code-block:: console
 
-    $ poetry add <whatever>
+    $ uv add <whatever>
 
-and then commit the ``pyproject.toml`` and ``poetry.lock``.
-If this is a development dependency then use the ``--dev`` flag, see the ``poetry`` documentation for more details.
+and then commit the ``pyproject.toml`` and ``uv.lock``.
+If this is a development dependency then use the ``--dev`` flag, see the ``uv`` documentation for more details.
 
 Versions are unpinned in the ``pyproject.toml`` file, to update the resolved dependencies use
 
 .. code-block:: console
 
-    $ poetry update <whatever>
+    $ uv lock --upgrade-package <whatever>
 
-and commit the updated ``poetry.lock``.
+and commit the updated ``uv.lock``.
 
 The containers will need to be rebuilt after running these steps, so stop the ``make runserver`` process with ``CTRL+C`` and restart.
 

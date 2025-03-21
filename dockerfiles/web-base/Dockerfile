@@ -79,11 +79,11 @@ RUN mkdir -p /opt/docker \
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false\
     COMPONENTS_SAGEMAKER_SHIM_VERSION=0.3.5\
-    PATH="/opt/poetry/.venv/bin:/home/django/.local/bin:${PATH}"
+    PATH="/opt/grand-challenge/.venv/bin:/home/django/.local/bin:${PATH}"
 
-RUN mkdir -p /opt/poetry /app /static /opt/sagemaker-shim /opt/virtualenvs \
+RUN mkdir -p /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs \
     && groupadd -r django && useradd -m -r -g django django \
-    && chown django:django /opt/poetry /app /static /opt/sagemaker-shim /opt/virtualenvs
+    && chown django:django /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs
 
 USER django:django
 
@@ -99,16 +99,15 @@ RUN mkdir -p /opt/virtualenvs \
     && python -m venv /opt/virtualenvs/biom \
     && /opt/virtualenvs/biom/bin/python -m pip --no-cache-dir --no-color install biom-format
 
-WORKDIR /opt/poetry
+WORKDIR /opt/grand-challenge
 
 # Install base python packages
-COPY --chown=django:django pyproject.toml /opt/poetry
-COPY --chown=django:django poetry.lock /opt/poetry
+COPY --chown=django:django pyproject.toml /opt/grand-challenge
+COPY --chown=django:django uv.lock /opt/grand-challenge
 
 RUN python -m pip install -U pip \
-    && python -m pip install -U poetry \
-    && poetry config virtualenvs.in-project true \
-    && poetry install --no-interaction --no-ansi --no-root --only main
+    && python -m pip install -U uv \
+    && uv sync --no-progress --no-dev
 
 ##################
 # TEST CONTAINER #
@@ -134,5 +133,5 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 USER django:django
 
-RUN poetry install --no-interaction --no-ansi --no-root
+RUN uv sync --no-progress
 RUN playwright install

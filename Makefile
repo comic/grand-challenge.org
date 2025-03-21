@@ -1,6 +1,6 @@
 USER_ID=$(shell id -u)
 PYTHON_VERSION="3.11"
-POETRY_HASH=$(shell shasum -a 512 poetry.lock | cut -c 1-8)
+LOCKFILE_HASH=$(shell shasum -a 512 uv.lock | cut -c 1-8)
 GIT_COMMIT_ID=$(shell git describe --always --dirty)
 GIT_BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD | sed "s/[^[:alnum:]]//g")
 GRAND_CHALLENGE_HTTP_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/http
@@ -11,66 +11,66 @@ GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-
 
 
 build_web_test:
-	@docker pull $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(POETRY_HASH) || { \
+	@docker pull $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) || { \
 		docker buildx build \
 			--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 			--target test-base \
-			-t $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(POETRY_HASH) \
+			-t $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) \
 			-f dockerfiles/web-base/Dockerfile \
 			.; \
 	}
 	docker buildx build\
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
-		--build-arg POETRY_HASH=$(POETRY_HASH) \
+		--build-arg LOCKFILE_HASH=$(LOCKFILE_HASH) \
 		--build-arg GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI) \
 		--build-arg GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI) \
 		--target test \
-		-t $(GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) \
+		-t $(GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
 		-t $(GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI):latest \
 		-f dockerfiles/web/Dockerfile \
 		.
 
 build_web_dist:
-	@docker pull $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(POETRY_HASH) || { \
+	@docker pull $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) || { \
 		docker buildx build \
 			--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 			--target base \
-			-t $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(POETRY_HASH) \
+			-t $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH) \
 			-f dockerfiles/web-base/Dockerfile \
 			.; \
 	}
 	DOCKER_BUILDKIT=0 docker build \
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
-		--build-arg POETRY_HASH=$(POETRY_HASH) \
+		--build-arg LOCKFILE_HASH=$(LOCKFILE_HASH) \
 		--build-arg GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI) \
 		--build-arg GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI) \
 		--network grand-challengeorg_default \
 		--target dist \
-		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) \
+		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
 		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):latest \
 		-f dockerfiles/web/Dockerfile \
 		.
 
 build_http:
 	docker buildx build \
-		-t $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH) \
+		-t $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
 		-t $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):latest \
 		dockerfiles/http
 
 push_web_base:
-	docker push $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(POETRY_HASH)
+	docker push $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH)
 
 push_web_test_base:
-	docker push $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(POETRY_HASH)
+	docker push $(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH)
 
 push_web:
-	docker push $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
+	docker push $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 	docker push $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):latest
 
 push_http:
-	docker push $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(POETRY_HASH)
+	docker push $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 	docker push $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):latest
 
 build: build_web_test build_web_dist build_http
