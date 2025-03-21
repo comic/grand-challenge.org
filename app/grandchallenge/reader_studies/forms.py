@@ -695,7 +695,7 @@ class GroundTruthFromAnswersForm(SaveFormInitMixin, Form):
         required=True,
         help_text=format_html(
             "Select a user whose answers will be consumed. "
-            "Only users that have <strong>completed the reader study</strong> can be selected."
+            "Only users that have <strong>completed the reader study</strong> are valid options."
         ),
         widget=Select2Widget,
     )
