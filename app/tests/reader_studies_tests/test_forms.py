@@ -25,7 +25,7 @@ from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
-    GroundTruthViaAnswersForm,
+    GroundTruthFromAnswersForm,
     QuestionForm,
 )
 from grandchallenge.reader_studies.models import (
@@ -1925,7 +1925,7 @@ def test_interactive_algorithm_field_permissions():
 
 
 @pytest.mark.django_db
-def test_ground_view_copy_answers_form():
+def test_ground_truth_from_answers_form():
     rs = ReaderStudyFactory()
 
     reader = UserFactory()
@@ -1955,7 +1955,7 @@ def test_ground_view_copy_answers_form():
         answer="Foo",
     )
 
-    form = GroundTruthViaAnswersForm(
+    form = GroundTruthFromAnswersForm(
         reader_study=rs,
         data={"user": str(reader.pk)},
     )
@@ -1964,7 +1964,7 @@ def test_ground_view_copy_answers_form():
     # Answer 1 of 2 questions
     AnswerFactory(question=q1, display_set=ds, creator=reader, answer=True)
 
-    form = GroundTruthViaAnswersForm(
+    form = GroundTruthFromAnswersForm(
         reader_study=rs,
         data={"user": str(reader.pk)},
     )
@@ -1975,7 +1975,7 @@ def test_ground_view_copy_answers_form():
     # Answer 2 of 2 questions
     AnswerFactory(question=q2, display_set=ds, creator=reader, answer=True)
 
-    form = GroundTruthViaAnswersForm(
+    form = GroundTruthFromAnswersForm(
         reader_study=rs,
         data={"user": str(reader.pk)},
     )
@@ -1988,7 +1988,7 @@ def test_ground_view_copy_answers_form():
         is_ground_truth=True,
     ).exists(), "Non applicable gt answer does not get copied"
 
-    form = GroundTruthViaAnswersForm(
+    form = GroundTruthFromAnswersForm(
         reader_study=rs,
         data={"user": str(reader.pk)},
     )

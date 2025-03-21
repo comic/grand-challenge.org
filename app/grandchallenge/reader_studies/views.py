@@ -87,7 +87,7 @@ from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
     GroundTruthCSVForm,
-    GroundTruthViaAnswersForm,
+    GroundTruthFromAnswersForm,
     QuestionForm,
     ReadersForm,
     ReaderStudyCopyForm,
@@ -512,11 +512,12 @@ class AddGroundTruthViaCSVToReaderStudy(
         return self.reader_study.get_absolute_url()
 
 
-class AddGroundTruthViaAnswersToReaderStudy(
-    BaseAddObjectToReaderStudyMixin, FormView
+class ReaderStudyGroundTruthFromAnswers(
+    BaseAddObjectToReaderStudyMixin,
+    FormView,
 ):
-    form_class = GroundTruthViaAnswersForm
-    template_name = "reader_studies/ground_truth_copy_answers_form.html"
+    form_class = GroundTruthFromAnswersForm
+    template_name = "reader_studies/ground_truth_from_answers_form.html"
     type_to_add = "Ground Truth"
 
     def get_form_kwargs(self):

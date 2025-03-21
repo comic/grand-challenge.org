@@ -689,11 +689,14 @@ class ReaderStudyPermissionRequestUpdateForm(PermissionRequestUpdateForm):
         model = ReaderStudyPermissionRequest
 
 
-class GroundTruthViaAnswersForm(SaveFormInitMixin, Form):
+class GroundTruthFromAnswersForm(SaveFormInitMixin, Form):
     user = ModelChoiceField(
         queryset=get_user_model().objects.none(),
         required=True,
-        help_text="Select a user whose answers will be copied.",
+        help_text=format_html(
+            "Select a user whose answers will be consumed. "
+            "Only users that have <strong>completed the reader study</strong> can be selected."
+        ),
         widget=Select2Widget,
     )
 
@@ -738,16 +741,7 @@ class GroundTruthViaAnswersForm(SaveFormInitMixin, Form):
         return user
 
     def create_ground_truth(self):
-        answers = self.answers
-
-        for answer in answers:
-            answer.is_ground_truth = True
-
-            answer.pk = None  # Ensures new ones are created
-            answer.id = None  # Required to ensure inheritence works correctly
-            answer._state.adding = True
-
-            answer.save()
+        self.answers.update(is_ground_truth=True)
 
 
 class GroundTruthCSVForm(SaveFormInitMixin, Form):

@@ -959,7 +959,7 @@ def test_ground_truth_view(client):
 
 
 @pytest.mark.django_db
-def test_ground_view_from_answers_workflow(client):
+def test_ground_truth_from_answers_workflow(client):
     rs = ReaderStudyFactory(is_educational=True)
 
     editor, reader, a_user = UserFactory.create_batch(3)
@@ -1013,11 +1013,10 @@ def test_ground_view_from_answers_workflow(client):
     assert response.status_code == 200, "Editor can post form"
 
     assert rs.has_ground_truth, "Sanity: reader study now has ground truth"
-
-    answer.delete()
-    assert (
-        rs.has_ground_truth
-    ), "Sanity: ground Truth exists seperately from the copied answers"
+    assert not Answer.objects.filter(
+        pk=answer.pk,
+        is_ground_truth=False,
+    ).exists(), "Source answer is consumed"
 
     response = get_view_for_user(
         viewname="api:reader-study-ground-truth",
