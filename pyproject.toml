@@ -60,7 +60,7 @@ dependencies = [
     "django-csp",
     "psycopg[c]>3.1.8",
     # Import issue with 7.45.3 (https://github.com/comic/grand-challenge.org/issues/3252)
-    "pycurl<7.45.3",
+    "pycurl==7.45.6",
     "pyjwt",
     "beautifulsoup4",
     "pymdown-extensions",

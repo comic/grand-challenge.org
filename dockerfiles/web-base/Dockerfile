@@ -133,5 +133,5 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 USER django:django
 
-RUN uv sync --no-progress
+RUN uv sync --no-progress --no-binary-package pycurl
 RUN playwright install
