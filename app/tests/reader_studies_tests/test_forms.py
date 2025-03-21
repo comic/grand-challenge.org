@@ -25,6 +25,7 @@ from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
+    GroundTruthFromAnswersForm,
     QuestionForm,
 )
 from grandchallenge.reader_studies.models import (
@@ -1883,7 +1884,7 @@ def test_question_form_interactive_algorithm_field(answer_type, choices):
 
 
 @pytest.mark.django_db
-def test_interactive_algorithm_field_permissions(client):
+def test_interactive_algorithm_field_permissions():
     editor, editor_with_permission = UserFactory.create_batch(2)
     rs = ReaderStudyFactory()
 
@@ -1921,3 +1922,76 @@ def test_interactive_algorithm_field_permissions(client):
         form.cleaned_data["interactive_algorithm"]
         == InteractiveAlgorithmChoices.ULS23_BASELINE
     )
+
+
+@pytest.mark.django_db
+def test_ground_truth_from_answers_form():
+    rs = ReaderStudyFactory()
+
+    reader = UserFactory()
+    rs.add_reader(reader)
+
+    ds = DisplaySetFactory(reader_study=rs)
+    q1 = QuestionFactory(
+        reader_study=rs,
+        question_text="q1",
+        answer_type=Question.AnswerType.BOOL,
+    )
+    q2 = QuestionFactory(
+        reader_study=rs,
+        question_text="q2",
+        answer_type=Question.AnswerType.BOOL,
+    )
+
+    # Not ground truth applicable
+    AnswerFactory(
+        question=QuestionFactory(
+            reader_study=rs,
+            question_text="BB",
+            answer_type=Question.AnswerType.BOUNDING_BOX_2D,
+        ),
+        display_set=ds,
+        creator=reader,
+        answer="Foo",
+    )
+
+    form = GroundTruthFromAnswersForm(
+        reader_study=rs,
+        data={"user": str(reader.pk)},
+    )
+    assert not form.is_valid()
+
+    # Answer 1 of 2 questions
+    AnswerFactory(question=q1, display_set=ds, creator=reader, answer=True)
+
+    form = GroundTruthFromAnswersForm(
+        reader_study=rs,
+        data={"user": str(reader.pk)},
+    )
+    assert (
+        not form.is_valid()
+    ), "With only one answer the user is a valid source"
+
+    # Answer 2 of 2 questions
+    AnswerFactory(question=q2, display_set=ds, creator=reader, answer=True)
+
+    form = GroundTruthFromAnswersForm(
+        reader_study=rs,
+        data={"user": str(reader.pk)},
+    )
+    assert form.is_valid(), "With both answers the user is a valid source"
+
+    form.create_ground_truth()
+
+    assert not Answer.objects.filter(
+        question__answer_type=Question.AnswerType.BOUNDING_BOX_2D,
+        is_ground_truth=True,
+    ).exists(), "Non applicable gt answer does not get copied"
+
+    form = GroundTruthFromAnswersForm(
+        reader_study=rs,
+        data={"user": str(reader.pk)},
+    )
+    assert (
+        not form.is_valid()
+    ), "With existing ground truth, the form is no longer valid"

@@ -1,0 +1,22 @@
+{% extends "reader_studies/readerstudy_ground_truth.html" %}
+{% load url %}
+{% block content %}
+    <h2>Confirm Deletion</h2>
+
+    <p>Are you sure that you want to delete the ground truth for "{{ object }}"? <br>
+        <b class="text-danger">WARNING:
+            You are not able to undo this action. Once the ground truth is deleted
+            it is deleted forever.</b>
+    </p>
+
+    <a href="{% url 'reader-studies:ground-truth' slug=object.slug %}"
+        type="button"
+        class="btn btn-secondary">Cancel</a>
+
+    <button class="btn btn-danger"
+            hx-post="{% url 'reader-studies:ground-truth-delete' slug=object.slug %}"
+            hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'
+    >
+        I understand, delete the ground truth for '{{ object }}'
+    </button>
+{% endblock %}

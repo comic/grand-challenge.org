@@ -174,7 +174,7 @@ def test_answer_remove_for_user(client):
 
 
 @pytest.mark.django_db
-def test_answer_remove_ground_truth(client):
+def test_ground_truth_delete(client):
     reader, editor = UserFactory.create_batch(2)
     rs1, rs2 = ReaderStudyFactory(title="rs1"), ReaderStudyFactory(title="rs2")
     for rs in [rs1, rs2]:
@@ -196,12 +196,11 @@ def test_answer_remove_ground_truth(client):
         )
 
     response = get_view_for_user(
-        viewname="reader-studies:ground-truth-remove",
+        viewname="reader-studies:ground-truth-delete",
         reverse_kwargs={"slug": rs1.slug},
         user=reader,
         client=client,
         method=client.post,
-        content_type="application/json",
     )
     assert response.status_code == 403
     assert Answer.objects.filter(answer=f"a-{rs1.title}").exists()
@@ -210,12 +209,11 @@ def test_answer_remove_ground_truth(client):
     assert Answer.objects.filter(answer=f"gt-{rs2.title}").exists()
 
     response = get_view_for_user(
-        viewname="reader-studies:ground-truth-remove",
+        viewname="reader-studies:ground-truth-delete",
         reverse_kwargs={"slug": rs1.slug},
         user=editor,
         client=client,
         method=client.post,
-        content_type="application/json",
     )
     assert response.status_code == 200
     assert Answer.objects.filter(answer=f"a-{rs1.title}").exists()
@@ -958,3 +956,91 @@ def test_ground_truth_view(client):
     )
 
     assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_ground_truth_from_answers_workflow(client):
+    rs = ReaderStudyFactory(is_educational=True)
+
+    editor, reader, a_user = UserFactory.create_batch(3)
+    rs.add_editor(editor)
+    rs.add_reader(reader)
+
+    ds = DisplaySetFactory(reader_study=rs)
+    q = QuestionFactory(
+        reader_study=rs,
+        question_text="q1",
+        answer_type=Question.AnswerType.BOOL,
+    )
+    answer = AnswerFactory(
+        question=q,
+        display_set=ds,
+        creator=reader,
+        answer=True,
+    )
+
+    assert (
+        not rs.has_ground_truth
+    ), "Sanity: reader study starts without ground truth"
+
+    # Copy answers
+    for usr in [reader, a_user]:
+        response = get_view_for_user(
+            client=client,
+            viewname="reader-studies:add-ground-truth-answers",
+            reverse_kwargs={"slug": rs.slug},
+            user=usr,
+        )
+        assert response.status_code == 403, "Readers and users cannot get form"
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:add-ground-truth-answers",
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+    )
+    assert response.status_code == 200, "Editor can get form"
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:add-ground-truth-answers",
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        follow=True,
+        data={"user": str(reader.pk)},
+        user=editor,
+    )
+    assert response.status_code == 200, "Editor can post form"
+
+    assert rs.has_ground_truth, "Sanity: reader study now has ground truth"
+    assert not Answer.objects.filter(
+        pk=answer.pk,
+        is_ground_truth=False,
+    ).exists(), "Source answer is consumed"
+
+    response = get_view_for_user(
+        viewname="api:reader-study-ground-truth",
+        reverse_kwargs={"pk": rs.pk, "case_pk": ds.pk},
+        user=reader,
+        client=client,
+        content_type="application/json",
+        follow=True,
+    )
+
+    assert response.status_code == 200, "Can retrieve ground truth"
+    response = response.json()
+    assert response[str(q.pk)]["answer"], "Ground truth is retrieved OK"
+
+    # Finally, attempt to delete the ground truth
+    response = get_view_for_user(
+        viewname="reader-studies:ground-truth-delete",
+        reverse_kwargs={"slug": rs.slug},
+        user=editor,
+        client=client,
+        method=client.post,
+    )
+    assert response.status_code == 200, "Can remove ground truth"
+
+    assert (
+        not rs.has_ground_truth
+    ), "Sanity: reader study no longer has ground truth"
