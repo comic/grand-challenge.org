@@ -23,7 +23,7 @@ FROM ${GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${POETRY_HASH}
 WORKDIR /app
 COPY --chown=django:django ./app/ /app/
 
-RUN python manage.py collectstatic --noinput && python manage.py compress --force
-
 ARG COMMIT_ID=unknown
 ENV COMMIT_ID=$COMMIT_ID
+
+RUN python manage.py collectstatic --noinput && python manage.py compress --force
