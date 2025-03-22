@@ -1378,6 +1378,7 @@ DISALLOWED_CHALLENGE_NAMES = {
     "cache",
     "challenge",
     "challenges",
+    "static",
     *USERNAME_DENYLIST,
     *WORKSTATIONS_RENDERING_SUBDOMAINS,
 }
