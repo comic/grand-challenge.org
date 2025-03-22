@@ -13,6 +13,7 @@ from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
+from django.utils._os import safe_join
 from django.utils.timezone import now
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from sentry_sdk.integrations.celery import CeleryIntegration
@@ -398,7 +399,7 @@ PERMISSIONS_POLICY = {
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = os.environ.get("STATIC_ROOT", "/static/")
+STATIC_ROOT = safe_join(os.environ.get("STATIC_ROOT", "/static/"), COMMIT_ID)
 
 STATIC_HOST = os.environ.get("DJANGO_STATIC_HOST", "")
 STATIC_URL = f"{STATIC_HOST}/static/"
