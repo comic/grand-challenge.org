@@ -34,10 +34,7 @@ class Command(BaseCommand):
             files_to_upload = self._get_files_to_upload()
 
             if not files_to_upload:
-                self.stdout.write(
-                    self.style.WARNING("No files found to upload")
-                )
-                return
+                raise RuntimeError("No files found to upload")
 
             self.stdout.write(
                 f"Found {len(files_to_upload)} files to upload to {bucket_name}"
@@ -126,11 +123,9 @@ class Command(BaseCommand):
 
     def _get_content_type(self, file_path: Path) -> str:
         content_types = {
-            ".br": "application/brotli",
             ".css": "text/css",
             ".eot": "application/vnd.ms-fontobject",
             ".gif": "image/gif",
-            ".gz": "application/gzip",
             ".html": "text/html",
             ".ico": "image/x-icon",
             ".jpg": "image/jpeg",

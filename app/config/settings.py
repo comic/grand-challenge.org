@@ -184,7 +184,7 @@ STORAGES = {
         "BACKEND": "grandchallenge.core.storage.PublicS3Storage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
@@ -398,11 +398,9 @@ PERMISSIONS_POLICY = {
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
-# Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = safe_join(os.environ.get("STATIC_ROOT", "/static/"), COMMIT_ID)
-
 STATIC_HOST = os.environ.get("DJANGO_STATIC_HOST", "")
-STATIC_URL = f"{STATIC_HOST}/static/"
+STATIC_URL = f"{STATIC_HOST}/{COMMIT_ID}/"
+STATIC_ROOT = safe_join(os.environ.get("STATIC_ROOT", "/static/"), COMMIT_ID)
 
 # List of finder classes that know how to find static files in
 # various locations.
@@ -470,8 +468,6 @@ TEMPLATES = [
 
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",  # Keep security at top
-    "whitenoise.middleware.WhiteNoiseMiddleware",
-    # Keep whitenoise after security and before all else
     "aws_xray_sdk.ext.django.middleware.XRayMiddleware",  # xray near the top
     "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
     "csp.contrib.rate_limiting.RateLimitedCSPMiddleware",
@@ -509,7 +505,6 @@ DJANGO_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sites",
     "django.contrib.messages",
-    "whitenoise.runserver_nostatic",  # Keep whitenoise above staticfiles
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "grandchallenge.django_admin",  # Keep above django.contrib.admin
