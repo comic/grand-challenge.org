@@ -9,6 +9,27 @@ from django.core.management.base import BaseCommand, CommandError
 
 logger = logging.getLogger(__name__)
 
+CONTENT_TYPES = {
+    ".css": "text/css",
+    ".eot": "application/vnd.ms-fontobject",
+    ".gif": "image/gif",
+    ".ico": "image/x-icon",
+    ".jpg": "image/jpeg",
+    ".js": "application/javascript",
+    ".json": "application/json",
+    ".map": "application/json",
+    ".md": "text/markdown",
+    ".mjs": "application/javascript",
+    ".png": "image/png",
+    ".rst": "text/x-rst",
+    ".scss": "text/x-scss",
+    ".svg": "image/svg+xml",
+    ".ttf": "font/ttf",
+    ".txt": "text/plain",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2",
+}
+
 
 class Command(BaseCommand):
     help = "Uploads static files to an S3 bucket"
@@ -99,9 +120,9 @@ class Command(BaseCommand):
                             Bucket=bucket_name,
                             Key=s3_key,
                             ExtraArgs={
-                                "ContentType": self._get_content_type(
-                                    file_path
-                                )
+                                "ContentType": CONTENT_TYPES[
+                                    file_path.suffix.lower()
+                                ]
                             },
                         ),
                     )
@@ -120,31 +141,3 @@ class Command(BaseCommand):
             raise CommandError(
                 f"Failed to upload {error_count} files. First error: {next(iter(errors))}"
             )
-
-    def _get_content_type(self, file_path: Path) -> str:
-        content_types = {
-            ".css": "text/css",
-            ".eot": "application/vnd.ms-fontobject",
-            ".gif": "image/gif",
-            ".html": "text/html",
-            ".ico": "image/x-icon",
-            ".jpg": "image/jpeg",
-            ".jpeg": "image/jpeg",
-            ".js": "application/javascript",
-            ".json": "application/json",
-            ".map": "application/json",
-            ".md": "text/markdown",
-            ".mjs": "application/javascript",
-            ".otf": "font/otf",
-            ".png": "image/png",
-            ".rst": "text/x-rst",
-            ".scss": "text/x-scss",
-            ".svg": "image/svg+xml",
-            ".ttf": "font/ttf",
-            ".txt": "text/plain",
-            ".woff": "font/woff",
-            ".woff2": "font/woff2",
-        }
-
-        suffix = file_path.suffix.lower()
-        return content_types.get(suffix, "application/octet-stream")

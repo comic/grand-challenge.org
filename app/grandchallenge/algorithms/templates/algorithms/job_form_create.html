@@ -14,7 +14,7 @@
     {{ block.super }}
     {{ form.media }}
     {# always load the uppy css and js because an upload widget might be added dynamically through htmx #}
-    <link href="/static/vendored/uppy/uppy.min.css" media="all" rel="stylesheet">
+    <link href="{% static 'vendored/uppy/uppy.min.css' %}" media="all" rel="stylesheet">
     <script src="{% static 'vendored/uppy/uppy.min.js' %}"></script>
     <script src="{% static 'js/user_upload.js' %}"></script>
 {% endblock %}
