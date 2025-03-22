@@ -10,6 +10,7 @@ from django.core.management.base import BaseCommand, CommandError
 logger = logging.getLogger(__name__)
 
 CONTENT_TYPES = {
+    "": "application/octet-stream",
     ".css": "text/css",
     ".eot": "application/vnd.ms-fontobject",
     ".gif": "image/gif",
