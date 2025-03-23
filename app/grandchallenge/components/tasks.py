@@ -1156,14 +1156,9 @@ def civ_value_to_file(*, civ_pk):
         if civ.value is None:
             raise RuntimeError("CIV value is None")
 
-        content_file = ContentFile(
+        civ.file = ContentFile(
             json.dumps(civ.value).encode("utf-8"),
             name=Path(civ.interface.relative_path).name,
-        )
-        civ.file.save(
-            content_file.name,
-            content_file,
-            parameters={"ContentType": civ.interface.content_type},
         )
         civ.value = None
         civ.save()

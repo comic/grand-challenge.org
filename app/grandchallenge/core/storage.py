@@ -179,7 +179,6 @@ def copy_s3_object(
         CopySource={"Bucket": src_bucket, "Key": src_key},
         Bucket=target_bucket,
         Key=target_key,
-        MetadataDirective="REPLACE",
         ExtraArgs=extra_args,
     )
 
