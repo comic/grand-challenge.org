@@ -166,7 +166,7 @@ def copy_s3_object(
         name=target_key, max_length=to_field.field.max_length
     )
 
-    extra_args = {"ContentType": mimetype}
+    extra_args = {"ContentType": mimetype, "MetadataDirective": "REPLACE"}
 
     if target_bucket == settings.PUBLIC_S3_STORAGE_KWARGS["bucket_name"]:
         extra_args["CacheControl"] = settings.PUBLIC_FILE_CACHE_CONTROL
