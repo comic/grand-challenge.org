@@ -41,6 +41,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONDecodeError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mimetypes</span><span class="w"> </span><span class="kn">import</span> <span class="n">guess_type</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span>
@@ -617,6 +618,15 @@
             <span class="k">return</span> <span class="n">forms</span><span class="o">.</span><span class="n">JSONField</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">content_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">content_type</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">guess_type</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">content_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;application/octet-stream&quot;</span>
+
+        <span class="k">return</span> <span class="n">content_type</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">allowed_file_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The allowed file types of the interface that is relevant when uploading&quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
@@ -639,11 +649,20 @@
             <span class="n">civ</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">image</span>
         <span class="k">elif</span> <span class="n">fileobj</span><span class="p">:</span>
             <span class="n">container</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">fileobj</span><span class="p">)</span>
-            <span class="n">civ</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">container</span><span class="p">)</span>
+            <span class="n">civ</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+                <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">container</span><span class="p">,</span>
+                <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;ContentType&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span><span class="p">},</span>
+            <span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">saved_in_object_store</span><span class="p">:</span>
-            <span class="n">civ</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">ContentFile</span><span class="p">(</span>
+            <span class="n">content_file</span> <span class="o">=</span> <span class="n">ContentFile</span><span class="p">(</span>
                 <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">),</span>
                 <span class="n">name</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">civ</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+                <span class="n">content_file</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">content_file</span><span class="p">,</span>
+                <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;ContentType&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">content_type</span><span class="p">},</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">civ</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
