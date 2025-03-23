@@ -208,11 +208,6 @@ AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
 AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
 AWS_S3_URL_PROTOCOL = os.environ.get("AWS_S3_URL_PROTOCOL", "https:")
-AWS_S3_OBJECT_PARAMETERS = {
-    # Note that these do not affect the Uploads bucket, which is configured separately.
-    # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_object
-    "StorageClass": os.environ.get("AWS_S3_DEFAULT_STORAGE_CLASS", "STANDARD")
-}
 AWS_CLOUDWATCH_REGION_NAME = os.environ.get("AWS_CLOUDWATCH_REGION_NAME")
 AWS_CODEBUILD_REGION_NAME = os.environ.get("AWS_CODEBUILD_REGION_NAME")
 AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
@@ -242,6 +237,8 @@ PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN = os.environ.get(
     "PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN_NAME", ""
 )
 
+PUBLIC_FILE_CACHE_CONTROL = "max-age=315360000, public, immutable"
+
 PUBLIC_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
@@ -250,6 +247,7 @@ PUBLIC_S3_STORAGE_KWARGS = {
     # Public bucket so do not use querystring_auth
     "querystring_auth": False,
     "default_acl": os.environ.get("PUBLIC_S3_DEFAULT_ACL", "public-read"),
+    "object_parameters": {"CacheControl": PUBLIC_FILE_CACHE_CONTROL},
 }
 
 UPLOADS_S3_BUCKET_NAME = os.environ.get(

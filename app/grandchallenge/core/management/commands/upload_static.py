@@ -123,7 +123,8 @@ class Command(BaseCommand):
                             ExtraArgs={
                                 "ContentType": CONTENT_TYPES[
                                     file_path.suffix.lower()
-                                ]
+                                ],
+                                "CacheControl": settings.PUBLIC_FILE_CACHE_CONTROL,
                             },
                         ),
                     )
