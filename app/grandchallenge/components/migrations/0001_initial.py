@@ -98,6 +98,7 @@ class Migration(migrations.Migration):
                         validators=[
                             grandchallenge.components.validators.validate_safe_path,
                             grandchallenge.components.validators.validate_no_slash_at_ends,
+                            grandchallenge.components.validators.validate_relative_path_not_reserved,
                             django.core.validators.RegexValidator(
                                 flags=re.RegexFlag["IGNORECASE"],
                                 inverse_match=True,

@@ -1,4 +1,4 @@
-import { renderVegaChartsObserver } from "/static/js/charts/render_charts.mjs";
+import { renderVegaChartsObserver } from "../../js/charts/render_charts.mjs";
 
 const defaultSortColumn = JSON.parse(
     document.getElementById("defaultSortColumn").textContent,

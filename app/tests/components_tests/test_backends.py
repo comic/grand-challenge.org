@@ -1,7 +1,10 @@
+import io
+import json
 import os
 from zipfile import ZipInfo
 
 import pytest
+from django.template.defaultfilters import title
 
 from grandchallenge.components.backends.docker_client import _get_cpuset_cpus
 from grandchallenge.components.backends.utils import (
@@ -9,6 +12,7 @@ from grandchallenge.components.backends.utils import (
     user_error,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
+from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.components_tests.resources.backends import InsecureDockerExecutor
 
 
@@ -129,3 +133,69 @@ def test_internal_logs_filtered():
         executor.stdout
         == "2022-05-31T09:48:03.205773000Z Greetings from stdout"
     )
+
+
+@pytest.mark.django_db
+def test_inputs_json(settings):
+    executor = InsecureDockerExecutor(
+        job_id="test-test-test",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+    )
+
+    civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2)
+
+    executor.provision(input_civs=[civ1, civ2], input_prefixes={})
+
+    with io.BytesIO() as fileobj:
+        executor._s3_client.download_fileobj(
+            Fileobj=fileobj,
+            Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            Key="/io/test/test/test/inputs.json",
+        )
+        fileobj.seek(0)
+        result = json.loads(fileobj.read().decode("utf-8"))
+
+    expected = [
+        {
+            "interface": {
+                "title": civ1.interface.title,
+                "description": civ1.interface.description,
+                "slug": civ1.interface.slug,
+                "kind": civ1.interface.get_kind_display(),
+                "pk": civ1.interface.pk,
+                "default_value": civ1.interface.default_value,
+                "super_kind": title(civ1.interface.super_kind.name),
+                "relative_path": civ1.interface.relative_path,
+                "overlay_segments": civ1.interface.overlay_segments,
+                "look_up_table": civ1.interface.look_up_table,
+            },
+            "value": civ1.value,
+            "file": None,
+            "image": civ1.image,
+            "pk": civ1.pk,
+        },
+        {
+            "interface": {
+                "title": civ2.interface.title,
+                "description": civ2.interface.description,
+                "slug": civ2.interface.slug,
+                "kind": civ2.interface.get_kind_display(),
+                "pk": civ2.interface.pk,
+                "default_value": civ2.interface.default_value,
+                "super_kind": title(civ2.interface.super_kind.name),
+                "relative_path": civ2.interface.relative_path,
+                "overlay_segments": civ2.interface.overlay_segments,
+                "look_up_table": civ2.interface.look_up_table,
+            },
+            "value": civ2.value,
+            "file": None,
+            "image": civ2.image,
+            "pk": civ2.pk,
+        },
+    ]
+
+    for e in expected:
+        assert e in result

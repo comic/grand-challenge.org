@@ -18,11 +18,6 @@ COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE = True
 
 TEMPLATES[0]["DIRS"].append(SITE_ROOT / "tests" / "templates")  # noqa 405
 
-WHITENOISE_AUTOREFRESH = True
-STORAGES["staticfiles"][  # noqa F405
-    "BACKEND"
-] = "django.contrib.staticfiles.storage.StaticFilesStorage"
-
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 FORUMS_MIN_ACCOUNT_AGE_DAYS = 0

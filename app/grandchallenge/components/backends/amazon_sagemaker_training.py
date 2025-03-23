@@ -106,14 +106,3 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
             raise TaskCancelled
         else:
             raise RuntimeError(f"Unknown status {secondary_status!r}")
-
-    def _get_invocation_json(self, *args, **kwargs):
-        # SageMaker Training Jobs expect a list
-        invocation_json = super()._get_invocation_json(*args, **kwargs)
-
-        if not isinstance(invocation_json, dict):
-            raise RuntimeError(
-                "Expected to receive a single invocation JSON object"
-            )
-
-        return [invocation_json]

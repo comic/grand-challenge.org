@@ -35,19 +35,9 @@ class InvoiceAdmin(GuardedModelAdmin):
     autocomplete_fields = ("challenge",)
     readonly_fields = ["invoice_request_text"]
 
-    def total_amount_euros(self, obj):
-        try:
-            return (
-                obj.support_costs_euros
-                + obj.compute_costs_euros
-                + obj.storage_costs_euros
-            )
-        except TypeError:
-            return
-
     def invoice_request_text(self, obj):
         required = {
-            "Amount": f"{self.total_amount_euros(obj)} Euro",
+            "Amount": f"{obj.total_amount_euros} Euro",
             "Billing address": obj.billing_address,
             "Contact person": obj.contact_name,
             "Contact email": obj.contact_email,
