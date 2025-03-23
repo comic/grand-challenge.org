@@ -23,8 +23,6 @@ dependencies = [
     "django-autocomplete-light",
     "django-storages[s3]>=1.14.2",
     "boto3>1.18.8",
-    "whitenoise",
-    "brotli",
     "djangorestframework-guardian",
     "django-extensions",
     "django-simple-history",
