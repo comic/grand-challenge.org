@@ -3,7 +3,6 @@ import logging
 import re
 from datetime import timedelta
 from json import JSONDecodeError
-from mimetypes import guess_type
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import NamedTuple
@@ -548,15 +547,6 @@ class ComponentInterface(OverlaySegmentsMixin):
             return forms.JSONField
 
     @property
-    def content_type(self):
-        content_type, _ = guess_type(Path(self.relative_path).name)
-
-        if content_type is None:
-            return "application/octet-stream"
-
-        return content_type
-
-    @property
     def allowed_file_types(self):
         """The allowed file types of the interface that is relevant when uploading"""
         try:
@@ -579,20 +569,11 @@ class ComponentInterface(OverlaySegmentsMixin):
             civ.image = image
         elif fileobj:
             container = File(fileobj)
-            civ.file.save(
-                Path(self.relative_path).name,
-                container,
-                parameters={"ContentType": self.content_type},
-            )
+            civ.file.save(Path(self.relative_path).name, container)
         elif self.saved_in_object_store:
-            content_file = ContentFile(
+            civ.file = ContentFile(
                 json.dumps(value).encode("utf-8"),
                 name=Path(self.relative_path).name,
-            )
-            civ.file.save(
-                content_file.name,
-                content_file,
-                parameters={"ContentType": self.content_type},
             )
         else:
             civ.value = value
