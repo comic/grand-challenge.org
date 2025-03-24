@@ -715,13 +715,12 @@ class GroundTruthFromAnswersForm(SaveFormInitMixin, Form):
         )
 
     def clean(self):
-        super().clean()
-
         if self._reader_study.has_ground_truth:
             raise ValidationError(
                 "Reader study already has ground truth. Ground truth cannot be updated. "
                 "Please, first delete the ground truth."
             )
+        return super().clean()
 
     def clean_user(self):
         user = self.cleaned_data["user"]
