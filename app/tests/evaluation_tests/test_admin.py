@@ -5,6 +5,7 @@ from django.contrib.sessions.middleware import SessionMiddleware
 
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.evaluation.admin import (
+    NON_EVALUATION_SOCKET_SLUGS,
     PhaseAdmin,
     PhaseAdminForm,
     SubmissionAdmin,
@@ -147,9 +148,10 @@ def test_disjoint_inputs_and_algorithm_sockets():
     assert ci4.slug not in str(form.errors)
 
 
+@pytest.mark.parametrize("slug", NON_EVALUATION_SOCKET_SLUGS)
 @pytest.mark.django_db
-def test_non_evaluation_interfaces():
-    ci = ComponentInterface.objects.get(slug="predictions-json-file")
+def test_non_evaluation_socket_slugs(slug):
+    ci, _ = ComponentInterface.objects.get_or_create(slug=slug)
 
     form = PhaseAdminForm(instance=PhaseFactory(), data={"inputs": [ci.pk]})
     assert not form.is_valid()

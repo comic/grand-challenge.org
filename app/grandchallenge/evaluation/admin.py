@@ -38,7 +38,7 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 
-NON_EVALUATION_INTERFACES = [
+NON_EVALUATION_SOCKET_SLUGS = [
     "predictions-csv-file",
     "predictions-json-file",
     "predictions-zip-file",
@@ -65,11 +65,11 @@ class PhaseAdminForm(ModelForm):
         inputs = self.cleaned_data["inputs"]
 
         if any(
-            elem in NON_EVALUATION_INTERFACES
+            elem in NON_EVALUATION_SOCKET_SLUGS
             for elem in inputs.values_list("slug", flat=True)
         ):
             raise ValidationError(
-                f'Evaluation inputs cannot be of the following types: {", ".join(NON_EVALUATION_INTERFACES)}'
+                f'Evaluation inputs cannot be of the following types: {", ".join(NON_EVALUATION_SOCKET_SLUGS)}'
             )
 
         return inputs
@@ -79,20 +79,12 @@ class PhaseAdminForm(ModelForm):
 
         if self.instance.submission_kind == SubmissionKindChoices.ALGORITHM:
             input_slugs = (
-                set(
-                    cleaned_data.get("inputs", []).values_list(
-                        "slug", flat=True
-                    )
-                )
+                set(cleaned_data.get("inputs").values_list("slug", flat=True))
                 if "inputs" in cleaned_data
                 else set()
             )
             output_slugs = (
-                set(
-                    cleaned_data.get("outputs", []).values_list(
-                        "slug", flat=True
-                    )
-                )
+                set(cleaned_data.get("outputs").values_list("slug", flat=True))
                 if "outputs" in cleaned_data
                 else set()
             )
