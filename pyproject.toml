@@ -57,8 +57,6 @@ dependencies = [
     "django-libsass",
     "django-csp",
     "psycopg[c]>3.1.8",
-    # Import issue with 7.45.3 (https://github.com/comic/grand-challenge.org/issues/3252)
-    "pycurl<7.45.3",
     "pyjwt",
     "beautifulsoup4",
     "pymdown-extensions",
@@ -97,6 +95,9 @@ dev = [
     "pytest-rerunfailures",
     "sphinx-exec-code",
 ]
+
+[tool.uv]
+no-binary-package = ["pycurl"]
 
 [tool.isort]
 profile = "black"
