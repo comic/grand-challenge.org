@@ -218,18 +218,18 @@ You can do this with</p>
 </section>
 <section id="adding-new-dependencies">
 <h2>Adding new dependencies<a class="headerlink" href="#adding-new-dependencies" title="Link to this heading">¶</a></h2>
-<p>Poetry is used to manage the dependencies of the platform.
+<p><cite>uv</cite> is used to manage the dependencies of the platform.
 To add a new dependency use</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>poetry<span class="w"> </span>add<span class="w"> </span>&lt;whatever&gt;
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>uv<span class="w"> </span>add<span class="w"> </span>&lt;whatever&gt;
 </pre></div>
 </div>
-<p>and then commit the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">poetry.lock</span></code>.
-If this is a development dependency then use the <code class="docutils literal notranslate"><span class="pre">--dev</span></code> flag, see the <code class="docutils literal notranslate"><span class="pre">poetry</span></code> documentation for more details.</p>
+<p>and then commit the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">uv.lock</span></code>.
+If this is a development dependency then use the <code class="docutils literal notranslate"><span class="pre">--dev</span></code> flag, see the <code class="docutils literal notranslate"><span class="pre">uv</span></code> documentation for more details.</p>
 <p>Versions are unpinned in the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> file, to update the resolved dependencies use</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>poetry<span class="w"> </span>update<span class="w"> </span>&lt;whatever&gt;
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>uv<span class="w"> </span>lock<span class="w"> </span>--upgrade-package<span class="w"> </span>&lt;whatever&gt;
 </pre></div>
 </div>
-<p>and commit the updated <code class="docutils literal notranslate"><span class="pre">poetry.lock</span></code>.</p>
+<p>and commit the updated <code class="docutils literal notranslate"><span class="pre">uv.lock</span></code>.</p>
 <p>The containers will need to be rebuilt after running these steps, so stop the <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">runserver</span></code> process with <code class="docutils literal notranslate"><span class="pre">CTRL+C</span></code> and restart.</p>
 </section>
 <section id="going-to-production">
