@@ -157,11 +157,11 @@ class ReaderStudyCreateForm(
         }
 
     def clean(self):
-        super().clean()
+        cleaned_data = super().clean()
 
-        if self.cleaned_data["roll_over_answers_for_n_cases"] > 0 and (
-            self.cleaned_data["allow_case_navigation"]
-            or self.cleaned_data["shuffle_hanging_list"]
+        if cleaned_data["roll_over_answers_for_n_cases"] > 0 and (
+            cleaned_data["allow_case_navigation"]
+            or cleaned_data["shuffle_hanging_list"]
         ):
             self.add_error(
                 error=ValidationError(
@@ -171,10 +171,7 @@ class ReaderStudyCreateForm(
                 field=None,
             )
 
-        if (
-            self.cleaned_data["public"]
-            and not self.cleaned_data["description"]
-        ):
+        if cleaned_data["public"] and not cleaned_data["description"]:
             self.add_error(
                 error=ValidationError(
                     "Making a reader study public requires a description",
@@ -184,8 +181,8 @@ class ReaderStudyCreateForm(
             )
 
         if (
-            self.cleaned_data["instant_verification"]
-            and not self.cleaned_data["is_educational"]
+            cleaned_data["instant_verification"]
+            and not cleaned_data["is_educational"]
         ):
             self.add_error(
                 error=ValidationError(
@@ -193,6 +190,8 @@ class ReaderStudyCreateForm(
                 ),
                 field="is_educational",
             )
+
+        return cleaned_data
 
 
 class ReaderStudyUpdateForm(
