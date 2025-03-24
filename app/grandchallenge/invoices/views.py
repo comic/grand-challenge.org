@@ -1,7 +1,10 @@
 from django.views.generic import ListView
 from guardian.mixins import LoginRequiredMixin
 
-from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    filter_by_permission,
+)
 from grandchallenge.invoices.models import Invoice
 from grandchallenge.subdomains.utils import reverse_lazy
 
@@ -30,6 +33,11 @@ class InvoiceList(
         queryset = queryset.filter(
             challenge=self.request.challenge
         ).with_overdue_status()
+        queryset = filter_by_permission(
+            queryset=queryset,
+            user=self.request.user,
+            codename="view_invoice",
+        )
         ordering = self.get_ordering()
         if ordering:
             if isinstance(ordering, str):
