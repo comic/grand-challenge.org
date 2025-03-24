@@ -725,11 +725,7 @@ class GroundTruthFromAnswersForm(SaveFormInitMixin, Form):
         user = self.cleaned_data["user"]
 
         progress = self._reader_study.get_progress_for_user(user)
-
-        if (
-            self._reader_study.answerable_questions.exists()
-            and progress["diff"] != 0
-        ):
+        if progress["questions"] != 100.0:
             raise ValidationError("User has not completed the reader study!")
 
         return user
