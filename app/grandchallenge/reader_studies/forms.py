@@ -735,7 +735,12 @@ class GroundTruthFromAnswersForm(SaveFormInitMixin, Form):
             question__in=self._reader_study.ground_truth_applicable_questions,
             creator=self.cleaned_data["user"],
         )
-        answers.update(is_ground_truth=True, score=None)
+        answers.update(is_ground_truth=True)
+
+        # Unassign all scores: some are invalid now
+        Answer.objects.filter(
+            question__reader_study=self._reader_study
+        ).update(score=None)
         bulk_assign_scores_for_reader_study.apply_async(
             kwargs={"reader_study_pk": self._reader_study.pk}
         )
