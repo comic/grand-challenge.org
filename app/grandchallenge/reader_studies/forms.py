@@ -753,7 +753,7 @@ class AnswersFromGroundTruthForm(SaveFormInitMixin, Form):
         queryset=get_user_model().objects.none(),
         required=True,
         help_text=format_html(
-            "Select a user to whom the answers will assigned"
+            "Select a user to whom the answers will assigned. "
             "Only users that currently have <strong>no answers</strong> are valid options."
         ),
         widget=Select2Widget,
@@ -764,10 +764,14 @@ class AnswersFromGroundTruthForm(SaveFormInitMixin, Form):
 
         self._reader_study = reader_study
 
+        # self.fields["user"].queryset = (
+        #     get_user_model()
+        #     .objects.filter(answer__question__reader_study=reader_study)
+        #     .distinct()
+        # )
         self.fields["user"].queryset = (
-            get_user_model()
-            .objects.filter(answer__question__reader_study=reader_study)
-            .distinct()
+            self._reader_study.editors_group.user_set.all()
+            | self._reader_study.readers_group.user_set.all()
         )
 
     def clean_user(self):

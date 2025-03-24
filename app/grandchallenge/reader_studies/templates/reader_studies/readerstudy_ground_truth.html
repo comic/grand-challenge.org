@@ -35,11 +35,20 @@
             <p class="mb-0">
                 This reader study has ground truth
             </p>
-             <a class="btn btn-danger"
-                    href="{% url 'reader-studies:ground-truth-delete' slug=object.slug %}">
-                <i class="fas fa-trash-alt fa-fw pr-1"></i>Delete Ground&nbsp;Truth
-            </a>
+            <div>
+                <a class="btn btn-danger"
+                        href="{% url 'reader-studies:ground-truth-delete' slug=object.slug %}">
+                    <i class="fas fa-trash-alt fa-fw pr-1"></i>Delete Ground&nbsp;Truth
+                </a>
+                or
+                <a class="btn btn-danger"
+                        href="{% url 'reader-studies:add-answers-from-ground-truth' slug=object.slug %}">
+                    <i class="fas fa-recycle fa-fw pr-1"></i>Assign Ground Truth as Answers
+                </a>
+            </div>
         </div>
+
+
 
         <hr>
 

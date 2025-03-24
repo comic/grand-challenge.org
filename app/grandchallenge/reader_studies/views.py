@@ -84,6 +84,7 @@ from grandchallenge.reader_studies.filters import (
     ReaderStudyFilter,
 )
 from grandchallenge.reader_studies.forms import (
+    AnswersFromGroundTruthForm,
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
     GroundTruthCSVForm,
@@ -528,6 +529,28 @@ class ReaderStudyGroundTruthFromAnswers(
     def form_valid(self, form):
         response = super().form_valid(form)
         form.create_ground_truth()
+        return response
+
+    def get_success_url(self):
+        return self.reader_study.get_absolute_url()
+
+
+class ReaderStudyAnswersFromGroundTruth(
+    BaseAddObjectToReaderStudyMixin,
+    FormView,
+):
+    form_class = AnswersFromGroundTruthForm
+    template_name = "reader_studies/answers_from_ground_truth_form.html"
+    type_to_add = "Answers"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"reader_study": self.reader_study})
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        form.convert_answers()
         return response
 
     def get_success_url(self):
