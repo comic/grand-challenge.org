@@ -1938,17 +1938,17 @@ class Answer(UUIDModel):
     def assign_permissions(self):
         # Allow the editors and creator to view this answer
         assign_perm(
-            f"view_{self._meta.model_name}",
+            "view_answer",
             self.question.reader_study.editors_group,
             self,
         )
         assign_perm(
-            f"delete_{self._meta.model_name}",
+            "delete_answer",
             self.question.reader_study.editors_group,
             self,
         )
-        assign_perm(f"view_{self._meta.model_name}", self.creator, self)
-        assign_perm(f"change_{self._meta.model_name}", self.creator, self)
+        assign_perm("view_answer", self.creator, self)
+        assign_perm("change_answer", self.creator, self)
 
 
 class AnswerUserObjectPermission(UserObjectPermissionBase):

@@ -1930,8 +1930,8 @@ def test_interactive_algorithm_field_permissions():
 def test_answers_from_ground_truth_form():
     rs = ReaderStudyFactory()
 
-    reader, editor = UserFactory.create_batch(2)
-    rs.add_editor(editor)
+    reader, other_reader = UserFactory.create_batch(2)
+    rs.add_reader(other_reader)
     rs.add_reader(reader)
 
     ds = DisplaySetFactory(reader_study=rs)
@@ -1950,24 +1950,16 @@ def test_answers_from_ground_truth_form():
     gt_a1 = AnswerFactory(
         question=q1,
         display_set=ds,
-        creator=editor,
+        creator=other_reader,
         answer=True,
         is_ground_truth=True,
     )
     gt_a2 = AnswerFactory(
         question=q2,
         display_set=ds,
-        creator=reader,  # Note: from a different user
+        creator=reader,  # Note, mixing creators here for testing purposes
         answer=True,
         is_ground_truth=True,
-    )
-
-    editor_answer = AnswerFactory(
-        question=q1,
-        display_set=ds,
-        creator=editor,
-        answer=True,
-        is_ground_truth=False,
     )
 
     reader_answer = AnswerFactory(
@@ -1978,23 +1970,33 @@ def test_answers_from_ground_truth_form():
         score=1.0,
     )
 
+    other_reader_answer = AnswerFactory(
+        question=q1,
+        display_set=ds,
+        creator=other_reader,
+        answer=True,
+        is_ground_truth=False,
+        score=1.0,
+    )
+
     assert reader_answer.score is not None, "Sanity: score is assigned"
 
     form = AnswersFromGroundTruthForm(
         reader_study=rs,
-        data={"user": str(editor.pk)},
+        data={"user": str(other_reader.pk)},
     )
-    assert not form.is_valid(), "Can't push answers with answers present"
+    assert not form.is_valid(), "Can't push answers with answer present"
 
-    editor_answer.delete()
+    other_reader_answer.delete()
 
     form = AnswersFromGroundTruthForm(
         reader_study=rs,
-        data={"user": str(editor.pk)},
+        data={"user": str(other_reader.pk)},
     )
     assert form.is_valid(), "Can now push answers"
 
     form.convert_answers()
+
     for a in gt_a1, gt_a2, reader_answer:
         a.refresh_from_db()
 
@@ -2002,9 +2004,15 @@ def test_answers_from_ground_truth_form():
         not gt_a1.is_ground_truth and not gt_a2.is_ground_truth
     ), "Answers converted"
     assert (
-        gt_a1.creator == editor and gt_a2.creator == editor
+        gt_a1.creator == other_reader and gt_a2.creator == other_reader
     ), "Creator re-assigned"
     assert reader_answer.score is None, "Scores are reset"
+
+    # Check permissions
+    for answer in [gt_a1, gt_a2]:
+        for perm in ["view_answer", "change_answer"]:
+            assert other_reader.has_perm(perm, answer)
+            assert not reader.has_perm(perm, answer)
 
 
 @pytest.mark.django_db

@@ -16,6 +16,7 @@ from crispy_forms.layout import (
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import transaction
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import (
     BooleanField,
@@ -67,6 +68,7 @@ from grandchallenge.reader_studies.models import (
     CASE_TEXT_SCHEMA,
     Answer,
     AnswerType,
+    AnswerUserObjectPermission,
     CategoricalOption,
     Question,
     ReaderStudy,
@@ -783,15 +785,41 @@ class AnswersFromGroundTruthForm(SaveFormInitMixin, Form):
         return user
 
     def convert_answers(self):
+        user = self.cleaned_data["user"]
         all_answers = Answer.objects.filter(
             question__reader_study=self._reader_study,
         )
-        ground_truth = all_answers.filter(is_ground_truth=True)
-        ground_truth.update(
-            is_ground_truth=False,
-            creator=self.cleaned_data["user"],
-        )
+
+        # Reset all scores: ground truth has been removed
         all_answers.update(score=None)
+
+        # Convert and reassign answers
+        all_answers.filter(is_ground_truth=True).update(
+            is_ground_truth=False,
+            creator=user,
+        )
+
+        # Fix permissions
+        with transaction.atomic():
+            user_answers = all_answers.filter(creator=user)
+
+            # First, remove all other user permissions
+            AnswerUserObjectPermission.objects.filter(
+                content_object__in=user_answers
+            ).exclude(user=user).delete()
+
+            # Second, assign new permissions.
+            # Note: this already handles existing permissions
+            AnswerUserObjectPermission.objects.bulk_assign_perm(
+                perm="view_answer",
+                user_or_group=user,
+                queryset=user_answers,
+            )
+            AnswerUserObjectPermission.objects.bulk_assign_perm(
+                perm="change_answer",
+                user_or_group=user,
+                queryset=user_answers,
+            )
 
 
 class GroundTruthCSVForm(SaveFormInitMixin, Form):
