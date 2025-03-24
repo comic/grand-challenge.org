@@ -67,8 +67,10 @@ class InvoiceQuerySet(models.QuerySet):
     @property
     def status_aggregates(self):
         return self.aggregate(
-            num_is_overdue=Count("is_overdue", filter=Q(is_overdue=True)),
-            num_is_due=Count("is_due", filter=Q(is_due=True)),
+            num_is_overdue=Count(
+                "is_overdue", filter=Q(is_overdue=True), distinct=True
+            ),
+            num_is_due=Count("is_due", filter=Q(is_due=True), distinct=True),
         )
 
 
