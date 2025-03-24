@@ -24,6 +24,7 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import (
+    AnswersFromGroundTruthForm,
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
     GroundTruthFromAnswersForm,
@@ -1926,8 +1927,89 @@ def test_interactive_algorithm_field_permissions():
 
 
 @pytest.mark.django_db
+def test_answers_from_ground_truth_form():
+    rs = ReaderStudyFactory()
+
+    reader, editor = UserFactory.create_batch(2)
+    rs.add_editor(editor)
+    rs.add_reader(reader)
+
+    ds = DisplaySetFactory(reader_study=rs)
+    q1 = QuestionFactory(
+        reader_study=rs,
+        question_text="q1",
+        answer_type=Question.AnswerType.BOOL,
+    )
+    q2 = QuestionFactory(
+        reader_study=rs,
+        question_text="q2",
+        answer_type=Question.AnswerType.BOOL,
+    )
+
+    # Create ground truth
+    gt_a1 = AnswerFactory(
+        question=q1,
+        display_set=ds,
+        creator=editor,
+        answer=True,
+        is_ground_truth=True,
+    )
+    gt_a2 = AnswerFactory(
+        question=q2,
+        display_set=ds,
+        creator=reader,  # Note: from a different user
+        answer=True,
+        is_ground_truth=True,
+    )
+
+    editor_answer = AnswerFactory(
+        question=q1,
+        display_set=ds,
+        creator=editor,
+        answer=True,
+        is_ground_truth=False,
+    )
+
+    reader_answer = AnswerFactory(
+        question=q1,
+        display_set=ds,
+        creator=reader,
+        answer=True,
+        score=1.0,
+    )
+
+    assert reader_answer.score is not None, "Sanity: score is assigned"
+
+    form = AnswersFromGroundTruthForm(
+        reader_study=rs,
+        data={"user": str(editor.pk)},
+    )
+    assert not form.is_valid(), "Can't push answers with answers present"
+
+    editor_answer.delete()
+
+    form = AnswersFromGroundTruthForm(
+        reader_study=rs,
+        data={"user": str(editor.pk)},
+    )
+    assert form.is_valid(), "Can now push answers"
+
+    form.convert_answers()
+    for a in gt_a1, gt_a2, reader_answer:
+        a.refresh_from_db()
+
+    assert (
+        not gt_a1.is_ground_truth and not gt_a2.is_ground_truth
+    ), "Answers converted"
+    assert (
+        gt_a1.creator == editor and gt_a2.creator == editor
+    ), "Creator re-assigned"
+    assert reader_answer.score is None, "Scores are reset"
+
+
+@pytest.mark.django_db
 @override_settings(task_eager_propagates=True, task_always_eager=True)
-def test_ground_truth_from_answers_form(settings):
+def test_ground_truth_from_answers_form():
     rs = ReaderStudyFactory()
 
     reader, editor = UserFactory.create_batch(2)

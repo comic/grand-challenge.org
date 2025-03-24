@@ -746,6 +746,54 @@ class GroundTruthFromAnswersForm(SaveFormInitMixin, Form):
         )
 
 
+class AnswersFromGroundTruthForm(SaveFormInitMixin, Form):
+    user = ModelChoiceField(
+        queryset=get_user_model().objects.none(),
+        required=True,
+        help_text=format_html(
+            "Select a user to whom the answers will assigned"
+            "Only users that currently have <strong>no answers</strong> are valid options."
+        ),
+        widget=Select2Widget,
+    )
+
+    def __init__(self, *args, reader_study, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._reader_study = reader_study
+
+        self.fields["user"].queryset = (
+            get_user_model()
+            .objects.filter(answer__question__reader_study=reader_study)
+            .distinct()
+        )
+
+    def clean_user(self):
+        user = self.cleaned_data["user"]
+
+        if Answer.objects.filter(
+            question__reader_study=self._reader_study,
+            creator=user,
+            is_ground_truth=False,
+        ).exists():
+            raise ValidationError(
+                "User already has answers. Delete these first"
+            )
+
+        return user
+
+    def convert_answers(self):
+        all_answers = Answer.objects.filter(
+            question__reader_study=self._reader_study,
+        )
+        ground_truth = all_answers.filter(is_ground_truth=True)
+        ground_truth.update(
+            is_ground_truth=False,
+            creator=self.cleaned_data["user"],
+        )
+        all_answers.update(score=None)
+
+
 class GroundTruthCSVForm(SaveFormInitMixin, Form):
     ground_truth = FileField(
         required=True,
