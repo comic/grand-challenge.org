@@ -69,7 +69,8 @@ def bulk_assign_scores_for_reader_study(*, reader_study_pk):
         ground_truth_lookup[key(answer)] = answer
 
     answers = Answer.objects.filter(
-        question__reader_study__pk=reader_study_pk
+        question__reader_study__pk=reader_study_pk,
+        is_ground_truth=False,
     ).prefetch_related("question")
 
     for answer in answers:
