@@ -816,6 +816,12 @@ class ReaderStudyGroundTruthDelete(AnswerBatchDelete):
             is_ground_truth=True,
         )
 
+    def form_valid(self, *args, **kwargs):
+        Answer.objects.filter(question__reader_study=self.reader_study).update(
+            score=None
+        )
+        return super().form_valid()
+
 
 class ReaderStudyPermissionRequestCreate(
     LoginRequiredMixin, SuccessMessageMixin, CreateView

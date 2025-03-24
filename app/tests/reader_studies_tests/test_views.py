@@ -2,6 +2,7 @@ import io
 
 import pytest
 from django.forms import JSONField
+from django.test import override_settings
 from guardian.shortcuts import assign_perm
 from requests import put
 
@@ -959,6 +960,7 @@ def test_ground_truth_view(client):
 
 
 @pytest.mark.django_db
+@override_settings(task_eager_propagates=True, task_always_eager=True)
 def test_ground_truth_from_answers_workflow(client):
     rs = ReaderStudyFactory(is_educational=True)
 
@@ -972,7 +974,13 @@ def test_ground_truth_from_answers_workflow(client):
         question_text="q1",
         answer_type=Question.AnswerType.BOOL,
     )
-    answer = AnswerFactory(
+    editor_answer = AnswerFactory(
+        question=q,
+        display_set=ds,
+        creator=editor,
+        answer=True,
+    )
+    reader_answer = AnswerFactory(
         question=q,
         display_set=ds,
         creator=reader,
@@ -982,6 +990,7 @@ def test_ground_truth_from_answers_workflow(client):
     assert (
         not rs.has_ground_truth
     ), "Sanity: reader study starts without ground truth"
+    assert reader_answer.score is None, "Sanity: score starts unassigned"
 
     # Copy answers
     for usr in [reader, a_user]:
@@ -1007,14 +1016,14 @@ def test_ground_truth_from_answers_workflow(client):
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
         follow=True,
-        data={"user": str(reader.pk)},
+        data={"user": str(editor.pk)},
         user=editor,
     )
     assert response.status_code == 200, "Editor can post form"
 
     assert rs.has_ground_truth, "Sanity: reader study now has ground truth"
     assert not Answer.objects.filter(
-        pk=answer.pk,
+        pk=editor_answer.pk,
         is_ground_truth=False,
     ).exists(), "Source answer is consumed"
 
@@ -1026,10 +1035,13 @@ def test_ground_truth_from_answers_workflow(client):
         content_type="application/json",
         follow=True,
     )
-
     assert response.status_code == 200, "Can retrieve ground truth"
+
     response = response.json()
     assert response[str(q.pk)]["answer"], "Ground truth is retrieved OK"
+
+    reader_answer.refresh_from_db()
+    assert reader_answer.score is not None, " Scores are assigned"
 
     # Finally, attempt to delete the ground truth
     response = get_view_for_user(
@@ -1040,6 +1052,9 @@ def test_ground_truth_from_answers_workflow(client):
         method=client.post,
     )
     assert response.status_code == 200, "Can remove ground truth"
+
+    reader_answer.refresh_from_db()
+    assert reader_answer.score is None, " Scores are unassigned"
 
     assert (
         not rs.has_ground_truth

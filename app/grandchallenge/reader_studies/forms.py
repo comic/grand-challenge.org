@@ -72,6 +72,9 @@ from grandchallenge.reader_studies.models import (
     ReaderStudy,
     ReaderStudyPermissionRequest,
 )
+from grandchallenge.reader_studies.tasks import (
+    bulk_assign_scores_for_reader_study,
+)
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.workstation_configs.models import OVERLAY_SEGMENTS_SCHEMA
 
@@ -711,13 +714,6 @@ class GroundTruthFromAnswersForm(SaveFormInitMixin, Form):
             .distinct()
         )
 
-    @cached_property
-    def answers(self):
-        return Answer.objects.filter(
-            question__in=self._reader_study.ground_truth_applicable_questions,
-            creator=self.cleaned_data["user"],
-        )
-
     def clean(self):
         super().clean()
 
@@ -741,7 +737,14 @@ class GroundTruthFromAnswersForm(SaveFormInitMixin, Form):
         return user
 
     def create_ground_truth(self):
-        self.answers.update(is_ground_truth=True)
+        answers = Answer.objects.filter(
+            question__in=self._reader_study.ground_truth_applicable_questions,
+            creator=self.cleaned_data["user"],
+        )
+        answers.update(is_ground_truth=True, score=None)
+        bulk_assign_scores_for_reader_study.apply_async(
+            kwargs={"reader_study_pk": self._reader_study.pk}
+        )
 
 
 class GroundTruthCSVForm(SaveFormInitMixin, Form):

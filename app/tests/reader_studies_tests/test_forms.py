@@ -7,6 +7,7 @@ from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import HiddenInput, Select
+from django.test import override_settings
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageWidget
@@ -1925,10 +1926,12 @@ def test_interactive_algorithm_field_permissions():
 
 
 @pytest.mark.django_db
-def test_ground_truth_from_answers_form():
+@override_settings(task_eager_propagates=True, task_always_eager=True)
+def test_ground_truth_from_answers_form(settings):
     rs = ReaderStudyFactory()
 
-    reader = UserFactory()
+    reader, editor = UserFactory.create_batch(2)
+    rs.add_editor(editor)
     rs.add_reader(reader)
 
     ds = DisplaySetFactory(reader_study=rs)
@@ -1943,6 +1946,11 @@ def test_ground_truth_from_answers_form():
         answer_type=Question.AnswerType.BOOL,
     )
 
+    scored_answer = AnswerFactory(
+        question=q1, display_set=ds, creator=reader, answer=True
+    )
+    assert scored_answer.score is None, "Sanity: answer starts without a score"
+
     # Not ground truth applicable
     AnswerFactory(
         question=QuestionFactory(
@@ -1951,7 +1959,7 @@ def test_ground_truth_from_answers_form():
             answer_type=Question.AnswerType.BOUNDING_BOX_2D,
         ),
         display_set=ds,
-        creator=reader,
+        creator=editor,
         answer="Foo",
     )
 
@@ -1962,7 +1970,7 @@ def test_ground_truth_from_answers_form():
     assert not form.is_valid()
 
     # Answer 1 of 2 questions
-    AnswerFactory(question=q1, display_set=ds, creator=reader, answer=True)
+    AnswerFactory(question=q1, display_set=ds, creator=editor, answer=True)
 
     form = GroundTruthFromAnswersForm(
         reader_study=rs,
@@ -1973,11 +1981,11 @@ def test_ground_truth_from_answers_form():
     ), "With only one answer the user is a valid source"
 
     # Answer 2 of 2 questions
-    AnswerFactory(question=q2, display_set=ds, creator=reader, answer=True)
+    AnswerFactory(question=q2, display_set=ds, creator=editor, answer=True)
 
     form = GroundTruthFromAnswersForm(
         reader_study=rs,
-        data={"user": str(reader.pk)},
+        data={"user": str(editor.pk)},
     )
     assert form.is_valid(), "With both answers the user is a valid source"
 
@@ -1986,11 +1994,14 @@ def test_ground_truth_from_answers_form():
     assert not Answer.objects.filter(
         question__answer_type=Question.AnswerType.BOUNDING_BOX_2D,
         is_ground_truth=True,
-    ).exists(), "Non applicable gt answer does not get copied"
+    ).exists(), "Non applicable gt answer did not get copied"
+
+    scored_answer.refresh_from_db()
+    assert scored_answer.score == 1.0, "Existing answers are scored"
 
     form = GroundTruthFromAnswersForm(
         reader_study=rs,
-        data={"user": str(reader.pk)},
+        data={"user": str(editor.pk)},
     )
     assert (
         not form.is_valid()
