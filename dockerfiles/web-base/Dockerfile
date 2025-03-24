@@ -107,7 +107,7 @@ COPY --chown=django:django uv.lock /opt/grand-challenge
 
 RUN python -m pip install -U pip \
     && python -m pip install -U uv \
-    && uv sync --no-progress --no-dev
+    && uv sync --no-progress --no-dev --no-binary-package pycurl
 
 ##################
 # TEST CONTAINER #
