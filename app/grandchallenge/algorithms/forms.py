@@ -1387,7 +1387,10 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
         if not inputs:
             raise ValidationError("You must provide at least 1 input.")
 
-        if self._base_obj.additional_inputs_field:
+        if (
+            self._base_obj.additional_inputs_field
+            or self._base_obj.additional_outputs_field
+        ):
             self.check_for_overlapping_sockets(
                 sockets=inputs,
             )
@@ -1417,7 +1420,10 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
         if not outputs:
             raise ValidationError("You must provide at least 1 output.")
 
-        if self._base_obj.additional_outputs_field:
+        if (
+            self._base_obj.additional_inputs_field
+            or self._base_obj.additional_outputs_field
+        ):
             self.check_for_overlapping_sockets(
                 sockets=outputs,
             )
