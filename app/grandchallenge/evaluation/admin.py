@@ -79,12 +79,12 @@ class PhaseAdminForm(ModelForm):
 
         if self.instance.submission_kind == SubmissionKindChoices.ALGORITHM:
             input_slugs = (
-                set(cleaned_data.get("inputs").values_list("slug", flat=True))
+                set(cleaned_data["inputs"].values_list("slug", flat=True))
                 if "inputs" in cleaned_data
                 else set()
             )
             output_slugs = (
-                set(cleaned_data.get("outputs").values_list("slug", flat=True))
+                set(cleaned_data["outputs"].values_list("slug", flat=True))
                 if "outputs" in cleaned_data
                 else set()
             )
