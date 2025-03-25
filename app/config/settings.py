@@ -633,8 +633,14 @@ ACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.AccountAdapter"
 ACCOUNT_SIGNUP_FORM_CLASS = "grandchallenge.profiles.forms.SignupForm"
 
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
+ACCOUNT_SIGNUP_FIELDS = [
+    "username*",
+    "email*",
+    "email2*",
+    "password1*",
+    "password2*",
+]
 ACCOUNT_EMAIL_NOTIFICATIONS = True
-ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
 ACCOUNT_SIGNUP_FORM_HONEYPOT_FIELD = "phone_number"

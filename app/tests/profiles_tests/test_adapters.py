@@ -66,6 +66,7 @@ SIGNUP_DATA = {
     "last_name": "test",
     "username": "test321455",
     "email": "test@example.org",
+    "email2": "test@example.org",
     "password1": "testpassword",
     "password2": "testpassword",
     "institution": "test",

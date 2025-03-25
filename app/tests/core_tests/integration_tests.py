@@ -165,6 +165,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "last_name": "test",
             "username": "test",
             "email": "test@test.com",
+            "email2": "test@test.com",
             "password1": password,
             "password2": password,
             "institution": "test",
@@ -191,7 +192,11 @@ class GrandChallengeFrameworkTestCase(TestCase):
         username = startname + "".join(
             [choice("AEOUY") + choice("QWRTPSDFGHHKLMNB") for x in range(3)]
         )
-        data = {"username": username, "email": username + "@test.com"}
+        data = {
+            "username": username,
+            "email": username + "@test.com",
+            "email2": username + "@test.com",
+        }
         return self._create_user(data)
 
     def _create_user(self, data):
