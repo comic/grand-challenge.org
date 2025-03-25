@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
@@ -52,6 +53,29 @@ def add_scores_for_display_set(*, instance_pk, ds_pk):
             display_set=display_set,
         ).get()
         add_score(instance, ground_truth.answer)
+
+
+@acks_late_2xlarge_task
+def answers_from_ground_truth(*, reader_study_pk, target_user_pk):
+    reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
+    target_user = get_user_model().objects.get(pk=target_user_pk)
+    all_answers = Answer.objects.filter(question__reader_study=reader_study)
+    if all_answers.filter(is_ground_truth=False, creator=target_user).exists():
+        raise ValidationError("User already has ansers")
+
+    ground_truth = all_answers.filter(is_ground_truth=True)
+
+    with transaction.atomic():
+        for answer in ground_truth.all():
+            # Simplify permissions and create new answers
+            answer._state.adding = True
+            answer.id = None
+            answer.pk = None
+            answer.is_ground_truth = False
+            answer.creator = target_user
+            answer.save()
+
+        ground_truth.delete()
 
 
 @acks_late_2xlarge_task

@@ -536,12 +536,16 @@ class ReaderStudyGroundTruthFromAnswers(
 
 
 class ReaderStudyAnswersFromGroundTruth(
+    SuccessMessageMixin,
     BaseAddObjectToReaderStudyMixin,
     FormView,
 ):
     form_class = AnswersFromGroundTruthForm
     template_name = "reader_studies/answers_from_ground_truth_form.html"
     type_to_add = "Answers"
+    success_message = (
+        "Conversion of Ground Truth to Answers will be done asynchronously."
+    )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

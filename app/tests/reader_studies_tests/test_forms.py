@@ -1927,6 +1927,7 @@ def test_interactive_algorithm_field_permissions():
 
 
 @pytest.mark.django_db
+@override_settings(task_eager_propagates=True, task_always_eager=True)
 def test_answers_from_ground_truth_form():
     rs = ReaderStudyFactory()
 
@@ -1946,19 +1947,19 @@ def test_answers_from_ground_truth_form():
         answer_type=Question.AnswerType.BOOL,
     )
 
-    # Create ground truth
-    gt_a1 = AnswerFactory(
+    # Create ground truth. Note thaty they differ in answer
+    AnswerFactory(
         question=q1,
         display_set=ds,
         creator=other_reader,
         answer=True,
         is_ground_truth=True,
     )
-    gt_a2 = AnswerFactory(
+    AnswerFactory(
         question=q2,
         display_set=ds,
         creator=reader,  # Note, mixing creators here for testing purposes
-        answer=True,
+        answer=False,
         is_ground_truth=True,
     )
 
@@ -1997,22 +1998,20 @@ def test_answers_from_ground_truth_form():
 
     form.convert_answers()
 
-    for a in gt_a1, gt_a2, reader_answer:
-        a.refresh_from_db()
+    reader_answer.refresh_from_db()
 
-    assert (
-        not gt_a1.is_ground_truth and not gt_a2.is_ground_truth
-    ), "Answers converted"
-    assert (
-        gt_a1.creator == other_reader and gt_a2.creator == other_reader
-    ), "Creator re-assigned"
     assert reader_answer.score is None, "Scores are reset"
 
+    a1 = Answer.objects.get(creator=other_reader, answer=True)
+    a2 = Answer.objects.get(creator=other_reader, answer=False)
+
     # Check permissions
-    for answer in [gt_a1, gt_a2]:
+    for answer in [a1, a2]:
         for perm in ["view_answer", "change_answer"]:
             assert other_reader.has_perm(perm, answer)
             assert not reader.has_perm(perm, answer)
+
+    assert not rs.has_ground_truth
 
 
 @pytest.mark.django_db
