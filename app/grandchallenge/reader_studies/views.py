@@ -87,6 +87,7 @@ from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
     GroundTruthCSVForm,
+    GroundTruthFromAnswersForm,
     QuestionForm,
     ReadersForm,
     ReaderStudyCopyForm,
@@ -511,6 +512,28 @@ class AddGroundTruthViaCSVToReaderStudy(
         return self.reader_study.get_absolute_url()
 
 
+class ReaderStudyGroundTruthFromAnswers(
+    BaseAddObjectToReaderStudyMixin,
+    FormView,
+):
+    form_class = GroundTruthFromAnswersForm
+    template_name = "reader_studies/ground_truth_from_answers_form.html"
+    type_to_add = "Ground Truth"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"reader_study": self.reader_study})
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        form.create_ground_truth()
+        return response
+
+    def get_success_url(self):
+        return self.reader_study.get_absolute_url()
+
+
 class ReaderStudyCopy(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, FormView
 ):
@@ -749,7 +772,7 @@ class AnswerBatchDelete(LoginRequiredMixin, FormView):
             },
         )
 
-    @property
+    @cached_property
     def reader_study(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
 
@@ -772,14 +795,32 @@ class AnswersRemoveForUser(AnswerBatchDelete):
         )
 
 
-class AnswersRemoveGroundTruth(AnswerBatchDelete):
-    success_message = "Ground Truth deleted"
+class ReaderStudyGroundTruthDelete(AnswerBatchDelete):
+    template_name = "reader_studies/ground_truth_confirm_delete.html"
+    success_message = "Ground truth successfully deleted"
+
+    def get_success_url(self):
+        return reverse(
+            "reader-studies:ground-truth",
+            kwargs={"slug": self.reader_study.slug},
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["object"] = self.reader_study
+        return context
 
     def get_queryset(self):
         return Answer.objects.filter(
             question__reader_study=self.reader_study,
             is_ground_truth=True,
         )
+
+    def form_valid(self, *args, **kwargs):
+        Answer.objects.filter(question__reader_study=self.reader_study).update(
+            score=None
+        )
+        return super().form_valid()
 
 
 class ReaderStudyPermissionRequestCreate(

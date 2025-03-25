@@ -14,6 +14,7 @@ from crispy_forms.layout import (
     Submit,
 )
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import (
@@ -34,7 +35,7 @@ from django.forms.models import inlineformset_factory
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import format_lazy
-from django_select2.forms import Select2MultipleWidget
+from django_select2.forms import Select2MultipleWidget, Select2Widget
 from dynamic_forms import DynamicField, DynamicFormMixin
 
 from grandchallenge.components.forms import (
@@ -70,6 +71,9 @@ from grandchallenge.reader_studies.models import (
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
+)
+from grandchallenge.reader_studies.tasks import (
+    bulk_assign_scores_for_reader_study,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.workstation_configs.models import OVERLAY_SEGMENTS_SCHEMA
@@ -153,11 +157,11 @@ class ReaderStudyCreateForm(
         }
 
     def clean(self):
-        super().clean()
+        cleaned_data = super().clean()
 
-        if self.cleaned_data["roll_over_answers_for_n_cases"] > 0 and (
-            self.cleaned_data["allow_case_navigation"]
-            or self.cleaned_data["shuffle_hanging_list"]
+        if cleaned_data["roll_over_answers_for_n_cases"] > 0 and (
+            cleaned_data["allow_case_navigation"]
+            or cleaned_data["shuffle_hanging_list"]
         ):
             self.add_error(
                 error=ValidationError(
@@ -167,10 +171,7 @@ class ReaderStudyCreateForm(
                 field=None,
             )
 
-        if (
-            self.cleaned_data["public"]
-            and not self.cleaned_data["description"]
-        ):
+        if cleaned_data["public"] and not cleaned_data["description"]:
             self.add_error(
                 error=ValidationError(
                     "Making a reader study public requires a description",
@@ -180,8 +181,8 @@ class ReaderStudyCreateForm(
             )
 
         if (
-            self.cleaned_data["instant_verification"]
-            and not self.cleaned_data["is_educational"]
+            cleaned_data["instant_verification"]
+            and not cleaned_data["is_educational"]
         ):
             self.add_error(
                 error=ValidationError(
@@ -189,6 +190,8 @@ class ReaderStudyCreateForm(
                 ),
                 field="is_educational",
             )
+
+        return cleaned_data
 
 
 class ReaderStudyUpdateForm(
@@ -686,6 +689,61 @@ class ReadersForm(UserGroupForm):
 class ReaderStudyPermissionRequestUpdateForm(PermissionRequestUpdateForm):
     class Meta(PermissionRequestUpdateForm.Meta):
         model = ReaderStudyPermissionRequest
+
+
+class GroundTruthFromAnswersForm(SaveFormInitMixin, Form):
+    user = ModelChoiceField(
+        queryset=get_user_model().objects.none(),
+        required=True,
+        help_text=format_html(
+            "Select a user whose answers will be consumed. "
+            "Only users that have <strong>completed the reader study</strong> are valid options."
+        ),
+        widget=Select2Widget,
+    )
+
+    def __init__(self, *args, reader_study, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._reader_study = reader_study
+
+        self.fields["user"].queryset = (
+            get_user_model()
+            .objects.filter(answer__question__reader_study=reader_study)
+            .distinct()
+        )
+
+    def clean(self):
+        if self._reader_study.has_ground_truth:
+            raise ValidationError(
+                "Reader study already has ground truth. Ground truth cannot be updated. "
+                "Please, first delete the ground truth."
+            )
+        return super().clean()
+
+    def clean_user(self):
+        user = self.cleaned_data["user"]
+
+        progress = self._reader_study.get_progress_for_user(user)
+        if progress["questions"] != 100.0:
+            raise ValidationError("User has not completed the reader study!")
+
+        return user
+
+    def create_ground_truth(self):
+        answers = Answer.objects.filter(
+            question__in=self._reader_study.ground_truth_applicable_questions,
+            creator=self.cleaned_data["user"],
+        )
+        answers.update(is_ground_truth=True)
+
+        # Unassign all scores: some are invalid now
+        Answer.objects.filter(
+            question__reader_study=self._reader_study
+        ).update(score=None)
+        bulk_assign_scores_for_reader_study.apply_async(
+            kwargs={"reader_study_pk": self._reader_study.pk}
+        )
 
 
 class GroundTruthCSVForm(SaveFormInitMixin, Form):
