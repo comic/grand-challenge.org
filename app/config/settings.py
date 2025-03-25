@@ -62,13 +62,16 @@ SITE_ROOT = Path(__file__).resolve(strict=True).parent.parent
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "grandchallenge.core.db.postgres_iam",
         "NAME": os.environ.get("POSTGRES_DB", "grandchallenge"),
         "USER": os.environ.get("POSTGRES_USER", "grandchallenge"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secretpassword"),
         "HOST": os.environ.get("POSTGRES_HOST", "postgres"),
-        "PORT": os.environ.get("POSTGRES_PORT", ""),
+        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
         "OPTIONS": {
+            "use_iam_auth": strtobool(
+                os.environ.get("POSTGRES_USE_IAM_AUTH", "false")
+            ),
             "sslmode": os.environ.get("POSTGRES_SSL_MODE", "prefer"),
             "sslrootcert": os.path.join(
                 SITE_ROOT, "config", "certs", "global-bundle.pem"
