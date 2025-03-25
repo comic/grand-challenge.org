@@ -15,9 +15,6 @@ $pagination-bg: $blue !default;
 $pagination-hover-bg: darken($blue, 15%) !default;
 $pagination-disabled-bg: lighten($blue, 15%) !default;
 
-// Override flatly nav-link padding for challenge topbar
-$nav-link-padding-x: 1.5rem !default;
-
 @import "../vendored/bootswatch/dist/flatly/variables";
 @import "../vendored/bootstrap/scss/bootstrap";
 @import "../vendored/bootswatch/dist/flatly/bootswatch";
@@ -68,4 +65,8 @@ div.codehilite {
 
 .docpage :is(h1, h2, h3, h4, h5, h6) {
     font-weight: bold;
+}
+
+.challenge-topbar .nav-link {
+    padding: $nav-link-padding-y 1.5rem;
 }
