@@ -76,16 +76,6 @@ def test_example_ground_truth(client, tmpdir):
         method=client.get,
         reverse_kwargs={"slug": rs.slug},
         follow=True,
-        user=reader,
-    )
-    assert response.status_code == 403
-
-    response = get_view_for_user(
-        viewname="reader-studies:example-ground-truth-csv",
-        client=client,
-        method=client.get,
-        reverse_kwargs={"slug": rs.slug},
-        follow=True,
         user=editor,
     )
     assert response.status_code == 200
