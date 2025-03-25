@@ -933,7 +933,16 @@ def test_display_set_upload_corrupt_image(
 
 
 @pytest.mark.django_db
-def test_ground_truth_view(client):
+@pytest.mark.parametrize(
+    "viewname",
+    [
+        "reader-studies:ground-truth",
+        "reader-studies:add-ground-truth-csv",
+        "reader-studies:add-ground-truth-answers",
+        "reader-studies:add-answers-from-ground-truth",
+    ],
+)
+def test_ground_truth_views(client, viewname):
     rs = ReaderStudyFactory()
 
     editor, reader, a_user = UserFactory.create_batch(3)
@@ -943,20 +952,20 @@ def test_ground_truth_view(client):
     for usr in [reader, a_user]:
         response = get_view_for_user(
             client=client,
-            viewname="reader-studies:ground-truth",
+            viewname=viewname,
             reverse_kwargs={"slug": rs.slug},
             user=usr,
         )
-        assert response.status_code == 403
+        assert response.status_code == 403, "Non editor cannot get view"
 
     response = get_view_for_user(
         client=client,
-        viewname="reader-studies:ground-truth",
+        viewname=viewname,
         reverse_kwargs={"slug": rs.slug},
         user=editor,
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 200, "Editors can get view"
 
 
 @pytest.mark.django_db
