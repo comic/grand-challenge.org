@@ -5,9 +5,8 @@ authors = [
 license = {text = "Apache-2.0"}
 requires-python = "<3.13,>=3.11"
 dependencies = [
-    # Pin kombu and celery due to performance issues, see https://github.com/celery/kombu/issues/2258
-    "celery[redis,sqs]!=5.0.6,!=5.3.0,!=5.5",
-    "kombu!=5.3.0,!=5.5",
+    "celery[redis,sqs]!=5.0.6,!=5.3.0,!=5.5.*",
+    "kombu!=5.3.0,!=5.5.*",
     "django<4.3",
     "django-countries",
     "django-crispy-forms",
