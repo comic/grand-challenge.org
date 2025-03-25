@@ -114,6 +114,7 @@ class SignupForm(UserProfileForm):
                 "first_name",
                 "last_name",
                 "email",
+                "email2",
                 "username",
                 "accept_terms",
                 "password1",
