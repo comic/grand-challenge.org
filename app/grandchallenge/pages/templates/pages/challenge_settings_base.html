@@ -35,6 +35,22 @@
                       </a>
               </li>
               <li class="nav-item">
+                  <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'invoices:list' %} active {% endif %}"
+                    href="{% url 'invoices:list' challenge_short_name=challenge.short_name %}">
+                      <i class="fas fa-file-invoice-dollar fa-fw"></i>&nbsp;Invoices&nbsp;
+                      {% if invoice_aggregates.num_is_overdue %}
+                            <span class="badge badge-pill badge-danger align-middle" title="Invoices overdue">
+                                {{ invoice_aggregates.num_is_overdue }}
+                            </span>
+                      {% endif %}
+                      {% if invoice_aggregates.num_is_due %}
+                            <span class="badge badge-pill badge-warning align-middle" title="Invoices due">
+                                {{ invoice_aggregates.num_is_due }}
+                            </span>
+                      {% endif %}
+                      </a>
+              </li>
+              <li class="nav-item">
                 <a class="nav-link px-4 py-1 mb-1 {% if request.resolver_match.view_name == 'participants:registration-question-list' or request.resolver_match.view_name == 'participants:registration-question-create' or request.resolver_match.view_name == 'participants:registration-question-delete'  %}active{% endif %}"
                   href="{% url 'participants:registration-question-list' challenge_short_name=challenge.short_name %}">
                     <i class="fas fa-question-circle fa-fw"></i>&nbsp;Registration Questions </a>
