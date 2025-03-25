@@ -13,6 +13,24 @@ from grandchallenge.invoices.models import (
 )
 
 
+class OverdueListFilter(admin.SimpleListFilter):
+    title = "Due status"
+    parameter_name = "due_status"
+
+    def lookups(self, *_, **__):
+        return [
+            ("due", "Due"),
+            ("overdue", "Overdue"),
+        ]
+
+    def queryset(self, request, queryset):
+        if self.value() == "due":
+            queryset = queryset.filter(is_due=True)
+        elif self.value() == "overdue":
+            queryset = queryset.filter(is_overdue=True)
+        return queryset
+
+
 @admin.register(Invoice)
 class InvoiceAdmin(GuardedModelAdmin):
     list_display = (
@@ -29,6 +47,7 @@ class InvoiceAdmin(GuardedModelAdmin):
         "internal_comments",
     )
     list_filter = (
+        OverdueListFilter,
         "payment_status",
         "payment_type",
     )
@@ -69,6 +88,9 @@ class InvoiceAdmin(GuardedModelAdmin):
         invoice_request_details += "</div>"
 
         return md2html(warning_text + invoice_request_details)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).with_overdue_status()
 
 
 admin.site.register(InvoiceUserObjectPermission, UserObjectPermissionAdmin)
