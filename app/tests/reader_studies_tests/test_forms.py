@@ -2016,7 +2016,7 @@ def test_answers_from_ground_truth_form():
 
 @pytest.mark.django_db
 @override_settings(task_eager_propagates=True, task_always_eager=True)
-def test_ground_truth_from_answers_form():
+def test_ground_truth_from_answers_form(django_capture_on_commit_callbacks):
     rs = ReaderStudyFactory()
 
     reader, editor = UserFactory.create_batch(2)
@@ -2078,7 +2078,8 @@ def test_ground_truth_from_answers_form():
     )
     assert form.is_valid(), "With both answers the user is a valid source"
 
-    form.create_ground_truth()
+    with django_capture_on_commit_callbacks(execute=True):
+        form.create_ground_truth()
 
     assert not Answer.objects.filter(
         question__answer_type=Question.AnswerType.BOUNDING_BOX_2D,

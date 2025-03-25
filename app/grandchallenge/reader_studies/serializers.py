@@ -1,5 +1,4 @@
 from django.core.exceptions import ValidationError
-from django.db.transaction import on_commit
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import (
     BooleanField,
@@ -33,7 +32,6 @@ from grandchallenge.reader_studies.models import (
     Question,
     ReaderStudy,
 )
-from grandchallenge.reader_studies.tasks import add_scores_for_display_set
 from grandchallenge.workstation_configs.serializers import (
     LookUpTableSerializer,
 )
@@ -256,23 +254,6 @@ class AnswerSerializer(HyperlinkedModelSerializer):
             display_set=display_set,
             instance=self.instance,
         )
-
-        if self.instance and (
-            self.instance.is_ground_truth
-            or Answer.objects.filter(
-                is_ground_truth=True,
-                question=self.instance.question,
-                display_set=display_set,
-            ).exists()
-        ):
-            on_commit(
-                lambda: add_scores_for_display_set.apply_async(
-                    kwargs={
-                        "instance_pk": str(self.instance.pk),
-                        "ds_pk": display_set.pk,
-                    }
-                )
-            )
 
         return (
             attrs

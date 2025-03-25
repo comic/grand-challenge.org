@@ -961,7 +961,9 @@ def test_ground_truth_view(client):
 
 @pytest.mark.django_db
 @override_settings(task_eager_propagates=True, task_always_eager=True)
-def test_ground_truth_from_answers_workflow(client):
+def test_ground_truth_from_answers_workflow(
+    client, django_capture_on_commit_callbacks
+):
     rs = ReaderStudyFactory(is_educational=True)
 
     editor, reader, a_user = UserFactory.create_batch(3)
@@ -1010,15 +1012,16 @@ def test_ground_truth_from_answers_workflow(client):
     )
     assert response.status_code == 200, "Editor can get form"
 
-    response = get_view_for_user(
-        client=client,
-        viewname="reader-studies:add-ground-truth-answers",
-        method=client.post,
-        reverse_kwargs={"slug": rs.slug},
-        follow=True,
-        data={"user": str(editor.pk)},
-        user=editor,
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            client=client,
+            viewname="reader-studies:add-ground-truth-answers",
+            method=client.post,
+            reverse_kwargs={"slug": rs.slug},
+            follow=True,
+            data={"user": str(editor.pk)},
+            user=editor,
+        )
     assert response.status_code == 200, "Editor can post form"
 
     assert rs.has_ground_truth, "Sanity: reader study now has ground truth"

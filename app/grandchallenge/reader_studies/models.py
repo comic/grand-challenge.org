@@ -1928,8 +1928,21 @@ class Answer(UUIDModel):
         self.score = self.question.calculate_score(self.answer, ground_truth)
         return self.score
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, calculate_score=True, **kwargs):
         adding = self._state.adding
+
+        if not self.is_ground_truth and calculate_score:
+            try:
+                ground_truth = Answer.objects.get(
+                    question=self.question,
+                    is_ground_truth=True,
+                    display_set=self.display_set,
+                )
+            except Answer.DoesNotExist:
+                pass  # Nothing to do here
+            else:
+                self.calculate_score(ground_truth=ground_truth.answer)
+
         super().save(*args, **kwargs)
 
         if adding:

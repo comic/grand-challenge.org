@@ -7,10 +7,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
+from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
 )
@@ -22,12 +19,6 @@ from grandchallenge.reader_studies.models import (
 
 
 @transaction.atomic
-def add_score(obj, answer):
-    obj.calculate_score(answer)
-    obj.save(update_fields=["score"])
-
-
-@transaction.atomic
 def add_image(obj, image):
     obj.answer_image = image
     obj.save()
@@ -35,33 +26,14 @@ def add_image(obj, image):
     image.update_viewer_groups_permissions()
 
 
-@acks_late_micro_short_task
-def add_scores_for_display_set(*, instance_pk, ds_pk):
-    instance = Answer.objects.get(pk=instance_pk)
-    display_set = DisplaySet.objects.get(pk=ds_pk)
-    if instance.is_ground_truth:
-        for answer in Answer.objects.filter(
-            question=instance.question,
-            is_ground_truth=False,
-            display_set=display_set,
-        ):
-            add_score(answer, instance.answer)
-    else:
-        ground_truth = Answer.objects.filter(
-            question=instance.question,
-            is_ground_truth=True,
-            display_set=display_set,
-        ).get()
-        add_score(instance, ground_truth.answer)
-
-
 @acks_late_2xlarge_task
 def answers_from_ground_truth(*, reader_study_pk, target_user_pk):
     reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
     target_user = get_user_model().objects.get(pk=target_user_pk)
+
     all_answers = Answer.objects.filter(question__reader_study=reader_study)
     if all_answers.filter(is_ground_truth=False, creator=target_user).exists():
-        raise ValidationError("User already has ansers")
+        raise ValueError("User already has answers")
 
     ground_truth = all_answers.filter(is_ground_truth=True)
 
@@ -73,9 +45,10 @@ def answers_from_ground_truth(*, reader_study_pk, target_user_pk):
             answer.pk = None
             answer.is_ground_truth = False
             answer.creator = target_user
-            answer.save()
+            answer.save(calculate_score=False)
 
         ground_truth.delete()
+        all_answers.update(score=None)
 
 
 @acks_late_2xlarge_task

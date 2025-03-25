@@ -17,6 +17,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import BLANK_CHOICE_DASH
+from django.db.transaction import on_commit
 from django.forms import (
     BooleanField,
     CharField,
@@ -742,8 +743,11 @@ class GroundTruthFromAnswersForm(SaveFormInitMixin, Form):
         Answer.objects.filter(
             question__reader_study=self._reader_study
         ).update(score=None)
-        bulk_assign_scores_for_reader_study.apply_async(
-            kwargs={"reader_study_pk": self._reader_study.pk}
+
+        on_commit(
+            bulk_assign_scores_for_reader_study.signature(
+                kwargs={"reader_study_pk": self._reader_study.pk}
+            ).apply_async
         )
 
 
@@ -783,11 +787,6 @@ class AnswersFromGroundTruthForm(SaveFormInitMixin, Form):
         return user
 
     def convert_answers(self):
-        # Reset all scores: ground truth will be removed
-        Answer.objects.filter(
-            question__reader_study=self._reader_study
-        ).update(score=None)
-
         answers_from_ground_truth.apply_async(
             kwargs={
                 "reader_study_pk": self._reader_study.pk,
@@ -898,8 +897,18 @@ class GroundTruthCSVForm(SaveFormInitMixin, Form):
                 self._answers.append(answer_obj)
 
     def save_answers(self):
+        Answer.objects.filter(
+            question__reader_study=self._reader_study
+        ).update(score=None)
+
         for answer in self._answers:
             answer.save()
+
+        on_commit(
+            bulk_assign_scores_for_reader_study.signature(
+                kwargs={"reader_study_pk": self._reader_study.pk}
+            ).apply_async
+        )
 
 
 class DisplaySetFormMixin:

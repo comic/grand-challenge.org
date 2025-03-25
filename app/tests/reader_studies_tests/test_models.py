@@ -1196,3 +1196,40 @@ def test_ground_truth_complete():
 
     AnswerFactory(display_set=ds2, question=q2, is_ground_truth=True)
     assert rs.ground_truth_is_complete, "All GT answers are given"
+
+
+@pytest.mark.django_db
+def test_answer_score_calculation():
+    rs = ReaderStudyFactory()
+
+    ds = DisplaySetFactory(reader_study=rs)
+    q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
+
+    reader = UserFactory()
+    rs.add_reader(reader)
+
+    # Ground truth
+    gt = AnswerFactory(
+        question=q,
+        creator=reader,
+        answer=True,
+        display_set=ds,
+        is_ground_truth=True,
+    )
+
+    assert gt.score is None, "Ground truth does not get a score"
+
+    answer = AnswerFactory(
+        question=q,
+        creator=reader,
+        answer=True,
+        display_set=ds,
+    )
+
+    assert answer.score == 1.0, "Creating an answer calculates a score"
+
+    answer.answer = False
+    answer.save()
+
+    answer.refresh_from_db()  # Sanity
+    assert answer.score == 0.0, "Udpate an answer re-calculates a score"
