@@ -67,14 +67,18 @@ class UserProfileForm(forms.ModelForm):
         return url
 
     def clean(self):
-        first_name = self.cleaned_data.get("first_name", "")
-        last_name = self.cleaned_data.get("last_name", "")
+        cleaned_data = super().clean()
+
+        first_name = cleaned_data.get("first_name", "")
+        last_name = cleaned_data.get("last_name", "")
 
         c = slice(-2, None)
         if first_name[c] == first_name[c].upper() == last_name[c]:
             # Hack around a scripts creating
             # accounts with names fooAB barAB etc.
             raise ValidationError("Account details invalid")
+
+        return cleaned_data
 
 
 class SignupForm(UserProfileForm):
