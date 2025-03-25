@@ -1232,4 +1232,4 @@ def test_answer_score_calculation():
     answer.save()
 
     answer.refresh_from_db()  # Sanity
-    assert answer.score == 0.0, "Udpate an answer re-calculates a score"
+    assert answer.score == 0.0, "Updating an answer re-calculates a score"
