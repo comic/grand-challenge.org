@@ -1935,7 +1935,9 @@ def test_answers_from_ground_truth_form():
     rs.add_reader(other_reader)
     rs.add_reader(reader)
 
-    ds = DisplaySetFactory(reader_study=rs)
+    ds1 = DisplaySetFactory(reader_study=rs)
+    ds2 = DisplaySetFactory(reader_study=rs)
+
     q1 = QuestionFactory(
         reader_study=rs,
         question_text="q1",
@@ -1950,14 +1952,14 @@ def test_answers_from_ground_truth_form():
     # Create ground truth. Note thaty they differ in answer
     AnswerFactory(
         question=q1,
-        display_set=ds,
+        display_set=ds1,
         creator=other_reader,
-        answer=True,
+        answer=False,
         is_ground_truth=True,
     )
     AnswerFactory(
         question=q2,
-        display_set=ds,
+        display_set=ds1,
         creator=reader,  # Note, mixing creators here for testing purposes
         answer=False,
         is_ground_truth=True,
@@ -1965,7 +1967,7 @@ def test_answers_from_ground_truth_form():
 
     reader_answer = AnswerFactory(
         question=q1,
-        display_set=ds,
+        display_set=ds2,
         creator=reader,
         answer=True,
         score=1.0,
@@ -1973,9 +1975,9 @@ def test_answers_from_ground_truth_form():
 
     other_reader_answer = AnswerFactory(
         question=q1,
-        display_set=ds,
+        display_set=ds1,
         creator=other_reader,
-        answer=True,
+        answer=False,
         is_ground_truth=False,
         score=1.0,
     )
@@ -2002,11 +2004,18 @@ def test_answers_from_ground_truth_form():
 
     assert reader_answer.score is None, "Scores are reset"
 
-    a1 = Answer.objects.get(creator=other_reader, answer=True)
-    a2 = Answer.objects.get(creator=other_reader, answer=False)
+    a1 = Answer.objects.get(
+        display_set=ds1,
+        question=q1,
+    )
+    a2 = Answer.objects.get(
+        display_set=ds1,
+        question=q2,
+    )
 
     # Check permissions
     for answer in [a1, a2]:
+        assert answer.creator == other_reader, "Correct creator"
         for perm in ["view_answer", "change_answer"]:
             assert other_reader.has_perm(perm, answer)
             assert not reader.has_perm(perm, answer)
