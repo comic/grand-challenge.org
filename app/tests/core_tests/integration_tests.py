@@ -165,6 +165,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "last_name": "test",
             "username": "test",
             "email": "test@test.com",
+            "email2": "test@test.com",
             "password1": password,
             "password2": password,
             "institution": "test",
