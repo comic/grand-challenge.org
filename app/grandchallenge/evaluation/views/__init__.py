@@ -517,7 +517,10 @@ class EvaluationList(
                 "submission__phase__challenge",
                 "submission__algorithm_image__algorithm",
             )
-            .prefetch_related("submission__phase__optional_hanging_protocols")
+            .prefetch_related(
+                "submission__phase__optional_hanging_protocols",
+                "inputs__interface",
+            )
         )
 
         if self.request.challenge.is_admin(self.request.user):
@@ -740,6 +743,9 @@ class LeaderboardDetail(
             Column(title="Created", sort_field="submission__created")
         )
 
+        if self.phase.inputs:
+            columns.append(Column(title="Inputs"))
+
         if self.phase.scoring_method_choice == self.phase.MEAN:
             columns.append(Column(title="Mean Position", sort_field="rank"))
         elif self.phase.scoring_method_choice == self.phase.MEDIAN:
@@ -830,9 +836,7 @@ class LeaderboardDetail(
                 "submission__phase__challenge",
                 "submission__algorithm_image__algorithm",
             )
-            .prefetch_related(
-                "outputs__interface",
-            )
+            .prefetch_related("outputs__interface", "inputs__interface")
         )
         return filter_by_permission(
             queryset=queryset,

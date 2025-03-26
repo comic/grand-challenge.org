@@ -4,6 +4,7 @@
 {% load humanize %}
 {% load remove_whitespace %}
 {% load url %}
+{% load civ %}
 
 {{ object.rank|ordinal }}
 <split></split>
@@ -27,6 +28,19 @@
 {% endif %}
 
 {{ object.submission.created|date:"j N Y" }}
+<split></split>
+
+{% if object.submission.phase.inputs %}
+    <td>
+        {% for input in object.additional_inputs.all|sort_civs %}
+            <dd>
+                {% include 'components/partials/civ.html' with object=input display_inline=True only %}
+            </dd>
+        {% empty %}
+            <span class="text-muted">Empty</span>
+        {% endfor %}
+    </td>
+{% endif %}
 <split></split>
 
 {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
