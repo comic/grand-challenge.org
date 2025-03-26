@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db import models
 from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.core.admin import (
@@ -13,20 +14,22 @@ from grandchallenge.invoices.models import (
 )
 
 
+class DueStatusChoices(models.TextChoices):
+    DUE = "DUE", "Due"
+    OVERDUE = "OVERDUE", "Overdue"
+
+
 class OverdueListFilter(admin.SimpleListFilter):
     title = "Due status"
     parameter_name = "due_status"
 
     def lookups(self, *_, **__):
-        return [
-            ("due", "Due"),
-            ("overdue", "Overdue"),
-        ]
+        return DueStatusChoices.choices
 
     def queryset(self, request, queryset):
-        if self.value() == "due":
+        if self.value() == DueStatusChoices.DUE:
             queryset = queryset.filter(is_due=True)
-        elif self.value() == "overdue":
+        elif self.value() == DueStatusChoices.OVERDUE:
             queryset = queryset.filter(is_overdue=True)
         return queryset
 
