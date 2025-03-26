@@ -81,3 +81,39 @@ def test_keyword_arguments():
     assert test_func(x=5) == 1
     assert test_func(x=6) == 2
     assert call_count == 2
+
+
+def test_cache_size_limit():
+    call_count = 0
+
+    @thread_local_cache(ttl=timedelta(hours=1), max_size=2)
+    def mock_expensive_function(x):
+        nonlocal call_count
+        call_count += 1
+        return x * 2
+
+    results = []
+    for i in range(5):
+        results.append(mock_expensive_function(i))
+
+    assert results == [0, 2, 4, 6, 8]
+    assert call_count == 5
+
+    call_count = 0
+
+    # Last two should be in cache
+    assert mock_expensive_function(4) == 8
+    assert mock_expensive_function(3) == 6
+    assert call_count == 0
+
+    # But now the oldest gets wiped
+    assert mock_expensive_function(2) == 4
+    assert call_count == 1
+
+    # Old one should still be there
+    assert mock_expensive_function(4) == 8
+    assert call_count == 1
+
+    # Going back adds another call
+    assert mock_expensive_function(3) == 6
+    assert call_count == 2

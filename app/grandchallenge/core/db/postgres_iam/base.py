@@ -6,7 +6,7 @@ from django.db.backends.postgresql import base
 from django.utils import timezone
 
 
-def thread_local_cache(ttl):
+def thread_local_cache(ttl, max_size=128):
     def decorator(func):
         function_cache = {}
 
@@ -22,6 +22,13 @@ def thread_local_cache(ttl):
 
             result = func(*args, **kwargs)
             function_cache[key] = (result, current_time)
+
+            if len(function_cache) > max_size:
+                oldest_key = min(
+                    function_cache, key=lambda k: function_cache[k][1]
+                )
+                del function_cache[oldest_key]
+
             return result
 
         return wrapper
