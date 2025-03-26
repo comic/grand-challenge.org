@@ -136,7 +136,7 @@ class PhaseAdmin(admin.ModelAdmin):
         "challenge__short_name",
     )
     autocomplete_fields = (
-        "additional_evaluation_inputs",
+        "inputs",
         "outputs",
         "archive",
     )
