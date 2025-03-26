@@ -1,12 +1,9 @@
 import functools
-import logging
 from datetime import timedelta
 
 import boto3
 from django.db.backends.postgresql import base
 from django.utils import timezone
-
-logger = logging.getLogger(__name__)
 
 
 def thread_local_cache(ttl):
