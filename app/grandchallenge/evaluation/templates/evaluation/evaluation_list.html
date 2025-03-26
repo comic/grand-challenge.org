@@ -41,7 +41,7 @@
                 {% if "change_challenge" in challenge_perms %}
                     <th>User</th>
                 {% endif %}
-                {% if phase.inputs %}
+                {% if phase.additional_evaluation_inputs %}
                     <th>Inputs</th>
                 {% endif %}
                 <th>Status</th>
@@ -74,7 +74,7 @@
 
                         </td>
                     {% endif %}
-                    {% if evaluation.submission.phase.inputs %}
+                    {% if evaluation.submission.phase.additional_evaluation_inputs %}
                         <td>
                         {% for input in evaluation.additional_inputs.all|sort_civs %}
                             <dd>

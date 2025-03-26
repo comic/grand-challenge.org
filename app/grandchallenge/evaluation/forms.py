@@ -448,7 +448,9 @@ class SubmissionForm(
             if not self._phase.active_image:
                 self.fields["user_upload"].disabled = True
 
-        self.init_additional_inputs(inputs=self._phase.inputs.all())
+        self.init_additional_inputs(
+            inputs=self._phase.additional_evaluation_inputs.all()
+        )
 
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))
@@ -719,7 +721,9 @@ class EvaluationForm(AdditionalInputsMixin, forms.Form):
         )
         self.fields["submission"].initial = submission
 
-        self.init_additional_inputs(inputs=submission.phase.inputs.all())
+        self.init_additional_inputs(
+            inputs=submission.phase.additional_evaluation_inputs.all()
+        )
 
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Save"))

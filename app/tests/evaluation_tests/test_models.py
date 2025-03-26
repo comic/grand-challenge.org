@@ -1,4 +1,5 @@
 from collections import namedtuple
+from contextlib import nullcontext
 from datetime import timedelta
 from typing import NamedTuple
 
@@ -8,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.timezone import now
 
+from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
 from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.models import (
@@ -21,6 +23,7 @@ from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
     Phase,
+    PhaseAdditionalEvaluationInput,
     get_archive_items_for_interfaces,
     get_valid_jobs_for_interfaces_and_archive_items,
 )
@@ -283,7 +286,7 @@ def test_create_evaluation_uniqueness_checks(
     assert Evaluation.objects.count() == 6
 
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
-    sub.phase.inputs.set([ci])
+    sub.phase.additional_evaluation_inputs.set([ci])
     ComponentInterfaceValueFactory(interface=ci, value="foo")
     with django_capture_on_commit_callbacks(execute=True):
         sub.create_evaluation(
@@ -2029,7 +2032,7 @@ def test_get_valid_jobs_for_interfaces_and_archive_items(
 def test_additional_inputs_complete():
     phase = PhaseFactory()
     ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
-    phase.inputs.set([ci1, ci2])
+    phase.additional_evaluation_inputs.set([ci1, ci2])
 
     civ1 = ComponentInterfaceValueFactory(interface=ci1)
     civ2 = ComponentInterfaceValueFactory(interface=ci2)
@@ -2077,7 +2080,7 @@ def phase_with_image_and_gt_and_two_inputs():
     ci1, ci2 = ComponentInterfaceFactory.create_batch(
         2, kind=ComponentInterface.Kind.STRING
     )
-    phase.inputs.set([ci1, ci2])
+    phase.additional_evaluation_inputs.set([ci1, ci2])
 
     civs = [
         ComponentInterfaceValueFactory(interface=ci1, value="foo"),
@@ -2380,7 +2383,7 @@ class TestGetEvaluationsWithSameInputs:
     ):
         phase = phase_with_image_and_gt_and_two_inputs.phase
         # remove inputs
-        phase.inputs.clear()
+        phase.additional_evaluation_inputs.clear()
 
         civs = phase_with_image_and_gt_and_two_inputs.civs
         submission = SubmissionFactory(
@@ -2425,3 +2428,44 @@ class TestGetEvaluationsWithSameInputs:
         assert len(evals) == 2
         assert eval in evals
         assert eval2 in evals
+
+
+@pytest.mark.django_db
+def test_disjoint_inputs_and_algorithm_sockets():
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+    interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    phase.algorithm_interfaces.set([interface])
+
+    for ci in [ci1, ci2]:
+        instance = PhaseAdditionalEvaluationInput(interface=ci, phase=phase)
+        with pytest.raises(ValidationError) as e:
+            instance.clean()
+        assert (
+            f"{ci.slug} cannot be defined as evaluation inputs or "
+            "outputs because it is already defined as algorithm input or "
+            "output for this phase" in str(e)
+        )
+
+    for ci in [ci3, ci4]:
+        instance = PhaseAdditionalEvaluationInput(
+            interface=ci, phase=PhaseFactory()
+        )
+        with nullcontext():
+            instance.clean()
+
+
+@pytest.mark.parametrize("slug", RESERVED_SOCKET_SLUGS)
+@pytest.mark.django_db
+def test_non_evaluation_socket_slugs(slug):
+    ci, _ = ComponentInterface.objects.get_or_create(slug=slug)
+
+    instance = PhaseAdditionalEvaluationInput(
+        interface=ci, phase=PhaseFactory()
+    )
+    with pytest.raises(ValidationError) as e:
+        instance.clean()
+    assert (
+        "Evaluation inputs cannot be of the following types: predictions-csv-file, predictions-json-file, predictions-zip-file, metrics-json-file, results-json-file"
+        in str(e)
+    )
