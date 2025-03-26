@@ -194,8 +194,8 @@ class JobCreateForm(AdditionalInputsMixin, Form):
         return cleaned_data
 
 
-# Exclude interfaces that are not aimed at algorithms from user selection
-NON_ALGORITHM_INTERFACES = [
+# Exclude sockets that are not aimed at algorithms or evaluations from user selection
+RESERVED_SOCKET_SLUGS = [
     "predictions-csv-file",
     "predictions-json-file",
     "predictions-zip-file",
@@ -1359,13 +1359,13 @@ class AlgorithmModelVersionControlForm(Form):
 class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
-            slug__in=NON_ALGORITHM_INTERFACES
+            slug__in=RESERVED_SOCKET_SLUGS
         ),
         widget=Select2MultipleWidget,
     )
     outputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
-            slug__in=NON_ALGORITHM_INTERFACES
+            slug__in=RESERVED_SOCKET_SLUGS
         ),
         widget=Select2MultipleWidget,
     )
@@ -1386,6 +1386,14 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
 
         if not inputs:
             raise ValidationError("You must provide at least 1 input.")
+
+        if (
+            self._base_obj.additional_inputs_field
+            or self._base_obj.additional_outputs_field
+        ):
+            self.check_for_overlapping_sockets(
+                sockets=inputs,
+            )
 
         if (
             self._base_obj.algorithm_interface_through_model_manager.annotate(
@@ -1412,7 +1420,39 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
         if not outputs:
             raise ValidationError("You must provide at least 1 output.")
 
+        if (
+            self._base_obj.additional_inputs_field
+            or self._base_obj.additional_outputs_field
+        ):
+            self.check_for_overlapping_sockets(
+                sockets=outputs,
+            )
+
         return outputs
+
+    def check_for_overlapping_sockets(self, *, sockets):
+        overlapping_input_sockets = (
+            self._base_obj.additional_inputs_field.filter(
+                slug__in=sockets.values_list("slug", flat=True)
+            )
+        )
+        overlapping_output_sockets = (
+            self._base_obj.additional_outputs_field.filter(
+                slug__in=sockets.values_list("slug", flat=True)
+            )
+        )
+        overlapping_sockets = list(
+            chain(overlapping_input_sockets, overlapping_output_sockets)
+        )
+
+        if overlapping_sockets:
+            overlapping_names = ", ".join(
+                str(obj) for obj in overlapping_sockets
+            )
+            raise ValidationError(
+                "The following sockets are already configured as additional inputs or outputs on"
+                f" {self._base_obj}: {overlapping_names}"
+            )
 
     def clean(self):
         cleaned_data = super().clean()

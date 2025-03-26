@@ -521,6 +521,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         return AlgorithmAlgorithmInterface.objects.filter(algorithm=self)
 
     @property
+    def additional_inputs_field(self):
+        return None
+
+    @property
+    def additional_outputs_field(self):
+        return None
+
+    @property
     def algorithm_interface_create_url(self):
         return reverse(
             "algorithms:interface-create", kwargs={"slug": self.slug}

@@ -3,13 +3,17 @@ from django.contrib.admin import AdminSite
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
 
+from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
+from grandchallenge.components.models import ComponentInterface
 from grandchallenge.evaluation.admin import (
     PhaseAdmin,
+    PhaseAdminForm,
     SubmissionAdmin,
     reevaluate_submissions,
 )
 from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
+from tests.algorithms_tests.factories import AlgorithmInterfaceFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import (
     MethodFactory,
@@ -119,3 +123,39 @@ def test_reevaluate_submission_idempotent(rf):
     )
 
     assert Evaluation.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_disjoint_inputs_and_algorithm_sockets():
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+    interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    phase.algorithm_interfaces.set([interface])
+
+    form = PhaseAdminForm(
+        instance=phase, data={"inputs": [ci1.pk, ci2.pk, ci3.pk, ci4.pk]}
+    )
+
+    assert not form.is_valid()
+    assert (
+        "The following sockets cannot be defined as evaluation inputs or "
+        "outputs because they are already defined as algorithm inputs or "
+        "outputs for this phase" in str(form.errors)
+    )
+    assert ci1.slug in str(form.errors)
+    assert ci2.slug in str(form.errors)
+    assert ci3.slug not in str(form.errors)
+    assert ci4.slug not in str(form.errors)
+
+
+@pytest.mark.parametrize("slug", RESERVED_SOCKET_SLUGS)
+@pytest.mark.django_db
+def test_non_evaluation_socket_slugs(slug):
+    ci, _ = ComponentInterface.objects.get_or_create(slug=slug)
+
+    form = PhaseAdminForm(instance=PhaseFactory(), data={"inputs": [ci.pk]})
+    assert not form.is_valid()
+    assert (
+        form.errors["inputs"][0]
+        == "Evaluation inputs cannot be of the following types: predictions-csv-file, predictions-json-file, predictions-zip-file, metrics-json-file, results-json-file"
+    )
