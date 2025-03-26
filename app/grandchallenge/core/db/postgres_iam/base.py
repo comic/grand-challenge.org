@@ -20,14 +20,22 @@ def thread_local_cache(ttl, max_size=128):
                 if (current_time - timestamp) < ttl:
                     return result
 
-            result = func(*args, **kwargs)
-            function_cache[key] = (result, current_time)
+            expired_keys = [
+                k
+                for k, (_, timestamp) in function_cache.items()
+                if (current_time - timestamp) >= ttl
+            ]
+            for expired_key in expired_keys:
+                del function_cache[expired_key]
 
-            if len(function_cache) > max_size:
+            if len(function_cache) >= max_size:
                 oldest_key = min(
                     function_cache, key=lambda k: function_cache[k][1]
                 )
                 del function_cache[oldest_key]
+
+            result = func(*args, **kwargs)
+            function_cache[key] = (result, current_time)
 
             return result
 
