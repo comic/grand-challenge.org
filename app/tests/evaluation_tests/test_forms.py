@@ -1321,10 +1321,10 @@ def test_disjoint_algorithm_interface_sockets_and_evaluation_inputs():
     )
     assert not form.is_valid()
     assert (
-        f"The following sockets are already configured as sockets on "
+        f"The following sockets are already configured as additional inputs or outputs on "
         f"{phase}: {ci1}" in str(form.errors["inputs"])
     )
     assert (
-        f"The following sockets are already configured as sockets on "
+        f"The following sockets are already configured as additional inputs or outputs on "
         f"{phase}: {ci2}" in str(form.errors["outputs"])
     )

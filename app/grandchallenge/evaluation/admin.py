@@ -6,6 +6,7 @@ from django.forms import ModelForm
 from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
 
+from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
     cancel_jobs,
@@ -38,14 +39,6 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 
-NON_EVALUATION_SOCKET_SLUGS = [
-    "predictions-csv-file",
-    "predictions-json-file",
-    "predictions-zip-file",
-    "metrics-json-file",
-    "results-json-file",
-]
-
 
 class PhaseAdminForm(ModelForm):
     class Meta:
@@ -65,11 +58,11 @@ class PhaseAdminForm(ModelForm):
         inputs = self.cleaned_data["inputs"]
 
         if any(
-            elem in NON_EVALUATION_SOCKET_SLUGS
+            elem in RESERVED_SOCKET_SLUGS
             for elem in inputs.values_list("slug", flat=True)
         ):
             raise ValidationError(
-                f'Evaluation inputs cannot be of the following types: {", ".join(NON_EVALUATION_SOCKET_SLUGS)}'
+                f'Evaluation inputs cannot be of the following types: {", ".join(RESERVED_SOCKET_SLUGS)}'
             )
 
         return inputs
@@ -143,7 +136,7 @@ class PhaseAdmin(admin.ModelAdmin):
         "challenge__short_name",
     )
     autocomplete_fields = (
-        "inputs",
+        "additional_evaluation_inputs",
         "outputs",
         "archive",
     )

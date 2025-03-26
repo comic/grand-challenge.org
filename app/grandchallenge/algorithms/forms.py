@@ -194,8 +194,8 @@ class JobCreateForm(AdditionalInputsMixin, Form):
         return cleaned_data
 
 
-# Exclude interfaces that are not aimed at algorithms from user selection
-NON_ALGORITHM_INTERFACES = [
+# Exclude sockets that are not aimed at algorithms or evaluations from user selection
+RESERVED_SOCKET_SLUGS = [
     "predictions-csv-file",
     "predictions-json-file",
     "predictions-zip-file",
@@ -1359,13 +1359,13 @@ class AlgorithmModelVersionControlForm(Form):
 class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
-            slug__in=NON_ALGORITHM_INTERFACES
+            slug__in=RESERVED_SOCKET_SLUGS
         ),
         widget=Select2MultipleWidget,
     )
     outputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
-            slug__in=NON_ALGORITHM_INTERFACES
+            slug__in=RESERVED_SOCKET_SLUGS
         ),
         widget=Select2MultipleWidget,
     )
@@ -1450,7 +1450,7 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
                 str(obj) for obj in overlapping_sockets
             )
             raise ValidationError(
-                "The following sockets are already configured as sockets on"
+                "The following sockets are already configured as additional inputs or outputs on"
                 f" {self._base_obj}: {overlapping_names}"
             )
 
