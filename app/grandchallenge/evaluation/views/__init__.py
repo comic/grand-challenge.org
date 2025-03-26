@@ -517,7 +517,10 @@ class EvaluationList(
                 "submission__phase__challenge",
                 "submission__algorithm_image__algorithm",
             )
-            .prefetch_related("submission__phase__optional_hanging_protocols")
+            .prefetch_related(
+                "submission__phase__optional_hanging_protocols",
+                "inputs__interface",
+            )
         )
 
         if self.request.challenge.is_admin(self.request.user):
@@ -833,9 +836,7 @@ class LeaderboardDetail(
                 "submission__phase__challenge",
                 "submission__algorithm_image__algorithm",
             )
-            .prefetch_related(
-                "outputs__interface",
-            )
+            .prefetch_related("outputs__interface", "inputs__interface")
         )
         return filter_by_permission(
             queryset=queryset,
