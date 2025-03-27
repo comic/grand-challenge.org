@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "evaluation",
-            "0078_remove_phase_inputs_remove_phase_outputs_and_more",
+            "0078_add_evaluation_input_and_output_throughmodels",
         ),
     ]
 
