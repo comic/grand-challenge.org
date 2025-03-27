@@ -543,15 +543,26 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         blank=True,
         help_text="The interfaces that an algorithm for this phase must implement.",
     )
+    inputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface, related_name="evaluation_inputs", blank=True
+        )
+    )
+    outputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface,
+            related_name="evaluation_outputs",
+        )
+    )
     additional_evaluation_inputs = models.ManyToManyField(
         to=ComponentInterface,
         through="evaluation.PhaseAdditionalEvaluationInput",
-        related_name="evaluation_inputs",
+        related_name="additional_eval_inputs",
         blank=True,
     )
     evaluation_outputs = models.ManyToManyField(
         to=ComponentInterface,
-        related_name="evaluation_outputs",
+        related_name="eval_outputs",
         through="evaluation.PhaseEvaluationOutput",
     )
     algorithm_inputs = deprecate_field(

@@ -13,14 +13,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name="phase",
-            name="inputs",
-        ),
-        migrations.RemoveField(
-            model_name="phase",
-            name="outputs",
-        ),
         migrations.CreateModel(
             name="PhaseEvaluationOutput",
             fields=[
@@ -90,7 +82,7 @@ class Migration(migrations.Migration):
             name="additional_evaluation_inputs",
             field=models.ManyToManyField(
                 blank=True,
-                related_name="evaluation_inputs",
+                related_name="additional_eval_inputs",
                 through="evaluation.PhaseAdditionalEvaluationInput",
                 to="components.componentinterface",
             ),
@@ -99,7 +91,7 @@ class Migration(migrations.Migration):
             model_name="phase",
             name="evaluation_outputs",
             field=models.ManyToManyField(
-                related_name="evaluation_outputs",
+                related_name="eval_outputs",
                 through="evaluation.PhaseEvaluationOutput",
                 to="components.componentinterface",
             ),
