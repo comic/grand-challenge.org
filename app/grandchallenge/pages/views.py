@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count, Q
 from django.http import Http404
@@ -18,6 +17,7 @@ from guardian.mixins import LoginRequiredMixin
 from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.charts.specs import stacked_bar, world_map
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
+from grandchallenge.core.models import UserPassesTestMixin
 from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.pages.forms import (
     PageContentUpdateForm,

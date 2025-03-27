@@ -1,7 +1,6 @@
 from dateutil.utils import today
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.functional import cached_property
 from django.views.generic import (
@@ -18,6 +17,7 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     filter_by_permission,
 )
+from grandchallenge.core.models import UserPassesTestMixin
 from grandchallenge.direct_messages.forms import (
     ConversationForm,
     DirectMessageForm,

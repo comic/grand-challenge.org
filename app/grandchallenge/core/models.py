@@ -1,6 +1,8 @@
+import abc
 import uuid
 
 from django.conf import settings
+from django.contrib.auth import mixins
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.timezone import localtime
@@ -10,6 +12,12 @@ from django_extensions.db.models import (
 )
 
 from grandchallenge.core import utils
+
+
+class UserPassesTestMixin(mixins.UserPassesTestMixin, abc.ABC):
+    @abc.abstractmethod
+    def test_func(self):
+        return True
 
 
 class TitleSlugDescriptionModel(BaseTitleSlugDescriptionModel):

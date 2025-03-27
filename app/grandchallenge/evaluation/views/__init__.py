@@ -4,11 +4,7 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import (
-    AccessMixin,
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
@@ -41,6 +37,7 @@ from grandchallenge.core.guardian import (
     PermissionListMixin,
     filter_by_permission,
 )
+from grandchallenge.core.models import UserPassesTestMixin
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.direct_messages.forms import ConversationForm
 from grandchallenge.evaluation.forms import (

@@ -1,6 +1,6 @@
-from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import get_object_or_404
 
+from grandchallenge.core.models import UserPassesTestMixin
 from grandchallenge.teams.models import Team, TeamMember
 
 
