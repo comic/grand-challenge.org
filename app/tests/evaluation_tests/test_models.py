@@ -2438,7 +2438,7 @@ def test_disjoint_inputs_and_algorithm_sockets():
     phase.algorithm_interfaces.set([interface])
 
     for ci in [ci1, ci2]:
-        instance = PhaseAdditionalEvaluationInput(interface=ci, phase=phase)
+        instance = PhaseAdditionalEvaluationInput(socket=ci, phase=phase)
         with pytest.raises(ValidationError) as e:
             instance.clean()
         assert (
@@ -2449,7 +2449,7 @@ def test_disjoint_inputs_and_algorithm_sockets():
 
     for ci in [ci3, ci4]:
         instance = PhaseAdditionalEvaluationInput(
-            interface=ci, phase=PhaseFactory()
+            socket=ci, phase=PhaseFactory()
         )
         with nullcontext():
             instance.clean()
@@ -2460,9 +2460,7 @@ def test_disjoint_inputs_and_algorithm_sockets():
 def test_non_evaluation_socket_slugs(slug):
     ci, _ = ComponentInterface.objects.get_or_create(slug=slug)
 
-    instance = PhaseAdditionalEvaluationInput(
-        interface=ci, phase=PhaseFactory()
-    )
+    instance = PhaseAdditionalEvaluationInput(socket=ci, phase=PhaseFactory())
     with pytest.raises(ValidationError) as e:
         instance.clean()
     assert (

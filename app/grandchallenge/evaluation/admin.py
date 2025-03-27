@@ -54,26 +54,22 @@ class PhaseAdminForm(ModelForm):
                 self.fields[field_name].disabled = True
 
 
-class EvaluationInputInline(admin.TabularInline):
+class EvaluationSocketInline(admin.TabularInline):
+    extra = 1
+
+    def get_formset(self, request, obj=None, **kwargs):
+        # Enable form validation
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.validate_each = True
+        return formset
+
+
+class EvaluationInputInline(EvaluationSocketInline):
     model = PhaseAdditionalEvaluationInput
-    extra = 1
-
-    def get_formset(self, request, obj=None, **kwargs):
-        # Enable form validation
-        formset = super().get_formset(request, obj, **kwargs)
-        formset.validate_each = True
-        return formset
 
 
-class EvaluationOutputInline(admin.TabularInline):
+class EvaluationOutputInline(EvaluationSocketInline):
     model = PhaseEvaluationOutput
-    extra = 1
-
-    def get_formset(self, request, obj=None, **kwargs):
-        # Enable form validation
-        formset = super().get_formset(request, obj, **kwargs)
-        formset.validate_each = True
-        return formset
 
 
 @admin.register(Phase)

@@ -1327,7 +1327,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         )
 
 
-class CheckForOverlappingInterfacesMixin:
+class CheckForOverlappingSocketsMixin:
 
     def clean(self):
         super().clean()
@@ -1343,24 +1343,24 @@ class CheckForOverlappingInterfacesMixin:
                 )
             )
 
-            if self.interface.slug in algorithm_socket_slugs:
+            if self.socket.slug in algorithm_socket_slugs:
                 raise ValidationError(
-                    f"{self.interface.slug} cannot be defined as evaluation "
+                    f"{self.socket.slug} cannot be defined as evaluation "
                     f"inputs or outputs because it is already defined as "
                     f"algorithm input or output for this phase"
                 )
 
 
 class PhaseAdditionalEvaluationInput(
-    CheckForOverlappingInterfacesMixin, models.Model
+    CheckForOverlappingSocketsMixin, models.Model
 ):
-    interface = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
+    socket = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
     phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["phase", "interface"],
+                fields=["phase", "socket"],
                 name="unique_phase_input_combination",
             ),
         ]
@@ -1370,20 +1370,20 @@ class PhaseAdditionalEvaluationInput(
 
         from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
 
-        if self.interface.slug in RESERVED_SOCKET_SLUGS:
+        if self.socket.slug in RESERVED_SOCKET_SLUGS:
             raise ValidationError(
                 f'Evaluation inputs cannot be of the following types: {", ".join(RESERVED_SOCKET_SLUGS)}'
             )
 
 
-class PhaseEvaluationOutput(CheckForOverlappingInterfacesMixin, models.Model):
-    interface = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
+class PhaseEvaluationOutput(CheckForOverlappingSocketsMixin, models.Model):
+    socket = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
     phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["phase", "interface"],
+                fields=["phase", "socket"],
                 name="unique_phase_output_combination",
             ),
         ]
