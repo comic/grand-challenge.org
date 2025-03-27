@@ -1224,9 +1224,12 @@ class QuestionInteractiveAlgorithmsView(
     UserPassesTestMixin, BaseAddObjectToReaderStudyMixin, View
 ):
     def test_func(self):
-        return self.request.user.has_perm(
+        if self.request.user.has_perm(
             "reader_studies.add_interactive_algorithm_to_question"
-        )
+        ):
+            return super().test_func()
+        else:
+            return False
 
     def get(self, request, slug):
         form = QuestionForm(

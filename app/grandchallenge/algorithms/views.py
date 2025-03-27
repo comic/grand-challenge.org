@@ -986,7 +986,8 @@ class AlgorithmImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
     template_name = "algorithms/algorithm_import_form.html"
 
     def test_func(self):
-        return self.request.user.is_staff
+        if self.request.user.is_staff:
+            return super().test_func()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

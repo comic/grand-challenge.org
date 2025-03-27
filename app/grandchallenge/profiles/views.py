@@ -239,7 +239,7 @@ class EmailPreferencesUpdate(
                 }
             ).apply_async()
 
-        return True
+        return super().test_func()
 
     @property
     def username_from_token(self):

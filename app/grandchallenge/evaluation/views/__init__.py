@@ -685,10 +685,12 @@ class LeaderboardDetail(
     search_fields = ["pk", "submission__creator__username"]
 
     def test_func(self):
-        if self.phase.public:
-            return True
+        if self.phase.public or self.phase.challenge.is_admin(
+            user=self.request.user
+        ):
+            return super().test_func()
         else:
-            return self.phase.challenge.is_admin(user=self.request.user)
+            return False
 
     @cached_property
     def phase(self):

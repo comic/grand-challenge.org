@@ -43,19 +43,21 @@ class ConversationCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     def test_func(self):
         if settings.ANONYMOUS_USER_NAME == self.kwargs["username"]:
             return False
-        else:
+        elif not (
             # Only challenge or reader study admins can message their participants
-            return (
-                Challenge.objects.filter(
-                    admins_group__user=self.request.user,
-                    participants_group__user__username=self.kwargs["username"],
-                    is_active_until__gt=today().date(),
-                ).exists()
-                or ReaderStudy.objects.filter(
-                    editors_group__user=self.request.user,
-                    readers_group__user__username=self.kwargs["username"],
-                ).exists()
-            )
+            Challenge.objects.filter(
+                admins_group__user=self.request.user,
+                participants_group__user__username=self.kwargs["username"],
+                is_active_until__gt=today().date(),
+            ).exists()
+            or ReaderStudy.objects.filter(
+                editors_group__user=self.request.user,
+                readers_group__user__username=self.kwargs["username"],
+            ).exists()
+        ):
+            return False
+        else:
+            return super().test_func()
 
     def get_form_kwargs(self, *args, **kwargs):
         form_kwargs = super().get_form_kwargs(*args, **kwargs)

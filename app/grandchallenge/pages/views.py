@@ -96,7 +96,10 @@ class PageDetail(
     def test_func(self):
         user = self.request.user
         page = self.get_object()
-        return page.can_be_viewed_by(user=user)
+        if page.can_be_viewed_by(user=user):
+            return super().test_func()
+        else:
+            return False
 
 
 class ChallengeHome(PageDetail):
