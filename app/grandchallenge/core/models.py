@@ -15,6 +15,12 @@ from grandchallenge.core import utils
 
 
 class UserPassesTestMixin(mixins.UserPassesTestMixin, abc.ABC):
+    """
+    Deny a request with a permission error if the test_func() method returns False.
+
+    Adjusted to allow for multiple inheritance by calling super().test_func().
+    """
+
     @abc.abstractmethod
     def test_func(self):
         return True
