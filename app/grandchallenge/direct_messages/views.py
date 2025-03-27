@@ -1,7 +1,7 @@
 from dateutil.utils import today
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.mixins import AccessMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.functional import cached_property
 from django.views.generic import (
@@ -35,27 +35,29 @@ from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 
 
-class ConversationCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+class ConversationCreate(LoginRequiredMixin, AccessMixin, CreateView):
     raise_exception = True
     model = Conversation
     form_class = ConversationForm
 
-    def test_func(self):
-        if settings.ANONYMOUS_USER_NAME == self.kwargs["username"]:
-            return False
-        else:
+    def dispatch(self, request, *args, **kwargs):
+        if settings.ANONYMOUS_USER_NAME == kwargs["username"]:
+            return self.handle_no_permission()
+        if (
             # Only challenge or reader study admins can message their participants
-            return (
-                Challenge.objects.filter(
-                    admins_group__user=self.request.user,
-                    participants_group__user__username=self.kwargs["username"],
-                    is_active_until__gt=today().date(),
-                ).exists()
-                or ReaderStudy.objects.filter(
-                    editors_group__user=self.request.user,
-                    readers_group__user__username=self.kwargs["username"],
-                ).exists()
-            )
+            Challenge.objects.filter(
+                admins_group__user=request.user,
+                participants_group__user__username=kwargs["username"],
+                is_active_until__gt=today().date(),
+            ).exists()
+            or ReaderStudy.objects.filter(
+                editors_group__user=request.user,
+                readers_group__user__username=kwargs["username"],
+            ).exists()
+        ):
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return self.handle_no_permission()
 
     def get_form_kwargs(self, *args, **kwargs):
         form_kwargs = super().get_form_kwargs(*args, **kwargs)

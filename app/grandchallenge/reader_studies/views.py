@@ -4,10 +4,7 @@ import logging
 from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -1223,12 +1220,15 @@ class QuestionWidgetsView(BaseAddObjectToReaderStudyMixin, View):
 
 
 class QuestionInteractiveAlgorithmsView(
-    UserPassesTestMixin, BaseAddObjectToReaderStudyMixin, View
+    AccessMixin, BaseAddObjectToReaderStudyMixin, View
 ):
-    def test_func(self):
-        return self.request.user.has_perm(
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.has_perm(
             "reader_studies.add_interactive_algorithm_to_question"
-        )
+        ):
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            self.handle_no_permission()
 
     def get(self, request, slug):
         form = QuestionForm(
