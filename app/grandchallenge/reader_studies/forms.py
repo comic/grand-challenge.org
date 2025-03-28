@@ -3,6 +3,7 @@ import io
 import json
 import logging
 
+from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
     HTML,
@@ -752,45 +753,49 @@ class GroundTruthFromAnswersForm(SaveFormInitMixin, Form):
 
 
 class AnswersFromGroundTruthForm(SaveFormInitMixin, Form):
-    user = ModelChoiceField(
-        queryset=get_user_model().objects.none(),
-        required=True,
-        help_text=format_html(
-            "Select a user to whom the answers will assigned. "
-            "Only users that currently have <strong>no answers</strong> are valid options."
-        ),
-        widget=Select2Widget,
-    )
-
-    def __init__(self, *args, reader_study, **kwargs):
+    def __init__(self, *args, reader_study, request_user, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._reader_study = reader_study
+        self._user = request_user
 
-        self.fields["user"].queryset = (
-            self._reader_study.editors_group.user_set.all()
-            | self._reader_study.readers_group.user_set.all()
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            FormActions(
+                HTML(
+                    format_html(
+                        '<a class="btn btn-secondary" href="{ground_truth_url}">Cancel</a>',
+                        ground_truth_url=reverse(
+                            "reader-studies:ground-truth",
+                            kwargs={"slug": reader_study.slug},
+                        ),
+                    )
+                ),
+                Submit(
+                    "submit",
+                    "Yes, create Answers for Me",
+                    css_class="btn btn-primary",
+                ),
+            )
         )
 
-    def clean_user(self):
-        user = self.cleaned_data["user"]
-
+    def clean(self):
         if Answer.objects.filter(
             question__reader_study=self._reader_study,
-            creator=user,
+            creator=self._user,
             is_ground_truth=False,
         ).exists():
             raise ValidationError(
                 "User already has answers. Delete these first"
             )
 
-        return user
+        return super().clean()
 
-    def convert_answers(self):
+    def schedule_answers_from_ground_truth_task(self):
         answers_from_ground_truth.apply_async(
             kwargs={
                 "reader_study_pk": self._reader_study.pk,
-                "target_user_pk": self.cleaned_data["user"].pk,
+                "target_user_pk": self._user.pk,
             }
         )
 

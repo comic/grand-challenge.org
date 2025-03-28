@@ -33,28 +33,35 @@
     {% if object.has_ground_truth %}
         <div class="d-flex justify-content-between align-items-center py-3">
             <p class="mb-0">
-                This reader study has ground truth
+                This reader study has ground truth.
+            </p>
+            <a class="btn btn-danger"
+                    href="{% url 'reader-studies:ground-truth-delete' slug=object.slug %}">
+                <i class="fas fa-trash-alt fa-fw pr-1"></i>Delete Ground&nbsp;Truth
+            </a>
+        </div>
+
+        <hr>
+
+        <h3>Copy Ground Truth</h3>
+
+         <div class="d-flex justify-content-between align-items-center py-3">
+            <p class="mb-0">
+                The ground truth from the reader study can be copied as your answers.
             </p>
             <div>
-                <a class="btn btn-danger"
-                        href="{% url 'reader-studies:ground-truth-delete' slug=object.slug %}">
-                    <i class="fas fa-trash-alt fa-fw pr-1"></i>Delete Ground&nbsp;Truth
-                </a>
-                or
-                <a class="btn btn-danger"
+                <a class="btn btn-primary"
                         href="{% url 'reader-studies:add-answers-from-ground-truth' slug=object.slug %}">
-                    <i class="fas fa-users fa-fw pr-1"></i>Ground&nbsp;Truth to User Answers
+                    <i class="fas fa-copy fa-fw pr-1"></i>Copy Ground&nbsp;Truth to Answers
                 </a>
             </div>
         </div>
 
-
-
         <hr>
 
         <h3>Update Ground Truth</h3>
-        <p>
-            The ground truth can’t be updated directly. Please delete the current and create a new one.
+        <p class="mb-0 py-3">
+            The ground truth is not directly updatable. First delete the current one and create a new one.
         </p>
     {% else %}
 

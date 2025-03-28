@@ -18,7 +18,6 @@ from grandchallenge.reader_studies.models import (
 )
 
 
-@transaction.atomic
 def add_image(obj, image):
     obj.answer_image = image
     obj.save()
@@ -27,6 +26,7 @@ def add_image(obj, image):
 
 
 @acks_late_2xlarge_task
+@transaction.atomic
 def answers_from_ground_truth(*, reader_study_pk, target_user_pk):
     reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
     target_user = get_user_model().objects.get(pk=target_user_pk)
@@ -35,20 +35,16 @@ def answers_from_ground_truth(*, reader_study_pk, target_user_pk):
     if all_answers.filter(is_ground_truth=False, creator=target_user).exists():
         raise ValueError("User already has answers")
 
-    ground_truth = all_answers.filter(is_ground_truth=True)
+    for answer in all_answers.filter(is_ground_truth=True).all():
+        # Simplify permissions and create new answers
+        answer._state.adding = True
+        answer.id = None
+        answer.pk = None
+        answer.is_ground_truth = False
+        answer.creator = target_user
+        answer.save(calculate_score=False)
 
-    with transaction.atomic():
-        for answer in ground_truth.all():
-            # Simplify permissions and create new answers
-            answer._state.adding = True
-            answer.id = None
-            answer.pk = None
-            answer.is_ground_truth = False
-            answer.creator = target_user
-            answer.save(calculate_score=False)
-
-        ground_truth.delete()
-        all_answers.update(score=None)
+    all_answers.update(score=None)
 
 
 @acks_late_2xlarge_task

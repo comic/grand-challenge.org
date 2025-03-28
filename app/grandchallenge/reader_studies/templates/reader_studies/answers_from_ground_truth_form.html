@@ -1,12 +1,11 @@
 {% extends "reader_studies/ground_truth_csv_form.html" %}
 
+{% load url %}
 {% block form_heading %}
-    <h2> Add {{ type_to_add }} from Ground Truth to {{ object }} </h2>
-
+    <h2> Copy {{ type_to_add }} Ground Truth to Answers for {{ object }} </h2>
 
     <p>
-        The ground truth will be deleted and the selected user will get
-        new individual answers that are equal to the ground truth.
+        You will get new individual answers that are equal to the ground truth. Note that you cannot have any answers already.
     </p>
 
 {% endblock %}

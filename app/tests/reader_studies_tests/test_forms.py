@@ -1949,7 +1949,7 @@ def test_answers_from_ground_truth_form():
         answer_type=Question.AnswerType.BOOL,
     )
 
-    # Create ground truth. Note thaty they differ in answer
+    # Create ground truth
     AnswerFactory(
         question=q1,
         display_set=ds1,
@@ -1970,6 +1970,7 @@ def test_answers_from_ground_truth_form():
         display_set=ds2,
         creator=reader,
         answer=True,
+        is_ground_truth=False,
         score=1.0,
     )
 
@@ -1986,7 +1987,7 @@ def test_answers_from_ground_truth_form():
 
     form = AnswersFromGroundTruthForm(
         reader_study=rs,
-        data={"user": str(other_reader.pk)},
+        request_user=other_reader,
     )
     assert not form.is_valid(), "Can't push answers with answer present"
 
@@ -1994,11 +1995,12 @@ def test_answers_from_ground_truth_form():
 
     form = AnswersFromGroundTruthForm(
         reader_study=rs,
-        data={"user": str(other_reader.pk)},
+        request_user=other_reader,
+        data={},
     )
     assert form.is_valid(), "Can now push answers"
 
-    form.convert_answers()
+    form.schedule_answers_from_ground_truth_task()
 
     reader_answer.refresh_from_db()
 
@@ -2007,10 +2009,12 @@ def test_answers_from_ground_truth_form():
     a1 = Answer.objects.get(
         display_set=ds1,
         question=q1,
+        is_ground_truth=False,
     )
     a2 = Answer.objects.get(
         display_set=ds1,
         question=q2,
+        is_ground_truth=False,
     )
 
     # Check permissions
@@ -2020,7 +2024,7 @@ def test_answers_from_ground_truth_form():
             assert other_reader.has_perm(perm, answer)
             assert not reader.has_perm(perm, answer)
 
-    assert not rs.has_ground_truth
+    assert rs.has_ground_truth, "Sanity: Ground Truth is intact"
 
 
 @pytest.mark.django_db
