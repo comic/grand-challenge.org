@@ -20,7 +20,7 @@ from celery import (  # noqa: I251 TODO needs to be refactored
 )
 from django.apps import apps
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.db import OperationalError, transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F
@@ -1191,6 +1191,25 @@ def validate_voxel_values(*, civ_pk):
     civ.interface._validate_voxel_values(civ.image)
 
 
+def _get_object_with_lock(*, app_label, model_name, object_pk):
+    from grandchallenge.archives.models import ArchiveItem
+    from grandchallenge.reader_studies.models import DisplaySet
+
+    try:
+        object = lock_model_instance(
+            app_label=app_label, model_name=model_name, pk=object_pk
+        )
+    except ObjectDoesNotExist as e:
+        if model_name in [
+            ArchiveItem._meta.model_name,
+            DisplaySet._meta.model_name,
+        ]:
+            return None
+        else:
+            raise e
+    return object
+
+
 @acks_late_micro_short_task(
     retry_on=(LockNotAcquiredException,), delayed_retry=False
 )
@@ -1210,20 +1229,18 @@ def add_image_to_object(  # noqa: C901
         ComponentInterfaceValue,
     )
 
+    object = _get_object_with_lock(
+        app_label=app_label, model_name=model_name, object_pk=object_pk
+    )
+    if object is None:
+        logger.info(f"Nothing to do: {model_name} no longer exists.")
+        return
+
     interface = ComponentInterface.objects.get(pk=interface_pk)
     upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
 
     if upload_session.status != upload_session.SUCCESS:
         logger.info("Nothing to do: upload session was not successful.")
-        return
-
-    object_model = apps.get_model(app_label=app_label, model_name=model_name)
-    try:
-        object = lock_model_instance(
-            app_label=app_label, model_name=model_name, pk=object_pk
-        )
-    except object_model.DoesNotExist:
-        logger.info("Nothing to do: object no longer exists.")
         return
 
     error_handler = object.get_error_handler(linked_object=upload_session)
@@ -1303,11 +1320,15 @@ def add_file_to_object(
         ComponentInterfaceValue,
     )
 
+    object = _get_object_with_lock(
+        app_label=app_label, model_name=model_name, object_pk=object_pk
+    )
+    if object is None:
+        logger.info(f"Nothing to do: {model_name} no longer exists.")
+        return
+
     interface = ComponentInterface.objects.get(pk=interface_pk)
     user_upload = UserUpload.objects.get(pk=user_upload_pk)
-    object = lock_model_instance(
-        app_label=app_label, model_name=model_name, pk=object_pk
-    )
     error_handler = object.get_error_handler(linked_object=user_upload)
 
     current_value = object.get_current_value_for_interface(

@@ -1,15 +1,16 @@
 import json
 import uuid
+from contextlib import nullcontext
 from pathlib import Path
 from unittest.mock import call, patch
 
 import pytest
 from celery.exceptions import MaxRetriesExceededError
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from requests import put
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
-from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
@@ -35,10 +36,7 @@ from grandchallenge.components.tasks import (
 )
 from grandchallenge.core.celery import _retry, acks_late_micro_short_task
 from grandchallenge.notifications.models import Notification
-from grandchallenge.reader_studies.models import (
-    DisplaySet,
-    InteractiveAlgorithmChoices,
-)
+from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -492,37 +490,77 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
 
 
 @pytest.mark.parametrize(
-    "object_type",
-    [
-        DisplaySet,
-        ArchiveItem,
-    ],
+    "task",
+    (
+        add_image_to_object,
+        add_file_to_object,
+    ),
+)
+@pytest.mark.parametrize(
+    "object_factory, factory_kwargs, context",
+    (
+        (
+            DisplaySetFactory,
+            {},
+            nullcontext(),
+        ),
+        (
+            ArchiveItemFactory,
+            {},
+            nullcontext(),
+        ),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 10, "status": Job.VALIDATING_INPUTS},  # Required
+            pytest.raises(ObjectDoesNotExist),
+        ),
+    ),
 )
 @pytest.mark.django_db
-def test_add_image_to_object_handles_deleted_object(
-    settings, django_capture_on_commit_callbacks, object_type
+def test_task_handles_deleted_object(
+    settings,
+    django_capture_on_commit_callbacks,
+    task,
+    object_factory,
+    factory_kwargs,
+    context,
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    obj = object_type()
-
-    us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
-    ci = ComponentInterfaceFactory(kind="IMG")
+    obj = object_factory(**factory_kwargs)
+    obj.delete()
 
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
     )
 
-    with django_capture_on_commit_callbacks(execute=True) as callbacks:
-        add_image_to_object(
-            app_label=obj._meta.app_label,
-            model_name=obj._meta.model_name,
-            upload_session_pk=us.pk,
-            object_pk=obj.pk,
-            interface_pk=ci.pk,
-            linked_task=linked_task,
+    task_kwargs = {
+        "app_label": obj._meta.app_label,
+        "model_name": obj._meta.model_name,
+        "object_pk": obj.pk,
+        "linked_task": linked_task,
+    }
+    if task is add_image_to_object:
+        ci = ComponentInterfaceFactory(kind="IMG")
+        task_kwargs.update(
+            {
+                "upload_session_pk": None,
+                "interface_pk": ci.pk,
+            }
         )
+    if task is add_file_to_object:
+        ci = ComponentInterfaceFactory(kind="PDF")
+        task_kwargs.update(
+            {
+                "user_upload_pk": None,
+                "interface_pk": ci.pk,
+            }
+        )
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        with context:
+            task(**task_kwargs)
 
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     assert "some_async_task" not in str(callbacks)
