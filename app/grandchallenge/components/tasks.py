@@ -1212,14 +1212,21 @@ def add_image_to_object(  # noqa: C901
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
     upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
-    object = lock_model_instance(
-        app_label=app_label, model_name=model_name, pk=object_pk
-    )
-    error_handler = object.get_error_handler(linked_object=upload_session)
 
     if upload_session.status != upload_session.SUCCESS:
         logger.info("Nothing to do: upload session was not successful.")
         return
+
+    object_model = apps.get_model(app_label=app_label, model_name=model_name)
+    try:
+        object = lock_model_instance(
+            app_label=app_label, model_name=model_name, pk=object_pk
+        )
+    except object_model.DoesNotExist:
+        logger.info("Nothing to do: object no longer exists.")
+        return
+
+    error_handler = object.get_error_handler(linked_object=upload_session)
 
     try:
         image = Image.objects.get(origin_id=upload_session_pk)

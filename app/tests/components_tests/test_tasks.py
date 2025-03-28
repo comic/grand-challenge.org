@@ -9,6 +9,7 @@ from django.core.files.base import ContentFile
 from requests import put
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
+from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
@@ -34,7 +35,10 @@ from grandchallenge.components.tasks import (
 )
 from grandchallenge.core.celery import _retry, acks_late_micro_short_task
 from grandchallenge.notifications.models import Notification
-from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
+from grandchallenge.reader_studies.models import (
+    DisplaySet,
+    InteractiveAlgorithmChoices,
+)
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -423,7 +427,7 @@ def test_add_image_to_object_updates_upload_session_on_validation_fail(
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind="IMG")
 
-    error_message = f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image. "
+    error_message = f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image."
 
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
@@ -484,6 +488,43 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
     assert "Image imports should result in a single image" in str(
         obj.detailed_error_message
     )
+    assert "some_async_task" not in str(callbacks)
+
+
+@pytest.mark.parametrize(
+    "object_type",
+    [
+        DisplaySet,
+        ArchiveItem,
+    ],
+)
+@pytest.mark.django_db
+def test_add_image_to_object_handles_deleted_object(
+    settings, django_capture_on_commit_callbacks, object_type
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    obj = object_type()
+
+    us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
+    ci = ComponentInterfaceFactory(kind="IMG")
+
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
+    )
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        add_image_to_object(
+            app_label=obj._meta.app_label,
+            model_name=obj._meta.model_name,
+            upload_session_pk=us.pk,
+            object_pk=obj.pk,
+            interface_pk=ci.pk,
+            linked_task=linked_task,
+        )
+
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     assert "some_async_task" not in str(callbacks)
 
 
