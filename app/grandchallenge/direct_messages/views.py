@@ -1,7 +1,6 @@
 from dateutil.utils import today
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import UserPassesTestMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.functional import cached_property
 from django.views.generic import (
@@ -18,6 +17,7 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     filter_by_permission,
 )
+from grandchallenge.core.models import UserPassesTestMixin
 from grandchallenge.direct_messages.forms import (
     ConversationForm,
     DirectMessageForm,
@@ -43,19 +43,21 @@ class ConversationCreate(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     def test_func(self):
         if settings.ANONYMOUS_USER_NAME == self.kwargs["username"]:
             return False
-        else:
+        elif not (
             # Only challenge or reader study admins can message their participants
-            return (
-                Challenge.objects.filter(
-                    admins_group__user=self.request.user,
-                    participants_group__user__username=self.kwargs["username"],
-                    is_active_until__gt=today().date(),
-                ).exists()
-                or ReaderStudy.objects.filter(
-                    editors_group__user=self.request.user,
-                    readers_group__user__username=self.kwargs["username"],
-                ).exists()
-            )
+            Challenge.objects.filter(
+                admins_group__user=self.request.user,
+                participants_group__user__username=self.kwargs["username"],
+                is_active_until__gt=today().date(),
+            ).exists()
+            or ReaderStudy.objects.filter(
+                editors_group__user=self.request.user,
+                readers_group__user__username=self.kwargs["username"],
+            ).exists()
+        ):
+            return False
+        else:
+            return super().test_func()
 
     def get_form_kwargs(self, *args, **kwargs):
         form_kwargs = super().get_form_kwargs(*args, **kwargs)
