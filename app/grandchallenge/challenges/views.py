@@ -1,12 +1,15 @@
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    AccessMixin,
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+)
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import F, Prefetch, Q
 from django.http import HttpResponse
 from django.utils.html import format_html
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
-from guardian.mixins import LoginRequiredMixin
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter

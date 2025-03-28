@@ -1,7 +1,7 @@
 from dateutil.utils import today
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.functional import cached_property
 from django.views.generic import (
@@ -11,7 +11,6 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
-from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.guardian import (

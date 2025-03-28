@@ -1,9 +1,9 @@
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.shortcuts import get_object_or_404
 from django.utils.html import format_html
 from django.views.generic import DeleteView, FormView, ListView
-from guardian.mixins import LoginRequiredMixin
 from knox.models import AuthToken
 
 from grandchallenge.api_tokens.forms import AuthTokenForm

@@ -1,12 +1,12 @@
 from dal import autocomplete
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import CharField, Q, Value
 from django.db.models.functions import Concat
 from django.utils.html import format_html
 from django.views.generic import FormView
-from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.verifications.models import Verification

@@ -7,6 +7,7 @@ import requests
 from dal_select2.views import Select2ListView
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.transaction import non_atomic_requests
 from django.http import HttpResponse, HttpResponseForbidden
@@ -14,7 +15,6 @@ from django.shortcuts import redirect
 from django.utils.functional import cached_property
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from guardian.mixins import LoginRequiredMixin
 from requests import HTTPError
 
 from grandchallenge.github.exceptions import GitHubBadRefreshTokenException

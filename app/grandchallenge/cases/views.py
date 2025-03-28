@@ -2,6 +2,7 @@ from functools import reduce
 from operator import or_
 
 from django.conf import settings
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.forms import HiddenInput
 from django.http import Http404, HttpResponse
@@ -9,7 +10,6 @@ from django.shortcuts import get_object_or_404
 from django.views import View
 from django.views.generic import DetailView, ListView
 from django_filters.rest_framework import DjangoFilterBackend
-from guardian.mixins import LoginRequiredMixin
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,

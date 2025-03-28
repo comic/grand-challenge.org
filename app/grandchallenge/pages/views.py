@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count, Q
 from django.http import Http404
@@ -13,7 +13,6 @@ from django.views.generic import (
     UpdateView,
 )
 from django_countries import countries
-from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.charts.specs import stacked_bar, world_map

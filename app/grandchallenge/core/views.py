@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from random import choice
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.forms.utils import ErrorList
@@ -10,7 +11,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.templatetags.static import static
 from django.views import View
 from django.views.generic import TemplateView, UpdateView
-from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.blogs.models import Post

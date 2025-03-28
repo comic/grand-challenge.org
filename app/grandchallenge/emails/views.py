@@ -1,9 +1,11 @@
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+)
 from django.core.exceptions import PermissionDenied
 from django.utils.decorators import method_decorator
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
-from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.emails.forms import EmailBodyForm, EmailMetadataForm
 from grandchallenge.emails.models import Email

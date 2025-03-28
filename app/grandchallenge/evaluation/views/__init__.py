@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import (
     AccessMixin,
+    LoginRequiredMixin,
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
@@ -26,7 +27,6 @@ from django.views.generic import (
     RedirectView,
     UpdateView,
 )
-from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Algorithm, Job

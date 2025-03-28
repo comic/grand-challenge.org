@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
@@ -43,7 +44,6 @@ from drf_spectacular.utils import (
     extend_schema_view,
 )
 from guardian.core import ObjectPermissionChecker
-from guardian.mixins import LoginRequiredMixin
 from guardian.shortcuts import get_perms
 from rest_framework import mixins
 from rest_framework.decorators import action

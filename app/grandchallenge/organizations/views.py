@@ -1,8 +1,8 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.views.generic import DetailView, ListView, UpdateView
-from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,

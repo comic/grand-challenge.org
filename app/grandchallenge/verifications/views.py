@@ -1,11 +1,14 @@
 from django.contrib import messages
-from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    AccessMixin,
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+)
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.utils.html import format_html
 from django.utils.timezone import now
 from django.views.generic import CreateView, DetailView, FormView
-from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.subdomains.utils import reverse

@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import (
     AccessMixin,
+    LoginRequiredMixin,
     PermissionRequiredMixin,
     UserPassesTestMixin,
 )
@@ -30,7 +31,6 @@ from django.views.generic import (
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from grand_challenge_forge.forge import generate_algorithm_template
-from guardian.mixins import LoginRequiredMixin
 from guardian.shortcuts import get_perms
 from rest_framework.mixins import (
     CreateModelMixin,

@@ -3,7 +3,7 @@ from functools import reduce
 from operator import or_
 
 from dal import autocomplete
-from django.contrib.auth.mixins import AccessMixin
+from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
 from django.forms import HiddenInput, Media
@@ -21,7 +21,6 @@ from django.views.generic import (
     TemplateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
-from guardian.mixins import LoginRequiredMixin
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.algorithms.forms import NON_ALGORITHM_INTERFACES
