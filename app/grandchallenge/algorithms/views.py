@@ -85,9 +85,9 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    UserPassesTestMixin,
     filter_by_permission,
 )
-from grandchallenge.core.models import UserPassesTestMixin
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.utils.grand_challenge_forge import (
     get_forge_algorithm_template_context,

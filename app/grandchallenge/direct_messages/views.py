@@ -15,9 +15,9 @@ from guardian.mixins import LoginRequiredMixin
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
+    UserPassesTestMixin,
     filter_by_permission,
 )
-from grandchallenge.core.models import UserPassesTestMixin
 from grandchallenge.direct_messages.forms import (
     ConversationForm,
     DirectMessageForm,

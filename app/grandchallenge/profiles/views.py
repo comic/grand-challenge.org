@@ -20,9 +20,9 @@ from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
+    UserPassesTestMixin,
     get_objects_for_user,
 )
-from grandchallenge.core.models import UserPassesTestMixin
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.organizations.models import Organization
 from grandchallenge.profiles.forms import (

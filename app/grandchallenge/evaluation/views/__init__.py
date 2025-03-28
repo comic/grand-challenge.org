@@ -35,9 +35,9 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    UserPassesTestMixin,
     filter_by_permission,
 )
-from grandchallenge.core.models import UserPassesTestMixin
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.direct_messages.forms import ConversationForm
 from grandchallenge.evaluation.forms import (
