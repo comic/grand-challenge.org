@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "evaluation",
-            "0078_add_evaluation_input_and_output_throughmodels",
+            "0077_add_evaluation_input_and_output_throughmodels",
         ),
     ]
 

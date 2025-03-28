@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("components", "0025_alter_componentinterface_overlay_segments"),
-        ("evaluation", "0079_migrate_evaluation_inputs_outputs"),
+        ("evaluation", "0078_migrate_evaluation_inputs_outputs"),
     ]
 
     operations = [
