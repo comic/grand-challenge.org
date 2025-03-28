@@ -425,7 +425,7 @@ def test_add_image_to_object_updates_upload_session_on_validation_fail(
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind="IMG")
 
-    error_message = f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image."
+    error_message = f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image. "
 
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
