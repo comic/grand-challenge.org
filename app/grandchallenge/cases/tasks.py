@@ -138,10 +138,6 @@ def build_images(  # noqa:C901
         app_label=RawImageUploadSession._meta.app_label,
         model_name=RawImageUploadSession._meta.model_name,
     )
-    if linked_interface_slug:
-        ci = ComponentInterface.objects.get(slug=linked_interface_slug)
-    else:
-        ci = None
 
     if linked_object_pk:
         try:
@@ -156,11 +152,22 @@ def build_images(  # noqa:C901
                 DisplaySet._meta.model_name,
             ]:
                 # users can delete archive items and display sets before this task runs
+                logger.info(
+                    f"Nothing to do here: {linked_model_name} no longer exists."
+                )
+                upload_session.update_status(
+                    status=RawImageUploadSession.CANCELLED
+                )
                 return
             else:
                 raise e
     else:
         linked_object = None
+
+    if linked_interface_slug:
+        ci = ComponentInterface.objects.get(slug=linked_interface_slug)
+    else:
+        ci = None
 
     error_handler = upload_session.get_error_handler(
         linked_object=linked_object
