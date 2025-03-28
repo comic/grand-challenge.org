@@ -1,9 +1,7 @@
-from django.contrib.auth.mixins import (
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
 from grandchallenge.hanging_protocols.forms import HangingProtocolForm

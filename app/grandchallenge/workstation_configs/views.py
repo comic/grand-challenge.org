@@ -1,7 +1,4 @@
-from django.contrib.auth.mixins import (
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import (
     CreateView,
@@ -10,6 +7,7 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from guardian.mixins import LoginRequiredMixin
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.api.permissions import IsAuthenticated

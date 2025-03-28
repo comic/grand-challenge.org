@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count, Q
 from django.http import Http404
@@ -13,6 +13,7 @@ from django.views.generic import (
     UpdateView,
 )
 from django_countries import countries
+from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.charts.specs import stacked_bar, world_map
@@ -85,18 +86,17 @@ class PageList(
         return self.request.challenge
 
 
-class PageDetail(AccessMixin, ChallengeFilteredQuerysetMixin, DetailView):
+class PageDetail(
+    UserPassesTestMixin, ChallengeFilteredQuerysetMixin, DetailView
+):
     model = Page
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
-    def dispatch(self, request, *args, **kwargs):
-        user = request.user
+    def test_func(self):
+        user = self.request.user
         page = self.get_object()
-        if page.can_be_viewed_by(user=user):
-            return super().dispatch(request, *args, **kwargs)
-        else:
-            return self.handle_no_permission()
+        return page.can_be_viewed_by(user=user)
 
 
 class ChallengeHome(PageDetail):

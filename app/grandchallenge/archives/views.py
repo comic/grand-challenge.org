@@ -1,7 +1,4 @@
-from django.contrib.auth.mixins import (
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.forms.utils import ErrorList
@@ -20,6 +17,7 @@ from django.views.generic import (
     UpdateView,
 )
 from django_filters.rest_framework import DjangoFilterBackend
+from guardian.mixins import LoginRequiredMixin
 from rest_framework.decorators import action
 from rest_framework.mixins import CreateModelMixin, UpdateModelMixin
 from rest_framework.permissions import DjangoObjectPermissions

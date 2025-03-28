@@ -6,8 +6,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import (
     AccessMixin,
-    LoginRequiredMixin,
     PermissionRequiredMixin,
+    UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
@@ -30,6 +30,7 @@ from django.views.generic import (
 )
 from django_filters.rest_framework import DjangoFilterBackend
 from grand_challenge_forge.forge import generate_algorithm_template
+from guardian.mixins import LoginRequiredMixin
 from guardian.shortcuts import get_perms
 from rest_framework.mixins import (
     CreateModelMixin,
@@ -983,15 +984,12 @@ class AlgorithmPublishView(
         return response
 
 
-class AlgorithmImportView(LoginRequiredMixin, FormView):
+class AlgorithmImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
     form_class = AlgorithmImportForm
     template_name = "algorithms/algorithm_import_form.html"
 
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_staff:
-            return super().dispatch(request, *args, **kwargs)
-        else:
-            return self.handle_no_permission()
+    def test_func(self):
+        return self.request.user.is_staff
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

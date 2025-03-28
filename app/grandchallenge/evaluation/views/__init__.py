@@ -6,8 +6,8 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import (
     AccessMixin,
-    LoginRequiredMixin,
     PermissionRequiredMixin,
+    UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
@@ -26,6 +26,7 @@ from django.views.generic import (
     RedirectView,
     UpdateView,
 )
+from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Algorithm, Job
@@ -678,19 +679,19 @@ class LeaderboardRedirect(RedirectView):
             raise Http404("Leaderboard not found")
 
 
-class LeaderboardDetail(AccessMixin, TeamContextMixin, PaginatedTableListView):
+class LeaderboardDetail(
+    UserPassesTestMixin, TeamContextMixin, PaginatedTableListView
+):
     model = Evaluation
     template_name = "evaluation/leaderboard_detail.html"
     row_template = "evaluation/leaderboard_row.html"
     search_fields = ["pk", "submission__creator__username"]
 
-    def dispatch(self, request, *args, **kwargs):
-        if self.phase.public or self.phase.challenge.is_admin(
-            user=request.user
-        ):
-            return super().dispatch(request, *args, **kwargs)
+    def test_func(self):
+        if self.phase.public:
+            return True
         else:
-            self.handle_no_permission()
+            return self.phase.challenge.is_admin(user=self.request.user)
 
     @cached_property
     def phase(self):

@@ -1,6 +1,6 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.views.generic import FormView, ListView
+from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.admins.forms import AdminsForm
 from grandchallenge.core.guardian import ObjectPermissionRequiredMixin

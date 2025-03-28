@@ -1,7 +1,4 @@
-from django.contrib.auth.mixins import (
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.postgres.search import (
     SearchQuery,
     SearchRank,
@@ -11,6 +8,7 @@ from django.contrib.postgres.search import (
 from django.db.models import F, Q
 from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.documentation.forms import (
     DocPageContentUpdateForm,

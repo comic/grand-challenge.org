@@ -1,4 +1,3 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -11,6 +10,7 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team, TeamMember

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.signing import BadSignature, Signer
@@ -10,6 +10,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import DetailView, UpdateView
 from guardian.core import ObjectPermissionChecker
+from guardian.mixins import LoginRequiredMixin
 from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
@@ -208,35 +209,37 @@ class UserProfileViewSet(GenericViewSet):
         return Response(serializer.data)
 
 
-class EmailPreferencesUpdate(SuccessMessageMixin, AccessMixin, UpdateView):
+class EmailPreferencesUpdate(
+    SuccessMessageMixin, UserPassesTestMixin, UpdateView
+):
     model = UserProfile
     form_class = SubscriptionPreferenceForm
     template_name = "profiles/subscription_form.html"
     raise_exception = True
     subscription_type = None
 
-    def dispatch(self, request, *args, **kwargs):
+    def test_func(self):
         try:
             username = self.username_from_token
         except BadSignature:
-            return self.handle_no_permission()
+            return False
 
         try:
             user = get_user_model().objects.get(username=username)
         except ObjectDoesNotExist:
-            return self.handle_no_permission()
+            return False
 
-        if request.user.is_authenticated and user != request.user:
+        if self.request.user.is_authenticated and user != self.request.user:
             update_verification_user_set.signature(
                 kwargs={
                     "usernames": [
-                        request.user.username,
+                        self.request.user.username,
                         user.username,
                     ]
                 }
             ).apply_async()
 
-        return super().dispatch(request, *args, **kwargs)
+        return True
 
     @property
     def username_from_token(self):

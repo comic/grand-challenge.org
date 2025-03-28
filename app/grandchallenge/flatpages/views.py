@@ -1,9 +1,7 @@
-from django.contrib.auth.mixins import (
-    LoginRequiredMixin,
-    PermissionRequiredMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.flatpages.models import FlatPage
 from django.views.generic import CreateView, UpdateView
+from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.flatpages.forms import FlatPageForm, FlatPageUpdateForm
 from grandchallenge.subdomains.utils import reverse_lazy

@@ -1,5 +1,5 @@
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
+from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
