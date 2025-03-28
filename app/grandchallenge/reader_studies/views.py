@@ -5,7 +5,6 @@ from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import (
-    AccessMixin,
     LoginRequiredMixin,
     PermissionRequiredMixin,
 )
@@ -1222,9 +1221,7 @@ class QuestionWidgetsView(BaseAddObjectToReaderStudyMixin, View):
         return HttpResponse(form["widget"])
 
 
-class QuestionInteractiveAlgorithmsView(
-    AccessMixin, BaseAddObjectToReaderStudyMixin, View
-):
+class QuestionInteractiveAlgorithmsView(BaseAddObjectToReaderStudyMixin, View):
     def dispatch(self, request, *args, **kwargs):
         if request.user.has_perm(
             "reader_studies.add_interactive_algorithm_to_question"
