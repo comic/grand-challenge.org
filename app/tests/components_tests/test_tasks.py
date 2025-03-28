@@ -490,10 +490,10 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
 
 
 @pytest.mark.parametrize(
-    "task",
+    "task, task_extra_kwargs",
     (
-        add_image_to_object,
-        add_file_to_object,
+        (add_image_to_object, {"upload_session_pk": None}),
+        (add_file_to_object, {"user_upload_pk": None}),
     ),
 )
 @pytest.mark.parametrize(
@@ -523,6 +523,7 @@ def test_task_handles_deleted_object(
     task,
     object_factory,
     factory_kwargs,
+    task_extra_kwargs,
     context,
 ):
     settings.task_eager_propagates = (True,)
@@ -535,28 +536,16 @@ def test_task_handles_deleted_object(
         kwargs={"foo": "bar"}, immutable=True
     )
 
+    ci = ComponentInterfaceFactory(kind="IMG")
+
     task_kwargs = {
         "app_label": obj._meta.app_label,
         "model_name": obj._meta.model_name,
         "object_pk": obj.pk,
         "linked_task": linked_task,
+        "interface_pk": ci.pk,
+        **task_extra_kwargs,
     }
-    if task is add_image_to_object:
-        ci = ComponentInterfaceFactory(kind="IMG")
-        task_kwargs.update(
-            {
-                "upload_session_pk": None,
-                "interface_pk": ci.pk,
-            }
-        )
-    if task is add_file_to_object:
-        ci = ComponentInterfaceFactory(kind="PDF")
-        task_kwargs.update(
-            {
-                "user_upload_pk": None,
-                "interface_pk": ci.pk,
-            }
-        )
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         with context:
