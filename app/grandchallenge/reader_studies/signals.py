@@ -9,8 +9,7 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 
 from grandchallenge.cases.models import Image
-from grandchallenge.reader_studies.models import Answer, DisplaySet
-from grandchallenge.reader_studies.tasks import add_scores_for_display_set
+from grandchallenge.reader_studies.models import DisplaySet
 
 
 @receiver(m2m_changed, sender=DisplaySet.values.through)
@@ -84,25 +83,3 @@ def set_display_set_order(sender, instance, **_):
     if instance.order:
         return
     instance.order = instance.reader_study.next_display_set_order
-
-
-@receiver(post_save, sender=Answer)
-def assign_score(sender, instance, created, update_fields=None, **kwargs):
-    if update_fields is not None and set(update_fields) == {"score"}:
-        return
-    if (
-        instance.is_ground_truth
-        or Answer.objects.filter(
-            question=instance.question,
-            is_ground_truth=True,
-            display_set=instance.display_set,
-        ).exists()
-    ):
-        on_commit(
-            lambda: add_scores_for_display_set.apply_async(
-                kwargs={
-                    "instance_pk": str(instance.pk),
-                    "ds_pk": str(instance.display_set.pk),
-                }
-            )
-        )
