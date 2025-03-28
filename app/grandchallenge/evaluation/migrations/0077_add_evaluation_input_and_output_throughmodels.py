@@ -9,7 +9,7 @@ import grandchallenge.evaluation.models
 class Migration(migrations.Migration):
     dependencies = [
         ("components", "0025_alter_componentinterface_overlay_segments"),
-        ("evaluation", "0077_alter_evaluation_unique_together"),
+        ("evaluation", "0076_alter_evaluation_unique_together"),
     ]
 
     operations = [
