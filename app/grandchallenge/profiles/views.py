@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.signing import BadSignature, Signer
@@ -22,7 +23,6 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     get_objects_for_user,
 )
-from grandchallenge.core.models import UserPassesTestMixin
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.organizations.models import Organization
 from grandchallenge.profiles.forms import (
@@ -239,7 +239,7 @@ class EmailPreferencesUpdate(
                 }
             ).apply_async()
 
-        return super().test_func()
+        return True
 
     @property
     def username_from_token(self):

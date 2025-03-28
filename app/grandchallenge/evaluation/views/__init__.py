@@ -4,7 +4,11 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    AccessMixin,
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
@@ -37,7 +41,6 @@ from grandchallenge.core.guardian import (
     PermissionListMixin,
     filter_by_permission,
 )
-from grandchallenge.core.models import UserPassesTestMixin
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.direct_messages.forms import ConversationForm
 from grandchallenge.evaluation.forms import (
@@ -685,12 +688,10 @@ class LeaderboardDetail(
     search_fields = ["pk", "submission__creator__username"]
 
     def test_func(self):
-        if self.phase.public or self.phase.challenge.is_admin(
-            user=self.request.user
-        ):
-            return super().test_func()
+        if self.phase.public:
+            return True
         else:
-            return False
+            return self.phase.challenge.is_admin(user=self.request.user)
 
     @cached_property
     def phase(self):
