@@ -8,7 +8,6 @@ from django.contrib.auth.mixins import (
     AccessMixin,
     LoginRequiredMixin,
     PermissionRequiredMixin,
-    UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
@@ -679,19 +678,19 @@ class LeaderboardRedirect(RedirectView):
             raise Http404("Leaderboard not found")
 
 
-class LeaderboardDetail(
-    UserPassesTestMixin, TeamContextMixin, PaginatedTableListView
-):
+class LeaderboardDetail(AccessMixin, TeamContextMixin, PaginatedTableListView):
     model = Evaluation
     template_name = "evaluation/leaderboard_detail.html"
     row_template = "evaluation/leaderboard_row.html"
     search_fields = ["pk", "submission__creator__username"]
 
-    def test_func(self):
-        if self.phase.public:
-            return True
+    def dispatch(self, request, *args, **kwargs):
+        if self.phase.public or self.phase.challenge.is_admin(
+            user=request.user
+        ):
+            return super().dispatch(request, *args, **kwargs)
         else:
-            return self.phase.challenge.is_admin(user=self.request.user)
+            self.handle_no_permission()
 
     @cached_property
     def phase(self):

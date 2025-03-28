@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count, Q
 from django.http import Http404
@@ -85,17 +85,18 @@ class PageList(
         return self.request.challenge
 
 
-class PageDetail(
-    UserPassesTestMixin, ChallengeFilteredQuerysetMixin, DetailView
-):
+class PageDetail(AccessMixin, ChallengeFilteredQuerysetMixin, DetailView):
     model = Page
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
-    def test_func(self):
-        user = self.request.user
+    def dispatch(self, request, *args, **kwargs):
+        user = request.user
         page = self.get_object()
-        return page.can_be_viewed_by(user=user)
+        if page.can_be_viewed_by(user=user):
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return self.handle_no_permission()
 
 
 class ChallengeHome(PageDetail):

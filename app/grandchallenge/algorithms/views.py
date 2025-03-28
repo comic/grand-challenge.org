@@ -8,7 +8,6 @@ from django.contrib.auth.mixins import (
     AccessMixin,
     LoginRequiredMixin,
     PermissionRequiredMixin,
-    UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
@@ -984,12 +983,15 @@ class AlgorithmPublishView(
         return response
 
 
-class AlgorithmImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
+class AlgorithmImportView(LoginRequiredMixin, FormView):
     form_class = AlgorithmImportForm
     template_name = "algorithms/algorithm_import_form.html"
 
-    def test_func(self):
-        return self.request.user.is_staff
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_staff:
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return self.handle_no_permission()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import AccessMixin, LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.signing import BadSignature, Signer
@@ -208,37 +208,35 @@ class UserProfileViewSet(GenericViewSet):
         return Response(serializer.data)
 
 
-class EmailPreferencesUpdate(
-    SuccessMessageMixin, UserPassesTestMixin, UpdateView
-):
+class EmailPreferencesUpdate(SuccessMessageMixin, AccessMixin, UpdateView):
     model = UserProfile
     form_class = SubscriptionPreferenceForm
     template_name = "profiles/subscription_form.html"
     raise_exception = True
     subscription_type = None
 
-    def test_func(self):
+    def dispatch(self, request, *args, **kwargs):
         try:
             username = self.username_from_token
         except BadSignature:
-            return False
+            return self.handle_no_permission()
 
         try:
             user = get_user_model().objects.get(username=username)
         except ObjectDoesNotExist:
-            return False
+            return self.handle_no_permission()
 
-        if self.request.user.is_authenticated and user != self.request.user:
+        if request.user.is_authenticated and user != request.user:
             update_verification_user_set.signature(
                 kwargs={
                     "usernames": [
-                        self.request.user.username,
+                        request.user.username,
                         user.username,
                     ]
                 }
             ).apply_async()
 
-        return True
+        return super().dispatch(request, *args, **kwargs)
 
     @property
     def username_from_token(self):
