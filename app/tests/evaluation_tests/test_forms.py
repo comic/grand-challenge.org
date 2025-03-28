@@ -1290,7 +1290,7 @@ def test_additional_inputs_on_submission_form():
     ci_file = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.ANY, store_in_database=False
     )
-    phase.inputs.set([ci_img, ci_str, ci_file])
+    phase.additional_evaluation_inputs.set([ci_img, ci_str, ci_file])
 
     form = SubmissionForm(
         user=UserFactory(),
@@ -1314,7 +1314,7 @@ def test_additional_inputs_on_submission_form():
 def test_disjoint_algorithm_interface_sockets_and_evaluation_inputs():
     ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
-    phase.inputs.set([ci1, ci2])
+    phase.additional_evaluation_inputs.set([ci1, ci2])
 
     form = AlgorithmInterfaceForm(
         base_obj=phase, data={"inputs": [ci1, ci3], "outputs": [ci2, ci4]}

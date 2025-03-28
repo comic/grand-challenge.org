@@ -1,12 +1,10 @@
 import json
 
 from django.contrib import admin, messages
-from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
 
-from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
     cancel_jobs,
@@ -30,14 +28,15 @@ from grandchallenge.evaluation.models import (
     MethodGroupObjectPermission,
     MethodUserObjectPermission,
     Phase,
+    PhaseAdditionalEvaluationInput,
     PhaseAlgorithmInterface,
+    PhaseEvaluationOutput,
     PhaseGroupObjectPermission,
     PhaseUserObjectPermission,
     Submission,
     SubmissionGroupObjectPermission,
     SubmissionUserObjectPermission,
 )
-from grandchallenge.evaluation.utils import SubmissionKindChoices
 
 
 class PhaseAdminForm(ModelForm):
@@ -54,64 +53,29 @@ class PhaseAdminForm(ModelForm):
             ) in self.instance.read_only_fields_for_dependent_phases:
                 self.fields[field_name].disabled = True
 
-    def clean_inputs(self):
-        inputs = self.cleaned_data["inputs"]
 
-        if any(
-            elem in RESERVED_SOCKET_SLUGS
-            for elem in inputs.values_list("slug", flat=True)
-        ):
-            raise ValidationError(
-                f'Evaluation inputs cannot be of the following types: {", ".join(RESERVED_SOCKET_SLUGS)}'
-            )
+class EvaluationSocketInline(admin.TabularInline):
+    extra = 1
 
-        return inputs
+    def get_formset(self, request, obj=None, **kwargs):
+        # Enable form validation
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.validate_each = True
+        return formset
 
-    def clean(self):
-        cleaned_data = super().clean()
 
-        if self.instance.submission_kind == SubmissionKindChoices.ALGORITHM:
-            input_slugs = (
-                set(cleaned_data["inputs"].values_list("slug", flat=True))
-                if "inputs" in cleaned_data
-                else set()
-            )
-            output_slugs = (
-                set(cleaned_data["outputs"].values_list("slug", flat=True))
-                if "outputs" in cleaned_data
-                else set()
-            )
+class EvaluationInputInline(EvaluationSocketInline):
+    model = PhaseAdditionalEvaluationInput
 
-            evaluation_socket_slugs = input_slugs | output_slugs
 
-            algorithm_socket_slugs = set(
-                self.instance.algorithm_interfaces.values_list(
-                    "inputs__slug", flat=True
-                )
-            ) | set(
-                self.instance.algorithm_interfaces.values_list(
-                    "outputs__slug", flat=True
-                )
-            )
-
-            overlapping_slugs = set(evaluation_socket_slugs) & set(
-                algorithm_socket_slugs
-            )
-
-            if overlapping_slugs:
-                conflicting_slugs = ", ".join(overlapping_slugs)
-                raise ValidationError(
-                    f"The following sockets cannot be defined as evaluation "
-                    f"inputs or outputs because they are already defined as "
-                    f"algorithm inputs or outputs for this phase: {conflicting_slugs}"
-                )
-
-        return cleaned_data
+class EvaluationOutputInline(EvaluationSocketInline):
+    model = PhaseEvaluationOutput
 
 
 @admin.register(Phase)
 class PhaseAdmin(admin.ModelAdmin):
     ordering = ("challenge",)
+    inlines = [EvaluationInputInline, EvaluationOutputInline]
     list_display = (
         "slug",
         "title",
@@ -136,8 +100,8 @@ class PhaseAdmin(admin.ModelAdmin):
         "challenge__short_name",
     )
     autocomplete_fields = (
-        "inputs",
-        "outputs",
+        "additional_evaluation_inputs",
+        "evaluation_outputs",
         "archive",
     )
     readonly_fields = (
@@ -169,7 +133,7 @@ class PhaseAdmin(admin.ModelAdmin):
 def reevaluate_submissions(modeladmin, request, queryset):
     """Creates a new evaluation for an existing submission"""
     for submission in queryset:
-        if submission.phase.inputs.exists():
+        if submission.phase.additional_evaluation_inputs.exists():
             modeladmin.message_user(
                 request,
                 f"Submission {submission.pk} cannot be reevaluated in the admin "

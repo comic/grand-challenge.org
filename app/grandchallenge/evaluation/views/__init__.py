@@ -743,7 +743,7 @@ class LeaderboardDetail(
             Column(title="Created", sort_field="submission__created")
         )
 
-        if self.phase.inputs:
+        if self.phase.additional_evaluation_inputs:
             columns.append(Column(title="Inputs"))
 
         if self.phase.scoring_method_choice == self.phase.MEAN:

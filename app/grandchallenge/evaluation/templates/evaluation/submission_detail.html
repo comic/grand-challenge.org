@@ -154,7 +154,7 @@
                 </dl>
             </div>
 
-            {% with object.phase.inputs.all as additional_inputs_required %}
+            {% with object.phase.additional_evaluation_inputs.all as additional_inputs_required %}
 
                 {% if not object.is_evaluated_with_active_image_and_ground_truth or additional_inputs_required %}
                     <div class="card-body">

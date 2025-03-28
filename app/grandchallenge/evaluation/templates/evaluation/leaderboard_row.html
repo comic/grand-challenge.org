@@ -30,7 +30,7 @@
 {{ object.submission.created|date:"j N Y" }}
 <split></split>
 
-{% if object.submission.phase.inputs %}
+{% if object.submission.phase.additional_evaluation_inputs %}
     <td>
         {% for input in object.additional_inputs.all|sort_civs %}
             <dd>
