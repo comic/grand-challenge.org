@@ -293,6 +293,15 @@ wheels = [
 ]
 
 [[package]]
+name = "cachetools"
+version = "5.5.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/6c/81/3747dad6b14fa2cf53fcf10548cf5aea6913e96fab41a3c198676f8948a5/cachetools-5.5.2.tar.gz", hash = "sha256:1a661caa9175d26759571b2e19580f9d6393969e5dfca11fdb1f947a23e640d4", size = 28380 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/72/76/20fa66124dbe6be5cafeb312ece67de6b61dd91a0247d1ea13db4ebb33c2/cachetools-5.5.2-py3-none-any.whl", hash = "sha256:d26a22bcc62eb95c3beabd9f1ee5e820d3d2704fe2967cbe350e20c8ffcd3f0a", size = 10080 },
+]
+
+[[package]]
 name = "celery"
 version = "5.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1208,6 +1217,7 @@ dependencies = [
     { name = "biopython" },
     { name = "bleach", extra = ["css"] },
     { name = "boto3" },
+    { name = "cachetools" },
     { name = "celery", extra = ["redis", "sqs"] },
     { name = "citeproc-py" },
     { name = "crispy-bootstrap4" },
@@ -1292,6 +1302,7 @@ requires-dist = [
     { name = "biopython" },
     { name = "bleach", extras = ["css"] },
     { name = "boto3", specifier = ">1.18.8" },
+    { name = "cachetools", specifier = ">=5.5.2" },
     { name = "celery", extras = ["redis", "sqs"], specifier = "!=5.0.6,!=5.3.0,!=5.5.*" },
     { name = "citeproc-py" },
     { name = "crispy-bootstrap4" },
