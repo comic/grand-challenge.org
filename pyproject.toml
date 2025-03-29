@@ -62,6 +62,7 @@ dependencies = [
     "pymdown-extensions",
     "grand-challenge-forge",
     "biopython",
+    "cachetools",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"
