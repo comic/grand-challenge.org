@@ -358,6 +358,7 @@ def test_notification_email_choice_after_user_signup(client):
         method=client.post,
         data={
             "email": "user123@domain.com",
+            "email2": "user123@domain.com",
             "username": "user123",
             "first_name": "Firstname",
             "last_name": "Lastname",

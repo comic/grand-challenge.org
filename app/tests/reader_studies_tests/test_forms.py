@@ -7,6 +7,7 @@ from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import HiddenInput, Select
+from django.test import override_settings
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageWidget
@@ -25,6 +26,7 @@ from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
+    GroundTruthFromAnswersForm,
     QuestionForm,
 )
 from grandchallenge.reader_studies.models import (
@@ -1883,7 +1885,7 @@ def test_question_form_interactive_algorithm_field(answer_type, choices):
 
 
 @pytest.mark.django_db
-def test_interactive_algorithm_field_permissions(client):
+def test_interactive_algorithm_field_permissions():
     editor, editor_with_permission = UserFactory.create_batch(2)
     rs = ReaderStudyFactory()
 
@@ -1921,3 +1923,86 @@ def test_interactive_algorithm_field_permissions(client):
         form.cleaned_data["interactive_algorithm"]
         == InteractiveAlgorithmChoices.ULS23_BASELINE
     )
+
+
+@pytest.mark.django_db
+@override_settings(task_eager_propagates=True, task_always_eager=True)
+def test_ground_truth_from_answers_form(settings):
+    rs = ReaderStudyFactory()
+
+    reader, editor = UserFactory.create_batch(2)
+    rs.add_editor(editor)
+    rs.add_reader(reader)
+
+    ds = DisplaySetFactory(reader_study=rs)
+    q1 = QuestionFactory(
+        reader_study=rs,
+        question_text="q1",
+        answer_type=Question.AnswerType.BOOL,
+    )
+    q2 = QuestionFactory(
+        reader_study=rs,
+        question_text="q2",
+        answer_type=Question.AnswerType.BOOL,
+    )
+
+    scored_answer = AnswerFactory(
+        question=q1, display_set=ds, creator=reader, answer=True
+    )
+    assert scored_answer.score is None, "Sanity: answer starts without a score"
+
+    # Not ground truth applicable
+    AnswerFactory(
+        question=QuestionFactory(
+            reader_study=rs,
+            question_text="BB",
+            answer_type=Question.AnswerType.BOUNDING_BOX_2D,
+        ),
+        display_set=ds,
+        creator=editor,
+        answer="Foo",
+    )
+
+    form = GroundTruthFromAnswersForm(
+        reader_study=rs,
+        data={"user": str(reader.pk)},
+    )
+    assert not form.is_valid()
+
+    # Answer 1 of 2 questions
+    AnswerFactory(question=q1, display_set=ds, creator=editor, answer=True)
+
+    form = GroundTruthFromAnswersForm(
+        reader_study=rs,
+        data={"user": str(reader.pk)},
+    )
+    assert (
+        not form.is_valid()
+    ), "With only one answer the user is a valid source"
+
+    # Answer 2 of 2 questions
+    AnswerFactory(question=q2, display_set=ds, creator=editor, answer=True)
+
+    form = GroundTruthFromAnswersForm(
+        reader_study=rs,
+        data={"user": str(editor.pk)},
+    )
+    assert form.is_valid(), "With both answers the user is a valid source"
+
+    form.create_ground_truth()
+
+    assert not Answer.objects.filter(
+        question__answer_type=Question.AnswerType.BOUNDING_BOX_2D,
+        is_ground_truth=True,
+    ).exists(), "Non applicable gt answer did not get copied"
+
+    scored_answer.refresh_from_db()
+    assert scored_answer.score == 1.0, "Existing answers are scored"
+
+    form = GroundTruthFromAnswersForm(
+        reader_study=rs,
+        data={"user": str(editor.pk)},
+    )
+    assert (
+        not form.is_valid()
+    ), "With existing ground truth, the form is no longer valid"
