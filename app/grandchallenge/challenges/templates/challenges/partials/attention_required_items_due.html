@@ -1,0 +1,5 @@
+{% if onboardingtask_aggregates.num_is_overdue or invoice_aggregates.num_is_overdue %}
+    <i class="fas fa-exclamation-triangle text-danger" title="Action required, items are overdue."></i>
+{% elif onboardingtask_aggregates.num_is_overdue_soon or invoice_aggregates.num_is_due %}
+    <i class="fas fa-exclamation-triangle text-warning" title="Items are due soon."></i>
+{% endif %}

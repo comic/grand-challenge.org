@@ -55,6 +55,36 @@ def add_scores_for_display_set(*, instance_pk, ds_pk):
 
 
 @acks_late_2xlarge_task
+def bulk_assign_scores_for_reader_study(*, reader_study_pk):
+    ground_truth = Answer.objects.filter(
+        question__reader_study__pk=reader_study_pk,
+        is_ground_truth=True,
+    ).all()
+
+    def key(answer):
+        return (str(answer.question_id), str(answer.display_set_id))
+
+    ground_truth_lookup = {}
+    for answer in ground_truth:
+        ground_truth_lookup[key(answer)] = answer
+
+    answers = Answer.objects.filter(
+        question__reader_study__pk=reader_study_pk,
+        is_ground_truth=False,
+    ).prefetch_related("question")
+
+    for answer in answers:
+        gt_answer = ground_truth_lookup.get(key(answer))
+        if gt_answer is not None:
+            answer.calculate_score(ground_truth=gt_answer.answer)
+        else:
+            # Sanity: should already be none, but just to be sure
+            answer.score = None
+
+    Answer.objects.bulk_update(answers, ["score"])
+
+
+@acks_late_2xlarge_task
 def create_display_sets_for_upload_session(
     *, upload_session_pk, reader_study_pk, interface_pk
 ):

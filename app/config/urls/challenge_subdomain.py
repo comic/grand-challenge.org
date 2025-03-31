@@ -18,6 +18,10 @@ urlpatterns = [
         "evaluation/",
         include("grandchallenge.evaluation.urls", namespace="evaluation"),
     ),
+    path(
+        "invoices/",
+        include("grandchallenge.invoices.urls", namespace="invoices"),
+    ),
     path("teams/", include("grandchallenge.teams.urls", namespace="teams")),
     path(
         "participants/",

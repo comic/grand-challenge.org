@@ -1,0 +1,14 @@
+{% extends "reader_studies/ground_truth_csv_form.html" %}
+
+{% block form_heading %}
+    <h2>Add {{ type_to_add }} to {{ object }}</h2>
+
+    <p>
+        The selected user's answers will be used to generate ground truth, meaning their individual answers will be removed.
+    </p>
+
+    <p>
+        This is a one-time action. Adding new questions or cases will make the ground truth incomplete.
+    </p>
+
+{% endblock %}
