@@ -156,7 +156,9 @@ def build_images(  # noqa:C901
                     f"Nothing to do here: {linked_model_name} no longer exists."
                 )
                 upload_session.update_status(
-                    status=RawImageUploadSession.CANCELLED
+                    status=RawImageUploadSession.CANCELLED,
+                    error_message="Image processing canceled. "
+                    f"The associated {linked_model_name} not longer exists.",
                 )
                 return
             else:
