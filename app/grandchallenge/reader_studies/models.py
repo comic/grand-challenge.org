@@ -832,7 +832,7 @@ class ReaderStudy(
         )
         return interfaces_and_values
 
-    @property
+    @cached_property
     def credits_consumed(self):
         total = 0
         for session in self.session_costs.annotate(
@@ -840,6 +840,14 @@ class ReaderStudy(
         ):
             total += session.credits_consumed / session.num
         return ceil(total)
+
+    @property
+    def is_launchable(self):
+        launchable = True
+        if self.max_credits and self.credits_consumed >= self.max_credits:
+            launchable = False
+        return launchable
+
 
 class ReaderStudyUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
