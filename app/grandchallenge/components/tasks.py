@@ -20,7 +20,7 @@ from celery import (  # noqa: I251 TODO needs to be refactored
 )
 from django.apps import apps
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import OperationalError, transaction
 from django.db.models import DateTimeField, ExpressionWrapper, F
@@ -1199,14 +1199,8 @@ def _get_object_with_lock(*, app_label, model_name, object_pk):
         object = lock_model_instance(
             app_label=app_label, model_name=model_name, pk=object_pk
         )
-    except ObjectDoesNotExist as e:
-        if model_name in [
-            ArchiveItem._meta.model_name,
-            DisplaySet._meta.model_name,
-        ]:
-            return None
-        else:
-            raise e
+    except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
+        return None
     return object
 
 
