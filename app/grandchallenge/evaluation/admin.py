@@ -99,11 +99,7 @@ class PhaseAdmin(admin.ModelAdmin):
         "external_evaluation",
         "challenge__short_name",
     )
-    autocomplete_fields = (
-        "additional_evaluation_inputs",
-        "evaluation_outputs",
-        "archive",
-    )
+    autocomplete_fields = ("archive",)
     readonly_fields = (
         "give_algorithm_editors_job_view_permissions",
         "challenge_forge_json",

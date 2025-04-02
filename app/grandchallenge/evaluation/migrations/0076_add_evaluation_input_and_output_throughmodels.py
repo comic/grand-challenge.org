@@ -9,10 +9,14 @@ import grandchallenge.evaluation.models
 class Migration(migrations.Migration):
     dependencies = [
         ("components", "0025_alter_componentinterface_overlay_segments"),
-        ("evaluation", "0076_alter_evaluation_unique_together"),
+        ("evaluation", "0075_alter_phase_inputs_alter_phase_outputs"),
     ]
 
     operations = [
+        migrations.AlterUniqueTogether(
+            name="evaluation",
+            unique_together=set(),
+        ),
         migrations.CreateModel(
             name="PhaseEvaluationOutput",
             fields=[
