@@ -332,6 +332,13 @@ class ReaderStudy(
         help_text="The organizations associated with this reader study",
         related_name="readerstudies",
     )
+    leaderboard_accessible_to_readers = models.BooleanField(
+        default=False,
+        help_text=(
+            "If checked, readers can see the leaderboard. "
+            "Usernames and avatars will be hidden to protect other readers' privacy."
+        ),
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"

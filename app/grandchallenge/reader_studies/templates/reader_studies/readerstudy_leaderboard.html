@@ -33,9 +33,13 @@
             </thead>
             <tbody>
             {% for entry in object.leaderboard.grouped_scores %}
-                <tr>
+                <tr {% if object.leaderboard_accessible_to_readers and request.user.username == entry.creator__username %} class="bg-success"{% endif %}>
                     <td data-order="{{ forloop.counter|stringformat:'020f' }}">{{ forloop.counter|ordinal }}</td>
-                    <td data-order="{{ entry.creator__username }}">{{ entry.creator__username|user_profile_link_username }}</td>
+                    {% if not object.leaderboard_accessible_to_readers %}
+                        <td data-order="{{ entry.creator__username }}">{{ entry.creator__username|user_profile_link_username }}</td>
+                    {% else %}
+                        <td>{% if entry.creator__username == request.user.username %} You {% else %} Reader {% endif %}</td>
+                    {% endif %}
                     <td data-order="{{ entry.score__sum|stringformat:'020f' }}">{{ entry.score__sum }} / {{ object.leaderboard.question_count }}</td>
                     <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg|floatformat:4 }}</td>
                 </tr>

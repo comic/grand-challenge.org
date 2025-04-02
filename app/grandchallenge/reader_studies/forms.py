@@ -134,6 +134,7 @@ class ReaderStudyCreateForm(
             "workstation",
             "workstation_config",
             "is_educational",
+            "leaderboard_accessible_to_readers",
             "instant_verification",
             "public",
             "access_request_handling",
@@ -191,6 +192,17 @@ class ReaderStudyCreateForm(
                 field="is_educational",
             )
 
+        if (
+            cleaned_data["leaderboard_accessible_to_readers"]
+            and not cleaned_data["is_educational"]
+        ):
+            self.add_error(
+                error=ValidationError(
+                    "Reader study must be educational when making leaderboard accessible to readers."
+                ),
+                field="is_educational",
+            )
+
         return cleaned_data
 
 
@@ -215,6 +227,7 @@ class ReaderStudyUpdateForm(
             "help_text_markdown",
             "shuffle_hanging_list",
             "is_educational",
+            "leaderboard_accessible_to_readers",
             "instant_verification",
             "public",
             "access_request_handling",
