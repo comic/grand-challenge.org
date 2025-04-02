@@ -60,6 +60,11 @@ IGNORABLE_404_URLS = [
 # the config dir. We need to  go one dir higher so path.join("..")
 SITE_ROOT = Path(__file__).resolve(strict=True).parent.parent
 
+if strtobool(os.environ.get("POSTGRES_USE_RDS_PROXY", "false")):
+    ssl_root_cert = "amazon-root-ca.pem"
+else:
+    ssl_root_cert = "global-bundle.pem"
+
 DATABASES = {
     "default": {
         "ENGINE": "grandchallenge.core.db.postgres_iam",
@@ -74,7 +79,7 @@ DATABASES = {
             ),
             "sslmode": os.environ.get("POSTGRES_SSL_MODE", "prefer"),
             "sslrootcert": os.path.join(
-                SITE_ROOT, "config", "certs", "global-bundle.pem"
+                SITE_ROOT, "config", "certs", ssl_root_cert
             ),
             # wait 100ms to acquire DB lock rather than indefinitely,
             # this saves having to set select_for_update() on normal views
