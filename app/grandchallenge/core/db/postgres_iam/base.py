@@ -33,10 +33,10 @@ class DatabaseWrapper(base.DatabaseWrapper):
 
         return params
 
-    def get_new_connection(self, *args, **kwargs):
-        connection = super().get_new_connection(*args, **kwargs)
-        with connection.cursor() as cursor:
+    def init_connection_state(self):
+        super().init_connection_state()
+
+        with self.connection.cursor() as cursor:
             # wait 100ms to acquire DB lock rather than indefinitely,
             # this saves having to set select_for_update() on normal views
             cursor.execute("SET lock_timeout = 100;")
-        return connection
