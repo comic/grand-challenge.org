@@ -543,14 +543,27 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         blank=True,
         help_text="The interfaces that an algorithm for this phase must implement.",
     )
-    inputs = models.ManyToManyField(
+    inputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface, related_name="evaluation_inputs", blank=True
+        )
+    )
+    outputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface,
+            related_name="evaluation_outputs",
+        )
+    )
+    additional_evaluation_inputs = models.ManyToManyField(
         to=ComponentInterface,
-        related_name="evaluation_inputs",
+        through="evaluation.PhaseAdditionalEvaluationInput",
+        related_name="additional_eval_inputs",
         blank=True,
     )
-    outputs = models.ManyToManyField(
+    evaluation_outputs = models.ManyToManyField(
         to=ComponentInterface,
-        related_name="evaluation_outputs",
+        related_name="eval_outputs",
+        through="evaluation.PhaseEvaluationOutput",
     )
     algorithm_inputs = deprecate_field(
         models.ManyToManyField(
@@ -960,7 +973,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 raise ValidationError(SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT)
 
     def set_default_interfaces(self):
-        self.outputs.set(
+        self.evaluation_outputs.set(
             [ComponentInterface.objects.get(slug="metrics-json-file")]
         )
 
@@ -1300,11 +1313,11 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     @property
     def additional_inputs_field(self):
-        return self.inputs
+        return self.additional_evaluation_inputs
 
     @property
     def additional_outputs_field(self):
-        return self.outputs
+        return self.evaluation_outputs
 
     @property
     def algorithm_interface_create_url(self):
@@ -1323,6 +1336,68 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "evaluation:interface-list",
             kwargs={"challenge_short_name": self.challenge, "slug": self.slug},
         )
+
+
+class CheckForOverlappingSocketsMixin:
+
+    def clean(self):
+        super().clean()
+
+        if self.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
+            algorithm_socket_slugs = set(
+                self.phase.algorithm_interfaces.values_list(
+                    "inputs__slug", flat=True
+                )
+            ) | set(
+                self.phase.algorithm_interfaces.values_list(
+                    "outputs__slug", flat=True
+                )
+            )
+
+            if self.socket.slug in algorithm_socket_slugs:
+                raise ValidationError(
+                    f"{self.socket.slug} cannot be defined as evaluation "
+                    f"inputs or outputs because it is already defined as "
+                    f"algorithm input or output for this phase"
+                )
+
+
+class PhaseAdditionalEvaluationInput(
+    CheckForOverlappingSocketsMixin, models.Model
+):
+    socket = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["phase", "socket"],
+                name="unique_phase_input_combination",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+
+        from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
+
+        if self.socket.slug in RESERVED_SOCKET_SLUGS:
+            raise ValidationError(
+                f'Evaluation inputs cannot be of the following types: {", ".join(RESERVED_SOCKET_SLUGS)}'
+            )
+
+
+class PhaseEvaluationOutput(CheckForOverlappingSocketsMixin, models.Model):
+    socket = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["phase", "socket"],
+                name="unique_phase_output_combination",
+            ),
+        ]
 
 
 class PhaseUserObjectPermission(UserObjectPermissionBase):
@@ -1535,7 +1610,10 @@ class Submission(FieldChangeMixin, UUIDModel):
                 )
 
     def create_evaluation(self, *, additional_inputs):
-        if self.phase.inputs.exists() and not additional_inputs:
+        if (
+            self.phase.additional_evaluation_inputs.exists()
+            and not additional_inputs
+        ):
             raise RuntimeError(
                 "Additional inputs are required to create an evaluation for this phase"
             )
@@ -1755,8 +1833,10 @@ class EvaluationManager(ComponentJobManager):
             unique_kwargs["ground_truth__isnull"] = True
 
         input_interface_count = len(inputs)
-        configured_input_interface_slugs = submission.phase.inputs.values_list(
-            "slug", flat=True
+        configured_input_interface_slugs = (
+            submission.phase.additional_evaluation_inputs.values_list(
+                "slug", flat=True
+            )
         )
 
         # annotate the number of inputs and the number of inputs that match
@@ -1893,7 +1973,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
     @property
     def output_interfaces(self):
-        return self.submission.phase.outputs
+        return self.submission.phase.evaluation_outputs
 
     @cached_property
     def successful_jobs_per_interface(self):
@@ -1952,8 +2032,10 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     @property
     def additional_inputs(self):
         # additional inputs as currently defined on the phase
-        phase_input_slugs = self.submission.phase.inputs.values_list(
-            "slug", flat=True
+        phase_input_slugs = (
+            self.submission.phase.additional_evaluation_inputs.values_list(
+                "slug", flat=True
+            )
         )
         return self.inputs.filter(interface__slug__in=phase_input_slugs)
 
@@ -1961,7 +2043,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     def additional_inputs_complete(self):
         return (
             self.additional_inputs.count()
-            == self.submission.phase.inputs.count()
+            == self.submission.phase.additional_evaluation_inputs.count()
         )
 
     @property

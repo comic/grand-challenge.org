@@ -2252,7 +2252,7 @@ class TestSubmissionCreationWithExtraInputs:
         algorithm_phase_with_multiple_inputs,
     ):
         # configure multiple additional evaluation inputs
-        algorithm_phase_with_multiple_inputs.phase.inputs.set(
+        algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
                 algorithm_phase_with_multiple_inputs.ci_json_in_db_with_schema,
                 algorithm_phase_with_multiple_inputs.ci_existing_img,
@@ -2326,7 +2326,7 @@ class TestSubmissionCreationWithExtraInputs:
         assert sorted(
             [
                 int.pk
-                for int in algorithm_phase_with_multiple_inputs.phase.inputs.all()
+                for int in algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.all()
             ]
         ) == sorted([civ.interface.pk for civ in eval.inputs.all()])
 
@@ -2357,7 +2357,7 @@ class TestSubmissionCreationWithExtraInputs:
         algorithm_phase_with_multiple_inputs,
     ):
         # configure multiple inputs
-        algorithm_phase_with_multiple_inputs.phase.inputs.set(
+        algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
                 algorithm_phase_with_multiple_inputs.ci_json_in_db_with_schema,
                 algorithm_phase_with_multiple_inputs.ci_existing_img,
@@ -2432,7 +2432,7 @@ class TestSubmissionCreationWithExtraInputs:
         algorithm_phase_with_multiple_inputs,
     ):
         # configure file input
-        algorithm_phase_with_multiple_inputs.phase.inputs.set(
+        algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
                 algorithm_phase_with_multiple_inputs.ci_json_file,
             ]
@@ -2488,7 +2488,7 @@ class TestSubmissionCreationWithExtraInputs:
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
-        algorithm_phase_with_multiple_inputs.phase.inputs.set(
+        algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
                 algorithm_phase_with_multiple_inputs.ci_json_in_db_with_schema,
             ]
@@ -2524,7 +2524,7 @@ class TestSubmissionCreationWithExtraInputs:
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
-        algorithm_phase_with_multiple_inputs.phase.inputs.set(
+        algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
                 algorithm_phase_with_multiple_inputs.ci_img_upload,
             ]
@@ -2620,7 +2620,7 @@ def test_reschedule_evaluation_with_additional_inputs(
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
-    phase.inputs.set([ci_str, ci_bool])
+    phase.additional_evaluation_inputs.set([ci_str, ci_bool])
 
     user = UserFactory()
     phase.challenge.add_admin(user)
