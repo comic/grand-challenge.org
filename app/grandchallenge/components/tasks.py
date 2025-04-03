@@ -1214,7 +1214,7 @@ def add_image_to_object(  # noqa: C901
 
     try:
         object = lock_model_instance(
-            app_label=app_label, model_name=model_name, object_pk=object_pk
+            app_label=app_label, model_name=model_name, pk=object_pk
         )
     except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
         logger.info(f"Nothing to do: {model_name} no longer exists.")
@@ -1308,7 +1308,7 @@ def add_file_to_object(
 
     try:
         object = lock_model_instance(
-            app_label=app_label, model_name=model_name, object_pk=object_pk
+            app_label=app_label, model_name=model_name, pk=object_pk
         )
     except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
         logger.info(f"Nothing to do: {model_name} no longer exists.")
