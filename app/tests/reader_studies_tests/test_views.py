@@ -1061,7 +1061,7 @@ def test_ground_truth_from_answers_workflow(client):
     ), "Sanity: reader study no longer has ground truth"
 
 
-@pytest.parametrize(
+@pytest.mark.parametrize(
     "accessible_to_readers, status_code",
     ([True, 200], [False, 403]),
 )
@@ -1069,7 +1069,8 @@ def test_ground_truth_from_answers_workflow(client):
 def test_leaderboard_accessibility(client, accessible_to_readers, status_code):
     editor, reader, user = UserFactory.create_batch(3)
     rs = ReaderStudyFactory(
-        leaderboard_accessible_to_readers=accessible_to_readers
+        is_educational=True,
+        leaderboard_accessible_to_readers=accessible_to_readers,
     )
     rs.add_editor(editor)
     rs.add_reader(reader)

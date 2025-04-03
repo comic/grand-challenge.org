@@ -360,16 +360,17 @@ class ReaderStudyLeaderBoard(
     template_name = "reader_studies/readerstudy_leaderboard.html"
 
     def test_func(self, *args, **kwargs):
+        reader_study = self.get_object()
         if (
-            self.get_object().is_educational
-            and self.get_object().leaderboard_accessible_to_readers
+            reader_study.is_educational
+            and reader_study.leaderboard_accessible_to_readers
         ):
             return self.request.user.has_perm(
-                "reader_studies.read_readerstudy", self.get_object()
+                "reader_studies.read_readerstudy", reader_study
             )
         else:
             return self.request.user.has_perm(
-                "reader_studies.change_readerstudy", self.get_object()
+                "reader_studies.change_readerstudy", reader_study
             )
 
 
