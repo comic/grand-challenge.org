@@ -38,7 +38,11 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.reader_studies.models import Question, ReaderStudy
+from grandchallenge.reader_studies.models import (
+    InteractiveAlgorithmChoices,
+    Question,
+    ReaderStudy,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.emails import send_new_feedback_email_to_staff
 
@@ -728,3 +732,56 @@ class FeedbackUserObjectPermission(UserObjectPermissionBase):
 
 class FeedbackGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Feedback, on_delete=models.CASCADE)
+
+
+class SessionCost(UUIDModel):
+    session = models.OneToOneField(
+        Session,
+        related_name="session_cost",
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+    reader_studies = models.ManyToManyField(
+        ReaderStudy,
+        through="ReaderStudySessionCost",
+        related_name="session_costs",
+        blank=True,
+        help_text="Reader studies accessed during session",
+    )
+    duration = models.DurationField(null=True, blank=True)
+    interactive_algorithms = models.JSONField(
+        blank=True,
+        default=list,
+        help_text=(
+            "The interactive algorithms for which hardware has been initialized during the session."
+        ),
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "enum": InteractiveAlgorithmChoices.values,
+                        "type": "string",
+                    },
+                    "uniqueItems": True,
+                }
+            )
+        ],
+    )
+
+
+class ReaderStudySessionCost(models.Model):
+    reader_study = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
+    session_cost = models.ForeignKey(SessionCost, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["session_cost", "reader_study"],
+                name="unique_reader_study_session_cost",
+            )
+        ]
