@@ -641,6 +641,10 @@ class Session(UUIDModel):
 
         if created:
             self.assign_permissions()
+            SessionCost.objects.create(
+                session=self,
+                creator=self.creator,
+            )
             on_commit(
                 start_service.signature(
                     kwargs=self.task_kwargs,
