@@ -16,6 +16,7 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.urls.resolvers import RoutePattern
 from django.utils.text import get_valid_filename
+from django.utils.timezone import now
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -583,6 +584,8 @@ class Session(UUIDModel):
         self.logs = self.service.logs()
         self.service.stop_and_cleanup()
         self.update_status(status=self.STOPPED)
+        self.session_cost.duration = now() - self.created
+        self.session_cost.save()
 
         if self.auth_token:
             self.auth_token.delete()
