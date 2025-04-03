@@ -5,7 +5,7 @@ from datetime import timedelta
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, OperationalError, transaction
+from django.db import OperationalError, transaction
 from django.db.models import Case, IntegerField, Value, When
 from django.db.transaction import on_commit
 from django.utils.timezone import now
@@ -24,46 +24,39 @@ from grandchallenge.core.celery import (
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import rank_results
-from grandchallenge.notifications.models import Notification, NotificationType
 
 logger = logging.getLogger(__name__)
 
 
 @acks_late_2xlarge_task
 @transaction.atomic
-def create_evaluation(*, submission_pk, max_initial_jobs=1):  # noqa: C901
+def prepare_and_execute_evaluation(
+    *, evaluation_pk, max_initial_jobs=1
+):  # noqa: C901
     """
-    Creates an Evaluation for a Submission
+    Prepares an evaluation object for execution
 
     Parameters
     ----------
-    submission_pk
-        The primary key of the Submission
+    evaluation_pk
+        The primary key of the Evaluation
     max_initial_jobs
         The maximum number of algorithm jobs to schedule first
     """
-    Submission = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Submission"
-    )
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
+    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+    submission = evaluation.submission
 
-    submission = Submission.objects.get(pk=submission_pk)
+    if not evaluation.additional_inputs_complete:
+        logger.info("Nothing to do, inputs are still being validated.")
+        return
 
-    if submission.phase.external_evaluation:
-        external_evaluation, created = Evaluation.objects.get_or_create(
-            submission=submission,
-            defaults={
-                "time_limit": submission.phase.evaluation_time_limit,
-                "requires_gpu_type": submission.phase.evaluation_requires_gpu_type,
-                "requires_memory_gb": submission.phase.evaluation_requires_memory_gb,
-            },
-        )
-        if not created:
-            logger.info(
-                "External evaluation already created for this submission."
-            )
+    if evaluation.status != evaluation.VALIDATING_INPUTS:
+        # this task can be called multiple times with complete inputs,
+        # and might have been queued for execution already, so ignore
+        logger.info("Evaluation has already been scheduled for execution.")
         return
 
     if not submission.predictions_file and submission.user_upload:
@@ -72,39 +65,13 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):  # noqa: C901
         )
         submission.user_upload.delete()
 
-    # TODO - move this to the forms and make it an input here
-    method = submission.phase.active_image
-    if not method:
-        logger.error("No method ready for this submission")
-        Notification.send(
-            kind=NotificationType.NotificationTypeChoices.MISSING_METHOD,
-            message="missing method",
-            actor=submission.creator,
-            action_object=submission,
-            target=submission.phase,
-        )
-        return
-
-    try:
-        evaluation = Evaluation.objects.create(
-            submission=submission,
-            method=method,
-            ground_truth=submission.phase.active_ground_truth,
-            time_limit=submission.phase.evaluation_time_limit,
-            requires_gpu_type=submission.phase.evaluation_requires_gpu_type,
-            requires_memory_gb=submission.phase.evaluation_requires_memory_gb,
-        )
-    except IntegrityError:
-        logger.error(
-            "Evaluation already created for this submission, method and ground truth."
-        )
-        return
-
     if submission.algorithm_image:
+        evaluation.status = Evaluation.PENDING
+        evaluation.save()
         on_commit(
             lambda: create_algorithm_jobs_for_evaluation.apply_async(
                 kwargs={
-                    "evaluation_pk": evaluation.pk,
+                    "evaluation_pk": evaluation_pk,
                     "max_jobs": max_initial_jobs,
                 }
             )
@@ -141,8 +108,9 @@ def create_evaluation(*, submission_pk, max_initial_jobs=1):  # noqa: C901
             return
 
         civ.save()
-
-        evaluation.inputs.set([civ])
+        evaluation.inputs.add(civ)
+        evaluation.status = Evaluation.PENDING
+        evaluation.save()
         on_commit(evaluation.execute)
     else:
         raise RuntimeError("No algorithm or predictions file found")
@@ -362,14 +330,14 @@ def set_evaluation_inputs(*, evaluation_pk):
         )
 
         output_to_job = {
-            o: j
+            o.pk: j.pk
             for j in evaluation.successful_jobs.all()
             for o in j.outputs.all()
         }
 
-        evaluation.inputs.set([civ, *output_to_job.keys()])
+        evaluation.inputs.add(*[civ.pk, *output_to_job.keys()])
         evaluation.input_prefixes = {
-            str(o.pk): f"{j.pk}/output/" for o, j in output_to_job.items()
+            str(o): f"{j}/output/" for o, j in output_to_job.items()
         }
         evaluation.status = Evaluation.PENDING
         evaluation.save()

@@ -60,13 +60,11 @@ from grandchallenge.algorithms.serializers import (
     AlgorithmSerializer,
 )
 from grandchallenge.algorithms.tasks import import_remote_algorithm_image
-from grandchallenge.components.form_fields import (
-    INTERFACE_FORM_FIELD_PREFIX,
-    InterfaceFormFieldFactory,
+from grandchallenge.components.forms import (
+    AdditionalInputsMixin,
+    ContainerImageForm,
 )
-from grandchallenge.components.forms import ContainerImageForm
 from grandchallenge.components.models import (
-    CIVData,
     ComponentInterface,
     ComponentJob,
     ImportStatusChoices,
@@ -111,7 +109,7 @@ class ModelFactsTextField(Field):
     template = "algorithms/model_facts_field.html"
 
 
-class JobCreateForm(SaveFormInitMixin, Form):
+class JobCreateForm(AdditionalInputsMixin, Form):
     algorithm_image = ModelChoiceField(
         queryset=None, disabled=True, required=True, widget=HiddenInput
     )
@@ -132,8 +130,6 @@ class JobCreateForm(SaveFormInitMixin, Form):
         super().__init__(*args, **kwargs)
 
         self._algorithm = algorithm
-
-        self.helper = FormHelper()
 
         self._user = user
         self.fields["creator"].queryset = get_user_model().objects.filter(
@@ -162,30 +158,10 @@ class JobCreateForm(SaveFormInitMixin, Form):
             )
             self.fields["algorithm_model"].initial = active_model
 
-        for algorithm_input in interface.inputs.all():
-            prefixed_interface_slug = (
-                f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_input.slug}"
-            )
+        self.init_additional_inputs(inputs=interface.inputs.all())
 
-            if prefixed_interface_slug in self.data:
-                if (
-                    not algorithm_input.requires_file
-                    and algorithm_input.kind == ComponentInterface.Kind.ANY
-                ):
-                    # interfaces for which the data can be a list need
-                    # to be retrieved with getlist() from the QueryDict
-                    initial = self.data.getlist(prefixed_interface_slug)
-                else:
-                    initial = self.data[prefixed_interface_slug]
-            else:
-                initial = None
-
-            self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
-                interface=algorithm_input,
-                user=self._user,
-                required=algorithm_input.value_required,
-                initial=initial if initial else algorithm_input.default_value,
-            )
+        self.helper = FormHelper(self)
+        self.helper.layout.append(Submit("save", "Save"))
 
     @cached_property
     def jobs_limit(self):
@@ -203,7 +179,7 @@ class JobCreateForm(SaveFormInitMixin, Form):
         if self.jobs_limit < 1:
             raise ValidationError("You have run out of algorithm credits")
 
-        cleaned_data = self.reformat_inputs(cleaned_data=cleaned_data)
+        cleaned_data["inputs"] = self.clean_additional_inputs()
 
         if Job.objects.get_jobs_with_same_inputs(
             inputs=cleaned_data["inputs"],
@@ -217,29 +193,9 @@ class JobCreateForm(SaveFormInitMixin, Form):
 
         return cleaned_data
 
-    def reformat_inputs(self, *, cleaned_data):
-        keys_to_remove = []
-        inputs = []
-        for k, v in cleaned_data.items():
-            if k.startswith(INTERFACE_FORM_FIELD_PREFIX):
-                keys_to_remove.append(k)
-                inputs.append(
-                    CIVData(
-                        interface_slug=k[len(INTERFACE_FORM_FIELD_PREFIX) :],
-                        value=v,
-                    )
-                )
 
-        for key in keys_to_remove:
-            cleaned_data.pop(key)
-
-        cleaned_data["inputs"] = inputs
-
-        return cleaned_data
-
-
-# Exclude interfaces that are not aimed at algorithms from user selection
-NON_ALGORITHM_INTERFACES = [
+# Exclude sockets that are not aimed at algorithms or evaluations from user selection
+RESERVED_SOCKET_SLUGS = [
     "predictions-csv-file",
     "predictions-json-file",
     "predictions-zip-file",
@@ -1401,13 +1357,13 @@ class AlgorithmModelVersionControlForm(Form):
 class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
     inputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
-            slug__in=NON_ALGORITHM_INTERFACES
+            slug__in=RESERVED_SOCKET_SLUGS
         ),
         widget=Select2MultipleWidget,
     )
     outputs = ModelMultipleChoiceField(
         queryset=ComponentInterface.objects.exclude(
-            slug__in=NON_ALGORITHM_INTERFACES
+            slug__in=RESERVED_SOCKET_SLUGS
         ),
         widget=Select2MultipleWidget,
     )
@@ -1428,6 +1384,14 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
 
         if not inputs:
             raise ValidationError("You must provide at least 1 input.")
+
+        if (
+            self._base_obj.additional_inputs_field
+            or self._base_obj.additional_outputs_field
+        ):
+            self.check_for_overlapping_sockets(
+                sockets=inputs,
+            )
 
         if (
             self._base_obj.algorithm_interface_through_model_manager.annotate(
@@ -1454,7 +1418,39 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
         if not outputs:
             raise ValidationError("You must provide at least 1 output.")
 
+        if (
+            self._base_obj.additional_inputs_field
+            or self._base_obj.additional_outputs_field
+        ):
+            self.check_for_overlapping_sockets(
+                sockets=outputs,
+            )
+
         return outputs
+
+    def check_for_overlapping_sockets(self, *, sockets):
+        overlapping_input_sockets = (
+            self._base_obj.additional_inputs_field.filter(
+                slug__in=sockets.values_list("slug", flat=True)
+            )
+        )
+        overlapping_output_sockets = (
+            self._base_obj.additional_outputs_field.filter(
+                slug__in=sockets.values_list("slug", flat=True)
+            )
+        )
+        overlapping_sockets = list(
+            chain(overlapping_input_sockets, overlapping_output_sockets)
+        )
+
+        if overlapping_sockets:
+            overlapping_names = ", ".join(
+                str(obj) for obj in overlapping_sockets
+            )
+            raise ValidationError(
+                "The following sockets are already configured as additional inputs or outputs on"
+                f" {self._base_obj}: {overlapping_names}"
+            )
 
     def clean(self):
         cleaned_data = super().clean()

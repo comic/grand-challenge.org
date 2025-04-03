@@ -1,7 +1,10 @@
 import copy
+import logging
 from abc import ABC, abstractmethod
 
 from grandchallenge.notifications.models import Notification, NotificationType
+
+logger = logging.getLogger(__name__)
 
 
 class ErrorHandler(ABC):
@@ -10,22 +13,10 @@ class ErrorHandler(ABC):
         pass
 
 
-class JobCIVErrorHandler(ErrorHandler):
-    """
-    Error handler for CIV validation errors on job creation.
-    Handle_error() updates an algorithm job.
-    """
+class ComponentJobCIVErrorHandler(ErrorHandler):
 
     def __init__(self, *args, job, **kwargs):
         super().__init__(*args, **kwargs)
-
-        from grandchallenge.algorithms.models import Job
-
-        if not job or not isinstance(job, Job):
-            raise RuntimeError(
-                "You need to provide a Job instance to this error handler."
-            )
-
         self._job = job
 
     def handle_error(self, *, error_message, interface=None, user=None):
@@ -43,6 +34,53 @@ class JobCIVErrorHandler(ErrorHandler):
             self._job.update_status(
                 status=self._job.CANCELLED, error_message=error_message
             )
+
+
+class JobCIVErrorHandler(ComponentJobCIVErrorHandler):
+    """
+    Error handler for CIV validation errors on job creation.
+    Handle_error() updates an algorithm job.
+    """
+
+    def __init__(self, *args, job, **kwargs):
+        super().__init__(*args, job=job, **kwargs)
+
+        from grandchallenge.algorithms.models import Job
+
+        if not job or not isinstance(job, Job):
+            raise RuntimeError(
+                "You need to provide a Job instance to this error handler."
+            )
+
+
+class EvaluationCIVErrorHandler(ComponentJobCIVErrorHandler):
+    """
+    Error handler for CIV validation errors on evaluation creation.
+    Handle_error() updates an evaluation.
+    """
+
+    def __init__(self, *args, job, **kwargs):
+        super().__init__(*args, job=job, **kwargs)
+
+        from grandchallenge.evaluation.models import Evaluation
+
+        if not job or not isinstance(job, Evaluation):
+            raise RuntimeError(
+                "You need to provide a Evaluation instance to this error handler."
+            )
+
+    def handle_error(self, *, error_message, interface=None, user=None):
+        # for evaluations don't share the actual error message
+        # as it could lead information to challenge participants
+        # instead, log the error to sentry
+        logger.error(error_message, exc_info=True)
+
+        # and send a generic error message to the user
+        error_message = "Input validation failed"
+
+        super().handle_error(
+            error_message=error_message, interface=interface, user=user
+        )
 
 
 class RawImageUploadSessionErrorHandler(ErrorHandler):
@@ -64,7 +102,13 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
         self._linked_object = linked_object
 
     def handle_error(self, *, error_message, interface, user=None):
+        from grandchallenge.evaluation.models import Evaluation
+
         if self._linked_object:
+            if isinstance(self._linked_object, Evaluation):
+                logger.error(error_message, exc_info=True)
+                error_message = "Input validation failed"
+
             self._upload_session.update_status(
                 status=self._upload_session.FAILURE,
                 error_message=("One or more of the inputs failed validation."),

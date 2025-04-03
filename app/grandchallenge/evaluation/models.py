@@ -12,6 +12,7 @@ from django.core.mail import mail_managers
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Count, Q
+from django.db.models.functions import Coalesce
 from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -32,9 +33,11 @@ from grandchallenge.algorithms.models import (
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.models import (
+    CIVForObjectMixin,
     ComponentImage,
     ComponentInterface,
     ComponentJob,
+    ComponentJobManager,
     ImportStatusChoices,
     Tarball,
 )
@@ -63,7 +66,7 @@ from grandchallenge.evaluation.tasks import (
     assign_evaluation_permissions,
     assign_submission_permissions,
     calculate_ranks,
-    create_evaluation,
+    prepare_and_execute_evaluation,
     update_combined_leaderboard,
 )
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
@@ -540,14 +543,27 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         blank=True,
         help_text="The interfaces that an algorithm for this phase must implement.",
     )
-    inputs = models.ManyToManyField(
+    inputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface, related_name="evaluation_inputs", blank=True
+        )
+    )
+    outputs = deprecate_field(
+        models.ManyToManyField(
+            to=ComponentInterface,
+            related_name="evaluation_outputs",
+        )
+    )
+    additional_evaluation_inputs = models.ManyToManyField(
         to=ComponentInterface,
-        related_name="evaluation_inputs",
+        through="evaluation.PhaseAdditionalEvaluationInput",
+        related_name="additional_eval_inputs",
         blank=True,
     )
-    outputs = models.ManyToManyField(
+    evaluation_outputs = models.ManyToManyField(
         to=ComponentInterface,
-        related_name="evaluation_outputs",
+        related_name="eval_outputs",
+        through="evaluation.PhaseEvaluationOutput",
     )
     algorithm_inputs = deprecate_field(
         models.ManyToManyField(
@@ -957,7 +973,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 raise ValidationError(SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT)
 
     def set_default_interfaces(self):
-        self.outputs.set(
+        self.evaluation_outputs.set(
             [ComponentInterface.objects.get(slug="metrics-json-file")]
         )
 
@@ -1296,6 +1312,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         return PhaseAlgorithmInterface.objects.filter(phase=self)
 
     @property
+    def additional_inputs_field(self):
+        return self.additional_evaluation_inputs
+
+    @property
+    def additional_outputs_field(self):
+        return self.evaluation_outputs
+
+    @property
     def algorithm_interface_create_url(self):
         return reverse(
             "evaluation:interface-create",
@@ -1312,6 +1336,68 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "evaluation:interface-list",
             kwargs={"challenge_short_name": self.challenge, "slug": self.slug},
         )
+
+
+class CheckForOverlappingSocketsMixin:
+
+    def clean(self):
+        super().clean()
+
+        if self.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
+            algorithm_socket_slugs = set(
+                self.phase.algorithm_interfaces.values_list(
+                    "inputs__slug", flat=True
+                )
+            ) | set(
+                self.phase.algorithm_interfaces.values_list(
+                    "outputs__slug", flat=True
+                )
+            )
+
+            if self.socket.slug in algorithm_socket_slugs:
+                raise ValidationError(
+                    f"{self.socket.slug} cannot be defined as evaluation "
+                    f"inputs or outputs because it is already defined as "
+                    f"algorithm input or output for this phase"
+                )
+
+
+class PhaseAdditionalEvaluationInput(
+    CheckForOverlappingSocketsMixin, models.Model
+):
+    socket = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["phase", "socket"],
+                name="unique_phase_input_combination",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+
+        from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
+
+        if self.socket.slug in RESERVED_SOCKET_SLUGS:
+            raise ValidationError(
+                f'Evaluation inputs cannot be of the following types: {", ".join(RESERVED_SOCKET_SLUGS)}'
+            )
+
+
+class PhaseEvaluationOutput(CheckForOverlappingSocketsMixin, models.Model):
+    socket = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
+    phase = models.ForeignKey(Phase, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["phase", "socket"],
+                name="unique_phase_output_combination",
+            ),
+        ]
 
 
 class PhaseUserObjectPermission(UserObjectPermissionBase):
@@ -1523,8 +1609,76 @@ class Submission(FieldChangeMixin, UUIDModel):
                     send_action=False,
                 )
 
-            e = create_evaluation.signature(
-                kwargs={"submission_pk": self.pk}, immutable=True
+    def create_evaluation(self, *, additional_inputs):
+        if (
+            self.phase.additional_evaluation_inputs.exists()
+            and not additional_inputs
+        ):
+            raise RuntimeError(
+                "Additional inputs are required to create an evaluation for this phase"
+            )
+
+        if self.phase.external_evaluation:
+            evaluation, created = Evaluation.objects.get_or_create(
+                submission=self,
+                defaults={
+                    "time_limit": self.phase.evaluation_time_limit,
+                    "requires_gpu_type": self.phase.evaluation_requires_gpu_type,
+                    "requires_memory_gb": self.phase.evaluation_requires_memory_gb,
+                },
+            )
+            if not created:
+                logger.info(
+                    "External evaluation already created for this submission."
+                )
+            return
+        else:
+            method = self.phase.active_image
+            ground_truth = self.phase.active_ground_truth
+
+            if not method:
+                logger.error("No method ready for this submission")
+                Notification.send(
+                    kind=NotificationType.NotificationTypeChoices.MISSING_METHOD,
+                    message="missing method",
+                    actor=self.creator,
+                    action_object=self,
+                    target=self.phase,
+                )
+                return
+
+            if Evaluation.objects.get_evaluations_with_same_inputs(
+                inputs=additional_inputs if additional_inputs else [],
+                submission=self,
+                method=method,
+                ground_truth=ground_truth,
+                time_limit=self.phase.evaluation_time_limit,
+                requires_gpu_type=self.phase.evaluation_requires_gpu_type,
+                requires_memory_gb=self.phase.evaluation_requires_memory_gb,
+            ):
+                logger.error(
+                    "Evaluation already created for this submission, method, ground truth and inputs."
+                )
+                return
+
+            evaluation = Evaluation.objects.create(
+                submission=self,
+                method=method,
+                ground_truth=ground_truth,
+                time_limit=self.phase.evaluation_time_limit,
+                requires_gpu_type=self.phase.evaluation_requires_gpu_type,
+                requires_memory_gb=self.phase.evaluation_requires_memory_gb,
+                status=Evaluation.VALIDATING_INPUTS,
+            )
+
+        if additional_inputs:
+            evaluation.validate_values_and_execute_linked_task(
+                values=additional_inputs,
+                user=self.creator,
+            )
+        else:
+            e = prepare_and_execute_evaluation.signature(
+                kwargs={"evaluation_pk": evaluation.pk}, immutable=True
             )
             on_commit(e.apply_async)
 
@@ -1652,7 +1806,77 @@ class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
     )
 
 
-class Evaluation(ComponentJob):
+class EvaluationManager(ComponentJobManager):
+    def get_evaluations_with_same_inputs(
+        self,
+        *,
+        inputs,
+        submission,
+        method,
+        ground_truth,
+        time_limit,
+        requires_gpu_type,
+        requires_memory_gb,
+    ):
+        existing_civs = self.retrieve_existing_civs(civ_data=inputs)
+        unique_kwargs = {
+            "submission": submission,
+            "method": method,
+            "time_limit": time_limit,
+            "requires_gpu_type": requires_gpu_type,
+            "requires_memory_gb": requires_memory_gb,
+        }
+
+        if ground_truth:
+            unique_kwargs["ground_truth"] = ground_truth
+        else:
+            unique_kwargs["ground_truth__isnull"] = True
+
+        input_interface_count = len(inputs)
+        configured_input_interface_slugs = (
+            submission.phase.additional_evaluation_inputs.values_list(
+                "slug", flat=True
+            )
+        )
+
+        # annotate the number of inputs and the number of inputs that match
+        # the existing civs and filter on both counts so as to not include evaluations
+        # with partially overlapping inputs
+        # or evaluations with more inputs than the existing civs
+        existing_evaluations = (
+            Evaluation.objects.filter(**unique_kwargs)
+            .annotate(
+                additional_input_count=Coalesce(
+                    Count(
+                        "inputs",
+                        filter=(
+                            Q(
+                                inputs__interface__slug__in=configured_input_interface_slugs
+                            )
+                        ),
+                        distinct=True,
+                    ),
+                    0,
+                ),
+                relevant_additional_input_count=Coalesce(
+                    Count(
+                        "inputs",
+                        filter=(Q(inputs__in=existing_civs)),
+                        distinct=True,
+                    ),
+                    0,
+                ),
+            )
+            .filter(
+                additional_input_count=input_interface_count,
+                relevant_additional_input_count=input_interface_count,
+            )
+        )
+
+        return existing_evaluations
+
+
+class Evaluation(CIVForObjectMixin, ComponentJob):
     """Stores information about a evaluation for a given submission."""
 
     submission = models.ForeignKey("Submission", on_delete=models.PROTECT)
@@ -1682,8 +1906,9 @@ class Evaluation(ComponentJob):
         related_name="claimed_evaluations",
     )
 
+    objects = EvaluationManager.as_manager()
+
     class Meta(UUIDModel.Meta, ComponentJob.Meta):
-        unique_together = ("submission", "method", "ground_truth")
         permissions = [("claim_evaluation", "Can claim evaluation")]
 
     def save(self, *args, **kwargs):
@@ -1748,7 +1973,7 @@ class Evaluation(ComponentJob):
 
     @property
     def output_interfaces(self):
-        return self.submission.phase.outputs
+        return self.submission.phase.evaluation_outputs
 
     @cached_property
     def successful_jobs_per_interface(self):
@@ -1791,6 +2016,9 @@ class Evaluation(ComponentJob):
 
     @cached_property
     def inputs_complete(self):
+        if not self.additional_inputs_complete:
+            return False
+
         if self.submission.algorithm_image:
             return (
                 self.total_successful_jobs
@@ -1800,6 +2028,60 @@ class Evaluation(ComponentJob):
             return True
         else:
             return False
+
+    @property
+    def additional_inputs(self):
+        # additional inputs as currently defined on the phase
+        phase_input_slugs = (
+            self.submission.phase.additional_evaluation_inputs.values_list(
+                "slug", flat=True
+            )
+        )
+        return self.inputs.filter(interface__slug__in=phase_input_slugs)
+
+    @cached_property
+    def additional_inputs_complete(self):
+        return (
+            self.additional_inputs.count()
+            == self.submission.phase.additional_evaluation_inputs.count()
+        )
+
+    @property
+    def is_editable(self):
+        # staying with display set and archive item terminology here
+        # since this property is checked in create_civ()
+        if self.status == self.VALIDATING_INPUTS:
+            return True
+        else:
+            return False
+
+    def add_civ(self, *, civ):
+        super().add_civ(civ=civ)
+        return self.inputs.add(civ)
+
+    def remove_civ(self, *, civ):
+        super().remove_civ(civ=civ)
+        return self.inputs.remove(civ)
+
+    def get_civ_for_interface(self, interface):
+        return self.inputs.get(interface=interface)
+
+    def validate_values_and_execute_linked_task(
+        self, *, values, user, linked_task=None
+    ):
+        from grandchallenge.evaluation.tasks import (
+            prepare_and_execute_evaluation,
+        )
+
+        linked_task = prepare_and_execute_evaluation.signature(
+            kwargs={
+                "evaluation_pk": self.pk,
+            },
+            immutable=True,
+        )
+        return super().validate_values_and_execute_linked_task(
+            values=values, user=user, linked_task=linked_task
+        )
 
     @property
     def executor_kwargs(self):

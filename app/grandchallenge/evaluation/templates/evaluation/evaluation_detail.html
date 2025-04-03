@@ -94,6 +94,19 @@
         <dt>Submission created</dt>
         <dd>{{ object.submission.created }}</dd>
 
+        {% if object.additional_inputs.all %}
+            <dt>Additional Inputs</dt>
+            <dd class="col-sm-9 p-0">
+                <ul class="list-unstyled m-0">
+                    {% for input in object.additional_inputs.all|sort_civs %}
+                        <li>
+                            {% include 'components/partials/civ.html' with object=input display_inline=True only %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </dd>
+        {% endif %}
+
         <dt>Result created</dt>
         <dd>{{ object.created }}</dd>
 

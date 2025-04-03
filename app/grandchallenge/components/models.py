@@ -64,6 +64,7 @@ from grandchallenge.components.validators import (
 )
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_handlers import (
+    EvaluationCIVErrorHandler,
     FallbackCIVValidationErrorHandler,
     JobCIVErrorHandler,
     RawImageUploadSessionErrorHandler,
@@ -1555,6 +1556,52 @@ class ComponentJobManager(models.QuerySet):
             ]
         )
 
+    @staticmethod
+    def retrieve_existing_civs(*, civ_data):
+        """
+        Checks if there are existing CIVs for the provided data and returns those.
+
+        Parameters
+        ----------
+        civ_data
+            A list of CIVData objects.
+
+        Returns
+        -------
+        A list of ComponentInterfaceValues
+
+        """
+        existing_civs = []
+        for civ in civ_data:
+            if (
+                civ.user_upload
+                or civ.upload_session
+                or civ.user_upload_queryset
+            ):
+                # uploads will create new CIVs, so ignore these
+                continue
+            elif civ.image:
+                try:
+                    civs = ComponentInterfaceValue.objects.filter(
+                        interface__slug=civ.interface_slug, image=civ.image
+                    ).all()
+                    existing_civs.extend(civs)
+                except ObjectDoesNotExist:
+                    continue
+            elif civ.file_civ:
+                existing_civs.append(civ.file_civ)
+            else:
+                # values can be of different types, including None and False
+                try:
+                    civs = ComponentInterfaceValue.objects.filter(
+                        interface__slug=civ.interface_slug, value=civ.value
+                    ).all()
+                    existing_civs.extend(civs)
+                except ObjectDoesNotExist:
+                    continue
+
+        return existing_civs
+
 
 class ComponentJob(FieldChangeMixin, UUIDModel):
     # The job statuses come directly from celery.result.AsyncResult.status:
@@ -2558,6 +2605,7 @@ class CIVForObjectMixin:
         # local imports to prevent circular dependency
         from grandchallenge.algorithms.models import Job
         from grandchallenge.archives.models import ArchiveItem
+        from grandchallenge.evaluation.models import Evaluation
         from grandchallenge.reader_studies.models import DisplaySet
 
         if linked_object and isinstance(linked_object, RawImageUploadSession):
@@ -2567,6 +2615,8 @@ class CIVForObjectMixin:
             )
         elif isinstance(self, Job):
             return JobCIVErrorHandler(job=self)
+        elif isinstance(self, Evaluation):
+            return EvaluationCIVErrorHandler(job=self)
         elif linked_object and isinstance(linked_object, UserUpload):
             return UserUploadCIVErrorHandler(
                 user_upload=linked_object,

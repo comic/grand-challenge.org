@@ -24,7 +24,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from grandchallenge.algorithms.forms import NON_ALGORITHM_INTERFACES
+from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.archives.models import Archive
 from grandchallenge.components.form_fields import (
@@ -90,7 +90,7 @@ class ComponentInterfaceList(LoginRequiredMixin, ListView):
     model = ComponentInterface
     queryset = ComponentInterface.objects.select_related(
         "example_value"
-    ).exclude(slug__in=NON_ALGORITHM_INTERFACES)
+    ).exclude(slug__in=RESERVED_SOCKET_SLUGS)
     list_type = None
     object_type = None
 

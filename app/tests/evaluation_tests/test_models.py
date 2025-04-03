@@ -1,6 +1,7 @@
 from collections import namedtuple
+from contextlib import nullcontext
 from datetime import timedelta
-from itertools import chain
+from typing import NamedTuple
 
 import pytest
 from django.core import mail
@@ -8,22 +9,27 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.timezone import now
 
+from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
 from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import ArchiveItem
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import (
+    CIVData,
+    ComponentInterface,
+    InterfaceKindChoices,
+)
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.models import (
     SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT,
     CombinedLeaderboard,
     Evaluation,
     Phase,
+    PhaseAdditionalEvaluationInput,
     get_archive_items_for_interfaces,
     get_valid_jobs_for_interfaces_and_archive_items,
 )
 from grandchallenge.evaluation.tasks import (
     calculate_ranks,
     create_algorithm_jobs_for_evaluation,
-    create_evaluation,
     update_combined_leaderboard,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
@@ -94,13 +100,14 @@ def test_algorithm_submission_creates_one_job_per_test_set_image(
         phase=algorithm_submission.method.phase,
         algorithm_image=algorithm_submission.algorithm_image,
     )
+    eval = EvaluationFactory(
+        submission=s, method=algorithm_submission.method, time_limit=60
+    )
 
-    with django_capture_on_commit_callbacks() as callbacks:
-        create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
-
-    # Execute the callbacks non-recursively
-    for c in callbacks:
-        c()
+    with django_capture_on_commit_callbacks(execute=True):
+        create_algorithm_jobs_for_evaluation(
+            evaluation_pk=eval.pk, max_jobs=None
+        )
 
     assert Job.objects.count() == 2
     assert [
@@ -121,17 +128,15 @@ def test_create_evaluation_is_idempotent(
         algorithm_image=algorithm_submission.algorithm_image,
     )
 
-    with django_capture_on_commit_callbacks(execute=False) as callbacks1:
-        create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
+    with django_capture_on_commit_callbacks(execute=True):
+        s.create_evaluation(additional_inputs=None)
 
-    with django_capture_on_commit_callbacks(execute=False) as callbacks2:
-        create_evaluation(submission_pk=s.pk, max_initial_jobs=None)
+    with django_capture_on_commit_callbacks(execute=True):
+        s.create_evaluation(additional_inputs=None)
 
-    # Execute the callbacks non-recursively
-    for c in chain(callbacks1, callbacks2):
-        c()
-
-    assert Job.objects.count() == 2
+    assert Evaluation.objects.count() == 1
+    # max_inital_jobs is set to 1, so only one job should be created
+    assert Job.objects.count() == 1
 
 
 @pytest.mark.django_db
@@ -146,7 +151,7 @@ def test_create_evaluation_sets_gpu_and_memory():
 
     submission = SubmissionFactory(phase=method.phase)
 
-    create_evaluation(submission_pk=submission.pk, max_initial_jobs=None)
+    submission.create_evaluation(additional_inputs=None)
 
     evaluation = Evaluation.objects.get()
 
@@ -226,15 +231,16 @@ def test_create_evaluation_uniqueness_checks(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        create_evaluation(submission_pk=sub.pk, max_initial_jobs=None)
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 1
 
     gt = EvaluationGroundTruthFactory(phase=sub.phase, is_desired_version=True)
+    del sub.phase.active_ground_truth
     assert sub.phase.active_ground_truth == gt
 
     with django_capture_on_commit_callbacks(execute=True):
-        create_evaluation(submission_pk=sub.pk, max_initial_jobs=None)
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 2
 
@@ -242,17 +248,59 @@ def test_create_evaluation_uniqueness_checks(
         phase=sub.phase, is_in_registry=True, is_manifest_valid=True
     )
     m.mark_desired_version()
+    del sub.phase.active_image
     assert sub.phase.active_image == m
 
     with django_capture_on_commit_callbacks(execute=True):
-        create_evaluation(submission_pk=sub.pk, max_initial_jobs=None)
+        sub.create_evaluation(additional_inputs=None)
 
     assert Evaluation.objects.count() == 3
+
+    sub.phase.evaluation_time_limit = 45
+    sub.phase.save()
 
     with django_capture_on_commit_callbacks(execute=True):
-        create_evaluation(submission_pk=sub.pk, max_initial_jobs=None)
+        sub.create_evaluation(additional_inputs=None)
 
-    assert Evaluation.objects.count() == 3
+    assert Evaluation.objects.count() == 4
+
+    sub.phase.evaluation_requires_gpu_type = GPUTypeChoices.A10G
+    sub.phase.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sub.create_evaluation(additional_inputs=None)
+
+    assert Evaluation.objects.count() == 5
+
+    sub.phase.evaluation_requires_memory_gb = 16
+    sub.phase.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sub.create_evaluation(additional_inputs=None)
+
+    assert Evaluation.objects.count() == 6
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sub.create_evaluation(additional_inputs=None)
+
+    assert Evaluation.objects.count() == 6
+
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    sub.phase.additional_evaluation_inputs.set([ci])
+    ComponentInterfaceValueFactory(interface=ci, value="foo")
+    with django_capture_on_commit_callbacks(execute=True):
+        sub.create_evaluation(
+            additional_inputs=[CIVData(interface_slug=ci.slug, value="foo")]
+        )
+
+    assert Evaluation.objects.count() == 7
+
+    with django_capture_on_commit_callbacks(execute=True):
+        sub.create_evaluation(
+            additional_inputs=[CIVData(interface_slug=ci.slug, value="foo")]
+        )
+
+    assert Evaluation.objects.count() == 7
 
 
 @pytest.mark.django_db
@@ -1978,3 +2026,444 @@ def test_get_valid_jobs_for_interfaces_and_archive_items(
             archive_items_and_jobs_for_interfaces.jobs_for_interface2[0]
         ],
     }
+
+
+@pytest.mark.django_db
+def test_additional_inputs_complete():
+    phase = PhaseFactory()
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+    phase.additional_evaluation_inputs.set([ci1, ci2])
+
+    civ1 = ComponentInterfaceValueFactory(interface=ci1)
+    civ2 = ComponentInterfaceValueFactory(interface=ci2)
+    civ3 = ComponentInterfaceValueFactory(interface=ci3)
+    civ4 = ComponentInterfaceValueFactory(interface=ci3)
+
+    eval = EvaluationFactory(submission__phase=phase, time_limit=10)
+
+    assert not eval.additional_inputs_complete
+
+    # add required inputs
+    eval.inputs.set([civ1, civ2])
+    del eval.additional_inputs_complete
+    assert eval.additional_inputs_complete
+
+    # it should not matter if other inputs are present as well
+    eval.inputs.set([civ1, civ2, civ3])
+    del eval.additional_inputs_complete
+    assert eval.additional_inputs_complete
+
+    # or if multiple inputs of the same type are present
+    eval.inputs.set([civ1, civ2, civ3, civ4])
+    del eval.additional_inputs_complete
+    assert eval.additional_inputs_complete
+
+
+class PhaseWithInputsAndCIVs(NamedTuple):
+    phase: PhaseFactory
+    civs: [ComponentInterfaceValueFactory]
+
+
+@pytest.fixture
+def phase_with_image_and_gt_and_two_inputs():
+    phase = PhaseFactory()
+    MethodFactory(
+        phase=phase,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+    EvaluationGroundTruthFactory(phase=phase, is_desired_version=True)
+    editor = UserFactory()
+    phase.challenge.add_admin(editor)
+
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(
+        2, kind=ComponentInterface.Kind.STRING
+    )
+    phase.additional_evaluation_inputs.set([ci1, ci2])
+
+    civs = [
+        ComponentInterfaceValueFactory(interface=ci1, value="foo"),
+        ComponentInterfaceValueFactory(interface=ci2, value="bar"),
+    ]
+
+    return PhaseWithInputsAndCIVs(
+        phase=phase,
+        civs=civs,
+    )
+
+
+@pytest.mark.django_db
+class TestGetEvaluationsWithSameInputs:
+
+    def get_civ_data(self, civs):
+        return [
+            CIVData(interface_slug=civ.interface.slug, value=civ.value)
+            for civ in civs
+        ]
+
+    def test_evaluation_with_same_method_different_gt(
+        self, phase_with_image_and_gt_and_two_inputs
+    ):
+        phase = phase_with_image_and_gt_and_two_inputs.phase
+        civs = phase_with_image_and_gt_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+        submission = SubmissionFactory(
+            phase=phase, algorithm_image=AlgorithmImageFactory()
+        )
+
+        eval = EvaluationFactory(
+            submission=submission,
+            method=phase.active_image,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        eval.inputs.set(civs)
+
+        evals = Evaluation.objects.get_evaluations_with_same_inputs(
+            inputs=data,
+            method=phase.active_image,
+            submission=submission,
+            ground_truth=EvaluationGroundTruthFactory(),  # new
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        assert len(evals) == 0
+
+    def test_job_with_same_gt_different_method(
+        self, phase_with_image_and_gt_and_two_inputs
+    ):
+        phase = phase_with_image_and_gt_and_two_inputs.phase
+        civs = phase_with_image_and_gt_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+        submission = SubmissionFactory(
+            phase=phase, algorithm_image=AlgorithmImageFactory()
+        )
+
+        eval = EvaluationFactory(
+            submission=submission,
+            method=phase.active_image,
+            ground_truth=phase.active_ground_truth,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        eval.inputs.set(civs)
+
+        evals = Evaluation.objects.get_evaluations_with_same_inputs(
+            inputs=data,
+            method=MethodFactory(),  # new
+            submission=submission,
+            ground_truth=phase.active_ground_truth,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        assert len(evals) == 0
+
+    def test_job_with_same_gt_and_method(
+        self, phase_with_image_and_gt_and_two_inputs
+    ):
+        phase = phase_with_image_and_gt_and_two_inputs.phase
+        civs = phase_with_image_and_gt_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+        submission = SubmissionFactory(
+            phase=phase, algorithm_image=AlgorithmImageFactory()
+        )
+
+        eval = EvaluationFactory(
+            submission=submission,
+            method=phase.active_image,
+            ground_truth=phase.active_ground_truth,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        eval.inputs.set(civs)
+
+        evals = Evaluation.objects.get_evaluations_with_same_inputs(
+            inputs=data,
+            method=phase.active_image,
+            submission=submission,
+            ground_truth=phase.active_ground_truth,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        assert len(evals) == 1
+        assert eval in evals
+
+    def test_job_with_different_method_and_gt(
+        self, phase_with_image_and_gt_and_two_inputs
+    ):
+        phase = phase_with_image_and_gt_and_two_inputs.phase
+        civs = phase_with_image_and_gt_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+        submission = SubmissionFactory(
+            phase=phase, algorithm_image=AlgorithmImageFactory()
+        )
+
+        eval = EvaluationFactory(
+            submission=submission,
+            method=phase.active_image,
+            ground_truth=phase.active_ground_truth,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        eval.inputs.set(civs)
+
+        evals = Evaluation.objects.get_evaluations_with_same_inputs(
+            inputs=data,
+            method=MethodFactory(),  # new
+            submission=submission,
+            ground_truth=EvaluationGroundTruthFactory(),  # new
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        assert len(evals) == 0
+
+    def test_eval_with_same_method_no_gt_provided(
+        self, phase_with_image_and_gt_and_two_inputs
+    ):
+        phase = phase_with_image_and_gt_and_two_inputs.phase
+        civs = phase_with_image_and_gt_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+        submission = SubmissionFactory(
+            phase=phase, algorithm_image=AlgorithmImageFactory()
+        )
+
+        eval = EvaluationFactory(
+            submission=submission,
+            method=phase.active_image,
+            ground_truth=phase.active_ground_truth,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        eval.inputs.set(civs)
+
+        evals = Evaluation.objects.get_evaluations_with_same_inputs(
+            inputs=data,
+            method=phase.active_image,
+            submission=submission,
+            ground_truth=None,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        assert len(evals) == 0
+
+    def test_job_with_same_method_and_without_gt(
+        self, phase_with_image_and_gt_and_two_inputs
+    ):
+        phase = phase_with_image_and_gt_and_two_inputs.phase
+        civs = phase_with_image_and_gt_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+        submission = SubmissionFactory(
+            phase=phase, algorithm_image=AlgorithmImageFactory()
+        )
+
+        eval = EvaluationFactory(
+            submission=submission,
+            method=phase.active_image,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        eval.inputs.set(civs)
+
+        evals = Evaluation.objects.get_evaluations_with_same_inputs(
+            inputs=data,
+            method=phase.active_image,
+            submission=submission,
+            ground_truth=None,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        assert eval in evals
+        assert len(evals) == 1
+
+    def test_eval_with_different_input(
+        self, phase_with_image_and_gt_and_two_inputs
+    ):
+        phase = phase_with_image_and_gt_and_two_inputs.phase
+        civs = phase_with_image_and_gt_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+        submission = SubmissionFactory(
+            phase=phase, algorithm_image=AlgorithmImageFactory()
+        )
+
+        eval = EvaluationFactory(
+            submission=submission,
+            method=phase.active_image,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        eval.inputs.set(
+            [
+                ComponentInterfaceValueFactory(),
+                ComponentInterfaceValueFactory(),
+            ]
+        )
+
+        evals = Evaluation.objects.get_evaluations_with_same_inputs(
+            inputs=data,
+            method=phase.active_image,
+            submission=submission,
+            ground_truth=None,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        assert len(evals) == 0
+
+    def test_eval_with_partially_overlapping_input(
+        self, phase_with_image_and_gt_and_two_inputs
+    ):
+        phase = phase_with_image_and_gt_and_two_inputs.phase
+        civs = phase_with_image_and_gt_and_two_inputs.civs
+        data = self.get_civ_data(civs=civs)
+        submission = SubmissionFactory(
+            phase=phase, algorithm_image=AlgorithmImageFactory()
+        )
+
+        eval = EvaluationFactory(
+            submission=submission,
+            method=phase.active_image,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        # this eval should be ignored since it has incomplete inputs
+        eval.inputs.set(
+            [
+                civs[0],
+                ComponentInterfaceValueFactory(),
+            ]
+        )
+
+        eval2 = EvaluationFactory(
+            submission=submission,
+            method=phase.active_image,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        # this eval should count since it has inputs for all configured additional inputs
+        # it doesn't matter that there is also a third input
+        eval2.inputs.set(
+            [
+                civs[0],
+                civs[1],
+                ComponentInterfaceValueFactory(),
+            ]
+        )
+
+        evals = Evaluation.objects.get_evaluations_with_same_inputs(
+            inputs=data,
+            method=phase.active_image,
+            submission=submission,
+            ground_truth=None,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+
+        assert len(evals) == 1
+        assert eval2 in evals
+
+    def test_eval_without_inputs_configured(
+        self, phase_with_image_and_gt_and_two_inputs
+    ):
+        phase = phase_with_image_and_gt_and_two_inputs.phase
+        # remove inputs
+        phase.additional_evaluation_inputs.clear()
+
+        civs = phase_with_image_and_gt_and_two_inputs.civs
+        submission = SubmissionFactory(
+            phase=phase, algorithm_image=AlgorithmImageFactory()
+        )
+
+        eval = EvaluationFactory(
+            submission=submission,
+            method=phase.active_image,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+        # this eval should count since it only has inputs that are
+        # not configured for the phase
+        eval.inputs.set(
+            [
+                civs[0],
+                civs[1],
+            ]
+        )
+
+        # this eval should count since it has no inputs, but matches otherwise
+        eval2 = EvaluationFactory(
+            submission=submission,
+            method=phase.active_image,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+
+        evals = Evaluation.objects.get_evaluations_with_same_inputs(
+            inputs=[],
+            method=phase.active_image,
+            submission=submission,
+            ground_truth=None,
+            time_limit=phase.evaluation_time_limit,
+            requires_gpu_type=phase.evaluation_requires_gpu_type,
+            requires_memory_gb=phase.evaluation_requires_memory_gb,
+        )
+
+        assert len(evals) == 2
+        assert eval in evals
+        assert eval2 in evals
+
+
+@pytest.mark.django_db
+def test_disjoint_inputs_and_algorithm_sockets():
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+    interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    phase.algorithm_interfaces.set([interface])
+
+    for ci in [ci1, ci2]:
+        instance = PhaseAdditionalEvaluationInput(socket=ci, phase=phase)
+        with pytest.raises(ValidationError) as e:
+            instance.clean()
+        assert (
+            f"{ci.slug} cannot be defined as evaluation inputs or "
+            "outputs because it is already defined as algorithm input or "
+            "output for this phase" in str(e)
+        )
+
+    for ci in [ci3, ci4]:
+        instance = PhaseAdditionalEvaluationInput(
+            socket=ci, phase=PhaseFactory()
+        )
+        with nullcontext():
+            instance.clean()
+
+
+@pytest.mark.parametrize("slug", RESERVED_SOCKET_SLUGS)
+@pytest.mark.django_db
+def test_non_evaluation_socket_slugs(slug):
+    ci, _ = ComponentInterface.objects.get_or_create(slug=slug)
+
+    instance = PhaseAdditionalEvaluationInput(socket=ci, phase=PhaseFactory())
+    with pytest.raises(ValidationError) as e:
+        instance.clean()
+    assert (
+        "Evaluation inputs cannot be of the following types: predictions-csv-file, predictions-json-file, predictions-zip-file, metrics-json-file, results-json-file"
+        in str(e)
+    )
