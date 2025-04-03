@@ -91,6 +91,9 @@ DATABASES = {
         "CONN_HEALTH_CHECKS": strtobool(
             os.environ.get("CONN_HEALTH_CHECKS", "false")
         ),
+        "DISABLE_SERVER_SIDE_CURSORS": strtobool(
+            os.environ.get("DISABLE_SERVER_SIDE_CURSORS", "false")
+        ),
     }
 }
 
