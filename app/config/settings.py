@@ -61,9 +61,14 @@ IGNORABLE_404_URLS = [
 SITE_ROOT = Path(__file__).resolve(strict=True).parent.parent
 
 if strtobool(os.environ.get("POSTGRES_USE_RDS_PROXY", "false")):
+    # From https://www.amazontrust.com/repository/
+    # See https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.howitworks.html#rds-proxy-security
     ssl_root_cert = "amazon-root-ca.pem"
 else:
     ssl_root_cert = "global-bundle.pem"
+
+CONN_MAX_AGE = int(os.environ.get("CONN_MAX_AGE", "0"))
+CONN_HEALTH_CHECKS = strtobool(os.environ.get("CONN_HEALTH_CHECKS", "false"))
 
 DATABASES = {
     "default": {
