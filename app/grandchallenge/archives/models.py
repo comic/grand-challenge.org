@@ -9,7 +9,6 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from stdimage import JPEGField
 
-from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
     CIVForObjectMixin,
@@ -100,11 +99,6 @@ class Archive(
         blank=True,
         help_text="Optional alternative hanging protocols for this archive",
     )
-    algorithms = models.ManyToManyField(
-        Algorithm,
-        blank=True,
-        help_text="Algorithms that will be executed on all images in this archive",
-    )
     publications = models.ManyToManyField(
         Publication,
         blank=True,
@@ -142,11 +136,6 @@ class Archive(
 
     def __str__(self):
         return f"{self.title}"
-
-    @property
-    def name(self) -> str:
-        # Include the read only name for legacy clients
-        return self.title
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

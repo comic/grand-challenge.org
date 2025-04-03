@@ -2,7 +2,7 @@
 {% load static %}
 
 {% if challenge %}
-    <div class="row mb-3 mx-0 border-bottom">
+    <div class="row mb-3 mx-0 border-bottom challenge-topbar">
         <div class="col-11 px-0">
             <div class="nav-tab-dropdown-container">
                 <a class="d-lg-none btn btn-outline-dark mb-1"
@@ -80,7 +80,7 @@
                                href="{% url 'challenge-update' challenge_short_name=challenge.short_name %}">
                                 <i class="fas fa-cog fa-fw"></i>
                                     Admin
-                                    {% include "challenges/partials/challenge_onboardingtask_overdue.html" with aggregates=onboardingtask_aggregates only %}
+                                    {% include "challenges/partials/attention_required_items_due.html" %}
                             </a>
                         </li>
                     {% endif %}

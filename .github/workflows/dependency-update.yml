@@ -25,15 +25,18 @@ jobs:
               uses: actions/setup-python@v5
               with:
                   python-version: ${{ env.PYTHON_VERSION }}
-            - name: Install poetry and pre-commit
+            - name: Install uv and pre-commit
               run: |
                   python -m pip install --upgrade pip
-                  python -m pip install poetry pre-commit virtualenv!=20.0.6
-            - name: Update Depencencies
+                  python -m pip install uv pre-commit virtualenv!=20.0.6
+            - name: Update Dependencies
               id: dependency-update
               timeout-minutes: 5
               run: |
-                  poetry update --lock --no-interaction --no-ansi
+                  LOCK_OUTPUT=$(uv lock --upgrade --no-progress 2>&1)
+                  echo "LOCK_OUTPUT<<EOF" >> $GITHUB_ENV
+                  echo "$LOCK_OUTPUT" >> $GITHUB_ENV
+                  echo "EOF" >> $GITHUB_ENV
             - name: Set DOCKER_GID
               run: |
                   echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
@@ -61,4 +64,9 @@ jobs:
                   branch-suffix: "short-commit-hash"
                   delete-branch: true
                   title: "Update dependencies"
-                  body: "Automated dependency update, see changes to `poetry.lock`."
+                  body: |
+                    Automated dependency update:
+
+                    ```
+                    ${{ env.LOCK_OUTPUT }}
+                    ```

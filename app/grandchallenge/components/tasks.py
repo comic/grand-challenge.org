@@ -727,12 +727,7 @@ def execute_job(  # noqa: C901
 
     try:
         # This call is potentially very long
-        executor.execute(
-            input_civs=job.inputs.prefetch_related(
-                "interface", "image__files"
-            ).all(),
-            input_prefixes=job.input_prefixes,
-        )
+        executor.execute()
     except RetryStep:
         job.update_status(status=job.PROVISIONED)
         raise
@@ -1210,21 +1205,29 @@ def add_image_to_object(  # noqa: C901
     linked_task=None,
 ):
     from grandchallenge.algorithms.models import Job
+    from grandchallenge.archives.models import ArchiveItem
     from grandchallenge.components.models import (
         ComponentInterface,
         ComponentInterfaceValue,
     )
+    from grandchallenge.reader_studies.models import DisplaySet
+
+    try:
+        object = lock_model_instance(
+            app_label=app_label, model_name=model_name, pk=object_pk
+        )
+    except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
+        logger.info(f"Nothing to do: {model_name} no longer exists.")
+        return
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
     upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
-    object = lock_model_instance(
-        app_label=app_label, model_name=model_name, pk=object_pk
-    )
-    error_handler = object.get_error_handler(linked_object=upload_session)
 
     if upload_session.status != upload_session.SUCCESS:
         logger.info("Nothing to do: upload session was not successful.")
         return
+
+    error_handler = object.get_error_handler(linked_object=upload_session)
 
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
@@ -1296,16 +1299,23 @@ def add_file_to_object(
     linked_task=None,
 ):
     from grandchallenge.algorithms.models import Job
+    from grandchallenge.archives.models import ArchiveItem
     from grandchallenge.components.models import (
         ComponentInterface,
         ComponentInterfaceValue,
     )
+    from grandchallenge.reader_studies.models import DisplaySet
+
+    try:
+        object = lock_model_instance(
+            app_label=app_label, model_name=model_name, pk=object_pk
+        )
+    except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
+        logger.info(f"Nothing to do: {model_name} no longer exists.")
+        return
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
     user_upload = UserUpload.objects.get(pk=user_upload_pk)
-    object = lock_model_instance(
-        app_label=app_label, model_name=model_name, pk=object_pk
-    )
     error_handler = object.get_error_handler(linked_object=user_upload)
 
     current_value = object.get_current_value_for_interface(

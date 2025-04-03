@@ -5,7 +5,6 @@ from grandchallenge.reader_studies.views import (
     AddGroundTruthViaCSVToReaderStudy,
     AddQuestionToReaderStudy,
     AnswersRemoveForUser,
-    AnswersRemoveGroundTruth,
     DisplaySetBulkDelete,
     DisplaySetCreate,
     DisplaySetDelete,
@@ -25,6 +24,8 @@ from grandchallenge.reader_studies.views import (
     ReaderStudyDisplaySetList,
     ReaderStudyExampleGroundTruthCSV,
     ReaderStudyGroundTruth,
+    ReaderStudyGroundTruthDelete,
+    ReaderStudyGroundTruthFromAnswers,
     ReaderStudyLeaderBoard,
     ReaderStudyList,
     ReaderStudyPermissionRequestCreate,
@@ -71,9 +72,9 @@ urlpatterns = [
         name="ground-truth",
     ),
     path(
-        "<slug:slug>/remove-ground-truth/",
-        AnswersRemoveGroundTruth.as_view(),
-        name="ground-truth-remove",
+        "<slug:slug>/ground-truth/delete/",
+        ReaderStudyGroundTruthDelete.as_view(),
+        name="ground-truth-delete",
     ),
     path(
         "<slug:slug>/ground-truth/csv/create/",
@@ -84,6 +85,11 @@ urlpatterns = [
         "<slug:slug>/ground-truth/csv/example/",
         ReaderStudyExampleGroundTruthCSV.as_view(),
         name="example-ground-truth-csv",
+    ),
+    path(
+        "<slug:slug>/ground-truth/answers/create/",
+        ReaderStudyGroundTruthFromAnswers.as_view(),
+        name="add-ground-truth-answers",
     ),
     path(
         "<slug:slug>/display-sets/create/",

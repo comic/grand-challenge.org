@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.db import transaction
 from django.db.transaction import on_commit
@@ -138,10 +138,6 @@ def build_images(  # noqa:C901
         app_label=RawImageUploadSession._meta.app_label,
         model_name=RawImageUploadSession._meta.model_name,
     )
-    if linked_interface_slug:
-        ci = ComponentInterface.objects.get(slug=linked_interface_slug)
-    else:
-        ci = None
 
     if linked_object_pk:
         try:
@@ -150,17 +146,24 @@ def build_images(  # noqa:C901
                 model_name=linked_model_name,
                 pk=linked_object_pk,
             )
-        except ObjectDoesNotExist as e:
-            if linked_model_name in [
-                ArchiveItem._meta.model_name,
-                DisplaySet._meta.model_name,
-            ]:
-                # users can delete archive items and display sets before this task runs
-                return
-            else:
-                raise e
+        except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
+            # users can delete archive items and display sets before this task runs
+            logger.info(
+                f"Nothing to do here: {linked_model_name} no longer exists."
+            )
+            upload_session.update_status(
+                status=RawImageUploadSession.CANCELLED,
+                error_message="Image processing canceled. "
+                f"The associated {linked_model_name} not longer exists.",
+            )
+            return
     else:
         linked_object = None
+
+    if linked_interface_slug:
+        ci = ComponentInterface.objects.get(slug=linked_interface_slug)
+    else:
+        ci = None
 
     error_handler = upload_session.get_error_handler(
         linked_object=linked_object

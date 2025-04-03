@@ -1,10 +1,17 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Q
+from django.db.models import Count, ExpressionWrapper, F, Q
+from django.db.models.functions import Cast
+from django.db.transaction import on_commit
+from django.utils.timezone import now
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import FieldChangeMixin
+from grandchallenge.invoices.tasks import (
+    send_challenge_invoice_issued_notification_emails,
+)
 
 
 class PaymentStatusChoices(models.TextChoices):
@@ -20,7 +27,57 @@ class PaymentTypeChoices(models.TextChoices):
     POSTPAID = "POSTPAID", "Postpaid"
 
 
+class InvoiceQuerySet(models.QuerySet):
+    def with_due_date(self):
+        return self.annotate(
+            due_date=Cast(
+                F("issued_on") + settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF,
+                output_field=models.DateField(),
+            ),
+        )
+
+    def with_overdue_status(self):
+        today = now().date()
+
+        return self.with_due_date().annotate(
+            is_overdue=ExpressionWrapper(
+                Q(
+                    payment_type__in=[
+                        Invoice.PaymentTypeChoices.PREPAID,
+                        Invoice.PaymentTypeChoices.POSTPAID,
+                    ],
+                    payment_status=Invoice.PaymentStatusChoices.ISSUED,
+                    due_date__lt=today,
+                ),
+                output_field=models.BooleanField(),
+            ),
+            is_due=ExpressionWrapper(
+                Q(
+                    payment_type__in=[
+                        Invoice.PaymentTypeChoices.PREPAID,
+                        Invoice.PaymentTypeChoices.POSTPAID,
+                    ],
+                    payment_status=Invoice.PaymentStatusChoices.ISSUED,
+                    due_date__gte=today,
+                    issued_on__lte=today,
+                ),
+                output_field=models.BooleanField(),
+            ),
+        )
+
+    @property
+    def status_aggregates(self):
+        return self.aggregate(
+            num_is_overdue=Count(
+                "is_overdue", filter=Q(is_overdue=True), distinct=True
+            ),
+            num_is_due=Count("is_due", filter=Q(is_due=True), distinct=True),
+        )
+
+
 class Invoice(models.Model, FieldChangeMixin):
+    objects = InvoiceQuerySet.as_manager()
+
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -217,6 +274,16 @@ class Invoice(models.Model, FieldChangeMixin):
         super().save(*args, **kwargs)
         if adding:
             self.assign_permissions()
+        if (
+            self.payment_type != PaymentTypeChoices.COMPLIMENTARY
+            and (self.has_changed("payment_status") or adding)
+            and self.payment_status == PaymentStatusChoices.ISSUED
+        ):
+            on_commit(
+                send_challenge_invoice_issued_notification_emails.signature(
+                    kwargs={"pk": self.pk}
+                ).apply_async
+            )
 
     def assign_permissions(self):
         assign_perm(

@@ -13,6 +13,7 @@ from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 from django.urls import reverse
+from django.utils._os import safe_join
 from django.utils.timezone import now
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from sentry_sdk.integrations.celery import CeleryIntegration
@@ -59,22 +60,32 @@ IGNORABLE_404_URLS = [
 # the config dir. We need to  go one dir higher so path.join("..")
 SITE_ROOT = Path(__file__).resolve(strict=True).parent.parent
 
+if strtobool(os.environ.get("POSTGRES_USE_RDS_PROXY", "false")):
+    # From https://www.amazontrust.com/repository/
+    # See https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.howitworks.html#rds-proxy-security
+    ssl_root_cert = "amazon-root-ca.pem"
+else:
+    ssl_root_cert = "global-bundle.pem"
+
+CONN_MAX_AGE = int(os.environ.get("CONN_MAX_AGE", "0"))
+CONN_HEALTH_CHECKS = strtobool(os.environ.get("CONN_HEALTH_CHECKS", "false"))
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "grandchallenge.core.db.postgres_iam",
         "NAME": os.environ.get("POSTGRES_DB", "grandchallenge"),
         "USER": os.environ.get("POSTGRES_USER", "grandchallenge"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "secretpassword"),
         "HOST": os.environ.get("POSTGRES_HOST", "postgres"),
-        "PORT": os.environ.get("POSTGRES_PORT", ""),
+        "PORT": os.environ.get("POSTGRES_PORT", "5432"),
         "OPTIONS": {
+            "use_iam_auth": strtobool(
+                os.environ.get("POSTGRES_USE_IAM_AUTH", "false")
+            ),
             "sslmode": os.environ.get("POSTGRES_SSL_MODE", "prefer"),
             "sslrootcert": os.path.join(
-                SITE_ROOT, "config", "certs", "global-bundle.pem"
+                SITE_ROOT, "config", "certs", ssl_root_cert
             ),
-            # wait 100ms to acquire DB lock rather than indefinitely,
-            # this saves having to set select_for_update() on normal views
-            "options": "-c lock_timeout=100",
         },
         "ATOMIC_REQUESTS": strtobool(
             os.environ.get("ATOMIC_REQUESTS", "True")
@@ -183,7 +194,7 @@ STORAGES = {
         "BACKEND": "grandchallenge.core.storage.PublicS3Storage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
@@ -207,11 +218,6 @@ AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
 AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
 AWS_S3_URL_PROTOCOL = os.environ.get("AWS_S3_URL_PROTOCOL", "https:")
-AWS_S3_OBJECT_PARAMETERS = {
-    # Note that these do not affect the Uploads bucket, which is configured separately.
-    # See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html#S3.Client.put_object
-    "StorageClass": os.environ.get("AWS_S3_DEFAULT_STORAGE_CLASS", "STANDARD")
-}
 AWS_CLOUDWATCH_REGION_NAME = os.environ.get("AWS_CLOUDWATCH_REGION_NAME")
 AWS_CODEBUILD_REGION_NAME = os.environ.get("AWS_CODEBUILD_REGION_NAME")
 AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
@@ -241,6 +247,8 @@ PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN = os.environ.get(
     "PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN_NAME", ""
 )
 
+PUBLIC_FILE_CACHE_CONTROL = "max-age=315360000, public, immutable"
+
 PUBLIC_S3_STORAGE_KWARGS = {
     "bucket_name": os.environ.get(
         "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
@@ -249,6 +257,7 @@ PUBLIC_S3_STORAGE_KWARGS = {
     # Public bucket so do not use querystring_auth
     "querystring_auth": False,
     "default_acl": os.environ.get("PUBLIC_S3_DEFAULT_ACL", "public-read"),
+    "object_parameters": {"CacheControl": PUBLIC_FILE_CACHE_CONTROL},
 }
 
 UPLOADS_S3_BUCKET_NAME = os.environ.get(
@@ -397,11 +406,9 @@ PERMISSIONS_POLICY = {
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
-# Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = os.environ.get("STATIC_ROOT", "/static/")
-
 STATIC_HOST = os.environ.get("DJANGO_STATIC_HOST", "")
-STATIC_URL = f"{STATIC_HOST}/static/"
+STATIC_URL = f"{STATIC_HOST}/{COMMIT_ID}/"
+STATIC_ROOT = safe_join(os.environ.get("STATIC_ROOT", "/static/"), COMMIT_ID)
 
 # List of finder classes that know how to find static files in
 # various locations.
@@ -469,8 +476,6 @@ TEMPLATES = [
 
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",  # Keep security at top
-    "whitenoise.middleware.WhiteNoiseMiddleware",
-    # Keep whitenoise after security and before all else
     "aws_xray_sdk.ext.django.middleware.XRayMiddleware",  # xray near the top
     "corsheaders.middleware.CorsMiddleware",  # Keep CORS near the top
     "csp.contrib.rate_limiting.RateLimitedCSPMiddleware",
@@ -508,7 +513,6 @@ DJANGO_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sites",
     "django.contrib.messages",
-    "whitenoise.runserver_nostatic",  # Keep whitenoise above staticfiles
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "grandchallenge.django_admin",  # Keep above django.contrib.admin
@@ -639,8 +643,14 @@ ACCOUNT_ADAPTER = "grandchallenge.profiles.adapters.AccountAdapter"
 ACCOUNT_SIGNUP_FORM_CLASS = "grandchallenge.profiles.forms.SignupForm"
 
 ACCOUNT_LOGIN_METHODS = {"email", "username"}
+ACCOUNT_SIGNUP_FIELDS = [
+    "username*",
+    "email*",
+    "email2*",
+    "password1*",
+    "password2*",
+]
 ACCOUNT_EMAIL_NOTIFICATIONS = True
-ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
 ACCOUNT_SIGNUP_FORM_HONEYPOT_FIELD = "phone_number"
@@ -1133,6 +1143,7 @@ READER_STUDY_CREATORS_GROUP_NAME = "reader_study_creators"
 
 CHALLENGES_DEFAULT_ACTIVE_MONTHS = 12
 CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF = timedelta(days=7)
+CHALLENGE_INVOICE_OVERDUE_CUTOFF = timedelta(weeks=4)
 
 ###############################################################################
 #
@@ -1243,6 +1254,10 @@ CELERY_BEAT_SCHEDULE = {
     "send_onboarding_task_reminder_emails": {
         "task": "grandchallenge.challenges.tasks.send_onboarding_task_reminder_emails",
         "schedule": crontab(day_of_week="mon", hour=6, minute=0),
+    },
+    "send_challenge_invoice_overdue_reminder_emails": {
+        "task": "grandchallenge.invoices.tasks.send_challenge_invoice_overdue_reminder_emails",
+        "schedule": crontab(day_of_month=1, hour=6, minute=0),
     },
     "delete_users_who_dont_login": {
         "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
@@ -1372,6 +1387,7 @@ DISALLOWED_CHALLENGE_NAMES = {
     "cache",
     "challenge",
     "challenges",
+    "static",
     *USERNAME_DENYLIST,
     *WORKSTATIONS_RENDERING_SUBDOMAINS,
 }

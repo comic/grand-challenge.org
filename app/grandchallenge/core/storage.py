@@ -166,18 +166,10 @@ def copy_s3_object(
         name=target_key, max_length=to_field.field.max_length
     )
 
-    extra_args = {"ContentType": mimetype}
+    extra_args = {"ContentType": mimetype, "MetadataDirective": "REPLACE"}
 
-    if settings.AWS_S3_OBJECT_PARAMETERS[
-        "StorageClass"
-    ] != "STANDARD" and target_bucket in {
-        settings.PRIVATE_S3_STORAGE_KWARGS["bucket_name"],
-        settings.PROTECTED_S3_STORAGE_KWARGS["bucket_name"],
-        settings.PUBLIC_S3_STORAGE_KWARGS["bucket_name"],
-    }:
-        extra_args["StorageClass"] = settings.AWS_S3_OBJECT_PARAMETERS[
-            "StorageClass"
-        ]
+    if target_bucket == settings.PUBLIC_S3_STORAGE_KWARGS["bucket_name"]:
+        extra_args["CacheControl"] = settings.PUBLIC_FILE_CACHE_CONTROL
 
     if not settings.USING_MINIO:
         # Minio does not handle the checksum correctly

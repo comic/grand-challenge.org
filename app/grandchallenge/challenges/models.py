@@ -1121,13 +1121,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         "phase 1 and 2 cost estimates by the number of tasks.",
         validators=[MinValueValidator(limit_value=1)],
     )
-    long_term_commitment = models.BooleanField(
-        default=False,
-    )
-    long_term_commitment_extra = models.CharField(
-        max_length=2000,
-        blank=True,
-    )
     data_license = models.BooleanField(
         default=False,
     )

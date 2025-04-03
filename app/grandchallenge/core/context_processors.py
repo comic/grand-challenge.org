@@ -41,6 +41,7 @@ def challenge(request):
         )
         .with_overdue_status()
         .status_aggregates,
+        "invoice_aggregates": challenge.invoices.with_overdue_status().status_aggregates,
     }
 
 

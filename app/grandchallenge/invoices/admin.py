@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db import models
 from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.core.admin import (
@@ -11,6 +12,26 @@ from grandchallenge.invoices.models import (
     InvoiceGroupObjectPermission,
     InvoiceUserObjectPermission,
 )
+
+
+class DueStatusChoices(models.TextChoices):
+    DUE = "DUE", "Due"
+    OVERDUE = "OVERDUE", "Overdue"
+
+
+class OverdueListFilter(admin.SimpleListFilter):
+    title = "Due status"
+    parameter_name = "due_status"
+
+    def lookups(self, *_, **__):
+        return DueStatusChoices.choices
+
+    def queryset(self, request, queryset):
+        if self.value() == DueStatusChoices.DUE:
+            queryset = queryset.filter(is_due=True)
+        elif self.value() == DueStatusChoices.OVERDUE:
+            queryset = queryset.filter(is_overdue=True)
+        return queryset
 
 
 @admin.register(Invoice)
@@ -29,25 +50,16 @@ class InvoiceAdmin(GuardedModelAdmin):
         "internal_comments",
     )
     list_filter = (
+        OverdueListFilter,
         "payment_status",
         "payment_type",
     )
     autocomplete_fields = ("challenge",)
     readonly_fields = ["invoice_request_text"]
 
-    def total_amount_euros(self, obj):
-        try:
-            return (
-                obj.support_costs_euros
-                + obj.compute_costs_euros
-                + obj.storage_costs_euros
-            )
-        except TypeError:
-            return
-
     def invoice_request_text(self, obj):
         required = {
-            "Amount": f"{self.total_amount_euros(obj)} Euro",
+            "Amount": f"{obj.total_amount_euros} Euro",
             "Billing address": obj.billing_address,
             "Contact person": obj.contact_name,
             "Contact email": obj.contact_email,
@@ -79,6 +91,9 @@ class InvoiceAdmin(GuardedModelAdmin):
         invoice_request_details += "</div>"
 
         return md2html(warning_text + invoice_request_details)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).with_overdue_status()
 
 
 admin.site.register(InvoiceUserObjectPermission, UserObjectPermissionAdmin)

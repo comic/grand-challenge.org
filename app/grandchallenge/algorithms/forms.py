@@ -493,7 +493,6 @@ class UserAlgorithmsForPhaseMixin:
         return (
             get_objects_for_user(self._user, "algorithms.change_algorithm")
             .annotate(
-                interface_count=Count("interfaces", distinct=True),
                 relevant_interfaces_count=Count(
                     "interfaces",
                     filter=Q(interfaces__in=interfaces),
@@ -501,7 +500,6 @@ class UserAlgorithmsForPhaseMixin:
                 ),
             )
             .filter(
-                interface_count=len(interfaces),
                 relevant_interfaces_count=len(interfaces),
             )
             .annotate(
