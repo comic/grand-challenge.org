@@ -67,9 +67,6 @@ if strtobool(os.environ.get("POSTGRES_USE_RDS_PROXY", "false")):
 else:
     ssl_root_cert = "global-bundle.pem"
 
-CONN_MAX_AGE = int(os.environ.get("CONN_MAX_AGE", "0"))
-CONN_HEALTH_CHECKS = strtobool(os.environ.get("CONN_HEALTH_CHECKS", "false"))
-
 DATABASES = {
     "default": {
         "ENGINE": "grandchallenge.core.db.postgres_iam",
@@ -89,6 +86,10 @@ DATABASES = {
         },
         "ATOMIC_REQUESTS": strtobool(
             os.environ.get("ATOMIC_REQUESTS", "True")
+        ),
+        "CONN_MAX_AGE": int(os.environ.get("CONN_MAX_AGE", "0")),
+        "CONN_HEALTH_CHECKS": strtobool(
+            os.environ.get("CONN_HEALTH_CHECKS", "false")
         ),
     }
 }
