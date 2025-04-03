@@ -1,10 +1,12 @@
 import json
 import uuid
+from contextlib import nullcontext
 from pathlib import Path
 from unittest.mock import call, patch
 
 import pytest
 from celery.exceptions import MaxRetriesExceededError
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from requests import put
 
@@ -484,6 +486,72 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
     assert "Image imports should result in a single image" in str(
         obj.detailed_error_message
     )
+    assert "some_async_task" not in str(callbacks)
+
+
+@pytest.mark.parametrize(
+    "task, task_extra_kwargs",
+    (
+        (add_image_to_object, {"upload_session_pk": None}),
+        (add_file_to_object, {"user_upload_pk": None}),
+    ),
+)
+@pytest.mark.parametrize(
+    "object_factory, factory_kwargs, context",
+    (
+        (
+            DisplaySetFactory,
+            {},
+            nullcontext(),
+        ),
+        (
+            ArchiveItemFactory,
+            {},
+            nullcontext(),
+        ),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 10, "status": Job.VALIDATING_INPUTS},  # Required
+            pytest.raises(ObjectDoesNotExist),
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_task_handles_deleted_object(
+    settings,
+    django_capture_on_commit_callbacks,
+    task,
+    object_factory,
+    factory_kwargs,
+    task_extra_kwargs,
+    context,
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    obj = object_factory(**factory_kwargs)
+    obj.delete()
+
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
+    )
+
+    ci = ComponentInterfaceFactory(kind="IMG")
+
+    task_kwargs = {
+        "app_label": obj._meta.app_label,
+        "model_name": obj._meta.model_name,
+        "object_pk": obj.pk,
+        "linked_task": linked_task,
+        "interface_pk": ci.pk,
+        **task_extra_kwargs,
+    }
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        with context:
+            task(**task_kwargs)
+
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     assert "some_async_task" not in str(callbacks)
 
 
