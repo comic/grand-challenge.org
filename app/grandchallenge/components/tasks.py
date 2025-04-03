@@ -1191,19 +1191,6 @@ def validate_voxel_values(*, civ_pk):
     civ.interface._validate_voxel_values(civ.image)
 
 
-def _get_object_with_lock(*, app_label, model_name, object_pk):
-    from grandchallenge.archives.models import ArchiveItem
-    from grandchallenge.reader_studies.models import DisplaySet
-
-    try:
-        object = lock_model_instance(
-            app_label=app_label, model_name=model_name, pk=object_pk
-        )
-    except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
-        return None
-    return object
-
-
 @acks_late_micro_short_task(
     retry_on=(LockNotAcquiredException,), delayed_retry=False
 )
@@ -1218,15 +1205,18 @@ def add_image_to_object(  # noqa: C901
     linked_task=None,
 ):
     from grandchallenge.algorithms.models import Job
+    from grandchallenge.archives.models import ArchiveItem
     from grandchallenge.components.models import (
         ComponentInterface,
         ComponentInterfaceValue,
     )
+    from grandchallenge.reader_studies.models import DisplaySet
 
-    object = _get_object_with_lock(
-        app_label=app_label, model_name=model_name, object_pk=object_pk
-    )
-    if object is None:
+    try:
+        object = lock_model_instance(
+            app_label=app_label, model_name=model_name, object_pk=object_pk
+        )
+    except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
         logger.info(f"Nothing to do: {model_name} no longer exists.")
         return
 
@@ -1309,15 +1299,18 @@ def add_file_to_object(
     linked_task=None,
 ):
     from grandchallenge.algorithms.models import Job
+    from grandchallenge.archives.models import ArchiveItem
     from grandchallenge.components.models import (
         ComponentInterface,
         ComponentInterfaceValue,
     )
+    from grandchallenge.reader_studies.models import DisplaySet
 
-    object = _get_object_with_lock(
-        app_label=app_label, model_name=model_name, object_pk=object_pk
-    )
-    if object is None:
+    try:
+        object = lock_model_instance(
+            app_label=app_label, model_name=model_name, object_pk=object_pk
+        )
+    except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
         logger.info(f"Nothing to do: {model_name} no longer exists.")
         return
 
