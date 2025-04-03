@@ -68,9 +68,6 @@
                             <i class="fa fa-exclamation-triangle text-warning" title="Ground truth is incomplete"></i>
                         {% endif %}
                     </a>
-                    <a class="nav-link" href="{% url 'reader-studies:leaderboard' slug=object.slug %}">
-                       <i class="fas fa-trophy fa-fw"></i>&nbsp;Leaderboard
-                    </a>
                     <a class="nav-link" href="{% url 'reader-studies:statistics' slug=object.slug %}">
                         <i class="fas fa-chart-bar fa-fw"></i>&nbsp;Statistics
                     </a>
@@ -85,6 +82,11 @@
                        aria-selected="false"><i class="fas fa-copy fa-fw"></i>&nbsp;Copy
                     </a>
                 {% endif %}
+            {% endif %}
+            {% if object.is_educational and object.leaderboard_accessible_to_readers or object.is_educational and 'change_readerstudy' in readerstudy_perms %}
+                <a class="nav-link" href="{% url 'reader-studies:leaderboard' slug=object.slug %}">
+                       <i class="fas fa-trophy fa-fw"></i>&nbsp;Leaderboard
+                    </a>
             {% endif %}
 
             {% if "read_readerstudy" not in readerstudy_perms %}
