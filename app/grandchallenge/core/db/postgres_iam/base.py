@@ -24,9 +24,11 @@ class DatabaseWrapper(base.DatabaseWrapper):
     def get_connection_params(self):
         params = super().get_connection_params()
 
+        rds_proxy_host = params.pop("rds_proxy_host")
+
         if params.pop("use_iam_auth"):
             params["password"] = generate_db_auth_token(
-                host=params["host"],
+                host=rds_proxy_host or params["host"],
                 port=params["port"],
                 user=params["user"],
             )

@@ -60,7 +60,7 @@ IGNORABLE_404_URLS = [
 # the config dir. We need to  go one dir higher so path.join("..")
 SITE_ROOT = Path(__file__).resolve(strict=True).parent.parent
 
-if strtobool(os.environ.get("POSTGRES_USE_RDS_PROXY", "false")):
+if os.environ.get("POSTGRES_RDS_PROXY_HOST"):
     # From https://www.amazontrust.com/repository/
     # See https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.howitworks.html#rds-proxy-security
     ssl_root_cert = "amazon-root-ca.pem"
@@ -82,6 +82,7 @@ DATABASES = {
             "use_iam_auth": strtobool(
                 os.environ.get("POSTGRES_USE_IAM_AUTH", "false")
             ),
+            "rds_proxy_host": os.environ.get("POSTGRES_RDS_PROXY_HOST"),
             "sslmode": os.environ.get("POSTGRES_SSL_MODE", "prefer"),
             "sslrootcert": os.path.join(
                 SITE_ROOT, "config", "certs", ssl_root_cert
