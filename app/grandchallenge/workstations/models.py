@@ -680,17 +680,27 @@ class Session(UUIDModel):
 
         reader_study = ReaderStudy.objects.get(lookup)
         reader_study.workstation_sessions.add(self)
+        self.session_cost.reader_studies.add(reader_study)
 
-        if (
-            Question.objects.filter(reader_study=reader_study)
-            .exclude(interactive_algorithm="")
-            .exists()
-        ):
+        questions_with_interactive_algorithms = Question.objects.filter(
+            reader_study=reader_study
+        ).exclude(interactive_algorithm="")
+
+        if questions_with_interactive_algorithms.exists():
             on_commit(
                 preload_interactive_algorithms.signature(
                     queue=f"workstations-{self.region}"
                 ).apply_async
             )
+            self.session_cost.interactive_algorithms = list(
+                set(self.session_cost.interactive_algorithms).union(
+                    [
+                        question.interactive_algorithm
+                        for question in questions_with_interactive_algorithms
+                    ]
+                )
+            )
+            self.session_cost.save()
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):

@@ -12,16 +12,24 @@ from grandchallenge.components.backends.docker_client import (
     inspect_container,
 )
 from grandchallenge.components.tasks import stop_expired_services
+from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
 from grandchallenge.workstations.models import (
     Session,
     SessionCost,
     Workstation,
+)
+from grandchallenge.workstations.templatetags.workstations import (
+    get_workstation_path_and_query_string,
 )
 from tests.factories import (
     SessionFactory,
     UserFactory,
     WorkstationFactory,
     WorkstationImageFactory,
+)
+from tests.reader_studies_tests.factories import (
+    QuestionFactory,
+    ReaderStudyFactory,
 )
 from tests.utils import recurse_callbacks
 from tests.workstations_tests.factories import FeedbackFactory
@@ -391,6 +399,49 @@ def test_session_cost_duration(mocker):
     session.stop()
 
     assert session.session_cost.duration == timedelta(minutes=5)
+
+
+@pytest.mark.django_db
+def test_reader_studies_in_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    session.handle_reader_study_switching(
+        workstation_path=get_workstation_path_and_query_string(
+            reader_study=reader_study
+        ).path
+    )
+    assert session.session_cost.reader_studies.count() == 1
+    assert {rs.pk for rs in session.session_cost.reader_studies.all()} == {
+        reader_study.pk
+    }
+
+    reader_study2 = ReaderStudyFactory()
+    session.handle_reader_study_switching(
+        workstation_path=get_workstation_path_and_query_string(
+            reader_study=reader_study2
+        ).path
+    )
+    assert session.session_cost.reader_studies.count() == 2
+    assert {rs.pk for rs in session.session_cost.reader_studies.all()} == {
+        reader_study.pk,
+        reader_study2.pk,
+    }
+
+
+@pytest.mark.django_db
+def test_session_cost_interactive_algorithm():
+    session = SessionFactory()
+    question = QuestionFactory(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+    session.handle_reader_study_switching(
+        workstation_path=get_workstation_path_and_query_string(
+            reader_study=question.reader_study
+        ).path
+    )
+    assert session.session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
 
 
 @pytest.mark.django_db
