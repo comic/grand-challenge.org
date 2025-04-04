@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from django.conf import settings
@@ -367,3 +367,23 @@ def test_extra_env_vars():
             settings.WORKSTATIONS_MAX_CONCURRENT_API_REQUESTS
         ),
     }
+
+
+@pytest.mark.django_db
+def test_session_cost_duration(mocker):
+    fixed_now = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    mocker.patch(
+        "django.utils.timezone.now",
+        return_value=fixed_now,
+    )
+    session = SessionFactory()
+
+    assert session.created == fixed_now
+
+    mocker.patch(
+        "grandchallenge.workstations.models.now",
+        return_value=fixed_now + timedelta(minutes=5),
+    )
+    session.stop()
+
+    assert session.session_cost.duration == timedelta(minutes=5)
