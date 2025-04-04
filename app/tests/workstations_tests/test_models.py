@@ -12,7 +12,11 @@ from grandchallenge.components.backends.docker_client import (
     inspect_container,
 )
 from grandchallenge.components.tasks import stop_expired_services
-from grandchallenge.workstations.models import Session, Workstation
+from grandchallenge.workstations.models import (
+    Session,
+    SessionCost,
+    Workstation,
+)
 from tests.factories import (
     SessionFactory,
     UserFactory,
@@ -387,3 +391,16 @@ def test_session_cost_duration(mocker):
     session.stop()
 
     assert session.session_cost.duration == timedelta(minutes=5)
+
+
+@pytest.mark.django_db
+def test_session_cost_retained_when_session_deleted():
+    session = SessionFactory()
+    session_pk = session.pk
+    session_cost = session.session_cost
+    session_cost_pk = session_cost.pk
+
+    session.delete()
+
+    assert not Session.objects.filter(pk__in=[session_pk]).exists()
+    assert SessionCost.objects.filter(pk__in=[session_cost_pk]).exists()
