@@ -1,7 +1,17 @@
 import json
 
 import pytest
-from django.http import HttpRequest
+from django.contrib.sites.middleware import CurrentSiteMiddleware
+from django.core.exceptions import PermissionDenied
+from django.db import connection
+from django.http import (
+    HttpRequest,
+    HttpResponseForbidden,
+    HttpResponseNotFound,
+    HttpResponseServerError,
+)
+from django.urls import Resolver404
+from django.utils.module_loading import import_string
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.core.utils.access_requests import (
@@ -9,11 +19,17 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.core.views import RedirectPath
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.subdomains.middleware import (
+    challenge_subdomain_middleware,
+    subdomain_middleware,
+    subdomain_urlconf_middleware,
+)
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
 from tests.factories import ChallengeFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
+from tests.subdomain_tests.test_middleware import SITE_DOMAIN
 from tests.utils import get_view_for_user
 
 
@@ -255,3 +271,61 @@ def test_permission_request_status_msg(
     )
 
     assert expected_msg in response.rendered_content
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "urlconf,subdomain",
+    (
+        ("root", None),
+        ("challenge_subdomain", "c"),
+        ("rendering_subdomain", "eu-central-1"),
+    ),
+)
+@pytest.mark.parametrize(
+    "error_code,included_exception,expected_return",
+    (
+        (403, PermissionDenied(), HttpResponseForbidden),
+        (404, Resolver404(), HttpResponseNotFound),
+        (500, None, HttpResponseServerError),
+    ),
+)
+def test_handler_no_db_calls(
+    rf,
+    django_assert_num_queries,
+    urlconf,
+    error_code,
+    included_exception,
+    settings,
+    subdomain,
+    expected_return,
+):
+    handler = import_string(
+        import_string(f"config.urls.{urlconf}.handler{error_code}")
+    )
+
+    settings.ALLOWED_HOSTS = [f".{SITE_DOMAIN}"]
+    ChallengeFactory(short_name="c")
+
+    if subdomain is not None:
+        host = f"{subdomain}.{SITE_DOMAIN}"
+    else:
+        host = SITE_DOMAIN
+
+    request = CurrentSiteMiddleware(lambda x: x)(rf.get("/", HTTP_HOST=host))
+    request = subdomain_middleware(lambda x: x)(request)
+    request = challenge_subdomain_middleware(lambda x: x)(request)
+    request = subdomain_urlconf_middleware(lambda x: x)(request)
+
+    connection.queries_log.clear()
+
+    kwargs = {"request": request}
+
+    if included_exception:
+        kwargs["exception"] = included_exception
+
+    with django_assert_num_queries(0):
+        response = handler(**kwargs)
+
+    assert response.status_code == error_code
+    assert isinstance(response, expected_return)
