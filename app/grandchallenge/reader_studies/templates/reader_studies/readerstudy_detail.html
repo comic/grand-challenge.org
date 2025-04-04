@@ -86,6 +86,11 @@
                     </a>
                 {% endif %}
             {% endif %}
+            {% if 'change_readerstudy' not in readerstudy_perms and 'read_readerstudy' in readerstudy_perms and object.is_educational and object.leaderboard_accessible_to_readers %}
+                <a class="nav-link" href="{% url 'reader-studies:leaderboard' slug=object.slug %}">
+                       <i class="fas fa-trophy fa-fw"></i>&nbsp;Leaderboard
+                    </a>
+            {% endif %}
 
             {% if "read_readerstudy" not in readerstudy_perms %}
                 <a class="nav-link"
