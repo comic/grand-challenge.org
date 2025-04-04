@@ -1,7 +1,8 @@
 {% extends "base.html" %}
-{# 403 Forbidden - the user is signed in but need permission to access this page #}
 
 {% block title %}Forbidden{% endblock %}
+
+{% block navbar %}{% endblock %}
 
 {% block content %}
     <h2>Forbidden</h2>
@@ -13,3 +14,5 @@
         {% endif %}
     </p>
 {% endblock %}
+
+{% block footer %}{% endblock %}
