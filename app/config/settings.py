@@ -1497,9 +1497,8 @@ CSP_MEDIA_HOSTS = (
     )
 )
 
-CONTENT_SECURITY_POLICY_REPORT_ONLY = {
+CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
-        "report-uri": os.environ.get("CSP_REPORT_URI"),
         "default-src": csp_constants.NONE,
         "script-src": (
             CSP_STATIC_HOST,
@@ -1541,41 +1540,43 @@ CONTENT_SECURITY_POLICY_REPORT_ONLY = {
             ),
             "https://*.ingest.sentry.io",  # For Sentry errors
         ),
+        "report-uri": os.environ.get("CSP_REPORT_URI"),
     },
     "REPORT_PERCENTAGE": float(os.environ.get("CSP_REPORT_PERCENTAGE", "0")),
 }
 
 
 if STATIC_HOST:
-    CONTENT_SECURITY_POLICY_REPORT_ONLY["DIRECTIVES"]["connect-src"] += (
+    CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] += (
         STATIC_HOST,
     )  # For the map json
 
 if PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN:
     # Used by Open Sea Dragon and countries json
-    CONTENT_SECURITY_POLICY_REPORT_ONLY["DIRECTIVES"]["img-src"] += (
+    CONTENT_SECURITY_POLICY["DIRECTIVES"]["img-src"] += (
         f"https://{PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN}",
     )
-    CONTENT_SECURITY_POLICY_REPORT_ONLY["DIRECTIVES"]["connect-src"] += (
+    CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] += (
         f"https://{PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN}",
     )
 
 if UPLOADS_S3_USE_ACCELERATE_ENDPOINT:
-    CONTENT_SECURITY_POLICY_REPORT_ONLY["DIRECTIVES"]["connect-src"] += (
+    CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] += (
         f"https://{UPLOADS_S3_BUCKET_NAME}.s3-accelerate.amazonaws.com",
     )
 else:
     if AWS_S3_ENDPOINT_URL:
-        CONTENT_SECURITY_POLICY_REPORT_ONLY["DIRECTIVES"]["connect-src"] += (
+        CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] += (
             AWS_S3_ENDPOINT_URL,
         )
     else:
-        CONTENT_SECURITY_POLICY_REPORT_ONLY["DIRECTIVES"]["connect-src"] += (
+        CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] += (
             f"https://{UPLOADS_S3_BUCKET_NAME}.s3.{AWS_DEFAULT_REGION}.amazonaws.com",
         )
 
-if not strtobool(os.environ.get("CSP_REPORT_ONLY", "False")):
-    CONTENT_SECURITY_POLICY = CONTENT_SECURITY_POLICY_REPORT_ONLY
+if strtobool(os.environ.get("CSP_REPORT_ONLY", "False")):
+    CONTENT_SECURITY_POLICY_REPORT_ONLY = CONTENT_SECURITY_POLICY
+    del CONTENT_SECURITY_POLICY
 
 ENABLE_DEBUG_TOOLBAR = False
 
