@@ -1488,14 +1488,16 @@ ALLOWED_JSON_SCHEMA_REF_SRC_REGEXES = (
 ##########################
 
 CSP_STATIC_HOST = STATIC_HOST if STATIC_HOST else csp_constants.SELF
-CSP_MEDIA_HOSTS = (
-    (AWS_S3_ENDPOINT_URL,)
-    if AWS_S3_ENDPOINT_URL
-    else (
+
+if AWS_S3_ENDPOINT_URL:
+    CSP_MEDIA_HOSTS = (AWS_S3_ENDPOINT_URL,)
+elif public_bucket_custom_domain := PUBLIC_S3_STORAGE_KWARGS["custom_domain"]:
+    CSP_MEDIA_HOSTS = f"https://{public_bucket_custom_domain}"
+else:
+    CSP_MEDIA_HOSTS = (
         f"https://{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}.s3.amazonaws.com",
         f"https://{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}.s3.{AWS_DEFAULT_REGION}.amazonaws.com",
     )
-)
 
 CONTENT_SECURITY_POLICY = {
     "DIRECTIVES": {
