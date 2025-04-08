@@ -1492,7 +1492,7 @@ CSP_STATIC_HOST = STATIC_HOST if STATIC_HOST else csp_constants.SELF
 if AWS_S3_ENDPOINT_URL:
     CSP_MEDIA_HOSTS = (AWS_S3_ENDPOINT_URL,)
 elif public_bucket_custom_domain := PUBLIC_S3_STORAGE_KWARGS["custom_domain"]:
-    CSP_MEDIA_HOSTS = f"https://{public_bucket_custom_domain}"
+    CSP_MEDIA_HOSTS = (f"https://{public_bucket_custom_domain}",)
 else:
     CSP_MEDIA_HOSTS = (
         f"https://{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}.s3.amazonaws.com",
