@@ -40,8 +40,9 @@
             <span class="text-muted">Empty</span>
         {% endfor %}
     </td>
+    <split></split>
 {% endif %}
-<split></split>
+
 
 {% if object.submission.phase.scoring_method_choice != object.submission.phase.ABSOLUTE %}
     <a href="{{ object.get_absolute_url }}">
