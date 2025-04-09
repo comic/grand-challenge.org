@@ -409,6 +409,19 @@ def test_session_cost_retained_when_session_deleted():
 
 
 @pytest.mark.django_db
+def test_session_cost_retained_when_creator_deleted():
+    session = SessionFactory()
+    session_cost = session.session_cost
+    session_cost_pk = session_cost.pk
+
+    session.creator.delete()
+    session_cost.refresh_from_db()
+
+    assert session_cost.creator is None
+    assert SessionCost.objects.filter(pk__in=[session_cost_pk]).exists()
+
+
+@pytest.mark.django_db
 def test_session_cost_duration(mocker):
     fixed_now = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
     mocker.patch(
