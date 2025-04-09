@@ -3,7 +3,7 @@ from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 
 from grandchallenge.reader_studies.models import WorkstationSessionReaderStudy
-from grandchallenge.workstations.models import ReaderStudySessionCost, Session
+from grandchallenge.workstations.models import Session, SessionCostReaderStudy
 
 
 @receiver(user_logged_out)
@@ -35,7 +35,7 @@ def reader_study_workstation_sessions_changed(
             reader_study.session_costs.add(*session_costs)
 
 
-@receiver(m2m_changed, sender=ReaderStudySessionCost)
+@receiver(m2m_changed, sender=SessionCostReaderStudy)
 def session_cost_reader_studies_changed(
     sender, instance, action, pk_set, model, reverse, **kwargs
 ):
