@@ -55,6 +55,8 @@ class VerificationAdmin(admin.ModelAdmin):
         "email_is_verified",
         "is_verified",
         "verified_at",
+        "created",
+        "modified",
     )
     list_select_related = ("user__user_profile",)
     list_filter = ("email_is_verified", "is_verified")
