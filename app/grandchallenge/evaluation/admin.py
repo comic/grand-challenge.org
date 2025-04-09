@@ -1,6 +1,6 @@
 import json
 
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.forms import ModelForm
 from django.utils.html import format_html
 from guardian.admin import GuardedModelAdmin
@@ -28,14 +28,15 @@ from grandchallenge.evaluation.models import (
     MethodGroupObjectPermission,
     MethodUserObjectPermission,
     Phase,
+    PhaseAdditionalEvaluationInput,
     PhaseAlgorithmInterface,
+    PhaseEvaluationOutput,
     PhaseGroupObjectPermission,
     PhaseUserObjectPermission,
     Submission,
     SubmissionGroupObjectPermission,
     SubmissionUserObjectPermission,
 )
-from grandchallenge.evaluation.tasks import create_evaluation
 
 
 class PhaseAdminForm(ModelForm):
@@ -53,9 +54,28 @@ class PhaseAdminForm(ModelForm):
                 self.fields[field_name].disabled = True
 
 
+class EvaluationSocketInline(admin.TabularInline):
+    extra = 1
+
+    def get_formset(self, request, obj=None, **kwargs):
+        # Enable form validation
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.validate_each = True
+        return formset
+
+
+class EvaluationInputInline(EvaluationSocketInline):
+    model = PhaseAdditionalEvaluationInput
+
+
+class EvaluationOutputInline(EvaluationSocketInline):
+    model = PhaseEvaluationOutput
+
+
 @admin.register(Phase)
 class PhaseAdmin(admin.ModelAdmin):
     ordering = ("challenge",)
+    inlines = [EvaluationInputInline, EvaluationOutputInline]
     list_display = (
         "slug",
         "title",
@@ -79,11 +99,7 @@ class PhaseAdmin(admin.ModelAdmin):
         "external_evaluation",
         "challenge__short_name",
     )
-    autocomplete_fields = (
-        "inputs",
-        "outputs",
-        "archive",
-    )
+    autocomplete_fields = ("archive",)
     readonly_fields = (
         "give_algorithm_editors_job_view_permissions",
         "challenge_forge_json",
@@ -113,9 +129,16 @@ class PhaseAdmin(admin.ModelAdmin):
 def reevaluate_submissions(modeladmin, request, queryset):
     """Creates a new evaluation for an existing submission"""
     for submission in queryset:
-        create_evaluation.apply_async(
-            kwargs={"submission_pk": str(submission.pk)}
-        )
+        if submission.phase.additional_evaluation_inputs.exists():
+            modeladmin.message_user(
+                request,
+                f"Submission {submission.pk} cannot be reevaluated in the admin "
+                f"because it requires additional inputs. "
+                f"Please reschedule through the challenge UI.",
+                messages.WARNING,
+            )
+        else:
+            submission.create_evaluation(additional_inputs=None)
 
 
 @admin.register(Submission)

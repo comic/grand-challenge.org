@@ -1,19 +1,27 @@
 import json
 from datetime import timedelta
+from pathlib import Path
+from typing import NamedTuple
+from unittest.mock import patch
 
 import factory
 import pytest
 from django.conf import settings
 from django.core.cache import cache
+from django.core.files.base import ContentFile
 from django.db.models import signals
+from django.test import override_settings
 from django.utils import timezone
 from factory.django import ImageField
 from guardian.shortcuts import assign_perm, remove_perm
+from requests import put
 
-from grandchallenge.algorithms.models import Algorithm, AlgorithmInterface
+from grandchallenge.algorithms.models import Algorithm, AlgorithmInterface, Job
 from grandchallenge.components.models import (
     ComponentInterface,
+    ComponentInterfaceValue,
     ImportStatusChoices,
+    InterfaceKind,
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -26,18 +34,30 @@ from grandchallenge.evaluation.models import (
 )
 from grandchallenge.evaluation.tasks import update_combined_leaderboard
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.invoices.models import PaymentTypeChoices
+from grandchallenge.invoices.models import (
+    PaymentStatusChoices,
+    PaymentTypeChoices,
+)
+from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstations.models import Workstation
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmInterfaceFactory,
+    AlgorithmJobFactory,
+    AlgorithmModelFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
+from tests.cases_tests import RESOURCE_PATH
+from tests.cases_tests.factories import (
+    ImageFileFactoryWithMHDFile,
+    RawImageUploadSessionFactory,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.conftest import get_interface_form_data
 from tests.evaluation_tests.factories import (
     CombinedLeaderboardFactory,
     EvaluationFactory,
@@ -50,15 +70,161 @@ from tests.factories import (
     ChallengeFactory,
     ChallengeRequestFactory,
     GroupFactory,
+    ImageFactory,
     UserFactory,
     WorkstationConfigFactory,
     WorkstationFactory,
 )
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
 from tests.invoices_tests.factories import InvoiceFactory
-from tests.uploads_tests.factories import UserUploadFactory
+from tests.uploads_tests.factories import (
+    UserUploadFactory,
+    create_upload_from_file,
+)
 from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
+
+
+class PhaseWithInputs(NamedTuple):
+    phase: PhaseFactory
+    admin: UserFactory
+    algorithm: AlgorithmFactory
+    ci_str: ComponentInterfaceFactory
+    ci_bool: ComponentInterfaceFactory
+    ci_img_upload: ComponentInterfaceFactory
+    ci_existing_img: ComponentInterfaceFactory
+    ci_json_in_db_with_schema: ComponentInterfaceFactory
+    ci_json_file: ComponentInterfaceFactory
+    im_upload_through_api: RawImageUploadSessionFactory
+    im_upload_through_ui: UserUploadFactory
+    file_upload: UserUploadFactory
+    image_1: ImageFactory
+    image_2: ImageFactory
+
+
+@pytest.fixture
+def algorithm_phase_with_multiple_inputs():
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    algorithm = AlgorithmFactory()
+    ai = AlgorithmImageFactory(
+        algorithm=algorithm,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+    AlgorithmModelFactory(
+        algorithm=algorithm,
+        is_desired_version=True,
+    )
+
+    alg_in = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.STRING
+    )
+    interface = AlgorithmInterfaceFactory(
+        inputs=[alg_in],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    ai.algorithm.interfaces.add(interface)
+
+    admin = UserFactory()
+    VerificationFactory(user=admin, is_verified=True)
+    algorithm.add_editor(admin)
+    phase.challenge.add_admin(user=admin)
+    phase.algorithm_interfaces.add(interface)
+
+    MethodFactory(
+        phase=phase,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+
+    archive = ArchiveFactory()
+    phase.archive = archive
+    phase.save()
+
+    item = ArchiveItemFactory(archive=archive)
+    item.values.add(
+        ComponentInterfaceValueFactory(interface=alg_in, value="foo")
+    )
+
+    InvoiceFactory(
+        challenge=phase.challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+
+    # create interfaces of different kinds
+    ci_str = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.STRING
+    )
+    ci_bool = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+    ci_img_upload = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    ci_existing_img = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+    )
+    ci_json_in_db_with_schema = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        store_in_database=True,
+        schema={
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "type": "array",
+        },
+    )
+    ci_json_file = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        store_in_database=False,
+        schema={
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "type": "array",
+        },
+    )
+
+    # Create inputs
+    im_upload_through_api = RawImageUploadSessionFactory(creator=admin)
+    image_1, image_2 = ImageFactory.create_batch(2)
+    mhd1, mhd2 = ImageFileFactoryWithMHDFile.create_batch(2)
+    image_1.files.set([mhd1])
+    image_2.files.set([mhd2])
+    for im in [image_1, image_2]:
+        assign_perm("cases.view_image", admin, im)
+    im_upload_through_api.image_set.set([image_1])
+
+    im_upload_through_ui = create_upload_from_file(
+        file_path=RESOURCE_PATH / "image10x10x10.mha",
+        creator=admin,
+    )
+
+    file_upload = UserUploadFactory(filename="file.json", creator=admin)
+    presigned_urls = file_upload.generate_presigned_urls(part_numbers=[1])
+    response = put(presigned_urls["1"], data=b'["Foo", "bar"]')
+    file_upload.complete_multipart_upload(
+        parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+    )
+    file_upload.save()
+
+    return PhaseWithInputs(
+        phase=phase,
+        algorithm=ai.algorithm,
+        admin=admin,
+        ci_str=ci_str,
+        ci_bool=ci_bool,
+        ci_img_upload=ci_img_upload,
+        ci_existing_img=ci_existing_img,
+        ci_json_in_db_with_schema=ci_json_in_db_with_schema,
+        ci_json_file=ci_json_file,
+        im_upload_through_api=im_upload_through_api,
+        im_upload_through_ui=im_upload_through_ui,
+        file_upload=file_upload,
+        image_1=image_1,
+        image_2=image_2,
+    )
 
 
 @pytest.mark.django_db
@@ -2016,6 +2182,391 @@ def test_submission_list_row_template_ajax_renders(client):
 
 
 @pytest.mark.django_db
+class TestSubmissionCreationWithExtraInputs:
+
+    def create_submission(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        user,
+        extra_inputs,
+        phase,
+        algorithm,
+    ):
+        with patch(
+            "grandchallenge.evaluation.tasks.create_algorithm_jobs_for_evaluation"
+        ) as mocked_execute_eval:
+            # no need to actually execute the evaluation
+            # we just want to check that the additional inputs are validated and
+            # attached
+            mocked_execute_eval.return_value = None
+            with django_capture_on_commit_callbacks(execute=True):
+                response = get_view_for_user(
+                    viewname="evaluation:submission-create",
+                    client=client,
+                    method=client.post,
+                    user=user,
+                    reverse_kwargs={
+                        "challenge_short_name": phase.challenge.short_name,
+                        "slug": phase.slug,
+                    },
+                    data={
+                        "algorithm": algorithm.pk,
+                        "creator": user.pk,
+                        "phase": phase.pk,
+                        **extra_inputs,
+                    },
+                    follow=True,
+                )
+        return response
+
+    def create_existing_civs(self, interface_data):
+        civ1 = ComponentInterfaceValueFactory(
+            interface=interface_data.ci_bool, value=True
+        )
+        civ2 = ComponentInterfaceValueFactory(
+            interface=interface_data.ci_str, value="Foo"
+        )
+        civ3 = ComponentInterfaceValueFactory(
+            interface=interface_data.ci_existing_img,
+            image=interface_data.image_1,
+        )
+        civ4 = ComponentInterfaceValueFactory(
+            interface=interface_data.ci_json_in_db_with_schema,
+            value=["Foo", "bar"],
+        )
+        civ5 = ComponentInterfaceValueFactory(
+            interface=interface_data.ci_json_file,
+            file=ContentFile(
+                json.dumps(["Foo", "bar"]).encode("utf-8"),
+                name=Path(interface_data.ci_json_file.relative_path).name,
+            ),
+        )
+        return [civ1, civ2, civ3, civ4, civ5]
+
+    @override_settings(task_eager_propagates=True, task_always_eager=True)
+    def test_create_submission_with_multiple_inputs(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_phase_with_multiple_inputs,
+    ):
+        # configure multiple additional evaluation inputs
+        algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
+            [
+                algorithm_phase_with_multiple_inputs.ci_json_in_db_with_schema,
+                algorithm_phase_with_multiple_inputs.ci_existing_img,
+                algorithm_phase_with_multiple_inputs.ci_str,
+                algorithm_phase_with_multiple_inputs.ci_bool,
+                algorithm_phase_with_multiple_inputs.ci_json_file,
+                algorithm_phase_with_multiple_inputs.ci_img_upload,
+            ]
+        )
+
+        assert (
+            ComponentInterfaceValue.objects.count() == 1
+        )  # the archive item in the linked archive
+
+        response = self.create_submission(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_phase_with_multiple_inputs.algorithm,
+            user=algorithm_phase_with_multiple_inputs.admin,
+            phase=algorithm_phase_with_multiple_inputs.phase,
+            extra_inputs={
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_str.slug,
+                    data="Foo",
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_bool.slug,
+                    data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_img_upload.slug,
+                    data=algorithm_phase_with_multiple_inputs.im_upload_through_ui.pk,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_existing_img.slug,
+                    data=algorithm_phase_with_multiple_inputs.image_1.pk,
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_json_file.slug,
+                    data=algorithm_phase_with_multiple_inputs.file_upload.pk,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_json_in_db_with_schema.slug,
+                    data='["Foo", "bar"]',
+                ),
+            },
+        )
+        assert response.status_code == 200
+
+        assert Submission.objects.count() == 1
+        assert Evaluation.objects.count() == 1
+
+        eval = Evaluation.objects.get()
+
+        assert (
+            eval.submission.algorithm_image
+            == algorithm_phase_with_multiple_inputs.algorithm.active_image
+        )
+        assert (
+            eval.submission.algorithm_model
+            == algorithm_phase_with_multiple_inputs.algorithm.active_model
+        )
+        assert eval.time_limit == 3600
+        assert eval.inputs.count() == 6
+
+        assert not UserUpload.objects.filter(
+            pk=algorithm_phase_with_multiple_inputs.file_upload.pk
+        ).exists()
+
+        assert sorted(
+            [
+                int.pk
+                for int in algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.all()
+            ]
+        ) == sorted([civ.interface.pk for civ in eval.inputs.all()])
+
+        value_inputs = [civ.value for civ in eval.inputs.all() if civ.value]
+        assert "Foo" in value_inputs
+        assert True in value_inputs
+        assert ["Foo", "bar"] in value_inputs
+
+        image_inputs = [
+            civ.image.name for civ in eval.inputs.all() if civ.image
+        ]
+        assert (
+            algorithm_phase_with_multiple_inputs.image_1.name in image_inputs
+        )
+        assert "image10x10x10.mha" in image_inputs
+        assert (
+            algorithm_phase_with_multiple_inputs.file_upload.filename.split(
+                "."
+            )[0]
+            in [civ.file for civ in eval.inputs.all() if civ.file][0].name
+        )
+
+    @override_settings(task_eager_propagates=True, task_always_eager=True)
+    def test_create_job_with_existing_inputs(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_phase_with_multiple_inputs,
+    ):
+        # configure multiple inputs
+        algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
+            [
+                algorithm_phase_with_multiple_inputs.ci_json_in_db_with_schema,
+                algorithm_phase_with_multiple_inputs.ci_existing_img,
+                algorithm_phase_with_multiple_inputs.ci_str,
+                algorithm_phase_with_multiple_inputs.ci_bool,
+                algorithm_phase_with_multiple_inputs.ci_json_file,
+            ]
+        )
+
+        civ1, civ2, civ3, civ4, civ5 = self.create_existing_civs(
+            interface_data=algorithm_phase_with_multiple_inputs
+        )
+
+        # create a job with the existing file so that the user has permission to reuse it
+        old_job_with_only_file_input = AlgorithmJobFactory(
+            algorithm_image=algorithm_phase_with_multiple_inputs.algorithm.active_image,
+            algorithm_model=algorithm_phase_with_multiple_inputs.algorithm.active_model,
+            status=Job.SUCCESS,
+            time_limit=10,
+            creator=algorithm_phase_with_multiple_inputs.admin,
+        )
+        old_job_with_only_file_input.inputs.set([civ5])
+
+        old_civ_count = ComponentInterfaceValue.objects.count()
+
+        response = self.create_submission(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_phase_with_multiple_inputs.algorithm,
+            user=algorithm_phase_with_multiple_inputs.admin,
+            phase=algorithm_phase_with_multiple_inputs.phase,
+            extra_inputs={
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_str.slug,
+                    data="Foo",
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_bool.slug,
+                    data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_existing_img.slug,
+                    data=algorithm_phase_with_multiple_inputs.image_1.pk,
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_json_file.slug,
+                    data=civ5.pk,
+                    existing_data=True,
+                ),
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_json_in_db_with_schema.slug,
+                    data='["Foo", "bar"]',
+                ),
+            },
+        )
+        assert response.status_code == 200
+        # no new CIVs should have been created
+        assert ComponentInterfaceValue.objects.count() == old_civ_count
+        assert Submission.objects.count() == 1
+        assert Evaluation.objects.count() == 1
+        eval = Evaluation.objects.last()
+        assert eval.inputs.count() == 5
+        for civ in [civ1, civ2, civ3, civ4, civ5]:
+            assert civ in eval.inputs.all()
+
+    @override_settings(task_eager_propagates=True, task_always_eager=True)
+    def test_create_job_with_faulty_file_input(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_phase_with_multiple_inputs,
+    ):
+        # configure file input
+        algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
+            [
+                algorithm_phase_with_multiple_inputs.ci_json_file,
+            ]
+        )
+
+        file_upload = UserUploadFactory(
+            filename="file.json",
+            creator=algorithm_phase_with_multiple_inputs.admin,
+        )
+        presigned_urls = file_upload.generate_presigned_urls(part_numbers=[1])
+        response = put(presigned_urls["1"], data=b'{"Foo": "bar"}')
+        file_upload.complete_multipart_upload(
+            parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
+        )
+        file_upload.save()
+
+        old_civ_count = ComponentInterfaceValue.objects.count()
+
+        response = self.create_submission(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_phase_with_multiple_inputs.algorithm,
+            user=algorithm_phase_with_multiple_inputs.admin,
+            phase=algorithm_phase_with_multiple_inputs.phase,
+            extra_inputs={
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_json_file.slug,
+                    data=file_upload.pk,
+                ),
+            },
+        )
+        assert response.status_code == 200
+        # validation of files happens async, so submission and evaluation get created
+        assert Submission.objects.count() == 1
+        assert Evaluation.objects.count() == 1
+        eval = Evaluation.objects.get()
+        # but in cancelled state and with an error message
+        assert eval.status == Evaluation.CANCELLED
+        assert (
+            "One or more of the inputs failed validation."
+            == eval.error_message
+        )
+        assert eval.detailed_error_message == {
+            algorithm_phase_with_multiple_inputs.ci_json_file.title: "Input validation failed"
+        }
+        # and no CIVs should have been created
+        assert ComponentInterfaceValue.objects.count() == old_civ_count
+
+    @override_settings(task_eager_propagates=True, task_always_eager=True)
+    def test_create_job_with_faulty_json_input(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_phase_with_multiple_inputs,
+    ):
+        algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
+            [
+                algorithm_phase_with_multiple_inputs.ci_json_in_db_with_schema,
+            ]
+        )
+        old_civ_count = ComponentInterfaceValue.objects.count()
+
+        response = self.create_submission(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_phase_with_multiple_inputs.algorithm,
+            user=algorithm_phase_with_multiple_inputs.admin,
+            phase=algorithm_phase_with_multiple_inputs.phase,
+            extra_inputs={
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_json_in_db_with_schema.slug,
+                    data='{"foo": "bar"}',
+                ),
+            },
+        )
+        # validation of values stored in DB happens synchronously,
+        # so no job and no CIVs get created if validation fails
+        # error message is reported back to user directly in the form
+        assert response.status_code == 200
+        assert "JSON does not fulfill schema" in str(response.content)
+        assert Submission.objects.count() == 0
+        assert Evaluation.objects.count() == 0
+        assert ComponentInterfaceValue.objects.count() == old_civ_count
+
+    @override_settings(task_eager_propagates=True, task_always_eager=True)
+    def test_create_job_with_faulty_image_input(
+        self,
+        client,
+        django_capture_on_commit_callbacks,
+        algorithm_phase_with_multiple_inputs,
+    ):
+        algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
+            [
+                algorithm_phase_with_multiple_inputs.ci_img_upload,
+            ]
+        )
+
+        user_upload = create_upload_from_file(
+            creator=algorithm_phase_with_multiple_inputs.admin,
+            file_path=RESOURCE_PATH / "corrupt.png",
+        )
+
+        old_civ_count = ComponentInterfaceValue.objects.count()
+
+        response = self.create_submission(
+            client=client,
+            django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+            algorithm=algorithm_phase_with_multiple_inputs.algorithm,
+            user=algorithm_phase_with_multiple_inputs.admin,
+            phase=algorithm_phase_with_multiple_inputs.phase,
+            extra_inputs={
+                **get_interface_form_data(
+                    interface_slug=algorithm_phase_with_multiple_inputs.ci_img_upload.slug,
+                    data=user_upload.pk,
+                ),
+            },
+        )
+        assert response.status_code == 200
+        # validation of images happens async, so job gets created
+        assert Submission.objects.count() == 1
+        assert Evaluation.objects.count() == 1
+        eval = Evaluation.objects.get()
+        # but in cancelled state and with an error message
+        assert eval.status == Evaluation.CANCELLED
+        assert (
+            "One or more of the inputs failed validation."
+            == eval.error_message
+        )
+        assert "Input validation failed" in str(eval.detailed_error_message)
+        # and no CIVs should have been created
+        assert ComponentInterfaceValue.objects.count() == old_civ_count
+
+
+@pytest.mark.django_db
 def test_parent_phase_algorithm_interfaces_locked(client):
     challenge = ChallengeFactory()
     phase, parent_phase = PhaseFactory.create_batch(
@@ -2056,3 +2607,113 @@ def test_parent_phase_algorithm_interfaces_locked(client):
             },
         )
         assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_reschedule_evaluation_with_additional_inputs(
+    client, settings, django_capture_on_commit_callbacks
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    # create phase with inputs
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    phase.additional_evaluation_inputs.set([ci_str, ci_bool])
+
+    user = UserFactory()
+    phase.challenge.add_admin(user)
+    InvoiceFactory(
+        challenge=phase.challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    method = MethodFactory(
+        phase=phase,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+
+    algorithm = AlgorithmFactory()
+    algorithm.add_editor(user)
+    ai = AlgorithmImageFactory(algorithm=algorithm)
+
+    civ_str = ComponentInterfaceValueFactory(interface=ci_str, value="Foo")
+    civ_bool = ComponentInterfaceValueFactory(interface=ci_bool, value=True)
+
+    submission = SubmissionFactory(
+        phase=phase, creator=user, algorithm_image=ai
+    )
+    eval1 = EvaluationFactory(
+        submission=submission,
+        method=method,
+        status=Evaluation.SUCCESS,
+        time_limit=10,
+    )
+    eval1.inputs.set([civ_str, civ_bool])
+
+    with django_capture_on_commit_callbacks(execute=False):
+        response = get_view_for_user(
+            viewname="evaluation:evaluation-create",
+            client=client,
+            method=client.post,
+            user=user,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci_str.slug, data="Bar"
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_bool.slug, data=False
+                ),
+            },
+        )
+
+    assert response.status_code == 302
+
+    eval2 = Evaluation.objects.exclude(pk=eval1.pk).get()
+    evaluation_count = Evaluation.objects.count()
+
+    assert evaluation_count == 2
+    assert eval2.inputs.count() == 2
+    assert civ_str not in eval2.inputs.all()
+    assert civ_bool not in eval2.inputs.all()
+    assert eval2.inputs.get(interface=ci_str).value == "Bar"
+    assert not eval2.inputs.get(interface=ci_bool).value
+
+    # try rerunning with identical inputs, that should fail
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="evaluation:evaluation-create",
+            client=client,
+            method=client.post,
+            user=user,
+            reverse_kwargs={
+                "challenge_short_name": phase.challenge.short_name,
+                "slug": phase.slug,
+                "pk": submission.pk,
+            },
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci_str.slug, data="Bar"
+                ),
+                **get_interface_form_data(
+                    interface_slug=ci_bool.slug, data=False
+                ),
+            },
+        )
+
+    assert response.status_code == 200
+    assert (
+        "A result for these inputs with the current method and ground truth already exists."
+        in str(response.content)
+    )
+    assert Evaluation.objects.count() == evaluation_count

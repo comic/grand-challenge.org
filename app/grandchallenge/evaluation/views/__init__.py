@@ -65,7 +65,6 @@ from grandchallenge.evaluation.models import (
     PhaseAlgorithmInterface,
     Submission,
 )
-from grandchallenge.evaluation.tasks import create_evaluation
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
@@ -481,10 +480,17 @@ class EvaluationCreate(
 
     def form_valid(self, form):
         redirect = super().form_valid(form)
-        create_evaluation.apply_async(
-            kwargs={"submission_pk": str(form.cleaned_data["submission"].pk)}
+        self.submission.create_evaluation(
+            additional_inputs=form.cleaned_data["additional_inputs"]
         )
         return redirect
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data()
+        context.update(
+            {"submission": self.submission, "phase": self.submission.phase}
+        )
+        return context
 
 
 class EvaluationList(
@@ -511,7 +517,10 @@ class EvaluationList(
                 "submission__phase__challenge",
                 "submission__algorithm_image__algorithm",
             )
-            .prefetch_related("submission__phase__optional_hanging_protocols")
+            .prefetch_related(
+                "submission__phase__optional_hanging_protocols",
+                "inputs__interface",
+            )
         )
 
         if self.request.challenge.is_admin(self.request.user):
@@ -734,6 +743,9 @@ class LeaderboardDetail(
             Column(title="Created", sort_field="submission__created")
         )
 
+        if self.phase.additional_evaluation_inputs:
+            columns.append(Column(title="Inputs"))
+
         if self.phase.scoring_method_choice == self.phase.MEAN:
             columns.append(Column(title="Mean Position", sort_field="rank"))
         elif self.phase.scoring_method_choice == self.phase.MEDIAN:
@@ -824,9 +836,7 @@ class LeaderboardDetail(
                 "submission__phase__challenge",
                 "submission__algorithm_image__algorithm",
             )
-            .prefetch_related(
-                "outputs__interface",
-            )
+            .prefetch_related("outputs__interface", "inputs__interface")
         )
         return filter_by_permission(
             queryset=queryset,
