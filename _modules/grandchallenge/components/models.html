@@ -102,6 +102,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.celery</span><span class="w"> </span><span class="kn">import</span> <span class="n">acks_late_2xlarge_task</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.error_handlers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EvaluationCIVErrorHandler</span><span class="p">,</span>
     <span class="n">FallbackCIVValidationErrorHandler</span><span class="p">,</span>
     <span class="n">JobCIVErrorHandler</span><span class="p">,</span>
     <span class="n">RawImageUploadSessionErrorHandler</span><span class="p">,</span>
@@ -1656,7 +1657,56 @@
                 <span class="n">ComponentJob</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span>
                 <span class="n">ComponentJob</span><span class="o">.</span><span class="n">CLAIMED</span><span class="p">,</span>
             <span class="p">]</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="ComponentJobManager.retrieve_existing_civs">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.retrieve_existing_civs">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_existing_civs</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">civ_data</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Checks if there are existing CIVs for the provided data and returns those.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        civ_data</span>
+<span class="sd">            A list of CIVData objects.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        A list of ComponentInterfaceValues</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">existing_civs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">civ</span> <span class="ow">in</span> <span class="n">civ_data</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">civ</span><span class="o">.</span><span class="n">user_upload</span>
+                <span class="ow">or</span> <span class="n">civ</span><span class="o">.</span><span class="n">upload_session</span>
+                <span class="ow">or</span> <span class="n">civ</span><span class="o">.</span><span class="n">user_upload_queryset</span>
+            <span class="p">):</span>
+                <span class="c1"># uploads will create new CIVs, so ignore these</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="n">civ</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">civs</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">interface__slug</span><span class="o">=</span><span class="n">civ</span><span class="o">.</span><span class="n">interface_slug</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="n">civ</span><span class="o">.</span><span class="n">image</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+                    <span class="n">existing_civs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">civs</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
+                    <span class="k">continue</span>
+            <span class="k">elif</span> <span class="n">civ</span><span class="o">.</span><span class="n">file_civ</span><span class="p">:</span>
+                <span class="n">existing_civs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">civ</span><span class="o">.</span><span class="n">file_civ</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># values can be of different types, including None and False</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">civs</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                        <span class="n">interface__slug</span><span class="o">=</span><span class="n">civ</span><span class="o">.</span><span class="n">interface_slug</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">civ</span><span class="o">.</span><span class="n">value</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+                    <span class="n">existing_civs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">civs</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+        <span class="k">return</span> <span class="n">existing_civs</span></div>
+</div>
 
 
 
@@ -2677,6 +2727,7 @@
         <span class="c1"># local imports to prevent circular dependency</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.algorithms.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Job</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.archives.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArchiveItem</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Evaluation</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.reader_studies.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">DisplaySet</span>
 
         <span class="k">if</span> <span class="n">linked_object</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">linked_object</span><span class="p">,</span> <span class="n">RawImageUploadSession</span><span class="p">):</span>
@@ -2686,6 +2737,8 @@
             <span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Job</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">JobCIVErrorHandler</span><span class="p">(</span><span class="n">job</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Evaluation</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">EvaluationCIVErrorHandler</span><span class="p">(</span><span class="n">job</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">linked_object</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">linked_object</span><span class="p">,</span> <span class="n">UserUpload</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">UserUploadCIVErrorHandler</span><span class="p">(</span>
                 <span class="n">user_upload</span><span class="o">=</span><span class="n">linked_object</span><span class="p">,</span>

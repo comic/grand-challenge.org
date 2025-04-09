@@ -50,6 +50,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaxValueValidator</span><span class="p">,</span> <span class="n">MinValueValidator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Count</span><span class="p">,</span> <span class="n">Q</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.functions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Coalesce</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.transaction</span><span class="w"> </span><span class="kn">import</span> <span class="n">on_commit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">timezone</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
@@ -70,9 +71,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.archives.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Archive</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.challenges.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Challenge</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CIVForObjectMixin</span><span class="p">,</span>
     <span class="n">ComponentImage</span><span class="p">,</span>
     <span class="n">ComponentInterface</span><span class="p">,</span>
     <span class="n">ComponentJob</span><span class="p">,</span>
+    <span class="n">ComponentJobManager</span><span class="p">,</span>
     <span class="n">ImportStatusChoices</span><span class="p">,</span>
     <span class="n">Tarball</span><span class="p">,</span>
 <span class="p">)</span>
@@ -101,7 +104,7 @@
     <span class="n">assign_evaluation_permissions</span><span class="p">,</span>
     <span class="n">assign_submission_permissions</span><span class="p">,</span>
     <span class="n">calculate_ranks</span><span class="p">,</span>
-    <span class="n">create_evaluation</span><span class="p">,</span>
+    <span class="n">prepare_and_execute_evaluation</span><span class="p">,</span>
     <span class="n">update_combined_leaderboard</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.templatetags.evaluation_extras</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -580,14 +583,27 @@
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The interfaces that an algorithm for this phase must implement.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">inputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+            <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterface</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;evaluation_inputs&quot;</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+            <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterface</span><span class="p">,</span>
+            <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;evaluation_outputs&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">additional_evaluation_inputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
         <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterface</span><span class="p">,</span>
-        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;evaluation_inputs&quot;</span><span class="p">,</span>
+        <span class="n">through</span><span class="o">=</span><span class="s2">&quot;evaluation.PhaseAdditionalEvaluationInput&quot;</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;additional_eval_inputs&quot;</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">outputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+    <span class="n">evaluation_outputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
         <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterface</span><span class="p">,</span>
-        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;evaluation_outputs&quot;</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;eval_outputs&quot;</span><span class="p">,</span>
+        <span class="n">through</span><span class="o">=</span><span class="s2">&quot;evaluation.PhaseEvaluationOutput&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">algorithm_inputs</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
         <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
@@ -1003,7 +1019,7 @@
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="n">SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">set_default_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_outputs</span><span class="o">.</span><span class="n">set</span><span class="p">(</span>
             <span class="p">[</span><span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="s2">&quot;metrics-json-file&quot;</span><span class="p">)]</span>
         <span class="p">)</span>
 
@@ -1345,6 +1361,14 @@
         <span class="k">return</span> <span class="n">PhaseAlgorithmInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">phase</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">additional_inputs_field</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_evaluation_inputs</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">additional_outputs_field</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_outputs</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">algorithm_interface_create_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span>
             <span class="s2">&quot;evaluation:interface-create&quot;</span><span class="p">,</span>
@@ -1362,6 +1386,68 @@
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span> <span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">slug</span><span class="p">},</span>
         <span class="p">)</span></div>
 
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CheckForOverlappingSocketsMixin</span><span class="p">:</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
+            <span class="n">algorithm_socket_slugs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
+                    <span class="s2">&quot;inputs__slug&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+            <span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
+                    <span class="s2">&quot;outputs__slug&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">slug</span> <span class="ow">in</span> <span class="n">algorithm_socket_slugs</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">slug</span><span class="si">}</span><span class="s2"> cannot be defined as evaluation &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;inputs or outputs because it is already defined as &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;algorithm input or output for this phase&quot;</span>
+                <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PhaseAdditionalEvaluationInput</span><span class="p">(</span>
+    <span class="n">CheckForOverlappingSocketsMixin</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span>
+<span class="p">):</span>
+    <span class="n">socket</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">ComponentInterface</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="s2">&quot;socket&quot;</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unique_phase_input_combination&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+
+        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.algorithms.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">RESERVED_SOCKET_SLUGS</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">socket</span><span class="o">.</span><span class="n">slug</span> <span class="ow">in</span> <span class="n">RESERVED_SOCKET_SLUGS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Evaluation inputs cannot be of the following types: </span><span class="si">{</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">RESERVED_SOCKET_SLUGS</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PhaseEvaluationOutput</span><span class="p">(</span><span class="n">CheckForOverlappingSocketsMixin</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">socket</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">ComponentInterface</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="s2">&quot;socket&quot;</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unique_phase_output_combination&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">]</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">PhaseUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
@@ -1573,8 +1659,76 @@
                     <span class="n">send_action</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                 <span class="p">)</span>
 
-            <span class="n">e</span> <span class="o">=</span> <span class="n">create_evaluation</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
-                <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;submission_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">},</span> <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">additional_inputs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">additional_evaluation_inputs</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">additional_inputs</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Additional inputs are required to create an evaluation for this phase&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">external_evaluation</span><span class="p">:</span>
+            <span class="n">evaluation</span><span class="p">,</span> <span class="n">created</span> <span class="o">=</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span>
+                <span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">defaults</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;time_limit&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_time_limit</span><span class="p">,</span>
+                    <span class="s2">&quot;requires_gpu_type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_requires_gpu_type</span><span class="p">,</span>
+                    <span class="s2">&quot;requires_memory_gb&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_requires_memory_gb</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">created</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="s2">&quot;External evaluation already created for this submission.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">active_image</span>
+            <span class="n">ground_truth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">active_ground_truth</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">method</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;No method ready for this submission&quot;</span><span class="p">)</span>
+                <span class="n">Notification</span><span class="o">.</span><span class="n">send</span><span class="p">(</span>
+                    <span class="n">kind</span><span class="o">=</span><span class="n">NotificationType</span><span class="o">.</span><span class="n">NotificationTypeChoices</span><span class="o">.</span><span class="n">MISSING_METHOD</span><span class="p">,</span>
+                    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;missing method&quot;</span><span class="p">,</span>
+                    <span class="n">actor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span>
+                    <span class="n">action_object</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                    <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span>
+
+            <span class="k">if</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_evaluations_with_same_inputs</span><span class="p">(</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="n">additional_inputs</span> <span class="k">if</span> <span class="n">additional_inputs</span> <span class="k">else</span> <span class="p">[],</span>
+                <span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                <span class="n">ground_truth</span><span class="o">=</span><span class="n">ground_truth</span><span class="p">,</span>
+                <span class="n">time_limit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_time_limit</span><span class="p">,</span>
+                <span class="n">requires_gpu_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_requires_gpu_type</span><span class="p">,</span>
+                <span class="n">requires_memory_gb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_requires_memory_gb</span><span class="p">,</span>
+            <span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s2">&quot;Evaluation already created for this submission, method, ground truth and inputs.&quot;</span>
+                <span class="p">)</span>
+                <span class="k">return</span>
+
+            <span class="n">evaluation</span> <span class="o">=</span> <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">submission</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                <span class="n">ground_truth</span><span class="o">=</span><span class="n">ground_truth</span><span class="p">,</span>
+                <span class="n">time_limit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_time_limit</span><span class="p">,</span>
+                <span class="n">requires_gpu_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_requires_gpu_type</span><span class="p">,</span>
+                <span class="n">requires_memory_gb</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_requires_memory_gb</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="n">Evaluation</span><span class="o">.</span><span class="n">VALIDATING_INPUTS</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">additional_inputs</span><span class="p">:</span>
+            <span class="n">evaluation</span><span class="o">.</span><span class="n">validate_values_and_execute_linked_task</span><span class="p">(</span>
+                <span class="n">values</span><span class="o">=</span><span class="n">additional_inputs</span><span class="p">,</span>
+                <span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">prepare_and_execute_evaluation</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;evaluation_pk&quot;</span><span class="p">:</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">pk</span><span class="p">},</span> <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span>
             <span class="p">)</span>
             <span class="n">on_commit</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
 
@@ -1702,7 +1856,77 @@
     <span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">Evaluation</span><span class="p">(</span><span class="n">ComponentJob</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationManager</span><span class="p">(</span><span class="n">ComponentJobManager</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_evaluations_with_same_inputs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">inputs</span><span class="p">,</span>
+        <span class="n">submission</span><span class="p">,</span>
+        <span class="n">method</span><span class="p">,</span>
+        <span class="n">ground_truth</span><span class="p">,</span>
+        <span class="n">time_limit</span><span class="p">,</span>
+        <span class="n">requires_gpu_type</span><span class="p">,</span>
+        <span class="n">requires_memory_gb</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">existing_civs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">retrieve_existing_civs</span><span class="p">(</span><span class="n">civ_data</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="n">unique_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;submission&quot;</span><span class="p">:</span> <span class="n">submission</span><span class="p">,</span>
+            <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="n">method</span><span class="p">,</span>
+            <span class="s2">&quot;time_limit&quot;</span><span class="p">:</span> <span class="n">time_limit</span><span class="p">,</span>
+            <span class="s2">&quot;requires_gpu_type&quot;</span><span class="p">:</span> <span class="n">requires_gpu_type</span><span class="p">,</span>
+            <span class="s2">&quot;requires_memory_gb&quot;</span><span class="p">:</span> <span class="n">requires_memory_gb</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">ground_truth</span><span class="p">:</span>
+            <span class="n">unique_kwargs</span><span class="p">[</span><span class="s2">&quot;ground_truth&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ground_truth</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">unique_kwargs</span><span class="p">[</span><span class="s2">&quot;ground_truth__isnull&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">input_interface_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="n">configured_input_interface_slugs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">additional_evaluation_inputs</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
+                <span class="s2">&quot;slug&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># annotate the number of inputs and the number of inputs that match</span>
+        <span class="c1"># the existing civs and filter on both counts so as to not include evaluations</span>
+        <span class="c1"># with partially overlapping inputs</span>
+        <span class="c1"># or evaluations with more inputs than the existing civs</span>
+        <span class="n">existing_evaluations</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="o">**</span><span class="n">unique_kwargs</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+                <span class="n">additional_input_count</span><span class="o">=</span><span class="n">Coalesce</span><span class="p">(</span>
+                    <span class="n">Count</span><span class="p">(</span>
+                        <span class="s2">&quot;inputs&quot;</span><span class="p">,</span>
+                        <span class="nb">filter</span><span class="o">=</span><span class="p">(</span>
+                            <span class="n">Q</span><span class="p">(</span>
+                                <span class="n">inputs__interface__slug__in</span><span class="o">=</span><span class="n">configured_input_interface_slugs</span>
+                            <span class="p">)</span>
+                        <span class="p">),</span>
+                        <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="mi">0</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">relevant_additional_input_count</span><span class="o">=</span><span class="n">Coalesce</span><span class="p">(</span>
+                    <span class="n">Count</span><span class="p">(</span>
+                        <span class="s2">&quot;inputs&quot;</span><span class="p">,</span>
+                        <span class="nb">filter</span><span class="o">=</span><span class="p">(</span><span class="n">Q</span><span class="p">(</span><span class="n">inputs__in</span><span class="o">=</span><span class="n">existing_civs</span><span class="p">)),</span>
+                        <span class="n">distinct</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">),</span>
+                    <span class="mi">0</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">additional_input_count</span><span class="o">=</span><span class="n">input_interface_count</span><span class="p">,</span>
+                <span class="n">relevant_additional_input_count</span><span class="o">=</span><span class="n">input_interface_count</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">existing_evaluations</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Evaluation</span><span class="p">(</span><span class="n">CIVForObjectMixin</span><span class="p">,</span> <span class="n">ComponentJob</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Stores information about a evaluation for a given submission.&quot;&quot;&quot;</span>
 
     <span class="n">submission</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;Submission&quot;</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
@@ -1732,8 +1956,9 @@
         <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;claimed_evaluations&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">EvaluationManager</span><span class="o">.</span><span class="n">as_manager</span><span class="p">()</span>
+
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="n">ComponentJob</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
-        <span class="n">unique_together</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;submission&quot;</span><span class="p">,</span> <span class="s2">&quot;method&quot;</span><span class="p">,</span> <span class="s2">&quot;ground_truth&quot;</span><span class="p">)</span>
         <span class="n">permissions</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;claim_evaluation&quot;</span><span class="p">,</span> <span class="s2">&quot;Can claim evaluation&quot;</span><span class="p">)]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -1798,7 +2023,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">output_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">outputs</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_outputs</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">successful_jobs_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1841,6 +2066,9 @@
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">inputs_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">additional_inputs_complete</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">total_successful_jobs</span>
@@ -1850,6 +2078,60 @@
             <span class="k">return</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">additional_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># additional inputs as currently defined on the phase</span>
+        <span class="n">phase_input_slugs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">additional_evaluation_inputs</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
+                <span class="s2">&quot;slug&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface__slug__in</span><span class="o">=</span><span class="n">phase_input_slugs</span><span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">additional_inputs_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">additional_inputs</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">additional_evaluation_inputs</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_editable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># staying with display set and archive item terminology here</span>
+        <span class="c1"># since this property is checked in create_civ()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">VALIDATING_INPUTS</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">add_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">civ</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">civ</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">remove_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">remove_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">civ</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">civ</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_civ_for_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="n">interface</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_values_and_execute_linked_task</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="n">prepare_and_execute_evaluation</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">linked_task</span> <span class="o">=</span> <span class="n">prepare_and_execute_evaluation</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+            <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;evaluation_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">validate_values_and_execute_linked_task</span><span class="p">(</span>
+            <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span>
+        <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">executor_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
