@@ -24,7 +24,8 @@ from grandchallenge.reader_studies.sitemaps import ReaderStudiesSiteMap
 admin.autodiscover()
 admin.site.login = login_required(admin.site.login)
 
-
+handler403 = "grandchallenge.core.views.handler403"
+handler404 = "grandchallenge.core.views.handler404"
 handler500 = "grandchallenge.core.views.handler500"
 
 

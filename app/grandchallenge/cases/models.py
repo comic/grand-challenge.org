@@ -128,7 +128,9 @@ class RawImageUploadSession(UUIDModel):
 
     @property
     def default_error_message(self):
-        n_errors = len(self.import_result["file_errors"])
+        n_errors = self.import_result and len(
+            self.import_result["file_errors"]
+        )
         if n_errors:
             return (
                 f"{n_errors} file{pluralize(n_errors)} could not be imported"

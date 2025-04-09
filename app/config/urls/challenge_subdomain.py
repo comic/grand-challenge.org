@@ -7,6 +7,8 @@ from grandchallenge.challenges.views import (
     OnboardingTaskList,
 )
 
+handler403 = "grandchallenge.core.views.handler403"
+handler404 = "grandchallenge.core.views.handler404"
 handler500 = "grandchallenge.core.views.handler500"
 
 

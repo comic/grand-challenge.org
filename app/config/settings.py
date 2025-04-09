@@ -9,7 +9,7 @@ from subprocess import CalledProcessError
 
 import sentry_sdk
 from celery.schedules import crontab
-from corsheaders.defaults import default_headers
+from csp import constants as csp_constants
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
@@ -61,6 +61,13 @@ IGNORABLE_404_URLS = [
 # the config dir. We need to  go one dir higher so path.join("..")
 SITE_ROOT = Path(__file__).resolve(strict=True).parent.parent
 
+if strtobool(os.environ.get("POSTGRES_USE_RDS_PROXY", "false")):
+    # From https://www.amazontrust.com/repository/
+    # See https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.howitworks.html#rds-proxy-security
+    ssl_root_cert = "amazon-root-ca.pem"
+else:
+    ssl_root_cert = "global-bundle.pem"
+
 DATABASES = {
     "default": {
         "ENGINE": "grandchallenge.core.db.postgres_iam",
@@ -75,14 +82,18 @@ DATABASES = {
             ),
             "sslmode": os.environ.get("POSTGRES_SSL_MODE", "prefer"),
             "sslrootcert": os.path.join(
-                SITE_ROOT, "config", "certs", "global-bundle.pem"
+                SITE_ROOT, "config", "certs", ssl_root_cert
             ),
-            # wait 100ms to acquire DB lock rather than indefinitely,
-            # this saves having to set select_for_update() on normal views
-            "options": "-c lock_timeout=100",
         },
         "ATOMIC_REQUESTS": strtobool(
             os.environ.get("ATOMIC_REQUESTS", "True")
+        ),
+        "CONN_MAX_AGE": int(os.environ.get("CONN_MAX_AGE", "0")),
+        "CONN_HEALTH_CHECKS": strtobool(
+            os.environ.get("CONN_HEALTH_CHECKS", "false")
+        ),
+        "DISABLE_SERVER_SIDE_CURSORS": strtobool(
+            os.environ.get("DISABLE_SERVER_SIDE_CURSORS", "false")
         ),
     }
 }
@@ -538,6 +549,7 @@ THIRD_PARTY_APPS = [
     "stdimage",
     "django_filters",
     "drf_spectacular",
+    "csp",
     "allauth",
     "allauth.account",
     "allauth.mfa",
@@ -978,14 +990,6 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 # SESSION_COOKIE_SAMESITE should be set to "lax" so won't send credentials
 # across domains, but this will allow workstations to access the api
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_HEADERS = (
-    *default_headers,
-    "hx-trigger",
-    "hx-target",
-    "hx-current-url",
-    "hx-request",
-    "hx-trigger-name",
-)
 
 ###############################################################################
 #
@@ -1483,82 +1487,98 @@ ALLOWED_JSON_SCHEMA_REF_SRC_REGEXES = (
 # CONTENT SECURITY POLICY
 ##########################
 
-CSP_REPORT_ONLY = strtobool(os.environ.get("CSP_REPORT_ONLY", "False"))
+CSP_STATIC_HOST = STATIC_HOST if STATIC_HOST else csp_constants.SELF
 
-CSP_REPORT_URI = os.environ.get("CSP_REPORT_URI")
-CSP_REPORT_PERCENTAGE = float(os.environ.get("CSP_REPORT_PERCENTAGE", "0"))
-
-CSP_STATIC_HOST = STATIC_HOST if STATIC_HOST else "'self'"
-CSP_MEDIA_HOSTS = (
-    (AWS_S3_ENDPOINT_URL,)
-    if AWS_S3_ENDPOINT_URL
-    else (
+if AWS_S3_ENDPOINT_URL:
+    CSP_MEDIA_HOSTS = (AWS_S3_ENDPOINT_URL,)
+elif public_bucket_custom_domain := PUBLIC_S3_STORAGE_KWARGS["custom_domain"]:
+    CSP_MEDIA_HOSTS = (f"https://{public_bucket_custom_domain}",)
+else:
+    CSP_MEDIA_HOSTS = (
         f"https://{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}.s3.amazonaws.com",
         f"https://{PUBLIC_S3_STORAGE_KWARGS['bucket_name']}.s3.{AWS_DEFAULT_REGION}.amazonaws.com",
     )
-)
 
-CSP_DEFAULT_SRC = "'none'"
-CSP_SCRIPT_SRC = (
-    CSP_STATIC_HOST,
-    "'unsafe-eval'",  # Required for vega https://github.com/vega/vega/issues/1106
-    "'self'",  # Used in the Django admin
-)
-CSP_STYLE_SRC = (
-    CSP_STATIC_HOST,
-    "https://fonts.googleapis.com",
-    "'unsafe-inline'",  # TODO fix inline styles
-)
-CSP_FONT_SRC = (
-    CSP_STATIC_HOST,
-    "https://fonts.gstatic.com",
-)
-CSP_IMG_SRC = (
-    CSP_STATIC_HOST,
-    *CSP_MEDIA_HOSTS,
-    "https://www.gravatar.com",  # Used for default mugshots
-    "data:",  # Used by jsoneditor
-    "'self'",  # Used by Open Sea Dragon
-    "https:",  # Arbitrary files used on blog posts and challenge pages
-)
-CSP_FRAME_SRC = (
-    "https://www.youtube-nocookie.com",  # Embedding YouTube videos
-)
-CSP_MEDIA_SRC = (
-    *CSP_MEDIA_HOSTS,
-    "https://user-images.githubusercontent.com",  # Used in blog posts
-)
-CSP_CONNECT_SRC = (
-    "'self'",  # For subdomain leaderboards
-    # For workstation subdomain to main
-    f"{DEFAULT_SCHEME}://{SESSION_COOKIE_DOMAIN.lstrip('.')}{f':{SITE_SERVER_PORT}' if SITE_SERVER_PORT else ''}",
-    # For main to workstation subdomain
-    *(
-        f"{DEFAULT_SCHEME}://{region}{SESSION_COOKIE_DOMAIN}{f':{SITE_SERVER_PORT}' if SITE_SERVER_PORT else ''}"
-        for region in WORKSTATIONS_ACTIVE_REGIONS
-    ),
-    "https://*.ingest.sentry.io",  # For Sentry errors
-)
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": csp_constants.NONE,
+        "script-src": (
+            CSP_STATIC_HOST,
+            "'unsafe-eval'",  # Required for vega https://github.com/vega/vega/issues/1106
+            csp_constants.SELF,  # Used in the Django admin
+        ),
+        "style-src": (
+            CSP_STATIC_HOST,
+            "https://fonts.googleapis.com",
+            "'unsafe-inline'",  # TODO fix inline styles
+        ),
+        "font-src": (
+            CSP_STATIC_HOST,
+            "https://fonts.gstatic.com",
+        ),
+        "img-src": (
+            CSP_STATIC_HOST,
+            *CSP_MEDIA_HOSTS,
+            "https://www.gravatar.com",  # Used for default mugshots
+            "data:",  # Used by jsoneditor
+            csp_constants.SELF,  # Used by Open Sea Dragon
+            "https:",  # Arbitrary files used on blog posts and challenge pages
+        ),
+        "frame-src": (
+            "https://www.youtube-nocookie.com",  # Embedding YouTube videos
+        ),
+        "media-src": (
+            *CSP_MEDIA_HOSTS,
+            "https://user-images.githubusercontent.com",  # Used in blog posts
+        ),
+        "connect-src": (
+            csp_constants.SELF,  # For subdomain leaderboards
+            # For workstation subdomain to main
+            f"{DEFAULT_SCHEME}://{SESSION_COOKIE_DOMAIN.lstrip('.')}{f':{SITE_SERVER_PORT}' if SITE_SERVER_PORT else ''}",
+            # For main to workstation subdomain
+            *(
+                f"{DEFAULT_SCHEME}://{region}{SESSION_COOKIE_DOMAIN}{f':{SITE_SERVER_PORT}' if SITE_SERVER_PORT else ''}"
+                for region in WORKSTATIONS_ACTIVE_REGIONS
+            ),
+            "https://*.ingest.sentry.io",  # For Sentry errors
+        ),
+        "report-uri": os.environ.get("CSP_REPORT_URI"),
+    },
+    "REPORT_PERCENTAGE": float(os.environ.get("CSP_REPORT_PERCENTAGE", "0")),
+}
+
 
 if STATIC_HOST:
-    CSP_CONNECT_SRC += (STATIC_HOST,)  # For the map json
+    CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] += (
+        STATIC_HOST,
+    )  # For the map json
 
 if PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN:
     # Used by Open Sea Dragon and countries json
-    CSP_IMG_SRC += (f"https://{PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN}",)
-    CSP_CONNECT_SRC += (f"https://{PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN}",)
+    CONTENT_SECURITY_POLICY["DIRECTIVES"]["img-src"] += (
+        f"https://{PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN}",
+    )
+    CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] += (
+        f"https://{PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN}",
+    )
 
 if UPLOADS_S3_USE_ACCELERATE_ENDPOINT:
-    CSP_CONNECT_SRC += (
+    CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] += (
         f"https://{UPLOADS_S3_BUCKET_NAME}.s3-accelerate.amazonaws.com",
     )
 else:
     if AWS_S3_ENDPOINT_URL:
-        CSP_CONNECT_SRC += (AWS_S3_ENDPOINT_URL,)
+        CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] += (
+            AWS_S3_ENDPOINT_URL,
+        )
     else:
-        CSP_CONNECT_SRC += (
+        CONTENT_SECURITY_POLICY["DIRECTIVES"]["connect-src"] += (
             f"https://{UPLOADS_S3_BUCKET_NAME}.s3.{AWS_DEFAULT_REGION}.amazonaws.com",
         )
+
+if strtobool(os.environ.get("CSP_REPORT_ONLY", "False")):
+    CONTENT_SECURITY_POLICY_REPORT_ONLY = CONTENT_SECURITY_POLICY
+    del CONTENT_SECURITY_POLICY
 
 ENABLE_DEBUG_TOOLBAR = False
 

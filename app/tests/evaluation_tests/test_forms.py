@@ -1065,33 +1065,32 @@ def test_user_algorithms_for_phase():
     )
     interface2 = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci3])
     interface3 = AlgorithmInterfaceFactory(inputs=[ci3], outputs=[ci1, ci4])
+    interface4 = AlgorithmInterfaceFactory(inputs=[ci2], outputs=[ci1, ci2])
 
     for alg in [alg1, alg2, alg3, alg4, alg5]:
         alg.add_editor(user)
 
-    # phase has 1 interface
-    phase.algorithm_interfaces.set([interface1])
-    # only algorithms that have this interface set only should match
-    # partial matches are not valid
-    alg1.interfaces.set([interface1])  # exact match
+    # phase has 2 interfaces
+    phase.algorithm_interfaces.set([interface1, interface2])
+    # only algorithms that have at least these two interfaces set should match
+    alg1.interfaces.set([interface1, interface2])  # exact match
     alg2.interfaces.set(
-        [interface3]
-    )  # same number of interfaces, but different interface
-    alg3.interfaces.set([interface1, interface3])  # additional interface
-    alg4.interfaces.set([interface2, interface3])  # diff num, diff interfaces
+        [interface3, interface4]
+    )  # same number of interfaces, but different interfaces
+    alg3.interfaces.set(
+        [interface1, interface2, interface3]
+    )  # required interfaces, plus additional interface
+    alg4.interfaces.set(
+        [interface1]
+    )  # only 1, partially overlapping interface
 
-    form = populate_form(interfaces=[interface1])
-    assert list(form.user_algorithms_for_phase) == [alg1]
-
-    # phase with 2 interfaces
-    phase.algorithm_interfaces.set([interface1, interface3])
-    form = populate_form(interfaces=[interface1, interface3])
-    assert list(form.user_algorithms_for_phase) == [alg3]
+    form = populate_form(interfaces=phase.algorithm_interfaces.all())
+    assert set(form.user_algorithms_for_phase) == {alg1, alg3}
 
     # user needs to be owner of algorithm
     alg3.remove_editor(user)
-    form = populate_form(interfaces=[interface1, interface3])
-    assert list(form.user_algorithms_for_phase) == []
+    form = populate_form(interfaces=phase.algorithm_interfaces.all())
+    assert set(form.user_algorithms_for_phase) == {alg1}
 
 
 @pytest.mark.django_db
