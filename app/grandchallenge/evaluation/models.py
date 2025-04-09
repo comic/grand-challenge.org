@@ -1339,7 +1339,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
 
 class CheckForOverlappingSocketsMixin:
-
     def clean(self):
         super().clean()
 
@@ -1974,6 +1973,10 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     @property
     def output_interfaces(self):
         return self.submission.phase.evaluation_outputs
+
+    @property
+    def additional_outputs(self):
+        return self.outputs.exclude(interface__slug="metrics-json-file")
 
     @cached_property
     def successful_jobs_per_interface(self):
