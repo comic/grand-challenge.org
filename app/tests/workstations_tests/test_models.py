@@ -382,6 +382,32 @@ def test_extra_env_vars():
 
 
 @pytest.mark.django_db
+def test_session_cost_created_with_session():
+    assert SessionCost.objects.count() == 0
+
+    session = SessionFactory()
+
+    assert SessionCost.objects.count() == 1
+
+    session_cost = SessionCost.objects.first()
+
+    assert session_cost.session == session
+
+
+@pytest.mark.django_db
+def test_session_cost_retained_when_session_deleted():
+    session = SessionFactory()
+    session_pk = session.pk
+    session_cost = session.session_cost
+    session_cost_pk = session_cost.pk
+
+    session.delete()
+
+    assert not Session.objects.filter(pk__in=[session_pk]).exists()
+    assert SessionCost.objects.filter(pk__in=[session_cost_pk]).exists()
+
+
+@pytest.mark.django_db
 def test_session_cost_duration(mocker):
     fixed_now = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
     mocker.patch(
@@ -442,16 +468,3 @@ def test_session_cost_interactive_algorithm():
     assert session.session_cost.interactive_algorithms == [
         InteractiveAlgorithmChoices.ULS23_BASELINE.value
     ]
-
-
-@pytest.mark.django_db
-def test_session_cost_retained_when_session_deleted():
-    session = SessionFactory()
-    session_pk = session.pk
-    session_cost = session.session_cost
-    session_cost_pk = session_cost.pk
-
-    session.delete()
-
-    assert not Session.objects.filter(pk__in=[session_pk]).exists()
-    assert SessionCost.objects.filter(pk__in=[session_cost_pk]).exists()
