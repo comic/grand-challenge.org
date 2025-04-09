@@ -680,7 +680,6 @@ class Session(UUIDModel):
 
         reader_study = ReaderStudy.objects.get(lookup)
         reader_study.workstation_sessions.add(self)
-        self.session_cost.reader_studies.add(reader_study)
 
         questions_with_interactive_algorithms = Question.objects.filter(
             reader_study=reader_study

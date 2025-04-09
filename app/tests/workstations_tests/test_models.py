@@ -428,30 +428,124 @@ def test_session_cost_duration(mocker):
 
 
 @pytest.mark.django_db
-def test_reader_studies_in_session_cost():
+def test_switching_reader_studies_adds_study_to_session_cost():
     session = SessionFactory()
     reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
     session.handle_reader_study_switching(
         workstation_path=get_workstation_path_and_query_string(
             reader_study=reader_study
         ).path
     )
-    assert session.session_cost.reader_studies.count() == 1
-    assert {rs.pk for rs in session.session_cost.reader_studies.all()} == {
-        reader_study.pk
-    }
 
-    reader_study2 = ReaderStudyFactory()
-    session.handle_reader_study_switching(
-        workstation_path=get_workstation_path_and_query_string(
-            reader_study=reader_study2
-        ).path
-    )
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_forward_adding_relation_reader_study_workstation_session_adds_study_to_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
+    reader_study.workstation_sessions.add(session)
+
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_reverse_adding_relation_reader_study_workstation_session_adds_study_to_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
+    session.reader_studies.add(reader_study)
+
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_forward_setting_relation_reader_study_workstation_session_adds_study_to_session_cost():
+    session1, session2 = SessionFactory.create_batch(2)
+    reader_study = ReaderStudyFactory()
+    assert session1.session_cost.reader_studies.count() == 0
+    assert session2.session_cost.reader_studies.count() == 0
+
+    reader_study.workstation_sessions.set([session1, session2])
+
+    assert session1.session_cost.reader_studies.count() == 1
+    assert reader_study in session1.session_cost.reader_studies.all()
+    assert session2.session_cost.reader_studies.count() == 1
+    assert reader_study in session2.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_reverse_setting_relation_reader_study_workstation_session_adds_study_to_session_cost():
+    session = SessionFactory()
+    reader_studies = ReaderStudyFactory.create_batch(2)
+    assert session.session_cost.reader_studies.count() == 0
+
+    session.reader_studies.set(reader_studies)
+
     assert session.session_cost.reader_studies.count() == 2
-    assert {rs.pk for rs in session.session_cost.reader_studies.all()} == {
-        reader_study.pk,
-        reader_study2.pk,
-    }
+    assert set(reader_studies) == set(
+        session.session_cost.reader_studies.all()
+    )
+
+
+@pytest.mark.django_db
+def test_forward_removing_relation_reader_study_workstation_session_retains_study_in_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
+    reader_study.workstation_sessions.add(session)
+    reader_study.workstation_sessions.remove(session)
+
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_reverse_removing_relation_reader_study_workstation_session_retains_study_in_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
+    session.reader_studies.add(reader_study)
+    session.reader_studies.remove(reader_study)
+
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_forward_clearing_relation_reader_study_workstation_session_retains_study_in_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
+    reader_study.workstation_sessions.add(session)
+    reader_study.workstation_sessions.clear()
+
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_reverse_clearing_relation_reader_study_workstation_session_retains_study_in_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
+    session.reader_studies.add(reader_study)
+    session.reader_studies.clear()
+
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
 
 
 @pytest.mark.django_db
