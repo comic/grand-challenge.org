@@ -24,12 +24,12 @@ def reader_studies_changed(
     sender, instance, action, pk_set, model, reverse, **kwargs
 ):
     if action == "post_add":
-        for pk in pk_set:
-            obj = model.objects.get(pk=pk)
-            if reverse:
-                reader_study = obj
-                session = instance
-            else:
-                reader_study = instance
-                session = obj
-            session.session_cost.reader_studies.add(reader_study)
+        if reverse:
+            session = instance
+            session.session_cost.reader_studies.add(*pk_set)
+        else:
+            reader_study = instance
+            session_costs = model.objects.filter(pk__in=pk_set).values_list(
+                "session_cost", flat=True
+            )
+            reader_study.session_costs.add(*session_costs)
