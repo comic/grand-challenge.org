@@ -574,7 +574,6 @@ class EvaluationAdminList(
 
 
 class EvaluationIncompleteJobsMixin:
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -743,7 +742,7 @@ class LeaderboardDetail(
             Column(title="Created", sort_field="submission__created")
         )
 
-        if self.phase.additional_evaluation_inputs:
+        if self.phase.additional_evaluation_inputs.exists():
             columns.append(Column(title="Inputs"))
 
         if self.phase.scoring_method_choice == self.phase.MEAN:
@@ -1304,7 +1303,6 @@ class PhaseArchiveInfo(
 
 
 class AlgorithmInterfaceForPhaseMixin:
-
     @property
     def phase(self):
         return get_object_or_404(
