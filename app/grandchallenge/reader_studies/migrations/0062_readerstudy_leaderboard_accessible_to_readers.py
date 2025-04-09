@@ -17,4 +17,15 @@ class Migration(migrations.Migration):
                 help_text="If checked, readers can see the leaderboard. Usernames and avatars will be hidden to protect other readers' privacy.",
             ),
         ),
+        migrations.AlterModelOptions(
+            name="readerstudy",
+            options={
+                "ordering": ("created",),
+                "permissions": [
+                    ("read_readerstudy", "Can read reader study"),
+                    ("view_leaderboard", "Can view leaderboard"),
+                ],
+                "verbose_name_plural": "reader studies",
+            },
+        ),
     ]

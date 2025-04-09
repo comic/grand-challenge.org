@@ -354,24 +354,12 @@ class ReaderStudyDelete(
 
 
 class ReaderStudyLeaderBoard(
-    LoginRequiredMixin, UserPassesTestMixin, DetailView
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     model = ReaderStudy
     template_name = "reader_studies/readerstudy_leaderboard.html"
-
-    def test_func(self, *args, **kwargs):
-        reader_study = self.get_object()
-        if (
-            reader_study.is_educational
-            and reader_study.leaderboard_accessible_to_readers
-        ):
-            return self.request.user.has_perm(
-                "reader_studies.read_readerstudy", reader_study
-            )
-        else:
-            return self.request.user.has_perm(
-                "reader_studies.change_readerstudy", reader_study
-            )
+    permission_required = "reader_studies.view_leaderboard"
+    raise_exception = True
 
 
 class ReaderStudyStatistics(

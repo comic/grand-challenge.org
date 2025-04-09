@@ -36,7 +36,7 @@
             </thead>
             <tbody>
             {% for entry in object.leaderboard.grouped_scores %}
-                <tr {% if object.leaderboard_accessible_to_readers and request.user.username == entry.creator__username %} class="bg-primary text-white"{% endif %}>
+                <tr {% if request.user.username == entry.creator__username %} class="bg-primary text-white"{% endif %}>
                     <td data-order="{{ forloop.counter|stringformat:'020f' }}">{{ forloop.counter|ordinal }}</td>
                     {% if "change_readerstudy" in readerstudy_perms %}
                         <td data-order="{{ entry.creator__username }}">{{ entry.creator__username|user_profile_link_username }}</td>
