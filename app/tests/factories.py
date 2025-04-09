@@ -25,6 +25,7 @@ from grandchallenge.teams.models import Team, TeamMember
 from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstations.models import (
     Session,
+    SessionCost,
     Workstation,
     WorkstationImage,
 )
@@ -225,6 +226,11 @@ class SessionFactory(factory.django.DjangoModelFactory):
 
     creator = factory.SubFactory(UserFactory)
     workstation_image = factory.SubFactory(WorkstationImageFactory)
+
+
+class SessionCostFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = SessionCost
 
 
 class PolicyFactory(factory.django.DjangoModelFactory):

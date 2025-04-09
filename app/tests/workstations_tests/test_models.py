@@ -22,6 +22,7 @@ from grandchallenge.workstations.templatetags.workstations import (
     get_workstation_path_and_query_string,
 )
 from tests.factories import (
+    SessionCostFactory,
     SessionFactory,
     UserFactory,
     WorkstationFactory,
@@ -549,16 +550,113 @@ def test_reverse_clearing_relation_reader_study_workstation_session_retains_stud
 
 
 @pytest.mark.django_db
-def test_session_cost_interactive_algorithm():
-    session = SessionFactory()
+def test_forward_adding_relation_session_cost_reader_study_adds_interactive_algorithm_to_session_cost():
+    session_cost = SessionCostFactory()
     question = QuestionFactory(
         interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
     )
-    session.handle_reader_study_switching(
-        workstation_path=get_workstation_path_and_query_string(
-            reader_study=question.reader_study
-        ).path
+
+    assert session_cost.interactive_algorithms == []
+
+    session_cost.reader_studies.add(question.reader_study)
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+
+@pytest.mark.django_db
+def test_reverse_adding_relation_session_cost_reader_study_adds_interactive_algorithm_to_session_cost():
+    session_cost = SessionCostFactory()
+    question = QuestionFactory(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
     )
-    assert session.session_cost.interactive_algorithms == [
+
+    assert session_cost.interactive_algorithms == []
+
+    question.reader_study.session_costs.add(session_cost)
+    session_cost.refresh_from_db()
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+
+@pytest.mark.django_db
+def test_forward_removing_relation_session_cost_reader_study_adds_interactive_algorithm_to_session_cost():
+    session_cost = SessionCostFactory()
+    question = QuestionFactory(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+    session_cost.reader_studies.add(question.reader_study)
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+    session_cost.reader_studies.remove(question.reader_study)
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+
+@pytest.mark.django_db
+def test_reverse_removing_relation_session_cost_reader_study_adds_interactive_algorithm_to_session_cost():
+    session_cost = SessionCostFactory()
+    question = QuestionFactory(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+    question.reader_study.session_costs.add(session_cost)
+    session_cost.refresh_from_db()
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+    question.reader_study.session_costs.remove(session_cost)
+    session_cost.refresh_from_db()
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+
+@pytest.mark.django_db
+def test_forward_clearing_relation_session_cost_reader_study_adds_interactive_algorithm_to_session_cost():
+    session_cost = SessionCostFactory()
+    question = QuestionFactory(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+    session_cost.reader_studies.add(question.reader_study)
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+    session_cost.reader_studies.clear()
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+
+@pytest.mark.django_db
+def test_reverse_clearing_relation_session_cost_reader_study_adds_interactive_algorithm_to_session_cost():
+    session_cost = SessionCostFactory()
+    question = QuestionFactory(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+    question.reader_study.session_costs.add(session_cost)
+    session_cost.refresh_from_db()
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+    question.reader_study.session_costs.clear()
+    session_cost.refresh_from_db()
+
+    assert session_cost.interactive_algorithms == [
         InteractiveAlgorithmChoices.ULS23_BASELINE.value
     ]

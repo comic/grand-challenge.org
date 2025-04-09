@@ -691,15 +691,6 @@ class Session(UUIDModel):
                     queue=f"workstations-{self.region}"
                 ).apply_async
             )
-            self.session_cost.interactive_algorithms = list(
-                set(self.session_cost.interactive_algorithms).union(
-                    [
-                        question.interactive_algorithm
-                        for question in questions_with_interactive_algorithms
-                    ]
-                )
-            )
-            self.session_cost.save()
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):
@@ -788,6 +779,18 @@ class SessionCost(UUIDModel):
             )
         ],
     )
+
+    def update_interactive_algorithms(self, reader_studies):
+        interactive_algorithms = (
+            Question.objects.filter(reader_study__in=reader_studies)
+            .exclude(interactive_algorithm="")
+            .values_list("interactive_algorithm", flat=True)
+        )
+
+        self.interactive_algorithms = list(
+            set(self.interactive_algorithms).union(interactive_algorithms)
+        )
+        self.save()
 
 
 class ReaderStudySessionCost(models.Model):

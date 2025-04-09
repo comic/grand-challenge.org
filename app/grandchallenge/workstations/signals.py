@@ -3,7 +3,7 @@ from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 
 from grandchallenge.reader_studies.models import WorkstationSessionReaderStudy
-from grandchallenge.workstations.models import Session
+from grandchallenge.workstations.models import ReaderStudySessionCost, Session
 
 
 @receiver(user_logged_out)
@@ -20,7 +20,7 @@ def stop_users_sessions(*, user, **_):
 
 
 @receiver(m2m_changed, sender=WorkstationSessionReaderStudy)
-def reader_studies_changed(
+def reader_study_workstation_sessions_changed(
     sender, instance, action, pk_set, model, reverse, **kwargs
 ):
     if action == "post_add":
@@ -33,3 +33,20 @@ def reader_studies_changed(
                 "session_cost", flat=True
             )
             reader_study.session_costs.add(*session_costs)
+
+
+@receiver(m2m_changed, sender=ReaderStudySessionCost)
+def session_cost_reader_studies_changed(
+    sender, instance, action, pk_set, model, reverse, **kwargs
+):
+    if action == "post_add":
+        if reverse:
+            reader_study = instance
+            session_costs = model.objects.filter(pk__in=pk_set)
+            for session_cost in session_costs:
+                session_cost.update_interactive_algorithms(
+                    reader_studies=[reader_study]
+                )
+        else:
+            session_cost = instance
+            session_cost.update_interactive_algorithms(reader_studies=pk_set)
