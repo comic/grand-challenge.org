@@ -1389,7 +1389,6 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">CheckForOverlappingSocketsMixin</span><span class="p">:</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
 
@@ -2024,6 +2023,10 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">output_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">evaluation_outputs</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">additional_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">interface__slug</span><span class="o">=</span><span class="s2">&quot;metrics-json-file&quot;</span><span class="p">)</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">successful_jobs_per_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
