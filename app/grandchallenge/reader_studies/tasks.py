@@ -32,16 +32,21 @@ def answers_from_ground_truth(*, reader_study_pk, target_user_pk):
     target_user = get_user_model().objects.get(pk=target_user_pk)
 
     all_answers = Answer.objects.filter(question__reader_study=reader_study)
-    if all_answers.filter(is_ground_truth=False, creator=target_user).exists():
-        raise ValueError("User already has answers")
 
-    for answer in all_answers.filter(is_ground_truth=True).all():
+    for answer in all_answers.filter(is_ground_truth=True):
         # Simplify permissions and create new answers
         answer._state.adding = True
         answer.id = None
         answer.pk = None
         answer.is_ground_truth = False
         answer.creator = target_user
+        Answer.validate(
+            creator=answer.creator,
+            question=answer.question,
+            answer=answer.answer,
+            display_set=answer.display_set,
+            is_ground_truth=answer.is_ground_truth,
+        )
         answer.save(calculate_score=False)
 
     all_answers.update(score=None)
