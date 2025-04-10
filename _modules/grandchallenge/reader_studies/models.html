@@ -375,11 +375,21 @@
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The organizations associated with this reader study&quot;</span><span class="p">,</span>
         <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;readerstudies&quot;</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">leaderboard_accessible_to_readers</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;If checked, readers can see the leaderboard. &quot;</span>
+            <span class="s2">&quot;Usernames and avatars will be hidden to protect other readers&#39; privacy.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
 
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
         <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s2">&quot;reader studies&quot;</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">,)</span>
-        <span class="n">permissions</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;read_readerstudy&quot;</span><span class="p">,</span> <span class="s2">&quot;Can read reader study&quot;</span><span class="p">)]</span>
+        <span class="n">permissions</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;read_readerstudy&quot;</span><span class="p">,</span> <span class="s2">&quot;Can read reader study&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;view_leaderboard&quot;</span><span class="p">,</span> <span class="s2">&quot;Can view leaderboard&quot;</span><span class="p">),</span>
+        <span class="p">]</span>
 
     <span class="n">copy_fields</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">&quot;workstation&quot;</span><span class="p">,</span>
@@ -480,6 +490,13 @@
         <span class="n">reg_and_anon</span> <span class="o">=</span> <span class="n">Group</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
             <span class="n">name</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">REGISTERED_AND_ANON_USERS_GROUP_NAME</span>
         <span class="p">)</span>
+
+        <span class="c1"># Allow editors to view the leaderboard</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_leaderboard&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">leaderboard_accessible_to_readers</span><span class="p">:</span>
+            <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_leaderboard&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">readers_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">remove_perm</span><span class="p">(</span><span class="s2">&quot;view_leaderboard&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">readers_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">public</span><span class="p">:</span>
             <span class="n">assign_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">reg_and_anon</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
