@@ -28,6 +28,7 @@ from grandchallenge.reader_studies.forms import (
     DisplaySetUpdateForm,
     GroundTruthFromAnswersForm,
     QuestionForm,
+    ReaderStudyCreateForm,
 )
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -2006,3 +2007,33 @@ def test_ground_truth_from_answers_form(settings):
     assert (
         not form.is_valid()
     ), "With existing ground truth, the form is no longer valid"
+
+
+@pytest.mark.django_db
+def test_leaderboard_accessible_to_readers_only_for_educational_rs():
+    user = UserFactory()
+    form = ReaderStudyCreateForm(
+        user=user,
+        data={
+            "roll_over_answers_for_n_cases": 0,
+            "leaderboard_accessible_to_readers": True,
+            "is_educational": False,
+        },
+    )
+
+    assert not form.is_valid()
+    assert form.errors["is_educational"] == [
+        "Reader study must be educational when making leaderboard accessible to readers."
+    ]
+
+    form = ReaderStudyCreateForm(
+        user=user,
+        data={
+            "roll_over_answers_for_n_cases": 0,
+            "leaderboard_accessible_to_readers": True,
+            "is_educational": True,
+        },
+    )
+
+    assert not form.is_valid()
+    assert "is_educational" not in form.errors.keys()

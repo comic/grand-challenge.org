@@ -332,11 +332,21 @@ class ReaderStudy(
         help_text="The organizations associated with this reader study",
         related_name="readerstudies",
     )
+    leaderboard_accessible_to_readers = models.BooleanField(
+        default=False,
+        help_text=(
+            "If checked, readers can see the leaderboard. "
+            "Usernames and avatars will be hidden to protect other readers' privacy."
+        ),
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
         ordering = ("created",)
-        permissions = [("read_readerstudy", "Can read reader study")]
+        permissions = [
+            ("read_readerstudy", "Can read reader study"),
+            ("view_leaderboard", "Can view leaderboard"),
+        ]
 
     copy_fields = (
         "workstation",
@@ -437,6 +447,13 @@ class ReaderStudy(
         reg_and_anon = Group.objects.get(
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
         )
+
+        # Allow editors to view the leaderboard
+        assign_perm("view_leaderboard", self.editors_group, self)
+        if self.leaderboard_accessible_to_readers:
+            assign_perm("view_leaderboard", self.readers_group, self)
+        else:
+            remove_perm("view_leaderboard", self.readers_group, self)
 
         if self.public:
             assign_perm(f"view_{self._meta.model_name}", reg_and_anon, self)

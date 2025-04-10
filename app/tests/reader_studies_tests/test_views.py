@@ -13,6 +13,7 @@ from grandchallenge.components.form_fields import (
 )
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.notifications.models import Notification
+from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
@@ -1059,3 +1060,86 @@ def test_ground_truth_from_answers_workflow(client):
     assert (
         not rs.has_ground_truth
     ), "Sanity: reader study no longer has ground truth"
+
+
+@pytest.mark.parametrize(
+    "accessible_to_readers, status_code",
+    ([True, 200], [False, 403]),
+)
+@pytest.mark.django_db
+def test_leaderboard_accessibility(client, accessible_to_readers, status_code):
+    editor, reader, user = UserFactory.create_batch(3)
+    rs = ReaderStudyFactory(
+        is_educational=True,
+        leaderboard_accessible_to_readers=accessible_to_readers,
+    )
+    rs.add_editor(editor)
+    rs.add_reader(reader)
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:leaderboard",
+        reverse_kwargs={"slug": rs.slug},
+        user=user,
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="reader-studies:leaderboard",
+        client=client,
+        user=editor,
+        reverse_kwargs={"slug": rs.slug},
+    )
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        client=client,
+        viewname="reader-studies:leaderboard",
+        reverse_kwargs={"slug": rs.slug},
+        user=reader,
+    )
+    assert response.status_code == status_code
+
+
+@pytest.mark.django_db
+def test_leaderboard_user_visibility(client):
+    reader1, reader2, editor = UserFactory.create_batch(3)
+    rs = ReaderStudyFactory(
+        is_educational=True, leaderboard_accessible_to_readers=True
+    )
+    rs.add_editor(editor)
+    rs.add_reader(reader1)
+    rs.add_reader(reader2)
+
+    reader1_userprofile_link = user_profile_link(reader1)
+    reader2_userprofile_link = user_profile_link(reader2)
+
+    qu = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.TEXT)
+    AnswerFactory(creator=reader1, question=qu, answer="bar")
+    AnswerFactory(creator=reader2, question=qu, answer="foo")
+    AnswerFactory(question=qu, answer="bar", is_ground_truth=True)
+
+    response = get_view_for_user(
+        viewname="reader-studies:leaderboard",
+        client=client,
+        user=editor,
+        reverse_kwargs={"slug": rs.slug},
+    )
+    html_for_editor = response.content.decode("utf-8")
+    # editor sees user names
+    assert response.status_code == 200
+    assert reader1_userprofile_link in html_for_editor
+    assert reader2_userprofile_link in html_for_editor
+
+    response = get_view_for_user(
+        viewname="reader-studies:leaderboard",
+        client=client,
+        user=reader1,
+        reverse_kwargs={"slug": rs.slug},
+    )
+    html_for_reader1 = response.content.decode("utf-8")
+    assert response.status_code == 200
+    assert reader1_userprofile_link not in html_for_reader1
+    assert reader2_userprofile_link not in html_for_reader1
+    assert "<td> Reader </td>" in html_for_reader1
+    assert "<td> You </td>" in html_for_reader1

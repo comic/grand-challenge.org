@@ -357,9 +357,9 @@ class ReaderStudyLeaderBoard(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     model = ReaderStudy
-    permission_required = "reader_studies.change_readerstudy"
-    raise_exception = True
     template_name = "reader_studies/readerstudy_leaderboard.html"
+    permission_required = "reader_studies.view_leaderboard"
+    raise_exception = True
 
 
 class ReaderStudyStatistics(
