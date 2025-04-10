@@ -1928,7 +1928,7 @@ def test_interactive_algorithm_field_permissions():
 
 @pytest.mark.django_db
 @override_settings(task_eager_propagates=True, task_always_eager=True)
-def test_answers_from_ground_truth_form():
+def test_answers_from_ground_truth_form(django_capture_on_commit_callbacks):
     rs = ReaderStudyFactory()
 
     reader, other_reader = UserFactory.create_batch(2)
@@ -2000,7 +2000,8 @@ def test_answers_from_ground_truth_form():
     )
     assert form.is_valid(), "Can now push answers"
 
-    form.schedule_answers_from_ground_truth_task()
+    with django_capture_on_commit_callbacks(execute=True):
+        form.schedule_answers_from_ground_truth_task()
 
     reader_answer.refresh_from_db()
 

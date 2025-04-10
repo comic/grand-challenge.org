@@ -792,11 +792,13 @@ class AnswersFromGroundTruthForm(SaveFormInitMixin, Form):
         return super().clean()
 
     def schedule_answers_from_ground_truth_task(self):
-        answers_from_ground_truth.apply_async(
-            kwargs={
-                "reader_study_pk": self._reader_study.pk,
-                "target_user_pk": self._user.pk,
-            }
+        on_commit(
+            answers_from_ground_truth.signature(
+                kwargs={
+                    "reader_study_pk": self._reader_study.pk,
+                    "target_user_pk": self._user.pk,
+                }
+            ).apply_async
         )
 
 
