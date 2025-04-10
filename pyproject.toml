@@ -1,6 +1,6 @@
 [project]
 authors = [
-    {name = "James Meakin", email = "code@jmsmkn.com"},
+    {name = "James Meakin"},
 ]
 license = {text = "Apache-2.0"}
 requires-python = "<3.13,>=3.11"
