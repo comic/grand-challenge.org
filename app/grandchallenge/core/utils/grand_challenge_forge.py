@@ -1,17 +1,41 @@
+from django.db.models import Prefetch
+
+from grandchallenge.algorithms.models import AlgorithmInterface
+from grandchallenge.archives.models import Archive
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 
 
-def _process_component_interface(component_interface):
+def _process_socket(socket):
     result = {
-        "slug": component_interface.slug,
-        "kind": component_interface.get_kind_display(),
-        "super_kind": component_interface.super_kind.label,
-        "relative_path": component_interface.relative_path,
+        "slug": socket.slug,
+        "kind": socket.get_kind_display(),
+        "super_kind": socket.super_kind.label,
+        "relative_path": socket.relative_path,
         "example_value": None,
     }
 
-    if component_interface.is_json_kind:
-        result["example_value"] = component_interface.json_kind_example.value
+    if socket.is_json_kind:
+        result["example_value"] = socket.json_kind_example.value
+
+    return result
+
+
+def _process_algorithm_interfaces(algorithm_interfaces):
+    result = []
+
+    for interface in algorithm_interfaces:
+        result.append(
+            {
+                "inputs": [
+                    _process_socket(socket)
+                    for socket in interface.inputs.order_by("slug").all()
+                ],
+                "outputs": [
+                    _process_socket(socket)
+                    for socket in interface.outputs.order_by("slug").all()
+                ],
+            }
+        )
 
     return result
 
@@ -22,10 +46,41 @@ def get_forge_challenge_pack_context(challenge, phase_pks=None):
     grand-challenge-forge to generate a challenge pack.
     """
 
-    phases = challenge.phase_set.filter(
-        archive__isnull=False,
-        submission_kind=SubmissionKindChoices.ALGORITHM,
-    ).prefetch_related("archive", "algorithm_interfaces")
+    from grandchallenge.components.models import ComponentInterface
+
+    phases = (
+        challenge.phase_set.filter(
+            archive__isnull=False,
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+        )
+        .order_by("slug")
+        .prefetch_related(
+            Prefetch(
+                "archive",
+                queryset=Archive.objects.order_by("created"),
+            ),
+            Prefetch(
+                "additional_evaluation_inputs",
+                queryset=ComponentInterface.objects.order_by("slug"),
+            ),
+            Prefetch(
+                "evaluation_outputs",
+                queryset=ComponentInterface.objects.order_by("slug"),
+            ),
+            Prefetch(
+                "algorithm_interfaces",
+                queryset=AlgorithmInterface.objects.order_by("created"),
+            ),
+            Prefetch(
+                "algorithm_interfaces__inputs",
+                queryset=ComponentInterface.objects.order_by("slug"),
+            ),
+            Prefetch(
+                "algorithm_interfaces__outputs",
+                queryset=ComponentInterface.objects.order_by("slug"),
+            ),
+        )
+    )
 
     if phase_pks is not None:
         phases = phases.filter(pk__in=phase_pks)
@@ -39,21 +94,21 @@ def get_forge_challenge_pack_context(challenge, phase_pks=None):
         }
 
     def process_phase(phase):
-        interfaces = phase.algorithm_interfaces.all()
-        inputs = {
-            ci for interface in interfaces for ci in interface.inputs.all()
-        }
-        outputs = {
-            ci for interface in interfaces for ci in interface.outputs.all()
-        }
         return {
             "slug": phase.slug,
             "archive": process_archive(phase.archive),
-            "algorithm_inputs": [
-                _process_component_interface(ci) for ci in inputs
+            "algorithm_interfaces": _process_algorithm_interfaces(
+                phase.algorithm_interfaces.order_by("created").all()
+            ),
+            "evaluation_additional_inputs": [
+                _process_socket(socket)
+                for socket in phase.additional_evaluation_inputs.all()
             ],
-            "algorithm_outputs": [
-                _process_component_interface(ci) for ci in outputs
+            "evaluation_additional_outputs": [
+                _process_socket(socket)
+                for socket in phase.evaluation_outputs.exclude(
+                    slug="metrics-json-file"
+                )
             ],
         }
 
@@ -68,17 +123,13 @@ def get_forge_challenge_pack_context(challenge, phase_pks=None):
 
 
 def get_forge_algorithm_template_context(algorithm):
-    interfaces = algorithm.interfaces.all()
-    inputs = {ci for interface in interfaces for ci in interface.inputs.all()}
-    outputs = {
-        ci for interface in interfaces for ci in interface.outputs.all()
-    }
     return {
         "algorithm": {
             "title": algorithm.title,
             "slug": algorithm.slug,
             "url": algorithm.get_absolute_url(),
-            "inputs": [_process_component_interface(ci) for ci in inputs],
-            "outputs": [_process_component_interface(ci) for ci in outputs],
+            "interfaces": _process_algorithm_interfaces(
+                algorithm.interfaces.order_by("created").all()
+            ),
         }
     }
