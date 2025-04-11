@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Count, ExpressionWrapper, F, Q
 from django.db.models.functions import Cast
@@ -81,10 +82,14 @@ class Invoice(models.Model, FieldChangeMixin):
     updated = models.DateTimeField(auto_now=True)
 
     issued_on = models.DateField(
-        help_text="The date when the invoice was issued", blank=True, null=True
+        help_text="The date when the invoice was issued (required for issued invoices)",
+        blank=True,
+        null=True,
     )
     paid_on = models.DateField(
-        help_text="The date when the invoice was paid", blank=True, null=True
+        help_text="The date when the invoice was paid (required for paid invoices)",
+        blank=True,
+        null=True,
     )
     last_checked_on = models.DateField(
         help_text="The date when the invoice status was last checked",
@@ -109,29 +114,37 @@ class Invoice(models.Model, FieldChangeMixin):
     )
 
     internal_invoice_number = models.CharField(
-        max_length=16, help_text="The internal invoice number", blank=True
+        max_length=16,
+        help_text="The internal invoice number (required for issued invoices)",
+        blank=True,
     )
     internal_client_number = models.CharField(
-        max_length=8, help_text="The internal client number", blank=True
+        max_length=8,
+        help_text="The internal client number (required for issued invoices)",
+        blank=True,
     )
     internal_comments = models.TextField(
-        help_text="Internal comments about the invoice", blank=True
+        help_text="Internal comments about the invoice (required for complimentary invoices)",
+        blank=True,
     )
 
     contact_name = models.CharField(
         max_length=32,
-        help_text="Name of the person the invoice should be sent to",
+        help_text="Name of the person the invoice should be sent to (required for non-complimentary invoices)",
         blank=True,
     )
     contact_email = models.EmailField(
-        help_text="Email of the person the invoice should be sent to",
+        help_text="Email of the person the invoice should be sent to (required for non-complimentary invoices)",
         blank=True,
     )
     billing_address = models.TextField(
-        help_text="The physical address of the client", blank=True
+        help_text="The physical address of the client (required for non-complimentary invoices)",
+        blank=True,
     )
     vat_number = models.CharField(
-        max_length=32, help_text="The VAT number of the client", blank=True
+        max_length=32,
+        help_text="The VAT number of the client (required for non-complimentary invoices)",
+        blank=True,
     )
     external_reference = models.TextField(
         help_text="Optional reference to be included with the invoice for the client",
@@ -151,6 +164,83 @@ class Invoice(models.Model, FieldChangeMixin):
         default=PaymentStatusChoices.INITIALIZED,
     )
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=Q(payment_type__in=PaymentTypeChoices.values),
+                name="payment_type_in_choices",
+            ),
+            models.CheckConstraint(
+                check=Q(payment_status__in=PaymentStatusChoices.values),
+                name="payment_status_in_choices",
+            ),
+            models.CheckConstraint(
+                name="issued_on_date_required_for_issued_payment_status",
+                check=~Q(payment_status=PaymentStatusChoices.ISSUED)
+                | Q(issued_on__isnull=False)
+                | Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
+                violation_error_message="When setting the payment status to 'Issued',"
+                " you must set the 'Issued on' date.",
+            ),
+            models.CheckConstraint(
+                name="internal_invoice_number_required_for_issued_payment_status",
+                check=~Q(payment_status=PaymentStatusChoices.ISSUED)
+                | ~Q(internal_invoice_number="")
+                | Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
+                violation_error_message="When setting the payment status to 'Issued',"
+                " you must specify the internal invoice number.",
+            ),
+            models.CheckConstraint(
+                name="internal_client_number_required_for_issued_payment_status",
+                check=~Q(payment_status=PaymentStatusChoices.ISSUED)
+                | ~Q(internal_client_number="")
+                | Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
+                violation_error_message="When setting the payment status to 'Issued',"
+                " you must specify the internal client number.",
+            ),
+            models.CheckConstraint(
+                name="paid_on_date_required_for_paid_payment_status",
+                check=~Q(payment_status=PaymentStatusChoices.PAID)
+                | Q(paid_on__isnull=False)
+                | Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
+                violation_error_message="When setting the payment status to 'Paid',"
+                " you must set the 'Paid on' date.",
+            ),
+            models.CheckConstraint(
+                name="comments_required_for_complimentary_payment_type",
+                check=~(
+                    Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                    & Q(internal_comments="")
+                ),
+                violation_error_message="Please explain why the invoice is "
+                "complimentary in the internal comments.",
+            ),
+            models.CheckConstraint(
+                name="contact_name_required_for_non_complimentary_payment_type",
+                check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                | ~Q(contact_name=""),
+                violation_error_message="Contact name is required for non-complimentary invoices.",
+            ),
+            models.CheckConstraint(
+                name="contact_email_required_for_non_complimentary_payment_type",
+                check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                | ~Q(contact_email=""),
+                violation_error_message="Contact email is required for non-complimentary invoices.",
+            ),
+            models.CheckConstraint(
+                name="billing_address_required_for_non_complimentary_payment_type",
+                check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                | ~Q(billing_address=""),
+                violation_error_message="Billing address is required for non-complimentary invoices.",
+            ),
+            models.CheckConstraint(
+                name="vat_number_required_for_non_complimentary_payment_type",
+                check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                | ~Q(vat_number=""),
+                violation_error_message="VAT number is required for non-complimentary invoices.",
+            ),
+        ]
+
     @property
     def total_amount_euros(self):
         try:
@@ -162,17 +252,22 @@ class Invoice(models.Model, FieldChangeMixin):
         except TypeError:
             return
 
-    class Meta:
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(payment_type__in=PaymentTypeChoices.values),
-                name="payment_type_in_choices",
-            ),
-            models.CheckConstraint(
-                check=models.Q(payment_status__in=PaymentStatusChoices.values),
-                name="payment_status_in_choices",
-            ),
-        ]
+    @property
+    def _current_state(self):
+        state = super()._current_state
+        state["total_amount_euros"] = self.total_amount_euros
+        return state
+
+    def clean(self):
+        if not self._state.adding:
+            # Assert total amount unchanged
+            if (
+                self._current_state["total_amount_euros"]
+                != self._initial_state["total_amount_euros"]
+            ):
+                raise ValidationError(
+                    "The total amount may not change. (You may only redistribute costs.)"
+                )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
