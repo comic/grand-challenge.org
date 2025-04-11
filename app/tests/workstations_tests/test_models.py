@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from django.conf import settings
@@ -12,12 +12,25 @@ from grandchallenge.components.backends.docker_client import (
     inspect_container,
 )
 from grandchallenge.components.tasks import stop_expired_services
-from grandchallenge.workstations.models import Session, Workstation
+from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
+from grandchallenge.workstations.models import (
+    Session,
+    SessionCost,
+    Workstation,
+)
+from grandchallenge.workstations.templatetags.workstations import (
+    get_workstation_path_and_query_string,
+)
 from tests.factories import (
+    SessionCostFactory,
     SessionFactory,
     UserFactory,
     WorkstationFactory,
     WorkstationImageFactory,
+)
+from tests.reader_studies_tests.factories import (
+    QuestionFactory,
+    ReaderStudyFactory,
 )
 from tests.utils import recurse_callbacks
 from tests.workstations_tests.factories import FeedbackFactory
@@ -367,3 +380,296 @@ def test_extra_env_vars():
             settings.WORKSTATIONS_MAX_CONCURRENT_API_REQUESTS
         ),
     }
+
+
+@pytest.mark.django_db
+def test_session_cost_created_with_session():
+    assert SessionCost.objects.count() == 0
+
+    session = SessionFactory()
+
+    assert SessionCost.objects.count() == 1
+
+    session_cost = SessionCost.objects.first()
+
+    assert session_cost.session == session
+
+
+@pytest.mark.django_db
+def test_session_cost_retained_when_session_deleted():
+    session = SessionFactory()
+    session_pk = session.pk
+    session_cost = session.session_cost
+    session_cost_pk = session_cost.pk
+
+    session.delete()
+
+    assert not Session.objects.filter(pk__in=[session_pk]).exists()
+    assert SessionCost.objects.filter(pk__in=[session_cost_pk]).exists()
+
+
+@pytest.mark.django_db
+def test_session_cost_retained_when_creator_deleted():
+    session = SessionFactory()
+    session_cost = session.session_cost
+    session_cost_pk = session_cost.pk
+
+    session.creator.delete()
+    session_cost.refresh_from_db()
+
+    assert session_cost.creator is None
+    assert SessionCost.objects.filter(pk__in=[session_cost_pk]).exists()
+
+
+@pytest.mark.django_db
+def test_session_cost_duration(mocker):
+    fixed_now = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    mocker.patch(
+        "django.utils.timezone.now",
+        return_value=fixed_now,
+    )
+    session = SessionFactory()
+
+    assert session.created == fixed_now
+
+    mocker.patch(
+        "grandchallenge.workstations.models.now",
+        return_value=fixed_now + timedelta(minutes=5),
+    )
+    session.stop()
+
+    assert session.session_cost.duration == timedelta(minutes=5)
+
+
+@pytest.mark.django_db
+def test_switching_reader_studies_adds_study_to_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
+    session.handle_reader_study_switching(
+        workstation_path=get_workstation_path_and_query_string(
+            reader_study=reader_study
+        ).path
+    )
+
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_forward_adding_relation_reader_study_workstation_session_adds_study_to_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
+    reader_study.workstation_sessions.add(session)
+
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_reverse_adding_relation_reader_study_workstation_session_adds_study_to_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
+    session.reader_studies.add(reader_study)
+
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_forward_setting_relation_reader_study_workstation_session_adds_study_to_session_cost():
+    session1, session2 = SessionFactory.create_batch(2)
+    reader_study = ReaderStudyFactory()
+    assert session1.session_cost.reader_studies.count() == 0
+    assert session2.session_cost.reader_studies.count() == 0
+
+    reader_study.workstation_sessions.set([session1, session2])
+
+    assert session1.session_cost.reader_studies.count() == 1
+    assert reader_study in session1.session_cost.reader_studies.all()
+    assert session2.session_cost.reader_studies.count() == 1
+    assert reader_study in session2.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_reverse_setting_relation_reader_study_workstation_session_adds_study_to_session_cost():
+    session = SessionFactory()
+    reader_studies = ReaderStudyFactory.create_batch(2)
+    assert session.session_cost.reader_studies.count() == 0
+
+    session.reader_studies.set(reader_studies)
+
+    assert session.session_cost.reader_studies.count() == 2
+    assert set(reader_studies) == set(
+        session.session_cost.reader_studies.all()
+    )
+
+
+@pytest.mark.django_db
+def test_forward_removing_relation_reader_study_workstation_session_retains_study_in_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
+    reader_study.workstation_sessions.add(session)
+    reader_study.workstation_sessions.remove(session)
+
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_reverse_removing_relation_reader_study_workstation_session_retains_study_in_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
+    session.reader_studies.add(reader_study)
+    session.reader_studies.remove(reader_study)
+
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_forward_clearing_relation_reader_study_workstation_session_retains_study_in_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
+    reader_study.workstation_sessions.add(session)
+    reader_study.workstation_sessions.clear()
+
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_reverse_clearing_relation_reader_study_workstation_session_retains_study_in_session_cost():
+    session = SessionFactory()
+    reader_study = ReaderStudyFactory()
+    assert session.session_cost.reader_studies.count() == 0
+
+    session.reader_studies.add(reader_study)
+    session.reader_studies.clear()
+
+    assert session.session_cost.reader_studies.count() == 1
+    assert reader_study in session.session_cost.reader_studies.all()
+
+
+@pytest.mark.django_db
+def test_forward_adding_relation_session_cost_reader_study_adds_interactive_algorithm_to_session_cost():
+    session_cost = SessionCostFactory()
+    question = QuestionFactory(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+
+    assert session_cost.interactive_algorithms == []
+
+    session_cost.reader_studies.add(question.reader_study)
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+
+@pytest.mark.django_db
+def test_reverse_adding_relation_session_cost_reader_study_adds_interactive_algorithm_to_session_cost():
+    session_cost = SessionCostFactory()
+    question = QuestionFactory(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+
+    assert session_cost.interactive_algorithms == []
+
+    question.reader_study.session_costs.add(session_cost)
+    session_cost.refresh_from_db()
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+
+@pytest.mark.django_db
+def test_forward_removing_relation_session_cost_reader_study_adds_interactive_algorithm_to_session_cost():
+    session_cost = SessionCostFactory()
+    question = QuestionFactory(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+    session_cost.reader_studies.add(question.reader_study)
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+    session_cost.reader_studies.remove(question.reader_study)
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+
+@pytest.mark.django_db
+def test_reverse_removing_relation_session_cost_reader_study_adds_interactive_algorithm_to_session_cost():
+    session_cost = SessionCostFactory()
+    question = QuestionFactory(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+    question.reader_study.session_costs.add(session_cost)
+    session_cost.refresh_from_db()
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+    question.reader_study.session_costs.remove(session_cost)
+    session_cost.refresh_from_db()
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+
+@pytest.mark.django_db
+def test_forward_clearing_relation_session_cost_reader_study_adds_interactive_algorithm_to_session_cost():
+    session_cost = SessionCostFactory()
+    question = QuestionFactory(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+    session_cost.reader_studies.add(question.reader_study)
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+    session_cost.reader_studies.clear()
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+
+@pytest.mark.django_db
+def test_reverse_clearing_relation_session_cost_reader_study_adds_interactive_algorithm_to_session_cost():
+    session_cost = SessionCostFactory()
+    question = QuestionFactory(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+    question.reader_study.session_costs.add(session_cost)
+    session_cost.refresh_from_db()
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
+
+    question.reader_study.session_costs.clear()
+    session_cost.refresh_from_db()
+
+    assert session_cost.interactive_algorithms == [
+        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+    ]
