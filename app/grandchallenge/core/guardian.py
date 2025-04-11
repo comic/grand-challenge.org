@@ -1,5 +1,7 @@
+import abc
 from functools import cached_property, partial
 
+import django.contrib.auth.mixins
 from django.contrib.auth.models import Permission
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import (  # noqa: I251
@@ -126,3 +128,17 @@ def get_object_if_allowed(*, model, pk, user, codename):
 
     if user.has_perm(codename, obj):
         return obj
+
+
+class UserPassesTestMixin(
+    django.contrib.auth.mixins.UserPassesTestMixin, abc.ABC
+):
+    """
+    Deny a request with a permission error if the test_func() method returns False.
+
+    Adjusted to allow for multiple inheritance by calling super().test_func().
+    """
+
+    @abc.abstractmethod
+    def test_func(self):
+        return True
