@@ -2090,7 +2090,9 @@
                 <span class="s2">&quot;slug&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span>
             <span class="p">)</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface__slug__in</span><span class="o">=</span><span class="n">phase_input_slugs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">interface__slug__in</span><span class="o">=</span><span class="n">phase_input_slugs</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">&quot;interface&quot;</span><span class="p">,</span> <span class="s2">&quot;image&quot;</span><span class="p">)</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">additional_inputs_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
