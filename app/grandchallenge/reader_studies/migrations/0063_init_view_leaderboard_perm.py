@@ -4,7 +4,7 @@ from django.db import migrations
 def init_view_leaderboard_permission(apps, _schema_editor):
     ReaderStudy = apps.get_model("reader_studies", "ReaderStudy")  # noqa: N806
 
-    for rs in ReaderStudy.objects.filter(is_educational=True).all():
+    for rs in ReaderStudy.objects.all():
         rs.save()
 
 
