@@ -2040,7 +2040,9 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
                 "slug", flat=True
             )
         )
-        return self.inputs.filter(interface__slug__in=phase_input_slugs)
+        return self.inputs.filter(
+            interface__slug__in=phase_input_slugs
+        ).select_related("interface", "image")
 
     @cached_property
     def additional_inputs_complete(self):

@@ -709,6 +709,10 @@ class LeaderboardDetail(
             slug=self.kwargs["slug"],
         )
 
+    @cached_property
+    def additional_inputs_defined_on_phase(self):
+        return self.phase.additional_evaluation_inputs.exists()
+
     @property
     def columns(self):
         columns = []
@@ -742,7 +746,7 @@ class LeaderboardDetail(
             Column(title="Created", sort_field="submission__created")
         )
 
-        if self.phase.additional_evaluation_inputs.exists():
+        if self.additional_inputs_defined_on_phase:
             columns.append(Column(title="Inputs"))
 
         if self.phase.scoring_method_choice == self.phase.MEAN:
@@ -807,6 +811,7 @@ class LeaderboardDetail(
         context.update(
             {
                 "phase": self.phase,
+                "additional_inputs": self.additional_inputs_defined_on_phase,
                 "now": now().isoformat(),
                 "limit": 1000,
                 "user_teams": self.user_teams,
@@ -835,8 +840,12 @@ class LeaderboardDetail(
                 "submission__phase__challenge",
                 "submission__algorithm_image__algorithm",
             )
-            .prefetch_related("outputs__interface", "inputs__interface")
+            .prefetch_related("outputs__interface")
         )
+
+        if self.additional_inputs_defined_on_phase:
+            queryset = queryset.prefetch_related("inputs")
+
         return filter_by_permission(
             queryset=queryset,
             user=self.request.user,
