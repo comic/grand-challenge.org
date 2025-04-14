@@ -11,7 +11,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
@@ -33,7 +33,10 @@ from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.algorithms.views import AlgorithmInterfaceCreateBase
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
-from grandchallenge.components.models import ImportStatusChoices
+from grandchallenge.components.models import (
+    ComponentInterfaceValue,
+    ImportStatusChoices,
+)
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -844,7 +847,14 @@ class LeaderboardDetail(
         )
 
         if self.additional_inputs_defined_on_phase:
-            queryset = queryset.prefetch_related("inputs")
+            additional_inputs_qs = ComponentInterfaceValue.objects.filter(
+                interface__slug__in=self.phase.additional_evaluation_inputs.values_list(
+                    "slug", flat=True
+                )
+            )
+            queryset = queryset.prefetch_related(
+                Prefetch("inputs", queryset=additional_inputs_qs)
+            )
 
         return filter_by_permission(
             queryset=queryset,
