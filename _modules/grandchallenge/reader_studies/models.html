@@ -2089,8 +2089,21 @@
 
 <div class="viewcode-block" id="Answer.save">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Answer.save">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">calculate_score</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_ground_truth</span> <span class="ow">and</span> <span class="n">calculate_score</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">ground_truth</span> <span class="o">=</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                    <span class="n">question</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="p">,</span>
+                    <span class="n">is_ground_truth</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">display_set</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">display_set</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="n">Answer</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+                <span class="k">pass</span>  <span class="c1"># Nothing to do here</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">calculate_score</span><span class="p">(</span><span class="n">ground_truth</span><span class="o">=</span><span class="n">ground_truth</span><span class="o">.</span><span class="n">answer</span><span class="p">)</span>
+
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
@@ -2100,17 +2113,17 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># Allow the editors and creator to view this answer</span>
         <span class="n">assign_perm</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;view_answer&quot;</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span>
             <span class="bp">self</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">assign_perm</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;delete_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;delete_answer&quot;</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">question</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span>
             <span class="bp">self</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">assign_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="n">assign_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;change_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_answer&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;change_answer&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span></div>
 
 
 
