@@ -49,8 +49,6 @@ def answers_from_ground_truth(*, reader_study_pk, target_user_pk):
         )
         answer.save(calculate_score=False)
 
-    all_answers.update(score=None)
-
 
 @acks_late_2xlarge_task
 def bulk_assign_scores_for_reader_study(*, reader_study_pk):
