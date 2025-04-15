@@ -18,13 +18,6 @@ from grandchallenge.reader_studies.models import (
 )
 
 
-def add_image(obj, image):
-    obj.answer_image = image
-    obj.save()
-    image.assign_view_perm_to_creator()
-    image.update_viewer_groups_permissions()
-
-
 @acks_late_2xlarge_task
 @transaction.atomic
 def answers_from_ground_truth(*, reader_study_pk, target_user_pk):
@@ -51,6 +44,7 @@ def answers_from_ground_truth(*, reader_study_pk, target_user_pk):
 
 
 @acks_late_2xlarge_task
+@transaction.atomic
 def bulk_assign_scores_for_reader_study(*, reader_study_pk):
     ground_truth = Answer.objects.filter(
         question__reader_study__pk=reader_study_pk,
@@ -81,6 +75,7 @@ def bulk_assign_scores_for_reader_study(*, reader_study_pk):
 
 
 @acks_late_2xlarge_task
+@transaction.atomic
 def create_display_sets_for_upload_session(
     *, upload_session_pk, reader_study_pk, interface_pk
 ):
@@ -88,33 +83,39 @@ def create_display_sets_for_upload_session(
     reader_study = ReaderStudy.objects.get(pk=reader_study_pk)
     interface = ComponentInterface.objects.get(pk=interface_pk)
     upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
-    with transaction.atomic():
-        for image in images:
-            civ = ComponentInterfaceValue.objects.filter(
-                interface=interface, image=image
-            ).first()
-            if civ is None:
-                civ = ComponentInterfaceValue(interface=interface)
-            civ.image = image
-            try:
-                civ.full_clean()
-            except ValidationError as e:
-                upload_session.status = RawImageUploadSession.FAILURE
-                upload_session.error_message = format_validation_error_message(
-                    error=e
-                )
-                upload_session.save()
-            else:
-                civ.save()
-                if DisplaySet.objects.filter(
-                    reader_study=reader_study, values=civ
-                ).exists():
-                    continue
-                ds = DisplaySet.objects.create(reader_study=reader_study)
-                ds.values.add(civ)
+
+    for image in images:
+        civ = ComponentInterfaceValue.objects.filter(
+            interface=interface, image=image
+        ).first()
+
+        if civ is None:
+            civ = ComponentInterfaceValue(interface=interface)
+
+        civ.image = image
+
+        try:
+            civ.full_clean()
+        except ValidationError as e:
+            upload_session.status = RawImageUploadSession.FAILURE
+            upload_session.error_message = format_validation_error_message(
+                error=e
+            )
+            upload_session.save()
+        else:
+            civ.save()
+
+            if DisplaySet.objects.filter(
+                reader_study=reader_study, values=civ
+            ).exists():
+                continue
+
+            ds = DisplaySet.objects.create(reader_study=reader_study)
+            ds.values.add(civ)
 
 
 @acks_late_2xlarge_task
+@transaction.atomic
 def add_image_to_answer(*, upload_session_pk, answer_pk):
     image = Image.objects.get(origin_id=upload_session_pk)
     answer = Answer.objects.get(pk=answer_pk)
@@ -136,21 +137,24 @@ def add_image_to_answer(*, upload_session_pk, answer_pk):
             )
             upload_session.save()
         else:
-            add_image(answer, image)
+            answer.answer_image = image
+            answer.save()
+            image.assign_view_perm_to_creator()
+            image.update_viewer_groups_permissions()
     else:
         raise ValueError("Upload session for answer does not match")
 
 
 @acks_late_2xlarge_task
+@transaction.atomic
 def copy_reader_study_display_sets(*, orig_pk, new_pk):
     orig = ReaderStudy.objects.get(pk=orig_pk)
     new = ReaderStudy.objects.get(pk=new_pk)
 
-    with transaction.atomic():
-        for ds in orig.display_sets.all():
-            new_ds = DisplaySet.objects.create(
-                reader_study=new,
-                order=ds.order,
-                title=ds.title,
-            )
-            new_ds.values.set(ds.values.all())
+    for ds in orig.display_sets.all():
+        new_ds = DisplaySet.objects.create(
+            reader_study=new,
+            order=ds.order,
+            title=ds.title,
+        )
+        new_ds.values.set(ds.values.all())
