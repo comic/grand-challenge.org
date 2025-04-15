@@ -128,7 +128,7 @@ def get_forge_algorithm_template_context(algorithm):
             "title": algorithm.title,
             "slug": algorithm.slug,
             "url": algorithm.get_absolute_url(),
-            "interfaces": _process_algorithm_interfaces(
+            "algorithm_interfaces": _process_algorithm_interfaces(
                 algorithm.interfaces.order_by("created").all()
             ),
         }
