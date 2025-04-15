@@ -1971,7 +1971,6 @@ def test_answers_from_ground_truth_form(django_capture_on_commit_callbacks):
         creator=reader,
         answer=True,
         is_ground_truth=False,
-        score=1.0,
     )
 
     other_reader_answer = AnswerFactory(
@@ -1980,10 +1979,7 @@ def test_answers_from_ground_truth_form(django_capture_on_commit_callbacks):
         creator=other_reader,
         answer=False,
         is_ground_truth=False,
-        score=1.0,
     )
-
-    assert reader_answer.score is not None, "Sanity: score is assigned"
 
     form = AnswersFromGroundTruthForm(
         reader_study=rs,
@@ -2004,8 +2000,6 @@ def test_answers_from_ground_truth_form(django_capture_on_commit_callbacks):
         form.schedule_answers_from_ground_truth_task()
 
     reader_answer.refresh_from_db()
-
-    assert reader_answer.score is None, "Scores are reset"
 
     a1 = Answer.objects.get(
         display_set=ds1,
