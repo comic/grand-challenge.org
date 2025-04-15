@@ -17,6 +17,7 @@ from grandchallenge.reader_studies.views import (
     QuestionInterfacesView,
     QuestionUpdate,
     QuestionWidgetsView,
+    ReaderStudyAnswersFromGroundTruth,
     ReaderStudyCopy,
     ReaderStudyCreate,
     ReaderStudyDelete,
@@ -90,6 +91,11 @@ urlpatterns = [
         "<slug:slug>/ground-truth/answers/create/",
         ReaderStudyGroundTruthFromAnswers.as_view(),
         name="add-ground-truth-answers",
+    ),
+    path(
+        "<slug:slug>/answers/ground-truth/create/",
+        ReaderStudyAnswersFromGroundTruth.as_view(),
+        name="add-answers-from-ground-truth",
     ),
     path(
         "<slug:slug>/display-sets/create/",

@@ -24,6 +24,7 @@ from grandchallenge.core.utils.access_requests import (
 )
 from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.reader_studies.forms import (
+    AnswersFromGroundTruthForm,
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
     GroundTruthFromAnswersForm,
@@ -1928,7 +1929,103 @@ def test_interactive_algorithm_field_permissions():
 
 @pytest.mark.django_db
 @override_settings(task_eager_propagates=True, task_always_eager=True)
-def test_ground_truth_from_answers_form(settings):
+def test_answers_from_ground_truth_form(django_capture_on_commit_callbacks):
+    rs = ReaderStudyFactory()
+
+    reader, other_reader = UserFactory.create_batch(2)
+    rs.add_reader(other_reader)
+    rs.add_reader(reader)
+
+    ds1 = DisplaySetFactory(reader_study=rs)
+    ds2 = DisplaySetFactory(reader_study=rs)
+
+    q1 = QuestionFactory(
+        reader_study=rs,
+        question_text="q1",
+        answer_type=Question.AnswerType.BOOL,
+    )
+    q2 = QuestionFactory(
+        reader_study=rs,
+        question_text="q2",
+        answer_type=Question.AnswerType.BOOL,
+    )
+
+    # Create ground truth
+    AnswerFactory(
+        question=q1,
+        display_set=ds1,
+        creator=other_reader,
+        answer=False,
+        is_ground_truth=True,
+    )
+    AnswerFactory(
+        question=q2,
+        display_set=ds1,
+        creator=reader,  # Note, mixing creators here for testing purposes
+        answer=False,
+        is_ground_truth=True,
+    )
+
+    reader_answer = AnswerFactory(
+        question=q1,
+        display_set=ds2,
+        creator=reader,
+        answer=True,
+        is_ground_truth=False,
+    )
+
+    other_reader_answer = AnswerFactory(
+        question=q1,
+        display_set=ds1,
+        creator=other_reader,
+        answer=False,
+        is_ground_truth=False,
+    )
+
+    form = AnswersFromGroundTruthForm(
+        reader_study=rs,
+        request_user=other_reader,
+    )
+    assert not form.is_valid(), "Can't push answers with answer present"
+
+    other_reader_answer.delete()
+
+    form = AnswersFromGroundTruthForm(
+        reader_study=rs,
+        request_user=other_reader,
+        data={},
+    )
+    assert form.is_valid(), "Can now push answers"
+
+    with django_capture_on_commit_callbacks(execute=True):
+        form.schedule_answers_from_ground_truth_task()
+
+    reader_answer.refresh_from_db()
+
+    a1 = Answer.objects.get(
+        display_set=ds1,
+        question=q1,
+        is_ground_truth=False,
+    )
+    a2 = Answer.objects.get(
+        display_set=ds1,
+        question=q2,
+        is_ground_truth=False,
+    )
+
+    # Check permissions
+    for answer in [a1, a2]:
+        assert answer.creator == other_reader, "Correct creator"
+        for perm in ["view_answer", "change_answer"]:
+            assert other_reader.has_perm(perm, answer)
+            assert not reader.has_perm(perm, answer)
+
+    assert rs.has_ground_truth, "Sanity: Ground Truth is intact"
+
+
+@pytest.mark.django_db
+@override_settings(task_eager_propagates=True, task_always_eager=True)
+def test_ground_truth_from_answers_form(django_capture_on_commit_callbacks):
     rs = ReaderStudyFactory()
 
     reader, editor = UserFactory.create_batch(2)
@@ -1990,7 +2087,8 @@ def test_ground_truth_from_answers_form(settings):
     )
     assert form.is_valid(), "With both answers the user is a valid source"
 
-    form.create_ground_truth()
+    with django_capture_on_commit_callbacks(execute=True):
+        form.create_ground_truth()
 
     assert not Answer.objects.filter(
         question__answer_type=Question.AnswerType.BOUNDING_BOX_2D,

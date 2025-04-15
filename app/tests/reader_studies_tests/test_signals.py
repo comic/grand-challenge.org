@@ -3,82 +3,18 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from grandchallenge.components.models import InterfaceKind
-from grandchallenge.reader_studies.models import Question
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.test_permissions import get_groups_with_set_perms
-from tests.factories import ImageFactory, UserFactory
+from tests.factories import ImageFactory
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
 )
-
-
-@pytest.mark.django_db
-def test_assign_score(settings, django_capture_on_commit_callbacks):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    rs = ReaderStudyFactory()
-    ds = DisplaySetFactory(reader_study=rs)
-    q1 = QuestionFactory(reader_study=rs)
-    q2 = QuestionFactory(
-        reader_study=rs, answer_type=Question.AnswerType.MULTIPLE_CHOICE
-    )
-    e, r1, r2 = UserFactory(), UserFactory(), UserFactory()
-
-    rs.add_editor(e)
-    rs.add_reader(r1)
-    rs.add_reader(r2)
-
-    with django_capture_on_commit_callbacks(execute=True):
-        a1 = AnswerFactory(
-            question=q1, creator=r1, answer="foo", display_set=ds
-        )
-    assert a1.score is None
-
-    with django_capture_on_commit_callbacks(execute=True):
-        AnswerFactory(
-            question=q1,
-            creator=e,
-            answer="foo",
-            is_ground_truth=True,
-            display_set=ds,
-        )
-    a1.refresh_from_db()
-    assert a1.score == 1.0
-
-    with django_capture_on_commit_callbacks(execute=True):
-        a2 = AnswerFactory(
-            question=q1, creator=r2, answer="foo", display_set=ds
-        )
-    a2.refresh_from_db()
-    assert a2.score == 1.0
-
-    with django_capture_on_commit_callbacks(execute=True):
-        a1 = AnswerFactory(question=q2, creator=r1, answer=[], display_set=ds)
-    a1.refresh_from_db()
-    assert a1.score is None
-
-    with django_capture_on_commit_callbacks(execute=True):
-        AnswerFactory(
-            question=q2,
-            creator=e,
-            answer=[],
-            is_ground_truth=True,
-            display_set=ds,
-        )
-    a1.refresh_from_db()
-    assert a1.score == 1.0
-
-    with django_capture_on_commit_callbacks(execute=True):
-        a2 = AnswerFactory(question=q2, creator=r2, answer=[], display_set=ds)
-    a2.refresh_from_db()
-    assert a2.score == 1.0
 
 
 @pytest.mark.django_db

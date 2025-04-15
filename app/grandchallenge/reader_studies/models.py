@@ -1945,8 +1945,21 @@ class Answer(UUIDModel):
         self.score = self.question.calculate_score(self.answer, ground_truth)
         return self.score
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, calculate_score=True, **kwargs):
         adding = self._state.adding
+
+        if not self.is_ground_truth and calculate_score:
+            try:
+                ground_truth = Answer.objects.get(
+                    question=self.question,
+                    is_ground_truth=True,
+                    display_set=self.display_set,
+                )
+            except Answer.DoesNotExist:
+                pass  # Nothing to do here
+            else:
+                self.calculate_score(ground_truth=ground_truth.answer)
+
         super().save(*args, **kwargs)
 
         if adding:
@@ -1955,17 +1968,17 @@ class Answer(UUIDModel):
     def assign_permissions(self):
         # Allow the editors and creator to view this answer
         assign_perm(
-            f"view_{self._meta.model_name}",
+            "view_answer",
             self.question.reader_study.editors_group,
             self,
         )
         assign_perm(
-            f"delete_{self._meta.model_name}",
+            "delete_answer",
             self.question.reader_study.editors_group,
             self,
         )
-        assign_perm(f"view_{self._meta.model_name}", self.creator, self)
-        assign_perm(f"change_{self._meta.model_name}", self.creator, self)
+        assign_perm("view_answer", self.creator, self)
+        assign_perm("change_answer", self.creator, self)
 
 
 class AnswerUserObjectPermission(UserObjectPermissionBase):

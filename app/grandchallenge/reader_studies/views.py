@@ -84,6 +84,7 @@ from grandchallenge.reader_studies.filters import (
     ReaderStudyFilter,
 )
 from grandchallenge.reader_studies.forms import (
+    AnswersFromGroundTruthForm,
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
     GroundTruthCSVForm,
@@ -477,11 +478,12 @@ class BaseAddObjectToReaderStudyMixin(
 
 
 class AddGroundTruthViaCSVToReaderStudy(
-    BaseAddObjectToReaderStudyMixin, FormView
+    SuccessMessageMixin, BaseAddObjectToReaderStudyMixin, FormView
 ):
     form_class = GroundTruthCSVForm
     template_name = "reader_studies/ground_truth_csv_form.html"
     type_to_add = "Ground Truth"
+    success_message = "Ground Truth has been added succesfully. Updating the scores is done asynchronously."
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -513,12 +515,14 @@ class AddGroundTruthViaCSVToReaderStudy(
 
 
 class ReaderStudyGroundTruthFromAnswers(
+    SuccessMessageMixin,
     BaseAddObjectToReaderStudyMixin,
     FormView,
 ):
     form_class = GroundTruthFromAnswersForm
     template_name = "reader_studies/ground_truth_from_answers_form.html"
     type_to_add = "Ground Truth"
+    success_message = "Answers have been succesfully converted to Ground Truth. Updating the scores is done asynchronously."
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -528,6 +532,37 @@ class ReaderStudyGroundTruthFromAnswers(
     def form_valid(self, form):
         response = super().form_valid(form)
         form.create_ground_truth()
+        return response
+
+    def get_success_url(self):
+        return self.reader_study.get_absolute_url()
+
+
+class ReaderStudyAnswersFromGroundTruth(
+    SuccessMessageMixin,
+    BaseAddObjectToReaderStudyMixin,
+    FormView,
+):
+    form_class = AnswersFromGroundTruthForm
+    template_name = "reader_studies/answers_from_ground_truth_form.html"
+    type_to_add = "Answers"
+    success_message = (
+        "Copying of Ground Truth to Answers will be done asynchronously."
+    )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update(
+            {
+                "reader_study": self.reader_study,
+                "request_user": self.request.user,
+            }
+        )
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        form.schedule_answers_from_ground_truth_task()
         return response
 
     def get_success_url(self):
