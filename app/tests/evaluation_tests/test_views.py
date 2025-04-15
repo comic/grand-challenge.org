@@ -1000,10 +1000,10 @@ def test_create_algorithm_for_phase_presets(client):
         client=client,
         user=admin,
     )
-    assert list(response.context_data["form"]["interfaces"].initial.all()) == [
+    assert {*response.context_data["form"]["interfaces"].initial.all()} == {
         interface1,
         interface2,
-    ]
+    }
     assert response.context_data["form"][
         "workstation"
     ].initial == Workstation.objects.get(
@@ -1034,8 +1034,8 @@ def test_create_algorithm_for_phase_presets(client):
     assert (
         response.context_data["form"]["logo"].initial == phase.challenge.logo
     )
-    assert list(response.context_data["form"]["modalities"].initial) == []
-    assert list(response.context_data["form"]["structures"].initial) == []
+    assert {*response.context_data["form"]["modalities"].initial} == set()
+    assert {*response.context_data["form"]["structures"].initial} == set()
 
     response = get_view_for_user(
         viewname="evaluation:phase-algorithm-create",
@@ -1079,7 +1079,7 @@ def test_create_algorithm_for_phase_presets(client):
     assert response.status_code == 302
     assert Algorithm.objects.count() == 1
     algorithm = Algorithm.objects.get()
-    assert list(algorithm.interfaces.all()) == [interface1, interface2]
+    assert {*algorithm.interfaces.all()} == {interface1, interface2}
     assert algorithm.hanging_protocol == phase.hanging_protocol
     assert algorithm.optional_hanging_protocols.get() == optional_protocol
     assert algorithm.workstation_config == phase.workstation_config
@@ -1087,8 +1087,8 @@ def test_create_algorithm_for_phase_presets(client):
     assert algorithm.workstation.slug == settings.DEFAULT_WORKSTATION_SLUG
     assert algorithm.contact_email == admin.email
     assert algorithm.display_editors is True
-    assert list(algorithm.structures.all()) == []
-    assert list(algorithm.modalities.all()) == []
+    assert {*algorithm.structures.all()} == set()
+    assert {*algorithm.modalities.all()} == set()
     assert algorithm.logo == phase.challenge.logo
     assert algorithm.time_limit == 10 * 60
     assert algorithm.job_requires_memory_gb == 8
@@ -1123,7 +1123,7 @@ def test_create_algorithm_for_phase_presets(client):
 
     # created algorithm has the initial values set, not the modified ones
     alg2 = Algorithm.objects.last()
-    assert list(alg2.interfaces.all()) == [interface1, interface2]
+    assert {*alg2.interfaces.all()} == {interface1, interface2}
     assert alg2.hanging_protocol == phase.hanging_protocol
     assert alg2.optional_hanging_protocols.get() == optional_protocol
     assert alg2.workstation_config == phase.workstation_config
