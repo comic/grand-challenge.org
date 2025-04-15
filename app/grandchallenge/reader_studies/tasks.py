@@ -88,9 +88,12 @@ def create_display_sets_for_upload_session(
         civ = ComponentInterfaceValue.objects.filter(
             interface=interface, image=image
         ).first()
+
         if civ is None:
             civ = ComponentInterfaceValue(interface=interface)
+
         civ.image = image
+
         try:
             civ.full_clean()
         except ValidationError as e:
@@ -101,10 +104,12 @@ def create_display_sets_for_upload_session(
             upload_session.save()
         else:
             civ.save()
+
             if DisplaySet.objects.filter(
                 reader_study=reader_study, values=civ
             ).exists():
                 continue
+
             ds = DisplaySet.objects.create(reader_study=reader_study)
             ds.values.add(civ)
 
