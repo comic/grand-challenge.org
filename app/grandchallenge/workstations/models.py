@@ -594,13 +594,6 @@ class Session(UUIDModel):
             duration=now() - self.created,
         )
 
-    def create_session_cost(self):
-        SessionCost.objects.create(
-            session=self,
-            duration=now() - self.created,
-        )
-        # self.session_cost.reader_studies.set(self.reader_studies.all())
-
     def update_status(self, *, status: STATUS_CHOICES) -> None:
         """
         Updates the status of this session.
