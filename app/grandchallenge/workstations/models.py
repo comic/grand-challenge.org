@@ -759,10 +759,6 @@ class SessionCost(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    reader_study_count = models.PositiveIntegerField(
-        default=0,
-        help_text="Number of reader studies accessed during session. The costs are divided by the number of reader studies.",
-    )
     reader_studies = models.ManyToManyField(
         to=ReaderStudy,
         through="SessionCostReaderStudy",
@@ -804,7 +800,6 @@ class SessionCost(UUIDModel):
         if adding and self.session:
             self.creator = self.session.creator
             self.reader_studies.set(self.session.reader_studies.all())
-            self.reader_study_count = self.reader_studies.count()
             self.interactive_algorithms = list(
                 Question.objects.filter(
                     reader_study__in=self.reader_studies.all()
