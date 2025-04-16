@@ -810,6 +810,7 @@ class SessionCost(UUIDModel):
                 .distinct()
             )
             self.credits_consumed = self.calculate_credits_consumed()
+            super().save()
 
     @property
     def credits_per_hour(self):
