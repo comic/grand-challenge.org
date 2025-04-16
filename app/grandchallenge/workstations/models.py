@@ -761,7 +761,6 @@ class SessionCost(UUIDModel):
     )
     reader_studies = models.ManyToManyField(
         to=ReaderStudy,
-        through="SessionCostReaderStudy",
         related_name="session_costs",
         blank=True,
         help_text="Reader studies accessed during session",
@@ -823,16 +822,3 @@ class SessionCost(UUIDModel):
         return ceil(
             self.duration.total_seconds() / 3600 * self.credits_per_hour
         )
-
-
-class SessionCostReaderStudy(models.Model):
-    session_cost = models.ForeignKey(SessionCost, on_delete=models.CASCADE)
-    reader_study = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["session_cost", "reader_study"],
-                name="unique_session_cost_reader_study",
-            )
-        ]
