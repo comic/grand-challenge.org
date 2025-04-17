@@ -780,7 +780,6 @@ class SessionCost(UUIDModel):
             )
         ],
     )
-    credits_consumed = models.PositiveIntegerField(editable=False)
 
     def save(self, *args, **kwargs) -> None:
         if self._state.adding:
@@ -794,7 +793,6 @@ class SessionCost(UUIDModel):
                 .order_by()
                 .distinct()
             )
-            self.credits_consumed = self.calculate_credits_consumed()
 
         super().save(*args, **kwargs)
 
@@ -805,7 +803,8 @@ class SessionCost(UUIDModel):
         else:
             return 500
 
-    def calculate_credits_consumed(self):
+    @property
+    def credits_consumed(self):
         return ceil(
             self.duration.total_seconds() / 3600 * self.credits_per_hour
         )
