@@ -792,11 +792,10 @@ class SessionCost(UUIDModel):
 
         if adding and self.session:
             self.creator = self.session.creator
-            self.reader_studies.set(self.session.reader_studies.all())
+            reader_studies = self.session.reader_studies.all()
+            self.reader_studies.set(reader_studies)
             self.interactive_algorithms = list(
-                Question.objects.filter(
-                    reader_study__in=self.reader_studies.all()
-                )
+                Question.objects.filter(reader_study__in=reader_studies)
                 .exclude(interactive_algorithm="")
                 .values_list("interactive_algorithm", flat=True)
                 .order_by()
