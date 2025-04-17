@@ -339,6 +339,10 @@ class ReaderStudy(
             "Usernames and avatars will be hidden to protect other readers' privacy."
         ),
     )
+    max_credits = models.PositiveSmallIntegerField(
+        default=0,
+        help_text="The maximum number of credits that may be consumed for this reader study",
+    )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
