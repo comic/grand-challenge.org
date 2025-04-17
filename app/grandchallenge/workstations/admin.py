@@ -20,7 +20,6 @@ from grandchallenge.workstations.models import (
     FeedbackUserObjectPermission,
     Session,
     SessionCost,
-    SessionCostReaderStudy,
     SessionGroupObjectPermission,
     SessionUserObjectPermission,
     Workstation,
@@ -112,11 +111,6 @@ class FeedbackAdmin(ModelAdmin):
         )
 
 
-class SessionCostReaderStudyInline(admin.TabularInline):
-    model = SessionCostReaderStudy
-    extra = 0
-
-
 @admin.register(SessionCost)
 class SessionCostAdmin(GuardedModelAdmin):
     ordering = ("-created",)
@@ -135,7 +129,6 @@ class SessionCostAdmin(GuardedModelAdmin):
         "reader_studies__slug",
         "reader_studies__pk",
     )
-    inlines = [SessionCostReaderStudyInline]
 
     def accessed_reader_studies(self, obj):
         return oxford_comma(obj.reader_studies.all())
