@@ -790,7 +790,7 @@ class SessionCost(UUIDModel):
 
         super().save(*args, **kwargs)
 
-        if adding and self.session:
+        if adding:
             self.creator = self.session.creator
             reader_studies = self.session.reader_studies.all()
             self.reader_studies.set(reader_studies)
