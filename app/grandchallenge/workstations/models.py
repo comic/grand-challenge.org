@@ -33,7 +33,7 @@ from grandchallenge.components.tasks import (
     start_service,
     stop_service,
 )
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
     protected_s3_storage,
@@ -332,7 +332,7 @@ ENV_VARS_SCHEMA = {
 }
 
 
-class Session(UUIDModel):
+class Session(FieldChangeMixin, UUIDModel):
     """
     Tracks who has launched workstation images. The ``WorkstationImage`` will
     be launched as a ``Service``. The ``Session`` is responsible for starting
@@ -589,11 +589,6 @@ class Session(UUIDModel):
         if self.auth_token:
             self.auth_token.delete()
 
-        SessionCost.objects.create(
-            session=self,
-            duration=now() - self.created,
-        )
-
     def update_status(self, *, status: STATUS_CHOICES) -> None:
         """
         Updates the status of this session.
@@ -660,6 +655,12 @@ class Session(UUIDModel):
                     kwargs=self.task_kwargs,
                     queue=f"workstations-{self.region}",
                 ).apply_async
+            )
+
+        if self.has_changed("status") and self.status == self.STOPPED:
+            SessionCost.objects.create(
+                session=self,
+                duration=now() - self.created,
             )
 
     def handle_reader_study_switching(self, *, workstation_path):
