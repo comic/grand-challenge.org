@@ -129,7 +129,7 @@ class SessionCostAdmin(GuardedModelAdmin):
         "reader_studies__slug",
         "reader_studies__pk",
     )
-    readonly_fields = ("reader_studies",)
+    readonly_fields = ("reader_studies", "credits_consumed")
 
     def accessed_reader_studies(self, obj):
         return oxford_comma(obj.reader_studies.all())
