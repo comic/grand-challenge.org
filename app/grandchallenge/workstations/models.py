@@ -783,11 +783,7 @@ class SessionCost(UUIDModel):
     credits_consumed = models.PositiveIntegerField(editable=False)
 
     def save(self, *args, **kwargs) -> None:
-        adding = self._state.adding
-
-        super().save(*args, **kwargs)
-
-        if adding:
+        if self._state.adding:
             self.creator = self.session.creator
             reader_studies = self.session.reader_studies.all()
             self.reader_studies.set(reader_studies)
@@ -799,7 +795,8 @@ class SessionCost(UUIDModel):
                 .distinct()
             )
             self.credits_consumed = self.calculate_credits_consumed()
-            super().save()
+
+        super().save(*args, **kwargs)
 
     @property
     def credits_per_hour(self):
