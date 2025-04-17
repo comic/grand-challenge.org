@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.template.defaultfilters import linebreaksbr
 from django.utils.html import format_html
+from guardian.admin import GuardedModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from grandchallenge.components.admin import ComponentImageAdmin
@@ -11,12 +12,14 @@ from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
     UserObjectPermissionAdmin,
 )
+from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import (
     Feedback,
     FeedbackGroupObjectPermission,
     FeedbackUserObjectPermission,
     Session,
+    SessionCost,
     SessionGroupObjectPermission,
     SessionUserObjectPermission,
     Workstation,
@@ -106,6 +109,30 @@ class FeedbackAdmin(ModelAdmin):
             + urlencode(params),
             "Create issue",
         )
+
+
+@admin.register(SessionCost)
+class SessionCostAdmin(GuardedModelAdmin):
+    ordering = ("-created",)
+    list_display = (
+        "pk",
+        "created",
+        "session",
+        "creator",
+        "duration",
+        "credits_consumed",
+        "accessed_reader_studies",
+    )
+    search_fields = (
+        "creator__username",
+        "pk",
+        "reader_studies__slug",
+        "reader_studies__pk",
+    )
+    readonly_fields = ("reader_studies", "credits_consumed")
+
+    def accessed_reader_studies(self, obj):
+        return oxford_comma(obj.reader_studies.all())
 
 
 admin.site.register(Workstation)
