@@ -780,10 +780,7 @@ class SessionCost(UUIDModel):
             )
         ],
     )
-    credits_consumed = models.PositiveIntegerField(
-        null=True,
-        editable=False,
-    )
+    credits_consumed = models.PositiveIntegerField(editable=False)
 
     def save(self, *args, **kwargs) -> None:
         adding = self._state.adding
