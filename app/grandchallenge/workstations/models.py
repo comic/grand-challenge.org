@@ -782,7 +782,6 @@ class SessionCost(UUIDModel):
     )
     credits_consumed = models.PositiveIntegerField(
         null=True,
-        blank=True,
         editable=False,
     )
 
