@@ -10,7 +10,7 @@
                    href="#"
                    role="button"
                    aria-expanded="false"><i class="fas fa-bars"></i></a>
-                <ul class="nav nav-tabs border-0">
+                <ul class="nav nav-tabs border-0 nav-fill">
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.view_name == 'pages:home' or request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
                            href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
