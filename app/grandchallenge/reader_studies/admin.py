@@ -21,6 +21,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudyPermissionRequest,
     ReaderStudyUserObjectPermission,
 )
+from grandchallenge.workstations.admin import SessionCostReaderStudyInline
 
 
 @admin.register(ReaderStudy)
@@ -46,6 +47,7 @@ class ReaderStudyAdmin(GuardedModelAdmin):
         "workstation__slug",
     )
     search_fields = ("title", "slug", "pk")
+    inlines = (SessionCostReaderStudyInline,)
 
 
 @admin.register(Answer)
