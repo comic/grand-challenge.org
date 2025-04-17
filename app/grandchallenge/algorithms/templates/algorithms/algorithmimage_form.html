@@ -27,7 +27,7 @@
         Upload a container image that implements all of the configured interfaces (i.e. input-output combinations):
     </p>
 
-    {% include 'algorithms/partials/algorithminterface_table.html' with base_obj=algorithm interfaces=algorithm.interfaces.all delete_option=False read_write_paths=True %}
+    {% include 'algorithms/partials/algorithminterface_table.html' with base_obj=algorithm interfaces=algorithm.interfaces.all delete_option=False %}
 
     {% if perms.algorithms.add_algorithm %}
         <p>
