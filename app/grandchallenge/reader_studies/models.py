@@ -1,3 +1,5 @@
+from math import ceil
+
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -830,6 +832,14 @@ class ReaderStudy(
         )
         return interfaces_and_values
 
+    @property
+    def credits_consumed(self):
+        total = 0
+        for session in self.session_costs.annotate(
+            num=Count("reader_studies")
+        ):
+            total += session.credits_consumed / session.num
+        return ceil(total)
 
 class ReaderStudyUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
