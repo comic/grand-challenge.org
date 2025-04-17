@@ -41,6 +41,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">ceil</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">unquote</span><span class="p">,</span> <span class="n">urljoin</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
@@ -54,6 +55,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.dispatch</span><span class="w"> </span><span class="kn">import</span> <span class="n">receiver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.urls.resolvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">RoutePattern</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_valid_filename</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.timezone</span><span class="w"> </span><span class="kn">import</span> <span class="n">now</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">guardian.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">GroupObjectPermissionBase</span><span class="p">,</span> <span class="n">UserObjectPermissionBase</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">guardian.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
@@ -69,14 +71,18 @@
     <span class="n">start_service</span><span class="p">,</span>
     <span class="n">stop_service</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">UUIDModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_logo_path</span><span class="p">,</span>
     <span class="n">protected_s3_storage</span><span class="p">,</span>
     <span class="n">public_s3_storage</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONValidator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.reader_studies.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Question</span><span class="p">,</span> <span class="n">ReaderStudy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.reader_studies.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InteractiveAlgorithmChoices</span><span class="p">,</span>
+    <span class="n">Question</span><span class="p">,</span>
+    <span class="n">ReaderStudy</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.subdomains.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.workstations.emails</span><span class="w"> </span><span class="kn">import</span> <span class="n">send_new_feedback_email_to_staff</span>
 
@@ -393,7 +399,7 @@
 
 <div class="viewcode-block" id="Session">
 <a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">Session</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Session</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Tracks who has launched workstation images. The ``WorkstationImage`` will</span>
 <span class="sd">    be launched as a ``Service``. The ``Session`` is responsible for starting</span>
@@ -730,6 +736,12 @@
                     <span class="n">kwargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">task_kwargs</span><span class="p">,</span>
                     <span class="n">queue</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;workstations-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">STOPPED</span><span class="p">:</span>
+            <span class="n">SessionCost</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">session</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">duration</span><span class="o">=</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">created</span><span class="p">,</span>
             <span class="p">)</span></div>
 
 
@@ -828,6 +840,96 @@
 <a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.FeedbackGroupObjectPermission">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FeedbackGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Feedback</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SessionCost">
+<a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.SessionCost">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SessionCost</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+    <span class="n">session</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
+        <span class="n">Session</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;session_cost&quot;</span><span class="p">,</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">duration</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DurationField</span><span class="p">()</span>
+    <span class="n">creator</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">AUTH_USER_MODEL</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">SET_NULL</span>
+    <span class="p">)</span>
+    <span class="n">reader_studies</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+        <span class="n">to</span><span class="o">=</span><span class="n">ReaderStudy</span><span class="p">,</span>
+        <span class="n">through</span><span class="o">=</span><span class="s2">&quot;SessionCostReaderStudy&quot;</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;session_costs&quot;</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Reader studies accessed during session&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">interactive_algorithms</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The interactive algorithms for which hardware has been initialized during the session.&quot;</span>
+        <span class="p">),</span>
+        <span class="n">validators</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">JSONValidator</span><span class="p">(</span>
+                <span class="n">schema</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;$schema&quot;</span><span class="p">:</span> <span class="s2">&quot;http://json-schema.org/draft-07/schema&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;array&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;items&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;enum&quot;</span><span class="p">:</span> <span class="n">InteractiveAlgorithmChoices</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">,</span>
+                    <span class="p">},</span>
+                    <span class="s2">&quot;uniqueItems&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="SessionCost.save">
+<a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.SessionCost.save">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">creator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">creator</span>
+            <span class="n">reader_studies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">reader_studies</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reader_studies</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">reader_studies</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">interactive_algorithms</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">reader_study__in</span><span class="o">=</span><span class="n">reader_studies</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">interactive_algorithm</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;interactive_algorithm&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">order_by</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+            <span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">credits_per_hour</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interactive_algorithms</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">1000</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">500</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">credits_consumed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ceil</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">duration</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span> <span class="o">/</span> <span class="mi">3600</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">credits_per_hour</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SessionCostReaderStudy">
+<a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.SessionCostReaderStudy">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SessionCostReaderStudy</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">session_cost</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">SessionCost</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">reader_study</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">ReaderStudy</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;session_cost&quot;</span><span class="p">,</span> <span class="s2">&quot;reader_study&quot;</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unique_session_cost_reader_study&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">]</span></div>
 
 </pre></div>
 
