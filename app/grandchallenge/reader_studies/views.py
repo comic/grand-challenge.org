@@ -4,10 +4,7 @@ import logging
 from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import (
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
@@ -70,6 +67,7 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    UserPassesTestMixin,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
@@ -1261,9 +1259,12 @@ class QuestionInteractiveAlgorithmsView(
     UserPassesTestMixin, BaseAddObjectToReaderStudyMixin, View
 ):
     def test_func(self):
-        return self.request.user.has_perm(
+        if self.request.user.has_perm(
             "reader_studies.add_interactive_algorithm_to_question"
-        )
+        ):
+            return super().test_func()
+        else:
+            return False
 
     def get(self, request, slug):
         form = QuestionForm(
