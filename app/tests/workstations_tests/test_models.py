@@ -36,7 +36,7 @@ from tests.workstations_tests.factories import FeedbackFactory
 
 
 def stop_all_sessions():
-    sessions = Session.objects.exclude(status=Session.STOPPED)
+    sessions = Session.objects.all()
     for s in sessions:
         s.stop()
 
