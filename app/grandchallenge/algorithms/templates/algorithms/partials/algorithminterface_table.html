@@ -14,7 +14,7 @@
             {% for interface in interfaces %}
                 <tr>
                     <td class="text-center p-1">{{ forloop.counter }}</td>
-                    <td  class="px-1">
+                    <td class="px-1">
                         {% for input in interface.inputs.all %}
                             <ul class="p-0 m-0">
                                 {% include 'algorithms/partials/socket_modal_base.html' with socket=input input=True %}
@@ -43,7 +43,7 @@
                         </td>
                     {% endif %}
                 </tr>
-                {% empty %}
+            {% empty %}
                 <tr>
                     <td colspan="100%" class="text-center">This {{ base_obj|verbose_name }} does not have any interfaces
                         defined yet.

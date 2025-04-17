@@ -38,22 +38,12 @@
                     {% if input %}
                         <dt>Read from</dt>
                         <dd>
-                            {% if socket.is_image_kind %}
-                                <code>/input{% if socket.relative_path %}/{{ socket.relative_path }}{% endif %}/&lt;uuid&gt;.mha</code> or
-                                <code>/input{% if socket.relative_path %}/{{ socket.relative_path }}{% endif %}/&lt;uuid&gt;.tif</code>
-                            {% else %}
-                                <code>/input/{{ socket.relative_path }}</code>
-                            {% endif %}
+                            {% include 'components/partials/socket_read_write_paths.html' with socket=socket input=True %}
                         </dd>
                     {% else %}
                         <dt>Write to</dt>
                         <dd>
-                            {% if socket.is_image_kind %}
-                                <code>/output{% if socket.relative_path %}/{{ socket.relative_path }}{% endif %}/&lt;uuid&gt;.mha</code> or
-                                <code>/output{% if socket.relative_path %}/{{ socket.relative_path }}{% endif %}/&lt;uuid&gt;.tif</code>
-                            {% else %}
-                                <code>/output/{{ socket.relative_path }}</code>
-                            {% endif %}
+                            {% include 'components/partials/socket_read_write_paths.html' with socket=socket input=False %}
                         </dd>
                     {% endif %}
 

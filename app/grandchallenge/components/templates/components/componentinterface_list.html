@@ -68,23 +68,11 @@
                     <td><code>{{ interface.slug }}</code></td>
                     {% if list_type == list_type_options.INPUT %}
                         <td>
-                            {% if interface.is_image_kind %}
-                                <code>/input/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.mha</code>
-                                or
-                                <code>/input/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.tif</code>
-                            {% else %}
-                                <code>/input/{{ interface.relative_path }}</code>
-                            {% endif %}
+                            {% include 'components/partials/socket_read_write_paths.html' with socket=interface input=True %}
                         </td>
                     {% elif list_type == list_type_options.OUTPUT %}
                         <td>
-                            {% if interface.is_image_kind %}
-                                <code>/output/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.mha</code>
-                                or
-                                <code>/output/{{ interface.relative_path }}{% if interface.relative_path %}/{% endif %}&lt;uuid&gt;.tif</code>
-                            {% else %}
-                                <code>/output/{{ interface.relative_path }}</code>
-                            {% endif %}
+                            {% include 'components/partials/socket_read_write_paths.html' with socket=interface input=False %}
                         </td>
                     {% endif %}
                     <td>
