@@ -160,11 +160,11 @@ def test_get_algorithm_template_context():
 
     context = get_forge_algorithm_template_context(algorithm=algorithm)
 
-    for key in ["title", "slug", "url", "interfaces"]:
+    for key in ["title", "slug", "url", "algorithm_interfaces"]:
         assert key in context["algorithm"]
 
-    inputs = context["algorithm"]["interfaces"][0]["inputs"]
-    outputs = context["algorithm"]["interfaces"][0]["inputs"]
+    inputs = context["algorithm"]["algorithm_interfaces"][0]["inputs"]
+    outputs = context["algorithm"]["algorithm_interfaces"][0]["inputs"]
 
     input_slugs = [input["slug"] for input in inputs]
     assert len(input_slugs) == len(inputs)
