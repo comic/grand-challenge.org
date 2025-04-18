@@ -17,7 +17,6 @@ class SessionCreationView(TemplateView):
     template_name = "new_session.html"
 
 
-@pytest.mark.xfail(reason="Still to be addressed for optional inputs pitch")
 @pytest.mark.playwright
 def test_viewer_session_control(live_server, page, settings):
     settings.WORKSTATIONS_EXTRA_BROADCAST_DOMAINS = [live_server.url]

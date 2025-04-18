@@ -75,7 +75,7 @@ def filter_by_permission(*, queryset, user, codename, accept_user_perms=True):
 
     dfk_group_model = get_group_obj_perms_model(queryset.model)
 
-    if dfk_group_model == GroupObjectPermission:
+    if isinstance(dfk_group_model, GroupObjectPermission):
         raise RuntimeError("DFK group permissions not active for model")
 
     group_related_query_name = (
@@ -95,7 +95,7 @@ def filter_by_permission(*, queryset, user, codename, accept_user_perms=True):
     if accept_user_perms:
         dfk_user_model = get_user_obj_perms_model(queryset.model)
 
-        if dfk_user_model == UserObjectPermission:
+        if isinstance(dfk_user_model, UserObjectPermission):
             raise RuntimeError("DFK user permissions not active for model")
 
         user_related_query_name = (

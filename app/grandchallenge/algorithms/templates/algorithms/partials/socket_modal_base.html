@@ -1,0 +1,64 @@
+{% load bleach %}
+{% load json %}
+
+
+<a href="#socketModal-{{ socket.pk }}"
+   data-toggle="modal"
+   data-target="#socketModal-{{ socket.pk }}"
+   class="text-decoration-none"
+   role="button"
+   title="View {{ socket.title }}"
+>
+    <div class="badge badge-info mr-1">
+        <i class="fas fa-fw fa-info"></i>
+    </div>
+</a>
+
+<div class="modal" id="socketModal-{{ socket.pk }}" tabindex="-1" role="dialog"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    {{ socket.title }}
+                </h5>
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <dd class="text-left modal-body">
+                <dl>
+                    <dt>Description</dt>
+                    <dd>{% if socket.description %}{{ socket.description }}{% else %} - {% endif %}</dd>
+
+                    <dt>Kind</dt>
+                    <dd>{{ socket.get_kind_display }}</dd>
+
+                    {% if input %}
+                        <dt>Read from</dt>
+                        <dd>
+                            {% include 'components/partials/socket_read_write_paths.html' with socket=socket input=True %}
+                        </dd>
+                    {% else %}
+                        <dt>Write to</dt>
+                        <dd>
+                            {% include 'components/partials/socket_read_write_paths.html' with socket=socket input=False %}
+                        </dd>
+                    {% endif %}
+
+                    {% if socket.json_kind_example %}
+                        <dt>Example</dt>
+                        <dd>
+                            {% if socket.json_kind_example.extra_info %}
+                                {{ socket.json_kind_example.extra_info|md2html }}
+                            {% endif %}
+                            <pre>{{ socket.json_kind_example.value|json_dumps:2 }}</pre>
+                        </dd>
+                    {% endif %}
+
+                </dl>
+            </dd>
+        </div>
+    </div>
+</div>

@@ -12,53 +12,44 @@
         </thead>
         <tbody>
             {% for interface in interfaces %}
-                 <tr>
-                    <td class="text-center align-middle p-3">{{ forloop.counter }}</td>
-                    <td>
+                <tr>
+                    <td class="text-center p-1">{{ forloop.counter }}</td>
+                    <td class="px-1">
                         {% for input in interface.inputs.all %}
-                            <li>{{ input }}
-                                {% if read_write_paths %}
-                                    at
-                                    {% if input.is_image_kind %}
-                                        <code>/input{% if input.relative_path %}/{{ input.relative_path }}{% endif %}/&lt;uuid&gt;.mha</code> or
-                                        <code>/input{% if input.relative_path %}/{{ input.relative_path }}{% endif %}/&lt;uuid&gt;.tif</code>
-                                    {% else %}
-                                        <code>/input/{{ input.relative_path }}</code>
-                                    {% endif %}
-                                {% endif %}
-                            </li>
+                            <ul class="p-0 m-0">
+                                {% include 'algorithms/partials/socket_modal_base.html' with socket=input input=True %}
+                                {{ input.title }}
+                            </ul>
                         {% endfor %}
                     </td>
                     <td>
                         {% for output in interface.outputs.all %}
-                            <li>{{ output }}
-                                {% if read_write_paths %}
-                                    at
-                                    {% if output.is_image_kind %}
-                                        <code>/output{% if output.relative_path %}/{{ output.relative_path }}{% endif %}/&lt;uuid&gt;.mha</code> or
-                                        <code>/output{% if output.relative_path %}/{{ output.relative_path }}{% endif %}/&lt;uuid&gt;.tif</code>
-                                    {% else %}
-                                        <code>/output/{{ output.relative_path }}</code>
-                                    {% endif %}
-                                {% endif %}
-                            </li>
+                            <ul class="p-0 m-0">
+                                {% include 'algorithms/partials/socket_modal_base.html' with socket=output input=False %}
+                                {{ output.title }}
+                            </ul>
                         {% endfor %}
                     </td>
-                     {% if delete_option %}
+                    {% if delete_option %}
                         <td class="align-middle">
-                        <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="{% if base_obj.algorithm_interfaces_locked %}Disabled because this phase is a parent or has a parent phase.{% endif %}">
-                            <a class="btn btn-sm btn-danger m-0 {% if base_obj.algorithm_interfaces_locked %} disabled {% endif %}"
-                               href="{% url base_obj.algorithm_interface_delete_viewname slug=base_obj.slug interface_pk=interface.pk %}"
-                            >
-                                <i class="fas fa-trash"></i>
-                            </a>
-                        </span>
+                            <span class="d-inline-block" tabindex="0" data-toggle="tooltip"
+                                  title="{% if base_obj.algorithm_interfaces_locked %}Disabled because this phase is a parent or has a parent phase.{% endif %}">
+                                <a class="btn btn-sm btn-danger m-0 {% if base_obj.algorithm_interfaces_locked %} disabled {% endif %}"
+                                   href="{% url base_obj.algorithm_interface_delete_viewname slug=base_obj.slug interface_pk=interface.pk %}"
+                                >
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </span>
                         </td>
-                     {% endif %}
-                 </tr>
+                    {% endif %}
+                </tr>
             {% empty %}
-                <tr><td colspan="100%" class="text-center">This {{ base_obj|verbose_name }} does not have any interfaces defined yet.</td></tr>
-             {% endfor %}
+                <tr>
+                    <td colspan="100%" class="text-center">This {{ base_obj|verbose_name }} does not have any interfaces
+                        defined yet.
+                    </td>
+                </tr>
+            {% endfor %}
         </tbody>
     </table>
 </div>

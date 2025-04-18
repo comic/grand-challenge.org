@@ -30,7 +30,7 @@
                aria-selected="true"><i
                     class="fas fa-info fa-fw"></i>&nbsp;Information
             </a>
-            {% if 'view_leaderboard' in readerstudy_perms %}
+            {% if 'view_leaderboard' in readerstudy_perms and object.is_educational %}
                 <a class="nav-link" href="{% url 'reader-studies:leaderboard' slug=object.slug %}">
                     <i class="fas fa-trophy fa-fw"></i>&nbsp;Leaderboard
                 </a>

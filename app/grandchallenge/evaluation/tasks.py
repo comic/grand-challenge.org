@@ -30,13 +30,6 @@ logger = logging.getLogger(__name__)
 
 @acks_late_2xlarge_task
 @transaction.atomic
-def create_evaluation(*, submission_pk, max_initial_jobs=1):  # noqa: C901
-    """Temporary placeholder task to eat queued tasks using the old API."""
-    pass
-
-
-@acks_late_2xlarge_task
-@transaction.atomic
 def prepare_and_execute_evaluation(
     *, evaluation_pk, max_initial_jobs=1
 ):  # noqa: C901

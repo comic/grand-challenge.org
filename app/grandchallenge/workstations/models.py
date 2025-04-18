@@ -3,6 +3,7 @@ import logging
 import re
 from datetime import datetime, timedelta
 from functools import cached_property
+from math import ceil
 from urllib.parse import unquote, urljoin
 
 from django.conf import settings
@@ -16,6 +17,7 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.urls.resolvers import RoutePattern
 from django.utils.text import get_valid_filename
+from django.utils.timezone import now
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -31,14 +33,18 @@ from grandchallenge.components.tasks import (
     start_service,
     stop_service,
 )
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
     protected_s3_storage,
     public_s3_storage,
 )
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.reader_studies.models import Question, ReaderStudy
+from grandchallenge.reader_studies.models import (
+    InteractiveAlgorithmChoices,
+    Question,
+    ReaderStudy,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.emails import send_new_feedback_email_to_staff
 
@@ -326,7 +332,7 @@ ENV_VARS_SCHEMA = {
 }
 
 
-class Session(UUIDModel):
+class Session(FieldChangeMixin, UUIDModel):
     """
     Tracks who has launched workstation images. The ``WorkstationImage`` will
     be launched as a ``Service``. The ``Session`` is responsible for starting
@@ -651,6 +657,12 @@ class Session(UUIDModel):
                 ).apply_async
             )
 
+        if self.has_changed("status") and self.status == self.STOPPED:
+            SessionCost.objects.create(
+                session=self,
+                duration=now() - self.created,
+            )
+
     def handle_reader_study_switching(self, *, workstation_path):
         reader_study_pattern = RoutePattern(
             f"{settings.WORKSTATIONS_READY_STUDY_PATH_PARAM}/<uuid:pk>"
@@ -728,3 +740,84 @@ class FeedbackUserObjectPermission(UserObjectPermissionBase):
 
 class FeedbackGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Feedback, on_delete=models.CASCADE)
+
+
+class SessionCost(UUIDModel):
+    session = models.OneToOneField(
+        Session,
+        related_name="session_cost",
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+    duration = models.DurationField()
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+    reader_studies = models.ManyToManyField(
+        to=ReaderStudy,
+        through="SessionCostReaderStudy",
+        related_name="session_costs",
+        blank=True,
+        help_text="Reader studies accessed during session",
+    )
+    interactive_algorithms = models.JSONField(
+        blank=True,
+        default=list,
+        help_text=(
+            "The interactive algorithms for which hardware has been initialized during the session."
+        ),
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "enum": InteractiveAlgorithmChoices.values,
+                        "type": "string",
+                    },
+                    "uniqueItems": True,
+                }
+            )
+        ],
+    )
+
+    def save(self, *args, **kwargs) -> None:
+        if self._state.adding:
+            self.creator = self.session.creator
+            reader_studies = self.session.reader_studies.all()
+            self.reader_studies.set(reader_studies)
+            self.interactive_algorithms = list(
+                Question.objects.filter(reader_study__in=reader_studies)
+                .exclude(interactive_algorithm="")
+                .values_list("interactive_algorithm", flat=True)
+                .order_by()
+                .distinct()
+            )
+
+        super().save(*args, **kwargs)
+
+    @property
+    def credits_per_hour(self):
+        if self.interactive_algorithms:
+            return 1000
+        else:
+            return 500
+
+    @property
+    def credits_consumed(self):
+        return ceil(
+            self.duration.total_seconds() / 3600 * self.credits_per_hour
+        )
+
+
+class SessionCostReaderStudy(models.Model):
+    session_cost = models.ForeignKey(SessionCost, on_delete=models.CASCADE)
+    reader_study = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["session_cost", "reader_study"],
+                name="unique_session_cost_reader_study",
+            )
+        ]

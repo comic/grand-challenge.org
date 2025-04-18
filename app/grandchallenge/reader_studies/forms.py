@@ -3,6 +3,7 @@ import io
 import json
 import logging
 
+from crispy_forms.bootstrap import FormActions
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import (
     HTML,
@@ -17,6 +18,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import BLANK_CHOICE_DASH
+from django.db.transaction import on_commit
 from django.forms import (
     BooleanField,
     CharField,
@@ -73,6 +75,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudyPermissionRequest,
 )
 from grandchallenge.reader_studies.tasks import (
+    answers_from_ground_truth,
     bulk_assign_scores_for_reader_study,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
@@ -754,8 +757,61 @@ class GroundTruthFromAnswersForm(SaveFormInitMixin, Form):
         Answer.objects.filter(
             question__reader_study=self._reader_study
         ).update(score=None)
-        bulk_assign_scores_for_reader_study.apply_async(
-            kwargs={"reader_study_pk": self._reader_study.pk}
+
+        on_commit(
+            bulk_assign_scores_for_reader_study.signature(
+                kwargs={"reader_study_pk": self._reader_study.pk}
+            ).apply_async
+        )
+
+
+class AnswersFromGroundTruthForm(SaveFormInitMixin, Form):
+    def __init__(self, *args, reader_study, request_user, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._reader_study = reader_study
+        self._user = request_user
+
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            FormActions(
+                HTML(
+                    format_html(
+                        '<a class="btn btn-secondary" href="{ground_truth_url}">Cancel</a>',
+                        ground_truth_url=reverse(
+                            "reader-studies:ground-truth",
+                            kwargs={"slug": reader_study.slug},
+                        ),
+                    )
+                ),
+                Submit(
+                    "submit",
+                    "Yes, create Answers for Me",
+                    css_class="btn btn-primary",
+                ),
+            )
+        )
+
+    def clean(self):
+        if Answer.objects.filter(
+            question__reader_study=self._reader_study,
+            creator=self._user,
+            is_ground_truth=False,
+        ).exists():
+            raise ValidationError(
+                "User already has answers. Delete these first"
+            )
+
+        return super().clean()
+
+    def schedule_answers_from_ground_truth_task(self):
+        on_commit(
+            answers_from_ground_truth.signature(
+                kwargs={
+                    "reader_study_pk": self._reader_study.pk,
+                    "target_user_pk": self._user.pk,
+                }
+            ).apply_async
         )
 
 
@@ -861,8 +917,18 @@ class GroundTruthCSVForm(SaveFormInitMixin, Form):
                 self._answers.append(answer_obj)
 
     def save_answers(self):
+        Answer.objects.filter(
+            question__reader_study=self._reader_study
+        ).update(score=None)
+
         for answer in self._answers:
             answer.save()
+
+        on_commit(
+            bulk_assign_scores_for_reader_study.signature(
+                kwargs={"reader_study_pk": self._reader_study.pk}
+            ).apply_async
+        )
 
 
 class DisplaySetFormMixin:

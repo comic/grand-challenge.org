@@ -1,5 +1,15 @@
 {% extends "reader_studies/readerstudy_ground_truth.html" %}
 {% load url %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader
+            Studies</a></li>
+        <li class="breadcrumb-item"><a href="{{ object.get_absolute_url }}">{{ object }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Delete Ground Truth</li>
+    </ol>
+{% endblock %}
+
 {% block content %}
     <h2>Confirm Deletion</h2>
 
