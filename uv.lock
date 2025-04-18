@@ -1195,7 +1195,7 @@ wheels = [
 
 [[package]]
 name = "grand-challenge-forge"
-version = "0.7.0"
+version = "0.7.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "black" },
@@ -1203,9 +1203,9 @@ dependencies = [
     { name = "jinja2" },
     { name = "jsonschema" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f5/1d/5ab749d0a3f45dc1d5b089341bfe09285bffde00b3a8cb1c66101d07cfdf/grand_challenge_forge-0.7.0.tar.gz", hash = "sha256:ff0be557130a083abff617e1e9a53c60a36a7c3683fc58fe4a00cb4ea796bc0f", size = 31657 }
+sdist = { url = "https://files.pythonhosted.org/packages/11/de/9732b5f457abd5e79bd8334673084344f82de3f048206334edb28c972bac/grand_challenge_forge-0.7.1.tar.gz", hash = "sha256:76432466a89d369a34832c44c9969300d223f0570fb1a8edfc07af4b47d47c10", size = 31709 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/15/e0/2a7f7526b98812de5bd90b68a2f5b1f803780459684b7519a6c922a460e3/grand_challenge_forge-0.7.0-py3-none-any.whl", hash = "sha256:bfde8219aeda31d1ef6ea7cab94c638959ef50524f347a9656b2c5e12d43d91f", size = 47651 },
+    { url = "https://files.pythonhosted.org/packages/c9/1d/772687ce37706340c0f801aa6556dcca601af6315915dace482aa5f9fce7/grand_challenge_forge-0.7.1-py3-none-any.whl", hash = "sha256:e45a9a3ef9065e369a03e30b0d447061942f80cb56d88ab2ce7f2c9581fb9a0f", size = 47693 },
 ]
 
 [[package]]
@@ -1339,7 +1339,7 @@ requires-dist = [
     { name = "djangorestframework-csv" },
     { name = "djangorestframework-guardian" },
     { name = "drf-spectacular" },
-    { name = "grand-challenge-forge", specifier = ">=0.7.0" },
+    { name = "grand-challenge-forge", specifier = ">=0.7.1" },
     { name = "gunicorn" },
     { name = "humanize" },
     { name = "jsonschema" },
