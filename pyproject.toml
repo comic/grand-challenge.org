@@ -60,7 +60,7 @@ dependencies = [
     "pyjwt",
     "beautifulsoup4",
     "pymdown-extensions",
-    "grand-challenge-forge<=0.6.1",
+    "grand-challenge-forge>=0.7.1",
     "biopython",
     "cachetools",
 ]
