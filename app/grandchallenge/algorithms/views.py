@@ -1163,20 +1163,17 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
 
     def get(self, *_, **__):
         algorithm = self.get_object()
+        dir_name = f"{algorithm.slug}-template"
 
         forge_context = get_forge_algorithm_template_context(algorithm)
 
         buffer = io.BytesIO()
-
         with ZipFile(buffer, "w") as zipf:
-            dir_name = f"{algorithm.slug}-template"
-
             generate_algorithm_template(
                 context=forge_context,
                 output_zip_file=zipf,
                 target_zpath=Path(dir_name),
             )
-
         buffer.seek(0)
 
         return FileResponse(
