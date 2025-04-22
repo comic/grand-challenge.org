@@ -57,7 +57,7 @@
                                     {% if reader_study.is_launchable %}
                                         {% workstation_session_control_data workstation=reader_study.workstation context_object=reader_study reader_study=reader_study user=user.obj %}
                                     {% else %}
-                                        disabled title="Reader study cannot be launched."
+                                        disabled title="Reader study cannot be launched"
                                     {% endif %}
                             >
                                 <i class="fa fa-eye"></i> View User's Answers
