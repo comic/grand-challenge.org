@@ -341,7 +341,7 @@ class ReaderStudy(
             "Usernames and avatars will be hidden to protect other readers' privacy."
         ),
     )
-    max_credits = models.PositiveSmallIntegerField(
+    max_credits = models.PositiveIntegerField(
         null=True,
         blank=True,
         help_text="The maximum number of credits that may be consumed for this reader study. Leave blank to allow unlimited usage.",
