@@ -43,7 +43,6 @@ from tests.uploads_tests.factories import (
     create_upload_from_file,
 )
 from tests.utils import get_view_for_user
-from tests.workstations_tests.factories import SessionCostFactory
 
 
 @pytest.mark.django_db
@@ -1150,7 +1149,7 @@ def test_leaderboard_user_visibility(client):
 
 
 @pytest.mark.django_db
-def test_reader_study_launch_button_disabled_when_not_launchable(client):
+def test_reader_study_launch_disabled_when_not_launchable(client):
     reader_study = ReaderStudyFactory()
 
     editor, reader = UserFactory.create_batch(2)
@@ -1170,9 +1169,7 @@ def test_reader_study_launch_button_disabled_when_not_launchable(client):
             response, f'data-workstation-path="reader-study/{reader_study.pk}"'
         )
 
-    reader_study.max_credits = 1
-    session_cost = SessionCostFactory()
-    session_cost.reader_studies.add(reader_study)
+    reader_study.max_credits = 0
     reader_study.save()
 
     assert not reader_study.is_launchable
