@@ -342,8 +342,9 @@ class ReaderStudy(
         ),
     )
     max_credits = models.PositiveSmallIntegerField(
-        default=0,
-        help_text="The maximum number of credits that may be consumed for this reader study",
+        null=True,
+        blank=True,
+        help_text="The maximum number of credits that may be consumed for this reader study. Leave blank to allow unlimited usage.",
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
@@ -843,10 +844,10 @@ class ReaderStudy(
 
     @property
     def is_launchable(self):
-        launchable = True
-        if self.max_credits and self.credits_consumed >= self.max_credits:
-            launchable = False
-        return launchable
+        return (
+            self.max_credits is None
+            or self.credits_consumed < self.max_credits
+        )
 
 
 class ReaderStudyUserObjectPermission(UserObjectPermissionBase):
