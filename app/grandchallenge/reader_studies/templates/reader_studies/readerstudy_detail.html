@@ -122,27 +122,26 @@
             {% endif %}
 
             {% if "read_readerstudy" in readerstudy_perms %}
-                <p>
-                    <button class="btn btn-primary"
-                        {% if object.is_launchable %}
-                            {% workstation_session_control_data workstation=object.workstation context_object=object reader_study=object %}
+                {% if object.is_launchable %}
+                    <p>
+                        <button class="btn btn-primary" {% workstation_session_control_data workstation=object.workstation context_object=object reader_study=object %}>
+                            <i class="fas fa-eye"></i> Launch this Reader Study
+                        </button>
+                    </p>
+                {% else %}
+                    <div class="alert alert-warning" role="alert">
+                        {% if "change_readerstudy" in readerstudy_perms %}
+                            The total budget for this reader study has been consumed. Please contact support if you would like to enable this study again.
                         {% else %}
-                            disabled
+                            This reader study cannot be launched. Please contact the reader study editor if you would like to launch this study.
                         {% endif %}
-                    >
-                        <i class="fas fa-eye"></i> Launch this Reader Study
-                    </button>
-                </p>
+                    </div>
+                {% endif %}
             {% endif %}
 
             {% if "change_readerstudy" in readerstudy_perms %}
                 <hr>
                 <h3>Admin Info</h3>
-                {% if not object.is_launchable %}
-                    <div class="alert alert-warning" role="alert">
-                        The total budget for this reader study has been consumed. Please contact support if you would like to enable this study again.
-                    </div>
-                {% endif %}
                 <p>
                     This reader study
                     {% if object.public %}
