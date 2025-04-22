@@ -54,7 +54,11 @@
                     <div class="col-6 col-md-3 p-1">
                         <div class="d-flex justify-content-md-end justify-content-start align-items-center">
                             <button class="btn btn-primary"
-                                    {% workstation_session_control_data workstation=reader_study.workstation context_object=reader_study reader_study=reader_study user=user.obj %}
+                                    {% if reader_study.is_launchable %}
+                                        {% workstation_session_control_data workstation=reader_study.workstation context_object=reader_study reader_study=reader_study user=user.obj %}
+                                    {% else %}
+                                        disabled title="Reader study cannot be launched."
+                                    {% endif %}
                             >
                                 <i class="fa fa-eye"></i> View User's Answers
                             </button>
