@@ -508,3 +508,22 @@ def test_session_cost_distinct_interactive_algorithms():
     assert session.session_cost.interactive_algorithms == [
         InteractiveAlgorithmChoices.ULS23_BASELINE.value
     ]
+
+
+@pytest.mark.django_db
+def test_session_cost_interactive_algorithms_credit_rate():
+    session_without_interactive_alg = SessionFactory()
+    question = QuestionFactory.create()
+    session_without_interactive_alg.reader_studies.add(question.reader_study)
+    session_without_interactive_alg.stop()
+
+    assert session_without_interactive_alg.session_cost.credits_per_hour == 500
+
+    session_with_interactive_alg = SessionFactory()
+    question = QuestionFactory.create(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+    session_with_interactive_alg.reader_studies.add(question.reader_study)
+    session_with_interactive_alg.stop()
+
+    assert session_with_interactive_alg.session_cost.credits_per_hour == 1000
