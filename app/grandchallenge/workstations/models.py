@@ -680,18 +680,20 @@ class Session(FieldChangeMixin, UUIDModel):
             return
 
         reader_study = ReaderStudy.objects.get(lookup)
-        reader_study.workstation_sessions.add(self)
 
-        if (
-            Question.objects.filter(reader_study=reader_study)
-            .exclude(interactive_algorithm="")
-            .exists()
-        ):
-            on_commit(
-                preload_interactive_algorithms.signature(
-                    queue=f"workstations-{self.region}"
-                ).apply_async
-            )
+        if reader_study.is_launchable:
+            reader_study.workstation_sessions.add(self)
+
+            if (
+                Question.objects.filter(reader_study=reader_study)
+                .exclude(interactive_algorithm="")
+                .exists()
+            ):
+                on_commit(
+                    preload_interactive_algorithms.signature(
+                        queue=f"workstations-{self.region}"
+                    ).apply_async
+                )
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):
