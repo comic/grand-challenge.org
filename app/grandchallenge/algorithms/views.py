@@ -1158,7 +1158,7 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
     queryset = Algorithm.objects.prefetch_related(
-        "interfaces",
+        "interfaces__inputs", "interfaces__outputs"
     )
 
     def get(self, *_, **__):

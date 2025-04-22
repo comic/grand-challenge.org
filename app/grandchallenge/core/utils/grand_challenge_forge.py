@@ -1,7 +1,3 @@
-from django.db.models import Prefetch
-
-from grandchallenge.algorithms.models import AlgorithmInterface
-from grandchallenge.archives.models import Archive
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 
 
@@ -28,11 +24,11 @@ def _process_algorithm_interfaces(algorithm_interfaces):
             {
                 "inputs": [
                     _process_socket(socket)
-                    for socket in interface.inputs.order_by("slug").all()
+                    for socket in interface.inputs.all()
                 ],
                 "outputs": [
                     _process_socket(socket)
-                    for socket in interface.outputs.order_by("slug").all()
+                    for socket in interface.outputs.all()
                 ],
             }
         )
@@ -46,40 +42,15 @@ def get_forge_challenge_pack_context(challenge, phase_pks=None):
     grand-challenge-forge to generate a challenge pack.
     """
 
-    from grandchallenge.components.models import ComponentInterface
-
-    phases = (
-        challenge.phase_set.filter(
-            archive__isnull=False,
-            submission_kind=SubmissionKindChoices.ALGORITHM,
-        )
-        .order_by("slug")
-        .prefetch_related(
-            Prefetch(
-                "archive",
-                queryset=Archive.objects.order_by("created"),
-            ),
-            Prefetch(
-                "additional_evaluation_inputs",
-                queryset=ComponentInterface.objects.order_by("slug"),
-            ),
-            Prefetch(
-                "evaluation_outputs",
-                queryset=ComponentInterface.objects.order_by("slug"),
-            ),
-            Prefetch(
-                "algorithm_interfaces",
-                queryset=AlgorithmInterface.objects.order_by("created"),
-            ),
-            Prefetch(
-                "algorithm_interfaces__inputs",
-                queryset=ComponentInterface.objects.order_by("slug"),
-            ),
-            Prefetch(
-                "algorithm_interfaces__outputs",
-                queryset=ComponentInterface.objects.order_by("slug"),
-            ),
-        )
+    phases = challenge.phase_set.filter(
+        archive__isnull=False,
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+    ).prefetch_related(
+        "archive",
+        "additional_evaluation_inputs",
+        "evaluation_outputs",
+        "algorithm_interfaces__inputs",
+        "algorithm_interfaces__outputs",
     )
 
     if phase_pks is not None:
@@ -98,7 +69,7 @@ def get_forge_challenge_pack_context(challenge, phase_pks=None):
             "slug": phase.slug,
             "archive": process_archive(phase.archive),
             "algorithm_interfaces": _process_algorithm_interfaces(
-                phase.algorithm_interfaces.order_by("created").all()
+                phase.algorithm_interfaces.all()
             ),
             "evaluation_additional_inputs": [
                 _process_socket(socket)
@@ -129,7 +100,7 @@ def get_forge_algorithm_template_context(algorithm):
             "slug": algorithm.slug,
             "url": algorithm.get_absolute_url(),
             "algorithm_interfaces": _process_algorithm_interfaces(
-                algorithm.interfaces.order_by("created").all()
+                algorithm.interfaces.all()
             ),
         }
     }
