@@ -178,6 +178,11 @@
                         Each reader will read the cases in the same order.
                     {% endif %}
                 </p>
+                {% if object.questions_with_interactive_algorithm.exists and object.max_credits is not None %}
+                    <p>
+                        This reader study has {{ object.questions_with_interactive_algorithm.count|pluralize:"a ," }}question{{ object.questions_with_interactive_algorithm.count|pluralize }} with an interactive algorithm. This doubles the credit consumption rate for this study.
+                    </p>
+                {% endif %}
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'reader-studies:update' slug=object.slug %}">

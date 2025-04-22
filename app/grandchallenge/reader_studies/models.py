@@ -849,6 +849,10 @@ class ReaderStudy(
             or self.credits_consumed < self.max_credits
         )
 
+    @cached_property
+    def questions_with_interactive_algorithm(self):
+        return self.questions.exclude(interactive_algorithm="")
+
 
 class ReaderStudyUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
