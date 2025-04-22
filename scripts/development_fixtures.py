@@ -15,7 +15,6 @@ from django.db import IntegrityError
 from faker import Faker
 from knox.models import AuthToken, hash_token
 from knox.settings import CONSTANTS
-from machina.apps.forum.models import Forum
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -94,7 +93,6 @@ def run():
     _create_reader_studies(users)
     _create_archive(users)
     _create_user_tokens(users)
-    _create_help_forum()
     _create_flatpages()
 
     print("✨ Development fixtures successfully created ✨")
@@ -193,10 +191,6 @@ def _set_user_permissions(users):
     add_archive_perm = Permission.objects.get(codename="add_archive")
     users["archive"].user_permissions.add(add_archive_perm)
     users["demo"].user_permissions.add(add_archive_perm)
-
-
-def _create_help_forum():
-    Forum.objects.create(name="General", type=Forum.FORUM_POST)
 
 
 def _create_demo_challenge(users, algorithm):
