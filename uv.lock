@@ -1199,7 +1199,7 @@ wheels = [
 
 [[package]]
 name = "grand-challenge-forge"
-version = "0.6.1"
+version = "0.7.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "black" },
@@ -1207,9 +1207,9 @@ dependencies = [
     { name = "jinja2" },
     { name = "jsonschema" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0c/b8/4e598ef120969ef0fdca2e5e4fd7317d465e16449b566f83391c330c0c24/grand_challenge_forge-0.6.1.tar.gz", hash = "sha256:279f1c4836a125ae85c3c74cab5a2a25cab30aa6c93c87839038287e26bab0d2", size = 33499, upload_time = "2024-11-01T14:08:26.543Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/11/de/9732b5f457abd5e79bd8334673084344f82de3f048206334edb28c972bac/grand_challenge_forge-0.7.1.tar.gz", hash = "sha256:76432466a89d369a34832c44c9969300d223f0570fb1a8edfc07af4b47d47c10", size = 31709, upload_time = "2025-04-18T14:39:42.324Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/19/d6/332111da3f42b5eab6a80aa8759c7aae544f7c9fcf55bf13c33727710f4c/grand_challenge_forge-0.6.1-py3-none-any.whl", hash = "sha256:1a1c6fb256395de896b53fb25ce89d13181f78f9363c97e421cf07e14bd3d8b5", size = 46481, upload_time = "2024-11-01T14:08:24.61Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/1d/772687ce37706340c0f801aa6556dcca601af6315915dace482aa5f9fce7/grand_challenge_forge-0.7.1-py3-none-any.whl", hash = "sha256:e45a9a3ef9065e369a03e30b0d447061942f80cb56d88ab2ce7f2c9581fb9a0f", size = 47693, upload_time = "2025-04-18T14:39:41.059Z" },
 ]
 
 [[package]]
@@ -1343,7 +1343,7 @@ requires-dist = [
     { name = "djangorestframework-csv" },
     { name = "djangorestframework-guardian" },
     { name = "drf-spectacular" },
-    { name = "grand-challenge-forge", specifier = "<=0.6.1" },
+    { name = "grand-challenge-forge", specifier = ">=0.7.1" },
     { name = "gunicorn" },
     { name = "humanize" },
     { name = "jsonschema" },
@@ -1892,6 +1892,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pkgconfig"
+version = "1.5.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c4/e0/e05fee8b5425db6f83237128742e7e5ef26219b687ab8f0d41ed0422125e/pkgconfig-1.5.5.tar.gz", hash = "sha256:deb4163ef11f75b520d822d9505c1f462761b4309b1bb713d08689759ea8b899", size = 6082, upload_time = "2021-07-19T18:49:51.669Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/32/af/89487c7bbf433f4079044f3dc32f9a9f887597fe04614a37a292e373e16b/pkgconfig-1.5.5-py3-none-any.whl", hash = "sha256:d20023bbeb42ee6d428a0fac6e0904631f545985a10cdd71a20aa58bc47a4209", size = 6732, upload_time = "2021-07-19T18:49:50.195Z" },
+]
+
+[[package]]
 name = "platformdirs"
 version = "4.3.7"
 source = { registry = "https://pypi.org/simple" }
@@ -2403,6 +2412,7 @@ version = "2.2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cffi" },
+    { name = "pkgconfig" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7b/88/f73dae807ec68b228fba72507105e3ba80a561dc0bade0004ce24fd118fc/pyvips-2.2.3.tar.gz", hash = "sha256:43bceced0db492654c93008246a58a508e0373ae1621116b87b322f2ac72212f", size = 56626, upload_time = "2024-04-28T11:19:58.158Z" }
 
