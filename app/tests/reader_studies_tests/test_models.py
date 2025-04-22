@@ -1238,7 +1238,7 @@ def test_answer_score_calculation():
 
 
 @pytest.mark.django_db
-def test_reader_study_launch_disabled_when_max_credits_consumed():
+def test_reader_study_not_launchable_when_max_credits_consumed():
     reader_study = ReaderStudyFactory(max_credits=100)
 
     assert reader_study.is_launchable
