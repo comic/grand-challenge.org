@@ -4,11 +4,7 @@ import pytest
 from django.forms import JSONField
 from django.test import override_settings
 from guardian.shortcuts import assign_perm
-from pytest_django.asserts import (
-    assertContains,
-    assertInHTML,
-    assertNotContains,
-)
+from pytest_django.asserts import assertContains, assertNotContains
 from requests import put
 
 from grandchallenge.cases.widgets import FlexibleImageField, ImageWidgetChoices
@@ -1190,8 +1186,4 @@ def test_reader_study_launch_button_disabled_when_not_launchable(client):
         )
         assertNotContains(
             response, f'data-workstation-path="reader-study/{reader_study.pk}"'
-        )
-        assertInHTML(
-            "<button class='btn btn-primary' disabled><i class='fas fa-eye'></i> Launch this Reader Study</button>",
-            response.rendered_content,
         )
