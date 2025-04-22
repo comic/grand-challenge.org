@@ -35,7 +35,7 @@ def get_workstation_path_and_query_string(  # noqa: C901
         path = (
             f"{settings.WORKSTATIONS_DISPLAY_SET_PATH_PARAM}/{display_set.pk}"
         )
-    elif reader_study and reader_study.is_launchable:
+    elif reader_study:
         path = (
             f"{settings.WORKSTATIONS_READY_STUDY_PATH_PARAM}/{reader_study.pk}"
         )
