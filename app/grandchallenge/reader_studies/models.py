@@ -833,7 +833,7 @@ class ReaderStudy(
         )
         return interfaces_and_values
 
-    @cached_property
+    @property
     def credits_consumed(self):
         total = 0
         for session in self.session_costs.annotate(
