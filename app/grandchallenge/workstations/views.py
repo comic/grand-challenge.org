@@ -4,7 +4,12 @@ from urllib.parse import quote_plus
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseForbidden,
+    HttpResponseRedirect,
+)
 from django.shortcuts import get_object_or_404
 from django.utils._os import safe_join
 from django.utils.functional import cached_property
@@ -370,17 +375,21 @@ class SessionCreate(
         )
 
         workstation_path = self.kwargs.get("workstation_path", "")
-        session.handle_reader_study_switching(
+        reader_study_launchable = session.handle_reader_study_switching(
             workstation_path=workstation_path
         )
+        if reader_study_launchable:
+            url = session.get_absolute_url()
+            url += f"?path={quote_plus(workstation_path)}"
+            qs = self.request.META.get("QUERY_STRING", "")
+            if qs:
+                url = f"{url}&qs={quote_plus(qs)}"
 
-        url = session.get_absolute_url()
-        url += f"?path={quote_plus(workstation_path)}"
-        qs = self.request.META.get("QUERY_STRING", "")
-        if qs:
-            url = f"{url}&qs={quote_plus(qs)}"
-
-        return HttpResponseRedirect(url)
+            return HttpResponseRedirect(url)
+        else:
+            return HttpResponseForbidden(
+                reason="Reader study cannot be launched."
+            )
 
 
 class DebugSessionCreate(SessionCreate):

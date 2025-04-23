@@ -690,6 +690,9 @@ class Session(FieldChangeMixin, UUIDModel):
                         queue=f"workstations-{self.region}"
                     ).apply_async
                 )
+            return True
+        else:
+            return False
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):
