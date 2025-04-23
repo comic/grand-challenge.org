@@ -38,7 +38,6 @@
   <h1>Source code for grandchallenge.workstations.models</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">ceil</span>
@@ -49,11 +48,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ObjectDoesNotExist</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaxValueValidator</span><span class="p">,</span> <span class="n">RegexValidator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Q</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.signals</span><span class="w"> </span><span class="kn">import</span> <span class="n">post_delete</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.transaction</span><span class="w"> </span><span class="kn">import</span> <span class="n">on_commit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.dispatch</span><span class="w"> </span><span class="kn">import</span> <span class="n">receiver</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.urls.resolvers</span><span class="w"> </span><span class="kn">import</span> <span class="n">RoutePattern</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.timezone</span><span class="w"> </span><span class="kn">import</span> <span class="n">now</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span>
@@ -745,30 +742,10 @@
             <span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">handle_reader_study_switching</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">workstation_path</span><span class="p">):</span>
-        <span class="n">reader_study_pattern</span> <span class="o">=</span> <span class="n">RoutePattern</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">WORKSTATIONS_READY_STUDY_PATH_PARAM</span><span class="si">}</span><span class="s2">/&lt;uuid:pk&gt;&quot;</span>
-        <span class="p">)</span>
-        <span class="n">display_set_pattern</span> <span class="o">=</span> <span class="n">RoutePattern</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">settings</span><span class="o">.</span><span class="n">WORKSTATIONS_DISPLAY_SET_PATH_PARAM</span><span class="si">}</span><span class="s2">/&lt;uuid:pk&gt;&quot;</span>
-        <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">match</span> <span class="o">:=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">reader_study_pattern</span><span class="o">.</span><span class="n">regex</span><span class="p">,</span> <span class="n">workstation_path</span><span class="p">):</span>
-            <span class="n">lookup</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">match</span><span class="o">.</span><span class="n">groupdict</span><span class="p">()[</span><span class="s2">&quot;pk&quot;</span><span class="p">])</span>
-        <span class="k">elif</span> <span class="n">match</span> <span class="o">:=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">display_set_pattern</span><span class="o">.</span><span class="n">regex</span><span class="p">,</span> <span class="n">workstation_path</span><span class="p">):</span>
-            <span class="n">lookup</span> <span class="o">=</span> <span class="n">Q</span><span class="p">(</span><span class="n">display_sets__pk</span><span class="o">=</span><span class="n">match</span><span class="o">.</span><span class="n">groupdict</span><span class="p">()[</span><span class="s2">&quot;pk&quot;</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># Not a reader study path</span>
-            <span class="k">return</span>
-
-        <span class="n">reader_study</span> <span class="o">=</span> <span class="n">ReaderStudy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">lookup</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle_reader_study_switching</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">reader_study</span><span class="p">):</span>
         <span class="n">reader_study</span><span class="o">.</span><span class="n">workstation_sessions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">reader_study</span><span class="o">=</span><span class="n">reader_study</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">interactive_algorithm</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-        <span class="p">):</span>
+        <span class="k">if</span> <span class="n">reader_study</span><span class="o">.</span><span class="n">questions_with_interactive_algorithm</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
             <span class="n">on_commit</span><span class="p">(</span>
                 <span class="n">preload_interactive_algorithms</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
                     <span class="n">queue</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;workstations-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">&quot;</span>

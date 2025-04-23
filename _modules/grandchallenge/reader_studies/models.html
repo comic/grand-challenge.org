@@ -36,7 +36,9 @@
           <div class="body" role="main">
             
   <h1>Source code for grandchallenge.reader_studies.models</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">actstream.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Follow</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">ceil</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">actstream.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Follow</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Group</span>
@@ -381,6 +383,11 @@
             <span class="s2">&quot;If checked, readers can see the leaderboard. &quot;</span>
             <span class="s2">&quot;Usernames and avatars will be hidden to protect other readers&#39; privacy.&quot;</span>
         <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">max_credits</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The maximum number of credits that may be consumed for this reader study. Leave blank to allow unlimited usage.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
@@ -897,7 +904,27 @@
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">interfaces_and_values</span></div>
+        <span class="k">return</span> <span class="n">interfaces_and_values</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">credits_consumed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">session</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_costs</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="n">num</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s2">&quot;reader_studies&quot;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="n">session</span><span class="o">.</span><span class="n">credits_consumed</span> <span class="o">/</span> <span class="n">session</span><span class="o">.</span><span class="n">num</span>
+        <span class="k">return</span> <span class="n">ceil</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_launchable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_credits</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">credits_consumed</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_credits</span>
+        <span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">questions_with_interactive_algorithm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">interactive_algorithm</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span></div>
 
 
 
