@@ -180,7 +180,7 @@
                 </p>
                 {% if object.questions_with_interactive_algorithm.exists and object.max_credits is not None %}
                     <p>
-                        This reader study has {{ object.questions_with_interactive_algorithm.count|pluralize:"a question,questions" }} with an interactive algorithm. This doubles the credit consumption rate for this study.
+                        This reader study has {{ object.questions_with_interactive_algorithm.count|pluralize:"a question,questions" }} with an interactive algorithm. This increases the credit consumption rate for this study.
                     </p>
                 {% endif %}
                 <p>
