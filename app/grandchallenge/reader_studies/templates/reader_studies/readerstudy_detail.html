@@ -122,13 +122,21 @@
             {% endif %}
 
             {% if "read_readerstudy" in readerstudy_perms %}
-                <p>
-                    <button class="btn btn-primary"
-                        {% workstation_session_control_data workstation=object.workstation context_object=object reader_study=object %}
-                    >
-                        <i class="fas fa-eye"></i> Launch this Reader Study
-                    </button>
-                </p>
+                {% if object.is_launchable %}
+                    <p>
+                        <button class="btn btn-primary" {% workstation_session_control_data workstation=object.workstation context_object=object reader_study=object %}>
+                            <i class="fas fa-eye"></i> Launch this Reader Study
+                        </button>
+                    </p>
+                {% else %}
+                    <div class="alert alert-warning" role="alert">
+                        {% if "change_readerstudy" in readerstudy_perms %}
+                            The total budget for this reader study has been consumed. Please contact support if you would like to enable this study again.
+                        {% else %}
+                            This reader study cannot be launched. Please contact the reader study editor if you would like to launch this study.
+                        {% endif %}
+                    </div>
+                {% endif %}
             {% endif %}
 
             {% if "change_readerstudy" in readerstudy_perms %}
@@ -170,6 +178,11 @@
                         Each reader will read the cases in the same order.
                     {% endif %}
                 </p>
+                {% if object.questions_with_interactive_algorithm.exists and object.max_credits is not None %}
+                    <p>
+                        This reader study has {{ object.questions_with_interactive_algorithm.count|pluralize:"a question,questions" }} with an interactive algorithm. This increases the credit consumption rate for this study.
+                    </p>
+                {% endif %}
                 <p>
                     <a class="btn btn-primary"
                        href="{% url 'reader-studies:update' slug=object.slug %}">

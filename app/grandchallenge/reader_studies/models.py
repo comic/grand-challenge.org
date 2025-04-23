@@ -1,3 +1,5 @@
+from math import ceil
+
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -338,6 +340,11 @@ class ReaderStudy(
             "If checked, readers can see the leaderboard. "
             "Usernames and avatars will be hidden to protect other readers' privacy."
         ),
+    )
+    max_credits = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="The maximum number of credits that may be consumed for this reader study. Leave blank to allow unlimited usage.",
     )
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
@@ -825,6 +832,26 @@ class ReaderStudy(
             )
         )
         return interfaces_and_values
+
+    @property
+    def credits_consumed(self):
+        total = 0
+        for session in self.session_costs.annotate(
+            num=Count("reader_studies")
+        ):
+            total += session.credits_consumed / session.num
+        return ceil(total)
+
+    @property
+    def is_launchable(self):
+        return (
+            self.max_credits is None
+            or self.credits_consumed < self.max_credits
+        )
+
+    @cached_property
+    def questions_with_interactive_algorithm(self):
+        return self.questions.exclude(interactive_algorithm="")
 
 
 class ReaderStudyUserObjectPermission(UserObjectPermissionBase):

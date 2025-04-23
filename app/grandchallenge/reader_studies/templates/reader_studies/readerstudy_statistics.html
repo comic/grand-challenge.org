@@ -47,8 +47,12 @@
                             <td data-order="{{ ground_truth }}">{{ ground_truth }}</td>
                         {% endfor %}
                         <td data-order="{{ entry.id }}">
-                            <button title="Open in viewer" class="btn badge badge-primary"
-                                    {% workstation_session_control_data workstation=object.workstation context_object=object display_set=entry reader_study=object %}
+                            <button class="btn btn-primary badge badge-primary"
+                                    {% if object.is_launchable %}
+                                        {% workstation_session_control_data workstation=object.workstation context_object=object display_set=entry reader_study=object %} title="Open in viewer"
+                                    {% else %}
+                                        disabled title="Reader study cannot be launched"
+                                    {% endif %}
                             >
                                 <i class="fa fa-eye"></i>
                             </button>

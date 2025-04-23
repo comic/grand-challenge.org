@@ -26,15 +26,19 @@
     <h4>{{ object.pk }}</h4>
 
     <p>
-        <a class="btn btn-primary"
+        <button class="btn btn-primary"
             {% if object.base_object|model_name == base_model_options.READER_STUDY %}
-                {% workstation_session_control_data workstation=object.base_object.workstation context_object=object display_set=object config=object.base_object.workstation_config %}
+                {% if object.base_object.is_launchable %}
+                    {% workstation_session_control_data workstation=object.base_object.workstation context_object=object display_set=object config=object.base_object.workstation_config %}
+                {% else %}
+                    disabled title="Reader study cannot be launched"
+                {% endif %}
             {% elif object.base_object|model_name == base_model_options.ARCHIVE %}
                 {% workstation_session_control_data workstation=object.base_object.workstation context_object=object archive_item=object config=object.base_object.workstation_config %}
             {% endif %}
         >
             <i class="fas fa-eye"></i> View in viewer
-        </a>
+        </button>
 
         {% if object.change_perm in object_perms %}
             <span

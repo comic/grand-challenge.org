@@ -18,9 +18,6 @@ from grandchallenge.workstations.models import (
     SessionCost,
     Workstation,
 )
-from grandchallenge.workstations.templatetags.workstations import (
-    get_workstation_path_and_query_string,
-)
 from tests.factories import (
     SessionFactory,
     UserFactory,
@@ -445,22 +442,11 @@ def test_session_cost_duration(mocker):
     assert session.session_cost.duration == timedelta(minutes=5)
 
 
-@pytest.fixture
-def session_with_reader_studies():
+@pytest.mark.django_db
+def test_session_cost_reader_studies():
     session = SessionFactory()
     reader_studies = ReaderStudyFactory.create_batch(2)
-    for reader_study in reader_studies:
-        session.handle_reader_study_switching(
-            workstation_path=get_workstation_path_and_query_string(
-                reader_study=reader_study
-            ).path
-        )
-    return session, reader_studies
-
-
-@pytest.mark.django_db
-def test_session_cost_reader_studies(session_with_reader_studies):
-    session, reader_studies = session_with_reader_studies
+    session.reader_studies.set(reader_studies)
 
     session.stop()
 
@@ -471,7 +457,7 @@ def test_session_cost_reader_studies(session_with_reader_studies):
 
 
 @pytest.mark.django_db
-def test_session_cost_no_reader_studies(mocker):
+def test_session_cost_no_reader_studies():
     session = SessionFactory()
     session.stop()
 
@@ -508,3 +494,22 @@ def test_session_cost_distinct_interactive_algorithms():
     assert session.session_cost.interactive_algorithms == [
         InteractiveAlgorithmChoices.ULS23_BASELINE.value
     ]
+
+
+@pytest.mark.django_db
+def test_session_cost_interactive_algorithms_credit_rate():
+    session_without_interactive_alg = SessionFactory()
+    question = QuestionFactory.create()
+    session_without_interactive_alg.reader_studies.add(question.reader_study)
+    session_without_interactive_alg.stop()
+
+    assert session_without_interactive_alg.session_cost.credits_per_hour == 500
+
+    session_with_interactive_alg = SessionFactory()
+    question = QuestionFactory.create(
+        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+    )
+    session_with_interactive_alg.reader_studies.add(question.reader_study)
+    session_with_interactive_alg.stop()
+
+    assert session_with_interactive_alg.session_cost.credits_per_hour == 1000

@@ -416,6 +416,37 @@ def test_session_create_reader_study_no_algorithm(
 
 
 @pytest.mark.django_db
+def test_session_create_reader_study_not_launchable(client):
+    user = UserFactory()
+    ws = WorkstationFactory()
+    WorkstationImageFactory(
+        workstation=ws,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    reader_study = ReaderStudyFactory(workstation=ws, max_credits=0)
+    QuestionFactory(reader_study=reader_study)
+    reader_study.readers_group.user_set.add(user)
+    path, _ = get_workstation_path_and_query_string(reader_study=reader_study)
+
+    assert not reader_study.is_launchable
+    assert Session.objects.count() == 0
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="workstations:workstation-session-create-nested",
+        reverse_kwargs={"slug": ws.slug, "workstation_path": path},
+        user=user,
+        data={"region": "eu-central-1"},
+    )
+
+    assert response.status_code == 200
+    assert Session.objects.count() == 0
+
+
+@pytest.mark.django_db
 def test_session_create_display_set(
     client, django_capture_on_commit_callbacks
 ):
