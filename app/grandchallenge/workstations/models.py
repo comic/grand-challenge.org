@@ -677,7 +677,7 @@ class Session(FieldChangeMixin, UUIDModel):
             lookup = Q(display_sets__pk=match.groupdict()["pk"])
         else:
             # Not a reader study path
-            return True
+            return
 
         reader_study = ReaderStudy.objects.get(lookup)
 
@@ -690,9 +690,8 @@ class Session(FieldChangeMixin, UUIDModel):
                         queue=f"workstations-{self.region}"
                     ).apply_async
                 )
-            return True
         else:
-            return False
+            raise PermissionError("Reader study cannot be launched.")
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):

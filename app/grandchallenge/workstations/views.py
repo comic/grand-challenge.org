@@ -375,21 +375,22 @@ class SessionCreate(
         )
 
         workstation_path = self.kwargs.get("workstation_path", "")
-        allow_redirect = session.handle_reader_study_switching(
-            workstation_path=workstation_path
-        )
-        if allow_redirect:
-            url = session.get_absolute_url()
-            url += f"?path={quote_plus(workstation_path)}"
-            qs = self.request.META.get("QUERY_STRING", "")
-            if qs:
-                url = f"{url}&qs={quote_plus(qs)}"
-
-            return HttpResponseRedirect(url)
-        else:
+        try:
+            session.handle_reader_study_switching(
+                workstation_path=workstation_path
+            )
+        except PermissionError:
             return HttpResponseForbidden(
                 reason="Reader study cannot be launched."
             )
+
+        url = session.get_absolute_url()
+        url += f"?path={quote_plus(workstation_path)}"
+        qs = self.request.META.get("QUERY_STRING", "")
+        if qs:
+            url = f"{url}&qs={quote_plus(qs)}"
+
+        return HttpResponseRedirect(url)
 
 
 class DebugSessionCreate(SessionCreate):
