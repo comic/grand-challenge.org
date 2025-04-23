@@ -375,10 +375,10 @@ class SessionCreate(
         )
 
         workstation_path = self.kwargs.get("workstation_path", "")
-        reader_study_launchable = session.handle_reader_study_switching(
+        allow_redirect = session.handle_reader_study_switching(
             workstation_path=workstation_path
         )
-        if reader_study_launchable:
+        if allow_redirect:
             url = session.get_absolute_url()
             url += f"?path={quote_plus(workstation_path)}"
             qs = self.request.META.get("QUERY_STRING", "")

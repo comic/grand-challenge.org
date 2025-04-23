@@ -677,7 +677,7 @@ class Session(FieldChangeMixin, UUIDModel):
             lookup = Q(display_sets__pk=match.groupdict()["pk"])
         else:
             # Not a reader study path
-            return
+            return True
 
         reader_study = ReaderStudy.objects.get(lookup)
 
