@@ -1,16 +1,14 @@
+import re
 from datetime import timedelta
 from urllib.parse import quote_plus
 
 from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.http import (
-    Http404,
-    HttpResponse,
-    HttpResponseForbidden,
-    HttpResponseRedirect,
-)
+from django.db.models import Q
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.urls.resolvers import RoutePattern
 from django.utils._os import safe_join
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -39,6 +37,7 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.groups.forms import EditorsForm, UsersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
+from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.verifications.views import VerificationRequiredMixin
 from grandchallenge.workstations.forms import (
@@ -352,6 +351,27 @@ class SessionCreate(
 
         return workstation_image
 
+    @cached_property
+    def reader_study(self):
+        workstation_path = self.kwargs.get("workstation_path", "")
+
+        reader_study_pattern = RoutePattern(
+            f"{settings.WORKSTATIONS_READY_STUDY_PATH_PARAM}/<uuid:pk>"
+        )
+        display_set_pattern = RoutePattern(
+            f"{settings.WORKSTATIONS_DISPLAY_SET_PATH_PARAM}/<uuid:pk>"
+        )
+
+        if match := re.match(reader_study_pattern.regex, workstation_path):
+            lookup = Q(pk=match.groupdict()["pk"])
+        elif match := re.match(display_set_pattern.regex, workstation_path):
+            lookup = Q(display_sets__pk=match.groupdict()["pk"])
+        else:
+            # Not a reader study path
+            return
+
+        return get_object_or_404(ReaderStudy, lookup)
+
     def get_permission_object(self):
         return self.workstation_image.workstation
 
@@ -365,6 +385,11 @@ class SessionCreate(
         )
         return context
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"reader_study": self.reader_study})
+        return kwargs
+
     def form_valid(self, form):
         session = get_or_create_active_session(
             user=self.request.user,
@@ -375,13 +400,10 @@ class SessionCreate(
         )
 
         workstation_path = self.kwargs.get("workstation_path", "")
-        try:
+
+        if self.reader_study:
             session.handle_reader_study_switching(
-                workstation_path=workstation_path
-            )
-        except PermissionError:
-            return HttpResponseForbidden(
-                reason="Reader study cannot be launched."
+                reader_study=self.reader_study,
             )
 
         url = session.get_absolute_url()

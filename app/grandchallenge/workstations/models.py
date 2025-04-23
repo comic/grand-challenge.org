@@ -1,6 +1,5 @@
 import json
 import logging
-import re
 from datetime import datetime, timedelta
 from functools import cached_property
 from math import ceil
@@ -11,11 +10,9 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
-from django.db.models import Q
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
-from django.urls.resolvers import RoutePattern
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django_extensions.db.models import TitleSlugDescriptionModel
@@ -663,35 +660,15 @@ class Session(FieldChangeMixin, UUIDModel):
                 duration=now() - self.created,
             )
 
-    def handle_reader_study_switching(self, *, workstation_path):
-        reader_study_pattern = RoutePattern(
-            f"{settings.WORKSTATIONS_READY_STUDY_PATH_PARAM}/<uuid:pk>"
-        )
-        display_set_pattern = RoutePattern(
-            f"{settings.WORKSTATIONS_DISPLAY_SET_PATH_PARAM}/<uuid:pk>"
-        )
+    def handle_reader_study_switching(self, *, reader_study):
+        reader_study.workstation_sessions.add(self)
 
-        if match := re.match(reader_study_pattern.regex, workstation_path):
-            lookup = Q(pk=match.groupdict()["pk"])
-        elif match := re.match(display_set_pattern.regex, workstation_path):
-            lookup = Q(display_sets__pk=match.groupdict()["pk"])
-        else:
-            # Not a reader study path
-            return
-
-        reader_study = ReaderStudy.objects.get(lookup)
-
-        if reader_study.is_launchable:
-            reader_study.workstation_sessions.add(self)
-
-            if reader_study.questions_with_interactive_algorithm.exists():
-                on_commit(
-                    preload_interactive_algorithms.signature(
-                        queue=f"workstations-{self.region}"
-                    ).apply_async
-                )
-        else:
-            raise PermissionError("Reader study cannot be launched.")
+        if reader_study.questions_with_interactive_algorithm.exists():
+            on_commit(
+                preload_interactive_algorithms.signature(
+                    queue=f"workstations-{self.region}"
+                ).apply_async
+            )
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):

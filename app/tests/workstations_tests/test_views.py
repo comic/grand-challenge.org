@@ -416,9 +416,7 @@ def test_session_create_reader_study_no_algorithm(
 
 
 @pytest.mark.django_db
-def test_session_create_reader_study_not_launchable(
-    client, django_capture_on_commit_callbacks
-):
+def test_session_create_reader_study_not_launchable(client):
     user = UserFactory()
     ws = WorkstationFactory()
     WorkstationImageFactory(
@@ -435,23 +433,17 @@ def test_session_create_reader_study_not_launchable(
     assert not reader_study.is_launchable
     assert Session.objects.count() == 0
 
-    with django_capture_on_commit_callbacks() as callbacks:
-        response = get_view_for_user(
-            client=client,
-            method=client.post,
-            viewname="workstations:workstation-session-create-nested",
-            reverse_kwargs={"slug": ws.slug, "workstation_path": path},
-            user=user,
-            data={"region": "eu-central-1"},
-        )
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="workstations:workstation-session-create-nested",
+        reverse_kwargs={"slug": ws.slug, "workstation_path": path},
+        user=user,
+        data={"region": "eu-central-1"},
+    )
 
-    assert response.status_code == 403
-    assert [c.__self__.name for c in callbacks] == [
-        "grandchallenge.components.tasks.start_service",
-        "grandchallenge.components.tasks.stop_service",
-    ]
-    assert Session.objects.count() == 1
-    assert reader_study.workstation_sessions.count() == 0
+    assert response.status_code == 200
+    assert Session.objects.count() == 0
 
 
 @pytest.mark.django_db

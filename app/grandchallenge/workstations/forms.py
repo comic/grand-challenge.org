@@ -59,13 +59,20 @@ class SessionForm(ModelForm):
         ],
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, reader_study, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.reader_study = reader_study
 
         self.helper = FormHelper(self)
         self.helper.attrs.update({"class": "d-none"})
 
         self.fields["ping_times"].required = False
+
+    def clean(self):
+        if self.reader_study and not self.reader_study.is_launchable:
+            raise ValidationError("Reader study cannot be launched.")
+        return super().clean()
 
     class Meta:
         model = Session
