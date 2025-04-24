@@ -1739,7 +1739,7 @@ class Submission(FieldChangeMixin, UUIDModel):
 
     @cached_property
     def has_blocking_algorithm_jobs(self):
-        if not self.predictions_file:
+        if self.phase.submission_kind == SubmissionKindChoices.CSV:
             # prediction submissions never have blocking jobs
             return False
         else:
