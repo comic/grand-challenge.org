@@ -460,7 +460,6 @@ class TestObjectPermissionRequiredViews:
             ),
             ("submission-list", {}, "view_submission", s),
         ]:
-
             assign_perm(permission, u, obj)
 
             response = get_view_for_user(
@@ -1703,7 +1702,6 @@ def test_ground_truth_version_management(settings, client):
 
 @pytest.mark.django_db
 def test_evaluation_details_zero_rank_message(client):
-
     phase = PhaseFactory(
         challenge__hidden=False,
         score_jsonpath="acc.mean",
@@ -2183,7 +2181,6 @@ def test_submission_list_row_template_ajax_renders(client):
 
 @pytest.mark.django_db
 class TestSubmissionCreationWithExtraInputs:
-
     def create_submission(
         self,
         client,
@@ -2717,3 +2714,155 @@ def test_reschedule_evaluation_with_additional_inputs(
         in str(response.content)
     )
     assert Evaluation.objects.count() == evaluation_count
+
+
+@pytest.mark.parametrize(
+    "select_interfaces, status",
+    (
+        [[0, 1, 2], Evaluation.VALIDATING_INPUTS],  # full match
+        [
+            [0, 1],
+            Evaluation.CANCELLED,
+        ],  # different number, partially overlapping
+        [
+            [0, 1, 3],
+            Evaluation.CANCELLED,
+        ],  # same number, partially overlapping
+    ),
+)
+@pytest.mark.django_db
+def test_create_evaluation_requires_matching_algorithm_interfaces(
+    select_interfaces, status
+):
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    archive = ArchiveFactory()
+    phase.archive = archive
+    phase.save()
+
+    int1, int2, int3, int4 = AlgorithmInterfaceFactory.create_batch(4)
+    interfaces = [int1, int2, int3, int4]
+    phase.algorithm_interfaces.set(interfaces[0:3])
+
+    user = UserFactory()
+    phase.challenge.add_admin(user)
+    InvoiceFactory(
+        challenge=phase.challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    method = MethodFactory(
+        phase=phase,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+
+    algorithm = AlgorithmFactory()
+    algorithm.interfaces.set([interfaces[i] for i in select_interfaces])
+    algorithm.add_editor(user)
+    ai = AlgorithmImageFactory(algorithm=algorithm)
+
+    submission = SubmissionFactory(
+        phase=phase, creator=user, algorithm_image=ai
+    )
+    EvaluationFactory(
+        submission=submission,
+        method=method,
+        status=Evaluation.SUCCESS,
+        time_limit=10,
+    )
+
+    submission.create_evaluation(additional_inputs=None)
+
+    eval = Evaluation.objects.order_by("created").last()
+
+    assert eval.status == status
+    if status == Evaluation.CANCELLED:
+        assert (
+            "The algorithm interfaces do not match those defined for the phase."
+            in str(eval.error_message)
+        )
+
+
+@pytest.mark.parametrize(
+    "num_jobs, jobs_statuses, status",
+    (
+        [1, [Job.SUCCESS], Evaluation.VALIDATING_INPUTS],
+        [1, [Job.FAILURE], Evaluation.CANCELLED],
+        [2, [Job.FAILURE, Job.SUCCESS], Evaluation.CANCELLED],
+        [2, [Job.SUCCESS, Job.CANCELLED], Evaluation.CANCELLED],
+        [2, [Job.SUCCESS, Job.SUCCESS], Evaluation.VALIDATING_INPUTS],
+        [2, [Job.FAILURE, Job.CANCELLED], Evaluation.CANCELLED],
+        [2, [Job.PENDING, Job.SUCCESS], Evaluation.CANCELLED],
+    ),
+)
+@pytest.mark.django_db
+def test_create_evaluation_blocked_if_failed_jobs_exist(
+    num_jobs, jobs_statuses, status
+):
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+
+    interface = AlgorithmInterfaceFactory(inputs=[ci_str], outputs=[ci_bool])
+    phase.algorithm_interfaces.add(interface)
+
+    user = UserFactory()
+    phase.challenge.add_admin(user)
+    InvoiceFactory(
+        challenge=phase.challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    MethodFactory(
+        phase=phase,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+    archive = ArchiveFactory()
+    phase.archive = archive
+    phase.save()
+
+    civs = []
+    for i in range(num_jobs):
+        ai = ArchiveItemFactory(archive=archive)
+        civ = ComponentInterfaceValueFactory(
+            interface=ci_str, value=f"foo-{i}"
+        )
+        ai.values.set([civ])
+        civs.append(civ)
+
+    algorithm = AlgorithmFactory()
+    algorithm.interfaces.add(interface)
+    algorithm.add_editor(user)
+    ai = AlgorithmImageFactory(algorithm=algorithm)
+
+    for i in range(num_jobs):
+        j = AlgorithmJobFactory(
+            algorithm_image=ai,
+            time_limit=10,
+            status=jobs_statuses[i],
+            creator=None,
+            algorithm_interface=interface,
+        )
+        j.inputs.set([civs[i]])
+
+    submission = SubmissionFactory(
+        phase=phase, creator=user, algorithm_image=ai
+    )
+
+    submission.create_evaluation(additional_inputs=None)
+
+    eval = Evaluation.objects.order_by("created").last()
+    assert eval.status == status
+    if status == Evaluation.CANCELLED:
+        assert (
+            "There are non-successful jobs for this submission. These need to be handled first before you can re-evaluate. Please contact support."
+            in str(eval.error_message)
+        )

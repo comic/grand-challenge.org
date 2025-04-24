@@ -22,6 +22,7 @@ from grandchallenge.components.models import (
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.forms import (
     ConfigureAlgorithmPhasesForm,
+    EvaluationForm,
     EvaluationGroundTruthForm,
     EvaluationGroundTruthVersionManagementForm,
     PhaseUpdateForm,
@@ -29,7 +30,10 @@ from grandchallenge.evaluation.forms import (
 )
 from grandchallenge.evaluation.models import Evaluation, Phase, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.invoices.models import PaymentTypeChoices
+from grandchallenge.invoices.models import (
+    PaymentStatusChoices,
+    PaymentTypeChoices,
+)
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.verifications.models import (
     Verification,
@@ -142,9 +146,18 @@ class TestSubmissionForm:
 
     def test_algorithm_queryset_if_parent_phase_exists(self):
         editor = UserFactory()
-        alg1, alg2, alg3, alg4, alg5, alg6, alg7, alg8, alg9, alg10 = (
-            AlgorithmFactory.create_batch(10)
-        )
+        (
+            alg1,
+            alg2,
+            alg3,
+            alg4,
+            alg5,
+            alg6,
+            alg7,
+            alg8,
+            alg9,
+            alg10,
+        ) = AlgorithmFactory.create_batch(10)
         ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
         interface = AlgorithmInterfaceFactory(
             inputs=[ci1, ci2], outputs=[ci3, ci4]
@@ -1034,7 +1047,6 @@ def test_algorithm_for_phase_form_validation():
 
 @pytest.mark.django_db
 def test_user_algorithms_for_phase():
-
     def populate_form(interfaces):
         return AlgorithmForPhaseForm(
             workstation_config=WorkstationConfigFactory(),
@@ -1327,3 +1339,146 @@ def test_disjoint_algorithm_interface_sockets_and_evaluation_inputs():
         f"The following sockets are already configured as additional inputs or outputs on "
         f"{phase}: {ci2}" in str(form.errors["outputs"])
     )
+
+
+@pytest.mark.parametrize(
+    "select_interfaces, form_valid",
+    (
+        [[0, 1, 2], True],  # full match
+        [[0, 1], False],  # different number, partially overlapping
+        [[0, 1, 3], False],  # same number, partially overlapping
+    ),
+)
+@pytest.mark.django_db
+def test_reschedule_evaluation_requires_matching_algorithm_interfaces(
+    select_interfaces, form_valid
+):
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    archive = ArchiveFactory()
+    phase.archive = archive
+    phase.save()
+
+    int1, int2, int3, int4 = AlgorithmInterfaceFactory.create_batch(4)
+    interfaces = [int1, int2, int3, int4]
+    phase.algorithm_interfaces.set(interfaces[0:3])
+
+    user = UserFactory()
+    phase.challenge.add_admin(user)
+    InvoiceFactory(
+        challenge=phase.challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    method = MethodFactory(
+        phase=phase,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+
+    algorithm = AlgorithmFactory()
+    algorithm.interfaces.set([interfaces[i] for i in select_interfaces])
+    algorithm.add_editor(user)
+    ai = AlgorithmImageFactory(algorithm=algorithm)
+
+    submission = SubmissionFactory(
+        phase=phase, creator=user, algorithm_image=ai
+    )
+    EvaluationFactory(
+        submission=submission,
+        method=method,
+        status=Evaluation.SUCCESS,
+        time_limit=10,
+    )
+
+    form = EvaluationForm(submission=submission, user=user, data={})
+
+    assert form.is_valid() == form_valid
+    if not form_valid:
+        assert (
+            "The algorithm interfaces do not match those defined for the phase."
+            in str(form.errors)
+        )
+
+
+@pytest.mark.parametrize(
+    "num_jobs, jobs_statuses, form_valid",
+    (
+        [1, [Job.SUCCESS], True],
+        [1, [Job.FAILURE], False],
+        [2, [Job.FAILURE, Job.SUCCESS], False],
+        [2, [Job.SUCCESS, Job.CANCELLED], False],
+        [2, [Job.SUCCESS, Job.SUCCESS], True],
+        [2, [Job.FAILURE, Job.CANCELLED], False],
+        [2, [Job.PENDING, Job.SUCCESS], False],
+    ),
+)
+@pytest.mark.django_db
+def test_reschedule_evaluation_blocked_if_failed_jobs_exist(
+    num_jobs, jobs_statuses, form_valid
+):
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+
+    interface = AlgorithmInterfaceFactory(inputs=[ci_str], outputs=[ci_bool])
+    phase.algorithm_interfaces.add(interface)
+
+    user = UserFactory()
+    phase.challenge.add_admin(user)
+    InvoiceFactory(
+        challenge=phase.challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    MethodFactory(
+        phase=phase,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+    archive = ArchiveFactory()
+    phase.archive = archive
+    phase.save()
+
+    civs = []
+    for i in range(num_jobs):
+        ai = ArchiveItemFactory(archive=archive)
+        civ = ComponentInterfaceValueFactory(
+            interface=ci_str, value=f"foo-{i}"
+        )
+        ai.values.set([civ])
+        civs.append(civ)
+
+    algorithm = AlgorithmFactory()
+    algorithm.interfaces.add(interface)
+    algorithm.add_editor(user)
+    ai = AlgorithmImageFactory(algorithm=algorithm)
+
+    for i in range(num_jobs):
+        j = AlgorithmJobFactory(
+            algorithm_image=ai,
+            time_limit=10,
+            status=jobs_statuses[i],
+            creator=None,
+            algorithm_interface=interface,
+        )
+        j.inputs.set([civs[i]])
+
+    submission = SubmissionFactory(
+        phase=phase, creator=user, algorithm_image=ai
+    )
+
+    form = EvaluationForm(submission=submission, user=user, data={})
+
+    assert form.is_valid() == form_valid
+    if not form_valid:
+        assert (
+            "There are non-successful jobs for this submission. These need to be handled first before you can re-evaluate. Please contact support."
+            in str(form.errors)
+        )
