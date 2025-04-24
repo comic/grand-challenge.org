@@ -1670,19 +1670,20 @@ class Submission(FieldChangeMixin, UUIDModel):
                 status=Evaluation.VALIDATING_INPUTS,
             )
 
-        if not self.has_matching_algorithm_interfaces:
-            evaluation.update_status(
-                status=Evaluation.CANCELLED,
-                error_message="The algorithm interfaces do not match those defined for the phase.",
-            )
+        if self.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
+            if not self.has_matching_algorithm_interfaces:
+                evaluation.update_status(
+                    status=Evaluation.CANCELLED,
+                    error_message="The algorithm interfaces do not match those defined for the phase.",
+                )
 
-        if self.has_blocking_algorithm_jobs:
-            evaluation.update_status(
-                status=Evaluation.CANCELLED,
-                error_message="There are non-successful jobs for this submission. "
-                "These need to be handled first before you can "
-                "re-evaluate. Please contact support.",
-            )
+            if self.has_blocking_algorithm_jobs:
+                evaluation.update_status(
+                    status=Evaluation.CANCELLED,
+                    error_message="There are non-successful jobs for this submission. "
+                    "These need to be handled first before you can "
+                    "re-evaluate. Please contact support.",
+                )
 
         if additional_inputs:
             evaluation.validate_values_and_execute_linked_task(
@@ -1739,35 +1740,31 @@ class Submission(FieldChangeMixin, UUIDModel):
 
     @cached_property
     def has_blocking_algorithm_jobs(self):
-        if self.phase.submission_kind == SubmissionKindChoices.CSV:
-            # prediction submissions never have blocking jobs
-            return False
+        # are there non-successful jobs for the algorithm image, model and archive?
+        algorithm_interfaces = self.phase.algorithm_interfaces.all()
+
+        items = get_archive_items_for_interfaces(
+            algorithm_interfaces=algorithm_interfaces,
+            archive_items=self.phase.archive.items.all(),
+        )
+        non_success_statuses = [
+            status[0]
+            for status in Job.STATUS_CHOICES
+            if status[0] != Job.SUCCESS
+        ]
+
+        jobs = get_valid_jobs_for_interfaces_and_archive_items(
+            algorithm_image=self.algorithm_image,
+            algorithm_model=self.algorithm_model,
+            algorithm_interfaces=algorithm_interfaces,
+            valid_archive_items_per_interface=items,
+            subset_by_status=non_success_statuses,
+        )
+
+        if any(jobs.values()):
+            return True
         else:
-            # are there non-successful jobs for the algorithm image, model and archive?
-            algorithm_interfaces = self.phase.algorithm_interfaces.all()
-
-            items = get_archive_items_for_interfaces(
-                algorithm_interfaces=algorithm_interfaces,
-                archive_items=self.phase.archive.items.all(),
-            )
-            non_success_statuses = [
-                status[0]
-                for status in Job.STATUS_CHOICES
-                if status[0] != Job.SUCCESS
-            ]
-
-            jobs = get_valid_jobs_for_interfaces_and_archive_items(
-                algorithm_image=self.algorithm_image,
-                algorithm_model=self.algorithm_model,
-                algorithm_interfaces=algorithm_interfaces,
-                valid_archive_items_per_interface=items,
-                subset_by_status=non_success_statuses,
-            )
-
-            if any(jobs.values()):
-                return True
-            else:
-                return False
+            return False
 
 
 class SubmissionUserObjectPermission(UserObjectPermissionBase):

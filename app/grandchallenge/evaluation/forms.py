@@ -731,17 +731,23 @@ class EvaluationForm(AdditionalInputsMixin, forms.Form):
     def clean(self):
         cleaned_data = super().clean()
 
-        if not cleaned_data["submission"].has_matching_algorithm_interfaces:
-            raise ValidationError(
-                "The algorithm interfaces do not match those "
-                "defined for the phase."
-            )
+        if (
+            cleaned_data["submission"].phase.submission_kind
+            == SubmissionKindChoices.ALGORITHM
+        ):
+            if not cleaned_data[
+                "submission"
+            ].has_matching_algorithm_interfaces:
+                raise ValidationError(
+                    "The algorithm interfaces do not match those "
+                    "defined for the phase."
+                )
 
-        if cleaned_data["submission"].has_blocking_algorithm_jobs:
-            raise ValidationError(
-                "There are non-successful jobs for this submission. These need "
-                "to be handled first before you can re-evaluate. Please contact support."
-            )
+            if cleaned_data["submission"].has_blocking_algorithm_jobs:
+                raise ValidationError(
+                    "There are non-successful jobs for this submission. These need "
+                    "to be handled first before you can re-evaluate. Please contact support."
+                )
 
         # Fetch from the db to get the cost annotations
         # Maybe this is solved with GeneratedField (Django 5)?
