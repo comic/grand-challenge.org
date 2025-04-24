@@ -121,6 +121,9 @@ class AlgorithmInterface(UUIDModel):
 
     objects = AlgorithmInterfaceManager()
 
+    class Meta:
+        ordering = ("created",)
+
     def delete(self, *args, **kwargs):
         raise ValidationError("AlgorithmInterfaces cannot be deleted.")
 
