@@ -2619,6 +2619,10 @@ def test_reschedule_evaluation_with_additional_inputs(
     ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     phase.additional_evaluation_inputs.set([ci_str, ci_bool])
 
+    archive = ArchiveFactory()
+    phase.archive = archive
+    phase.save()
+
     user = UserFactory()
     phase.challenge.add_admin(user)
     InvoiceFactory(
