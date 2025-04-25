@@ -1,4 +1,7 @@
+import io
 from datetime import datetime
+from pathlib import Path
+from zipfile import ZipFile
 
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
@@ -12,7 +15,7 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Prefetch, Q
-from django.http import Http404
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
@@ -26,6 +29,7 @@ from django.views.generic import (
     RedirectView,
     UpdateView,
 )
+from grand_challenge_forge.forge import generate_challenge_pack
 from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
@@ -43,6 +47,9 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
     filter_by_permission,
+)
+from grandchallenge.core.utils.grand_challenge_forge import (
+    get_forge_challenge_pack_context,
 )
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.direct_messages.forms import ConversationForm
@@ -1412,3 +1419,34 @@ class AlgorithmInterfaceForPhaseDelete(
             }
         )
         return context
+
+
+class PhaseStarterKitDownload(ObjectPermissionRequiredMixin, DetailView):
+    model = Phase
+    permission_required = "evaluation.change_phase"
+    raise_exception = True
+
+    def get(self, *_, **__):
+        phase = self.get_object()
+        dir_name = f"{phase.challenge.short_name}-starter-kit"
+
+        forge_context = get_forge_challenge_pack_context(
+            challenge=phase.challenge,
+            phase_pks=[phase.pk],
+        )
+
+        buffer = io.BytesIO()
+        with ZipFile(buffer, "w") as zipf:
+            generate_challenge_pack(
+                context=forge_context,
+                output_zip_file=zipf,
+                target_zpath=Path(dir_name),
+            )
+        buffer.seek(0)
+
+        return FileResponse(
+            streaming_content=buffer,
+            as_attachment=True,
+            filename=f"{dir_name}.zip",
+            content_type="application/zip",
+        )
