@@ -1450,7 +1450,7 @@ class PhaseStarterKitDownload(
 
     def get(self, *_, **__):
         phase = self.get_object()
-        dir_name = f"{phase.challenge.short_name}-starter-kit"
+        dir_name = f"{phase.challenge.short_name}-{phase.slug}-starter-kit"
 
         forge_context = get_forge_challenge_pack_context(
             challenge=phase.challenge,

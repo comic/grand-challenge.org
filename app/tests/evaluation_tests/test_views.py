@@ -2864,7 +2864,7 @@ def test_phase_starter_kit_download(client):
     zip_file = zipfile.ZipFile(buffer)
 
     # Spot check for expected files in the zip
-    root = Path(f"{phase.challenge.short_name}-starter-kit")
+    root = Path(f"{phase.challenge.short_name}-{phase.slug}-starter-kit")
 
     expected_files = [
         root / "README.md",
