@@ -864,10 +864,11 @@
 <div class="viewcode-block" id="SessionCost.save">
 <a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.SessionCost.save">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">creator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">creator</span>
+        <span class="n">adding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">adding</span>
+
+        <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="n">reader_studies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">reader_studies</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">reader_studies</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">reader_studies</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">creator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">creator</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">interactive_algorithms</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
                 <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">reader_study__in</span><span class="o">=</span><span class="n">reader_studies</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">interactive_algorithm</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
@@ -876,7 +877,10 @@
                 <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
             <span class="p">)</span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reader_studies</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">reader_studies</span><span class="p">)</span></div>
 
 
     <span class="nd">@property</span>
