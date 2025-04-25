@@ -1,0 +1,58 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load url %}
+
+{% block title %}
+    Starter kit for {{ object.title }} - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Starter kit for {{ object.title }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2 class="mb-3">Starter kit for {{ object.title }}</h2>
+
+    <p>
+       The starter kit is a Git-ready, custom-tailored set of examples designed specifically for this phase,
+       including input handling and output generation. It provides a strong foundation for building the necessary components
+       for this challenge phase.
+    </p>
+
+    <p>
+        The starter kit includes:
+        <ul>
+            <li>A script to <strong>automate uploading data</strong> to an archive</li>
+            <li>An <strong>submission algorithm</strong> that can be uploaded to run as a submission in a challenge phase</li>
+            <li>An <strong>evaluation method</strong> that evaluates algorithm submissions and generates performance metrics for ranking</li>
+        </ul>
+    </p>
+
+    {% if object.archive and object.submission_kind == object.SubmissionKindChoices.ALGORITHM %}
+
+        <a class="btn btn-primary"
+           href="{% url 'evaluation:phase-starter-kit-download' challenge_short_name=challenge.short_name slug=object.slug %}">
+            <i class="fa fa-download pr-2"></i>Download Phase Starter Kit
+        </a>
+
+    {% elif object.submission_kind != object.SubmissionKindChoices.ALGORITHM or not object.archive %}
+        <p>
+            This phase does not have an archive linked to it or is not set up as an algorithm-accepting phase.
+        </p>
+        <p>
+            These are pre-requisites for generating a starter kit.
+        </p>
+        <p>
+            Contact <a href="mailto:support@grand-challenge.org">Grand Challenge Support</a> for help with getting these set up.
+        </p>
+
+    {% endif %}
+
+{% endblock %}

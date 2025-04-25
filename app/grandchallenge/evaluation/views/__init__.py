@@ -1421,7 +1421,29 @@ class AlgorithmInterfaceForPhaseDelete(
         return context
 
 
-class PhaseStarterKitDownload(ObjectPermissionRequiredMixin, DetailView):
+class PhaseStarterKitInfo(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
+    model = Phase
+    permission_required = "evaluation.change_phase"
+    raise_exception = True
+    template_name = "evaluation/phase_starter_kit.html"
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            Phase,
+            challenge=self.request.challenge,
+            slug=self.kwargs["slug"],
+        )
+
+
+class PhaseStarterKitDownload(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
     model = Phase
     permission_required = "evaluation.change_phase"
     raise_exception = True

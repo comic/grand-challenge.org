@@ -2722,6 +2722,75 @@ def test_reschedule_evaluation_with_additional_inputs(
 
 
 @pytest.mark.django_db
+def test_phase_starter_kit_info(client):
+    challenge = ChallengeFactory()
+    admin, participant, user = UserFactory.create_batch(3)
+
+    challenge.add_admin(admin)
+    challenge.add_participant(participant)
+
+    # Note: missing archive / algorithm submission kind
+    phase_not_setup = PhaseFactory(
+        challenge=challenge,
+        submission_kind=SubmissionKindChoices.CSV,
+    )
+
+    phase_setup = PhaseFactory(
+        challenge=challenge,
+        archive=ArchiveFactory(),
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+    )
+
+    phase_setup.algorithm_interfaces.set(
+        [
+            AlgorithmInterfaceFactory(
+                inputs=[
+                    ComponentInterfaceFactory(
+                        kind=ComponentInterface.Kind.IMAGE
+                    ),
+                ],
+                outputs=[
+                    ComponentInterfaceFactory(
+                        kind=ComponentInterface.Kind.FLOAT
+                    ),
+                ],
+            )
+        ]
+    )
+
+    for phase in [phase_not_setup, phase_setup]:
+
+        # Permissions
+        for usr in [participant, user]:
+            response = get_view_for_user(
+                viewname="evaluation:phase-starter-kit-info",
+                reverse_kwargs={
+                    "slug": phase.slug,
+                    "challenge_short_name": phase.challenge.short_name,
+                },
+                client=client,
+                user=usr,
+            )
+
+            assert (
+                response.status_code == 403
+            ), "Participant or anonym user should not be able to view starter kit info"
+
+        # Admin
+        response = get_view_for_user(
+            viewname="evaluation:phase-starter-kit-info",
+            reverse_kwargs={
+                "slug": phase.slug,
+                "challenge_short_name": phase.challenge.short_name,
+            },
+            client=client,
+            user=admin,
+        )
+
+        assert response.status_code == 200, "Admin can view starter kit info"
+
+
+@pytest.mark.django_db
 def test_phase_starter_kit_download(client):
     phase = PhaseFactory(
         archive=ArchiveFactory(),
@@ -2775,7 +2844,7 @@ def test_phase_starter_kit_download(client):
 
     assert (
         response.status_code == 200
-    ), "Editor can download starer kit"  # Sanity
+    ), "Admin can download starer kit"  # Sanity
 
     assert (
         response["Content-Type"] == "application/zip"
