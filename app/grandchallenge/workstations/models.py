@@ -759,10 +759,11 @@ class SessionCost(UUIDModel):
     )
 
     def save(self, *args, **kwargs) -> None:
-        if self._state.adding:
-            self.creator = self.session.creator
+        adding = self._state.adding
+
+        if adding:
             reader_studies = self.session.reader_studies.all()
-            self.reader_studies.set(reader_studies)
+            self.creator = self.session.creator
             self.interactive_algorithms = list(
                 Question.objects.filter(reader_study__in=reader_studies)
                 .exclude(interactive_algorithm="")
@@ -772,6 +773,9 @@ class SessionCost(UUIDModel):
             )
 
         super().save(*args, **kwargs)
+
+        if adding:
+            self.reader_studies.set(reader_studies)
 
     @property
     def credits_per_hour(self):
