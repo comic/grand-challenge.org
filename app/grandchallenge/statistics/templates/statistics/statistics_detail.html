@@ -2,6 +2,8 @@
 {% load humanize %}
 {% load url %}
 {% load static %}
+{% load naturaldelta %}
+{% load costs %}
 
 {% block title %}
     Statistics - {{ block.super }}
@@ -202,6 +204,50 @@
         <dd>{{ workstations.False|intcomma }}</dd>
 
     </dl>
+
+    {% if request.user.is_staff %}
+
+        <h3>Storage</h3>
+
+        <table class="table table-hover table-borderless">
+            <thead class="thead-light">
+                <tr>
+                    <th>Property</th>
+                    <th>Size in Storage</th>
+                    <th>Size in Registry</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key, sizes in storage_data.items %}
+                    <tr>
+                        <td>{{ key|title }}</td>
+                        <td>{{ sizes.storage_size|naturalsize }}</td>
+                        <td>{{ sizes.registry_size|naturalsize }}</td>
+                    </tr>
+                {% endfor %}
+
+                <tr class="table-info">
+                    <td>Total</td>
+                    <td>{{ storage_total|naturalsize }}</td>
+                    <td>{{ registry_total|naturalsize }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Jobs This Month</h3>
+
+        <dl class="inline">
+
+            <dt>Algorthm Jobs</dt>
+            <dd>{{ this_month_jobs.algorithm_jobs.compute_cost_euro_millicents__sum|millicents_to_euro }}</dd>
+
+            <dt>Evaluations</dt>
+            <dd>{{ this_month_jobs.evaluations.compute_cost_euro_millicents__sum|millicents_to_euro }}</dd>
+
+        </dl>
+
+    {% endif %}
+
 {% endblock %}
 
 {% block script %}
