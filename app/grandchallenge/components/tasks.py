@@ -267,11 +267,13 @@ def remove_container_image_from_registry(
     if instance.latest_shimmed_version:
         remove_tag_from_registry(repo_tag=instance.shimmed_repo_tag)
         instance.latest_shimmed_version = ""
+        instance.is_desired_version = False
         instance.save()
 
     if instance.is_in_registry:
         remove_tag_from_registry(repo_tag=instance.original_repo_tag)
         instance.is_in_registry = False
+        instance.is_desired_version = False
         instance.save()
 
 
@@ -287,6 +289,7 @@ def archive_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     if instance.image:
         instance.image.delete(save=False)
         instance.is_archived = True
+        instance.is_desired_version = False
         instance.save()
 
 

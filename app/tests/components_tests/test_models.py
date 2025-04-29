@@ -1406,6 +1406,7 @@ def test_remove_container_image_from_registry(
         ai.latest_shimmed_version == settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
     )
     assert ai.is_in_registry is True
+    assert ai.is_desired_version is True
     assert ai.is_archived is False
     assert ai.size_in_storage != 0
     assert ai.size_in_registry != 0
@@ -1428,6 +1429,7 @@ def test_remove_container_image_from_registry(
     assert ai.is_manifest_valid is True
     assert ai.latest_shimmed_version == ""
     assert ai.is_in_registry is False
+    assert ai.is_desired_version is False
     assert ai.is_archived is False
     assert ai.size_in_storage != 0
     assert ai.size_in_registry == 0
@@ -1471,6 +1473,7 @@ def test_archive_container_image(
         ai.latest_shimmed_version == settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
     )
     assert ai.is_in_registry is True
+    assert ai.is_desired_version is True
     assert ai.image != ""
     assert ai.is_archived is False
     assert ai.size_in_storage != 0
@@ -1494,6 +1497,7 @@ def test_archive_container_image(
     assert ai.is_manifest_valid is True
     assert ai.latest_shimmed_version == ""
     assert ai.is_in_registry is False
+    assert ai.is_desired_version is False
     assert ai.image == ""
     assert ai.is_archived is True
     assert ai.size_in_storage == 0
