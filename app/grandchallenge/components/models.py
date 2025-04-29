@@ -2095,24 +2095,23 @@ class ComponentImage(FieldChangeMixin, models.Model):
             pass
 
     def save(self, *args, **kwargs):
-        image_needs_validation = (
-            self.import_status == ImportStatusChoices.INITIALIZED
-            and self.is_manifest_valid is None
-        )
-        validate_image_now = False
-
         if self.image and self.is_archived:
             raise RuntimeError("Image cannot be set when archived")
 
-        if self.initial_value("image"):
-            if self.has_changed("image"):
-                raise RuntimeError("The image cannot be changed")
-            if image_needs_validation:
-                self.import_status = ImportStatusChoices.QUEUED
-                validate_image_now = True
-        elif self.image and image_needs_validation:
+        if self.initial_value("image") and self.has_changed("image"):
+            raise RuntimeError("The image cannot be changed")
+
+        image_needs_validation = (
+            self.image
+            and self.import_status == ImportStatusChoices.INITIALIZED
+            and self.is_manifest_valid is None
+        )
+
+        if image_needs_validation:
             self.import_status = ImportStatusChoices.QUEUED
             validate_image_now = True
+        else:
+            validate_image_now = False
 
         if self.has_changed("image") or self.has_changed("is_in_registry"):
             self.update_size_in_storage()
