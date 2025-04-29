@@ -38,7 +38,7 @@ from grandchallenge.components.backends.exceptions import (
     TaskCancelled,
 )
 from grandchallenge.components.emails import send_invalid_dockerfile_email
-from grandchallenge.components.exceptions import PriorStepFailed
+from grandchallenge.components.exceptions import InstanceInUse, PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.core.celery import (
     _retry,
@@ -219,7 +219,7 @@ def remove_inactive_container_images():
                     )
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(ignore_errors=(InstanceInUse,))
 def remove_container_image_from_registry(
     *, pk: uuid.UUID, app_label: str, model_name: str
 ):
@@ -229,8 +229,7 @@ def remove_container_image_from_registry(
 
     from grandchallenge.algorithms.models import AlgorithmImage, Job
     from grandchallenge.evaluation.models import Evaluation, Method
-
-    instance_in_use = False
+    from grandchallenge.workstations.models import Session, Workstation
 
     if isinstance(instance, Method):
         instance_in_use = (
@@ -253,9 +252,17 @@ def remove_container_image_from_registry(
             .active()
             .exists()
         )
+    elif isinstance(instance, Workstation):
+        instance_in_use = (
+            Session.objects.filter(workstation_image=instance)
+            .active()
+            .exists()
+        )
+    else:
+        raise RuntimeError("Unknown instance type")
 
     if instance_in_use:
-        return
+        raise InstanceInUse
 
     if instance.latest_shimmed_version:
         remove_tag_from_registry(repo_tag=instance.shimmed_repo_tag)
@@ -265,6 +272,21 @@ def remove_container_image_from_registry(
     if instance.is_in_registry:
         remove_tag_from_registry(repo_tag=instance.original_repo_tag)
         instance.is_in_registry = False
+        instance.save()
+
+
+@acks_late_2xlarge_task(ignore_errors=(InstanceInUse,))
+def archive_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
+    remove_container_image_from_registry(
+        pk=pk, app_label=app_label, model_name=model_name
+    )
+
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    instance = model.objects.get(pk=pk)
+
+    if instance.image:
+        instance.image.delete(save=False)
+        instance.is_archived = True
         instance.save()
 
 

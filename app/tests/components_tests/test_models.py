@@ -27,6 +27,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
+    archive_container_image,
     remove_container_image_from_registry,
 )
 from grandchallenge.core.storage import (
@@ -1405,6 +1406,9 @@ def test_remove_container_image_from_registry(
         ai.latest_shimmed_version == settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
     )
     assert ai.is_in_registry is True
+    assert ai.is_archived is False
+    assert ai.size_in_storage != 0
+    assert ai.size_in_registry != 0
 
     old_shimmed_repo_tag = ai.shimmed_repo_tag
 
@@ -1424,6 +1428,76 @@ def test_remove_container_image_from_registry(
     assert ai.is_manifest_valid is True
     assert ai.latest_shimmed_version == ""
     assert ai.is_in_registry is False
+    assert ai.is_archived is False
+    assert ai.size_in_storage != 0
+    assert ai.size_in_registry == 0
+
+    assert mock_remove_tag_from_registry.call_count == 2
+
+    expected_calls = [
+        call(repo_tag=old_shimmed_repo_tag),
+        call(repo_tag=ai.original_repo_tag),
+    ]
+
+    mock_remove_tag_from_registry.assert_has_calls(
+        expected_calls, any_order=False
+    )
+
+
+@pytest.mark.django_db
+def test_archive_container_image(
+    algorithm_image,
+    settings,
+    django_capture_on_commit_callbacks,
+    mocker,
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    mock_remove_tag_from_registry = mocker.patch(
+        # remove_tag_from_registry is only implemented for ECR
+        "grandchallenge.components.tasks.remove_tag_from_registry"
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+
+    ai.refresh_from_db()
+
+    assert ai.can_execute is True
+    assert ai.is_manifest_valid is True
+    assert (
+        ai.latest_shimmed_version == settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+    )
+    assert ai.is_in_registry is True
+    assert ai.image != ""
+    assert ai.is_archived is False
+    assert ai.size_in_storage != 0
+    assert ai.size_in_registry != 0
+
+    old_shimmed_repo_tag = ai.shimmed_repo_tag
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        archive_container_image(
+            pk=ai.pk,
+            app_label=ai._meta.app_label,
+            model_name=ai._meta.model_name,
+        )
+
+    assert len(callbacks) == 0
+
+    ai.refresh_from_db()
+    del ai.can_execute
+
+    assert ai.can_execute is False
+    assert ai.is_manifest_valid is True
+    assert ai.latest_shimmed_version == ""
+    assert ai.is_in_registry is False
+    assert ai.image == ""
+    assert ai.is_archived is True
+    assert ai.size_in_storage == 0
+    assert ai.size_in_registry == 0
 
     assert mock_remove_tag_from_registry.call_count == 2
 

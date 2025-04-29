@@ -2095,10 +2095,14 @@ class ComponentImage(FieldChangeMixin, models.Model):
             pass
 
     def save(self, *args, **kwargs):
-        if self.image and self.is_archived:
+        if self.is_archived and self.image:
             raise RuntimeError("Image cannot be set when archived")
 
-        if self.initial_value("image") and self.has_changed("image"):
+        if (
+            not self.is_archived
+            and self.initial_value("image")
+            and self.has_changed("image")
+        ):
             raise RuntimeError("The image cannot be changed")
 
         image_needs_validation = (
