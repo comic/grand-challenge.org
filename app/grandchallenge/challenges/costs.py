@@ -10,7 +10,11 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.cases.models import ImageFile
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.evaluation.models import Evaluation, Method
+from grandchallenge.evaluation.models import (
+    Evaluation,
+    EvaluationGroundTruth,
+    Method,
+)
 
 
 def annotate_job_duration_and_compute_costs(*, phase):
@@ -134,6 +138,12 @@ def update_size_in_storage_and_registry(
         .aggregate(Sum("size_in_storage"), Sum("size_in_registry"))
     )
 
+    ground_truth_storage = (
+        EvaluationGroundTruth.objects.filter(phase__challenge=challenge)
+        .distinct()
+        .aggregate(Sum("size_in_storage"))
+    )
+
     items = [
         archive_image_storage,
         archive_file_storage,
@@ -144,6 +154,7 @@ def update_size_in_storage_and_registry(
         algorithm_storage,
         algorithm_model_storage,
         method_storage,
+        ground_truth_storage,
     ]
 
     challenge.size_in_storage = sum(

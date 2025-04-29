@@ -53,6 +53,17 @@ class StatisticsDetail(TemplateView):
             update_site_statistics_cache()
             stats = cache.get(settings.STATISTICS_SITE_CACHE_KEY)
 
+        storage_data = {}
+
+        for key, value in stats.get("storage", {}).items():
+            storage_size = value.get("size_in_storage__sum", 0) or 0
+            registry_size = value.get("size_in_registry__sum", 0) or 0
+
+            storage_data[key.replace("_", " ")] = {
+                "storage_size": storage_size,
+                "registry_size": registry_size,
+            }
+
         context.update(
             {
                 "users": bar(
@@ -311,6 +322,14 @@ class StatisticsDetail(TemplateView):
                     .annotate(object_count=Count("public"))
                     .order_by("public")
                 },
+                "storage_data": storage_data,
+                "storage_total": sum(
+                    v["storage_size"] for v in storage_data.values()
+                ),
+                "registry_total": sum(
+                    v["registry_size"] for v in storage_data.values()
+                ),
+                "this_month_jobs": stats.get("this_month_jobs"),
             }
         )
 

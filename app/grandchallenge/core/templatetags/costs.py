@@ -6,7 +6,11 @@ register = template.Library()
 
 @register.filter
 def millicents_to_euro(millicents):
-    euros = millicents / 1000 / 100
+    try:
+        euros = millicents / 1000 / 100
+    except TypeError:
+        return "-"
+
     return f"€ {euros:.2f}"
 
 
