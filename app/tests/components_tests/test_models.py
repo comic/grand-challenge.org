@@ -1293,6 +1293,30 @@ def test_can_execute():
 
 
 @pytest.mark.django_db
+def test_can_execute_archived_image():
+    ai = AlgorithmImageFactory(image=None)
+
+    assert ai.can_execute is False
+    assert ai not in AlgorithmImage.objects.executable_images()
+
+    ai.is_manifest_valid = True
+    ai.is_in_registry = True
+    ai.is_archived = False
+    ai.save()
+
+    del ai.can_execute
+    assert ai.can_execute is True
+    assert ai in AlgorithmImage.objects.executable_images()
+
+    ai.is_archived = True
+    ai.save()
+
+    del ai.can_execute
+    assert ai.can_execute is False
+    assert ai not in AlgorithmImage.objects.executable_images()
+
+
+@pytest.mark.django_db
 def test_no_job_without_image(django_capture_on_commit_callbacks):
     with django_capture_on_commit_callbacks() as callbacks:
         ai = AlgorithmImageFactory(image=None)
@@ -1334,10 +1358,24 @@ def test_can_change_from_empty(django_capture_on_commit_callbacks):
 def test_cannot_change_image(algorithm_image):
     ai = AlgorithmImageFactory(image__from_path=algorithm_image)
 
-    ai.image = "blah"
+    ai.image = ContentFile(b"Foo1", name="blah")
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError) as error:
         ai.save()
+
+    assert str(error.value) == "The image cannot be changed"
+
+
+@pytest.mark.django_db
+def test_cannot_add_image_when_archived(algorithm_image):
+    ai = AlgorithmImageFactory(is_archived=True, image="")
+
+    ai.image = ContentFile(b"Foo1", name="blah")
+
+    with pytest.raises(RuntimeError) as error:
+        ai.save()
+
+    assert str(error.value) == "Image cannot be set when archived"
 
 
 @pytest.mark.django_db
