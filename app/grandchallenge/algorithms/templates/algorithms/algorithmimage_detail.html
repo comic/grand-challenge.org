@@ -32,19 +32,25 @@
     {% get_obj_perms request.user for object as "algorithm_image_perms" %}
     {% get_obj_perms request.user for object.algorithm as "algorithm_perms" %}
 
-    {% if object.can_execute and "change_algorithmimage" in algorithm_image_perms %}
-        <a class="btn btn-primary"
-           href="{% url 'algorithms:image-update' slug=object.algorithm.slug pk=object.pk %}">
-            <i class="fa fa-edit"></i> Edit this algorithm image
-        </a><br>
-    {% endif %}
+    {% if object.is_archived %}
+        <div class="alert alert-info">
+            This Algorithm Container Image has been removed from the platform and can no longer be used
+        </div>
+    {% else %}
+        {% if object.can_execute and "change_algorithmimage" in algorithm_image_perms %}
+            <a class="btn btn-primary"
+               href="{% url 'algorithms:image-update' slug=object.algorithm.slug pk=object.pk %}">
+                <i class="fa fa-edit"></i> Edit this algorithm image
+            </a><br>
+        {% endif %}
 
-    {% if object.is_manifest_valid and not object.algorithm.image_upload_in_progress and not object.is_desired_version and "change_algorithm" in algorithm_perms %}
-        <div class="my-2">Activating an image will result in this image being used for future algorithm runs:</div>
-        <div class="mb-2">{% crispy image_activate_form %}</div>
-    {% endif %}
+        {% if object.is_manifest_valid and not object.algorithm.image_upload_in_progress and not object.is_desired_version and "change_algorithm" in algorithm_perms %}
+            <div class="my-2">Activating an image will result in this image being used for future algorithm runs:</div>
+            <div class="mb-2">{% crispy image_activate_form %}</div>
+        {% endif %}
 
-    <span class="badge p-2 my-2 {% if object.can_execute and object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.can_execute and object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active image for this algorithm{% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>
+        <span class="badge p-2 my-2 {% if object.can_execute and object.is_desired_version %} badge-success {% else %} badge-danger {% endif %}">{% if object.can_execute and object.is_desired_version %}<i class="fa fa-check-circle mr-1"></i> Active image for this algorithm{% else %} <i class="fa fa-times-circle mr-1"></i> Inactive {% endif %}</span>
+    {% endif %}
 
     <dl class="inline">
         <dt>ID</dt>
