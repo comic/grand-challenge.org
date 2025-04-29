@@ -278,7 +278,7 @@ def remove_container_image_from_registry(
 
 
 @acks_late_2xlarge_task(ignore_errors=(InstanceInUse,))
-def archive_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
+def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     remove_container_image_from_registry(
         pk=pk, app_label=app_label, model_name=model_name
     )
@@ -288,7 +288,7 @@ def archive_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     if instance.image:
         instance.image.delete(save=False)
-        instance.is_archived = True
+        instance.is_removed = True
         instance.is_desired_version = False
         instance.save()
 

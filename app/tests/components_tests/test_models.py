@@ -27,7 +27,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
-    archive_container_image,
+    delete_container_image,
     remove_container_image_from_registry,
 )
 from grandchallenge.core.storage import (
@@ -1294,7 +1294,7 @@ def test_can_execute():
 
 
 @pytest.mark.django_db
-def test_can_execute_archived_image():
+def test_can_execute_removed_image():
     ai = AlgorithmImageFactory(image=None)
 
     assert ai.can_execute is False
@@ -1302,14 +1302,14 @@ def test_can_execute_archived_image():
 
     ai.is_manifest_valid = True
     ai.is_in_registry = True
-    ai.is_archived = False
+    ai.is_removed = False
     ai.save()
 
     del ai.can_execute
     assert ai.can_execute is True
     assert ai in AlgorithmImage.objects.executable_images()
 
-    ai.is_archived = True
+    ai.is_removed = True
     ai.save()
 
     del ai.can_execute
@@ -1368,15 +1368,15 @@ def test_cannot_change_image(algorithm_image):
 
 
 @pytest.mark.django_db
-def test_cannot_add_image_when_archived(algorithm_image):
-    ai = AlgorithmImageFactory(is_archived=True, image="")
+def test_cannot_add_image_when_removed(algorithm_image):
+    ai = AlgorithmImageFactory(is_removed=True, image="")
 
     ai.image = ContentFile(b"Foo1", name="blah")
 
     with pytest.raises(RuntimeError) as error:
         ai.save()
 
-    assert str(error.value) == "Image cannot be set when archived"
+    assert str(error.value) == "Image cannot be set when removed"
 
 
 @pytest.mark.django_db
@@ -1407,7 +1407,7 @@ def test_remove_container_image_from_registry(
     )
     assert ai.is_in_registry is True
     assert ai.is_desired_version is True
-    assert ai.is_archived is False
+    assert ai.is_removed is False
     assert ai.size_in_storage != 0
     assert ai.size_in_registry != 0
 
@@ -1430,7 +1430,7 @@ def test_remove_container_image_from_registry(
     assert ai.latest_shimmed_version == ""
     assert ai.is_in_registry is False
     assert ai.is_desired_version is False
-    assert ai.is_archived is False
+    assert ai.is_removed is False
     assert ai.size_in_storage != 0
     assert ai.size_in_registry == 0
 
@@ -1447,7 +1447,7 @@ def test_remove_container_image_from_registry(
 
 
 @pytest.mark.django_db
-def test_archive_container_image(
+def test_delete_container_image(
     algorithm_image,
     settings,
     django_capture_on_commit_callbacks,
@@ -1475,14 +1475,14 @@ def test_archive_container_image(
     assert ai.is_in_registry is True
     assert ai.is_desired_version is True
     assert ai.image != ""
-    assert ai.is_archived is False
+    assert ai.is_removed is False
     assert ai.size_in_storage != 0
     assert ai.size_in_registry != 0
 
     old_shimmed_repo_tag = ai.shimmed_repo_tag
 
     with django_capture_on_commit_callbacks() as callbacks:
-        archive_container_image(
+        delete_container_image(
             pk=ai.pk,
             app_label=ai._meta.app_label,
             model_name=ai._meta.model_name,
@@ -1499,7 +1499,7 @@ def test_archive_container_image(
     assert ai.is_in_registry is False
     assert ai.is_desired_version is False
     assert ai.image == ""
-    assert ai.is_archived is True
+    assert ai.is_removed is True
     assert ai.size_in_storage == 0
     assert ai.size_in_registry == 0
 

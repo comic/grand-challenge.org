@@ -727,8 +727,8 @@ class ImageActivateForm(Form):
     def clean_algorithm_image(self):
         algorithm_image = self.cleaned_data["algorithm_image"]
 
-        if algorithm_image.is_archived:
-            raise ValidationError("This algorithm image has been archived")
+        if algorithm_image.is_removed:
+            raise ValidationError("This algorithm image has been removed")
 
         if algorithm_image.algorithm.image_upload_in_progress:
             raise ValidationError("Image updating already in progress.")

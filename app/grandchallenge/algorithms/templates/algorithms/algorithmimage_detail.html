@@ -32,7 +32,7 @@
     {% get_obj_perms request.user for object as "algorithm_image_perms" %}
     {% get_obj_perms request.user for object.algorithm as "algorithm_perms" %}
 
-    {% if object.is_archived %}
+    {% if object.is_removed %}
         <div class="alert alert-info">
             This Algorithm Container Image has been removed from the platform and can no longer be used
         </div>

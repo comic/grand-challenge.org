@@ -12,11 +12,11 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="workstationimage",
-            name="is_archived",
+            name="is_removed",
             field=models.BooleanField(
                 default=False,
                 editable=False,
-                help_text="If this image has been archived then it has been removed from storage and cannot be activated",
+                help_text="If this image has been removed then it has been removed from storage and cannot be activated",
             ),
         ),
     ]

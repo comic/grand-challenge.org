@@ -639,7 +639,7 @@ def test_image_activate_form():
 
 
 @pytest.mark.django_db
-def test_cannot_activate_archived_image():
+def test_cannot_activate_removed_image():
     alg = AlgorithmFactory()
     editor = UserFactory()
     alg.add_editor(editor)
@@ -653,7 +653,7 @@ def test_cannot_activate_archived_image():
 
     assert form.is_valid()
 
-    image.is_archived = True
+    image.is_removed = True
     image.image.delete()
 
     form = ImageActivateForm(
@@ -661,7 +661,7 @@ def test_cannot_activate_archived_image():
     )
 
     assert not form.is_valid()
-    assert "This algorithm image has been archived" in str(
+    assert "This algorithm image has been removed" in str(
         form.errors["algorithm_image"]
     )
 

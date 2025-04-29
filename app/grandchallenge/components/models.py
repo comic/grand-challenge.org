@@ -1953,7 +1953,7 @@ class ImportStatusChoices(IntegerChoices):
 class ComponentImageManager(models.Manager):
     def executable_images(self):
         return self.filter(
-            is_manifest_valid=True, is_in_registry=True, is_archived=False
+            is_manifest_valid=True, is_in_registry=True, is_removed=False
         )
 
     def active_images(self):
@@ -2010,11 +2010,11 @@ class ComponentImage(FieldChangeMixin, models.Model):
         editable=False,
         help_text="Is this image in the container registry?",
     )
-    is_archived = models.BooleanField(
+    is_removed = models.BooleanField(
         default=False,
         editable=False,
         help_text=(
-            "If this image has been archived then it has been "
+            "If this image has been removed then it has been "
             "removed from storage and cannot be activated"
         ),
     )
@@ -2095,11 +2095,11 @@ class ComponentImage(FieldChangeMixin, models.Model):
             pass
 
     def save(self, *args, **kwargs):
-        if self.is_archived and self.image:
-            raise RuntimeError("Image cannot be set when archived")
+        if self.is_removed and self.image:
+            raise RuntimeError("Image cannot be set when removed")
 
         if (
-            not self.is_archived
+            not self.is_removed
             and self.initial_value("image")
             and self.has_changed("image")
         ):
