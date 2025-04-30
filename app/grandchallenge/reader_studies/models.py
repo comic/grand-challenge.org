@@ -981,6 +981,7 @@ class DisplaySet(
 
                 if name in case_text and name not in seen_names:
                     output += md2html(case_text[name])
+                    seen_names.add(name)
 
             return output
         else:
