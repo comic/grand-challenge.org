@@ -28,6 +28,9 @@ def cleanup_celery_backend():
 @acks_late_micro_short_task(ignore_result=True)
 @transaction.atomic
 def put_cloudwatch_metrics():
+    if not settings.PUSH_CLOUDWATCH_METRICS:
+        return
+
     client = boto3.client(
         "cloudwatch", region_name=settings.AWS_CLOUDWATCH_REGION_NAME
     )
