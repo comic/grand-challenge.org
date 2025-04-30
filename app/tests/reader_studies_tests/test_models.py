@@ -405,6 +405,28 @@ def test_description_is_scrubbed(client):
 
 
 @pytest.mark.django_db
+def test_description_not_repeated(client):
+    u = UserFactory()
+    im = ImageFactory()
+    rs = ReaderStudyFactory(
+        case_text={
+            im.name: "One line of text",
+        },
+    )
+    ds = DisplaySetFactory(reader_study=rs)
+    ds.values.add(ComponentInterfaceValueFactory(image=im))
+    ds.values.add(ComponentInterfaceValueFactory(image=im))
+    ds.values.add(ComponentInterfaceValueFactory(image=im))
+    rs.add_reader(u)
+
+    response = get_view_for_user(client=client, url=ds.api_url, user=u)
+
+    assert response.status_code == 200
+    # Case should be indexed with the api url
+    assert response.json()["description"] == "<p>One line of text</p>"
+
+
+@pytest.mark.django_db
 def test_validate_answer():
     u = UserFactory()
     rs = ReaderStudyFactory()

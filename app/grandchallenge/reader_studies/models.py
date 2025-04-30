@@ -968,12 +968,17 @@ class DisplaySet(
     @property
     def description(self) -> str:
         case_text = self.reader_study.case_text
+
+        unique_image_names = {
+            val.image.name for val in self.values.all() if val.image
+        }
+
         if case_text:
             return "".join(
                 [
-                    md2html(case_text[val.image.name])
-                    for val in self.values.all()
-                    if val.image and val.image.name in case_text
+                    md2html(case_text[name])
+                    for name in unique_image_names
+                    if name in case_text
                 ]
             )
         else:
