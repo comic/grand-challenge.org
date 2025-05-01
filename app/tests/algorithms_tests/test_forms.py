@@ -639,6 +639,34 @@ def test_image_activate_form():
 
 
 @pytest.mark.django_db
+def test_cannot_activate_removed_image():
+    alg = AlgorithmFactory()
+    editor = UserFactory()
+    alg.add_editor(editor)
+    image = AlgorithmImageFactory(
+        algorithm=alg, is_manifest_valid=True, is_desired_version=False
+    )
+
+    form = ImageActivateForm(
+        user=editor, algorithm=alg, data={"algorithm_image": image}
+    )
+
+    assert form.is_valid()
+
+    image.is_removed = True
+    image.image.delete()
+
+    form = ImageActivateForm(
+        user=editor, algorithm=alg, data={"algorithm_image": image}
+    )
+
+    assert not form.is_valid()
+    assert "This algorithm image has been removed" in str(
+        form.errors["algorithm_image"]
+    )
+
+
+@pytest.mark.django_db
 def test_algorithm_model_form():
     user = UserFactory()
     alg = AlgorithmFactory()
