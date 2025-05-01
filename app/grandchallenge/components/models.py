@@ -1554,14 +1554,20 @@ class ComponentJobManager(models.QuerySet):
         )
 
     def active(self):
-        return self.exclude(
-            status__in=[
+        # We need to use a positive filter here so that the index
+        # can be used rather than excluding jobs in final states
+        active_choices = (
+            c[0]
+            for c in ComponentJob.status.field.choices
+            if c[0]
+            not in [
                 ComponentJob.SUCCESS,
                 ComponentJob.CANCELLED,
                 ComponentJob.FAILURE,
                 ComponentJob.CLAIMED,
             ]
         )
+        return self.filter(status__in=active_choices)
 
     @staticmethod
     def retrieve_existing_civs(*, civ_data):
@@ -1613,6 +1619,7 @@ class ComponentJobManager(models.QuerySet):
 class ComponentJob(FieldChangeMixin, UUIDModel):
     # The job statuses come directly from celery.result.AsyncResult.status:
     # http://docs.celeryproject.org/en/latest/reference/celery.result.html
+    # Note: check the implementation of active() if changing this to choices
     PENDING = 0
     STARTED = 1
     RETRY = 2
