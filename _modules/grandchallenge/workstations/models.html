@@ -394,6 +394,16 @@
 <span class="p">}</span>
 
 
+<div class="viewcode-block" id="SessionManager">
+<a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.SessionManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SessionManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">active</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span>
+            <span class="n">status__in</span><span class="o">=</span><span class="p">[</span><span class="n">Session</span><span class="o">.</span><span class="n">QUEUED</span><span class="p">,</span> <span class="n">Session</span><span class="o">.</span><span class="n">STARTED</span><span class="p">,</span> <span class="n">Session</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">]</span>
+        <span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="Session">
 <a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Session</span><span class="p">(</span><span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
@@ -499,6 +509,8 @@
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Extra environment variables to include in this session&quot;</span><span class="p">,</span>
         <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">JSONValidator</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">ENV_VARS_SCHEMA</span><span class="p">)],</span>
     <span class="p">)</span>
+
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">SessionManager</span><span class="o">.</span><span class="n">as_manager</span><span class="p">()</span>
 
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
         <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;created&quot;</span><span class="p">,</span> <span class="s2">&quot;creator&quot;</span><span class="p">)</span>
