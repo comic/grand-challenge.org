@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.contrib.auth.models import Permission
 from django.db.models import Count, Sum
+from typing_extensions import NamedTuple
 
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
@@ -40,7 +41,12 @@ def annotate_job_duration_and_compute_costs(*, phase):
     )
 
 
-def annotate_compute_costs_and_storage_size(*, challenge):
+class JobsAndEvaluations(NamedTuple):
+    algorithm_jobs: list[Job]
+    evaluation_jobs: list[Evaluation]
+
+
+def filter_object_for_compute_and_storage_update(*, challenge):
     permission = Permission.objects.get(
         codename="view_job",
         content_type__app_label="algorithms",
@@ -56,15 +62,26 @@ def annotate_compute_costs_and_storage_size(*, challenge):
         submission__phase__external_evaluation=False,
     ).distinct()
 
+    return JobsAndEvaluations(
+        algorithm_jobs=algorithm_jobs, evaluation_jobs=evaluation_jobs
+    )
+
+
+def annotate_storage_size(*, challenge):
+    jobs = filter_object_for_compute_and_storage_update(challenge=challenge)
     update_size_in_storage_and_registry(
         challenge=challenge,
-        algorithm_jobs=algorithm_jobs,
-        evaluation_jobs=evaluation_jobs,
+        algorithm_jobs=jobs.algorithm_jobs,
+        evaluation_jobs=jobs.evaluation_jobs,
     )
+
+
+def annotate_compute_costs(*, challenge):
+    jobs = filter_object_for_compute_and_storage_update(challenge=challenge)
     update_compute_cost_euro_millicents(
         obj=challenge,
-        algorithm_jobs=algorithm_jobs,
-        evaluation_jobs=evaluation_jobs,
+        algorithm_jobs=jobs.algorithm_jobs,
+        evaluation_jobs=jobs.evaluation_jobs,
     )
 
 

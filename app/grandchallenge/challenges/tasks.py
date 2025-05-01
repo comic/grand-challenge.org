@@ -10,8 +10,9 @@ from django.utils.timezone import datetime
 from psycopg.errors import LockNotAvailable
 
 from grandchallenge.challenges.costs import (
-    annotate_compute_costs_and_storage_size,
+    annotate_compute_costs,
     annotate_job_duration_and_compute_costs,
+    annotate_storage_size,
 )
 from grandchallenge.challenges.emails import (
     send_onboarding_task_due_reminder,
@@ -94,10 +95,10 @@ def retry_with_backoff(exceptions, max_attempts=5, base_delay=1, max_delay=10):
 
 
 @acks_late_2xlarge_task
-def update_compute_costs_and_storage_size():
+def update_storage_size():
     for challenge in Challenge.objects.with_available_compute().iterator():
         with transaction.atomic():
-            annotate_compute_costs_and_storage_size(challenge=challenge)
+            annotate_storage_size(challenge=challenge)
 
             @retry_with_backoff((LockNotAvailable,))
             def save_challenge():
@@ -105,9 +106,21 @@ def update_compute_costs_and_storage_size():
                     update_fields=(
                         "size_in_storage",
                         "size_in_registry",
-                        "compute_cost_euro_millicents",
                     )
                 )
+
+            save_challenge()
+
+
+@acks_late_2xlarge_task
+def update_compute_costs():
+    for challenge in Challenge.objects.with_available_compute().iterator():
+        with transaction.atomic():
+            annotate_compute_costs(challenge=challenge)
+
+            @retry_with_backoff((LockNotAvailable,))
+            def save_challenge():
+                challenge.save(update_fields=("compute_cost_euro_millicents",))
 
             save_challenge()
 

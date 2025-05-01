@@ -1288,9 +1288,13 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.core.tasks.cleanup_celery_backend",
         "schedule": timedelta(hours=1),
     },
-    "update_compute_costs_and_storage_size": {
-        "task": "grandchallenge.challenges.tasks.update_compute_costs_and_storage_size",
+    "update_compute_costs": {
+        "task": "grandchallenge.challenges.tasks.update_compute_costs",
         "schedule": timedelta(hours=1),
+    },
+    "update_storage_size": {
+        "task": "grandchallenge.challenges.tasks.update_storage_size",
+        "schedule": timedelta(days=1),
     },
     "logout_privileged_users": {
         "task": "grandchallenge.browser_sessions.tasks.logout_privileged_users",

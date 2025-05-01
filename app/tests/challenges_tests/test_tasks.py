@@ -12,7 +12,7 @@ from grandchallenge.challenges.models import (
 from grandchallenge.challenges.tasks import (
     send_onboarding_task_reminder_emails,
     update_challenge_results_cache,
-    update_compute_costs_and_storage_size,
+    update_compute_costs,
 )
 from grandchallenge.invoices.models import PaymentStatusChoices
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
@@ -162,7 +162,7 @@ def test_challenge_budget_alert_email(settings):
         compute_cost_euro_millicents=500000,
         time_limit=60,
     )
-    update_compute_costs_and_storage_size()
+    update_compute_costs()
 
     # Budget alert threshold not exceeded
     assert len(mail.outbox) == 0
@@ -172,7 +172,7 @@ def test_challenge_budget_alert_email(settings):
         compute_cost_euro_millicents=300000,
         time_limit=60,
     )
-    update_compute_costs_and_storage_size()
+    update_compute_costs()
 
     # Budget alert threshold exceeded
     assert len(mail.outbox) == 3
@@ -201,7 +201,7 @@ def test_challenge_budget_alert_email(settings):
         compute_cost_euro_millicents=100000,
         time_limit=60,
     )
-    update_compute_costs_and_storage_size()
+    update_compute_costs()
 
     # Next budget alert threshold not exceeded
     assert len(mail.outbox) == 0
@@ -211,7 +211,7 @@ def test_challenge_budget_alert_email(settings):
         compute_cost_euro_millicents=1,
         time_limit=60,
     )
-    update_compute_costs_and_storage_size()
+    update_compute_costs()
 
     # Next budget alert threshold exceeded
     assert len(mail.outbox) != 0
@@ -246,7 +246,7 @@ def test_challenge_budget_alert_two_thresholds_one_email(settings):
         compute_cost_euro_millicents=950000,
         time_limit=60,
     )
-    update_compute_costs_and_storage_size()
+    update_compute_costs()
 
     # Two budget alert thresholds exceeded, alert only sent for last one.
     assert len(mail.outbox) == 3
@@ -272,7 +272,7 @@ def test_challenge_budget_alert_no_budget():
         time_limit=60,
     )
     assert len(mail.outbox) == 0
-    update_compute_costs_and_storage_size()
+    update_compute_costs()
     assert len(mail.outbox) != 0
     assert "Budget Consumed Alert" in mail.outbox[0].subject
 
