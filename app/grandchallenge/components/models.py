@@ -1934,6 +1934,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
 
     class Meta:
         abstract = True
+        indexes = [
+            models.Index(fields=["status", "created"]),
+        ]
 
 
 def docker_image_path(instance, filename):
