@@ -329,6 +329,13 @@ ENV_VARS_SCHEMA = {
 }
 
 
+class SessionManager(models.QuerySet):
+    def active(self):
+        return self.exclude(
+            status__in=[Session.QUEUED, Session.STARTED, Session.RUNNING]
+        )
+
+
 class Session(FieldChangeMixin, UUIDModel):
     """
     Tracks who has launched workstation images. The ``WorkstationImage`` will
@@ -429,6 +436,8 @@ class Session(FieldChangeMixin, UUIDModel):
         help_text="Extra environment variables to include in this session",
         validators=[JSONValidator(schema=ENV_VARS_SCHEMA)],
     )
+
+    objects = SessionManager.as_manager()
 
     class Meta(UUIDModel.Meta):
         ordering = ("created", "creator")

@@ -1312,6 +1312,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.evaluation.tasks.cancel_external_evaluations_past_timeout",
         "schedule": timedelta(hours=1),
     },
+    "push_metrics_to_cloudwatch": {
+        "task": "grandchallenge.core.tasks.put_cloudwatch_metrics",
+        "schedule": timedelta(seconds=30),
+    },
     **{
         f"stop_expired_services_{region}": {
             "task": "grandchallenge.components.tasks.stop_expired_services",
@@ -1335,11 +1339,9 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-if strtobool(os.environ.get("PUSH_CLOUDWATCH_METRICS", "False")):
-    CELERY_BEAT_SCHEDULE["push_metrics_to_cloudwatch"] = {
-        "task": "grandchallenge.core.tasks.put_cloudwatch_metrics",
-        "schedule": timedelta(seconds=30),
-    }
+PUSH_CLOUDWATCH_METRICS = strtobool(
+    os.environ.get("PUSH_CLOUDWATCH_METRICS", "False")
+)
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
