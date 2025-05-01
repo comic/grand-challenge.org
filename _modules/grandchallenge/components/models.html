@@ -661,7 +661,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_overlay_segments</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_store_in_database</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_relative_path</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_example_value</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_example_value</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_default_value</span><span class="p">()</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_overlay_segments</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -751,6 +752,12 @@
         <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;The example value for this interface is not valid: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_default_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_file</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_value</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;A socket that requires a file should not have a default value&quot;</span>
             <span class="p">)</span>
 
 <div class="viewcode-block" id="ComponentInterface.validate_against_schema">
