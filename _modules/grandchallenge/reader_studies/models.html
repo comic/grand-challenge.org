@@ -1056,14 +1056,22 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">case_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">case_text</span>
+
         <span class="k">if</span> <span class="n">case_text</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="p">[</span>
-                    <span class="n">md2html</span><span class="p">(</span><span class="n">case_text</span><span class="p">[</span><span class="n">val</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
-                    <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-                    <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">image</span> <span class="ow">and</span> <span class="n">val</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">case_text</span>
-                <span class="p">]</span>
-            <span class="p">)</span>
+            <span class="n">seen_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+            <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">case_text</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_names</span><span class="p">:</span>
+                    <span class="n">output</span> <span class="o">+=</span> <span class="n">md2html</span><span class="p">(</span><span class="n">case_text</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+                    <span class="n">seen_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">output</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;&quot;</span>
 
