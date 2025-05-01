@@ -1877,3 +1877,19 @@ def test_inputs_json_reserved():
     assert "'relative_path': ['This relative path is reserved']" in str(
         error.value
     )
+
+
+@pytest.mark.django_db
+def test_no_default_value_allowed_when_file_required():
+    i = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        relative_path="foo/bar.json",
+        store_in_database=True,
+        default_value="foobar",
+    )
+    i.full_clean()
+
+    i.store_in_database = False
+
+    with pytest.raises(ValidationError):
+        i.full_clean()

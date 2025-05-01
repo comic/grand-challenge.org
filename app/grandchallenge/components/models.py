@@ -590,6 +590,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         self._clean_store_in_database()
         self._clean_relative_path()
         self._clean_example_value()
+        self._clean_default_value()
 
     def _clean_overlay_segments(self):
         if (
@@ -678,6 +679,12 @@ class ComponentInterface(OverlaySegmentsMixin):
         except ValidationError as error:
             raise ValidationError(
                 f"The example value for this interface is not valid: {error}"
+            )
+
+    def _clean_default_value(self):
+        if self.requires_file and self.default_value:
+            raise ValidationError(
+                "A socket that requires a file should not have a default value"
             )
 
     def validate_against_schema(self, *, value):
