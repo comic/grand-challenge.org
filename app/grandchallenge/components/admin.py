@@ -129,6 +129,7 @@ def cancel_jobs(modeladmin, request, queryset):
             ComponentJob.PARSING,
             ComponentJob.RETRY,
             ComponentJob.EXECUTING_PREREQUISITES,
+            ComponentJob.VALIDATING_INPUTS,
         ]
     ).select_for_update(of=("self",), skip_locked=True).update(
         status=ComponentJob.CANCELLED
