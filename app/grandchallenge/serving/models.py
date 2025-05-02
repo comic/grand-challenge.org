@@ -11,7 +11,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.guardian import filter_by_permission
-from grandchallenge.evaluation.models import Submission
+from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.workstations.models import Feedback
 
@@ -118,11 +118,24 @@ def get_component_interface_values_for_user(
         .values_list("values__pk", flat=True)
     )
 
+    evaluation_query = filter_by_permission(
+        queryset=Evaluation.objects.all(),
+        user=user,
+        codename="view_evaluation",
+        accept_user_perms=False,
+    )
+    evaluation_outputs = (
+        evaluation_query.filter(outputs__in=civs)
+        .distinct()
+        .values_list("outputs__pk", flat=True)
+    )
+
     return civs.filter(
         pk__in=[
             *job_inputs,
             *job_outputs,
             *display_sets,
             *archive_items,
+            *evaluation_outputs,
         ]
     )

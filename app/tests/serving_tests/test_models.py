@@ -13,6 +13,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
@@ -75,64 +76,76 @@ def test_get_component_interface_values_for_user():
 
     ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
 
-    civ1, civ2, civ3, civ4, civ5, civ6, civ7, civ8 = (
-        ComponentInterfaceValueFactory.create_batch(8, interface=ci1)
+    civa1, civa2, civa3, civa4, civa5, civa6, civa7, civa8, civa9, civa10 = (
+        ComponentInterfaceValueFactory.create_batch(10, interface=ci1)
     )
-    civ9, civ10, civ11, civ12, civ13, civ14, civ15, civ16 = (
-        ComponentInterfaceValueFactory.create_batch(8, interface=ci2)
+    civb1, civb2, civb3, civb4, civb5, civb6, civb7, civb8, civb9, civb10 = (
+        ComponentInterfaceValueFactory.create_batch(10, interface=ci2)
     )
 
     job_with_perm = AlgorithmJobFactory(creator=user, time_limit=60)
     job_without_perm = AlgorithmJobFactory(time_limit=60)
 
-    job_with_perm.inputs.set([civ1, civ9])
-    job_without_perm.inputs.set([civ2, civ10])
-    job_with_perm.outputs.set([civ3, civ11])
-    job_without_perm.outputs.set([civ4, civ12])
+    job_with_perm.inputs.set([civa1, civb1])
+    job_without_perm.inputs.set([civa2, civb2])
+    job_with_perm.outputs.set([civa3, civb3])
+    job_without_perm.outputs.set([civa4, civb4])
+
+    phase = PhaseFactory()
+    phase.challenge.add_admin(user)
+    eval_with_perm = EvaluationFactory(submission__phase=phase, time_limit=60)
+    eval_without_perm = EvaluationFactory(time_limit=60)
+
+    eval_with_perm.outputs.set([civa9, civb9])
+    eval_without_perm.outputs.set([civa10, civb10])
 
     rs = ReaderStudyFactory()
     rs.add_editor(user)
     ds_with_perm = DisplaySetFactory(reader_study=rs)
     ds_without_perm = DisplaySetFactory()
 
-    ds_with_perm.values.set([civ5, civ13])
-    ds_without_perm.values.set([civ6, civ14])
+    ds_with_perm.values.set([civa5, civb5])
+    ds_without_perm.values.set([civa6, civb6])
 
     archive = ArchiveFactory()
     archive.add_editor(user)
     ai_with_perm = ArchiveItemFactory(archive=archive)
     ai_without_perm = ArchiveItemFactory()
 
-    ai_with_perm.values.set([civ7, civ15])
-    ai_without_perm.values.set([civ8, civ16])
+    ai_with_perm.values.set([civa7, civb7])
+    ai_without_perm.values.set([civa8, civb8])
 
     assert set(get_component_interface_values_for_user(user=user)) == {
-        civ1,
-        civ3,
-        civ5,
-        civ7,
-        civ9,
-        civ11,
-        civ13,
-        civ15,
+        civa1,
+        civa3,
+        civa5,
+        civa7,
+        civa9,
+        civb1,
+        civb3,
+        civb5,
+        civb7,
+        civb9,
     }
 
     # subset by interface
     assert set(
         get_component_interface_values_for_user(user=user, interface=ci1)
-    ) == {civ1, civ3, civ5, civ7}
+    ) == {civa1, civa3, civa5, civa7, civa9}
     assert set(
         get_component_interface_values_for_user(user=user, interface=ci2)
-    ) == {civ9, civ11, civ13, civ15}
+    ) == {civb1, civb3, civb5, civb7, civb9}
 
     # subset by civ pk
     assert set(
-        get_component_interface_values_for_user(user=user, civ_pk=civ1.pk)
-    ) == {civ1}
+        get_component_interface_values_for_user(user=user, civ_pk=civa1.pk)
+    ) == {civa1}
     assert set(
-        get_component_interface_values_for_user(user=user, civ_pk=civ9.pk)
-    ) == {civ9}
+        get_component_interface_values_for_user(user=user, civ_pk=civb1.pk)
+    ) == {civb1}
     assert (
-        set(get_component_interface_values_for_user(user=user, civ_pk=civ2.pk))
+        set(
+            get_component_interface_values_for_user(user=user, civ_pk=civa2.pk)
+        )
         == set()
     )
