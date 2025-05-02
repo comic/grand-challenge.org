@@ -121,7 +121,7 @@ def get_component_interface_values_for_user(
     evaluation_query = filter_by_permission(
         queryset=Evaluation.objects.all(),
         user=user,
-        codename="view_evaluation",
+        codename="change_evaluation",
         accept_user_perms=False,
     )
     evaluation_outputs = (

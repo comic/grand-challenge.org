@@ -93,6 +93,8 @@ def test_get_component_interface_values_for_user():
 
     phase = PhaseFactory()
     phase.challenge.add_admin(user)
+    participant = UserFactory()
+    phase.challenge.add_participant(participant)
     eval_with_perm = EvaluationFactory(submission__phase=phase, time_limit=60)
     eval_without_perm = EvaluationFactory(time_limit=60)
 
@@ -127,6 +129,11 @@ def test_get_component_interface_values_for_user():
         civb7,
         civb9,
     }
+
+    # the challenge participant should not be able to download evaluation outputs
+    assert (
+        set(get_component_interface_values_for_user(user=participant)) == set()
+    )
 
     # subset by interface
     assert set(
