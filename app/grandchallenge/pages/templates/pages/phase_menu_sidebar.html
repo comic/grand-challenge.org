@@ -22,7 +22,7 @@
             </li>
              {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not phase.external_evaluation %}
                 <li class="nav-item pl-4">
-                    <a href="{% url "evaluation:phase-starter-kit-info" slug=phase.slug %}"
+                    <a href="{% url "evaluation:phase-starter-kit-detail" slug=phase.slug %}"
                        class="nav-link py-1 pl-2 {% if request.resolver_match.view_name == 'evaluation:phase-starter-kit-info' and request.resolver_match.kwargs.slug == phase.slug %} active {% endif %}">
                         <i class="fas fa-hard-hat fa-fw pr-1"></i> Starter&nbsp;Kit
                     </a>

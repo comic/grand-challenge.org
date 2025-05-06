@@ -2722,7 +2722,7 @@ def test_reschedule_evaluation_with_additional_inputs(
 
 
 @pytest.mark.django_db
-def test_phase_starter_kit_info(client):
+def test_phase_starter_kit_detail(client):
     challenge = ChallengeFactory()
     admin, participant, user = UserFactory.create_batch(3)
 
@@ -2763,7 +2763,7 @@ def test_phase_starter_kit_info(client):
         # Permissions
         for usr in [participant, user]:
             response = get_view_for_user(
-                viewname="evaluation:phase-starter-kit-info",
+                viewname="evaluation:phase-starter-kit-detail",
                 reverse_kwargs={
                     "slug": phase.slug,
                     "challenge_short_name": phase.challenge.short_name,
@@ -2778,7 +2778,7 @@ def test_phase_starter_kit_info(client):
 
         # Admin
         response = get_view_for_user(
-            viewname="evaluation:phase-starter-kit-info",
+            viewname="evaluation:phase-starter-kit-detail",
             reverse_kwargs={
                 "slug": phase.slug,
                 "challenge_short_name": phase.challenge.short_name,
