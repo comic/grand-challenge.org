@@ -1314,6 +1314,19 @@ class EvaluationGroundTruthVersionManagement(
         )
 
 
+class PhaseArchiveInfo(
+    CachedPhaseMixin,
+    ObjectPermissionRequiredMixin,
+    TemplateView,
+):
+    permission_required = "evaluation.change_phase"
+    raise_exception = True
+    template_name = "evaluation/phase_archive_info.html"
+
+    def get_permission_object(self):
+        return self.phase
+
+
 class AlgorithmInterfaceForPhaseMixin:
     @property
     def phase(self):
@@ -1407,41 +1420,30 @@ class AlgorithmInterfaceForPhaseDelete(
         return context
 
 
-class PhaseChangePermissionMixin(ObjectPermissionRequiredMixin):
+class PhaseStarterKitDetail(
+    CachedPhaseMixin,
+    ObjectPermissionRequiredMixin,
+    TemplateView,
+):
     permission_required = "evaluation.change_phase"
     raise_exception = True
-
-    @cached_property
-    def phase(self):
-        return get_object_or_404(
-            Phase,
-            challenge=self.request.challenge,
-            slug=self.kwargs["slug"],
-        )
+    template_name = "evaluation/phase_starter_kit.html"
 
     def get_permission_object(self):
         return self.phase
 
 
-class PhaseArchiveInfo(PhaseChangePermissionMixin, TemplateView):
-    template_name = "evaluation/phase_archive_info.html"
+class PhaseStarterKitDownload(
+    CachedPhaseMixin,
+    ObjectPermissionRequiredMixin,
+    View,
+):
+    permission_required = "evaluation.change_phase"
+    raise_exception = True
 
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data["object"] = self.phase
-        return context_data
+    def get_permission_object(self):
+        return self.phase
 
-
-class PhaseStarterKitDetail(PhaseChangePermissionMixin, TemplateView):
-    template_name = "evaluation/phase_starter_kit.html"
-
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data["object"] = self.phase
-        return context_data
-
-
-class PhaseStarterKitDownload(PhaseChangePermissionMixin, View):
     def get(self, *_, **__):
         phase = self.phase
         dir_name = f"{phase.challenge.short_name}-{phase.slug}-starter-kit"

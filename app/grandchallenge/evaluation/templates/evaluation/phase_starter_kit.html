@@ -2,7 +2,7 @@
 {% load url %}
 
 {% block title %}
-    Starter kit for {{ object.title }} - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+    Starter kit for {{ phase.title }} - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -13,12 +13,12 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Starter kit for {{ object.title }}</li>
+            aria-current="page">Starter kit for {{ phase.title }}</li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2 class="mb-3">Starter kit for {{ object.title }}</h2>
+    <h2 class="mb-3">Starter kit for {{ phase.title }}</h2>
 
     <p>
        The starter kit is a Git-ready, custom-tailored set of examples designed specifically for this phase,
@@ -35,18 +35,16 @@
         </ul>
     </p>
 
-    {% if object.archive and object.submission_kind == object.SubmissionKindChoices.ALGORITHM %}
+    {% if phase.archive and phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
 
         <a class="btn btn-primary"
-           href="{% url 'evaluation:phase-starter-kit-download' challenge_short_name=challenge.short_name slug=object.slug %}">
+           href="{% url 'evaluation:phase-starter-kit-download' challenge_short_name=challenge.short_name slug=phase.slug %}">
             <i class="fa fa-download pr-2"></i>Download Phase Starter Kit
         </a>
 
-    {% elif object.submission_kind != object.SubmissionKindChoices.ALGORITHM or not object.archive %}
+    {% elif phase.submission_kind != phase.SubmissionKindChoices.ALGORITHM or not phase.archive %}
         <p>
-            This phase does not have an archive linked to it or is not set up as an algorithm-accepting phase.
-        </p>
-        <p>
+            This phase does not have an archive linked to it or is not set up as an algorithm-accepting phase!
             These are pre-requisites for generating a starter kit.
         </p>
         <p>
