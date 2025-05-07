@@ -230,7 +230,8 @@ def delete_failed_import_container_images():
 
     for model in (AlgorithmImage, Method, WorkstationImage):
         for image in model.objects.filter(
-            import_status=ComponentImage.ImportStatusChoices.FAILED
+            is_removed=False,
+            import_status=ComponentImage.ImportStatusChoices.FAILED,
         ).iterator():
             on_commit(
                 delete_container_image.signature(
