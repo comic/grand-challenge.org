@@ -13,6 +13,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
@@ -135,4 +136,45 @@ def test_get_component_interface_values_for_user():
     assert (
         set(get_component_interface_values_for_user(user=user, civ_pk=civ2.pk))
         == set()
+    )
+
+
+@pytest.mark.django_db
+def test_evaluation_inputs_and_outputs_download_permissions():
+    admin = UserFactory()
+    participant = UserFactory()
+    assert set(get_component_interface_values_for_user(user=admin)) == set()
+    assert (
+        set(get_component_interface_values_for_user(user=participant)) == set()
+    )
+
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+
+    civa1, civa2, civa3, civa4 = ComponentInterfaceValueFactory.create_batch(
+        4, interface=ci1
+    )
+    civb1, civb2, civb3, civb4 = ComponentInterfaceValueFactory.create_batch(
+        4, interface=ci2
+    )
+
+    phase = PhaseFactory()
+    phase.challenge.add_admin(admin)
+    phase.challenge.add_participant(participant)
+    eval_with_perm = EvaluationFactory(submission__phase=phase, time_limit=60)
+    eval_without_perm = EvaluationFactory(time_limit=60)
+
+    eval_with_perm.inputs.set([civa1, civb1])
+    eval_with_perm.outputs.set([civa2, civb2])
+    eval_without_perm.outputs.set([civa3, civb3])
+    eval_without_perm.outputs.set([civa4, civb4])
+
+    # the challenge admin should be able to download only the outputs
+    assert set(get_component_interface_values_for_user(user=admin)) == {
+        civa2,
+        civb2,
+    }
+
+    # the challenge participant should not be able to download anything
+    assert (
+        set(get_component_interface_values_for_user(user=participant)) == set()
     )
