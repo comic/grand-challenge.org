@@ -124,6 +124,14 @@ def get_component_interface_values_for_user(
         codename="change_evaluation",
         accept_user_perms=False,
     )
+    # We restrict downloading of evaluation outputs to challenge admins since those
+    # might not be intended for participants to see (unlike the metrics).
+    # Note: we currently do not allow direct serving of evaluation inputs.
+    # Challenge admins can already download those because they are attached to jobs
+    # they have access to as output.
+    # Serving of evaluation inputs might become necessary in the future if
+    # challenges start using additional evaluation inputs of type file. Serving of
+    # those should be restricted to admins as well.
     evaluation_outputs = (
         evaluation_query.filter(outputs__in=civs)
         .distinct()

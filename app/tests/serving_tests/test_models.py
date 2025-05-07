@@ -76,83 +76,105 @@ def test_get_component_interface_values_for_user():
 
     ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
 
-    civa1, civa2, civa3, civa4, civa5, civa6, civa7, civa8, civa9, civa10 = (
-        ComponentInterfaceValueFactory.create_batch(10, interface=ci1)
+    civ1, civ2, civ3, civ4, civ5, civ6, civ7, civ8 = (
+        ComponentInterfaceValueFactory.create_batch(8, interface=ci1)
     )
-    civb1, civb2, civb3, civb4, civb5, civb6, civb7, civb8, civb9, civb10 = (
-        ComponentInterfaceValueFactory.create_batch(10, interface=ci2)
+    civ9, civ10, civ11, civ12, civ13, civ14, civ15, civ16 = (
+        ComponentInterfaceValueFactory.create_batch(8, interface=ci2)
     )
 
     job_with_perm = AlgorithmJobFactory(creator=user, time_limit=60)
     job_without_perm = AlgorithmJobFactory(time_limit=60)
 
-    job_with_perm.inputs.set([civa1, civb1])
-    job_without_perm.inputs.set([civa2, civb2])
-    job_with_perm.outputs.set([civa3, civb3])
-    job_without_perm.outputs.set([civa4, civb4])
-
-    phase = PhaseFactory()
-    phase.challenge.add_admin(user)
-    participant = UserFactory()
-    phase.challenge.add_participant(participant)
-    eval_with_perm = EvaluationFactory(submission__phase=phase, time_limit=60)
-    eval_without_perm = EvaluationFactory(time_limit=60)
-
-    eval_with_perm.outputs.set([civa9, civb9])
-    eval_without_perm.outputs.set([civa10, civb10])
+    job_with_perm.inputs.set([civ1, civ9])
+    job_without_perm.inputs.set([civ2, civ10])
+    job_with_perm.outputs.set([civ3, civ11])
+    job_without_perm.outputs.set([civ4, civ12])
 
     rs = ReaderStudyFactory()
     rs.add_editor(user)
     ds_with_perm = DisplaySetFactory(reader_study=rs)
     ds_without_perm = DisplaySetFactory()
 
-    ds_with_perm.values.set([civa5, civb5])
-    ds_without_perm.values.set([civa6, civb6])
+    ds_with_perm.values.set([civ5, civ13])
+    ds_without_perm.values.set([civ6, civ14])
 
     archive = ArchiveFactory()
     archive.add_editor(user)
     ai_with_perm = ArchiveItemFactory(archive=archive)
     ai_without_perm = ArchiveItemFactory()
 
-    ai_with_perm.values.set([civa7, civb7])
-    ai_without_perm.values.set([civa8, civb8])
+    ai_with_perm.values.set([civ7, civ15])
+    ai_without_perm.values.set([civ8, civ16])
 
     assert set(get_component_interface_values_for_user(user=user)) == {
-        civa1,
-        civa3,
-        civa5,
-        civa7,
-        civa9,
-        civb1,
-        civb3,
-        civb5,
-        civb7,
-        civb9,
+        civ1,
+        civ3,
+        civ5,
+        civ7,
+        civ9,
+        civ11,
+        civ13,
+        civ15,
     }
-
-    # the challenge participant should not be able to download evaluation outputs
-    assert (
-        set(get_component_interface_values_for_user(user=participant)) == set()
-    )
 
     # subset by interface
     assert set(
         get_component_interface_values_for_user(user=user, interface=ci1)
-    ) == {civa1, civa3, civa5, civa7, civa9}
+    ) == {civ1, civ3, civ5, civ7}
     assert set(
         get_component_interface_values_for_user(user=user, interface=ci2)
-    ) == {civb1, civb3, civb5, civb7, civb9}
+    ) == {civ9, civ11, civ13, civ15}
 
     # subset by civ pk
     assert set(
-        get_component_interface_values_for_user(user=user, civ_pk=civa1.pk)
-    ) == {civa1}
+        get_component_interface_values_for_user(user=user, civ_pk=civ1.pk)
+    ) == {civ1}
     assert set(
-        get_component_interface_values_for_user(user=user, civ_pk=civb1.pk)
-    ) == {civb1}
+        get_component_interface_values_for_user(user=user, civ_pk=civ9.pk)
+    ) == {civ9}
     assert (
-        set(
-            get_component_interface_values_for_user(user=user, civ_pk=civa2.pk)
-        )
+        set(get_component_interface_values_for_user(user=user, civ_pk=civ2.pk))
         == set()
+    )
+
+
+@pytest.mark.django_db
+def test_evaluation_inputs_and_outputs_download_permissions():
+    admin = UserFactory()
+    participant = UserFactory()
+    assert set(get_component_interface_values_for_user(user=admin)) == set()
+    assert (
+        set(get_component_interface_values_for_user(user=participant)) == set()
+    )
+
+    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
+
+    civa1, civa2, civa3, civa4 = ComponentInterfaceValueFactory.create_batch(
+        4, interface=ci1
+    )
+    civb1, civb2, civb3, civb4 = ComponentInterfaceValueFactory.create_batch(
+        4, interface=ci2
+    )
+
+    phase = PhaseFactory()
+    phase.challenge.add_admin(admin)
+    phase.challenge.add_participant(participant)
+    eval_with_perm = EvaluationFactory(submission__phase=phase, time_limit=60)
+    eval_without_perm = EvaluationFactory(time_limit=60)
+
+    eval_with_perm.inputs.set([civa1, civb1])
+    eval_with_perm.outputs.set([civa2, civb2])
+    eval_without_perm.outputs.set([civa3, civb3])
+    eval_without_perm.outputs.set([civa4, civb4])
+
+    # the challenge admin should be able to download only the outputs
+    assert set(get_component_interface_values_for_user(user=admin)) == {
+        civa2,
+        civb2,
+    }
+
+    # the challenge participant should not be able to download anything
+    assert (
+        set(get_component_interface_values_for_user(user=participant)) == set()
     )
