@@ -131,7 +131,10 @@ def get_component_interface_values_for_user(
     # they have access to as output.
     # Serving of evaluation inputs might become necessary in the future if
     # challenges start using additional evaluation inputs of type file. Serving of
-    # those should be restricted to admins as well.
+    # those MUST be restricted to admins.
+    #
+    # Challenge Participants MUST NOT have access to evaluation inputs as those
+    # contain the results on the hidden test set.
     evaluation_outputs = (
         evaluation_query.filter(outputs__in=civs)
         .distinct()
