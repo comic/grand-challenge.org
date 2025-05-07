@@ -24,7 +24,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import OperationalError, transaction
-from django.db.models import DateTimeField, ExpressionWrapper, F
+from django.db.models import Count, DateTimeField, ExpressionWrapper, F, Q
 from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
@@ -218,6 +218,50 @@ def remove_inactive_container_images():
                             }
                         ).apply_async
                     )
+
+
+@acks_late_2xlarge_task
+@transaction.atomic
+def delete_old_unsuccessful_container_images():
+    from grandchallenge.algorithms.models import AlgorithmImage, Job
+    from grandchallenge.evaluation.models import Evaluation, Method
+    from grandchallenge.workstations.models import WorkstationImage
+
+    querysets = [
+        WorkstationImage.objects.filter(
+            is_removed=False, created__lt=now() - relativedelta(years=1)
+        ),
+        Method.objects.filter(
+            is_removed=False, created__lt=now() - relativedelta(years=1)
+        )
+        .annotate(
+            successful_evaluation_count=Count(
+                "evaluation", filter=Q(evaluation__status=Evaluation.SUCCESS)
+            )
+        )
+        .filter(successful_evaluation_count=0),
+        AlgorithmImage.objects.filter(
+            is_removed=False, created__lt=now() - relativedelta(months=3)
+        )
+        .annotate(
+            successful_job_count=Count(
+                "job", filter=Q(job__status=Job.SUCCESS)
+            )
+        )
+        .filter(successful_job_count=0),
+    ]
+
+    for queryset in querysets:
+        for image in queryset.iterator():
+            on_commit(
+                delete_container_image.signature(
+                    kwargs={
+                        "pk": image.pk,
+                        "app_label": image._meta.app_label,
+                        "model_name": image._meta.model_name,
+                    }
+                ).apply_async
+            )
 
 
 @acks_late_2xlarge_task(ignore_errors=(InstanceInUse,))
