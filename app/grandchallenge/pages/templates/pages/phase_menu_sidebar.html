@@ -4,54 +4,60 @@
     <a class="nav-link px-4 py-1 mb-1"
        data-toggle="collapse"
        data-target="#collapse-{{ phase.slug }}"
-       aria-expanded={% if request.resolver_match.view_name in 'evaluation:phase-update,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail,evaluation:phase-archive-info,evaluation:interface-list, evaluation:interface-create, evaluation:interface-delete' and request.resolver_match.kwargs.slug == phase.slug %}"true"{% else %}"false"{% endif %}
+       aria-expanded={% if request.resolver_match.view_name in 'evaluation:phase-update,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail,evaluation:phase-archive-info,evaluation:phase-starter-kit-detail,evaluation:interface-list, evaluation:interface-create, evaluation:interface-delete' and request.resolver_match.kwargs.slug == phase.slug %}"true"{% else %}"false"{% endif %}
     >
-        <i class="fas fa-chevron-right fa-fw"></i>
-        <i class="fas fa-chevron-down fa-fw"></i>
+        <i class="fas fa-chevron-right fa-fw pr-1"></i>
+        <i class="fas fa-chevron-down fa-fw pr-1"></i>
         {% if not phase.public %}<i class="fas fa-lock" title="Phase is private"></i>{% endif %}
         {{ phase.title }}
     </a>
-    <div class="collapse {% if request.resolver_match.view_name in 'evaluation:phase-update,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail,evaluation:phase-archive-info,evaluation:interface-list, evaluation:interface-create, evaluation:interface-delete' and request.resolver_match.kwargs.slug == phase.slug %}show{% endif %}"
+    <div class="collapse {% if request.resolver_match.view_name in 'evaluation:phase-update,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail,evaluation:phase-archive-info,evaluation:phase-starter-kit-detail,evaluation:interface-list, evaluation:interface-create, evaluation:interface-delete' and request.resolver_match.kwargs.slug == phase.slug %}show{% endif %}"
          id="collapse-{{ phase.slug }}">
         <ul class="nav nav-pills flex-column">
             <li class="nav-item pl-4">
                 <a href="{% url 'evaluation:phase-update' slug=phase.slug %}"
-                   class="nav-link py-1 pl-3 {% if request.resolver_match.view_name == 'evaluation:phase-update' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}">
-                    <i class="fas fa-cog fa-fw"></i> Settings
+                   class="nav-link py-1 pl-2 {% if request.resolver_match.view_name == 'evaluation:phase-update' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}">
+                    <i class="fas fa-cog fa-fw pr-1"></i> Settings
                 </a>
             </li>
-            <li class="nav-item pl-4">
-                <a href="{% url "evaluation:method-list" slug=phase.slug %}"
-                   class="nav-link py-1 pl-3 {% if request.resolver_match.view_name in 'evaluation:method-list,evaluation:method-create,evaluation:method-update' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:method-detail' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}">
-                    <i class="fab fa-docker fa-fw"></i> Evaluation Methods
-                </a>
-            </li>
-            <li class="nav-item pl-4">
-                <a href="{% url "evaluation:ground-truth-list" slug=phase.slug %}"
-                   class="nav-link py-1 pl-3 {% if request.resolver_match.view_name in 'evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:ground-truth-detail' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}">
-                    <i class="fas fa-cube fa-fw"></i> Ground Truths
-                </a>
-            </li>
-            {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not phase.external_evaluation %}
+             {% if phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not phase.external_evaluation %}
+                <li class="nav-item pl-4">
+                    <a href="{% url "evaluation:phase-starter-kit-detail" slug=phase.slug %}"
+                       class="nav-link py-1 pl-2 {% if request.resolver_match.view_name == 'evaluation:phase-starter-kit-detail' and request.resolver_match.kwargs.slug == phase.slug %} active {% endif %}">
+                        <i class="fas fa-hard-hat fa-fw pr-1"></i> Starter&nbsp;Kit
+                    </a>
+                </li>
                 <li class="nav-item pl-4">
                     <a href="{% url "evaluation:phase-archive-info" slug=phase.slug %}"
-                       class="nav-link py-1 pl-3 {% if request.resolver_match.view_name == 'evaluation:phase-archive-info' and request.resolver_match.kwargs.slug == phase.slug %} active {% endif %}">
-                        <i class="fas fa-database fa-fw"></i> Linked archive
+                       class="nav-link py-1 pl-2 {% if request.resolver_match.view_name == 'evaluation:phase-archive-info' and request.resolver_match.kwargs.slug == phase.slug %} active {% endif %}">
+                        <i class="fas fa-database fa-fw pr-1"></i> Linked&nbsp;Archive
                     </a>
                 </li>
                 {% if perms.evaluation.configure_algorithm_phase %}
                     <li class="nav-item pl-4">
                         <a href="{% url 'evaluation:interface-list' slug=phase.slug %}"
-                           class="nav-link py-1 pl-3 {% if request.resolver_match.view_name in 'evaluation:interface-list,evaluation:interface-create,evaluation:interface-delete' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}">
-                            <i class="fas fa-sliders-h fa-fw"></i> Algorithm Interfaces
+                           class="nav-link py-1 pl-2 {% if request.resolver_match.view_name in 'evaluation:interface-list,evaluation:interface-create,evaluation:interface-delete' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}">
+                            <i class="fas fa-sliders-h fa-fw pr-1"></i> Algorithm&nbsp;Interfaces
                         </a>
                     </li>
                 {% endif %}
             {% endif %}
             <li class="nav-item pl-4">
+                <a href="{% url "evaluation:method-list" slug=phase.slug %}"
+                   class="nav-link py-1 pl-2 {% if request.resolver_match.view_name in 'evaluation:method-list,evaluation:method-create,evaluation:method-update' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:method-detail' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}">
+                    <i class="fab fa-docker fa-fw pr-1"></i> Evaluation&nbsp;Methods
+                </a>
+            </li>
+            <li class="nav-item pl-4">
+                <a href="{% url "evaluation:ground-truth-list" slug=phase.slug %}"
+                   class="nav-link py-1 pl-2  {% if request.resolver_match.view_name in 'evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:ground-truth-detail' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}">
+                    <i class="fas fa-cube fa-fw pr-1"></i> Ground&nbsp;Truths
+                </a>
+            </li>
+            <li class="nav-item pl-4">
                 <a href="{% url "evaluation:evaluation-admin-list" slug=phase.slug %}"
-                   class="nav-link py-1 pl-3 {% if request.resolver_match.view_name == 'evaluation:evaluation-admin-list' and request.resolver_match.kwargs.slug == phase.slug %} active {% endif %}">
-                    <i class="fas fa-list fa-fw"></i> Submissions & Evaluations
+                   class="nav-link py-1 pl-2 {% if request.resolver_match.view_name == 'evaluation:evaluation-admin-list' and request.resolver_match.kwargs.slug == phase.slug %} active {% endif %}">
+                    <i class="fas fa-list fa-fw pr-2"></i> Submissions & Evaluations
                 </a>
             </li>
         </ul>
