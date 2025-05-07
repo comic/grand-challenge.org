@@ -25,12 +25,14 @@ class ComponentImageAdmin(GuardedModelAdmin):
         "status",
         "latest_shimmed_version",
         "is_desired_version",
+        "is_removed",
     )
     list_filter = (
         "is_manifest_valid",
         "is_in_registry",
         "import_status",
         "is_desired_version",
+        "is_removed",
     )
     search_fields = ("pk", "creator__username", "image_sha256")
 

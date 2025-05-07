@@ -18,12 +18,13 @@ from celery import (  # noqa: I251 TODO needs to be refactored
     shared_task,
     signature,
 )
+from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import OperationalError, transaction
-from django.db.models import DateTimeField, ExpressionWrapper, F
+from django.db.models import Count, DateTimeField, ExpressionWrapper, F, Q
 from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
@@ -219,6 +220,73 @@ def remove_inactive_container_images():
                     )
 
 
+@acks_late_2xlarge_task
+@transaction.atomic
+def delete_failed_import_container_images():
+    from grandchallenge.algorithms.models import AlgorithmImage
+    from grandchallenge.components.models import ComponentImage
+    from grandchallenge.evaluation.models import Method
+    from grandchallenge.workstations.models import WorkstationImage
+
+    for model in (AlgorithmImage, Method, WorkstationImage):
+        for image in model.objects.filter(
+            import_status=ComponentImage.ImportStatusChoices.FAILED
+        ).iterator():
+            on_commit(
+                delete_container_image.signature(
+                    kwargs={
+                        "pk": image.pk,
+                        "app_label": image._meta.app_label,
+                        "model_name": image._meta.model_name,
+                    }
+                ).apply_async
+            )
+
+
+@acks_late_2xlarge_task
+@transaction.atomic
+def delete_old_unsuccessful_container_images():
+    from grandchallenge.algorithms.models import AlgorithmImage, Job
+    from grandchallenge.evaluation.models import Evaluation, Method
+    from grandchallenge.workstations.models import WorkstationImage
+
+    querysets = [
+        WorkstationImage.objects.filter(
+            is_removed=False, created__lt=now() - relativedelta(years=1)
+        ),
+        Method.objects.filter(
+            is_removed=False, created__lt=now() - relativedelta(years=1)
+        )
+        .annotate(
+            successful_evaluation_count=Count(
+                "evaluation", filter=Q(evaluation__status=Evaluation.SUCCESS)
+            )
+        )
+        .filter(successful_evaluation_count=0),
+        AlgorithmImage.objects.filter(
+            is_removed=False, created__lt=now() - relativedelta(months=3)
+        )
+        .annotate(
+            successful_job_count=Count(
+                "job", filter=Q(job__status=Job.SUCCESS)
+            )
+        )
+        .filter(successful_job_count=0),
+    ]
+
+    for queryset in querysets:
+        for image in queryset.iterator():
+            on_commit(
+                delete_container_image.signature(
+                    kwargs={
+                        "pk": image.pk,
+                        "app_label": image._meta.app_label,
+                        "model_name": image._meta.model_name,
+                    }
+                ).apply_async
+            )
+
+
 @acks_late_2xlarge_task(ignore_errors=(InstanceInUse,))
 def remove_container_image_from_registry(
     *, pk: uuid.UUID, app_label: str, model_name: str
@@ -229,7 +297,7 @@ def remove_container_image_from_registry(
 
     from grandchallenge.algorithms.models import AlgorithmImage, Job
     from grandchallenge.evaluation.models import Evaluation, Method
-    from grandchallenge.workstations.models import Session, Workstation
+    from grandchallenge.workstations.models import Session, WorkstationImage
 
     if isinstance(instance, Method):
         instance_in_use = (
@@ -252,7 +320,7 @@ def remove_container_image_from_registry(
             .active()
             .exists()
         )
-    elif isinstance(instance, Workstation):
+    elif isinstance(instance, WorkstationImage):
         instance_in_use = (
             Session.objects.filter(workstation_image=instance)
             .active()
@@ -279,12 +347,36 @@ def remove_container_image_from_registry(
 
 @acks_late_2xlarge_task(ignore_errors=(InstanceInUse,))
 def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
+    from grandchallenge.algorithms.models import AlgorithmImage, Job
+    from grandchallenge.evaluation.models import Evaluation, Method
+    from grandchallenge.workstations.models import WorkstationImage
+
     remove_container_image_from_registry(
         pk=pk, app_label=app_label, model_name=model_name
     )
 
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
+
+    if isinstance(instance, Method):
+        should_be_protected = Evaluation.objects.filter(
+            method=instance,
+            status=Evaluation.SUCCESS,
+        ).exists()
+    elif isinstance(instance, AlgorithmImage):
+        should_be_protected = Job.objects.filter(
+            algorithm_image=instance,
+            status=Job.SUCCESS,
+        ).exists()
+    elif isinstance(instance, WorkstationImage):
+        should_be_protected = instance.created > (
+            now() - relativedelta(years=1)
+        )
+    else:
+        raise RuntimeError("Unknown instance type")
+
+    if should_be_protected:
+        raise InstanceInUse
 
     if instance.image:
         instance.image.delete(save=False)

@@ -45,6 +45,7 @@ jobs:
             - name: Run the django tests
               run: |
                   make minio
+                  docker network create grand-challengeorg_workstations
                   docker compose run --rm celery_worker pytest --durations 10
 
     docs:
