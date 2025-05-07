@@ -222,6 +222,29 @@ def remove_inactive_container_images():
 
 @acks_late_2xlarge_task
 @transaction.atomic
+def delete_failed_import_container_images():
+    from grandchallenge.algorithms.models import AlgorithmImage
+    from grandchallenge.components.models import ComponentImage
+    from grandchallenge.evaluation.models import Method
+    from grandchallenge.workstations.models import WorkstationImage
+
+    for model in (AlgorithmImage, Method, WorkstationImage):
+        for image in model.objects.filter(
+            import_status=ComponentImage.ImportStatusChoices.FAILED
+        ).iterator():
+            on_commit(
+                delete_container_image.signature(
+                    kwargs={
+                        "pk": image.pk,
+                        "app_label": image._meta.app_label,
+                        "model_name": image._meta.model_name,
+                    }
+                ).apply_async
+            )
+
+
+@acks_late_2xlarge_task
+@transaction.atomic
 def delete_old_unsuccessful_container_images():
     from grandchallenge.algorithms.models import AlgorithmImage, Job
     from grandchallenge.evaluation.models import Evaluation, Method
