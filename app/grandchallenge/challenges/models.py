@@ -652,17 +652,15 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         UserForumPermission.objects.bulk_update(perms, ["has_perm"])
 
     def create_groups(self):
-        # Create the groups only on first save
-        admins_group = Group.objects.create(name=f"{self.short_name}_admins")
-        participants_group = Group.objects.create(
-            name=f"{self.short_name}_participants"
+        self.admins_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_admins"
         )
-        external_evaluators_group = Group.objects.create(
-            name=f"{self.short_name}_external_evaluators"
+        self.participants_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_participants"
         )
-        self.admins_group = admins_group
-        self.participants_group = participants_group
-        self.external_evaluators_group = external_evaluators_group
+        self.external_evaluators_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_external_evaluators"
+        )
 
     def create_forum(self):
         f, created = Forum.objects.get_or_create(
