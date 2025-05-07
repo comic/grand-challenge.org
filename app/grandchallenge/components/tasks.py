@@ -18,6 +18,7 @@ from celery import (  # noqa: I251 TODO needs to be refactored
     shared_task,
     signature,
 )
+from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -229,7 +230,7 @@ def remove_container_image_from_registry(
 
     from grandchallenge.algorithms.models import AlgorithmImage, Job
     from grandchallenge.evaluation.models import Evaluation, Method
-    from grandchallenge.workstations.models import Session, Workstation
+    from grandchallenge.workstations.models import Session, WorkstationImage
 
     if isinstance(instance, Method):
         instance_in_use = (
@@ -252,7 +253,7 @@ def remove_container_image_from_registry(
             .active()
             .exists()
         )
-    elif isinstance(instance, Workstation):
+    elif isinstance(instance, WorkstationImage):
         instance_in_use = (
             Session.objects.filter(workstation_image=instance)
             .active()
@@ -279,12 +280,36 @@ def remove_container_image_from_registry(
 
 @acks_late_2xlarge_task(ignore_errors=(InstanceInUse,))
 def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
+    from grandchallenge.algorithms.models import AlgorithmImage, Job
+    from grandchallenge.evaluation.models import Evaluation, Method
+    from grandchallenge.workstations.models import WorkstationImage
+
     remove_container_image_from_registry(
         pk=pk, app_label=app_label, model_name=model_name
     )
 
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
+
+    if isinstance(instance, Method):
+        should_be_protected = Evaluation.objects.filter(
+            method=instance,
+            status=Evaluation.SUCCESS,
+        ).exists()
+    elif isinstance(instance, AlgorithmImage):
+        should_be_protected = Job.objects.filter(
+            algorithm_image=instance,
+            status=Job.SUCCESS,
+        ).exists()
+    elif isinstance(instance, WorkstationImage):
+        should_be_protected = instance.created > (
+            now() - relativedelta(years=1)
+        )
+    else:
+        raise RuntimeError("Unknown instance type")
+
+    if should_be_protected:
+        raise InstanceInUse
 
     if instance.image:
         instance.image.delete(save=False)
