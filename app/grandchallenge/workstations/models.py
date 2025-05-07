@@ -331,7 +331,7 @@ ENV_VARS_SCHEMA = {
 
 class SessionManager(models.QuerySet):
     def active(self):
-        return self.exclude(
+        return self.filter(
             status__in=[Session.QUEUED, Session.STARTED, Session.RUNNING]
         )
 
