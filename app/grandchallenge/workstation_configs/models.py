@@ -437,15 +437,6 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
             "workstation-configs:detail", kwargs={"slug": self.slug}
         )
 
-    def clean(self):
-        super().clean()
-        if self.overlay_segments is None:
-            self.overlay_segments = self._meta.get_field(
-                "overlay_segments"
-            ).default()
-        if self.key_bindings is None:
-            self.key_bindings = self._meta.get_field("key_bindings").default()
-
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.creator:
