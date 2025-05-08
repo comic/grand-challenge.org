@@ -103,7 +103,7 @@
     <span class="n">assign_evaluation_permissions</span><span class="p">,</span>
     <span class="n">assign_submission_permissions</span><span class="p">,</span>
     <span class="n">calculate_ranks</span><span class="p">,</span>
-    <span class="n">prepare_and_execute_evaluation</span><span class="p">,</span>
+    <span class="n">check_prerequisites_for_evaluation_execution</span><span class="p">,</span>
     <span class="n">update_combined_leaderboard</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.templatetags.evaluation_extras</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -205,15 +205,15 @@
     <span class="n">algorithm_interfaces</span><span class="p">,</span>
     <span class="n">valid_archive_items_per_interface</span><span class="p">,</span>
     <span class="n">algorithm_model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">successful_jobs_only</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">subset_by_status</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
     <span class="k">if</span> <span class="n">algorithm_model</span><span class="p">:</span>
         <span class="n">extra_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;algorithm_model&quot;</span><span class="p">:</span> <span class="n">algorithm_model</span><span class="p">}</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">extra_filter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;algorithm_model__isnull&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 
-    <span class="k">if</span> <span class="n">successful_jobs_only</span><span class="p">:</span>
-        <span class="n">extra_filter</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Job</span><span class="o">.</span><span class="n">SUCCESS</span>
+    <span class="k">if</span> <span class="n">subset_by_status</span><span class="p">:</span>
+        <span class="n">extra_filter</span><span class="p">[</span><span class="s2">&quot;status__in&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subset_by_status</span>
 
     <span class="n">jobs</span> <span class="o">=</span> <span class="n">Job</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
         <span class="n">algorithm_image</span><span class="o">=</span><span class="n">algorithm_image</span><span class="p">,</span>
@@ -1692,13 +1692,20 @@
                 <span class="n">status</span><span class="o">=</span><span class="n">Evaluation</span><span class="o">.</span><span class="n">VALIDATING_INPUTS</span><span class="p">,</span>
             <span class="p">)</span>
 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_matching_algorithm_interfaces</span><span class="p">:</span>
+                <span class="n">evaluation</span><span class="o">.</span><span class="n">update_status</span><span class="p">(</span>
+                    <span class="n">status</span><span class="o">=</span><span class="n">Evaluation</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
+                    <span class="n">error_message</span><span class="o">=</span><span class="s2">&quot;The algorithm interfaces do not match those defined for the phase.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
         <span class="k">if</span> <span class="n">additional_inputs</span><span class="p">:</span>
             <span class="n">evaluation</span><span class="o">.</span><span class="n">validate_values_and_execute_linked_task</span><span class="p">(</span>
                 <span class="n">values</span><span class="o">=</span><span class="n">additional_inputs</span><span class="p">,</span>
                 <span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">e</span> <span class="o">=</span> <span class="n">prepare_and_execute_evaluation</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">check_prerequisites_for_evaluation_execution</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
                 <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;evaluation_pk&quot;</span><span class="p">:</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">pk</span><span class="p">},</span> <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span>
             <span class="p">)</span>
             <span class="n">on_commit</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
@@ -1736,6 +1743,12 @@
                 <span class="s2">&quot;slug&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">)</span>
+
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_matching_algorithm_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="o">.</span><span class="n">all</span><span class="p">()}</span> <span class="o">==</span> <span class="p">{</span>
+            <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_image</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">interfaces</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="p">}</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SubmissionUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
@@ -2009,7 +2022,7 @@
         <span class="p">)</span>
 
         <span class="n">successful_jobs_per_interface</span> <span class="o">=</span> <span class="n">get_valid_jobs_for_interfaces_and_archive_items</span><span class="p">(</span>
-            <span class="n">successful_jobs_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">subset_by_status</span><span class="o">=</span><span class="p">[</span><span class="n">Job</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">],</span>
             <span class="n">algorithm_image</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_image</span><span class="p">,</span>
             <span class="n">algorithm_model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">algorithm_model</span><span class="p">,</span>
             <span class="n">algorithm_interfaces</span><span class="o">=</span><span class="n">algorithm_interfaces</span><span class="p">,</span>
@@ -2097,10 +2110,10 @@
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-            <span class="n">prepare_and_execute_evaluation</span><span class="p">,</span>
+            <span class="n">check_prerequisites_for_evaluation_execution</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">linked_task</span> <span class="o">=</span> <span class="n">prepare_and_execute_evaluation</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+        <span class="n">linked_task</span> <span class="o">=</span> <span class="n">check_prerequisites_for_evaluation_execution</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
             <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
                 <span class="s2">&quot;evaluation_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
             <span class="p">},</span>
