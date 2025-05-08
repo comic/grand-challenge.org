@@ -213,6 +213,7 @@ class EvaluationAdmin(admin.ModelAdmin):
         "runtime_metrics",
         "claimed_by",
         "ground_truth",
+        "evaluation_utilization",
     )
     actions = (requeue_jobs, cancel_jobs, deprovision_jobs)
 
