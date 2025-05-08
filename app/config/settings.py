@@ -1234,11 +1234,19 @@ CELERY_BEAT_SCHEDULE = {
     },
     "update_publication_metadata": {
         "task": "grandchallenge.publications.tasks.update_publication_metadata",
-        "schedule": crontab(hour=1, minute=30),
+        "schedule": crontab(hour=0, minute=30),
     },
     "remove_inactive_container_images": {
         "task": "grandchallenge.components.tasks.remove_inactive_container_images",
-        "schedule": crontab(hour=2, minute=30),
+        "schedule": crontab(hour=1, minute=0),
+    },
+    "delete_failed_import_container_images": {
+        "task": "grandchallenge.components.tasks.delete_failed_import_container_images",
+        "schedule": crontab(hour=1, minute=30),
+    },
+    "delete_old_unsuccessful_container_images": {
+        "task": "grandchallenge.components.tasks.delete_old_unsuccessful_container_images",
+        "schedule": crontab(hour=2, minute=0),
     },
     "update_associated_challenges": {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
