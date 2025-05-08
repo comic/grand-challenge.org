@@ -133,13 +133,14 @@ class AcksLateTaskDecorator:
                 else:
                     return func(*args, **kwargs)
             except Exception as error:
-                if is_in_celery_context and any(
-                    isinstance(error, e) for e in ignore_errors
-                ):
-                    logger.info(
-                        f"Ignoring error in task {task_func.name}: {error}"
-                    )
-                    return
+                if any(isinstance(error, e) for e in ignore_errors):
+                    if is_in_celery_context:
+                        logger.info(
+                            f"Ignoring error in task {task_func.name}: {error}"
+                        )
+                        return
+                    else:
+                        raise error
                 elif any(isinstance(error, e) for e in retry_on) or (
                     singleton and isinstance(error, LockError)
                 ):
