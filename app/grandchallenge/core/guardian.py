@@ -87,8 +87,10 @@ def filter_by_permission(*, queryset, user, codename, accept_user_perms=True):
         codename=codename,
     )
 
+    group_pks = {*user.groups.values_list("pk", flat=True)}
+
     group_filter_kwargs = {
-        f"{group_related_query_name}__group__user": user,
+        f"{group_related_query_name}__group__pk__in": group_pks,
         f"{group_related_query_name}__permission": permission,
     }
 
