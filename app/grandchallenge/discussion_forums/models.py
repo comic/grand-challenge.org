@@ -54,6 +54,10 @@ class Topic(UUIDModel):
         default=TopicTypeChoices.DEFAULT,
     )
 
+    locked = models.BooleanField(
+        default=False,
+        help_text="Lock a topic to close it and prevent posts from being added to it.",
+    )
     last_post_on = models.DateTimeField(
         blank=True,
         null=True,

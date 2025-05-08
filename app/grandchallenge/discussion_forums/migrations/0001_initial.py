@@ -77,6 +77,13 @@ class Migration(migrations.Migration):
                         max_length=8,
                     ),
                 ),
+                (
+                    "locked",
+                    models.BooleanField(
+                        default=False,
+                        help_text="Lock a topic to close it and prevent posts from being added to it.",
+                    ),
+                ),
                 ("last_post_on", models.DateTimeField(blank=True, null=True)),
                 (
                     "creator",
