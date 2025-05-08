@@ -101,6 +101,20 @@ class WorkstationConfigForm(SaveFormInitMixin, ModelForm):
         else:
             self.helper.layout.append(Submit("save", "Save"))
 
+    def clean_overlay_segments(self):
+        overlay_segments = self.cleaned_data["overlay_segments"]
+        if overlay_segments is None:
+            return []
+        else:
+            return overlay_segments
+
+    def clean_key_bindings(self):
+        key_bindings = self.cleaned_data["key_bindings"]
+        if key_bindings is None:
+            return []
+        else:
+            return key_bindings
+
     class Meta:
         model = WorkstationConfig
         fields = (
