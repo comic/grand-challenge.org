@@ -166,7 +166,6 @@ class SubmissionAdmin(admin.ModelAdmin):
 
 @admin.register(Evaluation)
 class EvaluationAdmin(admin.ModelAdmin):
-    ordering = ("-created",)
     list_display = (
         "pk",
         "created",
