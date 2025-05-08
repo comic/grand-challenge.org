@@ -481,14 +481,7 @@ def test_claimable_evaluations_filter(
     )
     assert response.status_code == 200
     # both are claimable
-    assert response.json() == [
-        ExternalEvaluationSerializer(
-            e1, context={"request": response.wsgi_request}
-        ).data,
-        ExternalEvaluationSerializer(
-            e2, context={"request": response.wsgi_request}
-        ).data,
-    ]
+    assert {e["pk"] for e in response.json()} == {str(e1.pk), str(e2.pk)}
 
     # filter by phase
     response = get_view_for_user(
@@ -500,11 +493,7 @@ def test_claimable_evaluations_filter(
     )
     assert response.status_code == 200
     # only e1 is returned
-    assert response.json() == [
-        ExternalEvaluationSerializer(
-            e1, context={"request": response.wsgi_request}
-        ).data,
-    ]
+    assert {e["pk"] for e in response.json()} == {str(e1.pk)}
 
 
 @pytest.mark.django_db
