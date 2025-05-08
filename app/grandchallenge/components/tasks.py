@@ -205,8 +205,8 @@ def remove_inactive_container_images():
                 is_in_registry=True
             )
 
-            if active_image := instance.active_image:
-                queryset = queryset.exclude(pk=active_image.pk)
+            if instance.active_image:
+                queryset = queryset.exclude(pk=instance.active_image.pk)
 
             for image in queryset:
                 on_commit(
