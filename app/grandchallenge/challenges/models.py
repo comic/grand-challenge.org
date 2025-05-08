@@ -639,9 +639,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         self.external_evaluators_group = external_evaluators_group
 
     def create_forum(self):
-        self.discussion_forum = discussion_forum_models.Forum.objects.create(
-            name=self.title if self.title else self.short_name,
-        )
+        self.discussion_forum = discussion_forum_models.Forum.objects.create()
 
     def create_default_pages(self):
         Page.objects.create(
