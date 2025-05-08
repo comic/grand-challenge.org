@@ -66,7 +66,7 @@ from grandchallenge.evaluation.tasks import (
     assign_evaluation_permissions,
     assign_submission_permissions,
     calculate_ranks,
-    prepare_and_execute_evaluation,
+    check_prerequisites_for_evaluation_execution,
     update_combined_leaderboard,
 )
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
@@ -1677,21 +1677,13 @@ class Submission(FieldChangeMixin, UUIDModel):
                     error_message="The algorithm interfaces do not match those defined for the phase.",
                 )
 
-            if self.has_blocking_algorithm_jobs:
-                evaluation.update_status(
-                    status=Evaluation.CANCELLED,
-                    error_message="There are non-successful jobs for this submission. "
-                    "These need to be handled first before you can "
-                    "re-evaluate. Please contact support.",
-                )
-
         if additional_inputs:
             evaluation.validate_values_and_execute_linked_task(
                 values=additional_inputs,
                 user=self.creator,
             )
         else:
-            e = prepare_and_execute_evaluation.signature(
+            e = check_prerequisites_for_evaluation_execution.signature(
                 kwargs={"evaluation_pk": evaluation.pk}, immutable=True
             )
             on_commit(e.apply_async)
@@ -1732,39 +1724,9 @@ class Submission(FieldChangeMixin, UUIDModel):
 
     @cached_property
     def has_matching_algorithm_interfaces(self):
-        return sorted(
-            [int.pk for int in self.phase.algorithm_interfaces.all()]
-        ) == sorted(
-            [int.pk for int in self.algorithm_image.algorithm.interfaces.all()]
-        )
-
-    @cached_property
-    def has_blocking_algorithm_jobs(self):
-        # are there non-successful jobs for the algorithm image, model and archive?
-        algorithm_interfaces = self.phase.algorithm_interfaces.all()
-
-        items = get_archive_items_for_interfaces(
-            algorithm_interfaces=algorithm_interfaces,
-            archive_items=self.phase.archive.items.all(),
-        )
-        non_success_statuses = [
-            status[0]
-            for status in Job.STATUS_CHOICES
-            if status[0] != Job.SUCCESS
-        ]
-
-        jobs = get_valid_jobs_for_interfaces_and_archive_items(
-            algorithm_image=self.algorithm_image,
-            algorithm_model=self.algorithm_model,
-            algorithm_interfaces=algorithm_interfaces,
-            valid_archive_items_per_interface=items,
-            subset_by_status=non_success_statuses,
-        )
-
-        if any(jobs.values()):
-            return True
-        else:
-            return False
+        return {*self.phase.algorithm_interfaces.all()} == {
+            *self.algorithm_image.algorithm.interfaces.all()
+        }
 
 
 class SubmissionUserObjectPermission(UserObjectPermissionBase):
@@ -2126,10 +2088,10 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         self, *, values, user, linked_task=None
     ):
         from grandchallenge.evaluation.tasks import (
-            prepare_and_execute_evaluation,
+            check_prerequisites_for_evaluation_execution,
         )
 
-        linked_task = prepare_and_execute_evaluation.signature(
+        linked_task = check_prerequisites_for_evaluation_execution.signature(
             kwargs={
                 "evaluation_pk": self.pk,
             },

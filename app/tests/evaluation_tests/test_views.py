@@ -2804,8 +2804,16 @@ def test_create_evaluation_requires_matching_algorithm_interfaces(
 )
 @pytest.mark.django_db
 def test_create_evaluation_blocked_if_failed_jobs_exist(
-    num_jobs, jobs_statuses, status
+    num_jobs,
+    jobs_statuses,
+    status,
+    settings,
+    django_capture_on_commit_callbacks,
 ):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
 
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
@@ -2861,7 +2869,12 @@ def test_create_evaluation_blocked_if_failed_jobs_exist(
         phase=phase, creator=user, algorithm_image=ai
     )
 
-    submission.create_evaluation(additional_inputs=None)
+    with patch(
+        "grandchallenge.evaluation.tasks.prepare_and_execute_evaluation"
+    ) as mocked_execute_eval:
+        mocked_execute_eval.return_value = None
+        with django_capture_on_commit_callbacks(execute=True):
+            submission.create_evaluation(additional_inputs=None)
 
     eval = Evaluation.objects.order_by("created").last()
     assert eval.status == status
@@ -2870,3 +2883,103 @@ def test_create_evaluation_blocked_if_failed_jobs_exist(
             "There are non-successful jobs for this submission. These need to be handled first before you can re-evaluate. Please contact support."
             in str(eval.error_message)
         )
+
+
+@pytest.mark.django_db
+def test_reschedule_evaluation_blocked_if_failed_jobs_with_complete_inputs_exist(
+    settings, django_capture_on_commit_callbacks
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+
+    ci_str1 = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_str2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci_str1, ci_str2], outputs=[ci_bool]
+    )
+    phase.algorithm_interfaces.add(interface)
+
+    user = UserFactory()
+    phase.challenge.add_admin(user)
+    InvoiceFactory(
+        challenge=phase.challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    MethodFactory(
+        phase=phase,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+    archive = ArchiveFactory()
+    phase.archive = archive
+    phase.save()
+
+    civs = []
+    for i in range(5):
+        ai = ArchiveItemFactory(archive=archive)
+        civ1 = ComponentInterfaceValueFactory(
+            interface=ci_str1, value=f"foo-{i}"
+        )
+        civ2 = ComponentInterfaceValueFactory(
+            interface=ci_str2, value=f"bar-{i}"
+        )
+        ai.values.set([civ1, civ2])
+        civs.append([civ1, civ2])
+
+    algorithm = AlgorithmFactory()
+    algorithm.interfaces.add(interface)
+    algorithm.add_editor(user)
+    ai = AlgorithmImageFactory(algorithm=algorithm)
+
+    # 3 successful jobs with complete inputs
+    for i in range(3):
+        j = AlgorithmJobFactory(
+            algorithm_image=ai,
+            time_limit=10,
+            status=Job.SUCCESS,
+            creator=None,
+            algorithm_interface=interface,
+        )
+        j.inputs.set(civs[i])
+
+    # 1 failed job with partial input -- should be ignored
+    j = AlgorithmJobFactory(
+        algorithm_image=ai,
+        time_limit=10,
+        status=Job.FAILURE,
+        creator=None,
+        algorithm_interface=interface,
+    )
+    j.inputs.set([civs[3][0]])
+
+    # 1 failed job with additional input -- should be ignored
+    j_add = AlgorithmJobFactory(
+        algorithm_image=ai,
+        time_limit=10,
+        status=Job.FAILURE,
+        creator=None,
+        algorithm_interface=interface,
+    )
+    j_add.inputs.set([*civs[4], ComponentInterfaceValueFactory()])
+
+    submission = SubmissionFactory(
+        phase=phase, creator=user, algorithm_image=ai
+    )
+    with patch(
+        "grandchallenge.evaluation.tasks.prepare_and_execute_evaluation"
+    ) as mocked_execute_eval:
+        mocked_execute_eval.return_value = None
+        with django_capture_on_commit_callbacks(execute=True):
+            submission.create_evaluation(additional_inputs=None)
+
+    eval = Evaluation.objects.order_by("created").last()
+    assert eval.status == Evaluation.VALIDATING_INPUTS

@@ -743,12 +743,6 @@ class EvaluationForm(AdditionalInputsMixin, forms.Form):
                     "defined for the phase."
                 )
 
-            if cleaned_data["submission"].has_blocking_algorithm_jobs:
-                raise ValidationError(
-                    "There are non-successful jobs for this submission. These need "
-                    "to be handled first before you can re-evaluate. Please contact support."
-                )
-
         # Fetch from the db to get the cost annotations
         # Maybe this is solved with GeneratedField (Django 5)?
         challenge = (
