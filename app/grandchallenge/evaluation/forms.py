@@ -731,6 +731,18 @@ class EvaluationForm(AdditionalInputsMixin, forms.Form):
     def clean(self):
         cleaned_data = super().clean()
 
+        if (
+            cleaned_data["submission"].phase.submission_kind
+            == SubmissionKindChoices.ALGORITHM
+        ):
+            if not cleaned_data[
+                "submission"
+            ].has_matching_algorithm_interfaces:
+                raise ValidationError(
+                    "The algorithm interfaces do not match those "
+                    "defined for the phase."
+                )
+
         # Fetch from the db to get the cost annotations
         # Maybe this is solved with GeneratedField (Django 5)?
         challenge = (
