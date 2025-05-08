@@ -114,14 +114,7 @@ class Post(UUIDModel):
         return self.topic.posts.count() == 1
 
     def save(self, *args, **kwargs):
-        adding = self._state.adding
         super().save(*args, **kwargs)
-
-        # Ensures that the subject of the thread corresponds to the one associated
-        # with the first post
-        if adding and self.topic.first_post is None:
-            self.topic.subject = self.subject
-
         self.topic.last_post_on = self.created
         self.topic.save()
 
