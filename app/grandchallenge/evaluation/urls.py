@@ -32,6 +32,8 @@ from grandchallenge.evaluation.views import (
     PhaseAlgorithmCreate,
     PhaseArchiveInfo,
     PhaseCreate,
+    PhaseStarterKitDetail,
+    PhaseStarterKitDownload,
     PhaseUpdate,
     SubmissionCreate,
     SubmissionDetail,
@@ -189,6 +191,16 @@ urlpatterns = [
         name="evaluation-create",
     ),
     path("<slug:slug>/update/", PhaseUpdate.as_view(), name="phase-update"),
+    path(
+        "<slug:slug>/starter-kit/",
+        PhaseStarterKitDetail.as_view(),
+        name="phase-starter-kit-detail",
+    ),
+    path(
+        "<slug:slug>/starter-kit/download/",
+        PhaseStarterKitDownload.as_view(),
+        name="phase-starter-kit-download",
+    ),
     path("results/", LeaderboardRedirect.as_view()),
     path("leaderboard/", LeaderboardRedirect.as_view()),
 ]

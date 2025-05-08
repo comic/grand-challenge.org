@@ -59,13 +59,20 @@ class SessionForm(ModelForm):
         ],
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, reader_study, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.__reader_study = reader_study
 
         self.helper = FormHelper(self)
         self.helper.attrs.update({"class": "d-none"})
 
         self.fields["ping_times"].required = False
+
+    def clean(self):
+        if self.__reader_study and not self.__reader_study.is_launchable:
+            raise ValidationError("Reader study cannot be launched.")
+        return super().clean()
 
     class Meta:
         model = Session
@@ -82,8 +89,9 @@ class DebugSessionForm(SaveFormInitMixin, ModelForm):
         ],
     )
 
-    def __init__(self, *args, user, workstation, **kwargs):
+    def __init__(self, *args, reader_study, user, workstation, **kwargs):
         super().__init__(*args, **kwargs)
+        self.__reader_study = reader_study
         self.__user = user
         self.__workstation = workstation
         self.fields["extra_env_vars"].initial = [
@@ -92,6 +100,9 @@ class DebugSessionForm(SaveFormInitMixin, ModelForm):
         ]
 
     def clean(self):
+        if self.__reader_study and not self.__reader_study.is_launchable:
+            raise ValidationError("Reader study cannot be launched.")
+
         cleaned_data = super().clean()
 
         if Session.objects.filter(

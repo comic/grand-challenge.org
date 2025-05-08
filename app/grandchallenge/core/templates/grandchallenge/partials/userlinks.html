@@ -34,11 +34,6 @@
             <i class="fas fa-book fa-fw"></i>
             &nbsp;{{ request.site.name }} Documentation
         </a>
-        <a class="dropdown-item"
-           href="{% url 'forum:forum' slug=DOCUMENTATION_HELP_FORUM_SLUG pk=DOCUMENTATION_HELP_FORUM_PK %}">
-            <i class="fas fa-comments fa-fw"></i>
-            &nbsp;{{ request.site.name }} Forum
-        </a>
     </div>
 </li>
 {% if user.is_authenticated %}

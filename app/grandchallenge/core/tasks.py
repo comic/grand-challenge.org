@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import boto3
+from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db import transaction
@@ -8,6 +9,7 @@ from django.db.models import Count
 from django.utils import timezone
 from django.utils.timezone import now
 from django_celery_results.models import TaskResult
+from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import RawImageUploadSession
@@ -25,9 +27,17 @@ def cleanup_celery_backend():
     ).delete()
 
 
-@acks_late_micro_short_task(ignore_result=True)
+@acks_late_micro_short_task(
+    ignore_result=True,
+    singleton=True,
+    # No need to retry here as the periodic task call this again
+    ignore_errors=(LockError, SoftTimeLimitExceeded, TimeLimitExceeded),
+)
 @transaction.atomic
 def put_cloudwatch_metrics():
+    if not settings.PUSH_CLOUDWATCH_METRICS:
+        return
+
     client = boto3.client(
         "cloudwatch", region_name=settings.AWS_CLOUDWATCH_REGION_NAME
     )

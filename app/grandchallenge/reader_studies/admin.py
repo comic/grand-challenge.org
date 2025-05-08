@@ -46,6 +46,7 @@ class ReaderStudyAdmin(GuardedModelAdmin):
         "workstation__slug",
     )
     search_fields = ("title", "slug", "pk")
+    readonly_fields = ("credits_consumed",)
 
 
 @admin.register(Answer)

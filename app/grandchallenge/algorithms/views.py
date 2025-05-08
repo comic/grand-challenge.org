@@ -1,6 +1,7 @@
+import io
 import logging
-import tempfile
 from pathlib import Path
+from zipfile import ZipFile
 
 from django.conf import settings
 from django.contrib import messages
@@ -95,7 +96,6 @@ from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.utils.grand_challenge_forge import (
     get_forge_algorithm_template_context,
 )
-from grandchallenge.core.utils.zip import zip_memory_buffer
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.evaluation.models import Evaluation
@@ -1158,32 +1158,30 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "algorithms.change_algorithm"
     raise_exception = True
     queryset = Algorithm.objects.prefetch_related(
-        "interfaces",
+        "interfaces__inputs", "interfaces__outputs"
     )
 
     def get(self, *_, **__):
         algorithm = self.get_object()
+        dir_name = f"{algorithm.slug}-template"
 
         forge_context = get_forge_algorithm_template_context(algorithm)
 
-        with tempfile.TemporaryDirectory() as temp_dir:
-            output_path = Path(temp_dir)
-
+        buffer = io.BytesIO()
+        with ZipFile(buffer, "w") as zipf:
             generate_algorithm_template(
                 context=forge_context,
-                output_path=output_path,
+                output_zip_file=zipf,
+                target_zpath=Path(dir_name),
             )
+        buffer.seek(0)
 
-            buffer = zip_memory_buffer(
-                source=output_path / f"{algorithm.slug}-template"
-            )
-
-            return FileResponse(
-                streaming_content=buffer,
-                as_attachment=True,
-                filename=f"{algorithm.slug}-template.zip",
-                content_type="application/zip",
-            )
+        return FileResponse(
+            streaming_content=buffer,
+            as_attachment=True,
+            filename=f"{dir_name}.zip",
+            content_type="application/zip",
+        )
 
 
 class AlgorithmInterfacePermissionMixin(AccessMixin):

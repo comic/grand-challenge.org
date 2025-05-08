@@ -27,6 +27,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
+    delete_container_image,
     remove_container_image_from_registry,
 )
 from grandchallenge.core.storage import (
@@ -1293,6 +1294,30 @@ def test_can_execute():
 
 
 @pytest.mark.django_db
+def test_can_execute_removed_image():
+    ai = AlgorithmImageFactory(image=None)
+
+    assert ai.can_execute is False
+    assert ai not in AlgorithmImage.objects.executable_images()
+
+    ai.is_manifest_valid = True
+    ai.is_in_registry = True
+    ai.is_removed = False
+    ai.save()
+
+    del ai.can_execute
+    assert ai.can_execute is True
+    assert ai in AlgorithmImage.objects.executable_images()
+
+    ai.is_removed = True
+    ai.save()
+
+    del ai.can_execute
+    assert ai.can_execute is False
+    assert ai not in AlgorithmImage.objects.executable_images()
+
+
+@pytest.mark.django_db
 def test_no_job_without_image(django_capture_on_commit_callbacks):
     with django_capture_on_commit_callbacks() as callbacks:
         ai = AlgorithmImageFactory(image=None)
@@ -1334,10 +1359,24 @@ def test_can_change_from_empty(django_capture_on_commit_callbacks):
 def test_cannot_change_image(algorithm_image):
     ai = AlgorithmImageFactory(image__from_path=algorithm_image)
 
-    ai.image = "blah"
+    ai.image = ContentFile(b"Foo1", name="blah")
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError) as error:
         ai.save()
+
+    assert str(error.value) == "The image cannot be changed"
+
+
+@pytest.mark.django_db
+def test_cannot_add_image_when_removed(algorithm_image):
+    ai = AlgorithmImageFactory(is_removed=True, image="")
+
+    ai.image = ContentFile(b"Foo1", name="blah")
+
+    with pytest.raises(RuntimeError) as error:
+        ai.save()
+
+    assert str(error.value) == "Image cannot be set when removed"
 
 
 @pytest.mark.django_db
@@ -1367,6 +1406,10 @@ def test_remove_container_image_from_registry(
         ai.latest_shimmed_version == settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
     )
     assert ai.is_in_registry is True
+    assert ai.is_desired_version is True
+    assert ai.is_removed is False
+    assert ai.size_in_storage != 0
+    assert ai.size_in_registry != 0
 
     old_shimmed_repo_tag = ai.shimmed_repo_tag
 
@@ -1386,6 +1429,79 @@ def test_remove_container_image_from_registry(
     assert ai.is_manifest_valid is True
     assert ai.latest_shimmed_version == ""
     assert ai.is_in_registry is False
+    assert ai.is_desired_version is False
+    assert ai.is_removed is False
+    assert ai.size_in_storage != 0
+    assert ai.size_in_registry == 0
+
+    assert mock_remove_tag_from_registry.call_count == 2
+
+    expected_calls = [
+        call(repo_tag=old_shimmed_repo_tag),
+        call(repo_tag=ai.original_repo_tag),
+    ]
+
+    mock_remove_tag_from_registry.assert_has_calls(
+        expected_calls, any_order=False
+    )
+
+
+@pytest.mark.django_db
+def test_delete_container_image(
+    algorithm_image,
+    settings,
+    django_capture_on_commit_callbacks,
+    mocker,
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    mock_remove_tag_from_registry = mocker.patch(
+        # remove_tag_from_registry is only implemented for ECR
+        "grandchallenge.components.tasks.remove_tag_from_registry"
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+
+    ai.refresh_from_db()
+
+    assert ai.can_execute is True
+    assert ai.is_manifest_valid is True
+    assert (
+        ai.latest_shimmed_version == settings.COMPONENTS_SAGEMAKER_SHIM_VERSION
+    )
+    assert ai.is_in_registry is True
+    assert ai.is_desired_version is True
+    assert ai.image != ""
+    assert ai.is_removed is False
+    assert ai.size_in_storage != 0
+    assert ai.size_in_registry != 0
+
+    old_shimmed_repo_tag = ai.shimmed_repo_tag
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        delete_container_image(
+            pk=ai.pk,
+            app_label=ai._meta.app_label,
+            model_name=ai._meta.model_name,
+        )
+
+    assert len(callbacks) == 0
+
+    ai.refresh_from_db()
+    del ai.can_execute
+
+    assert ai.can_execute is False
+    assert ai.is_manifest_valid is True
+    assert ai.latest_shimmed_version == ""
+    assert ai.is_in_registry is False
+    assert ai.is_desired_version is False
+    assert ai.image == ""
+    assert ai.is_removed is True
+    assert ai.size_in_storage == 0
+    assert ai.size_in_registry == 0
 
     assert mock_remove_tag_from_registry.call_count == 2
 
@@ -1761,3 +1877,19 @@ def test_inputs_json_reserved():
     assert "'relative_path': ['This relative path is reserved']" in str(
         error.value
     )
+
+
+@pytest.mark.django_db
+def test_no_default_value_allowed_when_file_required():
+    i = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        relative_path="foo/bar.json",
+        store_in_database=True,
+        default_value="foobar",
+    )
+    i.full_clean()
+
+    i.store_in_database = False
+
+    with pytest.raises(ValidationError):
+        i.full_clean()

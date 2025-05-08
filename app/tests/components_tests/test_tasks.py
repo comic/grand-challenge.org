@@ -6,12 +6,15 @@ from unittest.mock import call, patch
 
 import pytest
 from celery.exceptions import MaxRetriesExceededError
+from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
+from django.utils.timezone import now
 from requests import put
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.components.exceptions import InstanceInUse
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     ComponentJob,
@@ -25,6 +28,7 @@ from grandchallenge.components.tasks import (
     add_image_to_object,
     assign_tarball_from_upload,
     civ_value_to_file,
+    delete_container_image,
     encode_b64j,
     execute_job,
     preload_interactive_algorithms,
@@ -38,6 +42,7 @@ from grandchallenge.core.celery import _retry, acks_late_micro_short_task
 from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
 from grandchallenge.uploads.models import UserUpload
+from grandchallenge.workstations.models import WorkstationImage
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -971,12 +976,12 @@ def test_preload_interactive_algorithms(settings):
     ),
 )
 @pytest.mark.parametrize(
-    "job_status, expected_image_is_in_registry",
+    "job_status, expected_image_is_in_registry, context",
     (
-        (ComponentJob.SUCCESS, False),
-        (ComponentJob.FAILURE, False),
-        (ComponentJob.PENDING, True),
-        (ComponentJob.EXECUTING, True),
+        (ComponentJob.SUCCESS, False, nullcontext()),
+        (ComponentJob.FAILURE, False, nullcontext()),
+        (ComponentJob.PENDING, True, pytest.raises(InstanceInUse)),
+        (ComponentJob.EXECUTING, True, pytest.raises(InstanceInUse)),
     ),
 )
 def test_remove_container_image_from_registry(
@@ -986,6 +991,7 @@ def test_remove_container_image_from_registry(
     job_status,
     expected_image_is_in_registry,
     mocker,
+    context,
 ):
     mocker.patch(
         # remove_tag_from_registry is only implemented for ECR
@@ -1004,11 +1010,100 @@ def test_remove_container_image_from_registry(
         }
     )
 
-    remove_container_image_from_registry(
-        pk=inactive_image.pk,
-        app_label=inactive_image._meta.app_label,
-        model_name=inactive_image._meta.model_name,
-    )
+    with context:
+        remove_container_image_from_registry(
+            pk=inactive_image.pk,
+            app_label=inactive_image._meta.app_label,
+            model_name=inactive_image._meta.model_name,
+        )
 
     inactive_image.refresh_from_db()
     assert inactive_image.is_in_registry is expected_image_is_in_registry
+
+
+@pytest.mark.django_db
+def test_algorithm_image_protected_from_deletion():
+    algorithm_image = AlgorithmImageFactory()
+    job = AlgorithmJobFactory(
+        algorithm_image=algorithm_image, status=Job.SUCCESS, time_limit=60
+    )
+
+    with pytest.raises(InstanceInUse):
+        delete_container_image(
+            pk=algorithm_image.pk,
+            app_label=algorithm_image._meta.app_label,
+            model_name=algorithm_image._meta.model_name,
+        )
+
+    algorithm_image.refresh_from_db()
+    assert algorithm_image.is_removed is False
+
+    job.status = Job.FAILURE
+    job.save()
+
+    delete_container_image(
+        pk=algorithm_image.pk,
+        app_label=algorithm_image._meta.app_label,
+        model_name=algorithm_image._meta.model_name,
+    )
+
+    algorithm_image.refresh_from_db()
+    assert algorithm_image.is_removed is True
+
+
+@pytest.mark.django_db
+def test_method_protected_from_deletion():
+    method = MethodFactory()
+    evaluation = EvaluationFactory(
+        method=method, status=Job.SUCCESS, time_limit=60
+    )
+
+    with pytest.raises(InstanceInUse):
+        delete_container_image(
+            pk=method.pk,
+            app_label=method._meta.app_label,
+            model_name=method._meta.model_name,
+        )
+
+    method.refresh_from_db()
+    assert method.is_removed is False
+
+    evaluation.status = Job.FAILURE
+    evaluation.save()
+
+    delete_container_image(
+        pk=method.pk,
+        app_label=method._meta.app_label,
+        model_name=method._meta.model_name,
+    )
+
+    method.refresh_from_db()
+    assert method.is_removed is True
+
+
+@pytest.mark.django_db
+def test_workstation_image_protected_from_deletion():
+    workstation = WorkstationImageFactory()
+
+    with pytest.raises(InstanceInUse):
+        delete_container_image(
+            pk=workstation.pk,
+            app_label=workstation._meta.app_label,
+            model_name=workstation._meta.model_name,
+        )
+
+    workstation.refresh_from_db()
+    assert workstation.is_removed is False
+
+    WorkstationImage.objects.filter(pk=workstation.pk).update(
+        created=now() - relativedelta(months=13)
+    )
+
+    delete_container_image(
+        pk=workstation.pk,
+        app_label=workstation._meta.app_label,
+        model_name=workstation._meta.model_name,
+    )
+
+    workstation.refresh_from_db()
+    assert workstation.is_removed is True

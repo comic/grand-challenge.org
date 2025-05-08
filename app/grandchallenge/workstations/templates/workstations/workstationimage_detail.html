@@ -23,6 +23,12 @@
 {% block content %}
     <h2>Viewer Container Image</h2>
 
+    {% if object.is_removed %}
+        <div class="alert alert-info">
+            This Viewer Container Image has been removed from the platform and can no longer be used
+        </div>
+    {% endif %}
+
     <dl class="inline">
         <dt>ID</dt>
         <dd>{{ object.pk }}</dd>

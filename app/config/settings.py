@@ -139,15 +139,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 DOCUMENTATION_HELP_VIEWER_CONTENT_SLUG = os.environ.get(
     "DOCUMENTATION_HELP_VIEWER_CONTENT_SLUG", "viewer-content"
 )
-
-# General forum
-DOCUMENTATION_HELP_FORUM_PK = os.environ.get(
-    "DOCUMENTATION_HELP_FORUM_PK", "1"
-)
-DOCUMENTATION_HELP_FORUM_SLUG = os.environ.get(
-    "DOCUMENTATION_HELP_FORUM_SLUG", "general"
-)
-
 DOCUMENTATION_HELP_INTERFACES_SLUG = os.environ.get(
     "DOCUMENTATION_HELP_INTERFACES_SLUG", "interfaces"
 )
@@ -468,7 +459,6 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.debug",
                 "grandchallenge.core.context_processors.sentry_dsn",
                 "grandchallenge.core.context_processors.footer_links",
-                "grandchallenge.core.context_processors.help_forum",
                 "grandchallenge.core.context_processors.about_page",
                 "grandchallenge.core.context_processors.newsletter_signup",
                 "grandchallenge.core.context_processors.viewport_names",
@@ -1244,11 +1234,19 @@ CELERY_BEAT_SCHEDULE = {
     },
     "update_publication_metadata": {
         "task": "grandchallenge.publications.tasks.update_publication_metadata",
-        "schedule": crontab(hour=1, minute=30),
+        "schedule": crontab(hour=0, minute=30),
     },
     "remove_inactive_container_images": {
         "task": "grandchallenge.components.tasks.remove_inactive_container_images",
-        "schedule": crontab(hour=2, minute=30),
+        "schedule": crontab(hour=1, minute=0),
+    },
+    "delete_failed_import_container_images": {
+        "task": "grandchallenge.components.tasks.delete_failed_import_container_images",
+        "schedule": crontab(hour=1, minute=30),
+    },
+    "delete_old_unsuccessful_container_images": {
+        "task": "grandchallenge.components.tasks.delete_old_unsuccessful_container_images",
+        "schedule": crontab(hour=2, minute=0),
     },
     "update_associated_challenges": {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
@@ -1300,7 +1298,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "update_compute_costs_and_storage_size": {
         "task": "grandchallenge.challenges.tasks.update_compute_costs_and_storage_size",
-        "schedule": timedelta(hours=1),
+        "schedule": timedelta(hours=2),
     },
     "logout_privileged_users": {
         "task": "grandchallenge.browser_sessions.tasks.logout_privileged_users",
@@ -1317,6 +1315,10 @@ CELERY_BEAT_SCHEDULE = {
     "cancel_external_evaluations_past_timeout": {
         "task": "grandchallenge.evaluation.tasks.cancel_external_evaluations_past_timeout",
         "schedule": timedelta(hours=1),
+    },
+    "push_metrics_to_cloudwatch": {
+        "task": "grandchallenge.core.tasks.put_cloudwatch_metrics",
+        "schedule": timedelta(seconds=30),
     },
     **{
         f"stop_expired_services_{region}": {
@@ -1341,11 +1343,9 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-if strtobool(os.environ.get("PUSH_CLOUDWATCH_METRICS", "False")):
-    CELERY_BEAT_SCHEDULE["push_metrics_to_cloudwatch"] = {
-        "task": "grandchallenge.core.tasks.put_cloudwatch_metrics",
-        "schedule": timedelta(seconds=30),
-    }
+PUSH_CLOUDWATCH_METRICS = strtobool(
+    os.environ.get("PUSH_CLOUDWATCH_METRICS", "False")
+)
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"

@@ -19,7 +19,6 @@ from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from django.utils.timezone import localtime
-from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
@@ -543,17 +542,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         blank=True,
         help_text="The interfaces that an algorithm for this phase must implement.",
     )
-    inputs = deprecate_field(
-        models.ManyToManyField(
-            to=ComponentInterface, related_name="evaluation_inputs", blank=True
-        )
-    )
-    outputs = deprecate_field(
-        models.ManyToManyField(
-            to=ComponentInterface,
-            related_name="evaluation_outputs",
-        )
-    )
     additional_evaluation_inputs = models.ManyToManyField(
         to=ComponentInterface,
         through="evaluation.PhaseAdditionalEvaluationInput",
@@ -564,22 +552,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         to=ComponentInterface,
         related_name="eval_outputs",
         through="evaluation.PhaseEvaluationOutput",
-    )
-    algorithm_inputs = deprecate_field(
-        models.ManyToManyField(
-            to=ComponentInterface,
-            related_name="+",
-            blank=True,
-            help_text="The input interfaces that the algorithms for this phase must use",
-        )
-    )
-    algorithm_outputs = deprecate_field(
-        models.ManyToManyField(
-            to=ComponentInterface,
-            related_name="+",
-            blank=True,
-            help_text="The output interfaces that the algorithms for this phase must use",
-        )
     )
     algorithm_selectable_gpu_type_choices = models.JSONField(
         default=get_default_gpu_type_choices,

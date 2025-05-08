@@ -11,7 +11,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.guardian import filter_by_permission
-from grandchallenge.evaluation.models import Submission
+from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.workstations.models import Feedback
 
@@ -118,11 +118,35 @@ def get_component_interface_values_for_user(
         .values_list("values__pk", flat=True)
     )
 
+    evaluation_query = filter_by_permission(
+        queryset=Evaluation.objects.all(),
+        user=user,
+        codename="change_evaluation",
+        accept_user_perms=False,
+    )
+    # We restrict downloading of evaluation outputs to challenge admins since those
+    # might not be intended for participants to see (unlike the metrics).
+    # Note: we currently do not allow direct serving of evaluation inputs.
+    # Challenge admins can already download those because they are attached to jobs
+    # they have access to as output.
+    # Serving of evaluation inputs might become necessary in the future if
+    # challenges start using additional evaluation inputs of type file. Serving of
+    # those MUST be restricted to admins.
+    #
+    # Challenge Participants MUST NOT have access to evaluation inputs as those
+    # contain the results on the hidden test set.
+    evaluation_outputs = (
+        evaluation_query.filter(outputs__in=civs)
+        .distinct()
+        .values_list("outputs__pk", flat=True)
+    )
+
     return civs.filter(
         pk__in=[
             *job_inputs,
             *job_outputs,
             *display_sets,
             *archive_items,
+            *evaluation_outputs,
         ]
     )

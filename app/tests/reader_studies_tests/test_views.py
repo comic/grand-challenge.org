@@ -4,6 +4,7 @@ import pytest
 from django.forms import JSONField
 from django.test import override_settings
 from guardian.shortcuts import assign_perm
+from pytest_django.asserts import assertContains, assertNotContains
 from requests import put
 
 from grandchallenge.cases.widgets import FlexibleImageField, ImageWidgetChoices
@@ -1145,3 +1146,41 @@ def test_leaderboard_user_visibility(client):
     assert reader2_userprofile_link not in html_for_reader1
     assert "<td> Reader </td>" in html_for_reader1
     assert "<td> You </td>" in html_for_reader1
+
+
+@pytest.mark.django_db
+def test_reader_study_launch_disabled_when_not_launchable(client):
+    reader_study = ReaderStudyFactory()
+
+    editor, reader = UserFactory.create_batch(2)
+    reader_study.add_editor(editor)
+    reader_study.add_reader(reader)
+
+    assert reader_study.is_launchable
+
+    for usr in [reader, editor]:
+        response = get_view_for_user(
+            client=client,
+            viewname="reader-studies:detail",
+            reverse_kwargs={"slug": reader_study.slug},
+            user=usr,
+        )
+        assertContains(
+            response, f'data-workstation-path="reader-study/{reader_study.pk}"'
+        )
+
+    reader_study.max_credits = 0
+    reader_study.save()
+
+    assert not reader_study.is_launchable
+
+    for usr in [reader, editor]:
+        response = get_view_for_user(
+            client=client,
+            viewname="reader-studies:detail",
+            reverse_kwargs={"slug": reader_study.slug},
+            user=usr,
+        )
+        assertNotContains(
+            response, f'data-workstation-path="reader-study/{reader_study.pk}"'
+        )

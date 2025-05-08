@@ -85,7 +85,7 @@ class AcksLateTaskDecorator:
             ignore_result: If the task should ignore the result
             retry_on: A tuple of exceptions that should trigger a retry on the delay queue
             delayed_retry: If the task should be retried after a delay
-            ignore_errors: A tuple of exceptions that should be ignored
+            ignore_errors: A tuple of exceptions that should be ignored when being run by celery
             singleton: If the task should be run as a singleton (only one concurrent execution at a time)
         """
         if func is None:
@@ -121,6 +121,7 @@ class AcksLateTaskDecorator:
     ):
         @wraps(func)
         def wrapper(*args, _retries=0, **kwargs):
+            is_in_celery_context = task_func.request.id is not None
             try:
                 if singleton:
                     with cache.lock(
@@ -133,10 +134,13 @@ class AcksLateTaskDecorator:
                     return func(*args, **kwargs)
             except Exception as error:
                 if any(isinstance(error, e) for e in ignore_errors):
-                    logger.info(
-                        f"Ignoring error in task {task_func.name}: {error}"
-                    )
-                    return
+                    if is_in_celery_context:
+                        logger.info(
+                            f"Ignoring error in task {task_func.name}: {error}"
+                        )
+                        return
+                    else:
+                        raise error
                 elif any(isinstance(error, e) for e in retry_on) or (
                     singleton and isinstance(error, LockError)
                 ):

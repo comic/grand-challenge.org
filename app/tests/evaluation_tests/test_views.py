@@ -1,4 +1,6 @@
+import io
 import json
+import zipfile
 from datetime import timedelta
 from pathlib import Path
 from typing import NamedTuple
@@ -2983,3 +2985,164 @@ def test_reschedule_evaluation_blocked_if_failed_jobs_with_complete_inputs_exist
 
     eval = Evaluation.objects.order_by("created").last()
     assert eval.status == Evaluation.VALIDATING_INPUTS
+
+
+@pytest.mark.django_db
+def test_phase_starter_kit_detail(client):
+    challenge = ChallengeFactory()
+    admin, participant, user = UserFactory.create_batch(3)
+
+    challenge.add_admin(admin)
+    challenge.add_participant(participant)
+
+    # Note: missing archive / algorithm submission kind
+    phase_not_setup = PhaseFactory(
+        challenge=challenge,
+        submission_kind=SubmissionKindChoices.CSV,
+    )
+
+    phase_setup = PhaseFactory(
+        challenge=challenge,
+        archive=ArchiveFactory(),
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+    )
+
+    phase_setup.algorithm_interfaces.set(
+        [
+            AlgorithmInterfaceFactory(
+                inputs=[
+                    ComponentInterfaceFactory(
+                        kind=ComponentInterface.Kind.IMAGE
+                    ),
+                ],
+                outputs=[
+                    ComponentInterfaceFactory(
+                        kind=ComponentInterface.Kind.FLOAT
+                    ),
+                ],
+            )
+        ]
+    )
+
+    for phase in [phase_not_setup, phase_setup]:
+        # Permissions
+        for usr in [participant, user]:
+            response = get_view_for_user(
+                viewname="evaluation:phase-starter-kit-detail",
+                reverse_kwargs={
+                    "slug": phase.slug,
+                    "challenge_short_name": phase.challenge.short_name,
+                },
+                client=client,
+                user=usr,
+            )
+
+            assert (
+                response.status_code == 403
+            ), "Participant or anonym user should not be able to view starter kit info"
+
+        # Admin
+        response = get_view_for_user(
+            viewname="evaluation:phase-starter-kit-detail",
+            reverse_kwargs={
+                "slug": phase.slug,
+                "challenge_short_name": phase.challenge.short_name,
+            },
+            client=client,
+            user=admin,
+        )
+
+        assert response.status_code == 200, "Admin can view starter kit info"
+
+
+@pytest.mark.django_db
+def test_phase_starter_kit_download(client):
+    phase = PhaseFactory(
+        archive=ArchiveFactory(),
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+    )
+
+    phase.algorithm_interfaces.set(
+        [
+            AlgorithmInterfaceFactory(
+                inputs=[
+                    ComponentInterfaceFactory(
+                        kind=ComponentInterface.Kind.IMAGE
+                    ),
+                ],
+                outputs=[
+                    ComponentInterfaceFactory(
+                        kind=ComponentInterface.Kind.FLOAT
+                    ),
+                ],
+            )
+        ]
+    )
+
+    admin, participant, user = UserFactory.create_batch(3)
+    phase.challenge.add_admin(admin)
+    phase.challenge.add_participant(participant)
+
+    for usr in [participant, user]:
+        response = get_view_for_user(
+            viewname="evaluation:phase-starter-kit-download",
+            reverse_kwargs={
+                "slug": phase.slug,
+                "challenge_short_name": phase.challenge.short_name,
+            },
+            client=client,
+            user=usr,
+        )
+        assert (
+            response.status_code == 403
+        ), "Participant or anonym user should not be able to download starter kit"
+
+    response = get_view_for_user(
+        viewname="evaluation:phase-starter-kit-download",
+        reverse_kwargs={
+            "slug": phase.slug,
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        client=client,
+        user=admin,
+    )
+
+    assert (
+        response.status_code == 200
+    ), "Admin can download starer kit"  # Sanity
+
+    assert (
+        response["Content-Type"] == "application/zip"
+    ), "Response is a ZIP file"
+
+    assert (
+        "attachment" in response["Content-Disposition"]
+    ), "Response is a downloadable attachment"
+    assert response["Content-Disposition"].endswith(
+        '.zip"'
+    ), "Filename ends with .zip"
+
+    # Load the response content into a BytesIO object to read as a zip
+    buffer = io.BytesIO(
+        b"".join(chunk for chunk in response.streaming_content)
+    )
+    zip_file = zipfile.ZipFile(buffer)
+
+    # Spot check for expected files in the zip
+    root = Path(f"{phase.challenge.short_name}-{phase.slug}-starter-kit")
+
+    expected_files = [
+        root / "README.md",
+        root / phase.slug / "example-algorithm" / "Dockerfile",
+        root / phase.slug / "example-algorithm" / "inference.py",
+        root / phase.slug / "example-evaluation-method" / "Dockerfile",
+        root / phase.slug / "example-evaluation-method" / "evaluate.py",
+        root
+        / phase.slug
+        / f"upload-to-archive-{phase.archive.slug}"
+        / "upload_files.py",
+    ]
+    for file_name in expected_files:
+        assert (
+            str(file_name) in zip_file.namelist()
+        ), f"{file_name} is in the ZIP file"

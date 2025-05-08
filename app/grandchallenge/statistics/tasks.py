@@ -3,15 +3,27 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.db.models import Count, Sum
+from django.utils.timezone import now
 
-from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmImage,
+    AlgorithmModel,
+    Job,
+)
 from grandchallenge.archives.models import Archive
-from grandchallenge.cases.models import Image
+from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.celery import acks_late_micro_short_task
-from grandchallenge.evaluation.models import Submission
+from grandchallenge.evaluation.models import (
+    Evaluation,
+    EvaluationGroundTruth,
+    Method,
+    Submission,
+)
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
-from grandchallenge.workstations.models import Session
+from grandchallenge.workstations.models import Session, WorkstationImage
 
 
 @acks_late_micro_short_task
@@ -115,6 +127,35 @@ def update_site_statistics_cache():
             .only("pk")
             .first()
         ),
+        "storage": {
+            "algorithm_images": AlgorithmImage.objects.aggregate(
+                Sum("size_in_storage"), Sum("size_in_registry")
+            ),
+            "algorithm_models": AlgorithmModel.objects.aggregate(
+                Sum("size_in_storage")
+            ),
+            "methods": Method.objects.aggregate(
+                Sum("size_in_storage"), Sum("size_in_registry")
+            ),
+            "ground_truths": EvaluationGroundTruth.objects.aggregate(
+                Sum("size_in_storage")
+            ),
+            "workstation_images": WorkstationImage.objects.aggregate(
+                Sum("size_in_storage"), Sum("size_in_registry")
+            ),
+            "image_files": ImageFile.objects.aggregate(Sum("size_in_storage")),
+            "socket_values": ComponentInterfaceValue.objects.aggregate(
+                Sum("size_in_storage")
+            ),
+        },
+        "this_month_jobs": {
+            "algorithm_jobs": Job.objects.filter(
+                created__month=now().month, created__year=now().year
+            ).aggregate(Sum("compute_cost_euro_millicents")),
+            "evaluations": Evaluation.objects.filter(
+                created__month=now().month, created__year=now().year
+            ).aggregate(Sum("compute_cost_euro_millicents")),
+        },
     }
 
     cache.set(settings.STATISTICS_SITE_CACHE_KEY, stats, timeout=None)

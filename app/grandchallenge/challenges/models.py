@@ -980,6 +980,11 @@ def delete_challenge_groups_hook(*_, instance: Challenge, using, **__):
     except ObjectDoesNotExist:
         pass
 
+    try:
+        instance.external_evaluators_group.delete(using=using)
+    except ObjectDoesNotExist:
+        pass
+
 
 @receiver(pre_delete, sender=Challenge)
 def delete_challenge_follows(*_, instance: Challenge, **__):

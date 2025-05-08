@@ -656,7 +656,7 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
         initial=initial_interactive_algorithm,
         choices=interactive_algorithm_choices,
         required=False,
-        help_text="Select an interactive algorithm for this question.",
+        help_text="Select an interactive algorithm for this question. Please note that setting an interactive algorithm will increase the credit consumption rate.",
     )
 
 

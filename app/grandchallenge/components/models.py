@@ -590,6 +590,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         self._clean_store_in_database()
         self._clean_relative_path()
         self._clean_example_value()
+        self._clean_default_value()
 
     def _clean_overlay_segments(self):
         if (
@@ -678,6 +679,12 @@ class ComponentInterface(OverlaySegmentsMixin):
         except ValidationError as error:
             raise ValidationError(
                 f"The example value for this interface is not valid: {error}"
+            )
+
+    def _clean_default_value(self):
+        if self.requires_file and self.default_value:
+            raise ValidationError(
+                "A socket that requires a file should not have a default value"
             )
 
     def validate_against_schema(self, *, value):
@@ -1547,14 +1554,20 @@ class ComponentJobManager(models.QuerySet):
         )
 
     def active(self):
-        return self.exclude(
-            status__in=[
+        # We need to use a positive filter here so that the index
+        # can be used rather than excluding jobs in final states
+        active_choices = (
+            c[0]
+            for c in ComponentJob.status.field.choices
+            if c[0]
+            not in [
                 ComponentJob.SUCCESS,
                 ComponentJob.CANCELLED,
                 ComponentJob.FAILURE,
                 ComponentJob.CLAIMED,
             ]
         )
+        return self.filter(status__in=active_choices)
 
     @staticmethod
     def retrieve_existing_civs(*, civ_data):
@@ -1606,6 +1619,7 @@ class ComponentJobManager(models.QuerySet):
 class ComponentJob(FieldChangeMixin, UUIDModel):
     # The job statuses come directly from celery.result.AsyncResult.status:
     # http://docs.celeryproject.org/en/latest/reference/celery.result.html
+    # Note: check the implementation of active() if changing this to choices
     PENDING = 0
     STARTED = 1
     RETRY = 2
@@ -1927,6 +1941,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
 
     class Meta:
         abstract = True
+        indexes = [
+            models.Index(fields=["status", "created"]),
+        ]
 
 
 def docker_image_path(instance, filename):
@@ -1952,7 +1969,9 @@ class ImportStatusChoices(IntegerChoices):
 
 class ComponentImageManager(models.Manager):
     def executable_images(self):
-        return self.filter(is_manifest_valid=True, is_in_registry=True)
+        return self.filter(
+            is_manifest_valid=True, is_in_registry=True, is_removed=False
+        )
 
     def active_images(self):
         return self.executable_images().filter(is_desired_version=True)
@@ -2007,6 +2026,14 @@ class ComponentImage(FieldChangeMixin, models.Model):
         default=False,
         editable=False,
         help_text="Is this image in the container registry?",
+    )
+    is_removed = models.BooleanField(
+        default=False,
+        editable=False,
+        help_text=(
+            "If this image has been removed then it has been "
+            "removed from storage and cannot be activated"
+        ),
     )
     status = models.TextField(editable=False)
 
@@ -2085,21 +2112,27 @@ class ComponentImage(FieldChangeMixin, models.Model):
             pass
 
     def save(self, *args, **kwargs):
+        if self.is_removed and self.image:
+            raise RuntimeError("Image cannot be set when removed")
+
+        if (
+            not self.is_removed
+            and self.initial_value("image")
+            and self.has_changed("image")
+        ):
+            raise RuntimeError("The image cannot be changed")
+
         image_needs_validation = (
-            self.import_status == ImportStatusChoices.INITIALIZED
+            self.image
+            and self.import_status == ImportStatusChoices.INITIALIZED
             and self.is_manifest_valid is None
         )
-        validate_image_now = False
 
-        if self.initial_value("image"):
-            if self.has_changed("image"):
-                raise RuntimeError("The image cannot be changed")
-            if image_needs_validation:
-                self.import_status = ImportStatusChoices.QUEUED
-                validate_image_now = True
-        elif self.image and image_needs_validation:
+        if image_needs_validation:
             self.import_status = ImportStatusChoices.QUEUED
             validate_image_now = True
+        else:
+            validate_image_now = False
 
         if self.has_changed("image") or self.has_changed("is_in_registry"):
             self.update_size_in_storage()
