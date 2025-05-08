@@ -841,6 +841,8 @@ class LeaderboardDetail(
         queryset = self.filter_by_date(queryset=queryset)
         queryset = (
             queryset.filter(
+                # An index is added for these filters, ensure that it
+                # is kept up to date if modified here.
                 submission__phase=self.phase,
                 published=True,
                 status=Evaluation.SUCCESS,
