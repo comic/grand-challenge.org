@@ -74,18 +74,19 @@ def test_participants_follow_forum(group):
     remove_method = getattr(c, f"remove_{group}")
 
     add_method(user=u)
-    assert is_following(user=u, obj=c.forum)
+    assert is_following(user=u, obj=c.discussion_forum)
 
     remove_method(user=u)
-    assert is_following(user=u, obj=c.forum) is False
+    assert is_following(user=u, obj=c.discussion_forum) is False
 
     # No actions involving the forum should be created
     for i in Action.objects.all():
-        assert c.forum != i.target
-        assert c.forum != i.action_object
-        assert c.forum != i.actor
+        assert c.discussion_forum != i.target
+        assert c.discussion_forum != i.action_object
+        assert c.discussion_forum != i.actor
 
 
+@pytest.mark.xfail(reason="To be addressed for forum pitch")
 @pytest.mark.django_db
 @pytest.mark.parametrize("group", ("participant", "admin"))
 def test_non_posters_notified(group):

@@ -583,18 +583,46 @@ class Challenge(ChallengeBase, FieldChangeMixin):
 
     def assign_forum_permissions(self):
         if self.display_forum_link and not self.hidden:
-            assign_perm("view_forum", self.admins_group, self.forum)
-            assign_perm("view_forum", self.participants_group, self.forum)
-            assign_perm("create_forum_topic", self.admins_group, self.forum)
             assign_perm(
-                "create_forum_topic", self.participants_group, self.forum
+                "discussion_forums.view_forum",
+                self.admins_group,
+                self.discussion_forum,
+            )
+            assign_perm(
+                "discussion_forums.view_forum",
+                self.participants_group,
+                self.discussion_forum,
+            )
+            assign_perm(
+                "discussion_forums.create_forum_topic",
+                self.admins_group,
+                self.discussion_forum,
+            )
+            assign_perm(
+                "discussion_forums.create_forum_topic",
+                self.participants_group,
+                self.discussion_forum,
             )
         else:
-            remove_perm("view_forum", self.admins_group, self.forum)
-            remove_perm("view_forum", self.participants_group, self.forum)
-            remove_perm("create_forum_topic", self.admins_group, self.forum)
             remove_perm(
-                "create_forum_topic", self.participants_group, self.forum
+                "discussion_forums.view_forum",
+                self.admins_group,
+                self.discussion_forum,
+            )
+            remove_perm(
+                "discussion_forums.view_forum",
+                self.participants_group,
+                self.discussion_forum,
+            )
+            remove_perm(
+                "discussion_forums.create_forum_topic",
+                self.admins_group,
+                self.discussion_forum,
+            )
+            remove_perm(
+                "discussion_forums.create_forum_topic",
+                self.participants_group,
+                self.discussion_forum,
             )
 
     def create_groups(self):
@@ -733,27 +761,33 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         if user != get_anonymous_user():
             user.groups.add(self.participants_group)
             follow(
-                user=user, obj=self.forum, actor_only=False, send_action=False
+                user=user,
+                obj=self.discussion_forum,
+                actor_only=False,
+                send_action=False,
             )
         else:
             raise ValueError("You cannot add the anonymous user to this group")
 
     def remove_participant(self, user):
         user.groups.remove(self.participants_group)
-        unfollow(user=user, obj=self.forum, send_action=False)
+        unfollow(user=user, obj=self.discussion_forum, send_action=False)
 
     def add_admin(self, user):
         if user != get_anonymous_user():
             user.groups.add(self.admins_group)
             follow(
-                user=user, obj=self.forum, actor_only=False, send_action=False
+                user=user,
+                obj=self.discussion_forum,
+                actor_only=False,
+                send_action=False,
             )
         else:
             raise ValueError("You cannot add the anonymous user to this group")
 
     def remove_admin(self, user):
         user.groups.remove(self.admins_group)
-        unfollow(user=user, obj=self.forum, send_action=False)
+        unfollow(user=user, obj=self.discussion_forum, send_action=False)
 
     @cached_property
     def should_show_verification_warning(self):

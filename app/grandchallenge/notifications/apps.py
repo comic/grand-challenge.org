@@ -36,6 +36,7 @@ class NotificationsConfig(AppConfig):
         from actstream import registry
 
         registry.register(apps.get_model("auth.User"))
+        # TODO: remove/ deregistered machina models
         registry.register(apps.get_model("forum.Forum"))
         registry.register(apps.get_model("forum_conversation.Topic"))
         registry.register(apps.get_model("forum_conversation.Post"))
@@ -55,6 +56,9 @@ class NotificationsConfig(AppConfig):
         registry.register(apps.get_model("evaluation.Evaluation"))
         registry.register(apps.get_model("evaluation.Phase"))
         registry.register(apps.get_model("cases.RawImageUploadSession"))
+        registry.register(apps.get_model("discussion_forums.Forum"))
+        registry.register(apps.get_model("discussion_forums.Topic"))
+        registry.register(apps.get_model("discussion_forums.Post"))
         post_migrate.connect(init_notification_permissions, sender=self)
 
         # noinspection PyUnresolvedReferences
