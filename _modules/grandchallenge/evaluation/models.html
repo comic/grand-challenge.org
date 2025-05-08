@@ -2212,6 +2212,11 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Evaluation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;group&quot;</span><span class="p">,</span> <span class="s2">&quot;permission&quot;</span><span class="p">]),</span>
+        <span class="p">]</span>
+
 
 <span class="k">class</span><span class="w"> </span><span class="nc">CombinedLeaderboard</span><span class="p">(</span><span class="n">TitleSlugDescriptionModel</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
     <span class="k">class</span><span class="w"> </span><span class="nc">CombinationMethodChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
