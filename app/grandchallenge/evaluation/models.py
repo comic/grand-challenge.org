@@ -1881,6 +1881,12 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
     class Meta(UUIDModel.Meta, ComponentJob.Meta):
         permissions = [("claim_evaluation", "Can claim evaluation")]
+        ordering = ("-created",)
+        indexes = [
+            *ComponentJob.Meta.indexes,
+            models.Index(fields=["created"]),
+            models.Index(fields=["submission", "published", "status", "rank"]),
+        ]
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
