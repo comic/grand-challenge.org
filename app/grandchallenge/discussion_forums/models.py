@@ -1,6 +1,5 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.utils.functional import cached_property
 from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.core.models import UUIDModel
@@ -76,10 +75,6 @@ class Topic(UUIDModel):
 
     def __str__(self):
         return self.subject
-
-    @cached_property
-    def first_post(self):
-        return self.posts.all().order_by("created").first()
 
 
 class Post(UUIDModel):
