@@ -438,6 +438,7 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
         )
 
     def clean(self):
+        super().clean()
         if self.overlay_segments is None:
             self.overlay_segments = self._meta.get_field(
                 "overlay_segments"
