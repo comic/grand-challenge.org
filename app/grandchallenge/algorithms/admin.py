@@ -24,6 +24,7 @@ from grandchallenge.algorithms.models import (
     Job,
     JobGroupObjectPermission,
     JobUserObjectPermission,
+    JobUtilization,
 )
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
@@ -222,6 +223,32 @@ class JobAdmin(admin.ModelAdmin):
 
     def algorithm(self, obj):
         return obj.algorithm_image.algorithm
+
+
+@admin.register(JobUtilization)
+class JobUtilizationAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = (
+        "pk",
+        "created",
+        "job",
+        "creator",
+        "duration",
+        "compute_cost_euro_millicents",
+        "phase",
+        "challenge",
+        "algorithm_image",
+        "algorithm",
+    )
+    search_fields = (
+        "creator__username",
+        "pk",
+        "job__pk",
+        "algorithm__slug",
+        "algorithm_image__pk",
+        "phase__slug",
+        "challenge__short_name",
+    )
 
 
 @admin.register(AlgorithmPermissionRequest)
