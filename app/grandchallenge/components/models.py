@@ -1799,6 +1799,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         elif self.status in [self.FAILURE, self.CANCELLED]:
             on_commit(self.execute_task_on_failure)
 
+        if self.finished:
+            self.create_utilization()
+
     @property
     def executor_kwargs(self):
         return {
@@ -1938,6 +1941,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                 for metric in self.runtime_metrics["metrics"]
             ],
         )
+
+    def create_utilization(self):
+        raise NotImplementedError
 
     class Meta:
         abstract = True
