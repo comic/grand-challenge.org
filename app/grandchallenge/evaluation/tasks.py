@@ -23,9 +23,62 @@ from grandchallenge.core.celery import (
 )
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.validators import get_file_mimetype
-from grandchallenge.evaluation.utils import rank_results
+from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
 
 logger = logging.getLogger(__name__)
+
+
+@acks_late_2xlarge_task
+@transaction.atomic
+def check_prerequisites_for_evaluation_execution(*, evaluation_pk):
+    from grandchallenge.evaluation.models import (
+        get_archive_items_for_interfaces,
+        get_valid_jobs_for_interfaces_and_archive_items,
+    )
+
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
+    )
+    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+    submission = evaluation.submission
+
+    if submission.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
+        algorithm_interfaces = submission.phase.algorithm_interfaces.all()
+
+        items = get_archive_items_for_interfaces(
+            algorithm_interfaces=algorithm_interfaces,
+            archive_items=submission.phase.archive.items.all(),
+        )
+        non_success_statuses = [
+            status[0]
+            for status in Job.STATUS_CHOICES
+            if status[0] != Job.SUCCESS
+        ]
+
+        jobs = get_valid_jobs_for_interfaces_and_archive_items(
+            algorithm_image=submission.algorithm_image,
+            algorithm_model=submission.algorithm_model,
+            algorithm_interfaces=algorithm_interfaces,
+            valid_archive_items_per_interface=items,
+            subset_by_status=non_success_statuses,
+        )
+    else:
+        # prediction submissions never have blocking jobs
+        jobs = {}
+
+    if any(jobs.values()):
+        evaluation.update_status(
+            status=Evaluation.CANCELLED,
+            error_message="There are non-successful jobs for this submission. "
+            "These need to be handled first before you can "
+            "re-evaluate. Please contact support.",
+        )
+        return
+    else:
+        e = prepare_and_execute_evaluation.signature(
+            kwargs={"evaluation_pk": evaluation.pk}, immutable=True
+        )
+        on_commit(e.apply_async)
 
 
 @acks_late_2xlarge_task
