@@ -201,23 +201,23 @@ def remove_inactive_container_images():
         model = apps.get_model(app_label=app_label, model_name=model_name)
 
         for instance in model.objects.all():
-            latest = instance.active_image
+            queryset = getattr(instance, related_name).filter(
+                is_in_registry=True
+            )
 
-            if latest is not None:
-                for image in (
-                    getattr(instance, related_name)
-                    .exclude(pk=latest.pk)
-                    .filter(is_in_registry=True)
-                ):
-                    on_commit(
-                        remove_container_image_from_registry.signature(
-                            kwargs={
-                                "pk": image.pk,
-                                "app_label": image._meta.app_label,
-                                "model_name": image._meta.model_name,
-                            }
-                        ).apply_async
-                    )
+            if instance.active_image:
+                queryset = queryset.exclude(pk=instance.active_image.pk)
+
+            for image in queryset:
+                on_commit(
+                    remove_container_image_from_registry.signature(
+                        kwargs={
+                            "pk": image.pk,
+                            "app_label": image._meta.app_label,
+                            "model_name": image._meta.model_name,
+                        }
+                    ).apply_async
+                )
 
 
 @acks_late_2xlarge_task
