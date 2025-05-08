@@ -16,12 +16,11 @@ def migrate_challenge_forums(apps, schema_editor):
     }
 
     for challenge in Challenge.objects.all():
-        old_forum = challenge.forum
-        new_forum = Forum.objects.create(name=old_forum.name)
+        new_forum = Forum.objects.create()
         challenge.discussion_forum = new_forum
         challenge.save()
 
-        for topic in old_forum.topics.all():
+        for topic in challenge.forum.topics.all():
             new_topic = Topic.objects.create(
                 forum=new_forum,
                 creator=topic.poster,

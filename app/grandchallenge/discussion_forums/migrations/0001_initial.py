@@ -30,16 +30,6 @@ class Migration(migrations.Migration):
                 ),
                 ("created", models.DateTimeField(auto_now_add=True)),
                 ("modified", models.DateTimeField(auto_now=True)),
-                ("name", models.CharField(max_length=60)),
-                (
-                    "slug",
-                    django_extensions.db.fields.AutoSlugField(
-                        blank=True,
-                        editable=False,
-                        max_length=60,
-                        populate_from="name",
-                    ),
-                ),
             ],
             options={
                 "permissions": (

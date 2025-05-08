@@ -5,8 +5,10 @@ from grandchallenge.discussion_forums.models import Forum, Post, Topic
 
 @admin.register(Forum)
 class ForumAdmin(admin.ModelAdmin):
-    list_display = ("name",)
-    search_fields = ("name",)
+    list_display = ("id", "parent_object")
+
+    def parent_object(self, obj):
+        return obj.get_parent()
 
 
 @admin.register(Topic)

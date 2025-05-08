@@ -12,9 +12,6 @@ class TopicTypeChoices(models.TextChoices):
 
 
 class Forum(UUIDModel):
-    # name gets populated from challenge title, so use same max_length
-    name = models.CharField(max_length=60)
-    slug = AutoSlugField(populate_from="name", max_length=60)
 
     class Meta:
         permissions = (
@@ -28,8 +25,9 @@ class Forum(UUIDModel):
             ),
         )
 
-    def __str__(self):
-        return self.name
+    @property
+    def parent_object(self):
+        return self.linked_challenge
 
 
 class Topic(UUIDModel):
