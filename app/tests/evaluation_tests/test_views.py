@@ -1932,7 +1932,12 @@ def test_phase_archive_info_permissions(client):
 
 
 @pytest.mark.parametrize(
-    "viewname", ["evaluation:interface-list", "evaluation:interface-create"]
+    "viewname",
+    [
+        "evaluation:interface-list",
+        "evaluation:interface-create",
+        "evaluation:interfaces-copy",
+    ],
 )
 @pytest.mark.django_db
 def test_algorithm_interface_for_phase_view_permission(client, viewname):

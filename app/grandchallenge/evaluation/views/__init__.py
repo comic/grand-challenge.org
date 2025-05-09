@@ -1388,16 +1388,12 @@ class AlgorithmInterfacesForPhaseList(
 class AlgorithmInterfacesForPhaseCopy(
     ConfigureAlgorithmPhasesPermissionMixin,
     AlgorithmInterfaceForPhaseMixin,
-    ObjectPermissionRequiredMixin,
     SuccessMessageMixin,
     FormView,
 ):
     form_class = AlgorithmInterfaceForPhaseCopyForm
     template_name = "evaluation/phase_copy_algorithminterfaces_form.html"
     success_message = "Algorithm interfaces copied successfully."
-
-    def get_permission_object(self):
-        return self.phase
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -1411,12 +1407,7 @@ class AlgorithmInterfacesForPhaseCopy(
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {
-                "user": self.request.user,
-                "phase": self.phase,
-            }
-        )
+        kwargs["phase"] = self.phase
         return kwargs
 
     def form_valid(self, form):

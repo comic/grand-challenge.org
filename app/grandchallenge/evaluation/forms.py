@@ -994,18 +994,14 @@ class AlgorithmInterfaceForPhaseCopyForm(Form):
         widget=CheckboxSelectMultiple,
     )
 
-    def __init__(self, *args, user, phase, **kwargs):
+    def __init__(self, *args, phase, **kwargs):
         super().__init__(*args, **kwargs)
         self._phase = phase
 
-        self.fields["phases"].queryset = filter_by_permission(
-            queryset=Phase.objects.filter(
-                challenge=phase.challenge,
-                submission_kind=phase.submission_kind,
-            ).exclude(pk=phase.pk),
-            codename="evaluation.configure_algorithm_phase",
-            user=user,
-        )
+        self.fields["phases"].queryset = Phase.objects.filter(
+            challenge=phase.challenge,
+            submission_kind=phase.submission_kind,
+        ).exclude(pk=phase.pk)
 
     def copy_algorithm_interfaces(self):
         for phase in self.cleaned_data["phases"]:
