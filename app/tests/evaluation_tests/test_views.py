@@ -2734,6 +2734,10 @@ def test_reschedule_evaluation_with_additional_inputs(
             [0, 1, 3],
             Evaluation.CANCELLED,
         ],  # same number, partially overlapping
+        [
+            [0, 1, 2, 3],
+            Evaluation.VALIDATING_INPUTS,
+        ],  # different number, but covering all the phase interfaces
     ),
 )
 @pytest.mark.django_db
