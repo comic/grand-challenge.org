@@ -27,11 +27,13 @@ def migrate_challenge_forums(apps, schema_editor):
                 subject=topic.subject,
                 type=topic_type_matching_dict[topic.type],
                 last_post_on=topic.last_post_on,
+                created=topic.created,
             )
 
             for post in topic.posts.all():
                 Post.objects.create(
                     topic=new_topic,
+                    created=post.created,
                     creator=post.poster,
                     subject=post.subject,
                     content=post.content,
