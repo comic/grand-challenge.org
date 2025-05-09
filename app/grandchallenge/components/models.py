@@ -1799,7 +1799,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         elif self.status in [self.FAILURE, self.CANCELLED]:
             on_commit(self.execute_task_on_failure)
 
-        if self.finished:
+        if self.finished and duration and compute_cost_euro_millicents:
             self.create_utilization()
 
     @property
