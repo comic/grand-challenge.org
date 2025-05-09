@@ -1,7 +1,6 @@
 import datetime
 import logging
 import math
-from itertools import chain, product
 
 from actstream.actions import follow, unfollow
 from actstream.models import Follow
@@ -43,12 +42,7 @@ from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
-from machina.apps.forum.models import Forum
-from machina.apps.forum_permission.models import (
-    ForumPermission,
-    GroupForumPermission,
-    UserForumPermission,
-)
+from machina.apps.forum import models as machina_forum_models
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
@@ -417,10 +411,13 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         on_delete=models.PROTECT,
         related_name="external_evaluators_of_challenge",
     )
-    forum = models.OneToOneField(
-        Forum,
-        editable=False,
-        on_delete=models.PROTECT,
+    forum = deprecate_field(
+        models.OneToOneField(
+            machina_forum_models.Forum,
+            null=True,
+            editable=False,
+            on_delete=models.PROTECT,
+        )
     )
     discussion_forum = models.OneToOneField(
         discussion_forum_models.Forum,
@@ -553,7 +550,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         if adding:
             if self.creator:
                 self.add_admin(user=self.creator)
-            self.create_forum_permissions()
             self.create_default_pages()
             self.create_default_onboarding_tasks()
 
@@ -567,7 +563,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
                     }
                 )
             )
-            self.update_user_forum_permissions()
 
         if self.has_changed("compute_cost_euro_millicents"):
             self.send_alert_if_budget_consumed_warning_threshold_exceeded()
@@ -593,81 +588,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             remove_perm("view_challenge", reg_and_anon, self)
 
         self.assign_discussion_forum_permissions()
-
-    def create_forum_permissions(self):
-        participant_group_perms = {
-            "can_see_forum",
-            "can_read_forum",
-            "can_start_new_topics",
-            "can_reply_to_topics",
-            "can_delete_own_posts",
-            "can_edit_own_posts",
-            "can_post_without_approval",
-            "can_create_polls",
-            "can_vote_in_polls",
-        }
-        admin_group_perms = {
-            "can_lock_topics",
-            "can_edit_posts",
-            "can_delete_posts",
-            "can_approve_posts",
-            "can_reply_to_locked_topics",
-            "can_post_announcements",
-            "can_post_stickies",
-            *participant_group_perms,
-        }
-
-        permissions = ForumPermission.objects.filter(
-            codename__in=admin_group_perms
-        ).values_list("codename", "pk")
-        permissions = {codename: pk for codename, pk in permissions}
-
-        GroupForumPermission.objects.bulk_create(
-            chain(
-                (
-                    GroupForumPermission(
-                        permission_id=permissions[codename],
-                        group=self.participants_group,
-                        forum=self.forum,
-                        has_perm=True,
-                    )
-                    for codename in participant_group_perms
-                ),
-                (
-                    GroupForumPermission(
-                        permission_id=permissions[codename],
-                        group=self.admins_group,
-                        forum=self.forum,
-                        has_perm=True,
-                    )
-                    for codename in admin_group_perms
-                ),
-            )
-        )
-
-        UserForumPermission.objects.bulk_create(
-            UserForumPermission(
-                permission_id=permissions[codename],
-                **{user: True},
-                forum=self.forum,
-                has_perm=not self.hidden,
-            )
-            for codename, user in product(
-                ["can_see_forum", "can_read_forum"],
-                ["anonymous_user", "authenticated_user"],
-            )
-        )
-
-    def update_user_forum_permissions(self):
-        perms = UserForumPermission.objects.filter(
-            permission__codename__in=["can_see_forum", "can_read_forum"],
-            forum=self.forum,
-        )
-
-        for p in perms:
-            p.has_perm = not self.hidden
-
-        UserForumPermission.objects.bulk_update(perms, ["has_perm"])
 
     def assign_discussion_forum_permissions(self):
         if self.display_forum_link:
@@ -737,33 +657,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         self.external_evaluators_group = external_evaluators_group
 
     def create_forum(self):
-        f, created = Forum.objects.get_or_create(
-            name=settings.FORUMS_CHALLENGE_CATEGORY_NAME, type=Forum.FORUM_CAT
-        )
-
-        if created:
-            UserForumPermission.objects.bulk_create(
-                UserForumPermission(
-                    permission_id=perm_id,
-                    **{user: True},
-                    forum=f,
-                    has_perm=True,
-                )
-                for perm_id, user in product(
-                    ForumPermission.objects.filter(
-                        codename__in=["can_see_forum", "can_read_forum"]
-                    ).values_list("pk", flat=True),
-                    ["anonymous_user", "authenticated_user"],
-                )
-            )
-
-        self.forum = Forum.objects.create(
-            name=self.title if self.title else self.short_name,
-            parent=f,
-            type=Forum.FORUM_POST,
-        )
-
-        # Create new forum
         self.discussion_forum = discussion_forum_models.Forum.objects.create(
             created=now(), modified=now(), source_object=self.forum
         )
@@ -886,7 +779,10 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         if user != get_anonymous_user():
             user.groups.add(self.participants_group)
             follow(
-                user=user, obj=self.forum, actor_only=False, send_action=False
+                user=user,
+                obj=self.discussion_forum,
+                actor_only=False,
+                send_action=False,
             )
             follow(
                 user=user,
@@ -899,15 +795,11 @@ class Challenge(ChallengeBase, FieldChangeMixin):
 
     def remove_participant(self, user):
         user.groups.remove(self.participants_group)
-        unfollow(user=user, obj=self.forum, send_action=False)
         unfollow(user=user, obj=self.discussion_forum, send_action=False)
 
     def add_admin(self, user):
         if user != get_anonymous_user():
             user.groups.add(self.admins_group)
-            follow(
-                user=user, obj=self.forum, actor_only=False, send_action=False
-            )
             follow(
                 user=user,
                 obj=self.discussion_forum,
@@ -919,7 +811,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
 
     def remove_admin(self, user):
         user.groups.remove(self.admins_group)
-        unfollow(user=user, obj=self.forum, send_action=False)
         unfollow(user=user, obj=self.discussion_forum, send_action=False)
 
     @cached_property

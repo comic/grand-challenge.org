@@ -113,10 +113,6 @@ class ForumTopic(FieldChangeMixin, UUIDModelNoAutoNow):
         null=True,
         on_delete=models.SET_NULL,
     )
-    last_post_on = models.DateTimeField(
-        blank=True,
-        null=True,
-    )
 
     class Meta:
         ordering = [
@@ -245,6 +241,8 @@ class ForumPost(UUIDModelNoAutoNow):
         null=True,
         on_delete=models.SET_NULL,
     )
+    subject = models.CharField(max_length=255)
+    slug = AutoSlugField(populate_from="subject", max_length=255)
 
     content = models.TextField()
 
@@ -252,6 +250,9 @@ class ForumPost(UUIDModelNoAutoNow):
         ordering = [
             "created",
         ]
+
+    def __str__(self):
+        return self.subject
 
     @property
     def is_alone(self):
@@ -268,7 +269,7 @@ class ForumPost(UUIDModelNoAutoNow):
 
         if adding:
             self.assign_permissions()
-            # self.topic.mark_as_read(user=self.creator)
+            self.topic.mark_as_read(user=self.creator)
 
         self.topic.last_post = self
         self.topic.last_post_on = self.created
