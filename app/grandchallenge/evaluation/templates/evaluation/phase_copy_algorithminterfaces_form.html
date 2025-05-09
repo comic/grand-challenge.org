@@ -1,0 +1,37 @@
+{% extends "pages/challenge_settings_base.html" %}
+{% load url %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    Copy Algorithm interfaces for {{ phase.title }} - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Copy Algorithm Interfaces from {{ phase.title }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h2>Copy Algorithm interfaces from {{ phase.title }}</h2>
+
+    <p>
+        Copy the algorithm interfaces below from this phase the selected phases.
+    </p>
+
+    {% include 'algorithms/partials/algorithminterface_table.html' with base_obj=phase interfaces=interfaces delete_option=False %}
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary">Copy</button>
+    </form>
+
+{% endblock %}

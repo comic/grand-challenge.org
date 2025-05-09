@@ -3,6 +3,7 @@ from django.urls import path
 from grandchallenge.evaluation.views import (
     AlgorithmInterfaceForPhaseCreate,
     AlgorithmInterfaceForPhaseDelete,
+    AlgorithmInterfacesForPhaseCopy,
     AlgorithmInterfacesForPhaseList,
     CombinedLeaderboardCreate,
     CombinedLeaderboardDelete,
@@ -108,6 +109,11 @@ urlpatterns = [
         "<slug:slug>/interfaces/<uuid:interface_pk>/delete/",
         AlgorithmInterfaceForPhaseDelete.as_view(),
         name="interface-delete",
+    ),
+    path(
+        "<slug:slug>/interfaces/copy/",
+        AlgorithmInterfacesForPhaseCopy.as_view(),
+        name="interfaces-copy",
     ),
     path(
         "<slug:slug>/linked-archive/",
