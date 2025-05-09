@@ -1,0 +1,17 @@
+{% extends "discussion_forums/forum_base.html" %}
+
+{% load static %}
+{% load guardian_tags %}
+
+
+{% block extra_content %}
+    {% get_obj_perms request.user for forum as "user_perms" %}
+    {% if 'create_forum_topic' in user_perms %}
+        <div class="row mb-3">
+            <div class="col-12"><a href="{% url 'discussion-forums:topic-create' %}" class="btn btn-primary btn-sm"><i class="fas fa-comments mr-1">&nbsp;</i>New topic</a>
+            </div>
+        </div>
+    {% endif %}
+    {% include 'discussion_forums/partials/topic_category_list.html' with topic_list_title="Announcements" topics=announcements %}
+    {% include 'discussion_forums/partials/topic_category_list.html' with topic_list_title="Topics" topics=default_topics %}
+{% endblock %}

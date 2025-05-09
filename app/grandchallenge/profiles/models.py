@@ -104,7 +104,7 @@ class UserProfile(models.Model):
 
     def get_mugshot_url(self):
         if self.mugshot:
-            return self.mugshot.x02.url
+            return self.mugshot.x20.url
         else:
             gravatar_url = (
                 "https://www.gravatar.com/avatar/"

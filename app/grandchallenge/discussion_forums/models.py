@@ -88,6 +88,22 @@ class Topic(UUIDModel):
             },
         )
 
+    @property
+    def is_announcement(self):
+        return self.type == TopicTypeChoices.ANNOUNCE
+
+    @property
+    def is_sticky(self):
+        return self.type == TopicTypeChoices.STICKY
+
+    @property
+    def last_post(self):
+        return self.posts.last()
+
+    @property
+    def num_replies(self):
+        return self.posts.count() - 1
+
 
 class Post(UUIDModel):
     topic = models.ForeignKey(

@@ -42,7 +42,7 @@ class TopicForm(SaveFormInitMixin, ModelForm):
 
         self.fields["creator"].initial = user
 
-        if user.has_perm(
+        if not user.has_perm(
             "discussion_forums.create_sticky_and_announcement_topic", forum
         ):
             self.fields["type"].choices = [

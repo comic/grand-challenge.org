@@ -4,6 +4,8 @@
 {% load i18n %}
 {% load forum_extras %}
 {% load guardian_tags %}
+{% load activity_tags %}
+{% load crispy_forms_tags %}
 
 {% block title %}{% block sub_title %}{% endblock sub_title %} - {{ request.site.name }} Forums{% endblock title %}
 
@@ -21,12 +23,13 @@
 {% endblock %}
 
 {% block content %}
-    <h1>Forum</h1>
-    <div class="row mb-3">
-        <div class="col-12">
+    <div class="row mb-3 justify-content-between">
+        <div class="col-8"><h1>Forum</h1></div>
+        <div class="col-4">
             <div class="float-right controls-link-wrapper">
-                <a href="{% url 'notifications:follow-list' %}" class="btn btn-primary"><i class="fas fa-bookmark">&nbsp;</i>Subscriptions</a>
                 {# TODO: my posts view button #}
+                {% include 'actstream/partials/follow_unfollow_links.html' with object=forum %}
+                <a href="{% url 'notifications:follow-list' %}" class="btn btn-primary btn-sm"><i class="fas fa-bookmark">&nbsp;</i>My Subscriptions</a>
             </div>
         </div>
     </div>

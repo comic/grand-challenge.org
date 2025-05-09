@@ -1,0 +1,23 @@
+{% extends "discussion_forums/forum_base.html" %}
+
+{% load remove_whitespace %}
+
+{% block extra_content %}
+
+    <h2>Confirm Topic Deletion</h2>
+    <form action="" method="post">
+        {% csrf_token %}
+        <p>Are you sure that you want to delete the topic "{{ object }}"?</p>
+        <p>
+            <b class="text-danger">WARNING: You are not able to undo this action. Once the topic is deleted, it is
+                deleted forever.</b>
+        </p>
+        <a href="{% url 'discussion-forums:topic-detail' pk=object.pk %}"
+           type="button"
+           class="btn btn-secondary">Cancel</a>
+        <input type="submit"
+               value="I understand, delete topic"
+               class="btn btn-danger"/>
+    </form>
+
+{% endblock %}

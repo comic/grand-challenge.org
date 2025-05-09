@@ -1,7 +1,9 @@
 {% extends "discussion_forums/forum_base.html" %}
-{% load user_profile_link from profiles %}
+{% load profiles %}
 {% load humanize %}
 {% load bleach %}
+{% load guardian_tags %}
+
 
 {% block sub_title %}Topic{% endblock %}
 
@@ -9,23 +11,30 @@
     <div class="row">
         <div class="col-12"><h2>{{ object.subject }}</h2></div>
     </div>
+    {% get_obj_perms request.user for object as "user_perms" %}
+    <div>
+        {% include 'actstream/partials/follow_unfollow_links.html' with object=object %}
+        {% if 'delete_topic' in  user_perms %}
+            <a href="{% url 'discussion-forums:topic-delete' pk=object.pk %}" class="btn btn-danger btn-sm">
+                <i class="fas fa-trash mr-1"></i>Delete topic
+            </a>
+        {% endif %}
+    </div>
     {# TODO: create post button #}
-    {# TODO: un/subscribe to topic button #}
     {# TODO: lock topic button #}
-    {# TODO: delete topic button #}
 
     <div class="row">
         <div class="col-12">
             {% for post in object.posts.all %}
-                <div id="{{ post.id }}" class="my-3 card post">
+                <div id="{{ post.id }}" class="my-3 card">
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-10 post-content-wrapper">
-                                <div class="float-right post-controls">
+                            <div class="col-md-10">
+                                <div class="float-right">
                                     {# TODO: edit button for post #}
                                     {# TODO: delete button for post #}
                                 </div>
-                                <h4 class="m-0 subject">
+                                <h4 class="m-0">
                                     {{ post.subject }}
                                 </h4>
                                 <p>
@@ -36,9 +45,9 @@
                                 </p>
                                 <div class="post-content">{{ post.content|md2html }}</div>
                             </div>
-                            <div class="col-md-2 d-none d-md-block post-sidebar">
-                                <div class="avatar">
-                                    {{ post.creator|user_profile_link }}
+                            <div class="col-md-2 d-none d-md-block">
+                                <div>
+                                    {{ post.creator|user_profile_link_with_big_mugshot }}
                                 </div>
                             </div>
                         </div>
