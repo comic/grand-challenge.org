@@ -1,6 +1,7 @@
 {% load crispy_forms_tags %}
 {% load remove_whitespace %}
 {% load meta_attr %}
+{% load url %}
 
 <h2>Algorithm Interfaces for {{ base_obj }}</h2>
 
@@ -10,9 +11,16 @@
         <a class="btn btn-primary {% if base_obj.algorithm_interfaces_locked %} disabled {% endif %}"
            href="{{ base_obj.algorithm_interface_create_url }}"
         >
-        <i class="fas fa-plus"></i> Add new interface
+        <i class="fas fa-plus pr-1"></i> Add new interface
         </a>
     </span>
+    {% if is_phase %}
+        <a class="btn btn-primary"
+            href="{% url 'evaluation:interfaces-copy' slug=base_obj.slug challenge_short_name=challenge.short_name %}"
+        >
+            <i class="fas fa-copy pr-1"></i> Copy interfaces
+        </a>
+    {% endif %}
 </p>
 
 {% include 'algorithms/partials/algorithminterface_table.html' with base_obj=base_obj interfaces=interfaces delete_option=True %}

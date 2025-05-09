@@ -985,3 +985,29 @@ class EvaluationGroundTruthVersionManagementForm(Form):
             raise ValidationError("Ground truth updating already in progress.")
 
         return ground_truth
+
+
+class AlgorithmInterfaceForPhaseCopyForm(Form):
+    phases = ModelMultipleChoiceField(
+        queryset=Phase.objects.none(),
+        label="Select the phases to copy the interfaces to",
+        widget=CheckboxSelectMultiple,
+    )
+
+    def __init__(self, *args, user, phase, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._phase = phase
+
+        self.fields["phases"].queryset = filter_by_permission(
+            queryset=Phase.objects.filter(
+                challenge=phase.challenge,
+                submission_kind=phase.submission_kind,
+            ).exclude(pk=phase.pk),
+            codename="evaluation.configure_algorithm_phase",
+            user=user,
+        )
+
+    def copy_algorithm_interfaces(self):
+        for phase in self.cleaned_data["phases"]:
+            for interface in self._phase.algorithm_interfaces.all():
+                phase.algorithm_interface_manager.add(interface)
