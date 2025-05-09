@@ -1799,6 +1799,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         elif self.status in [self.FAILURE, self.CANCELLED]:
             on_commit(self.execute_task_on_failure)
 
+        if self.finished and duration and compute_cost_euro_millicents:
+            self.create_utilization()
+
     @property
     def executor_kwargs(self):
         return {
@@ -1939,11 +1942,37 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             ],
         )
 
+    def create_utilization(self):
+        raise NotImplementedError
+
     class Meta:
         abstract = True
         indexes = [
             models.Index(fields=["status", "created"]),
         ]
+
+
+class ComponentJobUtilization(UUIDModel):
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+    phase = models.ForeignKey(
+        "evaluation.Phase", null=True, on_delete=models.SET_NULL
+    )
+    challenge = models.ForeignKey(
+        "challenges.Challenge", null=True, on_delete=models.SET_NULL
+    )
+    algorithm_image = models.ForeignKey(
+        "algorithms.AlgorithmImage", null=True, on_delete=models.SET_NULL
+    )
+    algorithm = models.ForeignKey(
+        "algorithms.Algorithm", null=True, on_delete=models.SET_NULL
+    )
+    duration = models.DurationField()
+    compute_cost_euro_millicents = models.PositiveIntegerField()
+
+    class Meta:
+        abstract = True
 
 
 def docker_image_path(instance, filename):
