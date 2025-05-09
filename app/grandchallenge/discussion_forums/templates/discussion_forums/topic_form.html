@@ -1,7 +1,14 @@
 {% extends "discussion_forums/forum_base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}Create Topic - {{ block.super }}{% endblock %}
+{% block sub_title %}Create Topic - {% endblock %}
+
+{% block extra_breadcrumbs %}
+    <li class="breadcrumb-item">
+        <a href="{% url 'discussion-forums:topic-list' %}">Forum</a>
+    </li>
+    <li class="breadcrumb-item active">Create Topic</li>
+{% endblock %}
 
 {% block extra_content %}
     <div class="row">

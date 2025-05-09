@@ -5,7 +5,14 @@
 {% load guardian_tags %}
 
 
-{% block sub_title %}Topic{% endblock %}
+{% block sub_title %}{{ object }} - {% endblock %}
+
+{% block extra_breadcrumbs %}
+    <li class="breadcrumb-item">
+        <a href="{% url 'discussion-forums:topic-list' %}">Forum</a>
+    </li>
+    <li class="breadcrumb-item active">{{ object }}</li>
+{% endblock %}
 
 {% block extra_content %}
     <div class="row">

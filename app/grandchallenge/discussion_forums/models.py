@@ -83,7 +83,7 @@ class Topic(UUIDModel):
         return reverse(
             "discussion-forums:topic-detail",
             kwargs={
-                "challenge_short_name": self.forum.linked_challenge,
+                "challenge_short_name": self.forum.linked_challenge.short_name,
                 "pk": self.pk,
             },
         )

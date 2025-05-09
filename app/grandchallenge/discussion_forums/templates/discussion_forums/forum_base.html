@@ -1,13 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 {% load url %}
-{% load i18n %}
-{% load forum_extras %}
-{% load guardian_tags %}
-{% load activity_tags %}
-{% load crispy_forms_tags %}
 
-{% block title %}{% block sub_title %}{% endblock sub_title %} - {{ request.site.name }} Forums{% endblock title %}
+{% block title %}{% block sub_title %}{% endblock sub_title %} Forum{% endblock title %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
@@ -16,9 +11,7 @@
         </li>
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
-        <li class="breadcrumb-item">
-            Forum
-        </li>
+        {% block extra_breadcrumbs %}{% endblock %}
     </ol>
 {% endblock %}
 

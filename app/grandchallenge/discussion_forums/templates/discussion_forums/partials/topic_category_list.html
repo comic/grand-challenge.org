@@ -9,7 +9,7 @@
                 <div class="row m-0 px-3 py-2 justify-content-between">
                     <div class="pl-0 col-8">
                         <h3 class="m-0 card-title h5 text-dark">
-                            <i class="fas fa-comment mr-1"></i> {{ topic_list_title }}
+                            <i class="fas fa-comment mr-1"></i> {{ topic_list_title|capfirst }}
                         </h3>
                     </div>
                     <div class="pr-0 col-1">Replies</div>
@@ -44,7 +44,7 @@
                             {% empty %}
                             <div class="row m-0 px-3 py-2">
                                 <div class="p-0 col-12">
-                                    There are no topics in this forum.
+                                    There are no {{ topic_list_title }} in this forum.
                                 </div>
                             </div>
                         {% endfor %}

@@ -11,13 +11,15 @@ class TopicListView(ObjectPermissionRequiredMixin, ListView):
     model = Topic
     permission_required = "discussion_forums.view_topic"
     raise_exception = True
+    queryset = Topic.objects.select_related("forum")
 
     @cached_property
     def forum(self):
         return self.request.challenge.discussion_forum
 
     def get_queryset(self):
-        return Topic.objects.filter(forum=self.forum)
+        queryset = super().get_queryset()
+        return queryset.filter(forum=self.forum)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -75,6 +77,11 @@ class TopicDelete(ObjectPermissionRequiredMixin, DeleteView):
     permission_required = "delete_topic"
     raise_exception = True
     success_message = "Successfully deleted topic."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update({"forum": self.object.forum})
+        return context
 
     def get_success_url(self):
         return reverse(
