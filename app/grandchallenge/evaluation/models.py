@@ -1700,7 +1700,7 @@ class Submission(FieldChangeMixin, UUIDModel):
             self.algorithm_image.algorithm.interfaces.all()
         )
         phase_algorithm_interfaces = set(self.phase.algorithm_interfaces.all())
-        return phase_algorithm_interfaces.issubset(algorithm_interfaces)
+        return phase_algorithm_interfaces <= algorithm_interfaces
 
 
 class SubmissionUserObjectPermission(UserObjectPermissionBase):
