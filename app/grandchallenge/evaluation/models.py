@@ -1696,9 +1696,14 @@ class Submission(FieldChangeMixin, UUIDModel):
 
     @cached_property
     def has_matching_algorithm_interfaces(self):
-        return {*self.phase.algorithm_interfaces.all()} == {
-            *self.algorithm_image.algorithm.interfaces.all()
-        }
+        algorithm_interfaces = set(
+            self.algorithm_image.algorithm.interfaces.all()
+        )
+        phase_algorithm_interfaces = set(self.phase.algorithm_interfaces.all())
+        if not phase_algorithm_interfaces.issubset(algorithm_interfaces):
+            return False
+        else:
+            return True
 
 
 class SubmissionUserObjectPermission(UserObjectPermissionBase):
