@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+{% load url %}
+{% load i18n %}
+{% load forum_extras %}
+{% load guardian_tags %}
+
+{% block title %}{% block sub_title %}{% endblock sub_title %} - {{ request.site.name }} Forums{% endblock title %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item">
+            Forum
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <h1>Forum</h1>
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="float-right controls-link-wrapper">
+                <a href="{% url 'notifications:follow-list' %}" class="btn btn-primary"><i class="fas fa-bookmark">&nbsp;</i>Subscriptions</a>
+                {# TODO: my posts view button #}
+            </div>
+        </div>
+    </div>
+
+    {% block extra_content %}
+    {% endblock %}
+
+{% endblock %}

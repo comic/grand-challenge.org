@@ -3,6 +3,7 @@ from django.db import models
 from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.core.models import UUIDModel
+from grandchallenge.subdomains.utils import reverse
 
 
 class TopicTypeChoices(models.TextChoices):
@@ -77,6 +78,15 @@ class Topic(UUIDModel):
 
     def __str__(self):
         return self.subject
+
+    def get_absolute_url(self):
+        return reverse(
+            "discussion-forums:topic-detail",
+            kwargs={
+                "challenge_short_name": self.forum.linked_challenge,
+                "pk": self.pk,
+            },
+        )
 
 
 class Post(UUIDModel):

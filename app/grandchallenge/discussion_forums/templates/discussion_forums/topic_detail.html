@@ -1,0 +1,50 @@
+{% extends "discussion_forums/forum_base.html" %}
+{% load user_profile_link from profiles %}
+{% load humanize %}
+{% load bleach %}
+
+{% block sub_title %}Topic{% endblock %}
+
+{% block extra_content %}
+    <div class="row">
+        <div class="col-12"><h2>{{ object.subject }}</h2></div>
+    </div>
+    {# TODO: create post button #}
+    {# TODO: un/subscribe to topic button #}
+    {# TODO: lock topic button #}
+    {# TODO: delete topic button #}
+
+    <div class="row">
+        <div class="col-12">
+            {% for post in object.posts.all %}
+                <div id="{{ post.id }}" class="my-3 card post">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-10 post-content-wrapper">
+                                <div class="float-right post-controls">
+                                    {# TODO: edit button for post #}
+                                    {# TODO: delete button for post #}
+                                </div>
+                                <h4 class="m-0 subject">
+                                    {{ post.subject }}
+                                </h4>
+                                <p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i>&nbsp;By: {{ post.creator|user_profile_link }}
+                                        {{ post.created|naturaltime }}
+                                    </small>
+                                </p>
+                                <div class="post-content">{{ post.content|md2html }}</div>
+                            </div>
+                            <div class="col-md-2 d-none d-md-block post-sidebar">
+                                <div class="avatar">
+                                    {{ post.creator|user_profile_link }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
