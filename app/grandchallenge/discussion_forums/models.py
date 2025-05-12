@@ -47,7 +47,7 @@ class Topic(UUIDModel):
     )
 
     subject = models.CharField(max_length=255)
-    slug = AutoSlugField(populate_from="subject", max_length=255)
+    slug = AutoSlugField(populate_from="subject", max_length=64)
 
     TopicTypeChoices = TopicTypeChoices
     type = models.CharField(
@@ -123,7 +123,7 @@ class Topic(UUIDModel):
             "discussion-forums:topic-detail",
             kwargs={
                 "challenge_short_name": self.forum.parent_object.short_name,
-                "pk": self.pk,
+                "slug": self.slug,
             },
         )
 
@@ -159,7 +159,7 @@ class Post(UUIDModel):
     )
 
     subject = models.CharField(max_length=255)
-    slug = AutoSlugField(populate_from="subject", max_length=255)
+    slug = AutoSlugField(populate_from="subject", max_length=64)
 
     content = models.TextField()
 

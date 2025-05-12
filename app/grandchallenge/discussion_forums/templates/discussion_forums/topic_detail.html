@@ -22,7 +22,7 @@
     <div>
         {% include 'actstream/partials/follow_unfollow_links.html' with object=object %}
         {% if 'delete_topic' in  user_perms %}
-            <a href="{% url 'discussion-forums:topic-delete' pk=object.pk %}" class="btn btn-danger btn-sm">
+            <a href="{% url 'discussion-forums:topic-delete' slug=object.slug %}" class="btn btn-danger btn-sm">
                 <i class="fas fa-trash mr-1"></i>Delete topic
             </a>
         {% endif %}

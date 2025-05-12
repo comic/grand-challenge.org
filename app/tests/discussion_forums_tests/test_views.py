@@ -162,7 +162,7 @@ def test_topic_deletion(client):
         user=creator,
         reverse_kwargs={
             "challenge_short_name": forum.linked_challenge.short_name,
-            "pk": topic.pk,
+            "slug": topic.slug,
         },
     )
     # topic creator cannot delete
@@ -177,7 +177,7 @@ def test_topic_deletion(client):
         user=admin,
         reverse_kwargs={
             "challenge_short_name": forum.linked_challenge.short_name,
-            "pk": topic.pk,
+            "slug": topic.slug,
         },
     )
     # admin can delete and deleting topic also deletes associated posts

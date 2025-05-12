@@ -18,12 +18,12 @@ urlpatterns = [
         name="topic-create",
     ),
     path(
-        "topics/<uuid:pk>/",
+        "topics/<slug:slug>/",
         TopicDetail.as_view(),
-        name="topic-detail",
+        name="c",
     ),
     path(
-        "topics/<uuid:pk>/delete/",
+        "topics/<slug:slug>/delete/",
         TopicDelete.as_view(),
         name="topic-delete",
     ),

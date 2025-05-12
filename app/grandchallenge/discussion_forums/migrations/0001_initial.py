@@ -61,7 +61,7 @@ class Migration(migrations.Migration):
                     django_extensions.db.fields.AutoSlugField(
                         blank=True,
                         editable=False,
-                        max_length=255,
+                        max_length=64,
                         populate_from="subject",
                     ),
                 ),
@@ -130,7 +130,7 @@ class Migration(migrations.Migration):
                     django_extensions.db.fields.AutoSlugField(
                         blank=True,
                         editable=False,
-                        max_length=255,
+                        max_length=64,
                         populate_from="subject",
                     ),
                 ),
