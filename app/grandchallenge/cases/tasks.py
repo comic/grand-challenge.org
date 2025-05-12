@@ -137,11 +137,11 @@ def build_images(  # noqa:C901
         model_name=RawImageUploadSession._meta.model_name,
     )
 
-    model = apps.get_model(
-        app_label=linked_app_label, model_name=linked_model_name
-    )
-
     if linked_object_pk:
+        model = apps.get_model(
+            app_label=linked_app_label, model_name=linked_model_name
+        )
+
         try:
             linked_object = model.objects.get(pk=linked_object_pk)
         except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
