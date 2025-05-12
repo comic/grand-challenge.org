@@ -276,7 +276,7 @@ def test_default_onboarding_tasks_creation():
 
 @pytest.mark.django_db
 def test_discussion_forum_permissions():
-    challenge = ChallengeFactory(display_forum_link=True, hidden=False)
+    challenge = ChallengeFactory(display_forum_link=True)
     admin, participant = UserFactory.create_batch(2)
     challenge.add_admin(admin)
     challenge.add_participant(participant)
@@ -285,7 +285,15 @@ def test_discussion_forum_permissions():
     assert admin.has_perm("view_forum", challenge.discussion_forum)
     assert participant.has_perm("view_forum", challenge.discussion_forum)
     assert admin.has_perm("create_forum_topic", challenge.discussion_forum)
-    assert admin.has_perm("create_forum_topic", challenge.discussion_forum)
+    assert admin.has_perm(
+        "create_sticky_and_announcement_topic", challenge.discussion_forum
+    )
+    assert participant.has_perm(
+        "create_forum_topic", challenge.discussion_forum
+    )
+    assert not participant.has_perm(
+        "create_sticky_and_announcement_topic", challenge.discussion_forum
+    )
 
     challenge.display_forum_link = False
     challenge.save()
@@ -293,13 +301,12 @@ def test_discussion_forum_permissions():
     assert not admin.has_perm("view_forum", challenge.discussion_forum)
     assert not participant.has_perm("view_forum", challenge.discussion_forum)
     assert not admin.has_perm("create_forum_topic", challenge.discussion_forum)
-    assert not admin.has_perm("create_forum_topic", challenge.discussion_forum)
-
-    challenge.display_forum_link = True
-    challenge.hidden = True
-    challenge.save()
-
-    assert not admin.has_perm("view_forum", challenge.discussion_forum)
-    assert not participant.has_perm("view_forum", challenge.discussion_forum)
-    assert not admin.has_perm("create_forum_topic", challenge.discussion_forum)
-    assert not admin.has_perm("create_forum_topic", challenge.discussion_forum)
+    assert not participant.has_perm(
+        "create_forum_topic", challenge.discussion_forum
+    )
+    assert not admin.has_perm(
+        "create_sticky_and_announcement_topic", challenge.discussion_forum
+    )
+    assert not participant.has_perm(
+        "create_sticky_and_announcement_topic", challenge.discussion_forum
+    )

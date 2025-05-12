@@ -111,13 +111,12 @@ class Topic(UUIDModel):
             self.forum.parent_object.participants_group,
             self,
         )
-        # both challenge admins and creator can delete this topic
+        # only challenge admins can delete this topic
         assign_perm(
             "discussion_forums.delete_topic",
             self.forum.parent_object.admins_group,
             self,
         )
-        assign_perm("discussion_forums.delete_topic", self.creator, self)
 
     def get_absolute_url(self):
         return reverse(

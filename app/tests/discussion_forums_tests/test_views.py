@@ -5,25 +5,27 @@ from grandchallenge.discussion_forums.models import (
     Topic,
     TopicTypeChoices,
 )
-from tests.discussion_forums_tests.factories import TopicFactory
-from tests.factories import ChallengeFactory, UserFactory
+from tests.discussion_forums_tests.factories import ForumFactory, TopicFactory
+from tests.factories import UserFactory
 from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
 def test_topic_create(client):
-    challenge = ChallengeFactory(display_forum_link=True)
+    forum = ForumFactory()
     user = UserFactory()
-    challenge.add_admin(user)
+    forum.linked_challenge.add_admin(user)
 
     response = get_view_for_user(
         viewname="discussion-forums:topic-create",
         client=client,
         method=client.post,
-        reverse_kwargs={"challenge_short_name": challenge.short_name},
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name
+        },
         user=user,
         data={
-            "forum": challenge.discussion_forum.pk,
+            "forum": forum.pk,
             "creator": user.pk,
             "subject": "First topic",
             "type": TopicTypeChoices.DEFAULT,
@@ -36,7 +38,7 @@ def test_topic_create(client):
     assert Post.objects.count() == 1
 
     topic = Topic.objects.first()
-    assert topic.forum == challenge.discussion_forum
+    assert topic.forum == forum
     assert topic.creator == user
     assert topic.type == TopicTypeChoices.DEFAULT
     assert topic.subject == "First topic"
@@ -49,24 +51,24 @@ def test_topic_create(client):
 
 
 @pytest.mark.parametrize(
-    "viewname, detail",
+    "viewname, participant_status_code, detail",
     (
-        ["discussion-forums:topic-create", False],
-        ["discussion-forums:topic-delete", True],
-        ["discussion-forums:topic-detail", True],
+        ["discussion-forums:topic-create", 200, False],
+        ["discussion-forums:topic-delete", 403, True],
+        ["discussion-forums:topic-detail", 200, True],
     ),
 )
 @pytest.mark.django_db
-def test_discussion_forum_views_permissions(client, viewname, detail):
-    challenge = ChallengeFactory(display_forum_link=True)
+def test_discussion_forum_views_permissions(
+    client, viewname, participant_status_code, detail
+):
+    forum = ForumFactory()
     user, participant, admin = UserFactory.create_batch(3)
-    challenge.add_admin(admin)
-    challenge.add_participant(participant)
+    forum.linked_challenge.add_admin(admin)
+    forum.linked_challenge.add_participant(participant)
 
     if detail:
-        topic = TopicFactory(
-            forum=challenge.discussion_forum, creator=participant
-        )
+        topic = TopicFactory(forum=forum, creator=participant)
         extra_kwargs = {"pk": topic.pk}
     else:
         extra_kwargs = {}
@@ -76,7 +78,7 @@ def test_discussion_forum_views_permissions(client, viewname, detail):
         client=client,
         user=user,
         reverse_kwargs={
-            "challenge_short_name": challenge.short_name,
+            "challenge_short_name": forum.linked_challenge.short_name,
             **extra_kwargs,
         },
     )
@@ -87,18 +89,18 @@ def test_discussion_forum_views_permissions(client, viewname, detail):
         client=client,
         user=participant,
         reverse_kwargs={
-            "challenge_short_name": challenge.short_name,
+            "challenge_short_name": forum.linked_challenge.short_name,
             **extra_kwargs,
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == participant_status_code
 
     response = get_view_for_user(
         viewname=viewname,
         client=client,
         user=admin,
         reverse_kwargs={
-            "challenge_short_name": challenge.short_name,
+            "challenge_short_name": forum.linked_challenge.short_name,
             **extra_kwargs,
         },
     )
@@ -107,22 +109,20 @@ def test_discussion_forum_views_permissions(client, viewname, detail):
 
 @pytest.mark.django_db
 def test_discussion_forum_topic_list_permission_filter(client):
-    challenge = ChallengeFactory(display_forum_link=True)
+    forum = ForumFactory()
     user, participant, admin = UserFactory.create_batch(3)
-    challenge.add_admin(admin)
-    challenge.add_participant(participant)
+    forum.linked_challenge.add_admin(admin)
+    forum.linked_challenge.add_participant(participant)
 
-    challenge2 = ChallengeFactory(display_forum_link=True)
-
-    TopicFactory.create_batch(5, forum=challenge.discussion_forum)
-    TopicFactory.create_batch(5, forum=challenge2.discussion_forum)
+    TopicFactory.create_batch(5, forum=forum)
+    TopicFactory.create_batch(5, forum=ForumFactory())
 
     response = get_view_for_user(
         viewname="discussion-forums:topic-list",
         client=client,
         user=user,
         reverse_kwargs={
-            "challenge_short_name": challenge.short_name,
+            "challenge_short_name": forum.linked_challenge.short_name,
         },
     )
     assert response.status_code == 200
@@ -134,12 +134,53 @@ def test_discussion_forum_topic_list_permission_filter(client):
             client=client,
             user=user,
             reverse_kwargs={
-                "challenge_short_name": challenge.short_name,
+                "challenge_short_name": forum.linked_challenge.short_name,
             },
         )
         # admin and participants can access page and will see topics for this forum only
         assert response.status_code == 200
         assert response.context["object_list"].count() == 5
         assert list(response.context["object_list"]) == list(
-            Topic.objects.filter(forum=challenge.discussion_forum).all()
+            Topic.objects.filter(forum=forum).all()
         )
+
+
+@pytest.mark.django_db
+def test_topic_deletion(client):
+    creator, admin = UserFactory.create_batch(2)
+    forum = ForumFactory()
+    forum.linked_challenge.add_admin(admin)
+    forum.linked_challenge.add_participant(creator)
+
+    topic = TopicFactory(forum=forum, creator=creator, post_count=3)
+    assert topic.posts.count() == 3
+
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-delete",
+        client=client,
+        method=client.post,
+        user=creator,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+            "pk": topic.pk,
+        },
+    )
+    # topic creator cannot delete
+    assert response.status_code == 403
+    assert Topic.objects.count() == 1
+    assert topic.posts.count() == Post.objects.count() == 3
+
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-delete",
+        client=client,
+        method=client.post,
+        user=admin,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+            "pk": topic.pk,
+        },
+    )
+    # admin can delete and deleting topic also deletes associated posts
+    assert response.status_code == 302
+    assert Topic.objects.count() == 0
+    assert Post.objects.count() == 0
