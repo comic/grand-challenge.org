@@ -349,6 +349,7 @@ def remove_container_image_from_registry(
 @acks_late_2xlarge_task(ignore_errors=(InstanceInUse,))
 def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     from grandchallenge.algorithms.models import AlgorithmImage, Job
+    from grandchallenge.components.models import ComponentImage
     from grandchallenge.evaluation.models import Evaluation, Method
     from grandchallenge.workstations.models import WorkstationImage
 
@@ -359,7 +360,9 @@ def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
 
-    if isinstance(instance, Method):
+    if instance.import_status == ComponentImage.ImportStatusChoices.FAILED:
+        should_be_protected = False
+    elif isinstance(instance, Method):
         should_be_protected = Evaluation.objects.filter(
             method=instance,
             status=Evaluation.SUCCESS,
@@ -381,9 +384,10 @@ def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     if instance.image:
         instance.image.delete(save=False)
-        instance.is_removed = True
-        instance.is_desired_version = False
-        instance.save()
+
+    instance.is_removed = True
+    instance.is_desired_version = False
+    instance.save()
 
 
 def push_container_image(*, instance):
