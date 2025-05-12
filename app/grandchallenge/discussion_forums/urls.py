@@ -20,7 +20,7 @@ urlpatterns = [
     path(
         "topics/<slug:slug>/",
         TopicDetail.as_view(),
-        name="c",
+        name="topic-detail",
     ),
     path(
         "topics/<slug:slug>/delete/",
