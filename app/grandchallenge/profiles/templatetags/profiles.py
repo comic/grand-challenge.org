@@ -16,6 +16,7 @@ def user_profile_link(user: AbstractUser | None) -> str:
     verified = ""
 
     if user:
+        username = user.username
         profile_url = reverse(
             "profile-detail", kwargs={"username": user.username}
         )
@@ -35,15 +36,16 @@ def user_profile_link(user: AbstractUser | None) -> str:
             # No verification request
             pass
     else:
+        username = "Unknown"
         profile_url = "#"
         mugshot = mark_safe('<i class="fas fa-user fa-lg"></i>')
 
     return format_html(
-        '<span class="text-nowrap"><a href="{profile_url}">{mugshot}</a>&nbsp;<a href="{profile_url}">{username}</a>&nbsp;{verified}</span>',
-        profile_url=profile_url,
-        mugshot=mugshot,
-        username=user.username,
-        verified=verified,
+        '<span class="text-nowrap"><a href="{0}">{1}</a>&nbsp;<a href="{0}">{2}</a>&nbsp;{3}</span>',
+        profile_url,
+        mugshot,
+        username,
+        verified,
     )
 
 
