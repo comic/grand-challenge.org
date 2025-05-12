@@ -1,5 +1,3 @@
-from typing import NamedTuple
-
 from allauth.mfa.utils import is_mfa_enabled
 from django import template
 from django.contrib.auth import get_user_model
@@ -13,13 +11,8 @@ from grandchallenge.subdomains.utils import reverse
 register = template.Library()
 
 
-class UserProfileInformation(NamedTuple):
-    profile_url: str
-    mugshot: str
-    verified: bool
-
-
-def get_user_profile_details(user):
+@register.filter
+def user_profile_link(user: AbstractUser | None) -> str:
     verified = ""
 
     if user:
@@ -45,36 +38,12 @@ def get_user_profile_details(user):
         profile_url = "#"
         mugshot = mark_safe('<i class="fas fa-user fa-lg"></i>')
 
-    return UserProfileInformation(
-        profile_url=profile_url,
-        mugshot=mugshot,
-        verified=verified,
-    )
-
-
-@register.filter
-def user_profile_link(user: AbstractUser | None) -> str:
-    user_details = get_user_profile_details(user)
-
     return format_html(
         '<span class="text-nowrap"><a href="{profile_url}">{mugshot}</a>&nbsp;<a href="{profile_url}">{username}</a>&nbsp;{verified}</span>',
-        profile_url=user_details.profile_url,
-        mugshot=user_details.mugshot,
+        profile_url=profile_url,
+        mugshot=mugshot,
         username=user.username,
-        verified=user_details.verified,
-    )
-
-
-@register.filter
-def user_profile_link_with_big_mugshot(user: AbstractUser | None) -> str:
-    user_details = get_user_profile_details(user)
-
-    return format_html(
-        '<div><div class"embed-responsive embed-responsive-1by1 mb-1"><img class="card-img-top embed-responsive-item rounded-circle" src="{mugshot_url}" style="display: block; margin: auto;"/></div><div class="text-center"><b><a href="{profile_url}">{username}</a>&nbsp;{verified}</b></div></div>',
-        profile_url=user_details.profile_url,
-        mugshot_url=user.user_profile.get_mugshot_url(),
-        username=user.username,
-        verified=user_details.verified,
+        verified=verified,
     )
 
 

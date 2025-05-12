@@ -53,9 +53,7 @@
                                 <div class="post-content">{{ post.content|md2html }}</div>
                             </div>
                             <div class="col-md-2 d-none d-md-block">
-                                <div>
-                                    {{ post.creator|user_profile_link_with_big_mugshot }}
-                                </div>
+                                {% include 'profiles/partials/mugshot.html' with profile=post.creator.user_profile with_userlink=True %}
                             </div>
                         </div>
                     </div>
