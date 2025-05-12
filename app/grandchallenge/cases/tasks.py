@@ -7,6 +7,7 @@ from shutil import rmtree
 from tempfile import TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -21,10 +22,7 @@ from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.utils import safe_extract
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.components.tasks import (
-    get_model_instance,
-    lock_model_instance,
-)
+from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.reader_studies.models import DisplaySet
@@ -140,12 +138,12 @@ def build_images(  # noqa:C901
     )
 
     if linked_object_pk:
+        linked_model = apps.get_model(
+            app_label=linked_app_label, model_name=linked_model_name
+        )
+
         try:
-            linked_object = get_model_instance(
-                app_label=linked_app_label,
-                model_name=linked_model_name,
-                pk=linked_object_pk,
-            )
+            linked_object = linked_model.objects.get(pk=linked_object_pk)
         except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
             # users can delete archive items and display sets before this task runs
             logger.info(
