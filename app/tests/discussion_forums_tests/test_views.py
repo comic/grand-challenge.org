@@ -69,7 +69,7 @@ def test_discussion_forum_views_permissions(
 
     if detail:
         topic = TopicFactory(forum=forum, creator=participant)
-        extra_kwargs = {"pk": topic.pk}
+        extra_kwargs = {"slug": topic.slug}
     else:
         extra_kwargs = {}
 
