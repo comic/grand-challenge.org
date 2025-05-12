@@ -16,6 +16,11 @@ class TopicFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Topic
 
+    @factory.post_generation
+    def posts(self, create, extracted, **kwargs):
+        if create:
+            PostFactory(topic=self)
+
 
 class PostFactory(factory.django.DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)

@@ -1,16 +1,18 @@
 from django.utils.functional import cached_property
 from django.views.generic import CreateView, DeleteView, DetailView, ListView
 
-from grandchallenge.core.guardian import ObjectPermissionRequiredMixin
+from grandchallenge.core.guardian import (
+    ObjectPermissionRequiredMixin,
+    PermissionListMixin,
+)
 from grandchallenge.discussion_forums.forms import TopicForm
 from grandchallenge.discussion_forums.models import Topic, TopicTypeChoices
 from grandchallenge.subdomains.utils import reverse
 
 
-class TopicListView(ObjectPermissionRequiredMixin, ListView):
+class TopicListView(PermissionListMixin, ListView):
     model = Topic
     permission_required = "discussion_forums.view_topic"
-    raise_exception = True
     queryset = Topic.objects.select_related("forum")
 
     @cached_property
@@ -63,7 +65,7 @@ class TopicCreate(ObjectPermissionRequiredMixin, CreateView):
 
 class TopicDetail(ObjectPermissionRequiredMixin, DetailView):
     model = Topic
-    permission_required = "view_topic"
+    permission_required = "discussion_forums.view_topic"
     raise_exception = True
 
     def get_context_data(self, **kwargs):
@@ -74,7 +76,7 @@ class TopicDetail(ObjectPermissionRequiredMixin, DetailView):
 
 class TopicDelete(ObjectPermissionRequiredMixin, DeleteView):
     model = Topic
-    permission_required = "delete_topic"
+    permission_required = "discussion_forums.delete_topic"
     raise_exception = True
     success_message = "Successfully deleted topic."
 

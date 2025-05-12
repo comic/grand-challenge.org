@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.subdomains.utils import reverse
@@ -79,11 +80,50 @@ class Topic(UUIDModel):
     def __str__(self):
         return self.subject
 
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save()
+
+        if adding:
+            self.assign_permissions()
+            self.last_post_on = self.created
+
+    def assign_permissions(self):
+        # challenge admins and participants can see this topic and add posts to it
+        assign_perm(
+            "discussion_forums.view_topic",
+            self.forum.parent_object.admins_group,
+            self,
+        )
+        assign_perm(
+            "discussion_forums.view_topic",
+            self.forum.parent_object.participants_group,
+            self,
+        )
+        assign_perm(
+            "discussion_forums.create_topic_post",
+            self.forum.parent_object.admins_group,
+            self,
+        )
+        assign_perm(
+            "discussion_forums.create_topic_post",
+            self.forum.parent_object.participants_group,
+            self,
+        )
+        # both challenge admins and creator can delete this topic
+        assign_perm(
+            "discussion_forums.delete_topic",
+            self.forum.parent_object.admins_group,
+            self,
+        )
+        assign_perm("discussion_forums.delete_topic", self.creator, self)
+
     def get_absolute_url(self):
         return reverse(
             "discussion-forums:topic-detail",
             kwargs={
-                "challenge_short_name": self.forum.linked_challenge.short_name,
+                "challenge_short_name": self.forum.parent_object.short_name,
                 "pk": self.pk,
             },
         )

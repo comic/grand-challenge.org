@@ -582,7 +582,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         self.assign_forum_permissions()
 
     def assign_forum_permissions(self):
-        if self.display_forum_link and not self.hidden:
+        if self.display_forum_link:
             assign_perm(
                 "discussion_forums.view_forum",
                 self.admins_group,
@@ -601,6 +601,11 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             assign_perm(
                 "discussion_forums.create_forum_topic",
                 self.participants_group,
+                self.discussion_forum,
+            )
+            assign_perm(
+                "discussion_forums.create_sticky_and_announcement_topic",
+                self.admins_group,
                 self.discussion_forum,
             )
         else:
@@ -622,6 +627,11 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             remove_perm(
                 "discussion_forums.create_forum_topic",
                 self.participants_group,
+                self.discussion_forum,
+            )
+            remove_perm(
+                "discussion_forums.create_sticky_and_announcement_topic",
+                self.admins_group,
                 self.discussion_forum,
             )
 
