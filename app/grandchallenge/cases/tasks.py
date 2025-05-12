@@ -138,12 +138,12 @@ def build_images(  # noqa:C901
     )
 
     if linked_object_pk:
-        model = apps.get_model(
+        linked_model = apps.get_model(
             app_label=linked_app_label, model_name=linked_model_name
         )
 
         try:
-            linked_object = model.objects.get(pk=linked_object_pk)
+            linked_object = linked_model.objects.get(pk=linked_object_pk)
         except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
             # users can delete archive items and display sets before this task runs
             logger.info(
