@@ -1,4 +1,10 @@
-from grandchallenge.workstations.models import Session, WorkstationImage
+from django.contrib.auth.models import Permission
+
+from grandchallenge.workstations.models import (
+    Session,
+    WorkstationGroupObjectPermission,
+    WorkstationImage,
+)
 
 
 def get_or_create_active_session(
@@ -47,3 +53,26 @@ def get_or_create_active_session(
         )
 
     return session
+
+
+def reassign_workstation_permissions(*, groups, workstation):
+    """
+    Removes all permissions for the given groups to view workstations
+    and assigns them to the new one if provided
+    """
+    permission = Permission.objects.get(
+        content_type__app_label="workstations",
+        codename="view_workstation",
+    )
+
+    WorkstationGroupObjectPermission.objects.filter(
+        permission=permission, group__in=groups
+    ).delete()
+
+    if workstation:
+        for group in groups:
+            WorkstationGroupObjectPermission.objects.create(
+                content_object=workstation,
+                group=group,
+                permission=permission,
+            )

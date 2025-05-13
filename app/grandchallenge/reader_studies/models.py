@@ -39,10 +39,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.fields import HexColorField, RegexField
-from grandchallenge.core.guardian import (
-    NoUserPermissionsAllowed,
-    get_objects_for_group,
-)
+from grandchallenge.core.guardian import NoUserPermissionsAllowed
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
@@ -69,6 +66,7 @@ from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.templatetags.workstations import (
     get_workstation_path_and_query_string,
 )
+from grandchallenge.workstations.utils import reassign_workstation_permissions
 
 __doc__ = """
 A reader study enables you to have a set of readers answer a set of questions
@@ -169,6 +167,7 @@ The scores can then be compared on the ``leaderboard``. Statistics are also avai
 based on these scores: the average and total scores for each question as well
 as for each case are displayed in the ``statistics`` view.
 """
+
 
 CASE_TEXT_SCHEMA = {
     "type": "object",
@@ -470,25 +469,6 @@ class ReaderStudy(
         else:
             remove_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
 
-    def assign_workstation_permissions(self):
-        perm = "workstations.view_workstation"
-
-        for group in (self.editors_group, self.readers_group):
-            workstations = get_objects_for_group(
-                group=group,
-                perms=perm,
-            )
-
-            if (
-                self.workstation not in workstations
-            ) or workstations.count() > 1:
-                remove_perm(perm=perm, user_or_group=group, obj=workstations)
-
-                # Allow readers to view the workstation used for this study
-                assign_perm(
-                    perm=perm, user_or_group=group, obj=self.workstation
-                )
-
     def clean(self):
         if self.case_text is None:
             self.case_text = {}
@@ -510,7 +490,10 @@ class ReaderStudy(
         super().save(*args, **kwargs)
 
         self.assign_permissions()
-        self.assign_workstation_permissions()
+        reassign_workstation_permissions(
+            groups=(self.readers_group, self.editors_group),
+            workstation=self.workstation,
+        )
 
     def delete(self, *args, **kwargs):
         ct = ContentType.objects.filter(
