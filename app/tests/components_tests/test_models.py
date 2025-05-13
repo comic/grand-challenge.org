@@ -9,7 +9,6 @@ import pytest
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.files.base import ContentFile
-from django.utils import timezone
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
@@ -59,22 +58,19 @@ from tests.utils import create_raw_upload_image_session
 
 
 @pytest.mark.django_db
-def test_update_started_adds_time():
+def test_update_status_adds_time():
     j = AlgorithmJobFactory(time_limit=60)
-    assert j.started_at is None
-    assert j.completed_at is None
+    assert j.job_utilization.duration is None
 
     j.update_status(status=j.EXECUTING)
 
     j.refresh_from_db()
-    assert j.started_at is not None
-    assert j.completed_at is None
+    assert j.job_utilization.duration is None
 
     j.update_status(status=j.SUCCESS)
 
     j.refresh_from_db()
-    assert j.started_at is not None
-    assert j.completed_at is not None
+    assert j.job_utilization.duration is not None
 
 
 @pytest.mark.django_db
@@ -98,19 +94,9 @@ def test_duration():
 
 @pytest.mark.django_db
 def test_average_duration_filtering():
-    completed_at = timezone.now()
-    j1, _ = (
-        AlgorithmJobFactory(
-            completed_at=completed_at,
-            started_at=completed_at - timedelta(minutes=5),
-            time_limit=60,
-        ),
-        AlgorithmJobFactory(
-            completed_at=completed_at,
-            started_at=completed_at - timedelta(minutes=10),
-            time_limit=60,
-        ),
-    )
+    j1, j2 = AlgorithmJobFactory.create_batch(2, time_limit=60)
+    j1.update_utilization(duration=timedelta(minutes=5))
+    j2.update_utilization(duration=timedelta(minutes=10))
     assert Job.objects.average_duration() == timedelta(minutes=7.5)
     assert Job.objects.filter(
         algorithm_image=j1.algorithm_image

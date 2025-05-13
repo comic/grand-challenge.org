@@ -1652,8 +1652,8 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     runtime_metrics = models.JSONField(default=dict, editable=False)
     error_message = models.CharField(max_length=1024, default="")
     detailed_error_message = models.JSONField(blank=True, default=dict)
-    started_at = models.DateTimeField(null=True)
-    completed_at = models.DateTimeField(null=True)
+    started_at = deprecate_field(models.DateTimeField(null=True))
+    completed_at = deprecate_field(models.DateTimeField(null=True))
     compute_cost_euro_millicents = models.PositiveIntegerField(
         # We store euro here as the costs were incurred at a time when
         # the exchange rate may have been different
