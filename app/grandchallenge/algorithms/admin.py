@@ -6,7 +6,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Sum
 from django.forms import ModelForm
 from django.utils.html import format_html
-from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -50,7 +49,7 @@ class AlgorithmAdminForm(ModelForm):
 
 
 @admin.register(Algorithm)
-class AlgorithmAdmin(GuardedModelAdmin):
+class AlgorithmAdmin(admin.ModelAdmin):
     readonly_fields = ("algorithm_forge_json",)
     list_display = (
         "title",
@@ -174,7 +173,7 @@ class AlgorithmUserCreditAdmin(ModelAdmin):
 
 
 @admin.register(Job)
-class JobAdmin(GuardedModelAdmin):
+class JobAdmin(admin.ModelAdmin):
     autocomplete_fields = ("viewer_groups",)
     ordering = ("-created",)
     list_display = (
@@ -226,12 +225,12 @@ class JobAdmin(GuardedModelAdmin):
 
 
 @admin.register(AlgorithmPermissionRequest)
-class AlgorithmPermissionRequestAdmin(GuardedModelAdmin):
+class AlgorithmPermissionRequestAdmin(admin.ModelAdmin):
     readonly_fields = ("user", "algorithm")
 
 
 @admin.register(AlgorithmModel)
-class AlgorithmModelAdmin(GuardedModelAdmin):
+class AlgorithmModelAdmin(admin.ModelAdmin):
     exclude = ("model",)
     list_display = ("algorithm", "created", "is_desired_version", "comment")
     list_filter = ("is_desired_version",)
@@ -240,7 +239,7 @@ class AlgorithmModelAdmin(GuardedModelAdmin):
 
 
 @admin.register(AlgorithmInterface)
-class AlgorithmInterfaceAdmin(GuardedModelAdmin):
+class AlgorithmInterfaceAdmin(admin.ModelAdmin):
     readonly_fields = ("algorithm_inputs", "algorithm_outputs")
     list_display = (
         "pk",
@@ -273,7 +272,7 @@ class AlgorithmInterfaceAdmin(GuardedModelAdmin):
 
 
 @admin.register(AlgorithmAlgorithmInterface)
-class AlgorithmAlgorithmInterfaceAdmin(GuardedModelAdmin):
+class AlgorithmAlgorithmInterfaceAdmin(admin.ModelAdmin):
     list_display = (
         "pk",
         "interface",

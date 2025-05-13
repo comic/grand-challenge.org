@@ -3,6 +3,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
@@ -41,6 +42,8 @@ class TestObjectPermissionRequiredViews:
         a = ArchiveFactory()
         u = UserFactory()
         p = ArchivePermissionRequestFactory(archive=a)
+        group = Group.objects.create(name="test-group")
+        group.user_set.add(u)
 
         for view_name, kwargs, permission, obj, redirect in [
             ("create", {}, "archives.add_archive", None, None),
@@ -90,12 +93,12 @@ class TestObjectPermissionRequiredViews:
             else:
                 assert response.status_code == 403
 
-            assign_perm(permission, u, obj)
+            assign_perm(permission, group, obj)
 
             response = _get_view()
             assert response.status_code == 200
 
-            remove_perm(permission, u, obj)
+            remove_perm(permission, group, obj)
 
     def test_permission_required_list_views(self, client):
         a = ArchiveFactory()

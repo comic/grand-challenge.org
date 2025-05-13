@@ -30,6 +30,10 @@ from grandchallenge.components.tasks import (
     start_service,
     stop_service,
 )
+from grandchallenge.core.guardian import (
+    NoGroupPermissionsAllowed,
+    NoUserPermissionsAllowed,
+)
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
@@ -174,7 +178,7 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         return user.groups.remove(self.users_group)
 
 
-class WorkstationUserObjectPermission(UserObjectPermissionBase):
+class WorkstationUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Workstation, on_delete=models.CASCADE)
 
 
@@ -282,7 +286,7 @@ class WorkstationImage(UUIDModel, ComponentImage):
         return WorkstationImage.objects.filter(workstation=self.workstation)
 
 
-class WorkstationImageUserObjectPermission(UserObjectPermissionBase):
+class WorkstationImageUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(
         WorkstationImage, on_delete=models.CASCADE
     )
@@ -681,10 +685,12 @@ class Session(FieldChangeMixin, UUIDModel):
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):
+    # This is used for view_ and change_ permissions for the creator
     content_object = models.ForeignKey(Session, on_delete=models.CASCADE)
 
 
 class SessionGroupObjectPermission(GroupObjectPermissionBase):
+    # TODO workstation editors get view_ and change_ permission on the Session
     content_object = models.ForeignKey(Session, on_delete=models.CASCADE)
 
 
@@ -721,10 +727,11 @@ class Feedback(UUIDModel):
 
 
 class FeedbackUserObjectPermission(UserObjectPermissionBase):
+    # This is used for view_feedback permission for the creator
     content_object = models.ForeignKey(Feedback, on_delete=models.CASCADE)
 
 
-class FeedbackGroupObjectPermission(GroupObjectPermissionBase):
+class FeedbackGroupObjectPermission(NoGroupPermissionsAllowed):
     content_object = models.ForeignKey(Feedback, on_delete=models.CASCADE)
 
 

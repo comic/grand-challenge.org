@@ -3,7 +3,6 @@ import json
 from django.contrib import admin, messages
 from django.forms import ModelForm
 from django.utils.html import format_html
-from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
@@ -22,6 +21,8 @@ from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
     Evaluation,
     EvaluationGroundTruth,
+    EvaluationGroundTruthGroupObjectPermission,
+    EvaluationGroundTruthUserObjectPermission,
     EvaluationGroupObjectPermission,
     EvaluationUserObjectPermission,
     Method,
@@ -233,7 +234,7 @@ class EvaluationGroundTruthAdmin(admin.ModelAdmin):
 
 
 @admin.register(PhaseAlgorithmInterface)
-class PhaseAlgorithmInterfaceAdmin(GuardedModelAdmin):
+class PhaseAlgorithmInterfaceAdmin(admin.ModelAdmin):
     list_display = (
         "pk",
         "interface",
@@ -262,4 +263,10 @@ admin.site.register(
 admin.site.register(EvaluationUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(
     EvaluationGroupObjectPermission, GroupObjectPermissionAdmin
+)
+admin.site.register(
+    EvaluationGroundTruthUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    EvaluationGroundTruthGroupObjectPermission, GroupObjectPermissionAdmin
 )

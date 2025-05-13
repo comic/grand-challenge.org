@@ -4,7 +4,6 @@ import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db.models import BLANK_CHOICE_DASH
-from guardian.shortcuts import assign_perm
 
 from grandchallenge.pages.models import Page
 from tests.evaluation_tests.factories import PhaseFactory
@@ -149,7 +148,8 @@ def test_page_create_permission(client):
     assert response.status_code == 403
     assert Page.objects.count() == n_pages
 
-    assign_perm("change_challenge", user, challenge)
+    challenge.add_admin(user=user)
+
     response = attempt_create()
     assert response.status_code == 302
     assert Page.objects.count() == n_pages + 1
@@ -233,11 +233,15 @@ def test_page_metadata_update_permission(client):
 
     user = UserFactory()
     page = PageFactory(display_title="old title")
+
     response = attempt_metadata_update()
     assert response.status_code == 403
-    assign_perm("change_challenge", user, page.challenge)
+
+    page.challenge.add_admin(user=user)
+
     response = attempt_metadata_update()
     assert response.status_code == 302
+
     page.refresh_from_db()
     assert page.display_title == "new title"
 
@@ -321,7 +325,7 @@ def test_page_content_update_permission(client):
 
     assert response.status_code == 403
 
-    assign_perm("change_challenge", user, page.challenge)
+    page.challenge.add_admin(user=user)
 
     response = attempt_content_update()
     page.refresh_from_db()

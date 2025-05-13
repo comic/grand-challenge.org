@@ -6,7 +6,12 @@ from guardian.mixins import (  # noqa: I251
     PermissionListMixin as PermissionListMixinOrig,
 )
 from guardian.mixins import PermissionRequiredMixin  # noqa: I251
-from guardian.models import GroupObjectPermission, UserObjectPermission
+from guardian.models import (
+    GroupObjectPermission,
+    GroupObjectPermissionBase,
+    UserObjectPermission,
+    UserObjectPermissionBase,
+)
 from guardian.shortcuts import (  # noqa: I251
     get_objects_for_group as get_objects_for_group_orig,
 )
@@ -49,7 +54,27 @@ class ObjectPermissionRequiredMixin(PermissionRequiredMixin):
     accept_global_perms = False
 
 
-def filter_by_permission(*, queryset, user, codename, accept_user_perms=True):
+class NoUserPermissionsAllowed(UserObjectPermissionBase):
+    def save(self, *args, **kwargs):
+        raise RuntimeError(
+            "User permissions should not be assigned for this model"
+        )
+
+    class Meta(UserObjectPermissionBase.Meta):
+        abstract = True
+
+
+class NoGroupPermissionsAllowed(GroupObjectPermissionBase):
+    def save(self, *args, **kwargs):
+        raise RuntimeError(
+            "Group permissions should not be assigned for this model"
+        )
+
+    class Meta(GroupObjectPermissionBase.Meta):
+        abstract = True
+
+
+def filter_by_permission(*, queryset, user, codename):
     """
     Optimised version of get_objects_for_user
 
@@ -87,6 +112,7 @@ def filter_by_permission(*, queryset, user, codename, accept_user_perms=True):
         codename=codename,
     )
 
+    # Evaluate the pks in python to force the use of the index
     group_pks = {*user.groups.values_list("pk", flat=True)}
 
     group_filter_kwargs = {
@@ -94,30 +120,34 @@ def filter_by_permission(*, queryset, user, codename, accept_user_perms=True):
         f"{group_related_query_name}__permission": permission,
     }
 
-    if accept_user_perms:
-        dfk_user_model = get_user_obj_perms_model(queryset.model)
+    dfk_user_model = get_user_obj_perms_model(queryset.model)
 
-        if isinstance(dfk_user_model, UserObjectPermission):
-            raise RuntimeError("DFK user permissions not active for model")
+    if isinstance(dfk_user_model, UserObjectPermission):
+        raise RuntimeError("DFK user permissions not active for model")
 
-        user_related_query_name = (
-            dfk_user_model.content_object.field.related_query_name()
-        )
+    user_related_query_name = (
+        dfk_user_model.content_object.field.related_query_name()
+    )
 
-        user_filter_kwargs = {
-            f"{user_related_query_name}__user": user,
-            f"{user_related_query_name}__permission": permission,
-        }
+    user_filter_kwargs = {
+        f"{user_related_query_name}__user": user,
+        f"{user_related_query_name}__permission": permission,
+    }
 
+    if isinstance(dfk_user_model, NoUserPermissionsAllowed):
+        # No user permissions allowed, so only filter by group perms
+        return queryset.filter(**group_filter_kwargs)
+    elif isinstance(dfk_group_model, NoGroupPermissionsAllowed):
+        # No group permissions allowed, so only filter by user perms
+        return queryset.filter(**user_filter_kwargs)
+    else:
+        # Both group and user permissions allowed, so filter by both
         pks = (
             queryset.filter(**user_filter_kwargs)
             .union(queryset.filter(**group_filter_kwargs))
             .values_list("pk", flat=True)
         )
-
         return queryset.filter(pk__in=pks)
-    else:
-        return queryset.filter(**group_filter_kwargs)
 
 
 def get_object_if_allowed(*, model, pk, user, codename):

@@ -39,7 +39,10 @@ from grandchallenge.components.models import (  # noqa: F401
     Tarball,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
-from grandchallenge.core.guardian import get_objects_for_group
+from grandchallenge.core.guardian import (
+    NoUserPermissionsAllowed,
+    get_objects_for_group,
+)
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
@@ -651,7 +654,7 @@ class AlgorithmAlgorithmInterface(models.Model):
         return str(self.interface)
 
 
-class AlgorithmUserObjectPermission(UserObjectPermissionBase):
+class AlgorithmUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
 
 
@@ -895,7 +898,7 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         return AlgorithmImage.objects.filter(algorithm=self.algorithm)
 
 
-class AlgorithmImageUserObjectPermission(UserObjectPermissionBase):
+class AlgorithmImageUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(
         AlgorithmImage, on_delete=models.CASCADE
     )
@@ -1023,7 +1026,7 @@ class AlgorithmModel(Tarball):
         )
 
 
-class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):
+class AlgorithmModelUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(
         AlgorithmModel, on_delete=models.CASCADE
     )
@@ -1327,6 +1330,7 @@ class Job(CIVForObjectMixin, ComponentJob):
 
 
 class JobUserObjectPermission(UserObjectPermissionBase):
+    # This is used for change_job permission for the creator
     content_object = models.ForeignKey(Job, on_delete=models.CASCADE)
 
 

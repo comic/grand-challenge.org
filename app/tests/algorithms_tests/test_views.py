@@ -356,6 +356,8 @@ class TestObjectPermissionRequiredViews:
         ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
         am = AlgorithmModelFactory()
         u = UserFactory()
+        group = Group.objects.create(name="test-group")
+        group.user_set.add(u)
         j = AlgorithmJobFactory(
             algorithm_image=ai,
             status=Job.SUCCESS,
@@ -563,12 +565,12 @@ class TestObjectPermissionRequiredViews:
             else:
                 assert response.status_code == 403
 
-            assign_perm(permission, u, obj)
+            assign_perm(permission, group, obj)
 
             response = _get_view()
             assert response.status_code == 200
 
-            remove_perm(permission, u, obj)
+            remove_perm(permission, group, obj)
 
     def test_permission_required_list_views(self, client):
         ai = AlgorithmImageFactory()

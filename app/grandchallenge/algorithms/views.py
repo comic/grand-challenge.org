@@ -244,7 +244,6 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             .order_by("created"),
             codename="view_evaluation",
             user=self.request.user,
-            accept_user_perms=False,
         )
 
     def get_context_data(self, **kwargs):
