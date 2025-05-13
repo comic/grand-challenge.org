@@ -1661,7 +1661,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     runtime_metrics = models.JSONField(default=dict, editable=False)
     error_message = models.CharField(max_length=1024, default="")
     detailed_error_message = models.JSONField(blank=True, default=dict)
-    claimed_at = models.DateTimeField(null=True)
     started_at = models.DateTimeField(null=True)
     completed_at = models.DateTimeField(null=True)
     compute_cost_euro_millicents = models.PositiveIntegerField(
