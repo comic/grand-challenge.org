@@ -142,7 +142,7 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
             )
 
         if (
-            evaluation.started_at - now()
+            evaluation.claimed_at - now()
         ).seconds > settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS:
             cancel_external_evaluations_past_timeout.apply_async()
             return Response(
