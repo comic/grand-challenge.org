@@ -96,7 +96,7 @@ class OrganizationDetail(DetailView):
                 organizations__in=[self.object]
             ).distinct(),
             user=self.request.user,
-            perms="reader_studies.view_readerstudy",
+            codename="view_readerstudy",
         )
 
         object_list = [
