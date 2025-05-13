@@ -67,6 +67,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         queryset=Image.objects.none(),
         view_name="api:image-detail",
         required=False,
+        allow_null=True,
     )
     interface = SlugRelatedField(
         slug_field="slug", queryset=ComponentInterface.objects.all()
@@ -76,12 +77,14 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         view_name="api:upload-session-detail",
         required=False,
         write_only=True,
+        allow_null=True,
     )
     user_upload = serializers.HyperlinkedRelatedField(
         queryset=UserUpload.objects.none(),
         view_name="api:upload-detail",
         required=False,
         write_only=True,
+        allow_null=True,
     )
 
     class Meta:
@@ -127,14 +130,14 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
 
         interface = attrs["interface"]
 
-        attributes = [
-            attribute for attribute in attrs if attribute != "interface"
-        ]
+        # Check if exactly one of the specified keys is set
+        keys_to_check = ["image", "value", "user_upload", "upload_session"]
+        set_keys = [key for key in keys_to_check if attrs.get(key) is not None]
 
-        if len(attributes) > 1:
+        if len(set_keys) != 1:
             raise serializers.ValidationError(
-                "Only one of image, value, user_upload and "
-                "upload_session should be set."
+                "Exactly one of 'image', 'value', 'user_upload', or "
+                "'upload_session' must be set."
             )
 
         if interface.is_image_kind:
@@ -154,7 +157,11 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             # later, but for now check everything else. DRF 3.0 dropped calling
             # full_clean on instances, so we need to do it ourselves.
             instance = ComponentInterfaceValue(
-                **{k: v for k, v in attrs.items() if k != "upload_session"}
+                **{
+                    k: v
+                    for k, v in attrs.items()
+                    if k != "upload_session" and v is not None
+                }
             )
             instance.full_clean()
 
