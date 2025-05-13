@@ -5,11 +5,7 @@ from zipfile import ZipFile
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import (
-    AccessMixin,
-    PermissionRequiredMixin,
-    UserPassesTestMixin,
-)
+from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -90,6 +86,7 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    UserPassesTestMixin,
     filter_by_permission,
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
@@ -988,7 +985,8 @@ class AlgorithmImportView(LoginRequiredMixin, UserPassesTestMixin, FormView):
     template_name = "algorithms/algorithm_import_form.html"
 
     def test_func(self):
-        return self.request.user.is_staff
+        if self.request.user.is_staff:
+            return super().test_func()
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
