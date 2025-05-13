@@ -4,7 +4,7 @@ from django.forms import ModelMultipleChoiceField
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 
@@ -35,10 +35,13 @@ class UploadRawImagesForm(SaveFormInitMixin, forms.ModelForm):
     def __init__(self, *args, user, linked_task=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["user_uploads"].queryset = get_objects_for_user(
-            user,
-            "uploads.change_userupload",
-        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+        self.fields["user_uploads"].queryset = filter_by_permission(
+            queryset=UserUpload.objects.filter(
+                status=UserUpload.StatusChoices.COMPLETED
+            ),
+            user=user,
+            codename="change_userupload",
+        )
 
         self._linked_task = linked_task
 

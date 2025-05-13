@@ -14,8 +14,6 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
     filter_by_permission,
-    get_objects_for_group,
-    get_objects_for_user,
 )
 from grandchallenge.reader_studies.models import Answer
 from tests.factories import GroupFactory, UserFactory
@@ -23,26 +21,60 @@ from tests.reader_studies_tests.factories import AnswerFactory
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "factory, method",
-    [
-        (GroupFactory, get_objects_for_group),
-        (UserFactory, get_objects_for_user),
-    ],
-)
-def test_get_objects_shortcuts(factory, method):
+def test_filter_by_permission_not_global():
     answer = AnswerFactory()
-    subject = factory()
+    user = UserFactory()
+    group = GroupFactory()
+
+    group.user_set.add(user)
 
     permission = "reader_studies.view_answer"
+    codename = permission.split(".")[1]
 
-    # Add global permission, answer should not be included
-    assign_perm(permission, subject)
-    assert method(subject, permission).count() == 0
+    assert (
+        filter_by_permission(
+            queryset=Answer.objects.all(), user=user, codename=codename
+        ).count()
+        == 0
+    )
 
-    # Add object level permission, answer should be included
-    assign_perm(permission, subject, answer)
-    assert method(subject, permission).count() == 1
+    # Add global permission to group, answer should not be included
+    assign_perm(permission, group)
+    assert (
+        filter_by_permission(
+            queryset=Answer.objects.all(), user=user, codename=codename
+        ).count()
+        == 0
+    )
+
+    # Add object level permission to group, answer should be included
+    assign_perm(permission, group, answer)
+    assert (
+        filter_by_permission(
+            queryset=Answer.objects.all(), user=user, codename=codename
+        ).count()
+        == 1
+    )
+
+    remove_perm(permission, group, answer)
+
+    # Add global permission to user, answer should not be included
+    assign_perm(permission, user)
+    assert (
+        filter_by_permission(
+            queryset=Answer.objects.all(), user=user, codename=codename
+        ).count()
+        == 0
+    )
+
+    # Add object level permission to user, answer should be included
+    assign_perm(permission, user, answer)
+    assert (
+        filter_by_permission(
+            queryset=Answer.objects.all(), user=user, codename=codename
+        ).count()
+        == 1
+    )
 
 
 @pytest.mark.django_db

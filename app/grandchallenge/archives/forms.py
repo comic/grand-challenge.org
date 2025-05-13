@@ -30,7 +30,7 @@ from grandchallenge.core.forms import (
     UniqueTitleUpdateFormMixin,
     WorkstationUserFilterMixin,
 )
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
@@ -176,10 +176,11 @@ class ArchiveItemsToReaderStudyForm(SaveFormInitMixin, Form):
         self.user = user
         self.archive = archive
 
-        self.fields["reader_study"].queryset = get_objects_for_user(
-            self.user,
-            "reader_studies.change_readerstudy",
-        ).order_by("title")
+        self.fields["reader_study"].queryset = filter_by_permission(
+            queryset=ReaderStudy.objects.order_by("title"),
+            user=self.user,
+            codename="change_readerstudy",
+        )
 
         self.fields["items"].queryset = self.archive.items.all()
         self.fields["items"].initial = self.fields["items"].queryset

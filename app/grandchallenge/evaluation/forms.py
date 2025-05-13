@@ -36,10 +36,7 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
-from grandchallenge.core.guardian import (
-    filter_by_permission,
-    get_objects_for_user,
-)
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
     MarkdownEditorInlineWidget,
@@ -440,10 +437,13 @@ class SubmissionForm(
             del self.fields["algorithm_image"]
             del self.fields["algorithm_model"]
 
-            self.fields["user_upload"].queryset = get_objects_for_user(
-                user,
-                "uploads.change_userupload",
-            ).filter(status=UserUpload.StatusChoices.COMPLETED)
+            self.fields["user_upload"].queryset = filter_by_permission(
+                queryset=UserUpload.objects.filter(
+                    status=UserUpload.StatusChoices.COMPLETED
+                ),
+                user=user,
+                codename="change_userupload",
+            )
 
             if not self._phase.active_image:
                 self.fields["user_upload"].disabled = True
@@ -870,10 +870,13 @@ class EvaluationGroundTruthForm(SaveFormInitMixin, ModelForm):
     def __init__(self, *args, user, phase, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["user_upload"].queryset = get_objects_for_user(
-            user,
-            "uploads.change_userupload",
-        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+        self.fields["user_upload"].queryset = filter_by_permission(
+            queryset=UserUpload.objects.filter(
+                status=UserUpload.StatusChoices.COMPLETED
+            ),
+            user=user,
+            codename="change_userupload",
+        )
 
         self.fields["creator"].initial = user
         self.fields["phase"].queryset = Phase.objects.filter(pk=phase.pk)
@@ -940,17 +943,14 @@ class EvaluationGroundTruthVersionManagementForm(Form):
         if self._activate:
             extra_filter["import_status"] = ImportStatusChoices.COMPLETED
 
-        self.fields["ground_truth"].queryset = (
-            get_objects_for_user(
-                user,
-                "evaluation.change_evaluationgroundtruth",
-            )
-            .filter(
+        self.fields["ground_truth"].queryset = filter_by_permission(
+            queryset=EvaluationGroundTruth.objects.filter(
                 phase=phase,
                 is_desired_version=False if activate else True,
                 **extra_filter,
-            )
-            .select_related("phase")
+            ).select_related("phase"),
+            user=user,
+            codename="change_evaluationgroundtruth",
         )
 
         if hide_ground_truth_input:

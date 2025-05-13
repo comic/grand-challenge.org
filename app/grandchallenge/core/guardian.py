@@ -15,17 +15,10 @@ from guardian.models import (
 from guardian.shortcuts import (  # noqa: I251
     get_objects_for_group as get_objects_for_group_orig,
 )
-from guardian.shortcuts import (  # noqa: I251
-    get_objects_for_user as get_objects_for_user_orig,
-)
 from guardian.utils import (
     get_anonymous_user,
     get_group_obj_perms_model,
     get_user_obj_perms_model,
-)
-
-get_objects_for_user = partial(
-    get_objects_for_user_orig, accept_global_perms=False
 )
 
 get_objects_for_group = partial(
