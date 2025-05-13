@@ -1436,6 +1436,9 @@ def test_phase_copy_algorithm_interfaces():
 
     # Can run it multiple times without trouble
     form.copy_algorithm_interfaces()
+    assert (
+        target_phase.algorithm_interfaces.get() == ai1
+    ), "Running multiple times does not duplicate interfaces"
 
     # Existing interfaces pose no problem
     ai2 = AlgorithmInterfaceFactory()
