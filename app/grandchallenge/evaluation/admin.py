@@ -228,7 +228,7 @@ class EvaluationUtilizationAdmin(admin.ModelAdmin):
         "creator",
         "duration",
         "compute_cost_euro_millicents",
-        "phase",
+        "archive",
         "challenge",
         "algorithm_image",
         "algorithm",
@@ -237,7 +237,6 @@ class EvaluationUtilizationAdmin(admin.ModelAdmin):
         "creator__username",
         "pk",
         "evaluation__pk",
-        "phase__slug",
         "challenge__short_name",
     )
 
