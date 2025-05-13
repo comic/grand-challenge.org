@@ -3,10 +3,11 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 from django_extensions.db.fields import AutoSlugField
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from guardian.models import UserObjectPermissionBase
 from simple_history.models import HistoricalRecords
 from stdimage import JPEGField
 
+from grandchallenge.core.guardian import NoGroupPermissionsAllowed
 from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.subdomains.utils import reverse
 
@@ -81,5 +82,5 @@ class PostUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Post, on_delete=models.CASCADE)
 
 
-class PostGroupObjectPermission(GroupObjectPermissionBase):
+class PostGroupObjectPermission(NoGroupPermissionsAllowed):
     content_object = models.ForeignKey(Post, on_delete=models.CASCADE)

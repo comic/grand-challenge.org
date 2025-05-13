@@ -187,7 +187,6 @@ def test_filter_by_permission_no_user():
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # User does not have permission to view
     assert filtered_queryset.count() == 0
@@ -197,7 +196,6 @@ def test_filter_by_permission_no_user():
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # Has user permission, but they're not allowed
     assert filtered_queryset.count() == 0
@@ -209,7 +207,6 @@ def test_filter_by_permission_no_user():
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # Has both user and group permission
     assert filtered_queryset.count() == 1
@@ -219,7 +216,6 @@ def test_filter_by_permission_no_user():
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # Has group permission
     assert filtered_queryset.count() == 1
@@ -229,7 +225,6 @@ def test_filter_by_permission_no_user():
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # Has no permission again
     assert filtered_queryset.count() == 0
@@ -239,7 +234,6 @@ def test_filter_by_permission_no_user():
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # Has group permission again
     assert filtered_queryset.count() == 1
@@ -249,7 +243,6 @@ def test_filter_by_permission_no_user():
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # Has no permission again
     assert filtered_queryset.count() == 0
@@ -281,7 +274,6 @@ def test_filter_by_permission_joined():
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # User has permission to view both, but only group considered
     assert filtered_queryset.count() == 1
@@ -291,8 +283,7 @@ def test_filter_by_permission_joined():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("accept_user_perms", (True, False))
-def test_filter_by_global_permission(accept_user_perms):
+def test_filter_by_global_permission():
     user = UserFactory()
     queryset = Algorithm.objects.all()
     _ = AlgorithmFactory()
@@ -304,7 +295,6 @@ def test_filter_by_global_permission(accept_user_perms):
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=accept_user_perms,
     )
     # User global permissions shouldn't count
     assert filtered_queryset.count() == 0
@@ -316,15 +306,13 @@ def test_filter_by_global_permission(accept_user_perms):
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=accept_user_perms,
     )
     # Group global permissions shouldn't count
     assert filtered_queryset.count() == 0
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("accept_user_perms", (True, False))
-def test_filter_with_superuser(accept_user_perms):
+def test_filter_with_superuser():
     user = UserFactory(is_superuser=True)
     queryset = Algorithm.objects.all()
     _ = AlgorithmFactory()
@@ -334,7 +322,6 @@ def test_filter_with_superuser(accept_user_perms):
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=accept_user_perms,
     )
     # Superusers see everything
     assert filtered_queryset.count() == 1

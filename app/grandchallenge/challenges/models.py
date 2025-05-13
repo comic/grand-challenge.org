@@ -1567,7 +1567,6 @@ class OnboardingTaskQuerySet(models.QuerySet):
             queryset=self,
             user=user,
             codename="change_onboardingtask",
-            accept_user_perms=False,
         )
 
     @property
@@ -1649,6 +1648,13 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
             remove_perm(
                 "view_onboardingtask", self.challenge.admins_group, self
             )
+
+
+class OnboardingTaskUserObjectPermission(NoUserPermissionsAllowed):
+    # TODO see if this is used
+    content_object = models.ForeignKey(
+        OnboardingTask, on_delete=models.CASCADE
+    )
 
 
 class OnboardingTaskGroupObjectPermission(GroupObjectPermissionBase):

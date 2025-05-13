@@ -80,7 +80,6 @@ def get_component_interface_values_for_user(
         queryset=Job.objects.all(),
         user=user,
         codename="view_job",
-        accept_user_perms=False,
     )
 
     job_inputs = (
@@ -99,7 +98,6 @@ def get_component_interface_values_for_user(
             queryset=DisplaySet.objects.all(),
             user=user,
             codename="view_displayset",
-            accept_user_perms=False,
         )
         .filter(values__in=civs)
         .distinct()
@@ -111,7 +109,6 @@ def get_component_interface_values_for_user(
             queryset=ArchiveItem.objects.all(),
             user=user,
             codename="view_archiveitem",
-            accept_user_perms=False,
         )
         .filter(values__in=civs)
         .distinct()
@@ -122,7 +119,6 @@ def get_component_interface_values_for_user(
         queryset=Evaluation.objects.all(),
         user=user,
         codename="change_evaluation",
-        accept_user_perms=False,
     )
     # We restrict downloading of evaluation outputs to challenge admins since those
     # might not be intended for participants to see (unlike the metrics).
