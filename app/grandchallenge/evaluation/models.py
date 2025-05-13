@@ -1470,7 +1470,7 @@ class Submission(FieldChangeMixin, UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    phase = models.ForeignKey(Phase, on_delete=models.PROTECT, null=True)
+    phase = models.ForeignKey(Phase, on_delete=models.PROTECT)
     algorithm_image = models.ForeignKey(
         AlgorithmImage, null=True, on_delete=models.PROTECT
     )
