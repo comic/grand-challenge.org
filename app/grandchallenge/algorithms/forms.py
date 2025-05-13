@@ -81,10 +81,7 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
-from grandchallenge.core.guardian import (
-    filter_by_permission,
-    get_objects_for_user,
-)
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.widgets import (
     JSONEditorWidget,
@@ -355,8 +352,10 @@ class AlgorithmForm(
 
     @cached_property
     def job_requirement_properties_from_phases(self):
-        qs = get_objects_for_user(
-            self._user, "evaluation.create_phase_submission"
+        qs = filter_by_permission(
+            queryset=Phase.objects.all(),
+            user=self._user,
+            codename="create_phase_submission",
         )
         interfaces = self.instance.interfaces.all()
         return (
@@ -446,9 +445,8 @@ class UserAlgorithmsForPhaseMixin:
             algorithm=OuterRef("pk"), is_desired_version=True
         )
 
-        return (
-            get_objects_for_user(self._user, "algorithms.change_algorithm")
-            .annotate(
+        queryset = (
+            Algorithm.objects.annotate(
                 relevant_interfaces_count=Count(
                     "interfaces",
                     filter=Q(interfaces__in=interfaces),
@@ -473,6 +471,12 @@ class UserAlgorithmsForPhaseMixin:
                     "comment", flat=True
                 ),
             )
+        )
+
+        return filter_by_permission(
+            queryset=queryset,
+            user=self._user,
+            codename="change_algorithm",
         )
 
     @cached_property
@@ -702,17 +706,15 @@ class ImageActivateForm(Form):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.fields["algorithm_image"].queryset = (
-            get_objects_for_user(
-                user,
-                "algorithms.change_algorithmimage",
-            )
-            .filter(
+
+        self.fields["algorithm_image"].queryset = filter_by_permission(
+            queryset=AlgorithmImage.objects.filter(
                 algorithm=algorithm,
                 is_manifest_valid=True,
                 is_desired_version=False,
-            )
-            .select_related("algorithm")
+            ).select_related("algorithm"),
+            user=user,
+            codename="change_algorithmimage",
         )
 
         if hide_algorithm_image_input:
@@ -785,10 +787,11 @@ class DisplaySetFromJobForm(SaveFormInitMixin, Form):
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["reader_study"].queryset = get_objects_for_user(
-            user,
-            "reader_studies.change_readerstudy",
-        ).order_by("title")
+        self.fields["reader_study"].queryset = filter_by_permission(
+            queryset=ReaderStudy.objects.order_by("title"),
+            user=user,
+            codename="change_readerstudy",
+        )
 
 
 class AlgorithmPermissionRequestUpdateForm(PermissionRequestUpdateForm):
@@ -1242,10 +1245,13 @@ class AlgorithmModelForm(SaveFormInitMixin, ModelForm):
     def __init__(self, *args, user, algorithm, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["user_upload"].queryset = get_objects_for_user(
-            user,
-            "uploads.change_userupload",
-        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+        self.fields["user_upload"].queryset = filter_by_permission(
+            queryset=UserUpload.objects.filter(
+                status=UserUpload.StatusChoices.COMPLETED
+            ),
+            user=user,
+            codename="change_userupload",
+        )
 
         self.fields["creator"].initial = user
         self.fields["algorithm"].queryset = Algorithm.objects.filter(
@@ -1312,17 +1318,14 @@ class AlgorithmModelVersionControlForm(Form):
         if activate:
             extra_filter = {"import_status": ImportStatusChoices.COMPLETED}
 
-        self.fields["algorithm_model"].queryset = (
-            get_objects_for_user(
-                user,
-                "algorithms.change_algorithmmodel",
-            )
-            .filter(
+        self.fields["algorithm_model"].queryset = filter_by_permission(
+            queryset=AlgorithmModel.objects.filter(
                 algorithm=algorithm,
                 is_desired_version=False if activate else True,
                 **extra_filter,
-            )
-            .select_related("algorithm")
+            ).select_related("algorithm"),
+            user=user,
+            codename="change_algorithmmodel",
         )
 
         if hide_algorithm_model_input:
