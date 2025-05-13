@@ -245,8 +245,6 @@ class JobUtilizationAdmin(admin.ModelAdmin):
         "creator__username",
         "pk",
         "job__pk",
-        "algorithm__slug",
-        "algorithm_image__pk",
         "phase__slug",
         "challenge__short_name",
     )
