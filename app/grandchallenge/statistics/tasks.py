@@ -73,11 +73,10 @@ def update_site_statistics_cache():
             .order_by("created__year", "created__month", "public")
         ),
         "jobs": (
-            Job.objects.with_duration()
-            .values("created__year", "created__month")
+            Job.objects.values("created__year", "created__month")
             .annotate(
                 object_count=Count("created__month"),
-                duration_sum=Sum("duration"),
+                duration_sum=Sum("job_utilization__duration"),
             )
             .order_by("created__year", "created__month", "duration_sum")
         ),

@@ -82,17 +82,14 @@ def test_duration():
     j = AlgorithmJobFactory(time_limit=60)
     _ = EvaluationFactory(time_limit=60)
 
-    jbs = Job.objects.with_duration()
-    assert jbs[0].duration is None
+    jbs = Job.objects.all()
+    assert jbs[0].job_utilization.duration is None
     assert Job.objects.average_duration() is None
 
-    now = timezone.now()
-    j.started_at = now - timedelta(minutes=5)
-    j.completed_at = now
-    j.save()
+    j.update_utilization(duration=timedelta(minutes=5))
 
-    jbs = Job.objects.with_duration()
-    assert jbs[0].duration == timedelta(minutes=5)
+    jbs = Job.objects.all()
+    assert jbs[0].job_utilization.duration == timedelta(minutes=5)
     assert Job.objects.average_duration() == timedelta(minutes=5)
 
     _ = AlgorithmJobFactory(time_limit=60)

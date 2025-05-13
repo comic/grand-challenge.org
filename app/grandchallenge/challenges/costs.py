@@ -18,14 +18,10 @@ from grandchallenge.evaluation.models import (
 
 
 def annotate_job_duration_and_compute_costs(*, phase):
-    algorithm_jobs = (
-        Job.objects.with_duration()
-        .filter(
-            inputs__archive_items__archive__phase=phase,
-            algorithm_image__submission__phase=phase,
-        )
-        .distinct()
-    )
+    algorithm_jobs = Job.objects.filter(
+        inputs__archive_items__archive__phase=phase,
+        algorithm_image__submission__phase=phase,
+    ).distinct()
     evaluation_jobs = Evaluation.objects.filter(
         submission__phase=phase, submission__phase__external_evaluation=False
     ).distinct()
@@ -185,9 +181,9 @@ def update_compute_cost_euro_millicents(
 
 def update_average_algorithm_job_duration(*, phase, algorithm_jobs):
     aggregates = algorithm_jobs.filter(
-        status=Job.SUCCESS, duration__gt=timedelta(seconds=0)
+        status=Job.SUCCESS, job_utilization__duration__gt=timedelta(seconds=0)
     ).aggregate(
-        total_job_duration=Sum("duration"),
+        total_job_duration=Sum("job_utilization__duration"),
         job_count=Count("pk", distinct=True),
     )
 
