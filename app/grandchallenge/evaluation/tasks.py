@@ -560,7 +560,7 @@ def cancel_external_evaluations_past_timeout():
 
     for eval in Evaluation.objects.filter(
         status=Evaluation.CLAIMED,
-        started_at__lt=timeout_threshold,
+        claimed_at__lt=timeout_threshold,
     ).all():
         eval.update_status(
             status=Evaluation.CANCELLED,

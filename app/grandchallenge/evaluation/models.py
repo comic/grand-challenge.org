@@ -1893,6 +1893,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         on_delete=models.SET_NULL,
         related_name="claimed_evaluations",
     )
+    claimed_at = models.DateTimeField(null=True)
 
     objects = EvaluationManager.as_manager()
 

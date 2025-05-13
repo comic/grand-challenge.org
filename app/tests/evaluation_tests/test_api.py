@@ -179,7 +179,7 @@ def test_claim_evaluation(client, claimable_external_evaluation):
     assert response.status_code == 200
     eval.refresh_from_db()
     assert eval.status == Evaluation.CLAIMED
-    assert eval.started_at is not None
+    assert eval.claimed_at is not None
     assert eval.claimed_by == claimable_external_evaluation.external_evaluator
     assert (
         response.json()

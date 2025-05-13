@@ -773,7 +773,7 @@ def test_cancel_external_evaluations_past_timeout(settings):
 
     e1 = EvaluationFactory(
         status=Evaluation.CLAIMED,
-        started_at=datetime.now() - timedelta(days=2),
+        claimed_at=datetime.now() - timedelta(days=2),
         submission__phase__external_evaluation=True,
         submission__phase__challenge=challenge,
         submission__creator=participant,
@@ -781,7 +781,7 @@ def test_cancel_external_evaluations_past_timeout(settings):
     )
     e2 = EvaluationFactory(
         status=Evaluation.CLAIMED,
-        started_at=datetime.now() - timedelta(days=2),
+        claimed_at=datetime.now() - timedelta(days=2),
         submission__phase__external_evaluation=True,
         submission__phase__challenge=challenge,
         submission__creator=participant,
@@ -789,7 +789,7 @@ def test_cancel_external_evaluations_past_timeout(settings):
     )
     e3 = EvaluationFactory(
         status=Evaluation.CLAIMED,
-        started_at=datetime.now(),
+        claimed_at=datetime.now(),
         submission__phase__external_evaluation=True,
         submission__phase__challenge=challenge,
         submission__creator=participant,
