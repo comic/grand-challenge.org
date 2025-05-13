@@ -46,6 +46,8 @@ class TestObjectPermissionRequiredViews:
         ws = WorkstationFactory()
         wsi = WorkstationImageFactory(workstation=ws)
         u = UserFactory()
+        group = Group.objects.create(name="test-group")
+        group.user_set.add(u)
         VerificationFactory(user=u, is_verified=True)
 
         def _get_view():
@@ -72,13 +74,13 @@ class TestObjectPermissionRequiredViews:
 
             assert response.status_code == 403
 
-            assign_perm(permission, u, obj)
+            assign_perm(permission, group, obj)
 
             response = _get_view()
 
             assert response.status_code == 200
 
-            remove_perm(permission, u, obj)
+            remove_perm(permission, group, obj)
 
 
 @pytest.mark.django_db
