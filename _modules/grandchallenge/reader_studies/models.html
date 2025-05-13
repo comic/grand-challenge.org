@@ -77,7 +77,10 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="n">ANSWER_TYPE_SCHEMA</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">HexColorField</span><span class="p">,</span> <span class="n">RegexField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.guardian</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_objects_for_group</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.guardian</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">NoUserPermissionsAllowed</span><span class="p">,</span>
+    <span class="n">get_objects_for_group</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">RequestBase</span><span class="p">,</span> <span class="n">UUIDModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_logo_path</span><span class="p">,</span>
@@ -930,7 +933,7 @@
 
 <div class="viewcode-block" id="ReaderStudyUserObjectPermission">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyUserObjectPermission">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ReaderStudyUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReaderStudyUserObjectPermission</span><span class="p">(</span><span class="n">NoUserPermissionsAllowed</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">ReaderStudy</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
@@ -1120,7 +1123,7 @@
 
 <div class="viewcode-block" id="DisplaySetUserObjectPermission">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.DisplaySetUserObjectPermission">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">DisplaySetUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DisplaySetUserObjectPermission</span><span class="p">(</span><span class="n">NoUserPermissionsAllowed</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">DisplaySet</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
@@ -1929,7 +1932,7 @@
 
 <div class="viewcode-block" id="QuestionUserObjectPermission">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.QuestionUserObjectPermission">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">QuestionUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuestionUserObjectPermission</span><span class="p">(</span><span class="n">NoUserPermissionsAllowed</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
@@ -2165,6 +2168,7 @@
 <div class="viewcode-block" id="AnswerUserObjectPermission">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.AnswerUserObjectPermission">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AnswerUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+    <span class="c1"># This is used for view_ and change_ permissions for the creator</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Answer</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 

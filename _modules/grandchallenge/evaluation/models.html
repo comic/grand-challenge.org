@@ -83,6 +83,7 @@
     <span class="n">GPUTypeChoices</span><span class="p">,</span>
     <span class="n">get_default_gpu_type_choices</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.guardian</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoUserPermissionsAllowed</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FieldChangeMixin</span><span class="p">,</span>
     <span class="n">TitleSlugDescriptionModel</span><span class="p">,</span>
@@ -1421,7 +1422,7 @@
         <span class="p">]</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">PhaseUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhaseUserObjectPermission</span><span class="p">(</span><span class="n">NoUserPermissionsAllowed</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
@@ -1484,7 +1485,7 @@
         <span class="k">return</span> <span class="n">Method</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">phase</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">MethodUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MethodUserObjectPermission</span><span class="p">(</span><span class="n">NoUserPermissionsAllowed</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Method</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
@@ -1754,6 +1755,7 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SubmissionUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+    <span class="c1"># This is used for view_submission permission for the creator</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Submission</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
@@ -1830,7 +1832,7 @@
         <span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationGroundTruthUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationGroundTruthUserObjectPermission</span><span class="p">(</span><span class="n">NoUserPermissionsAllowed</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">EvaluationGroundTruth</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
     <span class="p">)</span>
@@ -2202,13 +2204,8 @@
         <span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationUserObjectPermission</span><span class="p">(</span><span class="n">NoUserPermissionsAllowed</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Evaluation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="s2">&quot;User permissions should not be assigned for this model&quot;</span>
-        <span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
