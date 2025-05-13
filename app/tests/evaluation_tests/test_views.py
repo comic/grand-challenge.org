@@ -582,8 +582,11 @@ class TestViewFilters:
             time_limit=c2.phase_set.first().evaluation_time_limit,
         )
 
-        assign_perm("view_method", u, e1.method)
-        assign_perm("view_method", u, e2.method)
+        group = Group.objects.create(name="test-group")
+        group.user_set.add(u)
+
+        assign_perm("view_method", group, e1.method)
+        assign_perm("view_method", group, e2.method)
 
         for view_name, obj, extra_kwargs in [
             ("method-list", e1.method, {"slug": e1.submission.phase.slug}),

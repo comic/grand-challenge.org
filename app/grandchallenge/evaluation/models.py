@@ -1782,8 +1782,7 @@ class EvaluationGroundTruth(Tarball):
         )
 
 
-class EvaluationGroundTruthUserObjectPermission(UserObjectPermissionBase):
-    # TODO see if this is used
+class EvaluationGroundTruthUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(
         EvaluationGroundTruth, on_delete=models.CASCADE
     )

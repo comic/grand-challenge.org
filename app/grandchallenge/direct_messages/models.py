@@ -16,9 +16,10 @@ from django.db.models import (
 )
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from guardian.models import UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.core.guardian import NoGroupPermissionsAllowed
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.profiles.models import NotificationEmailOptions
 from grandchallenge.subdomains.utils import reverse
@@ -106,11 +107,10 @@ def email_subscribed_users_about_new_message(
 
 
 class DirectMessageUserObjectPermission(UserObjectPermissionBase):
-    # TODO see if this is used
     content_object = models.ForeignKey(DirectMessage, on_delete=models.CASCADE)
 
 
-class DirectMessageGroupObjectPermission(GroupObjectPermissionBase):
+class DirectMessageGroupObjectPermission(NoGroupPermissionsAllowed):
     content_object = models.ForeignKey(DirectMessage, on_delete=models.CASCADE)
 
 
@@ -147,11 +147,10 @@ class Mute(UUIDModel):
 
 
 class MuteUserObjectPermission(UserObjectPermissionBase):
-    # TODO see if this is used
     content_object = models.ForeignKey(Mute, on_delete=models.CASCADE)
 
 
-class MuteGroupObjectPermission(GroupObjectPermissionBase):
+class MuteGroupObjectPermission(NoGroupPermissionsAllowed):
     content_object = models.ForeignKey(Mute, on_delete=models.CASCADE)
 
 
@@ -270,9 +269,8 @@ class ConversationParticipant(models.Model):
 
 
 class ConversationUserObjectPermission(UserObjectPermissionBase):
-    # TODO see if this is used
     content_object = models.ForeignKey(Conversation, on_delete=models.CASCADE)
 
 
-class ConversationGroupObjectPermission(GroupObjectPermissionBase):
+class ConversationGroupObjectPermission(NoGroupPermissionsAllowed):
     content_object = models.ForeignKey(Conversation, on_delete=models.CASCADE)

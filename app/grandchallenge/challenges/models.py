@@ -1651,7 +1651,6 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
 
 
 class OnboardingTaskUserObjectPermission(NoUserPermissionsAllowed):
-    # TODO see if this is used
     content_object = models.ForeignKey(
         OnboardingTask, on_delete=models.CASCADE
     )
