@@ -61,6 +61,9 @@ from grandchallenge.hanging_protocols.models import (
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
+from grandchallenge.reader_studies.interactive_algorithms import (
+    InteractiveAlgorithmChoices,
+)
 from grandchallenge.reader_studies.metrics import accuracy_score
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.templatetags.workstations import (
@@ -174,10 +177,6 @@ CASE_TEXT_SCHEMA = {
     "properties": {},
     "additionalProperties": {"type": "string"},
 }
-
-
-class InteractiveAlgorithmChoices(models.TextChoices):
-    ULS23_BASELINE = "uls23-baseline", "ULS23 Baseline"
 
 
 class ReaderStudy(

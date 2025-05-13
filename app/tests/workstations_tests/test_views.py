@@ -8,7 +8,9 @@ from django.http import Http404
 from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
+from grandchallenge.reader_studies.interactive_algorithms import (
+    InteractiveAlgorithmChoices,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Session, Workstation
 from grandchallenge.workstations.templatetags.workstations import (

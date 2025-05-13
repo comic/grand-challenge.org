@@ -41,10 +41,8 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.reader_studies.models import (
+from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmChoices,
-    Question,
-    ReaderStudy,
 )
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.emails import send_new_feedback_email_to_staff
@@ -747,7 +745,7 @@ class SessionCost(UUIDModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     reader_studies = models.ManyToManyField(
-        to=ReaderStudy,
+        to="reader_studies.ReaderStudy",
         through="SessionCostReaderStudy",
         related_name="session_costs",
         blank=True,
@@ -775,6 +773,8 @@ class SessionCost(UUIDModel):
     )
 
     def save(self, *args, **kwargs) -> None:
+        from grandchallenge.reader_studies.models import Question
+
         adding = self._state.adding
 
         if adding:
@@ -809,7 +809,9 @@ class SessionCost(UUIDModel):
 
 class SessionCostReaderStudy(models.Model):
     session_cost = models.ForeignKey(SessionCost, on_delete=models.CASCADE)
-    reader_study = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
+    reader_study = models.ForeignKey(
+        "reader_studies.ReaderStudy", on_delete=models.CASCADE
+    )
 
     class Meta:
         constraints = [

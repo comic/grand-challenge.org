@@ -15,11 +15,13 @@ from grandchallenge.components.form_fields import (
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
+from grandchallenge.reader_studies.interactive_algorithms import (
+    InteractiveAlgorithmChoices,
+)
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
     DisplaySet,
-    InteractiveAlgorithmChoices,
     Question,
 )
 from grandchallenge.subdomains.utils import reverse
