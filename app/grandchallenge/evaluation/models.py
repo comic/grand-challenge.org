@@ -2159,11 +2159,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         )
 
     def create_utilization(self):
-        EvaluationUtilization.objects.create(
-            evalution=self,
-            duration=self.completed_at - self.started_at,
-            compute_cost_euro_millicents=self.compute_cost_euro_millicents,
-        )
+        EvaluationUtilization.objects.create(evalution=self)
 
 
 class EvaluationUserObjectPermission(NoUserPermissionsAllowed):

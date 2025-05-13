@@ -1731,6 +1731,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
+        if adding:
+            self.create_utilization()
+
         if not adding:
             for field in (
                 "requires_gpu_type",
@@ -1798,9 +1801,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             on_commit(self.execute_task_on_success)
         elif self.status in [self.FAILURE, self.CANCELLED]:
             on_commit(self.execute_task_on_failure)
-
-        if self.finished and duration and compute_cost_euro_millicents:
-            self.create_utilization()
 
     @property
     def executor_kwargs(self):
@@ -1968,8 +1968,8 @@ class ComponentJobUtilization(UUIDModel):
     algorithm = models.ForeignKey(
         "algorithms.Algorithm", null=True, on_delete=models.SET_NULL
     )
-    duration = models.DurationField()
-    compute_cost_euro_millicents = models.PositiveIntegerField()
+    duration = models.DurationField(null=True)
+    compute_cost_euro_millicents = models.PositiveIntegerField(null=True)
 
     class Meta:
         abstract = True

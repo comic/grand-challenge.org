@@ -1316,11 +1316,7 @@ class Job(CIVForObjectMixin, ComponentJob):
         return display_set
 
     def create_utilization(self):
-        JobUtilization.objects.create(
-            job=self,
-            duration=self.completed_at - self.started_at,
-            compute_cost_euro_millicents=self.compute_cost_euro_millicents,
-        )
+        JobUtilization.objects.create(job=self)
 
 
 class JobUserObjectPermission(UserObjectPermissionBase):
