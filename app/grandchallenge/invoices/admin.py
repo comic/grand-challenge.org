@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.db import models
-from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
@@ -35,7 +34,7 @@ class OverdueListFilter(admin.SimpleListFilter):
 
 
 @admin.register(Invoice)
-class InvoiceAdmin(GuardedModelAdmin):
+class InvoiceAdmin(admin.ModelAdmin):
     list_display = (
         "challenge",
         "issued_on",

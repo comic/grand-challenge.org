@@ -1,5 +1,4 @@
 from django.contrib import admin
-from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
@@ -13,7 +12,7 @@ from grandchallenge.uploads.models import (
 
 
 @admin.register(UserUpload)
-class UserUploadAdmin(GuardedModelAdmin):
+class UserUploadAdmin(admin.ModelAdmin):
     list_display = ("pk", "created", "creator", "filename", "status")
     list_filter = ("status",)
     ordering = ("-created",)

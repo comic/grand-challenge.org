@@ -1,5 +1,4 @@
 from django.contrib import admin
-from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.cases.models import (
     Image,
@@ -22,7 +21,7 @@ class ImageFileInline(admin.StackedInline):
 
 
 @admin.register(Image)
-class ImageAdmin(GuardedModelAdmin):
+class ImageAdmin(admin.ModelAdmin):
     search_fields = (
         "pk",
         "name",
@@ -60,14 +59,14 @@ class MhdOrRawFilter(admin.SimpleListFilter):
 
 
 @admin.register(ImageFile)
-class ImageFileAdmin(GuardedModelAdmin):
+class ImageFileAdmin(admin.ModelAdmin):
     search_fields = ("pk", "file", "image__name")
     list_filter = (MhdOrRawFilter,)
     readonly_fields = ("image",)
 
 
 @admin.register(RawImageUploadSession)
-class RawImageUploadSessionAdmin(GuardedModelAdmin):
+class RawImageUploadSessionAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "creator", "status", "error_message")
     readonly_fields = ("creator", "status")

@@ -4,7 +4,6 @@ from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.template.defaultfilters import linebreaksbr
 from django.utils.html import format_html
-from guardian.admin import GuardedModelAdmin
 from simple_history.admin import SimpleHistoryAdmin
 
 from grandchallenge.components.admin import ComponentImageAdmin
@@ -113,7 +112,7 @@ class FeedbackAdmin(ModelAdmin):
 
 
 @admin.register(SessionCost)
-class SessionCostAdmin(GuardedModelAdmin):
+class SessionCostAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = (
         "pk",

@@ -5,9 +5,10 @@ from django.db.models import Count, ExpressionWrapper, F, Q
 from django.db.models.functions import Cast
 from django.db.transaction import on_commit
 from django.utils.timezone import now
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from guardian.models import GroupObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.core.guardian import NoUserPermissionsAllowed
 from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.invoices.tasks import (
     send_challenge_invoice_issued_notification_emails,
@@ -293,13 +294,8 @@ class Invoice(models.Model, FieldChangeMixin):
         )
 
 
-class InvoiceUserObjectPermission(UserObjectPermissionBase):
+class InvoiceUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Invoice, on_delete=models.CASCADE)
-
-    def save(self, *args, **kwargs):
-        raise RuntimeError(
-            "User permissions should not be assigned for this model"
-        )
 
 
 class InvoiceGroupObjectPermission(GroupObjectPermissionBase):

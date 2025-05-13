@@ -1,5 +1,4 @@
 from django.contrib import admin
-from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
@@ -24,7 +23,7 @@ from grandchallenge.reader_studies.models import (
 
 
 @admin.register(ReaderStudy)
-class ReaderStudyAdmin(GuardedModelAdmin):
+class ReaderStudyAdmin(admin.ModelAdmin):
     exclude = ("images",)
     list_display = (
         "title",
@@ -50,7 +49,7 @@ class ReaderStudyAdmin(GuardedModelAdmin):
 
 
 @admin.register(Answer)
-class AnswersAdmin(GuardedModelAdmin):
+class AnswersAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = ("pk", "created", "question", "creator", "is_ground_truth")
     list_filter = ("is_ground_truth", "question__reader_study__slug")
@@ -67,7 +66,7 @@ class AnswersAdmin(GuardedModelAdmin):
 
 
 @admin.register(Question)
-class QuestionsAdmin(GuardedModelAdmin):
+class QuestionsAdmin(admin.ModelAdmin):
     list_filter = ("answer_type", "required", "reader_study__slug")
     readonly_fields = ("reader_study",)
     list_display = (
@@ -82,12 +81,12 @@ class QuestionsAdmin(GuardedModelAdmin):
 
 
 @admin.register(ReaderStudyPermissionRequest)
-class ReaderStudyPermissionRequestAdmin(GuardedModelAdmin):
+class ReaderStudyPermissionRequestAdmin(admin.ModelAdmin):
     readonly_fields = ("user", "reader_study")
 
 
 @admin.register(DisplaySet)
-class DisplaySetAdmin(GuardedModelAdmin):
+class DisplaySetAdmin(admin.ModelAdmin):
     list_filter = ("reader_study__slug",)
     readonly_fields = ("id", "reader_study", "values")
     list_display = (

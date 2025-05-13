@@ -77,6 +77,7 @@ class Post(models.Model):
 
 
 class PostUserObjectPermission(UserObjectPermissionBase):
+    # This is used for change_post permission for the authors
     content_object = models.ForeignKey(Post, on_delete=models.CASCADE)
 
 

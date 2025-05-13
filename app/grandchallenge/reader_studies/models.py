@@ -39,7 +39,10 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.fields import HexColorField, RegexField
-from grandchallenge.core.guardian import get_objects_for_group
+from grandchallenge.core.guardian import (
+    NoUserPermissionsAllowed,
+    get_objects_for_group,
+)
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
@@ -854,7 +857,7 @@ class ReaderStudy(
         return self.questions.exclude(interactive_algorithm="")
 
 
-class ReaderStudyUserObjectPermission(UserObjectPermissionBase):
+class ReaderStudyUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
 
 
@@ -1029,7 +1032,7 @@ class DisplaySet(
         return self.values.get(interface=interface)
 
 
-class DisplaySetUserObjectPermission(UserObjectPermissionBase):
+class DisplaySetUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(DisplaySet, on_delete=models.CASCADE)
 
 
@@ -1802,7 +1805,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         return self.reader_study.get_absolute_url() + "#questions"
 
 
-class QuestionUserObjectPermission(UserObjectPermissionBase):
+class QuestionUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Question, on_delete=models.CASCADE)
 
 
@@ -2017,6 +2020,7 @@ class Answer(UUIDModel):
 
 
 class AnswerUserObjectPermission(UserObjectPermissionBase):
+    # This is used for view_ and change_ permissions for the creator
     content_object = models.ForeignKey(Answer, on_delete=models.CASCADE)
 
 

@@ -45,6 +45,7 @@ from grandchallenge.components.schemas import (
     GPUTypeChoices,
     get_default_gpu_type_choices,
 )
+from grandchallenge.core.guardian import NoUserPermissionsAllowed
 from grandchallenge.core.models import (
     FieldChangeMixin,
     TitleSlugDescriptionModel,
@@ -1371,7 +1372,7 @@ class PhaseEvaluationOutput(CheckForOverlappingSocketsMixin, models.Model):
         ]
 
 
-class PhaseUserObjectPermission(UserObjectPermissionBase):
+class PhaseUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Phase, on_delete=models.CASCADE)
 
 
@@ -1434,7 +1435,7 @@ class Method(UUIDModel, ComponentImage):
         return Method.objects.filter(phase=self.phase)
 
 
-class MethodUserObjectPermission(UserObjectPermissionBase):
+class MethodUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Method, on_delete=models.CASCADE)
 
 
@@ -1704,6 +1705,7 @@ class Submission(FieldChangeMixin, UUIDModel):
 
 
 class SubmissionUserObjectPermission(UserObjectPermissionBase):
+    # This is used for view_submission permission for the creator
     content_object = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
 
@@ -1781,6 +1783,7 @@ class EvaluationGroundTruth(Tarball):
 
 
 class EvaluationGroundTruthUserObjectPermission(UserObjectPermissionBase):
+    # TODO see if this is used
     content_object = models.ForeignKey(
         EvaluationGroundTruth, on_delete=models.CASCADE
     )
@@ -2152,13 +2155,8 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         )
 
 
-class EvaluationUserObjectPermission(UserObjectPermissionBase):
+class EvaluationUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
-
-    def save(self, *args, **kwargs):
-        raise RuntimeError(
-            "User permissions should not be assigned for this model"
-        )
 
 
 class EvaluationGroupObjectPermission(GroupObjectPermissionBase):

@@ -106,6 +106,7 @@ def email_subscribed_users_about_new_message(
 
 
 class DirectMessageUserObjectPermission(UserObjectPermissionBase):
+    # TODO see if this is used
     content_object = models.ForeignKey(DirectMessage, on_delete=models.CASCADE)
 
 
@@ -146,6 +147,7 @@ class Mute(UUIDModel):
 
 
 class MuteUserObjectPermission(UserObjectPermissionBase):
+    # TODO see if this is used
     content_object = models.ForeignKey(Mute, on_delete=models.CASCADE)
 
 
@@ -268,6 +270,7 @@ class ConversationParticipant(models.Model):
 
 
 class ConversationUserObjectPermission(UserObjectPermissionBase):
+    # TODO see if this is used
     content_object = models.ForeignKey(Conversation, on_delete=models.CASCADE)
 
 

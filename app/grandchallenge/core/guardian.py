@@ -6,7 +6,12 @@ from guardian.mixins import (  # noqa: I251
     PermissionListMixin as PermissionListMixinOrig,
 )
 from guardian.mixins import PermissionRequiredMixin  # noqa: I251
-from guardian.models import GroupObjectPermission, UserObjectPermission
+from guardian.models import (
+    GroupObjectPermission,
+    GroupObjectPermissionBase,
+    UserObjectPermission,
+    UserObjectPermissionBase,
+)
 from guardian.shortcuts import (  # noqa: I251
     get_objects_for_group as get_objects_for_group_orig,
 )
@@ -47,6 +52,26 @@ class ObjectPermissionCheckerMixin:
 
 class ObjectPermissionRequiredMixin(PermissionRequiredMixin):
     accept_global_perms = False
+
+
+class NoUserPermissionsAllowed(UserObjectPermissionBase):
+    def save(self, *args, **kwargs):
+        raise RuntimeError(
+            "User permissions should not be assigned for this model"
+        )
+
+    class Meta(UserObjectPermissionBase.Meta):
+        abstract = True
+
+
+class NoGroupPermissionsAllowed(GroupObjectPermissionBase):
+    def save(self, *args, **kwargs):
+        raise RuntimeError(
+            "Group permissions should not be assigned for this model"
+        )
+
+    class Meta(GroupObjectPermissionBase.Meta):
+        abstract = True
 
 
 def filter_by_permission(*, queryset, user, codename, accept_user_perms=True):

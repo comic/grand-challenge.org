@@ -1,5 +1,4 @@
 from django.contrib import admin
-from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
@@ -15,12 +14,12 @@ from grandchallenge.participants.models import (
 
 
 @admin.register(RegistrationRequest)
-class RegistrationRequestAdmin(GuardedModelAdmin):
+class RegistrationRequestAdmin(admin.ModelAdmin):
     readonly_fields = ("user", "challenge")
 
 
 @admin.register(RegistrationQuestion)
-class RegistrationQuestionAdmin(GuardedModelAdmin):
+class RegistrationQuestionAdmin(admin.ModelAdmin):
     list_display = (
         "pk",
         "question_text",
@@ -41,7 +40,7 @@ admin.site.register(
 
 
 @admin.register(RegistrationQuestionAnswer)
-class RegistrationQuestionAnswerAdmin(GuardedModelAdmin):
+class RegistrationQuestionAnswerAdmin(admin.ModelAdmin):
     list_display = (
         "registration_request",
         "user",

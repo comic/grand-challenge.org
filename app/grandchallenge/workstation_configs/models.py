@@ -8,11 +8,12 @@ from django.core.validators import (
 from django.db import models
 from django.db.models import PositiveSmallIntegerField
 from django_extensions.db.models import TitleSlugDescriptionModel
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from guardian.models import UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.core.fields import HexColorField
+from grandchallenge.core.guardian import NoGroupPermissionsAllowed
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse
@@ -448,12 +449,13 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
 
 class WorkstationConfigUserObjectPermission(UserObjectPermissionBase):
+    # This is used for change_workstationconfig permission for the creator
     content_object = models.ForeignKey(
         WorkstationConfig, on_delete=models.CASCADE
     )
 
 
-class WorkstationConfigGroupObjectPermission(GroupObjectPermissionBase):
+class WorkstationConfigGroupObjectPermission(NoGroupPermissionsAllowed):
     content_object = models.ForeignKey(
         WorkstationConfig, on_delete=models.CASCADE
     )

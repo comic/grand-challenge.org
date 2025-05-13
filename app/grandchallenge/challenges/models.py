@@ -64,7 +64,10 @@ from grandchallenge.components.schemas import (
     GPUTypeChoices,
     get_default_gpu_type_choices,
 )
-from grandchallenge.core.guardian import filter_by_permission
+from grandchallenge.core.guardian import (
+    NoUserPermissionsAllowed,
+    filter_by_permission,
+)
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
@@ -954,7 +957,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             return None
 
 
-class ChallengeUserObjectPermission(UserObjectPermissionBase):
+class ChallengeUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Challenge, on_delete=models.CASCADE)
 
 
@@ -1519,6 +1522,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
 
 class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
+    # This is used for view_challengerequest permission for the creator
     content_object = models.ForeignKey(
         ChallengeRequest, on_delete=models.CASCADE
     )
