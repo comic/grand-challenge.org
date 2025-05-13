@@ -1318,6 +1318,18 @@ class Job(CIVForObjectMixin, ComponentJob):
     def create_utilization(self):
         JobUtilization.objects.create(job=self)
 
+    def update_utilization(self, *, duration, compute_cost_euro_millicents):
+        update_fields = []
+        if duration is not None:
+            self.job_utilization.duration = duration
+            update_fields.append("duration")
+        if compute_cost_euro_millicents is not None:
+            self.job_utilization.compute_cost_euro_millicents = (
+                compute_cost_euro_millicents
+            )
+            update_fields.append("compute_cost_euro_millicents")
+        self.job_utilization.save(update_fields=update_fields)
+
 
 class JobUserObjectPermission(UserObjectPermissionBase):
     # This is used for change_job permission for the creator
