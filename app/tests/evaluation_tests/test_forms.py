@@ -1444,7 +1444,35 @@ def test_phase_copy_algorithm_interfaces():
     ai2 = AlgorithmInterfaceFactory()
     target_phase.algorithm_interfaces.set([ai2])
 
+    form = AlgorithmInterfaceForPhaseCopyForm(
+        phase=source_phase,
+        data={
+            "phases": [
+                target_phase.pk,
+            ],
+        },
+    )
     assert form.is_valid()
     form.copy_algorithm_interfaces()
 
     assert set(target_phase.algorithm_interfaces.all()) == {ai1, ai2}
+
+    parent_phase = PhaseFactory(challenge=challenge)
+    target_phase.parent = parent_phase
+    target_phase.save()
+
+    assert (
+        target_phase.algorithm_interfaces_locked
+    ), "Sanity: interfaces locked"
+
+    form = AlgorithmInterfaceForPhaseCopyForm(
+        phase=source_phase,
+        data={
+            "phases": [
+                target_phase.pk,
+            ],
+        },
+    )
+    assert (
+        not form.is_valid()
+    ), "Locked interfaces on a selected phase invalides the form"

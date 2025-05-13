@@ -1003,6 +1003,18 @@ class AlgorithmInterfaceForPhaseCopyForm(Form):
             submission_kind=phase.submission_kind,
         ).exclude(pk=phase.pk)
 
+    def clean_phases(self):
+        phases = self.cleaned_data["phases"]
+
+        for phase in phases:
+            if phase.algorithm_interfaces_locked:
+                raise ValidationError(
+                    "You cannot copy algorithm interfaces to a phase "
+                    "where the algorithm interfaces are locked."
+                )
+
+        return phases
+
     def copy_algorithm_interfaces(self):
         for phase in self.cleaned_data["phases"]:
             for interface in self._phase.algorithm_interfaces.all():
