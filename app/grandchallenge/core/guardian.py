@@ -1,10 +1,8 @@
 from functools import cached_property, partial
 
 from django.contrib.auth.models import Permission
+from django.core.exceptions import ImproperlyConfigured
 from guardian.core import ObjectPermissionChecker
-from guardian.mixins import (  # noqa: I251
-    PermissionListMixin as PermissionListMixinOrig,
-)
 from guardian.mixins import PermissionRequiredMixin  # noqa: I251
 from guardian.models import (
     GroupObjectPermission,
@@ -33,8 +31,30 @@ get_objects_for_group = partial(
 )
 
 
-class PermissionListMixin(PermissionListMixinOrig):
-    get_objects_for_user_extra_kwargs = {"accept_global_perms": False}
+class PermissionListMixin:
+    permission_required = None
+
+    def get_queryset(self, *args, **kwargs):
+        queryset = super().get_queryset(*args, **kwargs)
+
+        if "." in self.permission_required:
+            permission_app_label, codename = self.permission_required.split(
+                "."
+            )
+            queryset_app_label = queryset.model._meta.app_label
+
+            if permission_app_label != queryset_app_label:
+                raise ImproperlyConfigured(
+                    f"{queryset_app_label=} and {permission_app_label=} do not match"
+                )
+        else:
+            codename = self.permission_required
+
+        return filter_by_permission(
+            queryset=queryset,
+            user=self.request.user,
+            codename=codename,
+        )
 
 
 class ObjectPermissionCheckerMixin:
@@ -87,9 +107,7 @@ def filter_by_permission(*, queryset, user, codename):
     by using a SQL Union.
 
     This requires using direct foreign key permissions on the objects so that
-    a reverse lookup can be used. Django does now allow filtering of
-    querysets created with a SQL Union, so this must be the last operation
-    in the queryset generation.
+    a reverse lookup can be used.
     """
     if user.is_superuser is True:
         return queryset
