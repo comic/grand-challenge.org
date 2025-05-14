@@ -7,32 +7,33 @@ from grandchallenge.algorithms.models import (
     AlgorithmImage,
     AlgorithmModel,
     Job,
+    JobUtilization,
 )
 from grandchallenge.cases.models import ImageFile
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.evaluation.models import (
     Evaluation,
     EvaluationGroundTruth,
+    EvaluationUtilization,
     Method,
 )
 
 
 def annotate_job_duration_and_compute_costs(*, phase):
-    algorithm_jobs = Job.objects.filter(
-        inputs__archive_items__archive__phase=phase,
-        algorithm_image__submission__phase=phase,
-    ).distinct()
-    evaluation_jobs = Evaluation.objects.filter(
-        submission__phase=phase, submission__phase__external_evaluation=False
+    algorithm_job_utilizations = JobUtilization.objects.filter(
+        phase=phase,
+    )
+    evaluation_job_utilizations = EvaluationUtilization.objects.filter(
+        phase=phase, phase__external_evaluation=False
     ).distinct()
 
     update_average_algorithm_job_duration(
-        phase=phase, algorithm_jobs=algorithm_jobs
+        phase=phase, algorithm_job_utilizations=algorithm_job_utilizations
     )
     update_compute_cost_euro_millicents(
         obj=phase,
-        algorithm_jobs=algorithm_jobs,
-        evaluation_jobs=evaluation_jobs,
+        algorithm_job_utilizations=algorithm_job_utilizations,
+        evaluation_job_utilizations=evaluation_job_utilizations,
     )
 
 
@@ -57,10 +58,18 @@ def annotate_compute_costs_and_storage_size(*, challenge):
         algorithm_jobs=algorithm_jobs,
         evaluation_jobs=evaluation_jobs,
     )
+
+    algorithm_job_utilizations = JobUtilization.objects.filter(
+        challenge=challenge,
+    )
+    evaluation_job_utilizations = EvaluationUtilization.objects.filter(
+        challenge=challenge, phase__external_evaluation=False
+    ).distinct()
+
     update_compute_cost_euro_millicents(
         obj=challenge,
-        algorithm_jobs=algorithm_jobs,
-        evaluation_jobs=evaluation_jobs,
+        algorithm_job_utilizations=algorithm_job_utilizations,
+        evaluation_job_utilizations=evaluation_job_utilizations,
     )
 
 
@@ -162,13 +171,13 @@ def update_size_in_storage_and_registry(
 
 
 def update_compute_cost_euro_millicents(
-    *, obj, algorithm_jobs, evaluation_jobs
+    *, obj, algorithm_job_utilizations, evaluation_job_utilizations
 ):
-    algorithm_job_costs = algorithm_jobs.aggregate(
+    algorithm_job_costs = algorithm_job_utilizations.aggregate(
         Sum("compute_cost_euro_millicents")
     )
 
-    evaluation_costs = evaluation_jobs.aggregate(
+    evaluation_costs = evaluation_job_utilizations.aggregate(
         Sum("compute_cost_euro_millicents")
     )
 
@@ -179,11 +188,13 @@ def update_compute_cost_euro_millicents(
     )
 
 
-def update_average_algorithm_job_duration(*, phase, algorithm_jobs):
-    aggregates = algorithm_jobs.filter(
-        status=Job.SUCCESS, job_utilization__duration__gt=timedelta(seconds=0)
+def update_average_algorithm_job_duration(
+    *, phase, algorithm_job_utilizations
+):
+    aggregates = algorithm_job_utilizations.filter(
+        job__status=Job.SUCCESS, duration__gt=timedelta(seconds=0)
     ).aggregate(
-        total_job_duration=Sum("job_utilization__duration"),
+        total_job_duration=Sum("duration"),
         job_count=Count("pk", distinct=True),
     )
 
