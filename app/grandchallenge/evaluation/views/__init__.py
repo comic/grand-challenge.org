@@ -700,12 +700,16 @@ class LeaderboardRedirect(RedirectView):
 
 
 class LeaderboardDetail(
-    UserPassesTestMixin, TeamContextMixin, PaginatedTableListView
+    UserPassesTestMixin,
+    TeamContextMixin,
+    PermissionListMixin,
+    PaginatedTableListView,
 ):
     model = Evaluation
     template_name = "evaluation/leaderboard_detail.html"
     row_template = "evaluation/leaderboard_row.html"
     search_fields = ["pk", "submission__creator__username"]
+    permission_required = "evaluation.view_evaluation"
 
     def test_func(self):
         if self.phase.public:
@@ -867,11 +871,7 @@ class LeaderboardDetail(
                 Prefetch("inputs", queryset=additional_inputs_qs)
             )
 
-        return filter_by_permission(
-            queryset=queryset,
-            user=self.request.user,
-            codename="view_evaluation",
-        )
+        return queryset
 
     def filter_by_date(self, queryset):
         if "date" in self.request.GET:
