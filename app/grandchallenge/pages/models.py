@@ -136,11 +136,10 @@ class Page(FieldChangeMixin, models.Model):
                 mm = Page.objects.get(
                     challenge=self.challenge, order=self.order - 1
                 )
+                mm.order += 1
+                mm.save()
             except ObjectDoesNotExist:
-                # Already the first page, nothing to do
-                return
-            mm.order += 1
-            mm.save()
+                pass
             self.order -= 1
             self.save()
         elif move == self.DOWN:
@@ -148,11 +147,10 @@ class Page(FieldChangeMixin, models.Model):
                 mm = Page.objects.get(
                     challenge=self.challenge, order=self.order + 1
                 )
+                mm.order -= 1
+                mm.save()
             except ObjectDoesNotExist:
-                # Already the last page, nothing to do
-                return
-            mm.order -= 1
-            mm.save()
+                pass
             self.order += 1
             self.save()
         elif move == self.FIRST:
