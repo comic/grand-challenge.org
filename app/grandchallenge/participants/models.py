@@ -2,11 +2,13 @@ from actstream.models import Follow
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
-from guardian.models import GroupObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.guardian import NoUserPermissionsAllowed
+from grandchallenge.core.guardian import (
+    GroupObjectPermissionBase,
+    NoUserPermissionsAllowed,
+)
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.utils.access_requests import process_access_request
 from grandchallenge.core.validators import JSONSchemaValidator, JSONValidator

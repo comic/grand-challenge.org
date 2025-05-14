@@ -19,7 +19,6 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from referencing.exceptions import Unresolvable
 from simple_history.models import HistoricalRecords
@@ -39,7 +38,12 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.fields import HexColorField, RegexField
-from grandchallenge.core.guardian import NoUserPermissionsAllowed
+
+from grandchallenge.core.guardian import (
+    GroupObjectPermissionBase,
+    NoUserPermissionsAllowed,
+    UserObjectPermissionBase,
+)
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,

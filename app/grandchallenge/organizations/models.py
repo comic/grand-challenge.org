@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db import models
 from django_countries.fields import CountryField
-from guardian.models import GroupObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from stdimage import JPEGField
 
@@ -11,7 +10,10 @@ from grandchallenge.components.schemas import (
     GPUTypeChoices,
     get_default_gpu_type_choices,
 )
-from grandchallenge.core.guardian import NoUserPermissionsAllowed
+from grandchallenge.core.guardian import (
+    GroupObjectPermissionBase,
+    NoUserPermissionsAllowed,
+)
 from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
 from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.core.validators import JSONValidator

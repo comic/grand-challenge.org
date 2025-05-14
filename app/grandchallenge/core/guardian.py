@@ -4,11 +4,13 @@ from django.contrib.auth.models import Permission
 from django.core.exceptions import ImproperlyConfigured
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import PermissionRequiredMixin  # noqa: I251
-from guardian.models import (
-    GroupObjectPermission,
-    GroupObjectPermissionBase,
-    UserObjectPermission,
-    UserObjectPermissionBase,
+from guardian.models import GroupObjectPermission
+from guardian.models import (  # noqa: I251
+    GroupObjectPermissionBase as GroupObjectPermissionBaseOrig,
+)
+from guardian.models import UserObjectPermission
+from guardian.models import (  # noqa: I251
+    UserObjectPermissionBase as UserObjectPermissionBaseOrig,
 )
 from guardian.utils import (
     get_anonymous_user,
@@ -60,23 +62,35 @@ class ObjectPermissionRequiredMixin(PermissionRequiredMixin):
     accept_global_perms = False
 
 
-class NoUserPermissionsAllowed(UserObjectPermissionBase):
+class UserObjectPermissionBase(UserObjectPermissionBaseOrig):
+
+    class Meta(UserObjectPermissionBaseOrig.Meta):
+        abstract = True
+
+
+class NoUserPermissionsAllowed(UserObjectPermissionBaseOrig):
     def save(self, *args, **kwargs):
         raise RuntimeError(
             "User permissions should not be assigned for this model"
         )
 
-    class Meta(UserObjectPermissionBase.Meta):
+    class Meta(UserObjectPermissionBaseOrig.Meta):
         abstract = True
 
 
-class NoGroupPermissionsAllowed(GroupObjectPermissionBase):
+class GroupObjectPermissionBase(GroupObjectPermissionBaseOrig):
+
+    class Meta(GroupObjectPermissionBaseOrig.Meta):
+        abstract = True
+
+
+class NoGroupPermissionsAllowed(GroupObjectPermissionBaseOrig):
     def save(self, *args, **kwargs):
         raise RuntimeError(
             "Group permissions should not be assigned for this model"
         )
 
-    class Meta(GroupObjectPermissionBase.Meta):
+    class Meta(GroupObjectPermissionBaseOrig.Meta):
         abstract = True
 
 

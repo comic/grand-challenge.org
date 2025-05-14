@@ -41,7 +41,6 @@ from django.utils.text import get_valid_filename
 from django.utils.timezone import now, timedelta
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from machina.apps.forum.models import Forum
@@ -65,7 +64,9 @@ from grandchallenge.components.schemas import (
     get_default_gpu_type_choices,
 )
 from grandchallenge.core.guardian import (
+    GroupObjectPermissionBase,
     NoUserPermissionsAllowed,
+    UserObjectPermissionBase,
     filter_by_permission,
 )
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
