@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
         ("forum", "0011_auto_20190627_2132"),
         (
             "challenges",
-            "0050_remove_challengerequest_long_term_commitment_and_more",
+            "0051_onboardingtaskuserobjectpermission",
         ),
     ]
 
