@@ -26,12 +26,6 @@ class Forum(UUIDModel):
                 "Can create sticky and announcement topics in this forum",
             ),
         )
-        constraints = [
-            models.CheckConstraint(
-                check=(models.Q(linked_challenge__isnull=False)),
-                name="forum_must_have_linked_challenge",
-            ),
-        ]
 
     @property
     def parent_object(self):
