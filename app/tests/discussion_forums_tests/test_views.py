@@ -28,7 +28,7 @@ def test_topic_create(client):
             "forum": forum.pk,
             "creator": user.pk,
             "subject": "First topic",
-            "type": TopicKindChoices.DEFAULT,
+            "kind": TopicKindChoices.DEFAULT,
             "content": "Some post content",
         },
     )
@@ -40,7 +40,7 @@ def test_topic_create(client):
     topic = Topic.objects.first()
     assert topic.forum == forum
     assert topic.creator == user
-    assert topic.type == TopicKindChoices.DEFAULT
+    assert topic.kind == TopicKindChoices.DEFAULT
     assert topic.subject == "First topic"
 
     post = Post.objects.first()

@@ -22,7 +22,7 @@ def test_topic_form_presets():
         participant_form.fields["forum"].initial == challenge.discussion_forum
     )
 
-    assert participant_form.fields["type"].choices == [
+    assert participant_form.fields["kind"].choices == [
         (TopicKindChoices.DEFAULT.name, TopicKindChoices.DEFAULT.label)
     ]
 
@@ -34,7 +34,7 @@ def test_topic_form_presets():
     assert admin_form.fields["creator"].initial == admin
     assert admin_form.fields["forum"].initial == challenge.discussion_forum
 
-    assert admin_form.fields["type"].choices == [
+    assert admin_form.fields["kind"].choices == [
         (TopicKindChoices.DEFAULT.name, TopicKindChoices.DEFAULT.label),
         (TopicKindChoices.STICKY.name, TopicKindChoices.STICKY.label),
         (TopicKindChoices.ANNOUNCE.name, TopicKindChoices.ANNOUNCE.label),
