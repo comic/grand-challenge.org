@@ -40,6 +40,9 @@ class ForumTopicForm(SaveFormInitMixin, ModelForm):
         self.fields["forum"].queryset = Forum.objects.filter(id=forum.id)
         self.fields["forum"].initial = forum
 
+        self.fields["creator"].queryset = get_user_model().objects.filter(
+            pk=user.pk
+        )
         self.fields["creator"].initial = user
 
         if not user.has_perm(
