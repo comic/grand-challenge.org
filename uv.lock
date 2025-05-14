@@ -1066,20 +1066,6 @@ wheels = [
 ]
 
 [[package]]
-name = "djangorestframework-guardian"
-version = "0.3.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-    { name = "django-guardian" },
-    { name = "djangorestframework" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e5/80/0f2190bacfe7c7b2e22d0e1e695882ec3123f9e58817c8392a258cd46442/djangorestframework-guardian-0.3.0.tar.gz", hash = "sha256:1883756452d9bfcc2a51fb4e039a6837a8f6697c756447aa83af085749b59330", size = 8647, upload-time = "2019-10-14T04:24:25.531Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/9b/cc/35c1d8fb99172b2646f29e270e9ec443ffe09e0b63e61cd528d4fb4b8b07/djangorestframework_guardian-0.3.0-py2.py3-none-any.whl", hash = "sha256:3bd3dd6ea58e1bceca5048faf6f8b1a93bb5dcff30ba5eb91b9a0e190a48a0c7", size = 6931, upload-time = "2019-08-02T01:00:39.543Z" },
-]
-
-[[package]]
 name = "docutils"
 version = "0.21.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1261,7 +1247,6 @@ dependencies = [
     { name = "django-storages", extra = ["s3"] },
     { name = "djangorestframework" },
     { name = "djangorestframework-csv" },
-    { name = "djangorestframework-guardian" },
     { name = "drf-spectacular" },
     { name = "grand-challenge-forge" },
     { name = "gunicorn" },
@@ -1346,7 +1331,6 @@ requires-dist = [
     { name = "django-storages", extras = ["s3"], specifier = ">=1.14.2" },
     { name = "djangorestframework" },
     { name = "djangorestframework-csv" },
-    { name = "djangorestframework-guardian" },
     { name = "drf-spectacular" },
     { name = "grand-challenge-forge", specifier = ">=0.7.1" },
     { name = "gunicorn" },

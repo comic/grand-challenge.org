@@ -27,13 +27,13 @@ from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from rest_framework_guardian.filters import ObjectPermissionsFilter
 from ua_parser.user_agent_parser import ParseUserAgent
 
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    ViewObjectPermissionsFilter,
 )
 from grandchallenge.groups.forms import EditorsForm, UsersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
@@ -65,7 +65,7 @@ class SessionViewSet(ReadOnlyModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
     permission_classes = (DjangoObjectPermissions,)
-    filter_backends = (ObjectPermissionsFilter,)
+    filter_backends = (ViewObjectPermissionsFilter,)
 
     @action(detail=True, methods=["patch"])
     def keep_alive(self, *_, **__):
@@ -476,12 +476,12 @@ class FeedbackViewSet(mixins.CreateModelMixin, ReadOnlyModelViewSet):
     queryset = Feedback.objects.all()
     serializer_class = FeedbackSerializer
     permission_classes = (DjangoObjectPermissions,)
-    filter_backends = (ObjectPermissionsFilter,)
+    filter_backends = (ViewObjectPermissionsFilter,)
 
 
 class WorkstationViewSet(ReadOnlyModelViewSet):
     queryset = Workstation.objects.all()
     serializer_class = WorkstationSerializer
     permission_classes = (DjangoObjectPermissions,)
-    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_fields = ["slug"]

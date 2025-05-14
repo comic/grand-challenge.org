@@ -40,7 +40,6 @@ from rest_framework.mixins import (
 )
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
-from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.filters import AlgorithmFilter, JobViewsetFilter
 from grandchallenge.algorithms.forms import (
@@ -90,6 +89,7 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    ViewObjectPermissionsFilter,
     filter_by_permission,
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
@@ -819,7 +819,7 @@ class AlgorithmViewSet(ReadOnlyModelViewSet):
     queryset = Algorithm.objects.all().prefetch_related("interfaces")
     serializer_class = AlgorithmSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_fields = ["slug"]
 
 
@@ -827,7 +827,7 @@ class AlgorithmImageViewSet(ReadOnlyModelViewSet):
     queryset = AlgorithmImage.objects.all()
     serializer_class = AlgorithmImageSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_fields = ["algorithm"]
 
 
@@ -846,7 +846,7 @@ class JobViewSet(
         )
     )
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_class = JobViewsetFilter
 
     def get_serializer_class(self):

@@ -7,8 +7,8 @@ from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import GenericViewSet
-from rest_framework_guardian.filters import ObjectPermissionsFilter
 
+from grandchallenge.core.guardian import ViewObjectPermissionsFilter
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.serializers import (
     UserUploadCompleteSerializer,
@@ -29,7 +29,7 @@ class UserUploadViewSet(
 ):
     queryset = UserUpload.objects.all()
     permission_classes = (DjangoObjectPermissions,)
-    filter_backends = (ObjectPermissionsFilter,)
+    filter_backends = (ViewObjectPermissionsFilter,)
 
     def get_serializer_class(self):
         if self.serializer_class is None:
