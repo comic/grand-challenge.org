@@ -2,6 +2,7 @@ from functools import cached_property
 
 from django.contrib.auth.models import Permission
 from django.core.exceptions import ImproperlyConfigured
+from django.db.models import Index
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import PermissionRequiredMixin  # noqa: I251
 from guardian.models import GroupObjectPermission
@@ -66,6 +67,9 @@ class UserObjectPermissionBase(UserObjectPermissionBaseOrig):
 
     class Meta(UserObjectPermissionBaseOrig.Meta):
         abstract = True
+        indexes = [
+            Index(fields=["user", "permission"]),
+        ]
 
 
 class NoUserPermissionsAllowed(UserObjectPermissionBaseOrig):
@@ -82,6 +86,9 @@ class GroupObjectPermissionBase(GroupObjectPermissionBaseOrig):
 
     class Meta(GroupObjectPermissionBaseOrig.Meta):
         abstract = True
+        indexes = [
+            Index(fields=["group", "permission"]),
+        ]
 
 
 class NoGroupPermissionsAllowed(GroupObjectPermissionBaseOrig):

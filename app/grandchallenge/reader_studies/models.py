@@ -38,7 +38,6 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.fields import HexColorField, RegexField
-
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     NoUserPermissionsAllowed,

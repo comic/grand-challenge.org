@@ -2165,11 +2165,6 @@ class EvaluationUserObjectPermission(NoUserPermissionsAllowed):
 class EvaluationGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
 
-    class Meta(GroupObjectPermissionBase.Meta):
-        indexes = [
-            models.Index(fields=["group", "permission"]),
-        ]
-
 
 class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
     class CombinationMethodChoices(models.TextChoices):
