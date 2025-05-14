@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.views.generic import CreateView, DeleteView, DetailView, ListView
 
@@ -68,6 +69,13 @@ class TopicDetail(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "discussion_forums.view_topic"
     raise_exception = True
 
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            Topic,
+            forum=self.request.challenge.discussion_forum,
+            slug=self.kwargs["slug"],
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
         context.update({"forum": self.object.forum})
@@ -79,6 +87,13 @@ class TopicDelete(ObjectPermissionRequiredMixin, DeleteView):
     permission_required = "discussion_forums.delete_topic"
     raise_exception = True
     success_message = "Successfully deleted topic."
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            Topic,
+            forum=self.request.challenge.discussion_forum,
+            slug=self.kwargs["slug"],
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
