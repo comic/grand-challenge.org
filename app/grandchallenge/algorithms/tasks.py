@@ -10,6 +10,7 @@ from django.core.files.base import File
 from django.db import transaction
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
+from psycopg.errors import LockNotAvailable
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.components.tasks import lock_model_instance
@@ -17,16 +18,13 @@ from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
-from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 
 logger = logging.getLogger(__name__)
 
 
-@acks_late_micro_short_task(
-    retry_on=(LockNotAcquiredException, TooManyJobsScheduled)
-)
+@acks_late_micro_short_task(retry_on=(LockNotAvailable, TooManyJobsScheduled))
 @transaction.atomic
 def execute_algorithm_job_for_inputs(*, job_pk):
     from grandchallenge.algorithms.models import Job
@@ -317,7 +315,7 @@ def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
             algorithm_image.image.save(filename, File(f))
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(retry_on=(LockNotAvailable,))
 @transaction.atomic
 def update_algorithm_average_duration(*, algorithm_pk):
     from grandchallenge.algorithms.models import Job

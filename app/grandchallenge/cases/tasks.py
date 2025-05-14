@@ -16,6 +16,7 @@ from django.utils._os import safe_join
 from django.utils.module_loading import import_string
 from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
+from psycopg.errors import LockNotAvailable
 
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
@@ -23,7 +24,6 @@ from grandchallenge.components.backends.utils import safe_extract
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import acks_late_2xlarge_task
-from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.uploads.models import UserUpload
 
@@ -92,7 +92,7 @@ def extract_files(*, source_path: Path, checked_paths=None):
         )
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(retry_on=(LockNotAvailable,))
 @transaction.atomic
 def build_images(  # noqa:C901
     *,

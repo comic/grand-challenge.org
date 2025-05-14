@@ -23,7 +23,6 @@ from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
-from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
 
@@ -305,7 +304,7 @@ def handle_failed_jobs(*, evaluation_pk):
     ).select_for_update(skip_locked=True).update(status=Job.CANCELLED)
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(retry_on=(LockNotAvailable,))
 @transaction.atomic
 def set_evaluation_inputs(*, evaluation_pk):
     """
@@ -429,9 +428,7 @@ def filter_by_creators_best(*, evaluations, ranks):
 
 
 # Use 2xlarge for memory use
-@acks_late_2xlarge_task(
-    retry_on=(LockNotAcquiredException,), delayed_retry=False
-)
+@acks_late_2xlarge_task(retry_on=(LockNotAvailable,), delayed_retry=False)
 @transaction.atomic
 def calculate_ranks(*, phase_pk: uuid.UUID):
     Phase = apps.get_model(  # noqa: N806
@@ -443,20 +440,17 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
 
     phase = Phase.objects.get(pk=phase_pk)
 
-    try:
-        # Acquire locks
-        evaluations = list(
-            Evaluation.objects.filter(
-                submission__phase=phase,
-                status=Evaluation.SUCCESS,
-            )
-            .select_for_update(nowait=True, of=("self",))
-            .order_by("-created")
-            .select_related("submission__creator", "submission__phase")
-            .prefetch_related("outputs__interface")
+    # Acquire locks
+    evaluations = list(
+        Evaluation.objects.filter(
+            submission__phase=phase,
+            status=Evaluation.SUCCESS,
         )
-    except LockNotAvailable as error:
-        raise LockNotAcquiredException from error
+        .select_for_update(nowait=True, of=("self",))
+        .order_by("-created")
+        .select_related("submission__creator", "submission__phase")
+        .prefetch_related("outputs__interface")
+    )
 
     valid_evaluations = [
         e

@@ -47,7 +47,6 @@ from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
-from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
@@ -730,18 +729,14 @@ def lock_model_instance(*, app_label, model_name, **kwargs):
     sure that no other process is updating the same instance at the same time.
     Must be used inside a transaction.
 
-    Raises `LockNotAcquiredException` if the lock could not be acquired.
+    Raises `LockNotAvailable` if the lock could not be acquired.
     """
     model = apps.get_model(app_label=app_label, model_name=model_name)
     queryset = model.objects.filter(**kwargs).select_for_update(nowait=True)
-
-    try:
-        return queryset.get()
-    except LockNotAvailable as error:
-        raise LockNotAcquiredException from error
+    return queryset.get()
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(retry_on=(LockNotAvailable,))
 @transaction.atomic
 def provision_job(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
@@ -865,7 +860,7 @@ def get_update_status_kwargs(*, executor=None):
         return {}
 
 
-@acks_late_micro_short_task(retry_on=(RetryStep, LockNotAcquiredException))
+@acks_late_micro_short_task(retry_on=(RetryStep, LockNotAvailable))
 @transaction.atomic
 def handle_event(*, event, backend):  # noqa: C901
     """
@@ -935,7 +930,7 @@ def handle_event(*, event, backend):  # noqa: C901
         )
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(retry_on=(LockNotAvailable,))
 @transaction.atomic
 def parse_job_outputs(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
@@ -1246,9 +1241,7 @@ def validate_voxel_values(*, civ_pk):
     civ.interface._validate_voxel_values(civ.image)
 
 
-@acks_late_micro_short_task(
-    retry_on=(LockNotAcquiredException,), delayed_retry=False
-)
+@acks_late_micro_short_task(retry_on=(LockNotAvailable,), delayed_retry=False)
 @transaction.atomic
 def add_image_to_object(  # noqa: C901
     *,
@@ -1340,9 +1333,7 @@ def add_image_to_object(  # noqa: C901
         on_commit(signature(linked_task).apply_async)
 
 
-@acks_late_micro_short_task(
-    retry_on=(LockNotAcquiredException,), delayed_retry=False
-)
+@acks_late_micro_short_task(retry_on=(LockNotAvailable,), delayed_retry=False)
 @transaction.atomic
 def add_file_to_object(
     *,
@@ -1419,7 +1410,7 @@ def add_file_to_object(
         on_commit(signature(linked_task).apply_async)
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task(retry_on=(LockNotAvailable,))
 @transaction.atomic
 def assign_tarball_from_upload(
     *, app_label, model_name, tarball_pk, field_to_copy
@@ -1430,21 +1421,18 @@ def assign_tarball_from_upload(
         app_label=app_label, model_name=model_name
     )
 
-    try:
-        # Acquire locks
-        current_tarball = (
-            TarballModel.objects.filter(
-                pk=tarball_pk,
-                import_status=TarballModel.ImportStatusChoices.INITIALIZED,
-            )
-            .select_for_update(nowait=True)
-            .get()
+    # Acquire locks
+    current_tarball = (
+        TarballModel.objects.filter(
+            pk=tarball_pk,
+            import_status=TarballModel.ImportStatusChoices.INITIALIZED,
         )
-        peer_tarballs = list(
-            current_tarball.get_peer_tarballs().select_for_update(nowait=True)
-        )
-    except LockNotAvailable as error:
-        raise LockNotAcquiredException from error
+        .select_for_update(nowait=True)
+        .get()
+    )
+    peer_tarballs = list(
+        current_tarball.get_peer_tarballs().select_for_update(nowait=True)
+    )
 
     current_tarball.user_upload.copy_object(
         to_field=getattr(current_tarball, field_to_copy)
