@@ -17,7 +17,10 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.components.tasks import check_operational_error
+from grandchallenge.components.tasks import (
+    check_operational_error,
+    lock_model_instance,
+)
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
@@ -325,9 +328,6 @@ def set_evaluation_inputs(*, evaluation_pk):
     Job = apps.get_model(  # noqa: N806
         app_label="algorithms", model_name="Job"
     )
-    Evaluation = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Evaluation"
-    )
 
     if AlgorithmModel.objects.filter(
         submission__evaluation=evaluation_pk
@@ -352,16 +352,9 @@ def set_evaluation_inputs(*, evaluation_pk):
         logger.info("Nothing to do: the algorithm has pending jobs.")
         return
 
-    evaluation_queryset = Evaluation.objects.filter(
-        pk=evaluation_pk
-    ).select_for_update(nowait=True)
-
-    try:
-        # Acquire lock
-        evaluation = evaluation_queryset.get()
-    except OperationalError as error:
-        check_operational_error(error)
-        raise
+    evaluation = lock_model_instance(
+        pk=evaluation_pk, app_label="evaluation", model_name="Evaluation"
+    )
 
     if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
         logger.info(
@@ -394,7 +387,7 @@ def set_evaluation_inputs(*, evaluation_pk):
         evaluation.input_prefixes = {
             str(o): f"{j}/output/" for o, j in output_to_job.items()
         }
-        evaluation.status = Evaluation.PENDING
+        evaluation.status = evaluation.PENDING
         evaluation.save()
 
         on_commit(evaluation.execute)

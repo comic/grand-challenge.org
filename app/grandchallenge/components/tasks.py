@@ -891,21 +891,12 @@ def handle_event(*, event, backend):  # noqa: C901
     job_name = Backend.get_job_name(event=event)
     job_params = Backend.get_job_params(job_name=job_name)
 
-    model = apps.get_model(
-        app_label=job_params.app_label, model_name=job_params.model_name
-    )
-
-    queryset = model.objects.filter(
+    job = lock_model_instance(
         pk=job_params.pk,
         attempt=job_params.attempt,
-    ).select_for_update(nowait=True)
-
-    try:
-        # Acquire the lock
-        job = queryset.get()
-    except OperationalError as error:
-        check_operational_error(error)
-        raise
+        app_label=job_params.app_label,
+        model_name=job_params.model_name,
+    )
 
     executor = job.get_executor(backend=backend)
 
@@ -1446,16 +1437,15 @@ def assign_tarball_from_upload(
         app_label=app_label, model_name=model_name
     )
 
+    current_tarball = lock_model_instance(
+        pk=tarball_pk,
+        import_status=ImportStatusChoices.INITIALIZED,
+        app_label=app_label,
+        model_name=model_name,
+    )
+
     try:
         # Acquire locks
-        current_tarball = (
-            TarballModel.objects.filter(
-                pk=tarball_pk,
-                import_status=TarballModel.ImportStatusChoices.INITIALIZED,
-            )
-            .select_for_update(nowait=True)
-            .get()
-        )
         peer_tarballs = list(
             current_tarball.get_peer_tarballs().select_for_update(nowait=True)
         )
