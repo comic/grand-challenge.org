@@ -222,6 +222,79 @@ def test_approved_compute_costs_postpaid_with_complimentary_invoice():
 
 
 @pytest.mark.django_db
+def test_approved_compute_costs_with_paid_and_cancelled_invoice():
+    challenge = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.CANCELLED,
+    )
+
+    challenge = Challenge.objects.with_available_compute().first()
+    assert challenge.approved_compute_costs_euro_millicents == 1 * 1000 * 100
+
+
+@pytest.mark.django_db
+def test_approved_compute_costs_postpaid_with_paid_and_cancelled_invoice():
+    challenge = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.CANCELLED,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_type=PaymentTypeChoices.POSTPAID,
+    )
+
+    challenge = Challenge.objects.with_available_compute().first()
+    assert challenge.approved_compute_costs_euro_millicents == 2 * 1000 * 100
+
+
+@pytest.mark.django_db
+def test_approved_compute_costs_postpaid_with_cancelled_invoice():
+    challenge = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.CANCELLED,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_type=PaymentTypeChoices.POSTPAID,
+    )
+
+    challenge = Challenge.objects.with_available_compute().first()
+    assert challenge.approved_compute_costs_euro_millicents == 0 * 1000 * 100
+
+
+@pytest.mark.django_db
 def test_most_recent_submission_datetime_no_submissions():
     ChallengeFactory()
 

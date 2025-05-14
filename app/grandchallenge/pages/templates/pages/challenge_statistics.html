@@ -87,6 +87,8 @@
                                                 badge-success
                                             {% elif invoice.payment_status == invoice.PaymentStatusChoices.ISSUED %}
                                                 badge-warning
+                                            {% elif invoice.payment_status == invoice.PaymentStatusChoices.CANCELLED %}
+                                                badge-danger
                                             {% else %}
                                                 badge-info
                                             {% endif %}">

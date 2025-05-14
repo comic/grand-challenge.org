@@ -20,6 +20,7 @@ class PaymentStatusChoices(models.TextChoices):
     REQUESTED = "REQUESTED", "Invoice Requested"
     ISSUED = "ISSUED", "Invoice Issued"
     PAID = "PAID", "Paid"
+    CANCELLED = "CANCELLED", "Cancelled"
 
 
 class PaymentTypeChoices(models.TextChoices):

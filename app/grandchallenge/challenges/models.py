@@ -137,6 +137,9 @@ class ChallengeSet(models.QuerySet):
                             "invoices__compute_costs_euros",
                             filter=Q(
                                 invoices__payment_type=PaymentTypeChoices.POSTPAID
+                            )
+                            & ~Q(
+                                invoices__payment_status=PaymentStatusChoices.CANCELLED
                             ),
                             output_field=models.PositiveBigIntegerField(),
                             default=0,
