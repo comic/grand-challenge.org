@@ -2,11 +2,13 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.html import format_html
-from guardian.models import UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
-from grandchallenge.core.guardian import NoGroupPermissionsAllowed
+from grandchallenge.core.guardian import (
+    NoGroupPermissionsAllowed,
+    UserObjectPermissionBase,
+)
 from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse

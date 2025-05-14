@@ -16,10 +16,12 @@ from django.db.models import (
 )
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
-from guardian.models import UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.core.guardian import NoGroupPermissionsAllowed
+from grandchallenge.core.guardian import (
+    NoGroupPermissionsAllowed,
+    UserObjectPermissionBase,
+)
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.profiles.models import NotificationEmailOptions
 from grandchallenge.subdomains.utils import reverse

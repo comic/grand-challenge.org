@@ -20,7 +20,6 @@ from django.utils.html import format_html
 from django.utils.text import get_valid_filename
 from django.utils.timezone import localtime
 from django_extensions.db.fields import AutoSlugField
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.algorithms.models import (
@@ -45,7 +44,11 @@ from grandchallenge.components.schemas import (
     GPUTypeChoices,
     get_default_gpu_type_choices,
 )
-from grandchallenge.core.guardian import NoUserPermissionsAllowed
+from grandchallenge.core.guardian import (
+    GroupObjectPermissionBase,
+    NoUserPermissionsAllowed,
+    UserObjectPermissionBase,
+)
 from grandchallenge.core.models import (
     FieldChangeMixin,
     TitleSlugDescriptionModel,
@@ -2161,11 +2164,6 @@ class EvaluationUserObjectPermission(NoUserPermissionsAllowed):
 
 class EvaluationGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
-
-    class Meta(GroupObjectPermissionBase.Meta):
-        indexes = [
-            models.Index(fields=["group", "permission"]),
-        ]
 
 
 class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):

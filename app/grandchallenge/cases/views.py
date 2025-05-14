@@ -33,7 +33,6 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
     ViewObjectPermissionsFilter,
-    filter_by_permission,
     get_object_if_allowed,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
@@ -180,18 +179,12 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
         )
 
 
-class ImageSearchResultView(LoginRequiredMixin, ListView):
+class ImageSearchResultView(LoginRequiredMixin, PermissionListMixin, ListView):
     template_name = "cases/image_search_result_select.html"
     search_fields = ["pk", "name"]
     model = Image
     paginate_by = 50
-
-    def get_queryset(self):
-        return filter_by_permission(
-            queryset=super().get_queryset(),
-            user=self.request.user,
-            codename="view_image",
-        )
+    permission_required = "cases.view_image"
 
     def get(self, request, *args, **kwargs):
         qs = self.get_queryset()

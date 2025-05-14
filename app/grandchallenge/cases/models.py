@@ -15,7 +15,6 @@ from django.dispatch import receiver
 from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from panimg.image_builders.metaio_utils import load_sitk_image
 from panimg.models import (
@@ -29,7 +28,11 @@ from storages.utils import clean_name
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
 )
-from grandchallenge.core.guardian import NoGroupPermissionsAllowed
+from grandchallenge.core.guardian import (
+    GroupObjectPermissionBase,
+    NoGroupPermissionsAllowed,
+    UserObjectPermissionBase,
+)
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma

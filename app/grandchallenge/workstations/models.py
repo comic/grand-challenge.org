@@ -16,7 +16,6 @@ from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django_extensions.db.models import TitleSlugDescriptionModel
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from knox.models import AuthToken
 from simple_history.models import HistoricalRecords
@@ -31,8 +30,10 @@ from grandchallenge.components.tasks import (
     stop_service,
 )
 from grandchallenge.core.guardian import (
+    GroupObjectPermissionBase,
     NoGroupPermissionsAllowed,
     NoUserPermissionsAllowed,
+    UserObjectPermissionBase,
 )
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
