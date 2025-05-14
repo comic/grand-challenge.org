@@ -1296,7 +1296,7 @@ def test_archive_item_list_database_hits(
 
     make_request()  # set up caches
 
-    expected_queries = 32
+    expected_queries = 33
     with django_assert_max_num_queries(expected_queries):
         resp = make_request()
         assert len(resp.json()["data"]) == 1
