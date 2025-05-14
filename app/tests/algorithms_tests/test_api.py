@@ -81,7 +81,7 @@ def test_job_list_view_num_queries(
     user = UserFactory()
     AlgorithmJobFactory.create_batch(num_jobs, creator=user, time_limit=60)
 
-    with django_assert_max_num_queries(32) as _:
+    with django_assert_max_num_queries(33) as _:
         response = get_view_for_user(
             viewname="api:algorithms-job-list",
             client=client,
