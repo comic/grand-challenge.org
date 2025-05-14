@@ -25,7 +25,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models, transaction
-from django.db.models import Avg, IntegerChoices, QuerySet, Sum
+from django.db.models import Avg, IntegerChoices, QuerySet
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
 from django.forms.models import model_to_dict
@@ -1533,11 +1533,6 @@ class ComponentInterfaceValue(models.Model):
 
 
 class ComponentJobManager(models.QuerySet):
-    def total_duration(self):
-        return self.exclude(job_utilization__duration=None).aggregate(
-            duration__sum=Sum("job_utilization__duration")
-        )["duration__sum"]
-
     def active(self):
         # We need to use a positive filter here so that the index
         # can be used rather than excluding jobs in final states
