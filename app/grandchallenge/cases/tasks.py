@@ -7,7 +7,6 @@ from shutil import rmtree
 from tempfile import TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
-from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -138,12 +137,12 @@ def build_images(  # noqa:C901
     )
 
     if linked_object_pk:
-        linked_model = apps.get_model(
-            app_label=linked_app_label, model_name=linked_model_name
-        )
-
         try:
-            linked_object = linked_model.objects.get(pk=linked_object_pk)
+            linked_object = lock_model_instance(
+                pk=linked_object_pk,
+                app_label=linked_app_label,
+                model_name=linked_model_name,
+            )
         except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
             # users can delete archive items and display sets before this task runs
             logger.info(
