@@ -18,7 +18,6 @@ from rest_framework.mixins import (
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
-from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.cases.filters import ImageFilterSet
 from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
@@ -33,6 +32,7 @@ from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    ViewObjectPermissionsFilter,
     get_object_if_allowed,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
@@ -88,7 +88,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
         .select_related("modality")
     )
     permission_classes = (DjangoObjectPermissions,)
-    filter_backends = (DjangoFilterBackend, ObjectPermissionsFilter)
+    filter_backends = (DjangoFilterBackend, ViewObjectPermissionsFilter)
     filterset_class = ImageFilterSet
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
@@ -101,7 +101,7 @@ class RawImageUploadSessionViewSet(
 ):
     queryset = RawImageUploadSession.objects.all()
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
+    filter_backends = [ViewObjectPermissionsFilter]
     serializer_class = RawImageUploadSessionSerializer
 
 

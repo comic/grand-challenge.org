@@ -6,12 +6,12 @@ from django.views.generic import CreateView, DeleteView, ListView
 from guardian.mixins import LoginRequiredMixin
 from rest_framework import mixins, viewsets
 from rest_framework.permissions import DjangoObjectPermissions
-from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    ViewObjectPermissionsFilter,
 )
 from grandchallenge.notifications.filters import (
     FollowFilter,
@@ -37,7 +37,7 @@ class NotificationViewSet(
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
     permission_classes = (DjangoObjectPermissions,)
-    filter_backends = [ObjectPermissionsFilter]
+    filter_backends = [ViewObjectPermissionsFilter]
 
     def destroy(self, request, *args, **kwargs):
         response = super().destroy(request, *args, **kwargs)
@@ -62,7 +62,7 @@ class FollowViewSet(
     queryset = Follow.objects.all()
     serializer_class = FollowSerializer
     permission_classes = (DjangoObjectPermissions,)
-    filter_backends = [ObjectPermissionsFilter]
+    filter_backends = [ViewObjectPermissionsFilter]
 
     def destroy(self, request, *args, **kwargs):
         response = super().destroy(request, *args, **kwargs)

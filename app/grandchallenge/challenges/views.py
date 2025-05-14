@@ -9,7 +9,6 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.challenges.emails import send_challenge_status_update_email
 from grandchallenge.challenges.filters import ChallengeFilter
@@ -29,6 +28,7 @@ from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    ViewObjectPermissionsFilter,
 )
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.publications.models import Publication
@@ -289,7 +289,7 @@ class ChallengeViewSet(ReadOnlyModelViewSet):
     )
     serializer_class = PublicChallengeSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [ObjectPermissionsFilter]
+    filter_backends = [ViewObjectPermissionsFilter]
     # We do not want to serialize the pk so lookup by short_name, but call it slug
     lookup_field = "short_name"
     lookup_url_kwarg = "slug"
