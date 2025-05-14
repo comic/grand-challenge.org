@@ -5,10 +5,12 @@ from django.db.models import Count, ExpressionWrapper, F, Q
 from django.db.models.functions import Cast
 from django.db.transaction import on_commit
 from django.utils.timezone import now
-from guardian.models import GroupObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.core.guardian import NoUserPermissionsAllowed
+from grandchallenge.core.guardian import (
+    GroupObjectPermissionBase,
+    NoUserPermissionsAllowed,
+)
 from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.invoices.tasks import (
     send_challenge_invoice_issued_notification_emails,
@@ -20,6 +22,7 @@ class PaymentStatusChoices(models.TextChoices):
     REQUESTED = "REQUESTED", "Invoice Requested"
     ISSUED = "ISSUED", "Invoice Issued"
     PAID = "PAID", "Paid"
+    CANCELLED = "CANCELLED", "Cancelled"
 
 
 class PaymentTypeChoices(models.TextChoices):

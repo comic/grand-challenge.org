@@ -5,7 +5,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Q
 from django_extensions.db.models import TitleSlugDescriptionModel
-from guardian.models import GroupObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from stdimage import JPEGField
 
@@ -17,7 +16,10 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     ValuesForInterfacesMixin,
 )
-from grandchallenge.core.guardian import NoUserPermissionsAllowed
+from grandchallenge.core.guardian import (
+    GroupObjectPermissionBase,
+    NoUserPermissionsAllowed,
+)
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
