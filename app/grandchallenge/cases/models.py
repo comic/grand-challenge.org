@@ -29,6 +29,7 @@ from storages.utils import clean_name
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
 )
+from grandchallenge.core.guardian import NoGroupPermissionsAllowed
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -250,12 +251,13 @@ class RawImageUploadSession(UUIDModel):
 
 
 class RawImageUploadSessionUserObjectPermission(UserObjectPermissionBase):
+    # This is used for view_rawimageuploadsession and view_rawimageuploadsession for the creator
     content_object = models.ForeignKey(
         RawImageUploadSession, on_delete=models.CASCADE
     )
 
 
-class RawImageUploadSessionGroupObjectPermission(GroupObjectPermissionBase):
+class RawImageUploadSessionGroupObjectPermission(NoGroupPermissionsAllowed):
     content_object = models.ForeignKey(
         RawImageUploadSession, on_delete=models.CASCADE
     )
@@ -653,6 +655,7 @@ class Image(UUIDModel):
 
 
 class ImageUserObjectPermission(UserObjectPermissionBase):
+    # This is used for view_image permission for the reader_study.answer creator
     content_object = models.ForeignKey(Image, on_delete=models.CASCADE)
 
 

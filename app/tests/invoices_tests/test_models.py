@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import ValidationError
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.invoices.models import (
@@ -254,3 +255,118 @@ def test_most_recent_submission_datetime_multiple_submissions():
         Challenge.objects.with_most_recent_submission_datetime().first()
     )
     assert challenge.most_recent_submission_datetime == last_submission.created
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "payment_status, required_field_name, field_value, expected_error_message",
+    (
+        (
+            PaymentStatusChoices.ISSUED,
+            "issued_on",
+            None,
+            "When setting the payment status to 'Issued', you must set the 'Issued on' date.",
+        ),
+        (
+            PaymentStatusChoices.ISSUED,
+            "internal_invoice_number",
+            "",
+            "When setting the payment status to 'Issued', you must specify the internal invoice number.",
+        ),
+        (
+            PaymentStatusChoices.ISSUED,
+            "internal_client_number",
+            "",
+            "When setting the payment status to 'Issued', you must specify the internal client number.",
+        ),
+        (
+            PaymentStatusChoices.PAID,
+            "paid_on",
+            None,
+            "When setting the payment status to 'Paid', you must set the 'Paid on' date.",
+        ),
+    ),
+)
+def test_payment_status_required_fields(
+    payment_status, required_field_name, field_value, expected_error_message
+):
+    invoice = InvoiceFactory(
+        payment_status=payment_status,
+    )
+
+    setattr(invoice, required_field_name, field_value)
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert e.value.messages[0] == expected_error_message
+
+    # should work with complimentary type
+    invoice.payment_type = PaymentTypeChoices.COMPLIMENTARY
+    invoice.save()
+
+
+@pytest.mark.django_db
+def test_payment_type_complimentary_requires_internal_comments():
+    invoice = InvoiceFactory(
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
+    )
+    invoice.internal_comments = ""
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert (
+        "Please explain why the invoice is complimentary in the internal comments."
+        == e.value.messages[0]
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "payment_type", (PaymentTypeChoices.PREPAID, PaymentTypeChoices.POSTPAID)
+)
+@pytest.mark.parametrize(
+    "required_field_name, expected_error_message",
+    (
+        (
+            "contact_name",
+            "Contact name is required for non-complimentary invoices.",
+        ),
+        (
+            "contact_email",
+            "Contact email is required for non-complimentary invoices.",
+        ),
+        (
+            "billing_address",
+            "Billing address is required for non-complimentary invoices.",
+        ),
+        (
+            "vat_number",
+            "VAT number is required for non-complimentary invoices.",
+        ),
+    ),
+)
+def test_payment_type_non_complimentary_requires_details(
+    payment_type, required_field_name, expected_error_message
+):
+    invoice = InvoiceFactory()
+    setattr(invoice, required_field_name, "")
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert expected_error_message == e.value.messages[0]
+
+
+@pytest.mark.django_db
+def test_total_amount_cannot_change():
+    invoice = InvoiceFactory(
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=2,
+    )
+    invoice.support_costs_euros = 1
+    with pytest.raises(ValidationError) as e:
+        invoice.clean()
+    assert ("The total amount may not change") in e.value.message
+
+    invoice.storage_costs_euros = 1
+    invoice.clean()

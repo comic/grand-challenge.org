@@ -2,9 +2,10 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from guardian.models import UserObjectPermissionBase
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.core.guardian import NoGroupPermissionsAllowed
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -55,10 +56,11 @@ class Team(models.Model):
 
 
 class TeamUserObjectPermission(UserObjectPermissionBase):
+    # This is used for change_team permission for the owner
     content_object = models.ForeignKey(Team, on_delete=models.CASCADE)
 
 
-class TeamGroupObjectPermission(GroupObjectPermissionBase):
+class TeamGroupObjectPermission(NoGroupPermissionsAllowed):
     content_object = models.ForeignKey(Team, on_delete=models.CASCADE)
 
 

@@ -31,10 +31,12 @@ from grandchallenge.reader_studies.forms import (
     QuestionForm,
     ReaderStudyCreateForm,
 )
+from grandchallenge.reader_studies.interactive_algorithms import (
+    InteractiveAlgorithmChoices,
+)
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
-    InteractiveAlgorithmChoices,
     Question,
     QuestionWidgetKindChoices,
     ReaderStudy,

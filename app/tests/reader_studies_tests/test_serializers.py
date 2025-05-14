@@ -1,9 +1,9 @@
 import pytest
 
-from grandchallenge.reader_studies.models import (
+from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmChoices,
-    QuestionWidgetKindChoices,
 )
+from grandchallenge.reader_studies.models import QuestionWidgetKindChoices
 from grandchallenge.reader_studies.serializers import QuestionSerializer
 from tests.reader_studies_tests.factories import QuestionFactory
 

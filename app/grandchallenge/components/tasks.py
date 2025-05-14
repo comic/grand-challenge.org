@@ -349,6 +349,7 @@ def remove_container_image_from_registry(
 @acks_late_2xlarge_task(ignore_errors=(InstanceInUse,))
 def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     from grandchallenge.algorithms.models import AlgorithmImage, Job
+    from grandchallenge.components.models import ComponentImage
     from grandchallenge.evaluation.models import Evaluation, Method
     from grandchallenge.workstations.models import WorkstationImage
 
@@ -359,7 +360,9 @@ def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     instance = model.objects.get(pk=pk)
 
-    if isinstance(instance, Method):
+    if instance.import_status == ComponentImage.ImportStatusChoices.FAILED:
+        should_be_protected = False
+    elif isinstance(instance, Method):
         should_be_protected = Evaluation.objects.filter(
             method=instance,
             status=Evaluation.SUCCESS,
@@ -381,9 +384,10 @@ def delete_container_image(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     if instance.image:
         instance.image.delete(save=False)
-        instance.is_removed = True
-        instance.is_desired_version = False
-        instance.save()
+
+    instance.is_removed = True
+    instance.is_desired_version = False
+    instance.save()
 
 
 def push_container_image(*, instance):
@@ -717,43 +721,6 @@ def _get_image_config_file(
     return {"image_sha256": image_sha256, "config": config}
 
 
-def retry_if_dropped(func):
-    """
-    Retry a function that relies on an open database connection.
-
-    Use this decorator when you have a long running task as sometimes the db
-    connection will drop.
-    """
-
-    def wrapper(*args, **kwargs):
-        n_tries = 0
-        max_tries = 2
-        err = None
-
-        while n_tries < max_tries:
-            n_tries += 1
-
-            try:
-                return func(*args, **kwargs)
-            except OperationalError as e:
-                err = e
-
-                # This needs to be a local import
-                from django.db import connection
-
-                connection.close()
-
-        raise err
-
-    return wrapper
-
-
-@retry_if_dropped
-def get_model_instance(*, app_label, model_name, **kwargs):
-    model = apps.get_model(app_label=app_label, model_name=model_name)
-    return model.objects.get(**kwargs)
-
-
 def lock_model_instance(*, app_label, model_name, **kwargs):
     """
     Locks a model instance for update.
@@ -827,9 +794,8 @@ def execute_job(  # noqa: C901
 
     Once the job has executed it will be in the EXECUTING or FAILURE states.
     """
-    job = get_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
-    )
+    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
+    job = model.objects.get(pk=job_pk)
     executor = job.get_executor(backend=backend)
 
     if job.status == job.PROVISIONED:
@@ -844,15 +810,11 @@ def execute_job(  # noqa: C901
         raise PriorStepFailed(msg)
 
     try:
-        # This call is potentially very long
         executor.execute()
     except RetryStep:
         job.update_status(status=job.PROVISIONED)
         raise
     except ComponentException as e:
-        job = get_model_instance(
-            pk=job_pk, app_label=job_app_label, model_name=job_model_name
-        )
         job.update_status(
             status=job.FAILURE,
             stdout=executor.stdout,
@@ -861,9 +823,6 @@ def execute_job(  # noqa: C901
             detailed_error_message=e.message_details,
         )
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
-        job = get_model_instance(
-            pk=job_pk, app_label=job_app_label, model_name=job_model_name
-        )
         job.update_status(
             status=job.FAILURE,
             stdout=executor.stdout,
@@ -871,9 +830,6 @@ def execute_job(  # noqa: C901
             error_message="Time limit exceeded",
         )
     except Exception:
-        job = get_model_instance(
-            pk=job_pk, app_label=job_app_label, model_name=job_model_name
-        )
         job.update_status(
             status=job.FAILURE,
             stdout=executor.stdout,
@@ -1031,9 +987,8 @@ def retry_task(
     backend: str,
 ):
     """Retries an existing task that was previously provisioned"""
-    job = get_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
-    )
+    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
+    job = model.objects.get(pk=job_pk)
     executor = job.get_executor(backend=backend)
 
     if job.status != job.PROVISIONED:
@@ -1062,9 +1017,8 @@ def deprovision_job(
     job_model_name: str,
     backend: str,
 ):
-    job = get_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
-    )
+    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
+    job = model.objects.get(pk=job_pk)
 
     executor = job.get_executor(backend=backend)
     executor.deprovision()
@@ -1072,17 +1026,15 @@ def deprovision_job(
 
 @shared_task
 def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
-    session = get_model_instance(
-        pk=pk, app_label=app_label, model_name=model_name
-    )
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    session = model.objects.get(pk=pk)
     session.start()
 
 
 @shared_task
 def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
-    session = get_model_instance(
-        pk=pk, app_label=app_label, model_name=model_name
-    )
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    session = model.objects.get(pk=pk)
     session.stop()
 
 
@@ -1235,60 +1187,52 @@ def preload_interactive_algorithms():
 
 
 @acks_late_micro_short_task
+@transaction.atomic
 def add_image_to_component_interface_value(
     *, component_interface_value_pk, upload_session_pk
 ):
-    with transaction.atomic():
-        session = RawImageUploadSession.objects.get(pk=upload_session_pk)
+    from grandchallenge.components.models import ComponentInterfaceValue
 
-        if session.image_set.count() != 1:
-            session.status = RawImageUploadSession.FAILURE
-            session.error_message = (
-                "Image imports should result in a single image"
-            )
-            session.save()
-            return
+    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
 
-        civ = get_model_instance(
-            pk=component_interface_value_pk,
-            app_label="components",
-            model_name="componentinterfacevalue",
-        )
+    if session.image_set.count() != 1:
+        session.status = RawImageUploadSession.FAILURE
+        session.error_message = "Image imports should result in a single image"
+        session.save()
+        return
 
-        civ.image = session.image_set.get()
-        civ.full_clean()
-        civ.save()
+    civ = ComponentInterfaceValue.objects.get(pk=component_interface_value_pk)
 
-        civ.image.update_viewer_groups_permissions()
+    civ.image = session.image_set.get()
+    civ.full_clean()
+    civ.save()
+
+    civ.image.update_viewer_groups_permissions()
 
 
 @acks_late_2xlarge_task
+@transaction.atomic
 def civ_value_to_file(*, civ_pk):
-    with transaction.atomic():
-        civ = get_model_instance(
-            pk=civ_pk,
-            app_label="components",
-            model_name="componentinterfacevalue",
-        )
+    from grandchallenge.components.models import ComponentInterfaceValue
 
-        if civ.value is None:
-            raise RuntimeError("CIV value is None")
+    civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
 
-        civ.file = ContentFile(
-            json.dumps(civ.value).encode("utf-8"),
-            name=Path(civ.interface.relative_path).name,
-        )
-        civ.value = None
-        civ.save()
+    if civ.value is None:
+        raise RuntimeError("CIV value is None")
+
+    civ.file = ContentFile(
+        json.dumps(civ.value).encode("utf-8"),
+        name=Path(civ.interface.relative_path).name,
+    )
+    civ.value = None
+    civ.save()
 
 
 @acks_late_2xlarge_task
 def validate_voxel_values(*, civ_pk):
-    civ = get_model_instance(
-        pk=civ_pk,
-        app_label="components",
-        model_name="componentinterfacevalue",
-    )
+    from grandchallenge.components.models import ComponentInterfaceValue
+
+    civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
 
     first_file = civ.image.files.first()
     if (

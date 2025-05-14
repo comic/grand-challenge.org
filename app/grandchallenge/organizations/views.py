@@ -4,15 +4,19 @@ from django.utils.safestring import mark_safe
 from django.views.generic import DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
+from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.archives.models import Archive
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
-    get_objects_for_user,
+    filter_by_permission,
 )
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.groups.forms import EditorsForm, MembersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.organizations.forms import OrganizationForm
 from grandchallenge.organizations.models import Organization
+from grandchallenge.reader_studies.models import ReaderStudy
 
 
 class OrganizationList(ListView):
@@ -66,37 +70,33 @@ class OrganizationDetail(DetailView):
 
     @property
     def _organization_objects(self):
-        algorithms = (
-            get_objects_for_user(
-                user=self.request.user,
-                perms="algorithms.view_algorithm",
-            )
-            .filter(organizations__in=[self.object])
-            .distinct()
+        algorithms = filter_by_permission(
+            queryset=Algorithm.objects.filter(
+                organizations__in=[self.object]
+            ).distinct(),
+            user=self.request.user,
+            codename="view_algorithm",
         )
-        archives = (
-            get_objects_for_user(
-                user=self.request.user,
-                perms="archives.view_archive",
-            )
-            .filter(organizations__in=[self.object])
-            .distinct()
+        archives = filter_by_permission(
+            queryset=Archive.objects.filter(
+                organizations__in=[self.object]
+            ).distinct(),
+            user=self.request.user,
+            codename="view_archive",
         )
-        challenges = (
-            get_objects_for_user(
-                user=self.request.user,
-                perms="challenges.view_challenge",
-            )
-            .filter(organizations__in=[self.object])
-            .distinct()
+        challenges = filter_by_permission(
+            queryset=Challenge.objects.filter(
+                organizations__in=[self.object]
+            ).distinct(),
+            user=self.request.user,
+            codename="view_challenge",
         )
-        reader_studies = (
-            get_objects_for_user(
-                user=self.request.user,
-                perms="reader_studies.view_readerstudy",
-            )
-            .filter(organizations__in=[self.object])
-            .distinct()
+        reader_studies = filter_by_permission(
+            queryset=ReaderStudy.objects.filter(
+                organizations__in=[self.object]
+            ).distinct(),
+            user=self.request.user,
+            codename="view_readerstudy",
         )
 
         object_list = [

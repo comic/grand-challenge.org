@@ -13,11 +13,12 @@ from django.utils.html import format_html
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from guardian.models import UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
 from stdimage import JPEGField
 
+from grandchallenge.core.guardian import NoGroupPermissionsAllowed
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -246,10 +247,11 @@ class UserProfile(models.Model):
 
 
 class UserProfileUserObjectPermission(UserObjectPermissionBase):
+    # This is used for change_userprofile permission for the user
     content_object = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
 
 
-class UserProfileGroupObjectPermission(GroupObjectPermissionBase):
+class UserProfileGroupObjectPermission(NoGroupPermissionsAllowed):
     content_object = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
 
 

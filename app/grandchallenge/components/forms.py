@@ -27,7 +27,7 @@ from grandchallenge.components.form_fields import (
 )
 from grandchallenge.components.models import CIVData, ComponentInterface
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.evaluation.models import Method
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
@@ -68,10 +68,13 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["user_upload"].queryset = get_objects_for_user(
-            user,
-            "uploads.change_userupload",
-        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+        self.fields["user_upload"].queryset = filter_by_permission(
+            queryset=UserUpload.objects.filter(
+                status=UserUpload.StatusChoices.COMPLETED
+            ),
+            user=user,
+            codename="change_userupload",
+        )
 
         self.fields["creator"].initial = user
 

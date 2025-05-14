@@ -9,6 +9,7 @@ from unittest.mock import patch
 import factory
 import pytest
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.db.models import signals
@@ -296,6 +297,8 @@ class TestObjectPermissionRequiredViews:
         e = EvaluationFactory(time_limit=60)
         u = UserFactory()
         VerificationFactory(user=u, is_verified=True)
+        group = Group.objects.create(name="test-group")
+        group.user_set.add(u)
 
         for view_name, kwargs, permission, obj in [
             (
@@ -365,7 +368,7 @@ class TestObjectPermissionRequiredViews:
 
             assert response.status_code == 403
 
-            assign_perm(permission, u, obj)
+            assign_perm(permission, group, obj)
 
             response = get_view_for_user(
                 client=client,
@@ -379,7 +382,7 @@ class TestObjectPermissionRequiredViews:
 
             assert response.status_code == 200
 
-            remove_perm(permission, u, obj)
+            remove_perm(permission, group, obj)
 
     def test_group_permission_required_views(self, client):
         e = EvaluationFactory(time_limit=60)
@@ -444,7 +447,7 @@ class TestObjectPermissionRequiredViews:
         u = UserFactory()
         p = PhaseFactory()
         m = MethodFactory(phase=p)
-        s = SubmissionFactory(phase=p, creator=u)
+        s = SubmissionFactory(phase=p)
         e = EvaluationFactory(
             method=m,
             submission=s,
@@ -452,6 +455,8 @@ class TestObjectPermissionRequiredViews:
             status=Evaluation.SUCCESS,
             time_limit=s.phase.evaluation_time_limit,
         )
+        group = Group.objects.create(name="test-group")
+        group.user_set.add(u)
 
         for view_name, kwargs, permission, obj in [
             (
@@ -462,7 +467,7 @@ class TestObjectPermissionRequiredViews:
             ),
             ("submission-list", {}, "view_submission", s),
         ]:
-            assign_perm(permission, u, obj)
+            assign_perm(permission, group, obj)
 
             response = get_view_for_user(
                 client=client,
@@ -477,7 +482,7 @@ class TestObjectPermissionRequiredViews:
             assert response.status_code == 200
             assert obj in response.context[-1]["object_list"]
 
-            remove_perm(permission, u, obj)
+            remove_perm(permission, group, obj)
 
             response = get_view_for_user(
                 client=client,
@@ -577,8 +582,11 @@ class TestViewFilters:
             time_limit=c2.phase_set.first().evaluation_time_limit,
         )
 
-        assign_perm("view_method", u, e1.method)
-        assign_perm("view_method", u, e2.method)
+        group = Group.objects.create(name="test-group")
+        group.user_set.add(u)
+
+        assign_perm("view_method", group, e1.method)
+        assign_perm("view_method", group, e2.method)
 
         for view_name, obj, extra_kwargs in [
             ("method-list", e1.method, {"slug": e1.submission.phase.slug}),
@@ -1573,6 +1581,8 @@ def test_ground_truth_permissions(client):
     u = UserFactory()
     gt = EvaluationGroundTruthFactory(phase=phase)
     VerificationFactory(user=u, is_verified=True)
+    group = Group.objects.create(name="test-group")
+    group.user_set.add(u)
 
     for view_name, kwargs, permission, obj in [
         (
@@ -1616,12 +1626,12 @@ def test_ground_truth_permissions(client):
         response = _get_view()
         assert response.status_code == 403
 
-        assign_perm(permission, u, obj)
+        assign_perm(permission, group, obj)
 
         response = _get_view()
         assert response.status_code == 200
 
-        remove_perm(permission, u, obj)
+        remove_perm(permission, group, obj)
 
 
 @pytest.mark.django_db
@@ -2734,6 +2744,10 @@ def test_reschedule_evaluation_with_additional_inputs(
             [0, 1, 3],
             Evaluation.CANCELLED,
         ],  # same number, partially overlapping
+        [
+            [0, 1, 2, 3],
+            Evaluation.VALIDATING_INPUTS,
+        ],  # different number, but covering all the phase interfaces
     ),
 )
 @pytest.mark.django_db

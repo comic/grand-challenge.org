@@ -9,60 +9,94 @@ from guardian.core import ObjectPermissionChecker
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
     filter_by_permission,
-    get_objects_for_group,
-    get_objects_for_user,
 )
-from tests.algorithms_tests.factories import AlgorithmFactory
+from grandchallenge.reader_studies.models import Answer
 from tests.factories import GroupFactory, UserFactory
+from tests.reader_studies_tests.factories import AnswerFactory
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "factory, method",
-    [
-        (GroupFactory, get_objects_for_group),
-        (UserFactory, get_objects_for_user),
-    ],
-)
-def test_get_objects_shortcuts(factory, method):
-    alg = AlgorithmFactory()
-    subject = factory()
+def test_filter_by_permission_not_global():
+    answer = AnswerFactory()
+    user = UserFactory()
+    group = GroupFactory()
 
-    # Add global permission, algorithm should not be included
-    assign_perm("algorithms.view_algorithm", subject)
-    assert method(subject, "algorithms.view_algorithm").count() == 0
+    group.user_set.add(user)
 
-    # Add object level permission, algorithm should be included
-    assign_perm("algorithms.view_algorithm", subject, alg)
-    assert method(subject, "algorithms.view_algorithm").count() == 1
+    permission = "reader_studies.view_answer"
+    codename = permission.split(".")[1]
+
+    assert (
+        filter_by_permission(
+            queryset=Answer.objects.all(), user=user, codename=codename
+        ).count()
+        == 0
+    )
+
+    # Add global permission to group, answer should not be included
+    assign_perm(permission, group)
+    assert (
+        filter_by_permission(
+            queryset=Answer.objects.all(), user=user, codename=codename
+        ).count()
+        == 0
+    )
+
+    # Add object level permission to group, answer should be included
+    assign_perm(permission, group, answer)
+    assert (
+        filter_by_permission(
+            queryset=Answer.objects.all(), user=user, codename=codename
+        ).count()
+        == 1
+    )
+
+    remove_perm(permission, group, answer)
+
+    # Add global permission to user, answer should not be included
+    assign_perm(permission, user)
+    assert (
+        filter_by_permission(
+            queryset=Answer.objects.all(), user=user, codename=codename
+        ).count()
+        == 0
+    )
+
+    # Add object level permission to user, answer should be included
+    assign_perm(permission, user, answer)
+    assert (
+        filter_by_permission(
+            queryset=Answer.objects.all(), user=user, codename=codename
+        ).count()
+        == 1
+    )
 
 
 @pytest.mark.django_db
 def test_permission_list_mixin():
-    alg = AlgorithmFactory()
+    answer = AnswerFactory()
     user = UserFactory()
 
     request = HttpRequest()
     request.user = user
 
     class View(PermissionListMixin, ListView):
-        model = Algorithm
-        permission_required = "algorithms.view_algorithm"
+        model = Answer
+        permission_required = "reader_studies.view_answer"
 
     # Add global permission, algorithm should not be included
-    assign_perm("algorithms.view_algorithm", user)
+    assign_perm("reader_studies.view_answer", user)
     view = View()
     view.request = request
     assert view.get_queryset().count() == 0
 
     # Add object level permission, algorithm should be included
-    assign_perm("algorithms.view_algorithm", user, alg)
+    assign_perm("reader_studies.view_answer", user, answer)
     view = View()
     view.request = request
     assert view.get_queryset().count() == 1
@@ -70,29 +104,29 @@ def test_permission_list_mixin():
 
 @pytest.mark.django_db
 def test_object_permission_required_mixin():
-    alg = AlgorithmFactory()
+    answer = AnswerFactory()
     user = UserFactory()
 
     request = HttpRequest()
     request.user = user
 
     class View(ObjectPermissionRequiredMixin, ListView):
-        model = Algorithm
-        permission_required = "algorithms.view_algorithm"
+        model = Answer
+        permission_required = "reader_studies.view_answer"
         raise_exception = True
 
         def get_permission_object(self):
-            return Algorithm.objects.first()
+            return Answer.objects.first()
 
     # Add global permission, algorithm should not be included
-    assign_perm("algorithms.view_algorithm", user)
+    assign_perm("reader_studies.view_answer", user)
     view = View()
     view.request = request
     with pytest.raises(PermissionDenied):
         view.check_permissions(request)
 
     # Add object level permission, algorithm should be included
-    assign_perm("algorithms.view_algorithm", user, alg)
+    assign_perm("reader_studies.view_answer", user, answer)
     view = View()
     view.request = request
     view.check_permissions(request)
@@ -106,7 +140,7 @@ def test_object_permission_checker_mixin():
     request.user = user
 
     class TestView(ObjectPermissionCheckerMixin, TemplateView):
-        model = Algorithm
+        model = Answer
 
     view = TestView()
     view.request = request
@@ -121,9 +155,9 @@ def test_object_permission_checker_mixin():
 @pytest.mark.django_db
 def test_filter_by_permission():
     user = UserFactory()
-    queryset = Algorithm.objects.all()
-    algorithm = AlgorithmFactory()
-    codename = "view_algorithm"
+    queryset = Answer.objects.all()
+    answer = AnswerFactory()
+    codename = "view_answer"
 
     filtered_queryset = filter_by_permission(
         queryset=queryset, user=user, codename=codename
@@ -131,7 +165,7 @@ def test_filter_by_permission():
     # User does not have permission to view
     assert filtered_queryset.count() == 0
 
-    assign_perm(codename, user, algorithm)
+    assign_perm(codename, user, answer)
     filtered_queryset = filter_by_permission(
         queryset=queryset, user=user, codename=codename
     )
@@ -140,28 +174,28 @@ def test_filter_by_permission():
 
     group = GroupFactory()
     group.user_set.add(user)
-    assign_perm(codename, group, algorithm)
+    assign_perm(codename, group, answer)
     filtered_queryset = filter_by_permission(
         queryset=queryset, user=user, codename=codename
     )
     # Has both user and group permission
     assert filtered_queryset.count() == 1
 
-    remove_perm(codename, user, algorithm)
+    remove_perm(codename, user, answer)
     filtered_queryset = filter_by_permission(
         queryset=queryset, user=user, codename=codename
     )
     # Has group permission
     assert filtered_queryset.count() == 1
 
-    remove_perm(codename, group, algorithm)
+    remove_perm(codename, group, answer)
     filtered_queryset = filter_by_permission(
         queryset=queryset, user=user, codename=codename
     )
     # Has no permission again
     assert filtered_queryset.count() == 0
 
-    assign_perm(codename, group, algorithm)
+    assign_perm(codename, group, answer)
     filtered_queryset = filter_by_permission(
         queryset=queryset, user=user, codename=codename
     )
@@ -179,67 +213,61 @@ def test_filter_by_permission():
 @pytest.mark.django_db
 def test_filter_by_permission_no_user():
     user = UserFactory()
-    queryset = Algorithm.objects.all()
-    algorithm = AlgorithmFactory()
-    codename = "view_algorithm"
+    queryset = Answer.objects.all()
+    answer = AnswerFactory()
+    codename = "view_answer"
 
     filtered_queryset = filter_by_permission(
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # User does not have permission to view
     assert filtered_queryset.count() == 0
 
-    assign_perm(codename, user, algorithm)
+    assign_perm(codename, user, answer)
     filtered_queryset = filter_by_permission(
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
-    # Has user permission, but they're not allowed
-    assert filtered_queryset.count() == 0
+    # Has user permission
+    assert filtered_queryset.count() == 1
 
     group = GroupFactory()
     group.user_set.add(user)
-    assign_perm(codename, group, algorithm)
+    assign_perm(codename, group, answer)
     filtered_queryset = filter_by_permission(
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # Has both user and group permission
     assert filtered_queryset.count() == 1
 
-    remove_perm(codename, user, algorithm)
+    remove_perm(codename, user, answer)
     filtered_queryset = filter_by_permission(
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # Has group permission
     assert filtered_queryset.count() == 1
 
-    remove_perm(codename, group, algorithm)
+    remove_perm(codename, group, answer)
     filtered_queryset = filter_by_permission(
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # Has no permission again
     assert filtered_queryset.count() == 0
 
-    assign_perm(codename, group, algorithm)
+    assign_perm(codename, group, answer)
     filtered_queryset = filter_by_permission(
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # Has group permission again
     assert filtered_queryset.count() == 1
@@ -249,7 +277,6 @@ def test_filter_by_permission_no_user():
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=False,
     )
     # Has no permission again
     assert filtered_queryset.count() == 0
@@ -258,14 +285,14 @@ def test_filter_by_permission_no_user():
 @pytest.mark.django_db
 def test_filter_by_permission_joined():
     user = UserFactory()
-    queryset = Algorithm.objects.all()
-    algorithm1, algorithm2 = AlgorithmFactory(), AlgorithmFactory()
+    queryset = Answer.objects.all()
+    answer1, answer2 = AnswerFactory(), AnswerFactory()
     group = GroupFactory()
     group.user_set.add(user)
-    codename = "view_algorithm"
+    codename = "view_answer"
 
-    assign_perm(codename, group, algorithm1)
-    assign_perm(codename, user, algorithm2)
+    assign_perm(codename, group, answer1)
+    assign_perm(codename, user, answer2)
 
     filtered_queryset = filter_by_permission(
         queryset=queryset, user=user, codename=codename
@@ -273,38 +300,24 @@ def test_filter_by_permission_joined():
     # User has permission to view both
     assert filtered_queryset.count() == 2
     assert {e.pk for e in filtered_queryset} == {
-        algorithm1.pk,
-        algorithm2.pk,
-    }
-
-    filtered_queryset = filter_by_permission(
-        queryset=queryset,
-        user=user,
-        codename=codename,
-        accept_user_perms=False,
-    )
-    # User has permission to view both, but only group considered
-    assert filtered_queryset.count() == 1
-    assert {e.pk for e in filtered_queryset} == {
-        algorithm1.pk,
+        answer1.pk,
+        answer2.pk,
     }
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("accept_user_perms", (True, False))
-def test_filter_by_global_permission(accept_user_perms):
+def test_filter_by_global_permission():
     user = UserFactory()
-    queryset = Algorithm.objects.all()
-    _ = AlgorithmFactory()
-    codename = "view_algorithm"
-    perm = f"algorithms.{codename}"
+    queryset = Answer.objects.all()
+    _ = AnswerFactory()
+    codename = "view_answer"
+    perm = f"reader_studies.{codename}"
 
     assign_perm(perm, user)
     filtered_queryset = filter_by_permission(
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=accept_user_perms,
     )
     # User global permissions shouldn't count
     assert filtered_queryset.count() == 0
@@ -316,25 +329,22 @@ def test_filter_by_global_permission(accept_user_perms):
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=accept_user_perms,
     )
     # Group global permissions shouldn't count
     assert filtered_queryset.count() == 0
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("accept_user_perms", (True, False))
-def test_filter_with_superuser(accept_user_perms):
+def test_filter_with_superuser():
     user = UserFactory(is_superuser=True)
-    queryset = Algorithm.objects.all()
-    _ = AlgorithmFactory()
-    codename = "view_algorithm"
+    queryset = Answer.objects.all()
+    _ = AnswerFactory()
+    codename = "view_answer"
 
     filtered_queryset = filter_by_permission(
         queryset=queryset,
         user=user,
         codename=codename,
-        accept_user_perms=accept_user_perms,
     )
     # Superusers see everything
     assert filtered_queryset.count() == 1
@@ -343,11 +353,11 @@ def test_filter_with_superuser(accept_user_perms):
 @pytest.mark.django_db
 def test_works_with_anonymous_user():
     anon = get_anonymous_user()
-    queryset = Algorithm.objects.all()
-    algorithm = AlgorithmFactory()
-    codename = "view_algorithm"
+    queryset = Answer.objects.all()
+    answer = AnswerFactory()
+    codename = "view_answer"
 
-    assign_perm(codename, anon, algorithm)
+    assign_perm(codename, anon, answer)
 
     filtered_queryset = filter_by_permission(
         queryset=queryset, user=anon, codename=codename
@@ -363,18 +373,18 @@ def test_works_with_anonymous_user():
 @pytest.mark.django_db
 def test_filter_ordering():
     user = UserFactory()
-    queryset = Algorithm.objects.all().order_by("created")
-    algorithm1, algorithm2 = AlgorithmFactory.create_batch(2)
-    codename = "view_algorithm"
+    queryset = Answer.objects.all().order_by("created")
+    answer1, answer2 = AnswerFactory.create_batch(2)
+    codename = "view_answer"
 
-    algorithm1.created -= timedelta(minutes=10)
-    algorithm1.save()
+    answer1.created -= timedelta(minutes=10)
+    answer1.save()
 
     group = GroupFactory()
     group.user_set.add(user)
 
-    assign_perm(codename, group, algorithm1)
-    assign_perm(codename, user, algorithm2)
+    assign_perm(codename, group, answer1)
+    assign_perm(codename, user, answer2)
 
     filtered_queryset = filter_by_permission(
         queryset=queryset, user=user, codename=codename
@@ -382,15 +392,15 @@ def test_filter_ordering():
     # User has permission to view both but ordering must be maintained
     assert filtered_queryset.count() == 2
     assert [e.pk for e in filtered_queryset] == [
-        algorithm1.pk,
-        algorithm2.pk,
+        answer1.pk,
+        answer2.pk,
     ]
 
-    remove_perm(codename, group, algorithm1)
-    remove_perm(codename, user, algorithm2)
+    remove_perm(codename, group, answer1)
+    remove_perm(codename, user, answer2)
 
-    assign_perm(codename, group, algorithm2)
-    assign_perm(codename, user, algorithm1)
+    assign_perm(codename, group, answer2)
+    assign_perm(codename, user, answer1)
 
     filtered_queryset = filter_by_permission(
         queryset=queryset,
@@ -400,6 +410,6 @@ def test_filter_ordering():
     # User has permission to view both but ordering must be maintained
     assert filtered_queryset.count() == 2
     assert [e.pk for e in filtered_queryset] == [
-        algorithm1.pk,
-        algorithm2.pk,
+        answer1.pk,
+        answer2.pk,
     ]

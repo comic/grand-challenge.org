@@ -2,6 +2,7 @@ import json
 from unittest.mock import patch
 
 import pytest
+from django.contrib.auth.models import Group
 from django.test import override_settings
 from guardian.shortcuts import assign_perm
 from requests import put
@@ -554,9 +555,13 @@ def test_algorithm_image_download_url(
     client, django_capture_on_commit_callbacks, algorithm_io_image, rf
 ):
     user1, user2 = UserFactory.create_batch(2)
+    group = Group.objects.create(name="test-group")
+    group.user_set.add(user1)
+
     with django_capture_on_commit_callbacks():
         ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
-    assign_perm("algorithms.download_algorithmimage", user1, ai)
+
+    assign_perm("algorithms.download_algorithmimage", group, ai)
 
     serialized_ai = AlgorithmImageSerializer(
         ai, context={"request": rf.get("/foo", secure=True)}
@@ -582,9 +587,13 @@ def test_algorithm_model_download_url(
     client, django_capture_on_commit_callbacks, algorithm_io_image, rf
 ):
     user1, user2 = UserFactory.create_batch(2)
+    group = Group.objects.create(name="test-group")
+    group.user_set.add(user1)
+
     with django_capture_on_commit_callbacks():
         model = AlgorithmModelFactory(model__from_path=algorithm_io_image)
-    assign_perm("algorithms.download_algorithmmodel", user1, model)
+
+    assign_perm("algorithms.download_algorithmmodel", group, model)
 
     serialized_model = AlgorithmModelSerializer(
         model, context={"request": rf.get("/foo", secure=True)}

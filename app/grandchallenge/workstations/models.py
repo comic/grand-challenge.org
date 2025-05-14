@@ -30,6 +30,10 @@ from grandchallenge.components.tasks import (
     start_service,
     stop_service,
 )
+from grandchallenge.core.guardian import (
+    NoGroupPermissionsAllowed,
+    NoUserPermissionsAllowed,
+)
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
@@ -37,10 +41,8 @@ from grandchallenge.core.storage import (
     public_s3_storage,
 )
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.reader_studies.models import (
+from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmChoices,
-    Question,
-    ReaderStudy,
 )
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.emails import send_new_feedback_email_to_staff
@@ -174,7 +176,7 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         return user.groups.remove(self.users_group)
 
 
-class WorkstationUserObjectPermission(UserObjectPermissionBase):
+class WorkstationUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Workstation, on_delete=models.CASCADE)
 
 
@@ -282,7 +284,7 @@ class WorkstationImage(UUIDModel, ComponentImage):
         return WorkstationImage.objects.filter(workstation=self.workstation)
 
 
-class WorkstationImageUserObjectPermission(UserObjectPermissionBase):
+class WorkstationImageUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(
         WorkstationImage, on_delete=models.CASCADE
     )
@@ -681,10 +683,12 @@ class Session(FieldChangeMixin, UUIDModel):
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):
+    # This is used for view_ and change_ permissions for the creator
     content_object = models.ForeignKey(Session, on_delete=models.CASCADE)
 
 
 class SessionGroupObjectPermission(GroupObjectPermissionBase):
+    # TODO workstation editors get view_ and change_ permission on the Session
     content_object = models.ForeignKey(Session, on_delete=models.CASCADE)
 
 
@@ -721,10 +725,11 @@ class Feedback(UUIDModel):
 
 
 class FeedbackUserObjectPermission(UserObjectPermissionBase):
+    # This is used for view_feedback permission for the creator
     content_object = models.ForeignKey(Feedback, on_delete=models.CASCADE)
 
 
-class FeedbackGroupObjectPermission(GroupObjectPermissionBase):
+class FeedbackGroupObjectPermission(NoGroupPermissionsAllowed):
     content_object = models.ForeignKey(Feedback, on_delete=models.CASCADE)
 
 
@@ -740,7 +745,7 @@ class SessionCost(UUIDModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     reader_studies = models.ManyToManyField(
-        to=ReaderStudy,
+        to="reader_studies.ReaderStudy",
         through="SessionCostReaderStudy",
         related_name="session_costs",
         blank=True,
@@ -768,6 +773,8 @@ class SessionCost(UUIDModel):
     )
 
     def save(self, *args, **kwargs) -> None:
+        from grandchallenge.reader_studies.models import Question
+
         adding = self._state.adding
 
         if adding:
@@ -802,7 +809,9 @@ class SessionCost(UUIDModel):
 
 class SessionCostReaderStudy(models.Model):
     session_cost = models.ForeignKey(SessionCost, on_delete=models.CASCADE)
-    reader_study = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
+    reader_study = models.ForeignKey(
+        "reader_studies.ReaderStudy", on_delete=models.CASCADE
+    )
 
     class Meta:
         constraints = [

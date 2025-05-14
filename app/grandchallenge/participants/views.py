@@ -114,7 +114,6 @@ class RegistrationRequestList(
             queryset=self.request.challenge.registration_questions.all(),
             user=self.request.user,
             codename="view_registrationquestion",
-            accept_user_perms=False,
         )
 
 

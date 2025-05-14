@@ -45,6 +45,7 @@ from grandchallenge.components.schemas import (
     GPUTypeChoices,
     get_default_gpu_type_choices,
 )
+from grandchallenge.core.guardian import NoUserPermissionsAllowed
 from grandchallenge.core.models import (
     FieldChangeMixin,
     TitleSlugDescriptionModel,
@@ -1371,7 +1372,7 @@ class PhaseEvaluationOutput(CheckForOverlappingSocketsMixin, models.Model):
         ]
 
 
-class PhaseUserObjectPermission(UserObjectPermissionBase):
+class PhaseUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Phase, on_delete=models.CASCADE)
 
 
@@ -1434,7 +1435,7 @@ class Method(UUIDModel, ComponentImage):
         return Method.objects.filter(phase=self.phase)
 
 
-class MethodUserObjectPermission(UserObjectPermissionBase):
+class MethodUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Method, on_delete=models.CASCADE)
 
 
@@ -1470,7 +1471,7 @@ class Submission(FieldChangeMixin, UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    phase = models.ForeignKey(Phase, on_delete=models.PROTECT, null=True)
+    phase = models.ForeignKey(Phase, on_delete=models.PROTECT)
     algorithm_image = models.ForeignKey(
         AlgorithmImage, null=True, on_delete=models.PROTECT
     )
@@ -1696,12 +1697,15 @@ class Submission(FieldChangeMixin, UUIDModel):
 
     @cached_property
     def has_matching_algorithm_interfaces(self):
-        return {*self.phase.algorithm_interfaces.all()} == {
-            *self.algorithm_image.algorithm.interfaces.all()
-        }
+        algorithm_interfaces = set(
+            self.algorithm_image.algorithm.interfaces.all()
+        )
+        phase_algorithm_interfaces = set(self.phase.algorithm_interfaces.all())
+        return phase_algorithm_interfaces <= algorithm_interfaces
 
 
 class SubmissionUserObjectPermission(UserObjectPermissionBase):
+    # This is used for view_submission permission for the creator
     content_object = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
 
@@ -1778,7 +1782,7 @@ class EvaluationGroundTruth(Tarball):
         )
 
 
-class EvaluationGroundTruthUserObjectPermission(UserObjectPermissionBase):
+class EvaluationGroundTruthUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(
         EvaluationGroundTruth, on_delete=models.CASCADE
     )
@@ -1889,11 +1893,18 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         on_delete=models.SET_NULL,
         related_name="claimed_evaluations",
     )
+    claimed_at = models.DateTimeField(null=True)
 
     objects = EvaluationManager.as_manager()
 
     class Meta(UUIDModel.Meta, ComponentJob.Meta):
         permissions = [("claim_evaluation", "Can claim evaluation")]
+        ordering = ("-created",)
+        indexes = [
+            *ComponentJob.Meta.indexes,
+            models.Index(fields=["created"]),
+            models.Index(fields=["submission", "published", "status", "rank"]),
+        ]
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -2144,17 +2155,17 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         )
 
 
-class EvaluationUserObjectPermission(UserObjectPermissionBase):
+class EvaluationUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
-
-    def save(self, *args, **kwargs):
-        raise RuntimeError(
-            "User permissions should not be assigned for this model"
-        )
 
 
 class EvaluationGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
+
+    class Meta(GroupObjectPermissionBase.Meta):
+        indexes = [
+            models.Index(fields=["group", "permission"]),
+        ]
 
 
 class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):
