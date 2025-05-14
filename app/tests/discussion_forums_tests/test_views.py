@@ -3,7 +3,7 @@ import pytest
 from grandchallenge.discussion_forums.models import (
     ForumPost,
     ForumTopic,
-    TopicKindChoices,
+    ForumTopicKindChoices,
 )
 from tests.discussion_forums_tests.factories import (
     ForumFactory,
@@ -31,7 +31,7 @@ def test_topic_create(client):
             "forum": forum.pk,
             "creator": user.pk,
             "subject": "First topic",
-            "kind": TopicKindChoices.DEFAULT,
+            "kind": ForumTopicKindChoices.DEFAULT,
             "content": "Some post content",
         },
     )
@@ -43,7 +43,7 @@ def test_topic_create(client):
     topic = ForumTopic.objects.first()
     assert topic.forum == forum
     assert topic.creator == user
-    assert topic.kind == TopicKindChoices.DEFAULT
+    assert topic.kind == ForumTopicKindChoices.DEFAULT
     assert topic.subject == "First topic"
 
     post = ForumPost.objects.first()

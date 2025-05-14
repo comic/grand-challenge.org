@@ -1,6 +1,6 @@
 from django.db import migrations
 
-from grandchallenge.discussion_forums.models import TopicKindChoices
+from grandchallenge.discussion_forums.models import ForumTopicKindChoices
 
 
 def migrate_challenge_forums(apps, schema_editor):
@@ -12,9 +12,9 @@ def migrate_challenge_forums(apps, schema_editor):
     ForumPost = apps.get_model("discussion_forums", "ForumPost")  # noqa: N806
 
     topic_type_matching_dict = {
-        0: TopicKindChoices.DEFAULT,
-        1: TopicKindChoices.STICKY,
-        2: TopicKindChoices.ANNOUNCE,
+        0: ForumTopicKindChoices.DEFAULT,
+        1: ForumTopicKindChoices.STICKY,
+        2: ForumTopicKindChoices.ANNOUNCE,
     }
 
     for challenge in Challenge.objects.all():

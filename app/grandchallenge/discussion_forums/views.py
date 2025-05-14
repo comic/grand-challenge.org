@@ -9,7 +9,7 @@ from grandchallenge.core.guardian import (
 from grandchallenge.discussion_forums.forms import ForumTopicForm
 from grandchallenge.discussion_forums.models import (
     ForumTopic,
-    TopicKindChoices,
+    ForumTopicKindChoices,
 )
 from grandchallenge.subdomains.utils import reverse
 
@@ -32,10 +32,10 @@ class ForumTopicListView(PermissionListMixin, ListView):
         context.update(
             {
                 "announcements": self.object_list.filter(
-                    kind=TopicKindChoices.ANNOUNCE
+                    kind=ForumTopicKindChoices.ANNOUNCE
                 ),
                 "default_topics": self.object_list.exclude(
-                    kind=TopicKindChoices.ANNOUNCE
+                    kind=ForumTopicKindChoices.ANNOUNCE
                 ),
                 "forum": self.forum,
             }

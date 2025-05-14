@@ -1,7 +1,7 @@
 import pytest
 
 from grandchallenge.discussion_forums.forms import ForumTopicForm
-from grandchallenge.discussion_forums.models import TopicKindChoices
+from grandchallenge.discussion_forums.models import ForumTopicKindChoices
 from tests.factories import ChallengeFactory, UserFactory
 
 
@@ -23,7 +23,10 @@ def test_topic_form_presets():
     )
 
     assert participant_form.fields["kind"].choices == [
-        (TopicKindChoices.DEFAULT.name, TopicKindChoices.DEFAULT.label)
+        (
+            ForumTopicKindChoices.DEFAULT.name,
+            ForumTopicKindChoices.DEFAULT.label,
+        )
     ]
 
     admin_form = ForumTopicForm(
@@ -35,7 +38,16 @@ def test_topic_form_presets():
     assert admin_form.fields["forum"].initial == challenge.discussion_forum
 
     assert admin_form.fields["kind"].choices == [
-        (TopicKindChoices.DEFAULT.name, TopicKindChoices.DEFAULT.label),
-        (TopicKindChoices.STICKY.name, TopicKindChoices.STICKY.label),
-        (TopicKindChoices.ANNOUNCE.name, TopicKindChoices.ANNOUNCE.label),
+        (
+            ForumTopicKindChoices.DEFAULT.name,
+            ForumTopicKindChoices.DEFAULT.label,
+        ),
+        (
+            ForumTopicKindChoices.STICKY.name,
+            ForumTopicKindChoices.STICKY.label,
+        ),
+        (
+            ForumTopicKindChoices.ANNOUNCE.name,
+            ForumTopicKindChoices.ANNOUNCE.label,
+        ),
     ]

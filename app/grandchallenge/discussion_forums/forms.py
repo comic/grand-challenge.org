@@ -8,7 +8,7 @@ from grandchallenge.discussion_forums.models import (
     Forum,
     ForumPost,
     ForumTopic,
-    TopicKindChoices,
+    ForumTopicKindChoices,
 )
 
 
@@ -49,7 +49,10 @@ class ForumTopicForm(SaveFormInitMixin, ModelForm):
             "discussion_forums.create_sticky_and_announcement_topic", forum
         ):
             self.fields["kind"].choices = [
-                (TopicKindChoices.DEFAULT.name, TopicKindChoices.DEFAULT.label)
+                (
+                    ForumTopicKindChoices.DEFAULT.name,
+                    ForumTopicKindChoices.DEFAULT.label,
+                )
             ]
 
     def save(self, commit=True):

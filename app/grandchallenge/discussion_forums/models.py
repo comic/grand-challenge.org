@@ -11,7 +11,7 @@ from grandchallenge.core.models import UUIDModel
 from grandchallenge.subdomains.utils import reverse
 
 
-class TopicKindChoices(models.TextChoices):
+class ForumTopicKindChoices(models.TextChoices):
     DEFAULT = "DEFAULT", "Default topic"
     STICKY = "STICKY", "Sticky topic"
     ANNOUNCE = "ANNOUNCE", "Announcement topic"
@@ -53,7 +53,7 @@ class ForumTopic(UUIDModel):
     subject = models.CharField(max_length=255)
     slug = AutoSlugField(populate_from="subject", max_length=64)
 
-    TopicKindChoices = TopicKindChoices
+    TopicKindChoices = ForumTopicKindChoices
     kind = models.CharField(
         max_length=8,
         choices=TopicKindChoices.choices,
@@ -83,7 +83,7 @@ class ForumTopic(UUIDModel):
         unique_together = ("slug", "forum")
         constraints = [
             models.CheckConstraint(
-                check=models.Q(kind__in=TopicKindChoices.values),
+                check=models.Q(kind__in=ForumTopicKindChoices.values),
                 name="valid_topic_kind",
             )
         ]
@@ -140,11 +140,11 @@ class ForumTopic(UUIDModel):
 
     @property
     def is_announcement(self):
-        return self.kind == TopicKindChoices.ANNOUNCE
+        return self.kind == ForumTopicKindChoices.ANNOUNCE
 
     @property
     def is_sticky(self):
-        return self.kind == TopicKindChoices.STICKY
+        return self.kind == ForumTopicKindChoices.STICKY
 
     @property
     def last_post(self):
