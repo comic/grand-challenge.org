@@ -5,11 +5,10 @@ from datetime import timedelta
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import OperationalError, transaction
 from django.db.models import Case, IntegerField, Value, When
 from django.db.transaction import on_commit
 from django.utils.timezone import now
-from psycopg.errors import LockNotAvailable
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import AlgorithmModel, Job
@@ -18,11 +17,11 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
+from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
 
@@ -304,7 +303,7 @@ def handle_failed_jobs(*, evaluation_pk):
     ).select_for_update(skip_locked=True).update(status=Job.CANCELLED)
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAvailable,))
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def set_evaluation_inputs(*, evaluation_pk):
     """
@@ -324,6 +323,9 @@ def set_evaluation_inputs(*, evaluation_pk):
     """
     Job = apps.get_model(  # noqa: N806
         app_label="algorithms", model_name="Job"
+    )
+    Evaluation = apps.get_model(  # noqa: N806
+        app_label="evaluation", model_name="Evaluation"
     )
 
     if AlgorithmModel.objects.filter(
@@ -349,9 +351,15 @@ def set_evaluation_inputs(*, evaluation_pk):
         logger.info("Nothing to do: the algorithm has pending jobs.")
         return
 
-    evaluation = lock_model_instance(
-        pk=evaluation_pk, app_label="evaluation", model_name="Evaluation"
-    )
+    evaluation_queryset = Evaluation.objects.filter(
+        pk=evaluation_pk
+    ).select_for_update(nowait=True)
+
+    try:
+        # Acquire lock
+        evaluation = evaluation_queryset.get()
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
 
     if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
         logger.info(
@@ -384,7 +392,7 @@ def set_evaluation_inputs(*, evaluation_pk):
         evaluation.input_prefixes = {
             str(o): f"{j}/output/" for o, j in output_to_job.items()
         }
-        evaluation.status = evaluation.PENDING
+        evaluation.status = Evaluation.PENDING
         evaluation.save()
 
         on_commit(evaluation.execute)
@@ -427,7 +435,9 @@ def filter_by_creators_best(*, evaluations, ranks):
 
 
 # Use 2xlarge for memory use
-@acks_late_2xlarge_task(retry_on=(LockNotAvailable,), delayed_retry=False)
+@acks_late_2xlarge_task(
+    retry_on=(LockNotAcquiredException,), delayed_retry=False
+)
 @transaction.atomic
 def calculate_ranks(*, phase_pk: uuid.UUID):
     Phase = apps.get_model(  # noqa: N806
@@ -439,17 +449,20 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
 
     phase = Phase.objects.get(pk=phase_pk)
 
-    # Acquire locks
-    evaluations = list(
-        Evaluation.objects.filter(
-            submission__phase=phase,
-            status=Evaluation.SUCCESS,
+    try:
+        # Acquire locks
+        evaluations = list(
+            Evaluation.objects.filter(
+                submission__phase=phase,
+                status=Evaluation.SUCCESS,
+            )
+            .select_for_update(nowait=True, of=("self",))
+            .order_by("-created")
+            .select_related("submission__creator", "submission__phase")
+            .prefetch_related("outputs__interface")
         )
-        .select_for_update(nowait=True, of=("self",))
-        .order_by("-created")
-        .select_related("submission__creator", "submission__phase")
-        .prefetch_related("outputs__interface")
-    )
+    except OperationalError as error:
+        raise LockNotAcquiredException from error
 
     valid_evaluations = [
         e
