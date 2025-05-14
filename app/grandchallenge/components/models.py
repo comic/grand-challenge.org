@@ -1937,11 +1937,14 @@ class ComponentJobUtilization(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    archive = models.ForeignKey(
-        "archives.Archive", null=True, on_delete=models.SET_NULL
+    phase = models.ForeignKey(
+        "evaluation.Phase", null=True, on_delete=models.SET_NULL
     )
     challenge = models.ForeignKey(
         "challenges.Challenge", null=True, on_delete=models.SET_NULL
+    )
+    archive = models.ForeignKey(
+        "archives.Archive", null=True, on_delete=models.SET_NULL
     )
     algorithm_image = models.ForeignKey(
         "algorithms.AlgorithmImage", null=True, on_delete=models.SET_NULL

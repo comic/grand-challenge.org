@@ -2193,6 +2193,7 @@ class EvaluationUtilization(ComponentJobUtilization):
     def save(self, *args, **kwargs) -> None:
         if self._state.adding:
             self.creator = self.evaluation.submission.creator
+            self.phase = self.evaluation.submission.phase
             self.archive = self.evaluation.submission.phase.archive
             self.challenge = self.evaluation.submission.phase.challenge
             self.algorithm_image = self.evaluation.submission.algorithm_image

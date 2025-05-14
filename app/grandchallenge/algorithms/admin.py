@@ -236,7 +236,7 @@ class JobUtilizationAdmin(admin.ModelAdmin):
         "creator",
         "duration",
         "compute_cost_euro_millicents",
-        "archive",
+        "phase",
         "challenge",
         "algorithm_image",
         "algorithm",
@@ -245,6 +245,7 @@ class JobUtilizationAdmin(admin.ModelAdmin):
         "creator__username",
         "pk",
         "job__pk",
+        "phase__slug",
         "challenge__short_name",
     )
 
