@@ -16,7 +16,7 @@ from grandchallenge.subdomains.utils import reverse
 
 class ForumTopicListView(PermissionListMixin, ListView):
     model = ForumTopic
-    permission_required = "discussion_forums.view_topic"
+    permission_required = "discussion_forums.view_forumtopic"
     queryset = ForumTopic.objects.select_related("forum")
 
     @cached_property
@@ -69,7 +69,7 @@ class ForumTopicCreate(ObjectPermissionRequiredMixin, CreateView):
 
 class ForumTopicDetail(ObjectPermissionRequiredMixin, DetailView):
     model = ForumTopic
-    permission_required = "discussion_forums.view_topic"
+    permission_required = "discussion_forums.view_forumtopic"
     raise_exception = True
 
     def get_object(self, queryset=None):
@@ -87,7 +87,7 @@ class ForumTopicDetail(ObjectPermissionRequiredMixin, DetailView):
 
 class ForumTopicDelete(ObjectPermissionRequiredMixin, DeleteView):
     model = ForumTopic
-    permission_required = "discussion_forums.delete_topic"
+    permission_required = "discussion_forums.delete_forumtopic"
     raise_exception = True
     success_message = "Successfully deleted topic."
 

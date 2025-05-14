@@ -103,12 +103,12 @@ class ForumTopic(UUIDModel):
     def assign_permissions(self):
         # challenge admins and participants can see this topic and add posts to it
         assign_perm(
-            "discussion_forums.view_topic",
+            "discussion_forums.view_forumtopic",
             self.forum.parent_object.admins_group,
             self,
         )
         assign_perm(
-            "discussion_forums.view_topic",
+            "discussion_forums.view_forumtopic",
             self.forum.parent_object.participants_group,
             self,
         )
@@ -124,7 +124,7 @@ class ForumTopic(UUIDModel):
         )
         # only challenge admins can delete this topic
         assign_perm(
-            "discussion_forums.delete_topic",
+            "discussion_forums.delete_forumtopic",
             self.forum.parent_object.admins_group,
             self,
         )
