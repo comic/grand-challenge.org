@@ -11,7 +11,11 @@ from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.files.base import ContentFile
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
-from grandchallenge.algorithms.models import AlgorithmImage, Job
+from grandchallenge.algorithms.models import (
+    AlgorithmImage,
+    Job,
+    JobUtilization,
+)
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
     INTERFACE_TYPE_JSON_EXAMPLES,
@@ -78,18 +82,18 @@ def test_duration():
     j = AlgorithmJobFactory(time_limit=60)
     _ = EvaluationFactory(time_limit=60)
 
-    jbs = Job.objects.all()
-    assert jbs[0].job_utilization.duration is None
-    assert Job.objects.average_duration() is None
+    job_utilizations = JobUtilization.objects.all()
+    assert job_utilizations[0].duration is None
+    assert JobUtilization.objects.average_duration() is None
 
     j.update_utilization(duration=timedelta(minutes=5))
 
-    jbs = Job.objects.all()
-    assert jbs[0].job_utilization.duration == timedelta(minutes=5)
-    assert Job.objects.average_duration() == timedelta(minutes=5)
+    job_utilizations = JobUtilization.objects.all()
+    assert job_utilizations[0].duration == timedelta(minutes=5)
+    assert JobUtilization.objects.average_duration() == timedelta(minutes=5)
 
     _ = AlgorithmJobFactory(time_limit=60)
-    assert Job.objects.average_duration() == timedelta(minutes=5)
+    assert JobUtilization.objects.average_duration() == timedelta(minutes=5)
 
 
 @pytest.mark.django_db
@@ -97,8 +101,8 @@ def test_average_duration_filtering():
     j1, j2 = AlgorithmJobFactory.create_batch(2, time_limit=60)
     j1.update_utilization(duration=timedelta(minutes=5))
     j2.update_utilization(duration=timedelta(minutes=10))
-    assert Job.objects.average_duration() == timedelta(minutes=7.5)
-    assert Job.objects.filter(
+    assert JobUtilization.objects.average_duration() == timedelta(minutes=7.5)
+    assert JobUtilization.objects.filter(
         algorithm_image=j1.algorithm_image
     ).average_duration() == timedelta(minutes=5)
 

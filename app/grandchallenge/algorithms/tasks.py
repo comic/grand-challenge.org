@@ -320,13 +320,13 @@ def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def update_algorithm_average_duration(*, algorithm_pk):
-    from grandchallenge.algorithms.models import Job
+    from grandchallenge.algorithms.models import Job, JobUtilization
 
     algorithm = lock_model_instance(
         app_label="algorithms", model_name="algorithm", pk=algorithm_pk
     )
 
-    algorithm.average_duration = Job.objects.filter(
-        algorithm_image__algorithm=algorithm, status=Job.SUCCESS
+    algorithm.average_duration = JobUtilization.objects.filter(
+        algorithm=algorithm, job__status=Job.SUCCESS
     ).average_duration()
     algorithm.save(update_fields=("average_duration",))

@@ -1533,12 +1533,6 @@ class ComponentInterfaceValue(models.Model):
 
 
 class ComponentJobManager(models.QuerySet):
-    def average_duration(self):
-        """Calculate the average duration that completed jobs ran for"""
-        return self.exclude(job_utilization__duration=None).aggregate(
-            duration__avg=Avg("job_utilization__duration")
-        )["duration__avg"]
-
     def total_duration(self):
         return self.exclude(job_utilization__duration=None).aggregate(
             duration__sum=Sum("job_utilization__duration")
@@ -1948,6 +1942,14 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         ]
 
 
+class ComponentJobUtilizationManager(models.QuerySet):
+    def average_duration(self):
+        """Calculate the average duration that completed jobs ran for"""
+        return self.exclude(duration=None).aggregate(
+            duration__avg=Avg("duration")
+        )["duration__avg"]
+
+
 class ComponentJobUtilization(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
@@ -1969,6 +1971,8 @@ class ComponentJobUtilization(UUIDModel):
     )
     duration = models.DurationField(null=True)
     compute_cost_euro_millicents = models.PositiveIntegerField(null=True)
+
+    objects = ComponentJobUtilizationManager.as_manager()
 
     class Meta:
         abstract = True
