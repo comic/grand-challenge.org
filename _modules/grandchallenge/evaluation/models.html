@@ -58,7 +58,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.timezone</span><span class="w"> </span><span class="kn">import</span> <span class="n">localtime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoSlugField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">guardian.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">GroupObjectPermissionBase</span><span class="p">,</span> <span class="n">UserObjectPermissionBase</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">guardian.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.algorithms.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -83,7 +82,11 @@
     <span class="n">GPUTypeChoices</span><span class="p">,</span>
     <span class="n">get_default_gpu_type_choices</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.guardian</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoUserPermissionsAllowed</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.guardian</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GroupObjectPermissionBase</span><span class="p">,</span>
+    <span class="n">NoUserPermissionsAllowed</span><span class="p">,</span>
+    <span class="n">UserObjectPermissionBase</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">FieldChangeMixin</span><span class="p">,</span>
     <span class="n">TitleSlugDescriptionModel</span><span class="p">,</span>
@@ -2211,11 +2214,6 @@
 
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Evaluation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
-
-    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
-        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;group&quot;</span><span class="p">,</span> <span class="s2">&quot;permission&quot;</span><span class="p">]),</span>
-        <span class="p">]</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">CombinedLeaderboard</span><span class="p">(</span><span class="n">TitleSlugDescriptionModel</span><span class="p">,</span> <span class="n">UUIDModel</span><span class="p">):</span>
