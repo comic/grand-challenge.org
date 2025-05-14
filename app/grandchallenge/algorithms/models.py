@@ -21,7 +21,6 @@ from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django_extensions.db.models import TitleSlugDescriptionModel
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from stdimage import JPEGField
 
@@ -39,7 +38,11 @@ from grandchallenge.components.models import (  # noqa: F401
     Tarball,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
-from grandchallenge.core.guardian import NoUserPermissionsAllowed
+from grandchallenge.core.guardian import (
+    GroupObjectPermissionBase,
+    NoUserPermissionsAllowed,
+    UserObjectPermissionBase,
+)
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,

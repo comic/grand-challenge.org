@@ -8,12 +8,14 @@ from django.core.validators import (
 from django.db import models
 from django.db.models import PositiveSmallIntegerField
 from django_extensions.db.models import TitleSlugDescriptionModel
-from guardian.models import UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.core.fields import HexColorField
-from grandchallenge.core.guardian import NoGroupPermissionsAllowed
+from grandchallenge.core.guardian import (
+    NoGroupPermissionsAllowed,
+    UserObjectPermissionBase,
+)
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse
