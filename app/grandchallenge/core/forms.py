@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.forms import CharField, ModelForm
 
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstations.models import Workstation
 
@@ -19,10 +19,11 @@ class SaveFormInitMixin:
 class WorkstationUserFilterMixin:
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["workstation"].queryset = get_objects_for_user(
-            user,
-            "workstations.view_workstation",
-        ).order_by("title")
+        self.fields["workstation"].queryset = filter_by_permission(
+            queryset=Workstation.objects.order_by("title"),
+            user=user,
+            codename="view_workstation",
+        )
         self.fields["workstation"].initial = Workstation.objects.get(
             slug=settings.DEFAULT_WORKSTATION_SLUG
         )

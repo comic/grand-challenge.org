@@ -12,7 +12,9 @@ from grandchallenge.components.backends.docker_client import (
     inspect_container,
 )
 from grandchallenge.components.tasks import stop_expired_services
-from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
+from grandchallenge.reader_studies.interactive_algorithms import (
+    InteractiveAlgorithmChoices,
+)
 from grandchallenge.workstations.models import (
     Session,
     SessionCost,

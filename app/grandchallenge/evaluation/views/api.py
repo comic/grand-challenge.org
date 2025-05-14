@@ -13,7 +13,7 @@ from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.core.guardian import get_objects_for_user
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.serializers import (
@@ -37,12 +37,11 @@ class CanClaimEvaluationFilter(BaseFilterBackend):
     """Returns only evaluations for which the user has 'claim_evaluation' permission and which are in pending state"""
 
     def filter_queryset(self, request, queryset, view):
-        return get_objects_for_user(
-            request.user,
-            "evaluation.claim_evaluation",
-            queryset,
-            accept_global_perms=False,
-        ).filter(status=Evaluation.PENDING)
+        return filter_by_permission(
+            queryset=queryset.filter(status=Evaluation.PENDING),
+            user=request.user,
+            codename="claim_evaluation",
+        )
 
 
 class EvaluationViewSet(ReadOnlyModelViewSet):

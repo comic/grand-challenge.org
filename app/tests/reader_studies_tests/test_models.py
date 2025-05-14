@@ -10,10 +10,12 @@ from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,
 )
+from grandchallenge.reader_studies.interactive_algorithms import (
+    InteractiveAlgorithmChoices,
+)
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
-    InteractiveAlgorithmChoices,
     Question,
     QuestionWidgetKindChoices,
     ReaderStudy,

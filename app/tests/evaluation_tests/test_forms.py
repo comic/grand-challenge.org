@@ -1244,7 +1244,7 @@ def test_submission_limit_avoidance_users():
 def test_phase_update_form_gpu_limited_choices():
     phase = PhaseFactory()
     form = PhaseUpdateForm(
-        instance=phase, challenge=phase.challenge, user=UserFactory.build()
+        instance=phase, challenge=phase.challenge, user=UserFactory()
     )
 
     validators = form.fields["evaluation_requires_memory_gb"].validators
@@ -1266,7 +1266,7 @@ def test_phase_update_form_gpu_limited_choices():
 def test_phase_update_form_gpu_type_limited_choices():
     phase = PhaseFactory()
     form = PhaseUpdateForm(
-        instance=phase, challenge=phase.challenge, user=UserFactory.build()
+        instance=phase, challenge=phase.challenge, user=UserFactory()
     )
 
     choices = form.fields["evaluation_requires_gpu_type"].widget.choices
@@ -1283,7 +1283,7 @@ def test_phase_update_form_gpu_type_with_additional_selectable_gpu_types():
     phase = PhaseFactory()
     phase.evaluation_selectable_gpu_type_choices = ["V100"]
     form = PhaseUpdateForm(
-        instance=phase, challenge=phase.challenge, user=UserFactory.build()
+        instance=phase, challenge=phase.challenge, user=UserFactory()
     )
 
     choices = form.fields["evaluation_requires_gpu_type"].widget.choices

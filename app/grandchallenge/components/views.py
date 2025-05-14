@@ -25,6 +25,7 @@ from guardian.mixins import LoginRequiredMixin
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.archives.models import Archive
 from grandchallenge.components.form_fields import (
@@ -44,8 +45,8 @@ from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    filter_by_permission,
     get_object_if_allowed,
-    get_objects_for_user,
 )
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.datatables.views import Column, PaginatedTableListView
@@ -390,12 +391,10 @@ class CIVSetBulkDelete(LoginRequiredMixin, FormView):
         return self.base_object.civ_sets_list_url
 
     def get_queryset(self, *args, **kwargs):
-        # subset by permission
-        permission = f"{self.model._meta.app_label}.delete_{self.model._meta.model_name}"
-        return get_objects_for_user(
+        return filter_by_permission(
+            queryset=self.base_object.civ_sets_related_manager.all(),
             user=self.request.user,
-            perms=[permission],
-            klass=self.base_object.civ_sets_related_manager.all(),
+            codename=f"delete_{self.model._meta.model_name}",
         )
 
     def get_context_data(self, **kwargs):
@@ -450,14 +449,20 @@ class CIVSetBulkDelete(LoginRequiredMixin, FormView):
 
 class FileAccessRequiredMixin(AccessMixin):
     def dispatch(self, request, *args, **kwargs):
-        algorithms = get_objects_for_user(
-            self.request.user, "algorithms.execute_algorithm"
+        algorithms = filter_by_permission(
+            queryset=Algorithm.objects.all(),
+            user=self.request.user,
+            codename="execute_algorithm",
         )
-        reader_studies = get_objects_for_user(
-            self.request.user, "reader_studies.change_readerstudy"
+        reader_studies = filter_by_permission(
+            queryset=ReaderStudy.objects.all(),
+            user=self.request.user,
+            codename="change_readerstudy",
         )
-        archives = get_objects_for_user(
-            self.request.user, "archives.change_archive"
+        archives = filter_by_permission(
+            queryset=Archive.objects.all(),
+            user=self.request.user,
+            codename="change_archive",
         )
 
         if algorithms.exists() or reader_studies.exists() or archives.exists():
