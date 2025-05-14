@@ -1,17 +1,14 @@
-from functools import cached_property, partial
+from functools import cached_property
 
 from django.contrib.auth.models import Permission
+from django.core.exceptions import ImproperlyConfigured
 from guardian.core import ObjectPermissionChecker
-from guardian.mixins import (  # noqa: I251
-    PermissionListMixin as PermissionListMixinOrig,
-)
 from guardian.mixins import PermissionRequiredMixin  # noqa: I251
-from guardian.models import GroupObjectPermission, UserObjectPermission
-from guardian.shortcuts import (  # noqa: I251
-    get_objects_for_group as get_objects_for_group_orig,
-)
-from guardian.shortcuts import (  # noqa: I251
-    get_objects_for_user as get_objects_for_user_orig,
+from guardian.models import (
+    GroupObjectPermission,
+    GroupObjectPermissionBase,
+    UserObjectPermission,
+    UserObjectPermissionBase,
 )
 from guardian.utils import (
     get_anonymous_user,
@@ -19,17 +16,31 @@ from guardian.utils import (
     get_user_obj_perms_model,
 )
 
-get_objects_for_user = partial(
-    get_objects_for_user_orig, accept_global_perms=False
-)
 
-get_objects_for_group = partial(
-    get_objects_for_group_orig, accept_global_perms=False
-)
+class PermissionListMixin:
+    permission_required = None
 
+    def get_queryset(self, *args, **kwargs):
+        queryset = super().get_queryset(*args, **kwargs)
 
-class PermissionListMixin(PermissionListMixinOrig):
-    get_objects_for_user_extra_kwargs = {"accept_global_perms": False}
+        if "." in self.permission_required:
+            permission_app_label, codename = self.permission_required.split(
+                "."
+            )
+            queryset_app_label = queryset.model._meta.app_label
+
+            if permission_app_label != queryset_app_label:
+                raise ImproperlyConfigured(
+                    f"{queryset_app_label=} and {permission_app_label=} do not match"
+                )
+        else:
+            codename = self.permission_required
+
+        return filter_by_permission(
+            queryset=queryset,
+            user=self.request.user,
+            codename=codename,
+        )
 
 
 class ObjectPermissionCheckerMixin:
@@ -49,7 +60,27 @@ class ObjectPermissionRequiredMixin(PermissionRequiredMixin):
     accept_global_perms = False
 
 
-def filter_by_permission(*, queryset, user, codename, accept_user_perms=True):
+class NoUserPermissionsAllowed(UserObjectPermissionBase):
+    def save(self, *args, **kwargs):
+        raise RuntimeError(
+            "User permissions should not be assigned for this model"
+        )
+
+    class Meta(UserObjectPermissionBase.Meta):
+        abstract = True
+
+
+class NoGroupPermissionsAllowed(GroupObjectPermissionBase):
+    def save(self, *args, **kwargs):
+        raise RuntimeError(
+            "Group permissions should not be assigned for this model"
+        )
+
+    class Meta(GroupObjectPermissionBase.Meta):
+        abstract = True
+
+
+def filter_by_permission(*, queryset, user, codename):
     """
     Optimised version of get_objects_for_user
 
@@ -62,9 +93,7 @@ def filter_by_permission(*, queryset, user, codename, accept_user_perms=True):
     by using a SQL Union.
 
     This requires using direct foreign key permissions on the objects so that
-    a reverse lookup can be used. Django does now allow filtering of
-    querysets created with a SQL Union, so this must be the last operation
-    in the queryset generation.
+    a reverse lookup can be used.
     """
     if user.is_superuser is True:
         return queryset
@@ -87,35 +116,42 @@ def filter_by_permission(*, queryset, user, codename, accept_user_perms=True):
         codename=codename,
     )
 
+    # Evaluate the pks in python to force the use of the index
+    group_pks = {*user.groups.values_list("pk", flat=True)}
+
     group_filter_kwargs = {
-        f"{group_related_query_name}__group__user": user,
+        f"{group_related_query_name}__group__pk__in": group_pks,
         f"{group_related_query_name}__permission": permission,
     }
 
-    if accept_user_perms:
-        dfk_user_model = get_user_obj_perms_model(queryset.model)
+    dfk_user_model = get_user_obj_perms_model(queryset.model)
 
-        if isinstance(dfk_user_model, UserObjectPermission):
-            raise RuntimeError("DFK user permissions not active for model")
+    if isinstance(dfk_user_model, UserObjectPermission):
+        raise RuntimeError("DFK user permissions not active for model")
 
-        user_related_query_name = (
-            dfk_user_model.content_object.field.related_query_name()
-        )
+    user_related_query_name = (
+        dfk_user_model.content_object.field.related_query_name()
+    )
 
-        user_filter_kwargs = {
-            f"{user_related_query_name}__user": user,
-            f"{user_related_query_name}__permission": permission,
-        }
+    user_filter_kwargs = {
+        f"{user_related_query_name}__user": user,
+        f"{user_related_query_name}__permission": permission,
+    }
 
+    if isinstance(dfk_user_model, NoUserPermissionsAllowed):
+        # No user permissions allowed, so only filter by group perms
+        return queryset.filter(**group_filter_kwargs)
+    elif isinstance(dfk_group_model, NoGroupPermissionsAllowed):
+        # No group permissions allowed, so only filter by user perms
+        return queryset.filter(**user_filter_kwargs)
+    else:
+        # Both group and user permissions allowed, so filter by both
         pks = (
             queryset.filter(**user_filter_kwargs)
             .union(queryset.filter(**group_filter_kwargs))
             .values_list("pk", flat=True)
         )
-
         return queryset.filter(pk__in=pks)
-    else:
-        return queryset.filter(**group_filter_kwargs)
 
 
 def get_object_if_allowed(*, model, pk, user, codename):

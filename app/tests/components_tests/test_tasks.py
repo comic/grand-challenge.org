@@ -40,7 +40,9 @@ from grandchallenge.components.tasks import (
 )
 from grandchallenge.core.celery import _retry, acks_late_micro_short_task
 from grandchallenge.notifications.models import Notification
-from grandchallenge.reader_studies.models import InteractiveAlgorithmChoices
+from grandchallenge.reader_studies.interactive_algorithms import (
+    InteractiveAlgorithmChoices,
+)
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstations.models import WorkstationImage
 from tests.algorithms_tests.factories import (

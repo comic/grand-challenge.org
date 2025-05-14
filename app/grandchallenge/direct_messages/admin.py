@@ -1,9 +1,19 @@
 from django.contrib import admin
 
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
+)
 from grandchallenge.direct_messages.models import (
     Conversation,
+    ConversationGroupObjectPermission,
+    ConversationUserObjectPermission,
     DirectMessage,
+    DirectMessageGroupObjectPermission,
+    DirectMessageUserObjectPermission,
     Mute,
+    MuteGroupObjectPermission,
+    MuteUserObjectPermission,
 )
 
 
@@ -77,3 +87,19 @@ class MuteAdmin(admin.ModelAdmin):
         "source__username",
         "target__username",
     )
+
+
+admin.site.register(
+    ConversationUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    ConversationGroupObjectPermission, GroupObjectPermissionAdmin
+)
+admin.site.register(
+    DirectMessageUserObjectPermission, UserObjectPermissionAdmin
+)
+admin.site.register(
+    DirectMessageGroupObjectPermission, GroupObjectPermissionAdmin
+)
+admin.site.register(MuteUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(MuteGroupObjectPermission, GroupObjectPermissionAdmin)

@@ -8,9 +8,10 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from guardian.models import UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
+from grandchallenge.core.guardian import NoGroupPermissionsAllowed
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import copy_s3_object
 from grandchallenge.subdomains.utils import reverse
@@ -332,8 +333,9 @@ def delete_objects_hook(*_, instance: UserUpload, **__):
 
 
 class UserUploadUserObjectPermission(UserObjectPermissionBase):
+    # This is used for view_ and change_ permissions for the creator
     content_object = models.ForeignKey(UserUpload, on_delete=models.CASCADE)
 
 
-class UserUploadGroupObjectPermission(GroupObjectPermissionBase):
+class UserUploadGroupObjectPermission(NoGroupPermissionsAllowed):
     content_object = models.ForeignKey(UserUpload, on_delete=models.CASCADE)

@@ -17,11 +17,12 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
-    get_objects_for_user,
+    filter_by_permission,
 )
 from grandchallenge.evaluation.models import Submission
 from grandchallenge.organizations.models import Organization
@@ -37,6 +38,7 @@ from grandchallenge.profiles.models import (
     UserProfile,
 )
 from grandchallenge.profiles.serializers import UserProfileSerializer
+from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.tasks import update_verification_user_set
 
@@ -80,44 +82,35 @@ class UserProfileDetail(UserProfileObjectMixin, DetailView):
             | Q(editors_group__in=profile_groups)
         ).distinct()
 
-        archives = (
-            get_objects_for_user(
-                user=self.request.user,
-                perms="archives.view_archive",
-            )
-            .filter(
+        archives = filter_by_permission(
+            queryset=Archive.objects.filter(
                 Q(editors_group__in=profile_groups)
                 | Q(uploaders_group__in=profile_groups)
                 | Q(users_group__in=profile_groups)
-            )
-            .distinct()
+            ).distinct(),
+            user=self.request.user,
+            codename="view_archive",
         )
-        reader_studies = (
-            get_objects_for_user(
-                user=self.request.user,
-                perms="reader_studies.view_readerstudy",
-            )
-            .filter(
+        reader_studies = filter_by_permission(
+            queryset=ReaderStudy.objects.filter(
                 Q(editors_group__in=profile_groups)
                 | Q(readers_group__in=profile_groups)
-            )
-            .distinct()
+            ).distinct(),
+            user=self.request.user,
+            codename="view_readerstudy",
         )
         challenges = Challenge.objects.filter(
             Q(admins_group__in=profile_groups)
             | Q(participants_group__in=profile_groups),
             hidden=False,
         ).distinct()
-        algorithms = (
-            get_objects_for_user(
-                user=self.request.user,
-                perms="algorithms.view_algorithm",
-            )
-            .filter(
+        algorithms = filter_by_permission(
+            queryset=Algorithm.objects.filter(
                 Q(editors_group__in=profile_groups)
                 | Q(users_group__in=profile_groups)
-            )
-            .distinct()
+            ).distinct(),
+            user=self.request.user,
+            codename="view_algorithm",
         )
 
         checker = ObjectPermissionChecker(user_or_group=profile_user)

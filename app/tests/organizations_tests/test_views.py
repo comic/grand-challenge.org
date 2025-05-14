@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, remove_perm
 
 from tests.algorithms_tests.factories import AlgorithmFactory
@@ -26,6 +27,8 @@ class TestObjectPermissionRequiredViews:
     def test_permission_required_views(self, client):
         o = OrganizationFactory()
         u = UserFactory()
+        group = Group.objects.create(name="test-group")
+        group.user_set.add(u)
 
         for view_name, kwargs, permission, obj, redirect in [
             ("update", {"slug": o.slug}, "change_organization", o, None),
@@ -60,12 +63,12 @@ class TestObjectPermissionRequiredViews:
             else:
                 assert response.status_code == 403
 
-            assign_perm(permission, u, obj)
+            assign_perm(permission, group, obj)
 
             response = _get_view()
             assert response.status_code == 200
 
-            remove_perm(permission, u, obj)
+            remove_perm(permission, group, obj)
 
 
 @pytest.mark.django_db

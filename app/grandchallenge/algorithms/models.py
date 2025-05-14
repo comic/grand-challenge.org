@@ -39,7 +39,7 @@ from grandchallenge.components.models import (  # noqa: F401
     Tarball,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
-from grandchallenge.core.guardian import get_objects_for_group
+from grandchallenge.core.guardian import NoUserPermissionsAllowed
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
@@ -59,6 +59,7 @@ from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Workstation
+from grandchallenge.workstations.utils import reassign_workstation_permissions
 
 logger = logging.getLogger(__name__)
 
@@ -373,7 +374,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         super().save(*args, **kwargs)
 
         self.assign_permissions()
-        self.assign_workstation_permissions()
+        reassign_workstation_permissions(
+            groups=(self.users_group, self.editors_group),
+            workstation=self.workstation,
+        )
 
     def delete(self, *args, **kwargs):
         ct = ContentType.objects.filter(
@@ -412,24 +416,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             assign_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
         else:
             remove_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
-
-    def assign_workstation_permissions(self):
-        """Allow the editors and users group to view the workstation."""
-        perm = "workstations.view_workstation"
-
-        for group in [self.users_group, self.editors_group]:
-            workstations = get_objects_for_group(
-                group=group,
-                perms=perm,
-            )
-
-            if (
-                self.workstation not in workstations
-            ) or workstations.count() > 1:
-                remove_perm(perm=perm, user_or_group=group, obj=workstations)
-                assign_perm(
-                    perm=perm, user_or_group=group, obj=self.workstation
-                )
 
     @cached_property
     def active_image(self):
@@ -651,7 +637,7 @@ class AlgorithmAlgorithmInterface(models.Model):
         return str(self.interface)
 
 
-class AlgorithmUserObjectPermission(UserObjectPermissionBase):
+class AlgorithmUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
 
 
@@ -895,7 +881,7 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         return AlgorithmImage.objects.filter(algorithm=self.algorithm)
 
 
-class AlgorithmImageUserObjectPermission(UserObjectPermissionBase):
+class AlgorithmImageUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(
         AlgorithmImage, on_delete=models.CASCADE
     )
@@ -1023,7 +1009,7 @@ class AlgorithmModel(Tarball):
         )
 
 
-class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):
+class AlgorithmModelUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(
         AlgorithmModel, on_delete=models.CASCADE
     )
@@ -1327,6 +1313,7 @@ class Job(CIVForObjectMixin, ComponentJob):
 
 
 class JobUserObjectPermission(UserObjectPermissionBase):
+    # This is used for change_job permission for the creator
     content_object = models.ForeignKey(Job, on_delete=models.CASCADE)
 
 

@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.db.transaction import on_commit
-from guardian.admin import GuardedModelAdmin
 
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -11,7 +10,7 @@ from grandchallenge.components.models import (
 from grandchallenge.components.tasks import deprovision_job
 
 
-class ComponentImageAdmin(GuardedModelAdmin):
+class ComponentImageAdmin(admin.ModelAdmin):
     exclude = ("image",)
     readonly_fields = ("creator",)
     list_display = (

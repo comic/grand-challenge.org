@@ -2,10 +2,11 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.html import format_html
-from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
+from guardian.models import UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.core.guardian import NoGroupPermissionsAllowed
 from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse
@@ -292,12 +293,13 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
 
 
 class HangingProtocolUserObjectPermission(UserObjectPermissionBase):
+    # This is used for change_hangingprotocol permission for the creator
     content_object = models.ForeignKey(
         HangingProtocol, on_delete=models.CASCADE
     )
 
 
-class HangingProtocolGroupObjectPermission(GroupObjectPermissionBase):
+class HangingProtocolGroupObjectPermission(NoGroupPermissionsAllowed):
     content_object = models.ForeignKey(
         HangingProtocol, on_delete=models.CASCADE
     )

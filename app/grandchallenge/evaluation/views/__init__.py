@@ -841,6 +841,8 @@ class LeaderboardDetail(
         queryset = self.filter_by_date(queryset=queryset)
         queryset = (
             queryset.filter(
+                # An index is added for these filters, ensure that it
+                # is kept up to date if modified here.
                 submission__phase=self.phase,
                 published=True,
                 status=Evaluation.SUCCESS,
@@ -869,7 +871,6 @@ class LeaderboardDetail(
             queryset=queryset,
             user=self.request.user,
             codename="view_evaluation",
-            accept_user_perms=False,
         )
 
     def filter_by_date(self, queryset):

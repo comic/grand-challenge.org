@@ -201,7 +201,7 @@ class ExternalEvaluationSerializer(EvaluationSerializer):
 
     def update(self, instance, validated_data):
         validated_data["claimed_by"] = self.context["request"].user
-        validated_data["started_at"] = now()
+        validated_data["claimed_at"] = now()
         validated_data["status"] = Evaluation.CLAIMED
         return super().update(instance, validated_data)
 
