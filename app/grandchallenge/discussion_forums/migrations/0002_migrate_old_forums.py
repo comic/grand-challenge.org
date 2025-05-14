@@ -6,8 +6,10 @@ from grandchallenge.discussion_forums.models import TopicKindChoices
 def migrate_challenge_forums(apps, schema_editor):
     Challenge = apps.get_model("challenges", "Challenge")  # noqa: N806
     Forum = apps.get_model("discussion_forums", "Forum")  # noqa: N806
-    Topic = apps.get_model("discussion_forums", "Topic")  # noqa: N806
-    Post = apps.get_model("discussion_forums", "Post")  # noqa: N806
+    ForumTopic = apps.get_model(  # noqa: N806
+        "discussion_forums", "ForumTopic"
+    )
+    ForumPost = apps.get_model("discussion_forums", "ForumPost")  # noqa: N806
 
     topic_type_matching_dict = {
         0: TopicKindChoices.DEFAULT,
@@ -21,7 +23,7 @@ def migrate_challenge_forums(apps, schema_editor):
         challenge.save()
 
         for topic in challenge.forum.topics.all():
-            new_topic = Topic.objects.create(
+            new_topic = ForumTopic.objects.create(
                 forum=new_forum,
                 creator=topic.poster,
                 subject=topic.subject,
@@ -31,7 +33,7 @@ def migrate_challenge_forums(apps, schema_editor):
             )
 
             for post in topic.posts.all():
-                Post.objects.create(
+                ForumPost.objects.create(
                     topic=new_topic,
                     created=post.created,
                     creator=post.poster,

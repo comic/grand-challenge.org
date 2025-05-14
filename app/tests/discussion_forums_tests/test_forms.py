@@ -1,6 +1,6 @@
 import pytest
 
-from grandchallenge.discussion_forums.forms import TopicForm
+from grandchallenge.discussion_forums.forms import ForumTopicForm
 from grandchallenge.discussion_forums.models import TopicKindChoices
 from tests.factories import ChallengeFactory, UserFactory
 
@@ -12,7 +12,7 @@ def test_topic_form_presets():
     challenge.add_admin(admin)
     challenge.add_participant(participant)
 
-    participant_form = TopicForm(
+    participant_form = ForumTopicForm(
         forum=challenge.discussion_forum,
         user=participant,
     )
@@ -26,7 +26,7 @@ def test_topic_form_presets():
         (TopicKindChoices.DEFAULT.name, TopicKindChoices.DEFAULT.label)
     ]
 
-    admin_form = TopicForm(
+    admin_form = ForumTopicForm(
         forum=challenge.discussion_forum,
         user=admin,
     )

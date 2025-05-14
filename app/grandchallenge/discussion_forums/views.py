@@ -6,15 +6,18 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
 )
-from grandchallenge.discussion_forums.forms import TopicForm
-from grandchallenge.discussion_forums.models import Topic, TopicKindChoices
+from grandchallenge.discussion_forums.forms import ForumTopicForm
+from grandchallenge.discussion_forums.models import (
+    ForumTopic,
+    TopicKindChoices,
+)
 from grandchallenge.subdomains.utils import reverse
 
 
-class TopicListView(PermissionListMixin, ListView):
-    model = Topic
+class ForumTopicListView(PermissionListMixin, ListView):
+    model = ForumTopic
     permission_required = "discussion_forums.view_topic"
-    queryset = Topic.objects.select_related("forum")
+    queryset = ForumTopic.objects.select_related("forum")
 
     @cached_property
     def forum(self):
@@ -40,11 +43,11 @@ class TopicListView(PermissionListMixin, ListView):
         return context
 
 
-class TopicCreate(ObjectPermissionRequiredMixin, CreateView):
-    model = Topic
+class ForumTopicCreate(ObjectPermissionRequiredMixin, CreateView):
+    model = ForumTopic
     permission_required = "discussion_forums.create_forum_topic"
     raise_exception = True
-    form_class = TopicForm
+    form_class = ForumTopicForm
 
     @cached_property
     def forum(self):
@@ -64,14 +67,14 @@ class TopicCreate(ObjectPermissionRequiredMixin, CreateView):
         return kwargs
 
 
-class TopicDetail(ObjectPermissionRequiredMixin, DetailView):
-    model = Topic
+class ForumTopicDetail(ObjectPermissionRequiredMixin, DetailView):
+    model = ForumTopic
     permission_required = "discussion_forums.view_topic"
     raise_exception = True
 
     def get_object(self, queryset=None):
         return get_object_or_404(
-            Topic,
+            ForumTopic,
             forum=self.request.challenge.discussion_forum,
             slug=self.kwargs["slug"],
         )
@@ -82,15 +85,15 @@ class TopicDetail(ObjectPermissionRequiredMixin, DetailView):
         return context
 
 
-class TopicDelete(ObjectPermissionRequiredMixin, DeleteView):
-    model = Topic
+class ForumTopicDelete(ObjectPermissionRequiredMixin, DeleteView):
+    model = ForumTopic
     permission_required = "discussion_forums.delete_topic"
     raise_exception = True
     success_message = "Successfully deleted topic."
 
     def get_object(self, queryset=None):
         return get_object_or_404(
-            Topic,
+            ForumTopic,
             forum=self.request.challenge.discussion_forum,
             slug=self.kwargs["slug"],
         )

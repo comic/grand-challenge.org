@@ -6,13 +6,13 @@ from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import MarkdownEditorInlineWidget
 from grandchallenge.discussion_forums.models import (
     Forum,
-    Post,
-    Topic,
+    ForumPost,
+    ForumTopic,
     TopicKindChoices,
 )
 
 
-class TopicForm(SaveFormInitMixin, ModelForm):
+class ForumTopicForm(SaveFormInitMixin, ModelForm):
 
     creator = ModelChoiceField(
         widget=HiddenInput(),
@@ -31,7 +31,7 @@ class TopicForm(SaveFormInitMixin, ModelForm):
     content = CharField(widget=MarkdownEditorInlineWidget)
 
     class Meta:
-        model = Topic
+        model = ForumTopic
         fields = ("forum", "creator", "subject", "kind", "content")
 
     def __init__(self, *args, forum, user, **kwargs):
@@ -51,7 +51,7 @@ class TopicForm(SaveFormInitMixin, ModelForm):
 
     def save(self, commit=True):
         topic = super().save()
-        Post.objects.create(
+        ForumPost.objects.create(
             topic=topic,
             creator=self.cleaned_data["creator"],
             content=self.cleaned_data["content"],

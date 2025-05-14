@@ -1,10 +1,12 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
-from guardian.models import GroupObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.core.guardian import NoUserPermissionsAllowed
+from grandchallenge.core.guardian import (
+    GroupObjectPermissionBase,
+    NoUserPermissionsAllowed,
+)
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.subdomains.utils import reverse
 
@@ -34,7 +36,7 @@ class Forum(UUIDModel):
         return self.linked_challenge
 
 
-class Topic(UUIDModel):
+class ForumTopic(UUIDModel):
     forum = models.ForeignKey(
         Forum,
         related_name="topics",
@@ -153,9 +155,9 @@ class Topic(UUIDModel):
         return self.posts.count() - 1
 
 
-class Post(UUIDModel):
+class ForumPost(UUIDModel):
     topic = models.ForeignKey(
-        Topic,
+        ForumTopic,
         null=False,
         related_name="posts",
         on_delete=models.CASCADE,
@@ -201,37 +203,17 @@ class ForumGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(Forum, on_delete=models.CASCADE)
 
 
-class TopicUserObjectPermission(NoUserPermissionsAllowed):
-    content_object = models.ForeignKey(Topic, on_delete=models.CASCADE)
+class ForumTopicUserObjectPermission(NoUserPermissionsAllowed):
+    content_object = models.ForeignKey(ForumTopic, on_delete=models.CASCADE)
 
 
-class TopicGroupObjectPermission(GroupObjectPermissionBase):
-    content_object = models.ForeignKey(Topic, on_delete=models.CASCADE)
+class ForumTopicGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(ForumTopic, on_delete=models.CASCADE)
 
 
-class PostUserObjectPermission(NoUserPermissionsAllowed):
-    content_object = models.ForeignKey(Post, on_delete=models.CASCADE)
-    user = models.ForeignKey(
-        get_user_model(),
-        on_delete=models.CASCADE,
-        related_name="forums_postuserobjectpermissions",
-    )
-    permission = models.ForeignKey(
-        "auth.Permission",
-        on_delete=models.CASCADE,
-        related_name="forums_postuserobjectpermissions",
-    )
+class ForumPostUserObjectPermission(NoUserPermissionsAllowed):
+    content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)
 
 
-class PostGroupObjectPermission(GroupObjectPermissionBase):
-    content_object = models.ForeignKey(Post, on_delete=models.CASCADE)
-    group = models.ForeignKey(
-        "auth.Group",
-        on_delete=models.CASCADE,
-        related_name="forums_postgroupobjectpermissions",
-    )
-    permission = models.ForeignKey(
-        "auth.Permission",
-        on_delete=models.CASCADE,
-        related_name="forums_postgroupobjectpermissions",
-    )
+class ForumPostGroupObjectPermission(GroupObjectPermissionBase):
+    content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)

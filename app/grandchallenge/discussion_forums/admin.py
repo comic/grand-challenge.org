@@ -1,6 +1,10 @@
 from django.contrib import admin
 
-from grandchallenge.discussion_forums.models import Forum, Post, Topic
+from grandchallenge.discussion_forums.models import (
+    Forum,
+    ForumPost,
+    ForumTopic,
+)
 
 
 @admin.register(Forum)
@@ -12,7 +16,7 @@ class ForumAdmin(admin.ModelAdmin):
         return obj.parent_object
 
 
-@admin.register(Topic)
+@admin.register(ForumTopic)
 class TopicAdmin(admin.ModelAdmin):
     list_display = ("subject", "linked_forum", "kind", "creator")
     search_fields = ("subject", "creator__username")
@@ -22,7 +26,7 @@ class TopicAdmin(admin.ModelAdmin):
         return f"Forum for {obj.forum.parent_object}"
 
 
-@admin.register(Post)
+@admin.register(ForumPost)
 class PostAdmin(admin.ModelAdmin):
     list_display = ("topic", "creator")
     search_fields = ("creator__username",)

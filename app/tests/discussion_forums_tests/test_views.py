@@ -1,11 +1,14 @@
 import pytest
 
 from grandchallenge.discussion_forums.models import (
-    Post,
-    Topic,
+    ForumPost,
+    ForumTopic,
     TopicKindChoices,
 )
-from tests.discussion_forums_tests.factories import ForumFactory, TopicFactory
+from tests.discussion_forums_tests.factories import (
+    ForumFactory,
+    ForumTopicFactory,
+)
 from tests.factories import UserFactory
 from tests.utils import get_view_for_user
 
@@ -34,16 +37,16 @@ def test_topic_create(client):
     )
     assert response.status_code == 302
 
-    assert Topic.objects.count() == 1
-    assert Post.objects.count() == 1
+    assert ForumTopic.objects.count() == 1
+    assert ForumPost.objects.count() == 1
 
-    topic = Topic.objects.first()
+    topic = ForumTopic.objects.first()
     assert topic.forum == forum
     assert topic.creator == user
     assert topic.kind == TopicKindChoices.DEFAULT
     assert topic.subject == "First topic"
 
-    post = Post.objects.first()
+    post = ForumPost.objects.first()
     assert post.topic == topic
     assert post.creator == user
     assert post.content == "Some post content"
@@ -67,7 +70,7 @@ def test_discussion_forum_views_permissions(
     forum.linked_challenge.add_participant(participant)
 
     if detail:
-        topic = TopicFactory(forum=forum, creator=participant)
+        topic = ForumTopicFactory(forum=forum, creator=participant)
         extra_kwargs = {"slug": topic.slug}
     else:
         extra_kwargs = {}
@@ -113,8 +116,8 @@ def test_discussion_forum_topic_list_permission_filter(client):
     forum.linked_challenge.add_admin(admin)
     forum.linked_challenge.add_participant(participant)
 
-    TopicFactory.create_batch(5, forum=forum)
-    TopicFactory.create_batch(5, forum=ForumFactory())
+    ForumTopicFactory.create_batch(5, forum=forum)
+    ForumTopicFactory.create_batch(5, forum=ForumFactory())
 
     response = get_view_for_user(
         viewname="discussion-forums:topic-list",
@@ -140,7 +143,7 @@ def test_discussion_forum_topic_list_permission_filter(client):
         assert response.status_code == 200
         assert response.context["object_list"].count() == 5
         assert list(response.context["object_list"]) == list(
-            Topic.objects.filter(forum=forum).all()
+            ForumTopic.objects.filter(forum=forum).all()
         )
 
 
@@ -151,7 +154,7 @@ def test_topic_deletion(client):
     forum.linked_challenge.add_admin(admin)
     forum.linked_challenge.add_participant(creator)
 
-    topic = TopicFactory(forum=forum, creator=creator, post_count=3)
+    topic = ForumTopicFactory(forum=forum, creator=creator, post_count=3)
     assert topic.posts.count() == 3
 
     response = get_view_for_user(
@@ -166,8 +169,8 @@ def test_topic_deletion(client):
     )
     # topic creator cannot delete
     assert response.status_code == 403
-    assert Topic.objects.count() == 1
-    assert topic.posts.count() == Post.objects.count() == 3
+    assert ForumTopic.objects.count() == 1
+    assert topic.posts.count() == ForumPost.objects.count() == 3
 
     response = get_view_for_user(
         viewname="discussion-forums:topic-delete",
@@ -181,5 +184,5 @@ def test_topic_deletion(client):
     )
     # admin can delete and deleting topic also deletes associated posts
     assert response.status_code == 302
-    assert Topic.objects.count() == 0
-    assert Post.objects.count() == 0
+    assert ForumTopic.objects.count() == 0
+    assert ForumPost.objects.count() == 0
