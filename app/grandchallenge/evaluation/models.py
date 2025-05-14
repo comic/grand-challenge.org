@@ -2161,17 +2161,9 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     def create_utilization(self):
         EvaluationUtilization.objects.create(evalution=self)
 
-    def update_utilization(self, *, duration, compute_cost_euro_millicents):
-        update_fields = []
-        if duration is not None:
-            self.evaluation_utilization.duration = duration
-            update_fields.append("duration")
-        if compute_cost_euro_millicents is not None:
-            self.evaluation_utilization.compute_cost_euro_millicents = (
-                compute_cost_euro_millicents
-            )
-            update_fields.append("compute_cost_euro_millicents")
-        self.evaluation_utilization.save(update_fields=update_fields)
+    @property
+    def utilization(self):
+        return self.evaluation_utilization
 
 
 class EvaluationUserObjectPermission(NoUserPermissionsAllowed):

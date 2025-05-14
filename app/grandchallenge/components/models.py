@@ -1925,8 +1925,21 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     def create_utilization(self):
         raise NotImplementedError
 
-    def update_utilization(self, *, duration, compute_cost_euro_millicents):
+    @property
+    def utilization(self):
         raise NotImplementedError
+
+    def update_utilization(self, *, duration, compute_cost_euro_millicents):
+        update_fields = []
+        if duration is not None:
+            self.utilization.duration = duration
+            update_fields.append("duration")
+        if compute_cost_euro_millicents is not None:
+            self.utilization.compute_cost_euro_millicents = (
+                compute_cost_euro_millicents
+            )
+            update_fields.append("compute_cost_euro_millicents")
+        self.utilization.save(update_fields=update_fields)
 
     class Meta:
         abstract = True
