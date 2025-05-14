@@ -8,10 +8,12 @@ from django.db import models
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
-from guardian.models import UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.core.guardian import NoGroupPermissionsAllowed
+from grandchallenge.core.guardian import (
+    NoGroupPermissionsAllowed,
+    UserObjectPermissionBase,
+)
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.storage import copy_s3_object
 from grandchallenge.subdomains.utils import reverse

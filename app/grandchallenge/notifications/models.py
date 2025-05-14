@@ -8,10 +8,12 @@ from django.contrib.sites.models import Site
 from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
-from guardian.models import UserObjectPermissionBase
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.core.guardian import NoGroupPermissionsAllowed
+from grandchallenge.core.guardian import (
+    NoGroupPermissionsAllowed,
+    UserObjectPermissionBase,
+)
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.profiles.models import NotificationEmailOptions
 from grandchallenge.profiles.templatetags.profiles import user_profile_link

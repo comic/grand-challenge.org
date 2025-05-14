@@ -7,11 +7,13 @@ from django.db import models
 from django.db.models import Max
 from django.utils.html import format_html
 from django_extensions.db.fields import AutoSlugField
-from guardian.models import GroupObjectPermissionBase
 from guardian.shortcuts import assign_perm, remove_perm
 from simple_history.models import HistoricalRecords
 
-from grandchallenge.core.guardian import NoUserPermissionsAllowed
+from grandchallenge.core.guardian import (
+    GroupObjectPermissionBase,
+    NoUserPermissionsAllowed,
+)
 from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.utils.query import index

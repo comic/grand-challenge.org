@@ -2,10 +2,12 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models
-from guardian.models import UserObjectPermissionBase
 
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.guardian import NoGroupPermissionsAllowed
+from grandchallenge.core.guardian import (
+    NoGroupPermissionsAllowed,
+    UserObjectPermissionBase,
+)
 from grandchallenge.subdomains.utils import reverse
 
 
