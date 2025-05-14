@@ -7,7 +7,7 @@ from grandchallenge.core.models import UUIDModel
 from grandchallenge.subdomains.utils import reverse
 
 
-class TopicTypeChoices(models.TextChoices):
+class TopicKindChoices(models.TextChoices):
     DEFAULT = "DEFAULT", "Default topic"
     STICKY = "STICKY", "Sticky topic"
     ANNOUNCE = "ANNOUNCE", "Announcement topic"
@@ -26,6 +26,12 @@ class Forum(UUIDModel):
                 "Can create sticky and announcement topics in this forum",
             ),
         )
+        constraints = [
+            models.CheckConstraint(
+                check=(models.Q(linked_challenge__isnull=False)),
+                name="forum_must_have_linked_challenge",
+            ),
+        ]
 
     @property
     def parent_object(self):
@@ -49,14 +55,14 @@ class Topic(UUIDModel):
     subject = models.CharField(max_length=255)
     slug = AutoSlugField(populate_from="subject", max_length=64)
 
-    TopicTypeChoices = TopicTypeChoices
-    type = models.CharField(
+    TopicKindChoices = TopicKindChoices
+    kind = models.CharField(
         max_length=8,
-        choices=TopicTypeChoices.choices,
-        default=TopicTypeChoices.DEFAULT,
+        choices=TopicKindChoices.choices,
+        default=TopicKindChoices.DEFAULT,
     )
 
-    locked = models.BooleanField(
+    is_locked = models.BooleanField(
         default=False,
         help_text="Lock a topic to close it and prevent posts from being added to it.",
     )
@@ -67,7 +73,7 @@ class Topic(UUIDModel):
 
     class Meta:
         ordering = [
-            "-type",
+            "-kind",
             "-last_post_on",
         ]
         permissions = (
@@ -76,6 +82,13 @@ class Topic(UUIDModel):
                 "Create a post for this topic",
             ),
         )
+        unique_together = ("slug", "forum")
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(kind__in=TopicKindChoices.values),
+                name="valid_topic_kind",
+            )
+        ]
 
     def __str__(self):
         return self.subject
@@ -129,11 +142,11 @@ class Topic(UUIDModel):
 
     @property
     def is_announcement(self):
-        return self.type == TopicTypeChoices.ANNOUNCE
+        return self.kind == TopicKindChoices.ANNOUNCE
 
     @property
     def is_sticky(self):
-        return self.type == TopicTypeChoices.STICKY
+        return self.kind == TopicKindChoices.STICKY
 
     @property
     def last_post(self):

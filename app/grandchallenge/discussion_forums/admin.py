@@ -14,9 +14,9 @@ class ForumAdmin(admin.ModelAdmin):
 
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
-    list_display = ("subject", "linked_forum", "type", "creator")
+    list_display = ("subject", "linked_forum", "kind", "creator")
     search_fields = ("subject", "creator__username")
-    list_filter = ("type",)
+    list_filter = ("kind",)
 
     def linked_forum(self, obj):
         return f"Forum for {obj.forum.parent_object}"
