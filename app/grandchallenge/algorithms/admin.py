@@ -148,8 +148,8 @@ class AlgorithmUserCreditAdmin(ModelAdmin):
     )
     def specific_compute_costs(self, obj):
         return millicents_to_euro(
-            Job.objects.filter(
-                algorithm_image__algorithm=obj.algorithm,
+            JobUtilization.objects.filter(
+                algorithm=obj.algorithm,
                 creator=obj.user,
             ).aggregate(
                 total=Sum("compute_cost_euro_millicents", default=0),
@@ -163,10 +163,10 @@ class AlgorithmUserCreditAdmin(ModelAdmin):
     )
     def other_compute_costs(self, obj):
         return millicents_to_euro(
-            Job.objects.filter(
+            JobUtilization.objects.filter(
                 creator=obj.user,
             )
-            .exclude(algorithm_image__algorithm=obj.algorithm)
+            .exclude(algorithm=obj.algorithm)
             .aggregate(
                 total=Sum("compute_cost_euro_millicents", default=0),
             )["total"]
@@ -184,7 +184,6 @@ class JobAdmin(admin.ModelAdmin):
         "creator",
         "is_complimentary",
         "credits_consumed",
-        "compute_cost_euro_millicents",
         "time_limit",
         "requires_gpu_type",
         "requires_memory_gb",

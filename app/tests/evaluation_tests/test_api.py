@@ -329,7 +329,10 @@ class TestUpdateExternalEvaluation:
         claimed_eval.refresh_from_db()
         assert claimed_eval.status == Evaluation.FAILURE
         assert claimed_eval.evaluation_utilization.duration is not None
-        assert claimed_eval.compute_cost_euro_millicents == 0
+        assert (
+            claimed_eval.evaluation_utilization.compute_cost_euro_millicents
+            == 0
+        )
         assert claimed_eval.outputs.count() == 0
 
         # notifications sent to challenge admin and submission creator
@@ -380,7 +383,10 @@ class TestUpdateExternalEvaluation:
         claimed_eval.refresh_from_db()
         assert claimed_eval.status == Evaluation.SUCCESS
         assert claimed_eval.evaluation_utilization.duration is not None
-        assert claimed_eval.compute_cost_euro_millicents == 0
+        assert (
+            claimed_eval.evaluation_utilization.compute_cost_euro_millicents
+            == 0
+        )
         assert claimed_eval.outputs.count() == 1
         assert response.json() == {
             "metrics": "foo-bar",
@@ -423,7 +429,10 @@ class TestUpdateExternalEvaluation:
         }
         claimed_eval.refresh_from_db()
         assert claimed_eval.status == Evaluation.CANCELLED
-        assert claimed_eval.compute_cost_euro_millicents == 0
+        assert (
+            claimed_eval.evaluation_utilization.compute_cost_euro_millicents
+            == 0
+        )
         assert claimed_eval.error_message == "External evaluation timed out."
 
         assert Notification.objects.count() == 2
