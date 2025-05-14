@@ -5,10 +5,11 @@ from datetime import timedelta
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import OperationalError, transaction
+from django.db import transaction
 from django.db.models import Case, IntegerField, Value, When
 from django.db.transaction import on_commit
 from django.utils.timezone import now
+from psycopg.errors import LockNotAvailable
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.algorithms.models import AlgorithmModel, Job
@@ -17,6 +18,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
@@ -324,9 +326,7 @@ def set_evaluation_inputs(*, evaluation_pk):
     Job = apps.get_model(  # noqa: N806
         app_label="algorithms", model_name="Job"
     )
-    Evaluation = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Evaluation"
-    )
+    Evaluation = apps.get_model()  # noqa: N806
 
     if AlgorithmModel.objects.filter(
         submission__evaluation=evaluation_pk
@@ -351,15 +351,9 @@ def set_evaluation_inputs(*, evaluation_pk):
         logger.info("Nothing to do: the algorithm has pending jobs.")
         return
 
-    evaluation_queryset = Evaluation.objects.filter(
-        pk=evaluation_pk
-    ).select_for_update(nowait=True)
-
-    try:
-        # Acquire lock
-        evaluation = evaluation_queryset.get()
-    except OperationalError as error:
-        raise LockNotAcquiredException from error
+    evaluation = lock_model_instance(
+        pk=evaluation_pk, app_label="evaluation", model_name="Evaluation"
+    )
 
     if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
         logger.info(
@@ -461,7 +455,7 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
             .select_related("submission__creator", "submission__phase")
             .prefetch_related("outputs__interface")
         )
-    except OperationalError as error:
+    except LockNotAvailable as error:
         raise LockNotAcquiredException from error
 
     valid_evaluations = [

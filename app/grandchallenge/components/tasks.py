@@ -23,12 +23,13 @@ from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
-from django.db import OperationalError, transaction
+from django.db import transaction
 from django.db.models import Count, DateTimeField, ExpressionWrapper, F, Q
 from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
 from panimg.models import SimpleITKImage
+from psycopg.errors import LockNotAvailable
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.exceptions import (
@@ -736,7 +737,7 @@ def lock_model_instance(*, app_label, model_name, **kwargs):
 
     try:
         return queryset.get()
-    except OperationalError as error:
+    except LockNotAvailable as error:
         raise LockNotAcquiredException from error
 
 
@@ -883,20 +884,12 @@ def handle_event(*, event, backend):  # noqa: C901
     job_name = Backend.get_job_name(event=event)
     job_params = Backend.get_job_params(job_name=job_name)
 
-    model = apps.get_model(
-        app_label=job_params.app_label, model_name=job_params.model_name
-    )
-
-    queryset = model.objects.filter(
+    job = lock_model_instance(
         pk=job_params.pk,
         attempt=job_params.attempt,
-    ).select_for_update(nowait=True)
-
-    try:
-        # Acquire the lock
-        job = queryset.get()
-    except OperationalError as error:
-        raise LockNotAcquiredException from error
+        app_label=job_params.app_label,
+        model_name=job_params.model_name,
+    )
 
     executor = job.get_executor(backend=backend)
 
@@ -1450,7 +1443,7 @@ def assign_tarball_from_upload(
         peer_tarballs = list(
             current_tarball.get_peer_tarballs().select_for_update(nowait=True)
         )
-    except OperationalError as error:
+    except LockNotAvailable as error:
         raise LockNotAcquiredException from error
 
     current_tarball.user_upload.copy_object(
