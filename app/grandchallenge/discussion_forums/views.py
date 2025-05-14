@@ -28,10 +28,10 @@ class TopicListView(PermissionListMixin, ListView):
         context.update(
             {
                 "announcements": self.object_list.filter(
-                    type=TopicKindChoices.ANNOUNCE
+                    kind=TopicKindChoices.ANNOUNCE
                 ),
                 "default_topics": self.object_list.exclude(
-                    type=TopicKindChoices.ANNOUNCE
+                    kind=TopicKindChoices.ANNOUNCE
                 ),
                 "forum": self.forum,
             }

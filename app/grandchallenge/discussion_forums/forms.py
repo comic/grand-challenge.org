@@ -32,7 +32,7 @@ class TopicForm(SaveFormInitMixin, ModelForm):
 
     class Meta:
         model = Topic
-        fields = ("forum", "creator", "subject", "type", "content")
+        fields = ("forum", "creator", "subject", "kind", "content")
 
     def __init__(self, *args, forum, user, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,7 +45,7 @@ class TopicForm(SaveFormInitMixin, ModelForm):
         if not user.has_perm(
             "discussion_forums.create_sticky_and_announcement_topic", forum
         ):
-            self.fields["type"].choices = [
+            self.fields["kind"].choices = [
                 (TopicKindChoices.DEFAULT.name, TopicKindChoices.DEFAULT.label)
             ]
 
