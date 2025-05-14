@@ -15,13 +15,13 @@ from rest_framework.decorators import action
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.archives.models import Archive
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
+    ViewObjectPermissionsFilter,
     filter_by_permission,
 )
 from grandchallenge.evaluation.models import Submission
@@ -192,7 +192,7 @@ class NewsletterSignUp(
 class UserProfileViewSet(GenericViewSet):
     serializer_class = UserProfileSerializer
     permission_classes = (DjangoObjectPermissions,)
-    filter_backends = (ObjectPermissionsFilter,)
+    filter_backends = (ViewObjectPermissionsFilter,)
     queryset = UserProfile.objects.all()
 
     @action(detail=False, methods=["get"])

@@ -18,6 +18,7 @@ from guardian.utils import (
     get_group_obj_perms_model,
     get_user_obj_perms_model,
 )
+from rest_framework.filters import BaseFilterBackend
 
 
 class PermissionListMixin:
@@ -43,6 +44,22 @@ class PermissionListMixin:
             queryset=queryset,
             user=self.request.user,
             codename=codename,
+        )
+
+
+class ViewObjectPermissionsFilter(BaseFilterBackend):
+    """
+    Optimised version of rest_framework_guardian.filters.ObjectPermissionsFilter
+
+    A filter backend that limits results to those where the requesting user
+    has read object level permissions.
+    """
+
+    def filter_queryset(self, request, queryset, view):
+        return filter_by_permission(
+            queryset=queryset,
+            user=request.user,
+            codename=f"view_{queryset.model._meta.model_name}",
         )
 
 

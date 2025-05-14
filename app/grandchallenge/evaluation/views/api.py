@@ -11,9 +11,11 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from rest_framework_guardian.filters import ObjectPermissionsFilter
 
-from grandchallenge.core.guardian import filter_by_permission
+from grandchallenge.core.guardian import (
+    ViewObjectPermissionsFilter,
+    filter_by_permission,
+)
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.serializers import (
@@ -52,7 +54,7 @@ class EvaluationViewSet(ReadOnlyModelViewSet):
     )
     serializer_class = EvaluationSerializer
     permission_classes = (DjangoObjectPermissions,)
-    filter_backends = (DjangoFilterBackend, ObjectPermissionsFilter)
+    filter_backends = (DjangoFilterBackend, ViewObjectPermissionsFilter)
     filterset_fields = ["submission__phase"]
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
