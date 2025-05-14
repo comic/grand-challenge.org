@@ -77,10 +77,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="n">ANSWER_TYPE_SCHEMA</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">HexColorField</span><span class="p">,</span> <span class="n">RegexField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.guardian</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">NoUserPermissionsAllowed</span><span class="p">,</span>
-    <span class="n">get_objects_for_group</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.guardian</span><span class="w"> </span><span class="kn">import</span> <span class="n">NoUserPermissionsAllowed</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">RequestBase</span><span class="p">,</span> <span class="n">UUIDModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.storage</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_logo_path</span><span class="p">,</span>
@@ -102,11 +99,15 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.modalities.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ImagingModality</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.organizations.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Organization</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.publications.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Publication</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.reader_studies.interactive_algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">InteractiveAlgorithmChoices</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.reader_studies.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">accuracy_score</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.subdomains.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.workstations.templatetags.workstations</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">get_workstation_path_and_query_string</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.workstations.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">reassign_workstation_permissions</span>
 
 <span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">A reader study enables you to have a set of readers answer a set of questions</span>
@@ -208,18 +209,12 @@
 <span class="s2">as for each case are displayed in the ``statistics`` view.</span>
 <span class="s2">&quot;&quot;&quot;</span>
 
+
 <span class="n">CASE_TEXT_SCHEMA</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;object&quot;</span><span class="p">,</span>
     <span class="s2">&quot;properties&quot;</span><span class="p">:</span> <span class="p">{},</span>
     <span class="s2">&quot;additionalProperties&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;string&quot;</span><span class="p">},</span>
 <span class="p">}</span>
-
-
-<div class="viewcode-block" id="InteractiveAlgorithmChoices">
-<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.InteractiveAlgorithmChoices">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">InteractiveAlgorithmChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
-    <span class="n">ULS23_BASELINE</span> <span class="o">=</span> <span class="s2">&quot;uls23-baseline&quot;</span><span class="p">,</span> <span class="s2">&quot;ULS23 Baseline&quot;</span></div>
-
 
 
 <div class="viewcode-block" id="ReaderStudy">
@@ -513,25 +508,6 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">remove_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">reg_and_anon</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">assign_workstation_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">perm</span> <span class="o">=</span> <span class="s2">&quot;workstations.view_workstation&quot;</span>
-
-        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">readers_group</span><span class="p">):</span>
-            <span class="n">workstations</span> <span class="o">=</span> <span class="n">get_objects_for_group</span><span class="p">(</span>
-                <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span>
-                <span class="n">perms</span><span class="o">=</span><span class="n">perm</span><span class="p">,</span>
-            <span class="p">)</span>
-
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">workstation</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">workstations</span>
-            <span class="p">)</span> <span class="ow">or</span> <span class="n">workstations</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">remove_perm</span><span class="p">(</span><span class="n">perm</span><span class="o">=</span><span class="n">perm</span><span class="p">,</span> <span class="n">user_or_group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">workstations</span><span class="p">)</span>
-
-                <span class="c1"># Allow readers to view the workstation used for this study</span>
-                <span class="n">assign_perm</span><span class="p">(</span>
-                    <span class="n">perm</span><span class="o">=</span><span class="n">perm</span><span class="p">,</span> <span class="n">user_or_group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation</span>
-                <span class="p">)</span>
-
 <div class="viewcode-block" id="ReaderStudy.clean">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.clean">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -558,7 +534,10 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assign_workstation_permissions</span><span class="p">()</span></div>
+        <span class="n">reassign_workstation_permissions</span><span class="p">(</span>
+            <span class="n">groups</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">readers_group</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">editors_group</span><span class="p">),</span>
+            <span class="n">workstation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
