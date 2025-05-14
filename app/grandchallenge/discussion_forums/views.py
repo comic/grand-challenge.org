@@ -6,7 +6,7 @@ from grandchallenge.core.guardian import (
     PermissionListMixin,
 )
 from grandchallenge.discussion_forums.forms import TopicForm
-from grandchallenge.discussion_forums.models import Topic, TopicTypeChoices
+from grandchallenge.discussion_forums.models import Topic, TopicKindChoices
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -28,10 +28,10 @@ class TopicListView(PermissionListMixin, ListView):
         context.update(
             {
                 "announcements": self.object_list.filter(
-                    type=TopicTypeChoices.ANNOUNCE
+                    type=TopicKindChoices.ANNOUNCE
                 ),
                 "default_topics": self.object_list.exclude(
-                    type=TopicTypeChoices.ANNOUNCE
+                    type=TopicKindChoices.ANNOUNCE
                 ),
                 "forum": self.forum,
             }
