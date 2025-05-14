@@ -10,7 +10,7 @@ from rest_framework.permissions import DjangoObjectPermissions
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     ViewObjectPermissionsFilter,
 )
 from grandchallenge.notifications.filters import (
@@ -81,10 +81,9 @@ class FollowViewSet(
 
 
 class NotificationList(
-    LoginRequiredMixin, FilterMixin, PermissionListMixin, ListView
+    LoginRequiredMixin, FilterMixin, ViewObjectPermissionListMixin, ListView
 ):
     model = Notification
-    permission_required = "view_notification"
     filter_class = NotificationFilter
     paginate_by = 50
 
@@ -114,10 +113,9 @@ class NotificationList(
 
 
 class FollowList(
-    LoginRequiredMixin, FilterMixin, PermissionListMixin, ListView
+    LoginRequiredMixin, FilterMixin, ViewObjectPermissionListMixin, ListView
 ):
     model = Follow
-    permission_required = "view_follow"
     filter_class = FollowFilter
     paginate_by = 50
     queryset = (

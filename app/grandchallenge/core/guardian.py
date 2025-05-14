@@ -1,7 +1,6 @@
 from functools import cached_property
 
 from django.contrib.auth.models import Permission
-from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Index
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import PermissionRequiredMixin  # noqa: I251
@@ -21,29 +20,21 @@ from guardian.utils import (
 from rest_framework.filters import BaseFilterBackend
 
 
-class PermissionListMixin:
-    permission_required = None
+class ViewObjectPermissionListMixin:
+    """
+    Optimised version of guardian.mixins.PermissionListMixin
+
+    A queryset filter that limits results to those where the requesting user
+    has read object level permissions.
+    """
 
     def get_queryset(self, *args, **kwargs):
         queryset = super().get_queryset(*args, **kwargs)
 
-        if "." in self.permission_required:
-            permission_app_label, codename = self.permission_required.split(
-                "."
-            )
-            queryset_app_label = queryset.model._meta.app_label
-
-            if permission_app_label != queryset_app_label:
-                raise ImproperlyConfigured(
-                    f"{queryset_app_label=} and {permission_app_label=} do not match"
-                )
-        else:
-            codename = self.permission_required
-
         return filter_by_permission(
             queryset=queryset,
             user=self.request.user,
-            codename=codename,
+            codename=f"view_{queryset.model._meta.model_name}",
         )
 
 
