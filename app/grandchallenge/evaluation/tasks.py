@@ -17,6 +17,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
+from grandchallenge.components.tasks import check_operational_error
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
@@ -359,7 +360,8 @@ def set_evaluation_inputs(*, evaluation_pk):
         # Acquire lock
         evaluation = evaluation_queryset.get()
     except OperationalError as error:
-        raise LockNotAcquiredException from error
+        check_operational_error(error)
+        raise
 
     if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
         logger.info(
@@ -462,7 +464,8 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
             .prefetch_related("outputs__interface")
         )
     except OperationalError as error:
-        raise LockNotAcquiredException from error
+        check_operational_error(error)
+        raise
 
     valid_evaluations = [
         e

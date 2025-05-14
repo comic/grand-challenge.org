@@ -737,7 +737,15 @@ def lock_model_instance(*, app_label, model_name, **kwargs):
     try:
         return queryset.get()
     except OperationalError as error:
+        check_operational_error(error)
+        raise
+
+
+def check_operational_error(error):
+    if "could not obtain lock" in str(error):
         raise LockNotAcquiredException from error
+    else:
+        raise error
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
@@ -896,7 +904,8 @@ def handle_event(*, event, backend):  # noqa: C901
         # Acquire the lock
         job = queryset.get()
     except OperationalError as error:
-        raise LockNotAcquiredException from error
+        check_operational_error(error)
+        raise
 
     executor = job.get_executor(backend=backend)
 
@@ -1451,7 +1460,8 @@ def assign_tarball_from_upload(
             current_tarball.get_peer_tarballs().select_for_update(nowait=True)
         )
     except OperationalError as error:
-        raise LockNotAcquiredException from error
+        check_operational_error(error)
+        raise
 
     current_tarball.user_upload.copy_object(
         to_field=getattr(current_tarball, field_to_copy)
