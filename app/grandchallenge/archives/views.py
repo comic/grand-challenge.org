@@ -24,7 +24,6 @@ from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import ReadOnlyModelViewSet
-from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.archives.filters import ArchiveFilter
 from grandchallenge.archives.forms import (
@@ -64,6 +63,7 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    ViewObjectPermissionsFilter,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
@@ -484,7 +484,7 @@ class ArchiveViewSet(ReadOnlyModelViewSet):
     serializer_class = ArchiveSerializer
     queryset = Archive.objects.all()
     permission_classes = (DjangoObjectPermissions,)
-    filter_backends = (DjangoFilterBackend, ObjectPermissionsFilter)
+    filter_backends = (DjangoFilterBackend, ViewObjectPermissionsFilter)
     filterset_fields = ("slug",)
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
@@ -532,7 +532,7 @@ class ArchiveItemViewSet(
     )
     serializer_class = ArchiveItemSerializer
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_fields = ["archive"]
 
     def get_serializer_class(self):

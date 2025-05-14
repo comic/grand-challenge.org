@@ -52,7 +52,6 @@ from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
-from rest_framework_guardian.filters import ObjectPermissionsFilter
 
 from grandchallenge.archives.forms import AddCasesForm
 from grandchallenge.cases.models import Image, RawImageUploadSession
@@ -70,6 +69,7 @@ from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
+    ViewObjectPermissionsFilter,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
@@ -948,7 +948,7 @@ class ReaderStudyViewSet(ReadOnlyModelViewSet):
         "questions__options",
     )
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_fields = ["slug"]
     change_permission = (
         f"{ReaderStudy._meta.app_label}.change_{ReaderStudy._meta.model_name}"
@@ -1021,7 +1021,7 @@ class DisplaySetViewSet(
         )
     )
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_fields = ["reader_study"]
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
@@ -1134,7 +1134,7 @@ class QuestionViewSet(ReadOnlyModelViewSet):
     serializer_class = QuestionSerializer
     queryset = Question.objects.all().select_related("reader_study")
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_fields = ["reader_study"]
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
@@ -1155,7 +1155,7 @@ class AnswerViewSet(
         "question__reader_study",
     )
     permission_classes = [DjangoObjectPermissions]
-    filter_backends = [DjangoFilterBackend, ObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_class = AnswerFilter
     renderer_classes = (
         *api_settings.DEFAULT_RENDERER_CLASSES,
