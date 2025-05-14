@@ -325,7 +325,6 @@ def set_evaluation_inputs(*, evaluation_pk):
     Job = apps.get_model(  # noqa: N806
         app_label="algorithms", model_name="Job"
     )
-    Evaluation = apps.get_model()  # noqa: N806
 
     if AlgorithmModel.objects.filter(
         submission__evaluation=evaluation_pk
@@ -385,7 +384,7 @@ def set_evaluation_inputs(*, evaluation_pk):
         evaluation.input_prefixes = {
             str(o): f"{j}/output/" for o, j in output_to_job.items()
         }
-        evaluation.status = Evaluation.PENDING
+        evaluation.status = evaluation.PENDING
         evaluation.save()
 
         on_commit(evaluation.execute)
