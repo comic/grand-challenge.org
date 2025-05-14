@@ -125,16 +125,6 @@ class Migration(migrations.Migration):
                 ),
                 ("created", models.DateTimeField(auto_now_add=True)),
                 ("modified", models.DateTimeField(auto_now=True)),
-                ("subject", models.CharField(max_length=255)),
-                (
-                    "slug",
-                    django_extensions.db.fields.AutoSlugField(
-                        blank=True,
-                        editable=False,
-                        max_length=64,
-                        populate_from="subject",
-                    ),
-                ),
                 ("content", models.TextField()),
                 (
                     "creator",

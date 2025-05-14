@@ -167,9 +167,6 @@ class Post(UUIDModel):
         on_delete=models.SET_NULL,
     )
 
-    subject = models.CharField(max_length=255)
-    slug = AutoSlugField(populate_from="subject", max_length=64)
-
     content = models.TextField()
 
     class Meta:

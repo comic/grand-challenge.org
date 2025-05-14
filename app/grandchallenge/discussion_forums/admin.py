@@ -24,5 +24,5 @@ class TopicAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ("subject", "topic", "creator")
-    search_fields = ("subject", "creator__username")
+    list_display = ("topic", "creator")
+    search_fields = ("creator__username",)

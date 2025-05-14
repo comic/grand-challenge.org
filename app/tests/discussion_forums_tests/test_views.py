@@ -46,7 +46,6 @@ def test_topic_create(client):
     post = Post.objects.first()
     assert post.topic == topic
     assert post.creator == user
-    assert post.subject == "First topic"
     assert post.content == "Some post content"
 
 

@@ -35,7 +35,6 @@ def migrate_challenge_forums(apps, schema_editor):
                     topic=new_topic,
                     created=post.created,
                     creator=post.poster,
-                    subject=post.subject,
                     content=post.content,
                 )
 

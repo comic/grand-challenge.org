@@ -54,7 +54,6 @@ class TopicForm(SaveFormInitMixin, ModelForm):
         Post.objects.create(
             topic=topic,
             creator=self.cleaned_data["creator"],
-            subject=self.cleaned_data["subject"],
             content=self.cleaned_data["content"],
         )
         return topic
