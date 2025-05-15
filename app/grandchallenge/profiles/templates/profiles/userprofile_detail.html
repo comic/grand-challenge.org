@@ -27,19 +27,7 @@
     <div id="details" class="row">
         {% block profile_details %}
             <div class="col-sm-3">
-                <div class="embed-responsive embed-responsive-1by1 mb-3">
-                    <img class="card-img-top embed-responsive-item rounded-circle"
-                         {% if profile.mugshot %}
-                            src="{{ profile.mugshot.x20.url }}"
-                            srcset="{{ profile.mugshot.x10.url }} 1x,
-                                    {{ profile.mugshot.x15.url }} 1.5x,
-                                    {{ profile.mugshot.x20.url }} 2x"
-                         {% else %}
-                            src="{{ profile.get_mugshot_url }}"
-                         {% endif %}
-                         style="display: block; margin: auto;"
-                         alt="{% trans "Your mugshot" %}"/>
-                </div>
+                {% include 'profiles/partials/mugshot.html' with profile=profile with_userlink=False %}
                 <div>
                     {% if profile.user.get_full_name %}
                         <h2 class="mb-0">{{ profile.user.get_full_name }}</h2>

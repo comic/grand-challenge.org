@@ -12,6 +12,7 @@ from machina.apps.forum_conversation import (
 )
 from machina.apps.forum_tracking import models as machina_tracking_models
 
+from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
@@ -200,6 +201,15 @@ class ForumTopic(FieldChangeMixin, UUIDModelNoAutoNow):
         TopicReadRecord.objects.update_or_create(
             user=user,
             topic=self,
+        )
+
+    def get_absolute_url(self):
+        return reverse(
+            "discussion-forums:topic-detail",
+            kwargs={
+                "challenge_short_name": self.forum.parent_object.short_name,
+                "slug": self.slug,
+            },
         )
 
     @property
