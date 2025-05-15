@@ -349,7 +349,7 @@ def test_civ_post_value_validation(kind):
     "store_in_database, expected_error",
     (
         (True, "value is required for interface kind {kind}"),
-        (False, "user_upload is required for interface kind {kind}"),
+        (False, "user_upload or file is required for interface kind {kind}"),
     ),
 )
 def test_civ_post_value_or_user_upload_required_validation(

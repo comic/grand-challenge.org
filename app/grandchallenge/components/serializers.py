@@ -149,7 +149,21 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                     f"value is required for interface "
                     f"kind {interface.kind}"
                 )
+        elif interface.requires_file:
+            if not any(
+                [
+                    attrs.get("file"),
+                    attrs.get("user_upload"),
+                ]
+            ):
+                raise serializers.ValidationError(
+                    f"user_upload or file is required for interface "
+                    f"kind {interface.kind}"
+                )
+        else:
+            NotImplementedError(f"Unsupported interface {interface}")
 
+        if not attrs.get("upload_session") and not attrs.get("user_upload"):
             # Instances without an image or a file are never valid, this will be checked
             # later, but for now check everything else. DRF 3.0 dropped calling
             # full_clean on instances, so we need to do it ourselves.
@@ -157,14 +171,6 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                 **{k: v for k, v in attrs.items() if v is not None}
             )
             instance.full_clean()
-        elif interface.requires_file:
-            if not attrs.get("user_upload"):
-                raise serializers.ValidationError(
-                    f"user_upload is required for interface "
-                    f"kind {interface.kind}"
-                )
-        else:
-            NotImplementedError(f"Unsupported interface {interface}")
 
         return attrs
 
