@@ -2181,11 +2181,15 @@ class EvaluationUtilization(ComponentJobUtilization):
         null=True,
         on_delete=models.SET_NULL,
     )
+    external_evaluation = models.BooleanField()
 
     def save(self, *args, **kwargs) -> None:
         if self._state.adding:
             self.creator = self.evaluation.submission.creator
             self.phase = self.evaluation.submission.phase
+            self.external_evaluation = (
+                self.evaluation.submission.phase.external_evaluation
+            )
             self.archive = self.evaluation.submission.phase.archive
             self.challenge = self.evaluation.submission.phase.challenge
             self.algorithm_image = self.evaluation.submission.algorithm_image

@@ -24,7 +24,7 @@ def annotate_job_duration_and_compute_costs(*, phase):
         phase=phase,
     )
     evaluation_job_utilizations = EvaluationUtilization.objects.filter(
-        phase=phase, phase__external_evaluation=False
+        phase=phase, external_evaluation=False
     ).distinct()
 
     update_average_algorithm_job_duration(
@@ -63,7 +63,7 @@ def annotate_compute_costs_and_storage_size(*, challenge):
         challenge=challenge,
     )
     evaluation_job_utilizations = EvaluationUtilization.objects.filter(
-        challenge=challenge, phase__external_evaluation=False
+        challenge=challenge, external_evaluation=False
     ).distinct()
 
     update_compute_cost_euro_millicents(
