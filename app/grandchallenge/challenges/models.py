@@ -65,7 +65,6 @@ from grandchallenge.components.schemas import (
 )
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
     UserObjectPermissionBase,
     filter_by_permission,
 )
@@ -961,7 +960,9 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             return None
 
 
-class ChallengeUserObjectPermission(NoUserPermissionsAllowed):
+class ChallengeUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Challenge, on_delete=models.CASCADE)
 
 
@@ -1654,7 +1655,9 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
             )
 
 
-class OnboardingTaskUserObjectPermission(NoUserPermissionsAllowed):
+class OnboardingTaskUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         OnboardingTask, on_delete=models.CASCADE
     )

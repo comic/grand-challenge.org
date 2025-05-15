@@ -72,41 +72,33 @@ class ObjectPermissionRequiredMixin(PermissionRequiredMixin):
 
 
 class UserObjectPermissionBase(UserObjectPermissionBaseOrig):
+    allowed_permissions = None
 
-    class Meta(UserObjectPermissionBaseOrig.Meta):
-        abstract = True
-        indexes = [
-            Index(fields=["user", "permission"]),
-        ]
-
-
-class NoUserPermissionsAllowed(UserObjectPermissionBaseOrig):
     def save(self, *args, **kwargs):
-        raise RuntimeError(
-            "User permissions should not be assigned for this model"
-        )
+        if self.permission.codename not in self.allowed_permissions:
+            raise RuntimeError(
+                f"{self.permission} should not be assigned to users for this model"
+            )
 
     class Meta(UserObjectPermissionBaseOrig.Meta):
         abstract = True
+        indexes = [Index(fields=["user", "permission"])]
 
 
 class GroupObjectPermissionBase(GroupObjectPermissionBaseOrig):
+    allowed_permissions = None
+
+    def save(self, *args, **kwargs):
+        if self.permission.codename not in self.allowed_permissions:
+            raise RuntimeError(
+                f"{self.permission} should not be assigned to groups for this model"
+            )
 
     class Meta(GroupObjectPermissionBaseOrig.Meta):
         abstract = True
         indexes = [
             Index(fields=["group", "permission"]),
         ]
-
-
-class NoGroupPermissionsAllowed(GroupObjectPermissionBaseOrig):
-    def save(self, *args, **kwargs):
-        raise RuntimeError(
-            "Group permissions should not be assigned for this model"
-        )
-
-    class Meta(GroupObjectPermissionBaseOrig.Meta):
-        abstract = True
 
 
 def filter_by_permission(*, queryset, user, codename):
@@ -131,18 +123,30 @@ def filter_by_permission(*, queryset, user, codename):
         # AnonymousUser does not work with filters
         user = get_anonymous_user()
 
+    permission = Permission.objects.get(
+        content_type__app_label=queryset.model._meta.app_label,
+        codename=codename,
+    )
+
     dfk_group_model = get_group_obj_perms_model(queryset.model)
 
     if isinstance(dfk_group_model, GroupObjectPermission):
         raise RuntimeError("DFK group permissions not active for model")
 
-    group_related_query_name = (
-        dfk_group_model.content_object.field.related_query_name()
+    dfk_user_model = get_user_obj_perms_model(queryset.model)
+
+    if isinstance(dfk_user_model, UserObjectPermission):
+        raise RuntimeError("DFK user permissions not active for model")
+
+    group_filter_required = (
+        permission.codename in dfk_user_model.allowed_permissions
+    )
+    user_filter_required = (
+        permission.codename in dfk_user_model.allowed_permissions
     )
 
-    permission = Permission.objects.get(
-        content_type__app_label=queryset.model._meta.app_label,
-        codename=codename,
+    group_related_query_name = (
+        dfk_group_model.content_object.field.related_query_name()
     )
 
     # Evaluate the pks in python to force the use of the index
@@ -153,11 +157,6 @@ def filter_by_permission(*, queryset, user, codename):
         f"{group_related_query_name}__permission": permission,
     }
 
-    dfk_user_model = get_user_obj_perms_model(queryset.model)
-
-    if isinstance(dfk_user_model, UserObjectPermission):
-        raise RuntimeError("DFK user permissions not active for model")
-
     user_related_query_name = (
         dfk_user_model.content_object.field.related_query_name()
     )
@@ -167,20 +166,22 @@ def filter_by_permission(*, queryset, user, codename):
         f"{user_related_query_name}__permission": permission,
     }
 
-    if isinstance(dfk_user_model, NoUserPermissionsAllowed):
-        # No user permissions allowed, so only filter by group perms
-        return queryset.filter(**group_filter_kwargs)
-    elif isinstance(dfk_group_model, NoGroupPermissionsAllowed):
-        # No group permissions allowed, so only filter by user perms
-        return queryset.filter(**user_filter_kwargs)
-    else:
-        # Both group and user permissions allowed, so filter by both
+    if group_filter_required and user_filter_required:
         pks = (
             queryset.filter(**user_filter_kwargs)
             .union(queryset.filter(**group_filter_kwargs))
             .values_list("pk", flat=True)
         )
         return queryset.filter(pk__in=pks)
+    elif group_filter_required:
+        return queryset.filter(**group_filter_kwargs)
+    elif user_filter_required:
+        return queryset.filter(**user_filter_kwargs)
+    else:
+        raise ImproperlyConfigured(
+            f"No filter required for filtering this queryset by {permission}. "
+            "Please ensure this permission is allowed on the object permission models"
+        )
 
 
 def get_object_if_allowed(*, model, pk, user, codename):

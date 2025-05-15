@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.guardian import (
-    NoGroupPermissionsAllowed,
+    GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import UUIDModel
@@ -25,7 +25,9 @@ class FollowUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Follow, on_delete=models.CASCADE)
 
 
-class FollowGroupObjectPermission(NoGroupPermissionsAllowed):
+class FollowGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Follow, on_delete=models.CASCADE)
 
 
@@ -482,5 +484,7 @@ class NotificationUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Notification, on_delete=models.CASCADE)
 
 
-class NotificationGroupObjectPermission(NoGroupPermissionsAllowed):
+class NotificationGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Notification, on_delete=models.CASCADE)

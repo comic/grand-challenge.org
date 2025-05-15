@@ -6,7 +6,7 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.core.guardian import (
-    NoGroupPermissionsAllowed,
+    GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
@@ -301,7 +301,9 @@ class HangingProtocolUserObjectPermission(UserObjectPermissionBase):
     )
 
 
-class HangingProtocolGroupObjectPermission(NoGroupPermissionsAllowed):
+class HangingProtocolGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         HangingProtocol, on_delete=models.CASCADE
     )

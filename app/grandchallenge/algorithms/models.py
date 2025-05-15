@@ -40,7 +40,6 @@ from grandchallenge.components.models import (  # noqa: F401
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -640,7 +639,9 @@ class AlgorithmAlgorithmInterface(models.Model):
         return str(self.interface)
 
 
-class AlgorithmUserObjectPermission(NoUserPermissionsAllowed):
+class AlgorithmUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
 
 
@@ -884,7 +885,9 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         return AlgorithmImage.objects.filter(algorithm=self.algorithm)
 
 
-class AlgorithmImageUserObjectPermission(NoUserPermissionsAllowed):
+class AlgorithmImageUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         AlgorithmImage, on_delete=models.CASCADE
     )
@@ -1012,7 +1015,9 @@ class AlgorithmModel(Tarball):
         )
 
 
-class AlgorithmModelUserObjectPermission(NoUserPermissionsAllowed):
+class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         AlgorithmModel, on_delete=models.CASCADE
     )

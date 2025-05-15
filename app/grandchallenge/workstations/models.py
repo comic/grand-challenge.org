@@ -31,8 +31,6 @@ from grandchallenge.components.tasks import (
 )
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoGroupPermissionsAllowed,
-    NoUserPermissionsAllowed,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
@@ -177,7 +175,9 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         return user.groups.remove(self.users_group)
 
 
-class WorkstationUserObjectPermission(NoUserPermissionsAllowed):
+class WorkstationUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Workstation, on_delete=models.CASCADE)
 
 
@@ -285,7 +285,9 @@ class WorkstationImage(UUIDModel, ComponentImage):
         return WorkstationImage.objects.filter(workstation=self.workstation)
 
 
-class WorkstationImageUserObjectPermission(NoUserPermissionsAllowed):
+class WorkstationImageUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         WorkstationImage, on_delete=models.CASCADE
     )
@@ -730,7 +732,9 @@ class FeedbackUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Feedback, on_delete=models.CASCADE)
 
 
-class FeedbackGroupObjectPermission(NoGroupPermissionsAllowed):
+class FeedbackGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Feedback, on_delete=models.CASCADE)
 
 

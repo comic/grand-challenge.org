@@ -30,7 +30,6 @@ from grandchallenge.core.error_handlers import (
 )
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoGroupPermissionsAllowed,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
@@ -260,7 +259,9 @@ class RawImageUploadSessionUserObjectPermission(UserObjectPermissionBase):
     )
 
 
-class RawImageUploadSessionGroupObjectPermission(NoGroupPermissionsAllowed):
+class RawImageUploadSessionGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         RawImageUploadSession, on_delete=models.CASCADE
     )

@@ -7,7 +7,7 @@ from guardian.shortcuts import assign_perm
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
+    UserObjectPermissionBase,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.utils.access_requests import process_access_request
@@ -118,7 +118,9 @@ class RegistrationQuestion(UUIDModel):
         )
 
 
-class RegistrationQuestionUserObjectPermission(NoUserPermissionsAllowed):
+class RegistrationQuestionUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         RegistrationQuestion, on_delete=models.CASCADE
     )

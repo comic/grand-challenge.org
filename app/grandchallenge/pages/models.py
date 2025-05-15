@@ -12,7 +12,7 @@ from simple_history.models import HistoricalRecords
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
+    UserObjectPermissionBase,
 )
 from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.core.templatetags.bleach import md2html
@@ -236,7 +236,9 @@ class Page(FieldChangeMixin, models.Model):
         ordering = ["challenge", "order"]
 
 
-class PageUserObjectPermission(NoUserPermissionsAllowed):
+class PageUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Page, on_delete=models.CASCADE)
 
 

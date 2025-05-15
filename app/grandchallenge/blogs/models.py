@@ -7,7 +7,7 @@ from simple_history.models import HistoricalRecords
 from stdimage import JPEGField
 
 from grandchallenge.core.guardian import (
-    NoGroupPermissionsAllowed,
+    GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.storage import get_logo_path, public_s3_storage
@@ -84,5 +84,7 @@ class PostUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Post, on_delete=models.CASCADE)
 
 
-class PostGroupObjectPermission(NoGroupPermissionsAllowed):
+class PostGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Post, on_delete=models.CASCADE)

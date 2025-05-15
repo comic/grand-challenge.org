@@ -19,7 +19,7 @@ from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.guardian import (
-    NoGroupPermissionsAllowed,
+    GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import UUIDModel
@@ -112,7 +112,9 @@ class DirectMessageUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(DirectMessage, on_delete=models.CASCADE)
 
 
-class DirectMessageGroupObjectPermission(NoGroupPermissionsAllowed):
+class DirectMessageGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(DirectMessage, on_delete=models.CASCADE)
 
 
@@ -152,7 +154,9 @@ class MuteUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Mute, on_delete=models.CASCADE)
 
 
-class MuteGroupObjectPermission(NoGroupPermissionsAllowed):
+class MuteGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Mute, on_delete=models.CASCADE)
 
 
@@ -274,5 +278,7 @@ class ConversationUserObjectPermission(UserObjectPermissionBase):
     content_object = models.ForeignKey(Conversation, on_delete=models.CASCADE)
 
 
-class ConversationGroupObjectPermission(NoGroupPermissionsAllowed):
+class ConversationGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Conversation, on_delete=models.CASCADE)

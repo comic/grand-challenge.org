@@ -12,7 +12,7 @@ from grandchallenge.components.schemas import (
 )
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
+    UserObjectPermissionBase,
 )
 from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
 from grandchallenge.core.storage import get_logo_path, public_s3_storage
@@ -122,7 +122,9 @@ class Organization(TitleSlugDescriptionModel, UUIDModel):
         return user.groups.remove(self.members_group)
 
 
-class OrganizationUserObjectPermission(NoUserPermissionsAllowed):
+class OrganizationUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
 

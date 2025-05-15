@@ -46,7 +46,6 @@ from grandchallenge.components.schemas import (
 )
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import (
@@ -1375,7 +1374,9 @@ class PhaseEvaluationOutput(CheckForOverlappingSocketsMixin, models.Model):
         ]
 
 
-class PhaseUserObjectPermission(NoUserPermissionsAllowed):
+class PhaseUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Phase, on_delete=models.CASCADE)
 
 
@@ -1438,7 +1439,9 @@ class Method(UUIDModel, ComponentImage):
         return Method.objects.filter(phase=self.phase)
 
 
-class MethodUserObjectPermission(NoUserPermissionsAllowed):
+class MethodUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Method, on_delete=models.CASCADE)
 
 
@@ -1785,7 +1788,9 @@ class EvaluationGroundTruth(Tarball):
         )
 
 
-class EvaluationGroundTruthUserObjectPermission(NoUserPermissionsAllowed):
+class EvaluationGroundTruthUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         EvaluationGroundTruth, on_delete=models.CASCADE
     )
@@ -2158,7 +2163,9 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         )
 
 
-class EvaluationUserObjectPermission(NoUserPermissionsAllowed):
+class EvaluationUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
 
 
