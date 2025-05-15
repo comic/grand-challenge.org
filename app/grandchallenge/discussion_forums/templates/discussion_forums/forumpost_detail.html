@@ -1,0 +1,26 @@
+{% load profiles %}
+{% load humanize %}
+{% load bleach %}
+
+<div id="{{ object.id }}" class="my-3 card">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-10">
+                <div class="float-right">
+                    {# TODO: edit button for post #}
+                    {# TODO: delete button for post #}
+                </div>
+                <p>
+                    <small class="text-muted">
+                        <i class="fas fa-clock mr-1"></i>By: {{ object.creator|user_profile_link }}
+                        {{ object.created|naturaltime }}
+                    </small>
+                </p>
+                <div class="post-content">{{ object.content|md2html }}</div>
+            </div>
+            <div class="col-md-2 d-none d-md-block">
+                {% include 'profiles/partials/mugshot.html' with profile=object.creator.user_profile with_userlink=True %}
+            </div>
+        </div>
+    </div>
+</div>

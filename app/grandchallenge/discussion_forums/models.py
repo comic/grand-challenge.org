@@ -231,6 +231,16 @@ class ForumPost(UUIDModel):
             self,
         )
 
+    def get_absolute_url(self):
+        return reverse(
+            "discussion-forums:post-detail",
+            kwargs={
+                "challenge_short_name": self.topic.forum.parent_object.short_name,
+                "slug": self.topic.slug,
+                "pk": self.pk,
+            },
+        )
+
 
 class ForumUserObjectPermission(NoUserPermissionsAllowed):
     content_object = models.ForeignKey(Forum, on_delete=models.CASCADE)

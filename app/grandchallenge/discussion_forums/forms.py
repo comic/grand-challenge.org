@@ -11,6 +11,7 @@ from grandchallenge.discussion_forums.models import (
     ForumTopic,
     ForumTopicKindChoices,
 )
+from grandchallenge.subdomains.utils import reverse
 
 
 class ForumTopicForm(SaveFormInitMixin, ModelForm):
@@ -77,6 +78,8 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
         queryset=None,
     )
 
+    content = CharField(widget=MarkdownEditorInlineWidget)
+
     class Meta:
         model = ForumPost
         fields = ("topic", "creator", "content")
@@ -94,6 +97,20 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
             pk=user.pk
         )
         self.fields["creator"].initial = user
+
+        self.helper.attrs.update(
+            {
+                "hx-post": reverse(
+                    "discussion-forums:post-create",
+                    kwargs={
+                        "challenge_short_name": topic.forum.parent_object.short_name,
+                        "slug": self._topic.slug,
+                    },
+                ),
+                "hx-target": "#new-post-card",
+                "hx-swap": "outerHTML",
+            }
+        )
 
     def clean(self):
         if (

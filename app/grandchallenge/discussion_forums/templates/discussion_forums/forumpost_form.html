@@ -1,34 +1,15 @@
-{% extends "discussion_forums/forum_base.html" %}
 {% load crispy_forms_tags %}
 
-{% block sub_title %}Create Topic - {% endblock %}
-
-{% block extra_breadcrumbs %}
-    <li class="breadcrumb-item">
-        <a href="{% url 'discussion-forums:topic-list' %}">Forum</a>
-    </li>
-    <li class="breadcrumb-item">
-        <a href="{% url 'discussion-forums:topic-detail' slug=topic.slug %}">{{ topic }}</a>
-    </li>
-    <li class="breadcrumb-item active">Create Post</li>
-{% endblock %}
-
-{% block extra_content %}
-    <div class="row">
-        <div class="col-12"><h2>{{ topic.subject }}</h2></div>
-    </div>
-    {% include 'discussion_forums/partials/topic_post_list.html' with object=topic %}
-    <div class="row">
-        <div class="col-12">
-            <div class="card border border-dark" id="new-post-card">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <h3 class="m-0 h5 card-title">Reply to topic</h3>
-                    <div><a href="{{ topic.get_absolute_url }}" class="btn btn-dark">Cancel</a></div>
-                </div>
-                <div class="card-body">
-                    {% crispy form %}
-                </div>
+<div class="row">
+    <div class="col-12">
+        <div class="card border border-dark" id="new-post-card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h3 class="m-0 h5 card-title">Reply to topic</h3>
+                <div><a href="{{ topic.get_absolute_url }}" class="btn btn-dark">Cancel</a></div>
+            </div>
+            <div class="card-body">
+                {% crispy form %}
             </div>
         </div>
     </div>
-{% endblock %}
+</div>
