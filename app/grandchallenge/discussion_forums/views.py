@@ -1,6 +1,12 @@
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
-from django.views.generic import CreateView, DeleteView, DetailView, ListView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
 
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
@@ -153,16 +159,9 @@ class ForumPostDetail(ObjectPermissionRequiredMixin, DetailView):
     def forum(self):
         return self.request.challenge.discussion_forum
 
-    @cached_property
-    def topic(self):
-        return get_object_or_404(
-            ForumTopic, forum=self.forum, slug=self.kwargs["slug"]
-        )
-
     def get_object(self, queryset=None):
         return get_object_or_404(
             ForumPost,
-            topic=self.topic,
             pk=self.kwargs["pk"],
         )
 
@@ -186,7 +185,6 @@ class ForumPostDelete(ObjectPermissionRequiredMixin, DeleteView):
     def get_object(self, queryset=None):
         return get_object_or_404(
             ForumPost,
-            topic=self.topic,
             pk=self.kwargs["pk"],
         )
 
@@ -205,3 +203,31 @@ class ForumPostDelete(ObjectPermissionRequiredMixin, DeleteView):
         context = super().get_context_data()
         context.update({"forum": self.forum})
         return context
+
+
+class ForumPostUpdate(ObjectPermissionRequiredMixin, UpdateView):
+    model = ForumPost
+    permission_required = "discussion_forums.change_forumpost"
+    raise_exception = True
+    form_class = ForumPostForm
+
+    @cached_property
+    def forum(self):
+        return self.request.challenge.discussion_forum
+
+    @cached_property
+    def topic(self):
+        return get_object_or_404(
+            ForumTopic, forum=self.forum, slug=self.kwargs["slug"]
+        )
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            ForumPost,
+            pk=self.kwargs["pk"],
+        )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user, "topic": self.topic})
+        return kwargs

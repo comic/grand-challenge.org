@@ -19,6 +19,7 @@
                 <form action="" method="post">
                     {% csrf_token %}
                     <p>Are you sure that you want to delete the topic "{{ object }}"?</p>
+                    <p>Deleting a topic also deletes all associated posts.</p>
                     <p>
                         <b class="text-danger">
                             WARNING: You are not able to undo this action. Once the topic is deleted, it is deleted

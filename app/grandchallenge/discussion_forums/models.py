@@ -235,14 +235,10 @@ class ForumPost(UUIDModel):
             self.topic.forum.parent_object.admins_group,
             self,
         )
+        # only the creator can change the post
         assign_perm(
             "discussion_forums.change_forumpost",
             self.creator,
-            self,
-        )
-        assign_perm(
-            "discussion_forums.change_forumpost",
-            self.topic.forum.parent_object.admins_group,
             self,
         )
 

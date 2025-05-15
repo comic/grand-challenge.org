@@ -4,6 +4,7 @@ from grandchallenge.discussion_forums.views import (
     ForumPostCreate,
     ForumPostDelete,
     ForumPostDetail,
+    ForumPostUpdate,
     ForumTopicCreate,
     ForumTopicDelete,
     ForumTopicDetail,
@@ -44,5 +45,10 @@ urlpatterns = [
         "topics/<slug:slug>/posts/<uuid:pk>/delete/",
         ForumPostDelete.as_view(),
         name="post-delete",
+    ),
+    path(
+        "topics/<slug:slug>/posts/<uuid:pk>/update/",
+        ForumPostUpdate.as_view(),
+        name="post-update",
     ),
 ]

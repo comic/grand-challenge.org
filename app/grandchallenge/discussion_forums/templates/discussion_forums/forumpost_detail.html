@@ -1,14 +1,22 @@
 {% load profiles %}
 {% load humanize %}
 {% load bleach %}
+{% load guardian_tags %}
 
-<div id="{{ object.id }}" class="my-3 card">
+<div id="post-{{ object.id }}" class="my-3 card">
     <div class="card-body">
         <div class="row">
             <div class="col-md-10">
                 <div class="float-right">
-                    {% include 'discussion_forums/forumpost_confirm_delete.html' %}
-                    {# TODO: edit button for post #}
+                    {% get_obj_perms request.user for object as "user_perms" %}
+                    {% if 'change_forumpost' in user_perms %}
+                        <a hx-get="{% url 'discussion-forums:post-update' slug=object.topic.slug pk=object.pk %}" hx-swap="outerHTML show:bottom" hx-target="#post-{{ object.id }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    {% endif %}
+                    {% if 'delete_forumpost' in user_perms %}
+                        {% include 'discussion_forums/forumpost_confirm_delete.html' %}
+                    {% endif %}
                 </div>
                 <p>
                     <small class="text-muted">

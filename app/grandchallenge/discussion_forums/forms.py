@@ -98,16 +98,30 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
         )
         self.fields["creator"].initial = user
 
+        if not self.instance._state.adding:
+            hx_post_url = reverse(
+                "discussion-forums:post-update",
+                kwargs={
+                    "challenge_short_name": topic.forum.parent_object.short_name,
+                    "slug": self._topic.slug,
+                    "pk": self.instance.pk,
+                },
+            )
+            hx_target = f"#post-{self.instance.pk}"
+        else:
+            hx_post_url = reverse(
+                "discussion-forums:post-create",
+                kwargs={
+                    "challenge_short_name": topic.forum.parent_object.short_name,
+                    "slug": self._topic.slug,
+                },
+            )
+            hx_target = "#new-post-card"
+
         self.helper.attrs.update(
             {
-                "hx-post": reverse(
-                    "discussion-forums:post-create",
-                    kwargs={
-                        "challenge_short_name": topic.forum.parent_object.short_name,
-                        "slug": self._topic.slug,
-                    },
-                ),
-                "hx-target": "#new-post-card",
+                "hx-post": hx_post_url,
+                "hx-target": hx_target,
                 "hx-swap": "outerHTML",
             }
         )
