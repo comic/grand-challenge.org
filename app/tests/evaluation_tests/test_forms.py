@@ -21,6 +21,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.forms import (
+    AlgorithmInterfaceForPhaseCopyForm,
     ConfigureAlgorithmPhasesForm,
     EvaluationForm,
     EvaluationGroundTruthForm,
@@ -1401,3 +1402,77 @@ def test_reschedule_evaluation_requires_matching_algorithm_interfaces(
             "The algorithm interfaces do not match those defined for the phase."
             in str(form.errors)
         )
+
+
+@pytest.mark.django_db
+def test_phase_copy_algorithm_interfaces():
+    challenge = ChallengeFactory()
+
+    source_phase = PhaseFactory(challenge=challenge)
+    ai1 = AlgorithmInterfaceFactory()
+    source_phase.algorithm_interfaces.set([ai1])
+
+    target_phase = PhaseFactory(challenge=challenge)
+
+    assert (
+        not target_phase.algorithm_interfaces.exists()
+    ), "Sanity: no algorithm interfaces to start with"
+
+    form = AlgorithmInterfaceForPhaseCopyForm(
+        phase=source_phase,
+        data={
+            "phases": [
+                target_phase.pk,
+            ],
+        },
+    )
+
+    assert form.is_valid()
+    form.copy_algorithm_interfaces()
+
+    assert (
+        target_phase.algorithm_interfaces.get() == ai1
+    ), "Algorithm interface copied correctly"
+
+    # Can run it multiple times without trouble
+    form.copy_algorithm_interfaces()
+    assert (
+        target_phase.algorithm_interfaces.get() == ai1
+    ), "Running multiple times does not duplicate interfaces"
+
+    # Existing interfaces pose no problem
+    ai2 = AlgorithmInterfaceFactory()
+    target_phase.algorithm_interfaces.set([ai2])
+
+    form = AlgorithmInterfaceForPhaseCopyForm(
+        phase=source_phase,
+        data={
+            "phases": [
+                target_phase.pk,
+            ],
+        },
+    )
+    assert form.is_valid()
+    form.copy_algorithm_interfaces()
+
+    assert set(target_phase.algorithm_interfaces.all()) == {ai1, ai2}
+
+    parent_phase = PhaseFactory(challenge=challenge)
+    target_phase.parent = parent_phase
+    target_phase.save()
+
+    assert (
+        target_phase.algorithm_interfaces_locked
+    ), "Sanity: interfaces locked"
+
+    form = AlgorithmInterfaceForPhaseCopyForm(
+        phase=source_phase,
+        data={
+            "phases": [
+                target_phase.pk,
+            ],
+        },
+    )
+    assert (
+        not form.is_valid()
+    ), "Locked interfaces on a selected phase invalides the form"
