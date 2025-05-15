@@ -2,6 +2,7 @@ from django.urls import path
 
 from grandchallenge.discussion_forums.views import (
     ForumPostCreate,
+    ForumPostDelete,
     ForumPostDetail,
     ForumTopicCreate,
     ForumTopicDelete,
@@ -38,5 +39,10 @@ urlpatterns = [
         "topics/<slug:slug>/posts/<uuid:pk>/",
         ForumPostDetail.as_view(),
         name="post-detail",
+    ),
+    path(
+        "topics/<slug:slug>/posts/<uuid:pk>/delete/",
+        ForumPostDelete.as_view(),
+        name="post-delete",
     ),
 ]

@@ -181,6 +181,10 @@ class ForumPost(UUIDModel):
     def is_alone(self):
         return self.topic.posts.count() == 1
 
+    @property
+    def is_last_post(self):
+        return self.topic.last_post == self
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
@@ -193,9 +197,20 @@ class ForumPost(UUIDModel):
         self.topic.save()
 
     def delete(self, *args, **kwargs):
+        update_last_post_on = False
+        topic = None
+
         if self.is_alone:
             self.topic.delete()
+        elif self.is_last_post:
+            update_last_post_on = True
+            topic = self.topic
+
         super().delete(*args, **kwargs)
+
+        if update_last_post_on:
+            topic.last_post_on = topic.last_post.created
+            topic.save()
 
     def assign_permissions(self):
         # challenge admins and participants can see this post

@@ -165,3 +165,43 @@ class ForumPostDetail(ObjectPermissionRequiredMixin, DetailView):
             topic=self.topic,
             pk=self.kwargs["pk"],
         )
+
+
+class ForumPostDelete(ObjectPermissionRequiredMixin, DeleteView):
+    model = ForumPost
+    permission_required = "discussion_forums.delete_forumpost"
+    raise_exception = True
+    success_message = "Successfully deleted post."
+
+    @cached_property
+    def forum(self):
+        return self.request.challenge.discussion_forum
+
+    @cached_property
+    def topic(self):
+        return get_object_or_404(
+            ForumTopic, forum=self.forum, slug=self.kwargs["slug"]
+        )
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            ForumPost,
+            topic=self.topic,
+            pk=self.kwargs["pk"],
+        )
+
+    def get_success_url(self):
+        if self.object.is_alone:
+            return reverse(
+                "discussion-forums:topic-list",
+                kwargs={
+                    "challenge_short_name": self.request.challenge.short_name
+                },
+            )
+        else:
+            return self.topic.get_absolute_url()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update({"forum": self.forum})
+        return context
