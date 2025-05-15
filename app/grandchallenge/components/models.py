@@ -1918,17 +1918,10 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     def utilization(self):
         raise NotImplementedError
 
-    def update_utilization(self, *, duration, compute_cost_euro_millicents):
-        update_fields = []
-        if duration is not None:
-            self.utilization.duration = duration
-            update_fields.append("duration")
-        if compute_cost_euro_millicents is not None:
-            self.utilization.compute_cost_euro_millicents = (
-                compute_cost_euro_millicents
-            )
-            update_fields.append("compute_cost_euro_millicents")
-        self.utilization.save(update_fields=update_fields)
+    def update_utilization(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self.utilization, key, value)
+        self.utilization.save(update_fields=kwargs.keys())
 
     class Meta:
         abstract = True
