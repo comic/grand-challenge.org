@@ -298,10 +298,6 @@ def test_civ_post_value_validation(kind):
         civ = {
             "interface": interface.slug,
             "value": TEST_DATA[test],
-            "file": None,
-            "image": None,
-            "upload_session": None,
-            "user_upload": None,
         }
 
         # test
