@@ -88,7 +88,7 @@ from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     ViewObjectPermissionsFilter,
     filter_by_permission,
 )
@@ -149,9 +149,8 @@ class AlgorithmCreate(
         return response
 
 
-class AlgorithmList(FilterMixin, PermissionListMixin, ListView):
+class AlgorithmList(FilterMixin, ViewObjectPermissionListMixin, ListView):
     model = Algorithm
-    permission_required = "algorithms.view_algorithm"
     ordering = ("-highlight", "-created")
     filter_class = AlgorithmFilter
     paginate_by = 40
@@ -664,7 +663,7 @@ class JobProgressDetail(
         return context
 
 
-class JobsList(PermissionListMixin, PaginatedTableListView):
+class JobsList(ViewObjectPermissionListMixin, PaginatedTableListView):
     model = Job
     row_template = "algorithms/job_list_row.html"
     search_fields = [
@@ -674,7 +673,6 @@ class JobsList(PermissionListMixin, PaginatedTableListView):
         "inputs__image__files__file",
         "comment",
     ]
-    permission_required = "algorithms.view_job"
 
     columns = [
         Column(title="Detail"),

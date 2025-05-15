@@ -12,7 +12,7 @@ from guardian.utils import get_anonymous_user
 from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     filter_by_permission,
 )
 from grandchallenge.reader_studies.models import Answer
@@ -85,9 +85,8 @@ def test_permission_list_mixin():
     request = HttpRequest()
     request.user = user
 
-    class View(PermissionListMixin, ListView):
+    class View(ViewObjectPermissionListMixin, ListView):
         model = Answer
-        permission_required = "reader_studies.view_answer"
 
     # Add global permission, algorithm should not be included
     assign_perm("reader_studies.view_answer", user)

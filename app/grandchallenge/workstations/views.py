@@ -32,7 +32,7 @@ from ua_parser.user_agent_parser import ParseUserAgent
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     ViewObjectPermissionsFilter,
 )
 from grandchallenge.groups.forms import EditorsForm, UsersForm
@@ -90,11 +90,10 @@ class SessionViewSet(ReadOnlyModelViewSet):
             )
 
 
-class WorkstationList(LoginRequiredMixin, PermissionListMixin, ListView):
+class WorkstationList(
+    LoginRequiredMixin, ViewObjectPermissionListMixin, ListView
+):
     model = Workstation
-    permission_required = (
-        f"{Workstation._meta.app_label}.view_{Workstation._meta.model_name}"
-    )
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

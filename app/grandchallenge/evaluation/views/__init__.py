@@ -47,7 +47,7 @@ from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     filter_by_permission,
 )
 from grandchallenge.core.utils.grand_challenge_forge import (
@@ -262,10 +262,12 @@ class MethodCreate(
 
 
 class MethodList(
-    LoginRequiredMixin, PermissionListMixin, CachedPhaseMixin, ListView
+    LoginRequiredMixin,
+    ViewObjectPermissionListMixin,
+    CachedPhaseMixin,
+    ListView,
 ):
     model = Method
-    permission_required = "view_method"
     login_url = reverse_lazy("account_login")
     ordering = ("-is_desired_version", "-created")
 
@@ -370,11 +372,10 @@ class SubmissionCreate(
 
 
 class SubmissionList(
-    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView
+    LoginRequiredMixin, ViewObjectPermissionListMixin, PaginatedTableListView
 ):
     model = Submission
     row_template = "evaluation/submission_list_row.html"
-    permission_required = "view_submission"
     login_url = reverse_lazy("account_login")
 
     search_fields = [
@@ -507,13 +508,12 @@ class EvaluationCreate(
 
 class EvaluationList(
     LoginRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     TeamContextMixin,
     CachedPhaseMixin,
     ListView,
 ):
     model = Evaluation
-    permission_required = "view_evaluation"
     login_url = reverse_lazy("account_login")
 
     def get_queryset(self):
@@ -702,14 +702,13 @@ class LeaderboardRedirect(RedirectView):
 class LeaderboardDetail(
     UserPassesTestMixin,
     TeamContextMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     PaginatedTableListView,
 ):
     model = Evaluation
     template_name = "evaluation/leaderboard_detail.html"
     row_template = "evaluation/leaderboard_row.html"
     search_fields = ["pk", "submission__creator__username"]
-    permission_required = "evaluation.view_evaluation"
 
     def test_func(self):
         if self.phase.public:
@@ -1239,10 +1238,12 @@ class EvaluationGroundTruthImportStatusDetail(
 
 
 class EvaluationGroundTruthList(
-    LoginRequiredMixin, PermissionListMixin, CachedPhaseMixin, ListView
+    LoginRequiredMixin,
+    ViewObjectPermissionListMixin,
+    CachedPhaseMixin,
+    ListView,
 ):
     model = EvaluationGroundTruth
-    permission_required = "evaluation.view_evaluationgroundtruth"
     login_url = reverse_lazy("account_login")
     ordering = ("-is_desired_version", "-created")
 

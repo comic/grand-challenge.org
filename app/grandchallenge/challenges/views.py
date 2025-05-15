@@ -27,7 +27,7 @@ from grandchallenge.challenges.serializers import PublicChallengeSerializer
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     ViewObjectPermissionsFilter,
 )
 from grandchallenge.datatables.views import Column, PaginatedTableListView
@@ -150,9 +150,10 @@ class ChallengeRequestCreate(
         return reverse("challenges:requests-list")
 
 
-class ChallengeRequestList(LoginRequiredMixin, PermissionListMixin, ListView):
+class ChallengeRequestList(
+    LoginRequiredMixin, ViewObjectPermissionListMixin, ListView
+):
     model = ChallengeRequest
-    permission_required = "view_challengerequest"
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
@@ -297,11 +298,10 @@ class ChallengeViewSet(ReadOnlyModelViewSet):
 
 class OnboardingTaskList(
     LoginRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     ListView,
 ):
     model = OnboardingTask
-    permission_required = "view_onboardingtask"
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
