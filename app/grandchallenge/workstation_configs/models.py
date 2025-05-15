@@ -451,7 +451,8 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
 
 class WorkstationConfigUserObjectPermission(UserObjectPermissionBase):
-    # This is used for change_workstationconfig permission for the creator
+    allowed_permissions = frozenset({"change_workstationconfig"})
+
     content_object = models.ForeignKey(
         WorkstationConfig, on_delete=models.CASCADE
     )

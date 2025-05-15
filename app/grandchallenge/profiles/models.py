@@ -249,7 +249,8 @@ class UserProfile(models.Model):
 
 
 class UserProfileUserObjectPermission(UserObjectPermissionBase):
-    # This is used for change_userprofile permission for the user
+    allowed_permissions = frozenset({"change_userprofile"})
+
     content_object = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
 
 

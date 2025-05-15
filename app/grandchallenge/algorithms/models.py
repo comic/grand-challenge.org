@@ -1321,7 +1321,8 @@ class Job(CIVForObjectMixin, ComponentJob):
 
 
 class JobUserObjectPermission(UserObjectPermissionBase):
-    # This is used for change_job permission for the creator
+    allowed_permissions = frozenset({"change_job"})
+
     content_object = models.ForeignKey(Job, on_delete=models.CASCADE)
 
 

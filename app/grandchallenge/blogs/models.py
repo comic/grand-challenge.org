@@ -80,7 +80,8 @@ class Post(models.Model):
 
 
 class PostUserObjectPermission(UserObjectPermissionBase):
-    # This is used for change_post permission for the authors
+    allowed_permissions = frozenset({"change_post"})
+
     content_object = models.ForeignKey(Post, on_delete=models.CASCADE)
 
 

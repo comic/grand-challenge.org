@@ -75,6 +75,11 @@ class UserObjectPermissionBase(UserObjectPermissionBaseOrig):
     allowed_permissions = None
 
     def save(self, *args, **kwargs):
+        if not isinstance(self.allowed_permissions, frozenset):
+            raise ImproperlyConfigured(
+                "allowed_permissions should be a frozenset"
+            )
+
         if self.permission.codename not in self.allowed_permissions:
             raise RuntimeError(
                 f"{self.permission} should not be assigned to users for this model"
@@ -89,6 +94,11 @@ class GroupObjectPermissionBase(GroupObjectPermissionBaseOrig):
     allowed_permissions = None
 
     def save(self, *args, **kwargs):
+        if not isinstance(self.allowed_permissions, frozenset):
+            raise ImproperlyConfigured(
+                "allowed_permissions should be a frozenset"
+            )
+
         if self.permission.codename not in self.allowed_permissions:
             raise RuntimeError(
                 f"{self.permission} should not be assigned to groups for this model"

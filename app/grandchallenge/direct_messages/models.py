@@ -109,6 +109,8 @@ def email_subscribed_users_about_new_message(
 
 
 class DirectMessageUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset({"delete_directmessage"})
+
     content_object = models.ForeignKey(DirectMessage, on_delete=models.CASCADE)
 
 
@@ -151,6 +153,8 @@ class Mute(UUIDModel):
 
 
 class MuteUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset({"delete_mute"})
+
     content_object = models.ForeignKey(Mute, on_delete=models.CASCADE)
 
 
@@ -275,6 +279,15 @@ class ConversationParticipant(models.Model):
 
 
 class ConversationUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {
+            "create_conversation_direct_message",
+            "mark_conversation_read",
+            "view_conversation",
+            "mark_conversation_message_as_spam",
+        }
+    )
+
     content_object = models.ForeignKey(Conversation, on_delete=models.CASCADE)
 
 

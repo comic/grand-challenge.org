@@ -21,7 +21,10 @@ from grandchallenge.subdomains.utils import reverse
 
 
 class FollowUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_, change_ and delete_ permissions for the user
+    allowed_permissions = frozenset(
+        {"delete_follow", "view_follow", "change_follow"}
+    )
+
     content_object = models.ForeignKey(Follow, on_delete=models.CASCADE)
 
 
@@ -480,7 +483,10 @@ class Notification(UUIDModel):
 
 
 class NotificationUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_, change_ and delete_ permissions for the user
+    allowed_permissions = frozenset(
+        {"view_notification", "change_notification", "delete_notification"}
+    )
+
     content_object = models.ForeignKey(Notification, on_delete=models.CASCADE)
 
 

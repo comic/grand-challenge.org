@@ -686,7 +686,8 @@ class Session(FieldChangeMixin, UUIDModel):
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_ and change_ permissions for the creator
+    allowed_permissions = frozenset({"change_session", "view_session"})
+
     content_object = models.ForeignKey(Session, on_delete=models.CASCADE)
 
 
@@ -728,7 +729,8 @@ class Feedback(UUIDModel):
 
 
 class FeedbackUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_feedback permission for the creator
+    allowed_permissions = frozenset({"view_feedback"})
+
     content_object = models.ForeignKey(Feedback, on_delete=models.CASCADE)
 
 

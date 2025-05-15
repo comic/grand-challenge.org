@@ -295,7 +295,8 @@ class HangingProtocol(UUIDModel, TitleSlugDescriptionModel):
 
 
 class HangingProtocolUserObjectPermission(UserObjectPermissionBase):
-    # This is used for change_hangingprotocol permission for the creator
+    allowed_permissions = frozenset({"change_hangingprotocol"})
+
     content_object = models.ForeignKey(
         HangingProtocol, on_delete=models.CASCADE
     )

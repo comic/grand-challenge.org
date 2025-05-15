@@ -335,7 +335,8 @@ def delete_objects_hook(*_, instance: UserUpload, **__):
 
 
 class UserUploadUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_ and change_ permissions for the creator
+    allowed_permissions = frozenset({"change_userupload", "view_userupload"})
+
     content_object = models.ForeignKey(UserUpload, on_delete=models.CASCADE)
 
 

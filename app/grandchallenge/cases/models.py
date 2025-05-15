@@ -253,7 +253,10 @@ class RawImageUploadSession(UUIDModel):
 
 
 class RawImageUploadSessionUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_rawimageuploadsession and view_rawimageuploadsession for the creator
+    allowed_permissions = frozenset(
+        {"change_rawimageuploadsession", "view_rawimageuploadsession"}
+    )
+
     content_object = models.ForeignKey(
         RawImageUploadSession, on_delete=models.CASCADE
     )
@@ -659,7 +662,8 @@ class Image(UUIDModel):
 
 
 class ImageUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_image permission for the reader_study.answer creator
+    allowed_permissions = frozenset({"view_image"})
+
     content_object = models.ForeignKey(Image, on_delete=models.CASCADE)
 
 

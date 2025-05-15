@@ -2010,7 +2010,8 @@ class Answer(UUIDModel):
 
 
 class AnswerUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_ and change_ permissions for the creator
+    allowed_permissions = frozenset({"view_answer", "change_answer"})
+
     content_object = models.ForeignKey(Answer, on_delete=models.CASCADE)
 
 

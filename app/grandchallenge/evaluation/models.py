@@ -1711,7 +1711,8 @@ class Submission(FieldChangeMixin, UUIDModel):
 
 
 class SubmissionUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_submission permission for the creator
+    allowed_permissions = frozenset({"view_submission"})
+
     content_object = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
 

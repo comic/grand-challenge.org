@@ -1527,7 +1527,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
 
 class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_challengerequest permission for the creator
+    allowed_permissions = frozenset({"view_challengerequest"})
+
     content_object = models.ForeignKey(
         ChallengeRequest, on_delete=models.CASCADE
     )
