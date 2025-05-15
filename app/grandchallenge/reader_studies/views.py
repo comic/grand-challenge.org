@@ -68,7 +68,7 @@ from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     ViewObjectPermissionsFilter,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
@@ -124,9 +124,8 @@ class HttpResponseSeeOther(HttpResponseRedirect):
     status_code = 303
 
 
-class ReaderStudyList(FilterMixin, PermissionListMixin, ListView):
+class ReaderStudyList(FilterMixin, ViewObjectPermissionListMixin, ListView):
     model = ReaderStudy
-    permission_required = "reader_studies.view_readerstudy"
     ordering = "-created"
     filter_class = ReaderStudyFilter
     paginate_by = 40
@@ -374,9 +373,12 @@ class ReaderStudyStatistics(
     # If the permission is changed to 'read', we need to filter these values out.
 
 
-class ReaderStudyDisplaySetList(CivSetListView):
+class ReaderStudyDisplaySetList(ObjectPermissionRequiredMixin, CivSetListView):
     model = DisplaySet
-    permission_required = "reader_studies.change_displayset"  # change instead of view permission so that readers don't get access
+    permission_required = (
+        "reader_studies.change_readerstudy"  # so that readers don't get access
+    )
+    raise_exception = True
 
     default_sort_column = 4
 
@@ -397,6 +399,9 @@ class ReaderStudyDisplaySetList(CivSetListView):
     @cached_property
     def base_object(self):
         return get_object_or_404(ReaderStudy, slug=self.kwargs["slug"])
+
+    def get_permission_object(self):
+        return self.base_object
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

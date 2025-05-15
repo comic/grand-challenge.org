@@ -31,7 +31,7 @@ from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     ViewObjectPermissionsFilter,
     get_object_if_allowed,
 )
@@ -44,10 +44,9 @@ from grandchallenge.workstations.models import Workstation
 
 
 class RawImageUploadSessionList(
-    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView
+    LoginRequiredMixin, ViewObjectPermissionListMixin, PaginatedTableListView
 ):
     model = RawImageUploadSession
-    permission_required = f"{RawImageUploadSession._meta.app_label}.view_{RawImageUploadSession._meta.model_name}"
     login_url = reverse_lazy("account_login")
     row_template = "cases/rawimageuploadsession_row.html"
     search_fields = ["pk"]
@@ -179,12 +178,13 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
         )
 
 
-class ImageSearchResultView(LoginRequiredMixin, PermissionListMixin, ListView):
+class ImageSearchResultView(
+    LoginRequiredMixin, ViewObjectPermissionListMixin, ListView
+):
     template_name = "cases/image_search_result_select.html"
     search_fields = ["pk", "name"]
     model = Image
     paginate_by = 50
-    permission_required = "cases.view_image"
 
     def get(self, request, *args, **kwargs):
         qs = self.get_queryset()

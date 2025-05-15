@@ -1348,3 +1348,55 @@ def test_archive_item_upload_corrupt_image(
     notification = Notification.objects.get()
     assert notification.user == editor
     assert "1 file could not be imported" in notification.description
+
+
+@pytest.mark.parametrize(
+    "add_collaborator_attr",
+    (
+        "add_uploader",
+        "add_user",
+    ),
+)
+@pytest.mark.django_db
+def test_archive_items_list_view_permissions(
+    client,
+    add_collaborator_attr,
+):
+    viewname = "archives:items-list"
+    user, editor, collaborator = UserFactory.create_batch(3)
+    archive = ArchiveFactory()
+    archive.add_editor(editor)
+    getattr(archive, add_collaborator_attr)(collaborator)
+    ob1, ob2, ob3 = ArchiveItemFactory.create_batch(3, **{"archive": archive})
+    ob4, ob5 = ArchiveItemFactory.create_batch(2)
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=user,
+        reverse_kwargs={"slug": archive.slug},
+    )
+    assert response.status_code == 200
+    assert len(response.context["object_list"]) == 0
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=collaborator,
+        reverse_kwargs={"slug": archive.slug},
+    )
+    assert response.status_code == 200
+    assert len(response.context["object_list"]) == 3
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=editor,
+        reverse_kwargs={"slug": archive.slug},
+    )
+    assert response.status_code == 200
+    assert len(response.context["object_list"]) == 3
+    for obj in [ob1, ob2, ob3]:
+        assert obj in response.context["object_list"]
+    for obj in [ob4, ob5]:
+        assert obj not in response.context["object_list"]
