@@ -1,0 +1,23 @@
+<div class="embed-responsive embed-responsive-1by1 mb-3">
+    <img class="card-img-top embed-responsive-item rounded-circle"
+            {% if profile.mugshot %}
+         src="{{ profile.mugshot.x20.url }}"
+         srcset="{{ profile.mugshot.x10.url }} 1x,
+             {{ profile.mugshot.x15.url }} 1.5x,
+             {{ profile.mugshot.x20.url }} 2x"
+            {% else %}
+         src="{{ profile.get_mugshot_url }}"
+            {% endif %}
+         style="display: block; margin: auto;"
+         alt="Your mugshot"/>
+</div>
+{% if with_userlink %}
+    <div class="text-center">
+        <b>
+            <a href="{{ profile.get_absolute_url }}">{{ profile.user.username }}</a>
+            {% if profile.user.verification.is_verified %}
+                <span class="btn btn-sm btn-outline-success disabled mb-3" title="Verified User"><i
+                        class="fas fa-user-check"></i></span>
+            {% endif %}</b>
+    </div>
+{% endif %}

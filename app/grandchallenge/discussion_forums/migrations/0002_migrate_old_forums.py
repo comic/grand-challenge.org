@@ -1,18 +1,20 @@
 from django.db import migrations
 
-from grandchallenge.discussion_forums.models import TopicTypeChoices
+from grandchallenge.discussion_forums.models import ForumTopicKindChoices
 
 
 def migrate_challenge_forums(apps, schema_editor):
     Challenge = apps.get_model("challenges", "Challenge")  # noqa: N806
     Forum = apps.get_model("discussion_forums", "Forum")  # noqa: N806
-    Topic = apps.get_model("discussion_forums", "Topic")  # noqa: N806
-    Post = apps.get_model("discussion_forums", "Post")  # noqa: N806
+    ForumTopic = apps.get_model(  # noqa: N806
+        "discussion_forums", "ForumTopic"
+    )
+    ForumPost = apps.get_model("discussion_forums", "ForumPost")  # noqa: N806
 
     topic_type_matching_dict = {
-        0: TopicTypeChoices.DEFAULT,
-        1: TopicTypeChoices.STICKY,
-        2: TopicTypeChoices.ANNOUNCE,
+        0: ForumTopicKindChoices.DEFAULT,
+        1: ForumTopicKindChoices.STICKY,
+        2: ForumTopicKindChoices.ANNOUNCE,
     }
 
     for challenge in Challenge.objects.all():
@@ -21,21 +23,20 @@ def migrate_challenge_forums(apps, schema_editor):
         challenge.save()
 
         for topic in challenge.forum.topics.all():
-            new_topic = Topic.objects.create(
+            new_topic = ForumTopic.objects.create(
                 forum=new_forum,
                 creator=topic.poster,
                 subject=topic.subject,
-                type=topic_type_matching_dict[topic.type],
+                kind=topic_type_matching_dict[topic.type],
                 last_post_on=topic.last_post_on,
                 created=topic.created,
             )
 
             for post in topic.posts.all():
-                Post.objects.create(
+                ForumPost.objects.create(
                     topic=new_topic,
                     created=post.created,
                     creator=post.poster,
-                    subject=post.subject,
                     content=post.content,
                 )
 

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+{% load url %}
+{% load guardian_tags %}
+
+
+{% block title %}{% block sub_title %}{% endblock sub_title %} Forum{% endblock title %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        {% block extra_breadcrumbs %}{% endblock %}
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <div class="row mb-3 justify-content-between">
+        <div class="col-8"><h1>Forum</h1></div>
+        {% get_obj_perms request.user for forum as "user_perms" %}
+        {% if 'view_forum' in user_perms %}
+            <div class="col-4">
+                <div class="float-right controls-link-wrapper">
+                    {# TODO: my posts view button #}
+                    {% include 'actstream/partials/follow_unfollow_links.html' with object=forum %}
+                    <a href="{% url 'notifications:follow-list' %}" class="btn btn-dark btn-sm"><i class="fas fa-bookmark mr-1"></i>My Subscriptions</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    {% block extra_content %}
+    {% endblock %}
+
+{% endblock %}
