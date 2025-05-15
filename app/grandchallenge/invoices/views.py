@@ -31,12 +31,6 @@ class InvoiceList(
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter(
+        return queryset.filter(
             challenge=self.request.challenge
         ).with_overdue_status()
-        ordering = self.get_ordering()
-        if ordering:
-            if isinstance(ordering, str):
-                ordering = (ordering,)
-            queryset = queryset.order_by(*ordering)
-        return queryset
