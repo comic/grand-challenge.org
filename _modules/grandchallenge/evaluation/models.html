@@ -84,7 +84,6 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.guardian</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">GroupObjectPermissionBase</span><span class="p">,</span>
-    <span class="n">NoUserPermissionsAllowed</span><span class="p">,</span>
     <span class="n">UserObjectPermissionBase</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -1425,11 +1424,17 @@
         <span class="p">]</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">PhaseUserObjectPermission</span><span class="p">(</span><span class="n">NoUserPermissionsAllowed</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhaseUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">PhaseGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;create_phase_submission&quot;</span><span class="p">,</span> <span class="s2">&quot;view_phase&quot;</span><span class="p">,</span> <span class="s2">&quot;change_phase&quot;</span><span class="p">}</span>
+    <span class="p">)</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Phase</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
@@ -1488,11 +1493,15 @@
         <span class="k">return</span> <span class="n">Method</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">phase</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">MethodUserObjectPermission</span><span class="p">(</span><span class="n">NoUserPermissionsAllowed</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MethodUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Method</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">MethodGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;view_method&quot;</span><span class="p">,</span> <span class="s2">&quot;change_method&quot;</span><span class="p">})</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Method</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
@@ -1758,11 +1767,14 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SubmissionUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
-    <span class="c1"># This is used for view_submission permission for the creator</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;view_submission&quot;</span><span class="p">})</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Submission</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">SubmissionGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;view_submission&quot;</span><span class="p">})</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Submission</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
@@ -1835,13 +1847,19 @@
         <span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationGroundTruthUserObjectPermission</span><span class="p">(</span><span class="n">NoUserPermissionsAllowed</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationGroundTruthUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">EvaluationGroundTruth</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
     <span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationGroundTruthGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;change_evaluationgroundtruth&quot;</span><span class="p">,</span> <span class="s2">&quot;view_evaluationgroundtruth&quot;</span><span class="p">}</span>
+    <span class="p">)</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">EvaluationGroundTruth</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
     <span class="p">)</span>
@@ -2208,11 +2226,17 @@
         <span class="p">)</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationUserObjectPermission</span><span class="p">(</span><span class="n">NoUserPermissionsAllowed</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EvaluationUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Evaluation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;change_evaluation&quot;</span><span class="p">,</span> <span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="s2">&quot;claim_evaluation&quot;</span><span class="p">}</span>
+    <span class="p">)</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Evaluation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
 
 

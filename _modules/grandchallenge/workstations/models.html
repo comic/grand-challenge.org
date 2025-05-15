@@ -69,8 +69,6 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.guardian</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">GroupObjectPermissionBase</span><span class="p">,</span>
-    <span class="n">NoGroupPermissionsAllowed</span><span class="p">,</span>
-    <span class="n">NoUserPermissionsAllowed</span><span class="p">,</span>
     <span class="n">UserObjectPermissionBase</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">FieldChangeMixin</span><span class="p">,</span> <span class="n">UUIDModel</span>
@@ -223,7 +221,9 @@
 
 <div class="viewcode-block" id="WorkstationUserObjectPermission">
 <a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.WorkstationUserObjectPermission">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">WorkstationUserObjectPermission</span><span class="p">(</span><span class="n">NoUserPermissionsAllowed</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WorkstationUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Workstation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
@@ -231,6 +231,8 @@
 <div class="viewcode-block" id="WorkstationGroupObjectPermission">
 <a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.WorkstationGroupObjectPermission">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">WorkstationGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;change_workstation&quot;</span><span class="p">,</span> <span class="s2">&quot;view_workstation&quot;</span><span class="p">})</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Workstation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
@@ -346,7 +348,9 @@
 
 <div class="viewcode-block" id="WorkstationImageUserObjectPermission">
 <a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.WorkstationImageUserObjectPermission">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">WorkstationImageUserObjectPermission</span><span class="p">(</span><span class="n">NoUserPermissionsAllowed</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WorkstationImageUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">WorkstationImage</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
     <span class="p">)</span></div>
@@ -356,6 +360,10 @@
 <div class="viewcode-block" id="WorkstationImageGroupObjectPermission">
 <a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.WorkstationImageGroupObjectPermission">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">WorkstationImageGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;change_workstationimage&quot;</span><span class="p">,</span> <span class="s2">&quot;view_workstationimage&quot;</span><span class="p">}</span>
+    <span class="p">)</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
         <span class="n">WorkstationImage</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
     <span class="p">)</span></div>
@@ -707,20 +715,8 @@
         <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;api:session-detail&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># Allow the editors group to view and change this session</span>
-        <span class="n">assign_perm</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">workstation</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span>
-            <span class="bp">self</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">assign_perm</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;change_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">workstation</span><span class="o">.</span><span class="n">editors_group</span><span class="p">,</span>
-            <span class="bp">self</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="c1"># Allow the session creator to view or change this</span>
-        <span class="n">assign_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;view_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
-        <span class="n">assign_perm</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;change_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_session&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;change_session&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Session.save">
 <a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.Session.save">[docs]</a>
@@ -772,7 +768,8 @@
 <div class="viewcode-block" id="SessionUserObjectPermission">
 <a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.SessionUserObjectPermission">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SessionUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
-    <span class="c1"># This is used for view_ and change_ permissions for the creator</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;change_session&quot;</span><span class="p">,</span> <span class="s2">&quot;view_session&quot;</span><span class="p">})</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Session</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
@@ -780,7 +777,8 @@
 <div class="viewcode-block" id="SessionGroupObjectPermission">
 <a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.SessionGroupObjectPermission">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SessionGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
-    <span class="c1"># TODO workstation editors get view_ and change_ permission on the Session</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Session</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
@@ -826,14 +824,17 @@
 <div class="viewcode-block" id="FeedbackUserObjectPermission">
 <a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.FeedbackUserObjectPermission">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">FeedbackUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>
-    <span class="c1"># This is used for view_feedback permission for the creator</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;view_feedback&quot;</span><span class="p">})</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Feedback</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="FeedbackGroupObjectPermission">
 <a class="viewcode-back" href="../../../workstations.html#grandchallenge.workstations.models.FeedbackGroupObjectPermission">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">FeedbackGroupObjectPermission</span><span class="p">(</span><span class="n">NoGroupPermissionsAllowed</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FeedbackGroupObjectPermission</span><span class="p">(</span><span class="n">GroupObjectPermissionBase</span><span class="p">):</span>
+    <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
+
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Feedback</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
 
 
