@@ -528,6 +528,10 @@ class ComponentInterface(OverlaySegmentsMixin):
         )
 
     @property
+    def requires_value(self):
+        return self.is_json_kind and self.store_in_database
+
+    @property
     def default_field(self):
         if self.requires_file:
             return ModelChoiceField
@@ -2296,7 +2300,7 @@ class CIVData:
 
         ci = ComponentInterface.objects.get(slug=interface_slug)
 
-        if ci.is_json_kind and not ci.requires_file:
+        if ci.requires_value:
             self._init_json_civ_data()
         elif ci.is_image_kind:
             self._init_image_civ_data()
@@ -2441,7 +2445,7 @@ class CIVForObjectMixin:
             interface=ci, user=user
         )
 
-        if ci.is_json_kind and not ci.requires_file:
+        if ci.requires_value:
             return self.create_civ_for_value(
                 ci=ci,
                 current_civ=current_civ,
