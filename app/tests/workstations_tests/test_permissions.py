@@ -90,7 +90,6 @@ def test_workstation_editor_permissions(
     [
         "workstations:detail",
         "workstations:workstation-session-create",
-        "session-detail",
     ],
 )
 def test_workstation_user_permissions(client, two_workstation_sets, viewname):
@@ -109,22 +108,49 @@ def test_workstation_user_permissions(client, two_workstation_sets, viewname):
     two_workstation_sets.ws1.image.is_desired_version = True
     two_workstation_sets.ws1.image.save()
 
-    kwargs = {"slug": two_workstation_sets.ws1.workstation.slug}
-
-    if viewname == "session-detail":
-        s = SessionFactory(
-            workstation_image=two_workstation_sets.ws1.image,
-            creator=two_workstation_sets.ws1.user,
-        )
-        kwargs.update({"pk": s.pk, "rendering_subdomain": s.region})
-        tests += ((two_workstation_sets.ws1.user1, 403),)
-
     for test in tests:
         response = get_view_for_user(
             viewname=viewname,
             client=client,
             user=test[0],
-            reverse_kwargs=kwargs,
+            reverse_kwargs={"slug": two_workstation_sets.ws1.workstation.slug},
+        )
+        assert response.status_code == test[1]
+
+
+@pytest.mark.django_db
+def test_session_detail_user_permissions(client, two_workstation_sets):
+    tests = (
+        (two_workstation_sets.ws1.editor, 403),
+        (two_workstation_sets.ws1.user, 200),
+        (two_workstation_sets.ws2.editor, 403),
+        (two_workstation_sets.ws2.user, 403),
+        (UserFactory(), 403),
+        (UserFactory(is_staff=True), 403),
+        (None, 302),
+        (two_workstation_sets.ws1.user1, 403),
+    )
+
+    two_workstation_sets.ws1.image.is_manifest_valid = True
+    two_workstation_sets.ws1.image.is_in_registry = True
+    two_workstation_sets.ws1.image.is_desired_version = True
+    two_workstation_sets.ws1.image.save()
+
+    s = SessionFactory(
+        workstation_image=two_workstation_sets.ws1.image,
+        creator=two_workstation_sets.ws1.user,
+    )
+
+    for test in tests:
+        response = get_view_for_user(
+            viewname="session-detail",
+            client=client,
+            user=test[0],
+            reverse_kwargs={
+                "slug": two_workstation_sets.ws1.workstation.slug,
+                "pk": s.pk,
+                "rendering_subdomain": s.region,
+            },
         )
         assert response.status_code == test[1]
 
@@ -223,7 +249,7 @@ def test_session_proxy_permissions(client, two_workstation_sets):
 )
 def test_session_api_permissions(client, two_workstation_sets, viewname):
     tests = (
-        (two_workstation_sets.ws1.editor, 200),
+        (two_workstation_sets.ws1.editor, 404),
         (two_workstation_sets.ws1.user, 200),
         (two_workstation_sets.ws1.user1, 404),
         (two_workstation_sets.ws2.editor, 404),
@@ -262,7 +288,7 @@ def test_session_api_permissions(client, two_workstation_sets, viewname):
 @pytest.mark.django_db
 def test_session_api_patch_permissions(client, two_workstation_sets):
     tests = (
-        (two_workstation_sets.ws1.editor, 200, True),
+        (two_workstation_sets.ws1.editor, 404, False),
         (two_workstation_sets.ws1.user, 200, True),
         (two_workstation_sets.ws1.user1, 404, False),
         (two_workstation_sets.ws2.editor, 404, False),

@@ -633,20 +633,8 @@ class Session(FieldChangeMixin, UUIDModel):
         return reverse("api:session-detail", kwargs={"pk": self.pk})
 
     def assign_permissions(self):
-        # Allow the editors group to view and change this session
-        assign_perm(
-            f"view_{self._meta.model_name}",
-            self.workstation_image.workstation.editors_group,
-            self,
-        )
-        assign_perm(
-            f"change_{self._meta.model_name}",
-            self.workstation_image.workstation.editors_group,
-            self,
-        )
-        # Allow the session creator to view or change this
-        assign_perm(f"view_{self._meta.model_name}", self.creator, self)
-        assign_perm(f"change_{self._meta.model_name}", self.creator, self)
+        assign_perm("view_session", self.creator, self)
+        assign_perm("change_session", self.creator, self)
 
     def save(self, *args, **kwargs) -> None:
         """Save the session instance, starting or stopping the service if needed."""
@@ -698,8 +686,7 @@ class SessionUserObjectPermission(UserObjectPermissionBase):
 
 
 class SessionGroupObjectPermission(GroupObjectPermissionBase):
-    # TODO workstation editors get view_ and change_ permission on the Session
-    allowed_permissions = frozenset({"change_session", "view_session"})
+    allowed_permissions = frozenset()
 
     content_object = models.ForeignKey(Session, on_delete=models.CASCADE)
 
