@@ -127,6 +127,14 @@ class RegistrationQuestionUserObjectPermission(UserObjectPermissionBase):
 
 
 class RegistrationQuestionGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {
+            "view_registrationquestion",
+            "change_registrationquestion",
+            "delete_registrationquestion",
+        }
+    )
+
     content_object = models.ForeignKey(
         RegistrationQuestion, on_delete=models.CASCADE
     )

@@ -304,4 +304,6 @@ class InvoiceUserObjectPermission(UserObjectPermissionBase):
 
 
 class InvoiceGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_invoice"})
+
     content_object = models.ForeignKey(Invoice, on_delete=models.CASCADE)

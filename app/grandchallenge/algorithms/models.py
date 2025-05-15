@@ -646,6 +646,10 @@ class AlgorithmUserObjectPermission(UserObjectPermissionBase):
 
 
 class AlgorithmGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"view_algorithm", "execute_algorithm", "change_algorithm"}
+    )
+
     content_object = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
 
 
@@ -894,6 +898,14 @@ class AlgorithmImageUserObjectPermission(UserObjectPermissionBase):
 
 
 class AlgorithmImageGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {
+            "change_algorithmimage",
+            "download_algorithmimage",
+            "view_algorithmimage",
+        }
+    )
+
     content_object = models.ForeignKey(
         AlgorithmImage, on_delete=models.CASCADE
     )
@@ -1024,6 +1036,10 @@ class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):
 
 
 class AlgorithmModelGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_algorithmmodel", "view_algorithmmodel"}
+    )
+
     content_object = models.ForeignKey(
         AlgorithmModel, on_delete=models.CASCADE
     )
@@ -1327,6 +1343,8 @@ class JobUserObjectPermission(UserObjectPermissionBase):
 
 
 class JobGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_job", "change_job", "view_logs"})
+
     content_object = models.ForeignKey(Job, on_delete=models.CASCADE)
 
 

@@ -848,6 +848,15 @@ class ReaderStudyUserObjectPermission(UserObjectPermissionBase):
 
 
 class ReaderStudyGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {
+            "read_readerstudy",
+            "view_leaderboard",
+            "change_readerstudy",
+            "view_readerstudy",
+        }
+    )
+
     content_object = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
 
 
@@ -1025,6 +1034,10 @@ class DisplaySetUserObjectPermission(UserObjectPermissionBase):
 
 
 class DisplaySetGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_displayset", "delete_displayset", "view_displayset"}
+    )
+
     content_object = models.ForeignKey(DisplaySet, on_delete=models.CASCADE)
 
 
@@ -1800,6 +1813,8 @@ class QuestionUserObjectPermission(UserObjectPermissionBase):
 
 
 class QuestionGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_question"})
+
     content_object = models.ForeignKey(Question, on_delete=models.CASCADE)
 
 
@@ -2016,6 +2031,8 @@ class AnswerUserObjectPermission(UserObjectPermissionBase):
 
 
 class AnswerGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_answer", "delete_answer"})
+
     content_object = models.ForeignKey(Answer, on_delete=models.CASCADE)
 
 

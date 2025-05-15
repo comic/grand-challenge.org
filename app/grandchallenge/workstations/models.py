@@ -182,6 +182,8 @@ class WorkstationUserObjectPermission(UserObjectPermissionBase):
 
 
 class WorkstationGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"change_workstation", "view_workstation"})
+
     content_object = models.ForeignKey(Workstation, on_delete=models.CASCADE)
 
 
@@ -294,6 +296,10 @@ class WorkstationImageUserObjectPermission(UserObjectPermissionBase):
 
 
 class WorkstationImageGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_workstationimage", "view_workstationimage"}
+    )
+
     content_object = models.ForeignKey(
         WorkstationImage, on_delete=models.CASCADE
     )
@@ -693,6 +699,8 @@ class SessionUserObjectPermission(UserObjectPermissionBase):
 
 class SessionGroupObjectPermission(GroupObjectPermissionBase):
     # TODO workstation editors get view_ and change_ permission on the Session
+    allowed_permissions = frozenset({"change_session", "view_session"})
+
     content_object = models.ForeignKey(Session, on_delete=models.CASCADE)
 
 

@@ -668,6 +668,8 @@ class ImageUserObjectPermission(UserObjectPermissionBase):
 
 
 class ImageGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_image"})
+
     content_object = models.ForeignKey(Image, on_delete=models.CASCADE)
 
 

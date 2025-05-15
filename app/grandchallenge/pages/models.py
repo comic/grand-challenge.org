@@ -243,4 +243,6 @@ class PageUserObjectPermission(UserObjectPermissionBase):
 
 
 class PageGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_page"})
+
     content_object = models.ForeignKey(Page, on_delete=models.CASCADE)

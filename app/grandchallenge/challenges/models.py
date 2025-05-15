@@ -967,6 +967,10 @@ class ChallengeUserObjectPermission(UserObjectPermissionBase):
 
 
 class ChallengeGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_challenge", "add_registration_question", "view_challenge"}
+    )
+
     content_object = models.ForeignKey(Challenge, on_delete=models.CASCADE)
 
 
@@ -1535,6 +1539,10 @@ class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
 
 
 class ChallengeRequestGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"view_challengerequest", "change_challengerequest"}
+    )
+
     content_object = models.ForeignKey(
         ChallengeRequest, on_delete=models.CASCADE
     )
@@ -1665,6 +1673,10 @@ class OnboardingTaskUserObjectPermission(UserObjectPermissionBase):
 
 
 class OnboardingTaskGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_onboardingtask", "view_onboardingtask"}
+    )
+
     content_object = models.ForeignKey(
         OnboardingTask, on_delete=models.CASCADE
     )

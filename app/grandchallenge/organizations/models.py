@@ -129,4 +129,6 @@ class OrganizationUserObjectPermission(UserObjectPermissionBase):
 
 
 class OrganizationGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"change_organization"})
+
     content_object = models.ForeignKey(Organization, on_delete=models.CASCADE)

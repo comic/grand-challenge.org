@@ -77,17 +77,22 @@ class UserObjectPermissionBase(UserObjectPermissionBaseOrig):
     def save(self, *args, **kwargs):
         if not isinstance(self.allowed_permissions, frozenset):
             raise ImproperlyConfigured(
-                "allowed_permissions should be a frozenset"
+                f"{self.__class__}.allowed_permissions should be a frozenset"
             )
 
         if self.permission.codename not in self.allowed_permissions:
             raise RuntimeError(
-                f"{self.permission} should not be assigned to users for this model"
+                f"{self.permission.codename} should not be assigned to users for this model, "
+                f"if it is required then please add it to {self.__class__}.allowed_permissions"
             )
+
+        super().save(*args, **kwargs)
 
     class Meta(UserObjectPermissionBaseOrig.Meta):
         abstract = True
-        indexes = [Index(fields=["user", "permission"])]
+        indexes = [
+            Index(fields=["user", "permission"]),
+        ]
 
 
 class GroupObjectPermissionBase(GroupObjectPermissionBaseOrig):
@@ -96,13 +101,16 @@ class GroupObjectPermissionBase(GroupObjectPermissionBaseOrig):
     def save(self, *args, **kwargs):
         if not isinstance(self.allowed_permissions, frozenset):
             raise ImproperlyConfigured(
-                "allowed_permissions should be a frozenset"
+                f"{self.__class__}.allowed_permissions should be a frozenset"
             )
 
         if self.permission.codename not in self.allowed_permissions:
             raise RuntimeError(
-                f"{self.permission} should not be assigned to groups for this model"
+                f"{self.permission.codename} should not be assigned to groups for this model, "
+                f"if it is required then please add it to {self.__class__}.allowed_permissions"
             )
+
+        super().save(*args, **kwargs)
 
     class Meta(GroupObjectPermissionBaseOrig.Meta):
         abstract = True
@@ -149,7 +157,7 @@ def filter_by_permission(*, queryset, user, codename):
         raise RuntimeError("DFK user permissions not active for model")
 
     group_filter_required = (
-        permission.codename in dfk_user_model.allowed_permissions
+        permission.codename in dfk_group_model.allowed_permissions
     )
     user_filter_required = (
         permission.codename in dfk_user_model.allowed_permissions
@@ -189,8 +197,9 @@ def filter_by_permission(*, queryset, user, codename):
         return queryset.filter(**user_filter_kwargs)
     else:
         raise ImproperlyConfigured(
-            f"No filter required for filtering this queryset by {permission}. "
-            "Please ensure this permission is allowed on the object permission models"
+            f"No filter required for filtering this queryset by {permission.codename}. "
+            "Please ensure this is set in allowed_permissions on "
+            f"{dfk_group_model.__class__} or {dfk_user_model.__class__}."
         )
 
 

@@ -1381,6 +1381,10 @@ class PhaseUserObjectPermission(UserObjectPermissionBase):
 
 
 class PhaseGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"create_phase_submission", "view_phase", "change_phase"}
+    )
+
     content_object = models.ForeignKey(Phase, on_delete=models.CASCADE)
 
 
@@ -1446,6 +1450,8 @@ class MethodUserObjectPermission(UserObjectPermissionBase):
 
 
 class MethodGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_method", "change_method"})
+
     content_object = models.ForeignKey(Method, on_delete=models.CASCADE)
 
 
@@ -1717,6 +1723,8 @@ class SubmissionUserObjectPermission(UserObjectPermissionBase):
 
 
 class SubmissionGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_submission"})
+
     content_object = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
 
@@ -1798,6 +1806,10 @@ class EvaluationGroundTruthUserObjectPermission(UserObjectPermissionBase):
 
 
 class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_evaluationgroundtruth", "view_evaluationgroundtruth"}
+    )
+
     content_object = models.ForeignKey(
         EvaluationGroundTruth, on_delete=models.CASCADE
     )
@@ -2171,6 +2183,8 @@ class EvaluationUserObjectPermission(UserObjectPermissionBase):
 
 
 class EvaluationGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"change_evaluation", "view_evaluation"})
+
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
 
 

@@ -282,6 +282,10 @@ class ArchiveUserObjectPermission(UserObjectPermissionBase):
 
 
 class ArchiveGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_archive", "view_archive", "upload_archive", "use_archive"}
+    )
+
     content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)
 
 
@@ -376,6 +380,10 @@ class ArchiveItemUserObjectPermission(UserObjectPermissionBase):
 
 
 class ArchiveItemGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_archiveitem", "delete_archiveitem", "view_archiveitem"}
+    )
+
     content_object = models.ForeignKey(ArchiveItem, on_delete=models.CASCADE)
 
 
