@@ -55,8 +55,6 @@ class ViewObjectPermissionsFilter(BaseFilterBackend):
 
 
 class ObjectPermissionCheckerMixin:
-    request = None
-
     @cached_property
     def permission_checker(self):
         return ObjectPermissionChecker(user_or_group=self.request.user)
@@ -72,6 +70,17 @@ class ObjectPermissionRequiredMixin(PermissionRequiredMixin):
 
 
 class UserObjectPermissionBase(UserObjectPermissionBaseOrig):
+    """
+    Base user object permissions
+
+    The allowed permissions should be a minimal set of codenames
+    that are allowed to be assigned to the users for the related
+    model in order to keep the permission filters fast.
+
+    content_object must be a foreign key to the related model with
+    on_delete=CASCADE.
+    """
+
     allowed_permissions = None
 
     def save(self, *args, **kwargs):
@@ -96,6 +105,17 @@ class UserObjectPermissionBase(UserObjectPermissionBaseOrig):
 
 
 class GroupObjectPermissionBase(GroupObjectPermissionBaseOrig):
+    """
+    Base group object permissions
+
+    The allowed permissions should be a minimal set of codenames
+    that are allowed to be assigned to the groups for the related
+    model in order to keep the permission filters fast.
+
+    content_object must be a foreign key to the related model with
+    on_delete=CASCADE.
+    """
+
     allowed_permissions = None
 
     def save(self, *args, **kwargs):
