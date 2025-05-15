@@ -278,5 +278,6 @@ class ExternalEvaluationUpdateSerializer(ModelSerializer):
                 else None
             ),
             compute_cost_euro_millicents=0,
+            duration=instance.claimed_at - now(),
         )
         return super().update(instance, validated_data)
