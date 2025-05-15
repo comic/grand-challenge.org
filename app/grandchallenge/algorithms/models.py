@@ -1037,7 +1037,11 @@ class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):
 
 class AlgorithmModelGroupObjectPermission(GroupObjectPermissionBase):
     allowed_permissions = frozenset(
-        {"change_algorithmmodel", "view_algorithmmodel"}
+        {
+            "change_algorithmmodel",
+            "view_algorithmmodel",
+            "download_algorithmmodel",
+        }
     )
 
     content_object = models.ForeignKey(

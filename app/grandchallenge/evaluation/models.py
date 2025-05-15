@@ -2183,7 +2183,9 @@ class EvaluationUserObjectPermission(UserObjectPermissionBase):
 
 
 class EvaluationGroupObjectPermission(GroupObjectPermissionBase):
-    allowed_permissions = frozenset({"change_evaluation", "view_evaluation"})
+    allowed_permissions = frozenset(
+        {"change_evaluation", "view_evaluation", "claim_evaluation"}
+    )
 
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
 

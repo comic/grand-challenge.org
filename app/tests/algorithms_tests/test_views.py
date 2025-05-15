@@ -51,7 +51,7 @@ from tests.components_tests.factories import (
 )
 from tests.conftest import get_interface_form_data
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
-from tests.factories import ImageFactory, UserFactory
+from tests.factories import GroupFactory, ImageFactory, UserFactory
 from tests.invoices_tests.factories import InvoiceFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
@@ -575,6 +575,8 @@ class TestObjectPermissionRequiredViews:
     def test_permission_required_list_views(self, client):
         ai = AlgorithmImageFactory()
         u = UserFactory()
+        group = GroupFactory()
+        group.user_set.add(u)
         j = AlgorithmJobFactory(
             algorithm_image=ai, time_limit=ai.algorithm.time_limit
         )
@@ -601,14 +603,14 @@ class TestObjectPermissionRequiredViews:
             assert response.status_code == 200
             assert set() == {*response.context[-1]["object_list"]}
 
-            assign_perm(permission, u, list(objs))
+            assign_perm(permission, group, list(objs))
 
             response = _get_view()
             assert response.status_code == 200
             assert objs == {*response.context[-1]["object_list"]}
 
             for obj in objs:
-                remove_perm(permission, u, obj)
+                remove_perm(permission, group, obj)
 
 
 @pytest.mark.django_db
@@ -616,7 +618,9 @@ class TestJobDetailView:
     def test_guarded_content_visibility(self, client):
         j = AlgorithmJobFactory(time_limit=60)
         u = UserFactory()
-        assign_perm("view_job", u, j)
+        group = GroupFactory()
+        group.user_set.add(u)
+        assign_perm("view_job", group, j)
 
         for content, permission, permission_object in [
             ("<h2>Viewers</h2>", "change_job", j),
@@ -635,13 +639,13 @@ class TestJobDetailView:
             assert response.status_code == 200
             assert content not in response.rendered_content
 
-            assign_perm(permission, u, permission_object)
+            assign_perm(permission, group, permission_object)
 
             response = get_view_for_user(**view_kwargs)
             assert response.status_code == 200
             assert content in response.rendered_content
 
-            remove_perm(permission, u, permission_object)
+            remove_perm(permission, group, permission_object)
 
 
 @pytest.mark.django_db

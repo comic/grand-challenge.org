@@ -78,6 +78,8 @@ class UserObjectPermissionBase(UserObjectPermissionBaseOrig):
     that are allowed to be assigned to the users for the related
     model in order to keep the permission filters fast.
 
+    Permission assignments only used in tests MUST NOT be added to allowed_permissions
+
     content_object must be a foreign key to the related model with
     on_delete=CASCADE.
     """
@@ -112,6 +114,8 @@ class GroupObjectPermissionBase(GroupObjectPermissionBaseOrig):
     The allowed permissions should be a minimal set of codenames
     that are allowed to be assigned to the groups for the related
     model in order to keep the permission filters fast.
+
+    Permission assignments only used in tests MUST NOT be added to allowed_permissions
 
     content_object must be a foreign key to the related model with
     on_delete=CASCADE.
