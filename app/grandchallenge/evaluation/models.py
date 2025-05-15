@@ -2159,7 +2159,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         )
 
     def create_utilization(self):
-        EvaluationUtilization.objects.create(evalution=self)
+        EvaluationUtilization.objects.create(evaluation=self)
 
     @property
     def utilization(self):
