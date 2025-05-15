@@ -31,8 +31,6 @@ from grandchallenge.components.tasks import (
 )
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoGroupPermissionsAllowed,
-    NoUserPermissionsAllowed,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
@@ -177,11 +175,15 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         return user.groups.remove(self.users_group)
 
 
-class WorkstationUserObjectPermission(NoUserPermissionsAllowed):
+class WorkstationUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Workstation, on_delete=models.CASCADE)
 
 
 class WorkstationGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"change_workstation", "view_workstation"})
+
     content_object = models.ForeignKey(Workstation, on_delete=models.CASCADE)
 
 
@@ -285,13 +287,19 @@ class WorkstationImage(UUIDModel, ComponentImage):
         return WorkstationImage.objects.filter(workstation=self.workstation)
 
 
-class WorkstationImageUserObjectPermission(NoUserPermissionsAllowed):
+class WorkstationImageUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         WorkstationImage, on_delete=models.CASCADE
     )
 
 
 class WorkstationImageGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_workstationimage", "view_workstationimage"}
+    )
+
     content_object = models.ForeignKey(
         WorkstationImage, on_delete=models.CASCADE
     )
@@ -625,20 +633,8 @@ class Session(FieldChangeMixin, UUIDModel):
         return reverse("api:session-detail", kwargs={"pk": self.pk})
 
     def assign_permissions(self):
-        # Allow the editors group to view and change this session
-        assign_perm(
-            f"view_{self._meta.model_name}",
-            self.workstation_image.workstation.editors_group,
-            self,
-        )
-        assign_perm(
-            f"change_{self._meta.model_name}",
-            self.workstation_image.workstation.editors_group,
-            self,
-        )
-        # Allow the session creator to view or change this
-        assign_perm(f"view_{self._meta.model_name}", self.creator, self)
-        assign_perm(f"change_{self._meta.model_name}", self.creator, self)
+        assign_perm("view_session", self.creator, self)
+        assign_perm("change_session", self.creator, self)
 
     def save(self, *args, **kwargs) -> None:
         """Save the session instance, starting or stopping the service if needed."""
@@ -684,12 +680,14 @@ class Session(FieldChangeMixin, UUIDModel):
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_ and change_ permissions for the creator
+    allowed_permissions = frozenset({"change_session", "view_session"})
+
     content_object = models.ForeignKey(Session, on_delete=models.CASCADE)
 
 
 class SessionGroupObjectPermission(GroupObjectPermissionBase):
-    # TODO workstation editors get view_ and change_ permission on the Session
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Session, on_delete=models.CASCADE)
 
 
@@ -726,11 +724,14 @@ class Feedback(UUIDModel):
 
 
 class FeedbackUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_feedback permission for the creator
+    allowed_permissions = frozenset({"view_feedback"})
+
     content_object = models.ForeignKey(Feedback, on_delete=models.CASCADE)
 
 
-class FeedbackGroupObjectPermission(NoGroupPermissionsAllowed):
+class FeedbackGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Feedback, on_delete=models.CASCADE)
 
 

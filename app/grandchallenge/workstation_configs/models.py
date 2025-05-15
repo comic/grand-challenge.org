@@ -13,7 +13,7 @@ from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.core.fields import HexColorField
 from grandchallenge.core.guardian import (
-    NoGroupPermissionsAllowed,
+    GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import UUIDModel
@@ -451,13 +451,16 @@ class WorkstationConfig(TitleSlugDescriptionModel, UUIDModel):
 
 
 class WorkstationConfigUserObjectPermission(UserObjectPermissionBase):
-    # This is used for change_workstationconfig permission for the creator
+    allowed_permissions = frozenset({"change_workstationconfig"})
+
     content_object = models.ForeignKey(
         WorkstationConfig, on_delete=models.CASCADE
     )
 
 
-class WorkstationConfigGroupObjectPermission(NoGroupPermissionsAllowed):
+class WorkstationConfigGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         WorkstationConfig, on_delete=models.CASCADE
     )

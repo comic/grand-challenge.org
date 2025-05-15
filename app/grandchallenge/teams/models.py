@@ -5,7 +5,7 @@ from django.db import models
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.guardian import (
-    NoGroupPermissionsAllowed,
+    GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
 from grandchallenge.subdomains.utils import reverse
@@ -58,11 +58,14 @@ class Team(models.Model):
 
 
 class TeamUserObjectPermission(UserObjectPermissionBase):
-    # This is used for change_team permission for the owner
+    allowed_permissions = frozenset({"change_team"})
+
     content_object = models.ForeignKey(Team, on_delete=models.CASCADE)
 
 
-class TeamGroupObjectPermission(NoGroupPermissionsAllowed):
+class TeamGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Team, on_delete=models.CASCADE)
 
 

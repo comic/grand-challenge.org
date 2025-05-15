@@ -41,7 +41,6 @@ from grandchallenge.components.models import (  # noqa: F401
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -641,11 +640,17 @@ class AlgorithmAlgorithmInterface(models.Model):
         return str(self.interface)
 
 
-class AlgorithmUserObjectPermission(NoUserPermissionsAllowed):
+class AlgorithmUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
 
 
 class AlgorithmGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"view_algorithm", "execute_algorithm", "change_algorithm"}
+    )
+
     content_object = models.ForeignKey(Algorithm, on_delete=models.CASCADE)
 
 
@@ -885,13 +890,23 @@ class AlgorithmImage(UUIDModel, ComponentImage):
         return AlgorithmImage.objects.filter(algorithm=self.algorithm)
 
 
-class AlgorithmImageUserObjectPermission(NoUserPermissionsAllowed):
+class AlgorithmImageUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         AlgorithmImage, on_delete=models.CASCADE
     )
 
 
 class AlgorithmImageGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {
+            "change_algorithmimage",
+            "download_algorithmimage",
+            "view_algorithmimage",
+        }
+    )
+
     content_object = models.ForeignKey(
         AlgorithmImage, on_delete=models.CASCADE
     )
@@ -1013,13 +1028,23 @@ class AlgorithmModel(Tarball):
         )
 
 
-class AlgorithmModelUserObjectPermission(NoUserPermissionsAllowed):
+class AlgorithmModelUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         AlgorithmModel, on_delete=models.CASCADE
     )
 
 
 class AlgorithmModelGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {
+            "change_algorithmmodel",
+            "view_algorithmmodel",
+            "download_algorithmmodel",
+        }
+    )
+
     content_object = models.ForeignKey(
         AlgorithmModel, on_delete=models.CASCADE
     )
@@ -1324,11 +1349,14 @@ class Job(CIVForObjectMixin, ComponentJob):
 
 
 class JobUserObjectPermission(UserObjectPermissionBase):
-    # This is used for change_job permission for the creator
+    allowed_permissions = frozenset({"change_job"})
+
     content_object = models.ForeignKey(Job, on_delete=models.CASCADE)
 
 
 class JobGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_job", "change_job", "view_logs"})
+
     content_object = models.ForeignKey(Job, on_delete=models.CASCADE)
 
 

@@ -56,6 +56,7 @@ from grandchallenge.core.utils.grand_challenge_forge import (
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.direct_messages.forms import ConversationForm
 from grandchallenge.evaluation.forms import (
+    AlgorithmInterfaceForPhaseCopyForm,
     CombinedLeaderboardForm,
     ConfigureAlgorithmPhasesForm,
     EvaluationForm,
@@ -1382,6 +1383,46 @@ class AlgorithmInterfacesForPhaseList(
             }
         )
         return context
+
+
+class AlgorithmInterfacesForPhaseCopy(
+    ConfigureAlgorithmPhasesPermissionMixin,
+    AlgorithmInterfaceForPhaseMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    form_class = AlgorithmInterfaceForPhaseCopyForm
+    template_name = "evaluation/phase_copy_algorithminterfaces_form.html"
+    success_message = "Algorithm interfaces copied successfully."
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "phase": self.phase,
+                "interfaces": self.phase.algorithm_interfaces.all(),
+            }
+        )
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["phase"] = self.phase
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form=form)
+        form.copy_algorithm_interfaces()
+        return response
+
+    def get_success_url(self):
+        return reverse(
+            "evaluation:interface-list",
+            kwargs={
+                "slug": self.phase.slug,
+                "challenge_short_name": self.request.challenge.short_name,
+            },
+        )
 
 
 class AlgorithmInterfaceForPhaseDelete(
