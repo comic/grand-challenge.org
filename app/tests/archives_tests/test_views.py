@@ -1201,9 +1201,9 @@ def test_archive_item_bulk_delete_permissions(client):
         reverse_kwargs={"slug": archive.slug},
         user=editor,
     )
-    assert list(
-        response.context["form"].fields["civ_sets_to_delete"].queryset
-    ) == [i1, i2]
+    assert {
+        *response.context["form"].fields["civ_sets_to_delete"].queryset
+    } == {i1, i2}
 
     # for the normal user the queryset is empty
     response = get_view_for_user(
@@ -1212,10 +1212,9 @@ def test_archive_item_bulk_delete_permissions(client):
         reverse_kwargs={"slug": archive.slug},
         user=user,
     )
-    assert (
-        list(response.context["form"].fields["civ_sets_to_delete"].queryset)
-        == []
-    )
+    assert {
+        *response.context["form"].fields["civ_sets_to_delete"].queryset
+    } == set()
 
 
 @pytest.mark.django_db
