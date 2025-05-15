@@ -1,7 +1,4 @@
 {% extends "discussion_forums/forum_base.html" %}
-{% load profiles %}
-{% load humanize %}
-{% load bleach %}
 {% load guardian_tags %}
 
 
@@ -20,6 +17,11 @@
     </div>
     {% get_obj_perms request.user for object as "user_perms" %}
     <div>
+        {% if 'create_topic_post' in user_perms %}
+            <a href="{% url 'discussion-forums:post-create' slug=object.slug %}#new-post-card" class="btn btn-primary btn-sm">
+                <i class="fas fa-comment mr-1"></i> Reply
+            </a>
+        {% endif %}
         {% include 'actstream/partials/follow_unfollow_links.html' with object=object %}
         {% if 'delete_topic' in  user_perms %}
             <a href="{% url 'discussion-forums:topic-delete' slug=object.slug %}" class="btn btn-danger btn-sm">
@@ -27,35 +29,7 @@
             </a>
         {% endif %}
     </div>
-    {# TODO: create post button #}
     {# TODO: lock topic button #}
 
-    <div class="row">
-        <div class="col-12">
-            {% for post in object.posts.all %}
-                <div id="{{ post.id }}" class="my-3 card">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-10">
-                                <div class="float-right">
-                                    {# TODO: edit button for post #}
-                                    {# TODO: delete button for post #}
-                                </div>
-                                <p>
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock mr-1"></i>By: {{ post.creator|user_profile_link }}
-                                        {{ post.created|naturaltime }}
-                                    </small>
-                                </p>
-                                <div class="post-content">{{ post.content|md2html }}</div>
-                            </div>
-                            <div class="col-md-2 d-none d-md-block">
-                                {% include 'profiles/partials/mugshot.html' with profile=post.creator.user_profile with_userlink=True %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
+    {% include 'discussion_forums/partials/topic_post_list.html' with object=object %}
 {% endblock %}

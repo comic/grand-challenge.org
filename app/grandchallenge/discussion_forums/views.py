@@ -6,8 +6,12 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     PermissionListMixin,
 )
-from grandchallenge.discussion_forums.forms import ForumTopicForm
+from grandchallenge.discussion_forums.forms import (
+    ForumPostForm,
+    ForumTopicForm,
+)
 from grandchallenge.discussion_forums.models import (
+    ForumPost,
     ForumTopic,
     ForumTopicKindChoices,
 )
@@ -108,3 +112,36 @@ class ForumTopicDelete(ObjectPermissionRequiredMixin, DeleteView):
             "discussion-forums:topic-list",
             kwargs={"challenge_short_name": self.request.challenge.short_name},
         )
+
+
+class ForumPostCreate(ObjectPermissionRequiredMixin, CreateView):
+    model = ForumPost
+    permission_required = "discussion_forums.create_topic_post"
+    raise_exception = True
+    form_class = ForumPostForm
+
+    @cached_property
+    def forum(self):
+        return self.request.challenge.discussion_forum
+
+    @cached_property
+    def topic(self):
+        return get_object_or_404(
+            ForumTopic, forum=self.forum, slug=self.kwargs["slug"]
+        )
+
+    def get_permission_object(self):
+        return self.topic
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update({"forum": self.forum, "topic": self.topic})
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"user": self.request.user, "topic": self.topic})
+        return kwargs
+
+    def get_success_url(self):
+        return self.topic.get_absolute_url()

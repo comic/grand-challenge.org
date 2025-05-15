@@ -426,4 +426,11 @@ class Migration(migrations.Migration):
             name="forumgroupobjectpermission",
             unique_together={("group", "permission", "content_object")},
         ),
+        migrations.AddIndex(
+            model_name="forumpostuserobjectpermission",
+            index=models.Index(
+                fields=["user", "permission"],
+                name="discussion__user_id_8aad93_idx",
+            ),
+        ),
     ]
