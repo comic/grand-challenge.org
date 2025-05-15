@@ -1713,9 +1713,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
-        if adding:
-            self.create_utilization()
-
         if not adding:
             for field in (
                 "requires_gpu_type",
@@ -1726,6 +1723,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                     raise ValueError(f"{field} cannot be changed")
 
         super().save()
+
+        if adding:
+            self.create_utilization()
 
     def update_status(  # noqa: C901
         self,
