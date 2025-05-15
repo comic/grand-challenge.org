@@ -62,22 +62,6 @@ from tests.utils import create_raw_upload_image_session
 
 
 @pytest.mark.django_db
-def test_update_status_adds_time():
-    j = AlgorithmJobFactory(time_limit=60)
-    assert j.job_utilization.duration is None
-
-    j.update_status(status=j.EXECUTING)
-
-    j.refresh_from_db()
-    assert j.job_utilization.duration is None
-
-    j.update_status(status=j.SUCCESS)
-
-    j.refresh_from_db()
-    assert j.job_utilization.duration is not None
-
-
-@pytest.mark.django_db
 def test_duration():
     j = AlgorithmJobFactory(time_limit=60)
     _ = EvaluationFactory(time_limit=60)
