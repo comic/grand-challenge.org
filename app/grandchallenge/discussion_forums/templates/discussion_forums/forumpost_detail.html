@@ -7,9 +7,7 @@
         <div class="row">
             <div class="col-md-10">
                 <div class="float-right">
-                    <a href="{% url 'discussion-forums:post-delete' slug=object.topic.slug pk=object.pk %}" class="btn btn-danger btn-sm">
-                        <i class="fas fa-trash"></i>
-                    </a>
+                    {% include 'discussion_forums/forumpost_confirm_delete.html' %}
                     {# TODO: edit button for post #}
                 </div>
                 <p>
