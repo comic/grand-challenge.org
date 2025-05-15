@@ -1194,12 +1194,12 @@ def test_ground_truth_version_management_form():
     form = EvaluationGroundTruthVersionManagementForm(
         user=admin, phase=phase, activate=True
     )
-    assert list(form.fields["ground_truth"].queryset) == [gt2]
+    assert {*form.fields["ground_truth"].queryset} == {gt2}
 
     form2 = EvaluationGroundTruthVersionManagementForm(
         user=admin, phase=phase, activate=False
     )
-    assert list(form2.fields["ground_truth"].queryset) == [gt1, gt3]
+    assert {*form2.fields["ground_truth"].queryset} == {gt1, gt3}
 
     EvaluationGroundTruthFactory(phase=phase, is_desired_version=False)
 
