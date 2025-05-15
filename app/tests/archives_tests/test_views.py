@@ -27,7 +27,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.conftest import get_interface_form_data
-from tests.factories import ImageFactory, UserFactory
+from tests.factories import GroupFactory, ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
@@ -103,9 +103,11 @@ class TestObjectPermissionRequiredViews:
     def test_permission_required_list_views(self, client):
         a = ArchiveFactory()
         u = UserFactory()
+        group = GroupFactory()
+        group.user_set.add(u)
 
-        for view_name, kwargs, permission, objs in [
-            ("list", {}, "view_archive", {a})
+        for view_name, kwargs, permission, obj in [
+            ("list", {}, "view_archive", a)
         ]:
 
             def _get_view():
@@ -120,14 +122,13 @@ class TestObjectPermissionRequiredViews:
             assert response.status_code == 200
             assert set() == {*response.context[-1]["object_list"]}
 
-            assign_perm(permission, u, list(objs))
+            assign_perm(permission, group, obj)
 
             response = _get_view()
             assert response.status_code == 200
-            assert objs == {*response.context[-1]["object_list"]}
+            assert {obj} == {*response.context[-1]["object_list"]}
 
-            for obj in objs:
-                remove_perm(permission, u, obj)
+            remove_perm(permission, group, obj)
 
 
 def add_image_to_archive(image, archive):
@@ -1200,9 +1201,9 @@ def test_archive_item_bulk_delete_permissions(client):
         reverse_kwargs={"slug": archive.slug},
         user=editor,
     )
-    assert list(
-        response.context["form"].fields["civ_sets_to_delete"].queryset
-    ) == [i1, i2]
+    assert {
+        *response.context["form"].fields["civ_sets_to_delete"].queryset
+    } == {i1, i2}
 
     # for the normal user the queryset is empty
     response = get_view_for_user(
@@ -1211,10 +1212,9 @@ def test_archive_item_bulk_delete_permissions(client):
         reverse_kwargs={"slug": archive.slug},
         user=user,
     )
-    assert (
-        list(response.context["form"].fields["civ_sets_to_delete"].queryset)
-        == []
-    )
+    assert {
+        *response.context["form"].fields["civ_sets_to_delete"].queryset
+    } == set()
 
 
 @pytest.mark.django_db

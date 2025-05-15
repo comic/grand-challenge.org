@@ -423,8 +423,8 @@ class TestObjectPermissionRequiredViews:
                 assign_perm(permission, u, obj)
 
             assert (
-                str(err.value)
-                == "User permissions should not be assigned for this model"
+                f"{permission} should not be assigned to users for this model"
+                in str(err.value)
             )
 
             assign_perm(permission, g, obj)
@@ -525,8 +525,8 @@ class TestObjectPermissionRequiredViews:
                 assign_perm(permission, u, obj)
 
             assert (
-                str(err.value)
-                == "User permissions should not be assigned for this model"
+                f"{permission} should not be assigned to users for this model"
+                in str(err.value)
             )
 
             assign_perm(permission, g, obj)

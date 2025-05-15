@@ -800,9 +800,9 @@ def test_display_set_bulk_delete_permissions(client):
         user=editor,
     )
     # ds with answer and ds from other reader study are not in queryset
-    assert list(
-        response.context["form"].fields["civ_sets_to_delete"].queryset
-    ) == [ds2, ds3]
+    assert {
+        *response.context["form"].fields["civ_sets_to_delete"].queryset
+    } == {ds2, ds3}
 
     # for the normal user the queryset is empty
     response = get_view_for_user(
@@ -811,10 +811,9 @@ def test_display_set_bulk_delete_permissions(client):
         reverse_kwargs={"slug": rs.slug},
         user=user,
     )
-    assert (
-        list(response.context["form"].fields["civ_sets_to_delete"].queryset)
-        == []
-    )
+    assert {
+        *response.context["form"].fields["civ_sets_to_delete"].queryset
+    } == set()
 
 
 @pytest.mark.django_db

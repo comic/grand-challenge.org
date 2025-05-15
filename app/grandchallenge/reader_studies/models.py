@@ -40,7 +40,6 @@ from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.fields import HexColorField, RegexField
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
@@ -842,11 +841,22 @@ class ReaderStudy(
         return self.questions.exclude(interactive_algorithm="")
 
 
-class ReaderStudyUserObjectPermission(NoUserPermissionsAllowed):
+class ReaderStudyUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
 
 
 class ReaderStudyGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {
+            "read_readerstudy",
+            "view_leaderboard",
+            "change_readerstudy",
+            "view_readerstudy",
+        }
+    )
+
     content_object = models.ForeignKey(ReaderStudy, on_delete=models.CASCADE)
 
 
@@ -1017,11 +1027,17 @@ class DisplaySet(
         return self.values.get(interface=interface)
 
 
-class DisplaySetUserObjectPermission(NoUserPermissionsAllowed):
+class DisplaySetUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(DisplaySet, on_delete=models.CASCADE)
 
 
 class DisplaySetGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_displayset", "delete_displayset", "view_displayset"}
+    )
+
     content_object = models.ForeignKey(DisplaySet, on_delete=models.CASCADE)
 
 
@@ -1790,11 +1806,15 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         return self.reader_study.get_absolute_url() + "#questions"
 
 
-class QuestionUserObjectPermission(NoUserPermissionsAllowed):
+class QuestionUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Question, on_delete=models.CASCADE)
 
 
 class QuestionGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_question"})
+
     content_object = models.ForeignKey(Question, on_delete=models.CASCADE)
 
 
@@ -2005,11 +2025,14 @@ class Answer(UUIDModel):
 
 
 class AnswerUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_ and change_ permissions for the creator
+    allowed_permissions = frozenset({"view_answer", "change_answer"})
+
     content_object = models.ForeignKey(Answer, on_delete=models.CASCADE)
 
 
 class AnswerGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_answer", "delete_answer"})
+
     content_object = models.ForeignKey(Answer, on_delete=models.CASCADE)
 
 

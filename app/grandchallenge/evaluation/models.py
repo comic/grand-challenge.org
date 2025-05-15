@@ -46,7 +46,6 @@ from grandchallenge.components.schemas import (
 )
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import (
@@ -1375,11 +1374,17 @@ class PhaseEvaluationOutput(CheckForOverlappingSocketsMixin, models.Model):
         ]
 
 
-class PhaseUserObjectPermission(NoUserPermissionsAllowed):
+class PhaseUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Phase, on_delete=models.CASCADE)
 
 
 class PhaseGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"create_phase_submission", "view_phase", "change_phase"}
+    )
+
     content_object = models.ForeignKey(Phase, on_delete=models.CASCADE)
 
 
@@ -1438,11 +1443,15 @@ class Method(UUIDModel, ComponentImage):
         return Method.objects.filter(phase=self.phase)
 
 
-class MethodUserObjectPermission(NoUserPermissionsAllowed):
+class MethodUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Method, on_delete=models.CASCADE)
 
 
 class MethodGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_method", "change_method"})
+
     content_object = models.ForeignKey(Method, on_delete=models.CASCADE)
 
 
@@ -1708,11 +1717,14 @@ class Submission(FieldChangeMixin, UUIDModel):
 
 
 class SubmissionUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_submission permission for the creator
+    allowed_permissions = frozenset({"view_submission"})
+
     content_object = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
 
 class SubmissionGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_submission"})
+
     content_object = models.ForeignKey(Submission, on_delete=models.CASCADE)
 
 
@@ -1785,13 +1797,19 @@ class EvaluationGroundTruth(Tarball):
         )
 
 
-class EvaluationGroundTruthUserObjectPermission(NoUserPermissionsAllowed):
+class EvaluationGroundTruthUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         EvaluationGroundTruth, on_delete=models.CASCADE
     )
 
 
 class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_evaluationgroundtruth", "view_evaluationgroundtruth"}
+    )
+
     content_object = models.ForeignKey(
         EvaluationGroundTruth, on_delete=models.CASCADE
     )
@@ -2158,11 +2176,17 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         )
 
 
-class EvaluationUserObjectPermission(NoUserPermissionsAllowed):
+class EvaluationUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
 
 
 class EvaluationGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_evaluation", "view_evaluation", "claim_evaluation"}
+    )
+
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
 
 
