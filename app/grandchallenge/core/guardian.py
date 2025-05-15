@@ -1,6 +1,7 @@
 from functools import cached_property
 
 from django.contrib.auth.models import Permission
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Index
 from guardian.core import ObjectPermissionChecker
 from guardian.mixins import PermissionRequiredMixin  # noqa: I251
