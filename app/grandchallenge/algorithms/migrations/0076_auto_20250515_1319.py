@@ -14,6 +14,7 @@ def create_job_utilizations(apps, schema_editor):
     ):
         JobUtilization.objects.create(
             job=job,
+            created=job.created,
             duration=job.duration,
             compute_cost_euro_millicents=job.compute_cost_euro_millicents,
         )

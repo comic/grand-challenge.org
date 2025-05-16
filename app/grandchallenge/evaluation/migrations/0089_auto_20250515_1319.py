@@ -16,6 +16,7 @@ def create_evaluation_utilizations(apps, schema_editor):
     ):
         EvaluationUtilization.objects.create(
             evaluation=evaluation,
+            created=evaluation.created,
             external_evaluation=evaluation.submission.phase.external_evaluation,
             duration=evaluation.duration,
             compute_cost_euro_millicents=evaluation.compute_cost_euro_millicents,
