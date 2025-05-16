@@ -9,6 +9,12 @@
     <li class="breadcrumb-item active">Delete Topic</li>
 {% endblock %}
 
+{% block extra_top_row_buttons %}
+    <div class="col-6">
+        <a href="{% url 'discussion-forums:topic-list' %}" class="btn btn-dark btn-sm">Back to forum</a>
+    </div>
+{% endblock %}
+
 {% block extra_content %}
     <div id="{{ post.id }}" class="my-3 card">
         <div class="card-header">
