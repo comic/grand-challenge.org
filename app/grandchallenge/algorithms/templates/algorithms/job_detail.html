@@ -128,9 +128,9 @@
                     </dd>
                 {% endif %}
 
-                {% if object.duration %}
+                {% if object.job_utilization.duration %}
                     <dt class="col-sm-3">Duration</dt>
-                    <dd class="col-sm-9">{{ object.duration|naturaldelta }}</dd>
+                    <dd class="col-sm-9">{{ object.job_utilization.duration|naturaldelta }}</dd>
                 {% endif %}
 
                 {% if object.comment %}

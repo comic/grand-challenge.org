@@ -735,6 +735,7 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
         "creator__user_profile",
         "creator__verification",
         "algorithm_image__algorithm__workstation",
+        "job_utilization",
     )
 
     def get_context_data(self, **kwargs):
