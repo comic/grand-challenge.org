@@ -14,6 +14,12 @@
     <li class="breadcrumb-item active">{{ object }}</li>
 {% endblock %}
 
+{% block extra_top_row_buttons %}
+    <div class="col-6">
+        <a href="{% url 'discussion-forums:topic-list' %}" class="btn btn-dark btn-sm">Back to forum</a>
+    </div>
+{% endblock %}
+
 {% block extra_content %}
     <div class="row">
         <div class="col-12"><h2>{{ object.subject }}</h2></div>
@@ -21,7 +27,7 @@
     {% get_obj_perms request.user for object as "user_perms" %}
     <div>
         {% include 'actstream/partials/follow_unfollow_links.html' with object=object %}
-        {% if 'delete_topic' in  user_perms %}
+        {% if 'delete_forumtopic' in  user_perms %}
             <a href="{% url 'discussion-forums:topic-delete' slug=object.slug %}" class="btn btn-danger btn-sm">
                 <i class="fas fa-trash mr-1"></i>Delete topic
             </a>

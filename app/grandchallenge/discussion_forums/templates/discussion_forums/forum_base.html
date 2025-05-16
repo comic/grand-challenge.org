@@ -18,11 +18,12 @@
 {% endblock %}
 
 {% block content %}
-    <div class="row mb-3 justify-content-between">
-        <div class="col-8"><h1>Forum</h1></div>
+    <div class="row mb-3">
+        {% block extra_top_row_buttons %}
+        {% endblock %}
         {% get_obj_perms request.user for forum as "user_perms" %}
         {% if 'view_forum' in user_perms %}
-            <div class="col-4">
+            <div class="col-6">
                 <div class="float-right controls-link-wrapper">
                     {# TODO: my posts view button #}
                     {% include 'actstream/partials/follow_unfollow_links.html' with object=forum %}
@@ -30,6 +31,7 @@
                 </div>
             </div>
         {% endif %}
+        <h1>Forum</h1>
     </div>
 
     {% block extra_content %}
