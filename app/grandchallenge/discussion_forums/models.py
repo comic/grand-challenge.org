@@ -5,7 +5,7 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
+    UserObjectPermissionBase,
 )
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.subdomains.utils import reverse
@@ -176,44 +176,115 @@ class ForumPost(UUIDModel):
             "created",
         ]
 
-    def __str__(self):
-        return self.subject
-
     @property
     def is_alone(self):
         return self.topic.posts.count() == 1
 
+    @property
+    def is_last_post(self):
+        return self.topic.last_post == self
+
     def save(self, *args, **kwargs):
+        adding = self._state.adding
+
         super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
         self.topic.last_post_on = self.created
         self.topic.save()
 
     def delete(self, *args, **kwargs):
+        update_last_post_on = False
+        topic = None
+
         if self.is_alone:
             self.topic.delete()
-        else:
-            super().delete(*args, **kwargs)
+        elif self.is_last_post:
+            update_last_post_on = True
+            topic = self.topic
+
+        super().delete(*args, **kwargs)
+
+        if update_last_post_on:
+            topic.last_post_on = topic.last_post.created
+            topic.save()
+
+    def assign_permissions(self):
+        # challenge admins and participants can see this post
+        assign_perm(
+            "discussion_forums.view_forumpost",
+            self.topic.forum.parent_object.admins_group,
+            self,
+        )
+        assign_perm(
+            "discussion_forums.view_forumpost",
+            self.topic.forum.parent_object.participants_group,
+            self,
+        )
+        # challenge admins and post creator can delete the post
+        assign_perm(
+            "discussion_forums.delete_forumpost",
+            self.creator,
+            self,
+        )
+        assign_perm(
+            "discussion_forums.delete_forumpost",
+            self.topic.forum.parent_object.admins_group,
+            self,
+        )
+        # only the creator can change the post
+        assign_perm(
+            "discussion_forums.change_forumpost",
+            self.creator,
+            self,
+        )
+
+    def get_absolute_url(self):
+        return reverse(
+            "discussion-forums:post-detail",
+            kwargs={
+                "challenge_short_name": self.topic.forum.parent_object.short_name,
+                "slug": self.topic.slug,
+                "pk": self.pk,
+            },
+        )
 
 
-class ForumUserObjectPermission(NoUserPermissionsAllowed):
+class ForumUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
     content_object = models.ForeignKey(Forum, on_delete=models.CASCADE)
 
 
 class ForumGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {
+            "view_forum",
+            "create_forum_topic",
+            "create_sticky_and_announcement_topic",
+        }
+    )
     content_object = models.ForeignKey(Forum, on_delete=models.CASCADE)
 
 
-class ForumTopicUserObjectPermission(NoUserPermissionsAllowed):
+class ForumTopicUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
     content_object = models.ForeignKey(ForumTopic, on_delete=models.CASCADE)
 
 
 class ForumTopicGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"view_forumtopic", "delete_forumtopic", "create_topic_post"}
+    )
     content_object = models.ForeignKey(ForumTopic, on_delete=models.CASCADE)
 
 
-class ForumPostUserObjectPermission(NoUserPermissionsAllowed):
+class ForumPostUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset({"change_forumpost", "delete_forumpost"})
     content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)
 
 
 class ForumPostGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_forumpost", "delete_forumpost"})
     content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)

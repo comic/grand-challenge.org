@@ -18,7 +18,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="row mb-3">
+    <div class="row mb-3 justify-content-end">
         {% block extra_top_row_buttons %}
         {% endblock %}
         {% get_obj_perms request.user for forum as "user_perms" %}
@@ -31,8 +31,8 @@
                 </div>
             </div>
         {% endif %}
-        <h1>Forum</h1>
     </div>
+    <h1>Forum</h1>
 
     {% block extra_content %}
     {% endblock %}
