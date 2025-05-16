@@ -9,7 +9,8 @@ from django.views.generic import (
 )
 
 from grandchallenge.core.guardian import (
-    ObjectPermissionRequiredMixin, ViewObjectPermissionListMixin,
+    ObjectPermissionRequiredMixin,
+    ViewObjectPermissionListMixin,
 )
 from grandchallenge.discussion_forums.forms import (
     ForumPostForm,
