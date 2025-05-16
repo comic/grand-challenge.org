@@ -433,4 +433,18 @@ class Migration(migrations.Migration):
                 name="discussion__user_id_8aad93_idx",
             ),
         ),
+        migrations.AddIndex(
+            model_name="forumtopicuserobjectpermission",
+            index=models.Index(
+                fields=["user", "permission"],
+                name="discussion__user_id_642d1b_idx",
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="forumuserobjectpermission",
+            index=models.Index(
+                fields=["user", "permission"],
+                name="discussion__user_id_e5363a_idx",
+            ),
+        ),
     ]

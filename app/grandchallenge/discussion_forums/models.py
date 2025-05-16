@@ -5,7 +5,6 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import UUIDModel
@@ -253,25 +252,39 @@ class ForumPost(UUIDModel):
         )
 
 
-class ForumUserObjectPermission(NoUserPermissionsAllowed):
+class ForumUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
     content_object = models.ForeignKey(Forum, on_delete=models.CASCADE)
 
 
 class ForumGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {
+            "view_forum",
+            "create_forum_topic",
+            "create_sticky_and_announcement_topic",
+        }
+    )
     content_object = models.ForeignKey(Forum, on_delete=models.CASCADE)
 
 
-class ForumTopicUserObjectPermission(NoUserPermissionsAllowed):
+class ForumTopicUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
     content_object = models.ForeignKey(ForumTopic, on_delete=models.CASCADE)
 
 
 class ForumTopicGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"view_forumtopic", "delete_forumtopic", "create_topic_post"}
+    )
     content_object = models.ForeignKey(ForumTopic, on_delete=models.CASCADE)
 
 
 class ForumPostUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset({"change_forumpost", "delete_forumpost"})
     content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)
 
 
 class ForumPostGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_forumpost", "delete_forumpost"})
     content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)
