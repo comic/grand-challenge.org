@@ -12,6 +12,8 @@
             </div>
         </div>
     {% endif %}
-    {% include 'discussion_forums/partials/topic_category_list.html' with topic_list_title="announcements" topics=announcements %}
+    {% if announcements %}
+        {% include 'discussion_forums/partials/topic_category_list.html' with topic_list_title="announcements" topics=announcements %}
+    {% endif %}
     {% include 'discussion_forums/partials/topic_category_list.html' with topic_list_title="topics" topics=default_topics %}
 {% endblock %}
