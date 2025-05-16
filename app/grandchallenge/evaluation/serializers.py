@@ -269,6 +269,20 @@ class ExternalEvaluationUpdateSerializer(ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
+        extra_kwargs = {}
+        status = validated_data["status"]
+        if (
+            status
+            in [
+                Evaluation.EXECUTED,
+                Evaluation.SUCCESS,
+                Evaluation.FAILURE,
+                Evaluation.CANCELLED,
+            ]
+            and instance.duration is None
+        ):
+            extra_kwargs.update(duration=now() - instance.claimed_at)
+
         # calling update_status takes care of sending the notifications
         instance.update_status(
             status=validated_data["status"],
@@ -278,6 +292,6 @@ class ExternalEvaluationUpdateSerializer(ModelSerializer):
                 else None
             ),
             compute_cost_euro_millicents=0,
-            duration=instance.claimed_at - now(),
+            **extra_kwargs,
         )
         return super().update(instance, validated_data)
