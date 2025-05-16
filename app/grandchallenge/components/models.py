@@ -1,7 +1,6 @@
 import json
 import logging
 import re
-from datetime import timedelta
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -1735,9 +1734,8 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         stderr: str = "",
         error_message="",
         detailed_error_message=None,
-        duration: timedelta | None = None,
-        compute_cost_euro_millicents=None,
         runtime_metrics=None,
+        **utilization_kwargs,
     ):
         self.status = status
 
@@ -1756,10 +1754,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                 for key, value in detailed_error_message.items()
             }
 
-        self.update_utilization(
-            duration=duration,
-            compute_cost_euro_millicents=compute_cost_euro_millicents,
-        )
+        self.update_utilization(**utilization_kwargs)
 
         if runtime_metrics is not None:
             self.runtime_metrics = runtime_metrics
