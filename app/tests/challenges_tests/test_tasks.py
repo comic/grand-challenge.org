@@ -157,21 +157,21 @@ def test_challenge_budget_alert_email(settings):
         payment_status=PaymentStatusChoices.PAID,
     )
     phase = PhaseFactory(challenge=challenge)
-    EvaluationFactory(
+    evaluation = EvaluationFactory(
         submission__phase=phase,
-        compute_cost_euro_millicents=500000,
         time_limit=60,
     )
+    evaluation.update_utilization(compute_cost_euro_millicents=500000)
     update_compute_costs_and_storage_size()
 
     # Budget alert threshold not exceeded
     assert len(mail.outbox) == 0
 
-    EvaluationFactory(
+    evaluation = EvaluationFactory(
         submission__phase=phase,
-        compute_cost_euro_millicents=300000,
         time_limit=60,
     )
+    evaluation.update_utilization(compute_cost_euro_millicents=300000)
     update_compute_costs_and_storage_size()
 
     # Budget alert threshold exceeded
@@ -196,21 +196,21 @@ def test_challenge_budget_alert_email(settings):
     )
 
     mail.outbox.clear()
-    EvaluationFactory(
+    evaluation = EvaluationFactory(
         submission__phase=phase,
-        compute_cost_euro_millicents=100000,
         time_limit=60,
     )
+    evaluation.update_utilization(compute_cost_euro_millicents=100000)
     update_compute_costs_and_storage_size()
 
     # Next budget alert threshold not exceeded
     assert len(mail.outbox) == 0
 
-    EvaluationFactory(
+    evaluation = EvaluationFactory(
         submission__phase=phase,
-        compute_cost_euro_millicents=1,
         time_limit=60,
     )
+    evaluation.update_utilization(compute_cost_euro_millicents=1)
     update_compute_costs_and_storage_size()
 
     # Next budget alert threshold exceeded
@@ -241,11 +241,11 @@ def test_challenge_budget_alert_two_thresholds_one_email(settings):
         payment_status=PaymentStatusChoices.PAID,
     )
     phase = PhaseFactory(challenge=challenge)
-    EvaluationFactory(
+    evaluation = EvaluationFactory(
         submission__phase=phase,
-        compute_cost_euro_millicents=950000,
         time_limit=60,
     )
+    evaluation.update_utilization(compute_cost_euro_millicents=950000)
     update_compute_costs_and_storage_size()
 
     # Two budget alert thresholds exceeded, alert only sent for last one.
@@ -266,11 +266,11 @@ def test_challenge_budget_alert_two_thresholds_one_email(settings):
 def test_challenge_budget_alert_no_budget():
     challenge = ChallengeFactory()
     phase = PhaseFactory(challenge=challenge)
-    EvaluationFactory(
+    evaluation = EvaluationFactory(
         submission__phase=phase,
-        compute_cost_euro_millicents=1,
         time_limit=60,
     )
+    evaluation.update_utilization(compute_cost_euro_millicents=1)
     assert len(mail.outbox) == 0
     update_compute_costs_and_storage_size()
     assert len(mail.outbox) != 0

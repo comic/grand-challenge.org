@@ -25,6 +25,7 @@ from grandchallenge.evaluation.models import (
     EvaluationGroundTruthUserObjectPermission,
     EvaluationGroupObjectPermission,
     EvaluationUserObjectPermission,
+    EvaluationUtilization,
     Method,
     MethodGroupObjectPermission,
     MethodUserObjectPermission,
@@ -171,7 +172,6 @@ class EvaluationAdmin(admin.ModelAdmin):
         "pk",
         "created",
         "submission",
-        "compute_cost_euro_millicents",
         "time_limit",
         "requires_gpu_type",
         "requires_memory_gb",
@@ -212,8 +212,33 @@ class EvaluationAdmin(admin.ModelAdmin):
         "runtime_metrics",
         "claimed_by",
         "ground_truth",
+        "evaluation_utilization",
     )
     actions = (requeue_jobs, cancel_jobs, deprovision_jobs)
+
+
+@admin.register(EvaluationUtilization)
+class EvaluationUtilizationAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = (
+        "pk",
+        "created",
+        "evaluation",
+        "creator",
+        "duration",
+        "compute_cost_euro_millicents",
+        "phase",
+        "challenge",
+        "algorithm_image",
+        "algorithm",
+    )
+    search_fields = (
+        "creator__username",
+        "pk",
+        "evaluation__pk",
+        "phase__slug",
+        "challenge__short_name",
+    )
 
 
 @admin.register(CombinedLeaderboard)

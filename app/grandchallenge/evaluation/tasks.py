@@ -271,6 +271,13 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         requires_memory_gb=evaluation.submission.algorithm_requires_memory_gb,
     )
 
+    for job in jobs:
+        job.update_utilization(
+            phase=evaluation.submission.phase,
+            archive=evaluation.submission.phase.archive,
+            challenge=evaluation.submission.phase.challenge,
+        )
+
     if not jobs:
         # No more jobs created from this task, so everything must be
         # ready for evaluation, handles archives with only one item
