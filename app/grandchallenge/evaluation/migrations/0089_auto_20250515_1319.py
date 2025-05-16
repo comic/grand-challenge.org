@@ -7,9 +7,13 @@ def create_evaluation_utilizations(apps, schema_editor):
     EvaluationUtilization = apps.get_model(  # noqa: N806
         "evaluation", "EvaluationUtilization"
     )
-    for evaluation in Evaluation.objects.annotate(
-        duration=F("completed_at") - F("started_at")
-    ).iterator():
+    for evaluation in (
+        Evaluation.objects.annotate(
+            duration=F("completed_at") - F("started_at")
+        )
+        .filter(evaluation_utilization__isnull=True)
+        .iterator()
+    ):
         EvaluationUtilization.objects.create(
             evaluation=evaluation,
             external_evaluation=evaluation.submission.phase.external_evaluation,
