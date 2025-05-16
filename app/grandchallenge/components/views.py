@@ -44,7 +44,7 @@ from grandchallenge.components.widgets import FileSearchWidget
 from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     filter_by_permission,
     get_object_if_allowed,
 )
@@ -323,11 +323,10 @@ class BaseModelOptions(TextChoices):
 class CivSetListView(
     LoginRequiredMixin,
     ObjectPermissionCheckerMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     PaginatedTableListView,
 ):
     model = None
-    permission_required = None
     raise_exception = True
     template_name = "components/civ_set_list.html"
     row_template = "components/civ_set_row.html"

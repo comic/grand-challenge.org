@@ -800,9 +800,9 @@ def test_display_set_bulk_delete_permissions(client):
         user=editor,
     )
     # ds with answer and ds from other reader study are not in queryset
-    assert list(
-        response.context["form"].fields["civ_sets_to_delete"].queryset
-    ) == [ds2, ds3]
+    assert {
+        *response.context["form"].fields["civ_sets_to_delete"].queryset
+    } == {ds2, ds3}
 
     # for the normal user the queryset is empty
     response = get_view_for_user(
@@ -811,10 +811,9 @@ def test_display_set_bulk_delete_permissions(client):
         reverse_kwargs={"slug": rs.slug},
         user=user,
     )
-    assert (
-        list(response.context["form"].fields["civ_sets_to_delete"].queryset)
-        == []
-    )
+    assert {
+        *response.context["form"].fields["civ_sets_to_delete"].queryset
+    } == set()
 
 
 @pytest.mark.django_db
@@ -1186,3 +1185,45 @@ def test_reader_study_launch_disabled_when_not_launchable(client):
         assertNotContains(
             response, f'data-workstation-path="reader-study/{reader_study.pk}"'
         )
+
+
+@pytest.mark.django_db
+def test_civset_list_view_permissions(client):
+    viewname = "reader-studies:display_sets"
+    user, editor, reader = UserFactory.create_batch(3)
+    reader_study = ReaderStudyFactory()
+    reader_study.add_editor(editor)
+    reader_study.add_reader(reader)
+    ob1, ob2, ob3 = DisplaySetFactory.create_batch(
+        3, **{"reader_study": reader_study}
+    )
+    ob4, ob5 = DisplaySetFactory.create_batch(2)
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=user,
+        reverse_kwargs={"slug": reader_study.slug},
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=reader,
+        reverse_kwargs={"slug": reader_study.slug},
+    )
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=editor,
+        reverse_kwargs={"slug": reader_study.slug},
+    )
+    assert response.status_code == 200
+    assert len(response.context["object_list"]) == 3
+    for obj in [ob1, ob2, ob3]:
+        assert obj in response.context["object_list"]
+    for obj in [ob4, ob5]:
+        assert obj not in response.context["object_list"]

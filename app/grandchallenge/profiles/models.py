@@ -18,7 +18,7 @@ from guardian.utils import get_anonymous_user
 from stdimage import JPEGField
 
 from grandchallenge.core.guardian import (
-    NoGroupPermissionsAllowed,
+    GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import UUIDModel
@@ -249,11 +249,14 @@ class UserProfile(models.Model):
 
 
 class UserProfileUserObjectPermission(UserObjectPermissionBase):
-    # This is used for change_userprofile permission for the user
+    allowed_permissions = frozenset({"change_userprofile"})
+
     content_object = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
 
 
-class UserProfileGroupObjectPermission(NoGroupPermissionsAllowed):
+class UserProfileGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
 
 

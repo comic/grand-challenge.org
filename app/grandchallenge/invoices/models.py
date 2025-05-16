@@ -9,7 +9,7 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
+    UserObjectPermissionBase,
 )
 from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.invoices.tasks import (
@@ -297,9 +297,13 @@ class Invoice(models.Model, FieldChangeMixin):
         )
 
 
-class InvoiceUserObjectPermission(NoUserPermissionsAllowed):
+class InvoiceUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Invoice, on_delete=models.CASCADE)
 
 
 class InvoiceGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_invoice"})
+
     content_object = models.ForeignKey(Invoice, on_delete=models.CASCADE)

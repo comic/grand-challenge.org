@@ -47,7 +47,7 @@ from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     filter_by_permission,
 )
 from grandchallenge.core.utils.grand_challenge_forge import (
@@ -56,6 +56,7 @@ from grandchallenge.core.utils.grand_challenge_forge import (
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.direct_messages.forms import ConversationForm
 from grandchallenge.evaluation.forms import (
+    AlgorithmInterfaceForPhaseCopyForm,
     CombinedLeaderboardForm,
     ConfigureAlgorithmPhasesForm,
     EvaluationForm,
@@ -262,10 +263,12 @@ class MethodCreate(
 
 
 class MethodList(
-    LoginRequiredMixin, PermissionListMixin, CachedPhaseMixin, ListView
+    LoginRequiredMixin,
+    ViewObjectPermissionListMixin,
+    CachedPhaseMixin,
+    ListView,
 ):
     model = Method
-    permission_required = "view_method"
     login_url = reverse_lazy("account_login")
     ordering = ("-is_desired_version", "-created")
 
@@ -370,11 +373,10 @@ class SubmissionCreate(
 
 
 class SubmissionList(
-    LoginRequiredMixin, PermissionListMixin, PaginatedTableListView
+    LoginRequiredMixin, ViewObjectPermissionListMixin, PaginatedTableListView
 ):
     model = Submission
     row_template = "evaluation/submission_list_row.html"
-    permission_required = "view_submission"
     login_url = reverse_lazy("account_login")
 
     search_fields = [
@@ -507,13 +509,12 @@ class EvaluationCreate(
 
 class EvaluationList(
     LoginRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     TeamContextMixin,
     CachedPhaseMixin,
     ListView,
 ):
     model = Evaluation
-    permission_required = "view_evaluation"
     login_url = reverse_lazy("account_login")
 
     def get_queryset(self):
@@ -702,14 +703,13 @@ class LeaderboardRedirect(RedirectView):
 class LeaderboardDetail(
     UserPassesTestMixin,
     TeamContextMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     PaginatedTableListView,
 ):
     model = Evaluation
     template_name = "evaluation/leaderboard_detail.html"
     row_template = "evaluation/leaderboard_row.html"
     search_fields = ["pk", "submission__creator__username"]
-    permission_required = "evaluation.view_evaluation"
 
     def test_func(self):
         if self.phase.public:
@@ -1239,10 +1239,12 @@ class EvaluationGroundTruthImportStatusDetail(
 
 
 class EvaluationGroundTruthList(
-    LoginRequiredMixin, PermissionListMixin, CachedPhaseMixin, ListView
+    LoginRequiredMixin,
+    ViewObjectPermissionListMixin,
+    CachedPhaseMixin,
+    ListView,
 ):
     model = EvaluationGroundTruth
-    permission_required = "evaluation.view_evaluationgroundtruth"
     login_url = reverse_lazy("account_login")
     ordering = ("-is_desired_version", "-created")
 
@@ -1381,6 +1383,46 @@ class AlgorithmInterfacesForPhaseList(
             }
         )
         return context
+
+
+class AlgorithmInterfacesForPhaseCopy(
+    ConfigureAlgorithmPhasesPermissionMixin,
+    AlgorithmInterfaceForPhaseMixin,
+    SuccessMessageMixin,
+    FormView,
+):
+    form_class = AlgorithmInterfaceForPhaseCopyForm
+    template_name = "evaluation/phase_copy_algorithminterfaces_form.html"
+    success_message = "Algorithm interfaces copied successfully."
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "phase": self.phase,
+                "interfaces": self.phase.algorithm_interfaces.all(),
+            }
+        )
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["phase"] = self.phase
+        return kwargs
+
+    def form_valid(self, form):
+        response = super().form_valid(form=form)
+        form.copy_algorithm_interfaces()
+        return response
+
+    def get_success_url(self):
+        return reverse(
+            "evaluation:interface-list",
+            kwargs={
+                "slug": self.phase.slug,
+                "challenge_short_name": self.request.challenge.short_name,
+            },
+        )
 
 
 class AlgorithmInterfaceForPhaseDelete(

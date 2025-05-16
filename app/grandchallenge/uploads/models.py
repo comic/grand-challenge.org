@@ -11,7 +11,7 @@ from django.utils.text import get_valid_filename
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.guardian import (
-    NoGroupPermissionsAllowed,
+    GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import UUIDModel
@@ -335,9 +335,12 @@ def delete_objects_hook(*_, instance: UserUpload, **__):
 
 
 class UserUploadUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_ and change_ permissions for the creator
+    allowed_permissions = frozenset({"change_userupload", "view_userupload"})
+
     content_object = models.ForeignKey(UserUpload, on_delete=models.CASCADE)
 
 
-class UserUploadGroupObjectPermission(NoGroupPermissionsAllowed):
+class UserUploadGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(UserUpload, on_delete=models.CASCADE)

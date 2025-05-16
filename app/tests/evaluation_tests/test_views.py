@@ -423,8 +423,8 @@ class TestObjectPermissionRequiredViews:
                 assign_perm(permission, u, obj)
 
             assert (
-                str(err.value)
-                == "User permissions should not be assigned for this model"
+                f"{permission} should not be assigned to users for this model"
+                in str(err.value)
             )
 
             assign_perm(permission, g, obj)
@@ -525,8 +525,8 @@ class TestObjectPermissionRequiredViews:
                 assign_perm(permission, u, obj)
 
             assert (
-                str(err.value)
-                == "User permissions should not be assigned for this model"
+                f"{permission} should not be assigned to users for this model"
+                in str(err.value)
             )
 
             assign_perm(permission, g, obj)
@@ -1932,7 +1932,12 @@ def test_phase_archive_info_permissions(client):
 
 
 @pytest.mark.parametrize(
-    "viewname", ["evaluation:interface-list", "evaluation:interface-create"]
+    "viewname",
+    [
+        "evaluation:interface-list",
+        "evaluation:interface-create",
+        "evaluation:interfaces-copy",
+    ],
 )
 @pytest.mark.django_db
 def test_algorithm_interface_for_phase_view_permission(client, viewname):

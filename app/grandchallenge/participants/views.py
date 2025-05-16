@@ -6,7 +6,7 @@ from guardian.mixins import LoginRequiredMixin
 
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     filter_by_permission,
 )
 from grandchallenge.participants.forms import (
@@ -148,10 +148,9 @@ class RegistrationRequestUpdate(
 
 
 class RegistrationQuestionList(
-    LoginRequiredMixin, PermissionListMixin, ListView
+    LoginRequiredMixin, ViewObjectPermissionListMixin, ListView
 ):
     model = RegistrationQuestion
-    permission_required = "participants.view_registrationquestion"
     raise_exception = True
     login_url = reverse_lazy("account_login")
 

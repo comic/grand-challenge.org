@@ -62,7 +62,7 @@ from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
     ViewObjectPermissionsFilter,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
@@ -74,11 +74,8 @@ from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
-class ArchiveList(FilterMixin, PermissionListMixin, ListView):
+class ArchiveList(FilterMixin, ViewObjectPermissionListMixin, ListView):
     model = Archive
-    permission_required = (
-        f"{model._meta.app_label}.view_{model._meta.model_name}"
-    )
     queryset = Archive.objects.prefetch_related("optional_hanging_protocols")
     ordering = "-created"
     filter_class = ArchiveFilter
@@ -417,9 +414,6 @@ class ArchiveItemUpdate(
 
 class ArchiveItemsList(CivSetListView):
     model = ArchiveItem
-    permission_required = (
-        f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
-    )
 
     @cached_property
     def base_object(self):

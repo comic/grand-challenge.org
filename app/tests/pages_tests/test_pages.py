@@ -373,6 +373,8 @@ def test_page_delete(client, two_challenge_sets):
         (2, Page.FIRST, [2, 3, 1, 4]),
         (1, Page.LAST, [1, 4, 2, 3]),
         (0, BLANK_CHOICE_DASH[0], [1, 2, 3, 4]),
+        (0, Page.UP, [1, 2, 3, 4]),
+        (3, Page.DOWN, [1, 2, 3, 4]),
     ],
 )
 def test_page_move(
