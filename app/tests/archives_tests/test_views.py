@@ -27,7 +27,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.conftest import get_interface_form_data
-from tests.factories import ImageFactory, UserFactory
+from tests.factories import GroupFactory, ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
@@ -103,9 +103,11 @@ class TestObjectPermissionRequiredViews:
     def test_permission_required_list_views(self, client):
         a = ArchiveFactory()
         u = UserFactory()
+        group = GroupFactory()
+        group.user_set.add(u)
 
-        for view_name, kwargs, permission, objs in [
-            ("list", {}, "view_archive", {a})
+        for view_name, kwargs, permission, obj in [
+            ("list", {}, "view_archive", a)
         ]:
 
             def _get_view():
@@ -120,14 +122,13 @@ class TestObjectPermissionRequiredViews:
             assert response.status_code == 200
             assert set() == {*response.context[-1]["object_list"]}
 
-            assign_perm(permission, u, list(objs))
+            assign_perm(permission, group, obj)
 
             response = _get_view()
             assert response.status_code == 200
-            assert objs == {*response.context[-1]["object_list"]}
+            assert {obj} == {*response.context[-1]["object_list"]}
 
-            for obj in objs:
-                remove_perm(permission, u, obj)
+            remove_perm(permission, group, obj)
 
 
 def add_image_to_archive(image, archive):
@@ -1200,9 +1201,9 @@ def test_archive_item_bulk_delete_permissions(client):
         reverse_kwargs={"slug": archive.slug},
         user=editor,
     )
-    assert list(
-        response.context["form"].fields["civ_sets_to_delete"].queryset
-    ) == [i1, i2]
+    assert {
+        *response.context["form"].fields["civ_sets_to_delete"].queryset
+    } == {i1, i2}
 
     # for the normal user the queryset is empty
     response = get_view_for_user(
@@ -1211,10 +1212,9 @@ def test_archive_item_bulk_delete_permissions(client):
         reverse_kwargs={"slug": archive.slug},
         user=user,
     )
-    assert (
-        list(response.context["form"].fields["civ_sets_to_delete"].queryset)
-        == []
-    )
+    assert {
+        *response.context["form"].fields["civ_sets_to_delete"].queryset
+    } == set()
 
 
 @pytest.mark.django_db
@@ -1348,3 +1348,55 @@ def test_archive_item_upload_corrupt_image(
     notification = Notification.objects.get()
     assert notification.user == editor
     assert "1 file could not be imported" in notification.description
+
+
+@pytest.mark.parametrize(
+    "add_collaborator_attr",
+    (
+        "add_uploader",
+        "add_user",
+    ),
+)
+@pytest.mark.django_db
+def test_archive_items_list_view_permissions(
+    client,
+    add_collaborator_attr,
+):
+    viewname = "archives:items-list"
+    user, editor, collaborator = UserFactory.create_batch(3)
+    archive = ArchiveFactory()
+    archive.add_editor(editor)
+    getattr(archive, add_collaborator_attr)(collaborator)
+    ob1, ob2, ob3 = ArchiveItemFactory.create_batch(3, **{"archive": archive})
+    ob4, ob5 = ArchiveItemFactory.create_batch(2)
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=user,
+        reverse_kwargs={"slug": archive.slug},
+    )
+    assert response.status_code == 200
+    assert len(response.context["object_list"]) == 0
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=collaborator,
+        reverse_kwargs={"slug": archive.slug},
+    )
+    assert response.status_code == 200
+    assert len(response.context["object_list"]) == 3
+
+    response = get_view_for_user(
+        viewname=viewname,
+        client=client,
+        user=editor,
+        reverse_kwargs={"slug": archive.slug},
+    )
+    assert response.status_code == 200
+    assert len(response.context["object_list"]) == 3
+    for obj in [ob1, ob2, ob3]:
+        assert obj in response.context["object_list"]
+    for obj in [ob4, ob5]:
+        assert obj not in response.context["object_list"]

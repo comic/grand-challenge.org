@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.guardian import (
-    NoGroupPermissionsAllowed,
+    GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import UUIDModel
@@ -21,11 +21,16 @@ from grandchallenge.subdomains.utils import reverse
 
 
 class FollowUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_, change_ and delete_ permissions for the user
+    allowed_permissions = frozenset(
+        {"delete_follow", "view_follow", "change_follow"}
+    )
+
     content_object = models.ForeignKey(Follow, on_delete=models.CASCADE)
 
 
-class FollowGroupObjectPermission(NoGroupPermissionsAllowed):
+class FollowGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Follow, on_delete=models.CASCADE)
 
 
@@ -478,9 +483,14 @@ class Notification(UUIDModel):
 
 
 class NotificationUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_, change_ and delete_ permissions for the user
+    allowed_permissions = frozenset(
+        {"view_notification", "change_notification", "delete_notification"}
+    )
+
     content_object = models.ForeignKey(Notification, on_delete=models.CASCADE)
 
 
-class NotificationGroupObjectPermission(NoGroupPermissionsAllowed):
+class NotificationGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Notification, on_delete=models.CASCADE)

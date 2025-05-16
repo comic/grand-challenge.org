@@ -16,7 +16,7 @@ from guardian.mixins import LoginRequiredMixin
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ViewObjectPermissionListMixin,
 )
 from grandchallenge.direct_messages.forms import (
     ConversationForm,
@@ -96,10 +96,12 @@ class MutedUsersMixin:
 
 
 class ConversationList(
-    LoginRequiredMixin, MutedUsersMixin, PermissionListMixin, ListView
+    LoginRequiredMixin,
+    MutedUsersMixin,
+    ViewObjectPermissionListMixin,
+    ListView,
 ):
     model = Conversation
-    permission_required = "direct_messages.view_conversation"
 
     def get_queryset(self):
         return (

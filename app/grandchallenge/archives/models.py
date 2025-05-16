@@ -18,7 +18,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
+    UserObjectPermissionBase,
 )
 from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
@@ -275,11 +275,17 @@ class Archive(
         return reverse("archives:cases-create", kwargs={"slug": self.slug})
 
 
-class ArchiveUserObjectPermission(NoUserPermissionsAllowed):
+class ArchiveUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)
 
 
 class ArchiveGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_archive", "view_archive", "upload_archive", "use_archive"}
+    )
+
     content_object = models.ForeignKey(Archive, on_delete=models.CASCADE)
 
 
@@ -367,11 +373,17 @@ class ArchiveItem(
         return self.values.get(interface=interface)
 
 
-class ArchiveItemUserObjectPermission(NoUserPermissionsAllowed):
+class ArchiveItemUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(ArchiveItem, on_delete=models.CASCADE)
 
 
 class ArchiveItemGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_archiveitem", "delete_archiveitem", "view_archiveitem"}
+    )
+
     content_object = models.ForeignKey(ArchiveItem, on_delete=models.CASCADE)
 
 

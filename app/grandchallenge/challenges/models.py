@@ -59,7 +59,6 @@ from grandchallenge.components.schemas import (
 )
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
     UserObjectPermissionBase,
     filter_by_permission,
 )
@@ -927,11 +926,17 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             return None
 
 
-class ChallengeUserObjectPermission(NoUserPermissionsAllowed):
+class ChallengeUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Challenge, on_delete=models.CASCADE)
 
 
 class ChallengeGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_challenge", "add_registration_question", "view_challenge"}
+    )
+
     content_object = models.ForeignKey(Challenge, on_delete=models.CASCADE)
 
 
@@ -1492,13 +1497,18 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
 
 class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
-    # This is used for view_challengerequest permission for the creator
+    allowed_permissions = frozenset({"view_challengerequest"})
+
     content_object = models.ForeignKey(
         ChallengeRequest, on_delete=models.CASCADE
     )
 
 
 class ChallengeRequestGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"view_challengerequest", "change_challengerequest"}
+    )
+
     content_object = models.ForeignKey(
         ChallengeRequest, on_delete=models.CASCADE
     )
@@ -1620,13 +1630,19 @@ class OnboardingTask(FieldChangeMixin, UUIDModel):
             )
 
 
-class OnboardingTaskUserObjectPermission(NoUserPermissionsAllowed):
+class OnboardingTaskUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(
         OnboardingTask, on_delete=models.CASCADE
     )
 
 
 class OnboardingTaskGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"change_onboardingtask", "view_onboardingtask"}
+    )
+
     content_object = models.ForeignKey(
         OnboardingTask, on_delete=models.CASCADE
     )

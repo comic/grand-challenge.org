@@ -12,7 +12,7 @@ from simple_history.models import HistoricalRecords
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
+    UserObjectPermissionBase,
 )
 from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.core.templatetags.bleach import md2html
@@ -134,21 +134,35 @@ class Page(FieldChangeMixin, models.Model):
 
     def move(self, move):
         if move == self.UP:
-            mm = Page.objects.get(
-                challenge=self.challenge, order=self.order - 1
+            target_page = (
+                Page.objects.filter(
+                    challenge=self.challenge, order__lt=self.order
+                )
+                .order_by("order")
+                .last()
             )
-            mm.order += 1
-            mm.save()
-            self.order -= 1
-            self.save()
+            if target_page:
+                target_order = target_page.order
+                target_page.order = self.order
+                target_page.save()
+
+                self.order = target_order
+                self.save()
         elif move == self.DOWN:
-            mm = Page.objects.get(
-                challenge=self.challenge, order=self.order + 1
+            target_page = (
+                Page.objects.filter(
+                    challenge=self.challenge, order__gt=self.order
+                )
+                .order_by("order")
+                .first()
             )
-            mm.order -= 1
-            mm.save()
-            self.order += 1
-            self.save()
+            if target_page:
+                target_order = target_page.order
+                target_page.order = self.order
+                target_page.save()
+
+                self.order = target_order
+                self.save()
         elif move == self.FIRST:
             pages = Page.objects.filter(challenge=self.challenge)
             idx = index(pages, self)
@@ -222,9 +236,13 @@ class Page(FieldChangeMixin, models.Model):
         ordering = ["challenge", "order"]
 
 
-class PageUserObjectPermission(NoUserPermissionsAllowed):
+class PageUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
+
     content_object = models.ForeignKey(Page, on_delete=models.CASCADE)
 
 
 class PageGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_page"})
+
     content_object = models.ForeignKey(Page, on_delete=models.CASCADE)
