@@ -9,8 +9,7 @@ from django.views.generic import (
 )
 
 from grandchallenge.core.guardian import (
-    ObjectPermissionRequiredMixin,
-    PermissionListMixin,
+    ObjectPermissionRequiredMixin, ViewObjectPermissionListMixin,
 )
 from grandchallenge.discussion_forums.forms import (
     ForumPostForm,
@@ -24,7 +23,7 @@ from grandchallenge.discussion_forums.models import (
 from grandchallenge.subdomains.utils import reverse
 
 
-class ForumTopicListView(PermissionListMixin, ListView):
+class ForumTopicListView(ViewObjectPermissionListMixin, ListView):
     model = ForumTopic
     permission_required = "discussion_forums.view_forumtopic"
     queryset = ForumTopic.objects.select_related("forum")
