@@ -28,7 +28,6 @@
                                         {% if topic.locked %}
                                             <i class="fas fa-lock text-info ml-1" title="This topic is locked"></i>
                                         {% endif %}
-
                                         <!-- Version for medium screens and up (≥768px) -->
                                         <div class="d-none d-md-block">
                                             By {{ topic.creator|user_profile_link }} {{ topic.last_post.created }}
