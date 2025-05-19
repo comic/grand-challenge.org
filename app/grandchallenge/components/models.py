@@ -618,6 +618,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         if (
             self.pk is not None
             and self._overlay_segments_orig != self.overlay_segments
+            and not self._overlay_segments_preserved()
             and (
                 ComponentInterfaceValue.objects.filter(interface=self).exists()
                 or Question.objects.filter(interface=self).exists()
@@ -627,6 +628,15 @@ class ComponentInterface(OverlaySegmentsMixin):
                 "Overlay segments cannot be changed, as values or questions "
                 "for this ComponentInterface exist."
             )
+
+    def _overlay_segments_preserved(self):
+        orig_overlay_segments = {
+            tuple(sorted(d.items())) for d in self._overlay_segments_orig
+        }
+        new_overlay_segments = {
+            tuple(sorted(d.items())) for d in self.overlay_segments
+        }
+        return orig_overlay_segments <= new_overlay_segments
 
     def _clean_relative_path(self):
         if (

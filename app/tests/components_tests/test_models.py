@@ -1191,6 +1191,47 @@ def test_clean_overlay_segments():
     ci._clean_overlay_segments()
 
 
+@pytest.mark.parametrize(
+    "updated_segments, expectation",
+    (
+        [
+            [{"name": "s1", "visible": True, "voxel_value": 1}],
+            pytest.raises(ValidationError),
+        ],  # deletes existing voxel values
+        [
+            [
+                {"name": "sfoo", "visible": True, "voxel_value": 1},
+                {"name": "s2", "visible": True, "voxel_value": 2},
+            ],
+            pytest.raises(ValidationError),
+        ],  # changes name of existing voxel value
+        [
+            [
+                {"name": "s1", "visible": True, "voxel_value": 1},
+                {"name": "s2", "visible": True, "voxel_value": 2},
+                {"name": "s3", "visible": True, "voxel_value": 3},
+            ],
+            nullcontext(),
+        ],  # adds new voxel value
+    ),
+)
+@pytest.mark.django_db
+def test_overlay_segments_can_be_extended(updated_segments, expectation):
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.SEGMENTATION,
+        overlay_segments=[
+            {"name": "s1", "visible": True, "voxel_value": 1},
+            {"name": "s2", "visible": True, "voxel_value": 2},
+        ],
+    )
+    ComponentInterfaceValueFactory(interface=ci)
+
+    ci.overlay_segments = updated_segments
+
+    with expectation:
+        ci._clean_overlay_segments()
+
+
 @pytest.mark.django_db
 def test_validate_voxel_values():
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
