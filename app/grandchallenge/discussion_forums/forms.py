@@ -84,7 +84,7 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
         model = ForumPost
         fields = ("topic", "creator", "content")
 
-    def __init__(self, *args, topic, user, **kwargs):
+    def __init__(self, *args, instance, topic, user, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._user = user
@@ -98,7 +98,7 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
         )
         self.fields["creator"].initial = user
 
-        if not self.instance._state.adding:
+        if not instance:
             hx_post_url = reverse(
                 "discussion-forums:post-update",
                 kwargs={

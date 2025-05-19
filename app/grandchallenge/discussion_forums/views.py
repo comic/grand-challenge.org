@@ -145,7 +145,9 @@ class ForumPostCreate(ObjectPermissionRequiredMixin, CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user, "topic": self.topic})
+        kwargs.update(
+            {"user": self.request.user, "topic": self.topic, "instance": None}
+        )
         return kwargs
 
 
@@ -231,5 +233,11 @@ class ForumPostUpdate(ObjectPermissionRequiredMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"user": self.request.user, "topic": self.topic})
+        kwargs.update(
+            {
+                "user": self.request.user,
+                "topic": self.topic,
+                "instance": self.object,
+            }
+        )
         return kwargs
