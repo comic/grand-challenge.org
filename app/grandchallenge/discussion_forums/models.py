@@ -122,7 +122,12 @@ class ForumTopic(UUIDModel):
             self.forum.parent_object.participants_group,
             self,
         )
-        # only challenge admins can delete this topic
+        # only challenge admins can change and delete this topic
+        assign_perm(
+            "discussion_forums.change_forumtopic",
+            self.forum.parent_object.admins_group,
+            self,
+        )
         assign_perm(
             "discussion_forums.delete_forumtopic",
             self.forum.parent_object.admins_group,
@@ -275,7 +280,12 @@ class ForumTopicUserObjectPermission(UserObjectPermissionBase):
 
 class ForumTopicGroupObjectPermission(GroupObjectPermissionBase):
     allowed_permissions = frozenset(
-        {"view_forumtopic", "delete_forumtopic", "create_topic_post"}
+        {
+            "view_forumtopic",
+            "delete_forumtopic",
+            "change_forumtopic",
+            "create_topic_post",
+        }
     )
     content_object = models.ForeignKey(ForumTopic, on_delete=models.CASCADE)
 

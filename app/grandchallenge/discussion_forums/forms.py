@@ -135,3 +135,15 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
             raise ValidationError(
                 "You can no longer reply to this topic because it is locked."
             )
+
+
+class ForumTopicLockUpdateForm(ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["is_locked"].widget = HiddenInput()
+
+    class Meta:
+        model = ForumTopic
+        fields = ("is_locked",)

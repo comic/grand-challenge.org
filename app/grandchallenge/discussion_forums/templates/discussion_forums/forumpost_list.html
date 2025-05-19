@@ -1,0 +1,30 @@
+{% extends "discussion_forums/forum_base.html" %}
+
+{% load static %}
+
+{% block sub_title %}{{ object }} - {% endblock %}
+
+{% block extra_breadcrumbs %}
+    <li class="breadcrumb-item">
+        <a href="{% url 'discussion-forums:topic-list' %}">Forum</a>
+    </li>
+    <li class="breadcrumb-item active">My posts</li>
+{% endblock %}
+
+{% block extra_top_row_buttons %}
+    <div class="col-6">
+        <a href="{% url 'discussion-forums:topic-list' %}" class="btn btn-dark btn-sm"><i class="fas fa-arrow-left mr-1"></i>Back to forum</a>
+        <a href="{% url 'discussion-forums:my-posts' %}" class="btn btn-dark btn-sm"><i class="fas fa-comments mr-1"></i>My posts</a>
+    </div>
+{% endblock %}
+
+{% block extra_content %}
+    <h3>My forum posts</h3>
+    <div class="row">
+        <div class="col-12" id="post-list">
+            {% for post in object_list %}
+                {% include 'discussion_forums/forumpost_detail.html' with object=post include_topic_link=True %}
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
