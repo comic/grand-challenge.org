@@ -618,7 +618,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         if (
             self.pk is not None
             and self._overlay_segments_orig != self.overlay_segments
-            and not self._overlay_segments_preserved()
+            and not self._overlay_segments_preserved
             and (
                 ComponentInterfaceValue.objects.filter(interface=self).exists()
                 or Question.objects.filter(interface=self).exists()
@@ -629,6 +629,7 @@ class ComponentInterface(OverlaySegmentsMixin):
                 "for this ComponentInterface exist."
             )
 
+    @property
     def _overlay_segments_preserved(self):
         orig_overlay_segments = {
             tuple(sorted(d.items())) for d in self._overlay_segments_orig
