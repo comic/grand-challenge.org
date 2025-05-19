@@ -598,6 +598,10 @@
         <span class="p">)</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">requires_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_json_kind</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">default_field</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">ModelChoiceField</span>
@@ -2418,7 +2422,7 @@
 
         <span class="n">ci</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="n">interface_slug</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_json_kind</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_value</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_init_json_civ_data</span><span class="p">()</span>
         <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_init_image_civ_data</span><span class="p">()</span>
@@ -2563,7 +2567,7 @@
             <span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span>
         <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_json_kind</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_value</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_value</span><span class="p">(</span>
                 <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
                 <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span>
