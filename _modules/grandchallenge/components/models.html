@@ -695,6 +695,7 @@
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_orig</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_preserved</span>
             <span class="ow">and</span> <span class="p">(</span>
                 <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
                 <span class="ow">or</span> <span class="n">Question</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
@@ -704,6 +705,16 @@
                 <span class="s2">&quot;Overlay segments cannot be changed, as values or questions &quot;</span>
                 <span class="s2">&quot;for this ComponentInterface exist.&quot;</span>
             <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_overlay_segments_preserved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">orig_overlay_segments</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_orig</span>
+        <span class="p">}</span>
+        <span class="n">new_overlay_segments</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">orig_overlay_segments</span> <span class="o">&lt;=</span> <span class="n">new_overlay_segments</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_relative_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
