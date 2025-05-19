@@ -31,7 +31,7 @@ from tests.reader_studies_tests.factories import (
     QuestionFactory,
     ReaderStudyFactory,
 )
-from tests.utilization_tests.factories import SessionCostFactory
+from tests.utilization_tests.factories import SessionUtilizationFactory
 from tests.utils import get_view_for_user
 
 
@@ -1267,10 +1267,12 @@ def test_reader_study_not_launchable_when_max_credits_consumed():
 
     assert reader_study.is_launchable
 
-    session_cost = SessionCostFactory(duration=timedelta(hours=1))
-    session_cost.reader_studies.add(reader_study)
+    session_utilization = SessionUtilizationFactory(
+        duration=timedelta(hours=1)
+    )
+    session_utilization.reader_studies.add(reader_study)
 
-    assert reader_study.session_costs.count() == 1
-    assert reader_study.session_costs.first().credits_consumed == 500
+    assert reader_study.session_utilizations.count() == 1
+    assert reader_study.session_utilizations.first().credits_consumed == 500
     assert reader_study.credits_consumed == 500
     assert not reader_study.is_launchable

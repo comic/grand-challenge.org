@@ -823,7 +823,7 @@ class ReaderStudy(
     @property
     def credits_consumed(self):
         total = 0
-        for session in self.session_costs.annotate(
+        for session in self.session_utilizations.annotate(
             num=Count("reader_studies")
         ):
             total += session.credits_consumed / session.num

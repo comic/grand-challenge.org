@@ -659,9 +659,9 @@ class Session(FieldChangeMixin, UUIDModel):
             )
 
         if self.has_changed("status") and self.status == self.STOPPED:
-            from grandchallenge.utilization.models import SessionCost
+            from grandchallenge.utilization.models import SessionUtilization
 
-            SessionCost.objects.create(
+            SessionUtilization.objects.create(
                 session=self,
                 duration=now() - self.created,
             )

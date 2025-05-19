@@ -1,11 +1,11 @@
 from django.contrib import admin
 
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.utilization.models import SessionCost
+from grandchallenge.utilization.models import SessionUtilization
 
 
-@admin.register(SessionCost)
-class SessionCostAdmin(admin.ModelAdmin):
+@admin.register(SessionUtilization)
+class SessionUtilizationAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = (
         "pk",

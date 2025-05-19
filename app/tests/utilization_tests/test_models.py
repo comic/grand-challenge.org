@@ -5,7 +5,7 @@ import pytest
 from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmChoices,
 )
-from grandchallenge.utilization.models import SessionCost
+from grandchallenge.utilization.models import SessionUtilization
 from grandchallenge.workstations.models import Session
 from tests.factories import SessionFactory
 from tests.reader_studies_tests.factories import (
@@ -15,56 +15,60 @@ from tests.reader_studies_tests.factories import (
 
 
 @pytest.mark.django_db
-def test_session_cost_created_after_session():
+def test_session_utilization_created_after_session():
     session = SessionFactory()
 
-    assert SessionCost.objects.count() == 0
+    assert SessionUtilization.objects.count() == 0
 
     session.stop()
 
-    assert SessionCost.objects.count() == 1
+    assert SessionUtilization.objects.count() == 1
 
-    session_cost = SessionCost.objects.first()
+    session_utilization = SessionUtilization.objects.first()
 
-    assert session_cost.session == session
+    assert session_utilization.session == session
 
 
 @pytest.mark.django_db
-def test_session_cost_retained_when_session_deleted():
+def test_session_utilization_retained_when_session_deleted():
     session = SessionFactory()
     session.stop()
     session_pk = session.pk
-    session_cost = session.session_cost
-    session_cost_pk = session_cost.pk
+    session_utilization = session.session_utilization
+    session_utilization_pk = session_utilization.pk
 
     session.delete()
 
     assert not Session.objects.filter(pk__in=[session_pk]).exists()
-    assert SessionCost.objects.filter(pk__in=[session_cost_pk]).exists()
+    assert SessionUtilization.objects.filter(
+        pk__in=[session_utilization_pk]
+    ).exists()
 
-    session_cost.refresh_from_db()
+    session_utilization.refresh_from_db()
 
-    assert session_cost.session is None
+    assert session_utilization.session is None
 
 
 @pytest.mark.django_db
-def test_session_cost_retained_when_creator_deleted():
+def test_session_utilization_retained_when_creator_deleted():
     session = SessionFactory()
     session.stop()
-    session_cost = session.session_cost
-    session_cost_pk = session_cost.pk
+    session_utilization = session.session_utilization
+    session_utilization_pk = session_utilization.pk
 
     session.creator.delete()
 
-    assert SessionCost.objects.filter(pk__in=[session_cost_pk]).exists()
+    assert SessionUtilization.objects.filter(
+        pk__in=[session_utilization_pk]
+    ).exists()
 
-    session_cost.refresh_from_db()
+    session_utilization.refresh_from_db()
 
-    assert session_cost.creator is None
+    assert session_utilization.creator is None
 
 
 @pytest.mark.django_db
-def test_session_cost_duration(mocker):
+def test_session_utilization_duration(mocker):
     fixed_now = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
     session = SessionFactory()
     session.created = fixed_now - timedelta(minutes=5)
@@ -75,33 +79,33 @@ def test_session_cost_duration(mocker):
 
     session.stop()
 
-    assert session.session_cost.duration == timedelta(minutes=5)
+    assert session.session_utilization.duration == timedelta(minutes=5)
 
 
 @pytest.mark.django_db
-def test_session_cost_reader_studies():
+def test_session_utilization_reader_studies():
     session = SessionFactory()
     reader_studies = ReaderStudyFactory.create_batch(2)
     session.reader_studies.set(reader_studies)
 
     session.stop()
 
-    assert session.session_cost.reader_studies.count() == 2
+    assert session.session_utilization.reader_studies.count() == 2
     assert set(reader_studies) == set(
-        session.session_cost.reader_studies.all()
+        session.session_utilization.reader_studies.all()
     )
 
 
 @pytest.mark.django_db
-def test_session_cost_no_reader_studies():
+def test_session_utilization_no_reader_studies():
     session = SessionFactory()
     session.stop()
 
-    assert session.session_cost.reader_studies.count() == 0
+    assert session.session_utilization.reader_studies.count() == 0
 
 
 @pytest.mark.django_db
-def test_session_cost_interactive_algorithm():
+def test_session_utilization_interactive_algorithm():
     session = SessionFactory()
     question = QuestionFactory(
         interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
@@ -110,13 +114,13 @@ def test_session_cost_interactive_algorithm():
 
     session.stop()
 
-    assert session.session_cost.interactive_algorithms == [
+    assert session.session_utilization.interactive_algorithms == [
         InteractiveAlgorithmChoices.ULS23_BASELINE.value
     ]
 
 
 @pytest.mark.django_db
-def test_session_cost_distinct_interactive_algorithms():
+def test_session_utilization_distinct_interactive_algorithms():
     session = SessionFactory()
     questions = QuestionFactory.create_batch(
         2,
@@ -127,19 +131,22 @@ def test_session_cost_distinct_interactive_algorithms():
 
     session.stop()
 
-    assert session.session_cost.interactive_algorithms == [
+    assert session.session_utilization.interactive_algorithms == [
         InteractiveAlgorithmChoices.ULS23_BASELINE.value
     ]
 
 
 @pytest.mark.django_db
-def test_session_cost_interactive_algorithms_credit_rate():
+def test_session_utilization_interactive_algorithms_credit_rate():
     session_without_interactive_alg = SessionFactory()
     question = QuestionFactory.create()
     session_without_interactive_alg.reader_studies.add(question.reader_study)
     session_without_interactive_alg.stop()
 
-    assert session_without_interactive_alg.session_cost.credits_per_hour == 500
+    assert (
+        session_without_interactive_alg.session_utilization.credits_per_hour
+        == 500
+    )
 
     session_with_interactive_alg = SessionFactory()
     question = QuestionFactory.create(
@@ -148,4 +155,7 @@ def test_session_cost_interactive_algorithms_credit_rate():
     session_with_interactive_alg.reader_studies.add(question.reader_study)
     session_with_interactive_alg.stop()
 
-    assert session_with_interactive_alg.session_cost.credits_per_hour == 1000
+    assert (
+        session_with_interactive_alg.session_utilization.credits_per_hour
+        == 1000
+    )

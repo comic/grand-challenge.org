@@ -11,10 +11,10 @@ from grandchallenge.reader_studies.interactive_algorithms import (
 from grandchallenge.workstations.models import Session
 
 
-class SessionCost(UUIDModel):
+class SessionUtilization(UUIDModel):
     session = models.OneToOneField(
         Session,
-        related_name="session_cost",
+        related_name="session_utilization",
         null=True,
         on_delete=models.SET_NULL,
     )
@@ -24,8 +24,8 @@ class SessionCost(UUIDModel):
     )
     reader_studies = models.ManyToManyField(
         to="reader_studies.ReaderStudy",
-        through="SessionCostReaderStudy",
-        related_name="session_costs",
+        through="SessionUtilizationReaderStudy",
+        related_name="session_utilizations",
         blank=True,
         help_text="Reader studies accessed during session",
     )
@@ -85,8 +85,10 @@ class SessionCost(UUIDModel):
         )
 
 
-class SessionCostReaderStudy(models.Model):
-    session_cost = models.ForeignKey(SessionCost, on_delete=models.CASCADE)
+class SessionUtilizationReaderStudy(models.Model):
+    session_utilization = models.ForeignKey(
+        SessionUtilization, on_delete=models.CASCADE
+    )
     reader_study = models.ForeignKey(
         "reader_studies.ReaderStudy", on_delete=models.CASCADE
     )
@@ -94,7 +96,7 @@ class SessionCostReaderStudy(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["session_cost", "reader_study"],
-                name="unique_session_cost_reader_study",
+                fields=["session_utilization", "reader_study"],
+                name="unique_session_utilization_reader_study",
             )
         ]

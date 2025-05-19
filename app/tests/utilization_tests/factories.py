@@ -2,13 +2,13 @@ from datetime import timedelta
 
 import factory
 
-from grandchallenge.utilization.models import SessionCost
+from grandchallenge.utilization.models import SessionUtilization
 from tests.factories import SessionFactory
 
 
-class SessionCostFactory(factory.django.DjangoModelFactory):
+class SessionUtilizationFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = SessionCost
+        model = SessionUtilization
 
     session = factory.SubFactory(SessionFactory)
     duration = timedelta(minutes=15)
