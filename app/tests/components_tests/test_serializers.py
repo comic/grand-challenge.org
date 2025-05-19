@@ -295,7 +295,10 @@ def test_civ_post_value_validation(kind):
     interface = ComponentInterfaceFactory(kind=kind)
 
     for test in TEST_DATA:
-        civ = {"interface": interface.slug, "value": TEST_DATA[test]}
+        civ = {
+            "interface": interface.slug,
+            "value": TEST_DATA[test],
+        }
 
         # test
         serializer = ComponentInterfaceValuePostSerializer(data=civ)
@@ -339,12 +342,24 @@ def test_civ_post_value_validation(kind):
         InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
         InterfaceKind.InterfaceKindChoices.THREE_POINT_ANGLE,
         InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
-        # Do not test ANY type here as that is always valid
+        InterfaceKind.InterfaceKindChoices.ANY,
     ),
 )
-def test_civ_post_value_required(kind):
+@pytest.mark.parametrize(
+    "store_in_database, expected_error",
+    (
+        (True, "value is required for interface kind {kind}"),
+        (False, "user_upload or file is required for interface kind {kind}"),
+    ),
+)
+def test_civ_post_value_or_user_upload_required_validation(
+    kind, store_in_database, expected_error
+):
     # setup
-    interface = ComponentInterfaceFactory(kind=kind)
+    interface = ComponentInterfaceFactory(
+        kind=kind,
+        store_in_database=store_in_database,
+    )
 
     civ = {"interface": interface.slug}
 
@@ -353,8 +368,9 @@ def test_civ_post_value_required(kind):
 
     # verify
     assert not serializer.is_valid()
-    assert "JSON does not fulfill schema: instance is not of type" in str(
-        serializer.errors["__all__"][0]
+    assert (
+        expected_error.format(kind=kind)
+        in serializer.errors["non_field_errors"]
     )
 
 
