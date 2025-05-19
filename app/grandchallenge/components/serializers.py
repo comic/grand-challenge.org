@@ -67,6 +67,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         queryset=Image.objects.none(),
         view_name="api:image-detail",
         required=False,
+        allow_null=True,
     )
     interface = SlugRelatedField(
         slug_field="slug", queryset=ComponentInterface.objects.all()
@@ -76,12 +77,14 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         view_name="api:upload-session-detail",
         required=False,
         write_only=True,
+        allow_null=True,
     )
     user_upload = serializers.HyperlinkedRelatedField(
         queryset=UserUpload.objects.none(),
         view_name="api:upload-detail",
         required=False,
         write_only=True,
+        allow_null=True,
     )
 
     class Meta:
@@ -127,16 +130,6 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
 
         interface = attrs["interface"]
 
-        attributes = [
-            attribute for attribute in attrs if attribute != "interface"
-        ]
-
-        if len(attributes) > 1:
-            raise serializers.ValidationError(
-                "Only one of image, value, user_upload and "
-                "upload_session should be set."
-            )
-
         if interface.is_image_kind:
             if not any(
                 [
@@ -148,22 +141,36 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                     f"upload_session or image are required for interface "
                     f"kind {interface.kind}"
                 )
+        elif interface.requires_value:
+            if (
+                attrs.get("value") is None
+            ):  # Note: can also be False so check for None instead
+                raise serializers.ValidationError(
+                    f"value is required for interface "
+                    f"kind {interface.kind}"
+                )
+        elif interface.requires_file:
+            if not any(
+                [
+                    attrs.get("file"),
+                    attrs.get("user_upload"),
+                ]
+            ):
+                raise serializers.ValidationError(
+                    f"user_upload or file is required for interface "
+                    f"kind {interface.kind}"
+                )
+        else:
+            NotImplementedError(f"Unsupported interface {interface}")
 
         if not attrs.get("upload_session") and not attrs.get("user_upload"):
             # Instances without an image or a file are never valid, this will be checked
             # later, but for now check everything else. DRF 3.0 dropped calling
             # full_clean on instances, so we need to do it ourselves.
             instance = ComponentInterfaceValue(
-                **{k: v for k, v in attrs.items() if k != "upload_session"}
+                **{k: v for k, v in attrs.items() if v is not None}
             )
             instance.full_clean()
-
-        if interface.requires_file:
-            if not attrs.get("user_upload"):
-                raise serializers.ValidationError(
-                    f"user_upload is required for interface "
-                    f"kind {interface.kind}"
-                )
 
         return attrs
 
