@@ -26,7 +26,6 @@ from grandchallenge.subdomains.utils import reverse
 
 class ForumTopicListView(ViewObjectPermissionListMixin, ListView):
     model = ForumTopic
-    permission_required = "discussion_forums.view_forumtopic"
     queryset = ForumTopic.objects.select_related("forum")
 
     @cached_property
@@ -55,7 +54,7 @@ class ForumTopicListView(ViewObjectPermissionListMixin, ListView):
 
 class ForumTopicCreate(ObjectPermissionRequiredMixin, CreateView):
     model = ForumTopic
-    permission_required = "discussion_forums.create_forum_topic"
+    permission_required = "create_forum_topic"
     raise_exception = True
     form_class = ForumTopicForm
 
@@ -79,7 +78,7 @@ class ForumTopicCreate(ObjectPermissionRequiredMixin, CreateView):
 
 class ForumTopicDetail(ObjectPermissionRequiredMixin, DetailView):
     model = ForumTopic
-    permission_required = "discussion_forums.view_forumtopic"
+    permission_required = "view_forumtopic"
     raise_exception = True
 
     def get_object(self, queryset=None):
@@ -97,7 +96,7 @@ class ForumTopicDetail(ObjectPermissionRequiredMixin, DetailView):
 
 class ForumTopicDelete(ObjectPermissionRequiredMixin, DeleteView):
     model = ForumTopic
-    permission_required = "discussion_forums.delete_forumtopic"
+    permission_required = "delete_forumtopic"
     raise_exception = True
     success_message = "Successfully deleted topic."
 
@@ -122,7 +121,7 @@ class ForumTopicDelete(ObjectPermissionRequiredMixin, DeleteView):
 
 class ForumPostCreate(ObjectPermissionRequiredMixin, CreateView):
     model = ForumPost
-    permission_required = "discussion_forums.create_topic_post"
+    permission_required = "create_topic_post"
     raise_exception = True
     form_class = ForumPostForm
 
@@ -152,7 +151,7 @@ class ForumPostCreate(ObjectPermissionRequiredMixin, CreateView):
 
 class ForumPostDetail(ObjectPermissionRequiredMixin, DetailView):
     model = ForumPost
-    permission_required = "discussion_forums.view_forumpost"
+    permission_required = "view_forumpost"
     raise_exception = True
 
     @cached_property
@@ -162,13 +161,14 @@ class ForumPostDetail(ObjectPermissionRequiredMixin, DetailView):
     def get_object(self, queryset=None):
         return get_object_or_404(
             ForumPost,
+            topic__forum=self.forum,
             pk=self.kwargs["pk"],
         )
 
 
 class ForumPostDelete(ObjectPermissionRequiredMixin, DeleteView):
     model = ForumPost
-    permission_required = "discussion_forums.delete_forumpost"
+    permission_required = "delete_forumpost"
     raise_exception = True
     success_message = "Successfully deleted post."
 
@@ -179,12 +179,13 @@ class ForumPostDelete(ObjectPermissionRequiredMixin, DeleteView):
     @cached_property
     def topic(self):
         return get_object_or_404(
-            ForumTopic, forum=self.forum, slug=self.kwargs["slug"]
+            ForumTopic, forum=self.forum, slug=self.object.topic.slug
         )
 
     def get_object(self, queryset=None):
         return get_object_or_404(
             ForumPost,
+            topic__forum=self.forum,
             pk=self.kwargs["pk"],
         )
 
@@ -207,7 +208,7 @@ class ForumPostDelete(ObjectPermissionRequiredMixin, DeleteView):
 
 class ForumPostUpdate(ObjectPermissionRequiredMixin, UpdateView):
     model = ForumPost
-    permission_required = "discussion_forums.change_forumpost"
+    permission_required = "change_forumpost"
     raise_exception = True
     form_class = ForumPostForm
 
@@ -218,12 +219,13 @@ class ForumPostUpdate(ObjectPermissionRequiredMixin, UpdateView):
     @cached_property
     def topic(self):
         return get_object_or_404(
-            ForumTopic, forum=self.forum, slug=self.kwargs["slug"]
+            ForumTopic, forum=self.forum, slug=self.object.topic.slug
         )
 
     def get_object(self, queryset=None):
         return get_object_or_404(
             ForumPost,
+            topic__forum=self.forum,
             pk=self.kwargs["pk"],
         )
 

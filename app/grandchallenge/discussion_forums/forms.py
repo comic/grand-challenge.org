@@ -90,7 +90,7 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
         self._user = user
         self._topic = topic
 
-        self.fields["topic"].queryset = ForumTopic.objects.filter(id=topic.id)
+        self.fields["topic"].queryset = ForumTopic.objects.filter(pk=topic.pk)
         self.fields["topic"].initial = topic
 
         self.fields["creator"].queryset = get_user_model().objects.filter(
@@ -127,10 +127,9 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
         )
 
     def clean(self):
-        if (
-            self._topic.is_locked
-            and not self._topic.forum.parent_object.is_admin(self._user)
-        ):
+        if self.cleaned_data["topic"].is_locked and not self.cleaned_data[
+            "topic"
+        ].forum.parent_object.is_admin(self.cleaned_data["creator"]):
             # challenge admins can still post to locked topics
             raise ValidationError(
                 "You can no longer reply to this topic because it is locked."

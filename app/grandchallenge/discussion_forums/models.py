@@ -103,28 +103,28 @@ class ForumTopic(UUIDModel):
     def assign_permissions(self):
         # challenge admins and participants can see this topic and add posts to it
         assign_perm(
-            "discussion_forums.view_forumtopic",
+            "view_forumtopic",
             self.forum.parent_object.admins_group,
             self,
         )
         assign_perm(
-            "discussion_forums.view_forumtopic",
+            "view_forumtopic",
             self.forum.parent_object.participants_group,
             self,
         )
         assign_perm(
-            "discussion_forums.create_topic_post",
+            "create_topic_post",
             self.forum.parent_object.admins_group,
             self,
         )
         assign_perm(
-            "discussion_forums.create_topic_post",
+            "create_topic_post",
             self.forum.parent_object.participants_group,
             self,
         )
         # only challenge admins can delete this topic
         assign_perm(
-            "discussion_forums.delete_forumtopic",
+            "delete_forumtopic",
             self.forum.parent_object.admins_group,
             self,
         )
@@ -214,29 +214,29 @@ class ForumPost(UUIDModel):
     def assign_permissions(self):
         # challenge admins and participants can see this post
         assign_perm(
-            "discussion_forums.view_forumpost",
+            "view_forumpost",
             self.topic.forum.parent_object.admins_group,
             self,
         )
         assign_perm(
-            "discussion_forums.view_forumpost",
+            "view_forumpost",
             self.topic.forum.parent_object.participants_group,
             self,
         )
         # challenge admins and post creator can delete the post
         assign_perm(
-            "discussion_forums.delete_forumpost",
+            "delete_forumpost",
             self.creator,
             self,
         )
         assign_perm(
-            "discussion_forums.delete_forumpost",
+            "delete_forumpost",
             self.topic.forum.parent_object.admins_group,
             self,
         )
         # only the creator can change the post
         assign_perm(
-            "discussion_forums.change_forumpost",
+            "change_forumpost",
             self.creator,
             self,
         )
