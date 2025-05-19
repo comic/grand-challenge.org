@@ -31,8 +31,8 @@ from tests.reader_studies_tests.factories import (
     QuestionFactory,
     ReaderStudyFactory,
 )
+from tests.utilization_tests.factories import SessionCostFactory
 from tests.utils import get_view_for_user
-from tests.workstations_tests.factories import SessionCostFactory
 
 
 @pytest.mark.django_db
