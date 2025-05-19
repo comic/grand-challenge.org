@@ -1117,7 +1117,6 @@ def test_clean_overlay_segments_with_values():
 
     ComponentInterfaceValueFactory(interface=ci)
     ci.overlay_segments = [
-        {"name": "s1", "visible": True, "voxel_value": 1},
         {"name": "s2", "visible": True, "voxel_value": 2},
     ]
     with pytest.raises(ValidationError) as e:
@@ -1146,7 +1145,6 @@ def test_clean_overlay_segments_with_questions(reader_study_with_gt):
     question.interface = ci
     question.save()
     ci.overlay_segments = [
-        {"name": "s1", "visible": True, "voxel_value": 1},
         {"name": "s2", "visible": True, "voxel_value": 2},
     ]
     with pytest.raises(ValidationError) as e:
