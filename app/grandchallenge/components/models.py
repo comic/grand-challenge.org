@@ -526,6 +526,10 @@ class ComponentInterface(OverlaySegmentsMixin):
         )
 
     @property
+    def requires_value(self):
+        return self.is_json_kind and self.store_in_database
+
+    @property
     def default_field(self):
         if self.requires_file:
             return ModelChoiceField
@@ -616,6 +620,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         if (
             self.pk is not None
             and self._overlay_segments_orig != self.overlay_segments
+            and not self._overlay_segments_preserved
             and (
                 ComponentInterfaceValue.objects.filter(interface=self).exists()
                 or Question.objects.filter(interface=self).exists()
@@ -625,6 +630,16 @@ class ComponentInterface(OverlaySegmentsMixin):
                 "Overlay segments cannot be changed, as values or questions "
                 "for this ComponentInterface exist."
             )
+
+    @property
+    def _overlay_segments_preserved(self):
+        orig_overlay_segments = {
+            tuple(sorted(d.items())) for d in self._overlay_segments_orig
+        }
+        new_overlay_segments = {
+            tuple(sorted(d.items())) for d in self.overlay_segments
+        }
+        return orig_overlay_segments <= new_overlay_segments
 
     def _clean_relative_path(self):
         if (
@@ -2311,7 +2326,7 @@ class CIVData:
 
         ci = ComponentInterface.objects.get(slug=interface_slug)
 
-        if ci.is_json_kind and not ci.requires_file:
+        if ci.requires_value:
             self._init_json_civ_data()
         elif ci.is_image_kind:
             self._init_image_civ_data()
@@ -2456,7 +2471,7 @@ class CIVForObjectMixin:
             interface=ci, user=user
         )
 
-        if ci.is_json_kind and not ci.requires_file:
+        if ci.requires_value:
             return self.create_civ_for_value(
                 ci=ci,
                 current_civ=current_civ,
