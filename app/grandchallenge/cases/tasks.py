@@ -199,14 +199,14 @@ def build_images(
 
     if upload_session.image_set.count() > 0:
         upload_session.update_status(status=RawImageUploadSession.SUCCESS)
-
-        if linked_task is not None:
-            logger.info("Scheduling linked task")
-            on_commit(signature(linked_task).apply_async)
-        else:
-            logger.info("No linked task, task complete")
     else:
         _handle_error(error_message=upload_session.default_error_message)
+
+    if linked_task is not None:
+        logger.info("Scheduling linked task")
+        on_commit(signature(linked_task).apply_async)
+    else:
+        logger.info("No linked task, task complete")
 
 
 @acks_late_micro_short_task(
