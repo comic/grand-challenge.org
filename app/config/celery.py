@@ -18,6 +18,14 @@ celery_app.config_from_object("django.conf:settings", namespace="CELERY_")
 celery_app.autodiscover_tasks()
 
 
+@task_prerun.connect
+def check_no_canvas_used(*_, sender=None, **__):
+    if sender.request.id != sender.request.root_id:
+        logger.warning(
+            f"Task {sender.request.task}[{sender.request.id}] was run as part of a canvas"
+        )
+
+
 @celeryd_after_setup.connect()
 def check_configuration(*, instance, **__):
     """
