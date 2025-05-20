@@ -16,16 +16,15 @@ from grandchallenge.cases.tasks import (
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.storage import protected_s3_storage
 from tests.cases_tests import RESOURCE_PATH
-from tests.factories import UploadSessionFactory
+from tests.utils import create_raw_upload_image_session
 
 
 @pytest.mark.django_db
 def test_linked_task_called_with_session_pk(
     settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     called = {}
 
@@ -33,7 +32,9 @@ def test_linked_task_called_with_session_pk(
     def local_linked_task(*_, **kwargs):
         called.update(**kwargs)
 
-    session = UploadSessionFactory()
+    session, uploaded_images = create_raw_upload_image_session(
+        image_paths=[RESOURCE_PATH / "image10x10x10.mha"],
+    )
 
     with django_capture_on_commit_callbacks(execute=True):
         session.process_images(linked_task=local_linked_task.signature())
