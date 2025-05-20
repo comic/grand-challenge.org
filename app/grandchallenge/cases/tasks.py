@@ -6,6 +6,7 @@ from shutil import rmtree
 from tempfile import TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from celery import signature
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -101,6 +102,7 @@ def build_images(  # noqa:C901
     linked_model_name=None,
     linked_object_pk=None,
     linked_interface_slug=None,
+    linked_task=None,
 ):
     """
     Task which analyzes an upload session and attempts to extract and store
@@ -128,6 +130,8 @@ def build_images(  # noqa:C901
         The model_name of the linked object.
     linked_interface_slug:
         The slug of the linked interface.
+    linked_task:
+        The signature of the task to run next
     """
 
     upload_session = lock_model_instance(
@@ -226,6 +230,12 @@ def build_images(  # noqa:C901
     finally:
         upload_session.user_uploads.all().delete()
         logger.info("User uploads deleted")
+
+    if linked_task is not None:
+        logger.info("Scheduling linked task")
+        on_commit(signature(linked_task).apply_async)
+    else:
+        logger.info("No linked task, task complete")
 
 
 @dataclass
