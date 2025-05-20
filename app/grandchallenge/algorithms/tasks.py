@@ -1,9 +1,9 @@
-import logging
 from tempfile import TemporaryDirectory
 from typing import NamedTuple
 
 import boto3
 from botocore.exceptions import ClientError
+from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
@@ -21,7 +21,7 @@ from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
 
 
 @acks_late_micro_short_task(
@@ -41,17 +41,20 @@ def execute_algorithm_job_for_inputs(*, job_pk):
     )
 
     if not job.inputs_complete:
-        logger.info("Nothing to do, inputs are still being validated.")
+        logger.info("Nothing to do, inputs are still being validated")
         return
 
     if not job.status == job.VALIDATING_INPUTS:
         # this task can be called multiple times with complete inputs,
         # and might have been queued for execution already, so ignore
-        logger.info("Job has already been scheduled for execution.")
+        logger.info("Job has already been scheduled for execution")
         return
 
     if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
+        logger.info("Too many jobs scheduled")
         raise TooManyJobsScheduled
+
+    logger.info("Job is ready, creating execution task")
 
     job.task_on_success = linked_task
     job.status = job.PENDING
