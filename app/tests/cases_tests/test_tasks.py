@@ -227,6 +227,7 @@ def test_build_images_with_deleted_object(
             linked_model_name=obj._meta.model_name,
             linked_object_pk=linked_object_pk,
             linked_interface_slug=None,
+            linked_task=None,
         )
 
     us.refresh_from_db()

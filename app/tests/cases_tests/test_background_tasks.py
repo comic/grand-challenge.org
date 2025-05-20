@@ -300,7 +300,14 @@ def test_soft_time_limit(_):
     session = UploadSessionFactory()
     session.status = session.REQUEUED
     session.save()
-    build_images(upload_session_pk=session.pk)
+    build_images(
+        upload_session_pk=session.pk,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_interface_slug=None,
+        linked_task=None,
+    )
     session.refresh_from_db()
     assert session.status == session.FAILURE
     assert session.error_message == "Time limit exceeded"
@@ -314,7 +321,14 @@ def test_failed_image_import_notification(django_capture_on_commit_callbacks):
         image_paths=[RESOURCE_PATH / p for p in images],
     )
 
-    build_images(upload_session_pk=session.pk)
+    build_images(
+        upload_session_pk=session.pk,
+        linked_app_label=None,
+        linked_model_name=None,
+        linked_object_pk=None,
+        linked_interface_slug=None,
+        linked_task=None,
+    )
     session.refresh_from_db()
 
     assert RawImageUploadSession.objects.count() == 1
