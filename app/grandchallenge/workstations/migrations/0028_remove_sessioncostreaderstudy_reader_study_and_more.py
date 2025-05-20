@@ -12,19 +12,4 @@ class Migration(migrations.Migration):
         ),
     ]
 
-    operations = [
-        migrations.RemoveField(
-            model_name="sessioncostreaderstudy",
-            name="reader_study",
-        ),
-        migrations.RemoveField(
-            model_name="sessioncostreaderstudy",
-            name="session_cost",
-        ),
-        migrations.DeleteModel(
-            name="SessionCost",
-        ),
-        migrations.DeleteModel(
-            name="SessionCostReaderStudy",
-        ),
-    ]
+    operations = []
