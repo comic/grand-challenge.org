@@ -27,9 +27,9 @@ def annotate_job_duration_and_compute_costs(*, phase):
         phase=phase
     )
 
-    phase.average_algorithm_job_duration = (
-        algorithm_job_utilizations.average_duration()
-    )
+    phase.average_algorithm_job_duration = algorithm_job_utilizations.filter(
+        job__status=Job.SUCCESS
+    ).average_duration()
     update_compute_cost_euro_millicents(
         obj=phase,
         algorithm_job_utilizations=algorithm_job_utilizations,
