@@ -227,20 +227,21 @@ class RawImageUploadSession(UUIDModel):
             status=RawImageUploadSession.REQUEUED
         )
 
-        workflow = build_images.signature(
-            kwargs={
-                "upload_session_pk": self.pk,
-                "linked_app_label": linked_app_label,
-                "linked_model_name": linked_model_name,
-                "linked_object_pk": linked_object_pk,
-                "linked_interface_slug": linked_interface_slug,
-            }
-        )
         if linked_task is not None:
             linked_task.kwargs.update({"upload_session_pk": self.pk})
-            workflow |= linked_task
 
-        on_commit(workflow.apply_async)
+        on_commit(
+            build_images.signature(
+                kwargs={
+                    "upload_session_pk": self.pk,
+                    "linked_app_label": linked_app_label,
+                    "linked_model_name": linked_model_name,
+                    "linked_object_pk": linked_object_pk,
+                    "linked_interface_slug": linked_interface_slug,
+                    "linked_task": linked_task,
+                }
+            ).apply_async
+        )
 
     def get_absolute_url(self):
         return reverse(
