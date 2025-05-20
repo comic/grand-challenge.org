@@ -169,6 +169,17 @@ def build_images(
                 base_directory=tmp_dir,
                 upload_session=upload_session,
             )
+
+            if upload_session.image_set.count() == 0:
+                _handle_error(
+                    error_message=upload_session.default_error_message
+                )
+                # The session may have been modified so needs to be saved
+                upload_session.save()
+            else:
+                upload_session.update_status(
+                    status=RawImageUploadSession.SUCCESS
+                )
     except RuntimeError as error:
         if "std::bad_alloc" in str(error):
             _handle_error(
@@ -197,11 +208,6 @@ def build_images(
         upload_session.user_uploads.all().delete()
         logger.info("User uploads deleted")
 
-    if upload_session.image_set.count() > 0:
-        upload_session.update_status(status=RawImageUploadSession.SUCCESS)
-    else:
-        _handle_error(error_message=upload_session.default_error_message)
-
     if linked_task is not None:
         logger.info("Scheduling linked task")
         on_commit(signature(linked_task).apply_async)
@@ -228,14 +234,17 @@ def handle_build_images_error(
         model_name=RawImageUploadSession._meta.model_name,
     )
 
-    try:
-        linked_object = lock_model_instance(
-            pk=linked_object_pk,
-            app_label=linked_app_label,
-            model_name=linked_model_name,
-        )
-    except ObjectDoesNotExist:
-        # Linked object may have been deleted
+    if linked_object_pk:
+        try:
+            linked_object = lock_model_instance(
+                pk=linked_object_pk,
+                app_label=linked_app_label,
+                model_name=linked_model_name,
+            )
+        except ObjectDoesNotExist:
+            # Linked object may have been deleted
+            linked_object = None
+    else:
         linked_object = None
 
     try:
