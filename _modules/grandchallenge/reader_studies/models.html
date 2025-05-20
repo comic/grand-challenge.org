@@ -893,7 +893,7 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">credits_consumed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">for</span> <span class="n">session</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_costs</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+        <span class="k">for</span> <span class="n">session</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">session_utilizations</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
             <span class="n">num</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span><span class="s2">&quot;reader_studies&quot;</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="n">total</span> <span class="o">+=</span> <span class="n">session</span><span class="o">.</span><span class="n">credits_consumed</span> <span class="o">/</span> <span class="n">session</span><span class="o">.</span><span class="n">num</span>

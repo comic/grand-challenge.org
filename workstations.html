@@ -211,9 +211,9 @@ to access the launched service.</p></li>
 <li><p><strong>sessionuserobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.SessionUserObjectPermission" title="grandchallenge.workstations.models.SessionUserObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">SessionUserObjectPermission</span></code></a>) – All session user object permissions of this session (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
 <li><p><strong>sessiongroupobjectpermission</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.SessionGroupObjectPermission" title="grandchallenge.workstations.models.SessionGroupObjectPermission"><code class="xref py py-class docutils literal notranslate"><span class="pre">SessionGroupObjectPermission</span></code></a>) – All session group object permissions of this session (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">content_object</span></code>)</p></li>
 <li><p><strong>feedback</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.Feedback" title="grandchallenge.workstations.models.Feedback"><code class="xref py py-class docutils literal notranslate"><span class="pre">Feedback</span></code></a>) – All feedbacks of this session (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">session</span></code>)</p></li>
-<li><p><strong>session_cost</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.OneToOneField" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">OneToOneField</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.SessionCost" title="grandchallenge.workstations.models.SessionCost"><code class="xref py py-class docutils literal notranslate"><span class="pre">SessionCost</span></code></a>) – The session cost of this session (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">session</span></code>)</p></li>
 <li><p><strong>reader_studies</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ManyToManyField" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ManyToManyField</span></code></a> from <a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – All reader studies of this session (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstation_sessions</span></code>)</p></li>
 <li><p><strong>workstationsessionreaderstudy</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.WorkstationSessionReaderStudy" title="grandchallenge.reader_studies.models.WorkstationSessionReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">WorkstationSessionReaderStudy</span></code></a>) – All workstation session reader studys of this session (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">workstation_session</span></code>)</p></li>
+<li><p><strong>session_utilization</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.OneToOneField" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">OneToOneField</span></code></a> from <code class="xref py py-class docutils literal notranslate"><span class="pre">SessionUtilization</span></code>) – The session utilization of this session (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">session</span></code>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -350,92 +350,6 @@ to access the launched service.</p></li>
 </dd>
 </dl>
 </dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="grandchallenge.workstations.models.SessionCost">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">SessionCost</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">creator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interactive_algorithms</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#SessionCost"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.SessionCost" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v5.2)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
-<li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v5.2)"><em>DateTimeField</em></a>) – Created</p></li>
-<li><p><strong>modified</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v5.2)"><em>DateTimeField</em></a>) – Modified</p></li>
-<li><p><strong>duration</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DurationField" title="(in Django v5.2)"><em>DurationField</em></a>) – Duration</p></li>
-<li><p><strong>interactive_algorithms</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.2)"><em>JSONField</em></a>) – Interactive algorithms. The interactive algorithms for which hardware has been initialized during the session.</p></li>
-</ul>
-</dd>
-</dl>
-<p>Relationship fields:</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>session</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.OneToOneField" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">OneToOneField</span></code></a> to <a class="reference internal" href="#grandchallenge.workstations.models.Session" title="grandchallenge.workstations.models.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a>) – Session (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">session_cost</span></code>)</p></li>
-<li><p><strong>creator</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/contrib/auth/#django.contrib.auth.models.User" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">User</span></code></a>) – Creator (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">sessioncost</span></code>)</p></li>
-<li><p><strong>reader_studies</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ManyToManyField" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ManyToManyField</span></code></a> to <a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Reader studies. Reader studies accessed during session (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">session_costs</span></code>)</p></li>
-</ul>
-</dd>
-</dl>
-<p>Reverse relationships:</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>sessioncostreaderstudy</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.workstations.models.SessionCostReaderStudy" title="grandchallenge.workstations.models.SessionCostReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">SessionCostReaderStudy</span></code></a>) – All session cost reader studys of this session cost (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">session_cost</span></code>)</p>
-</dd>
-</dl>
-<dl class="py exception">
-<dt class="sig sig-object py" id="grandchallenge.workstations.models.SessionCost.DoesNotExist">
-<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.workstations.models.SessionCost.DoesNotExist" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py exception">
-<dt class="sig sig-object py" id="grandchallenge.workstations.models.SessionCost.MultipleObjectsReturned">
-<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.workstations.models.SessionCost.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="grandchallenge.workstations.models.SessionCost.save">
-<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#SessionCost.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.SessionCost.save" title="Link to this definition">¶</a></dt>
-<dd><p>Save the current instance. Override this in a subclass if you want to
-control the saving process.</p>
-<p>The ‘force_insert’ and ‘force_update’ parameters can be used to insist
-that the “save” must be an SQL insert or update (or equivalent for
-non-SQL backends), respectively. Normally, they should not be set.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="grandchallenge.workstations.models.SessionCostReaderStudy">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">SessionCostReaderStudy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">session_cost</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#SessionCostReaderStudy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.SessionCostReaderStudy" title="Link to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v5.2)"><em>AutoField</em></a>) – Primary key: ID</p>
-</dd>
-</dl>
-<p>Relationship fields:</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>session_cost</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.workstations.models.SessionCost" title="grandchallenge.workstations.models.SessionCost"><code class="xref py py-class docutils literal notranslate"><span class="pre">SessionCost</span></code></a>) – Session cost (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">sessioncostreaderstudy</span></code>)</p></li>
-<li><p><strong>reader_study</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v5.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy" title="grandchallenge.reader_studies.models.ReaderStudy"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudy</span></code></a>) – Reader study (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">sessioncostreaderstudy</span></code>)</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="py exception">
-<dt class="sig sig-object py" id="grandchallenge.workstations.models.SessionCostReaderStudy.DoesNotExist">
-<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.workstations.models.SessionCostReaderStudy.DoesNotExist" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py exception">
-<dt class="sig sig-object py" id="grandchallenge.workstations.models.SessionCostReaderStudy.MultipleObjectsReturned">
-<em class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.workstations.models.SessionCostReaderStudy.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
 
 </dd></dl>
 
