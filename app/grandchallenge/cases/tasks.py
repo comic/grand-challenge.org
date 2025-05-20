@@ -1,4 +1,3 @@
-import logging
 import zipfile
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
@@ -7,6 +6,7 @@ from shutil import rmtree
 from tempfile import TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -27,7 +27,7 @@ from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.uploads.models import UserUpload
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
 
 POST_PROCESSORS = [
     import_string(p) for p in settings.CASES_POST_PROCESSORS if p

@@ -1,6 +1,5 @@
 import itertools
 import json
-import logging
 import shlex
 import subprocess
 import tarfile
@@ -18,6 +17,7 @@ from celery import (  # noqa: I251 TODO needs to be refactored
     shared_task,
     signature,
 )
+from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
 from django.conf import settings
@@ -53,7 +53,7 @@ from grandchallenge.core.utils.error_messages import (
 )
 from grandchallenge.uploads.models import UserUpload
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
 
 
 @acks_late_2xlarge_task

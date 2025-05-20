@@ -1,9 +1,9 @@
-import logging
 from tempfile import TemporaryDirectory
 from typing import NamedTuple
 
 import boto3
 from botocore.exceptions import ClientError
+from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
@@ -21,7 +21,7 @@ from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
 
 
 @acks_late_micro_short_task(

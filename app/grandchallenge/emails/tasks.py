@@ -1,10 +1,10 @@
-import logging
 import time
 from datetime import timedelta
 
 import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from botocore.exceptions import BotoCoreError, ClientError
+from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
@@ -20,7 +20,7 @@ from grandchallenge.emails.models import Email, RawEmail
 from grandchallenge.emails.utils import SendActionChoices
 from grandchallenge.profiles.models import EmailSubscriptionTypes
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
 
 
 def get_receivers(action):

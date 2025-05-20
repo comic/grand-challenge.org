@@ -1,6 +1,5 @@
 import base64
 import json
-import logging
 import os
 import subprocess
 import tempfile
@@ -9,6 +8,7 @@ from datetime import timedelta
 
 import jwt
 import requests
+from celery.utils.log import get_task_logger
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from django.conf import settings
@@ -25,7 +25,7 @@ from grandchallenge.core.celery import (
 )
 from grandchallenge.github.exceptions import GitHubBadRefreshTokenException
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
 
 
 def get_repo_url(payload):
