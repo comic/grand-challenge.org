@@ -40,6 +40,7 @@ from grandchallenge.core.storage import (
 )
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.utilization.models import SessionUtilization
 from grandchallenge.workstations.emails import send_new_feedback_email_to_staff
 
 __doc__ = """
@@ -659,8 +660,6 @@ class Session(FieldChangeMixin, UUIDModel):
             )
 
         if self.has_changed("status") and self.status == self.STOPPED:
-            from grandchallenge.utilization.models import SessionUtilization
-
             SessionUtilization.objects.create(
                 session=self,
                 duration=now() - self.created,

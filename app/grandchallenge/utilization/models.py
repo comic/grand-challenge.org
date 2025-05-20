@@ -8,12 +8,11 @@ from grandchallenge.core.validators import JSONValidator
 from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmChoices,
 )
-from grandchallenge.workstations.models import Session
 
 
 class SessionUtilization(UUIDModel):
     session = models.OneToOneField(
-        Session,
+        "workstations.Session",
         related_name="session_utilization",
         null=True,
         on_delete=models.SET_NULL,
