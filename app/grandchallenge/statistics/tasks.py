@@ -9,7 +9,6 @@ from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
     AlgorithmModel,
-    JobUtilization,
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image, ImageFile
@@ -18,11 +17,14 @@ from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.evaluation.models import (
     EvaluationGroundTruth,
-    EvaluationUtilization,
     Method,
     Submission,
 )
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
+from grandchallenge.utilization.models import (
+    EvaluationUtilization,
+    JobUtilization,
+)
 from grandchallenge.workstations.models import Session, WorkstationImage
 
 

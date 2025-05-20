@@ -34,7 +34,6 @@ from grandchallenge.components.models import (  # noqa: F401
     ComponentInterfaceValue,
     ComponentJob,
     ComponentJobManager,
-    ComponentJobUtilization,
     ImportStatusChoices,
     Tarball,
 )
@@ -61,6 +60,7 @@ from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.utilization.models import JobUtilization
 from grandchallenge.workstations.models import Workstation
 from grandchallenge.workstations.utils import reassign_workstation_permissions
 
@@ -1358,23 +1358,6 @@ class JobGroupObjectPermission(GroupObjectPermissionBase):
     allowed_permissions = frozenset({"view_job", "change_job", "view_logs"})
 
     content_object = models.ForeignKey(Job, on_delete=models.CASCADE)
-
-
-class JobUtilization(ComponentJobUtilization):
-    job = models.OneToOneField(
-        Job,
-        related_name="job_utilization",
-        null=True,
-        on_delete=models.SET_NULL,
-    )
-
-    def save(self, *args, **kwargs) -> None:
-        if self._state.adding:
-            self.creator = self.job.creator
-            self.algorithm_image = self.job.algorithm_image
-            self.algorithm = self.job.algorithm_image.algorithm
-
-        super().save(*args, **kwargs)
 
 
 @receiver(post_delete, sender=Job)

@@ -7,15 +7,17 @@ from grandchallenge.algorithms.models import (
     AlgorithmImage,
     AlgorithmModel,
     Job,
-    JobUtilization,
 )
 from grandchallenge.cases.models import ImageFile
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.evaluation.models import (
     Evaluation,
     EvaluationGroundTruth,
-    EvaluationUtilization,
     Method,
+)
+from grandchallenge.utilization.models import (
+    EvaluationUtilization,
+    JobUtilization,
 )
 
 

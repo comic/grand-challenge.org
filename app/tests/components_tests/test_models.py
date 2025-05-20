@@ -1,7 +1,6 @@
 import json
 import uuid
 from contextlib import nullcontext
-from datetime import timedelta
 from pathlib import Path
 from unittest.mock import call
 
@@ -11,11 +10,7 @@ from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.files.base import ContentFile
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
-from grandchallenge.algorithms.models import (
-    AlgorithmImage,
-    Job,
-    JobUtilization,
-)
+from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
     INTERFACE_TYPE_JSON_EXAMPLES,
@@ -41,7 +36,6 @@ from grandchallenge.reader_studies.models import Question
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
-    AlgorithmJobFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import ImageFactoryWithImageFileTiff
@@ -50,7 +44,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.evaluation_tests.factories import EvaluationFactory, MethodFactory
+from tests.evaluation_tests.factories import MethodFactory
 from tests.factories import ImageFactory, UserFactory, WorkstationImageFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
@@ -59,36 +53,6 @@ from tests.reader_studies_tests.factories import (
 )
 from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import create_raw_upload_image_session
-
-
-@pytest.mark.django_db
-def test_duration():
-    j = AlgorithmJobFactory(time_limit=60)
-    _ = EvaluationFactory(time_limit=60)
-
-    job_utilizations = JobUtilization.objects.all()
-    assert job_utilizations[0].duration is None
-    assert JobUtilization.objects.average_duration() is None
-
-    j.update_utilization(duration=timedelta(minutes=5))
-
-    job_utilizations = JobUtilization.objects.all()
-    assert job_utilizations[0].duration == timedelta(minutes=5)
-    assert JobUtilization.objects.average_duration() == timedelta(minutes=5)
-
-    _ = AlgorithmJobFactory(time_limit=60)
-    assert JobUtilization.objects.average_duration() == timedelta(minutes=5)
-
-
-@pytest.mark.django_db
-def test_average_duration_filtering():
-    j1, j2 = AlgorithmJobFactory.create_batch(2, time_limit=60)
-    j1.update_utilization(duration=timedelta(minutes=5))
-    j2.update_utilization(duration=timedelta(minutes=10))
-    assert JobUtilization.objects.average_duration() == timedelta(minutes=7.5)
-    assert JobUtilization.objects.filter(
-        algorithm_image=j1.algorithm_image
-    ).average_duration() == timedelta(minutes=5)
 
 
 @pytest.mark.parametrize(

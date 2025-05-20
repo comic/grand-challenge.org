@@ -24,7 +24,6 @@ from grandchallenge.algorithms.models import (
     Job,
     JobGroupObjectPermission,
     JobUserObjectPermission,
-    JobUtilization,
 )
 from grandchallenge.components.admin import (
     ComponentImageAdmin,
@@ -41,6 +40,7 @@ from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.grand_challenge_forge import (
     get_forge_algorithm_template_context,
 )
+from grandchallenge.utilization.models import JobUtilization
 
 
 class AlgorithmAdminForm(ModelForm):
@@ -223,30 +223,6 @@ class JobAdmin(admin.ModelAdmin):
 
     def algorithm(self, obj):
         return obj.algorithm_image.algorithm
-
-
-@admin.register(JobUtilization)
-class JobUtilizationAdmin(admin.ModelAdmin):
-    ordering = ("-created",)
-    list_display = (
-        "pk",
-        "created",
-        "job",
-        "creator",
-        "duration",
-        "compute_cost_euro_millicents",
-        "phase",
-        "challenge",
-        "algorithm_image",
-        "algorithm",
-    )
-    search_fields = (
-        "creator__username",
-        "pk",
-        "job__pk",
-        "phase__slug",
-        "challenge__short_name",
-    )
 
 
 @admin.register(AlgorithmPermissionRequest)

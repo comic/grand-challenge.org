@@ -24,7 +24,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models, transaction
-from django.db.models import Avg, IntegerChoices, QuerySet
+from django.db.models import IntegerChoices, QuerySet
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
 from django.forms.models import model_to_dict
@@ -1938,42 +1938,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         indexes = [
             models.Index(fields=["status", "created"]),
         ]
-
-
-class ComponentJobUtilizationManager(models.QuerySet):
-    def average_duration(self):
-        """Calculate the average duration that completed jobs ran for"""
-        return self.exclude(duration=None).aggregate(
-            duration__avg=Avg("duration")
-        )["duration__avg"]
-
-
-class ComponentJobUtilization(UUIDModel):
-    creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
-    )
-    phase = models.ForeignKey(
-        "evaluation.Phase", null=True, on_delete=models.SET_NULL
-    )
-    challenge = models.ForeignKey(
-        "challenges.Challenge", null=True, on_delete=models.SET_NULL
-    )
-    archive = models.ForeignKey(
-        "archives.Archive", null=True, on_delete=models.SET_NULL
-    )
-    algorithm_image = models.ForeignKey(
-        "algorithms.AlgorithmImage", null=True, on_delete=models.SET_NULL
-    )
-    algorithm = models.ForeignKey(
-        "algorithms.Algorithm", null=True, on_delete=models.SET_NULL
-    )
-    duration = models.DurationField(null=True)
-    compute_cost_euro_millicents = models.PositiveIntegerField(null=True)
-
-    objects = ComponentJobUtilizationManager.as_manager()
-
-    class Meta:
-        abstract = True
 
 
 def docker_image_path(instance, filename):

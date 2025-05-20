@@ -36,7 +36,6 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentJob,
     ComponentJobManager,
-    ComponentJobUtilization,
     ImportStatusChoices,
     Tarball,
 )
@@ -86,6 +85,7 @@ from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.profiles.tasks import deactivate_user
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
+from grandchallenge.utilization.models import EvaluationUtilization
 from grandchallenge.verifications.models import VerificationUserSet
 
 logger = logging.getLogger(__name__)
@@ -2196,33 +2196,6 @@ class EvaluationGroupObjectPermission(GroupObjectPermissionBase):
     )
 
     content_object = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
-
-
-class EvaluationUtilization(ComponentJobUtilization):
-    evaluation = models.OneToOneField(
-        Evaluation,
-        related_name="evaluation_utilization",
-        null=True,
-        on_delete=models.SET_NULL,
-    )
-    external_evaluation = models.BooleanField()
-
-    def save(self, *args, **kwargs) -> None:
-        if self._state.adding:
-            self.creator = self.evaluation.submission.creator
-            self.phase = self.evaluation.submission.phase
-            self.external_evaluation = (
-                self.evaluation.submission.phase.external_evaluation
-            )
-            self.archive = self.evaluation.submission.phase.archive
-            self.challenge = self.evaluation.submission.phase.challenge
-            self.algorithm_image = self.evaluation.submission.algorithm_image
-            if self.evaluation.submission.algorithm_image is not None:
-                self.algorithm = (
-                    self.evaluation.submission.algorithm_image.algorithm
-                )
-
-        super().save(*args, **kwargs)
 
 
 class CombinedLeaderboard(TitleSlugDescriptionModel, UUIDModel):

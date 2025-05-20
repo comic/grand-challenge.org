@@ -5,8 +5,13 @@ import pytest
 from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmChoices,
 )
-from grandchallenge.utilization.models import SessionUtilization
+from grandchallenge.utilization.models import (
+    JobUtilization,
+    SessionUtilization,
+)
 from grandchallenge.workstations.models import Session
+from tests.algorithms_tests.factories import AlgorithmJobFactory
+from tests.evaluation_tests.factories import EvaluationFactory
 from tests.factories import SessionFactory
 from tests.reader_studies_tests.factories import (
     QuestionFactory,
@@ -159,3 +164,33 @@ def test_session_utilization_interactive_algorithms_credit_rate():
         session_with_interactive_alg.session_utilization.credits_per_hour
         == 1000
     )
+
+
+@pytest.mark.django_db
+def test_duration():
+    j = AlgorithmJobFactory(time_limit=60)
+    _ = EvaluationFactory(time_limit=60)
+
+    job_utilizations = JobUtilization.objects.all()
+    assert job_utilizations[0].duration is None
+    assert JobUtilization.objects.average_duration() is None
+
+    j.update_utilization(duration=timedelta(minutes=5))
+
+    job_utilizations = JobUtilization.objects.all()
+    assert job_utilizations[0].duration == timedelta(minutes=5)
+    assert JobUtilization.objects.average_duration() == timedelta(minutes=5)
+
+    _ = AlgorithmJobFactory(time_limit=60)
+    assert JobUtilization.objects.average_duration() == timedelta(minutes=5)
+
+
+@pytest.mark.django_db
+def test_average_duration_filtering():
+    j1, j2 = AlgorithmJobFactory.create_batch(2, time_limit=60)
+    j1.update_utilization(duration=timedelta(minutes=5))
+    j2.update_utilization(duration=timedelta(minutes=10))
+    assert JobUtilization.objects.average_duration() == timedelta(minutes=7.5)
+    assert JobUtilization.objects.filter(
+        algorithm_image=j1.algorithm_image
+    ).average_duration() == timedelta(minutes=5)
