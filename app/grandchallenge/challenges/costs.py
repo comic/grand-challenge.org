@@ -1,7 +1,5 @@
-from datetime import timedelta
-
 from django.contrib.auth.models import Permission
-from django.db.models import Count, Sum
+from django.db.models import Sum
 
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
@@ -29,8 +27,8 @@ def annotate_job_duration_and_compute_costs(*, phase):
         phase=phase
     )
 
-    update_average_algorithm_job_duration(
-        phase=phase, algorithm_job_utilizations=algorithm_job_utilizations
+    phase.average_algorithm_job_duration = (
+        algorithm_job_utilizations.average_duration()
     )
     update_compute_cost_euro_millicents(
         obj=phase,
@@ -188,21 +186,3 @@ def update_compute_cost_euro_millicents(
     obj.compute_cost_euro_millicents = sum(
         item["compute_cost_euro_millicents__sum"] or 0 for item in items
     )
-
-
-def update_average_algorithm_job_duration(
-    *, phase, algorithm_job_utilizations
-):
-    aggregates = algorithm_job_utilizations.filter(
-        job__status=Job.SUCCESS, duration__gt=timedelta(seconds=0)
-    ).aggregate(
-        total_job_duration=Sum("duration"),
-        job_count=Count("pk", distinct=True),
-    )
-
-    if all(aggregates.values()):
-        phase.average_algorithm_job_duration = (
-            aggregates["total_job_duration"] / aggregates["job_count"]
-        )
-    else:
-        phase.average_algorithm_job_duration = None
