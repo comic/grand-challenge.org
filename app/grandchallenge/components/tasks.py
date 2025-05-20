@@ -1299,6 +1299,7 @@ def add_image_to_object(  # noqa: C901
             error_message="Image imports should result in a single image",
             user=upload_session.creator,
         )
+        logger.info("Upload session should only have one image")
         return
 
     current_value = object.get_current_value_for_interface(
@@ -1318,6 +1319,7 @@ def add_image_to_object(  # noqa: C901
                 error_message=format_validation_error_message(error=e),
                 user=upload_session.creator,
             )
+            logger.info(f"Validation failed: {e}")
             return
         except Exception as e:
             error_handler.handle_error(
@@ -1333,6 +1335,7 @@ def add_image_to_object(  # noqa: C901
         object.add_civ(civ=civ)
     except CIVNotEditableException as e:
         if isinstance(object, Job) and object.status == Job.CANCELLED:
+            logger.info("Job has been cancelled, exiting")
             return
         else:
             error_handler.handle_error(
@@ -1344,7 +1347,10 @@ def add_image_to_object(  # noqa: C901
             return
 
     if linked_task is not None:
+        logger.info("Scheduling linked task")
         on_commit(signature(linked_task).apply_async)
+    else:
+        logger.info("No linked task, task complete")
 
 
 @acks_late_micro_short_task(
@@ -1397,6 +1403,7 @@ def add_file_to_object(
             error_message=format_validation_error_message(e),
             user=user_upload.creator,
         )
+        logger.info(f"Validation failed: {e}")
         return
     except Exception as e:
         error_handler.handle_error(
@@ -1412,6 +1419,7 @@ def add_file_to_object(
         object.add_civ(civ=civ)
     except CIVNotEditableException as e:
         if isinstance(object, Job) and object.status == Job.CANCELLED:
+            logger.info("Job has been cancelled, exiting")
             return
         else:
             error_handler.handle_error(
@@ -1423,7 +1431,10 @@ def add_file_to_object(
             return
 
     if linked_task is not None:
+        logger.info("Scheduling linked task")
         on_commit(signature(linked_task).apply_async)
+    else:
+        logger.info("No linked task, task complete")
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))

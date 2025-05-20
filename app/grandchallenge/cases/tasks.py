@@ -196,6 +196,7 @@ def build_images(  # noqa:C901
                     "please try again with smaller images"
                 ),
             )
+            logger.info("Images were too large to process")
         else:
             error_handler.handle_error(
                 interface=ci,
@@ -206,15 +207,16 @@ def build_images(  # noqa:C901
         error_handler.handle_error(
             interface=ci,
             error_message=(
-                "Duplicate files uploaded, "
-                "please try again with a unique set of files"
+                "Duplicate files uploaded, please try again with a unique set of files"
             ),
         )
+        logger.info("Could not process duplicate input files")
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
         error_handler.handle_error(
             interface=ci,
             error_message="Time limit exceeded",
         )
+        logger.info("Time limit exceeded")
     except Exception:
         error_handler.handle_error(
             interface=ci,
@@ -223,6 +225,7 @@ def build_images(  # noqa:C901
         logger.error("An unexpected error occurred", exc_info=True)
     finally:
         upload_session.user_uploads.all().delete()
+        logger.info("User uploads deleted")
 
 
 @dataclass
