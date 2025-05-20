@@ -193,17 +193,21 @@ def build_images(
                 error_message="An unexpected error occurred",
             )
             logger.error("An unexpected error occurred", exc_info=True)
+        return
     except DuplicateFilesException:
         _handle_error(
             error_message=(
                 "Duplicate files uploaded, please try again with a unique set of files"
             ),
         )
+        return
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
         _handle_error(error_message="Time limit exceeded")
+        return
     except Exception:
         _handle_error(error_message="An unexpected error occurred")
         logger.error("An unexpected error occurred", exc_info=True)
+        return
     finally:
         upload_session.user_uploads.all().delete()
         logger.info("User uploads deleted")
