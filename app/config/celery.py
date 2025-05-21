@@ -20,10 +20,9 @@ celery_app.autodiscover_tasks()
 
 @task_prerun.connect
 def check_no_canvas_used(*_, sender=None, **__):
-    if sender.request.chain or sender.request.chord:
-        logger.warning(
-            f"Task {sender.request.task}[{sender.request.id}] is using a canvas"
-        )
+    request = sender.request
+    if request.chain or request.chord:
+        logger.error(f"Task {request.task} is using a canvas")
 
 
 @celeryd_after_setup.connect()
