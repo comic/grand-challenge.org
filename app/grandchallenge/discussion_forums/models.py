@@ -79,6 +79,7 @@ class ForumTopic(UUIDModel):
                 "create_topic_post",
                 "Create a post for this topic",
             ),
+            ("lock_forumtopic", "Lock a topic"),
         )
         unique_together = ("slug", "forum")
         constraints = [
@@ -122,9 +123,9 @@ class ForumTopic(UUIDModel):
             self.forum.parent_object.participants_group,
             self,
         )
-        # only challenge admins can change and delete this topic
+        # only challenge admins can lock and delete this topic
         assign_perm(
-            "discussion_forums.change_forumtopic",
+            "discussion_forums.lock_forumtopic",
             self.forum.parent_object.admins_group,
             self,
         )

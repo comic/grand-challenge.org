@@ -18,7 +18,7 @@ app_name = "discussion_forums"
 
 urlpatterns = [
     path("", ForumTopicListView.as_view(), name="topic-list"),
-    path("my-posts/", MyForumPosts.as_view(), name="my-posts"),
+    path("posts/mine/", MyForumPosts.as_view(), name="my-posts"),
     path(
         "topics/create/",
         ForumTopicCreate.as_view(),
