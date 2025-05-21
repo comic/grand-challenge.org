@@ -1940,7 +1940,16 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     def utilization(self):
         raise NotImplementedError
 
-    def update_utilization(self, **kwargs):
+    def update_utilization(
+        self, *, duration=object, compute_cost_euro_millicents=object
+    ):
+        kwargs = {}
+        if duration != object:
+            kwargs.update(duration=duration)
+        if compute_cost_euro_millicents != object:
+            kwargs.update(
+                compute_cost_euro_millicents=compute_cost_euro_millicents
+            )
         for key, value in kwargs.items():
             setattr(self.utilization, key, value)
         self.utilization.save(update_fields=kwargs.keys())
