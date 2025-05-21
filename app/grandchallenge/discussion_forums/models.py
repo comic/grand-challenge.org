@@ -288,7 +288,7 @@ class ForumTopicGroupObjectPermission(GroupObjectPermissionBase):
         {
             "view_forumtopic",
             "delete_forumtopic",
-            "change_forumtopic",
+            "lock_forumtopic",
             "create_topic_post",
         }
     )
