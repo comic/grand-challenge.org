@@ -18,11 +18,11 @@ def test_job_reset_duration_after_admin_requeue():
     jobs = Job.objects.all()
 
     assert len(jobs) == 1
-    assert job.jobutilization.duration is not None
+    assert job.job_utilization.duration is not None
 
     requeue_jobs(None, None, jobs)
 
     job.refresh_from_db()
 
     assert job.status == Job.RETRY
-    assert job.jobutilization.duration is None
+    assert job.job_utilization.duration is None
