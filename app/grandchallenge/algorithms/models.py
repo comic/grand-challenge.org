@@ -1345,7 +1345,7 @@ class Job(CIVForObjectMixin, ComponentJob):
 
     @property
     def utilization(self):
-        return self.job_utilization
+        return self.jobutilization
 
 
 class JobUserObjectPermission(UserObjectPermissionBase):

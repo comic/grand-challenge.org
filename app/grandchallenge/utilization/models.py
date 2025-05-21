@@ -112,22 +112,40 @@ class ComponentJobUtilizationManager(models.QuerySet):
 
 class ComponentJobUtilization(UUIDModel):
     creator = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="%(class)ss",
     )
     phase = models.ForeignKey(
-        "evaluation.Phase", null=True, on_delete=models.SET_NULL
+        "evaluation.Phase",
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="%(class)ss",
     )
     challenge = models.ForeignKey(
-        "challenges.Challenge", null=True, on_delete=models.SET_NULL
+        "challenges.Challenge",
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="%(class)ss",
     )
     archive = models.ForeignKey(
-        "archives.Archive", null=True, on_delete=models.SET_NULL
+        "archives.Archive",
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="%(class)ss",
     )
     algorithm_image = models.ForeignKey(
-        "algorithms.AlgorithmImage", null=True, on_delete=models.SET_NULL
+        "algorithms.AlgorithmImage",
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="%(class)ss",
     )
     algorithm = models.ForeignKey(
-        "algorithms.Algorithm", null=True, on_delete=models.SET_NULL
+        "algorithms.Algorithm",
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="%(class)ss",
     )
     duration = models.DurationField(null=True)
     compute_cost_euro_millicents = models.PositiveIntegerField(null=True)
@@ -141,7 +159,7 @@ class ComponentJobUtilization(UUIDModel):
 class JobUtilization(ComponentJobUtilization):
     job = models.OneToOneField(
         "algorithms.Job",
-        related_name="job_utilization",
+        related_name="jobutilization",
         null=True,
         on_delete=models.SET_NULL,
     )
@@ -158,7 +176,7 @@ class JobUtilization(ComponentJobUtilization):
 class EvaluationUtilization(ComponentJobUtilization):
     evaluation = models.OneToOneField(
         "evaluation.Evaluation",
-        related_name="evaluation_utilization",
+        related_name="evaluationutilization",
         null=True,
         on_delete=models.SET_NULL,
     )

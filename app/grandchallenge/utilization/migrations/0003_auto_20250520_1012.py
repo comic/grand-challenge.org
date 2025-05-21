@@ -11,7 +11,7 @@ def create_evaluation_utilizations(apps, schema_editor):
         Evaluation.objects.annotate(
             duration=F("completed_at") - F("started_at")
         )
-        .filter(evaluation_utilization__isnull=True)
+        .filter(evaluationutilization__isnull=True)
         .iterator()
     ):
         kwargs = dict(
@@ -40,7 +40,7 @@ def create_job_utilizations(apps, schema_editor):
     )
     for job in (
         Job.objects.annotate(duration=F("completed_at") - F("started_at"))
-        .filter(job_utilization__isnull=True)
+        .filter(jobutilization__isnull=True)
         .iterator()
     ):
         JobUtilization.objects.create(
@@ -79,7 +79,7 @@ def set_phases_and_archive_to_job_utilizations(apps, schema_editor):
     Phase = apps.get_model("evaluation", "Phase")  # noqa: N806
     for phase in Phase.objects.all():
         jobs = Job.objects.filter(
-            job_utilization__phase__isnull=False,
+            jobutilization__phase__isnull=False,
             inputs__archive_items__archive__phase=phase,
             algorithm_image__submission__phase=phase,
         ).distinct()

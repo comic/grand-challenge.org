@@ -279,7 +279,7 @@ class ExternalEvaluationUpdateSerializer(ModelSerializer):
                 Evaluation.FAILURE,
                 Evaluation.CANCELLED,
             ]
-            and instance.evaluation_utilization.duration is None
+            and instance.evaluationutilization.duration is None
         ):
             extra_kwargs.update(duration=now() - instance.claimed_at)
 
