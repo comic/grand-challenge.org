@@ -12,6 +12,12 @@ def create_evaluation_utilizations(apps, schema_editor):
             duration=F("completed_at") - F("started_at")
         )
         .filter(evaluation_utilization__isnull=True)
+        .select_related(
+            "submission",
+            "submission__algorithm_image",
+            "submission__phase",
+        )
+        .order_by()
         .iterator()
     ):
         kwargs = dict(
@@ -41,6 +47,8 @@ def create_job_utilizations(apps, schema_editor):
     for job in (
         Job.objects.annotate(duration=F("completed_at") - F("started_at"))
         .filter(job_utilization__isnull=True)
+        .select_related("algorithm_image")
+        .order_by()
         .iterator()
     ):
         JobUtilization.objects.create(
@@ -66,10 +74,14 @@ def set_challenges_to_job_utilizations(apps, schema_editor):
             content_type__model="job",
         )
         for challenge in challenges:
-            jobs = Job.objects.filter(
-                jobgroupobjectpermission__group=challenge.admins_group,
-                jobgroupobjectpermission__permission=permission,
-            ).distinct()
+            jobs = (
+                Job.objects.filter(
+                    jobgroupobjectpermission__group=challenge.admins_group,
+                    jobgroupobjectpermission__permission=permission,
+                )
+                .select_related("job_utilization")
+                .distinct()
+            )
             for job in jobs:
                 job.job_utilization.challenge = challenge
                 job.job_utilization.save()
@@ -79,11 +91,15 @@ def set_phases_and_archive_to_job_utilizations(apps, schema_editor):
     Job = apps.get_model("algorithms", "Job")  # noqa: N806
     Phase = apps.get_model("evaluation", "Phase")  # noqa: N806
     for phase in Phase.objects.all():
-        jobs = Job.objects.filter(
-            job_utilization__phase__isnull=False,
-            inputs__archive_items__archive__phase=phase,
-            algorithm_image__submission__phase=phase,
-        ).distinct()
+        jobs = (
+            Job.objects.filter(
+                job_utilization__phase__isnull=False,
+                inputs__archive_items__archive__phase=phase,
+                algorithm_image__submission__phase=phase,
+            )
+            .select_related("job_utilization")
+            .distinct()
+        )
         for job in jobs:
             job.job_utilization.phase = phase
             job.job_utilization.archive = phase.archive
