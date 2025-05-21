@@ -71,9 +71,13 @@
 
     <div class="row">
         <div class="col-12" id="post-list">
-            {% for post in object.posts.all %}
-                {% include 'discussion_forums/partials/forumpost_detail.html' with object=post %}
-            {% endfor %}
+                {% for post in object.posts.all %}
+                    <div class="my-3 card col-12"
+                         id="post-{{ post.pk }}"
+                         hx-get="{% url 'discussion-forums:post-detail' slug=object.slug pk=post.pk %}"
+                         hx-trigger="load"
+                         ></div>
+                {% endfor %}
         </div>
     </div>
 {% endblock %}

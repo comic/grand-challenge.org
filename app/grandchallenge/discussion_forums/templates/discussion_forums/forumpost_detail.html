@@ -3,7 +3,6 @@
 {% load bleach %}
 {% load guardian_tags %}
 
-<div id="post-{{ object.id }}" class="my-3 card">
     <div class="card-body">
         <div class="row">
             <div class="col-md-10">
@@ -15,7 +14,10 @@
                         </a>
                     {% endif %}
                     {% if 'delete_forumpost' in user_perms %}
-                        {% include 'discussion_forums/partials/forumpost_confirm_delete.html' %}
+                        <div hx-get="{% url 'discussion-forums:post-delete' slug=object.topic.slug pk=object.pk %}"
+                             hx-trigger="load"
+                             class="d-inline"
+                        ></div>
                     {% endif %}
                 </div>
                 <p>
@@ -34,4 +36,3 @@
             </div>
         </div>
     </div>
-</div>
