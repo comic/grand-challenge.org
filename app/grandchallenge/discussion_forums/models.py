@@ -197,18 +197,22 @@ class ForumPost(UUIDModel):
 
     def delete(self, *args, **kwargs):
         update_last_post_on = False
-        topic = None
+        topic = self.topic
 
         if self.is_alone:
             self.topic.delete()
         elif self.is_last_post:
             update_last_post_on = True
-            topic = self.topic
 
         super().delete(*args, **kwargs)
 
         if update_last_post_on:
-            topic.last_post_on = topic.last_post.created
+            new_last_post = (
+                ForumPost.objects.filter(topic=topic)
+                .order_by("created")
+                .last()
+            )
+            topic.last_post_on = new_last_post.created
             topic.save()
 
     def assign_permissions(self):

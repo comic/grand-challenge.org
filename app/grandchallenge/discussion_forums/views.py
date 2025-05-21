@@ -124,6 +124,7 @@ class ForumPostCreate(ObjectPermissionRequiredMixin, CreateView):
     permission_required = "create_topic_post"
     raise_exception = True
     form_class = ForumPostForm
+    template_name = "discussion_forums/partials/forumpost_form.html"
 
     @cached_property
     def forum(self):
@@ -155,6 +156,7 @@ class ForumPostDetail(ObjectPermissionRequiredMixin, DetailView):
     model = ForumPost
     permission_required = "view_forumpost"
     raise_exception = True
+    template_name = "discussion_forums/partials/forumpost_detail.html"
 
     @cached_property
     def forum(self):
@@ -173,6 +175,7 @@ class ForumPostDelete(ObjectPermissionRequiredMixin, DeleteView):
     permission_required = "delete_forumpost"
     raise_exception = True
     success_message = "Successfully deleted post."
+    template_name = "discussion_forums/partials/forumpost_confirm_delete.html"
 
     @cached_property
     def forum(self):
@@ -213,6 +216,7 @@ class ForumPostUpdate(ObjectPermissionRequiredMixin, UpdateView):
     permission_required = "change_forumpost"
     raise_exception = True
     form_class = ForumPostForm
+    template_name = "discussion_forums/partials/forumpost_form.html"
 
     @cached_property
     def forum(self):
@@ -237,7 +241,7 @@ class ForumPostUpdate(ObjectPermissionRequiredMixin, UpdateView):
             {
                 "user": self.request.user,
                 "topic": self.topic,
-                "instance": self.object,
+                "is_update": True,
             }
         )
         return kwargs
