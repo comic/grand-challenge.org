@@ -69,7 +69,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for invoice in challenge.invoices.all %}
+                    {% for invoice in challenge.invoices.with_overdue_status %}
                         <tr>
                             <td>{{ invoice.internal_invoice_number }}</td>
                             <td>{{ invoice.issued_on }}</td>
@@ -85,14 +85,22 @@
                                     <span class="badge
                                             {% if invoice.payment_status == invoice.PaymentStatusChoices.PAID %}
                                                 badge-success
+                                            {% elif invoice.is_overdue %}
+                                                badge-danger
                                             {% elif invoice.payment_status == invoice.PaymentStatusChoices.ISSUED %}
                                                 badge-warning
                                             {% elif invoice.payment_status == invoice.PaymentStatusChoices.CANCELLED %}
-                                                badge-danger
+                                                badge-dark
                                             {% else %}
                                                 badge-info
                                             {% endif %}">
-                                        {{ invoice.get_payment_status_display }}
+                                        {% if invoice.is_due %}
+                                            Due
+                                        {% elif invoice.is_overdue %}
+                                            Overdue
+                                        {% else %}
+                                            {{ invoice.get_payment_status_display }}
+                                        {% endif %}
                                     </span>
                                 {% endif %}
                             </td>
