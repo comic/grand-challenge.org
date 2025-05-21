@@ -2,6 +2,7 @@
 {% load humanize %}
 {% load bleach %}
 {% load guardian_tags %}
+{% load url %}
 
 <div class="card-body">
     <div class="row">
@@ -9,13 +10,13 @@
             <div class="float-right">
                 {% get_obj_perms request.user for object as "user_perms" %}
                 {% if 'change_forumpost' in user_perms %}
-                    <a hx-get="{% url 'discussion-forums:post-update' slug=object.topic.slug pk=object.pk %}"
+                    <a hx-get="{% url 'discussion-forums:post-update' challenge_short_name=object.topic.forum.linked_challenge.short_name slug=object.topic.slug pk=object.pk %}"
                        hx-swap="outerHTML show:bottom" hx-target="#post-{{ object.id }}" class="btn btn-primary btn-sm">
                         <i class="fas fa-edit"></i>
                     </a>
                 {% endif %}
                 {% if 'delete_forumpost' in user_perms %}
-                    <div hx-get="{% url 'discussion-forums:post-delete' slug=object.topic.slug pk=object.pk %}"
+                    <div hx-get="{% url 'discussion-forums:post-delete' challenge_short_name=object.topic.forum.linked_challenge.short_name slug=object.topic.slug pk=object.pk %}"
                          hx-trigger="load"
                          class="d-inline"
                     ></div>
