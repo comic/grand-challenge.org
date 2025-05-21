@@ -8,7 +8,7 @@
     <li class="breadcrumb-item">
         <a href="{% url 'discussion-forums:topic-list' %}">Forum</a>
     </li>
-    <li class="breadcrumb-item active">{{ object }}</li>
+    <li class="breadcrumb-item active">{{ topic }}</li>
 {% endblock %}
 
 {% block extra_top_row_buttons %}
@@ -19,18 +19,18 @@
 
 {% block extra_content %}
     <div class="row">
-        <div class="col-12"><h2>{{ object.subject }}</h2></div>
+        <div class="col-12"><h2>{{ topic.subject }}</h2></div>
     </div>
-    {% get_obj_perms request.user for object as "user_perms" %}
+    {% get_obj_perms request.user for topic as "user_perms" %}
     <div>
         {% if 'create_topic_post' in user_perms %}
-            <a hx-get="{% url 'discussion-forums:post-create' slug=object.slug %}" hx-swap="beforeend show:bottom" hx-target="#post-list" class="btn btn-primary btn-sm">
+            <a hx-get="{% url 'discussion-forums:post-create' slug=topic.slug %}" hx-swap="beforeend show:bottom" hx-target="#post-list" class="btn btn-primary btn-sm">
                 <i class="fas fa-comment mr-1"></i> Reply
             </a>
         {% endif %}
-        {% include 'actstream/partials/follow_unfollow_links.html' with object=object %}
+        {% include 'actstream/partials/follow_unfollow_links.html' with object=topic %}
         {% if 'delete_forumtopic' in  user_perms %}
-            <a href="{% url 'discussion-forums:topic-delete' slug=object.slug %}" class="btn btn-danger btn-sm">
+            <a href="{% url 'discussion-forums:topic-delete' slug=topic.slug %}" class="btn btn-danger btn-sm">
                 <i class="fas fa-trash mr-1"></i>Delete topic
             </a>
         {% endif %}
@@ -39,12 +39,12 @@
 
     <div class="row">
         <div class="col-12" id="post-list">
-            {% for post in object.posts.all %}
-                <div class="my-3 card col-12"
-                     id="post-{{ post.pk }}"
-                     hx-get="{% url 'discussion-forums:post-detail' slug=object.slug pk=post.pk %}"
-                     hx-trigger="load"></div>
+            {% for post in object_list %}
+                {% include 'discussion_forums/partials/forumpost_detail.html' %}
             {% endfor %}
         </div>
     </div>
+
+    {% include "grandchallenge/partials/pagination.html" %}
+
 {% endblock %}

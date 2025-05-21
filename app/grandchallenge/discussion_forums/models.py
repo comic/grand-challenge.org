@@ -131,7 +131,7 @@ class ForumTopic(UUIDModel):
 
     def get_absolute_url(self):
         return reverse(
-            "discussion-forums:topic-detail",
+            "discussion-forums:topic-post-list",
             kwargs={
                 "challenge_short_name": self.forum.parent_object.short_name,
                 "slug": self.slug,
@@ -243,16 +243,6 @@ class ForumPost(UUIDModel):
             "change_forumpost",
             self.creator,
             self,
-        )
-
-    def get_absolute_url(self):
-        return reverse(
-            "discussion-forums:post-detail",
-            kwargs={
-                "challenge_short_name": self.topic.forum.parent_object.short_name,
-                "slug": self.topic.slug,
-                "pk": self.pk,
-            },
         )
 
 

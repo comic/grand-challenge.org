@@ -58,7 +58,6 @@ def test_topic_create(client):
     (
         ["discussion-forums:topic-create", 200, False],
         ["discussion-forums:topic-delete", 403, True],
-        ["discussion-forums:topic-detail", 200, True],
     ),
 )
 @pytest.mark.django_db
@@ -113,7 +112,6 @@ def test_discussion_forum_topic_views_permissions(
 @pytest.mark.parametrize(
     "viewname, detail, admin_status_code, post_creator_status_code, participant_status_code",
     (
-        ["discussion-forums:post-detail", True, 200, 200, 200],
         ["discussion-forums:post-create", False, 200, 200, 200],
         ["discussion-forums:post-delete", True, 200, 200, 403],
         ["discussion-forums:post-update", True, 403, 200, 403],
@@ -213,6 +211,46 @@ def test_discussion_forum_topic_list_permission_filter(client):
         assert response.context["object_list"].count() == 5
         assert list(response.context["object_list"]) == list(
             ForumTopic.objects.filter(forum=forum).all()
+        )
+
+
+@pytest.mark.django_db
+def test_discussion_forum_topic_post_list_permission_filter(client):
+    forum = ForumFactory()
+    user, participant, admin = UserFactory.create_batch(3)
+    forum.linked_challenge.add_admin(admin)
+    forum.linked_challenge.add_participant(participant)
+
+    topic1 = ForumTopicFactory(forum=forum, post_count=3)
+    ForumTopicFactory(forum=forum, post_count=3)
+
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-post-list",
+        client=client,
+        user=user,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+            "slug": topic1.slug,
+        },
+    )
+    assert response.status_code == 200
+    assert response.context["object_list"].count() == 0
+
+    for user in [participant, admin]:
+        response = get_view_for_user(
+            viewname="discussion-forums:topic-post-list",
+            client=client,
+            user=user,
+            reverse_kwargs={
+                "challenge_short_name": forum.linked_challenge.short_name,
+                "slug": topic1.slug,
+            },
+        )
+        # admin and participants can access page and will see topics for this topic only
+        assert response.status_code == 200
+        assert response.context["object_list"].count() == 3
+        assert list(response.context["object_list"]) == list(
+            ForumPost.objects.filter(topic=topic1).all()
         )
 
 
