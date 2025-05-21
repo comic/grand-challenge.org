@@ -2181,7 +2181,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
     @property
     def utilization(self):
-        return self.evaluationutilization
+        return self.evaluation_utilization
 
 
 class EvaluationUserObjectPermission(UserObjectPermissionBase):

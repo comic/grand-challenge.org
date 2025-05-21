@@ -328,9 +328,9 @@ class TestUpdateExternalEvaluation:
 
         claimed_eval.refresh_from_db()
         assert claimed_eval.status == Evaluation.FAILURE
-        assert claimed_eval.evaluationutilization.duration is not None
+        assert claimed_eval.evaluation_utilization.duration is not None
         assert (
-            claimed_eval.evaluationutilization.compute_cost_euro_millicents
+            claimed_eval.evaluation_utilization.compute_cost_euro_millicents
             == 0
         )
         assert claimed_eval.outputs.count() == 0
@@ -382,9 +382,9 @@ class TestUpdateExternalEvaluation:
         assert response.status_code == 200
         claimed_eval.refresh_from_db()
         assert claimed_eval.status == Evaluation.SUCCESS
-        assert claimed_eval.evaluationutilization.duration is not None
+        assert claimed_eval.evaluation_utilization.duration is not None
         assert (
-            claimed_eval.evaluationutilization.compute_cost_euro_millicents
+            claimed_eval.evaluation_utilization.compute_cost_euro_millicents
             == 0
         )
         assert claimed_eval.outputs.count() == 1
@@ -430,7 +430,7 @@ class TestUpdateExternalEvaluation:
         claimed_eval.refresh_from_db()
         assert claimed_eval.status == Evaluation.CANCELLED
         assert (
-            claimed_eval.evaluationutilization.compute_cost_euro_millicents
+            claimed_eval.evaluation_utilization.compute_cost_euro_millicents
             == 0
         )
         assert claimed_eval.error_message == "External evaluation timed out."

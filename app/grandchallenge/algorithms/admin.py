@@ -211,7 +211,7 @@ class JobAdmin(admin.ModelAdmin):
         "runtime_metrics",
         "algorithm_interface",
         "time_limit",
-        "jobutilization",
+        "job_utilization",
     )
     search_fields = (
         "creator__username",
