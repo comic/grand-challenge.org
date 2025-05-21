@@ -32,6 +32,7 @@ from django.template.defaultfilters import truncatewords
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
@@ -1766,6 +1767,19 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                 str(key): value
                 for key, value in detailed_error_message.items()
             }
+
+        if (
+            status in [self.STARTED, self.EXECUTING]
+            and self.started_at is None
+        ):
+            self.started_at = now()
+        elif (
+            status
+            in [self.EXECUTED, self.SUCCESS, self.FAILURE, self.CANCELLED]
+            and self.utilization.duration is None
+            and "duration" not in utilization_kwargs.keys()
+        ):
+            utilization_kwargs.update(duration=now() - self.started_at)
 
         self.update_utilization(**utilization_kwargs)
 
