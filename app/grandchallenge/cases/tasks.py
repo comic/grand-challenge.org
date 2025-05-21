@@ -178,10 +178,8 @@ def build_images(
                 ),
             )
         else:
-            _handle_error(
-                error_message="An unexpected error occurred",
-            )
-            logger.error("An unexpected error occurred", exc_info=True)
+            _handle_error(error_message="An unexpected error occurred")
+            logger.error(error, exc_info=True)
         return
     except DuplicateFilesException:
         _handle_error(
@@ -193,9 +191,9 @@ def build_images(
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
         _handle_error(error_message="Time limit exceeded")
         return
-    except Exception:
+    except Exception as error:
         _handle_error(error_message="An unexpected error occurred")
-        logger.error("An unexpected error occurred", exc_info=True)
+        logger.error(error, exc_info=True)
         return
     finally:
         upload_session.user_uploads.all().delete()
@@ -244,6 +242,9 @@ def handle_build_images_error(
             )
         except ObjectDoesNotExist:
             # Linked object may have been deleted
+            logger.info(
+                f"Linked object {linked_app_label}.{linked_model_name}({linked_object_pk}) does not exist"
+            )
             linked_object = None
     else:
         linked_object = None
@@ -251,6 +252,7 @@ def handle_build_images_error(
     try:
         ci = ComponentInterface.objects.get(slug=linked_interface_slug)
     except ObjectDoesNotExist:
+        logger.info(f"Linked interface {linked_interface_slug} does not exist")
         ci = None
 
     error_handler = upload_session.get_error_handler(
