@@ -146,6 +146,9 @@ class JobUtilization(ComponentJobUtilization):
         on_delete=models.SET_NULL,
     )
 
+    class Meta(ComponentJobUtilization.Meta):
+        default_related_name = "job_utilizations"
+
     def save(self, *args, **kwargs) -> None:
         if self._state.adding:
             self.creator = self.job.creator
@@ -163,6 +166,9 @@ class EvaluationUtilization(ComponentJobUtilization):
         on_delete=models.SET_NULL,
     )
     external_evaluation = models.BooleanField()
+
+    class Meta(ComponentJobUtilization.Meta):
+        default_related_name = "evaluation_utilizations"
 
     def save(self, *args, **kwargs) -> None:
         if self._state.adding:
