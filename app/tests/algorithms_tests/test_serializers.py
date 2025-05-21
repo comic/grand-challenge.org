@@ -236,7 +236,15 @@ def test_algorithm_job_post_serializer_create(
     job = {
         "algorithm": algorithm_image.algorithm.api_url,
         "inputs": [
-            {"interface": ci_img1.slug, "upload_session": upload.api_url},
+            {
+                "interface": ci_img1.slug,
+                "upload_session": upload.api_url,
+                # Other attributes are optionally None
+                "user_upload": None,
+                "image": None,
+                "value": None,
+                "file": None,
+            },
             {"interface": ci_img2.slug, "image": image2.api_url},
             {"interface": ci_string.slug, "value": "foo"},
         ],
