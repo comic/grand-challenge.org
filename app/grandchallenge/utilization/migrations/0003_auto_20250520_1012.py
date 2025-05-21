@@ -71,7 +71,8 @@ def set_challenges_to_job_utilizations(apps, schema_editor):
                 jobgroupobjectpermission__permission=permission,
             ).distinct()
             for job in jobs:
-                job.update_utilization(challenge=challenge)
+                job.job_utilization.challenge = challenge
+                job.job_utilization.save()
 
 
 def set_phases_and_archive_to_job_utilizations(apps, schema_editor):
@@ -84,10 +85,9 @@ def set_phases_and_archive_to_job_utilizations(apps, schema_editor):
             algorithm_image__submission__phase=phase,
         ).distinct()
         for job in jobs:
-            job.update_utilization(
-                phase=phase,
-                archive=phase.archive,
-            )
+            job.job_utilization.phase = phase
+            job.job_utilization.archive = phase.archive
+            job.job_utilization.save()
 
 
 class Migration(migrations.Migration):
