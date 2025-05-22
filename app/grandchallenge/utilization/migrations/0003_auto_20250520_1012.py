@@ -16,6 +16,7 @@ def create_evaluation_utilizations(apps, schema_editor):
             "submission",
             "submission__algorithm_image",
             "submission__phase",
+            "submission__phase__archive",
             "submission__phase__challenge",
             "submission__creator",
         )
