@@ -16,6 +16,8 @@ def create_evaluation_utilizations(apps, schema_editor):
             "submission",
             "submission__algorithm_image",
             "submission__phase",
+            "submission__phase__challenge",
+            "submission__creator",
         )
         .order_by()
         .iterator(chunk_size=2000)
@@ -47,7 +49,11 @@ def create_job_utilizations(apps, schema_editor):
     for job in (
         Job.objects.annotate(duration=F("completed_at") - F("started_at"))
         .filter(job_utilization__isnull=True)
-        .select_related("algorithm_image")
+        .select_related(
+            "algorithm_image",
+            "algorithm_image__algorithm",
+            "creator",
+        )
         .order_by()
         .iterator(chunk_size=2000)
     ):
