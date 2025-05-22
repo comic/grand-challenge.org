@@ -189,9 +189,8 @@ def _create_submission(algorithm, challenge, archive_items):
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         )
-        job.update_utilization(
-            duration=timedelta(minutes=random.randint(5, 120))
-        )
+        job.utilization.duration = timedelta(minutes=random.randint(5, 120))
+        job.utilization.save()
         civ = ComponentInterfaceValue.objects.create(
             interface=ComponentInterface.objects.get(slug="results-json-file"),
         )

@@ -161,7 +161,9 @@ def test_challenge_budget_alert_email(settings):
         submission__phase=phase,
         time_limit=60,
     )
-    evaluation.update_utilization(compute_cost_euro_millicents=500000)
+
+    evaluation.utilization.compute_cost_euro_millicents = 500000
+    evaluation.utilization.save()
     update_compute_costs_and_storage_size()
 
     # Budget alert threshold not exceeded
@@ -171,7 +173,8 @@ def test_challenge_budget_alert_email(settings):
         submission__phase=phase,
         time_limit=60,
     )
-    evaluation.update_utilization(compute_cost_euro_millicents=300000)
+    evaluation.utilization.compute_cost_euro_millicents = 300000
+    evaluation.utilization.save()
     update_compute_costs_and_storage_size()
 
     # Budget alert threshold exceeded
@@ -200,7 +203,8 @@ def test_challenge_budget_alert_email(settings):
         submission__phase=phase,
         time_limit=60,
     )
-    evaluation.update_utilization(compute_cost_euro_millicents=100000)
+    evaluation.utilization.compute_cost_euro_millicents = 100000
+    evaluation.utilization.save()
     update_compute_costs_and_storage_size()
 
     # Next budget alert threshold not exceeded
@@ -210,7 +214,8 @@ def test_challenge_budget_alert_email(settings):
         submission__phase=phase,
         time_limit=60,
     )
-    evaluation.update_utilization(compute_cost_euro_millicents=1)
+    evaluation.utilization.compute_cost_euro_millicents = 1
+    evaluation.utilization.save()
     update_compute_costs_and_storage_size()
 
     # Next budget alert threshold exceeded
@@ -245,7 +250,8 @@ def test_challenge_budget_alert_two_thresholds_one_email(settings):
         submission__phase=phase,
         time_limit=60,
     )
-    evaluation.update_utilization(compute_cost_euro_millicents=950000)
+    evaluation.utilization.compute_cost_euro_millicents = 950000
+    evaluation.utilization.save()
     update_compute_costs_and_storage_size()
 
     # Two budget alert thresholds exceeded, alert only sent for last one.
@@ -270,7 +276,8 @@ def test_challenge_budget_alert_no_budget():
         submission__phase=phase,
         time_limit=60,
     )
-    evaluation.update_utilization(compute_cost_euro_millicents=1)
+    evaluation.utilization.compute_cost_euro_millicents = 1
+    evaluation.utilization.save()
     assert len(mail.outbox) == 0
     update_compute_costs_and_storage_size()
     assert len(mail.outbox) != 0

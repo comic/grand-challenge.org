@@ -186,7 +186,8 @@ def test_duration():
     assert job_utilizations[0].duration is None
     assert JobUtilization.objects.average_duration() is None
 
-    j.update_utilization(duration=timedelta(minutes=5))
+    j.utilization.duration = timedelta(minutes=5)
+    j.utilization.save()
 
     job_utilizations = JobUtilization.objects.all()
     assert job_utilizations[0].duration == timedelta(minutes=5)
@@ -199,8 +200,10 @@ def test_duration():
 @pytest.mark.django_db
 def test_average_duration_filtering():
     j1, j2 = AlgorithmJobFactory.create_batch(2, time_limit=60)
-    j1.update_utilization(duration=timedelta(minutes=5))
-    j2.update_utilization(duration=timedelta(minutes=10))
+    j1.utilization.duration = timedelta(minutes=5)
+    j1.utilization.save()
+    j2.utilization.duration = timedelta(minutes=10)
+    j2.utilization.save()
     assert JobUtilization.objects.average_duration() == timedelta(minutes=7.5)
     assert JobUtilization.objects.filter(
         algorithm_image=j1.algorithm_image

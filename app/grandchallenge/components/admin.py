@@ -95,7 +95,8 @@ def requeue_jobs(modeladmin, request, queryset):
     for job in queryset:
         job.status = ComponentJob.RETRY
         job.attempt += 1
-        job.update_utilization(duration=None)
+        job.utilization.duration = None
+        job.utilization.save()
         job.error_message = ""
         job.detailed_error_message = {}
         jobs.append(job)

@@ -13,7 +13,8 @@ def test_job_reset_duration_after_admin_requeue():
         time_limit=60,
         status=Job.FAILURE,
     )
-    job.update_utilization(duration=timedelta(minutes=1))
+    job.utilization.duration = timedelta(minutes=1)
+    job.utilization.save()
 
     jobs = Job.objects.all()
 

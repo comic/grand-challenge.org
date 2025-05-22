@@ -1748,8 +1748,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         stderr: str = "",
         error_message="",
         detailed_error_message=None,
+        duration=None,
+        compute_cost_euro_millicents=None,
         runtime_metrics=None,
-        **utilization_kwargs,
     ):
         self.status = status
 
@@ -1777,12 +1778,21 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             status
             in [self.EXECUTED, self.SUCCESS, self.FAILURE, self.CANCELLED]
             and self.utilization.duration is None
-            and "duration" not in utilization_kwargs.keys()
+            and duration is None
             and self.started_at is not None
         ):
-            utilization_kwargs.update(duration=now() - self.started_at)
+            duration = now() - self.started_at
 
-        self.update_utilization(**utilization_kwargs)
+        utilization_update_fields = set()
+        if duration is not None:
+            self.utilization.duration = duration
+            utilization_update_fields.add("duration")
+        if compute_cost_euro_millicents is not None:
+            self.utilization.compute_cost_euro_millicents = (
+                compute_cost_euro_millicents
+            )
+            utilization_update_fields.add("compute_cost_euro_millicents")
+        self.utilization.save(update_fields=utilization_update_fields)
 
         if runtime_metrics is not None:
             self.runtime_metrics = runtime_metrics
@@ -1940,20 +1950,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     @property
     def utilization(self):
         raise NotImplementedError
-
-    def update_utilization(
-        self, *, duration=object, compute_cost_euro_millicents=object
-    ):
-        kwargs = {}
-        if duration != object:
-            kwargs.update(duration=duration)
-        if compute_cost_euro_millicents != object:
-            kwargs.update(
-                compute_cost_euro_millicents=compute_cost_euro_millicents
-            )
-        for key, value in kwargs.items():
-            setattr(self.utilization, key, value)
-        self.utilization.save(update_fields=kwargs.keys())
 
     class Meta:
         abstract = True
