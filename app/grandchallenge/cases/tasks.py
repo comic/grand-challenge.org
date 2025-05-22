@@ -96,7 +96,7 @@ def extract_files(*, source_path: Path, checked_paths=None):
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
-def build_images(
+def build_images(  # noqa:C901
     *,
     upload_session_pk,
     linked_app_label,
@@ -140,6 +140,12 @@ def build_images(
         app_label=RawImageUploadSession._meta.app_label,
         model_name=RawImageUploadSession._meta.model_name,
     )
+
+    if upload_session.status != upload_session.REQUEUED:
+        logger.info(
+            "Nothing to do: upload session was not ready for processing"
+        )
+        return
 
     def _handle_error(*, error_message):
         logger.info(error_message)
@@ -195,9 +201,6 @@ def build_images(
         _handle_error(error_message="An unexpected error occurred")
         logger.error(error, exc_info=True)
         return
-    finally:
-        upload_session.user_uploads.all().delete()
-        logger.info("User uploads deleted")
 
     if upload_session.image_set.count() > 0:
         upload_session.update_status(status=RawImageUploadSession.SUCCESS)
@@ -212,6 +215,9 @@ def build_images(
         # The session may have been modified so needs to be saved
         upload_session.save()
         return
+
+    logger.info("Deleting associated uploaded files")
+    upload_session.user_uploads.all().delete()
 
 
 @acks_late_micro_short_task(
