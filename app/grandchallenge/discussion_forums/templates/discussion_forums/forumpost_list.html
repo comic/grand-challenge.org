@@ -39,7 +39,7 @@
             <div class="col-8">
                 {% if 'create_topic_post' in user_perms %}
                     <div class="d-inline" title="{% if topic.is_locked %}This topic is locked. You cannot reply to it.{% endif %}">
-                        <a hx-get="{% url 'discussion-forums:post-create' slug=topic.slug %}" hx-swap="beforeend show:bottom" hx-target="#post-list" class="btn btn-primary btn-sm {% if object.is_locked %}disabled{% endif %}">
+                        <a hx-get="{% url 'discussion-forums:post-create' slug=topic.slug %}" hx-swap="beforeend show:bottom" hx-target="#post-list" class="btn btn-primary btn-sm {% if topic.is_locked %}disabled{% endif %}">
                             <i class="fas fa-comment mr-1"></i> Reply
                         </a>
                     </div>
