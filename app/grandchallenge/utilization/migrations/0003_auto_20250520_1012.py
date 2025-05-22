@@ -63,7 +63,9 @@ def create_job_utilizations(apps, schema_editor):
 
 
 def set_challenges_to_job_utilizations(apps, schema_editor):
-    Job = apps.get_model("algorithms", "Job")  # noqa: N806
+    JobUtilization = apps.get_model(  # noqa: N806
+        "utilization", "JobUtilization"
+    )
     Permission = apps.get_model("auth", "Permission")  # noqa: N806
     Challenge = apps.get_model("challenges", "Challenge")  # noqa: N806
     challenges = Challenge.objects.all()
@@ -74,36 +76,25 @@ def set_challenges_to_job_utilizations(apps, schema_editor):
             content_type__model="job",
         )
         for challenge in challenges:
-            jobs = (
-                Job.objects.filter(
-                    jobgroupobjectpermission__group=challenge.admins_group,
-                    jobgroupobjectpermission__permission=permission,
-                )
-                .select_related("job_utilization")
-                .distinct()
-            )
-            for job in jobs:
-                job.job_utilization.challenge = challenge
-                job.job_utilization.save()
+            job_utilizations = JobUtilization.objects.filter(
+                job__jobgroupobjectpermission__group=challenge.admins_group,
+                job__jobgroupobjectpermission__permission=permission,
+            ).distinct()
+            job_utilizations.update(challenge=challenge)
 
 
 def set_phases_and_archive_to_job_utilizations(apps, schema_editor):
-    Job = apps.get_model("algorithms", "Job")  # noqa: N806
+    JobUtilization = apps.get_model(  # noqa: N806
+        "utilization", "JobUtilization"
+    )
     Phase = apps.get_model("evaluation", "Phase")  # noqa: N806
     for phase in Phase.objects.all():
-        jobs = (
-            Job.objects.filter(
-                job_utilization__phase__isnull=False,
-                inputs__archive_items__archive__phase=phase,
-                algorithm_image__submission__phase=phase,
-            )
-            .select_related("job_utilization")
-            .distinct()
-        )
-        for job in jobs:
-            job.job_utilization.phase = phase
-            job.job_utilization.archive = phase.archive
-            job.job_utilization.save()
+        job_utilizations = JobUtilization.objects.filter(
+            phase__isnull=False,
+            job__inputs__archive_items__archive__phase=phase,
+            job__algorithm_image__submission__phase=phase,
+        ).distinct()
+        job_utilizations.update(phase=phase, archive=phase.archive)
 
 
 class Migration(migrations.Migration):
