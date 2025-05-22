@@ -152,8 +152,6 @@ class JobSerializer(serializers.ModelSerializer):
             "inputs",
             "outputs",
             "status",
-            "started_at",
-            "completed_at",
             "hanging_protocol",
             "optional_hanging_protocols",
             "view_content",

@@ -79,7 +79,6 @@ def test_average_duration(settings, django_capture_on_commit_callbacks):
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     alg = AlgorithmFactory()
-    start = now()
 
     assert alg.average_duration is None
 
@@ -87,12 +86,8 @@ def test_average_duration(settings, django_capture_on_commit_callbacks):
         algorithm_image__algorithm=alg, time_limit=alg.time_limit
     )
 
-    j.started_at = start - timedelta(minutes=5)
-    j.completed_at = start
-    j.status = j.SUCCESS
-
     with django_capture_on_commit_callbacks(execute=True):
-        j.save()
+        j.update_status(status=j.SUCCESS, duration=timedelta(minutes=5))
 
     alg.refresh_from_db()
     assert alg.average_duration == timedelta(minutes=5)
@@ -101,24 +96,18 @@ def test_average_duration(settings, django_capture_on_commit_callbacks):
     j = AlgorithmJobFactory(
         algorithm_image__algorithm=alg, time_limit=alg.time_limit
     )
-    j.started_at = start - timedelta(minutes=10)
-    j.completed_at = start
-    j.status = j.FAILURE
 
     with django_capture_on_commit_callbacks(execute=True):
-        j.save()
+        j.update_status(status=j.FAILURE, duration=timedelta(minutes=10))
 
     alg.refresh_from_db()
     assert alg.average_duration == timedelta(minutes=5)
 
     # Nor should jobs for other algorithms
     j = AlgorithmJobFactory(time_limit=60)
-    j.started_at = start - timedelta(minutes=15)
-    j.completed_at = start
-    j.status = j.SUCCESS
 
     with django_capture_on_commit_callbacks(execute=True):
-        j.save()
+        j.update_status(status=j.SUCCESS, duration=timedelta(minutes=15))
 
     alg.refresh_from_db()
     assert alg.average_duration == timedelta(minutes=5)

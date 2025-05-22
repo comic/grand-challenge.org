@@ -9,7 +9,6 @@ from grandchallenge.algorithms.models import (
     Algorithm,
     AlgorithmImage,
     AlgorithmModel,
-    Job,
 )
 from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image, ImageFile
@@ -17,12 +16,15 @@ from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.evaluation.models import (
-    Evaluation,
     EvaluationGroundTruth,
     Method,
     Submission,
 )
 from grandchallenge.reader_studies.models import Answer, ReaderStudy
+from grandchallenge.utilization.models import (
+    EvaluationUtilization,
+    JobUtilization,
+)
 from grandchallenge.workstations.models import Session, WorkstationImage
 
 
@@ -73,8 +75,7 @@ def update_site_statistics_cache():
             .order_by("created__year", "created__month", "public")
         ),
         "jobs": (
-            Job.objects.with_duration()
-            .values("created__year", "created__month")
+            JobUtilization.objects.values("created__year", "created__month")
             .annotate(
                 object_count=Count("created__month"),
                 duration_sum=Sum("duration"),
@@ -149,10 +150,10 @@ def update_site_statistics_cache():
             ),
         },
         "this_month_jobs": {
-            "algorithm_jobs": Job.objects.filter(
+            "algorithm_jobs": JobUtilization.objects.filter(
                 created__month=now().month, created__year=now().year
             ).aggregate(Sum("compute_cost_euro_millicents")),
-            "evaluations": Evaluation.objects.filter(
+            "evaluations": EvaluationUtilization.objects.filter(
                 created__month=now().month, created__year=now().year
             ).aggregate(Sum("compute_cost_euro_millicents")),
         },

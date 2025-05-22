@@ -1,7 +1,11 @@
 from django.contrib import admin
 
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
-from grandchallenge.utilization.models import SessionUtilization
+from grandchallenge.utilization.models import (
+    EvaluationUtilization,
+    JobUtilization,
+    SessionUtilization,
+)
 
 
 @admin.register(SessionUtilization)
@@ -26,3 +30,51 @@ class SessionUtilizationAdmin(admin.ModelAdmin):
 
     def accessed_reader_studies(self, obj):
         return oxford_comma(obj.reader_studies.all())
+
+
+@admin.register(JobUtilization)
+class JobUtilizationAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = (
+        "pk",
+        "created",
+        "job",
+        "creator",
+        "duration",
+        "compute_cost_euro_millicents",
+        "phase",
+        "challenge",
+        "algorithm_image",
+        "algorithm",
+    )
+    search_fields = (
+        "creator__username",
+        "pk",
+        "job__pk",
+        "phase__slug",
+        "challenge__short_name",
+    )
+
+
+@admin.register(EvaluationUtilization)
+class EvaluationUtilizationAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = (
+        "pk",
+        "created",
+        "evaluation",
+        "creator",
+        "duration",
+        "compute_cost_euro_millicents",
+        "phase",
+        "challenge",
+        "algorithm_image",
+        "algorithm",
+    )
+    search_fields = (
+        "creator__username",
+        "pk",
+        "evaluation__pk",
+        "phase__slug",
+        "challenge__short_name",
+    )

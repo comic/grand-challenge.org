@@ -723,22 +723,19 @@ class JobsList(ViewObjectPermissionListMixin, PaginatedTableListView):
 class JobDetail(ObjectPermissionRequiredMixin, DetailView):
     permission_required = "view_job"
     raise_exception = True
-    queryset = (
-        Job.objects.with_duration()
-        .prefetch_related(
-            "outputs__image__files",
-            "outputs__interface",
-            "inputs__image__files",
-            "inputs__interface",
-            "viewers__user_set__user_profile",
-            "viewers__user_set__verification",
-            "viewer_groups",
-        )
-        .select_related(
-            "creator__user_profile",
-            "creator__verification",
-            "algorithm_image__algorithm__workstation",
-        )
+    queryset = Job.objects.prefetch_related(
+        "outputs__image__files",
+        "outputs__interface",
+        "inputs__image__files",
+        "inputs__interface",
+        "viewers__user_set__user_profile",
+        "viewers__user_set__verification",
+        "viewer_groups",
+    ).select_related(
+        "creator__user_profile",
+        "creator__verification",
+        "algorithm_image__algorithm__workstation",
+        "job_utilization",
     )
 
     def get_context_data(self, **kwargs):

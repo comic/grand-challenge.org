@@ -1,103 +1,29 @@
-from pathlib import Path
+from datetime import timedelta
 
 import pytest
-from django.core.files.base import ContentFile
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.algorithms.tasks import create_algorithm_jobs
-from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.admin import requeue_jobs
-from grandchallenge.components.models import ComponentInterface
-from tests.algorithms_tests.factories import (
-    AlgorithmImageFactory,
-    AlgorithmInterfaceFactory,
-)
-from tests.archives_tests.factories import ArchiveItemFactory
-from tests.components_tests.factories import (
-    ComponentInterfaceFactory,
-    ComponentInterfaceValueFactory,
-)
-from tests.factories import ImageFileFactory
-from tests.utils import recurse_callbacks
+from tests.algorithms_tests.factories import AlgorithmJobFactory
 
 
 @pytest.mark.django_db
-def test_job_updated_start_and_complete_times_after_admin_requeue(
-    algorithm_image, settings, django_capture_on_commit_callbacks
-):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        ai = AlgorithmImageFactory(image=None)
-
-        with open(algorithm_image, "rb") as f:
-            ai.image.save(algorithm_image, ContentFile(f.read()))
-
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+def test_job_reset_duration_after_admin_requeue():
+    job = AlgorithmJobFactory(
+        time_limit=60,
+        status=Job.FAILURE,
     )
-    ai.refresh_from_db()
+    job.utilization.duration = timedelta(minutes=1)
+    job.utilization.save()
 
-    # Make sure the job fails when trying to upload an invalid file
-    ci = ComponentInterface.objects.get(slug="generic-medical-image")
-    detection_interface = ComponentInterfaceFactory(
-        store_in_database=False,
-        relative_path="some_text.txt",
-        slug="detection-json-file",
-        kind=ComponentInterface.Kind.ANY,
-    )
-    interface = AlgorithmInterfaceFactory(
-        inputs=[ci], outputs=[detection_interface]
-    )
-    ai.algorithm.interfaces.add(interface)
-
-    image_file = ImageFileFactory(
-        file__from_path=Path(__file__).parent / "resources" / "input_file.tif"
-    )
-
-    civ = ComponentInterfaceValueFactory(
-        image=image_file.image, interface=ci, file=None
-    )
-    item = ArchiveItemFactory()
-    item.values.add(civ)
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        create_algorithm_jobs(
-            algorithm_image=ai,
-            archive_items=ArchiveItem.objects.all(),
-            time_limit=ai.algorithm.time_limit,
-            requires_gpu_type=ai.algorithm.job_requires_gpu_type,
-            requires_memory_gb=ai.algorithm.job_requires_memory_gb,
-        )
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    jobs = Job.objects.filter(
-        algorithm_image=ai, inputs__image=image_file.image, status=Job.FAILURE
-    ).all()
+    jobs = Job.objects.all()
 
     assert len(jobs) == 1
+    assert job.job_utilization.duration is not None
 
-    job = jobs.first()
+    requeue_jobs(None, None, jobs)
 
-    first_run_started_at = job.started_at
-    first_run_completed_at = job.completed_at
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        requeue_jobs(None, None, jobs)
-
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
     job.refresh_from_db()
 
-    second_run_started_at = job.started_at
-    second_run_completed_at = job.completed_at
-
-    assert second_run_started_at > first_run_started_at
-    assert second_run_completed_at > first_run_completed_at
+    assert job.status == Job.RETRY
+    assert job.job_utilization.duration is None

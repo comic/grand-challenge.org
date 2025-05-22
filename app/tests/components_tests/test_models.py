@@ -1,7 +1,6 @@
 import json
 import uuid
 from contextlib import nullcontext
-from datetime import timedelta
 from pathlib import Path
 from unittest.mock import call
 
@@ -9,7 +8,6 @@ import pytest
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.files.base import ContentFile
-from django.utils import timezone
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
@@ -38,7 +36,6 @@ from grandchallenge.reader_studies.models import Question
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
-    AlgorithmJobFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import ImageFactoryWithImageFileTiff
@@ -47,7 +44,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.evaluation_tests.factories import EvaluationFactory, MethodFactory
+from tests.evaluation_tests.factories import MethodFactory
 from tests.factories import ImageFactory, UserFactory, WorkstationImageFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
@@ -56,68 +53,6 @@ from tests.reader_studies_tests.factories import (
 )
 from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import create_raw_upload_image_session
-
-
-@pytest.mark.django_db
-def test_update_started_adds_time():
-    j = AlgorithmJobFactory(time_limit=60)
-    assert j.started_at is None
-    assert j.completed_at is None
-
-    j.update_status(status=j.EXECUTING)
-
-    j.refresh_from_db()
-    assert j.started_at is not None
-    assert j.completed_at is None
-
-    j.update_status(status=j.SUCCESS)
-
-    j.refresh_from_db()
-    assert j.started_at is not None
-    assert j.completed_at is not None
-
-
-@pytest.mark.django_db
-def test_duration():
-    j = AlgorithmJobFactory(time_limit=60)
-    _ = EvaluationFactory(time_limit=60)
-
-    jbs = Job.objects.with_duration()
-    assert jbs[0].duration is None
-    assert Job.objects.average_duration() is None
-
-    now = timezone.now()
-    j.started_at = now - timedelta(minutes=5)
-    j.completed_at = now
-    j.save()
-
-    jbs = Job.objects.with_duration()
-    assert jbs[0].duration == timedelta(minutes=5)
-    assert Job.objects.average_duration() == timedelta(minutes=5)
-
-    _ = AlgorithmJobFactory(time_limit=60)
-    assert Job.objects.average_duration() == timedelta(minutes=5)
-
-
-@pytest.mark.django_db
-def test_average_duration_filtering():
-    completed_at = timezone.now()
-    j1, _ = (
-        AlgorithmJobFactory(
-            completed_at=completed_at,
-            started_at=completed_at - timedelta(minutes=5),
-            time_limit=60,
-        ),
-        AlgorithmJobFactory(
-            completed_at=completed_at,
-            started_at=completed_at - timedelta(minutes=10),
-            time_limit=60,
-        ),
-    )
-    assert Job.objects.average_duration() == timedelta(minutes=7.5)
-    assert Job.objects.filter(
-        algorithm_image=j1.algorithm_image
-    ).average_duration() == timedelta(minutes=5)
 
 
 @pytest.mark.parametrize(

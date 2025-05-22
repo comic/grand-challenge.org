@@ -1,7 +1,6 @@
 import json
 import logging
 import re
-from datetime import timedelta
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -25,7 +24,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models, transaction
-from django.db.models import Avg, F, IntegerChoices, QuerySet, Sum
+from django.db.models import IntegerChoices, QuerySet
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
 from django.forms.models import model_to_dict
@@ -1549,25 +1548,6 @@ class ComponentInterfaceValue(models.Model):
 
 
 class ComponentJobManager(models.QuerySet):
-    def with_duration(self):
-        """Annotate the queryset with the duration of completed jobs"""
-        return self.annotate(duration=F("completed_at") - F("started_at"))
-
-    def average_duration(self):
-        """Calculate the average duration that completed jobs ran for"""
-        return (
-            self.with_duration()
-            .exclude(duration=None)
-            .aggregate(Avg("duration"))["duration__avg"]
-        )
-
-    def total_duration(self):
-        return (
-            self.with_duration()
-            .exclude(duration=None)
-            .aggregate(Sum("duration"))["duration__sum"]
-        )
-
     def active(self):
         # We need to use a positive filter here so that the index
         # can be used rather than excluding jobs in final states
@@ -1757,6 +1737,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
 
         super().save()
 
+        if adding:
+            self.create_utilization()
+
     def update_status(  # noqa: C901
         self,
         *,
@@ -1765,7 +1748,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         stderr: str = "",
         error_message="",
         detailed_error_message=None,
-        duration: timedelta | None = None,
+        duration=None,
         compute_cost_euro_millicents=None,
         runtime_metrics=None,
     ):
@@ -1794,15 +1777,22 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         elif (
             status
             in [self.EXECUTED, self.SUCCESS, self.FAILURE, self.CANCELLED]
-            and self.completed_at is None
+            and self.utilization.duration is None
+            and duration is None
+            and self.started_at is not None
         ):
-            self.completed_at = now()
-            if duration and self.started_at:
-                # TODO: maybe add separate timings for provisioning, executing, parsing and total
-                self.started_at = self.completed_at - duration
+            duration = now() - self.started_at
 
+        utilization_update_fields = set()
+        if duration is not None:
+            self.utilization.duration = duration
+            utilization_update_fields.add("duration")
         if compute_cost_euro_millicents is not None:
-            self.compute_cost_euro_millicents = compute_cost_euro_millicents
+            self.utilization.compute_cost_euro_millicents = (
+                compute_cost_euro_millicents
+            )
+            utilization_update_fields.add("compute_cost_euro_millicents")
+        self.utilization.save(update_fields=utilization_update_fields)
 
         if runtime_metrics is not None:
             self.runtime_metrics = runtime_metrics
@@ -1953,6 +1943,13 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                 for metric in self.runtime_metrics["metrics"]
             ],
         )
+
+    def create_utilization(self):
+        raise NotImplementedError
+
+    @property
+    def utilization(self):
+        raise NotImplementedError
 
     class Meta:
         abstract = True

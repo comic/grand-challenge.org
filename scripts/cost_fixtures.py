@@ -3,7 +3,6 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -185,13 +184,13 @@ def _create_submission(algorithm, challenge, archive_items):
         job = Job.objects.create(
             algorithm_image=ai,
             algorithm_interface=algorithm.interfaces.first(),
-            started_at=now() - timedelta(minutes=random.randint(5, 120)),
-            completed_at=now(),
             status=Job.SUCCESS,
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
         )
+        job.utilization.duration = timedelta(minutes=random.randint(5, 120))
+        job.utilization.save()
         civ = ComponentInterfaceValue.objects.create(
             interface=ComponentInterface.objects.get(slug="results-json-file"),
         )
