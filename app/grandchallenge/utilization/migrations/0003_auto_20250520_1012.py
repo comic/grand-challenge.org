@@ -18,7 +18,7 @@ def create_evaluation_utilizations(apps, schema_editor):
             "submission__phase",
         )
         .order_by()
-        .iterator(chunk_size=2000),
+        .iterator(chunk_size=2000)
     ):
         kwargs = dict(
             created=evaluation.created,
