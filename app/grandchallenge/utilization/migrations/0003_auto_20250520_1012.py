@@ -18,7 +18,7 @@ def create_evaluation_utilizations(apps, schema_editor):
             "submission__phase",
         )
         .order_by()
-        .iterator()
+        .iterator(chunk_size=2000),
     ):
         kwargs = dict(
             created=evaluation.created,
@@ -49,7 +49,7 @@ def create_job_utilizations(apps, schema_editor):
         .filter(job_utilization__isnull=True)
         .select_related("algorithm_image")
         .order_by()
-        .iterator()
+        .iterator(chunk_size=2000)
     ):
         JobUtilization.objects.create(
             created=job.created,
