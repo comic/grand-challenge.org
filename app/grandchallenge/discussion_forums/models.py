@@ -245,6 +245,22 @@ class ForumPost(UUIDModel):
             self,
         )
 
+    def get_absolute_url(self):
+        from grandchallenge.discussion_forums.views import ForumTopicPostList
+
+        position = self.get_relative_position()
+        posts_per_page = ForumTopicPostList.paginate_by
+
+        page_number = (position // posts_per_page) + 1
+        if page_number > 1:
+            return f"{self.topic.get_absolute_url()}?page={page_number}#post-{self.pk}"
+        else:
+            return f"{self.topic.get_absolute_url()}#post-{self.pk}"
+
+    def get_relative_position(self):
+        post_ids = list(self.topic.posts.values_list("pk", flat=True))
+        return post_ids.index(self.pk)
+
 
 class ForumUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset()

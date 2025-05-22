@@ -167,9 +167,6 @@ class ForumPostCreate(ObjectPermissionRequiredMixin, CreateView):
         )
         return kwargs
 
-    def get_success_url(self):
-        return f"{self.topic.get_absolute_url()}#post-{self.object.pk}"
-
 
 class ForumPostDelete(ObjectPermissionRequiredMixin, DeleteView):
     model = ForumPost
@@ -244,6 +241,3 @@ class ForumPostUpdate(ObjectPermissionRequiredMixin, UpdateView):
             }
         )
         return kwargs
-
-    def get_success_url(self):
-        return f"{self.topic.get_absolute_url()}#post-{self.object.pk}"
