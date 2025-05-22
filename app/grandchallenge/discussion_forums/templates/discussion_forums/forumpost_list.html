@@ -1,36 +1,96 @@
 {% extends "discussion_forums/forum_base.html" %}
 
 {% load static %}
+{% load guardian_tags %}
 
-{% block sub_title %}{{ object }} - {% endblock %}
+{% block sub_title %}{% if topic %}{{ topic }}{% endif %}- {% endblock %}
 
 {% block extra_breadcrumbs %}
     <li class="breadcrumb-item">
         <a href="{% url 'discussion-forums:topic-list' %}">Forum</a>
     </li>
-    <li class="breadcrumb-item active">My posts</li>
+    {% if topic %}
+        <li class="breadcrumb-item active">{{ topic }}</li>
+    {% else %}
+        <li class="breadcrumb-item active">My posts</li>
+    {% endif %}
 {% endblock %}
 
 {% block extra_top_row_buttons %}
     <div class="col-6">
-        <a href="{% url 'discussion-forums:topic-list' %}" class="btn btn-dark btn-sm"><i
-                class="fas fa-arrow-left mr-1"></i>Back to forum</a>
-        <a href="{% url 'discussion-forums:my-posts' %}" class="btn btn-dark btn-sm"><i
-                class="fas fa-comments mr-1"></i>My posts</a>
+        <a href="{% url 'discussion-forums:topic-list' %}" class="btn btn-dark btn-sm"><i class="fas fa-arrow-left mr-1"></i>Back to forum</a>
+        <a href="{% url 'discussion-forums:my-posts' %}" class="btn btn-dark btn-sm"><i class="fas fa-comments mr-1"></i>My posts</a>
     </div>
 {% endblock %}
 
 {% block extra_content %}
-    <h3>My forum posts</h3>
+    {% if topic %}
+        <div class="h3 my-3" title="{% if topic.is_locked %}This topic is locked.{% endif %}">
+            {% if topic.is_locked %}<i class="fas fa-lock mr-2 fa-xs badge-dark p-2 rounded"></i>{% endif %}
+            {{ topic.subject }}
+        </div>
+    {% else %}
+        <h3>My posts</h3>
+    {% endif %}
+
+    {% if topic %}
+        {% get_obj_perms request.user for topic as "user_perms" %}
+        <div class="row">
+            <div class="col-8">
+                {% if 'create_topic_post' in user_perms %}
+                    <div class="d-inline" title="{% if topic.is_locked %}This topic is locked. You cannot reply to it.{% endif %}">
+                        <a hx-get="{% url 'discussion-forums:post-create' slug=topic.slug %}" hx-swap="beforeend show:bottom" hx-target="#post-list" class="btn btn-primary btn-sm {% if object.is_locked %}disabled{% endif %}">
+                            <i class="fas fa-comment mr-1"></i> Reply
+                        </a>
+                    </div>
+                {% endif %}
+                {% if 'delete_forumtopic' in  user_perms %}
+                    <a href="{% url 'discussion-forums:topic-delete' slug=topic.slug %}" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash mr-1"></i>Delete topic
+                    </a>
+                {% endif %}
+                {% if 'change_forumtopic' in user_perms and not topic.is_locked %}
+                    <form class="d-inline"
+                          hx-post="{% url 'discussion-forums:topic-lock-update' slug=topic.slug %}"
+                          hx-vals='{"is_locked": "True"}'
+                          hx-swap="outerHTML"
+                          hx-target="body"
+                    >
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning btn-sm btn-subscription"><i class="fas fa-lock mr-1"></i>
+                            Lock topic
+                        </button>
+                    </form>
+                {% elif 'change_forumtopic' in user_perms and topopic.is_locked %}
+                    <form class="d-inline"
+                          hx-post="{% url 'discussion-forums:topic-lock-update' slug=topic.slug %}"
+                          hx-vals='{"is_locked": "False"}'
+                          hx-swap="outerHTML"
+                          hx-target="body"
+                    >
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-warning btn-sm btn-subscription"><i class="fas fa-lock-open mr-1"></i>
+                            Unlock topic
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+            <div class="col-4 text-right">
+                {% include 'actstream/partials/follow_unfollow_links.html' with object=topic %}
+            </div>
+        </div>
+    {% endif %}
+
     <div class="row">
         <div class="col-12" id="post-list">
             {% for post in object_list %}
-                <div class="my-3 card col-12"
-                     id="post-{{ post.pk }}"
-                     hx-get="{% url 'discussion-forums:post-detail' slug=post.topic.slug pk=post.pk %}"
-                     hx-trigger="load"
-                ></div>
+                {% with topic|yesno:"False,True" as include_topic_links %}
+                    {% include 'discussion_forums/partials/forumpost_detail.html' with include_topic_links=include_topic_links %}
+                {% endwith %}
             {% endfor %}
         </div>
     </div>
+
+    {% include "grandchallenge/partials/pagination.html" %}
+
 {% endblock %}

@@ -39,7 +39,7 @@
                                 forever.
                             </b>
                         </p>
-                        <a href="{% url 'discussion-forums:topic-detail' challenge_short_name=object.topic.forum.linked_challenge.short_name slug=object.topic.slug %}"
+                        <a href="{% url 'discussion-forums:topic-post-list' challenge_short_name=object.topic.forum.linked_challenge.short_name slug=object.topic.slug %}"
                            type="button"
                            class="btn btn-secondary">Cancel</a>
                         <input type="submit"

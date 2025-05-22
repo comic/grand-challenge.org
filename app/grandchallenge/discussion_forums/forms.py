@@ -107,7 +107,6 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
                     "pk": self.instance.pk,
                 },
             )
-            hx_target = f"#post-{self.instance.pk}"
         else:
             hx_post_url = reverse(
                 "discussion-forums:post-create",
@@ -116,12 +115,11 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
                     "slug": self._topic.slug,
                 },
             )
-            hx_target = "#new-post-card"
 
         self.helper.attrs.update(
             {
                 "hx-post": hx_post_url,
-                "hx-target": hx_target,
+                "hx-target": "body",
                 "hx-swap": "outerHTML",
             }
         )
