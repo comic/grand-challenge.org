@@ -28,6 +28,7 @@ from grandchallenge.core.celery import (
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
+from grandchallenge.utilization.models import JobUtilization
 
 logger = logging.getLogger(__name__)
 
@@ -271,12 +272,12 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         requires_memory_gb=evaluation.submission.algorithm_requires_memory_gb,
     )
 
-    for job in jobs:
-        job.update_utilization(
-            phase=evaluation.submission.phase,
-            archive=evaluation.submission.phase.archive,
-            challenge=evaluation.submission.phase.challenge,
-        )
+    job_utilizations = JobUtilization.objects.filter(job__in=jobs)
+    job_utilizations.update(
+        phase=evaluation.submission.phase,
+        archive=evaluation.submission.phase.archive,
+        challenge=evaluation.submission.phase.challenge,
+    )
 
     if not jobs:
         # No more jobs created from this task, so everything must be
