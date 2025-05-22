@@ -18,13 +18,20 @@ from grandchallenge.discussion_forums.models import (
 from grandchallenge.subdomains.utils import reverse
 
 
-class ForumTopicListView(ViewObjectPermissionListMixin, ListView):
+class ForumTopicListView(
+    ObjectPermissionRequiredMixin, ViewObjectPermissionListMixin, ListView
+):
     model = ForumTopic
+    permission_required = "view_forum"
+    raise_exception = True
     queryset = ForumTopic.objects.select_related("forum")
 
     @cached_property
     def forum(self):
         return self.request.challenge.discussion_forum
+
+    def get_permission_object(self):
+        return self.forum
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -70,9 +77,13 @@ class ForumTopicCreate(ObjectPermissionRequiredMixin, CreateView):
         return kwargs
 
 
-class ForumTopicPostList(ViewObjectPermissionListMixin, ListView):
+class ForumTopicPostList(
+    ObjectPermissionRequiredMixin, ViewObjectPermissionListMixin, ListView
+):
     model = ForumPost
     paginate_by = 10
+    permission_required = "view_forumtopic"
+    raise_exception = True
     queryset = ForumPost.objects.select_related("topic__forum")
 
     @cached_property
@@ -86,6 +97,9 @@ class ForumTopicPostList(ViewObjectPermissionListMixin, ListView):
             forum=self.forum,
             slug=self.kwargs["slug"],
         )
+
+    def get_permission_object(self):
+        return self.topic
 
     def get_queryset(self):
         queryset = super().get_queryset()

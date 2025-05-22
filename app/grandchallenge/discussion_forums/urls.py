@@ -26,7 +26,7 @@ urlpatterns = [
         name="topic-delete",
     ),
     path(
-        "topics/<slug:slug>/posts/",
+        "topics/<slug:slug>/",
         ForumTopicPostList.as_view(),
         name="topic-post-list",
     ),

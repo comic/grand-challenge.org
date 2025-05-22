@@ -194,8 +194,7 @@ def test_discussion_forum_topic_list_permission_filter(client):
             "challenge_short_name": forum.linked_challenge.short_name,
         },
     )
-    assert response.status_code == 200
-    assert response.context["object_list"].count() == 0
+    assert response.status_code == 403
 
     for user in [participant, admin]:
         response = get_view_for_user(
@@ -233,8 +232,7 @@ def test_discussion_forum_topic_post_list_permission_filter(client):
             "slug": topic1.slug,
         },
     )
-    assert response.status_code == 200
-    assert response.context["object_list"].count() == 0
+    assert response.status_code == 403
 
     for user in [participant, admin]:
         response = get_view_for_user(
