@@ -49,26 +49,24 @@
                         <i class="fas fa-trash mr-1"></i>Delete topic
                     </a>
                 {% endif %}
-                {% if 'change_forumtopic' in user_perms and not topic.is_locked %}
+                {% if 'lock_forumtopic' in user_perms and not topic.is_locked %}
                     <form class="d-inline"
-                          hx-post="{% url 'discussion-forums:topic-lock-update' slug=topic.slug %}"
-                          hx-vals='{"is_locked": "True"}'
-                          hx-swap="outerHTML"
-                          hx-target="body"
+                          method="post"
+                          action="{% url 'discussion-forums:topic-lock-update' slug=topic.slug %}"
                     >
                         {% csrf_token %}
+                        <input type="hidden" name="is_locked" value="True">
                         <button type="submit" class="btn btn-warning btn-sm btn-subscription"><i class="fas fa-lock mr-1"></i>
                             Lock topic
                         </button>
                     </form>
-                {% elif 'change_forumtopic' in user_perms and topic.is_locked %}
+                {% elif 'lock_forumtopic' in user_perms and topic.is_locked %}
                     <form class="d-inline"
-                          hx-post="{% url 'discussion-forums:topic-lock-update' slug=topic.slug %}"
-                          hx-vals='{"is_locked": "False"}'
-                          hx-swap="outerHTML"
-                          hx-target="body"
+                          method="post"
+                          action="{% url 'discussion-forums:topic-lock-update' slug=topic.slug %}"
                     >
                         {% csrf_token %}
+                        <input type="hidden" name="is_locked" value="False">
                         <button type="submit" class="btn btn-warning btn-sm btn-subscription"><i class="fas fa-lock-open mr-1"></i>
                             Unlock topic
                         </button>
