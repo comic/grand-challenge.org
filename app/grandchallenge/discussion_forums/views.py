@@ -125,7 +125,7 @@ class ForumTopicDelete(ObjectPermissionRequiredMixin, DeleteView):
 
 class ForumTopicLockUpdate(ObjectPermissionRequiredMixin, UpdateView):
     model = ForumTopic
-    permission_required = "discussion_forums.lock_forumtopic"
+    permission_required = "lock_forumtopic"
     raise_exception = True
     form_class = ForumTopicLockUpdateForm
 

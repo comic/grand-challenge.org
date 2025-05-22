@@ -125,7 +125,7 @@ class ForumTopic(UUIDModel):
         )
         # only challenge admins can lock and delete this topic
         assign_perm(
-            "discussion_forums.lock_forumtopic",
+            "lock_forumtopic",
             self.forum.parent_object.admins_group,
             self,
         )
