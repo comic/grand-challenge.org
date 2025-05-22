@@ -11,7 +11,6 @@ from grandchallenge.discussion_forums.models import (
     ForumTopic,
     ForumTopicKindChoices,
 )
-from grandchallenge.subdomains.utils import reverse
 
 
 class ForumTopicForm(SaveFormInitMixin, ModelForm):
@@ -84,7 +83,7 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
         model = ForumPost
         fields = ("topic", "creator", "content")
 
-    def __init__(self, *args, topic, user, is_update=False, **kwargs):
+    def __init__(self, *args, topic, user, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._user = user
@@ -97,32 +96,6 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
             pk=user.pk
         )
         self.fields["creator"].initial = user
-
-        if is_update:
-            hx_post_url = reverse(
-                "discussion-forums:post-update",
-                kwargs={
-                    "challenge_short_name": topic.forum.parent_object.short_name,
-                    "slug": self._topic.slug,
-                    "pk": self.instance.pk,
-                },
-            )
-        else:
-            hx_post_url = reverse(
-                "discussion-forums:post-create",
-                kwargs={
-                    "challenge_short_name": topic.forum.parent_object.short_name,
-                    "slug": self._topic.slug,
-                },
-            )
-
-        self.helper.attrs.update(
-            {
-                "hx-post": hx_post_url,
-                "hx-target": "body",
-                "hx-swap": "outerHTML",
-            }
-        )
 
     def clean(self):
         if self.cleaned_data["topic"].is_locked and not self.cleaned_data[

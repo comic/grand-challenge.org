@@ -11,8 +11,8 @@
                 <div class="float-right">
                     {% get_obj_perms request.user for post as "user_perms" %}
                     {% if 'change_forumpost' in user_perms %}
-                        <a hx-get="{% url 'discussion-forums:post-update' challenge_short_name=post.topic.forum.linked_challenge.short_name slug=post.topic.slug pk=post.pk %}"
-                           hx-swap="outerHTML show:bottom" hx-target="#post-{{ post.id }}" class="btn btn-primary btn-sm">
+                        <a href="{% url 'discussion-forums:post-update' challenge_short_name=post.topic.forum.linked_challenge.short_name slug=post.topic.slug pk=post.pk %}"
+                           class="btn btn-primary btn-sm">
                             <i class="fas fa-edit"></i>
                         </a>
                     {% endif %}

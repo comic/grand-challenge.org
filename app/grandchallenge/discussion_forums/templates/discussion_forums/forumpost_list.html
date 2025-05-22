@@ -24,7 +24,7 @@
     {% get_obj_perms request.user for topic as "user_perms" %}
     <div>
         {% if 'create_topic_post' in user_perms %}
-            <a hx-get="{% url 'discussion-forums:post-create' slug=topic.slug %}" hx-swap="beforeend show:bottom" hx-target="#post-list" class="btn btn-primary btn-sm">
+            <a href="{% url 'discussion-forums:post-create' slug=topic.slug %}#new-post-card" class="btn btn-primary btn-sm">
                 <i class="fas fa-comment mr-1"></i> Reply
             </a>
         {% endif %}

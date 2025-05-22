@@ -154,6 +154,14 @@ class ForumTopic(UUIDModel):
     def num_replies(self):
         return self.posts.count() - 1
 
+    @property
+    def latest_posts(self):
+        total_count = self.posts.count()
+        if total_count > 5:
+            return self.posts.all()[total_count - 5 :]
+        else:
+            return self.posts.all()
+
 
 class ForumPost(UUIDModel):
     topic = models.ForeignKey(

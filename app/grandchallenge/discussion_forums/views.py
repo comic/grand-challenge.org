@@ -157,14 +157,18 @@ class ForumPostCreate(ObjectPermissionRequiredMixin, CreateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
-        context.update({"forum": self.forum, "topic": self.topic})
+        context.update(
+            {
+                "forum": self.forum,
+                "topic": self.topic,
+                "latest_posts": self.topic.latest_posts,
+            }
+        )
         return context
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update(
-            {"user": self.request.user, "topic": self.topic, "instance": None}
-        )
+        kwargs.update({"user": self.request.user, "topic": self.topic})
         return kwargs
 
 
@@ -231,13 +235,23 @@ class ForumPostUpdate(ObjectPermissionRequiredMixin, UpdateView):
             pk=self.kwargs["pk"],
         )
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update(
+            {
+                "forum": self.forum,
+                "topic": self.topic,
+                "latest_posts": None,
+            }
+        )
+        return context
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update(
             {
                 "user": self.request.user,
                 "topic": self.topic,
-                "is_update": True,
             }
         )
         return kwargs
