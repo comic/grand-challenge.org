@@ -1347,7 +1347,7 @@ class JobUserObjectPermission(UserObjectPermissionBase):
 
 
 class JobGroupObjectPermission(GroupObjectPermissionBase):
-    allowed_permissions = frozenset({"view_job", "change_job", "view_logs"})
+    allowed_permissions = frozenset({"view_job", "view_logs"})
 
     content_object = models.ForeignKey(Job, on_delete=models.CASCADE)
 
