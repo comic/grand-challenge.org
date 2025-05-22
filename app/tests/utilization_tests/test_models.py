@@ -2,16 +2,27 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from grandchallenge.evaluation.tasks import (
+    create_algorithm_jobs_for_evaluation,
+)
+from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmChoices,
 )
 from grandchallenge.utilization.models import (
+    EvaluationUtilization,
     JobUtilization,
     SessionUtilization,
 )
 from grandchallenge.workstations.models import Session
-from tests.algorithms_tests.factories import AlgorithmJobFactory
-from tests.evaluation_tests.factories import EvaluationFactory
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    AlgorithmInterfaceFactory,
+    AlgorithmJobFactory,
+)
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
+from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import SessionFactory
 from tests.reader_studies_tests.factories import (
     QuestionFactory,
@@ -194,3 +205,111 @@ def test_average_duration_filtering():
     assert JobUtilization.objects.filter(
         algorithm_image=j1.algorithm_image
     ).average_duration() == timedelta(minutes=5)
+
+
+@pytest.mark.django_db
+def test_job_utilization_created_on_job_creation():
+
+    assert JobUtilization.objects.count() == 0
+
+    job = AlgorithmJobFactory(time_limit=60)
+
+    assert JobUtilization.objects.count() == 1
+
+    job_utilization = JobUtilization.objects.first()
+
+    assert job_utilization.job == job
+
+
+@pytest.mark.django_db
+def test_evaluation_utilization_created_on_evaluation_creation():
+
+    assert EvaluationUtilization.objects.count() == 0
+
+    evaluation = EvaluationFactory(time_limit=60)
+
+    assert EvaluationUtilization.objects.count() == 1
+
+    evaluation_utilization = EvaluationUtilization.objects.first()
+
+    assert evaluation_utilization.evaluation == evaluation
+
+
+@pytest.mark.django_db
+def test_job_utilization_created_on_job_sets_properties():
+    job = AlgorithmJobFactory(time_limit=60)
+    job_utilization = job.job_utilization
+
+    assert job_utilization.creator == job.creator
+    assert job_utilization.algorithm_image == job.algorithm_image
+    assert job_utilization.algorithm == job.algorithm_image.algorithm
+
+
+@pytest.mark.django_db
+def test_job_utilization_created_on_jobs_for_evaluation_sets_properties():
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    interface = AlgorithmInterfaceFactory()
+    algorithm_image.algorithm.interfaces.set([interface])
+
+    archive = ArchiveFactory()
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.set(
+        [
+            ComponentInterfaceValueFactory(interface=ci)
+            for ci in interface.inputs.all()
+        ]
+    )
+
+    phase = PhaseFactory(
+        archive=archive,
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+    )
+
+    evaluation = EvaluationFactory(
+        time_limit=60,
+        submission__phase=phase,
+        submission__algorithm_image=algorithm_image,
+    )
+
+    create_algorithm_jobs_for_evaluation(
+        evaluation_pk=evaluation.pk,
+        max_jobs=None,
+    )
+
+    job_utilization = JobUtilization.objects.get()
+
+    assert job_utilization.phase == phase
+    assert job_utilization.archive == phase.archive
+    assert job_utilization.challenge == phase.challenge
+    assert job_utilization.algorithm_image == algorithm_image
+    assert job_utilization.algorithm == algorithm_image.algorithm
+    assert job_utilization.creator is None
+
+
+@pytest.mark.django_db
+def test_evaluation_utilization_created_on_evaluation_sets_properties():
+    algorithm_image = AlgorithmImageFactory()
+    evaluation = EvaluationFactory(
+        submission__algorithm_image=algorithm_image, time_limit=60
+    )
+    evaluation_utilization = evaluation.evaluation_utilization
+
+    assert evaluation_utilization.creator == evaluation.submission.creator
+    assert evaluation_utilization.phase == evaluation.submission.phase
+    assert (
+        evaluation_utilization.external_evaluation
+        == evaluation.submission.phase.external_evaluation
+    )
+    assert (
+        evaluation_utilization.archive == evaluation.submission.phase.archive
+    )
+    assert (
+        evaluation_utilization.challenge
+        == evaluation.submission.phase.challenge
+    )
+    assert evaluation_utilization.algorithm_image == algorithm_image
+    assert evaluation_utilization.algorithm == algorithm_image.algorithm
