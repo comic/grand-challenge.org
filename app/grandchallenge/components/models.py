@@ -1778,6 +1778,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             in [self.EXECUTED, self.SUCCESS, self.FAILURE, self.CANCELLED]
             and self.utilization.duration is None
             and "duration" not in utilization_kwargs.keys()
+            and self.started_at is not None
         ):
             utilization_kwargs.update(duration=now() - self.started_at)
 
