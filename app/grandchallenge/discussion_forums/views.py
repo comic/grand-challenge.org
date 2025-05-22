@@ -260,6 +260,7 @@ class ForumPostUpdate(ObjectPermissionRequiredMixin, UpdateView):
 
 class MyForumPosts(ViewObjectPermissionListMixin, ListView):
     model = ForumPost
+    paginate_by = 10
 
     def get_queryset(self):
         qs = super().get_queryset()

@@ -3,7 +3,7 @@
 {% load static %}
 {% load guardian_tags %}
 
-{% block sub_title %}{% if topic %}{{ topic }}{% endif %}- {% endblock %}
+{% block sub_title %}{% if topic %}{{ topic }}{% endif %}My posts- {% endblock %}
 
 {% block extra_breadcrumbs %}
     <li class="breadcrumb-item">
@@ -61,7 +61,7 @@
                             Lock topic
                         </button>
                     </form>
-                {% elif 'change_forumtopic' in user_perms and topopic.is_locked %}
+                {% elif 'change_forumtopic' in user_perms and topic.is_locked %}
                     <form class="d-inline"
                           hx-post="{% url 'discussion-forums:topic-lock-update' slug=topic.slug %}"
                           hx-vals='{"is_locked": "False"}'
