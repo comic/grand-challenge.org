@@ -352,7 +352,7 @@ def test_algorithm_jobs_list_view(client):
 
 @pytest.mark.django_db
 class TestObjectPermissionRequiredViews:
-    def test_permission_required_views(self, client):
+    def test_group_permission_required_views(self, client):
         ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
         am = AlgorithmModelFactory()
         u = UserFactory()
@@ -472,23 +472,9 @@ class TestObjectPermissionRequiredViews:
                 None,
             ),
             (
-                "job-update",
-                {"slug": ai.algorithm.slug, "pk": j.pk},
-                "change_job",
-                j,
-                None,
-            ),
-            (
                 "display-set-from-job-create",
                 {"slug": ai.algorithm.slug, "pk": j.pk},
                 "view_job",
-                j,
-                None,
-            ),
-            (
-                "job-viewers-update",
-                {"slug": ai.algorithm.slug, "pk": j.pk},
-                "change_job",
                 j,
                 None,
             ),
@@ -572,6 +558,55 @@ class TestObjectPermissionRequiredViews:
 
             remove_perm(permission, group, obj)
 
+    def test_user_permission_required_views(self, client):
+        ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
+        u = UserFactory()
+        j = AlgorithmJobFactory(
+            status=Job.SUCCESS,
+            time_limit=ai.algorithm.time_limit,
+        )
+
+        VerificationFactory(user=u, is_verified=True)
+
+        for view_name, kwargs, permission, obj, redirect in [
+            (
+                "job-update",
+                {"slug": ai.algorithm.slug, "pk": j.pk},
+                "change_job",
+                j,
+                None,
+            ),
+            (
+                "job-viewers-update",
+                {"slug": ai.algorithm.slug, "pk": j.pk},
+                "change_job",
+                j,
+                None,
+            ),
+        ]:
+
+            def _get_view():
+                return get_view_for_user(
+                    client=client,
+                    viewname=f"algorithms:{view_name}",
+                    reverse_kwargs=kwargs,
+                    user=u,
+                )
+
+            response = _get_view()
+            if redirect is not None:
+                assert response.status_code == 302
+                assert response.url == redirect
+            else:
+                assert response.status_code == 403
+
+            assign_perm(permission, u, obj)
+
+            response = _get_view()
+            assert response.status_code == 200
+
+            remove_perm(permission, u, obj)
+
     def test_permission_required_list_views(self, client):
         ai = AlgorithmImageFactory()
         u = UserFactory()
@@ -615,7 +650,7 @@ class TestObjectPermissionRequiredViews:
 
 @pytest.mark.django_db
 class TestJobDetailView:
-    def test_guarded_content_visibility(self, client):
+    def test_guarded_group_content_visibility(self, client):
         j = AlgorithmJobFactory(time_limit=60)
         u = UserFactory()
         group = GroupFactory()
@@ -623,7 +658,6 @@ class TestJobDetailView:
         assign_perm("view_job", group, j)
 
         for content, permission, permission_object in [
-            ("<h2>Viewers</h2>", "change_job", j),
             ("<h2>Logs</h2>", "view_logs", j),
         ]:
             view_kwargs = {
@@ -646,6 +680,37 @@ class TestJobDetailView:
             assert content in response.rendered_content
 
             remove_perm(permission, group, permission_object)
+
+    def test_guarded_user_content_visibility(self, client):
+        j = AlgorithmJobFactory(time_limit=60)
+        u = UserFactory()
+        group = GroupFactory()
+        group.user_set.add(u)
+        assign_perm("view_job", group, j)
+
+        for content, permission, permission_object in [
+            ("<h2>Viewers</h2>", "change_job", j),
+        ]:
+            view_kwargs = {
+                "client": client,
+                "viewname": "algorithms:job-detail",
+                "reverse_kwargs": {
+                    "slug": j.algorithm_image.algorithm.slug,
+                    "pk": j.pk,
+                },
+                "user": u,
+            }
+            response = get_view_for_user(**view_kwargs)
+            assert response.status_code == 200
+            assert content not in response.rendered_content
+
+            assign_perm(permission, u, permission_object)
+
+            response = get_view_for_user(**view_kwargs)
+            assert response.status_code == 200
+            assert content in response.rendered_content
+
+            remove_perm(permission, u, permission_object)
 
 
 @pytest.mark.django_db

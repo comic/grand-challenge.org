@@ -9,7 +9,6 @@ from guardian.core import ObjectPermissionChecker
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.algorithms.models import Job
 from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
@@ -17,7 +16,6 @@ from grandchallenge.core.guardian import (
     filter_by_permission,
 )
 from grandchallenge.reader_studies.models import Answer
-from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.factories import GroupFactory, UserFactory
 from tests.reader_studies_tests.factories import AnswerFactory
 
@@ -419,16 +417,16 @@ def test_filter_ordering():
 @pytest.mark.django_db
 def test_unique_objects_returned_with_dual_access():
     user = UserFactory()
-    queryset = Job.objects.all()
-    job = AlgorithmJobFactory(time_limit=60)
-    codename = "change_job"
+    queryset = Answer.objects.all()
+    answer = AnswerFactory()
+    codename = "view_answer"
 
     group1, group2 = GroupFactory.create_batch(2)
     group1.user_set.add(user)
     group2.user_set.add(user)
 
-    assign_perm(codename, group1, job)
-    assign_perm(codename, group2, job)
+    assign_perm(codename, group1, answer)
+    assign_perm(codename, group2, answer)
 
     assert (
         filter_by_permission(
@@ -437,7 +435,7 @@ def test_unique_objects_returned_with_dual_access():
         == 1
     )
 
-    assign_perm(codename, user, job)
+    assign_perm(codename, user, answer)
 
     assert (
         filter_by_permission(
@@ -446,15 +444,15 @@ def test_unique_objects_returned_with_dual_access():
         == 1
     )
 
-    codename = "view_job"
+    codename = "delete_answer"
 
     with pytest.raises(RuntimeError):
         # For this test to work we need to use a model
         # that only has group permissions for this codename
-        assign_perm(codename, user, job)
+        assign_perm(codename, user, answer)
 
-    assign_perm(codename, group1, job)
-    assign_perm(codename, group2, job)
+    assign_perm(codename, group1, answer)
+    assign_perm(codename, group2, answer)
 
     assert (
         filter_by_permission(
