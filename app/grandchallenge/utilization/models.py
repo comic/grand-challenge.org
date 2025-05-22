@@ -1,3 +1,4 @@
+from datetime import timedelta
 from math import ceil
 
 from django.conf import settings
@@ -105,7 +106,7 @@ class SessionUtilizationReaderStudy(models.Model):
 class ComponentJobUtilizationManager(models.QuerySet):
     def average_duration(self):
         """Calculate the average duration that completed jobs ran for"""
-        return self.exclude(duration=None).aggregate(
+        return self.filter(duration__gt=timedelta(seconds=0)).aggregate(
             duration__avg=Avg("duration")
         )["duration__avg"]
 
