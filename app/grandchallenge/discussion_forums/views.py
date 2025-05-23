@@ -108,7 +108,15 @@ class ForumTopicPostList(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
-        context.update({"forum": self.forum, "topic": self.topic})
+        context.update(
+            {
+                "forum": self.forum,
+                "topic": self.topic,
+                "post_create_form": ForumPostForm(
+                    user=self.request.user, topic=self.topic
+                ),
+            }
+        )
         return context
 
 
