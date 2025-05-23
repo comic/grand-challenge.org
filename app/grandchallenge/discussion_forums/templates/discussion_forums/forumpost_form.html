@@ -1,49 +1,12 @@
-{% extends "discussion_forums/forum_base.html" %}
-{% load guardian_tags %}
 {% load crispy_forms_tags %}
 
-
-{% block sub_title %}{{ topic }} - {% endblock %}
-
-{% block extra_breadcrumbs %}
-    <li class="breadcrumb-item">
-        <a href="{% url 'discussion-forums:topic-list' %}">Forum</a>
-    </li>
-    <li class="breadcrumb-item"><a href="{{ topic.get_absolute_url }}">{{ topic }}</a></li>
-    <li class="breadcrumb-item active">{% if object %}Edit post{% else %}Reply to topic{% endif %}</li>
-{% endblock %}
-
-{% block extra_top_row_buttons %}
-    <div class="col-6">
-        <a href="{% url 'discussion-forums:topic-post-list' slug=topic.slug %}" class="btn btn-dark btn-sm">Back to
-            topic</a>
-    </div>
-{% endblock %}
-
-{% block extra_content %}
-    <div class="row">
-        <div class="col-12"><h2>{{ topic.subject }}</h2></div>
-    </div>
-    {% if latest_posts %}
-        <div class="row">
-            <div class="col-12" id="post-list">
-                {% for post in latest_posts %}
-                    {% include 'discussion_forums/partials/forumpost_detail.html' %}
-                {% endfor %}
-            </div>
-        </div>
-    {% endif %}
-
-    <div class="card" id={% if object %}"post-{{ object.id }}"{% else %}"new-post-card"{% endif %}>
-    <div class="card-header bg-light d-flex justify-content-between align-items-center">
-        <h3 class="m-0 h5 card-title">
-            {% if object %}Edit post{% else %}Reply to topic{% endif %}</h3>
-        {% if latest_posts %}
-            <small class="text-muted">Scroll up to see the latest posts for reference</small>{% endif %}
-        <div><a href="{{ topic.get_absolute_url }}" class="btn btn-dark">Cancel</a></div>
-    </div>
-    <div class="card-body">
-        {% crispy form %}
-    </div>
-    </div>
-{% endblock %}
+<div class="card" id={% if object %}"post-{{ object.id }}"{% else %}"new-post-card"{% endif %}>
+<div class="card-header bg-light d-flex justify-content-between align-items-center">
+    <h3 class="m-0 h5 card-title">
+        {% if object %}Edit post{% else %}Reply to topic{% endif %}</h3>
+    <div><a href="{{ topic.get_absolute_url }}" class="btn btn-dark">Cancel</a></div>
+</div>
+<div class="card-body">
+    {% crispy form %}
+</div>
+</div>
