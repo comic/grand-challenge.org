@@ -34,7 +34,7 @@ class ForumTopicFactory(factory.django.DjangoModelFactory):
     def post_count(self, create, extracted, **kwargs):
         if not create:
             return
-        num_posts = int(extracted) if extracted else 1
+        num_posts = int(extracted) if extracted is not None else 1
         ForumPostFactory.create_batch(num_posts, topic=self)
 
 

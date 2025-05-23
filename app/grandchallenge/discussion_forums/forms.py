@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.forms import CharField, HiddenInput, ModelChoiceField, ModelForm
 
 from grandchallenge.core.forms import SaveFormInitMixin
@@ -10,6 +11,7 @@ from grandchallenge.discussion_forums.models import (
     ForumTopic,
     ForumTopicKindChoices,
 )
+from grandchallenge.subdomains.utils import reverse
 
 
 class ForumTopicForm(SaveFormInitMixin, ModelForm):
@@ -63,3 +65,70 @@ class ForumTopicForm(SaveFormInitMixin, ModelForm):
             content=self.cleaned_data["content"],
         )
         return topic
+
+
+class ForumPostForm(SaveFormInitMixin, ModelForm):
+    creator = ModelChoiceField(
+        widget=HiddenInput(),
+        queryset=None,
+    )
+
+    topic = ModelChoiceField(
+        widget=HiddenInput(),
+        queryset=None,
+    )
+
+    content = CharField(widget=MarkdownEditorInlineWidget)
+
+    class Meta:
+        model = ForumPost
+        fields = ("topic", "creator", "content")
+
+    def __init__(self, *args, topic, user, is_update=False, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._user = user
+        self._topic = topic
+
+        self.fields["topic"].queryset = ForumTopic.objects.filter(pk=topic.pk)
+        self.fields["topic"].initial = topic
+
+        self.fields["creator"].queryset = get_user_model().objects.filter(
+            pk=user.pk
+        )
+        self.fields["creator"].initial = user
+
+        if is_update:
+            hx_post_url = reverse(
+                "discussion-forums:post-update",
+                kwargs={
+                    "challenge_short_name": topic.forum.parent_object.short_name,
+                    "slug": self._topic.slug,
+                    "pk": self.instance.pk,
+                },
+            )
+        else:
+            hx_post_url = reverse(
+                "discussion-forums:post-create",
+                kwargs={
+                    "challenge_short_name": topic.forum.parent_object.short_name,
+                    "slug": self._topic.slug,
+                },
+            )
+
+        self.helper.attrs.update(
+            {
+                "hx-post": hx_post_url,
+                "hx-target": "body",
+                "hx-swap": "outerHTML",
+            }
+        )
+
+    def clean(self):
+        if self.cleaned_data["topic"].is_locked and not self.cleaned_data[
+            "topic"
+        ].forum.parent_object.is_admin(self.cleaned_data["creator"]):
+            # challenge admins can still post to locked topics
+            raise ValidationError(
+                "You can no longer reply to this topic because it is locked."
+            )

@@ -24,7 +24,7 @@
                                         <i class="fas {% if topic.is_sticky %}fa-lightbulb{% elif topic.is_announcement %}fa-info{% else %}fa-dot-circle{% endif %} fa-2x text-info"></i>
                                     </div>
                                     <div class="col-10 col-md-7">
-                                        <a href="{% url 'discussion-forums:topic-detail' slug=topic.slug %}">{{ topic.subject }}</a>
+                                        <a href="{% url 'discussion-forums:topic-post-list' slug=topic.slug %}">{{ topic.subject }}</a>
                                         {% if topic.locked %}
                                             <i class="fas fa-lock text-info ml-1" title="This topic is locked"></i>
                                         {% endif %}

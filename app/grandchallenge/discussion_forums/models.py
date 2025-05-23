@@ -1,3 +1,5 @@
+import math
+
 from django.contrib.auth import get_user_model
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
@@ -5,7 +7,7 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
-    NoUserPermissionsAllowed,
+    UserObjectPermissionBase,
 )
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.subdomains.utils import reverse
@@ -103,35 +105,35 @@ class ForumTopic(UUIDModel):
     def assign_permissions(self):
         # challenge admins and participants can see this topic and add posts to it
         assign_perm(
-            "discussion_forums.view_forumtopic",
+            "view_forumtopic",
             self.forum.parent_object.admins_group,
             self,
         )
         assign_perm(
-            "discussion_forums.view_forumtopic",
+            "view_forumtopic",
             self.forum.parent_object.participants_group,
             self,
         )
         assign_perm(
-            "discussion_forums.create_topic_post",
+            "create_topic_post",
             self.forum.parent_object.admins_group,
             self,
         )
         assign_perm(
-            "discussion_forums.create_topic_post",
+            "create_topic_post",
             self.forum.parent_object.participants_group,
             self,
         )
         # only challenge admins can delete this topic
         assign_perm(
-            "discussion_forums.delete_forumtopic",
+            "delete_forumtopic",
             self.forum.parent_object.admins_group,
             self,
         )
 
     def get_absolute_url(self):
         return reverse(
-            "discussion-forums:topic-detail",
+            "discussion-forums:topic-post-list",
             kwargs={
                 "challenge_short_name": self.forum.parent_object.short_name,
                 "slug": self.slug,
@@ -153,6 +155,14 @@ class ForumTopic(UUIDModel):
     @property
     def num_replies(self):
         return self.posts.count() - 1
+
+    @property
+    def last_page_num(self):
+        from grandchallenge.discussion_forums.views import ForumTopicPostList
+
+        post_count = self.posts.count()
+        posts_per_page = ForumTopicPostList.paginate_by
+        return math.ceil(post_count / posts_per_page)
 
 
 class ForumPost(UUIDModel):
@@ -176,44 +186,125 @@ class ForumPost(UUIDModel):
             "created",
         ]
 
-    def __str__(self):
-        return self.subject
-
     @property
     def is_alone(self):
         return self.topic.posts.count() == 1
 
+    @property
+    def is_last_post(self):
+        return self.topic.last_post == self
+
     def save(self, *args, **kwargs):
+        adding = self._state.adding
+
         super().save(*args, **kwargs)
+
+        if adding:
+            self.assign_permissions()
+
         self.topic.last_post_on = self.created
         self.topic.save()
 
     def delete(self, *args, **kwargs):
+        update_last_post_on = False
+        topic = self.topic
+
         if self.is_alone:
             self.topic.delete()
+        elif self.is_last_post:
+            update_last_post_on = True
+
+        super().delete(*args, **kwargs)
+
+        if update_last_post_on:
+            new_last_post = (
+                ForumPost.objects.filter(topic=topic)
+                .order_by("created")
+                .last()
+            )
+            topic.last_post_on = new_last_post.created
+            topic.save()
+
+    def assign_permissions(self):
+        # challenge admins and participants can see this post
+        assign_perm(
+            "view_forumpost",
+            self.topic.forum.parent_object.admins_group,
+            self,
+        )
+        assign_perm(
+            "view_forumpost",
+            self.topic.forum.parent_object.participants_group,
+            self,
+        )
+        # challenge admins and post creator can delete the post
+        assign_perm(
+            "delete_forumpost",
+            self.creator,
+            self,
+        )
+        assign_perm(
+            "delete_forumpost",
+            self.topic.forum.parent_object.admins_group,
+            self,
+        )
+        # only the creator can change the post
+        assign_perm(
+            "change_forumpost",
+            self.creator,
+            self,
+        )
+
+    def get_absolute_url(self):
+        from grandchallenge.discussion_forums.views import ForumTopicPostList
+
+        position = self.get_relative_position()
+        posts_per_page = ForumTopicPostList.paginate_by
+
+        page_number = (position // posts_per_page) + 1
+        if page_number > 1:
+            return f"{self.topic.get_absolute_url()}?page={page_number}#post-{self.pk}"
         else:
-            super().delete(*args, **kwargs)
+            return f"{self.topic.get_absolute_url()}#post-{self.pk}"
+
+    def get_relative_position(self):
+        post_ids = list(self.topic.posts.values_list("pk", flat=True))
+        return post_ids.index(self.pk)
 
 
-class ForumUserObjectPermission(NoUserPermissionsAllowed):
+class ForumUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
     content_object = models.ForeignKey(Forum, on_delete=models.CASCADE)
 
 
 class ForumGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {
+            "view_forum",
+            "create_forum_topic",
+            "create_sticky_and_announcement_topic",
+        }
+    )
     content_object = models.ForeignKey(Forum, on_delete=models.CASCADE)
 
 
-class ForumTopicUserObjectPermission(NoUserPermissionsAllowed):
+class ForumTopicUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset()
     content_object = models.ForeignKey(ForumTopic, on_delete=models.CASCADE)
 
 
 class ForumTopicGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset(
+        {"view_forumtopic", "delete_forumtopic", "create_topic_post"}
+    )
     content_object = models.ForeignKey(ForumTopic, on_delete=models.CASCADE)
 
 
-class ForumPostUserObjectPermission(NoUserPermissionsAllowed):
+class ForumPostUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset({"change_forumpost", "delete_forumpost"})
     content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)
 
 
 class ForumPostGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset({"view_forumpost", "delete_forumpost"})
     content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)
