@@ -1,3 +1,5 @@
+import math
+
 from django.contrib.auth import get_user_model
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
@@ -153,6 +155,14 @@ class ForumTopic(UUIDModel):
     @property
     def num_replies(self):
         return self.posts.count() - 1
+
+    @property
+    def last_page_num(self):
+        from grandchallenge.discussion_forums.views import ForumTopicPostList
+
+        post_count = self.posts.count()
+        posts_per_page = ForumTopicPostList.paginate_by
+        return math.ceil(post_count / posts_per_page)
 
 
 class ForumPost(UUIDModel):
