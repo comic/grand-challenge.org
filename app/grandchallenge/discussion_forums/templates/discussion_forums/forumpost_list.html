@@ -26,7 +26,7 @@
 
 {% block extra_content %}
     {% if topic %}
-        <div class="h3 my-3" title="{% if topic.is_locked %}This topic is locked.{% endif %}">
+        <div class="h3 my-3" title="{% if topic.is_locked %}This topic is locked. You cannot reply to it.{% endif %}">
             {% if topic.is_locked %}<i class="fas fa-lock mr-2 fa-xs badge-dark p-2 rounded"></i>{% endif %}
             {{ topic.subject }}
         </div>
@@ -39,15 +39,13 @@
         <div class="row">
             <div class="col-8">
                 {% if 'create_topic_post' in user_perms %}
-                    <div class="d-inline" title="{% if topic.is_locked %}This topic is locked. You cannot reply to it.{% endif %}">
-                        {% if not page_obj.has_next %}
-                            <a href="#new-post-card" class="btn btn-primary btn-sm {% if topic.is_locked %}disabled{% endif %}">
-                                <i class="fas fa-comment mr-1"></i> Reply
-                            </a>
-                        {% else %}
-                            <a href="?page={{ topic.last_page_num }}#new-post-card" class="btn btn-primary btn-sm"><i class="fas fa-comment mr-1"></i>Reply</a>
-                        {% endif %}
-                    </div>
+                    {% if not page_obj.has_next %}
+                        <a href="#new-post-card" class="btn btn-primary btn-sm">
+                            <i class="fas fa-comment mr-1"></i>Reply
+                        </a>
+                    {% else %}
+                        <a href="?page={{ topic.last_page_num }}#new-post-card" class="btn btn-primary btn-sm"><i class="fas fa-comment mr-1"></i>Reply</a>
+                    {% endif %}
                 {% endif %}
                 {% if 'delete_forumtopic' in  user_perms %}
                     <a href="{% url 'discussion-forums:topic-delete' slug=topic.slug %}" class="btn btn-danger btn-sm">
@@ -94,8 +92,8 @@
         </div>
     </div>
 
-    {% if topic %}
-        {% if not page_obj.has_next and not topic.is_locked %}
+    {% if topic and 'create_topic_post' in user_perms %}
+        {% if not page_obj.has_next %}
             <div class="card my-3" id="new-post-card">
                 <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h3 class="m-0 p-2 h5 card-title">Reply to topic</h3>
@@ -107,12 +105,14 @@
             {% include "grandchallenge/partials/pagination.html" %}
         {% else %}
             <div class="d-flex justify-content-between">
-                <div class="d-inline" title="{% if topic.is_locked %}This topic is locked. You cannot reply to it.{% endif %}">
+                <div class="d-inline">
                     <a href="?page={{ topic.last_page_num }}#new-post-card" class="btn btn-primary my-1 {% if topic.is_locked %}disabled{% endif %}"><i class="fas fa-comment mr-1"></i>Reply</a>
                 </div>
                 {% include "grandchallenge/partials/pagination.html" %}
             </div>
         {% endif %}
+    {% else %}
+        {% include "grandchallenge/partials/pagination.html" %}
     {% endif %}
 
 {% endblock %}

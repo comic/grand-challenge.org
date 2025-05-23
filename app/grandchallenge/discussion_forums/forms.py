@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
 from django.forms import CharField, HiddenInput, ModelChoiceField, ModelForm
 
 from grandchallenge.core.forms import SaveFormInitMixin
@@ -123,15 +122,6 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
                 "hx-swap": "outerHTML",
             }
         )
-
-    def clean(self):
-        if self.cleaned_data["topic"].is_locked and not self.cleaned_data[
-            "topic"
-        ].forum.parent_object.is_admin(self.cleaned_data["creator"]):
-            # challenge admins can still post to locked topics
-            raise ValidationError(
-                "You can no longer reply to this topic because it is locked."
-            )
 
 
 class ForumTopicLockUpdateForm(ModelForm):

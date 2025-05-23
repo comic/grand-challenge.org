@@ -3,13 +3,13 @@ import math
 from django.contrib.auth import get_user_model
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
-from grandchallenge.core.models import UUIDModel
+from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -38,7 +38,7 @@ class Forum(UUIDModel):
         return self.linked_challenge
 
 
-class ForumTopic(UUIDModel):
+class ForumTopic(FieldChangeMixin, UUIDModel):
     forum = models.ForeignKey(
         Forum,
         related_name="topics",
@@ -103,6 +103,9 @@ class ForumTopic(UUIDModel):
             self.assign_permissions()
             self.last_post_on = self.created
 
+        if self.has_changed("is_locked"):
+            self.update_create_post_permission()
+
     def assign_permissions(self):
         # challenge admins and participants can see this topic and add posts to it
         assign_perm(
@@ -136,6 +139,17 @@ class ForumTopic(UUIDModel):
             self.forum.parent_object.admins_group,
             self,
         )
+
+    def update_create_post_permission(self):
+        groups = [
+            self.forum.parent_object.admins_group,
+            self.forum.parent_object.participants_group,
+        ]
+        for group in groups:
+            if self.is_locked:
+                remove_perm("create_topic_post", group, self)
+            else:
+                assign_perm("create_topic_post", group, self)
 
     def get_absolute_url(self):
         return reverse(

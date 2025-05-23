@@ -496,3 +496,56 @@ def test_my_posts_listview_filter(client):
     # admin should only see their own posts, not those of participants
     assert admin_response.context["object_list"].count() == 1
     assert p_admin in admin_response.context["object_list"]
+
+
+@pytest.mark.django_db
+def test_users_cannot_post_to_locked_topic(client):
+    topic = ForumTopicFactory(post_count=1)
+    user, admin = UserFactory.create_batch(2)
+    topic.forum.linked_challenge.add_participant(user)
+    topic.forum.linked_challenge.add_admin(admin)
+
+    post_count = topic.posts.count()
+
+    for u in [user, admin]:
+        response = get_view_for_user(
+            viewname="discussion-forums:post-create",
+            client=client,
+            method=client.post,
+            user=u,
+            reverse_kwargs={
+                "challenge_short_name": topic.forum.linked_challenge.short_name,
+                "slug": topic.slug,
+            },
+            data={
+                "topic": topic.pk,
+                "creator": u.pk,
+                "content": "New post",
+            },
+        )
+        post_count += 1
+        assert response.status_code == 302
+        assert topic.posts.count() == post_count
+
+    # locking revokes the permission to create posts
+    topic.is_locked = True
+    topic.save()
+
+    for u in [user, admin]:
+        response = get_view_for_user(
+            viewname="discussion-forums:post-create",
+            client=client,
+            method=client.post,
+            user=u,
+            reverse_kwargs={
+                "challenge_short_name": topic.forum.linked_challenge.short_name,
+                "slug": topic.slug,
+            },
+            data={
+                "topic": topic.pk,
+                "creator": u.pk,
+                "content": "New post",
+            },
+        )
+        assert response.status_code == 403
+        assert topic.posts.count() == post_count
