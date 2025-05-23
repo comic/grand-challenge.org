@@ -27,6 +27,9 @@
                     <small class="text-muted">
                         <i class="fas fa-clock mr-1"></i>By: {{ post.creator|user_profile_link }}
                         {{ post.created|naturaltime }}
+                        {% if include_topic_links %}
+                            in <a href="{{ post.topic.get_absolute_url }}">{{ post.topic }}</a>
+                        {% endif %}
                     </small>
                 </p>
                 <div class="post-content">{{ post.content|md2html }}</div>

@@ -17,6 +17,8 @@ def migrate_challenge_forums(apps, schema_editor):
         2: ForumTopicKindChoices.ANNOUNCE,
     }
 
+    topic_lock_matching_dict = {0: False, 1: True}
+
     for challenge in Challenge.objects.all():
         new_forum = Forum.objects.create()
         challenge.discussion_forum = new_forum
@@ -30,6 +32,7 @@ def migrate_challenge_forums(apps, schema_editor):
                 kind=topic_type_matching_dict[topic.type],
                 last_post_on=topic.last_post_on,
                 created=topic.created,
+                is_locked=topic_lock_matching_dict[topic.status],
             )
 
             for post in topic.posts.all():

@@ -138,6 +138,7 @@ class Migration(migrations.Migration):
                 "ordering": ["-kind", "-last_post_on"],
                 "permissions": (
                     ("create_topic_post", "Create a post for this topic"),
+                    ("lock_forumtopic", "Lock a topic"),
                 ),
             },
         ),
