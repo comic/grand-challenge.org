@@ -94,23 +94,25 @@
         </div>
     </div>
 
-    {% if not page_obj.has_next and not topic.is_locked %}
-        <div class="card my-3" id="new-post-card">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h3 class="m-0 p-2 h5 card-title">Reply to topic</h3>
-            </div>
-            <div class="card-body">
-                {% crispy post_create_form %}
-            </div>
-        </div>
-        {% include "grandchallenge/partials/pagination.html" %}
-    {% else %}
-        <div class="d-flex justify-content-between">
-            <div class="d-inline" title="{% if topic.is_locked %}This topic is locked. You cannot reply to it.{% endif %}">
-                <a href="?page={{ topic.last_page_num }}#new-post-card" class="btn btn-primary my-1 {% if topic.is_locked %}disabled{% endif %}"><i class="fas fa-comment mr-1"></i>Reply</a>
+    {% if topic %}
+        {% if not page_obj.has_next and not topic.is_locked %}
+            <div class="card my-3" id="new-post-card">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h3 class="m-0 p-2 h5 card-title">Reply to topic</h3>
+                </div>
+                <div class="card-body">
+                    {% crispy post_create_form %}
+                </div>
             </div>
             {% include "grandchallenge/partials/pagination.html" %}
-        </div>
+        {% else %}
+            <div class="d-flex justify-content-between">
+                <div class="d-inline" title="{% if topic.is_locked %}This topic is locked. You cannot reply to it.{% endif %}">
+                    <a href="?page={{ topic.last_page_num }}#new-post-card" class="btn btn-primary my-1 {% if topic.is_locked %}disabled{% endif %}"><i class="fas fa-comment mr-1"></i>Reply</a>
+                </div>
+                {% include "grandchallenge/partials/pagination.html" %}
+            </div>
+        {% endif %}
     {% endif %}
 
 {% endblock %}
