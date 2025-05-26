@@ -5,6 +5,7 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     ViewObjectPermissionListMixin,
+    filter_by_permission,
 )
 from grandchallenge.discussion_forums.forms import (
     ForumPostForm,
@@ -25,7 +26,10 @@ class ForumTopicListView(
     model = ForumTopic
     permission_required = "view_forum"
     raise_exception = True
-    queryset = ForumTopic.objects.select_related("forum")
+    queryset = ForumTopic.objects.exclude(
+        kind=ForumTopicKindChoices.ANNOUNCE
+    ).select_related("forum")
+    paginate_by = 15
 
     @cached_property
     def forum(self):
@@ -40,14 +44,19 @@ class ForumTopicListView(
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        # we're only paginating sticky and default topics
+        # announcements always stay at the top, unpaginated, so retrieve
+        # these here separately
+        announcements = filter_by_permission(
+            queryset=ForumTopic.objects.filter(
+                kind=ForumTopicKindChoices.ANNOUNCE, forum=self.forum
+            ),
+            user=self.request.user,
+            codename="view_forumtopic",
+        )
         context.update(
             {
-                "announcements": self.object_list.filter(
-                    kind=ForumTopicKindChoices.ANNOUNCE
-                ),
-                "default_topics": self.object_list.exclude(
-                    kind=ForumTopicKindChoices.ANNOUNCE
-                ),
+                "announcements": announcements,
                 "forum": self.forum,
             }
         )
