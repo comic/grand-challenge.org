@@ -1110,15 +1110,15 @@ def test_runtime_metrics_chart():
 
 @pytest.mark.django_db
 def test_clean_overlay_segments_with_values():
-    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
-    ci.overlay_segments = [{"name": "s1", "visible": True, "voxel_value": 1}]
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.SEGMENTATION,
+        overlay_segments=[{"name": "s1", "visible": True, "voxel_value": 1}],
+    )
     ci._clean_overlay_segments()
-    ci.save()
 
     ComponentInterfaceValueFactory(interface=ci)
     ci.overlay_segments = [
-        {"name": "s1", "visible": True, "voxel_value": 1},
-        {"name": "s2", "visible": True, "voxel_value": 2},
+        {"name": "s2", "visible": True, "voxel_value": 1},
     ]
     with pytest.raises(ValidationError) as e:
         ci._clean_overlay_segments()
@@ -1136,18 +1136,17 @@ def test_clean_overlay_segments_with_questions(reader_study_with_gt):
     )
     assert question.interface is None
 
-    ci = ComponentInterface(
-        kind=InterfaceKindChoices.SEGMENTATION, relative_path="images/test"
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.SEGMENTATION,
+        relative_path="images/test",
+        overlay_segments=[{"name": "s1", "visible": True, "voxel_value": 1}],
     )
-    ci.overlay_segments = [{"name": "s1", "visible": True, "voxel_value": 1}]
     ci._clean_overlay_segments()
-    ci.save()
 
     question.interface = ci
     question.save()
     ci.overlay_segments = [
-        {"name": "s1", "visible": True, "voxel_value": 1},
-        {"name": "s2", "visible": True, "voxel_value": 2},
+        {"name": "s2", "visible": True, "voxel_value": 1},
     ]
     with pytest.raises(ValidationError) as e:
         ci._clean_overlay_segments()
@@ -1189,6 +1188,47 @@ def test_clean_overlay_segments():
         {"name": "s2", "visible": True, "voxel_value": 2},
     ]
     ci._clean_overlay_segments()
+
+
+@pytest.mark.parametrize(
+    "updated_segments, expectation",
+    (
+        [
+            [{"name": "s1", "visible": True, "voxel_value": 1}],
+            pytest.raises(ValidationError),
+        ],  # deletes existing voxel values
+        [
+            [
+                {"name": "sfoo", "visible": True, "voxel_value": 1},
+                {"name": "s2", "visible": True, "voxel_value": 2},
+            ],
+            pytest.raises(ValidationError),
+        ],  # changes name of existing voxel value
+        [
+            [
+                {"name": "s1", "visible": True, "voxel_value": 1},
+                {"name": "s2", "visible": True, "voxel_value": 2},
+                {"name": "s3", "visible": True, "voxel_value": 3},
+            ],
+            nullcontext(),
+        ],  # adds new voxel value
+    ),
+)
+@pytest.mark.django_db
+def test_overlay_segments_can_be_extended(updated_segments, expectation):
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.SEGMENTATION,
+        overlay_segments=[
+            {"name": "s1", "visible": True, "voxel_value": 1},
+            {"name": "s2", "visible": True, "voxel_value": 2},
+        ],
+    )
+    ComponentInterfaceValueFactory(interface=ci)
+
+    ci.overlay_segments = updated_segments
+
+    with expectation:
+        ci._clean_overlay_segments()
 
 
 @pytest.mark.django_db
@@ -1605,15 +1645,16 @@ def test_correct_storage_set(factory, expected_storage, download_context):
 def test_displacement_field_validation(
     image, succeeds, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     image_paths = [Path(__file__).parent.absolute() / "resources" / image]
     session, uploaded_images = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         image_paths=image_paths,
     )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        session.process_images()
 
     session.refresh_from_db()
 

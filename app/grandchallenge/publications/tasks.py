@@ -1,11 +1,10 @@
-import logging
-
+from celery.utils.log import get_task_logger
 from requests.exceptions import RequestException
 
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.publications.models import Publication
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
 
 
 @acks_late_2xlarge_task

@@ -1,7 +1,7 @@
-import logging
 import uuid
 from datetime import timedelta
 
+from celery.utils.log import get_task_logger
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -29,7 +29,7 @@ from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
 
 
 @acks_late_2xlarge_task

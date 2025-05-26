@@ -1,4 +1,3 @@
-import logging
 import zipfile
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
@@ -7,8 +6,10 @@ from shutil import rmtree
 from tempfile import TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from celery import signature
+from celery.utils.log import get_task_logger
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
 from django.db import transaction
 from django.db.transaction import on_commit
@@ -17,17 +18,18 @@ from django.utils.module_loading import import_string
 from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
 
-from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.backends.utils import safe_extract
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import lock_model_instance
-from grandchallenge.core.celery import acks_late_2xlarge_task
+from grandchallenge.core.celery import (
+    acks_late_2xlarge_task,
+    acks_late_micro_short_task,
+)
 from grandchallenge.core.exceptions import LockNotAcquiredException
-from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.uploads.models import UserUpload
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
 
 POST_PROCESSORS = [
     import_string(p) for p in settings.CASES_POST_PROCESSORS if p
@@ -97,10 +99,11 @@ def extract_files(*, source_path: Path, checked_paths=None):
 def build_images(  # noqa:C901
     *,
     upload_session_pk,
-    linked_app_label=None,
-    linked_model_name=None,
-    linked_object_pk=None,
-    linked_interface_slug=None,
+    linked_app_label,
+    linked_model_name,
+    linked_object_pk,
+    linked_interface_slug,
+    linked_task,
 ):
     """
     Task which analyzes an upload session and attempts to extract and store
@@ -128,6 +131,8 @@ def build_images(  # noqa:C901
         The model_name of the linked object.
     linked_interface_slug:
         The slug of the linked interface.
+    linked_task:
+        The signature of the task to run on success
     """
 
     upload_session = lock_model_instance(
@@ -136,35 +141,26 @@ def build_images(  # noqa:C901
         model_name=RawImageUploadSession._meta.model_name,
     )
 
-    if linked_object_pk:
-        try:
-            linked_object = lock_model_instance(
-                pk=linked_object_pk,
-                app_label=linked_app_label,
-                model_name=linked_model_name,
-            )
-        except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
-            # users can delete archive items and display sets before this task runs
-            logger.info(
-                f"Nothing to do here: {linked_model_name} no longer exists."
-            )
-            upload_session.update_status(
-                status=RawImageUploadSession.CANCELLED,
-                error_message="Image processing canceled. "
-                f"The associated {linked_model_name} not longer exists.",
-            )
-            return
-    else:
-        linked_object = None
+    if upload_session.status != upload_session.REQUEUED:
+        logger.info(
+            "Nothing to do: upload session was not ready for processing"
+        )
+        return
 
-    if linked_interface_slug:
-        ci = ComponentInterface.objects.get(slug=linked_interface_slug)
-    else:
-        ci = None
-
-    error_handler = upload_session.get_error_handler(
-        linked_object=linked_object
-    )
+    def _handle_error(*, error_message):
+        logger.info(error_message)
+        on_commit(
+            handle_build_images_error.signature(
+                kwargs={
+                    "upload_session_pk": upload_session_pk,
+                    "error_message": error_message,
+                    "linked_app_label": linked_app_label,
+                    "linked_model_name": linked_model_name,
+                    "linked_object_pk": linked_object_pk,
+                    "linked_interface_slug": linked_interface_slug,
+                }
+            ).apply_async
+        )
 
     try:
         with TemporaryDirectory() as tmp_dir:
@@ -179,50 +175,100 @@ def build_images(  # noqa:C901
                 base_directory=tmp_dir,
                 upload_session=upload_session,
             )
-
-        if upload_session.image_set.count() == 0:
-            error_handler.handle_error(
-                interface=ci,
-                error_message=upload_session.default_error_message,
-            )
-        else:
-            upload_session.update_status(status=RawImageUploadSession.SUCCESS)
     except RuntimeError as error:
         if "std::bad_alloc" in str(error):
-            error_handler.handle_error(
-                interface=ci,
+            _handle_error(
                 error_message=(
                     "The uploaded images were too large to process, "
                     "please try again with smaller images"
                 ),
             )
         else:
-            error_handler.handle_error(
-                interface=ci,
-                error_message="An unexpected error occurred",
-            )
-            logger.error("An unexpected error occurred", exc_info=True)
+            _handle_error(error_message="An unexpected error occurred")
+            logger.error(error, exc_info=True)
+        return
     except DuplicateFilesException:
-        error_handler.handle_error(
-            interface=ci,
+        _handle_error(
             error_message=(
-                "Duplicate files uploaded, "
-                "please try again with a unique set of files"
+                "Duplicate files uploaded, please try again with a unique set of files"
             ),
         )
+        return
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
-        error_handler.handle_error(
-            interface=ci,
-            error_message="Time limit exceeded",
-        )
-    except Exception:
-        error_handler.handle_error(
-            interface=ci,
-            error_message="An unexpected error occurred",
-        )
-        logger.error("An unexpected error occurred", exc_info=True)
-    finally:
-        upload_session.user_uploads.all().delete()
+        _handle_error(error_message="Time limit exceeded")
+        return
+    except Exception as error:
+        _handle_error(error_message="An unexpected error occurred")
+        logger.error(error, exc_info=True)
+        return
+
+    if upload_session.image_set.count() > 0:
+        upload_session.update_status(status=RawImageUploadSession.SUCCESS)
+
+        if linked_task is not None:
+            logger.info("Scheduling linked task")
+            on_commit(signature(linked_task).apply_async)
+        else:
+            logger.info("No linked task, task complete")
+    else:
+        _handle_error(error_message=upload_session.default_error_message)
+        # The session may have been modified so needs to be saved
+        upload_session.save()
+        return
+
+    logger.info("Deleting associated uploaded files")
+    upload_session.user_uploads.all().delete()
+
+
+@acks_late_micro_short_task(
+    retry_on=(LockNotAcquiredException,), delayed_retry=False
+)
+@transaction.atomic
+def handle_build_images_error(
+    *,
+    upload_session_pk,
+    error_message,
+    linked_app_label,
+    linked_model_name,
+    linked_object_pk,
+    linked_interface_slug,
+):
+    upload_session = lock_model_instance(
+        pk=upload_session_pk,
+        app_label=RawImageUploadSession._meta.app_label,
+        model_name=RawImageUploadSession._meta.model_name,
+    )
+
+    if linked_object_pk:
+        try:
+            linked_object = lock_model_instance(
+                pk=linked_object_pk,
+                app_label=linked_app_label,
+                model_name=linked_model_name,
+            )
+        except ObjectDoesNotExist:
+            # Linked object may have been deleted
+            logger.info(
+                f"Linked object {linked_app_label}.{linked_model_name}({linked_object_pk}) does not exist"
+            )
+            linked_object = None
+    else:
+        linked_object = None
+
+    try:
+        ci = ComponentInterface.objects.get(slug=linked_interface_slug)
+    except ObjectDoesNotExist:
+        logger.info(f"Linked interface {linked_interface_slug} does not exist")
+        ci = None
+
+    error_handler = upload_session.get_error_handler(
+        linked_object=linked_object
+    )
+
+    error_handler.handle_error(
+        interface=ci,
+        error_message=error_message,
+    )
 
 
 @dataclass
