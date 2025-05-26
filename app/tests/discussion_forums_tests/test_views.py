@@ -58,6 +58,7 @@ def test_topic_create(client):
     (
         ["discussion-forums:topic-create", 200, False],
         ["discussion-forums:topic-delete", 403, True],
+        ["discussion-forums:topic-lock-update", 403, True],
     ),
 )
 @pytest.mark.django_db
@@ -346,7 +347,7 @@ def test_post_create(client):
     forum = ForumFactory()
     user = UserFactory()
     forum.linked_challenge.add_admin(user)
-    topic = ForumTopicFactory(forum=forum, creator=user)
+    topic = ForumTopicFactory(forum=forum, creator=user, post_count=1)
 
     assert topic.posts.count() == 1
 
@@ -405,3 +406,146 @@ def test_post_update(client):
     assert response.status_code == 302
     post.refresh_from_db()
     assert post.content == "Updated content"
+
+
+@pytest.mark.django_db
+def test_topic_lock_update(client):
+    topic = ForumTopicFactory()
+    admin = UserFactory()
+    topic.forum.linked_challenge.add_admin(admin)
+
+    assert not topic.is_locked
+
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-lock-update",
+        client=client,
+        method=client.post,
+        user=admin,
+        reverse_kwargs={
+            "challenge_short_name": topic.forum.linked_challenge.short_name,
+            "slug": topic.slug,
+        },
+        data={"is_locked": True},
+    )
+    assert response.status_code == 302
+    topic.refresh_from_db()
+    assert topic.is_locked
+
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-lock-update",
+        client=client,
+        method=client.post,
+        user=admin,
+        reverse_kwargs={
+            "challenge_short_name": topic.forum.linked_challenge.short_name,
+            "slug": topic.slug,
+        },
+        data={"is_locked": False},
+    )
+
+    assert response.status_code == 302
+    topic.refresh_from_db()
+    assert not topic.is_locked
+
+
+@pytest.mark.django_db
+def test_my_posts_listview_filter(client):
+    forum = ForumFactory()
+    participant, admin = UserFactory.create_batch(2)
+    forum.linked_challenge.add_participant(participant)
+    forum.linked_challenge.add_admin(admin)
+
+    # 3 posts from participant in this forum
+    p1, p2, p3 = ForumPostFactory.create_batch(
+        3, topic__forum=forum, creator=participant
+    )
+    # 1 post from this user in a different forum
+    forum2 = ForumFactory()
+    forum2.linked_challenge.add_participant(participant)
+    p_diff_forum = ForumPostFactory(creator=participant, topic__forum=forum2)
+    # 1 post from another user in this forum
+    p_diff_user = ForumPostFactory(topic__forum=forum)
+    # 1 post from admin in this forum
+    p_admin = ForumPostFactory(creator=admin, topic__forum=forum)
+
+    participant_response = get_view_for_user(
+        viewname="discussion-forums:my-posts",
+        client=client,
+        user=participant,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+        },
+    )
+    assert participant_response.status_code == 200
+    # all posts from this user, not just in the current forum, should be listed
+    assert participant_response.context["object_list"].count() == 4
+    assert p_diff_user not in participant_response.context["object_list"]
+    assert {p1, p2, p3, p_diff_forum} == set(
+        participant_response.context["object_list"].all()
+    )
+
+    admin_response = get_view_for_user(
+        viewname="discussion-forums:my-posts",
+        client=client,
+        user=admin,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+        },
+    )
+    assert admin_response.status_code == 200
+    # admin should only see their own posts, not those of participants
+    assert admin_response.context["object_list"].count() == 1
+    assert p_admin in admin_response.context["object_list"]
+
+
+@pytest.mark.django_db
+def test_users_cannot_post_to_locked_topic(client):
+    topic = ForumTopicFactory(post_count=1)
+    user, admin = UserFactory.create_batch(2)
+    topic.forum.linked_challenge.add_participant(user)
+    topic.forum.linked_challenge.add_admin(admin)
+
+    post_count = topic.posts.count()
+
+    for u in [user, admin]:
+        response = get_view_for_user(
+            viewname="discussion-forums:post-create",
+            client=client,
+            method=client.post,
+            user=u,
+            reverse_kwargs={
+                "challenge_short_name": topic.forum.linked_challenge.short_name,
+                "slug": topic.slug,
+            },
+            data={
+                "topic": topic.pk,
+                "creator": u.pk,
+                "content": "New post",
+            },
+        )
+        post_count += 1
+        assert response.status_code == 302
+        assert topic.posts.count() == post_count
+
+    # locking revokes the permission to create posts
+    topic.is_locked = True
+    topic.save()
+
+    for u in [user, admin]:
+        response = get_view_for_user(
+            viewname="discussion-forums:post-create",
+            client=client,
+            method=client.post,
+            user=u,
+            reverse_kwargs={
+                "challenge_short_name": topic.forum.linked_challenge.short_name,
+                "slug": topic.slug,
+            },
+            data={
+                "topic": topic.pk,
+                "creator": u.pk,
+                "content": "New post",
+            },
+        )
+        assert response.status_code == 403
+        assert topic.posts.count() == post_count

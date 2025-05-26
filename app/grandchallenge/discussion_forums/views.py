@@ -9,6 +9,7 @@ from grandchallenge.core.guardian import (
 from grandchallenge.discussion_forums.forms import (
     ForumPostForm,
     ForumTopicForm,
+    ForumTopicLockUpdateForm,
 )
 from grandchallenge.discussion_forums.models import (
     ForumPost,
@@ -144,6 +145,28 @@ class ForumTopicDelete(ObjectPermissionRequiredMixin, DeleteView):
         )
 
 
+class ForumTopicLockUpdate(ObjectPermissionRequiredMixin, UpdateView):
+    model = ForumTopic
+    permission_required = "lock_forumtopic"
+    raise_exception = True
+    form_class = ForumTopicLockUpdateForm
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            ForumTopic,
+            forum=self.request.challenge.discussion_forum,
+            slug=self.kwargs["slug"],
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update({"forum": self.object.forum})
+        return context
+
+    def get_success_url(self):
+        return self.object.get_absolute_url()
+
+
 class ForumPostCreate(ObjectPermissionRequiredMixin, CreateView):
     model = ForumPost
     permission_required = "create_topic_post"
@@ -249,3 +272,21 @@ class ForumPostUpdate(ObjectPermissionRequiredMixin, UpdateView):
             }
         )
         return kwargs
+
+
+class MyForumPosts(ViewObjectPermissionListMixin, ListView):
+    model = ForumPost
+    paginate_by = 10
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        return qs.filter(creator=self.request.user)
+
+    @cached_property
+    def forum(self):
+        return self.request.challenge.discussion_forum
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context.update({"forum": self.forum, "topic": None})
+        return context
