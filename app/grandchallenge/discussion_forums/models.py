@@ -18,7 +18,7 @@ from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
-from grandchallenge.core.models import FieldChangeMixin, UUIDModelNoAutoNow
+from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 
 
 def get_matching_forum(*, old_forum_id, old_forum_model):
@@ -46,7 +46,7 @@ class ForumTopicKindChoices(models.TextChoices):
     ANNOUNCE = "ANNOUNCE", "Announcement topic"
 
 
-class Forum(UUIDModelNoAutoNow):
+class Forum(UUIDModel):
 
     source_object = models.OneToOneField(
         MachinaForum,
@@ -75,7 +75,7 @@ class Forum(UUIDModelNoAutoNow):
         return self.linked_challenge
 
 
-class ForumTopic(FieldChangeMixin, UUIDModelNoAutoNow):
+class ForumTopic(FieldChangeMixin, UUIDModel):
     source_object = models.OneToOneField(
         machina_conversation_models.Topic,
         related_name="migrated_topic",
@@ -241,7 +241,7 @@ class ForumTopic(FieldChangeMixin, UUIDModelNoAutoNow):
         return math.ceil(post_count / posts_per_page)
 
 
-class ForumPost(UUIDModelNoAutoNow):
+class ForumPost(UUIDModel):
     source_object = models.OneToOneField(
         machina_conversation_models.Post,
         related_name="migrated_post",
@@ -402,7 +402,7 @@ class ForumPostGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)
 
 
-class TopicReadRecord(UUIDModelNoAutoNow):
+class TopicReadRecord(UUIDModel):
     source_object = models.OneToOneField(
         machina_tracking_models.TopicReadTrack,
         related_name="migrated_track",

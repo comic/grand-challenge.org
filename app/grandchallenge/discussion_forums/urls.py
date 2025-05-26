@@ -7,7 +7,9 @@ from grandchallenge.discussion_forums.views import (
     ForumTopicCreate,
     ForumTopicDelete,
     ForumTopicListView,
+    ForumTopicLockUpdate,
     ForumTopicPostList,
+    MyForumPosts,
 )
 
 app_name = "discussion_forums"
@@ -15,10 +17,16 @@ app_name = "discussion_forums"
 
 urlpatterns = [
     path("", ForumTopicListView.as_view(), name="topic-list"),
+    path("posts/mine/", MyForumPosts.as_view(), name="my-posts"),
     path(
         "topics/create/",
         ForumTopicCreate.as_view(),
         name="topic-create",
+    ),
+    path(
+        "topics/<slug:slug>/lock/",
+        ForumTopicLockUpdate.as_view(),
+        name="topic-lock-update",
     ),
     path(
         "topics/<slug:slug>/delete/",
