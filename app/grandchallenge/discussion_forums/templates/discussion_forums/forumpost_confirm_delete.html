@@ -1,0 +1,53 @@
+{% load url %}
+
+<a href="#postDeleteModal-{{ object.pk }}"
+   data-toggle="modal"
+   data-target="#postDeleteModal-{{ object.pk }}"
+   class="btn btn-danger btn-sm"
+   role="button"
+   title="Delete {{ object.pk }}"
+>
+    <i class="fas fa-trash"></i>
+</a>
+
+<div class="modal" id="postDeleteModal-{{ object.pk }}" tabindex="-1" role="dialog"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    Confirm Post Deletion
+                </h5>
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <dd class="text-left modal-body">
+                <div class="row px-3">
+                    <form action="{% url 'discussion-forums:post-delete' challenge_short_name=object.topic.forum.linked_challenge.short_name slug=object.topic.slug pk=object.pk %}"
+                          method="post">
+                        {% csrf_token %}
+                        <p>Are you sure that you want to delete this post?</p>
+                        {% if  object.is_alone %}
+                            <p><b>Since this is the only post for the topic, deleting the post will also delete the
+                                topic.</b></p>
+                        {% endif %}
+                        <p>
+                            <b class="text-danger">
+                                WARNING: You are not able to undo this action. Once the post is deleted, it is deleted
+                                forever.
+                            </b>
+                        </p>
+                        <a href="{% url 'discussion-forums:topic-post-list' challenge_short_name=object.topic.forum.linked_challenge.short_name slug=object.topic.slug %}"
+                           type="button"
+                           class="btn btn-secondary">Cancel</a>
+                        <input type="submit"
+                               value="I understand, delete post"
+                               class="btn btn-danger"/>
+                    </form>
+                </div>
+            </dd>
+        </div>
+    </div>
+</div>
