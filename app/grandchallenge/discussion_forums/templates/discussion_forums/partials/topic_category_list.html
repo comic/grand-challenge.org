@@ -7,10 +7,16 @@
         <div class="card">
             <div class="p-0 card-header">
                 <div class="row m-0 px-3 py-2 justify-content-between">
-                    <div class="pl-0 col-12 col-md-8">
-                        <h3 class="m-0 card-title h5 text-dark">
-                            <i class="fas fa-comment mr-1"></i> {{ topic_list_title|capfirst }}
-                        </h3>
+                    <div class="pl-0 col-12 col-md-8 justify-content-between">
+                        <div class="d-flex justify-content-between">
+                            <h3 class="m-0 card-title h5 text-dark">
+                                <i class="fas fa-comment mr-1"></i> {{ topic_list_title|capfirst }}
+                            </h3>
+                            {% if show_page_counter_in_card_header %}
+                                <small class="text-muted text-decoration-none">Page {{ page_obj.number }}
+                                    of {{ page_obj.paginator.num_pages }}</small>
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="pr-0 col-md-1 d-none d-md-block">Replies</div>
                     <div class="pr-0 col-md-3 d-none d-md-block">Last post</div>
