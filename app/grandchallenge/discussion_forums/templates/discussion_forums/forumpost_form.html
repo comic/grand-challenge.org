@@ -1,0 +1,11 @@
+{% load crispy_forms_tags %}
+
+<div class="card my-3" id="post-{{ object.id }}">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h3 class="m-0 p-2 h5 card-title">Edit post</h3>
+        <div><a href="{{ topic.get_absolute_url }}" class="btn btn-dark">Cancel</a></div>
+    </div>
+    <div class="card-body">
+        {% crispy form %}
+    </div>
+</div>

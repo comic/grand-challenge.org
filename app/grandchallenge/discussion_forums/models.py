@@ -1,4 +1,5 @@
 from django.conf import settings
+import math
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -205,7 +206,7 @@ class ForumTopic(FieldChangeMixin, UUIDModelNoAutoNow):
 
     def get_absolute_url(self):
         return reverse(
-            "discussion-forums:topic-detail",
+            "discussion-forums:topic-post-list",
             kwargs={
                 "challenge_short_name": self.forum.parent_object.short_name,
                 "slug": self.slug,
@@ -230,6 +231,14 @@ class ForumTopic(FieldChangeMixin, UUIDModelNoAutoNow):
             return self.posts.exclude(created__lt=read_record.modified)
         except ObjectDoesNotExist:
             return self.posts
+
+    @property
+    def last_page_num(self):
+        from grandchallenge.discussion_forums.views import ForumTopicPostList
+
+        post_count = self.posts.count()
+        posts_per_page = ForumTopicPostList.paginate_by
+        return math.ceil(post_count / posts_per_page)
 
 
 class ForumPost(UUIDModelNoAutoNow):
@@ -260,9 +269,6 @@ class ForumPost(UUIDModelNoAutoNow):
         ordering = [
             "created",
         ]
-
-    def __str__(self):
-        return self.subject
 
     @property
     def is_alone(self):
@@ -335,6 +341,18 @@ class ForumPost(UUIDModelNoAutoNow):
             self.creator,
             self,
         )
+
+    def get_absolute_url(self):
+        from grandchallenge.discussion_forums.views import ForumTopicPostList
+
+        position = self.get_relative_position()
+        posts_per_page = ForumTopicPostList.paginate_by
+
+        page_number = (position // posts_per_page) + 1
+        if page_number > 1:
+            return f"{self.topic.get_absolute_url()}?page={page_number}#post-{self.pk}"
+        else:
+            return f"{self.topic.get_absolute_url()}#post-{self.pk}"
 
     def get_relative_position(self):
         post_ids = list(self.topic.posts.values_list("pk", flat=True))

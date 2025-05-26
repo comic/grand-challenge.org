@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
         ("discussion_forums", "0001_initial"),
         (
             "challenges",
-            "0052_challengegroupobjectpermission_challenges__group_i_8a9dd3_idx_and_more",
+            "0053_challengeuserobjectpermission_challenges__user_id_7f9623_idx_and_more",
         ),
     ]
 

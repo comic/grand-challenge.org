@@ -20,7 +20,7 @@
 
                     {% if challenge.display_forum_link %}
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.view_name == 'discussion-forums:topic-list' or request.resolver_match.view_name == 'discussion-forums:topic-create' or request.resolver_match.view_name == 'discussion-forums:topic-detail' or request.resolver_match.view_name == 'discussion-forums:topic-delete' %} show active {% endif %}"
+                            <a class="nav-link {% if request.resolver_match.view_name == 'discussion-forums:topic-list' or request.resolver_match.view_name == 'discussion-forums:topic-create' or request.resolver_match.view_name == 'discussion-forums:topic-post-list' or request.resolver_match.view_name == 'discussion-forums:topic-delete' %} show active {% endif %}"
                                href="{% url 'discussion-forums:topic-list' challenge_short_name=challenge.short_name %}">
                                 <i class="fas fa-comments fa-fw"></i>&nbsp;&nbsp;Forum
                             </a>
