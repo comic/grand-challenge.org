@@ -1,4 +1,3 @@
-from django.contrib.contenttypes.models import ContentType
 from django.db import migrations
 
 from grandchallenge.notifications.models import NotificationTypeChoices
@@ -13,12 +12,17 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
     ForumTopic = apps.get_model(  # noqa: N806
         "discussion_forums", "ForumTopic"
     )
+    MachinaForum = apps.get_model("forum", "Forum")  # noqa: N806
+    MachinaTopic = apps.get_model("forum_conversation", "Topic")  # noqa: N806
+    ContentType = apps.get_model("contenttypes", "ContentType")  # noqa: N806
 
-    def get_matching_forum(*, old_forum):
+    def get_matching_forum(*, old_forum_id):
+        old_forum = MachinaForum.objects.get(pk=old_forum_id)
         return old_forum.challenge.discussion_forum
 
-    def get_matching_topic(*, old_topic):
-        new_forum = get_matching_forum(old_forum=old_topic.forum)
+    def get_matching_topic(*, old_topic_id):
+        old_topic = MachinaTopic.objects.get(pk=old_topic_id)
+        new_forum = get_matching_forum(old_forum_id=old_topic.forum.pk)
         return ForumTopic.objects.get(
             forum=new_forum,
             creator=old_topic.poster,
@@ -32,15 +36,19 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
         ]
     ):
         if notification.type == NotificationTypeChoices.FORUM_POST:
-            new_target = get_matching_forum(old_forum=notification.target)
+            new_target = get_matching_forum(
+                old_forum_id=notification.target_object_id
+            )
             new_action_object = get_matching_topic(
-                old_topic=notification.action_object
+                old_topic_id=notification.action_object_object_id
             )
             notification.target = new_target
             notification.action_object = new_action_object
             notification.save()
         elif notification.type == NotificationTypeChoices.FORUM_POST_REPLY:
-            new_target = get_matching_topic(old_topic=notification.target)
+            new_target = get_matching_topic(
+                old_topic_id=notification.target_object_id
+            )
             notification.target = new_target
             notification.save()
         else:
@@ -58,13 +66,13 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
         content_type__in=[ct_forum, ct_forumtopic]
     ):
         if follow.content_type == ct_forum:
-            forum = get_matching_forum(old_forum=follow.follow_object)
+            forum = get_matching_forum(old_forum_id=follow.object_id)
             follow.content_type = ContentType.objects.get_for_model(Forum)
             follow.follow_object = forum
             follow.object_id = forum.pk
             follow.save()
         elif follow.content_type == ct_forumtopic:
-            topic = get_matching_topic(old_topic=follow.follow_object)
+            topic = get_matching_topic(old_topic_id=follow.object_id)
             follow.content_type = ContentType.objects.get_for_model(ForumTopic)
             follow.follow_object = topic
             follow.object_id = topic.pk
