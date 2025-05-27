@@ -5,7 +5,7 @@ from grandchallenge.notifications.models import NotificationTypeChoices
 
 
 def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
-    Notification = apps.get_model( # noqa: N806
+    Notification = apps.get_model(  # noqa: N806
         "notifications", "Notification"
     )
     Follow = apps.get_model("actstream", "Follow")  # noqa: N806
