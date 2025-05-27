@@ -2,53 +2,74 @@ import pytest
 from actstream.actions import follow, is_following
 from actstream.models import Follow
 from django.utils.html import format_html
-from machina.apps.forum.models import Forum
-from machina.apps.forum_conversation.models import Topic
 
+from grandchallenge.discussion_forums.models import ForumTopicKindChoices
 from grandchallenge.notifications.models import Notification
+from grandchallenge.pages.models import Page
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
-from tests.factories import ChallengeFactory, UserFactory
-from tests.notifications_tests.factories import (
+from tests.discussion_forums_tests.factories import (
     ForumFactory,
-    PostFactory,
-    TopicFactory,
+    ForumPostFactory,
+    ForumTopicFactory,
 )
+from tests.factories import ChallengeFactory, UserFactory
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "kind", (Topic.TOPIC_ANNOUNCE, Topic.TOPIC_POST, Topic.TOPIC_STICKY)
+    "kind",
+    (
+        ForumTopicKindChoices.ANNOUNCE,
+        ForumTopicKindChoices.STICKY,
+        ForumTopicKindChoices.DEFAULT,
+    ),
 )
 def test_notification_sent_on_new_topic(kind):
-    p = UserFactory()
     u = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    follow(user=u, obj=f)
-    t = TopicFactory(forum=f, poster=p, type=kind)
+    f = ForumFactory()
+    f.linked_challenge.add_participant(u)
+    admin = f.linked_challenge.admins_group.user_set.get()
+
+    # clear notifications
+    Notification.objects.all().delete()
+    t = ForumTopicFactory(
+        forum=f,
+        creator=admin,
+        kind=kind,
+    )
 
     notification = Notification.objects.get()
     topic_string = format_html('<a href="{}">{}</a>', t.get_absolute_url(), t)
-    if kind == Topic.TOPIC_ANNOUNCE:
+    if kind == ForumTopicKindChoices.ANNOUNCE:
         assert notification.print_notification(user=u).startswith(
-            f"{user_profile_link(p)} announced {topic_string}"
+            f"{user_profile_link(admin)} announced {topic_string}"
         )
     else:
         assert notification.print_notification(user=u).startswith(
-            f"{user_profile_link(p)} posted {topic_string}"
+            f"{user_profile_link(admin)} posted {topic_string}"
         )
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "kind", (Topic.TOPIC_ANNOUNCE, Topic.TOPIC_POST, Topic.TOPIC_STICKY)
+    "kind",
+    (
+        ForumTopicKindChoices.ANNOUNCE,
+        ForumTopicKindChoices.STICKY,
+        ForumTopicKindChoices.DEFAULT,
+    ),
 )
 def test_notification_sent_on_new_post(kind):
-    u1 = UserFactory()
-    u2 = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    follow(user=u2, obj=f)
-    t = TopicFactory(forum=f, poster=u1, type=kind)
-    PostFactory(topic=t, poster=u2)
+    u = UserFactory()
+    f = ForumFactory()
+    f.linked_challenge.add_participant(u)
+    admin = f.linked_challenge.admins_group.user_set.get()
+
+    # clear notifications
+    Notification.objects.all().delete()
+
+    t = ForumTopicFactory(forum=f, creator=admin, kind=kind, post_count=1)
+    ForumPostFactory(topic=t, creator=u)
 
     notifications = Notification.objects.all()
     topic_string = format_html('<a href="{}">{}</a>', t.get_absolute_url(), t)
@@ -56,24 +77,24 @@ def test_notification_sent_on_new_post(kind):
     assert len(notifications) == 2
     assert (
         notifications[1]
-        .print_notification(user=u1)
-        .startswith(f"{user_profile_link(u2)} replied to {topic_string}")
+        .print_notification(user=admin)
+        .startswith(f"{user_profile_link(u)} replied to {topic_string}")
     )
 
-    if kind == Topic.TOPIC_ANNOUNCE:
+    if kind == ForumTopicKindChoices.ANNOUNCE:
         assert (
             notifications[0]
-            .print_notification(user=u2)
+            .print_notification(user=u)
             .startswith(
-                f"{user_profile_link(t.poster)} announced {topic_string} in {forum_string}"
+                f"{user_profile_link(admin)} announced {topic_string} in {forum_string}"
             )
         )
     else:
         assert (
             notifications[0]
-            .print_notification(user=u2)
+            .print_notification(user=2)
             .startswith(
-                f"{user_profile_link(t.poster)} posted {topic_string} in {forum_string}"
+                f"{user_profile_link(admin)} posted {topic_string} in {forum_string}"
             )
         )
 
@@ -81,37 +102,39 @@ def test_notification_sent_on_new_post(kind):
 @pytest.mark.django_db
 def test_follow_if_post_in_topic():
     u = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    t = TopicFactory(forum=f, type=Topic.TOPIC_POST)
-    PostFactory(topic=t, poster=u)
+    f = ForumFactory()
+    t = ForumTopicFactory(forum=f, post_count=1)
+    ForumPostFactory(topic=t, creator=u)
 
     assert Follow.objects.is_following(user=u, instance=t)
 
 
 @pytest.mark.django_db
 def test_notification_created_for_target_followers_on_action_creation():
-    user1 = UserFactory()
-    user2 = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    follow(user1, f, send_action=False)
-    follow(user2, f, send_action=False)
+    u = UserFactory()
+    f = ForumFactory()
+    f.linked_challenge.add_participant(u)
+    admin = f.linked_challenge.admins_group.user_set.get()
+
+    # clear notifications
+    Notification.objects.all().delete()
 
     # creating a post creates an action automatically
-    _ = TopicFactory(forum=f, poster=user1, type=Topic.TOPIC_POST)
+    _ = ForumTopicFactory(forum=f, creator=u)
     assert len(Notification.objects.all()) == 1
 
     notification = Notification.objects.get()
     # check that the poster did not receive a notification
-    assert notification.user == user2
-    assert notification.user != user1
+    assert notification.user == admin
+    assert notification.user != u
 
 
 @pytest.mark.django_db
 def test_follow_clean_up_after_topic_removal():
     u = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    t1 = TopicFactory(forum=f, type=Topic.TOPIC_POST)
-    t2 = TopicFactory(forum=f, type=Topic.TOPIC_POST)
+    f = ForumFactory()
+    t1 = ForumTopicFactory(forum=f)
+    t2 = ForumTopicFactory(forum=f)
     follow(u, t1, send_action=False)
     follow(u, t2, send_action=False)
 
@@ -123,10 +146,10 @@ def test_follow_clean_up_after_topic_removal():
 @pytest.mark.django_db
 def test_follow_clean_up_after_post_removal():
     u = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    t = TopicFactory(forum=f, type=Topic.TOPIC_POST)
-    p1 = PostFactory(topic=t, poster=u)
-    p2 = PostFactory(topic=t, poster=u)
+    f = ForumFactory()
+    t = ForumTopicFactory(forum=f)
+    p1 = ForumPostFactory(topic=t, creator=u)
+    p2 = ForumPostFactory(topic=t, creator=u)
 
     follow(u, p1)
     follow(u, p2)
@@ -139,11 +162,13 @@ def test_follow_clean_up_after_post_removal():
 @pytest.mark.django_db
 def test_follow_clean_up_after_forum_removal():
     u = UserFactory()
-    f1 = ForumFactory(type=Forum.FORUM_POST)
-    f2 = ForumFactory(type=Forum.FORUM_POST)
+    f1 = ForumFactory()
+    f2 = ForumFactory()
     follow(u, f1, send_action=False)
     follow(u, f2, send_action=False)
 
+    Page.objects.all().delete()
+    f1.linked_challenge.delete()
     f1.delete()
 
     assert not is_following(u, f1)
