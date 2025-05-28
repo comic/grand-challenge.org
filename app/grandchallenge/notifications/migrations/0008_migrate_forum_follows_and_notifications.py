@@ -70,12 +70,8 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
         batch_size=1000,
     )
 
-    ct_forum = ContentType.objects.filter(
-        app_label="forum", model="forum"
-    ).get()
-    ct_forumtopic = ContentType.objects.filter(
-        app_label="forum_conversation", model="topic"
-    ).get()
+    ct_forum = ContentType.objects.get_for_model(MachinaForum)
+    ct_forumtopic = ContentType.objects.get_for_model(MachinaTopic)
 
     follows_to_update = []
     for follow in Follow.objects.filter(

@@ -60,7 +60,7 @@ def test_update_editor_follows_signal(client, factory, reverse):
 @pytest.mark.django_db
 def test_user_follow_clean_up():
     user = UserFactory()
-    # create a forum that the user follows
+    # create a archive that the user follows
     a = ArchiveFactory()
     follow(user, a)
     assert Follow.objects.count() == 1

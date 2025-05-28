@@ -240,20 +240,21 @@ def test_topic_subscribe_and_unsubscribe(client):
 
 @pytest.mark.django_db
 def test_follow_delete_permission(client):
-    participant = UserFactory()
-    user = UserFactory()
+    participant1 = UserFactory()
+    participant2 = UserFactory()
     f = ForumFactory()
-    f.linked_challenge.add_participant(participant)
+    f.linked_challenge.add_participant(participant1)
+    f.linked_challenge.add_participant(participant2)
 
-    assert is_following(participant, f)
+    assert is_following(participant1, f)
 
-    # user cannot delete someone else's subscription
+    # users cannot delete someone elses subscription
     response = get_view_for_user(
         viewname="notifications:follow-delete",
         client=client,
         method=client.post,
-        reverse_kwargs={"pk": Follow.objects.get(user=participant).id},
-        user=user,
+        reverse_kwargs={"pk": Follow.objects.get(user=participant1).id},
+        user=participant2,
     )
     assert response.status_code == 403
 
@@ -261,11 +262,11 @@ def test_follow_delete_permission(client):
         viewname="notifications:follow-delete",
         client=client,
         method=client.post,
-        reverse_kwargs={"pk": Follow.objects.get(user=participant).id},
-        user=participant,
+        reverse_kwargs={"pk": Follow.objects.get(user=participant1).id},
+        user=participant1,
     )
     assert response.status_code == 302
-    assert not is_following(participant, f)
+    assert not is_following(participant1, f)
 
 
 @pytest.mark.django_db

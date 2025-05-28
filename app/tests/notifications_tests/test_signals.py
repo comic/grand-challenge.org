@@ -1,18 +1,40 @@
 import pytest
 from actstream.actions import follow, is_following
-from actstream.models import Follow
 from django.utils.html import format_html
 
 from grandchallenge.discussion_forums.models import ForumTopicKindChoices
 from grandchallenge.notifications.models import Notification
 from grandchallenge.pages.models import Page
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
+from tests.algorithms_tests.factories import (
+    AlgorithmFactory,
+    AlgorithmPermissionRequestFactory,
+)
+from tests.archives_tests.factories import (
+    ArchiveFactory,
+    ArchivePermissionRequestFactory,
+)
+from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.discussion_forums_tests.factories import (
     ForumFactory,
     ForumPostFactory,
     ForumTopicFactory,
 )
-from tests.factories import ChallengeFactory, UserFactory
+from tests.evaluation_tests.factories import (
+    EvaluationFactory,
+    PhaseFactory,
+    SubmissionFactory,
+)
+from tests.factories import (
+    ChallengeFactory,
+    RegistrationRequestFactory,
+    UserFactory,
+)
+from tests.notifications_tests.factories import NotificationFactory
+from tests.reader_studies_tests.factories import (
+    ReaderStudyFactory,
+    ReaderStudyPermissionRequestFactory,
+)
 
 
 @pytest.mark.django_db
@@ -104,9 +126,9 @@ def test_follow_if_post_in_topic():
     u = UserFactory()
     f = ForumFactory()
     t = ForumTopicFactory(forum=f, post_count=1)
+    assert not is_following(user=u, obj=t)
     ForumPostFactory(topic=t, creator=u)
-
-    assert Follow.objects.is_following(user=u, instance=t)
+    assert is_following(user=u, obj=t)
 
 
 @pytest.mark.django_db
@@ -130,37 +152,37 @@ def test_notification_created_for_target_followers_on_action_creation():
 
 
 @pytest.mark.django_db
-def test_follow_clean_up_after_topic_removal():
+@pytest.mark.parametrize(
+    "factory, extra_factory_kwargs",
+    [
+        [AlgorithmPermissionRequestFactory, {}],
+        [ReaderStudyPermissionRequestFactory, {}],
+        [ArchivePermissionRequestFactory, {}],
+        [ArchiveFactory, {}],
+        [AlgorithmFactory, {}],
+        [ReaderStudyFactory, {}],
+        [ForumTopicFactory, {}],
+        [RegistrationRequestFactory, {}],
+        [EvaluationFactory, {"time_limit": 10}],
+        [PhaseFactory, {}],
+        [SubmissionFactory, {}],
+        [RawImageUploadSessionFactory, {}],
+    ],
+)
+def test_follow_clean_up_after_object_removal(factory, extra_factory_kwargs):
     u = UserFactory()
-    f = ForumFactory()
-    t1 = ForumTopicFactory(forum=f)
-    t2 = ForumTopicFactory(forum=f)
-    follow(u, t1, send_action=False)
-    follow(u, t2, send_action=False)
+    o1, o2 = factory.create_batch(2, **extra_factory_kwargs)
+    follow(u, o1, send_action=False)
+    follow(u, o2, send_action=False)
 
-    t1.delete()
+    o1.delete()
 
-    assert not is_following(u, t1)
-
-
-@pytest.mark.django_db
-def test_follow_clean_up_after_post_removal():
-    u = UserFactory()
-    f = ForumFactory()
-    t = ForumTopicFactory(forum=f)
-    p1 = ForumPostFactory(topic=t, creator=u)
-    p2 = ForumPostFactory(topic=t, creator=u)
-
-    follow(u, p1)
-    follow(u, p2)
-
-    p1.delete()
-
-    assert not is_following(u, p1)
+    assert not is_following(u, o1)
 
 
 @pytest.mark.django_db
 def test_follow_clean_up_after_forum_removal():
+    # test seperately because test logic differs slightly
     u = UserFactory()
     f1 = ForumFactory()
     f2 = ForumFactory()
@@ -172,6 +194,21 @@ def test_follow_clean_up_after_forum_removal():
     f1.delete()
 
     assert not is_following(u, f1)
+
+
+@pytest.mark.django_db
+def test_follow_clean_up_after_challenge_removal():
+    # test seperately because test logic differs slightly
+    u = UserFactory()
+    c1 = ChallengeFactory()
+    c2 = ChallengeFactory()
+    follow(u, c1, send_action=False)
+    follow(u, c2, send_action=False)
+
+    Page.objects.all().delete()
+    c1.delete()
+
+    assert not is_following(u, c1)
 
 
 @pytest.mark.django_db
@@ -189,3 +226,154 @@ def test_notification_for_new_admin_only():
     assert Notification.objects.count() == 1
     assert Notification.objects.get().user == user
     assert Notification.objects.get().user != admin
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "object_reference, kind, actor, target, action_object, action_object_extra_kwargs",
+    [
+        [
+            "target",
+            Notification.Type.REQUEST_UPDATE,
+            None,
+            AlgorithmPermissionRequestFactory,
+            None,
+            {},
+        ],
+        [
+            "target",
+            Notification.Type.REQUEST_UPDATE,
+            None,
+            ReaderStudyPermissionRequestFactory,
+            None,
+            {},
+        ],
+        [
+            "target",
+            Notification.Type.REQUEST_UPDATE,
+            None,
+            ArchivePermissionRequestFactory,
+            None,
+            {},
+        ],
+        [
+            "target",
+            Notification.Type.ACCESS_REQUEST,
+            UserFactory,
+            ArchiveFactory,
+            None,
+            {},
+        ],
+        [
+            "target",
+            Notification.Type.ACCESS_REQUEST,
+            UserFactory,
+            AlgorithmFactory,
+            None,
+            {},
+        ],
+        [
+            "target",
+            Notification.Type.ACCESS_REQUEST,
+            UserFactory,
+            ReaderStudyFactory,
+            None,
+            {},
+        ],
+        [
+            "target",
+            Notification.Type.FORUM_POST_REPLY,
+            UserFactory,
+            ForumTopicFactory,
+            None,
+            {},
+        ],
+        [
+            "action_object",
+            Notification.Type.EVALUATION_STATUS,
+            UserFactory,
+            PhaseFactory,
+            EvaluationFactory,
+            {"time_limit": 10},
+        ],
+        [
+            "action_object",
+            Notification.Type.MISSING_METHOD,
+            UserFactory,
+            PhaseFactory,
+            SubmissionFactory,
+            {},
+        ],
+        [
+            "target",
+            Notification.Type.EVALUATION_STATUS,
+            UserFactory,
+            PhaseFactory,
+            EvaluationFactory,
+            {"time_limit": 10},
+        ],
+        [
+            "action_object",
+            Notification.Type.IMAGE_IMPORT_STATUS,
+            None,
+            None,
+            RawImageUploadSessionFactory,
+            {},
+        ],
+        [
+            "actor",
+            Notification.Type.CIV_VALIDATION,
+            UserFactory,
+            None,
+            None,
+            {},
+        ],
+    ],
+)
+def test_notification_clean_up_after_object_removal(
+    object_reference,
+    kind,
+    actor,
+    target,
+    action_object,
+    action_object_extra_kwargs,
+):
+    u = UserFactory()
+
+    notification = NotificationFactory(
+        user=u,
+        type=kind,
+        actor=actor() if actor else None,
+        target=target() if target else None,
+        message="foo",
+        action_object=(
+            action_object(**action_object_extra_kwargs)
+            if action_object
+            else None
+        ),
+    )
+
+    getattr(notification, object_reference).delete()
+
+    assert not Notification.objects.filter(pk=notification.pk).exists()
+
+
+@pytest.mark.django_db
+def test_forum_post_notification_clean_up_after_forum_removal():
+    u = UserFactory()
+    forum = ForumFactory()
+
+    notification = NotificationFactory(
+        user=u,
+        type=Notification.Type.FORUM_POST,
+        actor=UserFactory(),
+        target=forum,
+        message="foo",
+        action_object=ForumTopicFactory(),
+    )
+
+    Page.objects.all().delete()
+    forum.linked_challenge.delete()
+    forum.delete()
+
+    assert not Notification.objects.filter(pk=notification.pk).exists()
