@@ -8,6 +8,7 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
         "notifications", "Notification"
     )
     Follow = apps.get_model("actstream", "Follow")  # noqa: N806
+    Forum = apps.get_model("discussion_forums", "Forum")  # noqa: N806
     ForumTopic = apps.get_model(  # noqa: N806
         "discussion_forums", "ForumTopic"
     )
@@ -15,12 +16,8 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
     MachinaTopic = apps.get_model("forum_conversation", "Topic")  # noqa: N806
     ContentType = apps.get_model("contenttypes", "ContentType")  # noqa: N806
 
-    new_topic_ct = ContentType.objects.filter(
-        app_label="discussion_forums", model="forumtopic"
-    ).get()
-    new_forum_ct = ContentType.objects.filter(
-        app_label="discussion_forums", model="forum"
-    ).get()
+    new_topic_ct = ContentType.objects.get_for_model(ForumTopic)
+    new_forum_ct = ContentType.objects.get_for_model(Forum)
 
     def get_matching_forum(*, old_forum_id):
         old_forum = MachinaForum.objects.get(pk=old_forum_id)
@@ -57,7 +54,7 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
             new_target = get_matching_topic(
                 old_topic_id=notification.target_object_id
             )
-            notification.target_content_type = new_forum_ct
+            notification.target_content_type = new_topic_ct
             notification.target_object_id = new_target.pk
 
         notifications_to_update.append(notification)
