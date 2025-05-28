@@ -86,7 +86,6 @@ def test_participants_follow_forum(group):
         assert c.discussion_forum != i.actor
 
 
-@pytest.mark.xfail(reason="To be addressed for forum pitch")
 @pytest.mark.django_db
 @pytest.mark.parametrize("group", ("participant", "admin"))
 def test_non_posters_notified(group):
@@ -104,7 +103,7 @@ def test_non_posters_notified(group):
     ForumTopicFactory(
         forum=c.discussion_forum,
         creator=p,
-        type=ForumTopicKindChoices.ANNOUNCE,
+        kind=ForumTopicKindChoices.ANNOUNCE,
     )
 
     assert u.user_profile.has_unread_notifications is True
