@@ -15,6 +15,13 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
     MachinaTopic = apps.get_model("forum_conversation", "Topic")  # noqa: N806
     ContentType = apps.get_model("contenttypes", "ContentType")  # noqa: N806
 
+    new_topic_ct = ContentType.objects.filter(
+        app_label="discussion_forums", model="forumtopic"
+    ).get()
+    new_forum_ct = ContentType.objects.filter(
+        app_label="discussion_forums", model="forum"
+    ).get()
+
     def get_matching_forum(*, old_forum_id):
         old_forum = MachinaForum.objects.get(pk=old_forum_id)
         return old_forum.challenge.discussion_forum
@@ -42,13 +49,17 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
             new_action_object = get_matching_topic(
                 old_topic_id=notification.action_object_object_id
             )
-            notification.target = new_target
-            notification.action_object = new_action_object
+            notification.target_content_type = new_forum_ct
+            notification.target_object_id = new_target.pk
+            notification.action_object_content_type = new_topic_ct
+            notification.action_object_object_id = new_action_object.pk
         else:
             new_target = get_matching_topic(
                 old_topic_id=notification.target_object_id
             )
-            notification.target = new_target
+            notification.target_content_type = new_forum_ct
+            notification.target_object_id = new_target.pk
+
         notifications_to_update.append(notification)
 
     Notification.objects.bulk_update(
@@ -75,10 +86,13 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
     ):
         if follow.content_type == ct_forum:
             forum = get_matching_forum(old_forum_id=follow.object_id)
-            follow.follow_object = forum
+            follow.object_id = forum.pk
+            follow.content_type = new_forum_ct
         else:
             topic = get_matching_topic(old_topic_id=follow.object_id)
-            follow.follow_object = topic
+            follow.object_id = topic.pk
+            follow.content_type = new_topic_ct
+
         follows_to_update.append(follow)
 
     Follow.objects.bulk_update(
