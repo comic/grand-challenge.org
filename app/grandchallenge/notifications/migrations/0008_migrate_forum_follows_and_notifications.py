@@ -8,7 +8,6 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
         "notifications", "Notification"
     )
     Follow = apps.get_model("actstream", "Follow")  # noqa: N806
-    Forum = apps.get_model("discussion_forums", "Forum")  # noqa: N806
     ForumTopic = apps.get_model(  # noqa: N806
         "discussion_forums", "ForumTopic"
     )
@@ -29,6 +28,7 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
             subject=old_topic.subject,
         )
 
+    notifications_to_update = []
     for notification in Notification.objects.filter(
         type__in=[
             NotificationTypeChoices.FORUM_POST,
@@ -44,16 +44,23 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
             )
             notification.target = new_target
             notification.action_object = new_action_object
-            notification.save()
-        elif notification.type == NotificationTypeChoices.FORUM_POST_REPLY:
+        else:
             new_target = get_matching_topic(
                 old_topic_id=notification.target_object_id
             )
             notification.target = new_target
-            notification.save()
-        else:
-            # nothing to do
-            continue
+        notifications_to_update.append(notification)
+
+    Notification.objects.bulk_update(
+        notifications_to_update,
+        fields=[
+            "target_content_type",
+            "target_object_id",
+            "action_object_content_type",
+            "action_object_object_id",
+        ],
+        batch_size=1000,
+    )
 
     ct_forum = ContentType.objects.filter(
         app_label="forum", model="forum"
@@ -62,21 +69,23 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
         app_label="forum_conversation", model="topic"
     ).get()
 
+    follows_to_update = []
     for follow in Follow.objects.filter(
         content_type__in=[ct_forum, ct_forumtopic]
     ):
         if follow.content_type == ct_forum:
             forum = get_matching_forum(old_forum_id=follow.object_id)
-            follow.content_type = ContentType.objects.get_for_model(Forum)
             follow.follow_object = forum
-            follow.object_id = forum.pk
-            follow.save()
-        elif follow.content_type == ct_forumtopic:
+        else:
             topic = get_matching_topic(old_topic_id=follow.object_id)
-            follow.content_type = ContentType.objects.get_for_model(ForumTopic)
             follow.follow_object = topic
-            follow.object_id = topic.pk
-            follow.save()
+        follows_to_update.append(follow)
+
+    Follow.objects.bulk_update(
+        follows_to_update,
+        fields=["content_type", "object_id"],
+        batch_size=1000,
+    )
 
 
 class Migration(migrations.Migration):
