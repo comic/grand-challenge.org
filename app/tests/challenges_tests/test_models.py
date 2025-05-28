@@ -10,17 +10,17 @@ from dateutil.utils import today
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
 from django.utils.timezone import datetime, now, timedelta
-from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.challenges.models import Challenge, OnboardingTask
+from grandchallenge.discussion_forums.models import ForumTopicKindChoices
 from grandchallenge.notifications.models import Notification
+from tests.discussion_forums_tests.factories import ForumTopicFactory
 from tests.factories import (
     ChallengeFactory,
     ChallengeRequestFactory,
     OnboardingTaskFactory,
     UserFactory,
 )
-from tests.notifications_tests.factories import TopicFactory
 from tests.organizations_tests.factories import OrganizationFactory
 
 
@@ -86,7 +86,6 @@ def test_participants_follow_forum(group):
         assert c.discussion_forum != i.actor
 
 
-@pytest.mark.xfail(reason="To be addressed for forum pitch")
 @pytest.mark.django_db
 @pytest.mark.parametrize("group", ("participant", "admin"))
 def test_non_posters_notified(group):
@@ -101,7 +100,11 @@ def test_non_posters_notified(group):
     # delete all notifications for easier testing below
     Notification.objects.all().delete()
 
-    TopicFactory(forum=c.forum, poster=p, type=Topic.TOPIC_ANNOUNCE)
+    ForumTopicFactory(
+        forum=c.discussion_forum,
+        creator=p,
+        kind=ForumTopicKindChoices.ANNOUNCE,
+    )
 
     assert u.user_profile.has_unread_notifications is True
     assert p.user_profile.has_unread_notifications is False

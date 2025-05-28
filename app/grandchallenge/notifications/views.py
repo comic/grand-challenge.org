@@ -138,7 +138,7 @@ class FollowList(
             )
             | Q(
                 content_type__app_label="cases",
-                content_type__model="rawimageuploadsessions",
+                content_type__model="rawimageuploadsession",
             )
         )
         .exclude(flag="job-inactive")
