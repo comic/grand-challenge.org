@@ -1,6 +1,10 @@
+from datetime import timedelta
+
 import pytest
 from actstream.actions import follow, is_following
+from django.core.exceptions import PermissionDenied
 from django.utils.html import format_html
+from django.utils.timezone import now
 
 from grandchallenge.discussion_forums.models import ForumTopicKindChoices
 from grandchallenge.notifications.models import Notification
@@ -377,3 +381,28 @@ def test_forum_post_notification_clean_up_after_forum_removal():
     forum.delete()
 
     assert not Notification.objects.filter(pk=notification.pk).exists()
+
+
+@pytest.mark.django_db
+def test_permission_denied_when_posting(settings):
+    settings.FORUMS_MIN_ACCOUNT_AGE_DAYS = 1
+
+    f = ForumFactory()
+    old_user = UserFactory()
+    old_user.date_joined = now() - timedelta(days=2)
+    old_user.save()
+    topic = ForumTopicFactory(forum=f, creator=old_user)
+
+    user = UserFactory()
+
+    with pytest.raises(PermissionDenied):
+        ForumTopicFactory(forum=f, creator=user)
+
+    with pytest.raises(PermissionDenied):
+        ForumPostFactory(creator=user, topic=topic)
+
+    user.date_joined = now() - timedelta(days=2)
+    user.save()
+
+    ForumTopicFactory(forum=f, creator=user)
+    ForumPostFactory(creator=user, topic=topic)
