@@ -1194,7 +1194,7 @@ wheels = [
 
 [[package]]
 name = "grand-challenge-forge"
-version = "0.7.3"
+version = "0.7.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "black" },
@@ -1202,9 +1202,9 @@ dependencies = [
     { name = "jinja2" },
     { name = "jsonschema" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ea/3a/289f37173e153bceee3db92c18d0302b688806206697c8d4555fe95774b1/grand_challenge_forge-0.7.3.tar.gz", hash = "sha256:3af655cc8d2ada92615a19853650a46a881869cc05975852567559a53c363536", size = 32142, upload-time = "2025-04-25T12:41:46.759Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/23/6c/e28938315e843529aa232444b03c421e7a3a3d38302687323dd31e9683ff/grand_challenge_forge-0.7.4.tar.gz", hash = "sha256:2d25723d29ca85f7a03222e8852bff10afe7186b2af7d303d63d888bfca12a8b", size = 32123, upload-time = "2025-05-30T08:18:21.252Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/af/19/16cef263ae11f2cedccd3067d84a676839b719e46be6ed4d278122374e6f/grand_challenge_forge-0.7.3-py3-none-any.whl", hash = "sha256:d59bec2a63f22027daa628958184081398bd333d8d7a784852e09e332cf2add7", size = 48166, upload-time = "2025-04-25T12:41:45.451Z" },
+    { url = "https://files.pythonhosted.org/packages/54/a9/39ac67c975476509b2eeb5054551da8731e96240f49d87ddd620a9dc3090/grand_challenge_forge-0.7.4-py3-none-any.whl", hash = "sha256:f1daf68b51264d1c433466b775f8ac918c11dd7c7fc75fc4813bd87aae995155", size = 48141, upload-time = "2025-05-30T08:18:19.441Z" },
 ]
 
 [[package]]

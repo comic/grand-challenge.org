@@ -3148,18 +3148,13 @@ def test_phase_starter_kit_download(client):
     zip_file = zipfile.ZipFile(buffer)
 
     # Spot check for expected files in the zip
-    root = Path(f"{phase.challenge.short_name}-{phase.slug}-starter-kit")
-
     expected_files = [
-        root / "README.md",
-        root / phase.slug / "example-algorithm" / "Dockerfile",
-        root / phase.slug / "example-algorithm" / "inference.py",
-        root / phase.slug / "example-evaluation-method" / "Dockerfile",
-        root / phase.slug / "example-evaluation-method" / "evaluate.py",
-        root
-        / phase.slug
-        / f"upload-to-archive-{phase.archive.slug}"
-        / "upload_files.py",
+        "README.md",
+        Path(phase.slug) / "example-algorithm" / "Dockerfile",
+        Path(phase.slug) / "example-algorithm" / "inference.py",
+        Path(phase.slug) / "example-evaluation-method" / "Dockerfile",
+        Path(phase.slug) / "example-evaluation-method" / "evaluate.py",
+        Path(phase.slug) / "upload-to-archive" / "upload_files.py",
     ]
     for file_name in expected_files:
         assert (

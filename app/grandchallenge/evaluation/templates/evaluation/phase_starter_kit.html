@@ -35,16 +35,16 @@
         </ul>
     </p>
 
-    {% if phase.archive and phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM %}
+    {% if phase.archive and phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and phase.algorithm_interfaces.exists %}
 
         <a class="btn btn-primary"
            href="{% url 'evaluation:phase-starter-kit-download' challenge_short_name=challenge.short_name slug=phase.slug %}">
             <i class="fa fa-download pr-2"></i>Download Phase Starter Kit
         </a>
 
-    {% elif phase.submission_kind != phase.SubmissionKindChoices.ALGORITHM or not phase.archive %}
+    {% else %}
         <p>
-            This phase does not have an archive linked to it or is not set up as an algorithm-accepting phase!
+            This phase does not have an archive linked to it, is not set up as an algorithm-accepting phase, or has no interfaces configured!
             These are pre-requisites for generating a starter kit.
         </p>
         <p>
