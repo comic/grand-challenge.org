@@ -1507,6 +1507,6 @@ class PhaseStarterKitDownload(
         return FileResponse(
             streaming_content=buffer,
             as_attachment=True,
-            filename=f"{phase.challenge.short_name}-{phase.slug}-starter-kit.zip",
+            filename=f"{phase.challenge.short_name}-{phase.slug}-kit.zip",
             content_type="application/zip",
         )
