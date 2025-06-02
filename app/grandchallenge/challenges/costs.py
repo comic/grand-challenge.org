@@ -24,7 +24,7 @@ def annotate_job_duration_and_compute_costs(*, phase):
         phase=phase,
     )
     evaluation_job_utilizations = EvaluationUtilization.objects.filter(
-        phase=phase
+        phase=phase, external_evaluation=False
     )
 
     phase.average_algorithm_job_duration = algorithm_job_utilizations.filter(
