@@ -19,10 +19,23 @@ from grandchallenge.utilization.models import (
 )
 
 
-def annotate_job_duration_and_compute_costs(*, phase):
+def annotate_compute_costs(*, challenge):
     algorithm_job_utilizations = JobUtilization.objects.filter(
-        phase=phase,
+        challenge=challenge
     )
+    evaluation_job_utilizations = EvaluationUtilization.objects.filter(
+        challenge=challenge
+    )
+
+    update_compute_cost_euro_millicents(
+        obj=challenge,
+        algorithm_job_utilizations=algorithm_job_utilizations,
+        evaluation_job_utilizations=evaluation_job_utilizations,
+    )
+
+
+def annotate_job_duration_and_compute_costs(*, phase):
+    algorithm_job_utilizations = JobUtilization.objects.filter(phase=phase)
     evaluation_job_utilizations = EvaluationUtilization.objects.filter(
         phase=phase, external_evaluation=False
     )
@@ -38,7 +51,25 @@ def annotate_job_duration_and_compute_costs(*, phase):
     )
 
 
-def annotate_compute_costs_and_storage_size(*, challenge):
+def update_compute_cost_euro_millicents(
+    *, obj, algorithm_job_utilizations, evaluation_job_utilizations
+):
+    algorithm_job_costs = algorithm_job_utilizations.aggregate(
+        Sum("compute_cost_euro_millicents")
+    )
+
+    evaluation_costs = evaluation_job_utilizations.aggregate(
+        Sum("compute_cost_euro_millicents")
+    )
+
+    items = [algorithm_job_costs, evaluation_costs]
+
+    obj.compute_cost_euro_millicents = sum(
+        item["compute_cost_euro_millicents__sum"] or 0 for item in items
+    )
+
+
+def annotate_storage_size(*, challenge):
     permission = Permission.objects.get(
         codename="view_job",
         content_type__app_label="algorithms",
@@ -59,19 +90,6 @@ def annotate_compute_costs_and_storage_size(*, challenge):
         challenge=challenge,
         algorithm_jobs=algorithm_jobs,
         evaluation_jobs=evaluation_jobs,
-    )
-
-    algorithm_job_utilizations = JobUtilization.objects.filter(
-        challenge=challenge,
-    )
-    evaluation_job_utilizations = EvaluationUtilization.objects.filter(
-        challenge=challenge
-    )
-
-    update_compute_cost_euro_millicents(
-        obj=challenge,
-        algorithm_job_utilizations=algorithm_job_utilizations,
-        evaluation_job_utilizations=evaluation_job_utilizations,
     )
 
 
@@ -169,22 +187,4 @@ def update_size_in_storage_and_registry(
     )
     challenge.size_in_registry = sum(
         item.get("size_in_registry__sum") or 0 for item in items
-    )
-
-
-def update_compute_cost_euro_millicents(
-    *, obj, algorithm_job_utilizations, evaluation_job_utilizations
-):
-    algorithm_job_costs = algorithm_job_utilizations.aggregate(
-        Sum("compute_cost_euro_millicents")
-    )
-
-    evaluation_costs = evaluation_job_utilizations.aggregate(
-        Sum("compute_cost_euro_millicents")
-    )
-
-    items = [algorithm_job_costs, evaluation_costs]
-
-    obj.compute_cost_euro_millicents = sum(
-        item["compute_cost_euro_millicents__sum"] or 0 for item in items
     )
