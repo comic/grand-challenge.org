@@ -448,4 +448,39 @@ class Migration(migrations.Migration):
                 name="discussion__user_id_e5363a_idx",
             ),
         ),
+        migrations.CreateModel(
+            name="PostReadRecord",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField(auto_now_add=True)),
+                ("modified", models.DateTimeField(auto_now=True)),
+                (
+                    "post",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="read_by",
+                        to="discussion_forums.forumpost",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="read_posts",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+            ],
+            options={
+                "unique_together": {("user", "post")},
+            },
+        ),
     ]

@@ -333,3 +333,22 @@ class ForumPostUserObjectPermission(UserObjectPermissionBase):
 class ForumPostGroupObjectPermission(GroupObjectPermissionBase):
     allowed_permissions = frozenset({"view_forumpost", "delete_forumpost"})
     content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)
+
+
+class PostReadRecord(UUIDModel):
+    user = models.ForeignKey(
+        get_user_model(),
+        related_name="read_posts",
+        on_delete=models.CASCADE,
+    )
+    post = models.ForeignKey(
+        ForumPost,
+        related_name="read_by",
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        unique_together = [
+            "user",
+            "post",
+        ]
