@@ -102,6 +102,12 @@ def test_invoice_list_view_num_invoices_shown(client):
             ),
             '<td><span class="badge badge-success">Paid</span></td>',
         ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.CANCELLED,
+            ),
+            '<td><span class="badge badge-dark">Cancelled</span></td>',
+        ),
     ),
 )
 def test_invoice_list_view_content(client, invoice_kwargs, badge_and_status):

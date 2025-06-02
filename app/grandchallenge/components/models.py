@@ -838,7 +838,7 @@ INTERFACE_TYPE_JSON_EXAMPLES = {
             ],
             "config": {"axis": {"grid": True, "tickBand": "extent"}},
         },
-        extra_info="For more examples, see https://vega.github.io/vega-lite/examples/ and https://grand-challenge.org/blogs/visualisations-for-challenges/",
+        extra_info="For more examples, see https://vega.github.io/vega-lite/examples/",
     ),
     InterfaceKindChoices.TWO_D_BOUNDING_BOX: ComponentInterfaceExampleValue(
         value={

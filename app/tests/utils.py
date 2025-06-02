@@ -239,10 +239,8 @@ def recurse_callbacks(callbacks, django_capture_on_commit_callbacks):
 
 def create_raw_upload_image_session(
     *,
-    django_capture_on_commit_callbacks,
     image_paths: list[Path],
     user=None,
-    linked_task=None,
 ) -> tuple[RawImageUploadSession, dict[str, UserUpload]]:
     creator = user or UserFactory(email="test@example.com")
     upload_session = RawImageUploadSession.objects.create(creator=creator)
@@ -252,8 +250,5 @@ def create_raw_upload_image_session(
         upload = create_upload_from_file(file_path=image, creator=creator)
         uploaded_images[upload.filename] = upload
         upload_session.user_uploads.add(upload)
-
-    with django_capture_on_commit_callbacks(execute=True):
-        upload_session.process_images(linked_task=linked_task)
 
     return upload_session, uploaded_images

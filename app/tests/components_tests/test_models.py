@@ -1580,15 +1580,16 @@ def test_correct_storage_set(factory, expected_storage, download_context):
 def test_displacement_field_validation(
     image, succeeds, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     image_paths = [Path(__file__).parent.absolute() / "resources" / image]
     session, uploaded_images = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         image_paths=image_paths,
     )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        session.process_images()
 
     session.refresh_from_db()
 

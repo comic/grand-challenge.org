@@ -1,39 +1,30 @@
 import shutil
-from contextlib import nullcontext
 from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from django.core.exceptions import ObjectDoesNotExist
 from panimg.models import ImageType, PanImgFile, PostProcessorResult
 from panimg.post_processors import DEFAULT_POST_PROCESSORS
 
-from grandchallenge.algorithms.models import Job
-from grandchallenge.cases.models import ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import ImageFile
 from grandchallenge.cases.tasks import (
     POST_PROCESSORS,
     _check_post_processor_result,
-    build_images,
     import_images,
     post_process_image,
 )
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.storage import protected_s3_storage
-from tests.algorithms_tests.factories import AlgorithmJobFactory
-from tests.archives_tests.factories import ArchiveItemFactory
 from tests.cases_tests import RESOURCE_PATH
-from tests.cases_tests.factories import RawImageUploadSessionFactory
-from tests.factories import UploadSessionFactory
-from tests.reader_studies_tests.factories import DisplaySetFactory
+from tests.utils import create_raw_upload_image_session
 
 
 @pytest.mark.django_db
 def test_linked_task_called_with_session_pk(
     settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     called = {}
 
@@ -41,7 +32,9 @@ def test_linked_task_called_with_session_pk(
     def local_linked_task(*_, **kwargs):
         called.update(**kwargs)
 
-    session = UploadSessionFactory()
+    session, uploaded_images = create_raw_upload_image_session(
+        image_paths=[RESOURCE_PATH / "image10x10x10.mha"],
+    )
 
     with django_capture_on_commit_callbacks(execute=True):
         session.process_images(linked_task=local_linked_task.signature())
@@ -182,53 +175,3 @@ def test_post_processing(
         sum(file.size_in_storage for file in ImageFile.objects.all())
         == expected_bytes
     )
-
-
-@pytest.mark.parametrize(
-    "object_factory, factory_kwargs, context, expected_status",
-    (
-        (
-            DisplaySetFactory,
-            {},
-            nullcontext(),
-            RawImageUploadSession.CANCELLED,
-        ),
-        (
-            ArchiveItemFactory,
-            {},
-            nullcontext(),
-            RawImageUploadSession.CANCELLED,
-        ),
-        (
-            AlgorithmJobFactory,
-            {"time_limit": 10, "status": Job.VALIDATING_INPUTS},  # Required
-            pytest.raises(ObjectDoesNotExist),
-            None,
-        ),
-    ),
-)
-@pytest.mark.django_db
-def test_build_images_with_deleted_object(
-    object_factory,
-    factory_kwargs,
-    context,
-    expected_status,
-):
-    obj = object_factory(**factory_kwargs)
-    linked_object_pk = str(obj.pk)
-    obj.delete()
-
-    us = RawImageUploadSessionFactory(status=RawImageUploadSession.REQUEUED)
-
-    with context:
-        build_images(
-            upload_session_pk=us.pk,
-            linked_app_label=obj._meta.app_label,
-            linked_model_name=obj._meta.model_name,
-            linked_object_pk=linked_object_pk,
-            linked_interface_slug=None,
-        )
-
-    us.refresh_from_db()
-    if expected_status is not None:
-        assert us.status == expected_status

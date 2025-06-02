@@ -18,6 +18,13 @@ celery_app.config_from_object("django.conf:settings", namespace="CELERY_")
 celery_app.autodiscover_tasks()
 
 
+@task_prerun.connect
+def check_no_canvas_used(*_, sender=None, **__):
+    request = sender.request
+    if request.chain or request.chord:
+        logger.error(f"Task {request.task} is using a canvas")
+
+
 @celeryd_after_setup.connect()
 def check_configuration(*, instance, **__):
     """

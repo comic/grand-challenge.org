@@ -399,26 +399,22 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
     def assign_permissions(self):
         # Editors and users can view this algorithm
-        assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
-        assign_perm(f"view_{self._meta.model_name}", self.users_group, self)
+        assign_perm("view_algorithm", self.editors_group, self)
+        assign_perm("view_algorithm", self.users_group, self)
         # Editors and users can execute this algorithm
-        assign_perm(
-            f"execute_{self._meta.model_name}", self.editors_group, self
-        )
-        assign_perm(f"execute_{self._meta.model_name}", self.users_group, self)
+        assign_perm("execute_algorithm", self.editors_group, self)
+        assign_perm("execute_algorithm", self.users_group, self)
         # Editors can change this algorithm
-        assign_perm(
-            f"change_{self._meta.model_name}", self.editors_group, self
-        )
+        assign_perm("change_algorithm", self.editors_group, self)
 
         reg_and_anon = Group.objects.get(
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
         )
 
         if self.public:
-            assign_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
+            assign_perm("view_algorithm", reg_and_anon, self)
         else:
-            remove_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
+            remove_perm("view_algorithm", reg_and_anon, self)
 
     @cached_property
     def active_image(self):
@@ -876,14 +872,10 @@ class AlgorithmImage(UUIDModel, ComponentImage):
 
     def assign_permissions(self):
         # Editors and users can view this algorithm image
-        assign_perm(
-            f"view_{self._meta.model_name}", self.algorithm.editors_group, self
-        )
+        assign_perm("view_algorithmimage", self.algorithm.editors_group, self)
         # Editors can change this algorithm image
         assign_perm(
-            f"change_{self._meta.model_name}",
-            self.algorithm.editors_group,
-            self,
+            "change_algorithmimage", self.algorithm.editors_group, self
         )
 
     def get_peer_images(self):
@@ -999,14 +991,10 @@ class AlgorithmModel(Tarball):
 
     def assign_permissions(self):
         # Editors can view this algorithm model
-        assign_perm(
-            f"view_{self._meta.model_name}", self.algorithm.editors_group, self
-        )
+        assign_perm("view_algorithmmodel", self.algorithm.editors_group, self)
         # Editors can change this algorithm model
         assign_perm(
-            f"change_{self._meta.model_name}",
-            self.algorithm.editors_group,
-            self,
+            "change_algorithmmodel", self.algorithm.editors_group, self
         )
 
     def get_peer_tarballs(self):
@@ -1355,7 +1343,7 @@ class JobUserObjectPermission(UserObjectPermissionBase):
 
 
 class JobGroupObjectPermission(GroupObjectPermissionBase):
-    allowed_permissions = frozenset({"view_job", "change_job", "view_logs"})
+    allowed_permissions = frozenset({"view_job", "view_logs"})
 
     content_object = models.ForeignKey(Job, on_delete=models.CASCADE)
 

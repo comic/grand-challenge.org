@@ -310,7 +310,9 @@ class JobPostSerializer(JobSerializer):
 
         data = []
         for civ in serialized_civs:
-            found_keys = [key for key in possible_keys if key in civ]
+            found_keys = [
+                key for key in possible_keys if civ.get(key) is not None
+            ]
 
             if not found_keys:
                 raise serializers.ValidationError(

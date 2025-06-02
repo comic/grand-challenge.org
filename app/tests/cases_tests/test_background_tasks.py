@@ -1,7 +1,6 @@
 import os
 import shutil
 from pathlib import Path
-from unittest import mock
 
 import pytest
 from actstream.actions import is_following
@@ -14,10 +13,7 @@ from panimg.image_builders.metaio_utils import (
 )
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
-from grandchallenge.cases.tasks import (
-    build_images,
-    check_compressed_and_extract,
-)
+from grandchallenge.cases.tasks import check_compressed_and_extract
 from grandchallenge.notifications.models import Notification
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UploadSessionFactory
@@ -26,11 +22,9 @@ from tests.utils import create_raw_upload_image_session
 
 @pytest.mark.django_db
 def test_image_file_creation(settings, django_capture_on_commit_callbacks):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
-    # with replace_var(signals, "build_images", task_collector):
     images = [
         "image10x10x10.zraw",
         "image10x10x10.mhd",
@@ -50,9 +44,11 @@ def test_image_file_creation(settings, django_capture_on_commit_callbacks):
         "invalid_resolutions_tiff.tif",
     )
     session, uploaded_images = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         image_paths=[RESOURCE_PATH / p for p in images],
     )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        session.process_images()
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
@@ -83,14 +79,15 @@ def test_image_file_creation(settings, django_capture_on_commit_callbacks):
 def test_staged_mhd_upload_with_additional_headers(
     settings, tmp_path, images: list[str], django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     session, uploaded_images = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         image_paths=[RESOURCE_PATH / p for p in images],
     )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        session.process_images()
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
@@ -127,15 +124,16 @@ def test_staged_mhd_upload_with_additional_headers(
 
 @pytest.mark.django_db
 def test_no_convertible_file(settings, django_capture_on_commit_callbacks):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     images = ["no_image", "image10x10x10.mhd", "referring_to_system_file.mhd"]
     session, uploaded_images = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         image_paths=[RESOURCE_PATH / p for p in images],
     )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        session.process_images()
 
     session.refresh_from_db()
     assert session.status == session.FAILURE
@@ -149,9 +147,8 @@ def test_no_convertible_file(settings, django_capture_on_commit_callbacks):
 def test_errors_on_files_with_duplicate_file_names(
     settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     images = [
         "image10x10x10.zraw",
@@ -160,9 +157,11 @@ def test_errors_on_files_with_duplicate_file_names(
         "image10x10x10.mhd",
     ]
     session, uploaded_images = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         image_paths=[RESOURCE_PATH / p for p in images],
     )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        session.process_images()
 
     session.refresh_from_db()
     assert session.status == session.FAILURE
@@ -177,15 +176,16 @@ def test_errors_on_files_with_duplicate_file_names(
 def test_mhd_file_annotation_creation(
     settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     images = ["image5x6x7.mhd", "image5x6x7.zraw"]
     session, uploaded_images = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         image_paths=[RESOURCE_PATH / p for p in images],
     )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        session.process_images()
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
@@ -260,16 +260,18 @@ def test_check_compressed_and_extract_same_name(
 
 @pytest.mark.django_db
 def test_build_zip_file(settings, django_capture_on_commit_callbacks):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     # valid.zip contains a tarred version of the dicom folder,
     # image10x10x10.[mha,mhd,zraw] and valid_tiff.tiff
     images = ["valid.zip"]
     session, uploaded_images = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         image_paths=[RESOURCE_PATH / p for p in images],
     )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        session.process_images()
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
@@ -292,30 +294,41 @@ def test_build_zip_file(settings, django_capture_on_commit_callbacks):
 
 
 @pytest.mark.django_db
-@mock.patch(
-    "grandchallenge.cases.tasks._handle_raw_files",
-    side_effect=SoftTimeLimitExceeded(),
-)
-def test_soft_time_limit(_):
+def test_soft_time_limit(settings, django_capture_on_commit_callbacks, mocker):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     session = UploadSessionFactory()
-    session.status = session.REQUEUED
+    session.status = session.PENDING
     session.save()
-    build_images(upload_session_pk=session.pk)
+
+    mocker.patch(
+        "grandchallenge.cases.tasks._handle_raw_files",
+        side_effect=SoftTimeLimitExceeded(),
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        session.process_images()
+
     session.refresh_from_db()
     assert session.status == session.FAILURE
     assert session.error_message == "Time limit exceeded"
 
 
 @pytest.mark.django_db
-def test_failed_image_import_notification(django_capture_on_commit_callbacks):
+def test_failed_image_import_notification(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     images = ["corrupt.png"]
     session, _ = create_raw_upload_image_session(
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
         image_paths=[RESOURCE_PATH / p for p in images],
     )
 
-    build_images(upload_session_pk=session.pk)
-    session.refresh_from_db()
+    with django_capture_on_commit_callbacks(execute=True):
+        session.process_images()
 
     assert RawImageUploadSession.objects.count() == 1
     assert is_following(

@@ -193,7 +193,7 @@ class AlgorithmList(FilterMixin, ViewObjectPermissionListMixin, ListView):
 
 class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
     model = Algorithm
-    permission_required = "algorithms.view_algorithm"
+    permission_required = "view_algorithm"
     raise_exception = True
     queryset = Algorithm.objects.prefetch_related(
         "algorithm_container_images__build__webhook_message",
@@ -277,7 +277,7 @@ class AlgorithmStatistics(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     model = Algorithm
-    permission_required = "algorithms.change_algorithm"
+    permission_required = "change_algorithm"
     template_name = "algorithms/algorithm_statistics.html"
     raise_exception = True
 
@@ -290,7 +290,7 @@ class AlgorithmUpdate(
 ):
     model = Algorithm
     form_class = AlgorithmForm
-    permission_required = "algorithms.change_algorithm"
+    permission_required = "change_algorithm"
     raise_exception = True
 
 
@@ -301,13 +301,13 @@ class AlgorithmDescriptionUpdate(
 ):
     model = Algorithm
     form_class = AlgorithmDescriptionForm
-    permission_required = "algorithms.change_algorithm"
+    permission_required = "change_algorithm"
     raise_exception = True
 
 
 class AlgorithmUserGroupUpdateMixin(UserGroupUpdateMixin):
     template_name = "algorithms/user_groups_form.html"
-    permission_required = "algorithms.change_algorithm"
+    permission_required = "change_algorithm"
 
     @property
     def obj(self):
@@ -316,7 +316,7 @@ class AlgorithmUserGroupUpdateMixin(UserGroupUpdateMixin):
 
 class JobUserGroupUpdateMixin(UserGroupUpdateMixin):
     template_name = "algorithms/user_groups_form.html"
-    permission_required = "algorithms.change_job"
+    permission_required = "change_job"
 
     @property
     def obj(self):
@@ -365,7 +365,7 @@ class AlgorithmImageCreate(
 ):
     model = AlgorithmImage
     form_class = AlgorithmImageForm
-    permission_required = "algorithms.change_algorithm"
+    permission_required = "change_algorithm"
     raise_exception = True
     success_message = "Image validation and upload in progress."
 
@@ -391,7 +391,7 @@ class AlgorithmImageDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     model = AlgorithmImage
-    permission_required = "algorithms.view_algorithmimage"
+    permission_required = "view_algorithmimage"
     raise_exception = True
     queryset = AlgorithmImage.objects.prefetch_related(
         "build__webhook_message"
@@ -417,7 +417,7 @@ class AlgorithmImageDetail(
 class AlgorithmImageImportStatusDetail(
     ObjectPermissionRequiredMixin, DetailView
 ):
-    permission_required = "algorithms.view_algorithmimage"
+    permission_required = "view_algorithmimage"
     model = AlgorithmImage
     template_name = "components/import_status_detail.html"
     raise_exception = True
@@ -426,7 +426,7 @@ class AlgorithmImageImportStatusDetail(
 class AlgorithmImageBuildStatusDetail(
     ObjectPermissionRequiredMixin, DetailView
 ):
-    permission_required = "algorithms.view_algorithmimage"
+    permission_required = "view_algorithmimage"
     template_name_suffix = "_build_status_detail"
     model = AlgorithmImage
     raise_exception = True
@@ -437,7 +437,7 @@ class AlgorithmImageUpdate(
 ):
     model = AlgorithmImage
     form_class = AlgorithmImageUpdateForm
-    permission_required = "algorithms.change_algorithmimage"
+    permission_required = "change_algorithmimage"
     raise_exception = True
 
     def get_context_data(self, *args, **kwargs):
@@ -452,7 +452,7 @@ class AlgorithmImageActivate(
     SuccessMessageMixin,
     FormView,
 ):
-    permission_required = "algorithms.change_algorithm"
+    permission_required = "change_algorithm"
     raise_exception = True
     form_class = ImageActivateForm
     template_name = "algorithms/image_activate.html"
@@ -643,7 +643,7 @@ class JobProgressDetail(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, DetailView
 ):
     template_name = "algorithms/job_progress_detail.html"
-    permission_required = "algorithms.view_job"
+    permission_required = "view_job"
     model = Job
     raise_exception = True
 
@@ -721,7 +721,7 @@ class JobsList(ViewObjectPermissionListMixin, PaginatedTableListView):
 
 
 class JobDetail(ObjectPermissionRequiredMixin, DetailView):
-    permission_required = "algorithms.view_job"
+    permission_required = "view_job"
     raise_exception = True
     queryset = Job.objects.prefetch_related(
         "outputs__image__files",
@@ -757,13 +757,13 @@ class JobDetail(ObjectPermissionRequiredMixin, DetailView):
 class JobUpdate(LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView):
     model = Job
     form_class = JobForm
-    permission_required = "algorithms.change_job"
+    permission_required = "change_job"
     template_name_suffix = "_form_update"
     raise_exception = True
 
 
 class JobStatusDetail(ObjectPermissionRequiredMixin, DetailView):
-    permission_required = "algorithms.view_job"
+    permission_required = "view_job"
     template_name_suffix = "_status_detail"
     model = Job
     raise_exception = True
@@ -775,7 +775,7 @@ class DisplaySetFromJobCreate(
     FormView,
 ):
     form_class = DisplaySetFromJobForm
-    permission_required = "algorithms.view_job"
+    permission_required = "view_job"
     raise_exception = True
     template_name = "algorithms/display_set_from_job_form.html"
 
@@ -893,7 +893,7 @@ class AlgorithmPermissionRequestCreate(
 
 class AlgorithmPermissionRequestList(ObjectPermissionRequiredMixin, ListView):
     model = AlgorithmPermissionRequest
-    permission_required = "algorithms.change_algorithm"
+    permission_required = "change_algorithm"
     raise_exception = True
 
     @property
@@ -923,7 +923,7 @@ class AlgorithmPermissionRequestUpdate(PermissionRequestUpdate):
     form_class = AlgorithmPermissionRequestUpdateForm
     base_model = Algorithm
     redirect_namespace = "algorithms"
-    permission_required = "algorithms.change_algorithm"
+    permission_required = "change_algorithm"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -941,7 +941,7 @@ class AlgorithmRepositoryUpdate(
     model = Algorithm
     form_class = AlgorithmRepoForm
     template_name = "algorithms/algorithm_repository_update.html"
-    permission_required = "algorithms.change_algorithm"
+    permission_required = "change_algorithm"
     raise_exception = True
 
     def get_form_kwargs(self):
@@ -957,7 +957,7 @@ class AlgorithmPublishView(
 ):
     model = Algorithm
     form_class = AlgorithmPublishForm
-    permission_required = "algorithms.change_algorithm"
+    permission_required = "change_algorithm"
     raise_exception = True
 
     def form_valid(self, form):
@@ -1002,7 +1002,7 @@ class AlgorithmModelCreate(
 ):
     model = AlgorithmModel
     form_class = AlgorithmModelForm
-    permission_required = "algorithms.change_algorithm"
+    permission_required = "change_algorithm"
     raise_exception = True
     success_message = "Model validation and upload in progress."
 
@@ -1030,7 +1030,7 @@ class AlgorithmModelDetail(
     DetailView,
 ):
     model = AlgorithmModel
-    permission_required = "algorithms.view_algorithmmodel"
+    permission_required = "view_algorithmmodel"
     raise_exception = True
 
     def get_context_data(self, **kwargs):
@@ -1064,7 +1064,7 @@ class AlgorithmModelImportStatusDetail(
     DetailView,
 ):
     model = AlgorithmModel
-    permission_required = "algorithms.view_algorithmmodel"
+    permission_required = "view_algorithmmodel"
     template_name = "components/import_status_detail.html"
     raise_exception = True
     login_url = reverse_lazy("account_login")
@@ -1077,7 +1077,7 @@ class AlgorithmModelUpdate(
 ):
     model = AlgorithmModel
     form_class = AlgorithmModelUpdateForm
-    permission_required = "algorithms.change_algorithmmodel"
+    permission_required = "change_algorithmmodel"
     raise_exception = True
 
     def get_context_data(self, *args, **kwargs):
@@ -1092,7 +1092,7 @@ class AlgorithmModelVersionControl(
     SuccessMessageMixin,
     FormView,
 ):
-    permission_required = "algorithms.change_algorithm"
+    permission_required = "change_algorithm"
     raise_exception = True
     template_name = "algorithms/model_version_control.html"
     form_class = AlgorithmModelVersionControlForm
@@ -1143,7 +1143,7 @@ class AlgorithmModelVersionControl(
 
 class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
     model = Algorithm
-    permission_required = "algorithms.change_algorithm"
+    permission_required = "change_algorithm"
     raise_exception = True
     queryset = Algorithm.objects.prefetch_related(
         "interfaces__inputs", "interfaces__outputs"
@@ -1151,7 +1151,6 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
 
     def get(self, *_, **__):
         algorithm = self.get_object()
-        dir_name = f"{algorithm.slug}-template"
 
         forge_context = get_forge_algorithm_template_context(algorithm)
 
@@ -1160,14 +1159,14 @@ class AlgorithmImageTemplate(ObjectPermissionRequiredMixin, DetailView):
             generate_algorithm_template(
                 context=forge_context,
                 output_zip_file=zipf,
-                target_zpath=Path(dir_name),
+                target_zpath=Path(""),
             )
         buffer.seek(0)
 
         return FileResponse(
             streaming_content=buffer,
             as_attachment=True,
-            filename=f"{dir_name}.zip",
+            filename=f"{algorithm.slug}-template.zip",
             content_type="application/zip",
         )
 

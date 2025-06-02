@@ -1489,7 +1489,6 @@ class PhaseStarterKitDownload(
 
     def get(self, *_, **__):
         phase = self.phase
-        dir_name = f"{phase.challenge.short_name}-{phase.slug}-starter-kit"
 
         forge_context = get_forge_challenge_pack_context(
             challenge=phase.challenge,
@@ -1501,13 +1500,13 @@ class PhaseStarterKitDownload(
             generate_challenge_pack(
                 context=forge_context,
                 output_zip_file=zipf,
-                target_zpath=Path(dir_name),
+                target_zpath=Path(""),
             )
         buffer.seek(0)
 
         return FileResponse(
             streaming_content=buffer,
             as_attachment=True,
-            filename=f"{dir_name}.zip",
+            filename=f"{phase.challenge.short_name}-{phase.slug}-kit.zip",
             content_type="application/zip",
         )

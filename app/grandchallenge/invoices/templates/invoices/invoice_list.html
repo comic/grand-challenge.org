@@ -66,16 +66,31 @@
                         <td>{{ invoice.get_payment_type_display }}</td>
                         <td>
                             {% if invoice.payment_type == invoice.PaymentTypeChoices.COMPLIMENTARY %}
-                                -
-                            {% elif invoice.is_overdue %}
-                                <span class="badge badge-danger">Overdue</span>
-                            {% elif invoice.is_due %}
-                                <span class="badge badge-warning">Due</span>
-                            {% elif invoice.payment_status == invoice.PaymentStatusChoices.PAID %}
-                                <span class="badge badge-success">Paid</span>
-                            {% else %}
-                                <span class="badge badge-info">Initialized</span>
-                            {% endif %}
+                                    -
+                                {% else %}
+                                    <span class="badge
+                                            {% if invoice.payment_status == invoice.PaymentStatusChoices.PAID %}
+                                                badge-success
+                                            {% elif invoice.is_overdue %}
+                                                badge-danger
+                                            {% elif invoice.payment_status == invoice.PaymentStatusChoices.ISSUED %}
+                                                badge-warning
+                                            {% elif invoice.payment_status == invoice.PaymentStatusChoices.CANCELLED %}
+                                                badge-dark
+                                            {% else %}
+                                                badge-info
+                                            {% endif %}">
+                                        {% if invoice.is_due %}
+                                            Due
+                                        {% elif invoice.is_overdue %}
+                                            Overdue
+                                        {% elif invoice.payment_status == invoice.PaymentStatusChoices.REQUESTED %}
+                                            Initialized
+                                        {% else %}
+                                            {{ invoice.get_payment_status_display }}
+                                        {% endif %}
+                                    </span>
+                                {% endif %}
                         </td>
                     </tr>
                 {% endfor %}

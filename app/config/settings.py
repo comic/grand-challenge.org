@@ -854,29 +854,18 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {
+        "level": os.environ.get("GRAND_CHALLENGE_LOG_LEVEL", "INFO"),
+        "handlers": ["console"],
+    },
     "loggers": {
-        "grandchallenge": {
-            "level": os.environ.get("GRAND_CHALLENGE_LOG_LEVEL", "INFO"),
-            "handlers": ["console"],
-            "propagate": True,
-        },
-        "django": {
-            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
-            "handlers": ["console"],
-            "propagate": True,
-        },
-        "werkzeug": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
         # As AWS_XRAY_CONTEXT_MISSING can only be set to LOG_ERROR,
         # silence errors from this sdk as they flood the logs in
         # RedirectFallbackMiddleware
         "aws_xray_sdk": {
             "handlers": ["console"],
             "level": "CRITICAL",
-            "propagate": True,
+            "propagate": False,
         },
     },
 }
@@ -1595,8 +1584,6 @@ ENABLE_DEBUG_TOOLBAR = False
 if DEBUG:
     # Allow localhost in development
     CORS_ALLOWED_ORIGIN_REGEXES += [r"^http://localhost:8888$"]
-
-    LOGGING["loggers"]["grandchallenge"]["level"] = "DEBUG"
 
     if ENABLE_DEBUG_TOOLBAR:
         INSTALLED_APPS += ("debug_toolbar",)
