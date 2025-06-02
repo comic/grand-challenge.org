@@ -54,6 +54,17 @@ class JobUtilizationAdmin(admin.ModelAdmin):
         "phase__slug",
         "challenge__short_name",
     )
+    readonly_fields = (
+        "creator",
+        "phase",
+        "challenge",
+        "archive",
+        "algorithm_image",
+        "algorithm",
+        "duration",
+        "compute_cost_euro_millicents",
+        "job",
+    )
 
 
 @admin.register(EvaluationUtilization)
@@ -77,4 +88,15 @@ class EvaluationUtilizationAdmin(admin.ModelAdmin):
         "evaluation__pk",
         "phase__slug",
         "challenge__short_name",
+    )
+    readonly_fields = (
+        "creator",
+        "phase",
+        "challenge",
+        "archive",
+        "algorithm_image",
+        "algorithm",
+        "duration",
+        "compute_cost_euro_millicents",
+        "evaluation",
     )
