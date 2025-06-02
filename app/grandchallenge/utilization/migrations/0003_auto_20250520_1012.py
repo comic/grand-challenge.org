@@ -88,7 +88,7 @@ def create_job_utilizations(apps, schema_editor):
         if job.completed_at and job.started_at:
             duration = job.completed_at - job.started_at
         else:
-            duration = []
+            duration = None
 
         job_utlizations_to_create.append(
             JobUtilization(
