@@ -123,6 +123,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.profiles.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">deactivate_user</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.subdomains.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.uploads.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">UserUpload</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.utilization.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluationUtilization</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.verifications.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">VerificationUserSet</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -2224,6 +2225,13 @@
                 <span class="s2">&quot;challenge_short_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_utilization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">EvaluationUtilization</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">evaluation</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">utilization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluation_utilization</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">EvaluationUserObjectPermission</span><span class="p">(</span><span class="n">UserObjectPermissionBase</span><span class="p">):</span>

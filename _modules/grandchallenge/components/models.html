@@ -39,7 +39,6 @@
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONDecodeError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
@@ -63,7 +62,7 @@
     <span class="n">RegexValidator</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span><span class="p">,</span> <span class="n">transaction</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">F</span><span class="p">,</span> <span class="n">IntegerChoices</span><span class="p">,</span> <span class="n">QuerySet</span><span class="p">,</span> <span class="n">Sum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegerChoices</span><span class="p">,</span> <span class="n">QuerySet</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.transaction</span><span class="w"> </span><span class="kn">import</span> <span class="n">on_commit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelChoiceField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.forms.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">model_to_dict</span>
@@ -71,7 +70,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.module_loading</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_string</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_valid_filename</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.timezone</span><span class="w"> </span><span class="kn">import</span> <span class="n">now</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.translation</span><span class="w"> </span><span class="kn">import</span> <span class="n">gettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_deprecate_fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecate_field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoSlugField</span>
@@ -1646,31 +1644,6 @@
 <div class="viewcode-block" id="ComponentJobManager">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ComponentJobManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
-<div class="viewcode-block" id="ComponentJobManager.with_duration">
-<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.with_duration">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Annotate the queryset with the duration of completed jobs&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="s2">&quot;completed_at&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="n">F</span><span class="p">(</span><span class="s2">&quot;started_at&quot;</span><span class="p">))</span></div>
-
-
-<div class="viewcode-block" id="ComponentJobManager.average_duration">
-<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.average_duration">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">average_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the average duration that completed jobs ran for&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">with_duration</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">Avg</span><span class="p">(</span><span class="s2">&quot;duration&quot;</span><span class="p">))[</span><span class="s2">&quot;duration__avg&quot;</span><span class="p">]</span>
-        <span class="p">)</span></div>
-
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">total_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">with_duration</span><span class="p">()</span>
-            <span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">Sum</span><span class="p">(</span><span class="s2">&quot;duration&quot;</span><span class="p">))[</span><span class="s2">&quot;duration__sum&quot;</span><span class="p">]</span>
-        <span class="p">)</span>
-
     <span class="k">def</span><span class="w"> </span><span class="nf">active</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c1"># We need to use a positive filter here so that the index</span>
         <span class="c1"># can be used rather than excluding jobs in final states</span>
@@ -1866,7 +1839,10 @@
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="n">field</span><span class="p">):</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> cannot be changed&quot;</span><span class="p">)</span>
 
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">create_utilization</span><span class="p">()</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update_status</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
@@ -1877,7 +1853,7 @@
         <span class="n">stderr</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">error_message</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
         <span class="n">detailed_error_message</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">duration</span><span class="p">:</span> <span class="n">timedelta</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">duration</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">compute_cost_euro_millicents</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">runtime_metrics</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
@@ -1898,23 +1874,17 @@
                 <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">detailed_error_message</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
             <span class="p">}</span>
 
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">status</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">STARTED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">EXECUTING</span><span class="p">]</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span> <span class="ow">is</span> <span class="kc">None</span>
-        <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span> <span class="o">=</span> <span class="n">now</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="p">(</span>
-            <span class="n">status</span>
-            <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">EXECUTED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">]</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">completed_at</span> <span class="ow">is</span> <span class="kc">None</span>
-        <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">completed_at</span> <span class="o">=</span> <span class="n">now</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">duration</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span><span class="p">:</span>
-                <span class="c1"># TODO: maybe add separate timings for provisioning, executing, parsing and total</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">started_at</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">completed_at</span> <span class="o">-</span> <span class="n">duration</span>
+        <span class="k">if</span> <span class="n">duration</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">duration</span> <span class="o">=</span> <span class="n">duration</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;duration&quot;</span><span class="p">])</span>
 
         <span class="k">if</span> <span class="n">compute_cost_euro_millicents</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">compute_cost_euro_millicents</span> <span class="o">=</span> <span class="n">compute_cost_euro_millicents</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">compute_cost_euro_millicents</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">compute_cost_euro_millicents</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">utilization</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+                <span class="n">update_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;compute_cost_euro_millicents&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">runtime_metrics</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">runtime_metrics</span> <span class="o">=</span> <span class="n">runtime_metrics</span>
@@ -2065,6 +2035,13 @@
                 <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime_metrics</span><span class="p">[</span><span class="s2">&quot;metrics&quot;</span><span class="p">]</span>
             <span class="p">],</span>
         <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_utilization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">utilization</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
         <span class="n">abstract</span> <span class="o">=</span> <span class="kc">True</span>
