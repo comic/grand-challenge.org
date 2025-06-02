@@ -28,7 +28,6 @@ from grandchallenge.core.celery import (
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
-from grandchallenge.utilization.models import JobUtilization
 
 logger = get_task_logger(__name__)
 
@@ -279,13 +278,8 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         time_limit=evaluation.submission.phase.algorithm_time_limit,
         requires_gpu_type=evaluation.submission.algorithm_requires_gpu_type,
         requires_memory_gb=evaluation.submission.algorithm_requires_memory_gb,
-    )
-
-    job_utilizations = JobUtilization.objects.filter(job__in=jobs)
-    job_utilizations.update(
-        phase=evaluation.submission.phase,
-        archive=evaluation.submission.phase.archive,
-        challenge=evaluation.submission.phase.challenge,
+        job_utilization_phase=evaluation.submission.phase,
+        job_utilization_challenge=evaluation.submission.phase.challenge,
     )
 
     if not jobs:
