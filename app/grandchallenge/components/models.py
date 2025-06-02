@@ -32,7 +32,6 @@ from django.template.defaultfilters import truncatewords
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
-from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
@@ -1769,30 +1768,17 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                 for key, value in detailed_error_message.items()
             }
 
-        if (
-            status in [self.STARTED, self.EXECUTING]
-            and self.started_at is None
-        ):
-            self.started_at = now()
-        elif (
-            status
-            in [self.EXECUTED, self.SUCCESS, self.FAILURE, self.CANCELLED]
-            and self.utilization.duration is None
-            and duration is None
-            and self.started_at is not None
-        ):
-            duration = now() - self.started_at
-
-        utilization_update_fields = set()
         if duration is not None:
             self.utilization.duration = duration
-            utilization_update_fields.add("duration")
+            self.utilization.save(update_fields=["duration"])
+
         if compute_cost_euro_millicents is not None:
             self.utilization.compute_cost_euro_millicents = (
                 compute_cost_euro_millicents
             )
-            utilization_update_fields.add("compute_cost_euro_millicents")
-        self.utilization.save(update_fields=utilization_update_fields)
+            self.utilization.save(
+                update_fields=["compute_cost_euro_millicents"]
+            )
 
         if runtime_metrics is not None:
             self.runtime_metrics = runtime_metrics
