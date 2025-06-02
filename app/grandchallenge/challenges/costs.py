@@ -30,6 +30,7 @@ def annotate_job_duration_and_compute_costs(*, phase):
     phase.average_algorithm_job_duration = algorithm_job_utilizations.filter(
         job__status=Job.SUCCESS
     ).average_duration()
+
     update_compute_cost_euro_millicents(
         obj=phase,
         algorithm_job_utilizations=algorithm_job_utilizations,
@@ -43,6 +44,7 @@ def annotate_compute_costs_and_storage_size(*, challenge):
         content_type__app_label="algorithms",
         content_type__model="job",
     )
+
     algorithm_jobs = Job.objects.filter(
         jobgroupobjectpermission__group=challenge.admins_group,
         jobgroupobjectpermission__permission=permission,

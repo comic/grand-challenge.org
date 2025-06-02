@@ -119,7 +119,9 @@ def set_challenges_to_job_utilizations(apps, schema_editor):
     )
     Permission = apps.get_model("auth", "Permission")  # noqa: N806
     Challenge = apps.get_model("challenges", "Challenge")  # noqa: N806
+
     challenges = Challenge.objects.all()
+
     if challenges.exists():
         permission = Permission.objects.get(
             codename="view_job",
@@ -139,9 +141,9 @@ def set_phases_and_archive_to_job_utilizations(apps, schema_editor):
         "utilization", "JobUtilization"
     )
     Phase = apps.get_model("evaluation", "Phase")  # noqa: N806
+
     for phase in Phase.objects.all():
         job_utilizations = JobUtilization.objects.filter(
-            phase__isnull=False,
             job__inputs__archive_items__archive__phase=phase,
             job__algorithm_image__submission__phase=phase,
         ).distinct()
