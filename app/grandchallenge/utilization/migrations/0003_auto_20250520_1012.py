@@ -10,6 +10,9 @@ def create_evaluation_utilizations(apps, schema_editor):
     evaluations_to_create = []
     n_created = 0
 
+    if not Evaluation.objects.exists():
+        return
+
     for evaluation in (
         Evaluation.objects.filter(evaluation_utilization__isnull=True)
         .only(
@@ -72,6 +75,9 @@ def create_job_utilizations(apps, schema_editor):
     job_utlizations_to_create = []
     n_created = 0
 
+    if not Job.objects.exists():
+        return
+
     for job in (
         Job.objects.filter(job_utilization__isnull=True)
         .only(
@@ -120,20 +126,21 @@ def set_challenges_to_job_utilizations(apps, schema_editor):
     Permission = apps.get_model("auth", "Permission")  # noqa: N806
     Challenge = apps.get_model("challenges", "Challenge")  # noqa: N806
 
-    challenges = Challenge.objects.all()
+    if not Challenge.objects.exists():
+        return
 
-    if challenges.exists():
-        permission = Permission.objects.get(
-            codename="view_job",
-            content_type__app_label="algorithms",
-            content_type__model="job",
-        )
-        for challenge in challenges:
-            job_utilizations = JobUtilization.objects.filter(
-                job__jobgroupobjectpermission__group=challenge.admins_group,
-                job__jobgroupobjectpermission__permission=permission,
-            ).distinct()
-            job_utilizations.update(challenge=challenge)
+    permission = Permission.objects.get(
+        codename="view_job",
+        content_type__app_label="algorithms",
+        content_type__model="job",
+    )
+
+    for challenge in Challenge.objects.all():
+        job_utilizations = JobUtilization.objects.filter(
+            job__jobgroupobjectpermission__group=challenge.admins_group,
+            job__jobgroupobjectpermission__permission=permission,
+        ).distinct()
+        job_utilizations.update(challenge=challenge)
 
 
 def set_phases_and_archive_to_job_utilizations(apps, schema_editor):
@@ -141,6 +148,9 @@ def set_phases_and_archive_to_job_utilizations(apps, schema_editor):
         "utilization", "JobUtilization"
     )
     Phase = apps.get_model("evaluation", "Phase")  # noqa: N806
+
+    if not Phase.objects.exists():
+        return
 
     for phase in Phase.objects.all():
         job_utilizations = JobUtilization.objects.filter(
