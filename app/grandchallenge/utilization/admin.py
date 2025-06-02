@@ -63,7 +63,7 @@ class JobUtilizationAdmin(admin.ModelAdmin):
         "algorithm",
         "duration",
         "compute_cost_euro_millicents",
-        "evaluation",
+        "job",
     )
 
 
@@ -98,5 +98,5 @@ class EvaluationUtilizationAdmin(admin.ModelAdmin):
         "algorithm",
         "duration",
         "compute_cost_euro_millicents",
-        "job",
+        "evaluation",
     )
