@@ -85,6 +85,7 @@ from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.profiles.tasks import deactivate_user
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
+from grandchallenge.utilization.models import EvaluationUtilization
 from grandchallenge.verifications.models import VerificationUserSet
 
 logger = logging.getLogger(__name__)
@@ -2174,6 +2175,13 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
                 "challenge_short_name": self.submission.phase.challenge.short_name,
             },
         )
+
+    def create_utilization(self):
+        EvaluationUtilization.objects.create(evaluation=self)
+
+    @property
+    def utilization(self):
+        return self.evaluation_utilization
 
 
 class EvaluationUserObjectPermission(UserObjectPermissionBase):

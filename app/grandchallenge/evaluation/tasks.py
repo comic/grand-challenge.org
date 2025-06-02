@@ -278,6 +278,8 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         time_limit=evaluation.submission.phase.algorithm_time_limit,
         requires_gpu_type=evaluation.submission.algorithm_requires_gpu_type,
         requires_memory_gb=evaluation.submission.algorithm_requires_memory_gb,
+        job_utilization_phase=evaluation.submission.phase,
+        job_utilization_challenge=evaluation.submission.phase.challenge,
     )
 
     if not jobs:
