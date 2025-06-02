@@ -32,7 +32,7 @@ from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
 logger = get_task_logger(__name__)
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def check_prerequisites_for_evaluation_execution(*, evaluation_pk):
     from grandchallenge.evaluation.models import (
@@ -43,8 +43,15 @@ def check_prerequisites_for_evaluation_execution(*, evaluation_pk):
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
-    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+    evaluation = lock_model_instance(
+        app_label="evaluation", model_name="evaluation", pk=evaluation_pk
+    )
     submission = evaluation.submission
+
+    if evaluation.status != evaluation.VALIDATING_INPUTS:
+        # the evaluation might have been queued for execution already, so ignore
+        logger.info("Evaluation has already been scheduled for execution.")
+        return
 
     if submission.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
         algorithm_interfaces = submission.phase.algorithm_interfaces.all()
@@ -85,7 +92,7 @@ def check_prerequisites_for_evaluation_execution(*, evaluation_pk):
         on_commit(e.apply_async)
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def prepare_and_execute_evaluation(
     *, evaluation_pk, max_initial_jobs=1
@@ -103,7 +110,9 @@ def prepare_and_execute_evaluation(
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
-    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+    evaluation = lock_model_instance(
+        app_label="evaluation", model_name="Evaluation", pk=evaluation_pk
+    )
     submission = evaluation.submission
 
     if not evaluation.additional_inputs_complete:
