@@ -1,0 +1,9 @@
+<ul>
+    {% for user in users %}
+        <li>{% if not user.is_active %}<s>{% endif %}{{ user.username }}{% if not user.is_active %}</s>{% endif %}</li>
+    {% endfor %}
+</ul>
+
+{% for comment in comments %}
+    <p>{{ comment }}</p>
+{% endfor %}
