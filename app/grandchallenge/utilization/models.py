@@ -149,6 +149,10 @@ class JobUtilization(ComponentJobUtilization):
 
     class Meta(ComponentJobUtilization.Meta):
         default_related_name = "job_utilizations"
+        indexes = [
+            models.Index(fields=["-created"]),
+            models.Index(fields=["creator", "algorithm"]),
+        ]
 
     def save(self, *args, **kwargs) -> None:
         if self._state.adding:
@@ -170,6 +174,10 @@ class EvaluationUtilization(ComponentJobUtilization):
 
     class Meta(ComponentJobUtilization.Meta):
         default_related_name = "evaluation_utilizations"
+        indexes = [
+            models.Index(fields=["-created"]),
+            models.Index(fields=["phase", "external_evaluation", "duration"]),
+        ]
 
     def save(self, *args, **kwargs) -> None:
         if self._state.adding:

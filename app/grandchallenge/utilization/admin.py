@@ -70,10 +70,12 @@ class JobUtilizationAdmin(admin.ModelAdmin):
 @admin.register(EvaluationUtilization)
 class EvaluationUtilizationAdmin(admin.ModelAdmin):
     ordering = ("-created",)
+    list_filter = ("external_evaluation",)
     list_display = (
         "pk",
         "created",
         "evaluation",
+        "external_evaluation",
         "creator",
         "duration",
         "compute_cost_euro_millicents",
