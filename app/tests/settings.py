@@ -48,6 +48,7 @@ logging.disable(logging.CRITICAL)
 INSTALLED_APPS += [  # noqa F405
     "tests.core_tests",
     "allauth.socialaccount.providers.dummy",
+    "machina.apps.forum_tracking",
 ]
 
 SOCIALACCOUNT_PROVIDERS.update({"dummy": {}})  # noqa F405
