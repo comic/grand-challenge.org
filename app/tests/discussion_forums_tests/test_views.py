@@ -4,7 +4,7 @@ from grandchallenge.discussion_forums.models import (
     ForumPost,
     ForumTopic,
     ForumTopicKindChoices,
-    PostReadRecord,
+    TopicReadRecord,
 )
 from tests.discussion_forums_tests.factories import (
     ForumFactory,
@@ -558,10 +558,9 @@ def test_posts_marked_as_read(client):
     user = UserFactory()
     topic.forum.linked_challenge.add_participant(user)
 
-    for post in topic.posts.all():
-        assert not PostReadRecord.objects.filter(user=user, post=post).exists()
+    assert not TopicReadRecord.objects.filter(user=user, topic=topic).exists()
 
-    # accessing the topic detail view, will mark all posts as read by this user
+    # accessing the topic detail view, will mark the topic as read by this user
     response = get_view_for_user(
         viewname="discussion-forums:topic-post-list",
         client=client,
@@ -572,5 +571,24 @@ def test_posts_marked_as_read(client):
         },
     )
     assert response.status_code == 200
-    for post in topic.posts.all():
-        assert PostReadRecord.objects.filter(user=user, post=post).exists()
+    assert TopicReadRecord.objects.filter(user=user, topic=topic).exists()
+
+    old_modified_time = TopicReadRecord.objects.get(
+        user=user, topic=topic
+    ).modified
+
+    # accessing the topic detail view again, will update the modified time
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-post-list",
+        client=client,
+        user=user,
+        reverse_kwargs={
+            "slug": topic.slug,
+            "challenge_short_name": topic.forum.linked_challenge.short_name,
+        },
+    )
+    assert response.status_code == 200
+    assert (
+        TopicReadRecord.objects.get(user=user, topic=topic).modified
+        > old_modified_time
+    )

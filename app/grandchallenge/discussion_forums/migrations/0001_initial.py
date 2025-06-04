@@ -449,7 +449,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.CreateModel(
-            name="PostReadRecord",
+            name="TopicReadRecord",
             fields=[
                 (
                     "id",
@@ -463,24 +463,24 @@ class Migration(migrations.Migration):
                 ("created", models.DateTimeField(auto_now_add=True)),
                 ("modified", models.DateTimeField(auto_now=True)),
                 (
-                    "post",
+                    "topic",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
                         related_name="read_by",
-                        to="discussion_forums.forumpost",
+                        to="discussion_forums.forumtopic",
                     ),
                 ),
                 (
                     "user",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="read_posts",
+                        related_name="read_topics",
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),
             ],
             options={
-                "unique_together": {("user", "post")},
+                "unique_together": {("user", "topic")},
             },
         ),
     ]

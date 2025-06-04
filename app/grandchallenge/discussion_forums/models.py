@@ -185,7 +185,14 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
         return math.ceil(post_count / posts_per_page)
 
     def get_unread_topic_posts_for_user(self, *, user):
-        return self.posts.exclude(read_by__user=user)
+        if TopicReadRecord.objects.filter(user=user, topic=self).exists():
+            return self.posts.exclude(
+                created_lt=TopicReadRecord.objects.get(
+                    user=user, topic=self
+                ).modified
+            )
+        else:
+            return self.posts
 
 
 class ForumPost(UUIDModel):
@@ -338,14 +345,14 @@ class ForumPostGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)
 
 
-class PostReadRecord(UUIDModel):
+class TopicReadRecord(UUIDModel):
     user = models.ForeignKey(
         get_user_model(),
-        related_name="read_posts",
+        related_name="read_topics",
         on_delete=models.CASCADE,
     )
-    post = models.ForeignKey(
-        ForumPost,
+    topic = models.ForeignKey(
+        ForumTopic,
         related_name="read_by",
         on_delete=models.CASCADE,
     )
@@ -353,5 +360,5 @@ class PostReadRecord(UUIDModel):
     class Meta:
         unique_together = [
             "user",
-            "post",
+            "topic",
         ]

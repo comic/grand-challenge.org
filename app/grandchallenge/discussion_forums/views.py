@@ -16,7 +16,7 @@ from grandchallenge.discussion_forums.models import (
     ForumPost,
     ForumTopic,
     ForumTopicKindChoices,
-    PostReadRecord,
+    TopicReadRecord,
 )
 from grandchallenge.subdomains.utils import reverse
 
@@ -135,12 +135,13 @@ class ForumTopicPostList(
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
 
-        # mark all posts in this topic as read by the user
-        for post in self.topic.posts.all():
-            PostReadRecord.objects.get_or_create(
-                user=self.request.user,
-                post=post,
-            )
+        # mark topic as read by the user
+        track, created = TopicReadRecord.objects.get_or_create(
+            user=self.request.user,
+            topic=self.topic,
+        )
+        if not created:
+            track.save()
 
         return response
 
