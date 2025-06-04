@@ -553,7 +553,7 @@ def test_users_cannot_post_to_locked_topic(client):
 
 
 @pytest.mark.django_db
-def test_posts_marked_as_read(client):
+def test_topic_marked_as_read(client):
     topic = ForumTopicFactory(post_count=3)
     user = UserFactory()
     topic.forum.linked_challenge.add_participant(user)
