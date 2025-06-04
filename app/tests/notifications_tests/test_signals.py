@@ -1,15 +1,39 @@
 from datetime import timedelta
 
 import pytest
+from actstream import registry
 from actstream.actions import follow, is_following
+from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.utils.html import format_html
 from django.utils.timezone import now
+from machina.apps.forum import models as machina_forum_models
+from machina.apps.forum_conversation import (
+    models as machina_conversation_models,
+)
 
-from grandchallenge.discussion_forums.models import ForumTopicKindChoices
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmPermissionRequest,
+)
+from grandchallenge.archives.models import Archive, ArchivePermissionRequest
+from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.challenges.models import Challenge
+from grandchallenge.discussion_forums.models import (
+    Forum,
+    ForumPost,
+    ForumTopic,
+    ForumTopicKindChoices,
+)
+from grandchallenge.evaluation.models import Evaluation, Phase, Submission
 from grandchallenge.notifications.models import Notification
 from grandchallenge.pages.models import Page
+from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
+from grandchallenge.reader_studies.models import (
+    ReaderStudy,
+    ReaderStudyPermissionRequest,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmPermissionRequestFactory,
@@ -155,25 +179,58 @@ def test_notification_created_for_target_followers_on_action_creation():
     assert notification.user != u
 
 
+MODEL_TO_FACTORY = {
+    AlgorithmPermissionRequest: (AlgorithmPermissionRequestFactory, {}),
+    ReaderStudyPermissionRequest: (ReaderStudyPermissionRequestFactory, {}),
+    ArchivePermissionRequest: (ArchivePermissionRequestFactory, {}),
+    Archive: (ArchiveFactory, {}),
+    Algorithm: (AlgorithmFactory, {}),
+    ReaderStudy: (ReaderStudyFactory, {}),
+    ForumTopic: (ForumTopicFactory, {}),
+    ForumPost: (ForumPostFactory, {}),
+    RegistrationRequest: (RegistrationRequestFactory, {}),
+    Evaluation: (EvaluationFactory, {"time_limit": 10}),
+    Phase: (PhaseFactory, {}),
+    Submission: (SubmissionFactory, {}),
+    RawImageUploadSession: (RawImageUploadSessionFactory, {}),
+    User: (UserFactory, {}),
+}
+
+
+def test_all_registered_models_have_factory_coverage():
+    """Ensure all models registered with actstream have corresponding factories for the below test."""
+    registered_models = set(registry.registry.keys())
+    # Exclude Challenge and Forum models since we have seperate tests for those
+    registered_models.discard(Challenge)
+    registered_models.discard(Forum)
+    # also exclude deprecated machina models
+    registered_models.discard(machina_forum_models.Forum)
+    registered_models.discard(machina_conversation_models.Topic)
+    registered_models.discard(machina_conversation_models.Post)
+
+    factory_covered_models = set(MODEL_TO_FACTORY.keys())
+
+    missing_factories = registered_models - factory_covered_models
+    extra_factories = factory_covered_models - registered_models
+
+    assert (
+        not missing_factories
+    ), f"These registered models are missing factory coverage: {missing_factories}"
+    assert (
+        not extra_factories
+    ), f"These factories are for models not in registry: {extra_factories}"
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "factory, extra_factory_kwargs",
-    [
-        [AlgorithmPermissionRequestFactory, {}],
-        [ReaderStudyPermissionRequestFactory, {}],
-        [ArchivePermissionRequestFactory, {}],
-        [ArchiveFactory, {}],
-        [AlgorithmFactory, {}],
-        [ReaderStudyFactory, {}],
-        [ForumTopicFactory, {}],
-        [RegistrationRequestFactory, {}],
-        [EvaluationFactory, {"time_limit": 10}],
-        [PhaseFactory, {}],
-        [SubmissionFactory, {}],
-        [RawImageUploadSessionFactory, {}],
-    ],
+    list(MODEL_TO_FACTORY.values()),
+    ids=[model._meta.label for model in MODEL_TO_FACTORY.keys()],
 )
 def test_follow_clean_up_after_object_removal(factory, extra_factory_kwargs):
+    # IMPORTANT:
+    # if a new model needs to be added to clean_up_follows to satisfy this test,
+    # this model should also be added to clean_up_notifications !
     u = UserFactory()
     o1, o2 = factory.create_batch(2, **extra_factory_kwargs)
     follow(u, o1, send_action=False)

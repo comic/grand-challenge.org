@@ -103,12 +103,10 @@ class FollowFilter(FilterSet):
         if model:
             name_qs = [x.pk for x in model.objects.filter(**kwargs).all()]
             extra_filter = {
-                **{"object_id__in": name_qs},
-                **{
-                    "content_type__exact": ContentType.objects.filter(
-                        model=model_name, app_label=app_label
-                    ).get()
-                },
+                "object_id__in": name_qs,
+                "content_type__exact": ContentType.objects.get(
+                    model=model_name, app_label=app_label
+                ),
             }
         else:
             extra_filter = {}
@@ -123,12 +121,10 @@ class FollowFilter(FilterSet):
             x.pk for x in ForumTopic.objects.filter(forum__in=forums).all()
         ]
         return queryset.filter(
-            **{"object_id__in": name_qs},
-            **{
-                "content_type__exact": ContentType.objects.filter(
-                    model="forumtopic", app_label="discussion_forums"
-                ).get()
-            },
+            object_id__in=name_qs,
+            content_type__exact=ContentType.objects.get(
+                model="forumtopic", app_label="discussion_forums"
+            ),
         )
 
     def get_content_type(self, queryset, name, value):
