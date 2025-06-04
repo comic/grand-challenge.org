@@ -78,6 +78,7 @@ def migrate_topic_tracks(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("discussion_forums", "0001_initial"),
+        ("forum_tracking", "0001_initial"),
     ]
 
     operations = [
