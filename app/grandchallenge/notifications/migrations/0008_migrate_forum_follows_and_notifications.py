@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import migrations
 
 from grandchallenge.notifications.models import NotificationTypeChoices
@@ -32,53 +33,29 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
             subject=old_topic.subject,
         )
 
-    notifications_to_update = []
-    for notification in Notification.objects.filter(
+    # delete old notifications with outdated references
+    Notification.objects.filter(
         type__in=[
             NotificationTypeChoices.FORUM_POST,
             NotificationTypeChoices.FORUM_POST_REPLY,
         ]
-    ):
-        if notification.type == NotificationTypeChoices.FORUM_POST:
-            new_target = get_matching_forum(
-                old_forum_id=notification.target_object_id
-            )
-            new_action_object = get_matching_topic(
-                old_topic_id=notification.action_object_object_id
-            )
-            notification.target_content_type = new_forum_ct
-            notification.target_object_id = new_target.pk
-            notification.action_object_content_type = new_topic_ct
-            notification.action_object_object_id = new_action_object.pk
-        else:
-            new_target = get_matching_topic(
-                old_topic_id=notification.target_object_id
-            )
-            notification.target_content_type = new_topic_ct
-            notification.target_object_id = new_target.pk
-
-        notifications_to_update.append(notification)
-
-    Notification.objects.bulk_update(
-        notifications_to_update,
-        fields=[
-            "target_content_type",
-            "target_object_id",
-            "action_object_content_type",
-            "action_object_object_id",
-        ],
-        batch_size=1000,
-    )
+    ).delete()
 
     ct_forum = ContentType.objects.get_for_model(MachinaForum)
     ct_forumtopic = ContentType.objects.get_for_model(MachinaTopic)
 
     follows_to_update = []
-    for follow in Follow.objects.filter(
-        content_type__in=[ct_forum, ct_forumtopic]
+    batch_size = 1000
+    for follow in (
+        Follow.objects.filter(content_type__in=[ct_forum, ct_forumtopic])
+        .only("object_id", "content_type")
+        .iterator(chunk_size=batch_size)
     ):
         if follow.content_type == ct_forum:
-            forum = get_matching_forum(old_forum_id=follow.object_id)
+            try:
+                forum = get_matching_forum(old_forum_id=follow.object_id)
+            except ObjectDoesNotExist:
+                continue
             follow.object_id = forum.pk
             follow.content_type = new_forum_ct
         else:
@@ -88,11 +65,18 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
 
         follows_to_update.append(follow)
 
-    Follow.objects.bulk_update(
-        follows_to_update,
-        fields=["content_type", "object_id"],
-        batch_size=1000,
-    )
+        if follows_to_update >= batch_size:
+            Follow.objects.bulk_update(
+                follows_to_update,
+                fields=["content_type", "object_id"],
+            )
+            follows_to_update = []
+
+    if follows_to_update:
+        Follow.objects.bulk_update(
+            follows_to_update,
+            fields=["content_type", "object_id"],
+        )
 
 
 class Migration(migrations.Migration):
