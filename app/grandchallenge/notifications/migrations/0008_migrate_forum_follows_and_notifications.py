@@ -65,7 +65,7 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
 
         follows_to_update.append(follow)
 
-        if follows_to_update >= batch_size:
+        if len(follows_to_update) >= batch_size:
             Follow.objects.bulk_update(
                 follows_to_update,
                 fields=["content_type", "object_id"],
