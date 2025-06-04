@@ -185,13 +185,7 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
         return math.ceil(post_count / posts_per_page)
 
     def get_unread_topic_posts_for_user(self, *, user):
-        unread_posts = []
-        for post in self.posts.all():
-            if not PostReadRecord.objects.filter(
-                user=user, post=post
-            ).exists():
-                unread_posts.append(post)
-        return unread_posts
+        return self.posts.exclude(read_by__user=user)
 
 
 class ForumPost(UUIDModel):

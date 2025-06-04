@@ -4,6 +4,7 @@ from grandchallenge.discussion_forums.models import (
     ForumPost,
     ForumTopic,
     ForumTopicKindChoices,
+    PostReadRecord,
 )
 from tests.discussion_forums_tests.factories import (
     ForumFactory,
@@ -549,3 +550,27 @@ def test_users_cannot_post_to_locked_topic(client):
         )
         assert response.status_code == 403
         assert topic.posts.count() == post_count
+
+
+@pytest.mark.django_db
+def test_posts_marked_as_read(client):
+    topic = ForumTopicFactory(post_count=3)
+    user = UserFactory()
+    topic.forum.linked_challenge.add_participant(user)
+
+    for post in topic.posts.all():
+        assert not PostReadRecord.objects.filter(user=user, post=post).exists()
+
+    # accessing the topic detail view, will mark all posts as read by this user
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-post-list",
+        client=client,
+        user=user,
+        reverse_kwargs={
+            "slug": topic.slug,
+            "challenge_short_name": topic.forum.linked_challenge.short_name,
+        },
+    )
+    assert response.status_code == 200
+    for post in topic.posts.all():
+        assert PostReadRecord.objects.filter(user=user, post=post).exists()
