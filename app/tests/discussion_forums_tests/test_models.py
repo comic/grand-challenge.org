@@ -3,7 +3,7 @@ import pytest
 from grandchallenge.discussion_forums.models import (
     ForumPost,
     ForumTopic,
-    PostReadRecord,
+    TopicReadRecord,
 )
 from tests.discussion_forums_tests.factories import (
     ForumPostFactory,
@@ -49,10 +49,13 @@ def test_get_unread_topic_posts_for_user():
 
     assert topic.get_unread_topic_posts_for_user(user=user).count() == 5
 
-    PostReadRecord.objects.create(user=user, post=topic.posts.first())
+    TopicReadRecord.objects.create(user=user, topic=topic)
 
-    assert topic.get_unread_topic_posts_for_user(user=user).count() == 4
-    assert (
-        topic.posts.first()
-        not in topic.get_unread_topic_posts_for_user(user=user).all()
+    assert topic.get_unread_topic_posts_for_user(user=user).count() == 0
+
+    new_post = ForumPostFactory(topic=topic)
+
+    assert topic.get_unread_topic_posts_for_user(user=user).count() == 1
+    assert [new_post] == list(
+        topic.get_unread_topic_posts_for_user(user=user).all()
     )
