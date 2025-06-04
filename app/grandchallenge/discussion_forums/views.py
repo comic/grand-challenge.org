@@ -125,7 +125,7 @@ class ForumTopicPostList(
                 "post_create_form": ForumPostForm(
                     user=self.request.user, topic=self.topic
                 ),
-                "unread_posts_by_user": self.topic.get_unread_posts_for_user(
+                "unread_posts_by_user": self.topic.get_unread_topic_posts_for_user(
                     user=self.request.user
                 ),
             }
