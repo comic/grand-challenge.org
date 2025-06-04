@@ -193,6 +193,15 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
         posts_per_page = ForumTopicPostList.paginate_by
         return math.ceil(post_count / posts_per_page)
 
+    def get_unread_posts_for_user(self, *, user):
+        unread_posts = []
+        for post in self.posts.all():
+            if not PostReadRecord.objects.filter(
+                user=user, post=post
+            ).exists():
+                unread_posts.append(post)
+        return unread_posts
+
 
 class ForumPost(UUIDModel):
     topic = models.ForeignKey(

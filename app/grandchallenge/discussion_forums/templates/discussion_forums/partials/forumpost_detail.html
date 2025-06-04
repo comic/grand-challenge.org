@@ -5,7 +5,7 @@
 {% load url %}
 
 <div class="card my-3" id="post-{{ post.pk }}">
-    <div class="card-body">
+    <div class="card-body {% if post_unread_by_user %}shadow{% endif %}">
         <div class="row">
             <div class="col-md-10">
                 <div class="float-right">
@@ -25,6 +25,9 @@
                 </div>
                 <p>
                     <small class="text-muted">
+                        {% if post_unread_by_user%}
+                            <span class="text-danger mr-1" title="New post"><i class="fa fa-circle pl-1"></i></span>
+                        {% endif %}
                         <i class="fas fa-clock mr-1"></i>By: {{ post.creator|user_profile_link }}
                         {{ post.created|naturaltime }}
                         {% if include_topic_links %}
