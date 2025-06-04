@@ -44,6 +44,37 @@ def migrate_challenge_forums(apps, schema_editor):
                 )
 
 
+def migrate_topic_tracks(apps, schema_editor):
+    TopicReadTrack = apps.get_model(  # noqa: N806
+        "forum_tracking", "TopicReadTrack"
+    )
+    TopicReadRecord = apps.get_model(  # noqa: N806
+        "discussion_forums", "TopicReadRecord"
+    )
+    MachinaForum = apps.get_model("forum", "Forum")  # noqa: N806
+    MachinaTopic = apps.get_model("forum_conversation", "Topic")  # noqa: N806
+    ForumTopic = apps.get_model(  # noqa: N806
+        "discussion_forums", "ForumTopic"
+    )
+
+    def get_matching_forum(*, old_forum_id):
+        old_forum = MachinaForum.objects.get(pk=old_forum_id)
+        return old_forum.challenge.discussion_forum
+
+    def get_matching_topic(*, old_topic_id):
+        old_topic = MachinaTopic.objects.get(pk=old_topic_id)
+        new_forum = get_matching_forum(old_forum_id=old_topic.forum.pk)
+        return ForumTopic.objects.get(
+            forum=new_forum,
+            creator=old_topic.poster,
+            subject=old_topic.subject,
+        )
+
+    for track in TopicReadTrack.objects.iterator(chunk_size=1000):
+        new_topic = get_matching_topic(old_topic_id=track.topic.pk)
+        TopicReadRecord.objects.create(topic=new_topic, user=track.user)
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ("discussion_forums", "0001_initial"),
@@ -51,4 +82,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(migrate_challenge_forums, elidable=True),
+        migrations.RunPython(migrate_topic_tracks, elidable=True),
     ]
