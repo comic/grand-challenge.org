@@ -3,6 +3,8 @@
 {% load static %}
 {% load guardian_tags %}
 {% load crispy_forms_tags %}
+{% load discussion_forum_extras %}
+
 
 {% block sub_title %}{% if topic %}{{ topic }}{% endif %}My posts- {% endblock %}
 
@@ -86,7 +88,11 @@
         <div class="col-12" id="post-list">
             {% for post in object_list %}
                 {% with topic|yesno:"False,True" as include_topic_links %}
-                    {% include 'discussion_forums/partials/forumpost_detail.html' with include_topic_links=include_topic_links %}
+                    {% if post in unread_posts_by_user %}
+                        {% include 'discussion_forums/partials/forumpost_detail.html' with include_topic_links=include_topic_links post_unread_by_user=True %}
+                    {% else %}
+                        {% include 'discussion_forums/partials/forumpost_detail.html' with include_topic_links=include_topic_links post_unread_by_user=False %}
+                    {% endif %}
                 {% endwith %}
             {% endfor %}
         </div>

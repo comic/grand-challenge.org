@@ -1,6 +1,7 @@
 {% load user_profile_link from profiles %}
 {% load humanize %}
 {% load bleach %}
+{% load discussion_forum_extras %}
 
 <div class="mb-3 row">
     <div class="col-12">
@@ -27,10 +28,17 @@
                             <li class="list-group-item">
                                 <div class="row">
                                     <div class="col-2 col-md-1 text-center align-content-center pr-0 p-md-0">
-                                        <i class="fas {% if topic.is_sticky %}fa-lightbulb{% elif topic.is_announcement %}fa-info{% else %}fa-dot-circle{% endif %} fa-2x text-info"></i>
+                                        <i class="
+                                        fas
+                                        {% if topic.is_sticky %}fa-lightbulb{% elif topic.is_announcement %}fa-info{% else %}fa-dot-circle{% endif %}
+                                         fa-2x
+                                        {% get_first_unread_post_for_user topic=topic user=request.user as first_unread_post_for_user %}
+                                        {% if first_unread_post_for_user %}text-danger {% else %} text-info {% endif %}
+                                        "></i>
                                     </div>
                                     <div class="col-10 col-md-7">
-                                        <a href="{% url 'discussion-forums:topic-post-list' slug=topic.slug %}">{{ topic.subject }}</a>
+                                        <a href="{% if first_unread_post_for_user %} {{ first_unread_post_for_user.get_absolute_url }} {% else %}
+                                            {% url 'discussion-forums:topic-post-list' slug=topic.slug %}{% endif %}">{{ topic.subject }}</a>
                                         {% if topic.locked %}
                                             <i class="fas fa-lock text-info ml-1" title="This topic is locked"></i>
                                         {% endif %}
