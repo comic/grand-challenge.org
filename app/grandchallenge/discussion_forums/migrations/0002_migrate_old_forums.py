@@ -1,4 +1,5 @@
 from django.db import migrations
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.discussion_forums.models import ForumTopicKindChoices
 
@@ -21,6 +22,36 @@ def migrate_challenge_forums(apps, schema_editor):
 
     for challenge in Challenge.objects.all():
         new_forum = Forum.objects.create()
+
+        # assign permissions
+        if challenge.display_forum_link:
+            admins_group = challenge.admins_group
+            participants_group = challenge.participants_group
+            assign_perm(
+                "discussion_forums.view_forum",
+                admins_group,
+                new_forum,
+            )
+            assign_perm(
+                "discussion_forums.view_forum",
+                participants_group,
+                new_forum,
+            )
+            assign_perm(
+                "discussion_forums.create_forum_topic",
+                admins_group,
+                new_forum,
+            )
+            assign_perm(
+                "discussion_forums.create_forum_topic",
+                participants_group,
+                new_forum,
+            )
+            assign_perm(
+                "discussion_forums.create_sticky_and_announcement_topic",
+                admins_group,
+                new_forum,
+            )
         challenge.discussion_forum = new_forum
         challenge.save()
 
