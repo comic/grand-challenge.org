@@ -136,12 +136,12 @@ class ForumTopicPostList(
         response = super().get(request, *args, **kwargs)
 
         # mark topic as read by the user
-        track, created = TopicReadRecord.objects.get_or_create(
+        record, created = TopicReadRecord.objects.get_or_create(
             user=self.request.user,
             topic=self.topic,
         )
         if not created:
-            track.save()
+            record.save()
 
         return response
 

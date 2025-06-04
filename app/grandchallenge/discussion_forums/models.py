@@ -240,6 +240,13 @@ class ForumPost(UUIDModel):
 
         if adding:
             self.assign_permissions()
+            # mark topic (and hence this post) as read by the user
+            record, created = TopicReadRecord.objects.get_or_create(
+                user=self.creator,
+                topic=self.topic,
+            )
+            if not created:
+                record.save()
 
         self.topic.last_post_on = self.created
         self.topic.save()

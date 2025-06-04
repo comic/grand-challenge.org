@@ -87,13 +87,7 @@
     <div class="row">
         <div class="col-12" id="post-list">
             {% for post in object_list %}
-                {% with topic|yesno:"False,True" as include_topic_links %}
-                    {% if post in unread_posts_by_user %}
-                        {% include 'discussion_forums/partials/forumpost_detail.html' with include_topic_links=include_topic_links post_unread_by_user=True %}
-                    {% else %}
-                        {% include 'discussion_forums/partials/forumpost_detail.html' with include_topic_links=include_topic_links post_unread_by_user=False %}
-                    {% endif %}
-                {% endwith %}
+                {% include 'discussion_forums/partials/forumpost_detail.html' with topic=topic unread_posts_by_user=unread_posts_by_user %}
             {% endfor %}
         </div>
     </div>
