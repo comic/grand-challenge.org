@@ -1,6 +1,19 @@
 <ul>
     {% for user in users %}
-        <li>{% if not user.is_active %}<s>{% endif %}{{ user.username }}{% if not user.is_active %}</s>{% endif %}</li>
+        <li>
+            {% if not user.is_active %}<s>{% endif %}
+            {% if user.verification %}
+                {% if user.verification.is_verified == True %}
+                    ✅
+                {% elif user.verification.is_verified == False %}
+                    ❌
+                {% else %}
+                    ?
+                {% endif %}
+            {% endif %}
+            {{ user.username }}
+            {% if not user.is_active %}</s>{% endif %}
+        </li>
     {% endfor %}
 </ul>
 
