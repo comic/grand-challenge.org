@@ -46,7 +46,7 @@ def migrate_challenge_forums(apps, schema_editor):
 
 def migrate_topic_tracks(apps, schema_editor):
     TopicReadTrack = apps.get_model(  # noqa: N806
-        "forum_tracking", "TopicReadTrack"
+        "machina.apps.forum_tracking", "TopicReadTrack"
     )
     TopicReadRecord = apps.get_model(  # noqa: N806
         "discussion_forums", "TopicReadRecord"
