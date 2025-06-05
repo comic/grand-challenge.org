@@ -179,7 +179,11 @@ def prepare_and_execute_evaluation(
         evaluation.save()
         on_commit(evaluation.execute)
     else:
-        raise RuntimeError("No algorithm or predictions file found")
+        evaluation.update_status(
+            status=Evaluation.FAILURE,
+            error_message="An unexpected error occurred",
+        )
+        logger.error("No algorithm or predictions file found")
 
 
 @acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)
