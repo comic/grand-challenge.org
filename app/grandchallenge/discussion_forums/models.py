@@ -74,6 +74,12 @@ class Forum(UUIDModel):
     def parent_object(self):
         return self.linked_challenge
 
+    def get_absolute_url(self):
+        return reverse(
+            "discussion-forums:topic-list",
+            kwargs={"challenge_short_name": self.parent_object.short_name},
+        )
+
 
 class ForumTopic(FieldChangeMixin, UUIDModel):
     source_object = models.OneToOneField(
