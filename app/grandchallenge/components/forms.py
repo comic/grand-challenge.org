@@ -101,6 +101,21 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 
         return creator
 
+    def clean_user_upload(self):
+        user_upload = self.cleaned_data["user_upload"]
+
+        for model in (AlgorithmImage, Method, WorkstationImage):
+            if model.objects.filter(
+                user_upload=user_upload,
+            ).exists():
+                self.add_error(
+                    "user_upload",
+                    "The selected upload is already used by another container image",
+                )
+                break
+
+        return user_upload
+
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
         instance.assign_docker_image_from_upload()
