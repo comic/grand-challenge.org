@@ -60,6 +60,7 @@ from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.utilization.models import JobUtilization
 from grandchallenge.workstations.models import Workstation
 from grandchallenge.workstations.utils import reassign_workstation_permissions
 
@@ -1326,6 +1327,13 @@ class Job(CIVForObjectMixin, ComponentJob):
             display_set.values.set(values)
 
         return display_set
+
+    def create_utilization(self):
+        JobUtilization.objects.create(job=self)
+
+    @property
+    def utilization(self):
+        return self.job_utilization
 
 
 class JobUserObjectPermission(UserObjectPermissionBase):

@@ -207,9 +207,14 @@ class AnswerSerializer(HyperlinkedModelSerializer):
         required=False,
     )
     answer_image = HyperlinkedRelatedField(
-        read_only=True, view_name="api:image-detail"
+        read_only=True,
+        view_name="api:image-detail",
+        allow_null=True,
     )
-    total_edit_duration = DurationField(read_only=True)
+    total_edit_duration = DurationField(
+        read_only=True,
+        allow_null=True,
+    )
     # At the moment only non-ground-truth answers are created over REST
     is_ground_truth = BooleanField(read_only=True)
 

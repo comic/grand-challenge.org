@@ -2291,13 +2291,12 @@ def test_algorithm_template_download(client):
         b"".join(chunk for chunk in response.streaming_content)
     )
     zip_file = zipfile.ZipFile(buffer)
-    prefix = Path(f"{alg.slug}-template")
 
     # Spot check for expected files in the zip
     expected_files = [
-        prefix / "README.md",
-        prefix / "Dockerfile",
-        prefix / "inference.py",
+        "README.md",
+        "Dockerfile",
+        "inference.py",
     ]
     for file_name in expected_files:
         assert (
