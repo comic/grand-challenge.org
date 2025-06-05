@@ -1,7 +1,9 @@
+from datetime import timedelta
 from math import ceil
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Avg
 
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import JSONValidator
@@ -99,3 +101,97 @@ class SessionUtilizationReaderStudy(models.Model):
                 name="unique_session_utilization_reader_study",
             )
         ]
+
+
+class ComponentJobUtilizationManager(models.QuerySet):
+    def average_duration(self):
+        """Calculate the average duration that completed jobs ran for"""
+        return self.filter(duration__gt=timedelta(seconds=0)).aggregate(
+            duration__avg=Avg("duration")
+        )["duration__avg"]
+
+
+class ComponentJobUtilization(UUIDModel):
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+    phase = models.ForeignKey(
+        "evaluation.Phase", null=True, on_delete=models.SET_NULL
+    )
+    challenge = models.ForeignKey(
+        "challenges.Challenge", null=True, on_delete=models.SET_NULL
+    )
+    archive = models.ForeignKey(
+        "archives.Archive", null=True, on_delete=models.SET_NULL
+    )
+    algorithm_image = models.ForeignKey(
+        "algorithms.AlgorithmImage", null=True, on_delete=models.SET_NULL
+    )
+    algorithm = models.ForeignKey(
+        "algorithms.Algorithm", null=True, on_delete=models.SET_NULL
+    )
+    duration = models.DurationField(null=True)
+    compute_cost_euro_millicents = models.PositiveIntegerField(null=True)
+
+    objects = ComponentJobUtilizationManager.as_manager()
+
+    class Meta:
+        abstract = True
+
+
+class JobUtilization(ComponentJobUtilization):
+    job = models.OneToOneField(
+        "algorithms.Job",
+        related_name="job_utilization",
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+
+    class Meta(ComponentJobUtilization.Meta):
+        default_related_name = "job_utilizations"
+        indexes = [
+            models.Index(fields=["-created"]),
+            models.Index(fields=["creator", "algorithm"]),
+        ]
+
+    def save(self, *args, **kwargs) -> None:
+        if self._state.adding:
+            self.creator = self.job.creator
+            self.algorithm_image = self.job.algorithm_image
+            self.algorithm = self.job.algorithm_image.algorithm
+
+        super().save(*args, **kwargs)
+
+
+class EvaluationUtilization(ComponentJobUtilization):
+    evaluation = models.OneToOneField(
+        "evaluation.Evaluation",
+        related_name="evaluation_utilization",
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+    external_evaluation = models.BooleanField()
+
+    class Meta(ComponentJobUtilization.Meta):
+        default_related_name = "evaluation_utilizations"
+        indexes = [
+            models.Index(fields=["-created"]),
+            models.Index(fields=["phase", "external_evaluation", "duration"]),
+        ]
+
+    def save(self, *args, **kwargs) -> None:
+        if self._state.adding:
+            self.creator = self.evaluation.submission.creator
+            self.phase = self.evaluation.submission.phase
+            self.external_evaluation = (
+                self.evaluation.submission.phase.external_evaluation
+            )
+            self.archive = self.evaluation.submission.phase.archive
+            self.challenge = self.evaluation.submission.phase.challenge
+            self.algorithm_image = self.evaluation.submission.algorithm_image
+            if self.evaluation.submission.algorithm_image is not None:
+                self.algorithm = (
+                    self.evaluation.submission.algorithm_image.algorithm
+                )
+
+        super().save(*args, **kwargs)

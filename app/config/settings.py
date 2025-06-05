@@ -1263,6 +1263,14 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.invoices.tasks.send_challenge_invoice_overdue_reminder_emails",
         "schedule": crontab(day_of_month=1, hour=6, minute=0),
     },
+    "update_challenge_storage_size": {
+        "task": "grandchallenge.challenges.tasks.update_challenge_storage_size",
+        "schedule": crontab(hour=6, minute=15),
+    },
+    "update_challenge_compute_costs": {
+        "task": "grandchallenge.challenges.tasks.update_challenge_compute_costs",
+        "schedule": crontab(minute=45),
+    },
     "delete_users_who_dont_login": {
         "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
         "schedule": timedelta(hours=1),
@@ -1286,10 +1294,6 @@ CELERY_BEAT_SCHEDULE = {
     "cleanup_celery_backend": {
         "task": "grandchallenge.core.tasks.cleanup_celery_backend",
         "schedule": timedelta(hours=1),
-    },
-    "update_compute_costs_and_storage_size": {
-        "task": "grandchallenge.challenges.tasks.update_compute_costs_and_storage_size",
-        "schedule": timedelta(hours=2),
     },
     "logout_privileged_users": {
         "task": "grandchallenge.browser_sessions.tasks.logout_privileged_users",

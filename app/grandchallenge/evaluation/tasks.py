@@ -32,7 +32,7 @@ from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
 logger = get_task_logger(__name__)
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def check_prerequisites_for_evaluation_execution(*, evaluation_pk):
     from grandchallenge.evaluation.models import (
@@ -43,8 +43,15 @@ def check_prerequisites_for_evaluation_execution(*, evaluation_pk):
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
-    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+    evaluation = lock_model_instance(
+        app_label="evaluation", model_name="evaluation", pk=evaluation_pk
+    )
     submission = evaluation.submission
+
+    if evaluation.status != evaluation.VALIDATING_INPUTS:
+        # the evaluation might have been queued for execution already, so ignore
+        logger.info("Evaluation has already been scheduled for execution.")
+        return
 
     if submission.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
         algorithm_interfaces = submission.phase.algorithm_interfaces.all()
@@ -85,7 +92,7 @@ def check_prerequisites_for_evaluation_execution(*, evaluation_pk):
         on_commit(e.apply_async)
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def prepare_and_execute_evaluation(
     *, evaluation_pk, max_initial_jobs=1
@@ -103,7 +110,9 @@ def prepare_and_execute_evaluation(
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
     )
-    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+    evaluation = lock_model_instance(
+        app_label="evaluation", model_name="Evaluation", pk=evaluation_pk
+    )
     submission = evaluation.submission
 
     if not evaluation.additional_inputs_complete:
@@ -170,7 +179,11 @@ def prepare_and_execute_evaluation(
         evaluation.save()
         on_commit(evaluation.execute)
     else:
-        raise RuntimeError("No algorithm or predictions file found")
+        evaluation.update_status(
+            status=Evaluation.FAILURE,
+            error_message="An unexpected error occurred",
+        )
+        logger.error("No algorithm or predictions file found")
 
 
 @acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)
@@ -269,6 +282,8 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         time_limit=evaluation.submission.phase.algorithm_time_limit,
         requires_gpu_type=evaluation.submission.algorithm_requires_gpu_type,
         requires_memory_gb=evaluation.submission.algorithm_requires_memory_gb,
+        job_utilization_phase=evaluation.submission.phase,
+        job_utilization_challenge=evaluation.submission.phase.challenge,
     )
 
     if not jobs:

@@ -1,7 +1,5 @@
-from datetime import timedelta
-
 from django.contrib.auth.models import Permission
-from django.db.models import Count, Sum
+from django.db.models import Sum
 
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
@@ -15,37 +13,69 @@ from grandchallenge.evaluation.models import (
     EvaluationGroundTruth,
     Method,
 )
+from grandchallenge.utilization.models import (
+    EvaluationUtilization,
+    JobUtilization,
+)
+
+
+def annotate_compute_costs(*, challenge):
+    algorithm_job_utilizations = JobUtilization.objects.filter(
+        challenge=challenge
+    )
+    evaluation_job_utilizations = EvaluationUtilization.objects.filter(
+        challenge=challenge
+    )
+
+    update_compute_cost_euro_millicents(
+        obj=challenge,
+        algorithm_job_utilizations=algorithm_job_utilizations,
+        evaluation_job_utilizations=evaluation_job_utilizations,
+    )
 
 
 def annotate_job_duration_and_compute_costs(*, phase):
-    algorithm_jobs = (
-        Job.objects.with_duration()
-        .filter(
-            inputs__archive_items__archive__phase=phase,
-            algorithm_image__submission__phase=phase,
-        )
-        .distinct()
+    algorithm_job_utilizations = JobUtilization.objects.filter(phase=phase)
+    evaluation_job_utilizations = EvaluationUtilization.objects.filter(
+        phase=phase, external_evaluation=False
     )
-    evaluation_jobs = Evaluation.objects.filter(
-        submission__phase=phase, submission__phase__external_evaluation=False
-    ).distinct()
 
-    update_average_algorithm_job_duration(
-        phase=phase, algorithm_jobs=algorithm_jobs
-    )
+    phase.average_algorithm_job_duration = algorithm_job_utilizations.filter(
+        job__status=Job.SUCCESS
+    ).average_duration()
+
     update_compute_cost_euro_millicents(
         obj=phase,
-        algorithm_jobs=algorithm_jobs,
-        evaluation_jobs=evaluation_jobs,
+        algorithm_job_utilizations=algorithm_job_utilizations,
+        evaluation_job_utilizations=evaluation_job_utilizations,
     )
 
 
-def annotate_compute_costs_and_storage_size(*, challenge):
+def update_compute_cost_euro_millicents(
+    *, obj, algorithm_job_utilizations, evaluation_job_utilizations
+):
+    algorithm_job_costs = algorithm_job_utilizations.aggregate(
+        Sum("compute_cost_euro_millicents")
+    )
+
+    evaluation_costs = evaluation_job_utilizations.aggregate(
+        Sum("compute_cost_euro_millicents")
+    )
+
+    items = [algorithm_job_costs, evaluation_costs]
+
+    obj.compute_cost_euro_millicents = sum(
+        item["compute_cost_euro_millicents__sum"] or 0 for item in items
+    )
+
+
+def annotate_storage_size(*, challenge):
     permission = Permission.objects.get(
         codename="view_job",
         content_type__app_label="algorithms",
         content_type__model="job",
     )
+
     algorithm_jobs = Job.objects.filter(
         jobgroupobjectpermission__group=challenge.admins_group,
         jobgroupobjectpermission__permission=permission,
@@ -58,11 +88,6 @@ def annotate_compute_costs_and_storage_size(*, challenge):
 
     update_size_in_storage_and_registry(
         challenge=challenge,
-        algorithm_jobs=algorithm_jobs,
-        evaluation_jobs=evaluation_jobs,
-    )
-    update_compute_cost_euro_millicents(
-        obj=challenge,
         algorithm_jobs=algorithm_jobs,
         evaluation_jobs=evaluation_jobs,
     )
@@ -163,37 +188,3 @@ def update_size_in_storage_and_registry(
     challenge.size_in_registry = sum(
         item.get("size_in_registry__sum") or 0 for item in items
     )
-
-
-def update_compute_cost_euro_millicents(
-    *, obj, algorithm_jobs, evaluation_jobs
-):
-    algorithm_job_costs = algorithm_jobs.aggregate(
-        Sum("compute_cost_euro_millicents")
-    )
-
-    evaluation_costs = evaluation_jobs.aggregate(
-        Sum("compute_cost_euro_millicents")
-    )
-
-    items = [algorithm_job_costs, evaluation_costs]
-
-    obj.compute_cost_euro_millicents = sum(
-        item["compute_cost_euro_millicents__sum"] or 0 for item in items
-    )
-
-
-def update_average_algorithm_job_duration(*, phase, algorithm_jobs):
-    aggregates = algorithm_jobs.filter(
-        status=Job.SUCCESS, duration__gt=timedelta(seconds=0)
-    ).aggregate(
-        total_job_duration=Sum("duration"),
-        job_count=Count("pk", distinct=True),
-    )
-
-    if all(aggregates.values()):
-        phase.average_algorithm_job_duration = (
-            aggregates["total_job_duration"] / aggregates["job_count"]
-        )
-    else:
-        phase.average_algorithm_job_duration = None

@@ -33,9 +33,18 @@ class Forum(UUIDModel):
             ),
         )
 
+    def __str__(self):
+        return f"Forum for {self.parent_object}"
+
     @property
     def parent_object(self):
         return self.linked_challenge
+
+    def get_absolute_url(self):
+        return reverse(
+            "discussion-forums:topic-list",
+            kwargs={"challenge_short_name": self.parent_object.short_name},
+        )
 
 
 class ForumTopic(FieldChangeMixin, UUIDModel):

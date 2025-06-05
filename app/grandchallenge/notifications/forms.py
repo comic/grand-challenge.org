@@ -4,17 +4,14 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from guardian.utils import get_anonymous_user
-from machina.apps.forum.models import Forum
-from machina.apps.forum_conversation.models import Topic
-from machina.apps.forum_permission.handler import PermissionHandler
 
 from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.discussion_forums.models import Forum, ForumTopic
 
 
 class FollowForm(SaveFormInitMixin, forms.ModelForm):
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
-        self.perm_handler = PermissionHandler()
 
         self.user = user
         self.fields["user"].queryset = get_user_model().objects.filter(
@@ -39,16 +36,17 @@ class FollowForm(SaveFormInitMixin, forms.ModelForm):
             raise ValidationError("You cannot create this subscription!")
 
         if cleaned_data["content_type"] == ContentType.objects.get(
-            app_label="forum", model="forum"
+            app_label="discussion_forums", model="forum"
         ):
-            perm = self.perm_handler.can_read_forum(
-                Forum.objects.filter(id=obj_id).get(), self.user
+            perm = self.user.has_perm(
+                "view_forum", Forum.objects.filter(pk=obj_id).get()
             )
         elif cleaned_data["content_type"] == ContentType.objects.get(
-            app_label="forum_conversation", model="topic"
+            app_label="discussion_forums", model="forumtopic"
         ):
-            perm = self.perm_handler.can_subscribe_to_topic(
-                Topic.objects.filter(id=obj_id).get(), self.user
+            perm = self.user.has_perm(
+                "view_forumtopic",
+                ForumTopic.objects.filter(pk=obj_id).get(),
             )
 
         if not perm:

@@ -76,6 +76,8 @@ def create_algorithm_jobs(
     max_jobs=None,
     task_on_success=None,
     task_on_failure=None,
+    job_utilization_phase=None,
+    job_utilization_challenge=None,
 ):
     """
     Creates algorithm jobs for sets of component interface values
@@ -107,6 +109,10 @@ def create_algorithm_jobs(
         to handle being called more than once, and in parallel.
     task_on_failure
         Celery task that is run on job failure
+    job_utilization_phase
+        The phase that should be assigned for utilization tracking
+    job_utilization_challenge
+        The challenge that should be assigned for utilization tracking
     """
     from grandchallenge.algorithms.models import Job
 
@@ -150,6 +156,12 @@ def create_algorithm_jobs(
                     extra_logs_viewer_groups=extra_logs_viewer_groups,
                     input_civ_set=ai.values.all(),
                 )
+
+                job.utilization.archive = ai.archive
+                job.utilization.phase = job_utilization_phase
+                job.utilization.challenge = job_utilization_challenge
+                job.utilization.save()
+
                 on_commit(job.execute)
 
                 jobs.append(job)
@@ -324,12 +336,13 @@ def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
 @transaction.atomic
 def update_algorithm_average_duration(*, algorithm_pk):
     from grandchallenge.algorithms.models import Job
+    from grandchallenge.utilization.models import JobUtilization
 
     algorithm = lock_model_instance(
         app_label="algorithms", model_name="algorithm", pk=algorithm_pk
     )
 
-    algorithm.average_duration = Job.objects.filter(
-        algorithm_image__algorithm=algorithm, status=Job.SUCCESS
+    algorithm.average_duration = JobUtilization.objects.filter(
+        algorithm=algorithm, job__status=Job.SUCCESS
     ).average_duration()
     algorithm.save(update_fields=("average_duration",))
