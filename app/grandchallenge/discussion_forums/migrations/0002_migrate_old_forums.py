@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import migrations
 from guardian.shortcuts import assign_perm
 
@@ -102,7 +103,10 @@ def migrate_topic_tracks(apps, schema_editor):
         )
 
     for track in TopicReadTrack.objects.iterator(chunk_size=1000):
-        new_topic = get_matching_topic(old_topic_id=track.topic.pk)
+        try:
+            new_topic = get_matching_topic(old_topic_id=track.topic.pk)
+        except ObjectDoesNotExist:
+            continue
         TopicReadRecord.objects.create(topic=new_topic, user=track.user)
 
 
