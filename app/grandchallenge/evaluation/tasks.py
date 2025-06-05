@@ -179,6 +179,10 @@ def prepare_and_execute_evaluation(
         evaluation.save()
         on_commit(evaluation.execute)
     else:
+        evaluation.update_status(
+            status=Evaluation.FAILURE,
+            error_message="An unexpected error has occurred.",
+        )
         raise RuntimeError("No algorithm or predictions file found")
 
 
