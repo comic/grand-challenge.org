@@ -4,7 +4,9 @@ from django.db import migrations
 from grandchallenge.notifications.models import NotificationTypeChoices
 
 
-def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
+def migrate_forum_and_topic_follows_and_notifications(  # noqa C901
+    apps, schema_editor
+):
     Notification = apps.get_model(  # noqa: N806
         "notifications", "Notification"
     )
@@ -45,7 +47,9 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
     ct_forumtopic = ContentType.objects.get_for_model(MachinaTopic)
 
     follows_to_update = []
+    n_updated = 0
     batch_size = 1000
+
     for follow in (
         Follow.objects.filter(content_type__in=[ct_forum, ct_forumtopic])
         .only("object_id", "content_type")
@@ -59,7 +63,10 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
             follow.object_id = forum.pk
             follow.content_type = new_forum_ct
         else:
-            topic = get_matching_topic(old_topic_id=follow.object_id)
+            try:
+                topic = get_matching_topic(old_topic_id=follow.object_id)
+            except ObjectDoesNotExist:
+                continue
             follow.object_id = topic.pk
             follow.content_type = new_topic_ct
 
@@ -70,6 +77,12 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
                 follows_to_update,
                 fields=["content_type", "object_id"],
             )
+            n_batch = len(follows_to_update)
+            n_updated += n_batch
+            print(
+                f"Updated batch of {n_batch} follows. "
+                f"Total updated so far: {n_updated}"
+            )
             follows_to_update = []
 
     if follows_to_update:
@@ -77,6 +90,9 @@ def migrate_forum_and_topic_follows_and_notifications(apps, schema_editor):
             follows_to_update,
             fields=["content_type", "object_id"],
         )
+        n_updated += len(follows_to_update)
+
+    print(f"Updated a total of {n_updated} follows.")
 
 
 class Migration(migrations.Migration):
