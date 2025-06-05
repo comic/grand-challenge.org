@@ -74,7 +74,7 @@ class VerificationAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         queryset = queryset.prefetch_related(
-            "user__verificationuserset_set__users"
+            "user__verificationuserset_set__users", "user__verification"
         )
         return queryset
 
