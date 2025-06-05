@@ -11,8 +11,9 @@ from grandchallenge.components.tasks import deprovision_job
 
 
 class ComponentImageAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
     exclude = ("image",)
-    readonly_fields = ("creator",)
+    readonly_fields = ("creator", "user_upload", "import_status")
     list_display = (
         "pk",
         "created",
