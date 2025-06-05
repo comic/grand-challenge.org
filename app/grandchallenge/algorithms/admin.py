@@ -51,7 +51,8 @@ class AlgorithmAdminForm(ModelForm):
 
 @admin.register(Algorithm)
 class AlgorithmAdmin(admin.ModelAdmin):
-    readonly_fields = ("algorithm_forge_json",)
+    ordering = ("-created",)
+    readonly_fields = ("algorithm_forge_json", "public")
     list_display = (
         "title",
         "created",
@@ -212,6 +213,9 @@ class JobAdmin(admin.ModelAdmin):
         "algorithm_interface",
         "time_limit",
         "job_utilization",
+        "public",
+        "algorithm_model",
+        "status",
     )
     search_fields = (
         "creator__username",
@@ -232,11 +236,19 @@ class AlgorithmPermissionRequestAdmin(admin.ModelAdmin):
 
 @admin.register(AlgorithmModel)
 class AlgorithmModelAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
     exclude = ("model",)
     list_display = ("algorithm", "created", "is_desired_version", "comment")
     list_filter = ("is_desired_version",)
     search_fields = ("algorithm__title", "comment")
-    readonly_fields = ("creator", "algorithm", "sha256", "size_in_storage")
+    readonly_fields = (
+        "creator",
+        "algorithm",
+        "sha256",
+        "size_in_storage",
+        "user_upload",
+        "import_status",
+    )
 
 
 @admin.register(AlgorithmInterface)
@@ -290,9 +302,13 @@ class AlgorithmAlgorithmInterfaceAdmin(admin.ModelAdmin):
         return False
 
 
+@admin.register(AlgorithmImage)
+class AlgorithmImageAdmin(ComponentImageAdmin):
+    readonly_fields = (*ComponentImageAdmin.readonly_fields, "algorithm")
+
+
 admin.site.register(AlgorithmUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(AlgorithmGroupObjectPermission, GroupObjectPermissionAdmin)
-admin.site.register(AlgorithmImage, ComponentImageAdmin)
 admin.site.register(
     AlgorithmImageUserObjectPermission, UserObjectPermissionAdmin
 )
