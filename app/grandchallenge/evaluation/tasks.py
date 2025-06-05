@@ -181,9 +181,9 @@ def prepare_and_execute_evaluation(
     else:
         evaluation.update_status(
             status=Evaluation.FAILURE,
-            error_message="An unexpected error has occurred.",
+            error_message="An unexpected error occurred",
         )
-        logger.error("No algorithm or predictions file found", exc_info=True)
+        logger.error("No algorithm or predictions file found")
 
 
 @acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)
