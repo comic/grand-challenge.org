@@ -122,6 +122,17 @@ class AcksLateTaskDecorator:
         @wraps(func)
         def wrapper(*args, _retries=0, **kwargs):
             is_in_celery_context = task_func.request.id is not None
+            task_func._delayed_retry = lambda: _retry(
+                task=task_func,
+                signature_kwargs={
+                    "args": args,
+                    "kwargs": kwargs,
+                    "immutable": True,
+                },
+                retries=_retries,
+                delayed=delayed_retry,
+            )
+
             try:
                 if singleton:
                     with cache.lock(
@@ -147,16 +158,7 @@ class AcksLateTaskDecorator:
                     logger.info(
                         f"Retrying task {task_func.name} due to error: {error}, {_retries=}"
                     )
-                    return _retry(
-                        task=task_func,
-                        signature_kwargs={
-                            "args": args,
-                            "kwargs": kwargs,
-                            "immutable": True,
-                        },
-                        retries=_retries,
-                        delayed=delayed_retry,
-                    )
+                    return task_func._delayed_retry()
                 else:
                     raise error
 

@@ -215,8 +215,8 @@ def create_algorithm_jobs_for_evaluation(
         )
         return
 
-    if max_jobs == 1:
-        first_run = True
+    if max_jobs is None:
+        first_run = False
 
     slots_available = min(
         settings.ALGORITHMS_MAX_ACTIVE_JOBS - Job.objects.active().count(),
@@ -290,10 +290,9 @@ def create_algorithm_jobs_for_evaluation(
             job_utilization_challenge=evaluation.submission.phase.challenge,
         )
     except TooManyJobsScheduled:
-        if first_run:
-            return
-        else:
-            raise
+        if not first_run:
+            create_algorithm_jobs_for_evaluation._delayed_retry()
+        return
 
     if jobs:
         # If we've got to this point then there are no more jobs
