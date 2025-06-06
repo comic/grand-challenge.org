@@ -295,10 +295,13 @@ def create_algorithm_jobs_for_evaluation(
         else:
             raise
 
-    if not jobs:
-        # Once the algorithm has been run, score the submission. No emails as
-        # algorithm editors should not have access to the underlying images.
-        #
+    if jobs:
+        # If we've got to this point then there are no more jobs
+        # left to schedule, so no need to use warm pools
+        Job.objects.filter(pk__in=[j.pk for j in jobs]).update(
+            use_warm_pool=False
+        )
+    else:
         # No more jobs created from this task, so everything must be
         # ready for evaluation, handles archives with only one item
         # and re-evaluation of existing submissions with new methods
