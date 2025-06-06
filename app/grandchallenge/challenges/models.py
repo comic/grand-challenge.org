@@ -1338,6 +1338,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 memory_limit=self.algorithm_maximum_settable_memory_gb,
                 time_limit=self.inference_time_limit_in_minutes,
                 requires_gpu_type=gpu_type,
+                use_warm_pool=False,
             )
             for gpu_type in self.algorithm_selectable_gpu_type_choices
         ]
