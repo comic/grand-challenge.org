@@ -1799,6 +1799,9 @@
     <span class="n">requires_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
         <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;How much memory is required by this job?&quot;</span>
     <span class="p">)</span>
+    <span class="n">use_warm_pool</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Whether to use warm pools&quot;</span>
+    <span class="p">)</span>
 
     <span class="n">inputs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
         <span class="n">to</span><span class="o">=</span><span class="n">ComponentInterfaceValue</span><span class="p">,</span>
@@ -1894,6 +1897,7 @@
             <span class="s2">&quot;time_limit&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_limit</span><span class="p">,</span>
             <span class="s2">&quot;requires_gpu_type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_gpu_type</span><span class="p">,</span>
             <span class="s2">&quot;memory_limit&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_memory_gb</span><span class="p">,</span>
+            <span class="s2">&quot;use_warm_pool&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_warm_pool</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_executor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="p">):</span>
