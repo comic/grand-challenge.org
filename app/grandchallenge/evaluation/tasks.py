@@ -186,7 +186,7 @@ def prepare_and_execute_evaluation(
         logger.error("No algorithm or predictions file found")
 
 
-@acks_late_2xlarge_task(
+@acks_late_micro_short_task(
     retry_on=(TooManyJobsScheduled, LockNotAcquiredException)
 )
 def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
@@ -219,7 +219,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
 
     slots_available = min(
         settings.ALGORITHMS_MAX_ACTIVE_JOBS - Job.objects.active().count(),
-        settings.ALGORITHMS_JOB_BATCH_LIMIT,
+        settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM,
     )
     slots_available -= (
         Job.objects.active()
@@ -300,14 +300,16 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         ).apply_async()
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(
+    retry_on=(LockNotAcquiredException,), delayed_retry=False
+)
 @transaction.atomic
 def handle_failed_jobs(*, evaluation_pk):
     # Set the evaluation to failed
-    Evaluation = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Evaluation"
+    evaluation = lock_model_instance(
+        pk=evaluation_pk, app_label="evaluation", model_name="Evaluation"
     )
-    evaluation = Evaluation.objects.get(pk=evaluation_pk)
+
     if evaluation.status != evaluation.FAILURE:
         evaluation.update_status(
             status=evaluation.FAILURE,
