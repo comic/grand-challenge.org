@@ -427,7 +427,6 @@ class TestJobPermissions:
                 "view_job",
                 "view_logs",
             },
-            job.viewers: {"view_job"},
         }
         # No-one should be able to change the job
         assert (
@@ -436,8 +435,8 @@ class TestJobPermissions:
             )
             == {}
         )
-        # No-one should be in the viewers group
-        assert {*job.viewers.user_set.all()} == set()
+        # The viewers group should not exist for system jobs
+        assert job.viewers is None
 
     def test_job_permissions_for_debug_phase(
         self, django_capture_on_commit_callbacks
@@ -487,7 +486,6 @@ class TestJobPermissions:
                 "view_job",
                 "view_logs",
             },
-            job.viewers: {"view_job"},
         }
         # No-one should be able to change the job
         assert (
@@ -496,5 +494,5 @@ class TestJobPermissions:
             )
             == {}
         )
-        # No-one should be in the viewers group
-        assert {*job.viewers.user_set.all()} == set()
+        # The viewers group should not exist for system jobs
+        assert job.viewers is None
