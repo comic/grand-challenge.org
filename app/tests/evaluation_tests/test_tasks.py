@@ -931,7 +931,7 @@ def test_evaluation_order_with_title():
         archive_item.values.add(civ)
 
     create_algorithm_jobs_for_evaluation(
-        evaluation_pk=evaluation.pk, first_run=False
+        evaluation_pk=evaluation.pk, first_run=True
     )
 
     job = Job.objects.get()
@@ -968,7 +968,7 @@ def test_evaluation_order_without_title():
         archive_item.values.add(civ)
 
     create_algorithm_jobs_for_evaluation(
-        evaluation_pk=evaluation.pk, first_run=False
+        evaluation_pk=evaluation.pk, first_run=True
     )
 
     job = Job.objects.get()

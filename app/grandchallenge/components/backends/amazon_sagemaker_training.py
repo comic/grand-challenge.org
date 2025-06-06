@@ -63,6 +63,7 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
                 "VolumeSizeInGB": self._required_volume_size_gb,
                 "InstanceType": self._instance_type.name,
                 "InstanceCount": 1,
+                "KeepAlivePeriodInSeconds": 300 if self._use_warm_pool else 0,
             },
             StoppingCondition={
                 # https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_StoppingCondition.html
@@ -78,7 +79,6 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
                 "Subnets": settings.COMPONENTS_AMAZON_SAGEMAKER_SUBNETS,
             },
             RemoteDebugConfig={"EnableRemoteDebug": False},
-            KeepAlivePeriodInSeconds=600 if self._use_warm_pool else 0,
         )
 
     def _stop_job_boto(self):
