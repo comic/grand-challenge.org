@@ -109,7 +109,7 @@ def test_algorithm_submission_creates_one_job_per_test_set_image(
 
     with django_capture_on_commit_callbacks(execute=True):
         create_algorithm_jobs_for_evaluation(
-            evaluation_pk=eval.pk, max_jobs=None
+            evaluation_pk=eval.pk, first_run=False
         )
 
     assert Job.objects.count() == 2
@@ -211,7 +211,7 @@ def test_create_algorithm_jobs_for_evaluation_sets_gpu_and_memory():
     )
 
     create_algorithm_jobs_for_evaluation(
-        evaluation_pk=evaluation.pk,
+        evaluation_pk=evaluation.pk, first_run=False
     )
 
     job = Job.objects.get()

@@ -416,7 +416,9 @@ class TestJobPermissions:
         with django_capture_on_commit_callbacks(execute=True):
             archive_item.values.add(civ)
 
-        create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
+        create_algorithm_jobs_for_evaluation(
+            evaluation_pk=evaluation.pk, first_run=False
+        )
 
         job = Job.objects.get()
 
@@ -472,7 +474,9 @@ class TestJobPermissions:
         interface = AlgorithmInterfaceFactory(inputs=[ci])
         ai.algorithm.interfaces.add(interface)
 
-        create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
+        create_algorithm_jobs_for_evaluation(
+            evaluation_pk=evaluation.pk, first_run=False
+        )
 
         job = Job.objects.get()
 
