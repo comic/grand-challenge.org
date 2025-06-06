@@ -910,6 +910,7 @@ def test_evaluation_order_with_title():
         submission__phase__archive=archive,
         submission__algorithm_image=ai,
         time_limit=ai.algorithm.time_limit,
+        status=Evaluation.EXECUTING_PREREQUISITES,
     )
 
     input_ci = ComponentInterfaceFactory(
@@ -947,6 +948,7 @@ def test_evaluation_order_without_title():
         submission__phase__archive=archive,
         submission__algorithm_image=ai,
         time_limit=ai.algorithm.time_limit,
+        status=Evaluation.EXECUTING_PREREQUISITES,
     )
 
     input_ci = ComponentInterfaceFactory(

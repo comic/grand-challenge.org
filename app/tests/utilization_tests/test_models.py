@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.tasks import (
     create_algorithm_jobs_for_evaluation,
 )
@@ -276,11 +277,11 @@ def test_job_utilization_created_on_jobs_for_evaluation_sets_properties():
         time_limit=60,
         submission__phase=phase,
         submission__algorithm_image=algorithm_image,
+        status=Evaluation.EXECUTING_PREREQUISITES,
     )
 
     create_algorithm_jobs_for_evaluation(
         evaluation_pk=evaluation.pk,
-        first_run=False,
     )
 
     job_utilization = JobUtilization.objects.get()

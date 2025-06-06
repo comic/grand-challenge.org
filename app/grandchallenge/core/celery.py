@@ -122,7 +122,7 @@ class AcksLateTaskDecorator:
         @wraps(func)
         def wrapper(*args, _retries=0, **kwargs):
             is_in_celery_context = task_func.request.id is not None
-            task_func._delayed_retry = lambda: _retry(
+            task_func._retry = lambda: _retry(
                 task=task_func,
                 signature_kwargs={
                     "args": args,

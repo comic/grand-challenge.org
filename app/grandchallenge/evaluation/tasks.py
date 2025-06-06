@@ -182,7 +182,7 @@ def prepare_and_execute_evaluation(*, evaluation_pk):  # noqa: C901
         logger.error("No algorithm or predictions file found")
 
 
-@acks_late_micro_short_task(
+@acks_late_2xlarge_task(
     retry_on=(TooManyJobsScheduled, LockNotAcquiredException)
 )
 @transaction.atomic
@@ -291,7 +291,7 @@ def create_algorithm_jobs_for_evaluation(
         )
     except TooManyJobsScheduled:
         if not first_run:
-            create_algorithm_jobs_for_evaluation._delayed_retry()
+            create_algorithm_jobs_for_evaluation._retry()
         return
 
     if jobs:
