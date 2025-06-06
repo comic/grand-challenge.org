@@ -132,7 +132,7 @@ def prepare_and_execute_evaluation(
         submission.user_upload.delete()
 
     if submission.algorithm_image:
-        evaluation.status = Evaluation.PENDING
+        evaluation.status = Evaluation.EXECUTING_PREREQUISITES
         evaluation.save()
         on_commit(
             lambda: create_algorithm_jobs_for_evaluation.apply_async(
@@ -189,6 +189,7 @@ def prepare_and_execute_evaluation(
 @acks_late_micro_short_task(
     retry_on=(TooManyJobsScheduled, LockNotAcquiredException)
 )
+@transaction.atomic
 def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     """
     Creates the algorithm jobs for the evaluation
@@ -208,10 +209,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         pk=evaluation_pk, app_label="evaluation", model_name="Evaluation"
     )
 
-    if evaluation.status not in {
-        evaluation.PENDING,
-        evaluation.EXECUTING_PREREQUISITES,
-    }:
+    if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
         logger.info(
             f"Nothing to do: evaluation is {evaluation.get_status_display()}."
         )
@@ -230,6 +228,9 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     if slots_available <= 0:
         raise TooManyJobsScheduled
 
+    if max_jobs is None:
+        max_jobs = slots_available
+
     # Only the challenge admins should be able to view these jobs, never
     # the algorithm editors as these are participants - they must never
     # be able to see the test data...
@@ -241,28 +242,18 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
             evaluation.submission.algorithm_image.algorithm.editors_group
         )
 
-    if max_jobs is None:
-        # Once the algorithm has been run, score the submission. No emails as
-        # algorithm editors should not have access to the underlying images.
-        task_on_success = set_evaluation_inputs.signature(
-            kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
-        )
-        max_jobs = slots_available
-    else:
-        # Run with 1 job and then if that goes well, come back and
-        # run all jobs. Note that setting None here is caught by
-        # the if statement to schedule `set_evaluation_inputs`
-        task_on_success = create_algorithm_jobs_for_evaluation.signature(
-            kwargs={"evaluation_pk": str(evaluation.pk), "max_jobs": None},
-            immutable=True,
-        )
+    # Run with the jobs and then if that goes well, come back and
+    # run all jobs. Note that setting None here is caught by
+    # the if statement to schedule `set_evaluation_inputs`
+    task_on_success = create_algorithm_jobs_for_evaluation.signature(
+        kwargs={"evaluation_pk": str(evaluation.pk), "max_jobs": None},
+        immutable=True,
+    )
 
     # If any of the jobs fail then mark the evaluation as failed.
     task_on_failure = handle_failed_jobs.signature(
         kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
     )
-
-    evaluation.update_status(status=evaluation.EXECUTING_PREREQUISITES)
 
     jobs = create_algorithm_jobs(
         algorithm_image=evaluation.submission.algorithm_image,
@@ -291,13 +282,18 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     )
 
     if not jobs:
+        # Once the algorithm has been run, score the submission. No emails as
+        # algorithm editors should not have access to the underlying images.
+        #
         # No more jobs created from this task, so everything must be
         # ready for evaluation, handles archives with only one item
         # and re-evaluation of existing submissions with new methods
-        set_evaluation_inputs.signature(
-            kwargs={"evaluation_pk": str(evaluation.pk)},
-            immutable=True,
-        ).apply_async()
+        on_commit(
+            set_evaluation_inputs.signature(
+                kwargs={"evaluation_pk": str(evaluation.pk)},
+                immutable=True,
+            ).apply_async
+        )
 
 
 @acks_late_micro_short_task(
@@ -346,6 +342,16 @@ def set_evaluation_inputs(*, evaluation_pk):
     evaluation_pk
         The primary key of the evaluation.Evaluation object
     """
+    evaluation = lock_model_instance(
+        pk=evaluation_pk, app_label="evaluation", model_name="Evaluation"
+    )
+
+    if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
+        logger.info(
+            f"Nothing to do: evaluation is {evaluation.get_status_display()}."
+        )
+        return
+
     Job = apps.get_model(  # noqa: N806
         app_label="algorithms", model_name="Job"
     )
@@ -371,16 +377,6 @@ def set_evaluation_inputs(*, evaluation_pk):
 
     if has_pending_jobs:
         logger.info("Nothing to do: the algorithm has pending jobs.")
-        return
-
-    evaluation = lock_model_instance(
-        pk=evaluation_pk, app_label="evaluation", model_name="Evaluation"
-    )
-
-    if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
-        logger.info(
-            f"Nothing to do: evaluation is {evaluation.get_status_display()}."
-        )
         return
 
     if evaluation.inputs_complete:
