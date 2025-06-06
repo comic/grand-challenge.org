@@ -158,7 +158,7 @@ class AcksLateTaskDecorator:
                     logger.info(
                         f"Retrying task {task_func.name} due to error: {error}, {_retries=}"
                     )
-                    return task_func._delayed_retry()
+                    return task_func._retry()
                 else:
                     raise error
 
