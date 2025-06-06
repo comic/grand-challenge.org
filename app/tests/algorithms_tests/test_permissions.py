@@ -11,6 +11,7 @@ from guardian.shortcuts import (
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.serializers import JobPostSerializer
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.tasks import (
     create_algorithm_jobs_for_evaluation,
 )
@@ -391,6 +392,7 @@ class TestJobPermissions:
             submission__phase__archive=archive,
             submission__algorithm_image=ai,
             time_limit=ai.algorithm.time_limit,
+            status=Evaluation.EXECUTING_PREREQUISITES,
         )
 
         # The default should be not to share the jobs
@@ -447,6 +449,7 @@ class TestJobPermissions:
             submission__phase__archive=archive,
             submission__algorithm_image=ai,
             time_limit=ai.algorithm.time_limit,
+            status=Evaluation.EXECUTING_PREREQUISITES,
         )
 
         evaluation.submission.phase.give_algorithm_editors_job_view_permissions = (

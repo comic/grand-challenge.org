@@ -1061,6 +1061,9 @@ COMPONENTS_SAGEMAKER_SHIM_VERSION = os.environ.get(
 COMPONENTS_SAGEMAKER_SHIM_LOCATION = os.environ.get(
     "COMPONENTS_SAGEMAKER_SHIM_LOCATION", "/opt/sagemaker-shim"
 )
+COMPONENTS_USE_WARM_POOL = strtobool(
+    os.environ.get("COMPONENTS_USE_WARM_POOL", "True")
+)
 COMPONENTS_INPUT_BUCKET_NAME = os.environ.get(
     "COMPONENTS_INPUT_BUCKET_NAME", "grand-challenge-components-inputs"
 )
@@ -1343,19 +1346,13 @@ PUSH_CLOUDWATCH_METRICS = strtobool(
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
-# Number of jobs that can be scheduled in one task
-ALGORITHMS_JOB_BATCH_LIMIT = int(
-    os.environ.get("ALGORITHMS_JOB_BATCH_LIMIT", "32")
-)
 ALGORITHMS_MAX_ACTIVE_JOBS = int(
-    # This number excludes the number of jobs that will be added
-    # with ALGORITHMS_JOB_BATCH_LIMIT
+    # The maximum number of active jobs for the entire system
     os.environ.get("ALGORITHMS_MAX_ACTIVE_JOBS", "128")
 )
 ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM = int(
-    # This number excludes the number of jobs that will be added
-    # with ALGORITHMS_JOB_BATCH_LIMIT
-    os.environ.get("ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM", "1")
+    # The maximum number of active jobs for an algorithm
+    os.environ.get("ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM", "16")
 )
 # Maximum and minimum values the user can set for algorithm requirements
 ALGORITHMS_MIN_MEMORY_GB = 4

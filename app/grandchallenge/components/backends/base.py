@@ -61,6 +61,7 @@ class Executor(ABC):
         memory_limit: int,
         time_limit: int,
         requires_gpu_type: GPUTypeChoices,
+        use_warm_pool: bool,
         algorithm_model=None,
         ground_truth=None,
         **kwargs,
@@ -71,6 +72,9 @@ class Executor(ABC):
         self._memory_limit = memory_limit
         self._time_limit = time_limit
         self._requires_gpu_type = requires_gpu_type
+        self._use_warm_pool = (
+            use_warm_pool and settings.COMPONENTS_USE_WARM_POOL
+        )
         self._stdout = []
         self._stderr = []
         self.__s3_client = None

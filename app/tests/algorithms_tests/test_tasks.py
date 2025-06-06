@@ -67,6 +67,7 @@ class TestCreateAlgorithmJobs:
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=GPUTypeChoices.NO_GPU,
             requires_memory_gb=4,
+            max_jobs=16,
         )
         assert Job.objects.count() == 0
 
@@ -78,6 +79,7 @@ class TestCreateAlgorithmJobs:
                 time_limit=60,
                 requires_gpu_type=GPUTypeChoices.NO_GPU,
                 requires_memory_gb=4,
+                max_jobs=16,
             )
 
     def test_creates_job_correctly(self):
@@ -98,6 +100,7 @@ class TestCreateAlgorithmJobs:
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
         assert Job.objects.count() == 1
         j = Job.objects.first()
@@ -149,6 +152,7 @@ class TestCreateAlgorithmJobs:
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
         assert Job.objects.count() == 4
 
@@ -194,6 +198,7 @@ class TestCreateAlgorithmJobs:
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
 
         assert Job.objects.count() == 1
@@ -204,6 +209,7 @@ class TestCreateAlgorithmJobs:
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
 
         assert Job.objects.count() == 1
@@ -225,6 +231,7 @@ class TestCreateAlgorithmJobs:
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
         for g in groups:
             assert jobs[0].viewer_groups.filter(pk=g.pk).exists()
@@ -240,6 +247,7 @@ def test_no_jobs_workflow(django_capture_on_commit_callbacks):
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
     assert len(callbacks) == 0
 
@@ -264,6 +272,7 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
     assert len(callbacks) == 2
 

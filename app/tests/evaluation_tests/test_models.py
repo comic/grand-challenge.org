@@ -101,7 +101,10 @@ def test_algorithm_submission_creates_one_job_per_test_set_image(
         algorithm_image=algorithm_submission.algorithm_image,
     )
     eval = EvaluationFactory(
-        submission=s, method=algorithm_submission.method, time_limit=60
+        submission=s,
+        method=algorithm_submission.method,
+        time_limit=60,
+        status=Evaluation.EXECUTING_PREREQUISITES,
     )
 
     with django_capture_on_commit_callbacks(execute=True):
@@ -204,11 +207,11 @@ def test_create_algorithm_jobs_for_evaluation_sets_gpu_and_memory():
         submission__algorithm_image=algorithm_image,
         submission__algorithm_requires_gpu_type=GPUTypeChoices.V100,
         submission__algorithm_requires_memory_gb=456,
+        status=Evaluation.EXECUTING_PREREQUISITES,
     )
 
     create_algorithm_jobs_for_evaluation(
         evaluation_pk=evaluation.pk,
-        max_jobs=None,
     )
 
     job = Job.objects.get()
