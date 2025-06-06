@@ -200,48 +200,58 @@
                  aria-labelledby="v-pills-viewers-tab">
                 <h2>Viewers</h2>
 
-                <p>
-                    Members of the {{ object.viewer_groups.all|oxford_comma }} groups are able to view this result.
-                </p>
+                {% if object.public %}
 
-                {% if object.viewers in object.viewer_groups.all %}
+                    <div class="alert alert-danger" role="alert">
+                        This result is public, everyone can view it along with the results input and output data
+                    </div>
+
+                {% else %}
 
                     <p>
-                        The following users are members of this results viewers group:
+                        Members of the {{ object.viewer_groups.all|oxford_comma }} groups are able to view this result.
                     </p>
 
-                    <ul class="list-group list-group-flush mb-3">
-                        {% for user in object.viewers.user_set.all %}
-                            <li class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>{{ user|user_profile_link }}</div>
-                                    <div>
-                                        {% if user != request.user %}
-                                            <form action="{% url 'algorithms:job-viewers-update' slug=object.algorithm_image.algorithm.slug pk=object.pk %}"
-                                                  method="POST">
-                                                {% for field in viewers_form %}
-                                                    {% csrf_token %}
-                                                    {% if field.name == "user" %}
-                                                        <input type="hidden" name="user" value="{{ user.id }}"/>
-                                                    {% else %}
-                                                        {{ field }}
-                                                    {% endif %}
-                                                {% endfor %}
-                                                <button type="submit" class="btn btn-danger">Revoke access</button>
-                                            </form>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </li>
-                        {% empty %}
-                            <li class="list-group-item">There are no users in this results viewers group.</li>
-                        {% endfor %}
-                    </ul>
+                    {% if object.viewers %}
 
-                    <a class="btn btn-primary"
-                       href="{% url 'algorithms:job-viewers-update' slug=object.algorithm_image.algorithm.slug pk=object.pk %}">
-                        <i class="fa fa-user-plus"></i> Add users
-                    </a>
+                        <p>
+                            The following users are members of this results viewers group:
+                        </p>
+
+                        <ul class="list-group list-group-flush mb-3">
+                            {% for user in object.viewers.user_set.all %}
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>{{ user|user_profile_link }}</div>
+                                        <div>
+                                            {% if user != request.user %}
+                                                <form action="{% url 'algorithms:job-viewers-update' slug=object.algorithm_image.algorithm.slug pk=object.pk %}"
+                                                      method="POST">
+                                                    {% for field in viewers_form %}
+                                                        {% csrf_token %}
+                                                        {% if field.name == "user" %}
+                                                            <input type="hidden" name="user" value="{{ user.id }}"/>
+                                                        {% else %}
+                                                            {{ field }}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    <button type="submit" class="btn btn-danger">Revoke access</button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </li>
+                            {% empty %}
+                                <li class="list-group-item">There are no users in this results viewers group.</li>
+                            {% endfor %}
+                        </ul>
+
+                        <a class="btn btn-primary"
+                           href="{% url 'algorithms:job-viewers-update' slug=object.algorithm_image.algorithm.slug pk=object.pk %}">
+                            <i class="fa fa-user-plus"></i> Add users
+                        </a>
+
+                    {% endif %}
 
                 {% endif %}
             </div>
