@@ -98,6 +98,7 @@ def requeue_jobs(modeladmin, request, queryset):
         job.attempt += 1
         job.utilization.duration = None
         job.utilization.save()
+        job.use_warm_pool = False
         job.error_message = ""
         job.detailed_error_message = {}
         jobs.append(job)

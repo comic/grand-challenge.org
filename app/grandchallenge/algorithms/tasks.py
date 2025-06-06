@@ -70,10 +70,10 @@ def create_algorithm_jobs(
     time_limit,
     requires_gpu_type,
     requires_memory_gb,
+    max_jobs,
     algorithm_model=None,
     extra_viewer_groups=None,
     extra_logs_viewer_groups=None,
-    max_jobs=None,
     task_on_success=None,
     task_on_failure=None,
     job_utilization_phase=None,
@@ -131,15 +131,11 @@ def create_algorithm_jobs(
     jobs = []
     for interface, archive_items in valid_job_inputs.items():
         for ai in archive_items:
-            if max_jobs is not None and len(jobs) >= max_jobs:
+            if len(jobs) >= max_jobs:
                 # only schedule max_jobs amount of jobs
                 # the rest will be scheduled only after these have succeeded
                 # we do not want to retry the task here, so just stop the loop
                 break
-
-            if len(jobs) >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
-                # raise exception so that we retry the task
-                raise TooManyJobsScheduled
 
             with transaction.atomic():
                 job = Job.objects.create(
@@ -155,6 +151,10 @@ def create_algorithm_jobs(
                     extra_viewer_groups=extra_viewer_groups,
                     extra_logs_viewer_groups=extra_logs_viewer_groups,
                     input_civ_set=ai.values.all(),
+                    use_warm_pool=(
+                        len(valid_job_inputs) - max_jobs - len(jobs)
+                    )
+                    > 0,
                 )
 
                 job.utilization.archive = ai.archive

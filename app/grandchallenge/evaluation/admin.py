@@ -174,6 +174,7 @@ class EvaluationAdmin(admin.ModelAdmin):
         "time_limit",
         "requires_gpu_type",
         "requires_memory_gb",
+        "use_warm_pool",
         "status",
         "published",
         "error_message",
@@ -182,6 +183,7 @@ class EvaluationAdmin(admin.ModelAdmin):
         "status",
         "published",
         "requires_gpu_type",
+        "use_warm_pool",
         "submission__phase__submission_kind",
         "submission__phase__challenge__short_name",
     )

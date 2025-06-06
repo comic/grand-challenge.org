@@ -186,7 +186,9 @@ def prepare_and_execute_evaluation(
         logger.error("No algorithm or predictions file found")
 
 
-@acks_late_2xlarge_task(retry_on=(TooManyJobsScheduled,), singleton=True)
+@acks_late_2xlarge_task(
+    retry_on=(TooManyJobsScheduled, LockNotAcquiredException)
+)
 def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     """
     Creates the algorithm jobs for the evaluation
@@ -202,21 +204,9 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     max_jobs
         The maximum number of jobs to create
     """
-    Evaluation = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Evaluation"
+    evaluation = lock_model_instance(
+        pk=evaluation_pk, app_label="evaluation", model_name="Evaluation"
     )
-    evaluation = Evaluation.objects.get(pk=evaluation_pk)
-
-    if Job.objects.active().count() >= settings.ALGORITHMS_MAX_ACTIVE_JOBS:
-        raise TooManyJobsScheduled
-
-    if (
-        Job.objects.active()
-        .filter(algorithm_image=evaluation.submission.algorithm_image)
-        .count()
-        >= settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM
-    ):
-        raise TooManyJobsScheduled
 
     if evaluation.status not in {
         evaluation.PENDING,
@@ -226,6 +216,19 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
             f"Nothing to do: evaluation is {evaluation.get_status_display()}."
         )
         return
+
+    slots_available = min(
+        settings.ALGORITHMS_MAX_ACTIVE_JOBS - Job.objects.active().count(),
+        settings.ALGORITHMS_JOB_BATCH_LIMIT,
+    )
+    slots_available -= (
+        Job.objects.active()
+        .filter(algorithm_image=evaluation.submission.algorithm_image)
+        .count()
+    )
+
+    if slots_available <= 0:
+        raise TooManyJobsScheduled
 
     # Only the challenge admins should be able to view these jobs, never
     # the algorithm editors as these are participants - they must never
@@ -244,6 +247,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         task_on_success = set_evaluation_inputs.signature(
             kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
         )
+        max_jobs = slots_available
     else:
         # Run with 1 job and then if that goes well, come back and
         # run all jobs. Note that setting None here is caught by
@@ -258,7 +262,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
         kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
     )
 
-    evaluation.update_status(status=Evaluation.EXECUTING_PREREQUISITES)
+    evaluation.update_status(status=evaluation.EXECUTING_PREREQUISITES)
 
     jobs = create_algorithm_jobs(
         algorithm_image=evaluation.submission.algorithm_image,

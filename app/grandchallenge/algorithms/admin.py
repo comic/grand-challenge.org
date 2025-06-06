@@ -188,13 +188,20 @@ class JobAdmin(admin.ModelAdmin):
         "time_limit",
         "requires_gpu_type",
         "requires_memory_gb",
+        "use_warm_pool",
         "status",
         "public",
         "comment",
         "error_message",
     )
     list_select_related = ("algorithm_image__algorithm",)
-    list_filter = ("status", "public", "is_complimentary", "requires_gpu_type")
+    list_filter = (
+        "status",
+        "public",
+        "is_complimentary",
+        "requires_gpu_type",
+        "use_warm_pool",
+    )
     readonly_fields = (
         "creator",
         "algorithm_image",
