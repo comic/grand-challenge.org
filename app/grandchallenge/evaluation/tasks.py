@@ -94,9 +94,7 @@ def check_prerequisites_for_evaluation_execution(*, evaluation_pk):
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
-def prepare_and_execute_evaluation(
-    *, evaluation_pk, max_initial_jobs=1
-):  # noqa: C901
+def prepare_and_execute_evaluation(*, evaluation_pk):  # noqa: C901
     """
     Prepares an evaluation object for execution
 
@@ -104,8 +102,6 @@ def prepare_and_execute_evaluation(
     ----------
     evaluation_pk
         The primary key of the Evaluation
-    max_initial_jobs
-        The maximum number of algorithm jobs to schedule first
     """
     Evaluation = apps.get_model(  # noqa: N806
         app_label="evaluation", model_name="Evaluation"
@@ -138,7 +134,7 @@ def prepare_and_execute_evaluation(
             lambda: create_algorithm_jobs_for_evaluation.apply_async(
                 kwargs={
                     "evaluation_pk": evaluation_pk,
-                    "max_jobs": max_initial_jobs,
+                    "first_run": True,
                 }
             )
         )
@@ -190,7 +186,9 @@ def prepare_and_execute_evaluation(
     retry_on=(TooManyJobsScheduled, LockNotAcquiredException)
 )
 @transaction.atomic
-def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
+def create_algorithm_jobs_for_evaluation(
+    *, evaluation_pk, max_jobs=1, first_run=True
+):
     """
     Creates the algorithm jobs for the evaluation
 
@@ -203,7 +201,9 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     evaluation_pk
         The primary key of the evaluation
     max_jobs
-        The maximum number of jobs to create
+        Deprecated
+    first_run
+        Whether this is the first run of create_algorithm_jobs_for_evaluation
     """
     evaluation = lock_model_instance(
         pk=evaluation_pk, app_label="evaluation", model_name="Evaluation"
@@ -214,6 +214,9 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
             f"Nothing to do: evaluation is {evaluation.get_status_display()}."
         )
         return
+
+    if max_jobs == 1:
+        first_run = True
 
     slots_available = min(
         settings.ALGORITHMS_MAX_ACTIVE_JOBS - Job.objects.active().count(),
@@ -228,9 +231,6 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
     if slots_available <= 0:
         raise TooManyJobsScheduled
 
-    if max_jobs is None:
-        max_jobs = slots_available
-
     # Only the challenge admins should be able to view these jobs, never
     # the algorithm editors as these are participants - they must never
     # be able to see the test data...
@@ -242,44 +242,58 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, max_jobs=1):
             evaluation.submission.algorithm_image.algorithm.editors_group
         )
 
-    # Run with the jobs and then if that goes well, come back and
-    # run all jobs. Note that setting None here is caught by
-    # the if statement to schedule `set_evaluation_inputs`
-    task_on_success = create_algorithm_jobs_for_evaluation.signature(
-        kwargs={"evaluation_pk": str(evaluation.pk), "max_jobs": None},
-        immutable=True,
-    )
+    if first_run:
+        # Run with 1 job and then if that goes well, come back and
+        # run all jobs.
+        task_on_success = create_algorithm_jobs_for_evaluation.signature(
+            kwargs={"evaluation_pk": str(evaluation.pk), "first_run": False},
+            immutable=True,
+        )
+        max_jobs = 1
+    else:
+        # Once the algorithm has been run, score the submission. No emails as
+        # algorithm editors should not have access to the underlying images.
+        task_on_success = set_evaluation_inputs.signature(
+            kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
+        )
+        max_jobs = slots_available
 
     # If any of the jobs fail then mark the evaluation as failed.
     task_on_failure = handle_failed_jobs.signature(
         kwargs={"evaluation_pk": str(evaluation.pk)}, immutable=True
     )
 
-    jobs = create_algorithm_jobs(
-        algorithm_image=evaluation.submission.algorithm_image,
-        algorithm_model=evaluation.submission.algorithm_model,
-        archive_items=evaluation.submission.phase.archive.items.prefetch_related(
-            "values__interface"
-        )
-        .annotate(
-            has_title=Case(
-                When(title="", then=Value(1)),
-                default=Value(0),
-                output_field=IntegerField(),
+    try:
+        jobs = create_algorithm_jobs(
+            algorithm_image=evaluation.submission.algorithm_image,
+            algorithm_model=evaluation.submission.algorithm_model,
+            archive_items=evaluation.submission.phase.archive.items.prefetch_related(
+                "values__interface"
             )
+            .annotate(
+                has_title=Case(
+                    When(title="", then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("has_title", "title", "created"),
+            extra_viewer_groups=viewer_groups,
+            extra_logs_viewer_groups=viewer_groups,
+            task_on_success=task_on_success,
+            task_on_failure=task_on_failure,
+            max_jobs=max_jobs,
+            time_limit=evaluation.submission.phase.algorithm_time_limit,
+            requires_gpu_type=evaluation.submission.algorithm_requires_gpu_type,
+            requires_memory_gb=evaluation.submission.algorithm_requires_memory_gb,
+            job_utilization_phase=evaluation.submission.phase,
+            job_utilization_challenge=evaluation.submission.phase.challenge,
         )
-        .order_by("has_title", "title", "created"),
-        extra_viewer_groups=viewer_groups,
-        extra_logs_viewer_groups=viewer_groups,
-        task_on_success=task_on_success,
-        task_on_failure=task_on_failure,
-        max_jobs=max_jobs,
-        time_limit=evaluation.submission.phase.algorithm_time_limit,
-        requires_gpu_type=evaluation.submission.algorithm_requires_gpu_type,
-        requires_memory_gb=evaluation.submission.algorithm_requires_memory_gb,
-        job_utilization_phase=evaluation.submission.phase,
-        job_utilization_challenge=evaluation.submission.phase.challenge,
-    )
+    except TooManyJobsScheduled:
+        if first_run:
+            return
+        else:
+            raise
 
     if not jobs:
         # Once the algorithm has been run, score the submission. No emails as

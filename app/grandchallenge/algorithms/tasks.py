@@ -138,7 +138,7 @@ def create_algorithm_jobs(
             if len(jobs) >= max_jobs:
                 # only schedule max_jobs amount of jobs
                 # the rest will be scheduled only after these have succeeded
-                break
+                raise TooManyJobsScheduled
 
             job = Job.objects.create(
                 creator=None,  # System jobs, so no creator
@@ -153,7 +153,12 @@ def create_algorithm_jobs(
                 extra_viewer_groups=extra_viewer_groups,
                 extra_logs_viewer_groups=extra_logs_viewer_groups,
                 input_civ_set=ai.values.all(),
-                use_warm_pool=(items_remaining - max_jobs - len(jobs)) > 0,
+                use_warm_pool=(
+                    items_remaining
+                    - settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM
+                    - len(jobs)
+                )
+                > 0,
             )
 
             job.utilization.archive = ai.archive
