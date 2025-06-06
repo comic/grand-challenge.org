@@ -1791,6 +1791,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "time_limit": self.time_limit,
             "requires_gpu_type": self.requires_gpu_type,
             "memory_limit": self.requires_memory_gb,
+            "use_warm_pool": self.use_warm_pool,
         }
 
     def get_executor(self, *, backend):

@@ -198,6 +198,7 @@ def test_invocation_json(settings):
                     "Subnets": settings.COMPONENTS_AMAZON_SAGEMAKER_SUBNETS,
                 },
                 "RemoteDebugConfig": {"EnableRemoteDebug": False},
+                "KeepAlivePeriodInSeconds": 0,
             },
         )
         executor.provision(input_civs=[], input_prefixes={})
