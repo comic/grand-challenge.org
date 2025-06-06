@@ -125,6 +125,10 @@ def create_algorithm_jobs(
         algorithm_model=algorithm_model,
     )
 
+    items_remaining = sum(
+        len(archive_items) for archive_items in valid_job_inputs.values()
+    )
+
     if time_limit is None:
         time_limit = settings.ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS
 
@@ -147,7 +151,12 @@ def create_algorithm_jobs(
                 extra_viewer_groups=extra_viewer_groups,
                 extra_logs_viewer_groups=extra_logs_viewer_groups,
                 input_civ_set=ai.values.all(),
-                use_warm_pool=True,
+                use_warm_pool=(
+                    items_remaining
+                    - settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM
+                    - len(jobs)
+                )
+                > 0,
             )
 
             job.utilization.archive = ai.archive

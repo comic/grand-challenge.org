@@ -291,16 +291,12 @@ def create_algorithm_jobs_for_evaluation(
         )
     except TooManyJobsScheduled:
         if not first_run:
+            # Manually create the retry task so that the jobs
+            # created above are committed
             create_algorithm_jobs_for_evaluation._retry()
         return
 
-    if jobs:
-        # If we've got to this point then there are no more jobs
-        # left to schedule, so no need to use warm pools
-        Job.objects.filter(pk__in=[j.pk for j in jobs]).update(
-            use_warm_pool=False
-        )
-    else:
+    if not jobs:
         # No more jobs created from this task, so everything must be
         # ready for evaluation, handles archives with only one item
         # and re-evaluation of existing submissions with new methods
