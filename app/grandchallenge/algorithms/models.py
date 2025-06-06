@@ -1358,10 +1358,11 @@ def delete_job_groups_hook(*_, instance: Job, using, **__):
     We use a signal rather than overriding delete() to catch usages of
     bulk_delete.
     """
-    try:
-        instance.viewers.delete(using=using)
-    except ObjectDoesNotExist:
-        pass
+    if instance.viewers:
+        try:
+            instance.viewers.delete(using=using)
+        except ObjectDoesNotExist:
+            pass
 
 
 class AlgorithmPermissionRequest(RequestBase):
