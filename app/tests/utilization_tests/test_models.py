@@ -281,7 +281,7 @@ def test_job_utilization_created_on_jobs_for_evaluation_sets_properties():
     )
 
     create_algorithm_jobs_for_evaluation(
-        evaluation_pk=evaluation.pk,
+        evaluation_pk=evaluation.pk, first_run=False
     )
 
     job_utilization = JobUtilization.objects.get()

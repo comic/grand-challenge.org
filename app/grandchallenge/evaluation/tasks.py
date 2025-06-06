@@ -186,9 +186,7 @@ def prepare_and_execute_evaluation(*, evaluation_pk):  # noqa: C901
     retry_on=(TooManyJobsScheduled, LockNotAcquiredException)
 )
 @transaction.atomic
-def create_algorithm_jobs_for_evaluation(
-    *, evaluation_pk, max_jobs=1, first_run=True
-):
+def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
     """
     Creates the algorithm jobs for the evaluation
 
@@ -200,8 +198,6 @@ def create_algorithm_jobs_for_evaluation(
     ----------
     evaluation_pk
         The primary key of the evaluation
-    max_jobs
-        Deprecated
     first_run
         Whether this is the first run of create_algorithm_jobs_for_evaluation
     """
@@ -214,9 +210,6 @@ def create_algorithm_jobs_for_evaluation(
             f"Nothing to do: evaluation is {evaluation.get_status_display()}."
         )
         return
-
-    if max_jobs is None:
-        first_run = False
 
     slots_available = min(
         settings.ALGORITHMS_MAX_ACTIVE_JOBS - Job.objects.active().count(),
