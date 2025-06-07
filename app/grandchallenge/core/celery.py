@@ -147,7 +147,7 @@ class AcksLateTaskDecorator:
                 if any(isinstance(error, e) for e in ignore_errors):
                     if is_in_celery_context:
                         logger.info(
-                            f"Ignoring error in task {task_func.name}: {error}"
+                            f"Ignoring error in task {task_func.name}: {repr(error)}"
                         )
                         return
                     else:
