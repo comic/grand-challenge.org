@@ -12,6 +12,7 @@ from django.db.transaction import on_commit
 from django.utils._os import safe_join
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
@@ -138,6 +139,15 @@ def create_algorithm_jobs(
             if len(jobs) >= max_jobs:
                 raise TooManyJobsScheduled
 
+            use_warm_pool = (requires_gpu_type == GPUTypeChoices.A10G) and (
+                (
+                    items_remaining
+                    - settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM
+                    - len(jobs)
+                )
+                > 0
+            )
+
             job = Job.objects.create(
                 creator=None,  # System jobs, so no creator
                 algorithm_image=algorithm_image,
@@ -151,12 +161,7 @@ def create_algorithm_jobs(
                 extra_viewer_groups=extra_viewer_groups,
                 extra_logs_viewer_groups=extra_logs_viewer_groups,
                 input_civ_set=ai.values.all(),
-                use_warm_pool=(
-                    items_remaining
-                    - settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM
-                    - len(jobs)
-                )
-                > 0,
+                use_warm_pool=use_warm_pool,
             )
 
             job.utilization.archive = ai.archive
