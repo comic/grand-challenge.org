@@ -78,7 +78,7 @@ def test_create_job_warm_pool_utilizations(
         time_limit=60,
     )
 
-    with django_assert_num_queries(5):
+    with django_assert_num_queries(4):
         create_job_warm_pool_utilizations()
 
     warm_pool_utilization = JobWarmPoolUtilization.objects.get()

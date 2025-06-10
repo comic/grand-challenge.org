@@ -15,7 +15,7 @@ def create_job_warm_pool_utilizations():
     queryset = (
         Job.objects.only_completed()
         .filter(use_warm_pool=True, job_warm_pool_utilization__isnull=True)
-        .select_related("job_utilization")
+        .select_related("job_utilization", "algorithm_image")
     )
 
     for job in queryset:
