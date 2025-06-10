@@ -50,6 +50,8 @@ def test_create_job_warm_pool_utilizations(
     )
     settings.COMPONENTS_USD_TO_EUR = 1
 
+    n_expected_queries = 4
+
     challenge = ChallengeFactory()
     archive = ArchiveFactory()
     phase = PhaseFactory(challenge=challenge, archive=archive)
@@ -78,7 +80,7 @@ def test_create_job_warm_pool_utilizations(
         time_limit=60,
     )
 
-    with django_assert_num_queries(4):
+    with django_assert_num_queries(n_expected_queries):
         create_job_warm_pool_utilizations()
 
     warm_pool_utilization = JobWarmPoolUtilization.objects.get()
@@ -97,3 +99,9 @@ def test_create_job_warm_pool_utilizations(
     )
     assert warm_pool_utilization.duration.total_seconds() == 1337
     assert warm_pool_utilization.compute_cost_euro_millicents == 4494
+
+    # Run again, check nothing else is created
+    with django_assert_num_queries(n_expected_queries - 1):
+        create_job_warm_pool_utilizations()
+
+    assert JobWarmPoolUtilization.objects.count() == 1
