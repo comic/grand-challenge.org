@@ -1660,6 +1660,19 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">status__in</span><span class="o">=</span><span class="n">active_choices</span><span class="p">)</span>
 
+<div class="viewcode-block" id="ComponentJobManager.only_completed">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.only_completed">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">only_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Jobs that are in their final state&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">status__in</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">ComponentJob</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">,</span>
+                <span class="n">ComponentJob</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">,</span>
+                <span class="n">ComponentJob</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="ComponentJobManager.retrieve_existing_civs">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.retrieve_existing_civs">[docs]</a>
     <span class="nd">@staticmethod</span>
