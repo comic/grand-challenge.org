@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Max
@@ -6,6 +7,7 @@ from django.dispatch import receiver
 from django_extensions.db.fields import AutoSlugField
 from simple_history.models import HistoricalRecords
 
+from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -23,6 +25,7 @@ class DocPage(models.Model):
     slug = AutoSlugField(populate_from="title", max_length=1024)
 
     content = models.TextField()
+    content_plain = models.TextField(editable=False)  # for search
 
     order = models.IntegerField(
         editable=False,
@@ -72,7 +75,20 @@ class DocPage(models.Model):
                     + 1
                 )
 
+        self.update_content_plain()
+
         super().save(*args, **kwargs)
+
+    def update_content_plain(self):
+        self.content_plain = BeautifulSoup(
+            md2html(
+                self.content,
+                link_blank_target=False,
+                create_permalink_for_headers=False,
+                process_youtube_tags=False,
+            ),
+            "html.parser",
+        ).get_text()
 
     def position(self, position):
         if position:
