@@ -50,6 +50,16 @@ class JobParams(NamedTuple):
     attempt: int
 
 
+def duration_to_millicents(*, duration, usd_cents_per_hour):
+    return ceil(
+        (duration.total_seconds() / 3600)
+        * usd_cents_per_hour
+        * 1000
+        * settings.COMPONENTS_USD_TO_EUR
+        * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
+    )
+
+
 class Executor(ABC):
     IS_EVENT_DRIVEN = False
 
@@ -156,6 +166,10 @@ class Executor(ABC):
     def runtime_metrics(self): ...
 
     @property
+    @abstractmethod
+    def warm_pool_retained_billable_time_in_seconds(self): ...
+
+    @property
     def invocation_environment(self):
         env = {  # Up to 16 pairs
             "LOG_LEVEL": "INFO",
@@ -187,12 +201,8 @@ class Executor(ABC):
         if duration is None:
             return None
         else:
-            return ceil(
-                (self.duration.total_seconds() / 3600)
-                * self.usd_cents_per_hour
-                * 1000
-                * settings.COMPONENTS_USD_TO_EUR
-                * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
+            return duration_to_millicents(
+                duration=duration, usd_cents_per_hour=self.usd_cents_per_hour
             )
 
     @property
