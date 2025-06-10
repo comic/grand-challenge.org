@@ -1563,6 +1563,16 @@ class ComponentJobManager(models.QuerySet):
         )
         return self.filter(status__in=active_choices)
 
+    def only_completed(self):
+        """Jobs that are in their final state"""
+        return self.filter(
+            status__in=[
+                ComponentJob.SUCCESS,
+                ComponentJob.CANCELLED,
+                ComponentJob.FAILURE,
+            ]
+        )
+
     @staticmethod
     def retrieve_existing_civs(*, civ_data):
         """

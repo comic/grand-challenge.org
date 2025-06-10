@@ -16,11 +16,15 @@ from grandchallenge.evaluation.models import (
 from grandchallenge.utilization.models import (
     EvaluationUtilization,
     JobUtilization,
+    JobWarmPoolUtilization,
 )
 
 
 def annotate_compute_costs(*, challenge):
     algorithm_job_utilizations = JobUtilization.objects.filter(
+        challenge=challenge
+    )
+    job_warm_pool_utilizations = JobWarmPoolUtilization.objects.filter(
         challenge=challenge
     )
     evaluation_job_utilizations = EvaluationUtilization.objects.filter(
@@ -30,12 +34,16 @@ def annotate_compute_costs(*, challenge):
     update_compute_cost_euro_millicents(
         obj=challenge,
         algorithm_job_utilizations=algorithm_job_utilizations,
+        job_warm_pool_utilizations=job_warm_pool_utilizations,
         evaluation_job_utilizations=evaluation_job_utilizations,
     )
 
 
 def annotate_job_duration_and_compute_costs(*, phase):
     algorithm_job_utilizations = JobUtilization.objects.filter(phase=phase)
+    job_warm_pool_utilizations = JobWarmPoolUtilization.objects.filter(
+        phase=phase
+    )
     evaluation_job_utilizations = EvaluationUtilization.objects.filter(
         phase=phase, external_evaluation=False
     )
@@ -47,22 +55,29 @@ def annotate_job_duration_and_compute_costs(*, phase):
     update_compute_cost_euro_millicents(
         obj=phase,
         algorithm_job_utilizations=algorithm_job_utilizations,
+        job_warm_pool_utilizations=job_warm_pool_utilizations,
         evaluation_job_utilizations=evaluation_job_utilizations,
     )
 
 
 def update_compute_cost_euro_millicents(
-    *, obj, algorithm_job_utilizations, evaluation_job_utilizations
+    *,
+    obj,
+    algorithm_job_utilizations,
+    job_warm_pool_utilizations,
+    evaluation_job_utilizations,
 ):
     algorithm_job_costs = algorithm_job_utilizations.aggregate(
         Sum("compute_cost_euro_millicents")
     )
-
+    job_warm_pool_costs = job_warm_pool_utilizations.aggregate(
+        Sum("compute_cost_euro_millicents")
+    )
     evaluation_costs = evaluation_job_utilizations.aggregate(
         Sum("compute_cost_euro_millicents")
     )
 
-    items = [algorithm_job_costs, evaluation_costs]
+    items = [algorithm_job_costs, job_warm_pool_costs, evaluation_costs]
 
     obj.compute_cost_euro_millicents = sum(
         item["compute_cost_euro_millicents__sum"] or 0 for item in items

@@ -24,6 +24,21 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
     def _training_output_prefix(self):
         return safe_join("/training-outputs", *self.job_path_parts)
 
+    @property
+    def warm_pool_retained_billable_time_in_seconds(self):
+        job_description = self._sagemaker_client.describe_training_job(
+            TrainingJobName=self._sagemaker_job_name,
+        )
+        if job_description.get("WarmPoolStatus", {}).get("Status") in {
+            "Terminated",
+            "Reused",
+        }:
+            return job_description["WarmPoolStatus"][
+                "ResourceRetainedBillableTimeInSeconds"
+            ]
+        else:
+            return None
+
     @staticmethod
     def get_job_name(*, event):
         return event["TrainingJobName"]
