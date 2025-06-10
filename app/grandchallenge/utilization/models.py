@@ -179,12 +179,14 @@ class JobWarmPoolUtilization(ComponentJobUtilization):
 
     def save(self, *args, **kwargs) -> None:
         if self._state.adding:
-            self.creator = self.job.job_utilization.creator
-            self.phase = self.job.job_utilization.phase
-            self.challenge = self.job.job_utilization.challenge
-            self.archive = self.job.job_utilization.archive
-            self.algorithm_image = self.job.job_utilization.algorithm_image
-            self.algorithm = self.job.job_utilization.algorithm_image.algorithm
+            self.creator_id = self.job.job_utilization.creator_id
+            self.phase_id = self.job.job_utilization.phase_id
+            self.challenge_id = self.job.job_utilization.challenge_id
+            self.archive_id = self.job.job_utilization.archive_id
+            self.algorithm_image_id = (
+                self.job.job_utilization.algorithm_image_id
+            )
+            self.algorithm_id = self.job.job_utilization.algorithm_id
 
         super().save(*args, **kwargs)
 
