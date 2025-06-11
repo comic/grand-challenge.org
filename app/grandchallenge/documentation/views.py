@@ -36,20 +36,18 @@ class DocPageDetail(DetailView):
             DocPage.objects.filter(parent__isnull=True)
             .prefetch_related("children__children")
             .order_by("order")
-            .all()
         )
 
-        qs = DocPage.objects.all()
         keywords = self.request.GET.get("query")
 
         if keywords:
             query = SearchQuery(keywords)
             vector = SearchVector("title", "content_plain")
             headline = SearchHeadline("content_plain", query)
-            qs = (
-                qs.annotate(headline=headline)
-                .annotate(rank=SearchRank(vector, query))
-                .annotate(
+            search_results = (
+                DocPage.objects.annotate(
+                    headline=headline,
+                    rank=SearchRank(vector, query),
                     similarity=TrigramSimilarity("title", keywords)
                     + TrigramSimilarity("content_plain", keywords),
                 )
@@ -58,16 +56,15 @@ class DocPageDetail(DetailView):
                 .order_by("-combined_score")
             )
         else:
-            qs = None
+            search_results = None
 
         context.update(
             {
                 "top_level_pages": top_level_pages,
-                "search_results": qs,
+                "search_results": search_results,
                 "query": keywords,
             }
         )
-
         return context
 
 
