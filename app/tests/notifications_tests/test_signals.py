@@ -7,10 +7,6 @@ from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.utils.html import format_html
 from django.utils.timezone import now
-from machina.apps.forum import models as machina_forum_models
-from machina.apps.forum_conversation import (
-    models as machina_conversation_models,
-)
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -203,10 +199,6 @@ def test_all_registered_models_have_factory_coverage():
     # Exclude Challenge and Forum models since we have seperate tests for those
     registered_models.discard(Challenge)
     registered_models.discard(Forum)
-    # also exclude deprecated machina models
-    registered_models.discard(machina_forum_models.Forum)
-    registered_models.discard(machina_conversation_models.Topic)
-    registered_models.discard(machina_conversation_models.Post)
 
     factory_covered_models = set(MODEL_TO_FACTORY.keys())
 
