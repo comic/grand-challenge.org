@@ -14,12 +14,10 @@ class Migration(migrations.Migration):
             model_name="docpage",
             name="content_plain",
             field=models.TextField(default="", editable=False),
-            preserve_default=False,
         ),
         migrations.AddField(
             model_name="historicaldocpage",
             name="content_plain",
             field=models.TextField(default="", editable=False),
-            preserve_default=False,
         ),
     ]
