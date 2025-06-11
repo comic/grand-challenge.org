@@ -13,21 +13,12 @@
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'documentation:home' %}">Documentation</a></li>
-        {% if currentdocpage.parent %}
-            {% if currentdocpage.parent.parent %}
-                {% if currentdocpage.parent.parent.parent %}
-                    <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=currentdocpage.parent.parent.parent.slug %}">
-                        {{ currentdocpage.parent.parent.parent.title }}
-                    </a></li>
-                {% endif %}
-                <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=currentdocpage.parent.parent.slug %}">
-                        {{ currentdocpage.parent.parent.title }}
-                </a></li>
-            {% endif %}
-            <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=currentdocpage.parent.slug %}">
-                    {{ currentdocpage.parent.title }}
-            </a></li>
-        {% endif %}
+        {% get_breadcrumbs currentdocpage as breadcrumbs %}
+        {% for breadcrumb in breadcrumbs %}
+            <li class="breadcrumb-item">
+                <a href="{{ breadcrumb.url }}">{{ breadcrumb.title }}</a>
+            </li>
+        {% endfor %}
         <li class="breadcrumb-item active"
             aria-current="page">
                 {{ currentdocpage.title }}
@@ -144,21 +135,12 @@
                 {% for result in search_results %}
                     <div class="card rounded border-light my-1">
                         <ol class="pl-3 pb-0 breadcrumb">
-                            {% if result.parent %}
-                                {% if result.parent.parent %}
-                                    {% if result.parent.parent.parent %}
-                                        <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=result.parent.parent.parent.slug %}">
-                                            {{ result.parent.parent.parent.title }}
-                                        </a></li>
-                                    {% endif %}
-                                    <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=result.parent.parent.slug %}">
-                                            {{ result.parent.parent.title }}
-                                    </a></li>
-                                {% endif %}
-                                <li class="breadcrumb-item"><a href="{% url 'documentation:detail' slug=result.parent.slug %}">
-                                        {{ result.parent.title }}
-                                </a></li>
-                            {% endif %}
+                            {% get_breadcrumbs result as breadcrumbs %}
+                            {% for breadcrumb in breadcrumbs %}
+                                <li class="breadcrumb-item">
+                                    <a href="{{ breadcrumb.url }}">{{ breadcrumb.title }}</a>
+                                </li>
+                            {% endfor %}
                         </ol>
                         <a href="{% url 'documentation:detail' slug=result.slug %}"><h5 class="pl-3 pt-1">{{ result.title }}</h5></a>
                         <div class="mb-3 pl-3">{{ result.headline|safe }}</div>
