@@ -25,7 +25,7 @@ class DocPage(models.Model):
     slug = AutoSlugField(populate_from="title", max_length=1024)
 
     content = models.TextField()
-    content_plain = models.TextField(editable=False)  # for search
+    content_plain = models.TextField(default="", editable=False)
 
     order = models.IntegerField(
         editable=False,
