@@ -51,7 +51,7 @@ class DocPageDetail(DetailView):
                 .annotate(rank=SearchRank(vector, query))
                 .annotate(
                     similarity=TrigramSimilarity("title", keywords)
-                    + TrigramSimilarity("content", keywords)
+                    + TrigramSimilarity("content_plain", keywords),
                 )
                 .annotate(combined_score=(F("similarity") + F("rank")) / 2)
                 .filter(Q(rank__gt=0.001) | Q(similarity__gt=0.1))
