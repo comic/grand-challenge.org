@@ -3,7 +3,6 @@ from django.contrib.postgres.search import (
     SearchHeadline,
     SearchQuery,
     SearchRank,
-    SearchVector,
     TrigramSimilarity,
 )
 from django.db.models import F, Q
@@ -42,12 +41,11 @@ class DocPageDetail(DetailView):
 
         if keywords:
             query = SearchQuery(keywords)
-            vector = SearchVector("title", "content_plain")
             headline = SearchHeadline("content_plain", query)
             search_results = (
                 DocPage.objects.annotate(
                     headline=headline,
-                    rank=SearchRank(vector, query),
+                    rank=SearchRank(F("search_vector"), query),
                     similarity=TrigramSimilarity("title", keywords)
                     + TrigramSimilarity("content_plain", keywords),
                 )

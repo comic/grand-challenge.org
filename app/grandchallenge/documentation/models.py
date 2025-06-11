@@ -1,4 +1,6 @@
 from bs4 import BeautifulSoup
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Max
@@ -26,6 +28,7 @@ class DocPage(models.Model):
 
     content = models.TextField()
     content_plain = models.TextField(default="", editable=False)
+    search_vector = SearchVectorField(null=True)
 
     order = models.IntegerField(
         editable=False,
@@ -41,10 +44,15 @@ class DocPage(models.Model):
         related_name="children",
     )
 
-    history = HistoricalRecords(excluded_fields=["order", "parent", "slug"])
+    history = HistoricalRecords(
+        excluded_fields=["order", "parent", "slug", "search_vector"]
+    )
 
     class Meta:
         ordering = ["order"]
+        indexes = [
+            GinIndex(fields=["search_vector"]),
+        ]
 
     def __str__(self):
         return self.title
@@ -76,6 +84,7 @@ class DocPage(models.Model):
                 )
 
         self.update_content_plain()
+        self.update_search_vector()
 
         super().save(*args, **kwargs)
 
@@ -84,6 +93,9 @@ class DocPage(models.Model):
             md2html(self.content, create_permalink_for_headers=False),
             "html.parser",
         ).get_text()
+
+    def update_search_vector(self):
+        self.search_vector = SearchVector("title", "content_plain")
 
     def position(self, position):
         if position:
