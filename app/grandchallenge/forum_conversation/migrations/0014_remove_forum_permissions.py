@@ -17,6 +17,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("forum_conversation", "0013_auto_20201220_1745"),
+        ("forum_permission", "0001_initial"),
     ]
 
     operations = [
