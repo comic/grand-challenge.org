@@ -9,12 +9,7 @@ def markdown_to_plain_text(md):
     if not md:
         return ""
     return BeautifulSoup(
-        md2html(
-            md,
-            link_blank_target=False,
-            create_permalink_for_headers=False,
-            process_youtube_tags=False,
-        ),
+        md2html(md, create_permalink_for_headers=False),
         "html.parser",
     ).get_text()
 

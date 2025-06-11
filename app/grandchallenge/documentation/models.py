@@ -81,12 +81,7 @@ class DocPage(models.Model):
 
     def update_content_plain(self):
         self.content_plain = BeautifulSoup(
-            md2html(
-                self.content,
-                link_blank_target=False,
-                create_permalink_for_headers=False,
-                process_youtube_tags=False,
-            ),
+            md2html(self.content, create_permalink_for_headers=False),
             "html.parser",
         ).get_text()
 
