@@ -84,18 +84,18 @@ class DocPage(models.Model):
                 )
 
         self.update_content_plain()
-        self.update_search_vector()
 
         super().save(*args, **kwargs)
+
+        DocPage.objects.filter(pk=self.pk).update(
+            search_vector=SearchVector("title", "content_plain")
+        )
 
     def update_content_plain(self):
         self.content_plain = BeautifulSoup(
             md2html(self.content, create_permalink_for_headers=False),
             "html.parser",
         ).get_text()
-
-    def update_search_vector(self):
-        self.search_vector = SearchVector("title", "content_plain")
 
     def position(self, position):
         if position:
