@@ -146,7 +146,7 @@ def test_paginated_table_list_view_ordering():
 
 @pytest.mark.django_db
 def test_healthcheck(client, django_assert_num_queries):
-    with django_assert_num_queries(7):
+    with django_assert_num_queries(3):
         response = client.get("/healthcheck/")
 
     assert response.content == b""
