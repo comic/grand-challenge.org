@@ -223,6 +223,7 @@ class JobAdmin(admin.ModelAdmin):
         "public",
         "algorithm_model",
         "status",
+        "viewer_groups",
     )
     search_fields = (
         "creator__username",
