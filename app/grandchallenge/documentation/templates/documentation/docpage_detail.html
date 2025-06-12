@@ -143,7 +143,7 @@
                             {% endfor %}
                         </ol>
                         <a href="{% url 'documentation:detail' slug=result.slug %}"><h5 class="pl-3 pt-1">{{ result.title }}</h5></a>
-                        <div class="mb-3 pl-3">{{ result.headline|safe }}</div>
+                        <div class="mb-3 pl-3">{{ result.headline|clean }}</div>
                     </div>
                 {% endfor %}
             {% else %}
