@@ -967,9 +967,14 @@ class DisplaySetFormMixin:
     def clean(self):
         cleaned_data = super().clean()
 
-        if DisplaySet.objects.filter(
+        queryset = DisplaySet.objects.filter(
             reader_study=self.base_obj, order=cleaned_data["order"]
-        ).exists():
+        )
+
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+
+        if queryset.exists():
             self.add_error(
                 field="order",
                 error=ValidationError(

@@ -1211,7 +1211,7 @@ def test_display_set_form_unique_title(form_class):
         base_obj=rs1,
         data={
             "title": "A unique title",
-            "order": 10,
+            "order": 20,
         },
     )
     assert form.is_valid()
@@ -1227,6 +1227,9 @@ def test_display_set_form_unique_title(form_class):
         },
     )
     assert not form.is_valid()
+    assert form.errors["title"] == [
+        "There is already an existing display set with this title"
+    ]
 
     # However, it is allowed if it's in another archive all together
     rs2 = ReaderStudyFactory()
