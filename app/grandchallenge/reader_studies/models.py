@@ -987,13 +987,7 @@ class DisplaySet(
 
     @property
     def standard_index(self) -> int:
-        return len(
-            [
-                x
-                for x in self.reader_study.display_sets.all()
-                if x.order < self.order
-            ]
-        )
+        return [*self.reader_study.display_sets.all()].index(self)
 
     @property
     def update_url(self):
