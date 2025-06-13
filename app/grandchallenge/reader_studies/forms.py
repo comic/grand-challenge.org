@@ -70,6 +70,7 @@ from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
     CategoricalOption,
+    DisplaySet,
     Question,
     ReaderStudy,
     ReaderStudyPermissionRequest,
@@ -962,6 +963,21 @@ class DisplaySetFormMixin:
             .unique_title_query(*args, **kwargs)
             .filter(reader_study=self.base_obj)
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if DisplaySet.objects.filter(
+            reader_study=self.base_obj, order=cleaned_data["order"]
+        ).exists():
+            self.add_error(
+                field="order",
+                error=ValidationError(
+                    "A display set with this order exists for this reader study"
+                ),
+            )
+
+        return cleaned_data
 
 
 class DisplaySetCreateForm(

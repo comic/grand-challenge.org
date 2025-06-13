@@ -1276,3 +1276,27 @@ def test_reader_study_not_launchable_when_max_credits_consumed():
     assert reader_study.session_utilizations.first().credits_consumed == 500
     assert reader_study.credits_consumed == 500
     assert not reader_study.is_launchable
+
+
+@pytest.mark.django_db
+def test_display_set_order_unique():
+    rs = ReaderStudyFactory()
+
+    ds1, ds2 = DisplaySetFactory.create_batch(2, reader_study=rs)
+
+    ds1.order = 1337
+    ds1.save()
+
+    # Same order in other reader study should be fine
+    ds3 = DisplaySetFactory()
+    ds3.order = 1337
+    ds3.save()
+
+    ds2.order = 1337
+    with pytest.raises(IntegrityError) as error:
+        ds2.save()
+
+    assert (
+        'duplicate key value violates unique constraint "unique_display_set_order"'
+        in str(error.value)
+    )
