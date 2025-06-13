@@ -1022,7 +1022,10 @@ class DisplaySetViewSet(
         DisplaySet.objects.all()
         .select_related("reader_study__hanging_protocol")
         .prefetch_related(
-            "values__image", "values__interface", "reader_study__display_sets"
+            "values__image",
+            "values__interface",
+            "reader_study__display_sets",
+            "reader_study__optional_hanging_protocols",
         )
     )
     permission_classes = [DjangoObjectPermissions]

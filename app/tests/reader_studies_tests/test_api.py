@@ -2094,6 +2094,31 @@ def test_display_set_index(client):
 
 
 @pytest.mark.django_db
+def test_display_set_index_with_duplicate_order(
+    client, django_assert_num_queries
+):
+    reader_study = ReaderStudyFactory()
+    user = UserFactory()
+    reader_study.add_reader(user)
+
+    ds1, ds2, *_ = DisplaySetFactory.create_batch(3, reader_study=reader_study)
+
+    ds2.order = ds1.order
+    ds2.save()
+
+    with django_assert_num_queries(34):
+        response = get_view_for_user(
+            viewname="api:reader-studies-display-set-list",
+            data={"reader_study": str(reader_study.pk)},
+            user=user,
+            client=client,
+            method=client.get,
+        )
+
+    assert [x["index"] for x in response.json()["results"]] == [0, 1, 2]
+
+
+@pytest.mark.django_db
 def test_total_edit_duration(client):
     rs = ReaderStudyFactory(allow_answer_modification=True)
     ds = DisplaySetFactory(reader_study=rs)
