@@ -1,6 +1,7 @@
 import math
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
@@ -193,6 +194,13 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
         posts_per_page = ForumTopicPostList.paginate_by
         return math.ceil(post_count / posts_per_page)
 
+    def get_unread_topic_posts_for_user(self, *, user):
+        try:
+            read_record = TopicReadRecord.objects.get(user=user, topic=self)
+            return self.posts.exclude(created__lt=read_record.modified)
+        except ObjectDoesNotExist:
+            return self.posts
+
 
 class ForumPost(UUIDModel):
     topic = models.ForeignKey(
@@ -230,6 +238,11 @@ class ForumPost(UUIDModel):
 
         if adding:
             self.assign_permissions()
+            # mark topic (and hence this post) as read by the user
+            TopicReadRecord.objects.update_or_create(
+                user=self.creator,
+                topic=self.topic,
+            )
 
         self.topic.last_post_on = self.created
         self.topic.save()
@@ -342,3 +355,22 @@ class ForumPostUserObjectPermission(UserObjectPermissionBase):
 class ForumPostGroupObjectPermission(GroupObjectPermissionBase):
     allowed_permissions = frozenset({"view_forumpost", "delete_forumpost"})
     content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)
+
+
+class TopicReadRecord(UUIDModel):
+    user = models.ForeignKey(
+        get_user_model(),
+        related_name="read_topics",
+        on_delete=models.CASCADE,
+    )
+    topic = models.ForeignKey(
+        ForumTopic,
+        related_name="read_by",
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        unique_together = [
+            "user",
+            "topic",
+        ]

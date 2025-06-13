@@ -16,6 +16,7 @@ from grandchallenge.discussion_forums.models import (
     ForumPost,
     ForumTopic,
     ForumTopicKindChoices,
+    TopicReadRecord,
 )
 from grandchallenge.subdomains.utils import reverse
 
@@ -124,9 +125,23 @@ class ForumTopicPostList(
                 "post_create_form": ForumPostForm(
                     user=self.request.user, topic=self.topic
                 ),
+                "unread_posts_by_user": self.topic.get_unread_topic_posts_for_user(
+                    user=self.request.user
+                ),
             }
         )
         return context
+
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+
+        # mark topic as read by the user
+        TopicReadRecord.objects.update_or_create(
+            user=self.request.user,
+            topic=self.topic,
+        )
+
+        return response
 
 
 class ForumTopicDelete(ObjectPermissionRequiredMixin, DeleteView):

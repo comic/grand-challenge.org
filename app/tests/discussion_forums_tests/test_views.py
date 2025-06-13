@@ -4,6 +4,7 @@ from grandchallenge.discussion_forums.models import (
     ForumPost,
     ForumTopic,
     ForumTopicKindChoices,
+    TopicReadRecord,
 )
 from tests.discussion_forums_tests.factories import (
     ForumFactory,
@@ -549,3 +550,45 @@ def test_users_cannot_post_to_locked_topic(client):
         )
         assert response.status_code == 403
         assert topic.posts.count() == post_count
+
+
+@pytest.mark.django_db
+def test_topic_marked_as_read(client):
+    topic = ForumTopicFactory(post_count=3)
+    user = UserFactory()
+    topic.forum.linked_challenge.add_participant(user)
+
+    assert not TopicReadRecord.objects.filter(user=user, topic=topic).exists()
+
+    # accessing the topic detail view, will mark the topic as read by this user
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-post-list",
+        client=client,
+        user=user,
+        reverse_kwargs={
+            "slug": topic.slug,
+            "challenge_short_name": topic.forum.linked_challenge.short_name,
+        },
+    )
+    assert response.status_code == 200
+    assert TopicReadRecord.objects.filter(user=user, topic=topic).exists()
+
+    old_modified_time = TopicReadRecord.objects.get(
+        user=user, topic=topic
+    ).modified
+
+    # accessing the topic detail view again, will update the modified time
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-post-list",
+        client=client,
+        user=user,
+        reverse_kwargs={
+            "slug": topic.slug,
+            "challenge_short_name": topic.forum.linked_challenge.short_name,
+        },
+    )
+    assert response.status_code == 200
+    assert (
+        TopicReadRecord.objects.get(user=user, topic=topic).modified
+        > old_modified_time
+    )
