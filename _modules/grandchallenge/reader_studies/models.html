@@ -1020,7 +1020,11 @@
                 <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;reader_study&quot;</span><span class="p">],</span>
                 <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unique_display_set_title&quot;</span><span class="p">,</span>
                 <span class="n">condition</span><span class="o">=~</span><span class="n">Q</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">),</span>
-            <span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">,</span> <span class="s2">&quot;reader_study&quot;</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unique_display_set_order&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
         <span class="p">]</span>
 
     <span class="nd">@cached_property</span>
