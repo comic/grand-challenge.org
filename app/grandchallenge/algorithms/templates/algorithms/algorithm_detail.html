@@ -114,7 +114,7 @@
     {% if 'change_algorithm' in algorithm_perms %}
         {% if object.job_requires_gpu_type == gpu_type_choices.A10G and object.job_requires_memory_gb > 16 %}
             <div class="alert alert-danger" role="alert">
-                <p><i class="fas fa-exclamation-triangle mr-1"></i><u>A10G GPU Availability Issue</u></p>
+                <p><i class="fas fa-exclamation-triangle mr-1"></i><u>Instance Availability Issue</u></p>
                 <p>
                     You have configured jobs for this algorithm to run on an A10G GPU with 32 GB memory.
                     Unfortunately, these instances currently have lower availability on AWS. This can result in delays
