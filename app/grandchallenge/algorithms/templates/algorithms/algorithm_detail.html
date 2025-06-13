@@ -112,7 +112,7 @@
 
 {% block content %}
     {% if 'change_algorithm' in algorithm_perms %}
-        {% if object.job_requires_gpu_type == gpu_type_choices.A10G and object.job_requires_memory_gb > 16 %}
+        {% if object.job_requires_gpu_type == object.GPUTypeChoices.A10G and object.job_requires_memory_gb > 16 %}
             <div class="alert alert-danger" role="alert">
                 <p><i class="fas fa-exclamation-triangle mr-1"></i><u>Instance Availability Issue</u></p>
                 <p>
