@@ -160,6 +160,8 @@ def get_existing_interface_for_inputs_and_outputs(
 
 
 class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
+    GPUTypeChoices = GPUTypeChoices
+
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.PROTECT,
