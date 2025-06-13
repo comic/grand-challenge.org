@@ -71,12 +71,7 @@ class ComponentInterfaceValueAdmin(admin.ModelAdmin):
     list_display = ("pk", "interface", "value", "file", "image")
     readonly_fields = ("interface", "value", "file", "image")
     list_filter = ("interface",)
-    search_fields = (
-        "pk",
-        "file",
-        "value",
-        "image__name",
-    )
+    search_fields = ("pk",)
 
 
 @admin.action(
