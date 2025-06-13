@@ -83,6 +83,7 @@ from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
 from grandchallenge.components.models import ImportStatusChoices
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -267,6 +268,7 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
                 "pending_permission_requests": pending_permission_requests,
                 "algorithm_perms": get_perms(self.request.user, self.object),
                 "best_evaluation_per_phase": self.best_evaluation_per_phase,
+                "gpu_type_choices": GPUTypeChoices,
             }
         )
 
