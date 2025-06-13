@@ -1,6 +1,7 @@
 import math
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
@@ -194,13 +195,10 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
         return math.ceil(post_count / posts_per_page)
 
     def get_unread_topic_posts_for_user(self, *, user):
-        if TopicReadRecord.objects.filter(user=user, topic=self).exists():
-            return self.posts.exclude(
-                created__lt=TopicReadRecord.objects.get(
-                    user=user, topic=self
-                ).modified
-            )
-        else:
+        try:
+            read_record = TopicReadRecord.objects.get(user=user, topic=self)
+            return self.posts.exclude(created__lt=read_record.modified)
+        except ObjectDoesNotExist:
             return self.posts
 
 
