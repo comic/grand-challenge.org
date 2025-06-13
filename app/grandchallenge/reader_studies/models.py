@@ -935,7 +935,11 @@ class DisplaySet(
                 fields=["title", "reader_study"],
                 name="unique_display_set_title",
                 condition=~Q(title=""),
-            )
+            ),
+            models.UniqueConstraint(
+                fields=("order", "reader_study"),
+                name="unique_display_set_order",
+            ),
         ]
 
     @cached_property

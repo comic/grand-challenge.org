@@ -1248,6 +1248,72 @@ def test_display_set_form_unique_title(form_class):
     assert form.is_valid()
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "form_class",
+    (DisplaySetCreateForm, DisplaySetUpdateForm),
+)
+def test_display_set_form_unique_order(form_class):
+    rs1 = ReaderStudyFactory()
+
+    user = UserFactory()
+    rs1.add_editor(user)
+
+    ds1 = DisplaySetFactory(reader_study=rs1)
+    ds1.order = 1337
+    ds1.save()
+
+    instance1 = None
+    if form_class == DisplaySetUpdateForm:
+        instance1 = DisplaySetFactory(reader_study=rs1)
+
+    # Adding a unique order in reader study 1 is allowed
+    form = form_class(
+        user=user,
+        instance=instance1,
+        base_obj=rs1,
+        data={
+            "title": "",
+            "order": 42,
+        },
+    )
+    assert form.is_valid()
+
+    # Adding an existing order in reader study 1 is not allowed
+    form = form_class(
+        user=user,
+        instance=instance1,
+        base_obj=rs1,
+        data={
+            "title": "",
+            "order": 1337,
+        },
+    )
+    assert not form.is_valid()
+    assert form.errors["order"] == [
+        "A display set with this order exists for this reader study"
+    ]
+
+    # However, it is allowed if it's in another archive all together
+    rs2 = ReaderStudyFactory()
+    rs2.add_editor(user)
+
+    instance2 = None
+    if form_class == DisplaySetUpdateForm:
+        instance2 = DisplaySetFactory(reader_study=rs2)
+
+    form = form_class(
+        user=user,
+        instance=instance2,
+        base_obj=rs2,
+        data={
+            "title": "",
+            "order": 1337,
+        },
+    )
+    assert form.is_valid()
+
+
 @pytest.mark.parametrize(
     "form_class",
     (
