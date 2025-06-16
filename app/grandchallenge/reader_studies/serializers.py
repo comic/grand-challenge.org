@@ -122,15 +122,19 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
                 return None
         else:
             try:
-                return obj.standard_index - 1
+                standard_index = obj.standard_index
             except AttributeError:
                 # The annotation wasn't made when getting this object
-                return (
+                standard_index = (
                     DisplaySet.objects.with_standard_index()
                     .get(pk=obj.pk)
                     .standard_index
                     - 1
                 )
+
+            # standard_index is 1 based indexed as this comes from RowNumber
+            # index is 0 based indexed
+            return standard_index - 1
 
     class Meta:
         model = DisplaySet
