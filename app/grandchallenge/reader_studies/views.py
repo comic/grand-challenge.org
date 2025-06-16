@@ -1020,11 +1020,11 @@ class DisplaySetViewSet(
     serializer_class = DisplaySetSerializer
     queryset = (
         DisplaySet.objects.all()
+        .with_standard_index()
         .select_related("reader_study__hanging_protocol")
         .prefetch_related(
             "values__image",
             "values__interface",
-            "reader_study__display_sets",
             "reader_study__optional_hanging_protocols",
         )
     )
@@ -1046,7 +1046,8 @@ class DisplaySetViewSet(
     def get_serializer_class(self):
         if self.action in ["partial_update", "update", "create"]:
             return DisplaySetPostSerializer
-        return DisplaySetSerializer
+        else:
+            return DisplaySetSerializer
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

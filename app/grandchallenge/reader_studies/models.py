@@ -15,6 +15,7 @@ from django.core.validators import (
 )
 from django.db import models
 from django.db.models import Avg, Count, Q, Sum
+from django.db.models.functions.window import RowNumber
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
@@ -891,6 +892,17 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
         pass
 
 
+class DisplaySetQuerySet(models.QuerySet):
+    def with_standard_index(self):
+        return self.annotate(
+            standard_index=models.Window(
+                expression=RowNumber(),
+                partition_by=models.F("reader_study"),
+                order_by=("order", "created"),
+            )
+        )
+
+
 class DisplaySet(
     CIVSetStringRepresentationMixin,
     CIVSetObjectPermissionsMixin,
@@ -905,6 +917,18 @@ class DisplaySet(
     )
     order = models.PositiveIntegerField(default=0)
     title = models.CharField(max_length=255, default="", blank=True)
+
+    objects = DisplaySetQuerySet.as_manager()
+
+    class Meta:
+        ordering = ("order", "created")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["title", "reader_study"],
+                name="unique_display_set_title",
+                condition=~Q(title=""),
+            )
+        ]
 
     def assign_permissions(self):
         assign_perm(
@@ -927,16 +951,6 @@ class DisplaySet(
             self.reader_study.readers_group,
             self,
         )
-
-    class Meta:
-        ordering = ("order", "created")
-        constraints = [
-            models.UniqueConstraint(
-                fields=["title", "reader_study"],
-                name="unique_display_set_title",
-                condition=~Q(title=""),
-            )
-        ]
 
     @cached_property
     def is_editable(self):
@@ -984,10 +998,6 @@ class DisplaySet(
             return output
         else:
             return ""
-
-    @property
-    def standard_index(self) -> int:
-        return [*self.reader_study.display_sets.all()].index(self)
 
     @property
     def update_url(self):

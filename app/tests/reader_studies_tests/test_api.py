@@ -2106,7 +2106,7 @@ def test_display_set_index_with_duplicate_order(
     ds2.order = ds1.order
     ds2.save()
 
-    with django_assert_num_queries(34):
+    with django_assert_num_queries(33):
         response = get_view_for_user(
             viewname="api:reader-studies-display-set-list",
             data={"reader_study": str(reader_study.pk)},

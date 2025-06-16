@@ -121,7 +121,16 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
                 # The list is empty if no reader study is specified.
                 return None
         else:
-            return obj.standard_index
+            try:
+                return obj.standard_index - 1
+            except AttributeError:
+                # The annotation wasn't made when getting this object
+                return (
+                    DisplaySet.objects.with_standard_index()
+                    .get(pk=obj.pk)
+                    .standard_index
+                    - 1
+                )
 
     class Meta:
         model = DisplaySet
