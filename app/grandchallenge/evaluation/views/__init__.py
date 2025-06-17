@@ -536,12 +536,6 @@ class EvaluationList(
             )
         )
 
-        if self.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
-            # Exclude any non Algorithm submissions
-            queryset = queryset.exclude(
-                submission__algorithm_image__isnull=True
-            )
-
         if self.request.challenge.is_admin(self.request.user):
             return queryset
         else:
