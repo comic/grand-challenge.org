@@ -983,18 +983,6 @@ wheels = [
 ]
 
 [[package]]
-name = "django-simple-history"
-version = "3.8.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6c/46/4cbf411f9a8e426ed721785beb2cfd37c47cd5462697d92ff29dc6943d38/django_simple_history-3.8.0.tar.gz", hash = "sha256:e70d70fb4cc2af60a50904f1420d5a6440d24efddceba3daeff8b02d269ebdf0", size = 233906, upload-time = "2025-01-23T20:54:49.974Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/f0/f09f87199a0b4e21a10314b02e04472a8cc601ead4990e813a0b3cc43f09/django_simple_history-3.8.0-py3-none-any.whl", hash = "sha256:7f8bbdaa5b2c4c1c9a48c89a95ff3389eda6c82cf9de9b09ae99b558205d132f", size = 142593, upload-time = "2025-01-23T20:54:15.024Z" },
-]
-
-[[package]]
 name = "django-stdimage"
 version = "6.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1246,7 +1234,6 @@ dependencies = [
     { name = "django-permissions-policy" },
     { name = "django-redis" },
     { name = "django-select2" },
-    { name = "django-simple-history" },
     { name = "django-stdimage" },
     { name = "django-storages", extra = ["s3"] },
     { name = "djangorestframework" },
@@ -1330,7 +1317,6 @@ requires-dist = [
     { name = "django-permissions-policy" },
     { name = "django-redis" },
     { name = "django-select2" },
-    { name = "django-simple-history" },
     { name = "django-stdimage" },
     { name = "django-storages", extras = ["s3"], specifier = ">=1.14.2" },
     { name = "djangorestframework" },
