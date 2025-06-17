@@ -1,7 +1,7 @@
 import json
 
 from django.contrib import admin, messages
-from django.forms import ModelForm, ValidationError
+from django.forms import ModelForm
 from django.utils.html import format_html
 
 from grandchallenge.components.admin import (
@@ -53,17 +53,6 @@ class PhaseAdminForm(ModelForm):
                 field_name
             ) in self.instance.read_only_fields_for_dependent_phases:
                 self.fields[field_name].disabled = True
-
-    def clean_submission_kind(self):
-        if self.instance.pk and self.instance.submission_set.exists():
-            if (
-                self.instance.submission_kind
-                != self.cleaned_data["submission_kind"]
-            ):
-                raise ValidationError(
-                    "Cannot change submission kind of Phase with existing submissions"
-                )
-        return self.cleaned_data["submission_kind"]
 
 
 class EvaluationSocketInline(admin.TabularInline):

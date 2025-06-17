@@ -62,37 +62,6 @@ def test_selectable_gpu_type_choices_invalid():
 
 
 @pytest.mark.django_db
-def test_changing_submission_kind_with_submissions():
-    phase = PhaseFactory(submission_kind=SubmissionKindChoices.CSV)
-    submission = SubmissionFactory(phase=phase)
-
-    form = PhaseAdmin.form(
-        instance=phase,
-        data={"submission_kind": SubmissionKindChoices.CSV},
-    )
-
-    assert "submission_kind" not in form.errors
-
-    form = PhaseAdmin.form(
-        instance=phase,
-        data={"submission_kind": SubmissionKindChoices.ALGORITHM},
-    )
-    assert (
-        "submission_kind" in form.errors
-    ), "Not allowed to change submission kind with submissions"
-
-    submission.delete()
-    form = PhaseAdmin.form(
-        instance=phase,
-        data={"submission_kind": SubmissionKindChoices.ALGORITHM},
-    )
-
-    assert (
-        "submission_kind" not in form.errors
-    ), "Without submissions we can change the kind"
-
-
-@pytest.mark.django_db
 def test_reevaluate_submission_only_for_evaluations_without_inputs(rf):
     s1, s2 = SubmissionFactory.create_batch(2)
     s1.phase.additional_evaluation_inputs.add(ComponentInterfaceFactory())
