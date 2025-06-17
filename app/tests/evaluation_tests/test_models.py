@@ -2470,3 +2470,22 @@ def test_non_evaluation_socket_slugs(slug):
         "Evaluation inputs cannot be of the following types: predictions-csv-file, predictions-json-file, predictions-zip-file, metrics-json-file, results-json-file"
         in str(e)
     )
+
+
+@pytest.mark.django_db
+def test_phase_submission_kind_change():
+    # Initial create with submission kind is OK
+    phase = PhaseFactory(submission_kind=Phase.SubmissionKindChoices.ALGORITHM)
+
+    # Can change when no submissions exist
+    phase.submission_kind = Phase.SubmissionKindChoices.CSV
+    phase.full_clean()
+
+    # Cannot change when submission exists
+    submission = SubmissionFactory(phase=phase)
+    with pytest.raises(ValidationError):
+        phase.full_clean()
+
+    # Can change again after removing submission
+    submission.delete()
+    phase.full_clean()
