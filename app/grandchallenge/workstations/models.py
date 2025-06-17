@@ -17,7 +17,6 @@ from django.utils.timezone import now
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from knox.models import AuthToken
-from simple_history.models import HistoricalRecords
 from stdimage import JPEGField
 
 from grandchallenge.components.backends.docker import Service
@@ -435,9 +434,6 @@ class Session(FieldChangeMixin, UUIDModel):
     user_finished = models.BooleanField(default=False)
     logs = models.TextField(editable=False, blank=True)
     ping_times = models.JSONField(null=True, default=None)
-    history = HistoricalRecords(
-        excluded_fields=["logs", "ping_times", "auth_token"]
-    )
     extra_env_vars = models.JSONField(
         default=list,
         blank=True,
