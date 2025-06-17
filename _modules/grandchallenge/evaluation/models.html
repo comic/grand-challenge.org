@@ -826,12 +826,20 @@
 <a class="viewcode-back" href="../../../evaluation.html#grandchallenge.evaluation.models.Phase.clean">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clean_submission_kind</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_algorithm_submission_settings</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_submission_limits</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_parent_phase</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_external_evaluation</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_clean_evaluation_requirements</span><span class="p">()</span></div>
 
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_clean_submission_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;submission_kind&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_set</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="s2">&quot;Cannot change submission kind of Phase with existing submissions&quot;</span>
+                <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_algorithm_submission_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
