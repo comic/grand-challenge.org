@@ -28,7 +28,7 @@ from grandchallenge.workstations.models import (
 
 
 @admin.register(Session)
-class SessionHistoryAdmin(admin.ModelAdmin):
+class SessionAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = [
         "pk",
