@@ -28,7 +28,7 @@ class DocPage(models.Model):
 
     content = models.TextField()
     content_plain = models.TextField(default="", editable=False)
-    search_vector = SearchVectorField(null=True)
+    search_vector = SearchVectorField(default="", editable=False)
 
     order = models.IntegerField(
         editable=False,

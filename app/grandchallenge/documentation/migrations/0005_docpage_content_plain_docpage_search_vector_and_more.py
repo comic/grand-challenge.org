@@ -20,7 +20,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="docpage",
             name="search_vector",
-            field=django.contrib.postgres.search.SearchVectorField(null=True),
+            field=django.contrib.postgres.search.SearchVectorField(
+                default="", editable=False
+            ),
         ),
         migrations.AddField(
             model_name="historicaldocpage",
