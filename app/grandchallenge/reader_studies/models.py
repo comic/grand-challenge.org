@@ -55,6 +55,7 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
+from grandchallenge.core.utils.query import set_seed
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.vendored.django.validators import StepValueValidator
 from grandchallenge.hanging_protocols.models import (
@@ -893,12 +894,51 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
 
 
 class DisplaySetQuerySet(models.QuerySet):
-    def with_standard_index(self):
+    def with_row_number(self):
         return self.annotate(
-            standard_index=models.Window(
+            row_number=models.Window(
                 expression=RowNumber(),
                 partition_by=models.F("reader_study"),
                 order_by=("order", "created"),
+            )
+        )
+
+    def with_shuffled_index(self, *, reader_study, seed):
+        """
+        Sets the shuffled index on each object
+
+        This requires fetching all pks for all of the display sets
+        in the reader study first
+        """
+        if not isinstance(seed, int) or seed < 1:
+            raise ValueError("Invalid seed")
+
+        queryset = self.filter(reader_study=reader_study)
+
+        set_seed(1 / seed)
+
+        queryset = queryset.annotate(
+            shuffled_index=models.Case(
+                *[
+                    models.When(pk=pk, then=models.Value(idx))
+                    for idx, pk in enumerate(
+                        queryset.order_by("?").values_list("pk", flat=True)
+                    )
+                ],
+                output_field=models.IntegerField(),
+            )
+        ).order_by("shuffled_index")
+
+        return queryset
+
+    def with_answer_count(self, user):
+        return self.annotate(
+            answer_count=Count(
+                "answers",
+                filter=Q(
+                    answers__is_ground_truth=False,
+                    answers__creator=user,
+                ),
             )
         )
 

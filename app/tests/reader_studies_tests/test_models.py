@@ -1280,7 +1280,7 @@ def test_reader_study_not_launchable_when_max_credits_consumed():
 
 
 @pytest.mark.django_db
-def test_with_standard_index():
+def test_with_row_number():
     rs = ReaderStudyFactory()
     ds1, ds2, ds3 = DisplaySetFactory.create_batch(3, reader_study=rs)
 
@@ -1291,9 +1291,9 @@ def test_with_standard_index():
     ds4 = DisplaySetFactory()
 
     # Test global access
-    queryset = DisplaySet.objects.with_standard_index()
+    queryset = DisplaySet.objects.with_row_number()
     assert [*queryset] == [ds1, ds2, ds4, ds3]
-    assert {ds: ds.standard_index for ds in queryset} == {
+    assert {ds: ds.row_number for ds in queryset} == {
         ds1: 1,
         ds2: 2,
         ds3: 3,
@@ -1301,8 +1301,8 @@ def test_with_standard_index():
     }
 
     # Filtering should return the same indices
-    queryset = DisplaySet.objects.with_standard_index().filter(reader_study=rs)
-    assert {ds: ds.standard_index for ds in queryset} == {
+    queryset = DisplaySet.objects.with_row_number().filter(reader_study=rs)
+    assert {ds: ds.row_number for ds in queryset} == {
         ds1: 1,
         ds2: 2,
         ds3: 3,
@@ -1310,16 +1310,16 @@ def test_with_standard_index():
 
     # Getting a particular display set should return the correct order
     last_display_set = (
-        DisplaySet.objects.with_standard_index().filter(reader_study=rs).last()
+        DisplaySet.objects.with_row_number().filter(reader_study=rs).last()
     )
-    assert last_display_set.standard_index == 3
+    assert last_display_set.row_number == 3
 
     # Changing the order of the queryset should not change the index
-    queryset = DisplaySet.objects.with_standard_index().order_by(
+    queryset = DisplaySet.objects.with_row_number().order_by(
         "-order", "-created"
     )
     assert [*queryset] == [ds3, ds4, ds2, ds1]
-    assert {ds: ds.standard_index for ds in queryset} == {
+    assert {ds: ds.row_number for ds in queryset} == {
         ds1: 1,
         ds2: 2,
         ds3: 3,
