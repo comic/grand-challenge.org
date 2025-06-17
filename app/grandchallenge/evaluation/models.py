@@ -781,11 +781,19 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     def clean(self):
         super().clean()
+        self._clean_submission_kind()
         self._clean_algorithm_submission_settings()
         self._clean_submission_limits()
         self._clean_parent_phase()
         self._clean_external_evaluation()
         self._clean_evaluation_requirements()
+
+    def _clean_submission_kind(self):
+        if self.has_changed("submission_kind"):
+            if self.submission_set.exists():
+                raise ValidationError(
+                    "Cannot change submission kind of Phase with existing submissions"
+                )
 
     def _clean_algorithm_submission_settings(self):
         if self.submission_kind == SubmissionKindChoices.ALGORITHM:
