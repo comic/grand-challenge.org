@@ -4,7 +4,6 @@ from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.template.defaultfilters import linebreaksbr
 from django.utils.html import format_html
-from simple_history.admin import SimpleHistoryAdmin
 
 from grandchallenge.components.admin import ComponentImageAdmin
 from grandchallenge.core.admin import (
@@ -29,7 +28,7 @@ from grandchallenge.workstations.models import (
 
 
 @admin.register(Session)
-class SessionHistoryAdmin(SimpleHistoryAdmin):
+class SessionHistoryAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = [
         "pk",
