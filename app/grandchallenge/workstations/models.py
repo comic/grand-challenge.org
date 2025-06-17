@@ -364,8 +364,6 @@ class Session(FieldChangeMixin, UUIDModel):
         The maximum time that the service can be active before it is terminated
     user_finished
         Indicates if the user has chosen to end the session early
-    history
-        The history of this Session
     """
 
     QUEUED = 0

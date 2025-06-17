@@ -1864,10 +1864,6 @@ class Answer(UUIDModel):
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}
         )
 
-    @cached_property
-    def history_values(self):
-        return self.history.values_list("answer", "history_date")
-
     # TODO this should be a model clean method
     @staticmethod
     def validate(  # noqa: C901
