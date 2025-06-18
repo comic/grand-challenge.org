@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!startText) return;
 
-    const elements = content.querySelectorAll("p, h3, h4, h5");
+    const elements = content.querySelectorAll("p, h3, h4, h5, pre, td");
 
     let startNode = null;
     let capturing = false;
