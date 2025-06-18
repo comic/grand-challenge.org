@@ -3,38 +3,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const highlightText = params.get("highlight");
 
     if (highlightText) {
-        const content = document.getElementById("pageContainer");
-        const regex = new RegExp(highlightText, "i");
-
-        const walker = document.createTreeWalker(
-            content,
-            NodeFilter.SHOW_TEXT,
-            {
-                acceptNode: node =>
-                    regex.test(node.textContent)
-                        ? NodeFilter.FILTER_ACCEPT
-                        : NodeFilter.FILTER_SKIP,
-            },
+        const paragraphs = document.querySelectorAll(
+            "#pageContainer p, #pageContainer h3, #pageContainer h4, #pageContainer h5",
         );
+        const cleanText = highlightText.toLowerCase().replace(/[^\w\s]/g, "");
 
-        const node = walker.nextNode();
-        if (node) {
-            const span = document.createElement("span");
-            span.textContent = node.textContent;
-            span.innerHTML = node.textContent.replace(
-                regex,
-                match => `<mark>${match}</mark>`,
-            );
-            const tempDiv = document.createElement("div");
-            tempDiv.innerHTML = span.innerHTML;
+        let bestMatch = null;
+        let maxMatchScore = 0;
 
-            node.parentNode.replaceChild(tempDiv.firstChild, node);
+        for (const el of paragraphs) {
+            const content = el.textContent.toLowerCase();
+            const score = content
+                .split(" ")
+                .filter(word => cleanText.includes(word)).length;
 
-            // Scroll to the match
-            tempDiv.firstChild.scrollIntoView({
-                behavior: "smooth",
-                block: "center",
-            });
+            if (score > maxMatchScore) {
+                maxMatchScore = score;
+                bestMatch = el;
+            }
+        }
+
+        if (bestMatch) {
+            bestMatch.classList.add("highlight");
+            bestMatch.scrollIntoView({ behavior: "smooth", block: "center" });
         }
     }
 });
