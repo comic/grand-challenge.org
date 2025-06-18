@@ -1,7 +1,9 @@
 import math
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
@@ -197,11 +199,12 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
         )
 
     def mark_as_read(self, *, user):
-        if user != get_anonymous_user():
-            TopicReadRecord.objects.update_or_create(
-                user=user,
-                topic=self,
-            )
+        if user == get_anonymous_user() or isinstance(user, AnonymousUser):
+            return
+        TopicReadRecord.objects.update_or_create(
+            user=user,
+            topic=self,
+        )
 
     @property
     def is_announcement(self):
@@ -290,6 +293,7 @@ class ForumPost(UUIDModel):
                 .order_by("created")
                 .last()
             )
+            topic.last_post = new_last_post
             topic.last_post_on = new_last_post.created
             topic.save()
 
@@ -400,3 +404,12 @@ class TopicReadRecord(UUIDModel):
             "user",
             "topic",
         ]
+
+    def save(self, *args, **kwargs):
+        if self.user.username == settings.ANONYMOUS_USER_NAME or isinstance(
+            self.user, AnonymousUser
+        ):
+            raise ValidationError(
+                "Anonymous users cannot be assigned to TopicReadRecord."
+            )
+        super().save(*args, **kwargs)

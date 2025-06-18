@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import migrations
 
@@ -78,6 +79,9 @@ def migrate_topic_tracks(apps, schema_editor):
     num_tracks_to_create = TopicReadTrack.objects.count()
 
     for track in TopicReadTrack.objects.iterator(chunk_size=1000):
+        if track.user.username == settings.ANONYMOUS_USER_NAME:
+            continue
+
         try:
             new_topic = get_matching_topic(
                 old_topic_id=track.topic.pk,
@@ -87,6 +91,7 @@ def migrate_topic_tracks(apps, schema_editor):
             )
         except ObjectDoesNotExist:
             continue
+
         batch.append(
             TopicReadRecord(
                 topic=new_topic,
