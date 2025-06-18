@@ -1,7 +1,10 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import migrations
 
-from grandchallenge.discussion_forums.models import ForumTopicKindChoices
+from grandchallenge.discussion_forums.models import (
+    ForumTopicKindChoices,
+    get_matching_topic,
+)
 
 
 def migrate_challenge_forums(apps, schema_editor):
@@ -58,25 +61,37 @@ def migrate_topic_tracks(apps, schema_editor):
         "discussion_forums", "ForumTopic"
     )
 
-    def get_matching_forum(*, old_forum_id):
-        old_forum = MachinaForum.objects.get(pk=old_forum_id)
-        return old_forum.challenge.discussion_forum
-
-    def get_matching_topic(*, old_topic_id):
-        old_topic = MachinaTopic.objects.get(pk=old_topic_id)
-        new_forum = get_matching_forum(old_forum_id=old_topic.forum.pk)
-        return ForumTopic.objects.get(
-            forum=new_forum,
-            creator=old_topic.poster,
-            subject=old_topic.subject,
-        )
+    batch_size = 1000
+    batch = []
+    total_created = 0
+    num_tracks_to_create = TopicReadTrack.objects.count()
 
     for track in TopicReadTrack.objects.iterator(chunk_size=1000):
         try:
-            new_topic = get_matching_topic(old_topic_id=track.topic.pk)
+            new_topic = get_matching_topic(
+                old_topic_id=track.topic.pk,
+                old_topic_model=MachinaTopic,
+                new_topic_model=ForumTopic,
+                old_forum_model=MachinaForum,
+            )
         except ObjectDoesNotExist:
             continue
-        TopicReadRecord.objects.create(topic=new_topic, user=track.user)
+        batch.append(TopicReadRecord(topic=new_topic, user=track.user))
+
+        if len(batch) >= batch_size:
+            TopicReadRecord.objects.bulk_create(batch)
+            total_created += len(batch)
+            print(
+                f"Created {total_created} new records out of {num_tracks_to_create}"
+            )
+            batch = []
+
+    if batch:
+        TopicReadRecord.objects.bulk_create(batch)
+        total_created += len(batch)
+        print(
+            f"Finished creating TopicReadRecords. Created a total of {total_created} new records."
+        )
 
 
 class Migration(migrations.Migration):

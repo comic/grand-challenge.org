@@ -14,6 +14,25 @@ from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.subdomains.utils import reverse
 
 
+def get_matching_forum(*, old_forum_id, old_forum_model):
+    old_forum = old_forum_model.objects.get(pk=old_forum_id)
+    return old_forum.challenge.discussion_forum
+
+
+def get_matching_topic(
+    *, old_topic_id, old_topic_model, new_topic_model, old_forum_model
+):
+    old_topic = old_topic_model.objects.get(pk=old_topic_id)
+    new_forum = get_matching_forum(
+        old_forum_id=old_topic.forum.pk, old_forum_model=old_forum_model
+    )
+    return new_topic_model.objects.get(
+        forum=new_forum,
+        creator=old_topic.poster,
+        subject=old_topic.subject,
+    )
+
+
 class ForumTopicKindChoices(models.TextChoices):
     DEFAULT = "DEFAULT", "Default topic"
     STICKY = "STICKY", "Sticky topic"
