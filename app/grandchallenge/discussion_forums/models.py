@@ -225,7 +225,7 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
 
     def get_unread_topic_posts_for_user(self, *, user):
         try:
-            read_record = TopicReadRecord.objects.get(user=user, topic=self)
+            read_record = self.read_by.get(user=user)
             return self.posts.exclude(created__lt=read_record.modified)
         except ObjectDoesNotExist:
             return self.posts
