@@ -36,9 +36,6 @@ class NotificationsConfig(AppConfig):
         from actstream import registry
 
         registry.register(apps.get_model("auth.User"))
-        registry.register(apps.get_model("forum.Forum"))
-        registry.register(apps.get_model("forum_conversation.Topic"))
-        registry.register(apps.get_model("forum_conversation.Post"))
         registry.register(apps.get_model("algorithms.Algorithm"))
         registry.register(
             apps.get_model("algorithms.AlgorithmPermissionRequest")
