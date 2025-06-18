@@ -5,6 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
+from guardian.utils import get_anonymous_user
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
@@ -189,6 +190,13 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
             },
         )
 
+    def mark_as_read(self, *, user):
+        if user != get_anonymous_user():
+            TopicReadRecord.objects.update_or_create(
+                user=user,
+                topic=self,
+            )
+
     @property
     def is_announcement(self):
         return self.kind == ForumTopicKindChoices.ANNOUNCE
@@ -257,11 +265,7 @@ class ForumPost(UUIDModel):
 
         if adding:
             self.assign_permissions()
-            # mark topic (and hence this post) as read by the user
-            TopicReadRecord.objects.update_or_create(
-                user=self.creator,
-                topic=self.topic,
-            )
+            self.topic.mark_as_read(user=self.creator)
 
         self.topic.last_post_on = self.created
         self.topic.save()
