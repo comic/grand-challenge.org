@@ -96,6 +96,12 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
         default=False,
         help_text="Lock a topic to close it and prevent posts from being added to it.",
     )
+    last_post = models.ForeignKey(
+        "discussion_forums.ForumPost",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
     last_post_on = models.DateTimeField(
         blank=True,
         null=True,
@@ -206,10 +212,6 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
         return self.kind == ForumTopicKindChoices.STICKY
 
     @property
-    def last_post(self):
-        return self.posts.last()
-
-    @property
     def num_replies(self):
         return self.posts.count() - 1
 
@@ -267,6 +269,7 @@ class ForumPost(UUIDModel):
             self.assign_permissions()
             self.topic.mark_as_read(user=self.creator)
 
+        self.topic.last_post = self
         self.topic.last_post_on = self.created
         self.topic.save()
 

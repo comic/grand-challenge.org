@@ -1,3 +1,4 @@
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
@@ -28,7 +29,7 @@ class ForumTopicListView(
     raise_exception = True
     queryset = ForumTopic.objects.exclude(
         kind=ForumTopicKindChoices.ANNOUNCE
-    ).select_related("forum")
+    ).select_related("forum", "last_post")
     paginate_by = 15
 
     @cached_property
@@ -50,7 +51,7 @@ class ForumTopicListView(
         announcements = filter_by_permission(
             queryset=ForumTopic.objects.filter(
                 kind=ForumTopicKindChoices.ANNOUNCE, forum=self.forum
-            ),
+            ).select_related("forum", "last_post"),
             user=self.request.user,
             codename="view_forumtopic",
         )
@@ -108,6 +109,12 @@ class ForumTopicPostList(
             slug=self.kwargs["slug"],
         )
 
+    @cached_property
+    def unread_posts_by_user(self):
+        return self.topic.get_unread_topic_posts_for_user(
+            user=self.request.user
+        )
+
     def get_permission_object(self):
         return self.topic
 
@@ -124,15 +131,18 @@ class ForumTopicPostList(
                 "post_create_form": ForumPostForm(
                     user=self.request.user, topic=self.topic
                 ),
-                "unread_posts_by_user": self.topic.get_unread_topic_posts_for_user(
-                    user=self.request.user
-                ),
+                "unread_posts_by_user": self.unread_posts_by_user,
             }
         )
         return context
 
     def get(self, request, *args, **kwargs):
-        response = super().get(request, *args, **kwargs)
+        if self.unread_posts_by_user.exists():
+            response = HttpResponseRedirect(
+                self.unread_posts_by_user.first().get_absolute_url()
+            )
+        else:
+            response = super().get(request, *args, **kwargs)
         self.topic.mark_as_read(user=self.request.user)
         return response
 

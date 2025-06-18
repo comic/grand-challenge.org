@@ -25,7 +25,7 @@
                 <div class="p-0 card-body">
                     <ul class="list-group">
                         {% for topic in topics %}
-                            {% get_first_unread_topic_post_for_user topic=topic user=request.user as first_unread_post_for_user %}
+                            {% check_unread_topic_posts_for_user topic=topic user=request.user as user_has_unread_posts %}
                             <li class="list-group-item">
                                 <div class="row">
                                     <div class="col-2 col-md-1 text-center align-content-center pr-0 p-md-0">
@@ -33,16 +33,11 @@
                                         fas
                                         {% if topic.is_sticky %}fa-lightbulb{% elif topic.is_announcement %}fa-info{% else %}fa-dot-circle{% endif %}
                                          fa-2x
-                                        {% if first_unread_post_for_user %} text-danger{% else %} text-info{% endif %}
+                                        {% if user_has_unread_posts %} text-danger{% else %} text-info{% endif %}
                                         "></i>
                                     </div>
                                     <div class="col-10 col-md-7">
-                                        <a href="
-                                            {% if first_unread_post_for_user %}
-                                                {{ first_unread_post_for_user.get_absolute_url }}
-                                            {% else %}
-                                                {% url 'discussion-forums:topic-post-list' slug=topic.slug %}
-                                            {% endif %}"
+                                        <a href="{% url 'discussion-forums:topic-post-list' slug=topic.slug %}"
                                         >{{ topic.subject }}</a>
                                         {% if topic.locked %}
                                             <i class="fas fa-lock text-info ml-1" title="This topic is locked"></i>

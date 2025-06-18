@@ -115,6 +115,15 @@ class Migration(migrations.Migration):
                         help_text="Lock a topic to close it and prevent posts from being added to it.",
                     ),
                 ),
+                (
+                    "last_post",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="discussion_forums.forumpost",
+                    ),
+                ),
                 ("last_post_on", models.DateTimeField(blank=True, null=True)),
                 (
                     "creator",

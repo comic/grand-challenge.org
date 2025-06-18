@@ -306,6 +306,7 @@ def test_post_deletion(client):
     post1, post2 = topic.posts.all()
 
     assert topic.posts.count() == 2
+    assert topic.last_post == post2
     assert topic.last_post_on == post2.created
 
     response = get_view_for_user(
@@ -324,6 +325,7 @@ def test_post_deletion(client):
     topic.refresh_from_db()
     assert topic.posts.count() == 1
     assert list(topic.posts.all()) == [post1]
+    assert topic.last_post == post1
     assert topic.last_post_on == post1.created
 
     response = get_view_for_user(

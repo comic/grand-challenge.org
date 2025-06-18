@@ -42,14 +42,21 @@ def migrate_challenge_forums(apps, schema_editor):
                 is_locked=topic_lock_matching_dict[topic.status],
             )
 
+            latest_new_post = None
             for post in topic.posts.all():
-                ForumPost.objects.create(
+                # posts are ordered by creation time, so the last post we create here
+                # will correspond to the latest post and can be saved as that on the
+                # topic
+                latest_new_post = ForumPost.objects.create(
                     topic=new_topic,
                     created=post.created,
                     modified=post.updated,
                     creator=post.poster,
                     content=post.content,
                 )
+
+            new_topic.last_post = latest_new_post
+            new_topic.save()
 
 
 def migrate_topic_tracks(apps, schema_editor):

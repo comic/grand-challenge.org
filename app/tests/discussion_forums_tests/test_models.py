@@ -36,9 +36,11 @@ def test_adding_post_updates_last_post_on_topic():
     topic = ForumTopicFactory(post_count=1)
     assert topic.posts.count() == 1
     post = topic.posts.first()
+    assert post.last_post == post
     assert topic.last_post_on == post.created
 
     post2 = ForumPostFactory(topic=topic)
+    assert topic.last_post == post2
     assert topic.last_post_on == post2.created
 
 
