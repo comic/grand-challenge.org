@@ -1,31 +1,38 @@
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     const highlightText = params.get("highlight");
+    if (!highlightText) return;
 
-    if (highlightText) {
-        const paragraphs = document.querySelectorAll(
-            "#pageContainer p, #pageContainer h3, #pageContainer h4, #pageContainer h5",
-        );
-        const cleanText = highlightText.toLowerCase().replace(/[^\w\s]/g, "");
+    const content = document.getElementById("pageContainer");
+    if (!content) return;
 
-        let bestMatch = null;
-        let maxMatchScore = 0;
+    const [startText, endText] = highlightText.split(":::");
 
-        for (const el of paragraphs) {
-            const content = el.textContent.toLowerCase();
-            const score = content
-                .split(" ")
-                .filter(word => cleanText.includes(word)).length;
+    if (!startText) return;
 
-            if (score > maxMatchScore) {
-                maxMatchScore = score;
-                bestMatch = el;
-            }
+    const elements = content.querySelectorAll("p, h3, h4, h5");
+
+    let startNode = null;
+    let capturing = false;
+
+    for (const el of elements) {
+        const text = el.textContent.replace(/\s+/g, " ");
+
+        if (!startNode && text.includes(startText)) {
+            startNode = el;
+            capturing = true;
         }
 
-        if (bestMatch) {
-            bestMatch.classList.add("highlight");
-            bestMatch.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (capturing) {
+            el.classList.add("highlight");
         }
+
+        if (!endText && startNode) break;
+
+        if (endText && capturing && text.includes(endText)) break;
+    }
+
+    if (startNode) {
+        startNode.scrollIntoView({ behavior: "smooth", block: "center" });
     }
 });
