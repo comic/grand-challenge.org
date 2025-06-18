@@ -406,10 +406,15 @@ class TopicReadRecord(UUIDModel):
         ]
 
     def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+
         if self.user.username == settings.ANONYMOUS_USER_NAME or isinstance(
             self.user, AnonymousUser
         ):
             raise ValidationError(
                 "Anonymous users cannot be assigned to TopicReadRecord."
             )
-        super().save(*args, **kwargs)
