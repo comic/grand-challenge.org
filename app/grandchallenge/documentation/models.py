@@ -3,7 +3,7 @@ from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Max, Value
+from django.db.models import Max
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_extensions.db.fields import AutoSlugField
@@ -85,13 +85,11 @@ class DocPage(models.Model):
 
         self.update_content_plain()
 
-        # Using Value to get the current values of the field.
-        # Otherwise, the search vector is updated with the old values.
-        self.search_vector = SearchVector(
-            Value(self.title), Value(self.content_plain)
-        )
-
         super().save(*args, **kwargs)
+
+        DocPage.objects.filter(pk=self.pk).update(
+            search_vector=SearchVector("title", "content_plain")
+        )
 
     def update_content_plain(self):
         self.content_plain = BeautifulSoup(
