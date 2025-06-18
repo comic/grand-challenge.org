@@ -15,9 +15,12 @@ document.addEventListener("DOMContentLoaded", () => {
     let startNode = null;
     let capturing = false;
     let num_highlighted_elements = 0;
+    let last_two_words = "";
 
     for (const el of elements) {
-        const text = el.textContent.replace(/\s+/g, " ").replace(/¶/g, "");
+        const text = last_two_words
+            .concat(" ", el.textContent.replace(/\s+/g, " ").replace(/¶/g, ""))
+            .trim();
 
         if (!startNode && text.includes(startText)) {
             startNode = el;
@@ -34,6 +37,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!endText && startNode) break;
 
         if (endText && capturing && text.includes(endText)) break;
+
+        last_two_words = text.split(" ").slice(-2).join(" ");
     }
 
     if (startNode) {
