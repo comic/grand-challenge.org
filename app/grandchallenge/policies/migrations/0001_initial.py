@@ -2,6 +2,7 @@
 
 import django.db.models.deletion
 import django_extensions.db.fields
+import simple_history.models
 from django.conf import settings
 from django.db import migrations, models
 
@@ -115,6 +116,6 @@ class Migration(migrations.Migration):
                 "ordering": ("-history_date", "-history_id"),
                 "get_latest_by": "history_date",
             },
-            bases=(models.Model,),
+            bases=(simple_history.models.HistoricalChanges, models.Model),
         ),
     ]
