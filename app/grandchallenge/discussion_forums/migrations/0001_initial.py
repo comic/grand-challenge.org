@@ -55,8 +55,8 @@ class Migration(migrations.Migration):
                         serialize=False,
                     ),
                 ),
-                ("created", models.DateTimeField(auto_now_add=True)),
-                ("modified", models.DateTimeField(auto_now=True)),
+                ("created", models.DateTimeField()),
+                ("modified", models.DateTimeField()),
                 ("content", models.TextField()),
                 (
                     "creator",
@@ -84,8 +84,8 @@ class Migration(migrations.Migration):
                         serialize=False,
                     ),
                 ),
-                ("created", models.DateTimeField(auto_now_add=True)),
-                ("modified", models.DateTimeField(auto_now=True)),
+                ("created", models.DateTimeField()),
+                ("modified", models.DateTimeField()),
                 ("subject", models.CharField(max_length=255)),
                 (
                     "slug",
@@ -460,8 +460,8 @@ class Migration(migrations.Migration):
                         serialize=False,
                     ),
                 ),
-                ("created", models.DateTimeField(auto_now_add=True)),
-                ("modified", models.DateTimeField(auto_now=True)),
+                ("created", models.DateTimeField()),
+                ("modified", models.DateTimeField()),
                 (
                     "topic",
                     models.ForeignKey(

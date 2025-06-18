@@ -24,7 +24,9 @@ def migrate_challenge_forums(apps, schema_editor):
     topic_lock_matching_dict = {0: False, 1: True}
 
     for challenge in Challenge.objects.all():
-        new_forum = Forum.objects.create()
+        new_forum = Forum.objects.create(
+            created=challenge.forum.created, modified=challenge.forum.updated
+        )
         challenge.discussion_forum = new_forum
         challenge.save()
 
@@ -36,6 +38,7 @@ def migrate_challenge_forums(apps, schema_editor):
                 kind=topic_type_matching_dict[topic.type],
                 last_post_on=topic.last_post_on,
                 created=topic.created,
+                modified=topic.updated,
                 is_locked=topic_lock_matching_dict[topic.status],
             )
 
@@ -43,6 +46,7 @@ def migrate_challenge_forums(apps, schema_editor):
                 ForumPost.objects.create(
                     topic=new_topic,
                     created=post.created,
+                    modified=post.updated,
                     creator=post.poster,
                     content=post.content,
                 )
@@ -76,7 +80,14 @@ def migrate_topic_tracks(apps, schema_editor):
             )
         except ObjectDoesNotExist:
             continue
-        batch.append(TopicReadRecord(topic=new_topic, user=track.user))
+        batch.append(
+            TopicReadRecord(
+                topic=new_topic,
+                user=track.user,
+                created=track.mark_time,  # the original model does not have a creation time stamp
+                modified=track.mark_time,
+            )
+        )
 
         if len(batch) >= batch_size:
             TopicReadRecord.objects.bulk_create(batch)
