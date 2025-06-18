@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let num_highlighted_elements = 0;
 
     for (const el of elements) {
-        const text = el.textContent.replace(/\s+/g, " ");
+        const text = el.textContent.replace(/\s+/g, " ").replace(/¶/g, "");
 
         if (!startNode && text.includes(startText)) {
             startNode = el;
