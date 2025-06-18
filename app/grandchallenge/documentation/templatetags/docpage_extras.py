@@ -50,7 +50,7 @@ def startend_text(text):
     # Split around center word and extract fixed-length windows
     words = text.split()
     n_words = min(3, len(words) // 2)
-    start = " ".join(words[:n_words])
+    start = " ".join(words[:n_words]).rstrip(":")
     end = " ".join(words[-n_words:])
 
     return f"{quote(start)}:::{quote(end)}"
