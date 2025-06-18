@@ -85,7 +85,7 @@ wheels = [
 
 [[package]]
 name = "amass"
-version = "0.3.3"
+version = "0.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -94,9 +94,9 @@ dependencies = [
     { name = "packaging" },
     { name = "tomlkit" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c2/c8/5b0887c9ba6323d79995dcc85992591a9f0d7af711f0abf0a1e4de6441f9/amass-0.3.3.tar.gz", hash = "sha256:28026dae1b04dc18fbb6642b51beeb2d51ac4de635c3f1803f2ffc17768c3d17", size = 9409, upload-time = "2023-06-16T12:04:27.982Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/50/e8/69f5f038dd74d5d9e875be27246cf80613d2899014d72fb9c045b34b9bde/amass-0.4.1.tar.gz", hash = "sha256:ccd81403fa074ccd95c914ce471a98dfe0e8212b0d2c5f8c02ea6a52bbb821c1", size = 12188, upload-time = "2025-06-18T14:10:04.454Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1e/d1/f776eb9febe0a7d8e08cbf707e21c4e7b9b016beb43730691d3166b946f1/amass-0.3.3-py3-none-any.whl", hash = "sha256:4e02d903f8df72827ba3c61a48ca27468b57f19e6535c04e64607554a84dd570", size = 10092, upload-time = "2023-06-16T12:04:26.632Z" },
+    { url = "https://files.pythonhosted.org/packages/ea/50/e8bd871343c6a33e2bf1852109c991d341bd8e77412b82b40707c43bbd2b/amass-0.4.1-py3-none-any.whl", hash = "sha256:9ab551628274c5f51854c53f83314e0b3220b7a82dd2d3cf6578fe09539be654", size = 10309, upload-time = "2025-06-18T14:10:03.615Z" },
 ]
 
 [[package]]
