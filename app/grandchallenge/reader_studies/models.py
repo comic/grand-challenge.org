@@ -22,7 +22,6 @@ from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from referencing.exceptions import Unresolvable
-from simple_history.models import HistoricalRecords
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
@@ -1899,18 +1898,6 @@ class Answer(UUIDModel):
     last_edit_duration = models.DurationField(null=True)
     total_edit_duration = models.DurationField(null=True)
 
-    history = HistoricalRecords(
-        excluded_fields=[
-            "created",
-            "modified",
-            "creator",
-            "question",
-            "images",
-            "is_ground_truth",
-            "score",
-        ]
-    )
-
     class Meta:
         ordering = ("created",)
         unique_together = (
@@ -1926,10 +1913,6 @@ class Answer(UUIDModel):
         return reverse(
             "api:reader-studies-answer-detail", kwargs={"pk": self.pk}
         )
-
-    @cached_property
-    def history_values(self):
-        return self.history.values_list("answer", "history_date")
 
     # TODO this should be a model clean method
     @staticmethod

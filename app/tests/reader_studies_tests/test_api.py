@@ -159,7 +159,6 @@ def test_answer_update(client):
     answer = Answer.objects.get(pk=response.data.get("pk"))
     assert answer.answer is True
     assert answer.display_set == ds
-    assert answer.history.count() == 1
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-detail",
@@ -180,7 +179,6 @@ def test_answer_update(client):
     }
     assert answer.answer is True
     assert answer.display_set == ds
-    assert answer.history.count() == 1
 
     rs.allow_answer_modification = True
     rs.save()
@@ -204,7 +202,6 @@ def test_answer_update(client):
     }
     assert answer.answer is True
     assert answer.display_set == ds
-    assert answer.history.count() == 1
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-detail",
@@ -220,7 +217,6 @@ def test_answer_update(client):
     answer.refresh_from_db()
     assert answer.answer is False
     assert answer.display_set == ds
-    assert answer.history.count() == 2
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-detail",
@@ -235,7 +231,6 @@ def test_answer_update(client):
 
     answer.refresh_from_db()
     assert answer.answer is False
-    assert answer.history.count() == 2
 
 
 @pytest.mark.django_db

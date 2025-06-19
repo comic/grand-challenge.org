@@ -486,7 +486,6 @@ MIDDLEWARE = (
     "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
-    "simple_history.middleware.HistoryRequestMiddleware",
     # subdomain_middleware after CurrentSiteMiddleware
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
@@ -533,7 +532,6 @@ THIRD_PARTY_APPS = [
     "dal",  # for autocompletion of selection fields
     "dal_select2",  # for autocompletion of selection fields
     "django_extensions",  # custom extensions
-    "simple_history",  # for object history
     "corsheaders",  # to allow api communication from subdomains
     "markdownx",  # for editing markdown
     "compressor",  # for compressing css
