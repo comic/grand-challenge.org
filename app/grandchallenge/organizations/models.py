@@ -65,7 +65,7 @@ class Organization(TitleSlugDescriptionModel, UUIDModel):
     algorithm_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
         default=settings.ALGORITHMS_MAX_MEMORY_GB,
         help_text=(
-            "Maximum amount of memory (DRAM) that members will be allowed to "
+            "Maximum amount of main memory (DRAM) that members will be allowed to "
             "assign to algorithm inference jobs."
         ),
     )

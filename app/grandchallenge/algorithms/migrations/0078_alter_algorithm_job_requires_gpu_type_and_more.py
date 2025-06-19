@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
             name="job_requires_memory_gb",
             field=models.PositiveSmallIntegerField(
                 default=8,
-                help_text="How much memory (DRAM) to assign to this algorithms inference jobs",
+                help_text="How much main memory (DRAM) to assign to this algorithms inference jobs",
             ),
         ),
         migrations.AlterField(
@@ -58,7 +58,7 @@ class Migration(migrations.Migration):
             name="requires_memory_gb",
             field=models.PositiveSmallIntegerField(
                 editable=False,
-                help_text="How much memory (DRAM) is required by this job?",
+                help_text="How much main memory (DRAM) is required by this job?",
             ),
         ),
     ]

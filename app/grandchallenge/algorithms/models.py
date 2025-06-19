@@ -286,7 +286,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     )
     job_requires_memory_gb = models.PositiveSmallIntegerField(
         default=8,
-        help_text="How much memory (DRAM) to assign to this algorithms inference jobs",
+        help_text="How much main memory (DRAM) to assign to this algorithms inference jobs",
     )
     average_duration = models.DurationField(
         null=True,

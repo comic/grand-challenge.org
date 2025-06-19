@@ -1705,7 +1705,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     )
     requires_memory_gb = models.PositiveSmallIntegerField(
         editable=False,
-        help_text="How much memory (DRAM) is required by this job?",
+        help_text="How much main memory (DRAM) is required by this job?",
     )
     use_warm_pool = models.BooleanField(
         default=False, editable=False, help_text="Whether to use warm pools"

@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
             name="algorithm_maximum_settable_memory_gb",
             field=models.PositiveSmallIntegerField(
                 default=32,
-                help_text="Maximum amount of memory (DRAM) that participants will be allowed to assign to algorithm inference jobs for submission.",
+                help_text="Maximum amount of main memory (DRAM) that participants will be allowed to assign to algorithm inference jobs for submission.",
             ),
         ),
     ]

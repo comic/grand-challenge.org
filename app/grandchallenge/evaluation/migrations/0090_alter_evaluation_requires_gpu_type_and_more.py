@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
             name="requires_memory_gb",
             field=models.PositiveSmallIntegerField(
                 editable=False,
-                help_text="How much memory (DRAM) is required by this job?",
+                help_text="How much main memory (DRAM) is required by this job?",
             ),
         ),
         migrations.AlterField(
@@ -40,7 +40,7 @@ class Migration(migrations.Migration):
             name="algorithm_maximum_settable_memory_gb",
             field=models.PositiveSmallIntegerField(
                 default=32,
-                help_text="Maximum amount of memory (DRAM) that participants will be allowed to assign to algorithm inference jobs for submission. The setting on the algorithm will be validated against this on submission.",
+                help_text="Maximum amount of main memory (DRAM) that participants will be allowed to assign to algorithm inference jobs for submission. The setting on the algorithm will be validated against this on submission.",
             ),
         ),
         migrations.AlterField(
@@ -48,7 +48,7 @@ class Migration(migrations.Migration):
             name="evaluation_maximum_settable_memory_gb",
             field=models.PositiveSmallIntegerField(
                 default=32,
-                help_text="Maximum amount of memory (DRAM) that challenge admins will be able to assign for the evaluation method.",
+                help_text="Maximum amount of main memory (DRAM) that challenge admins will be able to assign for the evaluation method.",
             ),
         ),
         migrations.AlterField(
@@ -74,7 +74,7 @@ class Migration(migrations.Migration):
             name="evaluation_requires_memory_gb",
             field=models.PositiveSmallIntegerField(
                 default=8,
-                help_text="How much memory (DRAM) to assign to this phases evaluations. Note that the memory assigned to any algorithm inference jobs is determined by the submitted algorithm.",
+                help_text="How much main memory (DRAM) to assign to this phases evaluations. Note that the memory assigned to any algorithm inference jobs is determined by the submitted algorithm.",
             ),
         ),
         migrations.AlterField(
@@ -99,7 +99,7 @@ class Migration(migrations.Migration):
             name="algorithm_requires_memory_gb",
             field=models.PositiveSmallIntegerField(
                 editable=False,
-                help_text="How much memory (DRAM) is required by the algorithm jobs?",
+                help_text="How much main memory (DRAM) is required by the algorithm jobs?",
             ),
         ),
     ]
