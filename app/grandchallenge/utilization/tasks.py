@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 
 from grandchallenge.algorithms.models import Job
@@ -22,9 +23,17 @@ def create_job_warm_pool_utilizations():
         executor = job.get_executor(
             backend=settings.COMPONENTS_DEFAULT_BACKEND
         )
-        warm_pool_retained_billable_time_in_seconds = (
-            executor.warm_pool_retained_billable_time_in_seconds
-        )
+
+        try:
+            warm_pool_retained_billable_time_in_seconds = (
+                executor.warm_pool_retained_billable_time_in_seconds
+            )
+        except ObjectDoesNotExist:
+            if job.status == job.CANCELLED:
+                # The job was never started
+                warm_pool_retained_billable_time_in_seconds = 0
+            else:
+                raise
 
         if warm_pool_retained_billable_time_in_seconds is not None:
             duration = timedelta(

@@ -159,7 +159,6 @@ def test_answer_update(client):
     answer = Answer.objects.get(pk=response.data.get("pk"))
     assert answer.answer is True
     assert answer.display_set == ds
-    assert answer.history.count() == 1
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-detail",
@@ -180,7 +179,6 @@ def test_answer_update(client):
     }
     assert answer.answer is True
     assert answer.display_set == ds
-    assert answer.history.count() == 1
 
     rs.allow_answer_modification = True
     rs.save()
@@ -204,7 +202,6 @@ def test_answer_update(client):
     }
     assert answer.answer is True
     assert answer.display_set == ds
-    assert answer.history.count() == 1
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-detail",
@@ -220,7 +217,6 @@ def test_answer_update(client):
     answer.refresh_from_db()
     assert answer.answer is False
     assert answer.display_set == ds
-    assert answer.history.count() == 2
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-detail",
@@ -235,7 +231,6 @@ def test_answer_update(client):
 
     answer.refresh_from_db()
     assert answer.answer is False
-    assert answer.history.count() == 2
 
 
 @pytest.mark.django_db
@@ -2091,6 +2086,31 @@ def test_display_set_index(client):
     assert [x["order"] for x in response.json()["results"]] == [
         x for x in shuffled_order if x != last["order"]
     ]
+
+
+@pytest.mark.django_db
+def test_display_set_index_with_duplicate_order(
+    client, django_assert_num_queries
+):
+    reader_study = ReaderStudyFactory()
+    user = UserFactory()
+    reader_study.add_reader(user)
+
+    ds1, ds2, *_ = DisplaySetFactory.create_batch(3, reader_study=reader_study)
+
+    ds2.order = ds1.order
+    ds2.save()
+
+    with django_assert_num_queries(34):
+        response = get_view_for_user(
+            viewname="api:reader-studies-display-set-list",
+            data={"reader_study": str(reader_study.pk)},
+            user=user,
+            client=client,
+            method=client.get,
+        )
+
+    assert [x["index"] for x in response.json()["results"]] == [0, 1, 2]
 
 
 @pytest.mark.django_db

@@ -7,7 +7,6 @@ from django.db.models import Max
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_extensions.db.fields import AutoSlugField
-from simple_history.models import HistoricalRecords
 
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.subdomains.utils import reverse
@@ -42,10 +41,6 @@ class DocPage(models.Model):
         blank=True,
         on_delete=models.PROTECT,
         related_name="children",
-    )
-
-    history = HistoricalRecords(
-        excluded_fields=["order", "parent", "slug", "search_vector"]
     )
 
     class Meta:

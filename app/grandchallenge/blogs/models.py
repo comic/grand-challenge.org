@@ -3,7 +3,6 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 from django_extensions.db.fields import AutoSlugField
-from simple_history.models import HistoricalRecords
 from stdimage import JPEGField
 
 from grandchallenge.core.guardian import (
@@ -49,8 +48,6 @@ class Post(models.Model):
         default=False,
         help_text="If selected, this blog post will appear in first position in the news carousel on the home page.",
     )
-
-    history = HistoricalRecords(excluded_fields=["slug"])
 
     class Meta:
         ordering = ("-created",)

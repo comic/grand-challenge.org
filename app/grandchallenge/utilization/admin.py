@@ -48,6 +48,14 @@ class JobUtilizationAdmin(admin.ModelAdmin):
         "algorithm_image",
         "algorithm",
     )
+    list_select_related = (
+        "job",
+        "creator",
+        "phase",
+        "challenge",
+        "algorithm_image",
+        "algorithm",
+    )
     search_fields = (
         "creator__username",
         "pk",
@@ -78,6 +86,14 @@ class JobWarmPoolUtilizationAdmin(admin.ModelAdmin):
         "creator",
         "duration",
         "compute_cost_euro_millicents",
+        "phase",
+        "challenge",
+        "algorithm_image",
+        "algorithm",
+    )
+    list_select_related = (
+        "job",
+        "creator",
         "phase",
         "challenge",
         "algorithm_image",
@@ -115,6 +131,14 @@ class EvaluationUtilizationAdmin(admin.ModelAdmin):
         "creator",
         "duration",
         "compute_cost_euro_millicents",
+        "phase",
+        "challenge",
+        "algorithm_image",
+        "algorithm",
+    )
+    list_select_related = (
+        "evaluation",
+        "creator",
         "phase",
         "challenge",
         "algorithm_image",
