@@ -55,7 +55,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">guardian.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">knox.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AuthToken</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">simple_history.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">HistoricalRecords</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">stdimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">JPEGField</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.backends.docker</span><span class="w"> </span><span class="kn">import</span> <span class="n">Service</span>
@@ -435,8 +434,6 @@
 <span class="sd">        The maximum time that the service can be active before it is terminated</span>
 <span class="sd">    user_finished</span>
 <span class="sd">        Indicates if the user has chosen to end the session early</span>
-<span class="sd">    history</span>
-<span class="sd">        The history of this Session</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">QUEUED</span> <span class="o">=</span> <span class="mi">0</span>
@@ -508,9 +505,6 @@
     <span class="n">user_finished</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">logs</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">ping_times</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-    <span class="n">history</span> <span class="o">=</span> <span class="n">HistoricalRecords</span><span class="p">(</span>
-        <span class="n">excluded_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;logs&quot;</span><span class="p">,</span> <span class="s2">&quot;ping_times&quot;</span><span class="p">,</span> <span class="s2">&quot;auth_token&quot;</span><span class="p">]</span>
-    <span class="p">)</span>
     <span class="n">extra_env_vars</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
