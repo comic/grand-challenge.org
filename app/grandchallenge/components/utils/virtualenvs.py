@@ -11,7 +11,7 @@ def run_in_virtualenv(*, venv_location, command):
     """
     venv_activate_command = shlex.join(
         [
-            "source",
+            ".",
             str(Path(venv_location).resolve() / "bin" / "activate"),
         ]
     )
