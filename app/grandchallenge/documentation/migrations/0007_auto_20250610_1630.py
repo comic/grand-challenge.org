@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "documentation",
-            "0005_docpage_content_plain_docpage_search_vector_and_more",
+            "0006_docpage_content_plain_docpage_search_vector_and_more",
         ),
     ]
 
