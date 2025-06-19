@@ -268,6 +268,41 @@ def test_algorithm_job_post_serializer_create(
 
 @pytest.mark.django_db
 class TestJobCreateLimits:
+    def test_form_invalid_with_too_many_jobs(self, rf, settings):
+        algorithm_image = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm__minimum_credits_per_job=0,
+        )
+        user = UserFactory()
+
+        settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_USER = 1
+
+        algorithm_image.algorithm.add_user(user=user)
+
+        AlgorithmJobFactory(creator=user, time_limit=100)
+
+        request = rf.get("/foo")
+        request.user = user
+        serializer = JobPostSerializer(
+            data={
+                "algorithm": algorithm_image.algorithm.api_url,
+                "inputs": [],
+            },
+            context={"request": request},
+        )
+
+        assert not serializer.is_valid()
+        assert serializer.errors == {
+            "non_field_errors": [
+                ErrorDetail(
+                    string="You have too many active jobs, please try again after they have completed",
+                    code="invalid",
+                )
+            ]
+        }
+
     def test_form_invalid_without_enough_credits(self, rf, settings):
         algorithm_image = AlgorithmImageFactory(
             is_manifest_valid=True,

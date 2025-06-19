@@ -1356,6 +1356,11 @@ ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM = int(
     # The maximum number of active jobs for an algorithm
     os.environ.get("ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM", "16")
 )
+# The maximum number of active jobs for a user
+ALGORITHMS_MAX_ACTIVE_JOBS_PER_USER = int(
+    # The maximum number of active jobs for a user
+    os.environ.get("ALGORITHMS_MAX_ACTIVE_JOBS_PER_USER", "16")
+)
 # Maximum and minimum values the user can set for algorithm requirements
 ALGORITHMS_MIN_MEMORY_GB = 4
 ALGORITHMS_MAX_MEMORY_GB = 32

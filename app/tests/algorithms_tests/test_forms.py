@@ -534,6 +534,25 @@ class TestJobCreateLimits:
             },
         )
 
+    def test_form_invalid_with_too_many_jobs(self, settings):
+        algorithm = AlgorithmFactory()
+        user = UserFactory()
+        AlgorithmImageFactory(
+            algorithm=algorithm,
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
+        settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_USER = 1
+        AlgorithmJobFactory(creator=user, time_limit=100)
+
+        form = self.create_form(algorithm=algorithm, user=user)
+        assert not form.is_valid()
+        assert (
+            "You have too many active jobs, please try again after they have completed"
+            in str(form.errors["__all__"])
+        )
+
     def test_form_invalid_without_enough_credits(self, settings):
         algorithm = AlgorithmFactory(
             minimum_credits_per_job=(
