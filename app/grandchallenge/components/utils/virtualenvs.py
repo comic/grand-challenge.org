@@ -14,7 +14,7 @@ def run_script_in_venv(*, venv_location, python_script, args=None):
 
     venv_activate_command = shlex.join(
         [
-            ".",
+            "source",
             str(venv_activate),
         ]
     )
