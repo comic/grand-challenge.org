@@ -570,7 +570,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     algorithm_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
         default=settings.ALGORITHMS_MAX_MEMORY_GB,
         help_text=(
-            "Maximum amount of memory that participants will be allowed to "
+            "Maximum amount of main memory (DRAM) that participants will be allowed to "
             "assign to algorithm inference jobs for submission. The setting on the "
             "algorithm will be validated against this on submission."
         ),
@@ -640,14 +640,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     evaluation_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
         default=settings.ALGORITHMS_MAX_MEMORY_GB,
         help_text=(
-            "Maximum amount of memory that challenge admins will be able to "
+            "Maximum amount of main memory (DRAM) that challenge admins will be able to "
             "assign for the evaluation method."
         ),
     )
     evaluation_requires_memory_gb = models.PositiveSmallIntegerField(
         default=8,
         help_text=(
-            "How much memory to assign to this phases evaluations. "
+            "How much main memory (DRAM) to assign to this phases evaluations. "
             "Note that the memory assigned to any algorithm inference jobs "
             "is determined by the submitted algorithm."
         ),
@@ -1507,7 +1507,7 @@ class Submission(FieldChangeMixin, UUIDModel):
     )
     algorithm_requires_memory_gb = models.PositiveSmallIntegerField(
         editable=False,
-        help_text="How much memory is required by the algorithm jobs?",
+        help_text="How much main memory (DRAM) is required by the algorithm jobs?",
     )
 
     user_upload = models.ForeignKey(

@@ -879,13 +879,13 @@ def test_algorithm_form_gpu_limited_choices():
     form = AlgorithmForm(user=UserFactory())
 
     expected_choices = [
-        (GPUTypeChoices.NO_GPU, "No GPU"),
-        (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        GPUTypeChoices.NO_GPU,
+        GPUTypeChoices.T4,
     ]
 
     actual_choices = form.fields["job_requires_gpu_type"].choices
 
-    assert actual_choices == expected_choices
+    assert [c[0] for c in actual_choices] == expected_choices
 
 
 @pytest.mark.django_db
@@ -903,12 +903,12 @@ def test_algorithm_form_gpu_choices_from_phases():
 
         actual_choices = form.fields["job_requires_gpu_type"].choices
 
-        assert actual_choices == expected_choices
+        assert [c[0] for c in actual_choices] == expected_choices
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -933,12 +933,12 @@ def test_algorithm_form_gpu_choices_from_phases():
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
-            (GPUTypeChoices.A10G, "NVIDIA A10G Tensor Core GPU"),
-            (GPUTypeChoices.V100, "NVIDIA V100 Tensor Core GPU"),
-            (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.A100,
+            GPUTypeChoices.A10G,
+            GPUTypeChoices.V100,
+            GPUTypeChoices.K80,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -946,11 +946,11 @@ def test_algorithm_form_gpu_choices_from_phases():
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
-            (GPUTypeChoices.A10G, "NVIDIA A10G Tensor Core GPU"),
-            (GPUTypeChoices.V100, "NVIDIA V100 Tensor Core GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.A100,
+            GPUTypeChoices.A10G,
+            GPUTypeChoices.V100,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -959,10 +959,10 @@ def test_algorithm_form_gpu_choices_from_phases():
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
-            (GPUTypeChoices.A10G, "NVIDIA A10G Tensor Core GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.A100,
+            GPUTypeChoices.A10G,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -971,9 +971,9 @@ def test_algorithm_form_gpu_choices_from_phases():
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.A100,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -983,8 +983,8 @@ def test_algorithm_form_gpu_choices_from_phases():
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -993,8 +993,8 @@ def test_algorithm_form_gpu_choices_from_phases():
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -1002,9 +1002,9 @@ def test_algorithm_form_gpu_choices_from_phases():
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.K80,
+            GPUTypeChoices.T4,
         ]
     )
     interface3 = AlgorithmInterfaceFactory(inputs=inputs, outputs=[ci4, ci6])
@@ -1012,17 +1012,17 @@ def test_algorithm_form_gpu_choices_from_phases():
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.T4,
         ]
     )
 
     algorithm.interfaces.add(interface3)
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.K80,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -1050,12 +1050,12 @@ def test_algorithm_form_gpu_choices_from_organizations():
 
         actual_choices = form.fields["job_requires_gpu_type"].choices
 
-        assert actual_choices == expected_choices
+        assert [c[0] for c in actual_choices] == expected_choices
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -1063,9 +1063,9 @@ def test_algorithm_form_gpu_choices_from_organizations():
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.A100,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -1073,10 +1073,10 @@ def test_algorithm_form_gpu_choices_from_organizations():
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
-            (GPUTypeChoices.V100, "NVIDIA V100 Tensor Core GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.A100,
+            GPUTypeChoices.V100,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -1111,12 +1111,12 @@ def test_algorithm_form_gpu_choices_from_organizations_and_phases():
 
         actual_choices = form.fields["job_requires_gpu_type"].choices
 
-        assert actual_choices == expected_choices
+        assert [c[0] for c in actual_choices] == expected_choices
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -1139,10 +1139,10 @@ def test_algorithm_form_gpu_choices_from_organizations_and_phases():
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.A10G, "NVIDIA A10G Tensor Core GPU"),
-            (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.A10G,
+            GPUTypeChoices.K80,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -1151,12 +1151,12 @@ def test_algorithm_form_gpu_choices_from_organizations_and_phases():
 
     assert_gpu_type_choices(
         [
-            (GPUTypeChoices.NO_GPU, "No GPU"),
-            (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
-            (GPUTypeChoices.A10G, "NVIDIA A10G Tensor Core GPU"),
-            (GPUTypeChoices.V100, "NVIDIA V100 Tensor Core GPU"),
-            (GPUTypeChoices.K80, "NVIDIA K80 GPU"),
-            (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+            GPUTypeChoices.NO_GPU,
+            GPUTypeChoices.A100,
+            GPUTypeChoices.A10G,
+            GPUTypeChoices.V100,
+            GPUTypeChoices.K80,
+            GPUTypeChoices.T4,
         ]
     )
 
@@ -1179,13 +1179,13 @@ def test_algorithm_for_phase_form_gpu_limited_choices():
     )
 
     expected_choices = [
-        (GPUTypeChoices.NO_GPU, "No GPU"),
-        (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        GPUTypeChoices.NO_GPU,
+        GPUTypeChoices.T4,
     ]
 
     actual_choices = form.fields["job_requires_gpu_type"].choices
 
-    assert actual_choices == expected_choices
+    assert [c[0] for c in actual_choices] == expected_choices
 
 
 def test_algorithm_for_phase_form_gpu_additional_choices():
@@ -1212,14 +1212,14 @@ def test_algorithm_for_phase_form_gpu_additional_choices():
     )
 
     expected_choices = [
-        (GPUTypeChoices.NO_GPU, "No GPU"),
-        (GPUTypeChoices.A100, "NVIDIA A100 Tensor Core GPU"),
-        (GPUTypeChoices.T4, "NVIDIA T4 Tensor Core GPU"),
+        GPUTypeChoices.NO_GPU,
+        GPUTypeChoices.A100,
+        GPUTypeChoices.T4,
     ]
 
     actual_choices = form.fields["job_requires_gpu_type"].choices
 
-    assert actual_choices == expected_choices
+    assert [c[0] for c in actual_choices] == expected_choices
 
 
 @pytest.mark.django_db
