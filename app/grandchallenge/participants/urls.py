@@ -8,7 +8,6 @@ from grandchallenge.participants.views import (
     RegistrationQuestionUpdate,
     RegistrationRequestCreate,
     RegistrationRequestList,
-    RegistrationRequestUpdate,
 )
 
 app_name = "participants"
@@ -25,11 +24,11 @@ urlpatterns = [
         RegistrationRequestCreate.as_view(),
         name="registration-create",
     ),
-    path(
-        "registration/<int:pk>/update/",
-        RegistrationRequestUpdate.as_view(),
-        name="registration-update",
-    ),
+    # path(
+    #     "registration/<int:pk>/update/",
+    #     RegistrationRequestUpdate.as_view(),
+    #     name="registration-update",
+    # ),
     path(
         "registration/questions/",
         RegistrationQuestionList.as_view(),

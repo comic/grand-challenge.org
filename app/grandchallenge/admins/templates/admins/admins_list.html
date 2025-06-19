@@ -13,7 +13,8 @@
         <li class="breadcrumb-item"><a
                 href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
         <li class="breadcrumb-item active"
-            aria-current="page">Admins</li>
+            aria-current="page">Admins
+        </li>
     </ol>
 {% endblock %}
 
@@ -21,8 +22,10 @@
     <h2>Admins for {{ challenge.short_name }}</h2>
 
     <p>
-        <a class="btn btn-primary"
-           href="{% url 'admins:update' challenge_short_name=challenge.short_name %}">
+        <a class="btn btn-primary disabled"
+           title="Temporarily disabled, please come back later."
+                {#           href="{% url 'admins:update' challenge_short_name=challenge.short_name %}"#}
+        >
             <i class="fas fa-plus"></i> Add another admin
         </a>
     </p>
@@ -36,13 +39,16 @@
     <td>
         {% if user != request.user %}
             <form method="post"
-                  action="{% url 'admins:update' challenge_short_name=challenge.short_name %}">
+                    {#                  action="{% url 'admins:update' challenge_short_name=challenge.short_name %}"#}
+            >
                 {% csrf_token %}
                 <input name="user" type="hidden" value="{{ user.pk }}">
                 <input name="action" type="hidden"
                        value="{{ admin_remove_action }}">
                 <button type="submit"
-                        class="btn btn-xs btn-danger">
+                        class="btn btn-xs btn-danger disabled"
+                        title="Temporarily disabled, please come back later"
+                >
                     Remove Admin
                 </button>
             </form>
