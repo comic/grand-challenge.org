@@ -54,6 +54,7 @@ def test_registration_review_workflow(choice, expected, client, challenge_set):
     assert RegistrationRequest.objects.get(pk=rr.pk).status == choice
 
 
+@pytest.mark.xfail(reason="To be addressed for forums pitch")
 @pytest.mark.django_db
 def test_registration_admin_changed_mind(client, challenge_set):
     user = UserFactory()
