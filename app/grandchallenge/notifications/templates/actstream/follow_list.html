@@ -29,7 +29,7 @@
             </label>
         </div>
         <div class="col-6 d-flex justify-content-end">
-            <button class="btn btn-xs btn-danger mx-1 mb-3 mt-1" name="delete" type="button" id="delete"> Delete selected</button>
+            <button class="btn btn-xs btn-danger mx-1 mb-3 mt-1 disabled" name="delete" type="button" id="delete" title="Temporarily disabled, please come back later."> Delete selected</button>
         </div>
         </div>
 
@@ -41,7 +41,9 @@
                         <input class="checkbox mr-2" name="checkbox" type="checkbox" id="{{ follow.pk }}"
                                value="{{ follow.pk }}"
                                data-flag={% if follow.flag == 'job-active' %}"job-follow"{% else %}
-                                   "standard-follow"{% endif %} data-url="{% url 'api:follow-detail' pk=follow.pk %}">
+                                   "standard-follow"{% endif %}
+{#                                data-url="{% url 'api:follow-detail' pk=follow.pk %}"#}
+                        >
                         <a href="{{ follow.follow_object.get_absolute_url }}">
                             {% if follow.content_type.name == 'Topic' %} {{ follow.follow_object.subject }}{% else %}
                                 {{ follow.follow_object }}{% endif %}</a>

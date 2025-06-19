@@ -17,10 +17,7 @@ from grandchallenge.challenges.views import ChallengeViewSet
 from grandchallenge.components.views import ComponentInterfaceViewSet
 from grandchallenge.evaluation.views.api import EvaluationViewSet
 from grandchallenge.github.views import github_webhook
-from grandchallenge.notifications.views import (
-    FollowViewSet,
-    NotificationViewSet,
-)
+from grandchallenge.notifications.views import NotificationViewSet
 from grandchallenge.profiles.views import UserProfileViewSet
 from grandchallenge.reader_studies.views import (
     AnswerViewSet,
@@ -100,7 +97,7 @@ router.register(
 router.register(r"reader-studies", ReaderStudyViewSet, basename="reader-study")
 
 # Follows (Subscriptions)
-router.register(r"subscriptions", FollowViewSet, basename="follow")
+# router.register(r"subscriptions", FollowViewSet, basename="follow")
 
 # Uploads
 router.register(r"uploads", UserUploadViewSet, basename="upload")
