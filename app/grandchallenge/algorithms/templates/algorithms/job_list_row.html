@@ -52,15 +52,6 @@
 
 <split></split>
 
-<a class="badge badge-primary"
-    href="{% url 'algorithms:job-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}"
-    title="View result details">
-    <i class="fa fa-fw fa-info-circle"></i>
-    Result
-</a>
-
-<split></split>
-
 <ul class="list-unstyled mb-0 text-left">
     {% for civ in object.outputs.all|sort_civs %}
         <li>
