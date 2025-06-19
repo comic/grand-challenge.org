@@ -176,6 +176,17 @@ class JobCreateForm(AdditionalInputsMixin, Form):
         if self.jobs_limit < 1:
             raise ValidationError("You have run out of algorithm credits")
 
+        if (
+            Job.objects.active()
+            .filter(creator=cleaned_data["creator"])
+            .count()
+            >= settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_USER
+        ):
+            raise ValidationError(
+                "You have too many active jobs, "
+                "please try again after they have completed"
+            )
+
         cleaned_data["inputs"] = self.clean_additional_inputs()
 
         if Job.objects.get_jobs_with_same_inputs(

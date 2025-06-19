@@ -1,5 +1,6 @@
 import logging
 
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from rest_framework import serializers
 from rest_framework.fields import (
@@ -224,6 +225,15 @@ class JobPostSerializer(JobSerializer):
         if jobs_limit < 1:
             raise serializers.ValidationError(
                 "You have run out of algorithm credits"
+            )
+
+        if (
+            Job.objects.active().filter(creator=data["creator"]).count()
+            >= settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_USER
+        ):
+            raise ValidationError(
+                "You have too many active jobs, "
+                "please try again after they have completed"
             )
 
         inputs = data.pop("inputs")
