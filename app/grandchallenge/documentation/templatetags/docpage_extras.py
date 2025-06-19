@@ -44,12 +44,11 @@ def get_breadcrumbs(page):
 def startend_text(text):
     text = striptags(text).strip()
 
-    if len(text) <= 40:
-        return text
-
     # Split around center word and extract fixed-length windows
     words = text.split()
     n_words = min(3, len(words) // 2)
+    if n_words < 2:
+        return quote(text)
     start = " ".join(words[:n_words]).rstrip(":")
     end = " ".join(words[-n_words:])
 
