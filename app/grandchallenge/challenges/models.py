@@ -1109,7 +1109,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     algorithm_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
         default=settings.ALGORITHMS_MAX_MEMORY_GB,
         help_text=(
-            "Maximum amount of memory that participants will be allowed to "
+            "Maximum amount of memory (DRAM) that participants will be allowed to "
             "assign to algorithm inference jobs for submission."
         ),
     )
