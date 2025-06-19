@@ -1,8 +1,8 @@
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.postgres.search import (
+    SearchHeadline,
     SearchQuery,
     SearchRank,
-    SearchVector,
     TrigramSimilarity,
 )
 from django.db.models import F, Q
@@ -35,36 +35,34 @@ class DocPageDetail(DetailView):
             DocPage.objects.filter(parent__isnull=True)
             .prefetch_related("children__children")
             .order_by("order")
-            .all()
         )
 
-        qs = DocPage.objects.all()
         keywords = self.request.GET.get("query")
 
         if keywords:
             query = SearchQuery(keywords)
-            vector = SearchVector("title", "content")
-            qs = (
-                qs.annotate(rank=SearchRank(vector, query))
-                .annotate(
+            headline = SearchHeadline("content_plain", query)
+            search_results = (
+                DocPage.objects.annotate(
+                    headline=headline,
+                    rank=SearchRank(F("search_vector"), query),
                     similarity=TrigramSimilarity("title", keywords)
-                    + TrigramSimilarity("content", keywords)
+                    + TrigramSimilarity("content_plain", keywords),
                 )
                 .annotate(combined_score=(F("similarity") + F("rank")) / 2)
                 .filter(Q(rank__gt=0.001) | Q(similarity__gt=0.1))
                 .order_by("-combined_score")
             )
         else:
-            qs = None
+            search_results = None
 
         context.update(
             {
                 "top_level_pages": top_level_pages,
-                "search_results": qs,
+                "search_results": search_results,
                 "query": keywords,
             }
         )
-
         return context
 
 

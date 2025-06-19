@@ -1,3 +1,6 @@
+from bs4 import BeautifulSoup
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector, SearchVectorField
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Max
@@ -5,6 +8,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_extensions.db.fields import AutoSlugField
 
+from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.subdomains.utils import reverse
 
 
@@ -22,6 +26,8 @@ class DocPage(models.Model):
     slug = AutoSlugField(populate_from="title", max_length=1024)
 
     content = models.TextField()
+    content_plain = models.TextField(default="", editable=False)
+    search_vector = SearchVectorField(default="", editable=False)
 
     order = models.IntegerField(
         editable=False,
@@ -39,6 +45,9 @@ class DocPage(models.Model):
 
     class Meta:
         ordering = ["order"]
+        indexes = [
+            GinIndex(fields=["search_vector"]),
+        ]
 
     def __str__(self):
         return self.title
@@ -69,7 +78,19 @@ class DocPage(models.Model):
                     + 1
                 )
 
+        self.update_content_plain()
+
         super().save(*args, **kwargs)
+
+        DocPage.objects.filter(pk=self.pk).update(
+            search_vector=SearchVector("title", "content_plain")
+        )
+
+    def update_content_plain(self):
+        self.content_plain = BeautifulSoup(
+            md2html(self.content, create_permalink_for_headers=False),
+            "html.parser",
+        ).get_text()
 
     def position(self, position):
         if position:

@@ -1,5 +1,7 @@
 from django import template
 
+from grandchallenge.subdomains.utils import reverse
+
 register = template.Library()
 
 
@@ -13,3 +15,23 @@ def get_subordinate_pages(page):
             for greatgrandchild in grandchild.children.all():
                 subordinate_pages.append(greatgrandchild)
     return subordinate_pages
+
+
+@register.simple_tag
+def get_breadcrumbs(page):
+    breadcrumbs = []
+
+    current = page.parent
+    while current:
+        breadcrumbs.insert(
+            0,
+            {
+                "title": current.title,
+                "url": reverse(
+                    "documentation:detail", kwargs={"slug": current.slug}
+                ),
+            },
+        )
+        current = current.parent
+
+    return breadcrumbs
