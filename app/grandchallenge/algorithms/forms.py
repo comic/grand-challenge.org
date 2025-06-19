@@ -521,6 +521,7 @@ class AlgorithmForPhaseForm(
             "structures": MultipleHiddenInput(),
             "logo": HiddenInput(),
             "time_limit": HiddenInput(),
+            "job_requires_memory_gb": HiddenInput(),
         }
         help_texts = {
             "description": (
@@ -590,6 +591,10 @@ class AlgorithmForPhaseForm(
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
             MaxValueValidator(phase.algorithm_maximum_settable_memory_gb),
         ]
+        self.fields["job_requires_memory_gb"].initial = min(
+            16, phase.algorithm_maximum_settable_memory_gb
+        )
+        self.fields["job_requires_memory_gb"].disabled = True
 
     def clean(self):
         cleaned_data = super().clean()
