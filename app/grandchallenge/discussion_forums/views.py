@@ -1,3 +1,4 @@
+from django.db.models import Prefetch
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
@@ -49,12 +50,23 @@ class ForumTopicListView(
     def user_records(self):
         return TopicReadRecord.objects.filter(user=self.request.user)
 
+    @property
+    def common_prefetch_related_fields(self):
+        return [
+            "posts",
+            Prefetch(
+                "read_by",
+                queryset=self.user_records,
+                to_attr="user_read_records",
+            ),
+        ]
+
     def get_queryset(self):
         queryset = (
             super()
             .get_queryset()
             .select_related(*self.common_select_related_fields)
-            .prefetch_related("posts")
+            .prefetch_related(*self.common_prefetch_related_fields)
         )
         return queryset.filter(forum=self.forum)
 
@@ -68,7 +80,7 @@ class ForumTopicListView(
                 kind=ForumTopicKindChoices.ANNOUNCE, forum=self.forum
             )
             .select_related(*self.common_select_related_fields)
-            .prefetch_related("posts"),
+            .prefetch_related(*self.common_prefetch_related_fields),
             user=self.request.user,
             codename="view_forumtopic",
         )

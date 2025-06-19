@@ -25,7 +25,7 @@
                 <div class="p-0 card-body">
                     <ul class="list-group">
                         {% for topic in topics %}
-                            {% check_unread_topic_posts_for_user topic=topic user=request.user as user_has_unread_posts %}
+                            {% check_unread_topic_posts_for_user topic=topic as user_has_unread_posts %}
                             <li class="list-group-item">
                                 <div class="row">
                                     <div class="col-2 col-md-1 text-center align-content-center pr-0 p-md-0">

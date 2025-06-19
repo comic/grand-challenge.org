@@ -694,10 +694,9 @@ def test_queries_on_topic_list_view(client, django_assert_num_queries):
 
     initial_query_count = len(context)
 
-    # adding 5 more should add exactly 5 extra queries
+    # adding 5 more does not result in more queries
     ForumTopicFactory.create_batch(5, forum=forum)
-    expected_query_count = initial_query_count + 5
-    with django_assert_num_queries(expected_query_count):
+    with django_assert_num_queries(initial_query_count):
         get_view_for_user(
             viewname="discussion-forums:topic-list",
             client=client,
