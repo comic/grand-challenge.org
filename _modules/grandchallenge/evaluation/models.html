@@ -610,7 +610,7 @@
     <span class="n">algorithm_maximum_settable_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">ALGORITHMS_MAX_MEMORY_GB</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Maximum amount of memory that participants will be allowed to &quot;</span>
+            <span class="s2">&quot;Maximum amount of main memory (DRAM) that participants will be allowed to &quot;</span>
             <span class="s2">&quot;assign to algorithm inference jobs for submission. The setting on the &quot;</span>
             <span class="s2">&quot;algorithm will be validated against this on submission.&quot;</span>
         <span class="p">),</span>
@@ -680,14 +680,14 @@
     <span class="n">evaluation_maximum_settable_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">ALGORITHMS_MAX_MEMORY_GB</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;Maximum amount of memory that challenge admins will be able to &quot;</span>
+            <span class="s2">&quot;Maximum amount of main memory (DRAM) that challenge admins will be able to &quot;</span>
             <span class="s2">&quot;assign for the evaluation method.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">evaluation_requires_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;How much memory to assign to this phases evaluations. &quot;</span>
+            <span class="s2">&quot;How much main memory (DRAM) to assign to this phases evaluations. &quot;</span>
             <span class="s2">&quot;Note that the memory assigned to any algorithm inference jobs &quot;</span>
             <span class="s2">&quot;is determined by the submitted algorithm.&quot;</span>
         <span class="p">),</span>
@@ -1557,7 +1557,7 @@
     <span class="p">)</span>
     <span class="n">algorithm_requires_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
         <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;How much memory is required by the algorithm jobs?&quot;</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;How much main memory (DRAM) is required by the algorithm jobs?&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">user_upload</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>

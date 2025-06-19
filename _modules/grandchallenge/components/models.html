@@ -1810,7 +1810,8 @@
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;What GPU is required by this job?&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">requires_memory_gb</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
-        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;How much memory is required by this job?&quot;</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;How much main memory (DRAM) is required by this job?&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">use_warm_pool</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Whether to use warm pools&quot;</span>
