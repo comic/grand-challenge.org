@@ -12,6 +12,9 @@ def run_script_in_venv(*, venv_location, python_script, args=None):
     venv_activate = Path(venv_location).resolve() / "bin" / "activate"
     python_script = Path(python_script).resolve()
 
+    if args is None:
+        args = []
+
     venv_activate_command = shlex.join(
         [
             "source",
@@ -27,7 +30,7 @@ def run_script_in_venv(*, venv_location, python_script, args=None):
     )
     return subprocess.run(
         [
-            "bash",
+            "/bin/sh",
             "-c",
             f"{venv_activate_command} && {python_command}",
         ],

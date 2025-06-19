@@ -6,7 +6,6 @@ from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.utils._os import safe_join
 
-from grandchallenge.components import VALIDATION_SCRIPT_DIR
 from grandchallenge.components.utils.virtualenvs import run_script_in_venv
 
 
@@ -61,8 +60,9 @@ def validate_biom_format(*, file):
 
     try:
         run_script_in_venv(
-            venv_location=settings.COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION,
-            python_script=VALIDATION_SCRIPT_DIR / "validate_biom.py",
+            venv_location=settings.COMPONENTS_VIRTUALENV_BIOM_LOCATION,
+            python_script=settings.COMPONENTS_VIRTUALENV_SCRIPT_DIR
+            / "validate_biom.py",
             args=[str(file)],
         )
     except subprocess.CalledProcessError as e:

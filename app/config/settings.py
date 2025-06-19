@@ -1120,8 +1120,14 @@ COMPONENTS_NVIDIA_VISIBLE_DEVICES = os.environ.get(
 )
 COMPONENTS_CONTAINER_PLATFORM = "linux/amd64"
 
-COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION = os.environ.get(
-    "COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION", "/opt/virtualenvs/biom"
+COMPONENTS_VIRTUALENV_SCRIPT_DIR = (
+    SITE_ROOT / "grandchallenge" / "components" / "virtualenv_scripts"
+)
+COMPONENTS_VIRTUALENV_BIOM_LOCATION = os.environ.get(
+    "COMPONENTS_VIRTUALENV_BIOM_LOCATION", "/opt/virtualenvs/biom"
+)
+COMPONENTS_VIRTUALENV_PANIMG_LOCATION = os.environ.get(
+    "COMPONENTS_VIRTUALENV_PANIMG_LOCATION", "/opt/virtualenvs/panimg"
 )
 # Set which template pack to use for forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
