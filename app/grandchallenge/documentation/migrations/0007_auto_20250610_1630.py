@@ -19,10 +19,10 @@ def generate_content_plain_and_search_vector(apps, schema_editor):
     DocPage = apps.get_model("documentation", "DocPage")  # noqa: N806
 
     for doc in DocPage.objects.all():
-        plain_text = markdown_to_plain_text(doc.content)
-        search_vector = SearchVector("title", "content_plain")
+        doc.content_plain = markdown_to_plain_text(doc.content)
+        doc.save()
         DocPage.objects.filter(pk=doc.pk).update(
-            content_plain=plain_text, search_vector=search_vector
+            search_vector=SearchVector("title", "content_plain")
         )
 
 
