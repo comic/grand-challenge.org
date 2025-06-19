@@ -14,7 +14,6 @@ from csp import constants as csp_constants
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
-from django.urls import reverse
 from django.utils._os import safe_join
 from django.utils.timezone import now
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
@@ -311,22 +310,6 @@ RENDERING_SUBDOMAIN_URL_CONF = "config.urls.rendering_subdomain"
 
 DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
 SITE_SERVER_PORT = os.environ.get("SITE_SERVER_PORT")
-
-# Workaround for https://github.com/ellmetha/django-machina/issues/219
-ABSOLUTE_URL_OVERRIDES = {
-    "forum.forum": lambda o: reverse(
-        "forum:forum", kwargs={"slug": o.slug, "pk": o.pk}
-    ),
-    "forum_conversation.topic": lambda o: reverse(
-        "forum_conversation:topic",
-        kwargs={
-            "slug": o.slug,
-            "pk": o.pk,
-            "forum_slug": o.forum.slug,
-            "forum_pk": o.forum.pk,
-        },
-    ),
-}
 
 SESSION_ENGINE = "grandchallenge.browser_sessions.models"
 SESSION_PRIVILEGED_USER_TIMEOUT = timedelta(hours=8)

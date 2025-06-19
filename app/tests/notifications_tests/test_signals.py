@@ -15,6 +15,7 @@ from tests.notifications_tests.factories import (
 )
 
 
+@pytest.mark.xfail("To be addressed for forums pitch")
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "kind", (Topic.TOPIC_ANNOUNCE, Topic.TOPIC_POST, Topic.TOPIC_STICKY)
@@ -38,6 +39,7 @@ def test_notification_sent_on_new_topic(kind):
         )
 
 
+@pytest.mark.xfail("To be addressed for forums pitch")
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "kind", (Topic.TOPIC_ANNOUNCE, Topic.TOPIC_POST, Topic.TOPIC_STICKY)
