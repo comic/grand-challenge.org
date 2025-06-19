@@ -125,7 +125,6 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
                     DisplaySet.objects.with_row_number()
                     .get(pk=obj.pk)
                     .row_number
-                    - 1
                 )
 
             return row_number - 1
