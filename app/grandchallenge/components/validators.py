@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.utils._os import safe_join
 
-from grandchallenge.components.utils.virtualenvs import run_script_in_venv
+from grandchallenge.components.utils.virtualenvs import run_in_virtualenv
 
 
 def validate_safe_path(value):
@@ -56,14 +56,20 @@ def validate_newick_tree_format(tree):
 
 def validate_biom_format(*, file):
     """Validates an uploaded BIOM file by passing its content through a parser"""
-    file = Path(file).resolve()
+    command = [
+        "python",
+        str(
+            (
+                settings.COMPONENTS_VIRTUALENV_SCRIPT_DIR / "validate_biom.py"
+            ).resolve()
+        ),
+        str(Path(file).resolve()),
+    ]
 
     try:
-        run_script_in_venv(
+        run_in_virtualenv(
             venv_location=settings.COMPONENTS_VIRTUALENV_BIOM_LOCATION,
-            python_script=settings.COMPONENTS_VIRTUALENV_SCRIPT_DIR
-            / "validate_biom.py",
-            args=[str(file)],
+            command=command,
         )
     except subprocess.CalledProcessError as e:
         error_lines = e.stderr.strip().split("\n")

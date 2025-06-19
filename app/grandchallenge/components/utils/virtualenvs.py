@@ -3,36 +3,25 @@ import subprocess
 from pathlib import Path
 
 
-def run_script_in_venv(*, venv_location, python_script, args=None):
+def run_in_virtualenv(*, venv_location, command):
     """
     Runs a Python script as a subprocess in an existing isolated virtual environment.
 
     Returns the result of the process.
     """
-    venv_activate = Path(venv_location).resolve() / "bin" / "activate"
-    python_script = Path(python_script).resolve()
-
-    if args is None:
-        args = []
-
     venv_activate_command = shlex.join(
         [
             "source",
-            str(venv_activate),
+            str(Path(venv_location).resolve() / "bin" / "activate"),
         ]
     )
-    python_command = shlex.join(
-        [
-            "python",
-            str(python_script),
-            *args,
-        ]
-    )
+    escaped_command = shlex.join(command)
+
     return subprocess.run(
         [
             "/bin/sh",
             "-c",
-            f"{venv_activate_command} && {python_command}",
+            f"{venv_activate_command} && {escaped_command}",
         ],
         env=None,
         text=True,
