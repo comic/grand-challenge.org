@@ -1,9 +1,14 @@
 import pytest
+from django.core.exceptions import ValidationError
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+from guardian.utils import get_anonymous_user
 
 from grandchallenge.discussion_forums.models import (
     ForumPost,
     ForumTopic,
     ForumTopicKindChoices,
+    TopicReadRecord,
 )
 from tests.discussion_forums_tests.factories import (
     ForumFactory,
@@ -244,6 +249,7 @@ def test_discussion_forum_topic_post_list_permission_filter(client):
                 "challenge_short_name": forum.linked_challenge.short_name,
                 "slug": topic1.slug,
             },
+            follow=True,
         )
         # admin and participants can access page and will see topics for this topic only
         assert response.status_code == 200
@@ -251,6 +257,47 @@ def test_discussion_forum_topic_post_list_permission_filter(client):
         assert list(response.context["object_list"]) == list(
             ForumPost.objects.filter(topic=topic1).all()
         )
+
+
+@pytest.mark.django_db
+def test_redirect_when_unread_posts(client):
+    forum = ForumFactory()
+    user = UserFactory()
+    forum.linked_challenge.add_participant(user)
+    topic = ForumTopicFactory(forum=forum, post_count=3)
+
+    link_to_unread_post = (
+        topic.get_unread_topic_posts_for_user(user=user)
+        .first()
+        .get_absolute_url()
+    )
+
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-post-list",
+        client=client,
+        user=user,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+            "slug": topic.slug,
+        },
+    )
+    assert (
+        response.status_code == 302
+    )  # redirect because there are unread posts
+    assert response.url == link_to_unread_post
+    # all posts are now marked as read
+    assert not topic.get_unread_topic_posts_for_user(user=user).exists()
+
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-post-list",
+        client=client,
+        user=user,
+        reverse_kwargs={
+            "challenge_short_name": forum.linked_challenge.short_name,
+            "slug": topic.slug,
+        },
+    )
+    assert response.status_code == 200  # no redirect when no unread posts
 
 
 @pytest.mark.django_db
@@ -305,6 +352,7 @@ def test_post_deletion(client):
     post1, post2 = topic.posts.all()
 
     assert topic.posts.count() == 2
+    assert topic.last_post == post2
     assert topic.last_post_on == post2.created
 
     response = get_view_for_user(
@@ -323,6 +371,7 @@ def test_post_deletion(client):
     topic.refresh_from_db()
     assert topic.posts.count() == 1
     assert list(topic.posts.all()) == [post1]
+    assert topic.last_post == post1
     assert topic.last_post_on == post1.created
 
     response = get_view_for_user(
@@ -549,3 +598,110 @@ def test_users_cannot_post_to_locked_topic(client):
         )
         assert response.status_code == 403
         assert topic.posts.count() == post_count
+
+
+@pytest.mark.django_db
+def test_topic_marked_as_read(client):
+    topic = ForumTopicFactory(post_count=3)
+    user = UserFactory()
+    topic.forum.linked_challenge.add_participant(user)
+
+    assert not TopicReadRecord.objects.filter(user=user, topic=topic).exists()
+
+    # accessing the topic detail view, will mark the topic as read by this user
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-post-list",
+        client=client,
+        user=user,
+        reverse_kwargs={
+            "slug": topic.slug,
+            "challenge_short_name": topic.forum.linked_challenge.short_name,
+        },
+        follow=True,
+    )
+    assert response.status_code == 200
+    assert TopicReadRecord.objects.filter(user=user, topic=topic).exists()
+
+    old_modified_time = TopicReadRecord.objects.get(
+        user=user, topic=topic
+    ).modified
+
+    # accessing the topic detail view again, will update the modified time
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-post-list",
+        client=client,
+        user=user,
+        reverse_kwargs={
+            "slug": topic.slug,
+            "challenge_short_name": topic.forum.linked_challenge.short_name,
+        },
+    )
+    assert response.status_code == 200
+    assert (
+        TopicReadRecord.objects.get(user=user, topic=topic).modified
+        > old_modified_time
+    )
+
+
+@pytest.mark.django_db
+def test_topic_read_status_not_tracked_for_anonymous_user(client):
+    topic = ForumTopicFactory(post_count=3)
+    user = UserFactory()
+    topic.forum.linked_challenge.add_participant(user)
+
+    TopicReadRecord.objects.filter(topic=topic).all().delete()
+
+    # accessing the topic detail view as anonymous user will fail with permission error and will not create a record
+    response = get_view_for_user(
+        viewname="discussion-forums:topic-post-list",
+        client=client,
+        reverse_kwargs={
+            "slug": topic.slug,
+            "challenge_short_name": topic.forum.linked_challenge.short_name,
+        },
+        follow=True,
+    )
+    assert response.status_code == 403
+    assert not TopicReadRecord.objects.filter(topic=topic).exists()
+
+    # our custom method ignores anonymous users as well
+    topic.mark_as_read(user=get_anonymous_user())
+    assert not TopicReadRecord.objects.filter(topic=topic).exists()
+
+    # directly creating a record for the anonymous user also does not work
+    with pytest.raises(ValidationError):
+        TopicReadRecord.objects.create(user=get_anonymous_user(), topic=topic)
+
+
+@pytest.mark.django_db
+def test_queries_on_topic_list_view(client, django_assert_num_queries):
+    forum = ForumFactory()
+    user = UserFactory()
+    forum.linked_challenge.add_admin(user)
+
+    ForumTopicFactory.create_batch(5, forum=forum, post_count=0)
+
+    with CaptureQueriesContext(connection) as context:
+        response = get_view_for_user(
+            viewname="discussion-forums:topic-list",
+            client=client,
+            user=user,
+            reverse_kwargs={
+                "challenge_short_name": forum.linked_challenge.short_name,
+            },
+        )
+    assert response.status_code == 200
+
+    initial_query_count = len(context)
+
+    # adding 5 more does not result in more queries
+    ForumTopicFactory.create_batch(5, forum=forum)
+    with django_assert_num_queries(initial_query_count):
+        get_view_for_user(
+            viewname="discussion-forums:topic-list",
+            client=client,
+            user=user,
+            reverse_kwargs={
+                "challenge_short_name": forum.linked_challenge.short_name,
+            },
+        )

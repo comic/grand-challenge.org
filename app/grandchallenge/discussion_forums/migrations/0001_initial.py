@@ -55,8 +55,8 @@ class Migration(migrations.Migration):
                         serialize=False,
                     ),
                 ),
-                ("created", models.DateTimeField(auto_now_add=True)),
-                ("modified", models.DateTimeField(auto_now=True)),
+                ("created", models.DateTimeField()),
+                ("modified", models.DateTimeField()),
                 ("content", models.TextField()),
                 (
                     "creator",
@@ -84,8 +84,8 @@ class Migration(migrations.Migration):
                         serialize=False,
                     ),
                 ),
-                ("created", models.DateTimeField(auto_now_add=True)),
-                ("modified", models.DateTimeField(auto_now=True)),
+                ("created", models.DateTimeField()),
+                ("modified", models.DateTimeField()),
                 ("subject", models.CharField(max_length=255)),
                 (
                     "slug",
@@ -113,6 +113,15 @@ class Migration(migrations.Migration):
                     models.BooleanField(
                         default=False,
                         help_text="Lock a topic to close it and prevent posts from being added to it.",
+                    ),
+                ),
+                (
+                    "last_post",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="discussion_forums.forumpost",
                     ),
                 ),
                 ("last_post_on", models.DateTimeField(blank=True, null=True)),
@@ -447,5 +456,40 @@ class Migration(migrations.Migration):
                 fields=["user", "permission"],
                 name="discussion__user_id_e5363a_idx",
             ),
+        ),
+        migrations.CreateModel(
+            name="TopicReadRecord",
+            fields=[
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4,
+                        editable=False,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("created", models.DateTimeField()),
+                ("modified", models.DateTimeField()),
+                (
+                    "topic",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="read_by",
+                        to="discussion_forums.forumtopic",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="read_topics",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+            ],
+            options={
+                "unique_together": {("user", "topic")},
+            },
         ),
     ]

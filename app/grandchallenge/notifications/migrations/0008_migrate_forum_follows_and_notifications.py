@@ -1,6 +1,10 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import migrations
 
+from grandchallenge.discussion_forums.models import (
+    get_matching_forum,
+    get_matching_topic,
+)
 from grandchallenge.notifications.models import NotificationTypeChoices
 
 
@@ -21,19 +25,6 @@ def migrate_forum_and_topic_follows_and_notifications(  # noqa C901
 
     new_topic_ct = ContentType.objects.get_for_model(ForumTopic)
     new_forum_ct = ContentType.objects.get_for_model(Forum)
-
-    def get_matching_forum(*, old_forum_id):
-        old_forum = MachinaForum.objects.get(pk=old_forum_id)
-        return old_forum.challenge.discussion_forum
-
-    def get_matching_topic(*, old_topic_id):
-        old_topic = MachinaTopic.objects.get(pk=old_topic_id)
-        new_forum = get_matching_forum(old_forum_id=old_topic.forum.pk)
-        return ForumTopic.objects.get(
-            forum=new_forum,
-            creator=old_topic.poster,
-            subject=old_topic.subject,
-        )
 
     # delete old notifications with outdated references
     Notification.objects.filter(
@@ -57,14 +48,22 @@ def migrate_forum_and_topic_follows_and_notifications(  # noqa C901
     ):
         if follow.content_type == ct_forum:
             try:
-                forum = get_matching_forum(old_forum_id=follow.object_id)
+                forum = get_matching_forum(
+                    old_forum_id=follow.object_id,
+                    old_forum_model=MachinaForum,
+                )
             except ObjectDoesNotExist:
                 continue
             follow.object_id = forum.pk
             follow.content_type = new_forum_ct
         else:
             try:
-                topic = get_matching_topic(old_topic_id=follow.object_id)
+                topic = get_matching_topic(
+                    old_topic_id=follow.object_id,
+                    old_topic_model=MachinaTopic,
+                    new_topic_model=ForumTopic,
+                    old_forum_model=MachinaForum,
+                )
             except ObjectDoesNotExist:
                 continue
             follow.object_id = topic.pk

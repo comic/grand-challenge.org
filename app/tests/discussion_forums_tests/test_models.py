@@ -1,10 +1,15 @@
 import pytest
 
-from grandchallenge.discussion_forums.models import ForumPost, ForumTopic
+from grandchallenge.discussion_forums.models import (
+    ForumPost,
+    ForumTopic,
+    TopicReadRecord,
+)
 from tests.discussion_forums_tests.factories import (
     ForumPostFactory,
     ForumTopicFactory,
 )
+from tests.factories import UserFactory
 
 
 @pytest.mark.django_db
@@ -31,7 +36,28 @@ def test_adding_post_updates_last_post_on_topic():
     topic = ForumTopicFactory(post_count=1)
     assert topic.posts.count() == 1
     post = topic.posts.first()
+    assert topic.last_post == post
     assert topic.last_post_on == post.created
 
     post2 = ForumPostFactory(topic=topic)
+    assert topic.last_post == post2
     assert topic.last_post_on == post2.created
+
+
+@pytest.mark.django_db
+def test_get_unread_topic_posts_for_user():
+    topic = ForumTopicFactory(post_count=5)
+    user = UserFactory()
+
+    assert topic.get_unread_topic_posts_for_user(user=user).count() == 5
+
+    TopicReadRecord.objects.create(user=user, topic=topic)
+
+    assert topic.get_unread_topic_posts_for_user(user=user).count() == 0
+
+    new_post = ForumPostFactory(topic=topic)
+
+    assert topic.get_unread_topic_posts_for_user(user=user).count() == 1
+    assert [new_post] == list(
+        topic.get_unread_topic_posts_for_user(user=user).all()
+    )

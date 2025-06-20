@@ -1,9 +1,13 @@
 import math
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
+from guardian.utils import get_anonymous_user
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
@@ -11,6 +15,25 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.subdomains.utils import reverse
+
+
+def get_matching_forum(*, old_forum_id, old_forum_model):
+    old_forum = old_forum_model.objects.get(pk=old_forum_id)
+    return old_forum.challenge.discussion_forum
+
+
+def get_matching_topic(
+    *, old_topic_id, old_topic_model, new_topic_model, old_forum_model
+):
+    old_topic = old_topic_model.objects.get(pk=old_topic_id)
+    new_forum = get_matching_forum(
+        old_forum_id=old_topic.forum.pk, old_forum_model=old_forum_model
+    )
+    return new_topic_model.objects.get(
+        forum=new_forum,
+        creator=old_topic.poster,
+        subject=old_topic.subject,
+    )
 
 
 class ForumTopicKindChoices(models.TextChoices):
@@ -74,6 +97,12 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
     is_locked = models.BooleanField(
         default=False,
         help_text="Lock a topic to close it and prevent posts from being added to it.",
+    )
+    last_post = models.ForeignKey(
+        "discussion_forums.ForumPost",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
     )
     last_post_on = models.DateTimeField(
         blank=True,
@@ -169,6 +198,14 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
             },
         )
 
+    def mark_as_read(self, *, user):
+        if user == get_anonymous_user() or isinstance(user, AnonymousUser):
+            return
+        TopicReadRecord.objects.update_or_create(
+            user=user,
+            topic=self,
+        )
+
     @property
     def is_announcement(self):
         return self.kind == ForumTopicKindChoices.ANNOUNCE
@@ -176,10 +213,6 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
     @property
     def is_sticky(self):
         return self.kind == ForumTopicKindChoices.STICKY
-
-    @property
-    def last_post(self):
-        return self.posts.last()
 
     @property
     def num_replies(self):
@@ -192,6 +225,13 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
         post_count = self.posts.count()
         posts_per_page = ForumTopicPostList.paginate_by
         return math.ceil(post_count / posts_per_page)
+
+    def get_unread_topic_posts_for_user(self, *, user):
+        try:
+            read_record = self.read_by.get(user=user)
+            return self.posts.exclude(created__lt=read_record.modified)
+        except ObjectDoesNotExist:
+            return self.posts
 
 
 class ForumPost(UUIDModel):
@@ -230,7 +270,9 @@ class ForumPost(UUIDModel):
 
         if adding:
             self.assign_permissions()
+            self.topic.mark_as_read(user=self.creator)
 
+        self.topic.last_post = self
         self.topic.last_post_on = self.created
         self.topic.save()
 
@@ -251,6 +293,7 @@ class ForumPost(UUIDModel):
                 .order_by("created")
                 .last()
             )
+            topic.last_post = new_last_post
             topic.last_post_on = new_last_post.created
             topic.save()
 
@@ -342,3 +385,36 @@ class ForumPostUserObjectPermission(UserObjectPermissionBase):
 class ForumPostGroupObjectPermission(GroupObjectPermissionBase):
     allowed_permissions = frozenset({"view_forumpost", "delete_forumpost"})
     content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)
+
+
+class TopicReadRecord(UUIDModel):
+    user = models.ForeignKey(
+        get_user_model(),
+        related_name="read_topics",
+        on_delete=models.CASCADE,
+    )
+    topic = models.ForeignKey(
+        ForumTopic,
+        related_name="read_by",
+        on_delete=models.CASCADE,
+    )
+
+    class Meta:
+        unique_together = [
+            "user",
+            "topic",
+        ]
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+
+        if self.user.username == settings.ANONYMOUS_USER_NAME or isinstance(
+            self.user, AnonymousUser
+        ):
+            raise ValidationError(
+                "Anonymous users cannot be assigned to TopicReadRecord."
+            )

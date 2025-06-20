@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.forms import CharField, HiddenInput, ModelChoiceField, ModelForm
 
 from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.widgets import MarkdownEditorInlineWidget
 from grandchallenge.discussion_forums.models import (
     Forum,
@@ -89,7 +90,11 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
         self._user = user
         self._topic = topic
 
-        self.fields["topic"].queryset = ForumTopic.objects.filter(pk=topic.pk)
+        self.fields["topic"].queryset = filter_by_permission(
+            queryset=ForumTopic.objects.filter(pk=topic.pk),
+            user=user,
+            codename="view_forumtopic",
+        )
         self.fields["topic"].initial = topic
 
         self.fields["creator"].queryset = get_user_model().objects.filter(
