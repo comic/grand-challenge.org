@@ -46,8 +46,11 @@ class ForumTopicKindChoices(models.TextChoices):
 
 class Forum(UUIDModelNoAutoNow):
 
-    source_object = models.ForeignKey(
-        MachinaForum, null=True, on_delete=models.SET_NULL
+    source_object = models.OneToOneField(
+        MachinaForum,
+        related_name="migrated_forum",
+        null=True,
+        on_delete=models.SET_NULL,
     )
 
     class Meta:
@@ -71,8 +74,11 @@ class Forum(UUIDModelNoAutoNow):
 
 
 class ForumTopic(FieldChangeMixin, UUIDModelNoAutoNow):
-    source_object = models.ForeignKey(
-        machina_conversation_models.Topic, null=True, on_delete=models.SET_NULL
+    source_object = models.OneToOneField(
+        machina_conversation_models.Topic,
+        related_name="migrated_topic",
+        null=True,
+        on_delete=models.SET_NULL,
     )
     forum = models.ForeignKey(
         Forum,
@@ -221,8 +227,11 @@ class ForumTopic(FieldChangeMixin, UUIDModelNoAutoNow):
 
 
 class ForumPost(UUIDModelNoAutoNow):
-    source_object = models.ForeignKey(
-        machina_conversation_models.Post, null=True, on_delete=models.SET_NULL
+    source_object = models.OneToOneField(
+        machina_conversation_models.Post,
+        related_name="migrated_post",
+        null=True,
+        on_delete=models.SET_NULL,
     )
     topic = models.ForeignKey(
         ForumTopic,
@@ -259,7 +268,7 @@ class ForumPost(UUIDModelNoAutoNow):
 
         if adding:
             self.assign_permissions()
-            self.topic.mark_as_read(user=self.creator)
+            # self.topic.mark_as_read(user=self.creator)
 
         self.topic.last_post = self
         self.topic.last_post_on = self.created
@@ -365,8 +374,9 @@ class ForumPostGroupObjectPermission(GroupObjectPermissionBase):
 
 
 class TopicReadRecord(UUIDModelNoAutoNow):
-    source_object = models.ForeignKey(
+    source_object = models.OneToOneField(
         machina_tracking_models.TopicReadTrack,
+        related_name="migrated_track",
         null=True,
         on_delete=models.SET_NULL,
     )

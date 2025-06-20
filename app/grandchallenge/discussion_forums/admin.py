@@ -1,9 +1,19 @@
 from django.contrib import admin
 
+from grandchallenge.core.admin import (
+    GroupObjectPermissionAdmin,
+    UserObjectPermissionAdmin,
+)
 from grandchallenge.discussion_forums.models import (
     Forum,
+    ForumGroupObjectPermission,
     ForumPost,
+    ForumPostGroupObjectPermission,
+    ForumPostUserObjectPermission,
     ForumTopic,
+    ForumTopicGroupObjectPermission,
+    ForumTopicUserObjectPermission,
+    ForumUserObjectPermission,
 )
 
 
@@ -30,3 +40,13 @@ class TopicAdmin(admin.ModelAdmin):
 class PostAdmin(admin.ModelAdmin):
     list_display = ("topic", "creator", "created")
     search_fields = ("creator__username",)
+
+
+admin.site.register(ForumUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(ForumGroupObjectPermission, GroupObjectPermissionAdmin)
+admin.site.register(ForumTopicUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(
+    ForumTopicGroupObjectPermission, GroupObjectPermissionAdmin
+)
+admin.site.register(ForumPostUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(ForumPostGroupObjectPermission, GroupObjectPermissionAdmin)

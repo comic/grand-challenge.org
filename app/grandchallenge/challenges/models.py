@@ -737,10 +737,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         self.external_evaluators_group = external_evaluators_group
 
     def create_forum(self):
-        # Create new forum
-        self.discussion_forum = discussion_forum_models.Forum.objects.create()
-
-        # But also still create old forum
         f, created = Forum.objects.get_or_create(
             name=settings.FORUMS_CHALLENGE_CATEGORY_NAME, type=Forum.FORUM_CAT
         )
@@ -765,6 +761,11 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             name=self.title if self.title else self.short_name,
             parent=f,
             type=Forum.FORUM_POST,
+        )
+
+        # Create new forum
+        self.discussion_forum = discussion_forum_models.Forum.objects.create(
+            created=now(), modified=now(), source_object=self.forum
         )
 
     def create_default_pages(self):
