@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% load docpage_extras %}
 {% load bleach %}
-{% load static %}
 
 {% block title %}
     {{ currentdocpage.title }} -
@@ -143,7 +142,7 @@
                                 </li>
                             {% endfor %}
                         </ol>
-                        <a href="{% url 'documentation:detail' slug=result.slug %}?highlight={{ result.headline|startend_text }}"><h5 class="pl-3 pt-1">{{ result.title }}</h5></a>
+                        <a href="{% url 'documentation:detail' slug=result.slug %}#:~:text={{ result.headline|startend_text }}"><h5 class="pl-3 pt-1">{{ result.title }}</h5></a>
                         <div class="mb-3 pl-3">{{ result.headline|clean }}</div>
                     </div>
                 {% endfor %}
@@ -166,11 +165,4 @@
             </div>
         </div>
     {% endif %}
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    <script type="module" src="{% static 'documentation/js/highlight.mjs' %}"></script>
-
 {% endblock %}
