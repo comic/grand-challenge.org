@@ -151,18 +151,8 @@
             {% endif %}
         </div>
     {% else %}
+        {% include "documentation/partials/navigation_links.html" with page=currentdocpage %}
         <div class="mt-4 docpage" id=pageContainer>{{ currentdocpage.content|md2html }}</div>
-        <div class="row">
-            <div class="d-inline-block col-6 text-left">
-                {% if currentdocpage.previous %}
-                    <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:detail' slug=currentdocpage.previous.slug %}">Previous section</a>
-                {% endif %}
-            </div>
-            <div class="d-inline col-6 text-right">
-                {% if currentdocpage.next %}
-                    <a class="btn btn-md btn-outline-dark" href="{% url 'documentation:detail' slug=currentdocpage.next.slug %}">Next section</a>
-                {% endif %}
-            </div>
-        </div>
+        {% include "documentation/partials/navigation_links.html" with page=currentdocpage %}
     {% endif %}
 {% endblock %}

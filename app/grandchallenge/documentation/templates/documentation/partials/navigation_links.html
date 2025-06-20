@@ -1,0 +1,22 @@
+<div class="row mt-3">
+    <div class="d-inline-block col-6 text-left">
+        {% if page.previous %}
+            <a href="{% url 'documentation:detail' slug=page.previous.slug %}">
+                <div class="row">
+                    <div class="col-auto my-auto pr-2">←</div>
+                    <div class="col pl-0">{{ page.previous.title }}</div>
+                </div>
+            </a>
+        {% endif %}
+    </div>
+    <div class="d-inline col-6 text-right">
+        {% if page.next %}
+            <a href="{% url 'documentation:detail' slug=page.next.slug %}">
+                <div class="row">
+                    <div class="col pr-0">{{ page.next.title }}</div>
+                    <div class="col-auto my-auto pl-2">→</div>
+                </div>
+            </a>
+        {% endif %}
+    </div>
+</div>
