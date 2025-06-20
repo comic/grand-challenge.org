@@ -658,6 +658,17 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             )
         )
 
+    def update_user_forum_permissions(self):
+        perms = UserForumPermission.objects.filter(
+            permission__codename__in=["can_see_forum", "can_read_forum"],
+            forum=self.forum,
+        )
+
+        for p in perms:
+            p.has_perm = not self.hidden
+
+        UserForumPermission.objects.bulk_update(perms, ["has_perm"])
+
     def assign_discussion_forum_permissions(self):
         if self.display_forum_link:
             assign_perm(
