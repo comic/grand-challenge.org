@@ -7,7 +7,9 @@ from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from machina.apps.forum.models import Forum as MachinaForum
-from machina.apps.forum_conversation import models as machina_conversation_models
+from machina.apps.forum_conversation import (
+    models as machina_conversation_models,
+)
 from machina.apps.forum_tracking import models as machina_tracking_models
 
 from grandchallenge.core.guardian import (
@@ -364,7 +366,9 @@ class ForumPostGroupObjectPermission(GroupObjectPermissionBase):
 
 class TopicReadRecord(UUIDModelNoAutoNow):
     source_object = models.ForeignKey(
-        machina_tracking_models.TopicReadTrack, null=True, on_delete=models.SET_NULL
+        machina_tracking_models.TopicReadTrack,
+        null=True,
+        on_delete=models.SET_NULL,
     )
     user = models.ForeignKey(
         get_user_model(),
