@@ -42,16 +42,14 @@ def get_breadcrumbs(page):
 
 @register.filter
 def startend_text(text):
-    text = striptags(text).strip().replace("-", "%2D")
+    text = striptags(text).strip()
 
-    lines = text.splitlines()
-
-    if len(lines) < 2:
+    # Split around center word and extract fixed-length windows
+    words = text.split()
+    n_words = min(3, len(words) // 2)
+    if n_words < 2:
         return quote(text)
+    start = " ".join(words[:n_words]).rstrip(":")
+    end = " ".join(words[-n_words:])
 
-    lines = [line for line in lines if len(line.split()) > 2]
-
-    if len(lines) < 2:
-        return quote(lines[0])
-
-    return f"{quote(lines[0])},{quote(lines[-1])}"
+    return f"{quote(start)}:::{quote(end)}"
