@@ -1,3 +1,5 @@
+from django.db.models import Prefetch
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
@@ -16,6 +18,7 @@ from grandchallenge.discussion_forums.models import (
     ForumPost,
     ForumTopic,
     ForumTopicKindChoices,
+    TopicReadRecord,
 )
 from grandchallenge.subdomains.utils import reverse
 
@@ -26,9 +29,14 @@ class ForumTopicListView(
     model = ForumTopic
     permission_required = "view_forum"
     raise_exception = True
-    queryset = ForumTopic.objects.exclude(
-        kind=ForumTopicKindChoices.ANNOUNCE
-    ).select_related("forum")
+    common_select_related_fields = [
+        "forum",
+        "creator__verification",
+        "creator__user_profile",
+        "last_post__creator__user_profile",
+        "last_post__creator__verification",
+    ]
+    queryset = ForumTopic.objects.exclude(kind=ForumTopicKindChoices.ANNOUNCE)
     paginate_by = 15
 
     @cached_property
@@ -38,8 +46,28 @@ class ForumTopicListView(
     def get_permission_object(self):
         return self.forum
 
+    @cached_property
+    def user_records(self):
+        return TopicReadRecord.objects.filter(user=self.request.user)
+
+    @property
+    def common_prefetch_related_fields(self):
+        return [
+            "posts",
+            Prefetch(
+                "read_by",
+                queryset=self.user_records,
+                to_attr="user_read_records",
+            ),
+        ]
+
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = (
+            super()
+            .get_queryset()
+            .select_related(*self.common_select_related_fields)
+            .prefetch_related(*self.common_prefetch_related_fields)
+        )
         return queryset.filter(forum=self.forum)
 
     def get_context_data(self, *args, **kwargs):
@@ -50,7 +78,9 @@ class ForumTopicListView(
         announcements = filter_by_permission(
             queryset=ForumTopic.objects.filter(
                 kind=ForumTopicKindChoices.ANNOUNCE, forum=self.forum
-            ),
+            )
+            .select_related(*self.common_select_related_fields)
+            .prefetch_related(*self.common_prefetch_related_fields),
             user=self.request.user,
             codename="view_forumtopic",
         )
@@ -94,7 +124,11 @@ class ForumTopicPostList(
     paginate_by = 10
     permission_required = "view_forumtopic"
     raise_exception = True
-    queryset = ForumPost.objects.select_related("topic__forum")
+    queryset = ForumPost.objects.select_related(
+        "topic__forum__linked_challenge",
+        "creator__user_profile",
+        "creator__verification",
+    )
 
     @cached_property
     def forum(self):
@@ -106,6 +140,12 @@ class ForumTopicPostList(
             ForumTopic,
             forum=self.forum,
             slug=self.kwargs["slug"],
+        )
+
+    @cached_property
+    def unread_posts_by_user(self):
+        return self.topic.get_unread_topic_posts_for_user(
+            user=self.request.user
         )
 
     def get_permission_object(self):
@@ -124,9 +164,20 @@ class ForumTopicPostList(
                 "post_create_form": ForumPostForm(
                     user=self.request.user, topic=self.topic
                 ),
+                "unread_posts_by_user": self.unread_posts_by_user,
             }
         )
         return context
+
+    def get(self, request, *args, **kwargs):
+        if self.unread_posts_by_user.exists():
+            response = HttpResponseRedirect(
+                self.unread_posts_by_user.first().get_absolute_url()
+            )
+        else:
+            response = super().get(request, *args, **kwargs)
+        self.topic.mark_as_read(user=self.request.user)
+        return response
 
 
 class ForumTopicDelete(ObjectPermissionRequiredMixin, DeleteView):
@@ -288,8 +339,16 @@ class MyForumPosts(ViewObjectPermissionListMixin, ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        return qs.filter(creator=self.request.user)
+        return (
+            super()
+            .get_queryset()
+            .select_related(
+                "topic__forum__linked_challenge",
+                "creator__user_profile",
+                "creator__verification",
+            )
+            .filter(creator=self.request.user)
+        )
 
     @cached_property
     def forum(self):

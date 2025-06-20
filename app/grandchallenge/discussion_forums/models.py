@@ -1,5 +1,5 @@
-from django.conf import settings
 import math
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -121,6 +121,11 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
         null=True,
         on_delete=models.SET_NULL,
     )
+    last_post_on = models.DateTimeField(
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+    )
 
     class Meta:
         ordering = [
@@ -219,6 +224,14 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
             },
         )
 
+    def mark_as_read(self, *, user):
+        if user == get_anonymous_user() or isinstance(user, AnonymousUser):
+            return
+        TopicReadRecord.objects.update_or_create(
+            user=user,
+            topic=self,
+        )
+
     @property
     def is_announcement(self):
         return self.kind == ForumTopicKindChoices.ANNOUNCE
@@ -245,6 +258,13 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
         post_count = self.posts.count()
         posts_per_page = ForumTopicPostList.paginate_by
         return math.ceil(post_count / posts_per_page)
+
+    def get_unread_topic_posts_for_user(self, *, user):
+        try:
+            read_record = self.read_by.get(user=user)
+            return self.posts.exclude(created__lt=read_record.modified)
+        except ObjectDoesNotExist:
+            return self.posts
 
 
 class ForumPost(UUIDModel):
