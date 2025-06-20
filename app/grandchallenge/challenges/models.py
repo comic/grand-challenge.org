@@ -84,6 +84,7 @@ from grandchallenge.core.validators import (
     JSONValidator,
     MimeTypeValidator,
 )
+from grandchallenge.discussion_forums import models as discussion_forum_models
 from grandchallenge.evaluation.tasks import assign_evaluation_permissions
 from grandchallenge.evaluation.utils import (
     StatusChoices,
@@ -417,7 +418,16 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         related_name="external_evaluators_of_challenge",
     )
     forum = models.OneToOneField(
-        Forum, editable=False, on_delete=models.PROTECT
+        Forum,
+        editable=False,
+        on_delete=models.PROTECT,
+    )
+    discussion_forum = models.OneToOneField(
+        discussion_forum_models.Forum,
+        related_name="linked_challenge",
+        null=True,
+        editable=False,
+        on_delete=models.PROTECT,
     )
     display_forum_link = models.BooleanField(
         default=False,
@@ -582,6 +592,8 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         else:
             remove_perm("view_challenge", reg_and_anon, self)
 
+        self.assign_discussion_forum_permissions()
+
     def create_forum_permissions(self):
         participant_group_perms = {
             "can_see_forum",
@@ -646,16 +658,59 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             )
         )
 
-    def update_user_forum_permissions(self):
-        perms = UserForumPermission.objects.filter(
-            permission__codename__in=["can_see_forum", "can_read_forum"],
-            forum=self.forum,
-        )
-
-        for p in perms:
-            p.has_perm = not self.hidden
-
-        UserForumPermission.objects.bulk_update(perms, ["has_perm"])
+    def assign_discussion_forum_permissions(self):
+        if self.display_forum_link:
+            assign_perm(
+                "discussion_forums.view_forum",
+                self.admins_group,
+                self.discussion_forum,
+            )
+            assign_perm(
+                "discussion_forums.view_forum",
+                self.participants_group,
+                self.discussion_forum,
+            )
+            assign_perm(
+                "discussion_forums.create_forum_topic",
+                self.admins_group,
+                self.discussion_forum,
+            )
+            assign_perm(
+                "discussion_forums.create_forum_topic",
+                self.participants_group,
+                self.discussion_forum,
+            )
+            assign_perm(
+                "discussion_forums.create_sticky_and_announcement_topic",
+                self.admins_group,
+                self.discussion_forum,
+            )
+        else:
+            remove_perm(
+                "discussion_forums.view_forum",
+                self.admins_group,
+                self.discussion_forum,
+            )
+            remove_perm(
+                "discussion_forums.view_forum",
+                self.participants_group,
+                self.discussion_forum,
+            )
+            remove_perm(
+                "discussion_forums.create_forum_topic",
+                self.admins_group,
+                self.discussion_forum,
+            )
+            remove_perm(
+                "discussion_forums.create_forum_topic",
+                self.participants_group,
+                self.discussion_forum,
+            )
+            remove_perm(
+                "discussion_forums.create_sticky_and_announcement_topic",
+                self.admins_group,
+                self.discussion_forum,
+            )
 
     def create_groups(self):
         # Create the groups only on first save
@@ -671,6 +726,10 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         self.external_evaluators_group = external_evaluators_group
 
     def create_forum(self):
+        # Create new forum
+        self.discussion_forum = discussion_forum_models.Forum.objects.create()
+
+        # But also still create old forum
         f, created = Forum.objects.get_or_create(
             name=settings.FORUMS_CHALLENGE_CATEGORY_NAME, type=Forum.FORUM_CAT
         )
@@ -817,12 +876,19 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             follow(
                 user=user, obj=self.forum, actor_only=False, send_action=False
             )
+            follow(
+                user=user,
+                obj=self.discussion_forum,
+                actor_only=False,
+                send_action=False,
+            )
         else:
             raise ValueError("You cannot add the anonymous user to this group")
 
     def remove_participant(self, user):
         user.groups.remove(self.participants_group)
         unfollow(user=user, obj=self.forum, send_action=False)
+        unfollow(user=user, obj=self.discussion_forum, send_action=False)
 
     def add_admin(self, user):
         if user != get_anonymous_user():
@@ -830,12 +896,19 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             follow(
                 user=user, obj=self.forum, actor_only=False, send_action=False
             )
+            follow(
+                user=user,
+                obj=self.discussion_forum,
+                actor_only=False,
+                send_action=False,
+            )
         else:
             raise ValueError("You cannot add the anonymous user to this group")
 
     def remove_admin(self, user):
         user.groups.remove(self.admins_group)
         unfollow(user=user, obj=self.forum, send_action=False)
+        unfollow(user=user, obj=self.discussion_forum, send_action=False)
 
     @cached_property
     def should_show_verification_warning(self):
