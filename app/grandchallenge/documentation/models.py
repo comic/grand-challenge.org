@@ -44,6 +44,8 @@ class DocPage(models.Model):
         related_name="children",
     )
 
+    is_faq = models.BooleanField(default=False)
+
     class Meta:
         ordering = ["order"]
         indexes = [
