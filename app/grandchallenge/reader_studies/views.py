@@ -11,6 +11,7 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
+from django.db.models import Count, Q
 from django.forms import Form
 from django.forms.utils import ErrorList
 from django.http import (
@@ -73,6 +74,7 @@ from grandchallenge.core.guardian import (
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.utils import strtobool
+from grandchallenge.core.utils.query import set_seed
 from grandchallenge.core.views import PermissionRequestUpdate
 from grandchallenge.datatables.views import Column
 from grandchallenge.groups.forms import EditorsForm
@@ -1018,11 +1020,11 @@ class DisplaySetViewSet(
     serializer_class = DisplaySetSerializer
     queryset = (
         DisplaySet.objects.all()
-        .with_row_number()
         .select_related("reader_study__hanging_protocol")
         .prefetch_related(
             "values__image",
             "values__interface",
+            "reader_study__display_sets",
             "reader_study__optional_hanging_protocols",
         )
     )
@@ -1033,6 +1035,7 @@ class DisplaySetViewSet(
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
     )
+    randomized_qs = []
 
     @property
     def reader_study(self):
@@ -1043,26 +1046,18 @@ class DisplaySetViewSet(
     def get_serializer_class(self):
         if self.action in ["partial_update", "update", "create"]:
             return DisplaySetPostSerializer
-        else:
-            return DisplaySetSerializer
+        return DisplaySetSerializer
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
         # Note: if more fields besides 'reader_study' are added to the
         # filter_set fields, we cannot call super anymore before randomizing
         # as we only want to filter out the display sets for a specific
         # reader study.
         reader_study = self.reader_study
-
-        if reader_study:
-            if reader_study.shuffle_hanging_list:
-                queryset = queryset.with_shuffled_index(
-                    reader_study=reader_study, seed=self.request.user.pk
-                )
-            else:
-                queryset = queryset.filter(reader_study=reader_study)
-
+        if reader_study and reader_study.shuffle_hanging_list:
+            queryset = queryset.filter(reader_study=reader_study)
+            queryset = self.create_randomized_qs(queryset=queryset)
         unanswered_by_user = strtobool(
             self.request.query_params.get("unanswered_by_user", "False")
         )
@@ -1073,10 +1068,8 @@ class DisplaySetViewSet(
                 "Specifying a user is only possible when retrieving unanswered"
                 " display sets."
             )
-
         if username:
             user = get_user_model().objects.filter(username=username).get()
-
             if user != self.request.user and not self.request.user.has_perm(
                 "change_readerstudy", self.reader_study
             ):
@@ -1093,30 +1086,56 @@ class DisplaySetViewSet(
                     "Please provide a reader study when filtering for "
                     "unanswered display_sets."
                 )
-
             answerable_question_count = reader_study.answerable_question_count
-            queryset = queryset.with_answer_count(user=user).exclude(
-                answer_count__gte=answerable_question_count,
+            queryset = (
+                queryset.annotate(
+                    answer_count=Count(
+                        "answers",
+                        filter=Q(
+                            answers__is_ground_truth=False,
+                            answers__creator=user,
+                        ),
+                    )
+                )
+                .exclude(
+                    answer_count__gte=answerable_question_count,
+                )
+                .order_by("order", "created")
             )
+            # Because the filtering has changed the list, we can no longer
+            # reapply .order_by("?"), as the ordering would not be consistent
+            # with the ordering of the full list. Instead, we use the
+            # previously saved randomized_qs and filter the proper items
+            # out of it.
+            if reader_study and reader_study.shuffle_hanging_list:
+                pks = queryset.values_list("pk", flat=True)
+                queryset = [x for x in self.randomized_qs if x.pk in pks]
 
-            if reader_study.shuffle_hanging_list:
-                queryset = queryset.order_by("shuffled_index")
-            else:
-                queryset = queryset.order_by("order", "created")
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
 
-        return queryset
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def get_object(self):
         obj = super().get_object()
-
+        # retrieve the full queryset and save its shuffled version to later
+        # determine the shuffled index for this object
         if obj.reader_study.shuffle_hanging_list:
-            queryset = self.filter_queryset(self.get_queryset())
-            queryset = queryset.with_shuffled_index(
-                reader_study=obj.reader_study, seed=self.request.user.pk
-            )
-            return queryset.get(pk=obj.pk)
-        else:
-            return obj
+            queryset = self.get_queryset()
+            queryset = super().filter_queryset(queryset)
+            queryset = queryset.filter(reader_study=obj.reader_study)
+            self.create_randomized_qs(queryset=queryset)
+        return obj
+
+    def create_randomized_qs(self, queryset):
+        set_seed(1 / int(self.request.user.pk))
+        queryset = queryset.order_by("?")
+        # Save the queryset to determine each item's index in the serializer
+        self.randomized_qs = list(queryset)
+        return queryset
 
 
 class QuestionViewSet(ReadOnlyModelViewSet):

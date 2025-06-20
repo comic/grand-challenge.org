@@ -16,5 +16,6 @@ def index(queryset, obj):
 def set_seed(seed):
     # Note: this only works for postgres, if we ever switch dbs, this
     # may need changing.
-    with connection.cursor() as cursor:
-        cursor.execute(f"SELECT setseed({seed});")
+    cursor = connection.cursor()
+    cursor.execute(f"SELECT setseed({seed});")
+    cursor.close()
