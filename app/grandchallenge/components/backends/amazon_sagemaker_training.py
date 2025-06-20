@@ -1,4 +1,6 @@
+import botocore
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils._os import safe_join
 
 from grandchallenge.components.backends.amazon_sagemaker_base import (
@@ -23,6 +25,32 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
     @property
     def _training_output_prefix(self):
         return safe_join("/training-outputs", *self.job_path_parts)
+
+    @property
+    def warm_pool_retained_billable_time_in_seconds(self):
+        try:
+            job_description = self._sagemaker_client.describe_training_job(
+                TrainingJobName=self._sagemaker_job_name,
+            )
+        except botocore.exceptions.ClientError as error:
+            if (
+                error.response["Error"]["Code"] == "ValidationException"
+                and "Requested resource not found"
+                in error.response["Error"]["Message"]
+            ):
+                raise ObjectDoesNotExist from error
+            else:
+                raise
+
+        if job_description.get("WarmPoolStatus", {}).get("Status") in {
+            "Terminated",
+            "Reused",
+        }:
+            return job_description["WarmPoolStatus"][
+                "ResourceRetainedBillableTimeInSeconds"
+            ]
+        else:
+            return None
 
     @staticmethod
     def get_job_name(*, event):
@@ -63,6 +91,7 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
                 "VolumeSizeInGB": self._required_volume_size_gb,
                 "InstanceType": self._instance_type.name,
                 "InstanceCount": 1,
+                "KeepAlivePeriodInSeconds": 300 if self._use_warm_pool else 0,
             },
             StoppingCondition={
                 # https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_StoppingCondition.html

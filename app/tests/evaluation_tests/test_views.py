@@ -1057,7 +1057,7 @@ def test_create_algorithm_for_phase_presets(client):
         user=admin,
         data={
             "title": "Test algorithm",
-            "job_requires_memory_gb": 8,
+            "job_requires_memory_gb": 8,  # Fixed at 16 in disabled field
             "interfaces": [
                 interface.pk
                 for interface in response.context_data["form"][
@@ -1100,7 +1100,7 @@ def test_create_algorithm_for_phase_presets(client):
     assert {*algorithm.modalities.all()} == set()
     assert algorithm.logo == phase.challenge.logo
     assert algorithm.time_limit == 10 * 60
-    assert algorithm.job_requires_memory_gb == 8
+    assert algorithm.job_requires_memory_gb == 16
 
     # try to set different values
     ci3, ci4 = ComponentInterfaceFactory.create_batch(2)
@@ -1120,7 +1120,7 @@ def test_create_algorithm_for_phase_presets(client):
         user=admin,
         data={
             "title": "Test algorithm",
-            "job_requires_memory_gb": 8,
+            "job_requires_memory_gb": 8,  # Fixed at 16 in disabled field
             "interfaces": [interface1.pk],
             "workstation": ws.pk,
             "hanging_protocol": hp.pk,
@@ -1143,7 +1143,7 @@ def test_create_algorithm_for_phase_presets(client):
     assert alg2.view_content != "{}"
     assert alg2.workstation.slug != ws
     assert alg2.logo == phase.challenge.logo
-    assert alg2.job_requires_memory_gb == 8
+    assert alg2.job_requires_memory_gb == 16
 
 
 @pytest.mark.django_db

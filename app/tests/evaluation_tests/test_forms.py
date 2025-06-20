@@ -953,7 +953,7 @@ def test_algorithm_for_phase_form():
     assert not form.fields["title"].disabled
     assert not form.fields["description"].disabled
     assert not form.fields["job_requires_gpu_type"].disabled
-    assert not form.fields["job_requires_memory_gb"].disabled
+    assert form.fields["job_requires_memory_gb"].disabled
 
     assert {
         form.fields["interfaces"],
@@ -968,13 +968,13 @@ def test_algorithm_for_phase_form():
         form.fields["contact_email"],
         form.fields["logo"],
         form.fields["time_limit"],
+        form.fields["job_requires_memory_gb"],
     } == {field.field for field in form.hidden_fields()}
 
     assert {
         form.fields["title"],
         form.fields["description"],
         form.fields["job_requires_gpu_type"],
-        form.fields["job_requires_memory_gb"],
     } == {field.field for field in form.visible_fields()}
 
 

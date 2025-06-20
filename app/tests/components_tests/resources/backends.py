@@ -76,6 +76,10 @@ class InsecureDockerExecutor(DockerConnectionMixin, Executor):
         logger.warning("Runtime metrics are not implemented for this backend")
         return
 
+    @property
+    def warm_pool_retained_billable_time_in_seconds(self):
+        raise NotImplementedError
+
     def _execute_container(self) -> None:
         environment = {
             **self.invocation_environment,

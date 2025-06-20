@@ -11,6 +11,7 @@ from guardian.shortcuts import (
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.serializers import JobPostSerializer
 from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.tasks import (
     create_algorithm_jobs_for_evaluation,
 )
@@ -391,6 +392,7 @@ class TestJobPermissions:
             submission__phase__archive=archive,
             submission__algorithm_image=ai,
             time_limit=ai.algorithm.time_limit,
+            status=Evaluation.EXECUTING_PREREQUISITES,
         )
 
         # The default should be not to share the jobs
@@ -414,7 +416,9 @@ class TestJobPermissions:
         with django_capture_on_commit_callbacks(execute=True):
             archive_item.values.add(civ)
 
-        create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
+        create_algorithm_jobs_for_evaluation(
+            evaluation_pk=evaluation.pk, first_run=False
+        )
 
         job = Job.objects.get()
 
@@ -427,7 +431,6 @@ class TestJobPermissions:
                 "view_job",
                 "view_logs",
             },
-            job.viewers: {"view_job"},
         }
         # No-one should be able to change the job
         assert (
@@ -436,8 +439,8 @@ class TestJobPermissions:
             )
             == {}
         )
-        # No-one should be in the viewers group
-        assert {*job.viewers.user_set.all()} == set()
+        # The viewers group should not exist for system jobs
+        assert job.viewers is None
 
     def test_job_permissions_for_debug_phase(
         self, django_capture_on_commit_callbacks
@@ -448,6 +451,7 @@ class TestJobPermissions:
             submission__phase__archive=archive,
             submission__algorithm_image=ai,
             time_limit=ai.algorithm.time_limit,
+            status=Evaluation.EXECUTING_PREREQUISITES,
         )
 
         evaluation.submission.phase.give_algorithm_editors_job_view_permissions = (
@@ -470,7 +474,9 @@ class TestJobPermissions:
         interface = AlgorithmInterfaceFactory(inputs=[ci])
         ai.algorithm.interfaces.add(interface)
 
-        create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
+        create_algorithm_jobs_for_evaluation(
+            evaluation_pk=evaluation.pk, first_run=False
+        )
 
         job = Job.objects.get()
 
@@ -487,7 +493,6 @@ class TestJobPermissions:
                 "view_job",
                 "view_logs",
             },
-            job.viewers: {"view_job"},
         }
         # No-one should be able to change the job
         assert (
@@ -496,5 +501,5 @@ class TestJobPermissions:
             )
             == {}
         )
-        # No-one should be in the viewers group
-        assert {*job.viewers.user_set.all()} == set()
+        # The viewers group should not exist for system jobs
+        assert job.viewers is None

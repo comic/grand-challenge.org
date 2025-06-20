@@ -8,7 +8,6 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError
-from django.test import TestCase
 from django.utils.timezone import now
 
 from grandchallenge.algorithms.models import (
@@ -113,7 +112,8 @@ def test_average_duration(settings, django_capture_on_commit_callbacks):
     assert alg.average_duration == timedelta(minutes=5)
 
 
-class TestAlgorithmJobGroups(TestCase):
+@pytest.mark.django_db
+class TestAlgorithmJobGroups:
     def test_job_group_created(self):
         j = AlgorithmJobFactory(time_limit=60)
         assert j.viewers is not None
@@ -132,9 +132,11 @@ class TestAlgorithmJobGroups(TestCase):
     def test_group_deletion_reverse(self):
         j = AlgorithmJobFactory(time_limit=60)
         g = j.viewers
+        g.delete()
 
-        with pytest.raises(ProtectedError):
-            g.delete()
+        j.refresh_from_db()
+
+        assert j.viewers is None
 
     def test_creator_in_viewers_group(self):
         j = AlgorithmJobFactory(time_limit=60)
@@ -142,7 +144,15 @@ class TestAlgorithmJobGroups(TestCase):
 
     def test_viewer_group_in_m2m(self):
         j = AlgorithmJobFactory(time_limit=60)
+
+        assert j.viewers is not None
         assert {*j.viewer_groups.all()} == {j.viewers}
+
+    def test_no_group_with_no_creator(self):
+        j = AlgorithmJobFactory(creator=None, time_limit=60)
+
+        assert j.viewers is None
+        assert {*j.viewer_groups.all()} == set()
 
 
 def test_get_or_create_display_set_unsuccessful_job():

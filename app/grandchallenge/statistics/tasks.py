@@ -24,6 +24,7 @@ from grandchallenge.reader_studies.models import Answer, ReaderStudy
 from grandchallenge.utilization.models import (
     EvaluationUtilization,
     JobUtilization,
+    JobWarmPoolUtilization,
 )
 from grandchallenge.workstations.models import Session, WorkstationImage
 
@@ -151,6 +152,9 @@ def update_site_statistics_cache():
         },
         "this_month_jobs": {
             "algorithm_jobs": JobUtilization.objects.filter(
+                created__month=now().month, created__year=now().year
+            ).aggregate(Sum("compute_cost_euro_millicents")),
+            "algorithm_job_warm_pools": JobWarmPoolUtilization.objects.filter(
                 created__month=now().month, created__year=now().year
             ).aggregate(Sum("compute_cost_euro_millicents")),
             "evaluations": EvaluationUtilization.objects.filter(

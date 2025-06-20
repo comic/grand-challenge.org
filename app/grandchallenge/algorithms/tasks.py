@@ -12,6 +12,7 @@ from django.db.transaction import on_commit
 from django.utils._os import safe_join
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
@@ -70,10 +71,10 @@ def create_algorithm_jobs(
     time_limit,
     requires_gpu_type,
     requires_memory_gb,
+    max_jobs,
     algorithm_model=None,
     extra_viewer_groups=None,
     extra_logs_viewer_groups=None,
-    max_jobs=None,
     task_on_success=None,
     task_on_failure=None,
     job_utilization_phase=None,
@@ -125,46 +126,52 @@ def create_algorithm_jobs(
         algorithm_model=algorithm_model,
     )
 
+    items_remaining = sum(
+        len(archive_items) for archive_items in valid_job_inputs.values()
+    )
+
     if time_limit is None:
         time_limit = settings.ALGORITHMS_JOB_DEFAULT_TIME_LIMIT_SECONDS
 
     jobs = []
     for interface, archive_items in valid_job_inputs.items():
         for ai in archive_items:
-            if max_jobs is not None and len(jobs) >= max_jobs:
-                # only schedule max_jobs amount of jobs
-                # the rest will be scheduled only after these have succeeded
-                # we do not want to retry the task here, so just stop the loop
-                break
-
-            if len(jobs) >= settings.ALGORITHMS_JOB_BATCH_LIMIT:
-                # raise exception so that we retry the task
+            if len(jobs) >= max_jobs:
                 raise TooManyJobsScheduled
 
-            with transaction.atomic():
-                job = Job.objects.create(
-                    creator=None,  # System jobs, so no creator
-                    algorithm_image=algorithm_image,
-                    algorithm_model=algorithm_model,
-                    algorithm_interface=interface,
-                    task_on_success=task_on_success,
-                    task_on_failure=task_on_failure,
-                    time_limit=time_limit,
-                    requires_gpu_type=requires_gpu_type,
-                    requires_memory_gb=requires_memory_gb,
-                    extra_viewer_groups=extra_viewer_groups,
-                    extra_logs_viewer_groups=extra_logs_viewer_groups,
-                    input_civ_set=ai.values.all(),
+            use_warm_pool = (requires_gpu_type == GPUTypeChoices.A10G) and (
+                (
+                    items_remaining
+                    - settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM
+                    - len(jobs)
                 )
+                > 0
+            )
 
-                job.utilization.archive = ai.archive
-                job.utilization.phase = job_utilization_phase
-                job.utilization.challenge = job_utilization_challenge
-                job.utilization.save()
+            job = Job.objects.create(
+                creator=None,  # System jobs, so no creator
+                algorithm_image=algorithm_image,
+                algorithm_model=algorithm_model,
+                algorithm_interface=interface,
+                task_on_success=task_on_success,
+                task_on_failure=task_on_failure,
+                time_limit=time_limit,
+                requires_gpu_type=requires_gpu_type,
+                requires_memory_gb=requires_memory_gb,
+                extra_viewer_groups=extra_viewer_groups,
+                extra_logs_viewer_groups=extra_logs_viewer_groups,
+                input_civ_set=ai.values.all(),
+                use_warm_pool=use_warm_pool,
+            )
 
-                on_commit(job.execute)
+            job.utilization.archive = ai.archive
+            job.utilization.phase = job_utilization_phase
+            job.utilization.challenge = job_utilization_challenge
+            job.utilization.save()
 
-                jobs.append(job)
+            on_commit(job.execute)
+
+            jobs.append(job)
 
     return jobs
 

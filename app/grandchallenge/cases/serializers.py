@@ -8,10 +8,7 @@ from rest_framework.relations import (
 )
 
 from grandchallenge.archives.models import Archive, ArchiveItem
-from grandchallenge.archives.tasks import (
-    add_images_to_archive,
-    add_images_to_archive_item,
-)
+from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import add_image_to_object
@@ -268,9 +265,11 @@ def _get_linked_task(*, targets, interface):
             kwargs["interface_pk"] = interface.pk
         return add_images_to_archive.signature(kwargs=kwargs, immutable=True)
     elif "archive_item" in targets:
-        return add_images_to_archive_item.signature(
+        return add_image_to_object.signature(
             kwargs={
-                "archive_item_pk": targets["archive_item"].pk,
+                "app_label": targets["archive_item"]._meta.app_label,
+                "model_name": targets["archive_item"]._meta.model_name,
+                "object_pk": targets["archive_item"].pk,
                 "interface_pk": interface.pk,
             },
             immutable=True,

@@ -21,10 +21,7 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
-from grandchallenge.components.tasks import (
-    add_image_to_component_interface_value,
-    validate_docker_image,
-)
+from grandchallenge.components.tasks import validate_docker_image
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -34,7 +31,6 @@ from tests.algorithms_tests.factories import (
     AlgorithmModelFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
-from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -67,6 +63,7 @@ class TestCreateAlgorithmJobs:
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=GPUTypeChoices.NO_GPU,
             requires_memory_gb=4,
+            max_jobs=16,
         )
         assert Job.objects.count() == 0
 
@@ -78,6 +75,7 @@ class TestCreateAlgorithmJobs:
                 time_limit=60,
                 requires_gpu_type=GPUTypeChoices.NO_GPU,
                 requires_memory_gb=4,
+                max_jobs=16,
             )
 
     def test_creates_job_correctly(self):
@@ -98,6 +96,7 @@ class TestCreateAlgorithmJobs:
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
         assert Job.objects.count() == 1
         j = Job.objects.first()
@@ -149,6 +148,7 @@ class TestCreateAlgorithmJobs:
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
         assert Job.objects.count() == 4
 
@@ -194,6 +194,7 @@ class TestCreateAlgorithmJobs:
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
 
         assert Job.objects.count() == 1
@@ -204,6 +205,7 @@ class TestCreateAlgorithmJobs:
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
 
         assert Job.objects.count() == 1
@@ -225,6 +227,7 @@ class TestCreateAlgorithmJobs:
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
         for g in groups:
             assert jobs[0].viewer_groups.filter(pk=g.pk).exists()
@@ -240,6 +243,7 @@ def test_no_jobs_workflow(django_capture_on_commit_callbacks):
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
     assert len(callbacks) == 0
 
@@ -264,6 +268,7 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
             time_limit=ai.algorithm.time_limit,
             requires_gpu_type=ai.algorithm.job_requires_gpu_type,
             requires_memory_gb=ai.algorithm.job_requires_memory_gb,
+            max_jobs=16,
         )
     assert len(callbacks) == 2
 
@@ -504,34 +509,6 @@ def test_algorithm_with_invalid_output(
         == "The output file 'some_text.txt' is not valid json"
     )
     assert len(jobs[0].outputs.all()) == 0
-
-
-@pytest.mark.django_db
-def test_add_image_to_component_interface_value():
-    # Override the celery settings
-    us = RawImageUploadSessionFactory()
-    ImageFactory(origin=us)
-    ImageFactory(origin=us)
-    ci = ComponentInterface.objects.get(slug="generic-medical-image")
-
-    civ = ComponentInterfaceValueFactory(interface=ci, image=None, file=None)
-
-    add_image_to_component_interface_value(
-        component_interface_value_pk=civ.pk, upload_session_pk=us.pk
-    )
-    us.refresh_from_db()
-    civ.refresh_from_db()
-    assert us.error_message == "Image imports should result in a single image"
-    assert civ.image is None
-
-    us2 = RawImageUploadSessionFactory()
-    image = ImageFactory(origin=us2)
-    civ2 = ComponentInterfaceValueFactory(interface=ci, image=None, file=None)
-    add_image_to_component_interface_value(
-        component_interface_value_pk=civ2.pk, upload_session_pk=us2.pk
-    )
-    civ2.refresh_from_db()
-    assert civ2.image == image
 
 
 @pytest.mark.django_db

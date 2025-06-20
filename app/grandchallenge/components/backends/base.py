@@ -50,6 +50,16 @@ class JobParams(NamedTuple):
     attempt: int
 
 
+def duration_to_millicents(*, duration, usd_cents_per_hour):
+    return ceil(
+        (duration.total_seconds() / 3600)
+        * usd_cents_per_hour
+        * 1000
+        * settings.COMPONENTS_USD_TO_EUR
+        * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
+    )
+
+
 class Executor(ABC):
     IS_EVENT_DRIVEN = False
 
@@ -61,6 +71,7 @@ class Executor(ABC):
         memory_limit: int,
         time_limit: int,
         requires_gpu_type: GPUTypeChoices,
+        use_warm_pool: bool,
         algorithm_model=None,
         ground_truth=None,
         **kwargs,
@@ -71,6 +82,9 @@ class Executor(ABC):
         self._memory_limit = memory_limit
         self._time_limit = time_limit
         self._requires_gpu_type = requires_gpu_type
+        self._use_warm_pool = (
+            use_warm_pool and settings.COMPONENTS_USE_WARM_POOL
+        )
         self._stdout = []
         self._stderr = []
         self.__s3_client = None
@@ -152,13 +166,17 @@ class Executor(ABC):
     def runtime_metrics(self): ...
 
     @property
+    @abstractmethod
+    def warm_pool_retained_billable_time_in_seconds(self): ...
+
+    @property
     def invocation_environment(self):
         env = {  # Up to 16 pairs
             "LOG_LEVEL": "INFO",
             "PYTHONUNBUFFERED": "1",
             "no_proxy": "amazonaws.com",
-            "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth/:opt/ml/checkpoints:/tmp",
-            "GRAND_CHALLENGE_COMPONENT_POST_CLEAN_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth/",
+            "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth:/opt/ml/checkpoints:/tmp",
+            "GRAND_CHALLENGE_COMPONENT_POST_CLEAN_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth",
             "GRAND_CHALLENGE_COMPONENT_MAX_MEMORY_MB": str(
                 self._max_memory_mb
             ),
@@ -183,12 +201,8 @@ class Executor(ABC):
         if duration is None:
             return None
         else:
-            return ceil(
-                (self.duration.total_seconds() / 3600)
-                * self.usd_cents_per_hour
-                * 1000
-                * settings.COMPONENTS_USD_TO_EUR
-                * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
+            return duration_to_millicents(
+                duration=duration, usd_cents_per_hour=self.usd_cents_per_hour
             )
 
     @property

@@ -662,11 +662,11 @@ INTERFACE_VALUE_SCHEMA = {
 
 class GPUTypeChoices(TextChoices):
     NO_GPU = "", _("No GPU")
-    A100 = "A100", _("NVIDIA A100 Tensor Core GPU")
-    A10G = "A10G", _("NVIDIA A10G Tensor Core GPU")
-    V100 = "V100", _("NVIDIA V100 Tensor Core GPU")
-    K80 = "K80", _("NVIDIA K80 GPU")
-    T4 = "T4", _("NVIDIA T4 Tensor Core GPU")
+    A100 = "A100", _("NVIDIA A100 Tensor Core GPU (40-80 GiB VRAM)")
+    A10G = "A10G", _("NVIDIA A10G Tensor Core GPU (24 GiB VRAM)")
+    V100 = "V100", _("NVIDIA V100 Tensor Core GPU (16 GiB VRAM)")
+    K80 = "K80", _("NVIDIA K80 GPU (12 GiB VRAM)")
+    T4 = "T4", _("NVIDIA T4 Tensor Core GPU (16 GiB VRAM)")
 
 
 def get_default_gpu_type_choices():

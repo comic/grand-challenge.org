@@ -223,7 +223,7 @@
                     </a>
                 {% endif %}
 
-                {% if object.submission.phase.submission_kind == evaluation.submission.phase.SubmissionKindChoices.ALGORITHM %}
+                {% if object.submission.phase.submission_kind == evaluation.submission.phase.SubmissionKindChoices.ALGORITHM and object.submission.algorithm_image %}
                     <a class="btn btn-primary"
                        href="{% url 'algorithms:job-list' slug=object.submission.algorithm_image.algorithm.slug %}">
                         <i class="fas fa-angle-double-right mr-1"></i>

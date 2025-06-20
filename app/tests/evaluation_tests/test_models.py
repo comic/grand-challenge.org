@@ -101,12 +101,15 @@ def test_algorithm_submission_creates_one_job_per_test_set_image(
         algorithm_image=algorithm_submission.algorithm_image,
     )
     eval = EvaluationFactory(
-        submission=s, method=algorithm_submission.method, time_limit=60
+        submission=s,
+        method=algorithm_submission.method,
+        time_limit=60,
+        status=Evaluation.EXECUTING_PREREQUISITES,
     )
 
     with django_capture_on_commit_callbacks(execute=True):
         create_algorithm_jobs_for_evaluation(
-            evaluation_pk=eval.pk, max_jobs=None
+            evaluation_pk=eval.pk, first_run=False
         )
 
     assert Job.objects.count() == 2
@@ -204,11 +207,11 @@ def test_create_algorithm_jobs_for_evaluation_sets_gpu_and_memory():
         submission__algorithm_image=algorithm_image,
         submission__algorithm_requires_gpu_type=GPUTypeChoices.V100,
         submission__algorithm_requires_memory_gb=456,
+        status=Evaluation.EXECUTING_PREREQUISITES,
     )
 
     create_algorithm_jobs_for_evaluation(
-        evaluation_pk=evaluation.pk,
-        max_jobs=None,
+        evaluation_pk=evaluation.pk, first_run=False
     )
 
     job = Job.objects.get()
@@ -2467,3 +2470,22 @@ def test_non_evaluation_socket_slugs(slug):
         "Evaluation inputs cannot be of the following types: predictions-csv-file, predictions-json-file, predictions-zip-file, metrics-json-file, results-json-file"
         in str(e)
     )
+
+
+@pytest.mark.django_db
+def test_phase_submission_kind_change():
+    # Initial create with submission kind is OK
+    phase = PhaseFactory(submission_kind=Phase.SubmissionKindChoices.ALGORITHM)
+
+    # Can change when no submissions exist
+    phase.submission_kind = Phase.SubmissionKindChoices.CSV
+    phase.full_clean()
+
+    # Cannot change when submission exists
+    submission = SubmissionFactory(phase=phase)
+    with pytest.raises(ValidationError):
+        phase.full_clean()
+
+    # Can change again after removing submission
+    submission.delete()
+    phase.full_clean()

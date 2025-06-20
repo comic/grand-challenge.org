@@ -8,7 +8,6 @@ from django.db.models import Max
 from django.utils.html import format_html
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
-from simple_history.models import HistoricalRecords
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
@@ -62,11 +61,6 @@ class Page(FieldChangeMixin, models.Model):
         default=False, help_text="Do not display this page in site menu"
     )
     content_markdown = models.TextField(blank=True)
-    history = HistoricalRecords(
-        excluded_fields=[
-            "slug",
-        ]
-    )
 
     def __str__(self):
         if self.display_title:

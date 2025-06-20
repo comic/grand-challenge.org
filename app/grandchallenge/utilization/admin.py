@@ -4,6 +4,7 @@ from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.utilization.models import (
     EvaluationUtilization,
     JobUtilization,
+    JobWarmPoolUtilization,
     SessionUtilization,
 )
 
@@ -47,6 +48,57 @@ class JobUtilizationAdmin(admin.ModelAdmin):
         "algorithm_image",
         "algorithm",
     )
+    list_select_related = (
+        "job",
+        "creator",
+        "phase",
+        "challenge",
+        "algorithm_image",
+        "algorithm",
+    )
+    search_fields = (
+        "creator__username",
+        "pk",
+        "job__pk",
+        "phase__slug",
+        "challenge__short_name",
+    )
+    readonly_fields = (
+        "creator",
+        "phase",
+        "challenge",
+        "archive",
+        "algorithm_image",
+        "algorithm",
+        "duration",
+        "compute_cost_euro_millicents",
+        "job",
+    )
+
+
+@admin.register(JobWarmPoolUtilization)
+class JobWarmPoolUtilizationAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = (
+        "pk",
+        "created",
+        "job",
+        "creator",
+        "duration",
+        "compute_cost_euro_millicents",
+        "phase",
+        "challenge",
+        "algorithm_image",
+        "algorithm",
+    )
+    list_select_related = (
+        "job",
+        "creator",
+        "phase",
+        "challenge",
+        "algorithm_image",
+        "algorithm",
+    )
     search_fields = (
         "creator__username",
         "pk",
@@ -79,6 +131,14 @@ class EvaluationUtilizationAdmin(admin.ModelAdmin):
         "creator",
         "duration",
         "compute_cost_euro_millicents",
+        "phase",
+        "challenge",
+        "algorithm_image",
+        "algorithm",
+    )
+    list_select_related = (
+        "evaluation",
+        "creator",
         "phase",
         "challenge",
         "algorithm_image",

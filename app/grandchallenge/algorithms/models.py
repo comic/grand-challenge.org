@@ -160,6 +160,8 @@ def get_existing_interface_for_inputs_and_outputs(
 
 
 class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
+    GPUTypeChoices = GPUTypeChoices
+
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.PROTECT,
@@ -284,7 +286,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     )
     job_requires_memory_gb = models.PositiveSmallIntegerField(
         default=8,
-        help_text="How much memory to assign to this algorithms inference jobs",
+        help_text="How much main memory (DRAM) to assign to this algorithms inference jobs",
     )
     average_duration = models.DurationField(
         null=True,
@@ -1079,7 +1081,8 @@ class Job(CIVForObjectMixin, ComponentJob):
     )
     viewers = models.OneToOneField(
         Group,
-        on_delete=models.PROTECT,
+        null=True,
+        on_delete=models.SET_NULL,
         related_name="viewers_of_algorithm_job",
     )
 
@@ -1154,11 +1157,6 @@ class Job(CIVForObjectMixin, ComponentJob):
                 ).apply_async
             )
 
-    def init_viewers_group(self):
-        self.viewers = Group.objects.create(
-            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_viewers"
-        )
-
     def init_is_complimentary(self):
         self.is_complimentary = bool(
             self.creator
@@ -1202,12 +1200,18 @@ class Job(CIVForObjectMixin, ComponentJob):
             credits_per_job,
         )
 
-    def init_permissions(self):
-        # By default, only the viewers can view this job
-        self.viewer_groups.set([self.viewers])
-
-        # If there is a creator they can view and change this job
+    def init_viewers_group(self):
         if self.creator:
+            # Only create the viewer group if there is a creator
+            # as only they should have change_job
+            self.viewers = Group.objects.create(
+                name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_viewers"
+            )
+
+    def init_permissions(self):
+        if self.creator:
+            # If there is a creator they can view and change this job
+            self.viewer_groups.set([self.viewers])
             self.viewers.user_set.add(self.creator)
             assign_perm("change_job", self.creator, self)
 
@@ -1356,10 +1360,11 @@ def delete_job_groups_hook(*_, instance: Job, using, **__):
     We use a signal rather than overriding delete() to catch usages of
     bulk_delete.
     """
-    try:
-        instance.viewers.delete(using=using)
-    except ObjectDoesNotExist:
-        pass
+    if instance.viewers:
+        try:
+            instance.viewers.delete(using=using)
+        except ObjectDoesNotExist:
+            pass
 
 
 class AlgorithmPermissionRequest(RequestBase):

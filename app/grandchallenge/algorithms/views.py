@@ -681,7 +681,6 @@ class JobsList(ViewObjectPermissionListMixin, PaginatedTableListView):
         Column(title="Status", sort_field="status"),
         Column(title="Visibility", sort_field="public"),
         Column(title="Comment", sort_field="comment"),
-        Column(title="Result"),
         Column(title="Results"),
         Column(title="Viewer"),
     ]

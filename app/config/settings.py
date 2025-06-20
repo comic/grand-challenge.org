@@ -173,7 +173,7 @@ CHALLENGE_NUM_SUPPORT_YEARS = int(
     os.environ.get("CHALLENGE_NUM_SUPPORT_YEARS", 5)
 )
 
-GCAPI_LATEST_VERSION = os.environ.get("GCAPI_LATEST_VERSION", "0.13.0")
+GCAPI_LATEST_VERSION = os.environ.get("GCAPI_LATEST_VERSION", "0.13.2")
 GCAPI_LOWEST_SUPPORTED_VERSION = os.environ.get(
     "GCAPI_LOWEST_SUPPORTED_VERSION", "0.13.0"
 )
@@ -455,7 +455,6 @@ MIDDLEWARE = (
     "django.contrib.sites.middleware.CurrentSiteMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
-    "simple_history.middleware.HistoryRequestMiddleware",
     # subdomain_middleware after CurrentSiteMiddleware
     "grandchallenge.subdomains.middleware.subdomain_middleware",
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
@@ -501,7 +500,6 @@ THIRD_PARTY_APPS = [
     "dal",  # for autocompletion of selection fields
     "dal_select2",  # for autocompletion of selection fields
     "django_extensions",  # custom extensions
-    "simple_history",  # for object history
     "corsheaders",  # to allow api communication from subdomains
     "markdownx",  # for editing markdown
     "compressor",  # for compressing css
@@ -1018,6 +1016,9 @@ COMPONENTS_SAGEMAKER_SHIM_VERSION = os.environ.get(
 COMPONENTS_SAGEMAKER_SHIM_LOCATION = os.environ.get(
     "COMPONENTS_SAGEMAKER_SHIM_LOCATION", "/opt/sagemaker-shim"
 )
+COMPONENTS_USE_WARM_POOL = strtobool(
+    os.environ.get("COMPONENTS_USE_WARM_POOL", "True")
+)
 COMPONENTS_INPUT_BUCKET_NAME = os.environ.get(
     "COMPONENTS_INPUT_BUCKET_NAME", "grand-challenge-components-inputs"
 )
@@ -1223,6 +1224,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.update_challenge_storage_size",
         "schedule": crontab(hour=6, minute=15),
     },
+    "create_job_warm_pool_utilizations": {
+        "task": "grandchallenge.utilization.tasks.create_job_warm_pool_utilizations",
+        "schedule": crontab(minute=30),
+    },
     "update_challenge_compute_costs": {
         "task": "grandchallenge.challenges.tasks.update_challenge_compute_costs",
         "schedule": crontab(minute=45),
@@ -1300,19 +1305,18 @@ PUSH_CLOUDWATCH_METRICS = strtobool(
 
 # The name of the group whose members will be able to create algorithms
 ALGORITHMS_CREATORS_GROUP_NAME = "algorithm_creators"
-# Number of jobs that can be scheduled in one task
-ALGORITHMS_JOB_BATCH_LIMIT = int(
-    os.environ.get("ALGORITHMS_JOB_BATCH_LIMIT", "32")
-)
 ALGORITHMS_MAX_ACTIVE_JOBS = int(
-    # This number excludes the number of jobs that will be added
-    # with ALGORITHMS_JOB_BATCH_LIMIT
+    # The maximum number of active jobs for the entire system
     os.environ.get("ALGORITHMS_MAX_ACTIVE_JOBS", "128")
 )
 ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM = int(
-    # This number excludes the number of jobs that will be added
-    # with ALGORITHMS_JOB_BATCH_LIMIT
-    os.environ.get("ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM", "1")
+    # The maximum number of active jobs for an algorithm
+    os.environ.get("ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM", "16")
+)
+# The maximum number of active jobs for a user
+ALGORITHMS_MAX_ACTIVE_JOBS_PER_USER = int(
+    # The maximum number of active jobs for a user
+    os.environ.get("ALGORITHMS_MAX_ACTIVE_JOBS_PER_USER", "16")
 )
 # Maximum and minimum values the user can set for algorithm requirements
 ALGORITHMS_MIN_MEMORY_GB = 4

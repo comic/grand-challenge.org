@@ -176,6 +176,17 @@ class JobCreateForm(AdditionalInputsMixin, Form):
         if self.jobs_limit < 1:
             raise ValidationError("You have run out of algorithm credits")
 
+        if (
+            Job.objects.active()
+            .filter(creator=cleaned_data["creator"])
+            .count()
+            >= settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_USER
+        ):
+            raise ValidationError(
+                "You have too many active jobs, "
+                "please try again after they have completed"
+            )
+
         cleaned_data["inputs"] = self.clean_additional_inputs()
 
         if Job.objects.get_jobs_with_same_inputs(
@@ -521,6 +532,7 @@ class AlgorithmForPhaseForm(
             "structures": MultipleHiddenInput(),
             "logo": HiddenInput(),
             "time_limit": HiddenInput(),
+            "job_requires_memory_gb": HiddenInput(),
         }
         help_texts = {
             "description": (
@@ -590,6 +602,10 @@ class AlgorithmForPhaseForm(
             MinValueValidator(settings.ALGORITHMS_MIN_MEMORY_GB),
             MaxValueValidator(phase.algorithm_maximum_settable_memory_gb),
         ]
+        self.fields["job_requires_memory_gb"].initial = min(
+            16, phase.algorithm_maximum_settable_memory_gb
+        )
+        self.fields["job_requires_memory_gb"].disabled = True
 
     def clean(self):
         cleaned_data = super().clean()

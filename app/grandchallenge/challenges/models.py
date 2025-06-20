@@ -1077,7 +1077,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     algorithm_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
         default=settings.ALGORITHMS_MAX_MEMORY_GB,
         help_text=(
-            "Maximum amount of memory that participants will be allowed to "
+            "Maximum amount of main memory (DRAM) that participants will be allowed to "
             "assign to algorithm inference jobs for submission."
         ),
     )
@@ -1306,6 +1306,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 memory_limit=self.algorithm_maximum_settable_memory_gb,
                 time_limit=self.inference_time_limit_in_minutes,
                 requires_gpu_type=gpu_type,
+                use_warm_pool=False,
             )
             for gpu_type in self.algorithm_selectable_gpu_type_choices
         ]

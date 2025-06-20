@@ -163,6 +163,34 @@ class JobUtilization(ComponentJobUtilization):
         super().save(*args, **kwargs)
 
 
+class JobWarmPoolUtilization(ComponentJobUtilization):
+    job = models.OneToOneField(
+        "algorithms.Job",
+        related_name="job_warm_pool_utilization",
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+
+    class Meta(ComponentJobUtilization.Meta):
+        default_related_name = "job_warm_pool_utilizations"
+        indexes = [
+            models.Index(fields=["-created"]),
+        ]
+
+    def save(self, *args, **kwargs) -> None:
+        if self._state.adding:
+            self.creator_id = self.job.job_utilization.creator_id
+            self.phase_id = self.job.job_utilization.phase_id
+            self.challenge_id = self.job.job_utilization.challenge_id
+            self.archive_id = self.job.job_utilization.archive_id
+            self.algorithm_image_id = (
+                self.job.job_utilization.algorithm_image_id
+            )
+            self.algorithm_id = self.job.job_utilization.algorithm_id
+
+        super().save(*args, **kwargs)
+
+
 class EvaluationUtilization(ComponentJobUtilization):
     evaluation = models.OneToOneField(
         "evaluation.Evaluation",

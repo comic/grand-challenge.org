@@ -1,5 +1,4 @@
 from django.contrib import admin
-from simple_history.admin import SimpleHistoryAdmin
 
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
@@ -13,7 +12,7 @@ from grandchallenge.pages.models import (
 
 
 @admin.register(Page)
-class PageAdmin(SimpleHistoryAdmin):
+class PageAdmin(admin.ModelAdmin):
     list_filter = ("challenge", "permission_level", "hidden")
     list_display = (
         "slug",

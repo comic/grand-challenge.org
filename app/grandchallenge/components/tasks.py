@@ -1186,30 +1186,6 @@ def preload_interactive_algorithms():
     return consolidation_results
 
 
-@acks_late_micro_short_task
-@transaction.atomic
-def add_image_to_component_interface_value(
-    *, component_interface_value_pk, upload_session_pk
-):
-    from grandchallenge.components.models import ComponentInterfaceValue
-
-    session = RawImageUploadSession.objects.get(pk=upload_session_pk)
-
-    if session.image_set.count() != 1:
-        session.status = RawImageUploadSession.FAILURE
-        session.error_message = "Image imports should result in a single image"
-        session.save()
-        return
-
-    civ = ComponentInterfaceValue.objects.get(pk=component_interface_value_pk)
-
-    civ.image = session.image_set.get()
-    civ.full_clean()
-    civ.save()
-
-    civ.image.update_viewer_groups_permissions()
-
-
 @acks_late_2xlarge_task
 @transaction.atomic
 def civ_value_to_file(*, civ_pk):

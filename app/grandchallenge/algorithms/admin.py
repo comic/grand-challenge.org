@@ -51,7 +51,8 @@ class AlgorithmAdminForm(ModelForm):
 
 @admin.register(Algorithm)
 class AlgorithmAdmin(admin.ModelAdmin):
-    readonly_fields = ("algorithm_forge_json",)
+    ordering = ("-created",)
+    readonly_fields = ("algorithm_forge_json", "public")
     list_display = (
         "title",
         "created",
@@ -187,13 +188,20 @@ class JobAdmin(admin.ModelAdmin):
         "time_limit",
         "requires_gpu_type",
         "requires_memory_gb",
+        "use_warm_pool",
         "status",
         "public",
         "comment",
         "error_message",
     )
     list_select_related = ("algorithm_image__algorithm",)
-    list_filter = ("status", "public", "is_complimentary", "requires_gpu_type")
+    list_filter = (
+        "status",
+        "public",
+        "is_complimentary",
+        "requires_gpu_type",
+        "use_warm_pool",
+    )
     readonly_fields = (
         "creator",
         "algorithm_image",
@@ -212,6 +220,10 @@ class JobAdmin(admin.ModelAdmin):
         "algorithm_interface",
         "time_limit",
         "job_utilization",
+        "public",
+        "algorithm_model",
+        "status",
+        "viewer_groups",
     )
     search_fields = (
         "creator__username",
@@ -232,11 +244,19 @@ class AlgorithmPermissionRequestAdmin(admin.ModelAdmin):
 
 @admin.register(AlgorithmModel)
 class AlgorithmModelAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
     exclude = ("model",)
     list_display = ("algorithm", "created", "is_desired_version", "comment")
     list_filter = ("is_desired_version",)
     search_fields = ("algorithm__title", "comment")
-    readonly_fields = ("creator", "algorithm", "sha256", "size_in_storage")
+    readonly_fields = (
+        "creator",
+        "algorithm",
+        "sha256",
+        "size_in_storage",
+        "user_upload",
+        "import_status",
+    )
 
 
 @admin.register(AlgorithmInterface)
@@ -290,9 +310,13 @@ class AlgorithmAlgorithmInterfaceAdmin(admin.ModelAdmin):
         return False
 
 
+@admin.register(AlgorithmImage)
+class AlgorithmImageAdmin(ComponentImageAdmin):
+    readonly_fields = (*ComponentImageAdmin.readonly_fields, "algorithm")
+
+
 admin.site.register(AlgorithmUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(AlgorithmGroupObjectPermission, GroupObjectPermissionAdmin)
-admin.site.register(AlgorithmImage, ComponentImageAdmin)
 admin.site.register(
     AlgorithmImageUserObjectPermission, UserObjectPermissionAdmin
 )

@@ -1563,6 +1563,16 @@ class ComponentJobManager(models.QuerySet):
         )
         return self.filter(status__in=active_choices)
 
+    def only_completed(self):
+        """Jobs that are in their final state"""
+        return self.filter(
+            status__in=[
+                ComponentJob.SUCCESS,
+                ComponentJob.CANCELLED,
+                ComponentJob.FAILURE,
+            ]
+        )
+
     @staticmethod
     def retrieve_existing_civs(*, civ_data):
         """
@@ -1694,7 +1704,11 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         help_text="What GPU is required by this job?",
     )
     requires_memory_gb = models.PositiveSmallIntegerField(
-        editable=False, help_text="How much memory is required by this job?"
+        editable=False,
+        help_text="How much main memory (DRAM) is required by this job?",
+    )
+    use_warm_pool = models.BooleanField(
+        default=False, editable=False, help_text="Whether to use warm pools"
     )
 
     inputs = models.ManyToManyField(
@@ -1788,6 +1802,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "time_limit": self.time_limit,
             "requires_gpu_type": self.requires_gpu_type,
             "memory_limit": self.requires_memory_gb,
+            "use_warm_pool": self.use_warm_pool,
         }
 
     def get_executor(self, *, backend):

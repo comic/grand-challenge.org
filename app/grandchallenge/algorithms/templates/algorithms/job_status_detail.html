@@ -83,7 +83,7 @@
         </a>
     </div>
 {% else %}
-    <span class="badge badge-{{ object.status_context }}">
+    <span class="badge badge-{{ object.status_context }}" {% if not object.finished %}hx-get="{{ object.status_url }}" hx-trigger="load delay:30s" hx-swap="outerHTML"{% endif %}>
         {% if object.animate %}
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
         {% endif %}

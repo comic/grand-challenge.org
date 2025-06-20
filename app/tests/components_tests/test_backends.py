@@ -126,6 +126,7 @@ def test_internal_logs_filtered():
         memory_limit=4,
         time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
     )
     executor._parse_loglines(loglines=logs.splitlines())
 
@@ -143,6 +144,7 @@ def test_inputs_json(settings):
         memory_limit=4,
         time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
     )
 
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2)

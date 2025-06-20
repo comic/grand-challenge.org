@@ -579,15 +579,18 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     def _required_volume_size_gb(self):
         required_gb = super()._required_volume_size_gb
 
-        if (
-            self._instance_type.nvme_volume_size
-            and required_gb > self._instance_type.nvme_volume_size
-        ):
-            logger.error(
-                f"Job {self._job_id} likely needs {required_gb} GB but "
-                f"instance only has {self._instance_type.nvme_volume_size} GB. "
-                "Attempting to run the job anyway."
-            )
+        if self._instance_type.nvme_volume_size:
+            if required_gb > self._instance_type.nvme_volume_size:
+                logger.error(
+                    f"Job {self._job_id} likely needs {required_gb} GB but "
+                    f"instance only has {self._instance_type.nvme_volume_size} GB. "
+                    "Attempting to run the job anyway."
+                )
+            # Always request the nvme size for instances that offer it
+            # This setting has no practical effect as the instances
+            # do not get an EBS volume, but allows the instance
+            # to be reused in a warm pool as it is included in
+            # SageMakers warm pool reuse logic
             return self._instance_type.nvme_volume_size
         else:
             return required_gb

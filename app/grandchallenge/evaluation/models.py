@@ -570,7 +570,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     algorithm_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
         default=settings.ALGORITHMS_MAX_MEMORY_GB,
         help_text=(
-            "Maximum amount of memory that participants will be allowed to "
+            "Maximum amount of main memory (DRAM) that participants will be allowed to "
             "assign to algorithm inference jobs for submission. The setting on the "
             "algorithm will be validated against this on submission."
         ),
@@ -640,14 +640,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
     evaluation_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
         default=settings.ALGORITHMS_MAX_MEMORY_GB,
         help_text=(
-            "Maximum amount of memory that challenge admins will be able to "
+            "Maximum amount of main memory (DRAM) that challenge admins will be able to "
             "assign for the evaluation method."
         ),
     )
     evaluation_requires_memory_gb = models.PositiveSmallIntegerField(
         default=8,
         help_text=(
-            "How much memory to assign to this phases evaluations. "
+            "How much main memory (DRAM) to assign to this phases evaluations. "
             "Note that the memory assigned to any algorithm inference jobs "
             "is determined by the submitted algorithm."
         ),
@@ -781,11 +781,19 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     def clean(self):
         super().clean()
+        self._clean_submission_kind()
         self._clean_algorithm_submission_settings()
         self._clean_submission_limits()
         self._clean_parent_phase()
         self._clean_external_evaluation()
         self._clean_evaluation_requirements()
+
+    def _clean_submission_kind(self):
+        if self.has_changed("submission_kind"):
+            if self.submission_set.exists():
+                raise ValidationError(
+                    "Cannot change submission kind of Phase with existing submissions"
+                )
 
     def _clean_algorithm_submission_settings(self):
         if self.submission_kind == SubmissionKindChoices.ALGORITHM:
@@ -1499,7 +1507,7 @@ class Submission(FieldChangeMixin, UUIDModel):
     )
     algorithm_requires_memory_gb = models.PositiveSmallIntegerField(
         editable=False,
-        help_text="How much memory is required by the algorithm jobs?",
+        help_text="How much main memory (DRAM) is required by the algorithm jobs?",
     )
 
     user_upload = models.ForeignKey(

@@ -910,6 +910,7 @@ def test_evaluation_order_with_title():
         submission__phase__archive=archive,
         submission__algorithm_image=ai,
         time_limit=ai.algorithm.time_limit,
+        status=Evaluation.EXECUTING_PREREQUISITES,
     )
 
     input_ci = ComponentInterfaceFactory(
@@ -929,7 +930,9 @@ def test_evaluation_order_with_title():
         archive_item = ArchiveItemFactory(archive=archive, title=f"{5 - idx}")
         archive_item.values.add(civ)
 
-    create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
+    create_algorithm_jobs_for_evaluation(
+        evaluation_pk=evaluation.pk, first_run=True
+    )
 
     job = Job.objects.get()
 
@@ -947,6 +950,7 @@ def test_evaluation_order_without_title():
         submission__phase__archive=archive,
         submission__algorithm_image=ai,
         time_limit=ai.algorithm.time_limit,
+        status=Evaluation.EXECUTING_PREREQUISITES,
     )
 
     input_ci = ComponentInterfaceFactory(
@@ -963,7 +967,9 @@ def test_evaluation_order_without_title():
         archive_item = ArchiveItemFactory(archive=archive)
         archive_item.values.add(civ)
 
-    create_algorithm_jobs_for_evaluation(evaluation_pk=evaluation.pk)
+    create_algorithm_jobs_for_evaluation(
+        evaluation_pk=evaluation.pk, first_run=True
+    )
 
     job = Job.objects.get()
 

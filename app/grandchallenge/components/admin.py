@@ -11,8 +11,9 @@ from grandchallenge.components.tasks import deprovision_job
 
 
 class ComponentImageAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
     exclude = ("image",)
-    readonly_fields = ("creator",)
+    readonly_fields = ("creator", "user_upload", "import_status")
     list_display = (
         "pk",
         "created",
@@ -70,12 +71,7 @@ class ComponentInterfaceValueAdmin(admin.ModelAdmin):
     list_display = ("pk", "interface", "value", "file", "image")
     readonly_fields = ("interface", "value", "file", "image")
     list_filter = ("interface",)
-    search_fields = (
-        "pk",
-        "file",
-        "value",
-        "image__name",
-    )
+    search_fields = ("pk",)
 
 
 @admin.action(
@@ -97,6 +93,7 @@ def requeue_jobs(modeladmin, request, queryset):
         job.attempt += 1
         job.utilization.duration = None
         job.utilization.save()
+        job.use_warm_pool = False
         job.error_message = ""
         job.detailed_error_message = {}
         jobs.append(job)
