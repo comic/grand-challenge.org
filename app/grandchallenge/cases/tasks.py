@@ -283,7 +283,6 @@ def import_images(
     input_directory: Path,
     origin: RawImageUploadSession | None = None,
     builders: Sequence[Callable] | None = None,
-    recurse_subdirectories: bool = True,
 ) -> ImporterResult:
     """
     Creates Image objects from a set of files.
@@ -309,7 +308,6 @@ def import_images(
             output_directory=output_directory,
             builders=builders,
             post_processors=[],  # Do the post-processing later
-            recurse_subdirectories=recurse_subdirectories,
         )
 
         _check_all_ids(panimg_result=panimg_result)

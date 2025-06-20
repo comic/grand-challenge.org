@@ -7,7 +7,7 @@ Raises a ValidationScriptError if the BIOM file is not valid.
 
 
 
-The rational for having a seperate script and virtual environment is to provide
+The rational for having a separate script and virtual environment is to provide
 isolation of web-app and modality-specific libraries.
 
 In the case of BIOM the clashing HDF5 libraries of the libvips library (used in panimg)
@@ -25,7 +25,9 @@ class ValidationScriptError(Exception):
     pass
 
 
-def run(biom_file_path):
+def run():
+    biom_file_path = _get_file_path()
+
     try:
         hdf5_file = h5py.File(biom_file_path, "r")
     except OSError:
@@ -38,6 +40,8 @@ def run(biom_file_path):
         biom.Table.from_hdf5(hdf5_file)
     except Exception:
         raise ValidationScriptError("Does not appear to be a BIOM-format file")
+
+    return 0
 
 
 def _get_file_path():
@@ -55,4 +59,4 @@ def _get_file_path():
 
 
 if __name__ == "__main__":
-    run(_get_file_path())
+    raise SystemExit(run())
