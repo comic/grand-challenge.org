@@ -53,7 +53,6 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">models</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Avg</span><span class="p">,</span> <span class="n">Count</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">Sum</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.functions.window</span><span class="w"> </span><span class="kn">import</span> <span class="n">RowNumber</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models.signals</span><span class="w"> </span><span class="kn">import</span> <span class="n">post_delete</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.dispatch</span><span class="w"> </span><span class="kn">import</span> <span class="n">receiver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
@@ -92,7 +91,6 @@
     <span class="n">AccessRequestHandlingOptions</span><span class="p">,</span>
     <span class="n">process_access_request</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.utils.query</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_seed</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONValidator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.vendored.django.validators</span><span class="w"> </span><span class="kn">import</span> <span class="n">StepValueValidator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.hanging_protocols.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -975,62 +973,6 @@
 
 
 
-<div class="viewcode-block" id="DisplaySetQuerySet">
-<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.DisplaySetQuerySet">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">DisplaySetQuerySet</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_row_number</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-            <span class="n">row_number</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Window</span><span class="p">(</span>
-                <span class="n">expression</span><span class="o">=</span><span class="n">RowNumber</span><span class="p">(),</span>
-                <span class="n">partition_by</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">F</span><span class="p">(</span><span class="s2">&quot;reader_study&quot;</span><span class="p">),</span>
-                <span class="n">order_by</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">),</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-
-<div class="viewcode-block" id="DisplaySetQuerySet.with_shuffled_index">
-<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.DisplaySetQuerySet.with_shuffled_index">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_shuffled_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">reader_study</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sets the shuffled index on each object</span>
-
-<span class="sd">        This requires fetching all pks for all of the display sets</span>
-<span class="sd">        in the reader study first</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">seed</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid seed&quot;</span><span class="p">)</span>
-
-        <span class="n">queryset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">reader_study</span><span class="o">=</span><span class="n">reader_study</span><span class="p">)</span>
-
-        <span class="n">set_seed</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">seed</span><span class="p">)</span>
-
-        <span class="n">queryset</span> <span class="o">=</span> <span class="n">queryset</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-            <span class="n">shuffled_index</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Case</span><span class="p">(</span>
-                <span class="o">*</span><span class="p">[</span>
-                    <span class="n">models</span><span class="o">.</span><span class="n">When</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">,</span> <span class="n">then</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Value</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
-                    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">pk</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
-                        <span class="n">queryset</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                    <span class="p">)</span>
-                <span class="p">],</span>
-                <span class="n">output_field</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(),</span>
-            <span class="p">)</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;shuffled_index&quot;</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">queryset</span></div>
-
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">with_answer_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
-            <span class="n">answer_count</span><span class="o">=</span><span class="n">Count</span><span class="p">(</span>
-                <span class="s2">&quot;answers&quot;</span><span class="p">,</span>
-                <span class="nb">filter</span><span class="o">=</span><span class="n">Q</span><span class="p">(</span>
-                    <span class="n">answers__is_ground_truth</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                    <span class="n">answers__creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
-                <span class="p">),</span>
-            <span class="p">)</span>
-        <span class="p">)</span></div>
-
-
-
 <div class="viewcode-block" id="DisplaySet">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.DisplaySet">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DisplaySet</span><span class="p">(</span>
@@ -1047,18 +989,6 @@
     <span class="p">)</span>
     <span class="n">order</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="n">objects</span> <span class="o">=</span> <span class="n">DisplaySetQuerySet</span><span class="o">.</span><span class="n">as_manager</span><span class="p">()</span>
-
-    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
-        <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">)</span>
-        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
-                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;reader_study&quot;</span><span class="p">],</span>
-                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unique_display_set_title&quot;</span><span class="p">,</span>
-                <span class="n">condition</span><span class="o">=~</span><span class="n">Q</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">),</span>
-            <span class="p">)</span>
-        <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">assign_perm</span><span class="p">(</span>
@@ -1081,6 +1011,16 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">readers_group</span><span class="p">,</span>
             <span class="bp">self</span><span class="p">,</span>
         <span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">ordering</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;order&quot;</span><span class="p">,</span> <span class="s2">&quot;created&quot;</span><span class="p">)</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">UniqueConstraint</span><span class="p">(</span>
+                <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;reader_study&quot;</span><span class="p">],</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;unique_display_set_title&quot;</span><span class="p">,</span>
+                <span class="n">condition</span><span class="o">=~</span><span class="n">Q</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_editable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1128,6 +1068,10 @@
             <span class="k">return</span> <span class="n">output</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">standard_index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">reader_study</span><span class="o">.</span><span class="n">display_sets</span><span class="o">.</span><span class="n">all</span><span class="p">()]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">update_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
