@@ -515,21 +515,10 @@ class SubmissionForm(
                 "for this phase already exists."
             )
 
-        if (
-            Evaluation.objects.filter(
-                submission__algorithm_image__image_sha256=algorithm.active_image.image_sha256,
-                **extra_evaluation_filter,
-            )
-            .exclude(
-                status__in=[
-                    Evaluation.SUCCESS,
-                    Evaluation.FAILURE,
-                    Evaluation.CANCELLED,
-                ]
-            )
-            .exclude(submission__phase=self._phase)
-            .exists()
-        ):
+        if Evaluation.objects.active.filter(
+            submission__algorithm_image__image_sha256=algorithm.active_image.image_sha256,
+            **extra_evaluation_filter,
+        ).exists():
             # This causes problems in `set_evaluation_inputs` if two
             # evaluations are running for the same image at the same time
             raise ValidationError(
@@ -754,22 +743,12 @@ class EvaluationForm(AdditionalInputsMixin, forms.Form):
                 "submission__algorithm_model__isnull": True
             }
 
-        if (
-            Evaluation.objects.filter(
-                submission__algorithm_image__image_sha256=cleaned_data[
-                    "submission"
-                ].algorithm_image.image_sha256,
-                **extra_evaluation_filter,
-            )
-            .exclude(
-                status__in=[
-                    Evaluation.SUCCESS,
-                    Evaluation.FAILURE,
-                    Evaluation.CANCELLED,
-                ]
-            )
-            .exists()
-        ):
+        if Evaluation.objects.active.filter(
+            submission__algorithm_image__image_sha256=cleaned_data[
+                "submission"
+            ].algorithm_image.image_sha256,
+            **extra_evaluation_filter,
+        ).exists():
             # This causes problems in `set_evaluation_inputs` if two
             # evaluations are running for the same image at the same time
             raise ValidationError(
