@@ -29,6 +29,7 @@
                 <th data-field="order">Order</th>
                 <th data-field="title">Title</th>
                 <th data-field="title">Parent</th>
+                <th data-field="title">FAQ</th>
                 {% if 'documentation.change_docpage' in perms %}
                     <th data-field="edit">Edit</th>
                 {% endif %}
@@ -47,6 +48,9 @@
                     </td>
                     <td>
                         {{ page.parent }}
+                    </td>
+                    <td>
+                        {{ page.is_faq }}
                     </td>
                     {% if 'documentation.change_docpage' in perms %}
                         <td>
