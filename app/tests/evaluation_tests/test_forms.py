@@ -1476,3 +1476,26 @@ def test_phase_copy_algorithm_interfaces():
     assert (
         not form.is_valid()
     ), "Locked interfaces on a selected phase invalides the form"
+
+
+@pytest.mark.django_db
+def test_reevaluation_blocked_when_pending_evaluation_exists():
+    algorithm_image = AlgorithmImageFactory()
+    user = UserFactory()
+
+    EvaluationFactory(
+        time_limit=10,
+        submission__algorithm_image=algorithm_image,
+        status=Evaluation.PENDING,
+    )
+    sub = SubmissionFactory(algorithm_image=algorithm_image, creator=user)
+    form = EvaluationForm(
+        submission=sub,
+        user=user,
+        data={},
+    )
+
+    assert not form.is_valid()
+    assert "An evaluation for this algorithm is already in progress." in str(
+        form.errors
+    )
