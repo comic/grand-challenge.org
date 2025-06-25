@@ -743,6 +743,40 @@ class EvaluationForm(AdditionalInputsMixin, forms.Form):
                     "defined for the phase."
                 )
 
+        if cleaned_data["submission"].algorithm_image.algorithm.active_model:
+            extra_evaluation_filter = {
+                "submission__algorithm_model__sha256": cleaned_data[
+                    "submission"
+                ].algorithm_image.algorithm.active_model.sha256
+            }
+        else:
+            extra_evaluation_filter = {
+                "submission__algorithm_model__isnull": True
+            }
+
+        if (
+            Evaluation.objects.filter(
+                submission__algorithm_image__image_sha256=cleaned_data[
+                    "submission"
+                ].algorithm_image.image_sha256,
+                **extra_evaluation_filter,
+            )
+            .exclude(
+                status__in=[
+                    Evaluation.SUCCESS,
+                    Evaluation.FAILURE,
+                    Evaluation.CANCELLED,
+                ]
+            )
+            .exists()
+        ):
+            # This causes problems in `set_evaluation_inputs` if two
+            # evaluations are running for the same image at the same time
+            raise ValidationError(
+                "An evaluation for this algorithm is already in progress. "
+                "Please wait for the other evaluation to complete."
+            )
+
         # Fetch from the db to get the cost annotations
         # Maybe this is solved with GeneratedField (Django 5)?
         challenge = (
