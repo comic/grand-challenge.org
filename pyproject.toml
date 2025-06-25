@@ -135,7 +135,7 @@ jscolor = { version = "==2.5.1", include = ["jscolor(.min)?.js(.map)?"] }
 jquery = { version = "==3.7.0", include = ["jquery(.min)?(.js|.map)?$"] }
 font-awesome = { version = "==5.15.4", include = ["css/all(.min)?.css", "webfonts/*"] }
 bootstrap = { version = "==4.6.2", include = ["js/bootstrap.bundle(.min)?.js(.map)?", "css/bootstrap(.min)?.css(.map)?", "scss/*"] }
-# bootswatch version should match bootstrap, see #4093 
+# bootswatch version should match bootstrap, see #4093
 bootswatch = { version = "==4.6.2", provider = "unpkg", include = ["dist/flatly/.*.scss"] }
 floating-scroll = { version = "==3.2.0", provider = "unpkg", include = ["dist/jquery.floatingscroll.min.js", "dist/jquery.floatingscroll.css"] }
 "@github/markdown-toolbar-element" = { version = "==1.2.0", provider = "unpkg", include = ["dist/index.umd.js$"] }
