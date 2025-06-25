@@ -15,7 +15,7 @@ class DocPageCreateForm(forms.ModelForm):
 
     class Meta:
         model = DocPage
-        fields = ("title", "parent")
+        fields = ("title", "parent", "is_faq")
 
 
 class DocPageMetadataUpdateForm(DocPageCreateForm):
