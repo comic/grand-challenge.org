@@ -46,15 +46,16 @@ class Command(BaseCommand):
             except ObjectDoesNotExist:
                 continue
 
-            batch.append(
-                TopicReadRecord(
-                    source_object=track,
-                    topic=new_topic,
-                    user=track.user,
-                    created=track.mark_time,  # the original model does not have a creation time stamp
-                    modified=track.mark_time,
+            if track.user.has_perm("view_forumtopic", new_topic):
+                batch.append(
+                    TopicReadRecord(
+                        source_object=track,
+                        topic=new_topic,
+                        user=track.user,
+                        created=track.mark_time,  # the original model does not have a creation time stamp
+                        modified=track.mark_time,
+                    )
                 )
-            )
 
             if len(batch) >= batch_size:
                 TopicReadRecord.objects.bulk_create(batch)
