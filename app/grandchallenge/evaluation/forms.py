@@ -496,14 +496,8 @@ class SubmissionForm(
             extra_submission_filter = {
                 "algorithm_model__sha256": algorithm.active_model.sha256
             }
-            extra_evaluation_filter = {
-                "submission__algorithm_model__sha256": algorithm.active_model.sha256
-            }
         else:
             extra_submission_filter = {"algorithm_model__isnull": True}
-            extra_evaluation_filter = {
-                "submission__algorithm_model__isnull": True
-            }
 
         if Submission.objects.filter(
             algorithm_image__image_sha256=algorithm.active_image.image_sha256,
@@ -519,7 +513,6 @@ class SubmissionForm(
             Evaluation.objects.active()
             .filter(
                 submission__algorithm_image__image_sha256=algorithm.active_image.image_sha256,
-                **extra_evaluation_filter,
             )
             .exists()
         ):
@@ -736,24 +729,12 @@ class EvaluationForm(AdditionalInputsMixin, forms.Form):
                     "defined for the phase."
                 )
 
-        if cleaned_data["submission"].algorithm_image.algorithm.active_model:
-            extra_evaluation_filter = {
-                "submission__algorithm_model__sha256": cleaned_data[
-                    "submission"
-                ].algorithm_image.algorithm.active_model.sha256
-            }
-        else:
-            extra_evaluation_filter = {
-                "submission__algorithm_model__isnull": True
-            }
-
         if (
             Evaluation.objects.active()
             .filter(
                 submission__algorithm_image__image_sha256=cleaned_data[
                     "submission"
                 ].algorithm_image.image_sha256,
-                **extra_evaluation_filter,
             )
             .exists()
         ):
