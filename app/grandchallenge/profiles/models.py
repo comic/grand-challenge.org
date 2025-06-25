@@ -106,9 +106,9 @@ class UserProfile(models.Model):
         )
 
     def get_mugshot_url(self):
-        if self.mugshot:
+        try:
             return self.mugshot.x02.url
-        else:
+        except AttributeError:
             gravatar_url = (
                 "https://www.gravatar.com/avatar/"
                 + md5(self.user.email.lower().encode("utf-8")).hexdigest()
