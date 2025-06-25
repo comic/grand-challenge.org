@@ -657,9 +657,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         self.external_evaluators_group = external_evaluators_group
 
     def create_forum(self):
-        self.discussion_forum = discussion_forum_models.Forum.objects.create(
-            created=now(), modified=now(), source_object=self.forum
-        )
+        self.discussion_forum = discussion_forum_models.Forum.objects.create()
 
     def create_default_pages(self):
         Page.objects.create(
@@ -778,12 +776,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     def add_participant(self, user):
         if user != get_anonymous_user():
             user.groups.add(self.participants_group)
-            follow(
-                user=user,
-                obj=self.discussion_forum,
-                actor_only=False,
-                send_action=False,
-            )
             follow(
                 user=user,
                 obj=self.discussion_forum,

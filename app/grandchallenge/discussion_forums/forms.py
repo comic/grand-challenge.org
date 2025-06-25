@@ -70,7 +70,11 @@ class ForumTopicForm(SaveFormInitMixin, ModelForm):
 class ForumPostForm(SaveFormInitMixin, ModelForm):
     creator = ModelChoiceField(
         widget=HiddenInput(),
-        queryset=None,
+        queryset=(
+            get_user_model().objects.exclude(
+                username=settings.ANONYMOUS_USER_NAME
+            )
+        ),
     )
 
     topic = ModelChoiceField(

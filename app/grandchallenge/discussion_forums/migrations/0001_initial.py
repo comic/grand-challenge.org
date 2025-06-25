@@ -138,15 +138,6 @@ class Migration(migrations.Migration):
                         help_text="Lock a topic to close it and prevent posts from being added to it.",
                     ),
                 ),
-                (
-                    "last_post",
-                    models.ForeignKey(
-                        blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        to="discussion_forums.forumpost",
-                    ),
-                ),
                 ("last_post_on", models.DateTimeField(blank=True, null=True)),
                 (
                     "creator",
@@ -540,61 +531,5 @@ class Migration(migrations.Migration):
         migrations.AlterUniqueTogether(
             name="forumgroupobjectpermission",
             unique_together={("group", "permission", "content_object")},
-        ),
-        migrations.AddIndex(
-            model_name="forumpostuserobjectpermission",
-            index=models.Index(
-                fields=["user", "permission"],
-                name="discussion__user_id_8aad93_idx",
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="forumtopicuserobjectpermission",
-            index=models.Index(
-                fields=["user", "permission"],
-                name="discussion__user_id_642d1b_idx",
-            ),
-        ),
-        migrations.AddIndex(
-            model_name="forumuserobjectpermission",
-            index=models.Index(
-                fields=["user", "permission"],
-                name="discussion__user_id_e5363a_idx",
-            ),
-        ),
-        migrations.CreateModel(
-            name="TopicReadRecord",
-            fields=[
-                (
-                    "id",
-                    models.UUIDField(
-                        default=uuid.uuid4,
-                        editable=False,
-                        primary_key=True,
-                        serialize=False,
-                    ),
-                ),
-                ("created", models.DateTimeField()),
-                ("modified", models.DateTimeField()),
-                (
-                    "topic",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="read_by",
-                        to="discussion_forums.forumtopic",
-                    ),
-                ),
-                (
-                    "user",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="read_topics",
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-            ],
-            options={
-                "unique_together": {("user", "topic")},
-            },
         ),
     ]

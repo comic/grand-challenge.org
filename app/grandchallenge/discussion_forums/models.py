@@ -1,4 +1,5 @@
 import math
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
@@ -13,12 +14,12 @@ from machina.apps.forum_conversation import (
 )
 from machina.apps.forum_tracking import models as machina_tracking_models
 
-from grandchallenge.subdomains.utils import reverse
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
+from grandchallenge.subdomains.utils import reverse
 
 
 def get_matching_forum(*, old_forum_id, old_forum_model):
@@ -124,7 +125,6 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
     last_post_on = models.DateTimeField(
         blank=True,
         null=True,
-        on_delete=models.SET_NULL,
     )
 
     class Meta:
@@ -224,14 +224,6 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
             },
         )
 
-    def mark_as_read(self, *, user):
-        if user == get_anonymous_user() or isinstance(user, AnonymousUser):
-            return
-        TopicReadRecord.objects.update_or_create(
-            user=user,
-            topic=self,
-        )
-
     @property
     def is_announcement(self):
         return self.kind == ForumTopicKindChoices.ANNOUNCE
@@ -243,13 +235,6 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
     @property
     def num_replies(self):
         return self.posts.count() - 1
-
-    def get_unread_topic_posts_for_user(self, *, user):
-        try:
-            read_record = self.read_by.get(user=user)
-            return self.posts.exclude(created__lt=read_record.modified)
-        except ObjectDoesNotExist:
-            return self.posts
 
     @property
     def last_page_num(self):
@@ -286,8 +271,6 @@ class ForumPost(UUIDModel):
         null=True,
         on_delete=models.SET_NULL,
     )
-    subject = models.CharField(max_length=255)
-    slug = AutoSlugField(populate_from="subject", max_length=255)
 
     content = models.TextField()
 
