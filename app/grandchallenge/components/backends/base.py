@@ -536,6 +536,10 @@ class Executor(ABC):
             raise ComponentException(
                 f"Output file {interface.relative_path!r} was not produced"
             )
+        except MemoryError:
+            raise ComponentException(
+                f"The output file {interface.relative_path!r} is too large"
+            )
         except JSONDecodeError:
             raise ComponentException(
                 f"The output file {interface.relative_path!r} is not valid json"
