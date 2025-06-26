@@ -191,19 +191,19 @@ def nested_docpages():
 @pytest.mark.parametrize(
     "level, num_queries",
     (
-        (0, 42),
-        (1, 44),  # +1 parent is not null, +1 page with lower order exists
-        (2, 45),  # +1 breadcrumb
-        (3, 46),  # +1 breadcrumb
+        (0, 40),
+        (1, 41),  # +1 parent is not null
+        (2, 42),  # +1 parent breadcrumb
+        (3, 43),  # +1 parent breadcrumb
     ),
 )
 def test_docpage_detail_num_queries(
-    client, django_assert_max_num_queries, nested_docpages, level, num_queries
+    client, django_assert_num_queries, nested_docpages, level, num_queries
 ):
     user = UserFactory()
     page = nested_docpages[level]
 
-    with django_assert_max_num_queries(num_queries) as _:
+    with django_assert_num_queries(num_queries) as _:
         response = get_view_for_user(
             viewname="documentation:detail",
             reverse_kwargs={"slug": page.slug},
