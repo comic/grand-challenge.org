@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:fb074446e88817182a729f7117a8a3c52658eb27ca16532733118465a6db2293",
+  "content_hash": "sha256:5e7081926ff1ffb6705577549c5eed152bf5babdce2bf9240bf18d784e682c10",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -514,6 +514,22 @@
         {
           "name": "js/buttons.bootstrap4.min.js",
           "sri": "sha256-+0hWUGyz5myqHMYbeot8a5Hm87wLJHCjQcSYQ8k37oM="
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "dcmjs",
+      "version": "0.42.0",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "build/dcmjs.js",
+          "sri": "sha256-1nv/I8AxMdKsAK+RU7AYrN6ISE4j24swHCTqWR5ZFa4="
+        },
+        {
+          "name": "build/dcmjs.js.map",
+          "sri": "sha256-VHzxl9aljbrr5yhA+5LvW20r+6BMUk8GqXnJcqTetxo="
         }
       ],
       "maps": []
