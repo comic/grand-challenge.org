@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import Max
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils.functional import cached_property
 from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.core.templatetags.bleach import md2html
@@ -130,7 +131,7 @@ class DocPage(models.Model):
         url = reverse("documentation:detail", kwargs={"slug": self.slug})
         return url
 
-    @property
+    @cached_property
     def next(self):
         try:
             next_page = DocPage.objects.filter(order__gt=self.order).first()
@@ -138,7 +139,7 @@ class DocPage(models.Model):
             next_page = None
         return next_page
 
-    @property
+    @cached_property
     def previous(self):
         try:
             previous_page = DocPage.objects.filter(order__lt=self.order).last()
