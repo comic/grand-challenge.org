@@ -23,6 +23,10 @@ class UserUploadWidgetMixin:
         css = {"all": ("vendored/uppy/uppy.min.css",)}
         js = (
             "vendored/uppy/uppy.min.js",
+            # "vendored/dicom-curate/dist/umd/dicom-curate.umd.min.js", #TODO when this is available, use it
+            "vendored/dcmjs/build/dcmjs.js",
+            "js/dc.js",
+            "js/file_preprocessors.js",
             "js/user_upload.js",
         )
 
