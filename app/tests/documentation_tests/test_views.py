@@ -175,3 +175,42 @@ def test_search(client, query, target_pages):
             response.context_data["search_results"].get()
             not in non_matching_pages
         )
+
+
+@pytest.fixture
+def nested_docpages():
+    page = None
+    pages = []
+    for _ in range(4):
+        page = DocPageFactory(parent=page)
+        pages.append(page)
+    return pages
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "level, num_queries",
+    (
+        (0, 42),
+        (1, 44),  # +1 parent is not null, +1 page with lower order exists
+        (2, 45),  # +1 breadcrumb
+        (3, 46),  # +1 breadcrumb
+    ),
+)
+def test_docpage_detail_num_queries(
+    client, django_assert_max_num_queries, nested_docpages, level, num_queries
+):
+    user = UserFactory()
+    page = nested_docpages[level]
+
+    with django_assert_max_num_queries(num_queries) as _:
+        response = get_view_for_user(
+            viewname="documentation:detail",
+            reverse_kwargs={"slug": page.slug},
+            client=client,
+            method=client.get,
+            user=user,
+        )
+        # Sanity checks
+        assert response.status_code == 200
+        assert page.content in response.content.decode("utf-8")
