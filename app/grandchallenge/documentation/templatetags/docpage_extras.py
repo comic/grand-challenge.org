@@ -1,7 +1,4 @@
-from urllib.parse import quote
-
 from django import template
-from django.template.defaultfilters import striptags
 
 from grandchallenge.subdomains.utils import reverse
 
@@ -38,18 +35,3 @@ def get_breadcrumbs(page):
         current = current.parent
 
     return breadcrumbs
-
-
-@register.filter
-def startend_text(text):
-    text = striptags(text).strip()
-
-    # Split around center word and extract fixed-length windows
-    words = text.split()
-    n_words = min(3, len(words) // 2)
-    if n_words < 2:
-        return quote(text)
-    start = " ".join(words[:n_words]).rstrip(":")
-    end = " ".join(words[-n_words:])
-
-    return f"{quote(start)}:::{quote(end)}"
