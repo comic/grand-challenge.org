@@ -93,6 +93,24 @@
             );
             fileList.prepend(newFile);
         });
+
+        uppy.on("file-added", async file => {
+            if (globalThis.UPPY_FILE_PREPROCESSORS) {
+                for (const preprocessor of globalThis.UPPY_FILE_PREPROCESSORS) {
+                    if (preprocessor.fileMatcher(file)) {
+                        try {
+                            const processedFile =
+                                await preprocessor.preprocessor(file.data);
+                            uppy.setFileState(file.id, { data: processedFile });
+                        } catch (e) {
+                            uppy.removeFile(file.id);
+                            throw e; // TODO remove
+                        }
+                        return;
+                    }
+                }
+            }
+        });
     }
 
     function getCookie(name) {
