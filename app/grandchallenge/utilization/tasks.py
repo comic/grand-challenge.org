@@ -29,7 +29,10 @@ def create_job_warm_pool_utilizations():
                 executor.warm_pool_retained_billable_time_in_seconds
             )
         except ObjectDoesNotExist:
-            if job.status == job.CANCELLED:
+            if job.status == job.CANCELLED or (
+                job.status == job.FAILURE
+                and "was not ready to be used" in job.error_message
+            ):
                 # The job was never started
                 warm_pool_retained_billable_time_in_seconds = 0
             else:
