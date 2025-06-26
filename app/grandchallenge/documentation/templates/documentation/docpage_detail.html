@@ -28,7 +28,7 @@
 {% endblock %}
 
 {% block sidebar %}
-    <div class="col-lg-4 col-md-4">
+    <div class={% if currentdocpage.is_faq %}"col-lg-6 col-md-6"{% else %}"col-lg-4 col-md-4"{% endif %}>
         <nav class="documentation-sidebar p-3">
             <ul class="nav flex-column" id="documentation_nav_accordion">
                 {% for page in top_level_pages %}
@@ -51,9 +51,9 @@
                                 <ul class="rounded {% if currentdocpage == page or currentdocpage in subpages %}collapse show{% else %}collapse hide{% endif %} list-group">
                                     {% for subpage in page.children.all %}
                                         {% get_subordinate_pages subpage as subpage_subpages %}
-                                        {% if not subpage_subpages or currentdocpage.is_faq %}
+                                        {% if not subpage_subpages %}
                                             <li class="list-group-item border-0 p-0 {% if subpage == page.children.first %}mt-1{% endif %} mb-1">
-                                                <a class="nav-link rounded {% if subpage == currentdocpage or currentdocpage in subpage_subpages  %}active font-weight-bold{% endif %} text-primary bg-light"
+                                                <a class="nav-link rounded {% if subpage == currentdocpage  %}active font-weight-bold{% endif %} text-primary bg-light"
                                                    id="{{ subpage.slug }}"
                                                    href="{% url 'documentation:detail' slug=subpage.slug %}">
                                                         {{ subpage.title }}
@@ -156,32 +156,7 @@
         {% if not currentdocpage.is_faq %}
             {% include "documentation/partials/navigation_links.html" with page=currentdocpage %}
         {% endif %}
-        <div class="mt-4 docpage" id=pageContainer>
-            {{ currentdocpage.content|md2html }}
-            {% if currentdocpage.is_faq and not currentdocpage.content %}
-                <h3>{{ currentdocpage.title }} FAQ</h3>
-                {% if currentdocpage.children.all %}
-                    <div class="accordion" id="accordionFAQ">
-                    {% for faq in currentdocpage.children.all %}
-                      <div class="card">
-                        <div class="card-header" id="heading{{ faq.slug }}">
-                          <h2 class="mb-0">
-                            <button class="btn btn-block text-left" type="button" data-toggle="collapse" data-target="#collapse{{ faq.slug }}">
-                              {{ faq.title }}
-                            </button>
-                          </h2>
-                        </div>
-                        <div id="collapse{{ faq.slug }}" class="collapse">
-                          <div class="card-body">
-                            {{ faq.content|md2html }}
-                          </div>
-                        </div>
-                      </div>
-                    {% endfor %}
-                    </div>
-                {% endif %}
-            {% endif %}
-        </div>
+        <div class="mt-4 docpage" id=pageContainer>{{ currentdocpage.content|md2html }}</div>
         {% if not currentdocpage.is_faq %}
             {% include "documentation/partials/navigation_links.html" with page=currentdocpage %}
         {% endif %}
