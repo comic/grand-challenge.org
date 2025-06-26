@@ -85,6 +85,7 @@
                                                             </a>
                                                         </li>
                                                         <ul class="border-left border-right border-bottom {% if currentdocpage == tertiarypage or currentdocpage in tertiarypage.children.all %} collapse show {% else %} collapse hide {% endif %} list-group mb-1">
+                                                            {# If the number of nesting levels is changed, also change the children prefetch and the test_docpage_detail_num_queries #}
                                                             {% for fourthpage in tertiarypage.children.all %}
                                                                 <li class="p-0 mb-1 ml-5 mr-3">
                                                                     <a class="nav-link {% if fourthpage == currentdocpage %}active font-weight-bold{% endif %} text-primary pl-2"

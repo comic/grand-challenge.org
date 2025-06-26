@@ -33,7 +33,7 @@ class DocPageDetail(DetailView):
         context = super().get_context_data(**kwargs)
         top_level_pages = (
             DocPage.objects.filter(parent__isnull=True)
-            .prefetch_related("children__children")
+            .prefetch_related("children__children__children__children")
             .order_by("order")
         )
 
