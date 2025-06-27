@@ -1,26 +1,26 @@
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
-    // Added a fallback for empty highlight param to prevent errors
-    const highlightText = (params.get("highlight") || "").replace(/\s+/g, " ");
-    if (!highlightText) return;
+    const highlightText = params.get("highlight");
+    if (!highlightText || highlightText.trim() === "") return;
 
     const content = document.getElementById("pageContainer");
     if (!content) return;
 
-    // IMPORTANT: This whitespace normalization is the source of complexity.
-    // The traversal logic must perfectly match this.
-    const normalizedInnerText = content.innerText.replace(/\s+/g, " ");
-    const startIndex = normalizedInnerText
-        .toLocaleLowerCase()
-        .indexOf(highlightText.toLocaleLowerCase());
+    // The new function directly finds, highlights, and returns the first element.
+    const firstHighlightedElement = findAndHighlightSequence(
+        content,
+        highlightText,
+    );
 
-    if (startIndex === -1) {
+    if (firstHighlightedElement) {
+        // If a match was found and highlighted, scroll it into view.
+        firstHighlightedElement.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+        });
+    } else {
         console.warn(`Highlight text not found: "${highlightText}"`);
-        return;
     }
-    const endIndex = startIndex + highlightText.length;
-
-    highlightRangeAndScroll(startIndex, endIndex, content);
 });
 
 /**
@@ -35,72 +35,85 @@ function wrapTextNode(node) {
     return mark;
 }
 
-/**
- * Highlights a range and scrolls the first highlighted element into view.
- */
-function highlightRangeAndScroll(startIndex, endIndex, rootElement) {
-    if (startIndex < 0 || endIndex < startIndex) {
-        return;
-    }
-
-    const context = {
-        characterCount: 0,
-        first_node: null,
-    };
-
-    traverseAndHighlight(rootElement, startIndex, endIndex, context);
-
-    if (context.first_node) {
-        context.first_node.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-        });
-    }
-}
-
 // List of element tags that should be treated as a single, indivisible unit for highlighting.
 const ATOMIC_NODES = ["STRONG", "B", "EM", "I", "MARK", "SPAN", "A"];
 
 /**
- * Recursively traverses the DOM, highlighting full nodes that fall within a
- * character range.
+ * Recursively traverses the DOM to collect all "atomic" nodes (text nodes and
+ * specific inline elements) into a flat list, preserving their document order.
+ * @param {Node} node The starting node for traversal.
+ * @param {Array<Node>} nodes The accumulator array for collected nodes.
+ * @returns {Array<Node>} The flat list of atomic nodes.
  */
-function traverseAndHighlight(node, startIndex, endIndex, context) {
-    if (context.characterCount > endIndex) {
-        return;
-    }
-
+function collectAtomicNodes(node, nodes = []) {
     const isAtomic =
         node.nodeType === Node.TEXT_NODE ||
         (node.nodeType === Node.ELEMENT_NODE &&
             ATOMIC_NODES.includes(node.tagName));
 
     if (isAtomic) {
-        // Calculate the normalized length and character range of this atomic node.
-        // This normalization MUST match the one used to find startIndex/endIndex.
-        const nodeText = node.textContent.replace(/\s+/g, " ");
-        const nodeLength = nodeText.length;
-        const startOfNode = context.characterCount;
-        const endOfNode = startOfNode + nodeLength;
-
-        context.characterCount = endOfNode;
-
-        if (startOfNode < endIndex && endOfNode > startIndex) {
-            let highlightedElement;
-            if (node.nodeType === Node.TEXT_NODE) {
-                highlightedElement = wrapTextNode(node);
-            } else {
-                node.classList.add("mark");
-                highlightedElement = node;
-            }
-
-            if (!context.first_node) {
-                context.first_node = highlightedElement;
-            }
+        // Only add non-empty text nodes
+        if (
+            node.nodeType !== Node.TEXT_NODE ||
+            node.textContent.trim() !== ""
+        ) {
+            nodes.push(node);
         }
     } else if (node.nodeType === Node.ELEMENT_NODE) {
         for (const child of Array.from(node.childNodes)) {
-            traverseAndHighlight(child, startIndex, endIndex, context);
+            collectAtomicNodes(child, nodes);
         }
     }
+    return nodes;
+}
+
+/**
+ * Finds a sequence of nodes that match the search text and highlights them.
+ * This approach avoids the fragility of index-based highlighting by matching
+ * against the text content of the nodes directly.
+ * @param {HTMLElement} rootElement The element to search within.
+ * @param {string} searchText The text to find.
+ * @returns {HTMLElement|null} The first highlighted element, or null if not found.
+ */
+function findAndHighlightSequence(rootElement, searchText) {
+    const nodes = collectAtomicNodes(rootElement);
+    const normalizedSearchText = searchText
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+
+    for (let i = 0; i < nodes.length; i++) {
+        let currentSequenceText = "";
+        for (let j = i; j < nodes.length; j++) {
+            currentSequenceText += nodes[j].textContent;
+            const normalizedCurrentText = currentSequenceText
+                .replace(/\s+/g, " ")
+                .trim()
+                .toLowerCase();
+
+            if (normalizedCurrentText.indexOf(normalizedSearchText) !== -1) {
+                // Match found for the sequence of nodes from i to j.
+                const nodesToHighlight = nodes.slice(i, j + 1);
+                let firstHighlightedElement = null;
+                for (const node of nodesToHighlight) {
+                    let highlightedElement;
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        highlightedElement = wrapTextNode(node);
+                    } else {
+                        node.classList.add("mark");
+                        highlightedElement = node;
+                    }
+                    if (!firstHighlightedElement) {
+                        firstHighlightedElement = highlightedElement;
+                    }
+                }
+                return firstHighlightedElement;
+            }
+
+            if (!normalizedSearchText.startsWith(normalizedCurrentText)) {
+                break;
+            }
+        }
+    }
+    return null;
 }
