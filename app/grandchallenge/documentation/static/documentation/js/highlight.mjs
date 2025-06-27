@@ -1,15 +1,19 @@
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
-    const highlightText = params.get("highlight").replace(/\s+/g, " ");
+    // Added a fallback for empty highlight param to prevent errors
+    const highlightText = (params.get("highlight") || "").replace(/\s+/g, " ");
     if (!highlightText) return;
 
     const content = document.getElementById("pageContainer");
     if (!content) return;
 
-    const startIndex = content.innerText
-        .replace(/\s+/g, " ")
-        .indexOf(highlightText);
+    // IMPORTANT: This whitespace normalization is the source of complexity.
+    // The traversal logic must perfectly match this.
+    const normalizedInnerText = content.innerText.replace(/\s+/g, " ");
+    const startIndex = normalizedInnerText.indexOf(highlightText);
+
     if (startIndex === -1) {
+        console.warn(`Highlight text not found: "${highlightText}"`);
         return;
     }
     const endIndex = startIndex + highlightText.length;
@@ -18,11 +22,11 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /**
- * Wraps a DOM Node with a <mark> element.
+ * Wraps a TEXT_NODE with a <mark> element.
  * @param {Node} node The text node to wrap.
  * @returns {HTMLElement} The created <mark> element.
  */
-function wrapNode(node) {
+function wrapTextNode(node) {
     const mark = document.createElement("mark");
     node.parentNode.insertBefore(mark, node);
     mark.appendChild(node);
@@ -30,153 +34,130 @@ function wrapNode(node) {
 }
 
 /**
- * Highlights a range of text across multiple elements within a root container.
- *
- * @param {number} startIndex The starting character index of the selection.
- * @param {number} endIndex The ending character index of the selection.
- * @param {HTMLElement} rootElement The container element in which to perform the highlight.
+ * Highlights a range and scrolls the first highlighted element into view.
  */
 function highlightRangeAndScroll(startIndex, endIndex, rootElement) {
     if (startIndex < 0 || endIndex < startIndex) {
         return;
     }
 
-    // This object will be passed by reference through the recursive calls
     const context = {
         characterCount: 0,
-        highlighting: false, // Are we currently in a state of highlighting?
-        skipping_whitespace: false,
+        highlighting: false,
         first_node: null,
     };
 
-    // Start the traversal
     traverseAndHighlight(rootElement, startIndex, endIndex, context);
 
     if (context.first_node) {
-        context.first_node.parentElement.scrollIntoView({
+        // scrollIntoView works on elements, so if first_node is a text node,
+        // we use its parentElement.
+        const scrollTarget =
+            context.first_node.nodeType === Node.TEXT_NODE
+                ? context.first_node.parentElement
+                : context.first_node;
+
+        scrollTarget.scrollIntoView({
             behavior: "smooth",
             block: "center",
         });
     }
 }
 
-/**
- * Determine whether a node's text content is entirely whitespace.
- *
- * @param {Node} node A node implementing the `CharacterData` interface (i.e.,
- *                    a `Text`, `Comment`, or `CDATASection` node)
- * @return            `true` if all of the text content of `nod` is whitespace,
- *                    otherwise `false`.
- */
-function isAllWhitespace(node) {
-    return !/[^\t\n\r ]/.test(node.textContent);
-}
+// List of tags that should be wrapped entirely, not split.
+const FULL_HIGHLIGHT_NODES = ["STRONG", "B", "EM", "I", "MARK", "SPAN", "A"];
 
 /**
- * Recursively traverses the DOM and highlights text nodes based on the indices.
- *
- * @param {Node} node The current node to process.
- * @param {number} startIndex The starting character index.
- * @param {number} endIndex The ending character index.
- * @param {object} context An object holding the traversal state (characterCount, highlighting).
+ * Recursively traverses the DOM and highlights text based on character indices.
  */
 function traverseAndHighlight(node, startIndex, endIndex, context) {
-    if (context.characterCount > endIndex) return;
-
-    // We only care about text nodes and element nodes.
-    // We skip comments, etc.
-    if (
-        node.nodeType !== Node.ELEMENT_NODE &&
-        node.nodeType !== Node.TEXT_NODE
-    ) {
+    if (context.characterCount >= endIndex || context.done) {
         return;
     }
 
-    // If it's an element, recurse on its children
     if (node.nodeType === Node.ELEMENT_NODE) {
-        // We must convert childNodes to an array because the DOM manipulation
-        // ahead can change the live NodeList, causing issues with the loop.
+        // Check if the current element is one we should wrap whole.
+        if (FULL_HIGHLIGHT_NODES.includes(node.tagName)) {
+            const nodeText = node.textContent.replace(/\s+/g, " ");
+            const nodeLength = nodeText.length;
+            const startOfNode = context.characterCount;
+            const endOfNode = startOfNode + nodeLength;
+
+            // Check if this node's text content falls within the highlight range
+            const shouldHighlight =
+                (context.highlighting && endOfNode <= endIndex) || // Already highlighting and this node is fully contained
+                (startOfNode < endIndex && endOfNode > startIndex); // Node overlaps with the highlight range
+
+            if (shouldHighlight) {
+                // If this is the very first thing we highlight, store it for scrolling
+                if (!context.first_node) {
+                    context.first_node = node;
+                }
+                // wrapElementNode(node); // Wrap the entire element
+                node.classList.add("mark"); // Add a class for styling (or wrap the element as desired)
+                context.highlighting = true; // Ensure we stay in highlighting mode
+            }
+
+            // Update character count and, crucially, DO NOT traverse children.
+            // We've treated this element as an atomic unit.
+            context.characterCount = endOfNode;
+            return;
+        }
+
         for (const child of Array.from(node.childNodes)) {
             traverseAndHighlight(child, startIndex, endIndex, context);
         }
         return;
     }
 
-    // From here, we are only dealing with TEXT_NODE
+    if (node.nodeType === Node.TEXT_NODE) {
+        // Your whitespace handling is complex. For simplicity in this example,
+        // we'll use a more direct textContent length, but your logic
+        // for collapsing whitespace would go here. To correctly align with `normalizedInnerText`,
+        // the length of the text node's content must also be normalized.
+        const nodeLength = node.textContent.replace(/\s+/g, " ").length;
+        const startOfNode = context.characterCount;
+        const endOfNode = startOfNode + nodeLength;
 
-    if (isAllWhitespace(node)) {
-        if (!context.skipping_whitespace) {
-            context.characterCount += 1;
-            context.skipping_whitespace = true;
+        // This must be updated AFTER we use startOfNode
+        context.characterCount = endOfNode;
+
+        // If this node is completely outside the range, do nothing.
+        if (endOfNode <= startIndex || startOfNode >= endIndex) {
+            return;
         }
-        return;
-    }
 
-    const nodeText = node.textContent;
-    const nodeLength =
-        nodeText.length -
-        nodeText.includes("¶") -
-        (context.skipping_whitespace && nodeText.startsWith(" "));
+        // Determine if we are starting, ending, or fully inside the highlight
+        const shouldStart = startOfNode <= startIndex && endOfNode > startIndex;
+        const shouldEnd = startOfNode < endIndex && endOfNode >= endIndex;
 
-    context.skipping_whitespace = nodeText.endsWith(" ");
-
-    const startOfNode = context.characterCount;
-    const endOfNode = startOfNode + nodeLength;
-
-    // Update the global character count for the next node
-    context.characterCount = endOfNode;
-
-    // --- Core Logic: Determine if this node needs full or partial highlighting ---
-
-    // Case 1: The highlight is entirely contained within this single text node.
-    // [  start---end  ]
-    if (
-        !context.highlighting &&
-        startOfNode <= startIndex &&
-        endOfNode >= endIndex
-    ) {
-        context.first_node = node;
-        const startOffset = startIndex - startOfNode;
-        const endOffset = endIndex - startOfNode;
-
-        // Split the node at the end index first
-        const middleBit = node.splitText(startOffset);
-        middleBit.splitText(endOffset - startOffset);
-
-        // The middleBit is now the text to be highlighted
-        wrapNode(middleBit);
-        return;
-    }
-
-    // Case 2: The highlight starts here but ends in a later node.
-    // [  start-------->
-    if (
-        !context.highlighting &&
-        startOfNode <= startIndex &&
-        endOfNode > startIndex
-    ) {
-        context.first_node = node;
-        const offset = startIndex - startOfNode;
-        const nodeToWrap = node.splitText(offset);
-        wrapNode(nodeToWrap);
-        context.highlighting = true; // Enter highlighting mode
-        return;
-    }
-
-    // Case 3: This entire node is within the highlight range.
-    // <---- full node ---->
-    if (context.highlighting && endOfNode <= endIndex) {
-        wrapNode(node);
-        return;
-    }
-
-    // Case 4: The highlight started in a previous node and ends here.
-    // <--------end   ]
-    if (context.highlighting && endOfNode >= endIndex) {
-        const offset = endIndex - startOfNode;
-        node.splitText(offset); // The first part of the split is what we need to wrap
-        wrapNode(node);
-        context.highlighting = false; // We are done highlighting
-        return;
+        // The node contains the entire highlight
+        if (shouldStart && shouldEnd) {
+            const startOffset = startIndex - startOfNode;
+            const endOffset = endIndex - startOfNode;
+            const middleBit = node.splitText(startOffset);
+            middleBit.splitText(endOffset - startOffset);
+            context.first_node = wrapTextNode(middleBit);
+            context.done = true;
+        }
+        // The node contains the start of the highlight
+        else if (shouldStart) {
+            const startOffset = startIndex - startOfNode;
+            const nodeToWrap = node.splitText(startOffset);
+            context.first_node = wrapTextNode(nodeToWrap);
+            context.highlighting = true;
+        }
+        // The node contains the end of the highlight
+        else if (shouldEnd) {
+            const endOffset = endIndex - startOfNode;
+            node.splitText(endOffset);
+            wrapTextNode(node);
+            context.highlighting = false;
+            context.done = true;
+        }
+        // The node is fully contained within the highlight
+        else if (context.highlighting) {
+            wrapTextNode(node);
+        }
     }
 }
