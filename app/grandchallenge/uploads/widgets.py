@@ -26,6 +26,7 @@ class UserUploadWidgetMixin:
             # "vendored/dicom-curate/dist/umd/dicom-curate.umd.min.js", #TODO when this is available, use it
             "vendored/dcmjs/build/dcmjs.js",
             "js/dc.js",
+            "js/retrieve_deidentification_protocol.js",
             "js/file_preprocessors.js",
             "js/user_upload.js",
         )
