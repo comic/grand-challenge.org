@@ -42,9 +42,13 @@
                                value="{{ follow.pk }}"
                                data-flag={% if follow.flag == 'job-active' %}"job-follow"{% else %}
                                    "standard-follow"{% endif %} data-url="{% url 'api:follow-detail' pk=follow.pk %}">
-                        <a href="{{ follow.follow_object.get_absolute_url }}">
-                            {% if follow.content_type.name == 'Topic' %} {{ follow.follow_object.subject }}{% else %}
-                                {{ follow.follow_object }}{% endif %}</a>
+                        <a{% if follow.content_type.model == 'forumtopic' or follow.content_type.model == 'forum' %}
+                                    class="btn disabled p-0 m-0" role="button" title="Temporarily inaccessible, please come back later"
+                                {% else %}
+                                    href="{{ follow.follow_object.get_absolute_url }}"
+                                {% endif %}
+                                    href="{{ follow.follow_object.get_absolute_url }}"
+                        > {{ follow.follow_object }}</a>
                         <span class="text-truncate font-italic text-muted align-middle mx-2 ">{{ follow.content_type.name|title }}
                             {% if follow.flag != 'job-active' and follow.content_type.model == 'algorithm' %} Access
                                 Requests {% elif follow.flag == 'job-active' %} Job Notifications {% endif %}| subscribed to since {{ follow.started|date:'F j, Y' }}
