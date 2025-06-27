@@ -888,19 +888,12 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             follow(
                 user=user, obj=self.forum, actor_only=False, send_action=False
             )
-            follow(
-                user=user,
-                obj=self.discussion_forum,
-                actor_only=False,
-                send_action=False,
-            )
         else:
             raise ValueError("You cannot add the anonymous user to this group")
 
     def remove_participant(self, user):
         user.groups.remove(self.participants_group)
         unfollow(user=user, obj=self.forum, send_action=False)
-        unfollow(user=user, obj=self.discussion_forum, send_action=False)
 
     def add_admin(self, user):
         if user != get_anonymous_user():
@@ -908,19 +901,12 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             follow(
                 user=user, obj=self.forum, actor_only=False, send_action=False
             )
-            follow(
-                user=user,
-                obj=self.discussion_forum,
-                actor_only=False,
-                send_action=False,
-            )
         else:
             raise ValueError("You cannot add the anonymous user to this group")
 
     def remove_admin(self, user):
         user.groups.remove(self.admins_group)
         unfollow(user=user, obj=self.forum, send_action=False)
-        unfollow(user=user, obj=self.discussion_forum, send_action=False)
 
     @cached_property
     def should_show_verification_warning(self):
