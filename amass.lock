@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:5e7081926ff1ffb6705577549c5eed152bf5babdce2bf9240bf18d784e682c10",
+  "content_hash": "sha256:62aaefeff2a1b47a9f99371657cd70f6ef4d587cad69223b366eff6f6a251a1e",
   "dependencies": [
     {
       "name": "@github/markdown-toolbar-element",
@@ -727,6 +727,18 @@
       "maps": [
         "jsoneditor.map"
       ]
+    },
+    {
+      "name": "jszip",
+      "version": "3.10.1",
+      "provider": "cdnjs",
+      "assets": [
+        {
+          "name": "jszip.min.js",
+          "sri": "sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg=="
+        }
+      ],
+      "maps": []
     },
     {
       "name": "moment.js",
