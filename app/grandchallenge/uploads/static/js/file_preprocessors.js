@@ -2298,7 +2298,13 @@ function generateCurationSpec(customConfig, createDummyValueFn) {
                     continue;
                 }
                 const action = tagRule ? tagRule.default : defaultAction;
+                const justification =
+                    tagRule?.justification || "SOP Class is not allowed";
                 switch (action) {
+                    case "REJECT":
+                        throw new Error(
+                            `Image is rejected due to de-identification protocol. Reason: ${justification}`,
+                        );
                     case "X":
                         // Remove: default behavior, do nothing
                         break;
