@@ -592,8 +592,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         else:
             remove_perm("view_challenge", reg_and_anon, self)
 
-        if self.discussion_forum:
-            self.assign_discussion_forum_permissions()
+        self.assign_discussion_forum_permissions()
 
     def create_forum_permissions(self):
         participant_group_perms = {
