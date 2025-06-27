@@ -10,7 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // IMPORTANT: This whitespace normalization is the source of complexity.
     // The traversal logic must perfectly match this.
     const normalizedInnerText = content.innerText.replace(/\s+/g, " ");
-    const startIndex = normalizedInnerText.indexOf(highlightText);
+    const startIndex = normalizedInnerText
+        .toLocaleLowerCase()
+        .indexOf(highlightText.toLocaleLowerCase());
 
     if (startIndex === -1) {
         console.warn(`Highlight text not found: "${highlightText}"`);
