@@ -88,6 +88,7 @@ function findAndHighlightSequence(rootElement, searchText) {
     for (let i = 0; i < nodes.length; i++) {
         currentSequenceText += ` ${nodes[i].textContent}`;
         const normalizedCurrentText = currentSequenceText
+            .replace(/¶/g, "")
             .replace(/\s+/g, " ")
             .trim()
             .toLowerCase();
