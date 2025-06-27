@@ -82,37 +82,39 @@ function findAndHighlightSequence(rootElement, searchText) {
         .trim()
         .toLowerCase();
 
+    let currentSequenceText = "";
+    const charCountNodes = [];
+    let startIndex = -1;
     for (let i = 0; i < nodes.length; i++) {
-        let currentSequenceText = "";
-        for (let j = i; j < nodes.length; j++) {
-            currentSequenceText += nodes[j].textContent;
-            const normalizedCurrentText = currentSequenceText
-                .replace(/\s+/g, " ")
-                .trim()
-                .toLowerCase();
+        currentSequenceText += ` ${nodes[i].textContent}`;
+        const normalizedCurrentText = currentSequenceText
+            .replace(/\s+/g, " ")
+            .trim()
+            .toLowerCase();
+        charCountNodes.push(normalizedCurrentText.length);
 
-            if (normalizedCurrentText.indexOf(normalizedSearchText) !== -1) {
-                // Match found for the sequence of nodes from i to j.
-                const nodesToHighlight = nodes.slice(i, j + 1);
-                let firstHighlightedElement = null;
-                for (const node of nodesToHighlight) {
-                    let highlightedElement;
-                    if (node.nodeType === Node.TEXT_NODE) {
-                        highlightedElement = wrapTextNode(node);
-                    } else {
-                        node.classList.add("mark");
-                        highlightedElement = node;
-                    }
-                    if (!firstHighlightedElement) {
-                        firstHighlightedElement = highlightedElement;
-                    }
+        startIndex = normalizedCurrentText.indexOf(normalizedSearchText);
+
+        if (startIndex !== -1) {
+            const firstNode = charCountNodes.findIndex(
+                charCount => charCount > startIndex,
+            );
+            // Match found for the sequence of nodes from i to j.
+            const nodesToHighlight = nodes.slice(firstNode, i + 1);
+            let firstHighlightedElement = null;
+            for (const node of nodesToHighlight) {
+                let highlightedElement;
+                if (node.nodeType === Node.TEXT_NODE) {
+                    highlightedElement = wrapTextNode(node);
+                } else {
+                    node.classList.add("mark");
+                    highlightedElement = node;
                 }
-                return firstHighlightedElement;
+                if (!firstHighlightedElement) {
+                    firstHighlightedElement = highlightedElement;
+                }
             }
-
-            if (!normalizedSearchText.startsWith(normalizedCurrentText)) {
-                break;
-            }
+            return firstHighlightedElement;
         }
     }
     return null;
