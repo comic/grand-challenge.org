@@ -14,7 +14,7 @@ class Command(BaseCommand):
         old_forum_ct = ContentType.objects.get_for_model(MachinaForum)
         old_forumtopic_ct = ContentType.objects.get_for_model(MachinaTopic)
 
-        Notification.objects.filter(
+        deleted_count, _ = Notification.objects.filter(
             Q(target_content_type__in=[old_forum_ct, old_forumtopic_ct])
             | Q(
                 action_object_content_type__in=[
@@ -23,3 +23,9 @@ class Command(BaseCommand):
                 ]
             )
         ).delete()
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Successfully deleted {deleted_count} notifications"
+            )
+        )
