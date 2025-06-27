@@ -2259,10 +2259,6 @@ function getDummyValue(vr) {
 function generateCurationSpec(customConfig, createDummyValueFn) {
     return () => ({
         version: "2.0",
-        // Apply strict de-identification options by default.
-        // The custom config's global "REJECT" and SOP-specific "X" imply that
-        // tags not explicitly handled should be removed. This is the default
-        // behavior of PS3.15E if retention options are set to be strict.
         dicomPS315EOptions: {
             cleanDescriptorsOption: false, // Clean all descriptors by default
             // cleanDescriptorsExceptions: [], // No exceptions by default
@@ -2286,7 +2282,7 @@ function generateCurationSpec(customConfig, createDummyValueFn) {
                 sopClassRules = customConfig.sopClass[sopClassUID];
             }
             const tagRules = sopClassRules.tag || {};
-            const defaultAction = sopClassRules.default || "X";
+            const defaultAction = sopClassRules.default || customConfig.default;
 
             for (const tagKey of dicomTags) {
                 const tagRule = tagRules[tagKey];
@@ -2343,7 +2339,7 @@ const curationSpec = generateCurationSpec(
     getDummyValue,
 );
 
-// Helper to check if a file is a DICOM file (by extension, can be improved)
+// Helper to check if a file is a DICOM file by extension
 function isDicomFile(file) {
     const dicomExtensions = [".dcm", ".dicom"];
     const isDicom = dicomExtensions.some(ext =>
