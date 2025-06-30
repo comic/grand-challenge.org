@@ -30,6 +30,15 @@ function normalizeText(text) {
 }
 
 /**
+ * Determine whether a node's text content is entirely whitespace.
+ * @param {Node} node A node implementing the `CharacterData` interface
+ * @return            `true` if all of the text content of `node` is whitespace.
+ */
+function isAllWhitespace(node) {
+    return !/[^\t\n\r ]/.test(node.textContent);
+}
+
+/**
  * Wraps a TEXT_NODE with a <mark> element.
  * @param {Node} node The text node to wrap.
  * @returns {HTMLElement} The created <mark> element.
@@ -127,6 +136,11 @@ function traverseAndHighlight(node, startIndex, endIndex, context) {
 
         // If this node is completely outside the range, do nothing.
         if (endOfNode <= startIndex || startOfNode >= endIndex) {
+            return;
+        }
+
+        // If this node is completely whitespace, do nothing.
+        if (isAllWhitespace(node)) {
             return;
         }
 
