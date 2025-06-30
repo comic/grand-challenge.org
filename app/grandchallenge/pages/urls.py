@@ -18,7 +18,7 @@ urlpatterns = [
     path("pages/create/", PageCreate.as_view(), name="create"),
     path("statistics/", ChallengeStatistics.as_view(), name="statistics"),
     path("", ChallengeHome.as_view(), name="home"),
-    path("pages/<slug>/", PageDetail.as_view(), name="detail"),
+    path("<slug>/", PageDetail.as_view(), name="detail"),
     path(
         "pages/<slug>/content-update/",
         PageContentUpdate.as_view(),
