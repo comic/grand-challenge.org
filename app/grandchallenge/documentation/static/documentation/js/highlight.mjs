@@ -12,8 +12,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const normalizedInnerText = normalizeText(content.innerText);
     const startIndex = normalizedInnerText.indexOf(highlightText);
 
-    console.log(normalizedInnerText);
-
     if (startIndex === -1) {
         console.warn(`Highlight text not found: "${highlightText}"`);
         return;
@@ -58,8 +56,6 @@ function highlightRangeAndScroll(startIndex, endIndex, rootElement) {
         first_node: null,
     };
 
-    console.log(startIndex, endIndex);
-
     traverseAndHighlight(rootElement, startIndex, endIndex, context);
 
     if (context.first_node) {
@@ -96,8 +92,6 @@ function traverseAndHighlight(node, startIndex, endIndex, context) {
             // const startOfNode = context.characterCount;
             context.characterCount = context.currentSequenceText.length;
             const endOfNode = context.characterCount;
-            console.log(context.characterCount);
-            console.log(context.currentSequenceText);
 
             // Check if this node's text content falls within the highlight range
             const shouldHighlight =
@@ -134,8 +128,6 @@ function traverseAndHighlight(node, startIndex, endIndex, context) {
         const startOfNode = context.characterCount;
         context.characterCount = context.currentSequenceText.length;
         const endOfNode = context.characterCount;
-        console.log(context.characterCount);
-        console.log(context.currentSequenceText);
 
         // If this node is completely outside the range, do nothing.
         if (endOfNode <= startIndex || startOfNode >= endIndex) {
