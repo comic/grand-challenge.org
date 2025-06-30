@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import BLANK_CHOICE_DASH
+from django.template.defaultfilters import slugify
 
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import MarkdownEditorFullPageWidget
@@ -19,7 +20,8 @@ class PageCreateForm(SaveFormInitMixin, forms.ModelForm):
     def clean_display_title(self):
         display_title = self.cleaned_data["display_title"]
 
-        if display_title.lower() in {"evaluation"}:
+        # if display_title.lower() in {"evaluation"}:
+        if slugify(display_title) in {"evaluation"}:
             # evaluation results in a URL clash, especially with the update page.
             raise ValidationError(
                 "Title not allowed, please select an alternative"
