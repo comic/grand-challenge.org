@@ -178,61 +178,6 @@ async function preprocessDicomFile(file) {
 }
 
 /**
- * Helper to check if a file is a ZIP file by extension.
- * @param {File} file - The file to check.
- * @returns {boolean} - True if the file is a ZIP, false otherwise.
- */
-function isZipFile(file) {
-    return file.name.toLowerCase().endsWith(".zip");
-}
-
-/**
- * Asynchronously preprocesses a ZIP file, de-identifying any DICOM files within it.
- * Requires JSZip and dicomCurate to be available in the global scope.
- * @param {File} file - The ZIP file to preprocess.
- * @returns {Promise<File>} - A promise that resolves to a new File object
- *   representing the processed ZIP file.
- * @throws {Error} If JSZip or dicomCurate are not available.
- */
-async function preprocessZipFile(file) {
-    if (!globalThis.JSZip) {
-        throw new Error("JSZip library is not available in the global scope.");
-    }
-    if (
-        !globalThis.dicomCurate ||
-        typeof globalThis.dicomCurate.curateOne !== "function"
-    ) {
-        throw new Error("dicomCurate.curateOne is not available");
-    }
-
-    const zip = await globalThis.JSZip.loadAsync(file);
-    const newZip = new globalThis.JSZip();
-    const processingPromises = [];
-
-    zip.forEach((relativePath, zipEntry) => {
-        if (!zipEntry.dir) {
-            processingPromises.push(
-                zipEntry.async("blob").then(async blob => {
-                    const entryFile = new File([blob], zipEntry.name, {
-                        type: "application/octet-stream",
-                    });
-                    if (isDicomFile(entryFile)) {
-                        const processedDicom =
-                            await preprocessDicomFile(entryFile);
-                        newZip.file(relativePath, processedDicom);
-                    } else {
-                        newZip.file(relativePath, blob); // Add non-DICOM files as is
-                    }
-                }),
-            );
-        }
-    });
-    await Promise.all(processingPromises);
-    const processedZipBlob = await newZip.generateAsync({ type: "blob" });
-    return new File([processedZipBlob], file.name, { type: file.type });
-}
-
-/**
  * Registers file preprocessors used by Uppy to preprocess files.
  *
  * Each preprocessor object in the array must have the following properties:
@@ -253,9 +198,5 @@ globalThis.UPPY_FILE_PREPROCESSORS = [
     {
         fileMatcher: isDicomFile,
         preprocessor: preprocessDicomFile,
-    },
-    {
-        fileMatcher: isZipFile,
-        preprocessor: preprocessZipFile,
     },
 ];
