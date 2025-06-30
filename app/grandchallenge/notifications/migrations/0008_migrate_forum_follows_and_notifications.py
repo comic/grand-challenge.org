@@ -1,11 +1,11 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import migrations
+from django.db.models import Q
 
 from grandchallenge.discussion_forums.models import (
     get_matching_forum,
     get_matching_topic,
 )
-from grandchallenge.notifications.models import NotificationTypeChoices
 
 
 def migrate_forum_and_topic_follows_and_notifications(  # noqa C901
@@ -25,28 +25,33 @@ def migrate_forum_and_topic_follows_and_notifications(  # noqa C901
 
     new_topic_ct = ContentType.objects.get_for_model(ForumTopic)
     new_forum_ct = ContentType.objects.get_for_model(Forum)
+    old_forum_ct = ContentType.objects.get_for_model(MachinaForum)
+    old_forumtopic_ct = ContentType.objects.get_for_model(MachinaTopic)
 
     # delete old notifications with outdated references
-    Notification.objects.filter(
-        type__in=[
-            NotificationTypeChoices.FORUM_POST,
-            NotificationTypeChoices.FORUM_POST_REPLY,
-        ]
+    _, deleted_count = Notification.objects.filter(
+        Q(target_content_type__in=[old_forum_ct, old_forumtopic_ct])
+        | Q(
+            action_object_content_type__in=[
+                old_forum_ct,
+                old_forumtopic_ct,
+            ]
+        )
     ).delete()
-
-    ct_forum = ContentType.objects.get_for_model(MachinaForum)
-    ct_forumtopic = ContentType.objects.get_for_model(MachinaTopic)
+    print(f"Successfully deleted {deleted_count} notifications.")
 
     follows_to_update = []
     n_updated = 0
     batch_size = 1000
 
     for follow in (
-        Follow.objects.filter(content_type__in=[ct_forum, ct_forumtopic])
+        Follow.objects.filter(
+            content_type__in=[old_forum_ct, old_forumtopic_ct]
+        )
         .only("object_id", "content_type")
         .iterator(chunk_size=batch_size)
     ):
-        if follow.content_type == ct_forum:
+        if follow.content_type == old_forum_ct:
             try:
                 forum = get_matching_forum(
                     old_forum_id=follow.object_id,
