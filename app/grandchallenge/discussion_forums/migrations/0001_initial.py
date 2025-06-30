@@ -41,6 +41,7 @@ class Migration(migrations.Migration):
                     "source_object",
                     models.OneToOneField(
                         null=True,
+                        blank=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="migrated_forum",
                         to="forum.forum",
@@ -85,6 +86,7 @@ class Migration(migrations.Migration):
                     "source_object",
                     models.OneToOneField(
                         null=True,
+                        blank=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="migrated_post",
                         to="forum_conversation.post",
@@ -169,6 +171,7 @@ class Migration(migrations.Migration):
                     "source_object",
                     models.OneToOneField(
                         null=True,
+                        blank=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="migrated_topic",
                         to="forum_conversation.topic",
@@ -325,6 +328,7 @@ class Migration(migrations.Migration):
                     "source_object",
                     models.OneToOneField(
                         null=True,
+                        blank=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="migrated_track",
                         to="forum_tracking.topicreadtrack",

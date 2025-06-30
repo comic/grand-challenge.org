@@ -50,6 +50,7 @@ class Forum(UUIDModelNoAutoNow):
         MachinaForum,
         related_name="migrated_forum",
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
     )
 
@@ -78,6 +79,7 @@ class ForumTopic(FieldChangeMixin, UUIDModelNoAutoNow):
         machina_conversation_models.Topic,
         related_name="migrated_topic",
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
     )
     forum = models.ForeignKey(
@@ -231,6 +233,7 @@ class ForumPost(UUIDModelNoAutoNow):
         machina_conversation_models.Post,
         related_name="migrated_post",
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
     )
     topic = models.ForeignKey(
@@ -378,6 +381,7 @@ class TopicReadRecord(UUIDModelNoAutoNow):
         machina_tracking_models.TopicReadTrack,
         related_name="migrated_track",
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
     )
     user = models.ForeignKey(
