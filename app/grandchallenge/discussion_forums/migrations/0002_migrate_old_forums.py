@@ -169,7 +169,7 @@ def init_post_permissions(*, apps, post):
     )
 
 
-def migrate_challenge_forums(apps, schema_editor):
+def migrate_challenge_forums(apps, schema_editor):  # noqa C901
     Challenge = apps.get_model("challenges", "Challenge")  # noqa: N806
     Forum = apps.get_model("discussion_forums", "Forum")  # noqa: N806
     ForumTopic = apps.get_model(  # noqa: N806
@@ -242,8 +242,9 @@ def migrate_challenge_forums(apps, schema_editor):
                     init_post_permissions(apps=apps, post=post)
                     post_count += 1
 
-            new_topic.last_post = latest_new_post
-            new_topic.save()
+            if latest_new_post:
+                new_topic.last_post = latest_new_post
+                new_topic.save()
 
         print(
             f"Finished migrating forum, topics and posts for {challenge}. Migrated {topic_count} topics and {post_count} posts"
