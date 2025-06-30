@@ -53,18 +53,18 @@ function highlightRangeAndScroll(startIndex, endIndex, rootElement) {
         currentSequenceText: "",
         characterCount: 0,
         highlighting: false,
-        first_node: null,
+        firstNode: null,
     };
 
     traverseAndHighlight(rootElement, startIndex, endIndex, context);
 
-    if (context.first_node) {
-        // scrollIntoView works on elements, so if first_node is a text node,
+    if (context.firstNode) {
+        // scrollIntoView works on elements, so if firstNode is a text node,
         // we use its parentElement.
         const scrollTarget =
-            context.first_node.nodeType === Node.TEXT_NODE
-                ? context.first_node.parentElement
-                : context.first_node;
+            context.firstNode.nodeType === Node.TEXT_NODE
+                ? context.firstNode.parentElement
+                : context.firstNode;
 
         scrollTarget.scrollIntoView({
             behavior: "smooth",
@@ -80,7 +80,7 @@ const ATOMIC_NODES = ["STRONG", "B", "EM", "I", "MARK", "SPAN", "A"];
  * Recursively traverses the DOM and highlights text based on character indices.
  */
 function traverseAndHighlight(node, startIndex, endIndex, context) {
-    if (context.characterCount >= endIndex || context.done) {
+    if (context.characterCount >= endIndex) {
         return;
     }
     if (node.nodeType === Node.ELEMENT_NODE) {
@@ -89,7 +89,6 @@ function traverseAndHighlight(node, startIndex, endIndex, context) {
             context.currentSequenceText = normalizeText(
                 `${context.currentSequenceText}${node.textContent}`,
             );
-            // const startOfNode = context.characterCount;
             context.characterCount = context.currentSequenceText.length;
             const endOfNode = context.characterCount;
 
@@ -100,15 +99,12 @@ function traverseAndHighlight(node, startIndex, endIndex, context) {
 
             if (shouldHighlight) {
                 // If this is the very first thing we highlight, store it for scrolling
-                if (!context.first_node) {
-                    context.first_node = node;
+                if (!context.firstNode) {
+                    context.firstNode = node;
                 }
-                // wrapElementNode(node); // Wrap the entire element
-                node.classList.add("mark"); // Add a class for styling (or wrap the element as desired)
+                node.classList.add("mark"); // Add a class for styling
                 context.highlighting = true; // Ensure we stay in highlighting mode
             }
-
-            if (endOfNode >= endIndex) context.highlighting = false; // Stop highlighting.
 
             // DO NOT traverse children.
             // We've treated this element as an atomic unit.
@@ -144,14 +140,13 @@ function traverseAndHighlight(node, startIndex, endIndex, context) {
             const endOffset = endIndex - startOfNode;
             const middleBit = node.splitText(startOffset);
             middleBit.splitText(endOffset - startOffset);
-            context.first_node = wrapTextNode(middleBit);
-            context.done = true;
+            context.firstNode = wrapTextNode(middleBit);
         }
         // The node contains the start of the highlight
         else if (shouldStart) {
             const startOffset = startIndex - startOfNode;
             const nodeToWrap = node.splitText(startOffset);
-            context.first_node = wrapTextNode(nodeToWrap);
+            context.firstNode = wrapTextNode(nodeToWrap);
             context.highlighting = true;
         }
         // The node contains the end of the highlight
@@ -159,8 +154,6 @@ function traverseAndHighlight(node, startIndex, endIndex, context) {
             const endOffset = endIndex - startOfNode;
             node.splitText(endOffset);
             wrapTextNode(node);
-            context.highlighting = false;
-            context.done = true;
         }
         // The node is fully contained within the highlight
         else if (context.highlighting) {
