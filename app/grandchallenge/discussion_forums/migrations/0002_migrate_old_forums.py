@@ -196,11 +196,9 @@ def migrate_challenge_forums(apps, schema_editor):  # noqa C901
                 created=challenge.forum.created,
                 modified=challenge.forum.updated,
             )
-
-        challenge.discussion_forum = new_forum
-        challenge.save()
-
-        init_forum_permissions(apps=apps, challenge=challenge)
+            challenge.discussion_forum = new_forum
+            challenge.save()
+            init_forum_permissions(apps=apps, challenge=challenge)
 
         topic_count = 0
         post_count = 0
