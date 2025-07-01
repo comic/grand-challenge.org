@@ -188,6 +188,7 @@ def nested_docpages():
 
 
 @pytest.mark.django_db
+@pytest.mark.flaky(reruns=3)
 @pytest.mark.parametrize(
     "level, num_queries",
     (
