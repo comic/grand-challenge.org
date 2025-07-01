@@ -108,15 +108,17 @@
                 {% endfor %}
             </ul>
         </nav>
-        {% if not currentdocpage.is_faq %}
-            <div class="mt-4">
-                <a class="btn btn-info m-0"
-                   id="faq"
-                   href="{% url 'documentation:detail' slug='faq' %}">
-                        FAQ
+        <div class="mt-4">
+            {% if currentdocpage.is_faq %}
+                <a class="btn btn-info m-0" href="{% url 'documentation:home' %}">
+                    <i class="fa fa-book mr-2"></i>Documentation
                 </a>
-            </div>
-        {% endif %}
+            {% else %}
+                <a class="btn btn-info m-0" href="{% url 'documentation:detail' slug='faq' %}">
+                    <i class="fa fa-comments mr-2"></i>FAQ
+                </a>
+            {% endif %}
+        </div>
     </div>
 {% endblock %}
 
