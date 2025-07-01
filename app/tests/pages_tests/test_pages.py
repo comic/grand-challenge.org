@@ -524,3 +524,91 @@ def test_should_show_verification_warning():
     del challenge.visible_phases
 
     assert challenge.should_show_verification_warning is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "slug",
+    [
+        "0",
+        "1",
+        "admins",
+        "challenge",
+        "create",
+        "delete",
+        "evaluation",
+        "invoices",
+        "leaderboard",
+        "markdownx",
+        "member",
+        "onboarding-tasks",
+        "pages",
+        "participants",
+        "phase",
+        "statistics",
+        "submission",
+        "teams",
+        "update",
+    ],
+)
+def test_page_urls(client, slug):
+    content = f"page content for {slug}"
+    page = PageFactory(display_title=slug, content_markdown=content)
+    user = UserFactory()
+
+    # For user
+    response = get_view_for_user(
+        viewname="pages:detail",
+        client=client,
+        challenge=page.challenge,
+        user=user,
+        reverse_kwargs={"slug": slug},
+    )
+    assert response.status_code == 200
+    assert content in response.rendered_content
+
+    # For challenge admin
+    response = get_view_for_user(
+        viewname="pages:detail",
+        client=client,
+        challenge=page.challenge,
+        user=page.challenge.creator,
+        reverse_kwargs={"slug": slug},
+    )
+    assert response.status_code == 200
+    assert content in response.rendered_content
+
+    response = get_view_for_user(
+        viewname="pages:content-update",
+        client=client,
+        challenge=page.challenge,
+        user=page.challenge.creator,
+        reverse_kwargs={"slug": slug},
+    )
+    assert response.status_code == 200
+    assert "<h2>Update Page</h2>" in str(response.content)
+    assert content in response.rendered_content
+
+    response = get_view_for_user(
+        viewname="pages:metadata-update",
+        client=client,
+        challenge=page.challenge,
+        user=page.challenge.creator,
+        reverse_kwargs={"slug": slug},
+    )
+    assert response.status_code == 200
+    assert "<h2>Update Page</h2>" in str(response.content)
+    assert f'value="{slug}"' in str(response.content)  # noqa: B907
+
+    response = get_view_for_user(
+        viewname="pages:delete",
+        client=client,
+        challenge=page.challenge,
+        user=page.challenge.creator,
+        reverse_kwargs={"slug": slug},
+    )
+    assert response.status_code == 200
+    assert "<h2>Confirm Deletion</h2>" in str(response.content)
+    assert (
+        f'delete the page "{slug}"?' in response.rendered_content  # noqa: B907
+    )
