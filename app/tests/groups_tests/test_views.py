@@ -1,5 +1,5 @@
 import pytest
-from lxml.html.diff import html_escape
+from django.utils.html import escape
 
 from tests.algorithms_tests.factories import AlgorithmFactory
 from tests.archives_tests.factories import ArchiveFactory
@@ -53,7 +53,7 @@ class TestGroupManagementViews:
         assert response.status_code == 200
         assert str(u.pk) in response.json()["results"][0]["id"]
         assert (
-            html_escape(str(u.user_profile.get_mugshot_url()))
+            escape(str(u.user_profile.get_mugshot_url()))
             in response.json()["results"][0]["text"]
         )
         assert u.username in response.json()["results"][0]["text"]
@@ -122,7 +122,7 @@ class TestAutocompleteViews:
 
         assert str(u.pk) in response.json()["results"][0]["id"]
         assert (
-            html_escape(str(u.user_profile.get_mugshot_url()))
+            escape(str(u.user_profile.get_mugshot_url()))
             in response.json()["results"][0]["text"]
         )
         assert u.username in response.json()["results"][0]["text"]
