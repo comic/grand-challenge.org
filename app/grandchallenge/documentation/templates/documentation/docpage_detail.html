@@ -108,6 +108,15 @@
                 {% endfor %}
             </ul>
         </nav>
+        {% if not currentdocpage.is_faq %}
+            <div class="mt-4">
+                <a class="btn btn-info m-0"
+                   id="faq"
+                   href="{% url 'documentation:detail' slug='faq' %}">
+                        FAQ
+                </a>
+            </div>
+        {% endif %}
     </div>
 {% endblock %}
 
