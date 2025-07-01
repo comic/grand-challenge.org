@@ -17,7 +17,9 @@ urlpatterns = [
     path("pages/all/", PageList.as_view(), name="list"),
     path("pages/create/", PageCreate.as_view(), name="create"),
     path(
-        "pages/statistics/", ChallengeStatistics.as_view(), name="statistics"
+        "challenge/statistics/",
+        ChallengeStatistics.as_view(),
+        name="statistics",
     ),
     path("", ChallengeHome.as_view(), name="home"),
     path("<slug>/", PageDetail.as_view(), name="detail"),
