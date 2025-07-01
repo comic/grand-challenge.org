@@ -186,7 +186,7 @@ def migrate_challenge_forums(apps, schema_editor):  # noqa C901
     topic_lock_matching_dict = {0: False, 1: True}
 
     for challenge in Challenge.objects.all():
-        print(f"Processing forum for {challenge}")
+        print(f"Processing forum for {challenge.short_name}")
 
         try:
             new_forum = challenge.forum.migrated_forum
@@ -218,7 +218,7 @@ def migrate_challenge_forums(apps, schema_editor):  # noqa C901
                     modified=topic.updated,
                     is_locked=topic_lock_matching_dict[topic.status],
                 )
-                init_topic_permissions(apps=apps, topic=topic)
+                init_topic_permissions(apps=apps, topic=new_topic)
                 topic_count += 1
 
             latest_new_post = None
@@ -237,7 +237,7 @@ def migrate_challenge_forums(apps, schema_editor):  # noqa C901
                         creator=post.poster,
                         content=post.content,
                     )
-                    init_post_permissions(apps=apps, post=post)
+                    init_post_permissions(apps=apps, post=latest_new_post)
                     post_count += 1
 
             if latest_new_post:
@@ -290,7 +290,11 @@ def migrate_topic_tracks(apps, schema_editor):
         except ObjectDoesNotExist:
             continue
 
-        if track.user.has_perm("view_forumtopic", new_topic):
+        admins_group = new_topic.forum.admins_group
+        participants_group = new_topic.forum.participants_group
+        if track.user.groups.filter(
+            pk=[admins_group, participants_group]
+        ).exists():
             batch.append(
                 TopicReadRecord(
                     source_object=track,
