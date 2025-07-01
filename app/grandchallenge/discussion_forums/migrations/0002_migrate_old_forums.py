@@ -245,7 +245,7 @@ def migrate_challenge_forums(apps, schema_editor):  # noqa C901
                 new_topic.save()
 
         print(
-            f"Finished migrating forum, topics and posts for {challenge}. Migrated {topic_count} topics and {post_count} posts"
+            f"Finished migrating forum, topics and posts for {challenge.short_name}. Migrated {topic_count} topics and {post_count} posts"
         )
 
 
@@ -290,10 +290,12 @@ def migrate_topic_tracks(apps, schema_editor):
         except ObjectDoesNotExist:
             continue
 
-        admins_group = new_topic.forum.admins_group
-        participants_group = new_topic.forum.participants_group
+        admins_group = new_topic.forum.linked_challenge.admins_group
+        participants_group = (
+            new_topic.forum.linked_challenge.participants_group
+        )
         if track.user.groups.filter(
-            pk=[admins_group, participants_group]
+            pk__in=[admins_group.pk, participants_group.pk]
         ).exists():
             batch.append(
                 TopicReadRecord(
