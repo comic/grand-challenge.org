@@ -47,6 +47,8 @@ function getDummyValue(vr) {
 }
 
 function generateCurationSpec(customConfig, createDummyValueFn) {
+    const uidMap = new Map();
+
     return () => ({
         version: "2.0",
         dicomPS315EOptions: {
@@ -90,6 +92,7 @@ function generateCurationSpec(customConfig, createDummyValueFn) {
                 const action = tagRule ? tagRule.default : defaultAction;
                 const justification =
                     tagRule?.justification || "SOP Class is not allowed";
+                const tagValue = tagName ? parser.getDicom(tagName) : null;
                 switch (action) {
                     case "REJECT":
                         throw new Error(
@@ -99,8 +102,7 @@ function generateCurationSpec(customConfig, createDummyValueFn) {
                         // Remove: default behavior, do nothing
                         break;
                     case "K":
-                        dicomHeaderModifications[tagName] =
-                            parser.getDicom(tagName);
+                        dicomHeaderModifications[tagName] = tagValue;
                         break;
                     case "D":
                     case "Z":
@@ -108,7 +110,16 @@ function generateCurationSpec(customConfig, createDummyValueFn) {
                             createDummyValueFn(vr);
                         break;
                     case "U":
-                        // TODO
+                        if (tagValue) {
+                            if (!uidMap.has(tagValue)) {
+                                uidMap.set(
+                                    tagValue,
+                                    dcmjs.data.DicomMetaDictionary.uid(),
+                                );
+                            }
+                            dicomHeaderModifications[tagName] =
+                                uidMap.get(tagValue);
+                        }
                         break;
                     default:
                         console.warn(
