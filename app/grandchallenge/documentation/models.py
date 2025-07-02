@@ -138,6 +138,10 @@ class DocPage(models.Model):
 
     @cached_property
     def next(self):
+        if self.is_faq:
+            raise NotImplementedError(
+                "Property 'next' is not implemented for FAQ pages."
+            )
         try:
             next_page = DocPage.objects.filter(
                 order__gt=self.order, is_faq=False
@@ -148,6 +152,10 @@ class DocPage(models.Model):
 
     @cached_property
     def previous(self):
+        if self.is_faq:
+            raise NotImplementedError(
+                "Property 'previous' is not implemented for FAQ pages."
+            )
         try:
             previous_page = DocPage.objects.filter(
                 order__lt=self.order, is_faq=False
