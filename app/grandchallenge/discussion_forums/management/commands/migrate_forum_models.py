@@ -13,7 +13,7 @@ from grandchallenge.discussion_forums.models import (
 class Command(BaseCommand):
     help = "Migrates forums, topics and posts"
 
-    def handle(self, *args, **options):
+    def handle(self, *args, **options):  # noqa C901
         topic_type_matching_dict = {
             0: ForumTopicKindChoices.DEFAULT,
             1: ForumTopicKindChoices.STICKY,
@@ -79,8 +79,9 @@ class Command(BaseCommand):
                         )
                         post_count += 1
 
-                new_topic.last_post = latest_new_post
-                new_topic.save()
+                if latest_new_post:
+                    new_topic.last_post = latest_new_post
+                    new_topic.save()
 
             self.stdout.write(
                 self.style.SUCCESS(
