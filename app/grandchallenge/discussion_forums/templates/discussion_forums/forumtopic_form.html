@@ -11,12 +11,7 @@
 {% endblock %}
 
 {% block extra_top_row_buttons %}
-    <div class="col-6">
-        <a href="{% url 'discussion-forums:topic-list' %}" class="btn btn-dark btn-sm"><i
-                class="fas fa-arrow-left mr-1"></i>Back to forum</a>
-        <a href="{% url 'discussion-forums:my-posts' %}" class="btn btn-dark btn-sm"><i
-                class="fas fa-comments mr-1"></i>My posts</a>
-    </div>
+    {% include 'discussion_forums/partials/extra_top_row_buttons.html' %}
 {% endblock %}
 
 {% block extra_content %}
