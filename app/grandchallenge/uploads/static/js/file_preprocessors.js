@@ -142,6 +142,7 @@ async function preprocessDicomFile(file) {
     const defaultAction = sopClassRules.default || protocol.default || "X";
 
     // Build a new dataset, copying only the tags that should be kept or modified
+    const debugChanges = {};
     const newDataset = {};
     for (const tagKey in originalDataset) {
         const vr = originalDataset[tagKey]?.vr;
@@ -150,16 +151,22 @@ async function preprocessDicomFile(file) {
             dcmjs.data.DicomMetaDictionary.punctuateTag(tagKey);
         const tagRule = tagRules[protocolTagKey];
         const action = tagRule ? tagRule.default : defaultAction;
+        const name =
+            dcmjs.data.DicomMetaDictionary.dictionary[protocolTagKey]?.name ||
+            "Unknown Tag";
         switch (action) {
             case "REJECT":
                 throw new Error(
                     `Image is rejected due to de-identification protocol. Tag: ${tagKey}`,
                 );
             case "X":
+                debugChanges[`${protocolTagKey} - ${name}`] = "REMOVED";
                 // Remove tag (do not copy)
                 break;
             case "K":
                 // Keep original value
+                debugChanges[`${protocolTagKey} - ${name}`] =
+                    `KEEP value: ${tagValue}`;
                 newDataset[tagKey] = originalDataset[tagKey];
                 break;
             case "D":
@@ -168,6 +175,8 @@ async function preprocessDicomFile(file) {
                     ...originalDataset[tagKey],
                     Value: [getDummyValue(vr)],
                 };
+                debugChanges[`${protocolTagKey} - ${name}`] =
+                    `REPLACED value: "${tagValue}" with: "${getDummyValue(vr)}"`;
                 break;
             case "U":
                 if (tagValue) {
@@ -181,6 +190,8 @@ async function preprocessDicomFile(file) {
                         ...originalDataset[tagKey],
                         Value: [uidMap.get(tagValue)],
                     };
+                    debugChanges[`${protocolTagKey} - ${name}`] =
+                        `CONSISTENTLY REPLACED value: "${tagValue}" with: "${uidMap.get(tagValue)}"`;
                 }
                 break;
             default:
@@ -197,6 +208,7 @@ async function preprocessDicomFile(file) {
     // Copy the original _elements buffer to preserve binary data
     dicomDict._elements = dicomData._elements;
     const newBuffer = dicomDict.write();
+    console.log("De-identification changes:", debugChanges);
     return new File([newBuffer], file.name, { type: file.type });
 }
 
