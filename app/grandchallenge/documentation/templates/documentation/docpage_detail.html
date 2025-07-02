@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load docpage_extras %}
 {% load bleach %}
+{% load static %}
 
 {% block title %}
     {{ currentdocpage.title }} -
@@ -85,6 +86,7 @@
                                                             </a>
                                                         </li>
                                                         <ul class="border-left border-right border-bottom {% if currentdocpage == tertiarypage or currentdocpage in tertiarypage.children.all %} collapse show {% else %} collapse hide {% endif %} list-group mb-1">
+                                                            {# If the number of nesting levels is changed, also change the children prefetch and the test_docpage_detail_num_queries #}
                                                             {% for fourthpage in tertiarypage.children.all %}
                                                                 <li class="p-0 mb-1 ml-5 mr-3">
                                                                     <a class="nav-link {% if fourthpage == currentdocpage %}active font-weight-bold{% endif %} text-primary pl-2"
@@ -142,7 +144,7 @@
                                 </li>
                             {% endfor %}
                         </ol>
-                        <a href="{% url 'documentation:detail' slug=result.slug %}"><h5 class="pl-3 pt-1">{{ result.title }}</h5></a>
+                        <a href="{% url 'documentation:detail' slug=result.slug %}?highlight={{ result.headline|striptags|urlencode }}"><h5 class="pl-3 pt-1">{{ result.title }}</h5></a>
                         <div class="mb-3 pl-3">{{ result.headline|clean }}</div>
                     </div>
                 {% endfor %}
@@ -155,4 +157,11 @@
         <div class="mt-4 docpage" id=pageContainer>{{ currentdocpage.content|md2html }}</div>
         {% include "documentation/partials/navigation_links.html" with page=currentdocpage %}
     {% endif %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    <script type="module" src="{% static 'documentation/js/highlight.mjs' %}"></script>
+
 {% endblock %}
