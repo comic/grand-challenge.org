@@ -249,9 +249,12 @@ def migrate_challenge_forums(apps, schema_editor):  # noqa C901
         )
 
 
-def migrate_topic_tracks(apps, schema_editor):
+def migrate_topic_tracks(apps, schema_editor):  # noqa: C901
     TopicReadTrack = apps.get_model(  # noqa: N806
         "forum_tracking", "TopicReadTrack"
+    )
+    ForumReadTrack = apps.get_model(  # noqa: N806
+        "forum_tracking", "ForumReadTrack"
     )
     TopicReadRecord = apps.get_model(  # noqa: N806
         "discussion_forums", "TopicReadRecord"
@@ -265,15 +268,18 @@ def migrate_topic_tracks(apps, schema_editor):
     batch_size = 1000
     batch = []
     total_created = 0
-    num_tracks_to_create = (
-        TopicReadTrack.objects.filter(migrated_track__isnull=True)
-        .exclude(user__username=settings.ANONYMOUS_USER_NAME)
-        .count()
-    )
 
-    if num_tracks_to_create == 0:
-        print("No tracks to create")
-        return
+    topic_mapping = {}
+    for old_id in MachinaTopic.objects.values_list("pk", flat=True):
+        try:
+            topic_mapping[old_id] = get_matching_topic(
+                old_topic_id=old_id,
+                old_topic_model=MachinaTopic,
+                new_topic_model=ForumTopic,
+                old_forum_model=MachinaForum,
+            )
+        except ObjectDoesNotExist:
+            continue
 
     for track in (
         TopicReadTrack.objects.filter(migrated_track__isnull=True)
@@ -281,13 +287,8 @@ def migrate_topic_tracks(apps, schema_editor):
         .iterator(chunk_size=1000)
     ):
         try:
-            new_topic = get_matching_topic(
-                old_topic_id=track.topic.pk,
-                old_topic_model=MachinaTopic,
-                new_topic_model=ForumTopic,
-                old_forum_model=MachinaForum,
-            )
-        except ObjectDoesNotExist:
+            new_topic = topic_mapping[track.topic.pk]
+        except KeyError:
             continue
 
         admins_group = new_topic.forum.linked_challenge.admins_group
@@ -310,16 +311,63 @@ def migrate_topic_tracks(apps, schema_editor):
         if len(batch) >= batch_size:
             TopicReadRecord.objects.bulk_create(batch)
             total_created += len(batch)
-            print(
-                f"Created {total_created} new records out of {num_tracks_to_create}"
-            )
+            print(f"Created {total_created} new records")
             batch = []
 
     if batch:
         TopicReadRecord.objects.bulk_create(batch)
         total_created += len(batch)
+        print(f"Created {total_created} new records.")
+        batch = []
+
+    for track in ForumReadTrack.objects.exclude(
+        user__username=settings.ANONYMOUS_USER_NAME
+    ).iterator(chunk_size=1000):
+        for topic in track.forum.topics.filter(
+            updated__lte=track.mark_time
+        ).all():
+            try:
+                new_topic = topic_mapping[topic.pk]
+            except KeyError:
+                continue
+
+            existing_topic_ids = set(
+                TopicReadRecord.objects.filter(
+                    user=track.user,
+                ).values_list("topic__pk", flat=True)
+            )
+
+            if new_topic.pk in existing_topic_ids:
+                continue
+            else:
+                admins_group = new_topic.forum.linked_challenge.admins_group
+                participants_group = (
+                    new_topic.forum.linked_challenge.participants_group
+                )
+                if track.user.groups.filter(
+                    pk__in=[admins_group.pk, participants_group.pk]
+                ).exists():
+                    batch.append(
+                        TopicReadRecord(
+                            topic=new_topic,
+                            user=track.user,
+                            created=track.mark_time,
+                            modified=track.mark_time,
+                        )
+                    )
+
+            if len(batch) >= batch_size:
+                TopicReadRecord.objects.bulk_create(batch)
+                total_created += len(batch)
+                print(f"Created {total_created} new records")
+                batch = []
+
+    if batch:
+        TopicReadRecord.objects.bulk_create(batch)
+        total_created += len(batch)
         print(
-            f"Finished creating TopicReadRecords. Created a total of {total_created} new records."
+            f"Finished creating TopicReadRecords. "
+            f"Created a total of {total_created} new records"
         )
 
 
