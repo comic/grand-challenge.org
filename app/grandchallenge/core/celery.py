@@ -12,7 +12,7 @@ from redis.exceptions import LockError
 
 logger = logging.getLogger(__name__)
 
-MAX_RETRIES = 12 * 24  # 1 day assuming 5 minutes delay
+MAX_RETRIES = 60 * 24  # 1 day assuming 1 minute delay
 
 
 def _retry(*, task, signature_kwargs, retries, delayed=True):
