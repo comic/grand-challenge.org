@@ -96,3 +96,34 @@ def test_properties():
     assert not p2.parent
     assert [p2a.parent, p2b.parent] == [p2, p2]
     assert p3a.parent == p3
+
+
+@pytest.mark.django_db
+def test_faq_page_order_separate():
+    faq_pages = DocPageFactory.create_batch(4, is_faq=True)
+    pages = DocPageFactory.create_batch(4)
+    for p in faq_pages + pages:
+        p.refresh_from_db()
+    assert [p.order for p in pages] == [1, 2, 3, 4]
+    assert [p.order for p in faq_pages] == [5, 6, 7, 8]
+
+    page = DocPageFactory()
+    assert page.order == 5
+
+    faq_page = DocPageFactory(is_faq=True)
+    assert faq_page.order == 10
+
+
+@pytest.mark.django_db
+def test_next_previous_properties_is_faq():
+    faq_pages = DocPageFactory.create_batch(4, is_faq=True)
+    pages = DocPageFactory.create_batch(4)
+    for p in faq_pages + pages:
+        p.refresh_from_db()
+    assert [p.order for p in pages] == [1, 2, 3, 4]
+    assert [p.order for p in faq_pages] == [5, 6, 7, 8]
+    assert not pages[3].next
+    with pytest.raises(NotImplementedError):
+        faq_pages[0].next
+    with pytest.raises(NotImplementedError):
+        faq_pages[0].previous
