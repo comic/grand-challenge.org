@@ -124,6 +124,136 @@ function isDicomFile(file) {
 
 const uidMap = new Map(); // Map to store unique identifiers for UIDs
 
+// Recursive de-identification for a dataset (object with DICOM tags)
+function deidentifyDataset(
+    dataset,
+    tagRules,
+    defaultAction,
+    debugChanges,
+    parentTagKey,
+) {
+    const newDataset = {};
+    for (const tagKey in dataset) {
+        const vr = dataset[tagKey]?.vr;
+        const tagValue = dataset[tagKey]?.Value?.[0];
+        const protocolTagKey =
+            dcmjs.data.DicomMetaDictionary.punctuateTag(tagKey);
+        const tagRule = tagRules[protocolTagKey];
+        const action = tagRule ? tagRule.default : defaultAction;
+        const name =
+            dcmjs.data.DicomMetaDictionary.dictionary[protocolTagKey]?.name ||
+            "Unknown Tag";
+        if (vr === "SQ" && Array.isArray(dataset[tagKey]?.Value)) {
+            switch (action) {
+                case "K": {
+                    // Recurse into each item, using the rules for this sequence
+                    const items = dataset[tagKey].Value.map((item, idx) =>
+                        deidentifyDataset(
+                            item,
+                            tagRules, // Use item-specific rules if present
+                            defaultAction,
+                            debugChanges,
+                            `${protocolTagKey}[${idx}]`,
+                        ),
+                    );
+                    newDataset[tagKey] = { ...dataset[tagKey], Value: items };
+                    debugChanges[`${protocolTagKey} - ${name}`] =
+                        "RECURSE KEEP";
+                    break;
+                }
+                case "D":
+                case "Z": {
+                    // Recurse and replace all items with dummy values
+                    const items = dataset[tagKey].Value.map((item, idx) =>
+                        deidentifyDataset(
+                            item,
+                            {}, // Disregard tagrules for nested items
+                            "D", // Force dummy for all nested
+                            debugChanges,
+                            `${protocolTagKey}[${idx}]`,
+                        ),
+                    );
+                    newDataset[tagKey] = { ...dataset[tagKey], Value: items };
+                    debugChanges[`${protocolTagKey} - ${name}`] =
+                        "RECURSE DUMMY";
+                    break;
+                }
+                case "U": {
+                    // Recurse and consistently replace all items with mapped UID
+                    const items = dataset[tagKey].Value.map((item, idx) =>
+                        deidentifyDataset(
+                            item,
+                            {}, // Disregard tagrules for nested items
+                            "U", // Force U for all nested
+                            debugChanges,
+                            `${protocolTagKey}[${idx}]`,
+                        ),
+                    );
+                    newDataset[tagKey] = { ...dataset[tagKey], Value: items };
+                    debugChanges[`${protocolTagKey} - ${name}`] = "RECURSE UID";
+                    break;
+                }
+                case "X":
+                    debugChanges[`${protocolTagKey} - ${name}`] =
+                        "REMOVED (SQ)";
+                    break;
+                default:
+                    // Remove by default
+                    debugChanges[`${protocolTagKey} - ${name}`] =
+                        `REMOVED (SQ, unknown action: ${action})`;
+                    break;
+            }
+            continue;
+        }
+        switch (action) {
+            case "REJECT":
+            case "R":
+                throw new Error(
+                    `Image is rejected due to de-identification protocol. Tag: ${tagKey}`,
+                );
+            case "X":
+                debugChanges[`${protocolTagKey} - ${name}`] = "REMOVED";
+                break;
+            case "K":
+                debugChanges[`${protocolTagKey} - ${name}`] =
+                    `KEEP value: ${tagValue}`;
+                newDataset[tagKey] = dataset[tagKey];
+                break;
+            case "D":
+            case "Z":
+                newDataset[tagKey] = {
+                    ...dataset[tagKey],
+                    Value: [getDummyValue(vr)],
+                };
+                debugChanges[`${protocolTagKey} - ${name}`] =
+                    `REPLACED value: "${tagValue}" with: "${getDummyValue(vr)}"`;
+                break;
+            case "U":
+                if (tagValue) {
+                    if (!uidMap.has(tagValue)) {
+                        uidMap.set(
+                            tagValue,
+                            dcmjs.data.DicomMetaDictionary.uid(),
+                        );
+                    }
+                    newDataset[tagKey] = {
+                        ...dataset[tagKey],
+                        Value: [uidMap.get(tagValue)],
+                    };
+                    debugChanges[`${protocolTagKey} - ${name}`] =
+                        `CONSISTENTLY REPLACED value: "${tagValue}" with: "${uidMap.get(tagValue)}"`;
+                }
+                break;
+            default:
+                console.warn(
+                    `Unknown action "${action}" for tag ${tagKey}. Skipping.`,
+                );
+                break;
+        }
+    }
+    return newDataset;
+}
+
 async function preprocessDicomFile(file) {
     if (
         typeof dcmjs === "undefined" ||
@@ -140,73 +270,16 @@ async function preprocessDicomFile(file) {
     const sopClassRules = protocol.sopClass?.[sopClassUID] || {};
     const tagRules = sopClassRules.tag || {};
     const defaultAction = sopClassRules.default || protocol.default || "X";
-
-    // Build a new dataset, copying only the tags that should be kept or modified
     const debugChanges = {};
-    const newDataset = {};
-    for (const tagKey in originalDataset) {
-        const vr = originalDataset[tagKey]?.vr;
-        const tagValue = originalDataset[tagKey]?.Value?.[0];
-        const protocolTagKey =
-            dcmjs.data.DicomMetaDictionary.punctuateTag(tagKey);
-        const tagRule = tagRules[protocolTagKey];
-        const action = tagRule ? tagRule.default : defaultAction;
-        const name =
-            dcmjs.data.DicomMetaDictionary.dictionary[protocolTagKey]?.name ||
-            "Unknown Tag";
-        switch (action) {
-            case "REJECT":
-            case "R":
-                throw new Error(
-                    `Image is rejected due to de-identification protocol. Tag: ${tagKey}`,
-                );
-            case "X":
-                debugChanges[`${protocolTagKey} - ${name}`] = "REMOVED";
-                // Remove tag (do not copy)
-                break;
-            case "K":
-                // Keep original value
-                debugChanges[`${protocolTagKey} - ${name}`] =
-                    `KEEP value: ${tagValue}`;
-                newDataset[tagKey] = originalDataset[tagKey];
-                break;
-            case "D":
-            case "Z":
-                newDataset[tagKey] = {
-                    ...originalDataset[tagKey],
-                    Value: [getDummyValue(vr)],
-                };
-                debugChanges[`${protocolTagKey} - ${name}`] =
-                    `REPLACED value: "${tagValue}" with: "${getDummyValue(vr)}"`;
-                break;
-            case "U":
-                if (tagValue) {
-                    if (!uidMap.has(tagValue)) {
-                        uidMap.set(
-                            tagValue,
-                            dcmjs.data.DicomMetaDictionary.uid(),
-                        );
-                    }
-                    newDataset[tagKey] = {
-                        ...originalDataset[tagKey],
-                        Value: [uidMap.get(tagValue)],
-                    };
-                    debugChanges[`${protocolTagKey} - ${name}`] =
-                        `CONSISTENTLY REPLACED value: "${tagValue}" with: "${uidMap.get(tagValue)}"`;
-                }
-                break;
-            default:
-                // Remove tag by default (do not copy) and warn
-                console.warn(
-                    `Unknown action "${action}" for tag ${tagKey}. Skipping.`,
-                );
-                break;
-        }
-    }
-    // Write back to ArrayBuffer and create a new File, preserving all data (including PixelData)
+    const newDataset = deidentifyDataset(
+        originalDataset,
+        tagRules,
+        defaultAction,
+        debugChanges,
+        "root",
+    );
     const dicomDict = new dcmjs.data.DicomDict(dicomData.meta);
     dicomDict.dict = newDataset;
-    // Copy the original _elements buffer to preserve binary data
     dicomDict._elements = dicomData._elements;
     const newBuffer = dicomDict.write();
     console.log("De-identification changes:", debugChanges);
