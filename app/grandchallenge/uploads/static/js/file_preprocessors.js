@@ -156,6 +156,7 @@ async function preprocessDicomFile(file) {
             "Unknown Tag";
         switch (action) {
             case "REJECT":
+            case "R":
                 throw new Error(
                     `Image is rejected due to de-identification protocol. Tag: ${tagKey}`,
                 );
