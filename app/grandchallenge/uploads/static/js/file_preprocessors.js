@@ -6,43 +6,110 @@
  */
 function getDummyValue(vr) {
     switch (vr) {
-        case "AE": // Application Entity
-        case "AS": // Age String
-        case "CS": // Code String
-        case "DA": // Date
-        case "DS": // Decimal String
-        case "IS": // Integer String
-        case "LO": // Long String
-        case "LT": // Long Text
-        case "PN": // Person Name
-        case "SH": // Short String
-        case "ST": // Short Text
-        case "TM": // Time
-        case "UI": // UID
-        case "UC": // Unlimited Characters
-        case "UR": // URI
-        case "UT": // Unlimited Text
+        case "AE": // Application Entity - up to 16 characters, no leading/trailing spaces
+            return "DUMMY_AE";
+
+        case "AS": // Age String - 4 characters (nnnD, nnnW, nnnM, nnnY)
+            return "030Y"; // 30 years
+
+        case "AT": // Attribute Tag - 4 bytes as hex pairs
+            return new Uint16Array([0x0000, 0x0000]); // (0000,0000)
+
+        case "CS": // Code String - up to 16 characters, uppercase
             return "DUMMY";
-        case "FL": // Floating Point Single
-        case "FD": // Floating Point Double
-            return 0.0;
-        case "SL": // Signed Long
-        case "SS": // Signed Short
-        case "UL": // Unsigned Long
-        case "US": // Unsigned Short
-            return 0;
-        case "AT": // Attribute Tag
-            return "(0000,0000)"; // A valid but empty tag
-        case "OB": // Other Byte
-        case "OD": // Other Double
-        case "OF": // Other Float
-        case "OW": // Other Word
-        case "UN": // Unknown
-            return new Uint8Array(0).buffer; // Empty buffer
-        case "SQ": // Sequence
+
+        case "DA": // Date - YYYYMMDD format
+            return "20000101"; // January 1, 2000
+
+        case "DS": // Decimal String - floating point as string, up to 16 chars
+            return "0.0";
+
+        case "DT": // Date Time - YYYYMMDDHHMMSS.FFFFFF&ZZXX format
+            return "20000101120000.000000";
+
+        case "FL": // Floating Point Single - 4 bytes
+            return new Float32Array([0.0])[0];
+
+        case "FD": // Floating Point Double - 8 bytes
+            return new Float64Array([0.0])[0];
+
+        case "IS": // Integer String - integer as string, up to 12 chars
+            return "0";
+
+        case "LO": // Long String - up to 64 characters
+            return "DUMMY_LONG_STRING";
+
+        case "LT": // Long Text - up to 10240 characters
+            return "DUMMY LONG TEXT";
+
+        case "OB": // Other Byte - sequence of bytes
+            return new Uint8Array([0x00]); // Single zero byte
+
+        case "OD": // Other Double - sequence of 64-bit floating point values
+            return new Float64Array([0.0]).buffer;
+
+        case "OF": // Other Float - sequence of 32-bit floating point values
+            return new Float32Array([0.0]).buffer;
+
+        case "OL": // Other Long - sequence of 32-bit words
+            return new Uint32Array([0x00000000]).buffer;
+
+        case "OV": // Other Very Long - sequence of 64-bit words
+            return new BigUint64Array([0n]).buffer;
+
+        case "OW": // Other Word - sequence of 16-bit words
+            return new Uint16Array([0x0000]).buffer;
+
+        case "PN": // Person Name - up to 64 chars per component, format: Family^Given^Middle^Prefix^Suffix
+            return "DUMMY^PATIENT^^^";
+
+        case "SH": // Short String - up to 16 characters
+            return "DUMMY";
+
+        case "SL": // Signed Long - 32-bit signed integer
+            return new Int32Array([0])[0];
+
+        case "SQ": // Sequence - sequence of items
             return []; // Empty sequence
+
+        case "SS": // Signed Short - 16-bit signed integer
+            return new Int16Array([0])[0];
+
+        case "ST": // Short Text - up to 1024 characters
+            return "DUMMY SHORT TEXT";
+
+        case "SV": // Signed Very Long - 64-bit signed integer
+            return new BigInt64Array([0n])[0];
+
+        case "TM": // Time - HHMMSS.FFFFFF format
+            return "120000.000000"; // 12:00:00.000000
+
+        case "UC": // Unlimited Characters - unlimited length
+            return "DUMMY UNLIMITED CHARACTERS";
+
+        case "UI": // Unique Identifier - UID format with dots and numbers
+            return "1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9.0"; // Valid UID format
+
+        case "UL": // Unsigned Long - 32-bit unsigned integer
+            return new Uint32Array([0])[0];
+
+        case "UN": // Unknown - sequence of bytes
+            return new Uint8Array([0x00]).buffer; // Single zero byte buffer
+
+        case "UR": // Universal Resource Identifier/Locator - URI/URL
+            return "http://dummy.example.com";
+
+        case "US": // Unsigned Short - 16-bit unsigned integer
+            return new Uint16Array([0])[0];
+
+        case "UT": // Unlimited Text - unlimited length text
+            return "DUMMY UNLIMITED TEXT";
+
+        case "UV": // Unsigned Very Long - 64-bit unsigned integer
+            return new BigUint64Array([0n])[0];
+
         default:
-            return null; // Or throw an error for unsupported VR
+            throw new Error(`Unsupported DICOM VR: ${vr}`);
     }
 }
 
