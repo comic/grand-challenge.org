@@ -5,5 +5,5 @@ from grandchallenge.invoices.views import InvoiceList
 app_name = "invoices"
 
 urlpatterns = [
-    path("", InvoiceList.as_view(), name="list"),
+    path("all/", InvoiceList.as_view(), name="list"),
 ]

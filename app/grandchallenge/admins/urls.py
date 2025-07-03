@@ -6,7 +6,7 @@ from grandchallenge.groups.views import UserAutocomplete
 app_name = "admins"
 
 urlpatterns = [
-    path("", AdminsList.as_view(), name="list"),
+    path("all/", AdminsList.as_view(), name="list"),
     path("update/", AdminsUpdate.as_view(), name="update"),
     path(
         "users-autocomplete/",
