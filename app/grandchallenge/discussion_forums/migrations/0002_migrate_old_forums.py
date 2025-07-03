@@ -365,10 +365,11 @@ def migrate_topic_tracks(apps, schema_editor):  # noqa: C901
     if batch:
         TopicReadRecord.objects.bulk_create(batch)
         total_created += len(batch)
-        print(
-            f"Finished creating TopicReadRecords. "
-            f"Created a total of {total_created} new records"
-        )
+
+    print(
+        f"Finished creating TopicReadRecords. "
+        f"Created a total of {total_created} new records"
+    )
 
 
 class Migration(migrations.Migration):
