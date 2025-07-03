@@ -130,7 +130,7 @@ function deidentifyDataset(
     tagRules,
     defaultAction,
     debugChanges,
-    parentTagKey,
+    defaultJustification,
 ) {
     const newDataset = {};
     for (const tagKey in dataset) {
@@ -140,11 +140,18 @@ function deidentifyDataset(
             dcmjs.data.DicomMetaDictionary.punctuateTag(tagKey);
         const tagRule = tagRules[protocolTagKey];
         const action = tagRule ? tagRule.default : defaultAction;
+        const actionJustification = tagRule
+            ? tagRule.justification
+            : defaultJustification;
         const name =
             dcmjs.data.DicomMetaDictionary.dictionary[protocolTagKey]?.name ||
             "Unknown Tag";
         if (vr === "SQ" && Array.isArray(dataset[tagKey]?.Value)) {
             switch (action) {
+                case "R":
+                    throw new Error(
+                        `Image is rejected due to de-identification protocol. Tag: ${tagKey}; Justification: ${actionJustification}`,
+                    );
                 case "K": {
                     // Recurse into each item, using the rules for this sequence
                     const items = dataset[tagKey].Value.map((item, idx) =>
@@ -153,7 +160,7 @@ function deidentifyDataset(
                             tagRules, // Use item-specific rules if present
                             defaultAction,
                             debugChanges,
-                            `${protocolTagKey}[${idx}]`,
+                            defaultJustification,
                         ),
                     );
                     newDataset[tagKey] = { ...dataset[tagKey], Value: items };
@@ -209,7 +216,7 @@ function deidentifyDataset(
             case "REJECT":
             case "R":
                 throw new Error(
-                    `Image is rejected due to de-identification protocol. Tag: ${tagKey}`,
+                    `Image is rejected due to de-identification protocol. Tag: ${tagKey}; Justification: ${actionJustification}`,
                 );
             case "X":
                 debugChanges[`${protocolTagKey} - ${name}`] = "REMOVED";
@@ -276,7 +283,7 @@ async function preprocessDicomFile(file) {
         tagRules,
         defaultAction,
         debugChanges,
-        "root",
+        protocol.justification || "No justification provided",
     );
     const dicomDict = new dcmjs.data.DicomDict(dicomData.meta);
     dicomDict.dict = newDataset;
