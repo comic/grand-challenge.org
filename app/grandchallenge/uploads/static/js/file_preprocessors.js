@@ -154,7 +154,7 @@ function deidentifyDataset(
                     );
                 case "K": {
                     // Recurse into each item, using the rules for this sequence
-                    const items = dataset[tagKey].Value.map((item, idx) =>
+                    const items = dataset[tagKey].Value.map(item =>
                         deidentifyDataset(
                             item,
                             tagRules, // Use item-specific rules if present
@@ -171,13 +171,13 @@ function deidentifyDataset(
                 case "D":
                 case "Z": {
                     // Recurse and replace all items with dummy values
-                    const items = dataset[tagKey].Value.map((item, idx) =>
+                    const items = dataset[tagKey].Value.map(item =>
                         deidentifyDataset(
                             item,
                             {}, // Disregard tagrules for nested items
                             "D", // Force dummy for all nested
                             debugChanges,
-                            `${protocolTagKey}[${idx}]`,
+                            defaultJustification,
                         ),
                     );
                     newDataset[tagKey] = { ...dataset[tagKey], Value: items };
@@ -187,13 +187,13 @@ function deidentifyDataset(
                 }
                 case "U": {
                     // Recurse and consistently replace all items with mapped UID
-                    const items = dataset[tagKey].Value.map((item, idx) =>
+                    const items = dataset[tagKey].Value.map(item =>
                         deidentifyDataset(
                             item,
                             {}, // Disregard tagrules for nested items
                             "U", // Force U for all nested
                             debugChanges,
-                            `${protocolTagKey}[${idx}]`,
+                            defaultJustification,
                         ),
                     );
                     newDataset[tagKey] = { ...dataset[tagKey], Value: items };
