@@ -261,6 +261,21 @@ function deidentifyDataset(
     return newDataset;
 }
 
+function setDeidentificationMethodTag(dataset, version) {
+    const tagKey = "00120063"; // DICOM tag for De-identification Method
+    const vr = "LO";
+    const method = `De-identified by Grand Challenge client-side using version ${version}`;
+    if (dataset[tagKey]) {
+        dataset[tagKey].Value[0] += `; ${method}`;
+    } else {
+        dataset[tagKey] = {
+            vr: vr,
+            Value: [method],
+        };
+    }
+    return dataset;
+}
+
 async function preprocessDicomFile(file) {
     if (
         typeof dcmjs === "undefined" ||
@@ -278,12 +293,16 @@ async function preprocessDicomFile(file) {
     const tagRules = sopClassRules.tag || {};
     const defaultAction = sopClassRules.default || protocol.default || "X";
     const debugChanges = {};
-    const newDataset = deidentifyDataset(
+    let newDataset = deidentifyDataset(
         originalDataset,
         tagRules,
         defaultAction,
         debugChanges,
         protocol.justification || "No justification provided",
+    );
+    newDataset = setDeidentificationMethodTag(
+        newDataset,
+        protocol.version || "unknown",
     );
     const dicomDict = new dcmjs.data.DicomDict(dicomData.meta);
     dicomDict.dict = newDataset;
