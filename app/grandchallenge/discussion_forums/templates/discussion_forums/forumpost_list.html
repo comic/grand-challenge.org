@@ -20,10 +20,7 @@
 {% endblock %}
 
 {% block extra_top_row_buttons %}
-    <div class="col-6">
-        <a href="{% url 'discussion-forums:topic-list' %}" class="btn btn-dark btn-sm"><i class="fas fa-arrow-left mr-1"></i>Back to forum</a>
-        <a href="{% url 'discussion-forums:my-posts' %}" class="btn btn-dark btn-sm"><i class="fas fa-comments mr-1"></i>My posts</a>
-    </div>
+    {% include 'discussion_forums/partials/extra_top_row_buttons.html' %}
 {% endblock %}
 
 {% block extra_content %}
@@ -78,11 +75,18 @@
                     </form>
                 {% endif %}
             </div>
-            <div class="col-4 text-right">
+            <!-- Version for medium screens and up (≥768px) -->
+            <div class="d-none d-md-block col-4 text-right">
+                {% include 'actstream/partials/follow_unfollow_links.html' with object=topic %}
+            </div>
+            <!-- Version for small screens (phones) (<768px) -->
+            <div class="d-block d-md-none col-12 text-left">
                 {% include 'actstream/partials/follow_unfollow_links.html' with object=topic %}
             </div>
         </div>
     {% endif %}
+
+    <div class="d-flex justify-content-end mt-3"><div class="btn btn-sm m-0 p-0">{% include "grandchallenge/partials/pagination.html" %}</div></div>
 
     <div class="row">
         <div class="col-12" id="post-list">
@@ -102,7 +106,7 @@
                     {% crispy post_create_form %}
                 </div>
             </div>
-            {% include "grandchallenge/partials/pagination.html" %}
+            <div class="d-flex justify-content-end"><div class="btn btn-sm m-0 p-0">{% include "grandchallenge/partials/pagination.html" %}</div></div>
         {% else %}
             <div class="d-flex justify-content-between">
                 <div class="d-inline">
@@ -112,7 +116,7 @@
             </div>
         {% endif %}
     {% else %}
-        {% include "grandchallenge/partials/pagination.html" %}
+        <div class="d-flex justify-content-end"><div class="btn btn-sm m-0 p-0">{% include "grandchallenge/partials/pagination.html" %}</div></div>
     {% endif %}
 
 {% endblock %}

@@ -1,0 +1,15 @@
+<!-- Version for medium screens and up (≥768px) -->
+<div class="d-none d-md-block col-6">
+    <a href="{% url 'discussion-forums:topic-list' %}" class="btn btn-primary btn-sm"><i
+            class="fas fa-arrow-left mr-1"></i>Back to forum</a>
+    <a href="{% url 'discussion-forums:my-posts' %}" class="btn btn-primary btn-sm"><i
+            class="fas fa-comments mr-1"></i>My posts</a>
+</div>
+
+<!-- Version for small screens (phones) (<768px) -->
+<div class="d-block d-md-none col-12">
+    <a href="{% url 'discussion-forums:topic-list' %}" class="btn btn-primary btn-sm"><i
+            class="fas fa-arrow-left mr-1"></i>Back to forum</a>
+    <a href="{% url 'discussion-forums:my-posts' %}" class="btn btn-primary btn-sm"><i
+            class="fas fa-comments mr-1"></i>My posts</a>
+</div>
