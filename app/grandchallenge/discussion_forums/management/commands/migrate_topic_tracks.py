@@ -112,8 +112,9 @@ class Command(BaseCommand):
         if batch:
             TopicReadRecord.objects.bulk_create(batch)
             total_created += len(batch)
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"Finished creating TopicReadRecords. Created a total of {total_created} new records"
-                )
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Finished creating TopicReadRecords. Created a total of {total_created} new records"
             )
+        )
