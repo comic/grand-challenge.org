@@ -144,6 +144,7 @@ class ReaderStudyCreateForm(
             "allow_answer_modification",
             "shuffle_hanging_list",
             "allow_case_navigation",
+            "enable_autosaving",
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
         )
@@ -206,6 +207,17 @@ class ReaderStudyCreateForm(
                 field="is_educational",
             )
 
+        if (
+            cleaned_data["enable_autosaving"]
+            and not cleaned_data["allow_answer_modification"]
+        ):
+            self.add_error(
+                error=ValidationError(
+                    "Autosaving can only be enabled when also allowing answer modification."
+                ),
+                field="enable_autosaving",
+            )
+
         return cleaned_data
 
 
@@ -235,6 +247,7 @@ class ReaderStudyUpdateForm(
             "public",
             "access_request_handling",
             "allow_answer_modification",
+            "enable_autosaving",
             "allow_case_navigation",
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
