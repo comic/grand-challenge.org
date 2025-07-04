@@ -308,7 +308,7 @@ async function preprocessDicomFile(file) {
     dicomDict.dict = newDataset;
     dicomDict._elements = dicomData._elements;
     const newBuffer = dicomDict.write();
-    console.log("De-identification changes:", debugChanges);
+    console.debug("De-identification changes:", debugChanges);
     return new File([newBuffer], file.name, { type: file.type });
 }
 

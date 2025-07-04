@@ -101,19 +101,6 @@
                         try {
                             const processedFile =
                                 await preprocessor.preprocessor(file.data);
-                            ////////////// TODO REMOVE //////////////
-                            // push file to user for download (to debug)
-                            const url = URL.createObjectURL(processedFile);
-                            const a = document.createElement("a");
-                            a.href = url;
-                            a.download = file.name;
-                            document.body.appendChild(a);
-                            a.click();
-                            setTimeout(() => {
-                                document.body.removeChild(a);
-                                URL.revokeObjectURL(url);
-                            }, 100);
-                            ////////////// TODO REMOVE ABOVE ///////////
                             uppy.setFileState(file.id, { data: processedFile });
                         } catch (e) {
                             uppy.removeFile(file.id);
