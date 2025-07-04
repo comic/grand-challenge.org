@@ -330,8 +330,9 @@ async function preprocessDicomFile(file) {
  * validation) before the file is uploaded or further handled by Uppy.
  */
 globalThis.UPPY_FILE_PREPROCESSORS = [
-    {
-        fileMatcher: isDicomFile,
-        preprocessor: preprocessDicomFile,
-    },
+    // The following is disabled for now. We can enable this when it is used in a widget for uploading to HealthImaging
+    //{
+    //    fileMatcher: isDicomFile,
+    //    preprocessor: preprocessDicomFile,
+    //},
 ];
