@@ -22,9 +22,9 @@ class UserUploadWidgetMixin:
     class Media:
         css = {"all": ("vendored/uppy/uppy.min.css",)}
         js = (
-            "vendored/uppy/uppy.min.js",
+            "vendored/@diagnijmegen/rse-grand-challenge-dicom-deid-procedure/dist/grand-challenge-dicom-de-id-procedure.umd.js",
             "vendored/dcmjs/build/dcmjs.js",
-            "js/retrieve_deidentification_protocol.js",
+            "vendored/uppy/uppy.min.js",
             "js/file_preprocessors.js",
             "js/user_upload.js",
         )

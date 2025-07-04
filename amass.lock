@@ -1,7 +1,19 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:5e7081926ff1ffb6705577549c5eed152bf5babdce2bf9240bf18d784e682c10",
+  "content_hash": "sha256:846e454d9e0e88a35079eaa357c88ab01ebfa3aca51de04306c38f323dceec3e",
   "dependencies": [
+    {
+      "name": "@diagnijmegen/rse-grand-challenge-dicom-deid-procedure",
+      "version": "0.20250704.1",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/grand-challenge-dicom-de-id-procedure.umd.js",
+          "sri": "sha256-PpKjlW68o7mU+UWuecVyChiddKQ6jKsblW+L7AvfrCA="
+        }
+      ],
+      "maps": []
+    },
     {
       "name": "@github/markdown-toolbar-element",
       "version": "1.2.0",
