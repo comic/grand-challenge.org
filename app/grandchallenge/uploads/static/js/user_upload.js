@@ -104,7 +104,6 @@
                             uppy.setFileState(file.id, { data: processedFile });
                         } catch (e) {
                             uppy.removeFile(file.id);
-                            throw e; // TODO remove
                         }
                         return;
                     }
