@@ -189,6 +189,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "instant_verification",
             "has_ground_truth",
             "allow_answer_modification",
+            "enable_autosaving",
             "allow_case_navigation",
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
