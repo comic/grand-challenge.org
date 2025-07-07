@@ -97,7 +97,7 @@
         uppy.on("file-added", async file => {
             if (globalThis.UPPY_FILE_PREPROCESSORS) {
                 for (const preprocessor of globalThis.UPPY_FILE_PREPROCESSORS) {
-                    if (preprocessor.fileMatcher(file)) {
+                    if (await preprocessor.fileMatcher(file)) {
                         try {
                             const processedFile =
                                 await preprocessor.preprocessor(file.data);
