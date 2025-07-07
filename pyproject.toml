@@ -144,3 +144,5 @@ floating-scroll = { version = "==3.2.0", provider = "unpkg", include = ["dist/jq
 "datatables.net-bs4" = { version = "==2.1.8", provider = "unpkg", include = ["css/dataTables.bootstrap4(.min)?.css", "js/dataTables.bootstrap4(.min)?.js"]}
 "datatables.net-buttons" = { version = "==3.2.0", provider = "unpkg", include = ["js/dataTables.buttons(.min)?.js", "js/buttons.colVis(.min)?.js"]}
 "datatables.net-buttons-bs4" = { version = "==3.2.0", provider = "unpkg", include = ["css/buttons.bootstrap4(.min)?.css", "js/buttons.bootstrap4(.min)?.js"]}
+dcmjs = { version = "==0.42.0", provider = "unpkg", include = ["build/dcmjs.js", "build/dcmjs.js.map"] }
+"@diagnijmegen/rse-grand-challenge-dicom-deid-procedure" = { version = "==0.20250704.7", provider = "unpkg", include = ["dist/grand-challenge-dicom-de-id-procedure.umd.min.js", "dist/grand-challenge-dicom-de-id-procedure.umd.min.js.map"] }
