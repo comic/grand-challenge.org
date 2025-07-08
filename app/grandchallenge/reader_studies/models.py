@@ -291,6 +291,17 @@ class ReaderStudy(
             "be checked as well to enable this setting."
         ),
     )
+    enable_autosaving = models.BooleanField(
+        default=False,
+        help_text=(
+            "If true, answers to questions are saved in the background while a "
+            "user reads a case. 'Allow Answer Modification' must be "
+            "enabled as well for this to work. Please note that this "
+            "feature does not work for questions that a marked as 'required' "
+            "because storing answers for those questions needs to be done "
+            "explicitly by pressing the Save-button."
+        ),
+    )
     allow_case_navigation = models.BooleanField(
         default=False,
         help_text=(
@@ -368,6 +379,7 @@ class ReaderStudy(
         "instant_verification",
         "roll_over_answers_for_n_cases",
         "allow_answer_modification",
+        "enable_autosaving",
         "allow_case_navigation",
         "allow_show_all_annotations",
         "access_request_handling",

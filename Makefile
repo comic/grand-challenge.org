@@ -139,6 +139,13 @@ superuser:
 		web \
 		python manage.py runscript create_superuser
 
+docpages:
+	docker compose run \
+		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
+		--rm \
+		web \
+		python manage.py runscript create_docpages
+
 .PHONY: docs
 docs:
 	docker compose run --rm -u $(USER_ID) web bash -c "cd docs && make html"

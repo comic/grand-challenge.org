@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load docpage_extras %}
 {% load bleach %}
+{% load static %}
 
 {% block title %}
     {{ currentdocpage.title }} -
@@ -27,14 +28,14 @@
 {% endblock %}
 
 {% block sidebar %}
-    <div class="col-lg-4 col-md-4">
-        <nav class="documentation-sidebar p-3">
+    <div class={% if currentdocpage.is_faq %}"col-lg-6 col-md-6"{% else %}"col-lg-4 col-md-4"{% endif %}>
+        <nav class="documentation-sidebar mt-3">
             <ul class="nav flex-column" id="documentation_nav_accordion">
                 {% for page in top_level_pages %}
                     {% get_subordinate_pages page as subpages %}
                     {% if not subpages %}
                         <li class="nav-item mb-1">
-                            <a class="nav-link rounded {% if page == currentdocpage %}active {% endif %}text-white bg-dark"
+                            <a class="nav-link rounded btn-dark {% if page == currentdocpage %}active {% endif %}"
                                id="{{ page.slug }}"
                                href="{% url 'documentation:detail' slug=page.slug %}">
                                     {{ page.title }}
@@ -42,7 +43,7 @@
                         </li>
                     {% else %}
                         <li class="nav-item mb-1 rounded">
-                            <a class="nav-link rounded {% if page == currentdocpage or currentdocpage in subpages %}active{% endif %} text-white bg-dark"
+                            <a class="nav-link rounded btn-dark {% if page == currentdocpage or currentdocpage in subpages %}active {% endif %}"
                                id="{{ page.slug }}"
                                href="{% url 'documentation:detail' slug=page.slug %}">
                                     {{ page.title }} &nbsp;&nbsp;<i class="fas fa-caret-down"></i>
@@ -107,6 +108,17 @@
                 {% endfor %}
             </ul>
         </nav>
+        <div class="mt-4">
+            {% if currentdocpage.is_faq %}
+                <a class="btn btn-info m-0" href="{% url 'documentation:home' %}">
+                    <i class="fa fa-book mr-2"></i>Documentation
+                </a>
+            {% else %}
+                <a class="btn btn-info m-0" href="{% url 'documentation:detail' slug='faq' %}">
+                    <i class="fa fa-comments mr-2"></i>FAQ
+                </a>
+            {% endif %}
+        </div>
     </div>
 {% endblock %}
 
@@ -143,7 +155,7 @@
                                 </li>
                             {% endfor %}
                         </ol>
-                        <a href="{% url 'documentation:detail' slug=result.slug %}"><h5 class="pl-3 pt-1">{{ result.title }}</h5></a>
+                        <a href="{% url 'documentation:detail' slug=result.slug %}?highlight={{ result.headline|striptags|urlencode }}"><h5 class="pl-3 pt-1">{{ result.title }}</h5></a>
                         <div class="mb-3 pl-3">{{ result.headline|clean }}</div>
                     </div>
                 {% endfor %}
@@ -152,8 +164,19 @@
             {% endif %}
         </div>
     {% else %}
-        {% include "documentation/partials/navigation_links.html" with page=currentdocpage %}
+        {% if not currentdocpage.is_faq %}
+            {% include "documentation/partials/navigation_links.html" with page=currentdocpage %}
+        {% endif %}
         <div class="mt-4 docpage" id=pageContainer>{{ currentdocpage.content|md2html }}</div>
-        {% include "documentation/partials/navigation_links.html" with page=currentdocpage %}
+        {% if not currentdocpage.is_faq %}
+            {% include "documentation/partials/navigation_links.html" with page=currentdocpage %}
+        {% endif %}
     {% endif %}
+{% endblock %}
+
+{% block script %}
+    {{ block.super }}
+
+    <script type="module" src="{% static 'documentation/js/highlight.mjs' %}"></script>
+
 {% endblock %}
