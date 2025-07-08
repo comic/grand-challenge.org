@@ -137,11 +137,11 @@ wheels = [
 
 [[package]]
 name = "asgiref"
-version = "3.9.0"
+version = "3.9.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/6a/68/fb4fb78c9eac59d5e819108a57664737f855c5a8e9b76aec1738bb137f9e/asgiref-3.9.0.tar.gz", hash = "sha256:3dd2556d0f08c4fab8a010d9ab05ef8c34565f6bf32381d17505f7ca5b273767", size = 36772, upload-time = "2025-07-03T13:25:01.491Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/90/61/0aa957eec22ff70b830b22ff91f825e70e1ef732c06666a805730f28b36b/asgiref-3.9.1.tar.gz", hash = "sha256:a5ab6582236218e5ef1648f242fd9f10626cfd4de8dc377db215d5d5098e3142", size = 36870, upload-time = "2025-07-08T09:07:43.344Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/f9/76c9f4d4985b5a642926162e2d41fe6019b1fa929cfa58abb7d2dc9041e5/asgiref-3.9.0-py3-none-any.whl", hash = "sha256:06a41250a0114d2b6f6a2cb3ab962147d355b53d1de15eebc34a9d04a7b79981", size = 23788, upload-time = "2025-07-03T13:24:59.115Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/3c/0464dcada90d5da0e71018c04a140ad6349558afb30b3051b4264cc5b965/asgiref-3.9.1-py3-none-any.whl", hash = "sha256:f3bba7092a48005b5f5bacd747d36ee4a5a61f4a269a6df590b43144355ebd2c", size = 23790, upload-time = "2025-07-08T09:07:41.548Z" },
 ]
 
 [[package]]
@@ -2219,11 +2219,11 @@ wheels = [
 
 [[package]]
 name = "pyswot"
-version = "0.3.2"
+version = "0.3.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b0/53/adb9fc15b55061705dfc723ad726c698812ddef4ec73b1256d0e3494db56/pyswot-0.3.2.tar.gz", hash = "sha256:0896ca506674bf773971a55521cedad1c45ef3dff62a9fa0e6d6a4170a771147", size = 434313, upload-time = "2024-03-20T10:40:02.838Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6e/c1/51a9d0c63b8bb4a23e54ea3c36d60d2aae91e9934f30597d6a66017ac67f/pyswot-0.3.3.tar.gz", hash = "sha256:350ba9719c26034674afb41fc42b7474c674a27296fde0a47783f7679f4a74b6", size = 496998, upload-time = "2025-07-08T13:56:27.924Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1d/96/76a6d8764be2f1ad52a1e325ffaa33e5a62d0d509c8543130d760e67cdb9/pyswot-0.3.2-py3-none-any.whl", hash = "sha256:251fb56dad5e29fc92a7ee08107f8d44c5402b9b119da96f2719dd01bb15d13e", size = 438319, upload-time = "2024-03-20T10:40:00.424Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/02/6666e82d05ab907ce8c73857b28ba8bd791aa740d2e0d5d231a0e1a00914/pyswot-0.3.3-py3-none-any.whl", hash = "sha256:2f8bbadb5060eea4f29e96e57755710f33a521335f1917e807198b19740753d7", size = 499888, upload-time = "2025-07-08T13:56:26.288Z" },
 ]
 
 [[package]]
