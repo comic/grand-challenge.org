@@ -4,7 +4,9 @@ import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db.models import BLANK_CHOICE_DASH
+from django.urls import URLPattern, URLResolver
 
+from config.urls import challenge_subdomain
 from grandchallenge.pages.models import Page
 from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import ChallengeFactory, PageFactory, UserFactory
@@ -527,88 +529,32 @@ def test_should_show_verification_warning():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "slug",
-    [
-        "0",
-        "1",
-        "admins",
-        "challenge",
-        "create",
-        "delete",
-        "evaluation",
-        "invoices",
-        "leaderboard",
-        "markdownx",
-        "member",
-        "onboarding-tasks",
-        "pages",
-        "participants",
-        "phase",
-        "statistics",
-        "submission",
-        "teams",
-        "update",
-    ],
-)
-def test_page_urls(client, slug):
-    content = f"page content for {slug}"
-    page = PageFactory(display_title=slug, content_markdown=content)
-    user = UserFactory()
+def test_challenge_subdomain_patterns():
+    def resolve_and_check_patterns(items, base_url=None):
+        if base_url is None:
+            base_url = ""
+        for p in items:
+            if isinstance(p, URLResolver):
+                resolve_and_check_patterns(
+                    p.url_patterns, base_url + str(p.pattern)
+                )
+            elif isinstance(p, URLPattern):
+                url = base_url + str(p.pattern)
+                check_url_pattern(url=url, pattern=p)
 
-    # For user
-    response = get_view_for_user(
-        viewname="pages:detail",
-        client=client,
-        challenge=page.challenge,
-        user=user,
-        reverse_kwargs={"slug": slug},
-    )
-    assert response.status_code == 200
-    assert content in response.rendered_content
+    def check_url_pattern(url, pattern):
+        nonlocal invalid_patterns
+        if (
+            url.count("/") == 1
+            and url.endswith("/")
+            and pattern.lookup_str != "grandchallenge.pages.views.PageDetail"
+        ):
+            # these patterns will clash if challenge admins use it as a page title
+            invalid_patterns.append(url)
 
-    # For challenge admin
-    response = get_view_for_user(
-        viewname="pages:detail",
-        client=client,
-        challenge=page.challenge,
-        user=page.challenge.creator,
-        reverse_kwargs={"slug": slug},
-    )
-    assert response.status_code == 200
-    assert content in response.rendered_content
+    invalid_patterns = []
+    resolve_and_check_patterns(challenge_subdomain.urlpatterns)
 
-    response = get_view_for_user(
-        viewname="pages:content-update",
-        client=client,
-        challenge=page.challenge,
-        user=page.challenge.creator,
-        reverse_kwargs={"slug": slug},
-    )
-    assert response.status_code == 200
-    assert "<h2>Update Page</h2>" in str(response.content)
-    assert content in response.rendered_content
-
-    response = get_view_for_user(
-        viewname="pages:metadata-update",
-        client=client,
-        challenge=page.challenge,
-        user=page.challenge.creator,
-        reverse_kwargs={"slug": slug},
-    )
-    assert response.status_code == 200
-    assert "<h2>Update Page</h2>" in str(response.content)
-    assert f'value="{slug}"' in str(response.content)  # noqa: B907
-
-    response = get_view_for_user(
-        viewname="pages:delete",
-        client=client,
-        challenge=page.challenge,
-        user=page.challenge.creator,
-        reverse_kwargs={"slug": slug},
-    )
-    assert response.status_code == 200
-    assert "<h2>Confirm Deletion</h2>" in str(response.content)
     assert (
-        f'delete the page "{slug}"?' in response.rendered_content  # noqa: B907
-    )
+        invalid_patterns == []
+    ), f"These patterns will clash with page urls if challenge admins create a page with the same slug: {invalid_patterns}"
