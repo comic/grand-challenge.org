@@ -348,3 +348,14 @@ globalThis.UPPY_FILE_PREPROCESSORS = [
         preprocessor: preprocessDicomFile,
     },
 ];
+
+// Export for testing in Node.js environment
+if (typeof module !== "undefined" && module.exports) {
+    module.exports = {
+        getDummyValue,
+        isDicomFile,
+        preprocessDicomFile,
+        // For testing only
+        _uidMap: uidMap,
+    };
+}
