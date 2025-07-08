@@ -1,7 +1,23 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:fb074446e88817182a729f7117a8a3c52658eb27ca16532733118465a6db2293",
+  "content_hash": "sha256:21beba112364ab79711bce185eaacc5c7280d148bf405ad1e3e9533057dbce5c",
   "dependencies": [
+    {
+      "name": "@diagnijmegen/rse-grand-challenge-dicom-deid-procedure",
+      "version": "0.20250704.7",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/grand-challenge-dicom-de-id-procedure.umd.min.js",
+          "sri": "sha256-ofmzUtNjHpFbloBjYXjRAlxB9Ojj3CTKFm2ODf9kWO4="
+        },
+        {
+          "name": "dist/grand-challenge-dicom-de-id-procedure.umd.min.js.map",
+          "sri": "sha256-mGBJctsiz8c9W83HC8IEAj4jQ6xsXybM1HD7CceAZkI="
+        }
+      ],
+      "maps": []
+    },
     {
       "name": "@github/markdown-toolbar-element",
       "version": "1.2.0",
@@ -514,6 +530,22 @@
         {
           "name": "js/buttons.bootstrap4.min.js",
           "sri": "sha256-+0hWUGyz5myqHMYbeot8a5Hm87wLJHCjQcSYQ8k37oM="
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "dcmjs",
+      "version": "0.42.0",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "build/dcmjs.js",
+          "sri": "sha256-1nv/I8AxMdKsAK+RU7AYrN6ISE4j24swHCTqWR5ZFa4="
+        },
+        {
+          "name": "build/dcmjs.js.map",
+          "sri": "sha256-VHzxl9aljbrr5yhA+5LvW20r+6BMUk8GqXnJcqTetxo="
         }
       ],
       "maps": []
