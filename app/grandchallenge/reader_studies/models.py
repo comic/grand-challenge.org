@@ -379,6 +379,7 @@ class ReaderStudy(
         "instant_verification",
         "roll_over_answers_for_n_cases",
         "allow_answer_modification",
+        "enable_autosaving",
         "allow_case_navigation",
         "allow_show_all_annotations",
         "access_request_handling",
