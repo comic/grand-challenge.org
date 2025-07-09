@@ -1,5 +1,4 @@
 from django import forms
-from django.core.exceptions import ValidationError
 from django.db.models import BLANK_CHOICE_DASH
 
 from grandchallenge.core.forms import SaveFormInitMixin
@@ -15,17 +14,6 @@ class PageCreateForm(SaveFormInitMixin, forms.ModelForm):
             "permission_level",
             "hidden",
         )
-
-    def clean_display_title(self):
-        display_title = self.cleaned_data["display_title"]
-
-        if display_title.lower() in {"evaluation"}:
-            # evaluation results in a URL clash, especially with the update page.
-            raise ValidationError(
-                "Title not allowed, please select an alternative"
-            )
-
-        return display_title
 
 
 class PageMetadataUpdateForm(PageCreateForm):
