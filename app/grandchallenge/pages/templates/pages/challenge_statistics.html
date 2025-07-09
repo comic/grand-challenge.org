@@ -72,7 +72,7 @@
                     {% for invoice in challenge.invoices.with_overdue_status %}
                         <tr>
                             <td>{{ invoice.internal_invoice_number }}</td>
-                            <td>{{ invoice.issued_on }}</td>
+                            <td data-order="{{ invoice.issued_on|date:"c" }}">{{ invoice.issued_on }}</td>
                             <td>€ {{ invoice.support_costs_euros }}</td>
                             <td>€ {{ invoice.compute_costs_euros }}</td>
                             <td>€ {{ invoice.storage_costs_euros }}</td>
