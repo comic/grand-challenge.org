@@ -23,3 +23,8 @@
 .dt-orderable-none .dt-column-order {
     display: none;
 }
+
+table.dataTable th.dt-type-date,
+table.dataTable td.dt-type-date {
+  text-align: left !important;
+}
