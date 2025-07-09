@@ -52,7 +52,7 @@
                         <a href="{{ gt.get_absolute_url }}"><i class="fa fa-eye"></i></a>
                     </td>
                     <td class="d-flex justify-content-center">{% if gt.is_desired_version %}<i class="fa fa-check-circle text-success pt-1"></i>{% else %}<i class="fas fa-times-circle text-danger pt-1"></i>{% endif %}</td>
-                    <td data-order="{{ gt.created|date:"c" }}">{{ gt.created }}</td>
+                    <td data-order="{{ gt.created|date:"Y-m-d\TH:i:s" }}">{{ gt.created }}</td>
                     <td><a
                             href="{% url 'profile-detail' gt.creator.username %}">{{ gt.creator }}</a>
                     </td>

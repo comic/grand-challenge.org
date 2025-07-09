@@ -44,7 +44,7 @@
             {% for request in object_list %}
 
                 <tr>
-                    <td data-order='{{ request.created|date:"c" }}'>
+                    <td data-order='{{ request.created|date:"Y-m-d\TH:i:s" }}'>
                         {{ request.created|naturaltime }}
                     </td>
                     <td>

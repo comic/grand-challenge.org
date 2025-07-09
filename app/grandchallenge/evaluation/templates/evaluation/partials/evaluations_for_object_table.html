@@ -13,8 +13,8 @@
         <tbody>
         {% for evaluation in object.evaluation_set.all %}
             <tr>
-                <td data-order="{{ evaluation.created|date:"c" }}">{{ evaluation.created }}</td>
-                <td data-order="{{ evaluation.modified|date:"c" }}">{{ evaluation.modified }}</td>
+                <td data-order="{{ evaluation.created|date:"Y-m-d\TH:i:s" }}">{{ evaluation.created }}</td>
+                <td data-order="{{ evaluation.modified|date:"Y-m-d\TH:i:s" }}">{{ evaluation.modified }}</td>
                 <td><a href="{{ evaluation.get_absolute_url }}">{{ evaluation.id }}</a>
                 </td>
                 <td>

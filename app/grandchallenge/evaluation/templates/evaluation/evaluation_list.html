@@ -59,7 +59,7 @@
                 <tr>
                     <td data-order="{{ evaluation.submission.id }}"><a href="{{ evaluation.submission.get_absolute_url }}">{{ evaluation.submission.id|split_first:"-" }}</a></td>
                     <td data-order="{{ evaluation.id }}"><a href="{{ evaluation.get_absolute_url }}">{{ evaluation.id|split_first:"-" }}</a></td>
-                    <td data-order="{{ evaluation.created|date:"c" }}">{{ evaluation.created }}</td>
+                    <td data-order="{{ evaluation.created|date:"Y-m-d\TH:i:s" }}">{{ evaluation.created }}</td>
                     {% if "change_challenge" in challenge_perms %}
                         <td>
                             {{ evaluation.submission.creator|user_profile_link }}

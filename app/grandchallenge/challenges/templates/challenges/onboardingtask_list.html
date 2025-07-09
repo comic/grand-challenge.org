@@ -68,7 +68,7 @@
                         {{ task.description }}
                     </td>
                     <td title="{{ task.deadline }}"
-                        data-order="{{ task.deadline|date:"c" }}"
+                        data-order="{{ task.deadline|date:"Y-m-d\TH:i:s"" }}"
                         class="align-middle text-nowrap text-right"
                          style="{{ task.complete|yesno:'text-decoration: line-through;,' }}"
                     >

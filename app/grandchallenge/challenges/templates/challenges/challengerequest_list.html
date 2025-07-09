@@ -41,13 +41,13 @@
                         <td class="text-center align-middle">{{ object.creator|user_profile_link }}</td>
                         <td class="text-center align-middle" data-order="{{ object.start_date|date:"c" }}">{{ object.start_date|date:'F j, Y' }}</td>
                         {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
-                            <td class="text-center align-middle" data-order="{{ object.created|date:"c" }}"><span class="badge p-2 badge-primary">{{ object.created|date:'F j, Y' }}</span></td>
+                            <td class="text-center align-middle" data-order="{{ object.created|date:"Y-m-d\TH:i:s" }}"><span class="badge p-2 badge-primary">{{ object.created|date:'F j, Y' }}</span></td>
                             <td class="text-center align-middle"><span class="badge p-2 badge-success">Accepted</span></td>
                         {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
-                            <td class="text-center align-middle" data-order="{{ object.created|date:"c" }}"><span class="badge p-2 badge-primary">{{ object.created|date:'F j, Y' }}</span></td>
+                            <td class="text-center align-middle" data-order="{{ object.created|date:"Y-m-d\TH:i:s" }}"><span class="badge p-2 badge-primary">{{ object.created|date:'F j, Y' }}</span></td>
                             <td class="text-center align-middle"><span class="badge p-2 badge-danger">Rejected</span></td>
                         {% else %}
-                            <td class="text-center align-middle" data-order="{{ object.created|date:"c" }}"><span class="badge p-2 {% if object.created|timedifference < 8 %} badge-success {% elif object.created|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.created|date:'F j, Y' }}</span></td>
+                            <td class="text-center align-middle" data-order="{{ object.created|date:"Y-m-d\TH:i:s" }}"><span class="badge p-2 {% if object.created|timedifference < 8 %} badge-success {% elif object.created|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.created|date:'F j, Y' }}</span></td>
                             <td class="text-center align-middle">
                             {% if perms.challenges.change_challengerequest %}
                                 <a class="btn btn-primary btn-sm" hx-get="{% url 'challenges:requests-status-update' pk=object.pk %}" hx-swap="outerHTML">Accept or decline</a>
