@@ -121,7 +121,9 @@ async function isDicomFile(file) {
     }
 
     // Check magic byte: DICOM files have "DICM" at byte offset 128
-    const header = new Uint8Array(await file.slice(128, 132).arrayBuffer());
+    const header = new Uint8Array(
+        await file.data.slice(128, 132).arrayBuffer(),
+    );
     const isDicomMagic =
         header.length === 4 &&
         header[0] === 0x44 && // 'D'
@@ -346,3 +348,14 @@ globalThis.UPPY_FILE_PREPROCESSORS = [
         preprocessor: preprocessDicomFile,
     },
 ];
+
+// Export for testing in Node.js environment
+if (typeof module !== "undefined" && module.exports) {
+    module.exports = {
+        getDummyValue,
+        isDicomFile,
+        preprocessDicomFile,
+        // For testing only
+        _uidMap: uidMap,
+    };
+}
