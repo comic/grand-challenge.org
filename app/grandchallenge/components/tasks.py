@@ -455,6 +455,7 @@ def _repo_login_and_run(*, command):
 
     return subprocess.run(
         ["/bin/sh", "-c", clean_command],
+        env=None,
         check=True,
         capture_output=True,
         text=True,
