@@ -55,7 +55,7 @@
         <h4>Invoices</h4>
 
         <div class="table-responsive">
-            <table class="table table-hover table-borderless table-sm w-100" id="challengeInvoicesOverviewTable">
+            <table class="table sortable table-hover table-borderless table-sm w-100" id="challengeInvoicesOverviewTable" data-order="[[ 1, &quot;asc&quot; ]]">
                 <thead class="thead-light">
                     <tr>
                         <th>Number</th>
@@ -203,4 +203,5 @@
     <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
 
     <script type="module" src="{% static 'js/evaluation/phase_costs_overview.mjs' %}"></script>
+    <script type="module" src="{% static "js/sort_tables.js" %}"></script>
 {% endblock %}
