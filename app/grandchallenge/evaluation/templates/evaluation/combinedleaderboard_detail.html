@@ -64,7 +64,7 @@
                     <td data-order="{{ combined_rank.rank }}">{{ combined_rank.rank|ordinal }}</td>
                     {% get_dict_values user_profile_links combined_rank.user as user_profile_link %}
                     <td>{{ user_profile_link }}</td>
-                    <td data-order="{{ combined_rank.created|date:"Y-m-d\TH:i:s" }}">{{ combined_rank.created|date:"j N Y" }}</td>
+                    <td data-order="{{ combined_rank.created|date:"c" }}">{{ combined_rank.created|date:"j N Y" }}</td>
                     <td>{{ combined_rank.combined_rank }}</td>
                     {% for phase in object.public_phases %}
                         {% get_dict_values combined_rank.evaluations phase.pk as evaluation %}

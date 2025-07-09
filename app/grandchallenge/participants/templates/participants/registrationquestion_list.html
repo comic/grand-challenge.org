@@ -49,7 +49,7 @@
             {% for question in object_list %}
 
                 <tr>
-                    <td data-order="{{ question.created|date:"Y-m-d\TH:i:s" }}">
+                    <td data-order="{{ question.created|date:"c" }}">
                         {{ question.created }}
                     </td>
                     <td>
