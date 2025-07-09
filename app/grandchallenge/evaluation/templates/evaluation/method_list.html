@@ -50,7 +50,7 @@
                         <a href="{{ method.get_absolute_url }}"><i class="fa fa-eye"></i></a>
                     </td>
                     <td class="d-flex justify-content-center">{% if method.is_desired_version %}<i class="fa fa-check-circle text-success pt-1"></i>{% else %}<i class="fas fa-times-circle text-danger pt-1"></i>{% endif %}</td>
-                    <td data-order="{{ method.created|date:"U" }}">{{ method.created }}</td>
+                    <td data-order="{{ method.created|date:"c" }}">{{ method.created }}</td>
                     <td><a
                             href="{% url 'profile-detail' method.creator.username %}">{{ method.creator }}</a>
                     </td>

@@ -44,10 +44,10 @@
             {% for regrequest in object_list %}
 
                 <tr>
-                    <td data-order="{{ regrequest.created|date:"U" }}">
+                    <td data-order="{{ regrequest.created|date:"c" }}">
                         {{ regrequest.created }}
                     </td>
-                    <td data-order="{{ regrequest.changed|date:"U" }}">
+                    <td data-order="{{ regrequest.changed|date:"c" }}">
                         {{ regrequest.changed }}
                     </td>
                     <td>
