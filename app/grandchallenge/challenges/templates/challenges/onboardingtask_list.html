@@ -49,7 +49,7 @@
 
                 <tr>
 
-                    <td data-order="{{ task.complete|yesno:'1,0' }}" class="align-middle text-center">
+                    <td data-order="{{ task.complete }}" class="align-middle text-center">
                       {% if task.complete %}
                         <i  class="fas fa-check-circle fa-fw text-success" title="Completed!"></i>
                     {% elif task.is_overdue_soon %}

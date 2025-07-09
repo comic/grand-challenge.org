@@ -37,14 +37,14 @@
             <tbody>
             {% for entry in object.leaderboard.grouped_scores %}
                 <tr {% if request.user.username == entry.creator__username %} class="bg-primary text-white"{% endif %}>
-                    <td data-order="{{ forloop.counter|stringformat:'020f' }}">{{ forloop.counter|ordinal }}</td>
+                    <td data-order="{{ forloop.counter }}">{{ forloop.counter|ordinal }}</td>
                     {% if "change_readerstudy" in readerstudy_perms %}
                         <td data-order="{{ entry.creator__username }}">{{ entry.creator__username|user_profile_link_username }}</td>
                     {% else %}
                         <td>{% if entry.creator__username == request.user.username %} You {% else %} Reader {% endif %}</td>
                     {% endif %}
-                    <td data-order="{{ entry.score__sum|stringformat:'020f' }}">{{ entry.score__sum }} / {{ object.leaderboard.question_count }}</td>
-                    <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg|floatformat:4 }}</td>
+                    <td data-order="{{ entry.score__sum }}">{{ entry.score__sum }} / {{ object.leaderboard.question_count }}</td>
+                    <td data-order="{{ entry.score__avg }}">{{ entry.score__avg|floatformat:4 }}</td>
                 </tr>
             {% endfor %}
             </tbody>

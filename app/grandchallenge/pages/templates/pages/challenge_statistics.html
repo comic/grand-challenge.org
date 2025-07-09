@@ -184,8 +184,8 @@
                             <td>{{ phase.num_successful_submissions }}</td>
                             <td>{{ phase.num_creators }}</td>
                             <td data-order="{{ phase.average_algorithm_job_duration.total_seconds }}">{{ phase.average_algorithm_job_duration|naturaldelta }}</td>
-                            <td data-order="{{ phase.compute_cost_euro_millicents }}">{{ phase.compute_cost_euro_millicents|millicents_to_euro }}</td>
-                            <td data-order="{% if phase.num_successful_submissions %}{{ phase.compute_cost_euro_millicents|divide_by:phase.num_successful_submissions }}{% else %}-1{% endif %}">{% if phase.num_successful_submissions %}{{ phase.compute_cost_euro_millicents|divide_by:phase.num_successful_submissions|millicents_to_euro }}{% endif %}</td>
+                            <td>{{ phase.compute_cost_euro_millicents|millicents_to_euro }}</td>
+                            <td>{% if phase.num_successful_submissions %}{{ phase.compute_cost_euro_millicents|divide_by:phase.num_successful_submissions|millicents_to_euro }}{% endif %}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
