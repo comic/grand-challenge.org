@@ -212,14 +212,6 @@ def evaluation_image(tmpdir_factory):
 
 
 @pytest.fixture(scope="session")
-def algorithm_image(tmpdir_factory):
-    """Create the example algorithm container."""
-    return docker_image(
-        tmpdir_factory, path="algorithms_tests", label="algorithm"
-    )
-
-
-@pytest.fixture(scope="session")
 def algorithm_io_image(tmpdir_factory):
     """Create the example algorithm container."""
     return docker_image(

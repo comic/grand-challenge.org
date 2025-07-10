@@ -52,7 +52,6 @@ from tests.utils import get_view_for_user, recurse_callbacks
 
 @pytest.mark.django_db
 def test_submission_evaluation(
-    evaluation_image,
     submission_file,
     settings,
     client,
@@ -63,18 +62,16 @@ def test_submission_evaluation(
     settings.task_always_eager = (True,)
 
     # Upload a submission and create an evaluation
-    eval_container, sha256 = evaluation_image
     phase = PhaseFactory(
         submission_kind=SubmissionKindChoices.CSV,
         submissions_limit_per_user_per_period=10,
     )
 
-    with django_capture_on_commit_callbacks() as callbacks:
-        method = MethodFactory(phase=phase, image__from_path=eval_container)
-
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    method = MethodFactory(
+        phase=phase,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
     )
 
     # We should not be able to download methods
