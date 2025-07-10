@@ -140,6 +140,12 @@ class GitHubWebhookMessage(models.Model):
                 f"bandwidth. Please purchase more data packs on GitHub for "
                 f"this repo so that we can clone it."
             )
+        elif "This repository exceeded its LFS budget" in self.stdout:
+            return (
+                f"Repository {self.repo_name} has used all of its LFS "
+                f"budget. Please assign more LFS budget on GitHub for "
+                f"this repo so that we can clone it."
+            )
         else:
             return ""
 
