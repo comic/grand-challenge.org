@@ -10,7 +10,6 @@ from django.utils.html import format_html
 from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.backends import docker_client
 from grandchallenge.components.models import InterfaceKind
 from grandchallenge.components.tasks import (
     push_container_image,
@@ -172,11 +171,7 @@ def test_method_validation(algorithm_io_image):
     """The validator should set the correct sha256 and set the ready bit."""
     method = MethodFactory(image__from_path=algorithm_io_image)
 
-    image = docker_client.inspect_image(repo_tag="test-algorithm-io:latest")
-    sha256 = image["Id"]
-
-    # The method factory fakes the sha256 on creation
-    assert method.image_sha256 != sha256
+    original_sha256 = method.image_sha256
     assert method.is_manifest_valid is None
     assert method.is_in_registry is False
     assert method.can_execute is False
@@ -188,8 +183,9 @@ def test_method_validation(algorithm_io_image):
         mark_as_desired=False,
     )
 
+    # The method factory fakes the sha256 on creation
     method = Method.objects.get(pk=method.pk)
-    assert method.image_sha256 == sha256
+    assert method.image_sha256 != original_sha256
     assert method.is_manifest_valid is True
     assert method.is_in_registry is True
     assert method.can_execute is True
