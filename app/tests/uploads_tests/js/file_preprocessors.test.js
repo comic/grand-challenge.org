@@ -131,3 +131,227 @@ describe("isDicomFile", () => {
         },
     );
 });
+
+describe("preprocessDicomFile", () => {
+    const createDicomFileBuffer = tags => {
+        const meta = {
+            "00020010": { vr: "UI", Value: ["1.2.840.10008.1.2.1"] }, // TransferSyntaxUID
+        };
+        const dicomDict = new dcmjs.data.DicomDict(meta);
+        dicomDict.dict = tags;
+        return dicomDict.write();
+    };
+
+    const createDicomFile = (tags, filename = "test.dcm") => {
+        const buffer = createDicomFileBuffer(tags);
+        return new File([buffer], filename, { type: "application/dicom" });
+    };
+
+    const getProcessedDataset = async processedFile => {
+        const buffer = await processedFile.arrayBuffer();
+        return dcmjs.data.DicomMessage.readFile(buffer).dict;
+    };
+
+    beforeEach(() => {
+        global.GrandChallengeDICOMDeIdProcedure = {};
+        _uidMap.clear();
+    });
+
+    test("should throw an error if dcmjs is not available", async () => {
+        const originalDcmjs = global.dcmjs;
+        global.dcmjs = undefined;
+        const file = new File([new ArrayBuffer(1)], "test.dcm");
+        await expect(preprocessDicomFile(file)).rejects.toThrow(
+            "dcmjs is not available",
+        );
+        global.dcmjs = originalDcmjs;
+    });
+
+    test("should remove tags by default ('X') and keep specified tags ('K')", async () => {
+        const file = createDicomFile({
+            "00100010": { vr: "PN", Value: ["Patient Name"] }, // To be removed
+            "00080050": { vr: "SH", Value: ["ACC123"] }, // To be kept
+        });
+
+        global.GrandChallengeDICOMDeIdProcedure = {
+            default: "X",
+            sopClass: { "": { tag: { "(0008,0050)": { default: "K" } } } },
+            version: "1.0",
+        };
+
+        const processedFile = await preprocessDicomFile(file);
+        const dataset = await getProcessedDataset(processedFile);
+
+        expect(dataset["00100010"]).toBeUndefined();
+        expect(dataset["00080050"]).toBeDefined();
+        expect(dataset["00080050"].Value[0]).toBe("ACC123");
+        expect(dataset["00120063"]).toBeDefined(); // De-id method tag
+        expect(processedFile).toBeInstanceOf(File);
+    });
+
+    test("should dummy tags with 'D' action", async () => {
+        const file = createDicomFile({
+            "00080070": { vr: "LO", Value: ["Healthcare Ultrasound"] },
+        });
+        global.GrandChallengeDICOMDeIdProcedure = {
+            sopClass: { "": { tag: { "(0008,0070)": { default: "D" } } } },
+        };
+
+        const processedFile = await preprocessDicomFile(file);
+        const dataset = await getProcessedDataset(processedFile);
+
+        expect(dataset["00080070"].Value[0]).toBe("DUMMY_LONG_STRING");
+    });
+
+    test("should map UIDs consistently with 'U' action", async () => {
+        const originalUID = "1.2.3.4";
+        const file = createDicomFile({
+            "00080018": { vr: "UI", Value: [originalUID] },
+        });
+        global.GrandChallengeDICOMDeIdProcedure = {
+            sopClass: { "": { tag: { "(0008,0018)": { default: "U" } } } },
+        };
+
+        const processedFile = await preprocessDicomFile(file);
+        const dataset = await getProcessedDataset(processedFile);
+        const newUID = dataset["00080018"].Value[0];
+
+        expect(newUID).toBeDefined();
+        expect(newUID).not.toBe(originalUID);
+
+        // Check consistency with a new file using the same original UID
+        expect(_uidMap.get(originalUID)).toBe(newUID);
+        const file2 = createDicomFile({
+            "00080018": { vr: "UI", Value: [originalUID] },
+        });
+        const processedFile2 = await preprocessDicomFile(file2);
+        const dataset2 = await getProcessedDataset(processedFile2);
+        const newUID2 = dataset2["00080018"].Value[0];
+        expect(newUID2).toBe(newUID);
+
+        // Check inconsistency with a different original UID
+        const differentUID = "1.2.3.5";
+        const file3 = createDicomFile({
+            "00080018": { vr: "UI", Value: [differentUID] },
+        });
+        const processedFile3 = await preprocessDicomFile(file3);
+        const dataset3 = await getProcessedDataset(processedFile3);
+        const newUID3 = dataset3["00080018"].Value[0];
+        expect(newUID3).not.toBe(newUID);
+        expect(_uidMap.get(differentUID)).toBe(newUID3);
+        expect(_uidMap.size).toBe(2);
+    });
+
+    test("should reject files with 'R' action", async () => {
+        const file = createDicomFile({
+            "00100010": { vr: "PN", Value: ["Patient Name"] },
+        });
+        global.GrandChallengeDICOMDeIdProcedure = {
+            sopClass: {
+                "": {
+                    tag: {
+                        "(0010,0010)": {
+                            default: "R",
+                            justification: "Test Reject",
+                        },
+                    },
+                },
+            },
+        };
+
+        await expect(preprocessDicomFile(file)).rejects.toThrow(
+            "Image is rejected due to de-identification protocol. Tag: 00100010; Justification: Test Reject",
+        );
+    });
+
+    test("should handle D sequences by dummying all nested tags", async () => {
+        const file = createDicomFile({
+            "00540016": {
+                vr: "SQ",
+                Value: [
+                    {
+                        "00080070": {
+                            vr: "LO",
+                            Value: ["Healthcare Ultrasound"],
+                        },
+                    },
+                ],
+            },
+        });
+        global.GrandChallengeDICOMDeIdProcedure = {
+            sopClass: { "": { tag: { "(0054,0016)": { default: "D" } } } },
+        };
+
+        const processedFile = await preprocessDicomFile(file);
+        const dataset = await getProcessedDataset(processedFile);
+        const processedSequence = dataset["00540016"].Value;
+
+        expect(processedSequence[0]["00080070"].Value[0]).toBe(
+            "DUMMY_LONG_STRING",
+        );
+    });
+
+    test("should handle U sequences by consistently replacing all nested tags", async () => {
+        const file = createDicomFile({
+            "00540016": {
+                vr: "SQ",
+                Value: [
+                    {
+                        "00081150": {
+                            vr: "UI",
+                            Value: ["1.2.840.10008.5.1.4.1.1.6.1"],
+                        },
+                    },
+                ],
+            },
+        });
+        global.GrandChallengeDICOMDeIdProcedure = {
+            sopClass: { "": { tag: { "(0054,0016)": { default: "U" } } } },
+        };
+
+        const processedFile = await preprocessDicomFile(file);
+        const dataset = await getProcessedDataset(processedFile);
+        const processedSequence = dataset["00540016"].Value;
+
+        expect(processedSequence[0]["00081150"].Value[0]).toBe(
+            _uidMap.get("1.2.840.10008.5.1.4.1.1.6.1"),
+        );
+    });
+
+    test("should handle K sequences by iterating all nested tags and actions", async () => {
+        const file = createDicomFile({
+            "00540016": {
+                vr: "SQ",
+                Value: [
+                    {
+                        "00080070": {
+                            vr: "LO",
+                            Value: ["Healthcare Ultrasound"],
+                        },
+                        "00540017": { vr: "LO", Value: ["Nested Long String"] },
+                    },
+                ],
+            },
+        });
+        global.GrandChallengeDICOMDeIdProcedure = {
+            sopClass: {
+                "": {
+                    tag: {
+                        "(0054,0016)": { default: "K" },
+                        "(0008,0070)": { default: "D" },
+                        "(0054,0017)": { default: "X" },
+                    },
+                },
+            },
+        };
+
+        const processedFile = await preprocessDicomFile(file);
+        const dataset = await getProcessedDataset(processedFile);
+        const processedSequence = dataset["00540016"].Value;
+
+        expect(processedSequence[0]["00080070"].Value[0]).toBe(
+            "DUMMY_LONG_STRING",
+        );
+        expect(processedSequence[0]["00540017"]).toBeUndefined();
+    });
+});
