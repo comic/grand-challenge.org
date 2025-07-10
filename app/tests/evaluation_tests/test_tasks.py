@@ -10,6 +10,7 @@ from django.utils.html import format_html
 from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import Job
+from grandchallenge.components.backends import docker_client
 from grandchallenge.components.models import InterfaceKind
 from grandchallenge.components.tasks import (
     push_container_image,
@@ -167,10 +168,12 @@ def test_submission_evaluation(
 
 
 @pytest.mark.django_db
-def test_method_validation(evaluation_image):
+def test_method_validation(algorithm_io_image):
     """The validator should set the correct sha256 and set the ready bit."""
-    container, sha256 = evaluation_image
-    method = MethodFactory(image__from_path=container)
+    method = MethodFactory(image__from_path=algorithm_io_image)
+
+    image = docker_client.inspect_image(repo_tag="test-algorithm-io:latest")
+    sha256 = image["Id"]
 
     # The method factory fakes the sha256 on creation
     assert method.image_sha256 != sha256
@@ -193,9 +196,10 @@ def test_method_validation(evaluation_image):
 
 
 @pytest.mark.django_db
-def test_container_pushing(evaluation_image):
-    container, sha256 = evaluation_image
-    method = MethodFactory(image__from_path=container, is_manifest_valid=True)
+def test_container_pushing(algorithm_io_image):
+    method = MethodFactory(
+        image__from_path=algorithm_io_image, is_manifest_valid=True
+    )
 
     push_container_image(instance=method)
 
@@ -554,7 +558,6 @@ class TestSetEvaluationInputs:
 @pytest.mark.django_db
 def test_non_zip_submission_failure(
     client,
-    evaluation_image,
     submission_file,
     settings,
     django_capture_on_commit_callbacks,
@@ -623,7 +626,7 @@ def test_non_zip_submission_failure(
 @pytest.mark.django_db
 def test_evaluation_notifications(
     client,
-    evaluation_image,
+    algorithm_io_image,
     submission_file,
     settings,
     django_capture_on_commit_callbacks,
@@ -639,9 +642,8 @@ def test_evaluation_notifications(
     )
 
     # Add method and upload a submission
-    eval_container, sha256 = evaluation_image
     with django_capture_on_commit_callbacks() as callbacks:
-        MethodFactory(phase=phase, image__from_path=eval_container)
+        MethodFactory(phase=phase, image__from_path=algorithm_io_image)
     recurse_callbacks(
         callbacks=callbacks,
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
