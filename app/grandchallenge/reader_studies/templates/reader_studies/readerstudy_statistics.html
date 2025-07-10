@@ -39,14 +39,14 @@
             <tbody>
                 {% for entry in object.statistics.scores_by_case %}
                     <tr>
-                        <td data-order="{{ entry.id }}">{{ entry.id }}</td>
-                        <td data-order="{{ entry.sum|stringformat:'020f' }}">{{ entry.sum }} / {{ object.statistics.max_score_cases }}</td>
-                        <td data-order="{{ entry.avg|stringformat:'020f' }}">{{ entry.avg|floatformat:4 }}</td>
+                        <td>{{ entry.id }}</td>
+                        <td data-order="{{ entry.sum }}">{{ entry.sum }} / {{ object.statistics.max_score_cases }}</td>
+                        <td data-order="{{ entry.avg }}">{{ entry.avg|floatformat:4 }}</td>
                         {% for question in object.statistics.questions %}
                             {% get_ground_truth object entry.id question as ground_truth %}
-                            <td data-order="{{ ground_truth }}">{{ ground_truth }}</td>
+                            <td>{{ ground_truth }}</td>
                         {% endfor %}
-                        <td data-order="{{ entry.id }}">
+                        <td data-order="{{ object.is_launchable }}">
                             <button class="btn btn-primary badge badge-primary"
                                     {% if object.is_launchable %}
                                         {% workstation_session_control_data workstation=object.workstation context_object=object display_set=entry reader_study=object %} title="Open in viewer"
@@ -74,9 +74,9 @@
             <tbody>
                 {% for entry in object.statistics.scores_by_question %}
                     <tr>
-                        <td data-order="{{ entry.question__question_text }}">{{ entry.question__question_text }}</td>
-                        <td data-order="{{ entry.score__sum|stringformat:'020f' }}">{{ entry.score__sum }} / {{ object.statistics.max_score_questions }}</td>
-                        <td data-order="{{ entry.score__avg|stringformat:'020f' }}">{{ entry.score__avg|floatformat:4 }}</td>
+                        <td>{{ entry.question__question_text }}</td>
+                        <td data-order="{{ entry.score__sum }}">{{ entry.score__sum }} / {{ object.statistics.max_score_questions }}</td>
+                        <td data-order="{{ entry.score__avg }}">{{ entry.score__avg|floatformat:4 }}</td>
                     </tr>
                 {% endfor %}
             </tbody>

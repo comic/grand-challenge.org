@@ -45,13 +45,13 @@
                             <span class="badge {% if challenge.status == challenge.StatusChoices.OPEN %}badge-success{% elif challenge.status == challenge.StatusChoices.OPENING_SOON %}badge-warning{% else %}badge-danger{% endif %}">{{ challenge.status.name }}</span>
                         </td>
                         <td>{% if challenge.should_be_open_but_is_over_budget %}<i class="fa fa-exclamation-triangle text-danger"></i>{% endif %}</td>
-                        <td data-order="{% if challenge.most_recent_submission_datetime %}{{ challenge.most_recent_submission_datetime|date:'U' }}{% else %}-1{% endif %}">{% if challenge.most_recent_submission_datetime %}{{ challenge.most_recent_submission_datetime|date }}{% endif %}</td>
+                        <td data-order="{% if challenge.most_recent_submission_datetime %}{{ challenge.most_recent_submission_datetime|date:"c" }}{% else %}-1{% endif %}">{% if challenge.most_recent_submission_datetime %}{{ challenge.most_recent_submission_datetime|date }}{% endif %}</td>
                         <td data-order="{% if challenge.percent_budget_consumed is None %}-1{% else %}{{ challenge.percent_budget_consumed }}{% endif %}" class="{% if challenge.percent_budget_consumed >= 100 %}text-danger{% elif challenge.percent_budget_consumed >= 70 %}text-warning{% else %}text-success{% endif %}">{% if challenge.percent_budget_consumed is not None %}{{ challenge.percent_budget_consumed }}&nbsp;%{% endif %}</td>
-                        <td data-order="{{ challenge.approved_compute_costs_euro_millicents }}">{{ challenge.approved_compute_costs_euro_millicents|millicents_to_euro }}</td>
-                        <td data-order="{{ challenge.compute_cost_euro_millicents }}">{{ challenge.compute_cost_euro_millicents|millicents_to_euro }}</td>
-                        <td data-order="{{ challenge.available_compute_euro_millicents }}" class="{% if challenge.available_compute_euro_millicents <= 0 %}text-danger{% endif %}">{{ challenge.available_compute_euro_millicents|millicents_to_euro }}</td>
-                        <td data-order="{{ challenge.size_in_storage }}">{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</td>
-                        <td data-order="{{ challenge.size_in_registry }}">{{ challenge.size_in_registry|registry_bytes_to_euro_per_year }}</td>
+                        <td>{{ challenge.approved_compute_costs_euro_millicents|millicents_to_euro }}</td>
+                        <td>{{ challenge.compute_cost_euro_millicents|millicents_to_euro }}</td>
+                        <td class="{% if challenge.available_compute_euro_millicents <= 0 %}text-danger{% endif %}">{{ challenge.available_compute_euro_millicents|millicents_to_euro }}</td>
+                        <td>{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</td>
+                        <td>{{ challenge.size_in_registry|registry_bytes_to_euro_per_year }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
