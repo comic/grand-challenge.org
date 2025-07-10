@@ -14,40 +14,7 @@ from grandchallenge.components.tasks import _repo_login_and_run
 logger = logging.getLogger(__name__)
 
 
-class DockerConnectionMixin:
-    @property
-    def container_name(self):
-        return self._job_id
-
-    @property
-    def _labels(self):
-        return {"job": f"{self._job_id}", "traefik.enable": "false"}
-
-    def _pull_image(self):
-        try:
-            docker_client.inspect_image(repo_tag=self._exec_image_repo_tag)
-        except ObjectDoesNotExist:
-            if settings.COMPONENTS_REGISTRY_INSECURE:
-                # In CI we cannot set the docker daemon to trust the local
-                # registry, so pull the container with crane and then load it
-                with TemporaryDirectory() as tmp_dir:
-                    tarball = Path(tmp_dir) / f"{self._job_id}.tar"
-                    _repo_login_and_run(
-                        command=[
-                            "crane",
-                            "pull",
-                            self._exec_image_repo_tag,
-                            str(tarball),
-                        ]
-                    )
-                    docker_client.load_image(input=tarball)
-            else:
-                docker_client.pull_image(
-                    repo_tag=self._exec_image_repo_tag, authenticate=True
-                )
-
-
-class Service(DockerConnectionMixin):
+class Service:
     def __init__(
         self,
         job_id: str,
@@ -58,6 +25,14 @@ class Service(DockerConnectionMixin):
         self._job_id = job_id
         self._exec_image_repo_tag = exec_image_repo_tag
         self._memory_limit = memory_limit
+
+    @property
+    def container_name(self):
+        return self._job_id
+
+    @property
+    def _labels(self):
+        return {"job": f"{self._job_id}", "traefik.enable": "false"}
 
     @property
     def extra_hosts(self):
@@ -142,6 +117,29 @@ class Service(DockerConnectionMixin):
             network=settings.WORKSTATIONS_NETWORK_NAME,
             mem_limit=self._memory_limit,
         )
+
+    def _pull_image(self):
+        try:
+            docker_client.inspect_image(repo_tag=self._exec_image_repo_tag)
+        except ObjectDoesNotExist:
+            if settings.COMPONENTS_REGISTRY_INSECURE:
+                # In CI we cannot set the docker daemon to trust the local
+                # registry, so pull the container with crane and then load it
+                with TemporaryDirectory() as tmp_dir:
+                    tarball = Path(tmp_dir) / f"{self._job_id}.tar"
+                    _repo_login_and_run(
+                        command=[
+                            "crane",
+                            "pull",
+                            self._exec_image_repo_tag,
+                            str(tarball),
+                        ]
+                    )
+                    docker_client.load_image(input=tarball)
+            else:
+                docker_client.pull_image(
+                    repo_tag=self._exec_image_repo_tag, authenticate=True
+                )
 
     def stop_and_cleanup(self):
         docker_client.stop_container(name=self.container_name)

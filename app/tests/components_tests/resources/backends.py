@@ -1,50 +1,103 @@
-import sys
-from json import JSONDecodeError
+import io
+import json
+import logging
 
-from dateutil.parser import isoparse
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
+from django.utils.timezone import now
 
-from grandchallenge.components.backends import docker_client
 from grandchallenge.components.backends.base import Executor
-from grandchallenge.components.backends.docker import (
-    DockerConnectionMixin,
-    logger,
-)
-from grandchallenge.components.backends.utils import (
-    LOGLINES,
-    SourceChoices,
-    parse_structured_log,
-)
+
+logger = logging.getLogger(__name__)
 
 
-class InsecureDockerExecutor(DockerConnectionMixin, Executor):
+class IOCopyExecutor(Executor):
     def __init__(self, *args, **kwargs):
-        usage_message = (
-            "WARNING: The InsecureDockerExecutor is only for development. "
-            "Do not use it in a production environment. "
-            "Use the SageMakerExecutor instead."
-        )
-
-        if settings.DEBUG:
-            logger.critical(usage_message)
-        elif "pytest" in sys.modules:
-            pass
-        else:
-            raise ImproperlyConfigured(usage_message)
-
         super().__init__(*args, **kwargs)
 
+        self.__start_time = now()
+
     def execute(self):
-        self._pull_image()
-        self._execute_container()
+        try:
+            with io.BytesIO() as f:
+                self._s3_client.download_fileobj(
+                    Fileobj=f,
+                    Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                    Key=self._invocation_key,
+                )
+                f.seek(0)
+                invocation_json = json.loads(f.read().decode("utf-8"))
+
+            for task in invocation_json:
+                # Copy inputs to outputs
+                for inpt in task["inputs"]:
+                    copy_source = {
+                        "Bucket": inpt["bucket_name"],
+                        "Key": inpt["bucket_key"],
+                    }
+                    output_key = (
+                        f'{task["output_prefix"]}/{inpt["relative_path"]}'
+                    )
+
+                    logger.info(f"Copying {copy_source} to {output_key}")
+
+                    self._s3_client.copy(
+                        CopySource={
+                            "Bucket": inpt["bucket_name"],
+                            "Key": inpt["bucket_key"],
+                        },
+                        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                        Key=output_key,
+                    )
+
+                # Create results and metrics json files
+                for output_filename in ["results", "metrics"]:
+                    with io.BytesIO() as f:
+                        f.write(
+                            json.dumps(
+                                {
+                                    "score": 1,
+                                    "acc": 0.5,
+                                    "invocation_json": invocation_json,
+                                }
+                            ).encode("utf-8")
+                        )
+                        f.seek(0)
+                        self._s3_client.upload_fileobj(
+                            Fileobj=f,
+                            Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                            Key=f'{task["output_prefix"]}/{output_filename}.json',
+                        )
+
+                # write arbitrary text file; should not be processed
+                with io.BytesIO() as f:
+                    f.write(b"Some arbitrary text")
+                    f.seek(0)
+                    self._s3_client.upload_fileobj(
+                        Fileobj=f,
+                        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                        Key=f'{task["output_prefix"]}/some_text.txt',
+                    )
+
+            # Create a task return code
+            with io.BytesIO() as f:
+                f.write(
+                    json.dumps({"pk": self._job_id, "return_code": 0}).encode(
+                        "utf-8"
+                    )
+                )
+                f.seek(0)
+                self._s3_client.upload_fileobj(
+                    Fileobj=f,
+                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                    Key=self._result_key,
+                )
+        finally:
+            self._set_task_logs()
+
+        self._handle_completed_job()
 
     def handle_event(self, *, event):
         raise RuntimeError("This backend is not event-driven")
-
-    def deprovision(self):
-        super().deprovision()
-        docker_client.remove_container(name=self.container_name)
 
     @staticmethod
     def get_job_name(*, event):
@@ -56,16 +109,7 @@ class InsecureDockerExecutor(DockerConnectionMixin, Executor):
 
     @property
     def duration(self):
-        try:
-            details = docker_client.inspect_container(name=self.container_name)
-            if details["State"]["Status"] == "exited":
-                started_at = details["State"]["StartedAt"]
-                finished_at = details["State"]["FinishedAt"]
-                return isoparse(finished_at) - isoparse(started_at)
-            else:
-                return None
-        except ObjectDoesNotExist:
-            return None
+        return now() - self.__start_time
 
     @property
     def usd_cents_per_hour(self):
@@ -80,72 +124,12 @@ class InsecureDockerExecutor(DockerConnectionMixin, Executor):
     def warm_pool_retained_billable_time_in_seconds(self):
         raise NotImplementedError
 
-    def _execute_container(self) -> None:
-        environment = {
-            **self.invocation_environment,
-            "NVIDIA_VISIBLE_DEVICES": settings.COMPONENTS_NVIDIA_VISIBLE_DEVICES,
-        }
-
-        if settings.COMPONENTS_DOCKER_TASK_SET_AWS_ENV:
-            environment.update(
-                {
-                    "AWS_ACCESS_KEY_ID": settings.COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID,
-                    "AWS_SECRET_ACCESS_KEY": settings.COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY,
-                    "AWS_S3_ENDPOINT_URL": settings.COMPONENTS_S3_ENDPOINT_URL,
-                }
-            )
-
-        try:
-            docker_client.run_container(
-                repo_tag=self._exec_image_repo_tag,
-                name=self.container_name,
-                command=[
-                    "invoke",
-                    "--file",
-                    f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._invocation_key}",
-                ],
-                labels=self._labels,
-                environment=environment,
-                network=settings.COMPONENTS_DOCKER_NETWORK_NAME,
-                mem_limit=self._memory_limit,
-                detach=False,
-            )
-        finally:
-            docker_client.stop_container(name=self.container_name)
-            self._set_task_logs()
-
-        self._handle_completed_job()
-
     def _set_task_logs(self):
-        try:
-            loglines = docker_client.get_logs(
-                name=self.container_name, tail=LOGLINES
-            )
-        except ObjectDoesNotExist:
-            return
-
-        self._parse_loglines(loglines=loglines)
-
-    def _parse_loglines(self, *, loglines):
-        stdout = []
-        stderr = []
-
-        for line in loglines:
-            try:
-                timestamp, log = line.replace("\x00", "").split(" ", 1)
-                parsed_log = parse_structured_log(log=log)
-            except (JSONDecodeError, KeyError, ValueError):
-                logger.warning("Could not parse log")
-                continue
-
-            if parsed_log is not None:
-                output = f"{timestamp} {parsed_log.message}"
-                if parsed_log.source == SourceChoices.STDOUT:
-                    stdout.append(output)
-                elif parsed_log.source == SourceChoices.STDERR:
-                    stderr.append(output)
-                else:
-                    logger.error("Invalid source")
+        stdout = ["Greetings from stdout"]
+        stderr = [
+            "UserWarning: Could not google: [Errno ",
+            'warn("Hello from stderr")',
+        ]
 
         self._stdout = stdout
         self._stderr = stderr

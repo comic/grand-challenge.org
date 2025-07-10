@@ -1,3 +1,4 @@
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -703,17 +704,20 @@ def test_algorithm_model_form():
     assert "Select a valid choice" in str(form.errors["creator"])
 
     Verification.objects.create(user=user, is_verified=True)
-    upload = create_upload_from_file(
-        creator=user,
-        file_path=Path(__file__).parent / "resources" / "model.tar.gz",
-    )
-    AlgorithmModelFactory(creator=user)
 
-    form2 = AlgorithmModelForm(
-        user=user,
-        algorithm=alg,
-        data={"user_upload": upload, "creator": user, "algorithm": alg},
-    )
+    with tempfile.NamedTemporaryFile(suffix=".tar.gz") as file:
+        upload = create_upload_from_file(
+            creator=user, file_path=Path(file.name)
+        )
+
+        AlgorithmModelFactory(creator=user)
+
+        form2 = AlgorithmModelForm(
+            user=user,
+            algorithm=alg,
+            data={"user_upload": upload, "creator": user, "algorithm": alg},
+        )
+
     assert not form2.is_valid()
     assert (
         "You have an existing model importing, please wait for it to complete"
