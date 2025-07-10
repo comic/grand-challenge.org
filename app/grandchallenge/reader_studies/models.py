@@ -296,10 +296,7 @@ class ReaderStudy(
         help_text=(
             "If true, answers to questions are saved in the background while a "
             "user reads a case. 'Allow Answer Modification' must be "
-            "enabled as well for this to work. Please note that this "
-            "feature does not work for questions that a marked as 'required' "
-            "because storing answers for those questions needs to be done "
-            "explicitly by pressing the Save-button."
+            "enabled as well for this to work."
         ),
     )
     allow_case_navigation = models.BooleanField(
