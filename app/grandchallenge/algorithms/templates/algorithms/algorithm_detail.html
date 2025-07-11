@@ -188,7 +188,7 @@
 
             {% if object.display_editors %}
                 <div class="row mb-2">
-                    <div class="col-3 font-weight-bold">Creator{{ editors|pluralize }}:</div>
+                    <div class="col-3 font-weight-bold">Editor{{ editors|pluralize }}:</div>
                     <div class="col-9">
                         {% for user in editors %}
                             <span class="mr-3">{{ user|user_profile_link }}</span>
