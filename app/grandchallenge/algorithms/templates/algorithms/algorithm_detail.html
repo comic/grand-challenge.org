@@ -304,9 +304,16 @@
             <p>This algorithm implements all of the following input-output combinations: </p>
             {% include 'algorithms/partials/algorithminterface_table.html' with base_obj=object interfaces=object.interfaces.all delete_option=False %}
 
+            <h3 class="mt-5 mb-3">Validation and Performance</h3>
+            {% if object.validation_and_performance %}
+                {{ object.validation_and_performance|md2html }}
+            {% else %}
+                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
+            {% endif %}
 
             {% if best_evaluation_per_phase %}
-                <h3>Challenge Performance</h3>
+                <hr>
+                <h4 class="mt-3">Challenge Performance</h4>
 
                 <table class="table table-borderless table-hover table-sm">
                     <thead class="thead-light">
@@ -330,13 +337,6 @@
                     {% endfor %}
                     </tbody>
                 </table>
-            {% endif %}
-
-            <h3 class="mt-5 mb-3">Validation and Performance</h3>
-            {% if object.validation_and_performance %}
-                {{ object.validation_and_performance|md2html }}
-            {% else %}
-                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
 
             <h3 class="mt-5 mb-3">Uses and Directions</h3>
