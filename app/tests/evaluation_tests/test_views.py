@@ -2707,6 +2707,10 @@ def test_reschedule_evaluation_with_additional_inputs(
     assert eval2.inputs.get(interface=ci_str).value == "Bar"
     assert not eval2.inputs.get(interface=ci_bool).value
 
+    # mark eval2 as successful
+    eval2.status = Evaluation.SUCCESS
+    eval2.save()
+
     # try rerunning with identical inputs, that should fail
     with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(

@@ -23,10 +23,18 @@
         {% endblock %}
         {% get_obj_perms request.user for forum as "user_perms" %}
         {% if 'view_forum' in user_perms %}
-            <div class="col-6">
+            <!-- Version for medium screens and up (≥768px) -->
+            <div class="d-none d-md-block col-6">
                 <div class="float-right controls-link-wrapper">
                     {% include 'actstream/partials/follow_unfollow_links.html' with object=forum %}
-                    <a href="{% url 'notifications:follow-list' %}" class="btn btn-dark btn-sm"><i class="fas fa-bookmark mr-1"></i>My Subscriptions</a>
+                    <a href="{% url 'notifications:follow-list' %}" class="btn btn-primary btn-sm"><i class="fas fa-bookmark mr-1"></i>My Subscriptions</a>
+                </div>
+            </div>
+            <!-- Version for small screens (phones) (<768px) -->
+            <div class="d-block d-md-none col-12">
+                <div class="float-right controls-link-wrapper">
+                    {% include 'actstream/partials/follow_unfollow_links.html' with object=forum %}
+                    <a href="{% url 'notifications:follow-list' %}" class="btn btn-primary btn-sm"><i class="fas fa-bookmark mr-1"></i>My Subscriptions</a>
                 </div>
             </div>
         {% endif %}

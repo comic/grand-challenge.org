@@ -44,7 +44,7 @@ services:
         environment:
             <<: [*postgres-env, *minio-env]
             COMPONENTS_REGISTRY_INSECURE: "true"
-            COMPONENTS_DEFAULT_BACKEND: "tests.components_tests.resources.backends.InsecureDockerExecutor"
+            COMPONENTS_DEFAULT_BACKEND: "tests.components_tests.resources.backends.IOCopyExecutor"
             COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: "true"
             USING_MINIO: "true"
             DEBUG: "true"
@@ -108,7 +108,7 @@ services:
             <<: [*postgres-env, *minio-env]
             REMAP_SIGTERM: "SIGQUIT"
             COMPONENTS_REGISTRY_INSECURE: "true"
-            COMPONENTS_DEFAULT_BACKEND: "tests.components_tests.resources.backends.InsecureDockerExecutor"
+            COMPONENTS_DEFAULT_BACKEND: "tests.components_tests.resources.backends.IOCopyExecutor"
             COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: "true"
             USING_MINIO: "true"
             DEBUG: "true"

@@ -1,10 +1,8 @@
-import re
 from pathlib import Path
 
 import pytest
 from actstream.models import Follow
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.base import ContentFile
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.algorithms.models import Job
@@ -273,11 +271,8 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
     assert len(callbacks) == 2
 
 
-@pytest.mark.flaky(reruns=3)
 @pytest.mark.django_db
-def test_algorithm(
-    algorithm_image, client, settings, django_capture_on_commit_callbacks
-):
+def test_algorithm(client, settings, django_capture_on_commit_callbacks):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -285,21 +280,13 @@ def test_algorithm(
     assert Job.objects.count() == 0
 
     # Create the algorithm image
-    with django_capture_on_commit_callbacks() as callbacks:
-        ai = AlgorithmImageFactory(image=None)
-
-        with open(algorithm_image, "rb") as f:
-            ai.image.save(algorithm_image, ContentFile(f.read()))
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
 
     user = UserFactory()
     ai.algorithm.add_editor(user)
     VerificationFactory(user=user, is_verified=True)
-
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-    ai.refresh_from_db()
 
     # Run the algorithm, it will create a results.json and an output.tif
     image_file = ImageFileFactory(
@@ -315,7 +302,7 @@ def test_algorithm(
     )
     heatmap_interface = ComponentInterface.objects.get(slug="generic-overlay")
     interface = AlgorithmInterfaceFactory(
-        inputs=[input_interface],
+        inputs=[input_interface, heatmap_interface],
         outputs=[json_result_interface, heatmap_interface],
     )
     ai.algorithm.interfaces.add(interface)
@@ -334,6 +321,10 @@ def test_algorithm(
             data={
                 **get_interface_form_data(
                     interface_slug=input_interface.slug,
+                    data=image_file.image.pk,
+                ),
+                **get_interface_form_data(
+                    interface_slug=heatmap_interface.slug,
                     data=image_file.image.pk,
                 ),
             },
@@ -360,29 +351,19 @@ def test_algorithm(
     assert len(jobs[0].outputs.all()) == 2
 
     json_result_civ = jobs[0].outputs.get(interface=json_result_interface)
-    assert json_result_civ.value == {
-        "entity": "out.tif",
-        "metrics": {"abnormal": 0.19, "normal": 0.81},
-    }
+    assert json_result_civ.value
 
     heatmap_civ = jobs[0].outputs.get(interface=heatmap_interface)
-
-    assert heatmap_civ.image.name == "output.tif"
+    assert heatmap_civ.image.name == "input_file.tif"
 
     # We add another ComponentInterface with file value and run the algorithm again
-    detection_interface = ComponentInterfaceFactory(
-        store_in_database=False,
-        relative_path="detection_results.json",
-        title="detection-json-file",
-        slug="detection-json-file",
-        kind=ComponentInterface.Kind.ANY,
-    )
+    metrics_file = ComponentInterface.objects.get(slug="metrics-json-file")
     interface2 = AlgorithmInterfaceFactory(
-        inputs=[input_interface],
+        inputs=[input_interface, heatmap_interface],
         outputs=[
             json_result_interface,
             heatmap_interface,
-            detection_interface,
+            metrics_file,
         ],
     )
     ai.algorithm.interfaces.add(interface2)
@@ -407,6 +388,10 @@ def test_algorithm(
                     interface_slug=input_interface.slug,
                     data=image_file.image.pk,
                 ),
+                **get_interface_form_data(
+                    interface_slug=heatmap_interface.slug,
+                    data=image_file.image.pk,
+                ),
             },
         )
 
@@ -417,21 +402,19 @@ def test_algorithm(
 
     jobs = Job.objects.filter(
         algorithm_image=ai, inputs__image=image_file.image
-    ).all()
+    ).distinct()
     # There should be a single, successful job
     assert len(jobs) == 1
 
-    # The job should have three ComponentInterfaceValues,
-    # one with the detection_results store in the file
+    # The job should have three ComponentInterfaceValues
     assert len(jobs[0].outputs.all()) == 3
-    detection_civ = jobs[0].outputs.get(interface=detection_interface)
-    assert not detection_civ.value
-    assert re.search("detection_results.*json$", detection_civ.file.name)
+    metrics_civ = jobs[0].outputs.get(interface=metrics_file)
+    assert metrics_civ.value
 
 
 @pytest.mark.django_db
 def test_algorithm_with_invalid_output(
-    algorithm_image, client, settings, django_capture_on_commit_callbacks
+    client, settings, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -439,22 +422,16 @@ def test_algorithm_with_invalid_output(
 
     assert Job.objects.count() == 0
 
-    # Create the algorithm image
-    with django_capture_on_commit_callbacks() as callbacks:
-        ai = AlgorithmImageFactory(image=None)
-
-        with open(algorithm_image, "rb") as f:
-            ai.image.save(algorithm_image, ContentFile(f.read()))
+    ai = AlgorithmImageFactory(
+        image=None,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
 
     user = UserFactory()
     ai.algorithm.add_editor(user)
     VerificationFactory(user=user, is_verified=True)
-
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-    ai.refresh_from_db()
 
     # Make sure the job fails when trying to upload an invalid file
     input_interface = ComponentInterface.objects.get(

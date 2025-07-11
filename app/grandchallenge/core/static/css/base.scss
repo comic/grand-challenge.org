@@ -70,3 +70,17 @@ div.codehilite {
 .challenge-topbar .nav-link {
     padding: $nav-link-padding-y 1rem;
 }
+
+mark, .mark {
+    padding: 0;
+}
+
+a.mark {
+    color: $link-color;
+    text-decoration: none;
+}
+
+a.mark:hover {
+    color: $link-hover-color;
+    text-decoration: underline;
+}

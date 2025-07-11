@@ -10,12 +10,6 @@ $.extend($.fn.dataTable.defaults, {
     pagingType: "simple_numbers",
     columnDefs: [
         {
-            // Prevents unexpected styling for dt-*-type datatypes
-            // Only applies to client-side tables
-            type: "string",
-            targets: "_all",
-        },
-        {
             targets: "nonSortable",
             searchable: false,
             orderable: false,

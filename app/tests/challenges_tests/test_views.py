@@ -445,14 +445,13 @@ def test_challenge_request_date_check(client):
         },
     )
     assert response.status_code == 200
-    assert (
-        '<span id="error_1_id_start_date" class="invalid-feedback"><strong>This field is required.</strong></span>'
-        in response.rendered_content
-    )
-    assert (
-        '<span id="error_1_id_end_date" class="invalid-feedback"><strong>This field is required.</strong></span>'
-        in response.rendered_content
-    )
+    assert response.context["form"].errors == {
+        "algorithm_maximum_settable_memory_gb": ["This field is required."],
+        "algorithm_selectable_gpu_type_choices": ["This field is required."],
+        "end_date": ["This field is required."],
+        "number_of_tasks": ["This field is required."],
+        "start_date": ["This field is required."],
+    }
 
     response = get_view_for_user(
         client=client,
@@ -485,10 +484,12 @@ def test_challenge_request_date_check(client):
         },
     )
     assert response.status_code == 200
-    assert (
-        "The start date needs to be before the end date"
-        in response.rendered_content
-    )
+    assert response.context["form"].errors == {
+        "__all__": ["The start date needs to be before the end date."],
+        "algorithm_maximum_settable_memory_gb": ["This field is required."],
+        "algorithm_selectable_gpu_type_choices": ["This field is required."],
+        "number_of_tasks": ["This field is required."],
+    }
 
 
 @pytest.mark.django_db

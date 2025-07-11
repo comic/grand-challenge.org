@@ -37,9 +37,11 @@ urlpatterns = [
         include("grandchallenge.participants.urls", namespace="participants"),
     ),
     path("admins/", include("grandchallenge.admins.urls", namespace="admins")),
-    path("update/", ChallengeUpdate.as_view(), name="challenge-update"),
     path(
-        "onboarding-tasks/",
+        "challenge/update/", ChallengeUpdate.as_view(), name="challenge-update"
+    ),
+    path(
+        "onboarding-tasks/all/",
         OnboardingTaskList.as_view(),
         name="challenge-onboarding-task-list",
     ),

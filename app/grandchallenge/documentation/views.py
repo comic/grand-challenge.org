@@ -32,8 +32,10 @@ class DocPageDetail(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         top_level_pages = (
-            DocPage.objects.filter(parent__isnull=True)
-            .prefetch_related("children__children")
+            DocPage.objects.filter(
+                parent__isnull=True, is_faq=self.object.is_faq
+            )
+            .prefetch_related("children__children__children__children")
             .order_by("order")
         )
 

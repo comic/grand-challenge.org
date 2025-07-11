@@ -10,7 +10,7 @@
     {% if follow_object_pk %}
         <form class="d-inline" method="post" action="{% url 'notifications:follow-delete' pk=follow_object_pk %}">
             {% csrf_token %}
-            <button type="submit" class="btn btn-dark btn-sm"><i class="fas fa-bell-slash mr-1"></i>Unsubscribe
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-bell-slash mr-1"></i>Unsubscribe
                 from {{ object|verbose_name }}
             </button>
         </form>
@@ -21,7 +21,7 @@
     <form class="d-inline" method="post" action="{% url 'notifications:follow-create' %}">
         {% csrf_token %}
         {{ follow_form|crispy }}
-        <button type="submit" class="btn btn-dark btn-sm"><i class="fas fa-bell mr-1"></i>Subscribe
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-bell mr-1"></i>Subscribe
             to {{ object|verbose_name }}
         </button>
     </form>

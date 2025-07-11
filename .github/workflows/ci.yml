@@ -47,6 +47,20 @@ jobs:
                   make minio
                   docker compose run --rm celery_worker pytest --durations 10
 
+    javascript-tests:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'npm'
+            - name: Install dependencies
+              run: npm ci
+            - name: Run tests
+              run: npm test
+
     docs:
         runs-on: ubuntu-latest
         steps:
@@ -68,7 +82,7 @@ jobs:
                   publish_dir: ./app/docs/_build/html
 
     deploy:
-        needs: [django-tests]
+        needs: [django-tests, javascript-tests]
         runs-on: ubuntu-latest
         permissions:
             # These permissions are needed to interact with GitHub's OIDC Token endpoint.

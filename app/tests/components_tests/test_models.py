@@ -1303,10 +1303,10 @@ def test_no_job_without_image(django_capture_on_commit_callbacks):
 
 @pytest.mark.django_db
 def test_one_job_with_image(
-    algorithm_image, django_capture_on_commit_callbacks
+    algorithm_io_image, django_capture_on_commit_callbacks
 ):
     with django_capture_on_commit_callbacks() as callbacks:
-        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+        ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
 
     assert len(callbacks) == 1
     assert "grandchallenge.components.tasks.validate_docker_image" in str(
@@ -1331,8 +1331,8 @@ def test_can_change_from_empty(django_capture_on_commit_callbacks):
 
 
 @pytest.mark.django_db
-def test_cannot_change_image(algorithm_image):
-    ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+def test_cannot_change_image(algorithm_io_image):
+    ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
 
     ai.image = ContentFile(b"Foo1", name="blah")
 
@@ -1343,7 +1343,7 @@ def test_cannot_change_image(algorithm_image):
 
 
 @pytest.mark.django_db
-def test_cannot_add_image_when_removed(algorithm_image):
+def test_cannot_add_image_when_removed(algorithm_io_image):
     ai = AlgorithmImageFactory(is_removed=True, image="")
 
     ai.image = ContentFile(b"Foo1", name="blah")
@@ -1356,7 +1356,7 @@ def test_cannot_add_image_when_removed(algorithm_image):
 
 @pytest.mark.django_db
 def test_remove_container_image_from_registry(
-    algorithm_image,
+    algorithm_io_image,
     settings,
     django_capture_on_commit_callbacks,
     mocker,
@@ -1371,7 +1371,7 @@ def test_remove_container_image_from_registry(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+        ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
 
     ai.refresh_from_db()
 
@@ -1423,7 +1423,7 @@ def test_remove_container_image_from_registry(
 
 @pytest.mark.django_db
 def test_delete_container_image(
-    algorithm_image,
+    algorithm_io_image,
     settings,
     django_capture_on_commit_callbacks,
     mocker,
@@ -1438,7 +1438,7 @@ def test_delete_container_image(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        ai = AlgorithmImageFactory(image__from_path=algorithm_image)
+        ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
 
     ai.refresh_from_db()
 

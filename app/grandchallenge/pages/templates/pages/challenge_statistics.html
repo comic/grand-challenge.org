@@ -55,7 +55,7 @@
         <h4>Invoices</h4>
 
         <div class="table-responsive">
-            <table class="table table-hover table-borderless table-sm w-100" id="challengeCostsOverviewTable">
+            <table class="table sortable table-hover table-borderless table-sm w-100" id="challengeInvoicesOverviewTable" data-order="[[ 1, &quot;asc&quot; ]]">
                 <thead class="thead-light">
                     <tr>
                         <th>Number</th>
@@ -72,7 +72,7 @@
                     {% for invoice in challenge.invoices.with_overdue_status %}
                         <tr>
                             <td>{{ invoice.internal_invoice_number }}</td>
-                            <td>{{ invoice.issued_on }}</td>
+                            <td data-order="{{ invoice.issued_on|date:"c" }}">{{ invoice.issued_on }}</td>
                             <td>€ {{ invoice.support_costs_euros }}</td>
                             <td>€ {{ invoice.compute_costs_euros }}</td>
                             <td>€ {{ invoice.storage_costs_euros }}</td>
@@ -132,12 +132,12 @@
                             <span class="badge {% if challenge.status == challenge.StatusChoices.OPEN %}badge-success{% elif challenge.status == challenge.StatusChoices.OPENING_SOON %}badge-warning{% else %}badge-danger{% endif %}">{{ challenge.status.name }}</span>
                         </td>
                         <td>{% if challenge.should_be_open_but_is_over_budget %}<i class="fa fa-exclamation-triangle text-danger"></i>{% endif %}</td>
-                        <td data-order="{% if challenge.percent_budget_consumed is None %}-1{% else %}{{ challenge.percent_budget_consumed }}{% endif %}" class="{% if challenge.percent_budget_consumed >= 100 %}text-danger{% elif challenge.percent_budget_consumed >= 70 %}text-warning{% else %}text-success{% endif %}">{% if challenge.percent_budget_consumed is not None %}{{ challenge.percent_budget_consumed }}&nbsp;%{% endif %}</td>
-                        <td data-order="{{ challenge.approved_compute_costs_euro_millicents }}">{{ challenge.approved_compute_costs_euro_millicents|millicents_to_euro }}</td>
-                        <td data-order="{{ challenge.compute_cost_euro_millicents }}">{{ challenge.compute_cost_euro_millicents|millicents_to_euro }}</td>
-                        <td data-order="{{ challenge.available_compute_euro_millicents }}" class="{% if challenge.available_compute_euro_millicents <= 0 %}text-danger{% endif %}">{{ challenge.available_compute_euro_millicents|millicents_to_euro }}</td>
-                        <td data-order="{{ challenge.size_in_storage }}">{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</td>
-                        <td data-order="{{ challenge.size_in_registry }}">{{ challenge.size_in_registry|registry_bytes_to_euro_per_year }}</td>
+                        <td class="{% if challenge.percent_budget_consumed >= 100 %}text-danger{% elif challenge.percent_budget_consumed >= 70 %}text-warning{% else %}text-success{% endif %}">{% if challenge.percent_budget_consumed is not None %}{{ challenge.percent_budget_consumed }}&nbsp;%{% endif %}</td>
+                        <td>{{ challenge.approved_compute_costs_euro_millicents|millicents_to_euro }}</td>
+                        <td>{{ challenge.compute_cost_euro_millicents|millicents_to_euro }}</td>
+                        <td class="{% if challenge.available_compute_euro_millicents <= 0 %}text-danger{% endif %}">{{ challenge.available_compute_euro_millicents|millicents_to_euro }}</td>
+                        <td>{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</td>
+                        <td>{{ challenge.size_in_registry|registry_bytes_to_euro_per_year }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -184,8 +184,8 @@
                             <td>{{ phase.num_successful_submissions }}</td>
                             <td>{{ phase.num_creators }}</td>
                             <td data-order="{{ phase.average_algorithm_job_duration.total_seconds }}">{{ phase.average_algorithm_job_duration|naturaldelta }}</td>
-                            <td data-order="{{ phase.compute_cost_euro_millicents }}">{{ phase.compute_cost_euro_millicents|millicents_to_euro }}</td>
-                            <td data-order="{% if phase.num_successful_submissions %}{{ phase.compute_cost_euro_millicents|divide_by:phase.num_successful_submissions }}{% else %}-1{% endif %}">{% if phase.num_successful_submissions %}{{ phase.compute_cost_euro_millicents|divide_by:phase.num_successful_submissions|millicents_to_euro }}{% endif %}</td>
+                            <td>{{ phase.compute_cost_euro_millicents|millicents_to_euro }}</td>
+                            <td>{% if phase.num_successful_submissions %}{{ phase.compute_cost_euro_millicents|divide_by:phase.num_successful_submissions|millicents_to_euro }}{% endif %}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -203,4 +203,5 @@
     <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
 
     <script type="module" src="{% static 'js/evaluation/phase_costs_overview.mjs' %}"></script>
+    <script type="module" src="{% static "js/sort_tables.js" %}"></script>
 {% endblock %}
