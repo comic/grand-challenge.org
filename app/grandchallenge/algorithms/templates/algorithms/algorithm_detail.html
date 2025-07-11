@@ -207,22 +207,14 @@
             {% if object.active_image %}
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Image Version:</div>
-                    <div class="col-9">{{ object.active_image.pk }}</div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-3 font-weight-bold">Last updated:</div>
-                    <div class="col-9">{{ object.active_image.created }}</div>
+                    <div class="col-9">{{ object.active_image.pk }} — <span class="text-nowrap">{{ object.active_image.created|date }}</span></div>
                 </div>
             {% endif %}
 
             {% if object.active_model %}
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Model Version:</div>
-                    <div class="col-9">{{ object.active_model.pk }}</div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-3 font-weight-bold">Last updated:</div>
-                    <div class="col-9">{{ object.active_model.created }}</div>
+                    <div class="col-9">{{ object.active_model.pk }} — <span class="text-nowrap">{{ object.active_model.created|date }}</span></div>
                 </div>
             {% endif %}
 
