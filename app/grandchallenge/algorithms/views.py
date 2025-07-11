@@ -260,6 +260,8 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             ).count()
         )
 
+        editors = reversed(self.object.editors_group.user_set.all())
+
         context.update(
             {
                 "form": form,
@@ -267,6 +269,7 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
                 "pending_permission_requests": pending_permission_requests,
                 "algorithm_perms": get_perms(self.request.user, self.object),
                 "best_evaluation_per_phase": self.best_evaluation_per_phase,
+                "editors": editors,
             }
         )
 

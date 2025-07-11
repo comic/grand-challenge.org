@@ -188,9 +188,9 @@
 
             {% if object.display_editors %}
                 <div class="row mb-2">
-                    <div class="col-3 font-weight-bold">Creator{{ object.editors_group.user_set.all|pluralize }}:</div>
+                    <div class="col-3 font-weight-bold">Creator{{ editors|pluralize }}:</div>
                     <div class="col-9">
-                        {% for user in object.editors_group.user_set.all %}
+                        {% for user in editors %}
                             <p class="m-0">{{ user|user_profile_link }}</p>
                         {% endfor %}
                     </div>
@@ -395,7 +395,7 @@
                 </p>
 
                 {% url 'algorithms:editors-update' slug=object.slug as edit_url %}
-                {% include "groups/partials/user_list.html" with edit_url=edit_url form=editor_remove_form users=object.editors_group.user_set.all %}
+                {% include "groups/partials/user_list.html" with edit_url=edit_url form=editor_remove_form users=editors %}
 
                 <p>
                     <a class="btn btn-primary"
