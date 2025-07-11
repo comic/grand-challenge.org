@@ -154,10 +154,52 @@
         <div class="tab-pane fade show" id="information" role="tabpanel"
              aria-labelledby="v-pills-information-tab">
 
-            <div class="row col-12 m-0 p-0">
-                <h2 class="col-9 p-0">{{ object.title }}</h2>
-                {% if 'change_algorithm' in algorithm_perms %}
-                    <span class="col-3 p-0 text-right my-auto">
+            <h2>{{ object.title }}</h2>
+
+            <hr>
+
+            {% if "change_algorithm" in algorithm_perms %}
+                <div class="row">
+                    <div class="col-9">
+                        <h3>Admin Info</h3>
+                        <p>
+                            {% if algorithm.public %}
+                                This algorithm is <b>visible to the public</b>,
+                                {% if algorithm.access_request_handling != 'ACCEPT_ALL' %}
+                                    however, users will need to request access, which you
+                                    will need to approve
+                                        {% if algorithm.access_request_handling == 'ACCEPT_VERIFIED_USERS' %}
+                                            (unless they are verified)
+                                        {% endif %}
+                                    before they can run this algorithm.
+                                {% else %}
+                                    and users' access requests will be granted automatically.
+                                {% endif %}
+                            {% else %}
+                                Only users that you add to the users group will be
+                                able to run this algorithm.
+                            {% endif %}
+                        </p>
+                        <p>
+                            This algorithm uses
+                            <a href="{{ object.workstation.get_absolute_url }}">
+                                {{ object.workstation.title }}</a>
+                            {% if object.workstation_config %}
+                                with configuration
+                                <a href="{{ object.workstation_config.get_absolute_url }}">
+                                    {{ object.workstation_config.title }}</a>.
+                            {% else %}
+                                with its default configuration.
+                            {% endif %}
+                        </p>
+                        {% if object.average_duration %}
+                            <p>
+                                On average, successful jobs for this algorithm have
+                                taken {{ object.average_duration|naturaldelta }}.
+                            </p>
+                        {% endif %}
+                    </div>
+                    <div class="col-3 pl-0 my-auto">
                         <a class="btn btn-primary btn-block"
                            href="{% url 'algorithms:update' slug=object.slug %}">
                             <i class="fa fa-cog"></i> Update Settings
@@ -174,11 +216,16 @@
                                 <i class="fa fa-star"></i> Publish Algorithm
                             </a>
                         {% endif %}
-                    </span>
+                    </div>
+                </div>
+                {% if object.editor_notes %}
+                    <h4>Notes</h4>
+                    {{ object.editor_notes|md2html }}
                 {% endif %}
-            </div>
 
-            <hr>
+                <hr>
+
+            {% endif %}
 
             {% if object.logo %}
                 <img class="w-50" loading="lazy" src="{{ object.logo.url }}" alt="Logo for {{ object.title }}">
@@ -321,59 +368,6 @@
                 Presenting machine learning model information to clinical end users with model facts labels.
                 npj Digit. Med. 3, 41 (2020). <a href="https://doi.org/10.1038/s41746-020-0253-3">10.1038/s41746-020-0253-3</a>
             </p>
-
-            {% if "change_algorithm" in algorithm_perms %}
-                <hr>
-                <h3>Admin Info</h3>
-                <p>
-                    {% if algorithm.public %}
-                        This algorithm is <b>visible to the public</b>,
-                        {% if algorithm.access_request_handling != 'ACCEPT_ALL' %}
-                            however, users will need to request access, which you
-                            will need to approve
-                                {% if algorithm.access_request_handling == 'ACCEPT_VERIFIED_USERS' %}
-                                    (unless they are verified)
-                                {% endif %}
-                            before they can run this algorithm.
-                        {% else %}
-                            and users' access requests will be granted automatically.
-                        {% endif %}
-                    {% else %}
-                        Only users that you add to the users group will be
-                        able to run this algorithm.
-                    {% endif %}
-                    This algorithm uses
-                    <a href="{{ object.workstation.get_absolute_url }}">
-                        {{ object.workstation.title }}</a>
-                    {% if object.workstation_config %}
-                        with configuration
-                        <a href="{{ object.workstation_config.get_absolute_url }}">
-                            {{ object.workstation_config.title }}</a>.
-                    {% else %}
-                        with its default configuration.
-                    {% endif %}
-                </p>
-                {% if object.average_duration %}
-                    <p>
-                        On average, successful jobs for this algorithm have
-                        taken {{ object.average_duration|naturaldelta }}.
-                    </p>
-                {% endif %}
-                {% if object.editor_notes %}
-                    <h4>Notes</h4>
-                    {{ object.editor_notes|md2html }}
-                {% endif %}
-                <p>
-                    <a class="btn btn-primary"
-                       href="{% url 'algorithms:update' slug=object.slug %}">
-                        <i class="fa fa-cog"></i> Update Settings
-                    </a>
-                    <a class="btn btn-primary"
-                       href="{% url 'algorithms:description-update' slug=object.slug %}">
-                        <i class="fa fa-edit"></i> Update Description
-                    </a>
-                </p>
-            {% endif %}
         </div>
 
         {% if "change_algorithm" in algorithm_perms %}
