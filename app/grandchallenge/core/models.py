@@ -34,20 +34,6 @@ class UUIDModel(models.Model):
         abstract = True
 
 
-class UUIDModelNoAutoNow(models.Model):
-    """
-    Abstract class that consists of a UUID primary key, created and modified
-    times without auto_add_now and auto_now
-    """
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    created = models.DateTimeField()
-    modified = models.DateTimeField()
-
-    class Meta:
-        abstract = True
-
-
 class RequestBase(models.Model):
     """
     When a user wants to join a project, admins have the option of reviewing
