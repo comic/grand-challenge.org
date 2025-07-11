@@ -2137,3 +2137,32 @@ def test_leaderboard_accessible_to_readers_only_for_educational_rs():
 
     assert not form.is_valid()
     assert "is_educational" not in form.errors.keys()
+
+
+@pytest.mark.django_db
+def test_validate_autosave_requires_answer_modification(client):
+    user = UserFactory()
+    form = ReaderStudyCreateForm(
+        user=user,
+        data={
+            "roll_over_answers_for_n_cases": 0,
+            "allow_answer_modification": False,
+            "enable_autosaving": True,
+        },
+    )
+
+    assert "enable_autosaving" in form.errors
+    assert form.errors["enable_autosaving"] == [
+        "Autosaving can only be enabled when also allowing answer modification."
+    ]
+
+    form = ReaderStudyCreateForm(
+        user=user,
+        data={
+            "roll_over_answers_for_n_cases": 0,
+            "allow_answer_modification": True,
+            "enable_autosaving": True,
+        },
+    )
+
+    assert "enable_autosaving" not in form.errors

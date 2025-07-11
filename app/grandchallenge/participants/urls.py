@@ -14,7 +14,7 @@ from grandchallenge.participants.views import (
 app_name = "participants"
 
 urlpatterns = [
-    path("", ParticipantsList.as_view(), name="list"),
+    path("all/", ParticipantsList.as_view(), name="list"),
     path(
         "registration/",
         RegistrationRequestList.as_view(),

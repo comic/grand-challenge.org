@@ -199,27 +199,6 @@ def docker_image(tmpdir_factory, path, label, full_path=None):
 
 
 @pytest.fixture(scope="session")
-def evaluation_image(tmpdir_factory):
-    """Create the example evaluation container."""
-    container = docker_image(
-        tmpdir_factory, path="evaluation_tests", label="evaluation"
-    )
-
-    image = docker_client.inspect_image(repo_tag="test-evaluation:latest")
-    sha256 = image["Id"]
-
-    return container, sha256
-
-
-@pytest.fixture(scope="session")
-def algorithm_image(tmpdir_factory):
-    """Create the example algorithm container."""
-    return docker_image(
-        tmpdir_factory, path="algorithms_tests", label="algorithm"
-    )
-
-
-@pytest.fixture(scope="session")
 def algorithm_io_image(tmpdir_factory):
     """Create the example algorithm container."""
     return docker_image(

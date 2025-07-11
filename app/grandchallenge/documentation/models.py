@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import Max
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils.functional import cached_property
 from django_extensions.db.fields import AutoSlugField
 
 from grandchallenge.core.templatetags.bleach import md2html
@@ -43,6 +44,8 @@ class DocPage(models.Model):
         related_name="children",
     )
 
+    is_faq = models.BooleanField(default=False)
+
     class Meta:
         ordering = ["order"]
         indexes = [
@@ -58,7 +61,10 @@ class DocPage(models.Model):
             # get max value of order for current pages.
             try:
                 self.order = (
-                    DocPage.objects.aggregate(Max("order"))["order__max"] + 1
+                    DocPage.objects.filter(is_faq=self.is_faq).aggregate(
+                        Max("order")
+                    )["order__max"]
+                    + 1
                 )
             except (ObjectDoesNotExist, TypeError):
                 # Use the default
@@ -130,18 +136,30 @@ class DocPage(models.Model):
         url = reverse("documentation:detail", kwargs={"slug": self.slug})
         return url
 
-    @property
+    @cached_property
     def next(self):
+        if self.is_faq:
+            raise NotImplementedError(
+                "Property 'next' is not implemented for FAQ pages."
+            )
         try:
-            next_page = DocPage.objects.filter(order__gt=self.order).first()
+            next_page = DocPage.objects.filter(
+                order__gt=self.order, is_faq=False
+            ).first()
         except ObjectDoesNotExist:
             next_page = None
         return next_page
 
-    @property
+    @cached_property
     def previous(self):
+        if self.is_faq:
+            raise NotImplementedError(
+                "Property 'previous' is not implemented for FAQ pages."
+            )
         try:
-            previous_page = DocPage.objects.filter(order__lt=self.order).last()
+            previous_page = DocPage.objects.filter(
+                order__lt=self.order, is_faq=False
+            ).last()
         except ObjectDoesNotExist:
             previous_page = None
         return previous_page

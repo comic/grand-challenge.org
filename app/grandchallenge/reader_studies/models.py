@@ -15,7 +15,6 @@ from django.core.validators import (
 )
 from django.db import models
 from django.db.models import Avg, Count, Q, Sum
-from django.db.models.functions.window import RowNumber
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
@@ -54,7 +53,6 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
-from grandchallenge.core.utils.query import set_seed
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.vendored.django.validators import StepValueValidator
 from grandchallenge.hanging_protocols.models import (
@@ -293,6 +291,14 @@ class ReaderStudy(
             "be checked as well to enable this setting."
         ),
     )
+    enable_autosaving = models.BooleanField(
+        default=False,
+        help_text=(
+            "If true, answers to questions are saved in the background while a "
+            "user reads a case. 'Allow Answer Modification' must be "
+            "enabled as well for this to work."
+        ),
+    )
     allow_case_navigation = models.BooleanField(
         default=False,
         help_text=(
@@ -370,6 +376,7 @@ class ReaderStudy(
         "instant_verification",
         "roll_over_answers_for_n_cases",
         "allow_answer_modification",
+        "enable_autosaving",
         "allow_case_navigation",
         "allow_show_all_annotations",
         "access_request_handling",
@@ -892,56 +899,6 @@ def delete_reader_study_groups_hook(*_, instance: ReaderStudy, using, **__):
         pass
 
 
-class DisplaySetQuerySet(models.QuerySet):
-    def with_row_number(self):
-        return self.annotate(
-            row_number=models.Window(
-                expression=RowNumber(),
-                partition_by=models.F("reader_study"),
-                order_by=("order", "created"),
-            )
-        )
-
-    def with_shuffled_index(self, *, reader_study, seed):
-        """
-        Sets the shuffled index on each object
-
-        This requires fetching all pks for all of the display sets
-        in the reader study first
-        """
-        if not isinstance(seed, int) or seed < 1:
-            raise ValueError("Invalid seed")
-
-        queryset = self.filter(reader_study=reader_study)
-
-        set_seed(1 / seed)
-
-        queryset = queryset.annotate(
-            shuffled_index=models.Case(
-                *[
-                    models.When(pk=pk, then=models.Value(idx))
-                    for idx, pk in enumerate(
-                        queryset.order_by("?").values_list("pk", flat=True)
-                    )
-                ],
-                output_field=models.IntegerField(),
-            )
-        ).order_by("shuffled_index")
-
-        return queryset
-
-    def with_answer_count(self, user):
-        return self.annotate(
-            answer_count=Count(
-                "answers",
-                filter=Q(
-                    answers__is_ground_truth=False,
-                    answers__creator=user,
-                ),
-            )
-        )
-
-
 class DisplaySet(
     CIVSetStringRepresentationMixin,
     CIVSetObjectPermissionsMixin,
@@ -956,18 +913,6 @@ class DisplaySet(
     )
     order = models.PositiveIntegerField(default=0)
     title = models.CharField(max_length=255, default="", blank=True)
-
-    objects = DisplaySetQuerySet.as_manager()
-
-    class Meta:
-        ordering = ("order", "created")
-        constraints = [
-            models.UniqueConstraint(
-                fields=["title", "reader_study"],
-                name="unique_display_set_title",
-                condition=~Q(title=""),
-            )
-        ]
 
     def assign_permissions(self):
         assign_perm(
@@ -990,6 +935,16 @@ class DisplaySet(
             self.reader_study.readers_group,
             self,
         )
+
+    class Meta:
+        ordering = ("order", "created")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["title", "reader_study"],
+                name="unique_display_set_title",
+                condition=~Q(title=""),
+            )
+        ]
 
     @cached_property
     def is_editable(self):
@@ -1037,6 +992,10 @@ class DisplaySet(
             return output
         else:
             return ""
+
+    @property
+    def standard_index(self) -> int:
+        return [*self.reader_study.display_sets.all()].index(self)
 
     @property
     def update_url(self):

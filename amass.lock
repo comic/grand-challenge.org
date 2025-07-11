@@ -1,7 +1,23 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:55376154d6570a2830cb23147f93b61f4d43d3af635c6e3c4e1c7845d964c6bd",
+  "content_hash": "sha256:21beba112364ab79711bce185eaacc5c7280d148bf405ad1e3e9533057dbce5c",
   "dependencies": [
+    {
+      "name": "@diagnijmegen/rse-grand-challenge-dicom-deid-procedure",
+      "version": "0.20250704.7",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "dist/grand-challenge-dicom-de-id-procedure.umd.min.js",
+          "sri": "sha256-ofmzUtNjHpFbloBjYXjRAlxB9Ojj3CTKFm2ODf9kWO4="
+        },
+        {
+          "name": "dist/grand-challenge-dicom-de-id-procedure.umd.min.js.map",
+          "sri": "sha256-mGBJctsiz8c9W83HC8IEAj4jQ6xsXybM1HD7CceAZkI="
+        }
+      ],
+      "maps": []
+    },
     {
       "name": "@github/markdown-toolbar-element",
       "version": "1.2.0",
@@ -9,7 +25,7 @@
       "assets": [
         {
           "name": "dist/index.umd.js",
-          "sri": "sha384-Ax3sxzgMtcdi9LFvXcq24Eb67ECTmlxgV0+3psXKVymsmK8XzCtqC2YQDcBn3mS/"
+          "sri": "sha256-u+3C5OGsY1YtF6qMTBBfotzO/eHW2RjU4Vl1bofKdL4="
         }
       ],
       "maps": []
@@ -416,16 +432,16 @@
     },
     {
       "name": "bootswatch",
-      "version": "5.3.0",
+      "version": "4.6.2",
       "provider": "unpkg",
       "assets": [
         {
           "name": "dist/flatly/_bootswatch.scss",
-          "sri": "sha384-Hzmz1s2Rz4naafNaqlI84mIG2I38fTwckv0p34b3axboXKKF1JwOd6lTWhds127J"
+          "sri": "sha256-Zjdf+YJSGQTYRRpBHZrvl3gp+M6SMFqunCnD0FM67Ng="
         },
         {
           "name": "dist/flatly/_variables.scss",
-          "sri": "sha384-dYnUzGrVtPtkinIMHgIMUPs59/LXTyUzD38LVA2JqAUVLCWvVSVPsr1gajK3z0jF"
+          "sri": "sha256-UCZGDxvYsSEoWLmsffY/03CH10ljY8d7wfCBTlAYf3A="
         }
       ],
       "maps": []
@@ -437,11 +453,11 @@
       "assets": [
         {
           "name": "js/dataTables.js",
-          "sri": "sha384-cDXquhvkdBprgcpTQsrhfhxXRN4wfwmWauQ3wR5ZTyYtGrET2jd68wvJ1LlDqlQG"
+          "sri": "sha256-PSmeeEFHx/Xs2Jb23S6XwbhgCh7n1HGv8NnLtZhSiDA="
         },
         {
           "name": "js/dataTables.min.js",
-          "sri": "sha384-MgwUq0TVErv5Lkj/jIAgQpC+iUIqwhwXxJMfrZQVAOhr++1MR02yXH8aXdPc3fk0"
+          "sri": "sha256-aTBve1VKWozmjo9Nb2E73RvP4t8xOWLn/IPPX2vl4IU="
         }
       ],
       "maps": []
@@ -453,19 +469,19 @@
       "assets": [
         {
           "name": "css/dataTables.bootstrap4.css",
-          "sri": "sha384-1QBwR4jM75CjZBwJk69i7nwaVySAvCxM2yILRHu7b4Q0YMsRSRX405VX7dCiay52"
+          "sri": "sha256-WL3wyIwiPlsyjDTx705wDcXEWXXQA487JtAQV4u/yK4="
         },
         {
           "name": "css/dataTables.bootstrap4.min.css",
-          "sri": "sha384-0KscpVDhBnNtS+8A0GBYhIcV5+eSYeo2IhiT53C+ztHx7PGbwekJz3qcyk0HVqHs"
+          "sri": "sha256-1fF64w9kQ74cJNCxY1iWKWkfnmjsmY5hx8vWYVAxJdE="
         },
         {
           "name": "js/dataTables.bootstrap4.js",
-          "sri": "sha384-zNhLQXVfbsNMy4yxmaWgoZ7RVDmzTYQ3/y1HXPwR2sakXOh563PWfrivaYmDAzDz"
+          "sri": "sha256-AuIDgE0AudDF/CXiZDvIZK9bpmeh5Utq6lUzYNcXwv0="
         },
         {
           "name": "js/dataTables.bootstrap4.min.js",
-          "sri": "sha384-lzE84zE76t/xTDUpoKl8o6c0h10nNP8YllhiEMM0c/sSn4F16OzlMehMoHkVTsTN"
+          "sri": "sha256-uw2OU14ICaJ99/YlgWlWar5JBAKjqW3vzs8Ucn2n0KE="
         }
       ],
       "maps": []
@@ -477,19 +493,19 @@
       "assets": [
         {
           "name": "js/buttons.colVis.js",
-          "sri": "sha384-i6Z7TESDTMWWMiPn4glNtpuvZKnfRC8IRXtzYgtiFgpuLgRPoUyRO4uJJ8H22IyH"
+          "sri": "sha256-tmNXXCxhkRLADHCa/8lT+lHB5jWEHyferqE5A0BSprM="
         },
         {
           "name": "js/buttons.colVis.min.js",
-          "sri": "sha384-LC8PmH0Tdjy6c1Hesl75hUSKQuoIo3PCAr3svr0xJ4y90sNaTEMLK5n68Fl5VBqB"
+          "sri": "sha256-27nWU0jKZ2f2srxDJPc8lLzE6HpKRdxCzg1mkrzBFes="
         },
         {
           "name": "js/dataTables.buttons.js",
-          "sri": "sha384-m1YnvBcNGjKAtJ9d9O4s6EuBhKPlLADOZwIu9q7rZBl9d52CUmsHElEO7fNmajv9"
+          "sri": "sha256-6wfRo4WuA8oI8MsvLvqEzn2GUClEsr1+2d6tzdqrIUg="
         },
         {
           "name": "js/dataTables.buttons.min.js",
-          "sri": "sha384-1yo9s/77ZWiY2Xvn1BPaWyS3ErmUO+k734D+PxbLD2Iv8WJt4miQdnhv8IiMMY7j"
+          "sri": "sha256-2SmX/IhbmVdeg5paUsa6SExqBi0iF2LF+Dh7tG/Uv7s="
         }
       ],
       "maps": []
@@ -501,19 +517,35 @@
       "assets": [
         {
           "name": "css/buttons.bootstrap4.css",
-          "sri": "sha384-fpLaDkiKo85dyvJ2qKPGz+2rJlKiBUbgeu7UQ+Ka2wjB8r1zn9scWvltGqppEARE"
+          "sri": "sha256-3CX3Al/3b0PcKlL2qXTZFA//WsSU4ImEXyTLGtbElkQ="
         },
         {
           "name": "css/buttons.bootstrap4.min.css",
-          "sri": "sha384-3tdfacHAFSZHsvYb3sbANSxCJHbmLfOFbrdLuSrPG6avz0/yEu68qMSY0dupV7zK"
+          "sri": "sha256-v8mVTG9uLsUOyss4ACpa9JD/LD85IBUrK/oXBrlGRrw="
         },
         {
           "name": "js/buttons.bootstrap4.js",
-          "sri": "sha384-slk9S0+eL62v+SlIlVYXXMej29KaVsy4K59oNptoqxIypW6ZAHIqwOXUPC89A1ug"
+          "sri": "sha256-HAZ6Uab5OTv34aSFQnWqsHG0ufWrvcHHQvdfd1ZaBOw="
         },
         {
           "name": "js/buttons.bootstrap4.min.js",
-          "sri": "sha384-1oeq8jb8l26AfnhvoQ1kcuVi2ty/y+QuzyJCi5E+GC31PymbE9QEla3XuYTwZHBC"
+          "sri": "sha256-+0hWUGyz5myqHMYbeot8a5Hm87wLJHCjQcSYQ8k37oM="
+        }
+      ],
+      "maps": []
+    },
+    {
+      "name": "dcmjs",
+      "version": "0.42.0",
+      "provider": "unpkg",
+      "assets": [
+        {
+          "name": "build/dcmjs.js",
+          "sri": "sha256-1nv/I8AxMdKsAK+RU7AYrN6ISE4j24swHCTqWR5ZFa4="
+        },
+        {
+          "name": "build/dcmjs.js.map",
+          "sri": "sha256-VHzxl9aljbrr5yhA+5LvW20r+6BMUk8GqXnJcqTetxo="
         }
       ],
       "maps": []
@@ -525,11 +557,11 @@
       "assets": [
         {
           "name": "dist/jquery.floatingscroll.css",
-          "sri": "sha384-IhiSZ9rydjTj1D6ZswgB2pCL8hba3n2U7ljG1A0IOaLieaahZNTCTyBEkTECkPaL"
+          "sri": "sha256-fJNzQojoQhmhz8zr7/WsUNLml031m83jYT8NgNfS3Uw="
         },
         {
           "name": "dist/jquery.floatingscroll.min.js",
-          "sri": "sha384-gS4dgnfbPsSGHw07CtiuYGt7z8RfOScrwZbvmFGEVblveZgbTwScK+29f9wBreQV"
+          "sri": "sha256-r8oVAm1jaUMQNB+fDPErEajs68A5q2kZavhd2o6q8VY="
         }
       ],
       "maps": []

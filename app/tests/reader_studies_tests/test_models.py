@@ -16,7 +16,6 @@ from grandchallenge.reader_studies.interactive_algorithms import (
 from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
-    DisplaySet,
     Question,
     QuestionWidgetKindChoices,
     ReaderStudy,
@@ -1277,51 +1276,3 @@ def test_reader_study_not_launchable_when_max_credits_consumed():
     assert reader_study.session_utilizations.first().credits_consumed == 500
     assert reader_study.credits_consumed == 500
     assert not reader_study.is_launchable
-
-
-@pytest.mark.django_db
-def test_with_row_number():
-    rs = ReaderStudyFactory()
-    ds1, ds2, ds3 = DisplaySetFactory.create_batch(3, reader_study=rs)
-
-    # Duplicate order should return unique indices
-    ds2.order = ds1.order
-    ds2.save()
-
-    ds4 = DisplaySetFactory()
-
-    # Test global access
-    queryset = DisplaySet.objects.with_row_number()
-    assert [*queryset] == [ds1, ds2, ds4, ds3]
-    assert {ds: ds.row_number for ds in queryset} == {
-        ds1: 1,
-        ds2: 2,
-        ds3: 3,
-        ds4: 1,
-    }
-
-    # Filtering should return the same indices
-    queryset = DisplaySet.objects.with_row_number().filter(reader_study=rs)
-    assert {ds: ds.row_number for ds in queryset} == {
-        ds1: 1,
-        ds2: 2,
-        ds3: 3,
-    }
-
-    # Getting a particular display set should return the correct order
-    last_display_set = (
-        DisplaySet.objects.with_row_number().filter(reader_study=rs).last()
-    )
-    assert last_display_set.row_number == 3
-
-    # Changing the order of the queryset should not change the index
-    queryset = DisplaySet.objects.with_row_number().order_by(
-        "-order", "-created"
-    )
-    assert [*queryset] == [ds3, ds4, ds2, ds1]
-    assert {ds: ds.row_number for ds in queryset} == {
-        ds1: 1,
-        ds2: 2,
-        ds3: 3,
-        ds4: 1,
-    }

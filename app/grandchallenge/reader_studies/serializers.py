@@ -115,19 +115,13 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
 
     def get_index(self, obj) -> int | None:
         if obj.reader_study.shuffle_hanging_list:
-            return obj.shuffled_index
-        else:
             try:
-                row_number = obj.row_number
-            except AttributeError:
-                # The annotation wasn't made when getting this object
-                row_number = (
-                    DisplaySet.objects.with_row_number()
-                    .get(pk=obj.pk)
-                    .row_number
-                )
-
-            return row_number - 1
+                return self.context["view"].randomized_qs.index(obj)
+            except ValueError:
+                # The list is empty if no reader study is specified.
+                return None
+        else:
+            return obj.standard_index
 
     class Meta:
         model = DisplaySet
@@ -195,6 +189,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "instant_verification",
             "has_ground_truth",
             "allow_answer_modification",
+            "enable_autosaving",
             "allow_case_navigation",
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",

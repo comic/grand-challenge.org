@@ -44,7 +44,8 @@ def test_permissions(client, view, perm):
 
 
 @pytest.mark.django_db
-def test_docpage_create(client):
+@pytest.mark.parametrize("is_faq", (True, False))
+def test_docpage_create(client, is_faq):
     u1 = UserFactory()
     assign_perm("documentation.add_docpage", u1)
     assign_perm("documentation.change_docpage", u1)
@@ -56,7 +57,7 @@ def test_docpage_create(client):
         viewname="documentation:create",
         client=client,
         method=client.post,
-        data={"title": title},
+        data={"title": title, "is_faq": is_faq},
         user=u1,
     )
 
@@ -79,9 +80,10 @@ def test_docpage_create(client):
 
 
 @pytest.mark.django_db
-def test_docpage_content_update(client):
+@pytest.mark.parametrize("is_faq", (True, False))
+def test_docpage_content_update(client, is_faq):
     u1 = UserFactory()
-    p = DocPageFactory()
+    p = DocPageFactory(is_faq=is_faq)
     assign_perm("documentation.change_docpage", u1)
 
     new_content = "<h1>New content</h1>"
@@ -174,4 +176,125 @@ def test_search(client, query, target_pages):
         assert (
             response.context_data["search_results"].get()
             not in non_matching_pages
+        )
+
+
+@pytest.fixture
+def nested_docpages():
+    page = None
+    pages = []
+    for _ in range(4):
+        page = DocPageFactory(parent=page)
+        pages.append(page)
+    return pages
+
+
+@pytest.mark.django_db
+@pytest.mark.flaky(reruns=3)
+@pytest.mark.parametrize(
+    "level, num_queries",
+    (
+        (0, 40),
+        (1, 41),  # +1 parent is not null
+        (2, 42),  # +1 parent breadcrumb
+        (3, 43),  # +1 parent breadcrumb
+    ),
+)
+def test_docpage_detail_num_queries(
+    client, django_assert_num_queries, nested_docpages, level, num_queries
+):
+    user = UserFactory()
+    page = nested_docpages[level]
+
+    with django_assert_num_queries(num_queries) as _:
+        response = get_view_for_user(
+            viewname="documentation:detail",
+            reverse_kwargs={"slug": page.slug},
+            client=client,
+            method=client.get,
+            user=user,
+        )
+        # Sanity checks
+        assert response.status_code == 200
+        assert page.content in response.content.decode("utf-8")
+
+
+@pytest.mark.django_db
+def test_docpage_detail_filter_top_level_pages_on_is_faq(client):
+    user = UserFactory()
+    docpage = DocPageFactory()
+    faqpage = DocPageFactory(is_faq=True)
+
+    response = get_view_for_user(
+        viewname="documentation:detail",
+        reverse_kwargs={"slug": docpage.slug},
+        client=client,
+        method=client.get,
+        user=user,
+    )
+    assert response.status_code == 200
+    assert docpage in response.context["top_level_pages"]
+    assert faqpage not in response.context["top_level_pages"]
+
+    response = get_view_for_user(
+        viewname="documentation:detail",
+        reverse_kwargs={"slug": faqpage.slug},
+        client=client,
+        method=client.get,
+        user=user,
+    )
+    assert response.status_code == 200
+    assert docpage not in response.context["top_level_pages"]
+    assert faqpage in response.context["top_level_pages"]
+
+
+@pytest.mark.django_db
+def test_docpage_detail_faq_navigation_pane(client):
+    user = UserFactory()
+    docpage = DocPageFactory()
+    faq_homepage = DocPageFactory(title="FAQ", is_faq=True)
+    faq_category_page = DocPageFactory(
+        title="Challenges",
+        is_faq=True,
+        parent=faq_homepage,
+    )
+    faq_page = DocPageFactory(
+        is_faq=True,
+        parent=faq_category_page,
+    )
+    faq_pages = [faq_homepage, faq_category_page, faq_page]
+
+    response = get_view_for_user(
+        viewname="documentation:detail",
+        reverse_kwargs={"slug": docpage.slug},
+        client=client,
+        method=client.get,
+        user=user,
+    )
+    assert response.status_code == 200
+    # nav button to doc page is shown
+    assert f'href="/documentation/{docpage.slug}/"' in str(
+        response.rendered_content
+    )
+    # nav button to faq page is NOT shown
+    assert f'href="/documentation/{faq_page.slug}/"' not in str(
+        response.rendered_content
+    )
+
+    response = get_view_for_user(
+        viewname="documentation:detail",
+        reverse_kwargs={"slug": faq_page.slug},
+        client=client,
+        method=client.get,
+        user=user,
+    )
+    assert response.status_code == 200
+    # nav button to doc page is NOT shown
+    assert f'href="/documentation/{docpage.slug}/"' not in str(
+        response.rendered_content
+    )
+    # nav buttons to faq pages are shown
+    for fp in faq_pages:
+        assert f'href="/documentation/{fp.slug}/"' in str(
+            response.rendered_content
         )

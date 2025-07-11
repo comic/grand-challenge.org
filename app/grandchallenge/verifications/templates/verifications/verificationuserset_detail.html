@@ -44,8 +44,8 @@
                     <tr>
                         <td>{{ user|user_profile_link }}</td>
                         <td>{{ user.get_full_name }}</td>
-                        <td data-order='{{ user.date_joined|date:"U" }}'>{{ user.date_joined }}</td>
-                        <td data-order='{{ user.last_login|date:"U" }}'>{{ user.last_login }}</td>
+                        <td data-order='{{ user.date_joined|date:"c" }}'>{{ user.date_joined }}</td>
+                        <td data-order='{{ user.last_login|date:"c" }}'>{{ user.last_login }}</td>
                         <td>{{ user.is_active }}</td>
                         <td>{{ user.verification.is_verified }}</td>
                     </tr>
@@ -75,7 +75,7 @@
             <tbody>
                 {% for submission in submissions %}
                     <tr>
-                        <td data-order='{{ submission.created|date:"U" }}'><a href="{{ submission.get_absolute_url }}">{{ submission.created }}</a></td>
+                        <td data-order='{{ submission.created|date:"c" }}'><a href="{{ submission.get_absolute_url }}">{{ submission.created }}</a></td>
                         <td>{{ submission.creator|user_profile_link }}</td>
                         <td>{{ submission.phase }}</td>
                         <td>{{ submission.phase.submissions_limit_per_user_per_period }} / {{ submission.phase.submission_limit_period }} day{{ submission.phase.submission_limit_period|pluralize }}</td>
