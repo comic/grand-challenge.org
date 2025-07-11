@@ -283,7 +283,24 @@
                 </div>
             {% endif %}
 
-            <h3 class="mt-5">Interfaces</h3>
+            <h3 class="mt-5 mb-3">Summary</h3>
+            {% if object.summary %}
+                {{ object.summary|md2html }}
+            {% elif object.detail_page_markdown %}
+                {{ object.detail_page_markdown|md2html }}
+            {% else %}
+                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
+            {% endif %}
+
+            <h3 class="mt-5 mb-3">Mechanism</h3>
+            {% if object.mechanism %}
+                {{ object.mechanism|md2html }}
+            {% else %}
+                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
+            {% endif %}
+
+            <hr>
+            <h4 class="mt-3">Interfaces</h4>
             <p>This algorithm implements all of the following input-output combinations: </p>
             {% include 'algorithms/partials/algorithminterface_table.html' with base_obj=object interfaces=object.interfaces.all delete_option=False %}
 
@@ -313,22 +330,6 @@
                     {% endfor %}
                     </tbody>
                 </table>
-            {% endif %}
-
-            <h3 class="mt-5 mb-3">Summary</h3>
-            {% if object.summary %}
-                {{ object.summary|md2html }}
-            {% elif object.detail_page_markdown %}
-                {{ object.detail_page_markdown|md2html }}
-            {% else %}
-                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
-            {% endif %}
-
-            <h3 class="mt-5 mb-3">Mechanism</h3>
-            {% if object.mechanism %}
-                {{ object.mechanism|md2html }}
-            {% else %}
-                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
 
             <h3 class="mt-5 mb-3">Validation and Performance</h3>
