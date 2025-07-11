@@ -315,9 +315,7 @@
                 </table>
             {% endif %}
 
-            <h3>Model Facts</h3>
-
-            <h4 class="mt-5 mb-3">Summary</h4>
+            <h3 class="mt-5 mb-3">Summary</h3>
             {% if object.summary %}
                 {{ object.summary|md2html }}
             {% elif object.detail_page_markdown %}
@@ -326,35 +324,35 @@
                 <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
 
-            <h4 class="mt-5 mb-3">Mechanism</h4>
+            <h3 class="mt-5 mb-3">Mechanism</h3>
             {% if object.mechanism %}
                 {{ object.mechanism|md2html }}
             {% else %}
                 <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
 
-            <h4 class="mt-5 mb-3">Validation and Performance</h4>
+            <h3 class="mt-5 mb-3">Validation and Performance</h3>
             {% if object.validation_and_performance %}
                 {{ object.validation_and_performance|md2html }}
             {% else %}
                 <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
 
-            <h4 class="mt-5 mb-3">Uses and Directions</h4>
+            <h3 class="mt-5 mb-3">Uses and Directions</h3>
             {% if object.uses_and_directions %}
                 {{ object.uses_and_directions|md2html }}
             {% else %}
                 <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
 
-            <h4 class="mt-5 mb-3">Warnings</h4>
+            <h3 class="mt-5 mb-3">Warnings</h3>
             {% if object.warnings %}
                 {{ object.warnings|md2html }}
             {% else %}
                 <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
 
-            <h4 class="mt-5 mb-3">Common Error Messages</h4>
+            <h3 class="mt-5 mb-3">Common Error Messages</h3>
             {% if object.common_error_messages %}
                 {{ object.common_error_messages|md2html }}
             {% else %}
