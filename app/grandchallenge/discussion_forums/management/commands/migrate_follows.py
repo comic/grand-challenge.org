@@ -39,6 +39,7 @@ class Command(BaseCommand):
                     forum = get_matching_forum(
                         old_forum_id=follow.object_id,
                         old_forum_model=MachinaForum,
+                        new_forum_model=Forum,
                     )
                 except ObjectDoesNotExist:
                     continue
@@ -50,7 +51,6 @@ class Command(BaseCommand):
                         old_topic_id=follow.object_id,
                         old_topic_model=MachinaTopic,
                         new_topic_model=ForumTopic,
-                        old_forum_model=MachinaForum,
                     )
                 except ObjectDoesNotExist:
                     continue

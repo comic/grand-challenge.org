@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
-from machina.apps.forum.models import Forum as MachinaForum
 from machina.apps.forum_conversation.models import Topic as MachinaTopic
 from machina.apps.forum_tracking.models import ForumReadTrack, TopicReadTrack
 
@@ -27,7 +26,6 @@ class Command(BaseCommand):
                     old_topic_id=old_id,
                     old_topic_model=MachinaTopic,
                     new_topic_model=ForumTopic,
-                    old_forum_model=MachinaForum,
                 )
             except ObjectDoesNotExist:
                 continue
