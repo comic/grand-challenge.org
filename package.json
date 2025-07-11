@@ -14,6 +14,6 @@
         "jest-environment-jsdom": "^30.0.4"
     },
     "dependencies": {
-        "dcmjs": "^0.42.0"
+        "dcmjs": "^0.43.0"
     }
 }

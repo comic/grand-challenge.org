@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:21beba112364ab79711bce185eaacc5c7280d148bf405ad1e3e9533057dbce5c",
+  "content_hash": "sha256:fbfb451204831aa39957dfabd21160dab3453c77350a33fa296cdbd2d546d149",
   "dependencies": [
     {
       "name": "@diagnijmegen/rse-grand-challenge-dicom-deid-procedure",
@@ -536,16 +536,16 @@
     },
     {
       "name": "dcmjs",
-      "version": "0.42.0",
+      "version": "0.43.0",
       "provider": "unpkg",
       "assets": [
         {
-          "name": "build/dcmjs.js",
-          "sri": "sha256-1nv/I8AxMdKsAK+RU7AYrN6ISE4j24swHCTqWR5ZFa4="
+          "name": "build/dcmjs.min.js",
+          "sri": "sha256-3Am7II2X2N/cnT5u6Ugh6zlC0OCP08PT9hnpG4KpIfk="
         },
         {
-          "name": "build/dcmjs.js.map",
-          "sri": "sha256-VHzxl9aljbrr5yhA+5LvW20r+6BMUk8GqXnJcqTetxo="
+          "name": "build/dcmjs.min.js.map",
+          "sri": "sha256-YmVGtoK2bs7l3bm0JKCMpdoZySLz+M8LC17ZgHcXTw0="
         }
       ],
       "maps": []
