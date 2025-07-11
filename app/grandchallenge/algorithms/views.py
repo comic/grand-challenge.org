@@ -1220,6 +1220,15 @@ class AlgorithmInterfaceForAlgorithmCreate(
             kwargs={"slug": self.algorithm.slug},
         )
 
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context.update(
+            {
+                "algorithm": self.algorithm,
+            }
+        )
+        return context
+
 
 class AlgorithmInterfacesForAlgorithmList(
     AlgorithmInterfacePermissionMixin, ListView
