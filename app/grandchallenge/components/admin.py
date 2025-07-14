@@ -84,7 +84,7 @@ def requeue_jobs(modeladmin, request, queryset):
             ComponentJob.FAILURE,
             ComponentJob.CANCELLED,
         ]
-    )
+    ).exclude(submission__phase__external_evaluation=True)
 
     jobs = []
 
