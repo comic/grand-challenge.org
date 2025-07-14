@@ -157,16 +157,17 @@ def init_post_permissions(*, apps, post):
         group=admins_group,
         permission=delete_permission,
     )
-    ForumPostUserObjectPermission.objects.create(
-        content_object=post,
-        user=post.creator,
-        permission=delete_permission,
-    )
-    ForumPostUserObjectPermission.objects.create(
-        content_object=post,
-        user=post.creator,
-        permission=change_permission,
-    )
+    if post.creator:
+        ForumPostUserObjectPermission.objects.create(
+            content_object=post,
+            user=post.creator,
+            permission=delete_permission,
+        )
+        ForumPostUserObjectPermission.objects.create(
+            content_object=post,
+            user=post.creator,
+            permission=change_permission,
+        )
 
 
 def migrate_challenge_forums(apps, schema_editor):  # noqa C901
