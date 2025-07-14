@@ -21,7 +21,7 @@ urlpatterns = [
         include("grandchallenge.evaluation.urls", namespace="evaluation"),
     ),
     path(
-        "discussion-forum/",
+        "forum/",
         include(
             "grandchallenge.discussion_forums.urls",
             namespace="discussion-forums",
