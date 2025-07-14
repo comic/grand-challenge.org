@@ -27,6 +27,12 @@ class Command(BaseCommand):
         n_updated = 0
         batch_size = 1000
 
+        existing_follows = set(
+            Follow.objects.filter(
+                content_type__in=[new_forum_ct, new_topic_ct]
+            ).values_list("content_type__pk", "object_id", "user__pk")
+        )
+
         for follow in (
             Follow.objects.filter(
                 content_type__in=[old_forum_ct, old_forumtopic_ct]
@@ -57,7 +63,14 @@ class Command(BaseCommand):
                 follow.object_id = topic.pk
                 follow.content_type = new_topic_ct
 
-            follows_to_update.append(follow)
+            key = (
+                follow.content_type.pk,
+                str(follow.object_id),
+                follow.user.pk,
+            )
+            if key not in existing_follows:
+                follows_to_update.append(follow)
+                existing_follows.add(key)
 
             if len(follows_to_update) >= batch_size:
                 Follow.objects.bulk_update(
