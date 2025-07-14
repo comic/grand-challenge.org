@@ -260,7 +260,6 @@ def migrate_topic_tracks(apps, schema_editor):  # noqa: C901
     TopicReadRecord = apps.get_model(  # noqa: N806
         "discussion_forums", "TopicReadRecord"
     )
-    MachinaForum = apps.get_model("forum", "Forum")  # noqa: N806
     MachinaTopic = apps.get_model("forum_conversation", "Topic")  # noqa: N806
     ForumTopic = apps.get_model(  # noqa: N806
         "discussion_forums", "ForumTopic"
@@ -277,7 +276,6 @@ def migrate_topic_tracks(apps, schema_editor):  # noqa: C901
                 old_topic_id=old_id,
                 old_topic_model=MachinaTopic,
                 new_topic_model=ForumTopic,
-                old_forum_model=MachinaForum,
             )
         except ObjectDoesNotExist:
             continue
