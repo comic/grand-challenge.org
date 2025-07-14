@@ -1,19 +1,19 @@
 {
-    "name": "grand-challenge.org",
-    "version": "1.0.0",
-    "description": "A platform for end-to-end development of machine learning solutions in biomedical imaging",
-    "main": "index.js",
-    "scripts": {
-        "test": "jest"
-    },
-    "keywords": [],
-    "author": "DIAG",
-    "license": "Apache-2.0",
-    "devDependencies": {
-        "jest": "^30.0.4",
-        "jest-environment-jsdom": "^30.0.4"
-    },
-    "dependencies": {
-        "dcmjs": "^0.42.0"
-    }
+  "name": "grand-challenge.org",
+  "version": "1.0.0",
+  "description": "A platform for end-to-end development of machine learning solutions in biomedical imaging",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "DIAG",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "jest": "^30.0.4",
+    "jest-environment-jsdom": "^30.0.4"
+  },
+  "dependencies": {
+    "dcmjs": "^0.43.0"
+  }
 }
