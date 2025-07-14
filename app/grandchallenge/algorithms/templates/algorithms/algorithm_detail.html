@@ -154,10 +154,52 @@
         <div class="tab-pane fade show" id="information" role="tabpanel"
              aria-labelledby="v-pills-information-tab">
 
-            <div class="row col-12 m-0 p-0">
-                <h2 class="col-9 p-0">{{ object.title }}</h2>
-                {% if 'change_algorithm' in algorithm_perms %}
-                    <span class="col-3 p-0 text-right my-auto">
+            <h2>{{ object.title }}</h2>
+
+            <hr>
+
+            {% if "change_algorithm" in algorithm_perms %}
+                <div class="row">
+                    <div class="col-9">
+                        <h3>Admin Info</h3>
+                        <p>
+                            {% if algorithm.public %}
+                                This algorithm is <b>visible to the public</b>,
+                                {% if algorithm.access_request_handling != 'ACCEPT_ALL' %}
+                                    however, users will need to request access, which you
+                                    will need to approve
+                                        {% if algorithm.access_request_handling == 'ACCEPT_VERIFIED_USERS' %}
+                                            (unless they are verified)
+                                        {% endif %}
+                                    before they can run this algorithm.
+                                {% else %}
+                                    and users' access requests will be granted automatically.
+                                {% endif %}
+                            {% else %}
+                                Only users that you add to the users group will be
+                                able to run this algorithm.
+                            {% endif %}
+                        </p>
+                        <p>
+                            This algorithm uses
+                            <a href="{{ object.workstation.get_absolute_url }}">
+                                {{ object.workstation.title }}</a>
+                            {% if object.workstation_config %}
+                                with configuration
+                                <a href="{{ object.workstation_config.get_absolute_url }}">
+                                    {{ object.workstation_config.title }}</a>.
+                            {% else %}
+                                with its default configuration.
+                            {% endif %}
+                        </p>
+                        {% if object.average_duration %}
+                            <p>
+                                On average, successful jobs for this algorithm have
+                                taken {{ object.average_duration|naturaldelta }}.
+                            </p>
+                        {% endif %}
+                    </div>
+                    <div class="col-3 pl-0 my-auto">
                         <a class="btn btn-primary btn-block"
                            href="{% url 'algorithms:update' slug=object.slug %}">
                             <i class="fa fa-cog"></i> Update Settings
@@ -174,24 +216,29 @@
                                 <i class="fa fa-star"></i> Publish Algorithm
                             </a>
                         {% endif %}
-                    </span>
+                    </div>
+                </div>
+                {% if object.editor_notes %}
+                    <h4>Notes</h4>
+                    {{ object.editor_notes|md2html }}
                 {% endif %}
-            </div>
 
-            <hr>
+                <hr>
+
+            {% endif %}
 
             {% if object.logo %}
-                <img class="w-50" loading="lazy" src="{{ object.logo.url }}" alt="Logo for {{ object.title }}">
+                <img style="height: 20em;" loading="lazy" src="{{ object.logo.url }}" alt="Logo for {{ object.title }}">
             {% endif %}
 
             <h3 class="my-3">About</h3>
 
             {% if object.display_editors %}
                 <div class="row mb-2">
-                    <div class="col-3 font-weight-bold">Creator{{ object.editors_group.user_set.all|pluralize }}:</div>
+                    <div class="col-3 font-weight-bold">Editor{{ editors|length|pluralize }}:</div>
                     <div class="col-9">
-                        {% for user in object.editors_group.user_set.all %}
-                            <p class="m-0">{{ user|user_profile_link }}</p>
+                        {% for user in editors %}
+                            <span class="mr-3">{{ user|user_profile_link }}</span>
                         {% endfor %}
                     </div>
                 </div>
@@ -207,22 +254,14 @@
             {% if object.active_image %}
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Image Version:</div>
-                    <div class="col-9">{{ object.active_image.pk }}</div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-3 font-weight-bold">Last updated:</div>
-                    <div class="col-9">{{ object.active_image.created }}</div>
+                    <div class="col-9">{{ object.active_image.pk }} — <span class="text-nowrap">{{ object.active_image.created|date }}</span></div>
                 </div>
             {% endif %}
 
             {% if object.active_model %}
                 <div class="row mb-2">
                     <div class="col-3 font-weight-bold">Model Version:</div>
-                    <div class="col-9">{{ object.active_model.pk }}</div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-3 font-weight-bold">Last updated:</div>
-                    <div class="col-9">{{ object.active_model.created }}</div>
+                    <div class="col-9">{{ object.active_model.pk }} — <span class="text-nowrap">{{ object.active_model.created|date }}</span></div>
                 </div>
             {% endif %}
 
@@ -244,13 +283,37 @@
                 </div>
             {% endif %}
 
-            <h3 class="mt-5">Interfaces</h3>
+            <h3 class="mt-5 mb-3">Summary</h3>
+            {% if object.summary %}
+                {{ object.summary|md2html }}
+            {% elif object.detail_page_markdown %}
+                {{ object.detail_page_markdown|md2html }}
+            {% else %}
+                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
+            {% endif %}
+
+            <h3 class="mt-5 mb-3">Mechanism</h3>
+            {% if object.mechanism %}
+                {{ object.mechanism|md2html }}
+            {% else %}
+                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
+            {% endif %}
+
+            <hr>
+            <h4 class="mt-3">Interfaces</h4>
             <p>This algorithm implements all of the following input-output combinations: </p>
             {% include 'algorithms/partials/algorithminterface_table.html' with base_obj=object interfaces=object.interfaces.all delete_option=False %}
 
+            <h3 class="mt-5 mb-3">Validation and Performance</h3>
+            {% if object.validation_and_performance %}
+                {{ object.validation_and_performance|md2html }}
+            {% else %}
+                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
+            {% endif %}
 
             {% if best_evaluation_per_phase %}
-                <h3>Challenge Performance</h3>
+                <hr>
+                <h4 class="mt-3">Challenge Performance</h4>
 
                 <table class="table table-borderless table-hover table-sm">
                     <thead class="thead-light">
@@ -276,112 +339,34 @@
                 </table>
             {% endif %}
 
-            <h3>Model Facts</h3>
-
-            <h4 class="mt-5 mb-3">Summary</h4>
-            {% if object.summary %}
-                {{ object.summary|md2html }}
-            {% elif object.detail_page_markdown %}
-                {{ object.detail_page_markdown|md2html }}
-            {% else %}
-                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
-            {% endif %}
-
-            <h4 class="mt-5 mb-3">Mechanism</h4>
-            {% if object.mechanism %}
-                {{ object.mechanism|md2html }}
-            {% else %}
-                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
-            {% endif %}
-
-            <h4 class="mt-5 mb-3">Validation and Performance</h4>
-            {% if object.validation_and_performance %}
-                {{ object.validation_and_performance|md2html }}
-            {% else %}
-                <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
-            {% endif %}
-
-            <h4 class="mt-5 mb-3">Uses and Directions</h4>
+            <h3 class="mt-5 mb-3">Uses and Directions</h3>
             {% if object.uses_and_directions %}
                 {{ object.uses_and_directions|md2html }}
             {% else %}
                 <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
 
-            <h4 class="mt-5 mb-3">Warnings</h4>
+            <h3 class="mt-5 mb-3">Warnings</h3>
             {% if object.warnings %}
                 {{ object.warnings|md2html }}
             {% else %}
                 <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
 
-            <h4 class="mt-5 mb-3">Common Error Messages</h4>
+            <h3 class="mt-5 mb-3">Common Error Messages</h3>
             {% if object.common_error_messages %}
                 {{ object.common_error_messages|md2html }}
             {% else %}
                 <div class="alert alert-warning" role="alert">Left empty by the Algorithm Editors</div>
             {% endif %}
 
-            <p>
+            <div class="mt-5 small text-muted">
                 Information on this algorithm has been provided by the Algorithm Editors,
                 following the Model Facts labels guidelines from
                 Sendak, M.P., Gao, M., Brajer, N. et al.
                 Presenting machine learning model information to clinical end users with model facts labels.
                 npj Digit. Med. 3, 41 (2020). <a href="https://doi.org/10.1038/s41746-020-0253-3">10.1038/s41746-020-0253-3</a>
-            </p>
-
-            {% if "change_algorithm" in algorithm_perms %}
-                <hr>
-                <h3>Admin Info</h3>
-                <p>
-                    {% if algorithm.public %}
-                        This algorithm is <b>visible to the public</b>,
-                        {% if algorithm.access_request_handling != 'ACCEPT_ALL' %}
-                            however, users will need to request access, which you
-                            will need to approve
-                                {% if algorithm.access_request_handling == 'ACCEPT_VERIFIED_USERS' %}
-                                    (unless they are verified)
-                                {% endif %}
-                            before they can run this algorithm.
-                        {% else %}
-                            and users' access requests will be granted automatically.
-                        {% endif %}
-                    {% else %}
-                        Only users that you add to the users group will be
-                        able to run this algorithm.
-                    {% endif %}
-                    This algorithm uses
-                    <a href="{{ object.workstation.get_absolute_url }}">
-                        {{ object.workstation.title }}</a>
-                    {% if object.workstation_config %}
-                        with configuration
-                        <a href="{{ object.workstation_config.get_absolute_url }}">
-                            {{ object.workstation_config.title }}</a>.
-                    {% else %}
-                        with its default configuration.
-                    {% endif %}
-                </p>
-                {% if object.average_duration %}
-                    <p>
-                        On average, successful jobs for this algorithm have
-                        taken {{ object.average_duration|naturaldelta }}.
-                    </p>
-                {% endif %}
-                {% if object.editor_notes %}
-                    <h4>Notes</h4>
-                    {{ object.editor_notes|md2html }}
-                {% endif %}
-                <p>
-                    <a class="btn btn-primary"
-                       href="{% url 'algorithms:update' slug=object.slug %}">
-                        <i class="fa fa-cog"></i> Update Settings
-                    </a>
-                    <a class="btn btn-primary"
-                       href="{% url 'algorithms:description-update' slug=object.slug %}">
-                        <i class="fa fa-edit"></i> Update Description
-                    </a>
-                </p>
-            {% endif %}
+            </div>
         </div>
 
         {% if "change_algorithm" in algorithm_perms %}
@@ -395,7 +380,7 @@
                 </p>
 
                 {% url 'algorithms:editors-update' slug=object.slug as edit_url %}
-                {% include "groups/partials/user_list.html" with edit_url=edit_url form=editor_remove_form users=object.editors_group.user_set.all %}
+                {% include "groups/partials/user_list.html" with edit_url=edit_url form=editor_remove_form users=editors %}
 
                 <p>
                     <a class="btn btn-primary"

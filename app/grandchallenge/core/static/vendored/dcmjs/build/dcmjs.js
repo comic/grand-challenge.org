@@ -9441,14 +9441,14 @@
 	var FloatingPointSingle = /*#__PURE__*/function (_ValueRepresentation5) {
 	  _inherits(FloatingPointSingle, _ValueRepresentation5);
 	  function FloatingPointSingle() {
-	    var _this10;
+	    var _this0;
 	    _classCallCheck(this, FloatingPointSingle);
-	    _this10 = _callSuper(this, FloatingPointSingle, ["FL"]);
-	    _this10.maxLength = 4;
-	    _this10.padByte = PADDING_NULL;
-	    _this10.fixed = true;
-	    _this10.defaultValue = 0.0;
-	    return _this10;
+	    _this0 = _callSuper(this, FloatingPointSingle, ["FL"]);
+	    _this0.maxLength = 4;
+	    _this0.padByte = PADDING_NULL;
+	    _this0.fixed = true;
+	    _this0.defaultValue = 0.0;
+	    return _this0;
 	  }
 	  _createClass(FloatingPointSingle, [{
 	    key: "readBytes",
@@ -9471,14 +9471,14 @@
 	var FloatingPointDouble = /*#__PURE__*/function (_ValueRepresentation6) {
 	  _inherits(FloatingPointDouble, _ValueRepresentation6);
 	  function FloatingPointDouble() {
-	    var _this11;
+	    var _this1;
 	    _classCallCheck(this, FloatingPointDouble);
-	    _this11 = _callSuper(this, FloatingPointDouble, ["FD"]);
-	    _this11.maxLength = 8;
-	    _this11.padByte = PADDING_NULL;
-	    _this11.fixed = true;
-	    _this11.defaultValue = 0.0;
-	    return _this11;
+	    _this1 = _callSuper(this, FloatingPointDouble, ["FD"]);
+	    _this1.maxLength = 8;
+	    _this1.padByte = PADDING_NULL;
+	    _this1.fixed = true;
+	    _this1.defaultValue = 0.0;
+	    return _this1;
 	  }
 	  _createClass(FloatingPointDouble, [{
 	    key: "readBytes",
@@ -9501,12 +9501,12 @@
 	var IntegerString = /*#__PURE__*/function (_NumericStringReprese2) {
 	  _inherits(IntegerString, _NumericStringReprese2);
 	  function IntegerString() {
-	    var _this12;
+	    var _this10;
 	    _classCallCheck(this, IntegerString);
-	    _this12 = _callSuper(this, IntegerString, ["IS"]);
-	    _this12.maxLength = 12;
-	    _this12.padByte = PADDING_SPACE;
-	    return _this12;
+	    _this10 = _callSuper(this, IntegerString, ["IS"]);
+	    _this10.maxLength = 12;
+	    _this10.padByte = PADDING_SPACE;
+	    return _this10;
 	  }
 	  _createClass(IntegerString, [{
 	    key: "applyFormatting",
@@ -9529,9 +9529,9 @@
 	  }, {
 	    key: "writeBytes",
 	    value: function writeBytes(stream, value, writeOptions) {
-	      var _this13 = this;
+	      var _this11 = this;
 	      var val = Array.isArray(value) ? value.map(function (is) {
-	        return _this13.convertToString(is);
+	        return _this11.convertToString(is);
 	      }) : [this.convertToString(value)];
 	      return _get(_getPrototypeOf(IntegerString.prototype), "writeBytes", this).call(this, stream, val, writeOptions);
 	    }
@@ -9541,12 +9541,12 @@
 	var LongString = /*#__PURE__*/function (_EncodedStringReprese) {
 	  _inherits(LongString, _EncodedStringReprese);
 	  function LongString() {
-	    var _this14;
+	    var _this12;
 	    _classCallCheck(this, LongString);
-	    _this14 = _callSuper(this, LongString, ["LO"]);
-	    _this14.maxCharLength = 64;
-	    _this14.padByte = PADDING_SPACE;
-	    return _this14;
+	    _this12 = _callSuper(this, LongString, ["LO"]);
+	    _this12.maxCharLength = 64;
+	    _this12.padByte = PADDING_SPACE;
+	    return _this12;
 	  }
 	  _createClass(LongString, [{
 	    key: "readBytes",
@@ -9564,12 +9564,12 @@
 	var LongText = /*#__PURE__*/function (_EncodedStringReprese2) {
 	  _inherits(LongText, _EncodedStringReprese2);
 	  function LongText() {
-	    var _this15;
+	    var _this13;
 	    _classCallCheck(this, LongText);
-	    _this15 = _callSuper(this, LongText, ["LT"]);
-	    _this15.maxCharLength = 10240;
-	    _this15.padByte = PADDING_SPACE;
-	    return _this15;
+	    _this13 = _callSuper(this, LongText, ["LT"]);
+	    _this13.maxCharLength = 10240;
+	    _this13.padByte = PADDING_SPACE;
+	    return _this13;
 	  }
 	  _createClass(LongText, [{
 	    key: "readBytes",
@@ -9587,12 +9587,12 @@
 	var PersonName = /*#__PURE__*/function (_EncodedStringReprese3) {
 	  _inherits(PersonName, _EncodedStringReprese3);
 	  function PersonName() {
-	    var _this16;
+	    var _this14;
 	    _classCallCheck(this, PersonName);
-	    _this16 = _callSuper(this, PersonName, ["PN"]);
-	    _this16.maxLength = null;
-	    _this16.padByte = PADDING_SPACE;
-	    return _this16;
+	    _this14 = _callSuper(this, PersonName, ["PN"]);
+	    _this14.maxLength = null;
+	    _this14.padByte = PADDING_SPACE;
+	    return _this14;
 	  }
 	  _createClass(PersonName, [{
 	    key: "addValueAccessors",
@@ -9702,12 +9702,12 @@
 	var ShortString = /*#__PURE__*/function (_EncodedStringReprese4) {
 	  _inherits(ShortString, _EncodedStringReprese4);
 	  function ShortString() {
-	    var _this17;
+	    var _this15;
 	    _classCallCheck(this, ShortString);
-	    _this17 = _callSuper(this, ShortString, ["SH"]);
-	    _this17.maxCharLength = 16;
-	    _this17.padByte = PADDING_SPACE;
-	    return _this17;
+	    _this15 = _callSuper(this, ShortString, ["SH"]);
+	    _this15.maxCharLength = 16;
+	    _this15.padByte = PADDING_SPACE;
+	    return _this15;
 	  }
 	  _createClass(ShortString, [{
 	    key: "readBytes",
@@ -9725,14 +9725,14 @@
 	var SignedLong = /*#__PURE__*/function (_ValueRepresentation7) {
 	  _inherits(SignedLong, _ValueRepresentation7);
 	  function SignedLong() {
-	    var _this18;
+	    var _this16;
 	    _classCallCheck(this, SignedLong);
-	    _this18 = _callSuper(this, SignedLong, ["SL"]);
-	    _this18.maxLength = 4;
-	    _this18.padByte = PADDING_NULL;
-	    _this18.fixed = true;
-	    _this18.defaultValue = 0;
-	    return _this18;
+	    _this16 = _callSuper(this, SignedLong, ["SL"]);
+	    _this16.maxLength = 4;
+	    _this16.padByte = PADDING_NULL;
+	    _this16.fixed = true;
+	    _this16.defaultValue = 0;
+	    return _this16;
 	  }
 	  _createClass(SignedLong, [{
 	    key: "readBytes",
@@ -9750,14 +9750,14 @@
 	var SequenceOfItems = /*#__PURE__*/function (_ValueRepresentation8) {
 	  _inherits(SequenceOfItems, _ValueRepresentation8);
 	  function SequenceOfItems() {
-	    var _this19;
+	    var _this17;
 	    _classCallCheck(this, SequenceOfItems);
-	    _this19 = _callSuper(this, SequenceOfItems, ["SQ"]);
-	    _this19.maxLength = null;
-	    _this19.padByte = PADDING_NULL;
-	    _this19.noMultiple = true;
-	    _this19._storeRaw = false;
-	    return _this19;
+	    _this17 = _callSuper(this, SequenceOfItems, ["SQ"]);
+	    _this17.maxLength = null;
+	    _this17.padByte = PADDING_NULL;
+	    _this17.noMultiple = true;
+	    _this17._storeRaw = false;
+	    return _this17;
 	  }
 	  _createClass(SequenceOfItems, [{
 	    key: "readBytes",
@@ -9878,15 +9878,15 @@
 	var SignedShort = /*#__PURE__*/function (_ValueRepresentation9) {
 	  _inherits(SignedShort, _ValueRepresentation9);
 	  function SignedShort() {
-	    var _this20;
+	    var _this18;
 	    _classCallCheck(this, SignedShort);
-	    _this20 = _callSuper(this, SignedShort, ["SS"]);
-	    _this20.maxLength = 2;
-	    _this20.valueLength = 2;
-	    _this20.padByte = PADDING_NULL;
-	    _this20.fixed = true;
-	    _this20.defaultValue = 0;
-	    return _this20;
+	    _this18 = _callSuper(this, SignedShort, ["SS"]);
+	    _this18.maxLength = 2;
+	    _this18.valueLength = 2;
+	    _this18.padByte = PADDING_NULL;
+	    _this18.fixed = true;
+	    _this18.defaultValue = 0;
+	    return _this18;
 	  }
 	  _createClass(SignedShort, [{
 	    key: "readBytes",
@@ -9904,12 +9904,12 @@
 	var ShortText = /*#__PURE__*/function (_EncodedStringReprese5) {
 	  _inherits(ShortText, _EncodedStringReprese5);
 	  function ShortText() {
-	    var _this21;
+	    var _this19;
 	    _classCallCheck(this, ShortText);
-	    _this21 = _callSuper(this, ShortText, ["ST"]);
-	    _this21.maxCharLength = 1024;
-	    _this21.padByte = PADDING_SPACE;
-	    return _this21;
+	    _this19 = _callSuper(this, ShortText, ["ST"]);
+	    _this19.maxCharLength = 1024;
+	    _this19.padByte = PADDING_SPACE;
+	    return _this19;
 	  }
 	  _createClass(ShortText, [{
 	    key: "readBytes",
@@ -9927,13 +9927,13 @@
 	var TimeValue = /*#__PURE__*/function (_AsciiStringRepresent7) {
 	  _inherits(TimeValue, _AsciiStringRepresent7);
 	  function TimeValue() {
-	    var _this22;
+	    var _this20;
 	    _classCallCheck(this, TimeValue);
-	    _this22 = _callSuper(this, TimeValue, ["TM"]);
-	    _this22.maxLength = 16;
-	    _this22.rangeMatchingMaxLength = 28;
-	    _this22.padByte = PADDING_SPACE;
-	    return _this22;
+	    _this20 = _callSuper(this, TimeValue, ["TM"]);
+	    _this20.maxLength = 16;
+	    _this20.rangeMatchingMaxLength = 28;
+	    _this20.padByte = PADDING_SPACE;
+	    return _this20;
 	  }
 	  _createClass(TimeValue, [{
 	    key: "readBytes",
@@ -9960,13 +9960,13 @@
 	var UnlimitedCharacters = /*#__PURE__*/function (_EncodedStringReprese6) {
 	  _inherits(UnlimitedCharacters, _EncodedStringReprese6);
 	  function UnlimitedCharacters() {
-	    var _this23;
+	    var _this21;
 	    _classCallCheck(this, UnlimitedCharacters);
-	    _this23 = _callSuper(this, UnlimitedCharacters, ["UC"]);
-	    _this23.maxLength = null;
-	    _this23.multi = true;
-	    _this23.padByte = PADDING_SPACE;
-	    return _this23;
+	    _this21 = _callSuper(this, UnlimitedCharacters, ["UC"]);
+	    _this21.maxLength = null;
+	    _this21.multi = true;
+	    _this21.padByte = PADDING_SPACE;
+	    return _this21;
 	  }
 	  _createClass(UnlimitedCharacters, [{
 	    key: "readBytes",
@@ -9984,12 +9984,12 @@
 	var UnlimitedText = /*#__PURE__*/function (_EncodedStringReprese7) {
 	  _inherits(UnlimitedText, _EncodedStringReprese7);
 	  function UnlimitedText() {
-	    var _this24;
+	    var _this22;
 	    _classCallCheck(this, UnlimitedText);
-	    _this24 = _callSuper(this, UnlimitedText, ["UT"]);
-	    _this24.maxLength = null;
-	    _this24.padByte = PADDING_SPACE;
-	    return _this24;
+	    _this22 = _callSuper(this, UnlimitedText, ["UT"]);
+	    _this22.maxLength = null;
+	    _this22.padByte = PADDING_SPACE;
+	    return _this22;
 	  }
 	  _createClass(UnlimitedText, [{
 	    key: "readBytes",
@@ -10004,17 +10004,17 @@
 	  }]);
 	  return UnlimitedText;
 	}(EncodedStringRepresentation);
-	var UnsignedShort = /*#__PURE__*/function (_ValueRepresentation10) {
-	  _inherits(UnsignedShort, _ValueRepresentation10);
+	var UnsignedShort = /*#__PURE__*/function (_ValueRepresentation0) {
+	  _inherits(UnsignedShort, _ValueRepresentation0);
 	  function UnsignedShort() {
-	    var _this25;
+	    var _this23;
 	    _classCallCheck(this, UnsignedShort);
-	    _this25 = _callSuper(this, UnsignedShort, ["US"]);
-	    _this25.maxLength = 2;
-	    _this25.padByte = PADDING_NULL;
-	    _this25.fixed = true;
-	    _this25.defaultValue = 0;
-	    return _this25;
+	    _this23 = _callSuper(this, UnsignedShort, ["US"]);
+	    _this23.maxLength = 2;
+	    _this23.padByte = PADDING_NULL;
+	    _this23.fixed = true;
+	    _this23.defaultValue = 0;
+	    return _this23;
 	  }
 	  _createClass(UnsignedShort, [{
 	    key: "readBytes",
@@ -10029,17 +10029,17 @@
 	  }]);
 	  return UnsignedShort;
 	}(ValueRepresentation);
-	var UnsignedLong = /*#__PURE__*/function (_ValueRepresentation11) {
-	  _inherits(UnsignedLong, _ValueRepresentation11);
+	var UnsignedLong = /*#__PURE__*/function (_ValueRepresentation1) {
+	  _inherits(UnsignedLong, _ValueRepresentation1);
 	  function UnsignedLong() {
-	    var _this26;
+	    var _this24;
 	    _classCallCheck(this, UnsignedLong);
-	    _this26 = _callSuper(this, UnsignedLong, ["UL"]);
-	    _this26.maxLength = 4;
-	    _this26.padByte = PADDING_NULL;
-	    _this26.fixed = true;
-	    _this26.defaultValue = 0;
-	    return _this26;
+	    _this24 = _callSuper(this, UnsignedLong, ["UL"]);
+	    _this24.maxLength = 4;
+	    _this24.padByte = PADDING_NULL;
+	    _this24.fixed = true;
+	    _this24.defaultValue = 0;
+	    return _this24;
 	  }
 	  _createClass(UnsignedLong, [{
 	    key: "readBytes",
@@ -10057,12 +10057,12 @@
 	var UniqueIdentifier = /*#__PURE__*/function (_AsciiStringRepresent8) {
 	  _inherits(UniqueIdentifier, _AsciiStringRepresent8);
 	  function UniqueIdentifier() {
-	    var _this27;
+	    var _this25;
 	    _classCallCheck(this, UniqueIdentifier);
-	    _this27 = _callSuper(this, UniqueIdentifier, ["UI"]);
-	    _this27.maxLength = 64;
-	    _this27.padByte = PADDING_NULL;
-	    return _this27;
+	    _this25 = _callSuper(this, UniqueIdentifier, ["UI"]);
+	    _this25.maxLength = 64;
+	    _this25.padByte = PADDING_NULL;
+	    return _this25;
 	  }
 	  _createClass(UniqueIdentifier, [{
 	    key: "readBytes",
@@ -10101,12 +10101,12 @@
 	var UniversalResource = /*#__PURE__*/function (_AsciiStringRepresent9) {
 	  _inherits(UniversalResource, _AsciiStringRepresent9);
 	  function UniversalResource() {
-	    var _this28;
+	    var _this26;
 	    _classCallCheck(this, UniversalResource);
-	    _this28 = _callSuper(this, UniversalResource, ["UR"]);
-	    _this28.maxLength = null;
-	    _this28.padByte = PADDING_SPACE;
-	    return _this28;
+	    _this26 = _callSuper(this, UniversalResource, ["UR"]);
+	    _this26.maxLength = null;
+	    _this26.padByte = PADDING_SPACE;
+	    return _this26;
 	  }
 	  _createClass(UniversalResource, [{
 	    key: "readBytes",
@@ -10119,30 +10119,30 @@
 	var UnknownValue = /*#__PURE__*/function (_BinaryRepresentation) {
 	  _inherits(UnknownValue, _BinaryRepresentation);
 	  function UnknownValue() {
-	    var _this29;
+	    var _this27;
 	    _classCallCheck(this, UnknownValue);
-	    _this29 = _callSuper(this, UnknownValue, ["UN"]);
-	    _this29.maxLength = null;
-	    _this29.padByte = PADDING_NULL;
-	    _this29.noMultiple = true;
-	    return _this29;
+	    _this27 = _callSuper(this, UnknownValue, ["UN"]);
+	    _this27.maxLength = null;
+	    _this27.padByte = PADDING_NULL;
+	    _this27.noMultiple = true;
+	    return _this27;
 	  }
 	  return _createClass(UnknownValue);
 	}(BinaryRepresentation);
 	var ParsedUnknownValue = /*#__PURE__*/function (_BinaryRepresentation2) {
 	  _inherits(ParsedUnknownValue, _BinaryRepresentation2);
 	  function ParsedUnknownValue(vr) {
-	    var _this30;
+	    var _this28;
 	    _classCallCheck(this, ParsedUnknownValue);
-	    _this30 = _callSuper(this, ParsedUnknownValue, [vr]);
-	    _this30.maxLength = null;
-	    _this30.padByte = 0;
-	    _this30.noMultiple = true;
-	    _this30._isBinary = true;
-	    _this30._allowMultiple = false;
-	    _this30._isExplicit = true;
-	    _this30._storeRaw = true;
-	    return _this30;
+	    _this28 = _callSuper(this, ParsedUnknownValue, [vr]);
+	    _this28.maxLength = null;
+	    _this28.padByte = 0;
+	    _this28.noMultiple = true;
+	    _this28._isBinary = true;
+	    _this28._allowMultiple = false;
+	    _this28._isExplicit = true;
+	    _this28._storeRaw = true;
+	    return _this28;
 	  }
 	  _createClass(ParsedUnknownValue, [{
 	    key: "read",
@@ -10176,52 +10176,52 @@
 	var OtherWordString = /*#__PURE__*/function (_BinaryRepresentation3) {
 	  _inherits(OtherWordString, _BinaryRepresentation3);
 	  function OtherWordString() {
-	    var _this31;
+	    var _this29;
 	    _classCallCheck(this, OtherWordString);
-	    _this31 = _callSuper(this, OtherWordString, ["OW"]);
-	    _this31.maxLength = null;
-	    _this31.padByte = PADDING_NULL;
-	    _this31.noMultiple = true;
-	    return _this31;
+	    _this29 = _callSuper(this, OtherWordString, ["OW"]);
+	    _this29.maxLength = null;
+	    _this29.padByte = PADDING_NULL;
+	    _this29.noMultiple = true;
+	    return _this29;
 	  }
 	  return _createClass(OtherWordString);
 	}(BinaryRepresentation);
 	var OtherByteString = /*#__PURE__*/function (_BinaryRepresentation4) {
 	  _inherits(OtherByteString, _BinaryRepresentation4);
 	  function OtherByteString() {
-	    var _this32;
+	    var _this30;
 	    _classCallCheck(this, OtherByteString);
-	    _this32 = _callSuper(this, OtherByteString, ["OB"]);
-	    _this32.maxLength = null;
-	    _this32.padByte = PADDING_NULL;
-	    _this32.noMultiple = true;
-	    return _this32;
+	    _this30 = _callSuper(this, OtherByteString, ["OB"]);
+	    _this30.maxLength = null;
+	    _this30.padByte = PADDING_NULL;
+	    _this30.noMultiple = true;
+	    return _this30;
 	  }
 	  return _createClass(OtherByteString);
 	}(BinaryRepresentation);
 	var OtherDoubleString = /*#__PURE__*/function (_BinaryRepresentation5) {
 	  _inherits(OtherDoubleString, _BinaryRepresentation5);
 	  function OtherDoubleString() {
-	    var _this33;
+	    var _this31;
 	    _classCallCheck(this, OtherDoubleString);
-	    _this33 = _callSuper(this, OtherDoubleString, ["OD"]);
-	    _this33.maxLength = null;
-	    _this33.padByte = PADDING_NULL;
-	    _this33.noMultiple = true;
-	    return _this33;
+	    _this31 = _callSuper(this, OtherDoubleString, ["OD"]);
+	    _this31.maxLength = null;
+	    _this31.padByte = PADDING_NULL;
+	    _this31.noMultiple = true;
+	    return _this31;
 	  }
 	  return _createClass(OtherDoubleString);
 	}(BinaryRepresentation);
 	var OtherFloatString = /*#__PURE__*/function (_BinaryRepresentation6) {
 	  _inherits(OtherFloatString, _BinaryRepresentation6);
 	  function OtherFloatString() {
-	    var _this34;
+	    var _this32;
 	    _classCallCheck(this, OtherFloatString);
-	    _this34 = _callSuper(this, OtherFloatString, ["OF"]);
-	    _this34.maxLength = null;
-	    _this34.padByte = PADDING_NULL;
-	    _this34.noMultiple = true;
-	    return _this34;
+	    _this32 = _callSuper(this, OtherFloatString, ["OF"]);
+	    _this32.maxLength = null;
+	    _this32.padByte = PADDING_NULL;
+	    _this32.noMultiple = true;
+	    return _this32;
 	  }
 	  return _createClass(OtherFloatString);
 	}(BinaryRepresentation); // these VR instances are precreate and are reused for each requested vr/tag
@@ -11839,8 +11839,8 @@
 	  }]);
 	  return OPImageNormalizer;
 	}(Normalizer);
-	var OCTImageNormalizer = /*#__PURE__*/function (_ImageNormalizer10) {
-	  _inherits(OCTImageNormalizer, _ImageNormalizer10);
+	var OCTImageNormalizer = /*#__PURE__*/function (_ImageNormalizer0) {
+	  _inherits(OCTImageNormalizer, _ImageNormalizer0);
 	  function OCTImageNormalizer() {
 	    _classCallCheck(this, OCTImageNormalizer);
 	    return _callSuper(this, OCTImageNormalizer, arguments);
@@ -17090,7 +17090,7 @@ b"+i+"*=d\
 	  var SeriesInstanceUID = generalSeriesModule.seriesInstanceUID;
 	  var ImageOrientationPatient;
 	  var validOrientations;
-	  var hasCoordinateSystem = ("FrameOfReferenceUID" in multiframe);
+	  var hasCoordinateSystem = "FrameOfReferenceUID" in multiframe;
 	  if (hasCoordinateSystem) {
 	    if (!imagePlaneModule) {
 	      console.warn("Insufficient metadata, imagePlaneModule missing.");
@@ -17293,7 +17293,7 @@ b"+i+"*=d\
 	        var PerFrameFunctionalGroups = PerFrameFunctionalGroupsSequence[_frameSegment];
 	        var pixelDataI2D = ndarray$1(new Uint8Array(pixelData.buffer, _frameSegment * sliceLength, sliceLength), [Rows, Columns]);
 	        var alignedPixelDataI = void 0;
-	        var hasCoordinateSystem = ("FrameOfReferenceUID" in multiframe);
+	        var hasCoordinateSystem = "FrameOfReferenceUID" in multiframe;
 	        if (hasCoordinateSystem) {
 	          var ImageOrientationPatientI = sharedImageOrientationPatient || PerFrameFunctionalGroups.PlaneOrientationSequence.ImageOrientationPatient;
 	          alignedPixelDataI = alignPixelDataWithSourceData(pixelDataI2D, ImageOrientationPatientI, validOrientations, tolerance);
@@ -17364,7 +17364,7 @@ b"+i+"*=d\
 	        }
 	        var pixelDataI2D = ndarray$1(new Uint8Array(pixelData.buffer, _i2 * sliceLength, sliceLength), [Rows, Columns]);
 	        var alignedPixelDataI;
-	        var hasCoordinateSystem = ("FrameOfReferenceUID" in multiframe);
+	        var hasCoordinateSystem = "FrameOfReferenceUID" in multiframe;
 	        if (hasCoordinateSystem) {
 	          var ImageOrientationPatientI = sharedImageOrientationPatient || PerFrameFunctionalGroups.PlaneOrientationSequence.ImageOrientationPatient;
 	          alignedPixelDataI = alignPixelDataWithSourceData(pixelDataI2D, ImageOrientationPatientI, validOrientations, tolerance);
@@ -17454,7 +17454,7 @@ b"+i+"*=d\
 	    var PerFrameFunctionalGroups = PerFrameFunctionalGroupsSequence[i];
 	    var pixelDataI2D = ndarray$1(new Uint8Array(pixelData.buffer, i * sliceLength, sliceLength), [Rows, Columns]);
 	    var alignedPixelDataI;
-	    var hasCoordinateSystem = ("FrameOfReferenceUID" in multiframe);
+	    var hasCoordinateSystem = "FrameOfReferenceUID" in multiframe;
 	    if (hasCoordinateSystem) {
 	      var ImageOrientationPatientI = sharedImageOrientationPatient || PerFrameFunctionalGroups.PlaneOrientationSequence.ImageOrientationPatient;
 	      alignedPixelDataI = alignPixelDataWithSourceData(pixelDataI2D, ImageOrientationPatientI, validOrientations, tolerance);
@@ -21314,7 +21314,7 @@ b"+i+"*=d\
 	  // filterBy(options) {
 	  // }
 	  return _createClass(ContentSequence);
-	}( /*#__PURE__*/_wrapNativeSuper(Array));
+	}(/*#__PURE__*/_wrapNativeSuper(Array));
 	var ContentItem = /*#__PURE__*/_createClass(function ContentItem(options) {
 	  _classCallCheck(this, ContentItem);
 	  if (options.name === undefined) {
@@ -21559,12 +21559,12 @@ b"+i+"*=d\
 	  }
 	  return _createClass(ContainerContentItem);
 	}(ContentItem);
-	var CompositeContentItem = /*#__PURE__*/function (_ContentItem10) {
-	  _inherits(CompositeContentItem, _ContentItem10);
+	var CompositeContentItem = /*#__PURE__*/function (_ContentItem0) {
+	  _inherits(CompositeContentItem, _ContentItem0);
 	  function CompositeContentItem(options) {
-	    var _this10;
+	    var _this0;
 	    _classCallCheck(this, CompositeContentItem);
-	    _this10 = _callSuper(this, CompositeContentItem, [{
+	    _this0 = _callSuper(this, CompositeContentItem, [{
 	      name: options.name,
 	      relationshipType: options.relationshipType,
 	      valueType: ValueTypes.COMPOSITE
@@ -21584,17 +21584,17 @@ b"+i+"*=d\
 	    var item = {};
 	    item.ReferencedSOPClassUID = options.referencedSOPClassUID;
 	    item.ReferencedSOPInstanceUID = options.referencedSOPInstanceUID;
-	    _this10.ReferenceSOPSequence = [item];
-	    return _this10;
+	    _this0.ReferenceSOPSequence = [item];
+	    return _this0;
 	  }
 	  return _createClass(CompositeContentItem);
 	}(ContentItem);
-	var ImageContentItem = /*#__PURE__*/function (_ContentItem11) {
-	  _inherits(ImageContentItem, _ContentItem11);
+	var ImageContentItem = /*#__PURE__*/function (_ContentItem1) {
+	  _inherits(ImageContentItem, _ContentItem1);
 	  function ImageContentItem(options) {
-	    var _this11;
+	    var _this1;
 	    _classCallCheck(this, ImageContentItem);
-	    _this11 = _callSuper(this, ImageContentItem, [{
+	    _this1 = _callSuper(this, ImageContentItem, [{
 	      name: options.name,
 	      relationshipType: options.relationshipType,
 	      valueType: ValueTypes.IMAGE
@@ -21628,17 +21628,17 @@ b"+i+"*=d\
 	      // FIXME: value multiplicity
 	      item.ReferencedSegmentNumber = options.referencedSegmentNumbers;
 	    }
-	    _this11.ReferencedSOPSequence = [item];
-	    return _this11;
+	    _this1.ReferencedSOPSequence = [item];
+	    return _this1;
 	  }
 	  return _createClass(ImageContentItem);
 	}(ContentItem);
-	var ScoordContentItem = /*#__PURE__*/function (_ContentItem12) {
-	  _inherits(ScoordContentItem, _ContentItem12);
+	var ScoordContentItem = /*#__PURE__*/function (_ContentItem10) {
+	  _inherits(ScoordContentItem, _ContentItem10);
 	  function ScoordContentItem(options) {
-	    var _this12;
+	    var _this10;
 	    _classCallCheck(this, ScoordContentItem);
-	    _this12 = _callSuper(this, ScoordContentItem, [{
+	    _this10 = _callSuper(this, ScoordContentItem, [{
 	      name: options.name,
 	      relationshipType: options.relationshipType,
 	      valueType: ValueTypes.SCOORD
@@ -21661,7 +21661,7 @@ b"+i+"*=d\
 	    if (options.graphicData[0] instanceof Array) {
 	      options.graphicData = [].concat.apply([], options.graphicData);
 	    }
-	    _this12.GraphicData = options.graphicData;
+	    _this10.GraphicData = options.graphicData;
 	    options.pixelOriginInterpretation = options.pixelOriginInterpretation || PixelOriginInterpretations.VOLUME;
 	    if (!(typeof options.pixelOriginInterpretation === "string" || options.pixelOriginInterpretation instanceof String)) {
 	      throw new Error("Option 'pixelOriginInterpretation' must have type String.");
@@ -21673,18 +21673,18 @@ b"+i+"*=d\
 	      if (!(typeof options.fiducialUID === "string" || options.fiducialUID instanceof String)) {
 	        throw new Error("Option 'fiducialUID' must have type String.");
 	      }
-	      _this12.FiducialUID = options.fiducialUID;
+	      _this10.FiducialUID = options.fiducialUID;
 	    }
-	    return _this12;
+	    return _this10;
 	  }
 	  return _createClass(ScoordContentItem);
 	}(ContentItem);
-	var Scoord3DContentItem = /*#__PURE__*/function (_ContentItem13) {
-	  _inherits(Scoord3DContentItem, _ContentItem13);
+	var Scoord3DContentItem = /*#__PURE__*/function (_ContentItem11) {
+	  _inherits(Scoord3DContentItem, _ContentItem11);
 	  function Scoord3DContentItem(options) {
-	    var _this13;
+	    var _this11;
 	    _classCallCheck(this, Scoord3DContentItem);
-	    _this13 = _callSuper(this, Scoord3DContentItem, [{
+	    _this11 = _callSuper(this, Scoord3DContentItem, [{
 	      name: options.name,
 	      relationshipType: options.relationshipType,
 	      valueType: ValueTypes.SCOORD3D
@@ -21707,31 +21707,31 @@ b"+i+"*=d\
 	    if (options.graphicData[0] instanceof Array) {
 	      options.graphicData = [].concat.apply([], options.graphicData);
 	    }
-	    _this13.GraphicType = options.graphicType;
-	    _this13.GraphicData = options.graphicData;
+	    _this11.GraphicType = options.graphicType;
+	    _this11.GraphicData = options.graphicData;
 	    if (options.frameOfReferenceUID === undefined) {
 	      throw new Error("Option 'frameOfReferenceUID' is required for Scoord3DContentItem.");
 	    }
 	    if (!(typeof options.frameOfReferenceUID === "string" || options.frameOfReferenceUID instanceof String)) {
 	      throw new Error("Option 'frameOfReferenceUID' must have type String.");
 	    }
-	    _this13.ReferencedFrameOfReferenceUID = options.frameOfReferenceUID;
+	    _this11.ReferencedFrameOfReferenceUID = options.frameOfReferenceUID;
 	    if ("fiducialUID" in options) {
 	      if (!(typeof options.fiducialUID === "string" || options.fiducialUID instanceof String)) {
 	        throw new Error("Option 'fiducialUID' must have type String.");
 	      }
-	      _this13.FiducialUID = options.fiducialUID;
+	      _this11.FiducialUID = options.fiducialUID;
 	    }
-	    return _this13;
+	    return _this11;
 	  }
 	  return _createClass(Scoord3DContentItem);
 	}(ContentItem);
-	var TcoordContentItem = /*#__PURE__*/function (_ContentItem14) {
-	  _inherits(TcoordContentItem, _ContentItem14);
+	var TcoordContentItem = /*#__PURE__*/function (_ContentItem12) {
+	  _inherits(TcoordContentItem, _ContentItem12);
 	  function TcoordContentItem(options) {
-	    var _this14;
+	    var _this12;
 	    _classCallCheck(this, TcoordContentItem);
-	    _this14 = _callSuper(this, TcoordContentItem, [{
+	    _this12 = _callSuper(this, TcoordContentItem, [{
 	      name: options.name,
 	      relationshipType: options.relationshipType,
 	      valueType: ValueTypes.TCOORD
@@ -21747,22 +21747,22 @@ b"+i+"*=d\
 	        throw new Error("Option 'referencedSamplePositions' must have type Array.");
 	      }
 	      // TODO: ensure values are integers
-	      _this14.ReferencedSamplePositions = options.referencedSamplePositions;
+	      _this12.ReferencedSamplePositions = options.referencedSamplePositions;
 	    } else if (options.referencedTimeOffsets === undefined) {
 	      if (!(_typeof(options.referencedTimeOffsets) === "object" || options.referencedTimeOffsets instanceof Array)) {
 	        throw new Error("Option 'referencedTimeOffsets' must have type Array.");
 	      }
 	      // TODO: ensure values are floats
-	      _this14.ReferencedTimeOffsets = options.referencedTimeOffsets;
+	      _this12.ReferencedTimeOffsets = options.referencedTimeOffsets;
 	    } else if (options.referencedDateTime === undefined) {
 	      if (!(_typeof(options.referencedDateTime) === "object" || options.referencedDateTime instanceof Array)) {
 	        throw new Error("Option 'referencedDateTime' must have type Array.");
 	      }
-	      _this14.ReferencedDateTime = options.referencedDateTime;
+	      _this12.ReferencedDateTime = options.referencedDateTime;
 	    } else {
 	      throw new Error("One of the following options is required for TcoordContentItem: " + "'referencedSamplePositions', 'referencedTimeOffsets', or " + "'referencedDateTime'.");
 	    }
-	    return _this14;
+	    return _this12;
 	  }
 	  return _createClass(TcoordContentItem);
 	}(ContentItem);
@@ -22451,11 +22451,11 @@ b"+i+"*=d\
 	      (_this9 = _this7).push.apply(_this9, _toConsumableArray(options.observerDeviceContext));
 	    }
 	    if (options.subjectContext !== undefined) {
-	      var _this10;
+	      var _this0;
 	      if (options.subjectContext.constructor !== SubjectContext) {
 	        throw new Error("Option 'subjectContext' must have type SubjectContext");
 	      }
-	      (_this10 = _this7).push.apply(_this10, _toConsumableArray(options.subjectContext));
+	      (_this0 = _this7).push.apply(_this0, _toConsumableArray(options.subjectContext));
 	    }
 	    return _this7;
 	  }
@@ -22464,10 +22464,10 @@ b"+i+"*=d\
 	var ObserverContext = /*#__PURE__*/function (_Template6) {
 	  _inherits(ObserverContext, _Template6);
 	  function ObserverContext(options) {
-	    var _this12;
-	    var _this11;
+	    var _this10;
+	    var _this1;
 	    _classCallCheck(this, ObserverContext);
-	    _this11 = _callSuper(this, ObserverContext);
+	    _this1 = _callSuper(this, ObserverContext);
 	    if (options.observerType === undefined) {
 	      throw new Error("Option 'observerType' is required for ObserverContext.");
 	    } else {
@@ -22484,7 +22484,7 @@ b"+i+"*=d\
 	      value: options.observerType,
 	      relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	    });
-	    _this11.push(observerTypeItem);
+	    _this1.push(observerTypeItem);
 	    if (options.observerIdentifyingAttributes === undefined) {
 	      throw new Error("Option 'observerIdentifyingAttributes' is required for ObserverContext.");
 	    }
@@ -22510,17 +22510,17 @@ b"+i+"*=d\
 	    } else {
 	      throw new Error("Option 'oberverType' must be either 'Person' or 'Device'.");
 	    }
-	    (_this12 = _this11).push.apply(_this12, _toConsumableArray(options.observerIdentifyingAttributes));
-	    return _this11;
+	    (_this10 = _this1).push.apply(_this10, _toConsumableArray(options.observerIdentifyingAttributes));
+	    return _this1;
 	  }
 	  return _createClass(ObserverContext);
 	}(Template);
 	var PersonObserverIdentifyingAttributes = /*#__PURE__*/function (_Template7) {
 	  _inherits(PersonObserverIdentifyingAttributes, _Template7);
 	  function PersonObserverIdentifyingAttributes(options) {
-	    var _this13;
+	    var _this11;
 	    _classCallCheck(this, PersonObserverIdentifyingAttributes);
-	    _this13 = _callSuper(this, PersonObserverIdentifyingAttributes);
+	    _this11 = _callSuper(this, PersonObserverIdentifyingAttributes);
 	    if (options.name === undefined) {
 	      throw new Error("Option 'name' is required for PersonObserverIdentifyingAttributes.");
 	    }
@@ -22533,7 +22533,7 @@ b"+i+"*=d\
 	      value: options.name,
 	      relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	    });
-	    _this13.push(nameItem);
+	    _this11.push(nameItem);
 	    if (options.loginName !== undefined) {
 	      var loginNameItem = new TextContentItem({
 	        name: new CodedConcept({
@@ -22544,7 +22544,7 @@ b"+i+"*=d\
 	        value: options.loginName,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this13.push(loginNameItem);
+	      _this11.push(loginNameItem);
 	    }
 	    if (options.organizationName !== undefined) {
 	      var organizationNameItem = new TextContentItem({
@@ -22556,7 +22556,7 @@ b"+i+"*=d\
 	        value: options.organizationName,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this13.push(organizationNameItem);
+	      _this11.push(organizationNameItem);
 	    }
 	    if (options.roleInOrganization !== undefined) {
 	      var roleInOrganizationItem = new CodeContentItem({
@@ -22568,7 +22568,7 @@ b"+i+"*=d\
 	        value: options.roleInOrganization,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this13.push(roleInOrganizationItem);
+	      _this11.push(roleInOrganizationItem);
 	    }
 	    if (options.roleInProcedure !== undefined) {
 	      var roleInProcedureItem = new CodeContentItem({
@@ -22580,18 +22580,18 @@ b"+i+"*=d\
 	        value: options.roleInProcedure,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this13.push(roleInProcedureItem);
+	      _this11.push(roleInProcedureItem);
 	    }
-	    return _this13;
+	    return _this11;
 	  }
 	  return _createClass(PersonObserverIdentifyingAttributes);
 	}(Template);
 	var DeviceObserverIdentifyingAttributes = /*#__PURE__*/function (_Template8) {
 	  _inherits(DeviceObserverIdentifyingAttributes, _Template8);
 	  function DeviceObserverIdentifyingAttributes(options) {
-	    var _this14;
+	    var _this12;
 	    _classCallCheck(this, DeviceObserverIdentifyingAttributes);
-	    _this14 = _callSuper(this, DeviceObserverIdentifyingAttributes);
+	    _this12 = _callSuper(this, DeviceObserverIdentifyingAttributes);
 	    if (options.uid === undefined) {
 	      throw new Error("Option 'uid' is required for DeviceObserverIdentifyingAttributes.");
 	    }
@@ -22604,7 +22604,7 @@ b"+i+"*=d\
 	      value: options.uid,
 	      relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	    });
-	    _this14.push(deviceObserverItem);
+	    _this12.push(deviceObserverItem);
 	    if (options.manufacturerName !== undefined) {
 	      var manufacturerNameItem = new TextContentItem({
 	        name: new CodedConcept({
@@ -22615,7 +22615,7 @@ b"+i+"*=d\
 	        value: options.manufacturerName,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this14.push(manufacturerNameItem);
+	      _this12.push(manufacturerNameItem);
 	    }
 	    if (options.modelName !== undefined) {
 	      var modelNameItem = new TextContentItem({
@@ -22627,7 +22627,7 @@ b"+i+"*=d\
 	        value: options.modelName,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this14.push(modelNameItem);
+	      _this12.push(modelNameItem);
 	    }
 	    if (options.serialNumber !== undefined) {
 	      var serialNumberItem = new TextContentItem({
@@ -22639,7 +22639,7 @@ b"+i+"*=d\
 	        value: options.serialNumber,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this14.push(serialNumberItem);
+	      _this12.push(serialNumberItem);
 	    }
 	    if (options.physicalLocation !== undefined) {
 	      var physicalLocationItem = new TextContentItem({
@@ -22651,7 +22651,7 @@ b"+i+"*=d\
 	        value: options.physicalLocation,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this14.push(physicalLocationItem);
+	      _this12.push(physicalLocationItem);
 	    }
 	    if (options.roleInProcedure !== undefined) {
 	      var roleInProcedureItem = new CodeContentItem({
@@ -22663,19 +22663,19 @@ b"+i+"*=d\
 	        value: options.roleInProcedure,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this14.push(roleInProcedureItem);
+	      _this12.push(roleInProcedureItem);
 	    }
-	    return _this14;
+	    return _this12;
 	  }
 	  return _createClass(DeviceObserverIdentifyingAttributes);
 	}(Template);
 	var SubjectContext = /*#__PURE__*/function (_Template9) {
 	  _inherits(SubjectContext, _Template9);
 	  function SubjectContext(options) {
-	    var _this16;
-	    var _this15;
+	    var _this14;
+	    var _this13;
 	    _classCallCheck(this, SubjectContext);
-	    _this15 = _callSuper(this, SubjectContext);
+	    _this13 = _callSuper(this, SubjectContext);
 	    if (options.subjectClass === undefined) {
 	      throw new Error("Option 'subjectClass' is required for SubjectContext.");
 	    }
@@ -22691,7 +22691,7 @@ b"+i+"*=d\
 	      value: options.subjectClass,
 	      relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	    });
-	    _this15.push(subjectClassItem);
+	    _this13.push(subjectClassItem);
 	    var fetus = new CodedConcept({
 	      value: "121026 ",
 	      schemeDesignator: "DCM",
@@ -22722,17 +22722,17 @@ b"+i+"*=d\
 	    } else {
 	      throw new Error("Option 'subjectClass' must be either 'Fetus', 'Specimen', or 'Device'.");
 	    }
-	    (_this16 = _this15).push.apply(_this16, _toConsumableArray(options.subjectClassSpecificContext));
-	    return _this15;
+	    (_this14 = _this13).push.apply(_this14, _toConsumableArray(options.subjectClassSpecificContext));
+	    return _this13;
 	  }
 	  return _createClass(SubjectContext);
 	}(Template);
-	var SubjectContextFetus = /*#__PURE__*/function (_Template10) {
-	  _inherits(SubjectContextFetus, _Template10);
+	var SubjectContextFetus = /*#__PURE__*/function (_Template0) {
+	  _inherits(SubjectContextFetus, _Template0);
 	  function SubjectContextFetus(options) {
-	    var _this17;
+	    var _this15;
 	    _classCallCheck(this, SubjectContextFetus);
-	    _this17 = _callSuper(this, SubjectContextFetus);
+	    _this15 = _callSuper(this, SubjectContextFetus);
 	    if (options.subjectID === undefined) {
 	      throw new Error("Option 'subjectID' is required for SubjectContextFetus.");
 	    }
@@ -22745,17 +22745,17 @@ b"+i+"*=d\
 	      value: options.subjectID,
 	      relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	    });
-	    _this17.push(subjectIdItem);
-	    return _this17;
+	    _this15.push(subjectIdItem);
+	    return _this15;
 	  }
 	  return _createClass(SubjectContextFetus);
 	}(Template);
-	var SubjectContextSpecimen = /*#__PURE__*/function (_Template11) {
-	  _inherits(SubjectContextSpecimen, _Template11);
+	var SubjectContextSpecimen = /*#__PURE__*/function (_Template1) {
+	  _inherits(SubjectContextSpecimen, _Template1);
 	  function SubjectContextSpecimen(options) {
-	    var _this18;
+	    var _this16;
 	    _classCallCheck(this, SubjectContextSpecimen);
-	    _this18 = _callSuper(this, SubjectContextSpecimen);
+	    _this16 = _callSuper(this, SubjectContextSpecimen);
 	    if (options.uid === undefined) {
 	      throw new Error("Option 'uid' is required for SubjectContextSpecimen.");
 	    }
@@ -22768,7 +22768,7 @@ b"+i+"*=d\
 	      value: options.uid,
 	      relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	    });
-	    _this18.push(specimenUidItem);
+	    _this16.push(specimenUidItem);
 	    if (options.identifier !== undefined) {
 	      var specimenIdentifierItem = new TextContentItem({
 	        name: new CodedConcept({
@@ -22779,7 +22779,7 @@ b"+i+"*=d\
 	        value: options.identifier,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this18.push(specimenIdentifierItem);
+	      _this16.push(specimenIdentifierItem);
 	    }
 	    if (options.containerIdentifier !== undefined) {
 	      var containerIdentifierItem = new TextContentItem({
@@ -22791,7 +22791,7 @@ b"+i+"*=d\
 	        value: options.containerIdentifier,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this18.push(containerIdentifierItem);
+	      _this16.push(containerIdentifierItem);
 	    }
 	    if (options.specimenType !== undefined) {
 	      var specimenTypeItem = new CodeContentItem({
@@ -22803,18 +22803,18 @@ b"+i+"*=d\
 	        value: options.specimenType,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this18.push(specimenTypeItem);
+	      _this16.push(specimenTypeItem);
 	    }
-	    return _this18;
+	    return _this16;
 	  }
 	  return _createClass(SubjectContextSpecimen);
 	}(Template);
-	var SubjectContextDevice = /*#__PURE__*/function (_Template12) {
-	  _inherits(SubjectContextDevice, _Template12);
+	var SubjectContextDevice = /*#__PURE__*/function (_Template10) {
+	  _inherits(SubjectContextDevice, _Template10);
 	  function SubjectContextDevice(options) {
-	    var _this19;
+	    var _this17;
 	    _classCallCheck(this, SubjectContextDevice);
-	    _this19 = _callSuper(this, SubjectContextDevice, [options]);
+	    _this17 = _callSuper(this, SubjectContextDevice, [options]);
 	    if (options.name === undefined) {
 	      throw new Error("Option 'name' is required for SubjectContextDevice.");
 	    }
@@ -22827,7 +22827,7 @@ b"+i+"*=d\
 	      value: options.name,
 	      relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	    });
-	    _this19.push(deviceNameItem);
+	    _this17.push(deviceNameItem);
 	    if (options.uid !== undefined) {
 	      var deviceUidItem = new UIDRefContentItem({
 	        name: new CodedConcept({
@@ -22838,7 +22838,7 @@ b"+i+"*=d\
 	        value: options.uid,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this19.push(deviceUidItem);
+	      _this17.push(deviceUidItem);
 	    }
 	    if (options.manufacturerName !== undefined) {
 	      var manufacturerNameItem = new TextContentItem({
@@ -22850,7 +22850,7 @@ b"+i+"*=d\
 	        value: options.manufacturerName,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this19.push(manufacturerNameItem);
+	      _this17.push(manufacturerNameItem);
 	    }
 	    if (options.modelName !== undefined) {
 	      var modelNameItem = new TextContentItem({
@@ -22862,7 +22862,7 @@ b"+i+"*=d\
 	        value: options.modelName,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this19.push(modelNameItem);
+	      _this17.push(modelNameItem);
 	    }
 	    if (options.serialNumber !== undefined) {
 	      var serialNumberItem = new TextContentItem({
@@ -22874,7 +22874,7 @@ b"+i+"*=d\
 	        value: options.serialNumber,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this19.push(serialNumberItem);
+	      _this17.push(serialNumberItem);
 	    }
 	    if (options.physicalLocation !== undefined) {
 	      var physicalLocationItem = new TextContentItem({
@@ -22886,18 +22886,18 @@ b"+i+"*=d\
 	        value: options.physicalLocation,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this19.push(physicalLocationItem);
+	      _this17.push(physicalLocationItem);
 	    }
-	    return _this19;
+	    return _this17;
 	  }
 	  return _createClass(SubjectContextDevice);
 	}(Template);
-	var LanguageOfContentItemAndDescendants = /*#__PURE__*/function (_Template13) {
-	  _inherits(LanguageOfContentItemAndDescendants, _Template13);
+	var LanguageOfContentItemAndDescendants = /*#__PURE__*/function (_Template11) {
+	  _inherits(LanguageOfContentItemAndDescendants, _Template11);
 	  function LanguageOfContentItemAndDescendants(options) {
-	    var _this20;
+	    var _this18;
 	    _classCallCheck(this, LanguageOfContentItemAndDescendants);
-	    _this20 = _callSuper(this, LanguageOfContentItemAndDescendants);
+	    _this18 = _callSuper(this, LanguageOfContentItemAndDescendants);
 	    if (options.language === undefined) {
 	      options.language = new CodedConcept({
 	        value: "en-US",
@@ -22914,18 +22914,18 @@ b"+i+"*=d\
 	      value: options.language,
 	      relationshipType: RelationshipTypes.HAS_CONCEPT_MOD
 	    });
-	    _this20.push(languageItem);
-	    return _this20;
+	    _this18.push(languageItem);
+	    return _this18;
 	  }
 	  return _createClass(LanguageOfContentItemAndDescendants);
 	}(Template);
-	var _MeasurementsAndQualitatitiveEvaluations = /*#__PURE__*/function (_Template14) {
-	  _inherits(_MeasurementsAndQualitatitiveEvaluations, _Template14);
+	var _MeasurementsAndQualitatitiveEvaluations = /*#__PURE__*/function (_Template12) {
+	  _inherits(_MeasurementsAndQualitatitiveEvaluations, _Template12);
 	  function _MeasurementsAndQualitatitiveEvaluations(options) {
 	    var _groupItem$ContentSeq;
-	    var _this21;
+	    var _this19;
 	    _classCallCheck(this, _MeasurementsAndQualitatitiveEvaluations);
-	    _this21 = _callSuper(this, _MeasurementsAndQualitatitiveEvaluations);
+	    _this19 = _callSuper(this, _MeasurementsAndQualitatitiveEvaluations);
 	    var groupItem = new ContainerContentItem({
 	      name: new CodedConcept({
 	        value: "125007",
@@ -23005,17 +23005,17 @@ b"+i+"*=d\
 	        groupItem.ContentSequence.push(evaluation);
 	      });
 	    }
-	    _this21.push(groupItem);
-	    return _this21;
+	    _this19.push(groupItem);
+	    return _this19;
 	  }
 	  return _createClass(_MeasurementsAndQualitatitiveEvaluations);
 	}(Template);
 	var _ROIMeasurementsAndQualitativeEvaluations = /*#__PURE__*/function (_MeasurementsAndQuali) {
 	  _inherits(_ROIMeasurementsAndQualitativeEvaluations, _MeasurementsAndQuali);
 	  function _ROIMeasurementsAndQualitativeEvaluations(options) {
-	    var _this22;
+	    var _this20;
 	    _classCallCheck(this, _ROIMeasurementsAndQualitativeEvaluations);
-	    _this22 = _callSuper(this, _ROIMeasurementsAndQualitativeEvaluations, [{
+	    _this20 = _callSuper(this, _ROIMeasurementsAndQualitativeEvaluations, [{
 	      trackingIdentifier: options.trackingIdentifier,
 	      timePointContext: options.timePointContext,
 	      findingType: options.findingType,
@@ -23023,7 +23023,7 @@ b"+i+"*=d\
 	      measurements: options.measurements,
 	      qualitativeEvaluations: options.qualitativeEvaluations
 	    }]);
-	    var groupItem = _this22[0];
+	    var groupItem = _this20[0];
 	    var wereReferencesProvided = [options.referencedRegions !== undefined, options.referencedVolume !== undefined, options.referencedSegmentation !== undefined];
 	    var numReferences = wereReferencesProvided.reduce(function (a, b) {
 	      return a + b;
@@ -23057,8 +23057,8 @@ b"+i+"*=d\
 	      }
 	      groupItem.ContentSequence.push(options.referencedSegmentation);
 	    }
-	    _this22[0] = groupItem;
-	    return _this22;
+	    _this20[0] = groupItem;
+	    return _this20;
 	  }
 	  return _createClass(_ROIMeasurementsAndQualitativeEvaluations);
 	}(_MeasurementsAndQualitatitiveEvaluations);
@@ -23107,12 +23107,12 @@ b"+i+"*=d\
 	  }
 	  return _createClass(VolumetricROIMeasurementsAndQualitativeEvaluations);
 	}(_ROIMeasurementsAndQualitativeEvaluations);
-	var MeasurementsDerivedFromMultipleROIMeasurements = /*#__PURE__*/function (_Template15) {
-	  _inherits(MeasurementsDerivedFromMultipleROIMeasurements, _Template15);
+	var MeasurementsDerivedFromMultipleROIMeasurements = /*#__PURE__*/function (_Template13) {
+	  _inherits(MeasurementsDerivedFromMultipleROIMeasurements, _Template13);
 	  function MeasurementsDerivedFromMultipleROIMeasurements(options) {
-	    var _this23;
+	    var _this21;
 	    _classCallCheck(this, MeasurementsDerivedFromMultipleROIMeasurements);
-	    _this23 = _callSuper(this, MeasurementsDerivedFromMultipleROIMeasurements, [options]);
+	    _this21 = _callSuper(this, MeasurementsDerivedFromMultipleROIMeasurements, [options]);
 	    if (options.derivation === undefined) {
 	      throw new Error("Option 'derivation' is required for " + "MeasurementsDerivedFromMultipleROIMeasurements.");
 	    }
@@ -23142,8 +23142,8 @@ b"+i+"*=d\
 	      }
 	      (_valueItem$ContentSeq5 = valueItem.ContentSequence).push.apply(_valueItem$ContentSeq5, _toConsumableArray(options.measurementProperties));
 	    }
-	    _this23.push(valueItem);
-	    return _this23;
+	    _this21.push(valueItem);
+	    return _this21;
 	  }
 	  return _createClass(MeasurementsDerivedFromMultipleROIMeasurements);
 	}(Template);
@@ -23163,12 +23163,12 @@ b"+i+"*=d\
 	  }
 	  return _createClass(MeasurementAndQualitativeEvaluationGroup);
 	}(_MeasurementsAndQualitatitiveEvaluations);
-	var ROIMeasurements = /*#__PURE__*/function (_Template16) {
-	  _inherits(ROIMeasurements, _Template16);
+	var ROIMeasurements = /*#__PURE__*/function (_Template14) {
+	  _inherits(ROIMeasurements, _Template14);
 	  function ROIMeasurements(options) {
-	    var _this24;
+	    var _this22;
 	    _classCallCheck(this, ROIMeasurements);
-	    _this24 = _callSuper(this, ROIMeasurements);
+	    _this22 = _callSuper(this, ROIMeasurements);
 	    if (options.method !== undefined) {
 	      var methodItem = new CodeContentItem({
 	        name: new CodedConcept({
@@ -23179,7 +23179,7 @@ b"+i+"*=d\
 	        value: options.method,
 	        relationshipType: RelationshipTypes.HAS_CONCEPT_MOD
 	      });
-	      _this24.push(methodItem);
+	      _this22.push(methodItem);
 	    }
 	    if (options.findingSites !== undefined) {
 	      if (!(_typeof(options.findingSites) === "object" || options.findingSites instanceof Array)) {
@@ -23189,7 +23189,7 @@ b"+i+"*=d\
 	        if (!site || site.constructor !== FindingSite) {
 	          throw new Error("Items of option 'findingSites' must have type FindingSite.");
 	        }
-	        _this24.push(site);
+	        _this22.push(site);
 	      });
 	    }
 	    if (options.measurements === undefined) {
@@ -23205,19 +23205,19 @@ b"+i+"*=d\
 	      if (!measurement || measurement.constructor !== Measurement) {
 	        throw new Error("Items of option 'measurements' must have type Measurement.");
 	      }
-	      _this24.push(measurement);
+	      _this22.push(measurement);
 	    });
-	    return _this24;
+	    return _this22;
 	  }
 	  return _createClass(ROIMeasurements);
 	}(Template);
-	var MeasurementReport = /*#__PURE__*/function (_Template17) {
-	  _inherits(MeasurementReport, _Template17);
+	var MeasurementReport = /*#__PURE__*/function (_Template15) {
+	  _inherits(MeasurementReport, _Template15);
 	  function MeasurementReport(options) {
 	    var _item$ContentSequence, _item$ContentSequence2, _item$ContentSequence3;
-	    var _this25;
+	    var _this23;
 	    _classCallCheck(this, MeasurementReport);
-	    _this25 = _callSuper(this, MeasurementReport);
+	    _this23 = _callSuper(this, MeasurementReport);
 	    if (options.observationContext === undefined) {
 	      throw new Error("Option 'observationContext' is required for MeasurementReport.");
 	    }
@@ -23302,17 +23302,17 @@ b"+i+"*=d\
 	      _containerItem2.ContentSequence = _construct(ContentSequence, _toConsumableArray(options.qualitativeEvaluations));
 	      item.ContentSequence.push(_containerItem2);
 	    }
-	    _this25.push(item);
-	    return _this25;
+	    _this23.push(item);
+	    return _this23;
 	  }
 	  return _createClass(MeasurementReport);
 	}(Template);
-	var TimePointContext = /*#__PURE__*/function (_Template18) {
-	  _inherits(TimePointContext, _Template18);
+	var TimePointContext = /*#__PURE__*/function (_Template16) {
+	  _inherits(TimePointContext, _Template16);
 	  function TimePointContext(options) {
-	    var _this26;
+	    var _this24;
 	    _classCallCheck(this, TimePointContext);
-	    _this26 = _callSuper(this, TimePointContext, [options]);
+	    _this24 = _callSuper(this, TimePointContext, [options]);
 	    if (options.timePoint === undefined) {
 	      throw new Error("Option 'timePoint' is required for TimePointContext.");
 	    }
@@ -23325,7 +23325,7 @@ b"+i+"*=d\
 	      value: options.timePoint,
 	      relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	    });
-	    _this26.push(timePointItem);
+	    _this24.push(timePointItem);
 	    if (options.timePointType !== undefined) {
 	      var timePointTypeItem = new CodeContentItem({
 	        name: new CodedConcept({
@@ -23336,7 +23336,7 @@ b"+i+"*=d\
 	        value: options.timePointType,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this26.push(timePointTypeItem);
+	      _this24.push(timePointTypeItem);
 	    }
 	    if (options.timePointOrder !== undefined) {
 	      var timePointOrderItem = new NumContentItem({
@@ -23348,7 +23348,7 @@ b"+i+"*=d\
 	        value: options.timePointOrder,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this26.push(timePointOrderItem);
+	      _this24.push(timePointOrderItem);
 	    }
 	    if (options.subjectTimePointIdentifier !== undefined) {
 	      var subjectTimePointIdentifierItem = new NumContentItem({
@@ -23360,7 +23360,7 @@ b"+i+"*=d\
 	        value: options.subjectTimePointIdentifier,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this26.push(subjectTimePointIdentifierItem);
+	      _this24.push(subjectTimePointIdentifierItem);
 	    }
 	    if (options.protocolTimePointIdentifier !== undefined) {
 	      var protocolTimePointIdentifierItem = new NumContentItem({
@@ -23372,7 +23372,7 @@ b"+i+"*=d\
 	        value: options.protocolTimePointIdentifier,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this26.push(protocolTimePointIdentifierItem);
+	      _this24.push(protocolTimePointIdentifierItem);
 	    }
 	    if (options.temporalOffsetFromEvent !== undefined) {
 	      // TODO: Missing LongitudinalTemporalOffsetFromEventContentItem
@@ -23385,18 +23385,18 @@ b"+i+"*=d\
 	      //             "LongitudinalTemporalOffsetFromEventContentItem."
 	      //     );
 	      // }
-	      _this26.push(options.temporalOffsetFromEvent);
+	      _this24.push(options.temporalOffsetFromEvent);
 	    }
-	    return _this26;
+	    return _this24;
 	  }
 	  return _createClass(TimePointContext);
 	}(Template);
-	var ImageLibrary = /*#__PURE__*/function (_Template19) {
-	  _inherits(ImageLibrary, _Template19);
+	var ImageLibrary = /*#__PURE__*/function (_Template17) {
+	  _inherits(ImageLibrary, _Template17);
 	  function ImageLibrary() {
-	    var _this27;
+	    var _this25;
 	    _classCallCheck(this, ImageLibrary);
-	    _this27 = _callSuper(this, ImageLibrary);
+	    _this25 = _callSuper(this, ImageLibrary);
 	    var libraryItem = new ContainerContentItem({
 	      name: new CodedConcept({
 	        value: "111028",
@@ -23405,17 +23405,17 @@ b"+i+"*=d\
 	      }),
 	      relationshipType: RelationshipTypes.CONTAINS
 	    });
-	    _this27.push(libraryItem);
-	    return _this27;
+	    _this25.push(libraryItem);
+	    return _this25;
 	  }
 	  return _createClass(ImageLibrary);
 	}(Template);
-	var AlgorithmIdentification = /*#__PURE__*/function (_Template20) {
-	  _inherits(AlgorithmIdentification, _Template20);
+	var AlgorithmIdentification = /*#__PURE__*/function (_Template18) {
+	  _inherits(AlgorithmIdentification, _Template18);
 	  function AlgorithmIdentification(options) {
-	    var _this28;
+	    var _this26;
 	    _classCallCheck(this, AlgorithmIdentification);
-	    _this28 = _callSuper(this, AlgorithmIdentification);
+	    _this26 = _callSuper(this, AlgorithmIdentification);
 	    if (options.name === undefined) {
 	      throw new Error("Option 'name' is required for AlgorithmIdentification.");
 	    }
@@ -23431,7 +23431,7 @@ b"+i+"*=d\
 	      value: options.name,
 	      relationshipType: RelationshipTypes.HAS_CONCEPT_MOD
 	    });
-	    _this28.push(nameItem);
+	    _this26.push(nameItem);
 	    var versionItem = new TextContentItem({
 	      name: new CodedConcept({
 	        value: "111003",
@@ -23441,7 +23441,7 @@ b"+i+"*=d\
 	      value: options.version,
 	      relationshipType: RelationshipTypes.HAS_CONCEPT_MOD
 	    });
-	    _this28.push(versionItem);
+	    _this26.push(versionItem);
 	    if (options.parameters !== undefined) {
 	      if (!(_typeof(options.parameters) === "object" || options.parameters instanceof Array)) {
 	        throw new Error("Option 'parameters' must have type Array.");
@@ -23456,19 +23456,19 @@ b"+i+"*=d\
 	          value: parameter,
 	          relationshipType: RelationshipTypes.HAS_CONCEPT_MOD
 	        });
-	        _this28.push(parameterItem);
+	        _this26.push(parameterItem);
 	      });
 	    }
-	    return _this28;
+	    return _this26;
 	  }
 	  return _createClass(AlgorithmIdentification);
 	}(Template);
-	var TrackingIdentifier = /*#__PURE__*/function (_Template21) {
-	  _inherits(TrackingIdentifier, _Template21);
+	var TrackingIdentifier = /*#__PURE__*/function (_Template19) {
+	  _inherits(TrackingIdentifier, _Template19);
 	  function TrackingIdentifier(options) {
-	    var _this29;
+	    var _this27;
 	    _classCallCheck(this, TrackingIdentifier);
-	    _this29 = _callSuper(this, TrackingIdentifier, [options]);
+	    _this27 = _callSuper(this, TrackingIdentifier, [options]);
 	    if (options.uid === undefined) {
 	      throw new Error("Option 'uid' is required for TrackingIdentifier.");
 	    }
@@ -23482,7 +23482,7 @@ b"+i+"*=d\
 	        value: options.identifier,
 	        relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	      });
-	      _this29.push(trackingIdentifierItem);
+	      _this27.push(trackingIdentifierItem);
 	    }
 	    var trackingUIDItem = new UIDRefContentItem({
 	      name: new CodedConcept({
@@ -23493,8 +23493,8 @@ b"+i+"*=d\
 	      value: options.uid,
 	      relationshipType: RelationshipTypes.HAS_OBS_CONTEXT
 	    });
-	    _this29.push(trackingUIDItem);
-	    return _this29;
+	    _this27.push(trackingUIDItem);
+	    return _this27;
 	  }
 	  return _createClass(TrackingIdentifier);
 	}(Template);
