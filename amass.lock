@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:fbfb451204831aa39957dfabd21160dab3453c77350a33fa296cdbd2d546d149",
+  "content_hash": "sha256:7323d757c1b86dd251c2109a0a3257b22a10f6ef7e2bfc0948d243abf0bd7fb8",
   "dependencies": [
     {
       "name": "@diagnijmegen/rse-grand-challenge-dicom-deid-procedure",
@@ -539,6 +539,14 @@
       "version": "0.43.0",
       "provider": "unpkg",
       "assets": [
+        {
+          "name": "build/dcmjs.js",
+          "sri": "sha256-mRqCqFSNl4jZJKl28DXBs1EFG9PExZSN6QqwC+SGtQw="
+        },
+        {
+          "name": "build/dcmjs.js.map",
+          "sri": "sha256-z6uj86izD6m4xSAWTxKKwzBqB2exPTc9JXyMbFFNP5I="
+        },
         {
           "name": "build/dcmjs.min.js",
           "sri": "sha256-3Am7II2X2N/cnT5u6Ugh6zlC0OCP08PT9hnpG4KpIfk="
