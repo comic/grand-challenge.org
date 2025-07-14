@@ -3,6 +3,7 @@ from django.contrib.admin import AdminSite
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
 
+from grandchallenge.components.admin import requeue_jobs
 from grandchallenge.evaluation.admin import (
     PhaseAdmin,
     SubmissionAdmin,
@@ -12,6 +13,7 @@ from grandchallenge.evaluation.models import Evaluation, Submission
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.factories import (
+    EvaluationFactory,
     MethodFactory,
     PhaseFactory,
     SubmissionFactory,
@@ -119,3 +121,59 @@ def test_reevaluate_submission_idempotent(rf):
     )
 
     assert Evaluation.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_requeueing_external_evaluation_not_possible():
+    phase_ext = PhaseFactory(external_evaluation=True)
+    phase_int = PhaseFactory()
+
+    eval_ext = EvaluationFactory(
+        time_limit=60,
+        status=Evaluation.FAILURE,
+        submission__phase=phase_ext,
+    )
+    eval_int = EvaluationFactory(
+        time_limit=60,
+        status=Evaluation.FAILURE,
+        submission__phase=phase_int,
+    )
+    evals = Evaluation.objects.all()
+
+    assert len(evals) == 2
+
+    requeue_jobs(None, None, evals)
+
+    eval_ext.refresh_from_db()
+    eval_int.refresh_from_db()
+
+    # int evaluation has been requeued
+    assert eval_int.status == Evaluation.RETRY
+    # ext evaluation has not been requeued
+    assert eval_ext.status == Evaluation.FAILURE
+
+
+@pytest.mark.django_db
+def test_rescheduling_external_evaluation_not_possible(rf):
+    phase_ext = PhaseFactory(external_evaluation=True)
+    phase_int = PhaseFactory()
+
+    SubmissionFactory(phase=phase_ext)
+    SubmissionFactory(phase=phase_int)
+
+    modeladmin = SubmissionAdmin(Submission, AdminSite)
+    request = rf.get("/foo")
+    # Add session
+    middleware = SessionMiddleware(lambda x: None)
+    middleware.process_request(request)
+    request.session.save()
+    # Add messages storage
+    messages_storage = FallbackStorage(request)
+    request.session["_messages"] = messages_storage
+    request._messages = messages_storage
+
+    reevaluate_submissions(modeladmin, request, Submission.objects.all())
+
+    messages = [m.message for m in request._messages]
+    assert len(messages) == 1
+    assert messages[0] == "External evaluations cannot be requeued."
