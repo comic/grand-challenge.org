@@ -13,7 +13,7 @@
         </button>
     </div>
     <div class="collapse navbar-collapse" id="collapsiblePhasesNav">
-        <ul class="nav nav-pills flex-wrap">
+        <ul class="navbar-nav nav-pills flex-wrap">
             {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-detail,evaluation:leaderboard,evaluation:detail' %}
                 {% for combined_leaderboard in challenge.combinedleaderboard_set.all %}
                     <li class="nav-item">
