@@ -1,0 +1,18 @@
+{
+  "status": "done",
+  "assets": {
+    "jquery-431ddbc5ad8d48a722ec.js": {
+      "name": "jquery-431ddbc5ad8d48a722ec.js",
+      "path": "jquery-431ddbc5ad8d48a722ec.js"
+    },
+    "jquery-431ddbc5ad8d48a722ec.js.LICENSE.txt": {
+      "name": "jquery-431ddbc5ad8d48a722ec.js.LICENSE.txt",
+      "path": "jquery-431ddbc5ad8d48a722ec.js.LICENSE.txt"
+    }
+  },
+  "chunks": {
+    "jquery": [
+      "jquery-431ddbc5ad8d48a722ec.js"
+    ]
+  }
+}

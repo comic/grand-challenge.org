@@ -62,6 +62,7 @@ dependencies = [
     "grand-challenge-forge>=0.7.1",
     "biopython",
     "cachetools",
+    "django-webpack-loader>=3.2.1",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"

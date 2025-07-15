@@ -4,16 +4,24 @@
   "description": "A platform for end-to-end development of machine learning solutions in biomedical imaging",
   "main": "index.js",
   "scripts": {
+    "build": "webpack --config webpack.config.js --mode production",
     "test": "jest"
   },
   "keywords": [],
   "author": "DIAG",
   "license": "Apache-2.0",
   "devDependencies": {
+    "clean-webpack-plugin": "^4.0.0",
+    "css-loader": "^7.1.2",
     "jest": "^30.0.4",
-    "jest-environment-jsdom": "^30.0.4"
+    "jest-environment-jsdom": "^30.0.4",
+    "mini-css-extract-plugin": "^2.9.2",
+    "webpack": "^5.100.1",
+    "webpack-bundle-tracker": "^3.2.1",
+    "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "dcmjs": "^0.43.0"
+    "dcmjs": "^0.43.0",
+    "jquery": "^3.7.0"
   }
 }

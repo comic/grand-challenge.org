@@ -1038,6 +1038,15 @@ wheels = [
 ]
 
 [[package]]
+name = "django-webpack-loader"
+version = "3.2.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/64/e3/7c824814222d8411e5b2a72f4650e0181893bafa8324c33a5f77dd41db42/django_webpack_loader-3.2.1.tar.gz", hash = "sha256:d4bfaca9a640f087e7feeeb2ca6afd3d0a644bce3925b3d430448989c1673774", size = 17855, upload-time = "2025-06-16T12:33:24.353Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/79/dc/216df230d008495613b6fa3fe6f5f38c99c8516e81acda8cbe73a3c0f14c/django_webpack_loader-3.2.1-py2.py3-none-any.whl", hash = "sha256:b7e505bcdf7af8f75433f13d54010e0a95c61a8b80890a700a598602656e09bf", size = 20806, upload-time = "2025-06-16T12:33:22.672Z" },
+]
+
+[[package]]
 name = "django-widget-tweaks"
 version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1250,6 +1259,7 @@ dependencies = [
     { name = "django-simple-history" },
     { name = "django-stdimage" },
     { name = "django-storages", extra = ["s3"] },
+    { name = "django-webpack-loader" },
     { name = "djangorestframework" },
     { name = "djangorestframework-csv" },
     { name = "drf-spectacular" },
@@ -1334,6 +1344,7 @@ requires-dist = [
     { name = "django-simple-history" },
     { name = "django-stdimage" },
     { name = "django-storages", extras = ["s3"], specifier = ">=1.14.2" },
+    { name = "django-webpack-loader", specifier = ">=3.2.1" },
     { name = "djangorestframework" },
     { name = "djangorestframework-csv" },
     { name = "drf-spectacular" },
