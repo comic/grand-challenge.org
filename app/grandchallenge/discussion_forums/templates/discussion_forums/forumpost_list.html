@@ -75,12 +75,7 @@
                     </form>
                 {% endif %}
             </div>
-            <!-- Version for medium screens and up (≥768px) -->
-            <div class="d-none d-md-block col-4 text-right">
-                {% include 'actstream/partials/follow_unfollow_links.html' with object=topic %}
-            </div>
-            <!-- Version for small screens (phones) (<768px) -->
-            <div class="d-block d-md-none col-12 text-left">
+            <div class="col-12 col-md-4 text-left text-md-right">
                 {% include 'actstream/partials/follow_unfollow_links.html' with object=topic %}
             </div>
         </div>

@@ -6,24 +6,18 @@
 
 {% block extra_content %}
     {% get_obj_perms request.user for forum as "user_perms" %}
-    <!-- Version for medium screens and up (≥768px) -->
-    <div class="row d-none d-md-block">
-        <div class="col-12 d-flex justify-content-between">
+    <div class="row">
+        <div class="col-12 d-flex justify-content-between flex-column flex-md-row">
             {% if 'create_forum_topic' in user_perms %}
-                <div><a href="{% url 'discussion-forums:topic-create' %}" class="btn btn-primary btn-sm mb-3 mt-2 py-1"><i class="fas fa-comments mr-1"></i>New topic</a></div>
+                <div class="mb-2 mb-md-0">
+                    <a href="{% url 'discussion-forums:topic-create' %}" class="btn btn-primary btn-sm mb-3 mt-2 py-1">
+                        <i class="fas fa-comments mr-1"></i>New topic
+                    </a>
+                </div>
             {% endif %}
-            <div class="btn btn-sm mx-0 p-0">{% include "grandchallenge/partials/pagination.html" %}</div>
-         </div>
-    </div>
-    <!-- Version for small screens (phones) (<768px) -->
-    <div>
-        {% if 'create_forum_topic' in user_perms %}
-            <div class="d-flex d-block d-md-none">
-                <div><a href="{% url 'discussion-forums:topic-create' %}" class="btn btn-primary btn-sm"><i class="fas fa-comments mr-1"></i>New topic</a></div>
+            <div class="btn btn-sm mx-0 p-0 mb-3 align-self-end align-self-md-center">
+                {% include "grandchallenge/partials/pagination.html" %}
             </div>
-        {% endif %}
-        <div class="d-flex d-block d-md-none justify-content-end">
-            <div class="btn btn-sm mx-0 mb-3 p-0">{% include "grandchallenge/partials/pagination.html" %}</div>
         </div>
     </div>
     {% if announcements %}
