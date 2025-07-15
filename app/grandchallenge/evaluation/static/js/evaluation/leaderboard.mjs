@@ -31,7 +31,6 @@ $(document).ready(() => {
             },
         ],
         ordering: true,
-        autoWidth: false,
         layout: getDatatableLayout(),
         buttons: getDataTablesButtons(),
     });
