@@ -3,6 +3,8 @@
 {% load static %}
 {% load to_range %}
 
+{% block container %}container-fluid{% endblock %}
+
 {% block title %}
     {{ phase.title }} Leaderboard - Leaderboards - {{ block.super }}
 {% endblock %}
@@ -18,11 +20,20 @@
     </ol>
 {% endblock %}
 
-{% block topbar2 %}
+{% block sidebar %}
     {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
 {% endblock %}
 
 {% block content %}
+    <div class="navbar-toggler p-0">
+        <button class="btn btn-outline-dark phaseButton px-4"
+                data-toggle="collapse"
+                data-target="#collapsiblePhasesNav"
+                type="button"
+                aria-expanded="false">
+            Choose a Phase <i class="fa fa-bars ml-3"></i>
+        </button>
+    </div>
     <h2>{{ phase.title }} Leaderboard {{ request.GET.date }}</h2>
 
     {% if "change_challenge" in challenge_perms %}

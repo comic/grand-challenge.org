@@ -3,15 +3,6 @@
 {% load evaluation_extras %}
 
 <nav class="navbar p-0 mb-3 {% if challenge.phase_set.count < 6 %}navbar-expand-lg{% endif %}">
-    <div class="navbar-toggler p-0">
-        <button class="btn btn-outline-dark phaseButton px-4"
-                data-toggle="collapse"
-                data-target="#collapsiblePhasesNav"
-                type="button"
-                aria-expanded="false">
-            Choose a Phase <i class="fa fa-bars ml-3"></i>
-        </button>
-    </div>
     <div class="collapse navbar-collapse" id="collapsiblePhasesNav">
         <ul class="navbar-nav nav-pills flex-wrap">
             {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-detail,evaluation:leaderboard,evaluation:detail' %}
