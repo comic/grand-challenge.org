@@ -1777,15 +1777,16 @@ def test_validate_user_upload_resource_error_handling(
     class MockUserUpload:
         is_completed = True
 
-        @classmethod
-        def read_object(cls, *_, **__):
+        @property
+        def file_object(self):
             if mock_error is UnicodeDecodeError:
                 # Requires some args
                 raise mock_error("foo", b"", 0, 1, "bar")
-            raise mock_error
+            else:
+                raise mock_error
 
     with pytest.raises(expected_error) as err:
-        civ.validate_user_upload(user_upload=MockUserUpload)
+        civ.validate_user_upload(user_upload=MockUserUpload())
 
     if msg:
         assert msg in str(err)

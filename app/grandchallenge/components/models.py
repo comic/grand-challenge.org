@@ -1512,12 +1512,14 @@ class ComponentInterfaceValue(models.Model):
         try:
             if self.interface.is_json_kind:
                 try:
-                    value = json.load(user_upload.fileobj)
+                    value = json.load(user_upload.file_object)
                 except JSONDecodeError as error:
                     raise ValidationError(error)
                 self.interface.validate_against_schema(value=value)
             elif self.interface.kind == InterfaceKindChoices.NEWICK:
-                validate_newick_tree_format(tree=user_upload.read_object())
+                validate_newick_tree_format(
+                    tree=user_upload.file_object.read().decode("utf-8")
+                )
             elif self.interface.kind == InterfaceKindChoices.BIOM:
                 with NamedTemporaryFile() as temp_file:
                     user_upload.download_fileobj(temp_file)

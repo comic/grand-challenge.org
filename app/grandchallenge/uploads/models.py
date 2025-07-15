@@ -315,12 +315,9 @@ class UserUpload(UUIDModel):
         self.status = self.StatusChoices.ABORTED
 
     @property
-    def fileobj(self):
+    def file_object(self):
         obj = self._client.get_object(Bucket=self.bucket, Key=self.key)
         return obj["Body"]
-
-    def read_object(self):
-        return self.fileobj.read().decode("utf-8")
 
 
 @receiver(post_delete, sender=UserUpload)
