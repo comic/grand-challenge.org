@@ -402,8 +402,8 @@ class Executor(ABC):
             fileobj.seek(0)
 
             try:
-                result = json.loads(
-                    fileobj.read().decode("utf-8"),
+                result = json.load(
+                    fileobj,
                 )
             except JSONDecodeError:
                 raise ComponentException(
@@ -527,8 +527,8 @@ class Executor(ABC):
                     Key=key,
                 )
                 fileobj.seek(0)
-                result = json.loads(
-                    fileobj.read().decode("utf-8"),
+                result = json.load(
+                    fileobj,
                     parse_constant=lambda x: None,  # Removes -inf, inf and NaN
                 )
             civ = interface.create_instance(value=result)

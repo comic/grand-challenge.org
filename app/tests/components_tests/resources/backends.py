@@ -25,7 +25,7 @@ class IOCopyExecutor(Executor):
                     Key=self._invocation_key,
                 )
                 f.seek(0)
-                invocation_json = json.loads(f.read().decode("utf-8"))
+                invocation_json = json.load(f)
 
             for task in invocation_json:
                 # Copy inputs to outputs

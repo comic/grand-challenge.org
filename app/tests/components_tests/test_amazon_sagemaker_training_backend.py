@@ -214,7 +214,7 @@ def test_invocation_json(settings):
             Key=executor._invocation_key,
         )
         fileobj.seek(0)
-        result = json.loads(fileobj.read().decode("utf-8"))
+        result = json.load(fileobj)
 
     assert result == [
         {

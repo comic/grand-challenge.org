@@ -1488,9 +1488,9 @@ class ComponentInterfaceValue(models.Model):
             return
         if self.interface.saved_in_object_store:
             self._validate_file_only()
-            with self.file.open("r") as f:
+            with self.file.open("r") as fileobj:
                 try:
-                    value = json.loads(f.read().decode("utf-8"))
+                    value = json.load(fileobj)
                 except JSONDecodeError as error:
                     raise ValidationError(error)
                 except UnicodeDecodeError:
@@ -1512,7 +1512,7 @@ class ComponentInterfaceValue(models.Model):
         try:
             if self.interface.is_json_kind:
                 try:
-                    value = json.loads(user_upload.read_object())
+                    value = json.load(user_upload.fileobj)
                 except JSONDecodeError as error:
                     raise ValidationError(error)
                 self.interface.validate_against_schema(value=value)

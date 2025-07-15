@@ -139,7 +139,7 @@ def test_inputs_json(settings):
             Key="/io/test/test/test/inputs.json",
         )
         fileobj.seek(0)
-        result = json.loads(fileobj.read().decode("utf-8"))
+        result = json.load(fileobj)
 
     expected = [
         {

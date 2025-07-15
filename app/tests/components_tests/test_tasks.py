@@ -143,7 +143,7 @@ def test_civ_value_to_file():
     civ.refresh_from_db()
 
     with civ.file.open("r") as f:
-        v = json.loads(f.read())
+        v = json.load(f)
 
     assert v == {"foo": 1, "bar": None}
     assert civ.value is None

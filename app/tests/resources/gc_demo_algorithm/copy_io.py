@@ -121,7 +121,7 @@ def create_output():
     for file in files:
         try:
             with open(file) as f:
-                val = json.loads(f.read())
+                val = json.load(f)
         except Exception as e:
             warn(f"Could not load {file} as json, {e}")
             val = "file"

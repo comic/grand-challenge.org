@@ -665,10 +665,8 @@ def _get_image_config_and_sha256(*, instance):
 
 def _get_image_manifest(*, container_image_files, open_tarfile):
     try:
-        manifest = json.loads(
-            open_tarfile.extractfile(
-                container_image_files["manifest.json"]
-            ).read()
+        manifest = json.load(
+            open_tarfile.extractfile(container_image_files["manifest.json"])
         )
     except KeyError:
         raise ValidationError(
@@ -691,10 +689,8 @@ def _get_image_config_file(
     config_filename = image_manifest["Config"]
 
     try:
-        config = json.loads(
-            open_tarfile.extractfile(
-                container_image_files[config_filename]
-            ).read()
+        config = json.load(
+            open_tarfile.extractfile(container_image_files[config_filename])
         )
     except KeyError:
         raise ValidationError(
