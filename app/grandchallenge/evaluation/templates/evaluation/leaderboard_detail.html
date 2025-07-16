@@ -3,8 +3,6 @@
 {% load static %}
 {% load to_range %}
 
-{% block container %}container-fluid{% endblock %}
-
 {% block title %}
     {{ phase.title }} Leaderboard - Leaderboards - {{ block.super }}
 {% endblock %}
@@ -20,11 +18,11 @@
     </ol>
 {% endblock %}
 
-{% block sidebar %}
+{% block sidebar_fluid %}
     {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
 {% endblock %}
 
-{% block content %}
+{% block content_fluid %}
 
     <div class="navbar-toggler p-0">
         <a class="btn btn-outline-primary"

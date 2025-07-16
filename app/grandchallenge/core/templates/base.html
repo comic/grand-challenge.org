@@ -100,6 +100,18 @@
             {% endblock %}
         </div>
 
+        <div class="container-fluid pb-3">
+            {% block outer_content_fluid %}
+                <div class="row">
+                    {% block sidebar_fluid %}{% endblock %}
+                    <div class="col overflow-auto">
+                        {% block content_fluid %}
+                        {% endblock %}
+                    </div>
+                </div>
+            {% endblock %}
+        </div>
+
         {% block post_content %}
         {% endblock %}
     </main>
