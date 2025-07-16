@@ -20,8 +20,8 @@
 
                     {% if challenge.display_forum_link %}
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.view_name == 'forum:forum' or request.resolver_match.view_name == 'forum_conversation:topic' or request.resolver_match.view_name == 'forum_conversation:topic_create' or request.resolver_match.view_name == 'forum_tracking:mark_topics_read' or request.resolver_match.view_name == 'forum_conversation:topic_update' or request.resolver_match.view_name == 'forum_conversation:post_create' or request.resolver_match.view_name == 'forum_conversation:post_update' or request.resolver_match.view_name == 'forum_conversation:post_delete' %} show active {% endif %}"
-                               href="{% url 'forum:forum' slug=challenge.forum.slug pk=challenge.forum.pk %}">
+                            <a class="nav-link {% if request.resolver_match.view_name == 'discussion-forums:topic-list' or request.resolver_match.view_name == 'discussion-forums:topic-create' or request.resolver_match.view_name == 'discussion-forums:topic-post-list' or request.resolver_match.view_name == 'discussion-forums:topic-delete' %} show active {% endif %}"
+                               href="{% url 'discussion-forums:topic-list' challenge_short_name=challenge.short_name %}">
                                 <i class="fas fa-comments fa-fw"></i>&nbsp;&nbsp;Forum
                             </a>
                         </li>
@@ -32,7 +32,8 @@
                             {% if "change_challenge" in challenge_perms or user_is_participant %}
                                 <li class="nav-item">
                                     <a class="nav-link {% if request.resolver_match.app_name == 'teams' %}active{% endif %}"
-                                       href="{% url 'teams:list' challenge_short_name=challenge.short_name %}"> <i class="fas fa-users fa-fw"></i>&nbsp;&nbsp;Teams</a>
+                                       href="{% url 'teams:list' challenge_short_name=challenge.short_name %}"> <i
+                                            class="fas fa-users fa-fw"></i>&nbsp;&nbsp;Teams</a>
                                 </li>
                             {% endif %}
                         {% endif %}
@@ -46,7 +47,8 @@
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}"
                                    href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
-                                    <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
+                                    <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
+                                </a>
                             </li>
                         {% elif user_is_participant and challenge.first_visible_phase %}
                             <li class="nav-item">
@@ -57,21 +59,23 @@
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' or request.resolver_match.view_name == 'evaluation:list' or request.resolver_match.view_name == 'evaluation:detail' or request.resolver_match.view_name == 'evaluation:update' %}active{% endif %}"
                                    href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.first_visible_phase.slug %}">
-                                    <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
+                                    <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
+                                </a>
                             </li>
                         {% elif not challenge.hidden and challenge.first_visible_phase %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' or request.resolver_match.view_name == 'evaluation:list' or request.resolver_match.view_name == 'evaluation:detail' or request.resolver_match.view_name == 'evaluation:update' %}active{% endif %}"
                                    href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.first_visible_phase.slug %}">
-                                    <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
+                                    <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
+                                </a>
                             </li>
                         {% endif %}
                     {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.view_name == 'pages:statistics'  %}active{% endif %}"
+                        <a class="nav-link {% if request.resolver_match.view_name == 'pages:statistics' %}active{% endif %}"
                            href="{% url 'pages:statistics' challenge_short_name=challenge.short_name %}">
                             <i class="fas fa-chart-bar fa-fw"></i>
-                                Statistics
+                            Statistics
                         </a>
                     </li>
                     {% if "change_challenge" in challenge_perms %}
@@ -79,8 +83,8 @@
                             <a class="nav-link {% if request.resolver_match.view_name in 'challenge-update,invoices:list,challenge-onboarding-task-list,pages:content-update,pages:metadata-update,pages:delete,pages:create,update,pages:list,participants:registration-question-create,participants:registration-question-delete, participants:registration-question-list,participants:list,participants:registration-list,evaluation:phase-create,evaluation:phase-update,evaluation:create,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail,evaluation:phase-archive-info,evaluation:phase-starter-kit-detail,evaluation:interface-list, evaluation:interface-create, evaluation:interface-delete,evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-create,evaluation:combined-leaderboard-delete' or request.resolver_match.app_name == 'admins' %}active{% endif %}"
                                href="{% url 'challenge-update' challenge_short_name=challenge.short_name %}">
                                 <i class="fas fa-cog fa-fw"></i>
-                                    Admin
-                                    {% include "challenges/partials/attention_required_items_due.html" %}
+                                Admin
+                                {% include "challenges/partials/attention_required_items_due.html" %}
                             </a>
                         </li>
                     {% endif %}
@@ -94,7 +98,7 @@
                     <a class="btn btn-success"
                        href="{% url 'participants:registration-create' challenge_short_name=challenge.short_name %}"
                        role="button">
-                            Join
+                        Join
                     </a>
                 </div>
             </div>

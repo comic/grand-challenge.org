@@ -1,24 +1,18 @@
 import pytest
-from actstream.actions import follow, is_following
+from actstream.actions import is_following, unfollow
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
-from machina.apps.forum.models import Forum
-from machina.apps.forum_conversation.models import Topic
-from machina.apps.forum_permission.models import (
-    ForumPermission,
-    UserForumPermission,
-)
 
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import AlgorithmFactory
-from tests.factories import UserFactory
-from tests.notifications_tests.factories import (
+from tests.discussion_forums_tests.factories import (
     ForumFactory,
-    NotificationFactory,
-    TopicFactory,
+    ForumTopicFactory,
 )
+from tests.factories import UserFactory
+from tests.notifications_tests.factories import NotificationFactory
 from tests.utils import get_view_for_user
 
 
@@ -92,6 +86,7 @@ def test_notification_view_permissions(client):
     user2 = UserFactory()
     notification = NotificationFactory(
         user=user1,
+        actor=UserFactory(),
         message="requested access to",
         target=AlgorithmFactory(),
         type=Notification.Type.ACCESS_REQUEST,
@@ -164,104 +159,102 @@ def test_notification_update_and_delete_permissions(client, type, data):
 
 @pytest.mark.django_db
 def test_forum_subscribe_and_unsubscribe(client):
-    user1 = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    UserForumPermission.objects.create(
-        permission=ForumPermission.objects.filter(
-            codename="can_read_forum"
-        ).get(),
-        user=user1,
-        forum=f,
-        has_perm=True,
+    admin = UserFactory()
+    f = ForumFactory()
+    f.linked_challenge.add_admin(admin)
+
+    assert is_following(admin, f)
+
+    response = get_view_for_user(
+        viewname="notifications:follow-delete",
+        client=client,
+        method=client.post,
+        user=admin,
+        reverse_kwargs={
+            "pk": Follow.objects.filter(user=admin, object_id=f.pk).first().id
+        },
     )
-    assert not is_following(user1, f)
+    assert response.status_code == 302
+    assert not is_following(admin, f)
 
     response = get_view_for_user(
         viewname="notifications:follow-create",
         client=client,
         method=client.post,
         data={
-            "user": user1.id,
+            "user": admin.id,
             "content_type": ContentType.objects.get(
                 app_label=f._meta.app_label, model=f._meta.model_name
             ).id,
             "object_id": f.id,
             "actor_only": False,
         },
-        user=user1,
+        user=admin,
     )
     assert response.status_code == 302
-    assert is_following(user1, f)
-
-    response = get_view_for_user(
-        viewname="notifications:follow-delete",
-        client=client,
-        method=client.post,
-        user=user1,
-        reverse_kwargs={"pk": Follow.objects.filter(user=user1).first().id},
-    )
-    assert response.status_code == 302
-    assert not is_following(user1, f)
+    assert is_following(admin, f)
 
 
 @pytest.mark.django_db
 def test_topic_subscribe_and_unsubscribe(client):
-    user1 = UserFactory()
-    user2 = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    UserForumPermission.objects.create(
-        permission=ForumPermission.objects.filter(
-            codename="can_read_forum"
-        ).get(),
-        user=user1,
-        forum=f,
-        has_perm=True,
-    )
-    t = TopicFactory(forum=f, poster=user2, type=Topic.TOPIC_POST)
+    admin = UserFactory()
+    user = UserFactory()
+    f = ForumFactory()
+    f.linked_challenge.add_admin(admin)
+    f.linked_challenge.add_participant(user)
 
-    assert not is_following(user1, t)
+    t = ForumTopicFactory(forum=f, creator=admin)
+
+    assert is_following(admin, t)
+    assert not is_following(user, t)
 
     response = get_view_for_user(
         viewname="notifications:follow-create",
         client=client,
         method=client.post,
         data={
-            "user": user1.id,
+            "user": user.id,
             "content_type": ContentType.objects.get(
                 app_label=t._meta.app_label, model=t._meta.model_name
             ).id,
             "object_id": t.id,
             "actor_only": False,
         },
-        user=user1,
+        user=user,
     )
     assert response.status_code == 302
-    assert is_following(user1, t)
+    assert is_following(user, t)
 
     response = get_view_for_user(
         viewname="notifications:follow-delete",
         client=client,
         method=client.post,
-        reverse_kwargs={"pk": Follow.objects.filter(user=user1).first().id},
-        user=user1,
+        reverse_kwargs={
+            "pk": Follow.objects.filter(user=user, object_id=t.pk).get().id
+        },
+        user=user,
     )
     assert response.status_code == 302
-    assert not is_following(user1, t)
+    assert not is_following(user, t)
 
 
 @pytest.mark.django_db
 def test_follow_delete_permission(client):
-    user1 = UserFactory()
-    user2 = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    follow(user1, f)
+    participant1 = UserFactory()
+    participant2 = UserFactory()
+    f = ForumFactory()
+    f.linked_challenge.add_participant(participant1)
+    f.linked_challenge.add_participant(participant2)
 
+    assert is_following(participant1, f)
+
+    # users cannot delete someone elses subscription
     response = get_view_for_user(
         viewname="notifications:follow-delete",
         client=client,
         method=client.post,
-        reverse_kwargs={"pk": Follow.objects.get().id},
-        user=user2,
+        reverse_kwargs={"pk": Follow.objects.get(user=participant1).id},
+        user=participant2,
     )
     assert response.status_code == 403
 
@@ -269,96 +262,86 @@ def test_follow_delete_permission(client):
         viewname="notifications:follow-delete",
         client=client,
         method=client.post,
-        reverse_kwargs={"pk": Follow.objects.get().id},
-        user=user1,
+        reverse_kwargs={"pk": Follow.objects.get(user=participant1).id},
+        user=participant1,
     )
     assert response.status_code == 302
+    assert not is_following(participant1, f)
 
 
 @pytest.mark.django_db
 def test_follow_create_permission(client):
-    user1 = UserFactory()
-    user2 = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
+    user = UserFactory()
+    admin = UserFactory()
+    participant = UserFactory()
+    f = ForumFactory()
 
-    # wrong user
-    _ = get_view_for_user(
-        viewname="notifications:follow-create",
-        client=client,
-        method=client.post,
-        data={
-            "user": user1.id,
-            "content_type": ContentType.objects.get(
-                app_label=f._meta.app_label, model=f._meta.model_name
-            ).id,
-            "object_id": f.id,
-            "actor_only": False,
-        },
-        user=user2,
-    )
-    assert len(Follow.objects.all()) == 0
+    f.linked_challenge.add_admin(admin)
+    f.linked_challenge.add_participant(participant)
 
-    # correct user, but does not have permission to subscribe
-    _ = get_view_for_user(
-        viewname="notifications:follow-create",
-        client=client,
-        method=client.post,
-        data={
-            "user": user1.id,
-            "content_type": ContentType.objects.get(
-                app_label=f._meta.app_label, model=f._meta.model_name
-            ).id,
-            "object_id": f.id,
-            "actor_only": False,
-        },
-        user=user1,
-    )
-    assert len(Follow.objects.all()) == 0
+    # admin and participant automatically follow forum
+    assert is_following(admin, f)
+    assert is_following(participant, f)
+    old_num_follows = Follow.objects.count()
 
-    UserForumPermission.objects.create(
-        permission=ForumPermission.objects.filter(
-            codename="can_read_forum"
-        ).get(),
-        user=user1,
-        forum=f,
-        has_perm=True,
-    )
-
+    # not a participant, so cannot subscribe
     response = get_view_for_user(
         viewname="notifications:follow-create",
         client=client,
         method=client.post,
         data={
-            "user": user1.id,
+            "user": user.id,
             "content_type": ContentType.objects.get(
                 app_label=f._meta.app_label, model=f._meta.model_name
             ).id,
             "object_id": f.id,
             "actor_only": False,
         },
-        user=user1,
+        user=user,
     )
-    assert response.status_code == 302
-    assert is_following(user1, f)
+    assert "You cannot create this subscription" in str(response.content)
+    assert len(Follow.objects.all()) == old_num_follows
+
+    # Remove follows
+    unfollow(admin, f)
+    unfollow(participant, f)
+
+    for u in [admin, participant]:
+        response = get_view_for_user(
+            viewname="notifications:follow-create",
+            client=client,
+            method=client.post,
+            data={
+                "user": u.id,
+                "content_type": ContentType.objects.get(
+                    app_label=f._meta.app_label, model=f._meta.model_name
+                ).id,
+                "object_id": f.id,
+                "actor_only": False,
+            },
+            user=u,
+        )
+        assert response.status_code == 302
+        assert is_following(u, f)
 
 
 @pytest.mark.django_db
 def test_follow_deletion_through_api(client):
-    user1 = UserFactory()
-    user2 = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    follow(user1, f)
+    participant = UserFactory()
+    user = UserFactory()
+    f = ForumFactory()
+    f.linked_challenge.add_participant(participant)
 
-    assert len(Follow.objects.all()) == 1
+    num_follows = Follow.objects.count()
 
     # users can only delete their own follows
     response = get_view_for_user(
         viewname="api:follow-detail",
         client=client,
         method=client.delete,
-        reverse_kwargs={"pk": Follow.objects.get().pk},
+        reverse_kwargs={"pk": Follow.objects.get(user=participant).pk},
         content_type="application/json",
-        user=user2,
+        user=user,
     )
     assert response.status_code == 404
 
@@ -366,39 +349,47 @@ def test_follow_deletion_through_api(client):
         viewname="api:follow-detail",
         client=client,
         method=client.delete,
-        reverse_kwargs={"pk": Follow.objects.get().pk},
+        reverse_kwargs={"pk": Follow.objects.get(user=participant).pk},
         content_type="application/json",
-        user=user1,
+        user=participant,
     )
     assert response.status_code == 204
-    assert len(Follow.objects.all()) == 0
+    assert len(Follow.objects.all()) == num_follows - 1
 
 
 @pytest.mark.django_db
 def test_follow_view_permissions(client):
-    user1 = UserFactory()
-    user2 = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
-    follow(user1, f)
+    challenge_participant = UserFactory()
+    user = UserFactory()
+    f = ForumFactory()
+    f.linked_challenge.add_participant(challenge_participant)
 
+    assert is_following(challenge_participant, f)
+
+    # user is not subscribed to anything, empty follow list
     response = get_view_for_user(
         viewname="notifications:follow-list",
         client=client,
         method=client.get,
-        user=user2,
+        user=user,
     )
     assert response.status_code == 200
+    assert response.context["object_list"].count() == 0
+
+    # challenge participant has 1 subscription to challenge forum
+    response = get_view_for_user(
+        viewname="notifications:follow-list",
+        client=client,
+        method=client.get,
+        user=challenge_participant,
+    )
+    assert response.status_code == 200
+    assert response.context["object_list"].count() == 1
     assert (
-        str(Follow.objects.get().follow_object)
-        not in response.rendered_content
+        str(
+            Follow.objects.get(
+                user=challenge_participant, object_id=f.pk
+            ).follow_object
+        )
+        in response.rendered_content
     )
-
-    # user1 cannot see user2 notifications
-    response = get_view_for_user(
-        viewname="notifications:follow-list",
-        client=client,
-        method=client.get,
-        user=user1,
-    )
-    assert response.status_code == 200
-    assert str(Follow.objects.get().follow_object) in response.rendered_content

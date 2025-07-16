@@ -1,0 +1,70 @@
+{% load user_profile_link from profiles %}
+{% load humanize %}
+{% load bleach %}
+{% load discussion_forum_extras %}
+
+<div class="mb-3 row">
+    <div class="col-12">
+        <div class="card">
+            <div class="p-0 card-header">
+                <div class="row m-0 px-3 py-2 justify-content-between">
+                    <div class="pl-0 col-12 col-md-8 justify-content-between">
+                        <div class="d-flex justify-content-between">
+                            <h3 class="m-0 card-title h5 text-dark">
+                                <i class="fas fa-comment mr-1"></i> {{ topic_list_title|capfirst }}
+                            </h3>
+                            {% if show_page_counter_in_card_header %}
+                                <small class="text-muted text-decoration-none">Page {{ page_obj.number }}
+                                    of {{ page_obj.paginator.num_pages }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="pr-0 col-md-1 d-none d-md-block">Replies</div>
+                    <div class="pr-0 col-md-3 d-none d-md-block">Last post</div>
+                </div>
+                <div class="p-0 card-body">
+                    <ul class="list-group">
+                        {% for topic in topics %}
+                            {% check_unread_topic_posts_for_user topic=topic as user_has_unread_posts %}
+                            <li class="list-group-item">
+                                <div class="row">
+                                    <div class="col-2 col-md-1 text-center align-content-center pr-0 p-md-0">
+                                        <i class="
+                                        fas
+                                        {% if topic.is_sticky %}fa-lightbulb{% elif topic.is_announcement %}fa-info{% else %}fa-dot-circle{% endif %}
+                                         fa-2x
+                                        {% if user_has_unread_posts %} text-danger{% else %} text-info{% endif %}
+                                        "></i>
+                                    </div>
+                                    <div class="col-10 col-md-7">
+                                        <a href="{% url 'discussion-forums:topic-post-list' slug=topic.slug %}"
+                                        >{{ topic.subject }}</a>
+                                        {% if topic.locked %}
+                                            <i class="fas fa-lock text-info ml-1" title="This topic is locked"></i>
+                                        {% endif %}
+                                        <div>
+                                            By {{ topic.creator|user_profile_link }} {{ topic.last_post.created }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1 d-none d-md-block">{{ topic.num_replies }}</div>
+                                    <div class="col-md-3 d-none d-md-block">
+                                        By {{ topic.last_post.creator|user_profile_link }}
+                                        <a href=""><i class="fas fa-arrow-circle-right ml-1"></i></a>
+                                        <br/>
+                                        <small>{{ topic.last_post.created }}</small>
+                                    </div>
+                                </div>
+                            </li>
+                            {% empty %}
+                            <div class="row m-0 px-3 py-2">
+                                <div class="p-0 col-12">
+                                    There are no {{ topic_list_title }} in this forum.
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

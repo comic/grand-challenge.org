@@ -14,10 +14,8 @@ from csp import constants as csp_constants
 from disposable_email_domains import blocklist
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
-from django.urls import reverse
 from django.utils._os import safe_join
 from django.utils.timezone import now
-from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
@@ -298,11 +296,7 @@ CACHES = {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": f"{REDIS_ENDPOINT}/0",
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
-    },
-    "machina_attachments": {
-        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
-        "LOCATION": "/tmp",
-    },
+    }
 }
 
 ROOT_URLCONF = "config.urls.root"
@@ -311,22 +305,6 @@ RENDERING_SUBDOMAIN_URL_CONF = "config.urls.rendering_subdomain"
 
 DEFAULT_SCHEME = os.environ.get("DEFAULT_SCHEME", "https")
 SITE_SERVER_PORT = os.environ.get("SITE_SERVER_PORT")
-
-# Workaround for https://github.com/ellmetha/django-machina/issues/219
-ABSOLUTE_URL_OVERRIDES = {
-    "forum.forum": lambda o: reverse(
-        "forum:forum", kwargs={"slug": o.slug, "pk": o.pk}
-    ),
-    "forum_conversation.topic": lambda o: reverse(
-        "forum_conversation:topic",
-        kwargs={
-            "slug": o.slug,
-            "pk": o.pk,
-            "forum_slug": o.forum.slug,
-            "forum_pk": o.forum.pk,
-        },
-    ),
-}
 
 SESSION_ENGINE = "grandchallenge.browser_sessions.models"
 SESSION_PRIVILEGED_USER_TIMEOUT = timedelta(hours=8)
@@ -415,9 +393,6 @@ STATICFILES_FINDERS = (
     "compressor.finders.CompressorFinder",  # for css compression
 )
 
-# Vendored static files will be put here
-STATICFILES_DIRS = [MACHINA_MAIN_STATIC_DIR]
-
 # CSS Compression settings
 COMPRESS_PRECOMPILERS = (("text/x-scss", "django_libsass.SassCompiler"),)
 LIBSASS_OUTPUT_STYLE = "compressed"
@@ -438,12 +413,7 @@ cached_loaders = [("django.template.loaders.cached.Loader", default_loaders)]
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [
-            # Override the machina templates, everything else is found with
-            # django.template.loaders.app_directories.Loader
-            os.path.join(SITE_ROOT, "grandchallenge/forums/templates/"),
-            MACHINA_MAIN_TEMPLATE_DIR,
-        ],
+        "DIRS": [],
         "OPTIONS": {
             "context_processors": [
                 "django.contrib.auth.context_processors.auth",
@@ -463,7 +433,6 @@ TEMPLATES = [
                 "grandchallenge.core.context_processors.newsletter_signup",
                 "grandchallenge.core.context_processors.viewport_names",
                 "grandchallenge.core.context_processors.workstation_domains",
-                "machina.core.context_processors.metadata",
             ],
             "loaders": default_loaders if DEBUG else cached_loaders,
         },
@@ -491,7 +460,6 @@ MIDDLEWARE = (
     "grandchallenge.subdomains.middleware.challenge_subdomain_middleware",
     "grandchallenge.subdomains.middleware.subdomain_urlconf_middleware",
     "grandchallenge.timezones.middleware.TimezoneMiddleware",
-    "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
     # Force 2FA for staff users
     "grandchallenge.core.middleware.RequireStaffAndSuperuser2FAMiddleware",
     # Flatpage fallback almost last
@@ -821,18 +789,6 @@ HAYSTACK_CONNECTIONS = {
 FORUMS_MIN_ACCOUNT_AGE_DAYS = int(
     os.environ.get("FORUMS_MIN_ACCOUNT_AGE_DAYS", "2")
 )
-FORUMS_CHALLENGE_CATEGORY_NAME = "Challenges"
-MACHINA_BASE_TEMPLATE_NAME = "base.html"
-MACHINA_PROFILE_AVATARS_ENABLED = False
-MACHINA_FORUM_NAME = "Grand Challenge Forums"
-MACHINA_MARKUP_WIDGET = (
-    "grandchallenge.core.widgets.MarkdownEditorInlineWidget"
-)
-MACHINA_MARKUP_LANGUAGE = (
-    "grandchallenge.core.templatetags.bleach.md2html",
-    {"link_blank_target": True},
-)
-MACHINA_ATTACHMENT_MAX_FILES_PER_POST = 0
 
 AUTH_PASSWORD_VALIDATORS = [
     {
