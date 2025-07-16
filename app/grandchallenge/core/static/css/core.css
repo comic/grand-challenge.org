@@ -228,8 +228,7 @@ ul.socialaccount_providers > li {
 a[aria-expanded="true"] .fa-chevron-right {
     display: none;
 }
-a[aria-expanded="false"] .fa-chevron-down,
-a[aria-expanded="false"] .fa-chevron-left {
+a[aria-expanded="false"] .fa-chevron-down {
     display: none;
 }
 

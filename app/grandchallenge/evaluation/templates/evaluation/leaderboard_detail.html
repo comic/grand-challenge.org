@@ -18,24 +18,11 @@
     </ol>
 {% endblock %}
 
-{% block sidebar_fluid %}
+{% block topbar2 %}
     {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
 {% endblock %}
 
-{% block content_fluid %}
-
-    <div class="navbar-toggler p-0">
-        <a class="btn btn-outline-primary"
-                data-toggle="collapse"
-                data-target="#collapsiblePhasesNav"
-                type="button"
-                aria-expanded="false">
-            <i class="fa fa-chevron-right mr-3"></i>
-            <i class="fa fa-chevron-left mr-3"></i>
-            Choose a phase
-        </a>
-    </div>
-
+{% block content %}
     <h2>{{ phase.title }} Leaderboard {{ request.GET.date }}</h2>
 
     {% if "change_challenge" in challenge_perms %}
