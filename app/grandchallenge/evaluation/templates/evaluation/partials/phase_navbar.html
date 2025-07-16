@@ -6,7 +6,7 @@
     <div class="row">
         <div class="col pr-0">
             <div class="collapse width navbar-collapse show" id="collapsiblePhasesNav">
-                <ul class="navbar-nav nav-pills flex-wrap">
+                <ul class="navbar-nav nav-pills flex-wrap" style="width: 20em;">
                     {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-detail,evaluation:leaderboard,evaluation:detail' %}
                         {% for combined_leaderboard in challenge.combinedleaderboard_set.all %}
                             <li class="nav-item">
