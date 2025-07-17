@@ -16,13 +16,16 @@ class Command(BaseCommand):
         n_created = 0
 
         for topic in ForumTopic.objects.filter(source_object__isnull=False):
-            redirects_to_add.append(
-                Redirect(
-                    site=site,
-                    old_path=f"/forums/forum/{topic.source_object.forum.slug}-{topic.source_object.forum.pk}/topic/{topic.source_object.slug}-{topic.source_object.pk}/",
-                    new_path=topic.get_absolute_url(),
+            old_path = f"/forums/forum/{topic.source_object.forum.slug}-{topic.source_object.forum.pk}/topic/{topic.source_object.slug}-{topic.source_object.pk}/"
+            new_path = topic.get_absolute_url()
+            if len(old_path) < 200 and len(new_path) < 200:
+                redirects_to_add.append(
+                    Redirect(
+                        site=site,
+                        old_path=f"/forums/forum/{topic.source_object.forum.slug}-{topic.source_object.forum.pk}/topic/{topic.source_object.slug}-{topic.source_object.pk}/",
+                        new_path=topic.get_absolute_url(),
+                    )
                 )
-            )
             if len(redirects_to_add) >= batch_size:
                 Redirect.objects.bulk_create(
                     redirects_to_add, ignore_conflicts=True
