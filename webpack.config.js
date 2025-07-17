@@ -13,7 +13,7 @@ module.exports = {
     path: path.resolve(__dirname, 'app/grandchallenge/core/static/vendored'),
     filename: '[name]-[contenthash].js',
     publicPath: '',
-    clean: true
+    clean: false, // TODO turn on when ready to clean up old files
   },
 
   module: {
