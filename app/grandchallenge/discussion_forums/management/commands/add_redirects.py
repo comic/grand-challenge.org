@@ -2,7 +2,7 @@ from django.contrib.redirects.models import Redirect
 from django.contrib.sites.models import Site
 from django.core.management import BaseCommand
 
-from grandchallenge.discussion_forums.models import Forum, ForumTopic
+from grandchallenge.discussion_forums.models import ForumTopic
 
 
 class Command(BaseCommand):
@@ -15,42 +15,29 @@ class Command(BaseCommand):
         redirects_to_add = []
         n_created = 0
 
-        for forum in Forum.objects.filter(source_object__isnull=False):
-            redirects_to_add.append(
-                Redirect(
-                    site=site,
-                    old_path=f"/forums/forum/{forum.source_object.slug}-{forum.source_object.pk}/",
-                    new_path=forum.get_absolute_url(),
-                )
-            )
-            if len(redirects_to_add) >= batch_size:
-                Redirect.objects.bulk_create(redirects_to_add)
-                n_created += len(redirects_to_add)
-                print(f"Created {n_created} new forum redirects")
-                redirects_to_add = []
-
-        if redirects_to_add:
-            Redirect.objects.bulk_create(redirects_to_add)
-            n_created += len(redirects_to_add)
-            print(f"Created {n_created} new forum redirects.")
-            redirects_to_add = []
-
         for topic in ForumTopic.objects.filter(source_object__isnull=False):
-            redirects_to_add.append(
-                Redirect(
-                    site=site,
-                    old_path=f"/forums/forum/{topic.source_object.forum.slug}-{topic.source_object.forum.pk}/topic/{topic.source_object.slug}-{topic.source_object.pk}/",
-                    new_path=topic.get_absolute_url(),
+            old_path = f"/forums/forum/{topic.source_object.forum.slug}-{topic.source_object.forum.pk}/topic/{topic.source_object.slug}-{topic.source_object.pk}/"
+            new_path = topic.get_absolute_url()
+            if len(old_path) < 200 and len(new_path) < 200:
+                redirects_to_add.append(
+                    Redirect(
+                        site=site,
+                        old_path=f"/forums/forum/{topic.source_object.forum.slug}-{topic.source_object.forum.pk}/topic/{topic.source_object.slug}-{topic.source_object.pk}/",
+                        new_path=topic.get_absolute_url(),
+                    )
                 )
-            )
             if len(redirects_to_add) >= batch_size:
-                Redirect.objects.bulk_create(redirects_to_add)
+                Redirect.objects.bulk_create(
+                    redirects_to_add, ignore_conflicts=True
+                )
                 n_created += len(redirects_to_add)
                 print(f"Created {n_created} new topic redirects")
                 redirects_to_add = []
 
         if redirects_to_add:
-            Redirect.objects.bulk_create(redirects_to_add)
+            Redirect.objects.bulk_create(
+                redirects_to_add, ignore_conflicts=True
+            )
             n_created += len(redirects_to_add)
             print(f"Created {n_created} new topic redirects.")
 
