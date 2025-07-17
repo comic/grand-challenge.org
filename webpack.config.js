@@ -55,7 +55,7 @@ module.exports = {
       'window.jQuery': 'jquery'
     }),
     new BundleTracker({
-      path: path.resolve(__dirname, 'app'),
+      path: path.resolve(__dirname, 'app/grandchallenge/core/static/vendored'),
       filename: 'webpack-stats.json',
       relativePath: true,
     })

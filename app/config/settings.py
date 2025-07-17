@@ -440,7 +440,8 @@ WEBPACK_LOADER = {
     "DEFAULT": {
         "BUNDLE_DIR_NAME": "vendored/",
         "STATS_FILE": os.path.join(
-            Path(__file__).resolve().parent.parent, "webpack-stats.json"
+            Path(__file__).resolve().parent.parent,
+            "grandchallenge/core/static/vendored/webpack-stats.json",
         ),
     }
 }
