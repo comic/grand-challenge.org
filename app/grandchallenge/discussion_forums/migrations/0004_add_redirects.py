@@ -11,7 +11,7 @@ def add_redirects_for_old_forums_and_topics(apps, schema_editor):
     Redirect = apps.get_model("redirects", "Redirect")  # noqa: N806
     Site = apps.get_model("sites", "Site")  # noqa: N806
 
-    site = Site.objects.get_current()
+    site = Site.objects.get(pk=2)
 
     batch_size = 500
     redirects_to_add = []
