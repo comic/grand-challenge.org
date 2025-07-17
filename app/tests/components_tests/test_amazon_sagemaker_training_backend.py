@@ -27,7 +27,7 @@ from grandchallenge.evaluation.models import Evaluation, Method
     (
         (10, GPUTypeChoices.T4, "ml.g4dn.xlarge"),
         (30, GPUTypeChoices.T4, "ml.g4dn.2xlarge"),
-        (8, GPUTypeChoices.NO_GPU, "ml.m5.large"),
+        (8, GPUTypeChoices.NO_GPU, "ml.m7i.large"),
         (16, GPUTypeChoices.NO_GPU, "ml.r7i.large"),
         (32, GPUTypeChoices.NO_GPU, "ml.r7i.xlarge"),
         (64, GPUTypeChoices.NO_GPU, "ml.r7i.2xlarge"),
@@ -190,7 +190,7 @@ def test_invocation_json(settings):
                 },
                 "ResourceConfig": {
                     "VolumeSizeInGB": 30,
-                    "InstanceType": "ml.m5.large",
+                    "InstanceType": "ml.m7i.large",
                     "InstanceCount": 1,
                     "KeepAlivePeriodInSeconds": 0,
                 },
@@ -460,7 +460,7 @@ def test_set_runtime_metrics(settings):
                 "TrainingStartTime": 1654767467000,
                 "TrainingEndTime": 1654767481000,
                 "ResourceConfig": {
-                    "InstanceType": "ml.m5.large",
+                    "InstanceType": "ml.m7i.large",
                     "InstanceCount": 1,
                 },
             }
@@ -472,7 +472,7 @@ def test_set_runtime_metrics(settings):
             "gpu_type": "",
             "gpus": 0,
             "memory": 8,
-            "name": "ml.m5.large",
+            "name": "ml.m7i.large",
         },
         "metrics": [
             {
