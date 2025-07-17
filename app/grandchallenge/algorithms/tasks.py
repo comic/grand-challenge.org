@@ -51,7 +51,7 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         raise TooManyJobsScheduled
 
     logger.info("Job is ready, creating execution task")
-    
+
     # Notify the job creator on failure
     job.task_on_failure = send_failed_job_notification.signature(
         kwargs={"job_pk": str(job.pk)}, immutable=True
