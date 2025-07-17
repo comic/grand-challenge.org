@@ -36,11 +36,6 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         app_label="algorithms", model_name="job", pk=job_pk
     )
 
-    # Notify the job creator on failure
-    linked_task = send_failed_job_notification.signature(
-        kwargs={"job_pk": str(job.pk)}, immutable=True
-    )
-
     if not job.inputs_complete:
         logger.info("Nothing to do, inputs are still being validated")
         return
@@ -56,8 +51,11 @@ def execute_algorithm_job_for_inputs(*, job_pk):
         raise TooManyJobsScheduled
 
     logger.info("Job is ready, creating execution task")
-
-    job.task_on_success = linked_task
+    
+    # Notify the job creator on failure
+    job.task_on_failure = send_failed_job_notification.signature(
+        kwargs={"job_pk": str(job.pk)}, immutable=True
+    )
     job.status = job.PENDING
     job.save()
 
