@@ -1499,3 +1499,40 @@ def test_reevaluation_blocked_when_pending_evaluation_exists():
     assert "An evaluation for this algorithm is already in progress." in str(
         form.errors
     )
+
+
+@pytest.mark.django_db
+def test_reschedule_evaluation_not_possible_for_external_evaluations():
+    phase = PhaseFactory(external_evaluation=True)
+
+    user = UserFactory()
+    phase.challenge.add_admin(user)
+    InvoiceFactory(
+        challenge=phase.challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+    method = MethodFactory(
+        phase=phase,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+
+    submission = SubmissionFactory(
+        phase=phase,
+        creator=user,
+    )
+    EvaluationFactory(
+        submission=submission,
+        method=method,
+        status=Evaluation.SUCCESS,
+        time_limit=10,
+    )
+
+    form = EvaluationForm(submission=submission, user=user, data={})
+
+    assert not form.is_valid()
+    assert "You cannot re-evaluate an external evaluation." in str(form.errors)

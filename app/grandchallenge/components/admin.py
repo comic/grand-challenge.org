@@ -8,6 +8,7 @@ from grandchallenge.components.models import (
     ComponentJob,
 )
 from grandchallenge.components.tasks import deprovision_job
+from grandchallenge.evaluation.models import Evaluation
 
 
 class ComponentImageAdmin(admin.ModelAdmin):
@@ -85,6 +86,10 @@ def requeue_jobs(modeladmin, request, queryset):
             ComponentJob.CANCELLED,
         ]
     )
+    if queryset.model == Evaluation:
+        queryset = queryset.exclude(
+            submission__phase__external_evaluation=True
+        )
 
     jobs = []
 

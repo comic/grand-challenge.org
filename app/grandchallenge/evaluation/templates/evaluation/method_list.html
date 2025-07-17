@@ -24,12 +24,14 @@
 
     {% include "evaluation/partials/phase_admin_warnings.html" with phase=phase %}
 
-    <p>
-        <a class="btn btn-primary"
-           href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name slug=phase.slug %}">
-            <i class="fas fa-plus"></i> Add a new method
-        </a>
-    </p>
+    {% if not phase.external_evaluation %}
+        <p>
+            <a class="btn btn-primary"
+               href="{% url 'evaluation:method-create' challenge_short_name=challenge.short_name slug=phase.slug %}">
+                <i class="fas fa-plus"></i> Add a new method
+            </a>
+        </p>
+    {% endif %}
 
     <div class="table-responsive">
         <table class="table table-hover table-borderless table-sm w-100" id="methodsTable">
