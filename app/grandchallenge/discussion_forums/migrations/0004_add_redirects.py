@@ -73,6 +73,7 @@ def add_redirects_for_old_forums_and_topics(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("discussion_forums", "0003_add_auto_now"),
+        ("redirects", "0001_initial"),
     ]
 
     operations = [
