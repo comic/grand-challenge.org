@@ -905,6 +905,12 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_external_evaluation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_evaluation</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">method_set</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                    <span class="s2">&quot;Phases that have an evaluation method cannot be turned &quot;</span>
+                    <span class="s2">&quot;into external evaluation phases. Remove the method and &quot;</span>
+                    <span class="s2">&quot;try again.&quot;</span>
+                <span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                     <span class="s2">&quot;External evaluation is only possible for algorithm submission phases.&quot;</span>
@@ -1472,6 +1478,14 @@
 
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">cleaned_data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">external_evaluation</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;You cannot add a method to an external evaluation.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">cleaned_data</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_method&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
