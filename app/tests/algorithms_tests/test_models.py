@@ -1027,9 +1027,9 @@ def test_inputs_complete():
     "requires_gpu_type,requires_memory_gb,time_limit,expected_credits",
     (
         (GPUTypeChoices.NO_GPU, 4, 60, 20),
-        (GPUTypeChoices.NO_GPU, 32, 3600, 60),
-        (GPUTypeChoices.NO_GPU, 32, 1800, 30),
-        (GPUTypeChoices.NO_GPU, 16, 3600, 30),
+        (GPUTypeChoices.NO_GPU, 32, 3600, 40),
+        (GPUTypeChoices.NO_GPU, 32, 1800, 20),
+        (GPUTypeChoices.NO_GPU, 16, 3600, 20),
         (GPUTypeChoices.V100, 32, 3600, 460),
         (GPUTypeChoices.T4, 32, 3600, 120),
         (GPUTypeChoices.T4, 32, 1800, 60),
