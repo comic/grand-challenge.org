@@ -27,9 +27,16 @@ from grandchallenge.evaluation.models import Evaluation, Method
     (
         (10, GPUTypeChoices.T4, "ml.g4dn.xlarge"),
         (30, GPUTypeChoices.T4, "ml.g4dn.2xlarge"),
-        (6, GPUTypeChoices.NO_GPU, "ml.m5.large"),
-        (10, GPUTypeChoices.NO_GPU, "ml.m5.xlarge"),
-        (30, GPUTypeChoices.NO_GPU, "ml.m5.2xlarge"),
+        (8, GPUTypeChoices.NO_GPU, "ml.m5.large"),
+        (16, GPUTypeChoices.NO_GPU, "ml.r7i.large"),
+        (32, GPUTypeChoices.NO_GPU, "ml.r7i.xlarge"),
+        (64, GPUTypeChoices.NO_GPU, "ml.r7i.2xlarge"),
+        (128, GPUTypeChoices.NO_GPU, "ml.r7i.4xlarge"),
+        (256, GPUTypeChoices.NO_GPU, "ml.r7i.8xlarge"),
+        (384, GPUTypeChoices.NO_GPU, "ml.r7i.12xlarge"),
+        (512, GPUTypeChoices.NO_GPU, "ml.r7i.16xlarge"),
+        (768, GPUTypeChoices.NO_GPU, "ml.r7i.24xlarge"),
+        (1536, GPUTypeChoices.NO_GPU, "ml.r7i.48xlarge"),
         (10, GPUTypeChoices.V100, "ml.p3.2xlarge"),
         (30, GPUTypeChoices.V100, "ml.p3.2xlarge"),
     ),
@@ -50,7 +57,7 @@ def test_instance_type(memory_limit, expected_type, requires_gpu_type):
 @pytest.mark.parametrize(
     "memory_limit,requires_gpu_type",
     (
-        (1337, ""),  # Total memory unavailable
+        (13370, ""),  # Total memory unavailable
         (10, GPUTypeChoices.A100),  # GPU type not supported
         (
             100,
