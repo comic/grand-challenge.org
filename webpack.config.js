@@ -2,6 +2,7 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const BundleTracker = require('webpack-bundle-tracker');
+const webpack = require('webpack');
 
 module.exports = {
   entry: {
@@ -17,6 +18,14 @@ module.exports = {
 
   module: {
     rules: [
+      {
+        // Expose jQuery globally on jQuery and $
+        test: require.resolve('jquery'),
+        loader: 'expose-loader',
+        options: {
+          exposes: ['$', 'jQuery'],
+        },
+      },
       {
         test: /\.css$/,
         use: [
@@ -39,6 +48,11 @@ module.exports = {
     // new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
       filename: '[name]-[contenthash].css'
+    }),
+    new webpack.ProvidePlugin({
+      $: 'jquery',
+      jQuery: 'jquery',
+      'window.jQuery': 'jquery'
     }),
     new BundleTracker({
       path: path.resolve(__dirname, 'app'),
