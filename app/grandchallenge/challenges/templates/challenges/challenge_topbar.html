@@ -1,5 +1,6 @@
 {% load url %}
 {% load static %}
+{% load guardian_tags %}
 
 {% if challenge %}
     <div class="row mb-3 mx-0 border-bottom challenge-topbar">
@@ -18,7 +19,8 @@
                         </a>
                     </li>
 
-                    {% if challenge.display_forum_link %}
+                    {% get_obj_perms request.user for challenge.discussion_forum as "forum_perms" %}
+                    {% if challenge.display_forum_link and 'view_forum' in forum_perms %}
                         <li class="nav-item">
                             <a class="nav-link {% if request.resolver_match.view_name == 'discussion-forums:topic-list' or request.resolver_match.view_name == 'discussion-forums:topic-create' or request.resolver_match.view_name == 'discussion-forums:topic-post-list' or request.resolver_match.view_name == 'discussion-forums:topic-delete' %} show active {% endif %}"
                                href="{% url 'discussion-forums:topic-list' challenge_short_name=challenge.short_name %}">
