@@ -4,6 +4,8 @@
         "ignore": [
             "package.json",
             "package-lock.json",
+            "webpack.config.js",
+            "app/webpack-stats.json",
             "app/grandchallenge/core/static/vendored/**",
             "app/grandchallenge/core/static/js/markdownx.js",
             "app/grandchallenge/core/static/js/world-atlas/countries-110m.json",

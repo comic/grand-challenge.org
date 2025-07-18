@@ -410,6 +410,17 @@ default_loaders = [
 
 cached_loaders = [("django.template.loaders.cached.Loader", default_loaders)]
 
+# Webpack Loader configuration
+WEBPACK_LOADER = {
+    "DEFAULT": {
+        "BUNDLE_DIR_NAME": "vendored/",
+        "STATS_FILE": os.path.join(
+            Path(__file__).resolve().parent.parent,
+            "grandchallenge/core/static/vendored/webpack-stats.json",
+        ),
+    }
+}
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -503,6 +514,7 @@ THIRD_PARTY_APPS = [
     "corsheaders",  # to allow api communication from subdomains
     "markdownx",  # for editing markdown
     "compressor",  # for compressing css
+    "webpack_loader",  # for webpack integration
     "stdimage",
     "django_filters",
     "drf_spectacular",
