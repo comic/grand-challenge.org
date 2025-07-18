@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "dcmjs": "^0.43.0",
-    "jquery": "^3.7.0"
+    "jquery": "^3.7.0",
+    "jsoneditor": "^10.2.0"
   }
 }

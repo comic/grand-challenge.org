@@ -1,18 +1,39 @@
 {
   "status": "done",
   "assets": {
-    "jquery-8e8c4437d4d70f1c5a0d.js": {
-      "name": "jquery-8e8c4437d4d70f1c5a0d.js",
-      "path": "jquery-8e8c4437d4d70f1c5a0d.js"
+    "assets/jsoneditor-icons-15f2789dd231f36d43a4.svg": {
+      "name": "assets/jsoneditor-icons-15f2789dd231f36d43a4.svg",
+      "path": "assets/jsoneditor-icons-15f2789dd231f36d43a4.svg",
+      "sourceFilename": "node_modules/jsoneditor/dist/img/jsoneditor-icons.svg"
     },
-    "jquery-8e8c4437d4d70f1c5a0d.js.LICENSE.txt": {
-      "name": "jquery-8e8c4437d4d70f1c5a0d.js.LICENSE.txt",
-      "path": "jquery-8e8c4437d4d70f1c5a0d.js.LICENSE.txt"
+    "jquery-afb310900fbe69d258f2.js": {
+      "name": "jquery-afb310900fbe69d258f2.js",
+      "path": "jquery-afb310900fbe69d258f2.js"
+    },
+    "jquery-afb310900fbe69d258f2.js.LICENSE.txt": {
+      "name": "jquery-afb310900fbe69d258f2.js.LICENSE.txt",
+      "path": "jquery-afb310900fbe69d258f2.js.LICENSE.txt"
+    },
+    "jsoneditor-2db66ba19092b66222e5.js": {
+      "name": "jsoneditor-2db66ba19092b66222e5.js",
+      "path": "jsoneditor-2db66ba19092b66222e5.js"
+    },
+    "jsoneditor-2db66ba19092b66222e5.js.LICENSE.txt": {
+      "name": "jsoneditor-2db66ba19092b66222e5.js.LICENSE.txt",
+      "path": "jsoneditor-2db66ba19092b66222e5.js.LICENSE.txt"
+    },
+    "jsoneditor-e01c6a95b904e41be4c4.css": {
+      "name": "jsoneditor-e01c6a95b904e41be4c4.css",
+      "path": "jsoneditor-e01c6a95b904e41be4c4.css"
     }
   },
   "chunks": {
     "jquery": [
-      "jquery-8e8c4437d4d70f1c5a0d.js"
+      "jquery-afb310900fbe69d258f2.js"
+    ],
+    "jsoneditor": [
+      "jsoneditor-e01c6a95b904e41be4c4.css",
+      "jsoneditor-2db66ba19092b66222e5.js"
     ]
   }
 }

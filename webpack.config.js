@@ -7,6 +7,7 @@ const webpack = require('webpack');
 module.exports = {
   entry: {
     'jquery': 'jquery',
+    'jsoneditor': ['jsoneditor', 'jsoneditor/dist/jsoneditor.css', 'jsoneditor/dist/img/jsoneditor-icons.svg'],
   },
 
   output: {
@@ -18,6 +19,14 @@ module.exports = {
 
   module: {
     rules: [
+      {
+        // Expose JSONEditor globally
+        test: require.resolve('jsoneditor'),
+        loader: 'expose-loader',
+        options: {
+          exposes: ['JSONEditor'],
+        },
+      },
       {
         // Expose jQuery globally on jQuery and $
         test: require.resolve('jquery'),
@@ -52,7 +61,7 @@ module.exports = {
     new webpack.ProvidePlugin({
       $: 'jquery',
       jQuery: 'jquery',
-      'window.jQuery': 'jquery'
+      'window.jQuery': 'jquery',
     }),
     new BundleTracker({
       path: path.resolve(__dirname, 'app/grandchallenge/core/static/vendored'),

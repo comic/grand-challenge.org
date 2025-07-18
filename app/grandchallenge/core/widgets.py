@@ -2,9 +2,12 @@ from django import forms
 from django.template.loader import render_to_string
 from markdownx.widgets import AdminMarkdownxWidget, MarkdownxWidget
 
+from grandchallenge.core.utils.webpack import WebpackWidgetMixin
 
-class JSONEditorWidget(forms.Textarea):
+
+class JSONEditorWidget(WebpackWidgetMixin, forms.Textarea):
     template_name = "jsoneditor/jsoneditor_widget.html"
+    webpack_bundles = ["jsoneditor"]
 
     def __init__(self, schema=None, attrs=None):
         super().__init__(attrs)
@@ -14,10 +17,6 @@ class JSONEditorWidget(forms.Textarea):
         context = super().get_context(name, value, attrs)
         context.update({"schema": self.schema})
         return context
-
-    class Media:
-        css = {"all": ("vendored/jsoneditor/jsoneditor.min.css",)}
-        js = ("vendored/jsoneditor/jsoneditor.min.js",)
 
 
 class ColorEditorWidget(forms.TextInput):
