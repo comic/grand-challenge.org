@@ -7,7 +7,7 @@ from grandchallenge.core.utils.webpack import WebpackWidgetMixin
 
 class JSONEditorWidget(WebpackWidgetMixin, forms.Textarea):
     template_name = "jsoneditor/jsoneditor_widget.html"
-    webpack_bundles = ["jsoneditor"]
+    webpack_bundles = ["jsoneditor_widget"]
 
     def __init__(self, schema=None, attrs=None):
         super().__init__(attrs)

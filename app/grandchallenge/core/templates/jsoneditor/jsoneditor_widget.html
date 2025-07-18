@@ -14,5 +14,3 @@
 {% with "schema_"|add:widget.attrs.id as schema_id %}
     {{ schema|json_script:schema_id }}
 {% endwith %}
-
-<script type="module" src="{% static 'js/jsoneditor_widget.mjs' %}"></script>

@@ -7,7 +7,7 @@ const webpack = require('webpack');
 module.exports = {
   entry: {
     'jquery': 'jquery',
-    'jsoneditor': ['jsoneditor', 'jsoneditor/dist/jsoneditor.css', 'jsoneditor/dist/img/jsoneditor-icons.svg'],
+    'jsoneditor_widget': './app/grandchallenge/core/static/js/jsoneditor_widget.mjs',
   },
 
   output: {
@@ -19,14 +19,6 @@ module.exports = {
 
   module: {
     rules: [
-      {
-        // Expose JSONEditor globally
-        test: require.resolve('jsoneditor'),
-        loader: 'expose-loader',
-        options: {
-          exposes: ['JSONEditor'],
-        },
-      },
       {
         // Expose jQuery globally on jQuery and $
         test: require.resolve('jquery'),
@@ -46,8 +38,7 @@ module.exports = {
         test: /\.(png|jpe?g|gif|svg|woff|woff2|ttf|eot)$/,
         type: 'asset/resource',
         generator: {
-          filename: '[name]-[contenthash][ext]',
-          outputPath: 'assets/'
+          filename: 'assets/[name]-[contenthash][ext]'
         }
       }
     ]

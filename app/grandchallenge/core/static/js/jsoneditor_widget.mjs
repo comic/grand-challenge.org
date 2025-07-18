@@ -1,3 +1,6 @@
+import JSONEditor from "jsoneditor";
+import "jsoneditor/dist/jsoneditor.css";
+
 function initialize_jsoneditor_widget(jsoneditorWidgetID) {
     const schema = JSON.parse(
         document.getElementById(`schema_${jsoneditorWidgetID}`).textContent,
