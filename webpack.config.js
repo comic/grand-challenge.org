@@ -7,7 +7,7 @@ const webpack = require('webpack');
 module.exports = {
   entry: {
     'jquery': 'jquery',
-    'jsoneditor_widget': './app/grandchallenge/core/static/js/jsoneditor_widget.mjs',
+    'jsoneditor_widget': './app/grandchallenge/core/javascript/jsoneditor_widget.mjs',
   },
 
   output: {
