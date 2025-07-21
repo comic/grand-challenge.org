@@ -56,6 +56,8 @@ jobs:
               with:
                   node-version: '22'
                   cache: 'npm'
+              working-directory: app
+
             - name: Install dependencies
               run: npm ci
               working-directory: app
