@@ -8,34 +8,34 @@ FROM python:${PYTHON_VERSION}-slim-bookworm AS base
 # Install system dependencies
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-    libpng-dev \
-    libjpeg-dev \
-    libjpeg62-turbo-dev \
-    libfreetype6-dev \
-    libxft-dev \
-    libffi-dev \
-    wget \
-    gettext \
-    # postgres packages for psycopg2
-    libpq-dev \
-    # curl and ssl for pycurl
-    libcurl4-openssl-dev \
-    libssl-dev \
-    # for python-magic
-    libmagic1 \
-    # openslide and vips for image imports with panimg
-    # gcc is required to compile the extensions
-    libopenslide-dev \
-    libvips-dev \
-    gcc \
-    # ruby3.1, rugged and nokogiri for licensee
-    ruby3.1 \
-    ruby-rugged \
-    ruby-nokogiri \
-    # git for CodeBuild integration
-    git \
-    # for dbshell \
-    postgresql-client \
+        libpng-dev \
+        libjpeg-dev \
+        libjpeg62-turbo-dev \
+        libfreetype6-dev \
+        libxft-dev \
+        libffi-dev \
+        wget \
+        gettext \
+        # postgres packages for psycopg2
+        libpq-dev \
+        # curl and ssl for pycurl
+        libcurl4-openssl-dev \
+        libssl-dev \
+        # for python-magic
+        libmagic1 \
+        # openslide and vips for image imports with panimg
+        # gcc is required to compile the extensions
+        libopenslide-dev \
+        libvips-dev \
+        gcc \
+        # ruby3.1, rugged and nokogiri for licensee
+        ruby3.1 \
+        ruby-rugged \
+        ruby-nokogiri \
+        # git for CodeBuild integration
+        git \
+        # for dbshell \
+        postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Fetch and install licensee for checking licenses
@@ -118,18 +118,18 @@ USER root
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     # Add java and graphviz for plantuml documentation
-    default-jre \
-    graphviz \
-    # make for sphinx docs
-    make \
-    # playwright dependencies
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libatspi2.0-0 \
-    libxcomposite1 \
-    libxrandr2 \
-    libgbm1 \
-    libxkbcommon0 \
+        default-jre \
+        graphviz \
+        # make for sphinx docs
+        make \
+        # playwright dependencies
+        libatk1.0-0 \
+        libatk-bridge2.0-0 \
+        libatspi2.0-0 \
+        libxcomposite1 \
+        libxrandr2 \
+        libgbm1 \
+        libxkbcommon0 \
     && rm -rf /var/lib/apt/lists/*
 USER django:django
 
