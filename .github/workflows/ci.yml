@@ -54,10 +54,12 @@ jobs:
             - name: Setup Node.js
               uses: actions/setup-node@v4
               with:
-                  node-version: '20'
+                  node-version: '22'
                   cache: 'npm'
             - name: Install dependencies
-              run: npm ci
+              run: cd app && npm ci
+            - name: Build the JS bundles
+              run: npm run build
             - name: Run tests
               run: npm test
 
