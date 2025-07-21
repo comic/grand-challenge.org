@@ -4,14 +4,16 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const BundleTracker = require('webpack-bundle-tracker');
 const webpack = require('webpack');
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 module.exports = {
   entry: {
     'jquery': 'jquery',
-    'jsoneditor_widget': './app/grandchallenge/core/javascript/jsoneditor_widget.mjs',
+    'jsoneditor_widget': './grandchallenge/core/javascript/jsoneditor_widget.mjs',
   },
 
   output: {
-    path: path.resolve(__dirname, 'app/grandchallenge/core/static/npm_vendored'),
+    path: path.resolve(__dirname, 'grandchallenge/core/static/npm_vendored'),
     filename: '[name]-[contenthash].js',
     publicPath: '',
     clean: true,
@@ -55,13 +57,14 @@ module.exports = {
       'window.jQuery': 'jquery',
     }),
     new BundleTracker({
-      path: path.resolve(__dirname, 'app/grandchallenge/core/static/npm_vendored'),
+      path: path.resolve(__dirname, 'grandchallenge/core/static/npm_vendored'),
       filename: 'webpack-stats.json',
       relativePath: true,
     })
   ],
 
-  mode: 'production',
+  mode: isProduction ? 'production' : 'development',
+  devtool: isProduction ? 'source-map' : 'eval-source-map',
   optimization: {
     splitChunks: false // Keep each package separate
   }

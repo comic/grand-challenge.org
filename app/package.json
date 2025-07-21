@@ -4,7 +4,8 @@
   "description": "A platform for end-to-end development of machine learning solutions in biomedical imaging",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --config webpack.config.js --mode production",
+    "build": "NODE_ENV=production webpack --config webpack.config.js",
+    "dev": "NODE_ENV=development webpack --config webpack.config.js",
     "test": "jest"
   },
   "keywords": [],

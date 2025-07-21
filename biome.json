@@ -2,9 +2,9 @@
     "$schema": "https://biomejs.dev/schemas/1.8.3/schema.json",
     "files": {
         "ignore": [
-            "package.json",
-            "package-lock.json",
-            "webpack.config.js",
+            "app/package.json",
+            "app/package-lock.json",
+            "app/webpack.config.js",
             "app/grandchallenge/core/static/npm_vendored/**",
             "app/grandchallenge/core/static/vendored/**",
             "app/grandchallenge/core/static/js/markdownx.js",
