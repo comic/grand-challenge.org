@@ -18,7 +18,7 @@ def get_webpack_bundles(bundle_name):
     css_files = []
     js_files = []
 
-    static_url_prefix = f"{settings.STATIC_URL}vendored/"
+    static_url_prefix = f"{settings.STATIC_URL}npm_vendored/"
 
     for file in files:
         file_info = assets[file]

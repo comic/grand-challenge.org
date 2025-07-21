@@ -11,10 +11,10 @@ module.exports = {
   },
 
   output: {
-    path: path.resolve(__dirname, 'app/grandchallenge/core/static/vendored'),
+    path: path.resolve(__dirname, 'app/grandchallenge/core/static/npm_vendored'),
     filename: '[name]-[contenthash].js',
     publicPath: '',
-    clean: false, // TODO turn on when ready to clean up old files
+    clean: true,
   },
 
   module: {
@@ -45,7 +45,7 @@ module.exports = {
   },
 
   plugins: [
-    // new CleanWebpackPlugin(),
+    new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
       filename: '[name]-[contenthash].css'
     }),
@@ -55,7 +55,7 @@ module.exports = {
       'window.jQuery': 'jquery',
     }),
     new BundleTracker({
-      path: path.resolve(__dirname, 'app/grandchallenge/core/static/vendored'),
+      path: path.resolve(__dirname, 'app/grandchallenge/core/static/npm_vendored'),
       filename: 'webpack-stats.json',
       relativePath: true,
     })

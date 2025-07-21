@@ -438,10 +438,10 @@ cached_loaders = [("django.template.loaders.cached.Loader", default_loaders)]
 # Webpack Loader configuration
 WEBPACK_LOADER = {
     "DEFAULT": {
-        "BUNDLE_DIR_NAME": "vendored/",
+        "BUNDLE_DIR_NAME": "npm_vendored/",
         "STATS_FILE": os.path.join(
             Path(__file__).resolve().parent.parent,
-            "grandchallenge/core/static/vendored/webpack-stats.json",
+            "grandchallenge/core/static/npm_vendored/webpack-stats.json",
         ),
     }
 }

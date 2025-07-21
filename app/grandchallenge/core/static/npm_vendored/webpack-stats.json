@@ -1,0 +1,31 @@
+{
+  "status": "done",
+  "assets": {
+    "assets/jsoneditor-icons-15f2789dd231f36d43a4.svg": {
+      "name": "assets/jsoneditor-icons-15f2789dd231f36d43a4.svg",
+      "path": "assets/jsoneditor-icons-15f2789dd231f36d43a4.svg",
+      "sourceFilename": "node_modules/jsoneditor/dist/img/jsoneditor-icons.svg"
+    },
+    "jquery-4e616a151ce2e38a15ed.js": {
+      "name": "jquery-4e616a151ce2e38a15ed.js",
+      "path": "jquery-4e616a151ce2e38a15ed.js"
+    },
+    "jsoneditor_widget-76d6d872851b9148d3e5.js": {
+      "name": "jsoneditor_widget-76d6d872851b9148d3e5.js",
+      "path": "jsoneditor_widget-76d6d872851b9148d3e5.js"
+    },
+    "jsoneditor_widget-ee9b89b4b31b71d06c63.css": {
+      "name": "jsoneditor_widget-ee9b89b4b31b71d06c63.css",
+      "path": "jsoneditor_widget-ee9b89b4b31b71d06c63.css"
+    }
+  },
+  "chunks": {
+    "jquery": [
+      "jquery-4e616a151ce2e38a15ed.js"
+    ],
+    "jsoneditor_widget": [
+      "jsoneditor_widget-ee9b89b4b31b71d06c63.css",
+      "jsoneditor_widget-76d6d872851b9148d3e5.js"
+    ]
+  }
+}

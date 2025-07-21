@@ -10,11 +10,11 @@ repos:
           - id: check-docstring-first
           - id: debug-statements
           - id: end-of-file-fixer
-            exclude: ^app/grandchallenge/core/static/vendored/.*$
+            exclude: ^app/grandchallenge/core/static/npm_vendored/.*$
           - id: mixed-line-ending
-            exclude: ^app/grandchallenge/core/static/vendored/.*$
+            exclude: ^app/grandchallenge/core/static/npm_vendored/.*$
           - id: trailing-whitespace
-            exclude: ^app/grandchallenge/core/static/vendored/.*$
+            exclude: ^app/grandchallenge/core/static/npm_vendored/.*$
     - repo: https://github.com/pycqa/isort
       rev: 5.13.2
       hooks:
