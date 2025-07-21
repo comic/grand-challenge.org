@@ -117,7 +117,7 @@ FROM base AS test-base
 USER root
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-    # Add java and graphviz for plantuml documentation
+        # Add java and graphviz for plantuml documentation
         default-jre \
         graphviz \
         # make for sphinx docs
