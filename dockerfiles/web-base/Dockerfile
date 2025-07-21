@@ -61,8 +61,8 @@ RUN mkdir -p /opt/git-lfs \
 
 # Get the minio client for development
 RUN mkdir -p /opt/mc \
-    && wget https://dl.min.io/client/mc/release/darwin-arm64/archive/mc.RELEASE.2025-07-16T15-35-03Z -O /opt/mc/mc \
-    && echo "61caf3c492ad86601739ff2e8278bede1bf5bfaee5b84bfc880f6549fc645952  /opt/mc/mc" | shasum -c - || exit 1 \
+    && wget https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2025-07-16T15-35-03Z -O /opt/mc/mc \
+    && echo "a5c3695b6f76ed958c0f099795f32091fced0d748ddc749c8b24e07681bbfbb9  /opt/mc/mc" | shasum -c - || exit 1 \
     && chmod a+x /opt/mc/mc \
     && mv /opt/mc/mc /usr/local/bin/ \
     && rm -r /opt/mc
