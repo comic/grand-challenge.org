@@ -57,11 +57,16 @@ jobs:
                   node-version: '22'
                   cache: 'npm'
             - name: Install dependencies
-              run: cd app && npm ci
+              run: npm ci
+              working-directory: app
+
             - name: Build the JS bundles
               run: npm run build
+              working-directory: app
+
             - name: Run tests
               run: npm test
+              working-directory: app
 
     docs:
         runs-on: ubuntu-latest
