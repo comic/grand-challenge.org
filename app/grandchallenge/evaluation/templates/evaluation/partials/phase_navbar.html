@@ -1,9 +1,10 @@
 {% load url %}
 {% load profiles %}
 {% load evaluation_extras %}
+{% load static %}
 
-<nav class="navbar p-0 mb-3">
-    <ul class="navbar-nav nav-pills p-3 flex-row text-nowrap overflow-auto">
+<nav class="navbar navbar-expand d-block p-0 mb-3" id="phaseNavbar">
+    <ul class="navbar-nav nav-pills p-3 text-nowrap" id="phaseNavbarUl">
         {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-detail,evaluation:leaderboard,evaluation:detail' %}
             {% for combined_leaderboard in challenge.combinedleaderboard_set.all %}
                 <li class="nav-item">
@@ -28,12 +29,22 @@
                 </li>
             {% endif %}
         {% endfor %}
-    {% if submission_nav %}
-        <li class="nav-item">
-            <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
-               href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">{% if "change_challenge" in challenge_perms %}All {% else %}Your {% endif %} Submissions
+        {% if submission_nav %}
+            <li class="nav-item">
+                <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
+                   href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">{% if "change_challenge" in challenge_perms %}All {% else %}Your {% endif %} Submissions
+                </a>
+            </li>
+        {% endif %}
+        <li class="nav-item dropdown ml-auto" id="phaseNavbarDropdownMenu" >
+            <a class="nav-link mr-1 px-4 py-1" href="#" id="phaseNavbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fa fa-ellipsis-h"></i> More
             </a>
+            <ul class="dropdown-menu dropdown-menu-right nav-pills p-3" aria-labelledby="phaseNavbarDropdownMenuLink">
+            </ul>
         </li>
-    {% endif %}
     </ul>
 </nav>
+
+
+<script src="{% static 'js/challenges/responsive-dropdown.mjs' %}" type="module" defer></script>
