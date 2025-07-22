@@ -3,6 +3,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const BundleTracker = require('webpack-bundle-tracker');
 const webpack = require('webpack');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -66,6 +67,10 @@ module.exports = {
   mode: isProduction ? 'production' : 'development',
   devtool: isProduction ? 'source-map' : 'eval-source-map',
   optimization: {
-    splitChunks: false // Keep each package separate
+    splitChunks: false, // Keep each package separate
+    minimizer: [
+      '...', // keep existing minimizers (like Terser for JS)
+      new CssMinimizerPlugin(),
+    ],
   }
 };
