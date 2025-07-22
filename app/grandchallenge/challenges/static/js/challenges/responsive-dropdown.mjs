@@ -12,7 +12,11 @@ function updatePhaseNavbar() {
         $("#phaseNavbar").outerWidth(true) - dropdownMenuWidth;
 
     if (navWidth > availableSpace) {
-        const lastItem = phaseNavItems.last();
+        const lastItem = phaseNavItems
+            .filter(function () {
+                return !$(this).find("a.nav-link").hasClass("active");
+            })
+            .last();
         lastItem.attr("data-width", lastItem.outerWidth(true));
         lastItem.prependTo($("#phaseNavbarDropdownMenu ul"));
         updatePhaseNavbar();
