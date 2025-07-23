@@ -126,7 +126,7 @@ def test_notification_sent_on_new_post(
     Notification.objects.all().delete()
 
     with django_capture_on_commit_callbacks(execute=True):
-        t = ForumTopicFactory(forum=f, creator=admin, kind=kind, post_count=0)
+        t = ForumTopicFactory(forum=f, creator=admin, kind=kind, post_count=1)
         ForumPostFactory(topic=t, creator=u)
 
     notifications = Notification.objects.all()
@@ -166,7 +166,7 @@ def test_follow_if_post_in_topic(settings, django_capture_on_commit_callbacks):
 
     with django_capture_on_commit_callbacks(execute=True):
         f = ForumFactory()
-        t = ForumTopicFactory(forum=f, post_count=0)
+        t = ForumTopicFactory(forum=f, post_count=1)
     assert not is_following(user=u, obj=t)
 
     with django_capture_on_commit_callbacks(execute=True):
