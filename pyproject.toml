@@ -129,7 +129,6 @@ vega = { version = "==5.20.2", include = ["vega(.min)?.js(.map)?"], maps = ["veg
 vega-lite = { version = "==5.1.0", include = ["vega-lite(.min)?.js(.map)?"] }
 vega-embed = { version = "==6.17.0", include = ["vega-embed(.min)?.js(.map)?"] }
 jsoneditor = { version = "==10.1.1", include = ["jsoneditor(.min)?.js(.map)?", "jsoneditor(.min)?.css(.map)?", "img/*"], maps = ["jsoneditor.map"] }
-"sentry-browser" = { version = "==6.19.7", include = ["bundle(.min)?.js(.map)?"], maps = ["bundle.min.js.map", "bundle.js.map"] }
 "hammer.js" = { version = "==2.0.8", include = ["hammer(.min)?.js(.map)?"] }
 uppy = { version = "==2.2.0", include = ["uppy(.min)?.css(.map)?", "uppy(.min)?.js(.map)?"], maps = ["packages/uppy/dist/uppy.min.js.map"] }
 jscolor = { version = "==2.5.1", include = ["jscolor(.min)?.js(.map)?"] }

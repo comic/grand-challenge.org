@@ -11,6 +11,7 @@ module.exports = {
   entry: {
     'jquery': 'jquery',
     'jsoneditor_widget': './grandchallenge/core/javascript/jsoneditor_widget.mjs',
+    'sentry': './grandchallenge/core/javascript/sentry.mjs',
   },
 
   output: {

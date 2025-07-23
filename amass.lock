@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:7323d757c1b86dd251c2109a0a3257b22a10f6ef7e2bfc0948d243abf0bd7fb8",
+  "content_hash": "sha256:25ed45cf822a33386de347d79da01dc67f366e571e1f880d4ce9e53ed548e440",
   "dependencies": [
     {
       "name": "@diagnijmegen/rse-grand-challenge-dicom-deid-procedure",
@@ -767,25 +767,6 @@
         }
       ],
       "maps": []
-    },
-    {
-      "name": "sentry-browser",
-      "version": "6.19.7",
-      "provider": "cdnjs",
-      "assets": [
-        {
-          "name": "bundle.js",
-          "sri": "sha512-YFAdK/3y/z0eEiGVH4jEbdHQM9CDBO6XV5oX5NkhlC4UlZLV9we7Sqog57K2FDBDbGQUWfkEilpByTPJwQ8Atg=="
-        },
-        {
-          "name": "bundle.min.js",
-          "sri": "sha512-bfZoCIl6netdQQ4kWQ5HZaKOS24IohehpiEjuOu2sVpY3XaheFE/n0+bqJCwt4CDEP+nN+90sQwIOl1II1pLjA=="
-        }
-      ],
-      "maps": [
-        "bundle.min.js.map",
-        "bundle.js.map"
-      ]
     },
     {
       "name": "uppy",
