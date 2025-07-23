@@ -7,7 +7,7 @@
     <ul class="navbar-nav nav-pills p-3 flex-wrap" id="phaseNavbarUl">
         {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-detail,evaluation:leaderboard,evaluation:detail' %}
             {% for combined_leaderboard in challenge.combinedleaderboard_set.all %}
-                <li class="nav-item col-xl-3 col-lg-4 col-md-6">
+                <li class="nav-item d-block col-xl-3 col-lg-4 col-md-6" style="position: static; width: 100%;">
                      <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-detail,evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-delete' and request.resolver_match.kwargs.slug == combined_leaderboard.slug %}active{% endif %}"
                         href="{% url 'evaluation:combined-leaderboard-detail' challenge_short_name=challenge.short_name slug=combined_leaderboard.slug %}">{{ combined_leaderboard.title|title }}</a>
                 </li>
@@ -15,7 +15,7 @@
         {%  endif %}
         {% for phase in challenge.phase_set.all %}
             {% if "change_challenge" in challenge_perms or phase.public %}
-                <li class="nav-item col-xl-3 col-lg-4 col-md-6">
+                <li class="nav-item d-block col-xl-3 col-lg-4 col-md-6" style="position: static; width: 100%;">
                     {% if leaderboard_nav %}
                         <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:leaderboard' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
                     href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}">{%if not phase.public %}<i class="fa fa-lock fa-fw mr-1"></i>{% endif %}{{ phase.title }}</a>
@@ -30,7 +30,7 @@
             {% endif %}
         {% endfor %}
         {% if submission_nav %}
-            <li class="nav-item col-xl-3 col-lg-4 col-md-6">
+            <li class="nav-item d-block col-xl-3 col-lg-4 col-md-6" style="position: static; width: 100%;">
                 <a class="nav-link mr-1 px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
                    href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">{% if "change_challenge" in challenge_perms %}All {% else %}Your {% endif %} Submissions
                 </a>
