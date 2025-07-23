@@ -107,3 +107,6 @@ app/tests/resources/gc_demo_algorithm/algorithm_io.tar
 
 # Editor files
 .vscode/
+
+# Vendored npm files
+app/grandchallenge/core/static/npm_vendored/
