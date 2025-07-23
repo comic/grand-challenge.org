@@ -3,7 +3,7 @@
 
 {% if challenge %}
     <div class="row mb-3 mx-0 border-bottom challenge-topbar">
-        <div class="col px-0">
+        <div class="col-auto mr-auto px-0">
             <div class="nav-tab-dropdown-container">
                 <a class="d-lg-none btn btn-outline-dark mb-1"
                    data-toggle="dropdown"
@@ -43,13 +43,10 @@
                                    href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
                                     <i class="fas fa-upload fa-fw"></i>&nbsp;&nbsp;Submit</a>
                             </li>
-                            <li class="nav-item position-static">
-                                <button class="nav-link dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}" type="button" data-toggle="dropdown" data-offset="-100, 0" aria-expanded="false">
-                                    <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
-                                </button>
-                                <div class="dropdown-menu w-100">
-                                    {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
-                                </div>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}"
+                                   href="#" type="button" data-toggle="collapse" data-target="#collapsiblePhasesNav" aria-expanded="false">
+                                    <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
                             </li>
                         {% elif user_is_participant and challenge.first_visible_phase %}
                             <li class="nav-item">
@@ -57,13 +54,10 @@
                                    href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=challenge.first_visible_phase.slug %}">
                                     <i class="fas fa-upload fa-fw"></i>&nbsp;&nbsp;Submit</a>
                             </li>
-                            <li class="nav-item dropdown position-static">
-                                <button class="nav-link dropdown-toggle {% if request.resolver_match.view_name == 'evaluation:leaderboard' or request.resolver_match.view_name == 'evaluation:list' or request.resolver_match.view_name == 'evaluation:detail' or request.resolver_match.view_name == 'evaluation:update' %}active{% endif %}" type="button" data-toggle="dropdown" aria-expanded="false">
-                                    <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
-                                </button>
-                                <ul class="dropdown-menu w-100">
-                                    {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
-                                </ul>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:leaderboard' or request.resolver_match.view_name == 'evaluation:list' or request.resolver_match.view_name == 'evaluation:detail' or request.resolver_match.view_name == 'evaluation:update' %}active{% endif %}"
+                                   href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=challenge.first_visible_phase.slug %}">
+                                    <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}</a>
                             </li>
                         {% elif not challenge.hidden and challenge.first_visible_phase %}
                             <li class="nav-item">
@@ -106,6 +100,8 @@
             </div>
         {% endif %}
     </div>
+
+    {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
 
     <script src="{% static 'js/challenges/dropdown.js' %}" type="module" defer></script>
 
