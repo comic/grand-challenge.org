@@ -1,4 +1,3 @@
-from actstream.actions import follow
 from actstream.models import Follow
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -20,10 +19,9 @@ from grandchallenge.discussion_forums.models import (
     Forum,
     ForumPost,
     ForumTopic,
-    ForumTopicKindChoices,
 )
 from grandchallenge.evaluation.models import Evaluation, Phase, Submission
-from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.notifications.models import Notification
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.reader_studies.models import (
     ReaderStudy,
@@ -40,52 +38,6 @@ def disallow_spam(sender, *, instance, **_):
         raise PermissionDenied(
             "Your account is too new to create a forum post, "
             "please try again later"
-        )
-
-
-@receiver(post_save, sender=ForumTopic)
-def create_topic_notification(sender, *, instance, created, **_):
-    if created:
-        follow(
-            user=instance.creator,
-            obj=instance,
-            actor_only=False,
-            send_action=False,
-        )
-
-        if instance.kind == ForumTopicKindChoices.ANNOUNCE:
-            Notification.send(
-                kind=NotificationType.NotificationTypeChoices.FORUM_POST,
-                actor=instance.creator,
-                message="announced",
-                action_object=instance,
-                target=instance.forum,
-                context_class="info",
-            )
-        else:
-            Notification.send(
-                kind=NotificationType.NotificationTypeChoices.FORUM_POST,
-                actor=instance.creator,
-                message="posted",
-                action_object=instance,
-                target=instance.forum,
-            )
-
-
-@receiver(post_save, sender=ForumPost)
-def create_post_notification(sender, *, instance, created, **_):
-    if created and not instance.is_alone:
-        follow(
-            user=instance.creator,
-            obj=instance.topic,
-            actor_only=False,
-            send_action=False,
-        )
-        Notification.send(
-            kind=NotificationType.NotificationTypeChoices.FORUM_POST_REPLY,
-            actor=instance.creator,
-            message="replied to",
-            target=instance.topic,
         )
 
 

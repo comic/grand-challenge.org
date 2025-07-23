@@ -70,7 +70,12 @@ from tests.reader_studies_tests.factories import (
         ForumTopicKindChoices.DEFAULT,
     ),
 )
-def test_notification_sent_on_new_topic(kind):
+def test_notification_sent_on_new_topic(
+    kind, settings, django_capture_on_commit_callbacks
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     u = UserFactory()
     f = ForumFactory()
     f.linked_challenge.add_participant(u)
@@ -78,11 +83,12 @@ def test_notification_sent_on_new_topic(kind):
 
     # clear notifications
     Notification.objects.all().delete()
-    t = ForumTopicFactory(
-        forum=f,
-        creator=admin,
-        kind=kind,
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        t = ForumTopicFactory(
+            forum=f,
+            creator=admin,
+            kind=kind,
+        )
 
     notification = Notification.objects.get()
     topic_string = format_html('<a href="{}">{}</a>', t.get_absolute_url(), t)
@@ -105,7 +111,12 @@ def test_notification_sent_on_new_topic(kind):
         ForumTopicKindChoices.DEFAULT,
     ),
 )
-def test_notification_sent_on_new_post(kind):
+def test_notification_sent_on_new_post(
+    kind, settings, django_capture_on_commit_callbacks
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     u = UserFactory()
     f = ForumFactory()
     f.linked_challenge.add_participant(u)
@@ -114,8 +125,9 @@ def test_notification_sent_on_new_post(kind):
     # clear notifications
     Notification.objects.all().delete()
 
-    t = ForumTopicFactory(forum=f, creator=admin, kind=kind, post_count=1)
-    ForumPostFactory(topic=t, creator=u)
+    with django_capture_on_commit_callbacks(execute=True):
+        t = ForumTopicFactory(forum=f, creator=admin, kind=kind, post_count=0)
+        ForumPostFactory(topic=t, creator=u)
 
     notifications = Notification.objects.all()
     topic_string = format_html('<a href="{}">{}</a>', t.get_absolute_url(), t)
@@ -146,17 +158,30 @@ def test_notification_sent_on_new_post(kind):
 
 
 @pytest.mark.django_db
-def test_follow_if_post_in_topic():
+def test_follow_if_post_in_topic(settings, django_capture_on_commit_callbacks):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     u = UserFactory()
-    f = ForumFactory()
-    t = ForumTopicFactory(forum=f, post_count=1)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        f = ForumFactory()
+        t = ForumTopicFactory(forum=f, post_count=0)
     assert not is_following(user=u, obj=t)
-    ForumPostFactory(topic=t, creator=u)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        ForumPostFactory(topic=t, creator=u)
     assert is_following(user=u, obj=t)
 
 
 @pytest.mark.django_db
-def test_notification_created_for_target_followers_on_action_creation():
+def test_notification_created_for_target_followers_on_action_creation(
+    settings,
+    django_capture_on_commit_callbacks,
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     u = UserFactory()
     f = ForumFactory()
     f.linked_challenge.add_participant(u)
@@ -166,7 +191,8 @@ def test_notification_created_for_target_followers_on_action_creation():
     Notification.objects.all().delete()
 
     # creating a post creates an action automatically
-    _ = ForumTopicFactory(forum=f, creator=u)
+    with django_capture_on_commit_callbacks(execute=True):
+        _ = ForumTopicFactory(forum=f, creator=u)
     assert len(Notification.objects.all()) == 1
 
     notification = Notification.objects.get()
