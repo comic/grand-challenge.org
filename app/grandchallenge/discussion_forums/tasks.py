@@ -2,14 +2,17 @@ import logging
 
 from actstream.actions import follow
 from django.apps import apps
+from django.db import transaction
 
 from grandchallenge.core.celery import acks_late_micro_short_task
+from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.notifications.models import Notification, NotificationType
 
 logger = logging.getLogger(__name__)
 
 
-@acks_late_micro_short_task()
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
 def create_forum_notifications(*, object_pk, app_label, model_name):
     from grandchallenge.discussion_forums.models import (
         ForumPost,
