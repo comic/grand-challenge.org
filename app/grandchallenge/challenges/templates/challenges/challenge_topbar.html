@@ -39,12 +39,12 @@
 
                         {% if "change_challenge" in challenge_perms %}
                             <li class="nav-item">
-                                <button id="submissionPhaseNavTrigger" type="button" class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' or request.resolver_match.view_name == 'evaluation:phase-algorithm-create' %}active{% endif %}">
+                                <button id="submissionPhaseNavTrigger" type="button" class="nav-link btn my-0 {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' or request.resolver_match.view_name == 'evaluation:phase-algorithm-create' %}active{% endif %}">
                                     <i class="fas fa-upload fa-fw"></i>&nbsp;&nbsp;Submit
                                 </button>
                             </li>
                             <li class="nav-item">
-                                <button id="leaderboardPhaseNavTrigger" type="button" class="nav-link {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}">
+                                <button id="leaderboardPhaseNavTrigger" type="button" class="nav-link btn my-0 {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}">
                                     <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
                                 </button>
                             </li>
