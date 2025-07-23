@@ -3,10 +3,9 @@
 
 {% if SENTRY_ENABLE_JS_REPORTING %}
     {# Setup sentry before anything else loads #}
-    <script src="{% static 'vendored/sentry-browser/bundle.min.js' %}"></script>
     {{ SENTRY_DSN|json_script:"sentryDSN" }}
     {{ COMMIT_ID|json_script:"commitID" }}
-    <script type="module" src="{% static 'js/sentry.mjs' %}"></script>
+    {% render_bundle 'sentry' 'js' %}
 {% endif %}
 
 {# jquery must be loaded first (e.g. for django_select2) #}
