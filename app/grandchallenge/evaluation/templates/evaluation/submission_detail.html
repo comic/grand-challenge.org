@@ -23,12 +23,6 @@
     </ol>
 {% endblock %}
 
-{% block topbar2 %}
-    {% if "change_challenge" in challenge_perms or user_is_participant %}
-        {% include "evaluation/partials/phase_navbar.html" with submission_nav=True %}
-    {% endif %}
-{% endblock %}
-
 {% block content %}
 
     {% if not object.phase.public %}

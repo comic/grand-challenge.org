@@ -2,7 +2,7 @@
 {% load static %}
 
 {% if challenge %}
-    <div class="row mb-3 mx-0 border-bottom challenge-topbar">
+    <div class="row mx-0 border-bottom challenge-topbar">
         <div class="col px-0">
             <div class="nav-tab-dropdown-container">
                 <a class="d-lg-none btn btn-outline-dark mb-1"
@@ -39,17 +39,14 @@
 
                         {% if "change_challenge" in challenge_perms %}
                             <li class="nav-item">
-                                <a class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' or request.resolver_match.view_name == 'evaluation:phase-algorithm-create' %}active{% endif %}"
-                                   href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=challenge.phase_set.first.slug %}">
-                                    <i class="fas fa-upload fa-fw"></i>&nbsp;&nbsp;Submit</a>
+                                <button id="submissionPhaseNavTrigger" type="button" class="nav-link {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' or request.resolver_match.view_name == 'evaluation:phase-algorithm-create' %}active{% endif %}">
+                                    <i class="fas fa-upload fa-fw"></i>&nbsp;&nbsp;Submit
+                                </button>
                             </li>
-                            <li class="nav-item position-static">
-                                <button class="nav-link dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}" type="button" data-toggle="dropdown" data-offset="-100, 0" aria-expanded="false">
+                            <li class="nav-item">
+                                <button id="leaderboardPhaseNavTrigger" type="button" class="nav-link {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}">
                                     <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
                                 </button>
-                                <div class="dropdown-menu w-100">
-                                    {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
-                                </div>
                             </li>
                         {% elif user_is_participant and challenge.first_visible_phase %}
                             <li class="nav-item">
@@ -103,6 +100,21 @@
                             Join
                     </a>
                 </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="dropdown" style="z-index: 1001;">
+        <button id="leaderboardPhaseNavDropdown" class="dropdown-toggle d-none" data-display="static" data-toggle="dropdown" type="button"></button>
+        <div class="dropdown-menu mt-0 border-top-0">
+            {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
+        </div>
+    </div>
+    <div class="dropdown mb-3" style="z-index: 1001;">
+        {% if "change_challenge" in challenge_perms or user_is_participant %}
+            <button id="submissionPhaseNavDropdown" class="dropdown-toggle d-none" data-display="static" data-toggle="dropdown" type="button"></button>
+            <div class="dropdown-menu mt-0 border-top-0">
+                {% include "evaluation/partials/phase_navbar.html" with submission_nav=True %}
             </div>
         {% endif %}
     </div>

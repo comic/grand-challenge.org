@@ -25,12 +25,6 @@
     </ol>
 {% endblock %}
 
-{% block topbar2 %}
-    {% if "change_challenge" in challenge_perms or user_is_participant %}
-        {% include "evaluation/partials/phase_navbar.html" with submission_nav=True %}
-    {% endif %}
-{% endblock %}
-
 {% block content %}
     {% if phase.creator_must_be_verified %}
         {% include "challenges/partials/participant_verification_warning.html" %}

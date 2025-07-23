@@ -1,3 +1,12 @@
+$("#leaderboardPhaseNavTrigger").click(e => {
+    e.stopPropagation();
+    $("#leaderboardPhaseNavDropdown").dropdown("toggle");
+});
+$("#submissionPhaseNavTrigger").click(e => {
+    e.stopPropagation();
+    $("#submissionPhaseNavDropdown").dropdown("toggle");
+});
+
 function handleNavTabDropdown() {
     if (window.innerWidth < 576) {
         // 576 px is the bootstrap breakpoint for sm
