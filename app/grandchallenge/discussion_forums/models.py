@@ -299,7 +299,7 @@ class ForumPost(UUIDModel):
         if adding:
             self.assign_permissions()
             self.topic.mark_as_read(user=self.creator)
-            if self.is_alone:
+            if not self.is_alone:
                 on_commit(
                     create_forum_notifications.signature(
                         kwargs={
