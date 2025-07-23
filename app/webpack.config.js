@@ -15,7 +15,7 @@ module.exports = {
 
   output: {
     path: path.resolve(__dirname, 'grandchallenge/core/static/npm_vendored'),
-    filename: '[name]-[contenthash].js',
+    filename: isProduction ? '[name].js' : '[name]-[contenthash].js',
     publicPath: '',
     clean: true,
   },
@@ -41,7 +41,7 @@ module.exports = {
         test: /\.(png|jpe?g|gif|svg|woff|woff2|ttf|eot)$/,
         type: 'asset/resource',
         generator: {
-          filename: 'assets/[name]-[contenthash][ext]'
+          filename: isProduction ? 'assets/[name][ext]' : 'assets/[name]-[contenthash][ext]',
         }
       }
     ]
@@ -50,7 +50,7 @@ module.exports = {
   plugins: [
     new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
-      filename: '[name]-[contenthash].css'
+      filename: isProduction ? '[name].css' : '[name]-[contenthash].css'
     }),
     new webpack.ProvidePlugin({
       $: 'jquery',
