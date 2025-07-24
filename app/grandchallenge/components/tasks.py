@@ -1,3 +1,4 @@
+import gzip
 import itertools
 import json
 import shlex
@@ -659,7 +660,14 @@ def _get_image_config_and_sha256(*, instance):
                 open_tarfile=open_tarfile,
             )
 
-    except (EOFError, zlib.error, LZMAError, tarfile.ReadError, MemoryError):
+    except (
+        EOFError,
+        zlib.error,
+        gzip.BadGzipFile,
+        LZMAError,
+        tarfile.ReadError,
+        MemoryError,
+    ):
         raise ValidationError("Could not decompress the container image file.")
 
 
