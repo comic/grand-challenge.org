@@ -28,15 +28,18 @@
     <div class="row equal-height">
 
         <div class="col-md-4 mb-3">
-            <div class="card text-center border-success">
+            <div id="fileImportCard" class="card text-center border-primary">
                 <div class="card-body">
-                    <h5 class="card-title">Creating inputs</h5>
-                    <div class="text-center p-3">
-                        <i class="text-success fa fa-check fa-2x"></i>
+                    <h5 class="card-title">Importing Files</h5>
+                    <div class="text-center p-3 statusSymbol">
+                        <div class="text-secondary spinner-grow" role="status"><span
+                                class="sr-only">Loading...</span></div>
                     </div>
+                    <p class="card-text">
+                        <a href="{% url 'algorithms:job-detail' slug=object.algorithm_image.algorithm.slug pk=object.pk %}"
+                           class="stretched-link statusMessage"></a>
+                    </p>
                 </div>
-                <a href="{% url 'algorithms:job-interface-select' slug=object.algorithm_image.algorithm.slug %}"
-                   class="stretched-link"></a>
             </div>
         </div>
         <div class="col-md-4 mb-3">
@@ -75,6 +78,8 @@
 
     {{ object.algorithm_image.algorithm.average_duration|json_script:"averageJobDuration" }}
     {{ job_detail_api|json_script:"jobDetailAPI" }}
+    {{ algorithm_detail_api|json_script:"algorithmDetailAPI" }}
+    {{ object.algorithm_interface.pk|json_script:"interfacePk" }}
     <script src="{% static 'vendored/moment.js/moment.min.js' %}"></script>
     <script type="module" src="{% static 'algorithms/js/job_session.mjs' %}"></script>
 

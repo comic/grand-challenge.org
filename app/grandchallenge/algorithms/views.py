@@ -660,7 +660,11 @@ class JobProgressDetail(
             {
                 "job_detail_api": reverse(
                     "api:algorithms-job-detail", kwargs={"pk": self.object.pk}
-                )
+                ),
+                "algorithm_detail_api": reverse(
+                    "api:algorithm-detail",
+                    kwargs={"pk": self.object.algorithm_image.algorithm.pk},
+                ),
             }
         )
         return context

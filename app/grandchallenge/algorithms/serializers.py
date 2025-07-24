@@ -50,6 +50,7 @@ class AlgorithmInterfaceSerializer(serializers.ModelSerializer):
     class Meta:
         model = AlgorithmInterface
         fields = [
+            "pk",
             "inputs",
             "outputs",
         ]

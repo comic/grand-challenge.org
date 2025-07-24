@@ -1,35 +1,85 @@
-const timeout = 5000;
+let numImageInputs = 0;
+let numFileInputs = 0;
 
-const cards = {
-    imageImport: document.getElementById("imageImportCard"),
-    job: document.getElementById("jobCard"),
-    resultImport: document.getElementById("resultImportCard"),
-};
-
-const averageJobDuration = moment.duration(
-    JSON.parse(document.getElementById("averageJobDuration").textContent),
+const algorithmDetailAPI = JSON.parse(
+    document.getElementById("algorithmDetailAPI").textContent,
+);
+const interfacePk = JSON.parse(
+    document.getElementById("interfacePk").textContent,
 );
 const jobDetailAPI = JSON.parse(
     document.getElementById("jobDetailAPI").textContent,
 );
+const averageJobDuration = moment.duration(
+    JSON.parse(document.getElementById("averageJobDuration").textContent),
+);
+
+const timeout = 5000;
+
+const cards = {
+    imageImport: document.getElementById("imageImportCard"),
+    fileImport: document.getElementById("fileImportCard"),
+    job: document.getElementById("jobCard"),
+    resultImport: document.getElementById("resultImportCard"),
+};
 
 // Set anything less than 1s to "a few seconds"
 moment.relativeTimeThreshold("ss", 1);
 
+function getAlgorithmDetails(algorithmURL) {
+    return fetch(algorithmURL)
+        .then(response => response.json())
+        .then(data => {
+            const targetInterface = data.interfaces.find(
+                i => i.pk === interfacePk,
+            );
+
+            if (!targetInterface || !Array.isArray(targetInterface.inputs)) {
+                throw new Error(
+                    `Interface with pk=${interfacePk} not found or missing inputs.`,
+                );
+            }
+
+            const inputs = targetInterface.inputs;
+            numImageInputs = inputs.filter(
+                i => i.super_kind === "Image",
+            ).length;
+            numFileInputs = inputs.filter(i => i.super_kind === "File").length;
+        });
+}
+
 function getJobStatus(jobUrl) {
-    // Checks on the status of the Job (queued, running, started, etc)
     fetch(jobUrl)
         .then(response => response.json())
-        .then(job => handleJobStatus(job));
+        .then(handleJobStatus)
+        .catch(err => console.error("Failed to fetch job status:", err));
 }
 
 function handleJobStatus(job) {
     const jobStatus = job.status.toLowerCase();
+
     const imageInputs = job.inputs.filter(i =>
         ["Image", "Heat Map", "Segmentation"].includes(i.interface.kind),
     );
 
-    handleImageImports(jobStatus, imageInputs);
+    const fileInputs = job.inputs.filter(
+        i => i.interface.super_kind === "File",
+    );
+
+    updateCardStatus(
+        cards.imageImport,
+        jobStatus,
+        imageInputs,
+        numImageInputs,
+        "image",
+    );
+    updateCardStatus(
+        cards.fileImport,
+        jobStatus,
+        fileInputs,
+        numFileInputs,
+        "file",
+    );
 
     if (jobStatus === "succeeded") {
         setCardCompleteMessage(cards.job, "View Results");
@@ -49,7 +99,7 @@ function handleJobStatus(job) {
             cards.job,
             `Job is being executed <br> Average job duration: ${moment.duration(averageJobDuration).humanize()}`,
         );
-    } else if (jobStatus === "queued" || jobStatus === "re-queued") {
+    } else if (["queued", "re-queued"].includes(jobStatus)) {
         setCardAwaitingMessage(cards.job, "Queued");
     } else {
         setCardErrorMessage(cards.job, "Errored");
@@ -69,27 +119,32 @@ function handleJobStatus(job) {
         ].includes(jobStatus)
     ) {
         setTimeout(
-            () => {
-                getJobStatus(job.api_url);
-            },
+            () => getJobStatus(job.api_url),
             Math.floor(Math.random() * timeout) + 100,
         );
     }
 }
 
-function handleImageImports(jobStatus, imageInputs) {
-    if (imageInputs.length === 0) {
-        setCardInactiveMessage(cards.imageImport, "No images for this job");
-    } else if (imageInputs.every(i => i.image != null)) {
-        const msg = `Total of ${imageInputs.length} images`;
-        setCardCompleteMessage(cards.imageImport, msg);
+function updateCardStatus(card, jobStatus, inputs, expectedCount, typeLabel) {
+    if (expectedCount === 0) {
+        setCardInactiveMessage(card, `No ${typeLabel}s for this job`);
+        return;
+    }
+
+    const importedCount = inputs.filter(i => i[typeLabel] != null).length;
+    const msg = `${importedCount} of ${expectedCount} ${typeLabel}s imported`;
+
+    const isNotPending = !["queued", "re-queued", "validating inputs"].includes(
+        jobStatus,
+    );
+    const isIncomplete = importedCount < expectedCount;
+
+    if (isNotPending && isIncomplete) {
+        setCardErrorMessage(card, msg);
+    } else if (isIncomplete) {
+        setCardAwaitingMessage(card, msg);
     } else {
-        const msg = `${imageInputs.filter(i => i.image != null).length} of ${imageInputs.length} images imported`;
-        if (jobStatus === "queued" || jobStatus === "re-queued") {
-            setCardAwaitingMessage(cards.imageImport, msg);
-        } else {
-            setCardErrorMessage(cards.imageImport, `Errored: ${msg}`);
-        }
+        setCardCompleteMessage(card, msg);
     }
 }
 
@@ -145,4 +200,6 @@ function setCardInactiveMessage(card, msg) {
         '<i class="text-success fa fa-minus fa-2x"></i>';
 }
 
-getJobStatus(jobDetailAPI);
+getAlgorithmDetails(algorithmDetailAPI)
+    .then(() => getJobStatus(jobDetailAPI))
+    .catch(err => console.error("Failed to initialize:", err));
