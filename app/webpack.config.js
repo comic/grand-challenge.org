@@ -68,7 +68,11 @@ module.exports = {
   mode: isProduction ? 'production' : 'development',
   devtool: isProduction ? 'source-map' : 'eval-source-map',
   optimization: {
-    splitChunks: false, // Keep each package separate
+    splitChunks: {
+      chunks: 'all',
+      minSize: 0,
+    },
+    runtimeChunk: 'single',
     minimizer: [
       '...', // keep existing minimizers (like Terser for JS)
       new CssMinimizerPlugin(),
