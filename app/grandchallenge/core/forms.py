@@ -1,8 +1,11 @@
+from crispy_forms.bootstrap import StrictButton
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
+from crispy_forms.layout import Fieldset, Layout
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.forms import CharField, ModelForm
+from django.templatetags.static import static
+from django.utils.html import format_html
 
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.workstation_configs.models import WorkstationConfig
@@ -13,7 +16,27 @@ class SaveFormInitMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
+        self.helper.attrs["gc-disable-fieldsets-after-submit"] = True
+        self.helper.layout = Layout(
+            Fieldset(
+                None,  # Legend
+                self.helper.layout,
+                StrictButton(
+                    "Save",
+                    css_class="btn-primary",
+                    type="submit",
+                    css_id="submit-id-save",
+                ),
+            )
+        )
+
+    class Media:
+        js = [
+            format_html(
+                '<script type="module" src="{}"></script>',
+                static("js/disable_after_submit.mjs"),
+            )
+        ]
 
 
 class WorkstationUserFilterMixin:
