@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load url %}
 {% load static %}
+{% load render_bundle from webpack_loader %}
 
 
 {% block title %}
@@ -25,9 +26,5 @@
 
     {% include "grandchallenge/partials/cards_info_modal.html" %}
 
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-    <script src="{% static "js/cards_info_modal.js" %}"></script>
+    {% render_bundle 'cards_info_modal' 'js' %}
 {% endblock %}

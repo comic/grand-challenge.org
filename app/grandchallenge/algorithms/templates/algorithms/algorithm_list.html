@@ -3,6 +3,7 @@
 {% load user_profile_link from profiles %}
 {% load meta_attr %}
 {% load static %}
+{% load render_bundle from webpack_loader %}
 
 
 {% block title %}
@@ -25,9 +26,6 @@
 
     {% include "grandchallenge/partials/cards_info_modal.html" %}
 
-{% endblock %}
+    {% render_bundle 'cards_info_modal' 'js' %}
 
-{% block script %}
-    {{ block.super }}
-    <script src="{% static "js/cards_info_modal.js" %}"></script>
 {% endblock %}

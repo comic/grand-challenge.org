@@ -3,6 +3,7 @@
 {% load static %}
 {% load humanize %}
 {% load cache %}
+{% load render_bundle from webpack_loader %}
 
 {% block content %}
     {% cache 600 homepage %}
@@ -124,10 +125,7 @@
         </div>
 
         {% include "grandchallenge/partials/cards_info_modal.html" %}
-    {% endcache %}
-{% endblock %}
 
-{% block script %}
-    {{ block.super }}
-    <script src="{% static "js/cards_info_modal.js" %}"></script>
+    {% endcache %}
+    {% render_bundle 'cards_info_modal' 'js' %}
 {% endblock %}

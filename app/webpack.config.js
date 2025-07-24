@@ -12,6 +12,7 @@ module.exports = {
     'jquery': 'jquery',
     'jsoneditor_widget': './grandchallenge/core/javascript/jsoneditor_widget.mjs',
     'sentry': './grandchallenge/core/javascript/sentry.mjs',
+    'cards_info_modal': './grandchallenge/core/javascript/cards_info_modal.js',
   },
 
   output: {
