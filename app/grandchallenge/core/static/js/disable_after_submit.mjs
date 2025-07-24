@@ -1,8 +1,12 @@
 /**
  * @description
- * This module provides functionality to temporarily disable all fieldsets (and indirectly their children)
- * and show a spinner on submit buttons within forms, when the forms have the
- * `gc-disable-fieldsets-after-submit` attribute. This prevents duplicate submissions.
+ * This module provides functionality to temporarily disable forms that have the
+ * `gc-disable-after-submit` attribute.
+ *
+ * It does so by disabling all fieldsets and hence indirectly all their children.
+ * In addition, it shows a spinner on all submit buttons within forms.
+ *
+ * This prevents duplicate form submissions.
  *
  * Fieldsets are re-enabled and spinners removed after a short timeout.
  */
@@ -13,21 +17,49 @@ const reEnableTimeout = 10000;
 // Attribute names
 const baseAttributeName = "gc-disable-after-submit";
 const initAttributeName = `${baseAttributeName}-initialized`;
-const activeAttributeName = `${baseAttributeName}-disabled`;
+const disabledAttributeName = `${baseAttributeName}-disabled`;
 const spinnerAttributeName = `${baseAttributeName}-spinner`;
 
-function disableFieldSets(form) {
+// Holds timers for later cancelation
+const formTimers = [];
+
+function initDisableAfterSubmit() {
+    const forms = document.querySelectorAll(`form[${baseAttributeName}]`);
+
+    for (const form of forms) {
+        if (!form.hasAttribute(initAttributeName)) {
+            form.addEventListener("submit", handleFormSubmit);
+            form.setAttribute(initAttributeName, "");
+        }
+    }
+}
+
+function handleFormSubmit(event) {
+    const form = event.currentTarget;
+
+    // Sanity: submitting a disabled form should be prevented
+    if (form.hasAttribute(disabledAttributeName)) {
+        event.preventDefault();
+        return;
+    }
+
+    // Delay the disable so form data is actually submitted.
+    // Disabled-element values are thus not excluded.
+    const disableTimerId = setTimeout(disableForm, 0, form);
+    formTimers.push(disableTimerId);
+}
+
+function disableForm(form) {
     if (!form) {
         // Form no longer exists.
         return;
     }
 
     // Sanity: ensure we don't disable something twice.
-    if (form.hasAttribute(activeAttributeName)) {
+    if (form.hasAttribute(disabledAttributeName)) {
         return;
     }
-
-    form.setAttribute(activeAttributeName, "true");
+    form.setAttribute(disabledAttributeName, "");
 
     // Disable fieldsets.
     const fieldsets = form.querySelectorAll("fieldset");
@@ -39,29 +71,31 @@ function disableFieldSets(form) {
     const submitButtons = form.querySelectorAll('button[type="submit"]');
     for (const btn of submitButtons) {
         const spinner = document.createElement("span");
-        spinner.className = "spinner-border spinner-border-sm mr-1";
+        spinner.setAttribute(spinnerAttributeName, "");
         spinner.setAttribute("role", "status");
         spinner.setAttribute("aria-hidden", "true");
-        spinner.setAttribute(spinnerAttributeName, "true");
+        spinner.className = "spinner-border spinner-border-sm mr-1";
+
         btn.prepend(spinner);
     }
 
     // Re-enable after a while to safeguard against unforeseen errors / cancelations.
-    setTimeout(enableFieldSets, reEnableTimeout, form);
+    const enableTimerId = setTimeout(enabledForm, reEnableTimeout, form);
+    formTimers.push(enableTimerId);
 }
 
-function enableFieldSets(form) {
+function enabledForm(form) {
     if (!form) {
         // Form no longer exists.
         return;
     }
 
     // Sanity: ensure we don't enable something twice.
-    if (!form.hasAttribute(activeAttributeName)) {
+    if (!form.hasAttribute(disabledAttributeName)) {
         return;
     }
 
-    form.removeAttribute(activeAttributeName);
+    form.removeAttribute(disabledAttributeName);
 
     // Re-enable fieldsets.
     const fieldsets = form.querySelectorAll("fieldset");
@@ -76,42 +110,30 @@ function enableFieldSets(form) {
     }
 }
 
-function handleFormSubmit(event) {
-    const form = event.currentTarget;
-
-    if (form.hasAttribute(activeAttributeName)) {
-        event.preventDefault();
-        return;
+/*
+ * Cleans up any running timers or disabled forms
+ */
+function cleanUp() {
+    for (const timerId in formTimers) {
+        clearTimeout(timerId);
     }
+    formTimers.length = 0;
 
-    // Delay the disable so form data is actually submitted.
-    // Disabled-element values are thus not excluded.
-    setTimeout(disableFieldSets, 0, form);
-}
-
-function initDisableAfterSubmit(elem) {
-    const forms = elem.querySelectorAll(
-        "form[gc-disable-fieldsets-after-submit]",
-    );
+    const forms = document.querySelectorAll(`form[${initAttributeName}]`);
 
     for (const form of forms) {
-        if (!form.hasAttribute(initAttributeName)) {
-            form.addEventListener("submit", handleFormSubmit);
-            form.setAttribute(initAttributeName, "true");
-        }
+        enabledForm(form);
+        form.removeAttribute(initAttributeName);
     }
 }
 
-// Initialize when DOM is ready.
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () =>
-        initDisableAfterSubmit(document),
-    );
-} else {
-    initDisableAfterSubmit(document);
-}
+document.addEventListener("DOMContentLoaded", initDisableAfterSubmit);
+document.addEventListener("htmx:load", initDisableAfterSubmit);
 
-// Handle inserted forms via HTMX.
-if (typeof htmx !== "undefined" && htmx.onLoad) {
-    htmx.onLoad(elem => initDisableAfterSubmit(elem));
-}
+window.addEventListener("pageshow", e => {
+    // Handle forward and backward navigations
+    if (e.persisted) {
+        cleanUp();
+        initDisableAfterSubmit;
+    }
+});

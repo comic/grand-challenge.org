@@ -16,7 +16,7 @@ class SaveFormInitMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
-        self.helper.attrs["gc-disable-fieldsets-after-submit"] = True
+        self.helper.attrs["gc-disable-after-submit"] = True
         self.helper.layout = Layout(
             Fieldset(
                 None,  # Legend
