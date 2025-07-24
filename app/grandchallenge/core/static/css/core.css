@@ -149,12 +149,16 @@ ul.socialaccount_providers > li {
 .nav-tabs > .nav-item > .nav-link:hover {
     border: inherit;
     border-bottom: 0.25rem solid #f0f0f0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
 .nav-tabs > .nav-item > .nav-link.active {
     border: inherit;
     font-weight: bold;
     border-bottom: 0.25rem solid #2c3e50;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
 .challengeDropdown {

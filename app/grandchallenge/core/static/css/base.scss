@@ -84,3 +84,8 @@ a.mark:hover {
     color: $link-hover-color;
     text-decoration: underline;
 }
+
+.phase-nav-dropdown {
+    background-clip: border-box;
+    z-index: 1001;  // place above .vega-embed summary
+}
