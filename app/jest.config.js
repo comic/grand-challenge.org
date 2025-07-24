@@ -5,5 +5,5 @@ module.exports = {
     setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
 
     // The glob patterns Jest uses to detect test files
-    testMatch: ["<rootDir>/app/tests/*/js/*.test.js"],
+    testMatch: ["<rootDir>/tests/*/js/*.test.js"],
 };
