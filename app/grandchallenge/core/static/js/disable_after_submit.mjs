@@ -21,7 +21,7 @@ const disabledAttributeName = `${baseAttributeName}-disabled`;
 const spinnerAttributeName = `${baseAttributeName}-spinner`;
 
 // Holds timers for later cancelation
-const formTimers = [];
+const formTimers = new Set();
 
 function initDisableAfterSubmit() {
     const forms = document.querySelectorAll(`form[${baseAttributeName}]`);
@@ -45,11 +45,11 @@ function handleFormSubmit(event) {
 
     // Delay the disable so form data is actually submitted.
     // Disabled-element values are thus not excluded.
-    const disableTimerId = setTimeout(disableForm, 0, form);
-    formTimers.push(disableTimerId);
+    const disableTimerId = setTimeout(disable, 0, form);
+    formTimers.add(disableTimerId);
 }
 
-function disableForm(form) {
+function disable(form) {
     if (!form) {
         // Form no longer exists.
         return;
@@ -80,11 +80,11 @@ function disableForm(form) {
     }
 
     // Re-enable after a while to safeguard against unforeseen errors / cancelations.
-    const enableTimerId = setTimeout(enabledForm, reEnableTimeout, form);
-    formTimers.push(enableTimerId);
+    const enableTimerId = setTimeout(enable, reEnableTimeout, form);
+    formTimers.add(enableTimerId);
 }
 
-function enabledForm(form) {
+function enable(form) {
     if (!form) {
         // Form no longer exists.
         return;
@@ -114,15 +114,18 @@ function enabledForm(form) {
  * Cleans up any running timers or disabled forms
  */
 function cleanUp() {
-    for (const timerId in formTimers) {
+    for (const timerId of formTimers) {
         clearTimeout(timerId);
     }
-    formTimers.length = 0;
+    formTimers.clear();
 
     const forms = document.querySelectorAll(`form[${initAttributeName}]`);
 
     for (const form of forms) {
-        enabledForm(form);
+        enable(form);
+
+        // Revernt initialization
+        form.removeEventListener("submit", handleFormSubmit);
         form.removeAttribute(initAttributeName);
     }
 }
@@ -134,6 +137,6 @@ window.addEventListener("pageshow", e => {
     // Handle forward and backward navigations
     if (e.persisted) {
         cleanUp();
-        initDisableAfterSubmit;
+        initDisableAfterSubmit();
     }
 });
