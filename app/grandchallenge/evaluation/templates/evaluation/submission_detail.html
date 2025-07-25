@@ -150,7 +150,7 @@
 
             {% with object.phase.additional_evaluation_inputs.all as additional_inputs_required %}
 
-                {% if not object.is_evaluated_with_active_image_and_ground_truth or additional_inputs_required %}
+                {% if not object.phase.external_evaluation and not object.is_evaluated_with_active_image_and_ground_truth or additional_inputs_required %}
                     <div class="card-body">
                         <h4 class="card-title">Re-Evaluate Submission with
                             {% if not object.is_evaluated_with_active_image_and_ground_truth %} Active Method and Active Ground Truth {% endif %}

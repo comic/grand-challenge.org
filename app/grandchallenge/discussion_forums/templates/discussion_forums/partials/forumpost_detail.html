@@ -1,0 +1,45 @@
+{% load profiles %}
+{% load humanize %}
+{% load bleach %}
+{% load guardian_tags %}
+{% load url %}
+
+<div class="card my-3" id="post-{{ post.pk }}">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-10">
+                <div class="float-right">
+                    {% get_obj_perms request.user for post as "user_perms" %}
+                    {% if 'change_forumpost' in user_perms %}
+                        <a hx-get="{% url 'discussion-forums:post-update' challenge_short_name=post.topic.forum.linked_challenge.short_name slug=post.topic.slug pk=post.pk %}"
+                           hx-swap="outerHTML show:bottom" hx-target="#post-{{ post.id }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    {% endif %}
+                    {% if 'delete_forumpost' in user_perms %}
+                        <div hx-get="{% url 'discussion-forums:post-delete' challenge_short_name=post.topic.forum.linked_challenge.short_name slug=post.topic.slug pk=post.pk %}"
+                             hx-trigger="load"
+                             class="d-inline"
+                        ></div>
+                    {% endif %}
+                </div>
+                <p>
+                    <small class="text-muted">
+                        {% if post in unread_posts_by_user %}
+                            <span class="text-danger mr-1" title="New post"><i class="fa fa-circle pl-1"></i></span>
+                        {% endif %}
+                        <i class="fas fa-clock mr-1"></i>By: {{ post.creator|user_profile_link }}
+                        {{ post.created|naturaltime }}
+                        {% if not topic %}
+                            in <a href="{{ post.topic.get_absolute_url }}">{{ post.topic }}</a>
+                        {% endif %}
+                    </small>
+                </p>
+                <div class="post-content">{{ post.content|md2html }}</div>
+            </div>
+            <div class="col-md-2 d-none d-md-block">
+                {% include 'profiles/partials/mugshot.html' with profile=post.creator.user_profile with_userlink=True %}
+            </div>
+        </div>
+    </div>
+</div>

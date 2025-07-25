@@ -1,0 +1,117 @@
+{% extends "discussion_forums/forum_base.html" %}
+
+{% load static %}
+{% load guardian_tags %}
+{% load crispy_forms_tags %}
+{% load discussion_forum_extras %}
+
+
+{% block sub_title %}{% if topic %}{{ topic }}{% endif %}My posts- {% endblock %}
+
+{% block extra_breadcrumbs %}
+    <li class="breadcrumb-item">
+        <a href="{% url 'discussion-forums:topic-list' %}">Forum</a>
+    </li>
+    {% if topic %}
+        <li class="breadcrumb-item active">{{ topic }}</li>
+    {% else %}
+        <li class="breadcrumb-item active">My posts</li>
+    {% endif %}
+{% endblock %}
+
+{% block extra_top_row_buttons %}
+    {% include 'discussion_forums/partials/extra_top_row_buttons.html' %}
+{% endblock %}
+
+{% block extra_content %}
+    {% if topic %}
+        <div class="h3 my-3" title="{% if topic.is_locked %}This topic is locked. You cannot reply to it.{% endif %}">
+            {% if topic.is_locked %}<i class="fas fa-lock mr-2 fa-xs badge-dark p-2 rounded"></i>{% endif %}
+            {{ topic.subject }}
+        </div>
+    {% else %}
+        <h3>My posts</h3>
+    {% endif %}
+
+    {% if topic %}
+        {% get_obj_perms request.user for topic as "user_perms" %}
+        <div class="row">
+            <div class="col-8">
+                {% if 'create_topic_post' in user_perms %}
+                    {% if not page_obj.has_next %}
+                        <a href="#new-post-card" class="btn btn-primary btn-sm">
+                            <i class="fas fa-comment mr-1"></i>Reply
+                        </a>
+                    {% else %}
+                        <a href="?page={{ topic.last_page_num }}#new-post-card" class="btn btn-primary btn-sm"><i class="fas fa-comment mr-1"></i>Reply</a>
+                    {% endif %}
+                {% endif %}
+                {% if 'delete_forumtopic' in  user_perms %}
+                    <a href="{% url 'discussion-forums:topic-delete' slug=topic.slug %}" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash mr-1"></i>Delete topic
+                    </a>
+                {% endif %}
+                {% if 'lock_forumtopic' in user_perms and not topic.is_locked %}
+                    <form class="d-inline"
+                          method="post"
+                          action="{% url 'discussion-forums:topic-lock-update' slug=topic.slug %}"
+                    >
+                        {% csrf_token %}
+                        <input type="hidden" name="is_locked" value="True">
+                        <button type="submit" class="btn btn-warning btn-sm btn-subscription"><i class="fas fa-lock mr-1"></i>
+                            Lock topic
+                        </button>
+                    </form>
+                {% elif 'lock_forumtopic' in user_perms and topic.is_locked %}
+                    <form class="d-inline"
+                          method="post"
+                          action="{% url 'discussion-forums:topic-lock-update' slug=topic.slug %}"
+                    >
+                        {% csrf_token %}
+                        <input type="hidden" name="is_locked" value="False">
+                        <button type="submit" class="btn btn-warning btn-sm btn-subscription"><i class="fas fa-lock-open mr-1"></i>
+                            Unlock topic
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+            <div class="col-12 col-md-4 text-left text-md-right">
+                {% include 'actstream/partials/follow_unfollow_links.html' with object=topic %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="d-flex justify-content-end mt-3"><div class="btn btn-sm m-0 p-0">{% include "grandchallenge/partials/pagination.html" %}</div></div>
+
+    <div class="row">
+        <div class="col-12" id="post-list">
+            {% for post in object_list %}
+                {% include 'discussion_forums/partials/forumpost_detail.html' with topic=topic unread_posts_by_user=unread_posts_by_user %}
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if topic and 'create_topic_post' in user_perms %}
+        {% if not page_obj.has_next %}
+            <div class="card my-3" id="new-post-card">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <h3 class="m-0 p-2 h5 card-title">Reply to topic</h3>
+                </div>
+                <div class="card-body">
+                    {% crispy post_create_form %}
+                </div>
+            </div>
+            <div class="d-flex justify-content-end"><div class="btn btn-sm m-0 p-0">{% include "grandchallenge/partials/pagination.html" %}</div></div>
+        {% else %}
+            <div class="d-flex justify-content-between">
+                <div class="d-inline">
+                    <a href="?page={{ topic.last_page_num }}#new-post-card" class="btn btn-primary my-1"><i class="fas fa-comment mr-1"></i>Reply</a>
+                </div>
+                {% include "grandchallenge/partials/pagination.html" %}
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="d-flex justify-content-end"><div class="btn btn-sm m-0 p-0">{% include "grandchallenge/partials/pagination.html" %}</div></div>
+    {% endif %}
+
+{% endblock %}

@@ -859,6 +859,12 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     def _clean_external_evaluation(self):
         if self.external_evaluation:
+            if self.method_set.exists():
+                raise ValidationError(
+                    "Phases that have an evaluation method cannot be turned "
+                    "into external evaluation phases. Remove the method and "
+                    "try again."
+                )
             if not self.submission_kind == SubmissionKindChoices.ALGORITHM:
                 raise ValidationError(
                     "External evaluation is only possible for algorithm submission phases."
@@ -1422,6 +1428,14 @@ class Method(UUIDModel, ComponentImage):
 
         if adding:
             self.assign_permissions()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.phase.external_evaluation:
+            raise ValidationError(
+                "You cannot add a method to an external evaluation."
+            )
+        return cleaned_data
 
     def assign_permissions(self):
         assign_perm("view_method", self.phase.challenge.admins_group, self)

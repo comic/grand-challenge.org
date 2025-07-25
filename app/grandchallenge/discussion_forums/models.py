@@ -1,3 +1,5 @@
+import math
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
@@ -16,7 +18,8 @@ from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
-from grandchallenge.core.models import FieldChangeMixin, UUIDModelNoAutoNow
+from grandchallenge.core.models import FieldChangeMixin, UUIDModel
+from grandchallenge.subdomains.utils import reverse
 
 
 def get_matching_forum(*, old_forum_id, old_forum_model, new_forum_model):
@@ -35,8 +38,7 @@ class ForumTopicKindChoices(models.TextChoices):
     ANNOUNCE = "ANNOUNCE", "Announcement topic"
 
 
-class Forum(UUIDModelNoAutoNow):
-
+class Forum(UUIDModel):
     source_object = models.OneToOneField(
         MachinaForum,
         related_name="migrated_forum",
@@ -64,8 +66,14 @@ class Forum(UUIDModelNoAutoNow):
     def parent_object(self):
         return self.linked_challenge
 
+    def get_absolute_url(self):
+        return reverse(
+            "discussion-forums:topic-list",
+            kwargs={"challenge_short_name": self.parent_object.short_name},
+        )
 
-class ForumTopic(FieldChangeMixin, UUIDModelNoAutoNow):
+
+class ForumTopic(FieldChangeMixin, UUIDModel):
     source_object = models.OneToOneField(
         machina_conversation_models.Topic,
         related_name="migrated_topic",
@@ -199,6 +207,15 @@ class ForumTopic(FieldChangeMixin, UUIDModelNoAutoNow):
             topic=self,
         )
 
+    def get_absolute_url(self):
+        return reverse(
+            "discussion-forums:topic-post-list",
+            kwargs={
+                "challenge_short_name": self.forum.parent_object.short_name,
+                "slug": self.slug,
+            },
+        )
+
     @property
     def is_announcement(self):
         return self.kind == ForumTopicKindChoices.ANNOUNCE
@@ -211,6 +228,14 @@ class ForumTopic(FieldChangeMixin, UUIDModelNoAutoNow):
     def num_replies(self):
         return self.posts.count() - 1
 
+    @property
+    def last_page_num(self):
+        from grandchallenge.discussion_forums.views import ForumTopicPostList
+
+        post_count = self.posts.count()
+        posts_per_page = ForumTopicPostList.paginate_by
+        return math.ceil(post_count / posts_per_page)
+
     def get_unread_topic_posts_for_user(self, *, user):
         try:
             read_record = self.read_by.get(user=user)
@@ -219,7 +244,7 @@ class ForumTopic(FieldChangeMixin, UUIDModelNoAutoNow):
             return self.posts
 
 
-class ForumPost(UUIDModelNoAutoNow):
+class ForumPost(UUIDModel):
     source_object = models.OneToOneField(
         machina_conversation_models.Post,
         related_name="migrated_post",
@@ -262,7 +287,7 @@ class ForumPost(UUIDModelNoAutoNow):
 
         if adding:
             self.assign_permissions()
-            # self.topic.mark_as_read(user=self.creator)
+            self.topic.mark_as_read(user=self.creator)
 
         self.topic.last_post = self
         self.topic.last_post_on = self.created
@@ -319,6 +344,18 @@ class ForumPost(UUIDModelNoAutoNow):
             self,
         )
 
+    def get_absolute_url(self):
+        from grandchallenge.discussion_forums.views import ForumTopicPostList
+
+        position = self.get_relative_position()
+        posts_per_page = ForumTopicPostList.paginate_by
+
+        page_number = (position // posts_per_page) + 1
+        if page_number > 1:
+            return f"{self.topic.get_absolute_url()}?page={page_number}#post-{self.pk}"
+        else:
+            return f"{self.topic.get_absolute_url()}#post-{self.pk}"
+
     def get_relative_position(self):
         post_ids = list(self.topic.posts.values_list("pk", flat=True))
         return post_ids.index(self.pk)
@@ -367,7 +404,7 @@ class ForumPostGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(ForumPost, on_delete=models.CASCADE)
 
 
-class TopicReadRecord(UUIDModelNoAutoNow):
+class TopicReadRecord(UUIDModel):
     source_object = models.OneToOneField(
         machina_tracking_models.TopicReadTrack,
         related_name="migrated_track",

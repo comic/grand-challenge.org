@@ -3,19 +3,16 @@ from actstream.actions import follow
 from actstream.models import Follow
 from django.conf import settings
 from django.db import connection, reset_queries
-from machina.apps.forum.models import Forum
 
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.notifications.models import Notification
 from grandchallenge.notifications.utils import (
     prefetch_generic_foreign_key_objects,
 )
+from tests.discussion_forums_tests.factories import ForumFactory
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import UserFactory
-from tests.notifications_tests.factories import (
-    ForumFactory,
-    NotificationFactory,
-)
+from tests.notifications_tests.factories import NotificationFactory
 
 
 @pytest.mark.django_db
@@ -84,7 +81,7 @@ def test_notification_list_view_num_queries(client, django_assert_num_queries):
 @pytest.mark.django_db
 def test_follow_list_view_num_queries():
     user1 = UserFactory()
-    f = ForumFactory(type=Forum.FORUM_POST)
+    f = ForumFactory()
     follow(user=user1, obj=f)
 
     follows = Follow.objects.select_related("user", "content_type").all()

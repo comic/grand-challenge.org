@@ -1,0 +1,28 @@
+{% load follow_extras %}
+{% load activity_tags %}
+{% load meta_attr %}
+{% load crispy_forms_tags %}
+{% load url %}
+
+
+{% if request.user|is_following:object %}
+    {% get_follow_object_pk request.user object as follow_object_pk %}
+    {% if follow_object_pk %}
+        <form class="d-inline" method="post" action="{% url 'notifications:follow-delete' pk=follow_object_pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-bell-slash mr-1"></i>Unsubscribe
+                from {{ object|verbose_name }}
+            </button>
+        </form>
+    {% endif %}
+{% else %}
+    {% get_content_type object as object_ct %}
+    {% follow_form user=request.user content_type=object_ct object_id=object.id as follow_form %}
+    <form class="d-inline" method="post" action="{% url 'notifications:follow-create' %}">
+        {% csrf_token %}
+        {{ follow_form|crispy }}
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-bell mr-1"></i>Subscribe
+            to {{ object|verbose_name }}
+        </button>
+    </form>
+{% endif %}

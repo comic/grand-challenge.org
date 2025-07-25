@@ -717,6 +717,11 @@ class EvaluationForm(AdditionalInputsMixin, forms.Form):
     def clean(self):
         cleaned_data = super().clean()
 
+        if cleaned_data["submission"].phase.external_evaluation:
+            raise ValidationError(
+                "You cannot re-evaluate an external evaluation."
+            )
+
         if (
             cleaned_data["submission"].phase.submission_kind
             == SubmissionKindChoices.ALGORITHM

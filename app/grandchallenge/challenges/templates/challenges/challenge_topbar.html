@@ -1,5 +1,6 @@
 {% load url %}
 {% load static %}
+{% load guardian_tags %}
 
 {% if challenge %}
     <div class="row mb-3 mx-0 border-bottom challenge-topbar">
@@ -18,10 +19,11 @@
                         </a>
                     </li>
 
-                    {% if challenge.display_forum_link %}
+                    {% get_obj_perms request.user for challenge.discussion_forum as "forum_perms" %}
+                    {% if challenge.display_forum_link and 'view_forum' in forum_perms %}
                         <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.view_name == 'forum:forum' or request.resolver_match.view_name == 'forum_conversation:topic' or request.resolver_match.view_name == 'forum_conversation:topic_create' or request.resolver_match.view_name == 'forum_tracking:mark_topics_read' or request.resolver_match.view_name == 'forum_conversation:topic_update' or request.resolver_match.view_name == 'forum_conversation:post_create' or request.resolver_match.view_name == 'forum_conversation:post_update' or request.resolver_match.view_name == 'forum_conversation:post_delete' %} show active {% endif %}"
-                               href="{% url 'forum:forum' slug=challenge.forum.slug pk=challenge.forum.pk %}">
+                            <a class="nav-link {% if request.resolver_match.view_name == 'discussion-forums:topic-list' or request.resolver_match.view_name == 'discussion-forums:topic-create' or request.resolver_match.view_name == 'discussion-forums:topic-post-list' or request.resolver_match.view_name == 'discussion-forums:topic-delete' %} show active {% endif %}"
+                               href="{% url 'discussion-forums:topic-list' challenge_short_name=challenge.short_name %}">
                                 <i class="fas fa-comments fa-fw"></i>&nbsp;&nbsp;Forum
                             </a>
                         </li>
@@ -57,7 +59,7 @@
                         {% endif %}
                     {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link {% if request.resolver_match.view_name == 'pages:statistics'  %}active{% endif %}"
+                        <a class="nav-link {% if request.resolver_match.view_name == 'pages:statistics' %}active{% endif %}"
                            href="{% url 'pages:statistics' challenge_short_name=challenge.short_name %}">
                             <i class="fas fa-chart-bar fa-fw"></i>&nbsp;&nbsp;Statistics
                         </a>
@@ -80,7 +82,7 @@
                     <a class="btn btn-success"
                        href="{% url 'participants:registration-create' challenge_short_name=challenge.short_name %}"
                        role="button">
-                            Join
+                        Join
                     </a>
                 </div>
             </div>

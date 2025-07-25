@@ -6,10 +6,9 @@ from actstream.models import Follow
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 from django_filters import CharFilter, ChoiceFilter, FilterSet
-from machina.apps.forum.models import Forum
-from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.core.filters import FilterForm
+from grandchallenge.discussion_forums.models import Forum, ForumTopic
 from grandchallenge.notifications.models import Notification
 
 BOOLEAN_CHOICES = (("1", "Read"), ("0", "Unread"))
@@ -29,12 +28,17 @@ class NotificationFilter(FilterSet):
 
         if name == "forum":
             name_qs = [
-                x.id for x in Forum.objects.filter(name__icontains=value).all()
+                x.id
+                for x in Forum.objects.filter(
+                    linked_challenge__short_name__icontains=value
+                ).all()
             ]
         elif name == "topic":
             name_qs = [
                 x.id
-                for x in Topic.objects.filter(subject__icontains=value).all()
+                for x in ForumTopic.objects.filter(
+                    subject__icontains=value
+                ).all()
             ]
 
         search_fields = (
@@ -50,8 +54,8 @@ class NotificationFilter(FilterSet):
 
 
 FOLLOW_CHOICES = (
-    ("forum_forum", "Forums"),
-    ("topic_forum_conversation", "Topics"),
+    ("forum_discussion_forums", "Forums"),
+    ("forumtopic_discussion_forums", "Topics"),
     ("readerstudy_reader_studies", "Reader studies"),
     ("archive_archives", "Archives"),
     ("algorithm_algorithms", "Algorithms"),
@@ -63,7 +67,7 @@ FOLLOW_CHOICES = (
 class FollowFilter(FilterSet):
 
     forum = CharFilter(method="search_filter", label="Search for a forum")
-    topic = CharFilter(
+    forumtopic = CharFilter(
         method="search_filter", label="Search for a forum topic"
     )
     forums_for_user = CharFilter(
@@ -79,44 +83,48 @@ class FollowFilter(FilterSet):
     class Meta:
         model = Follow
         form = FilterForm
-        fields = ("forum", "topic", "forums_for_user", "content_type")
+        fields = ("forum", "forumtopic", "forums_for_user", "content_type")
 
     def search_filter(self, queryset, name, value):
         model_name = name
         if model_name == "forum":
-            app_label = "forum"
+            app_label = "discussion_forums"
             model = Forum
-            kwargs = {"name__icontains": value}
-        elif model_name == "topic":
-            app_label = "forum_conversation"
-            model = Topic
+            kwargs = {"linked_challenge__short_name__icontains": value}
+        elif model_name == "forumtopic":
+            app_label = "discussion_forums"
+            model = ForumTopic
             kwargs = {"subject__icontains": value}
+        else:
+            app_label = None
+            model = None
+            kwargs = {}
 
-        name_qs = [x.id for x in model.objects.filter(**kwargs).all()]
-
-        return queryset.filter(
-            **{"object_id__in": name_qs},
-            **{
-                "content_type__exact": ContentType.objects.filter(
+        if model:
+            name_qs = [x.pk for x in model.objects.filter(**kwargs).all()]
+            extra_filter = {
+                "object_id__in": name_qs,
+                "content_type__exact": ContentType.objects.get(
                     model=model_name, app_label=app_label
-                ).get()
-            },
-        )
+                ),
+            }
+        else:
+            extra_filter = {}
+
+        return queryset.filter(**extra_filter)
 
     def search_forum_topics(self, queryset, name, value):
-        forums = [
-            x.id for x in Forum.objects.filter(name__icontains=value).all()
-        ]
+        forums = Forum.objects.filter(
+            linked_challenge__short_name__icontains=value
+        ).all()
         name_qs = [
-            x.id for x in Topic.objects.filter(forum__id__in=forums).all()
+            x.pk for x in ForumTopic.objects.filter(forum__in=forums).all()
         ]
         return queryset.filter(
-            **{"object_id__in": name_qs},
-            **{
-                "content_type__exact": ContentType.objects.filter(
-                    model="topic", app_label="forum_conversation"
-                ).get()
-            },
+            object_id__in=name_qs,
+            content_type__exact=ContentType.objects.get(
+                model="forumtopic", app_label="discussion_forums"
+            ),
         )
 
     def get_content_type(self, queryset, name, value):
