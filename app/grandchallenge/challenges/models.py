@@ -411,11 +411,13 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         on_delete=models.PROTECT,
         related_name="external_evaluators_of_challenge",
     )
-    forum = models.OneToOneField(
-        machina_forum_models.Forum,
-        null=True,
-        editable=False,
-        on_delete=models.PROTECT,
+    forum = deprecate_field(
+        models.OneToOneField(
+            machina_forum_models.Forum,
+            null=True,
+            editable=False,
+            on_delete=models.PROTECT,
+        )
     )
     discussion_forum = models.OneToOneField(
         discussion_forum_models.Forum,
