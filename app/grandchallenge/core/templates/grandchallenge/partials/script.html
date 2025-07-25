@@ -1,8 +1,9 @@
 {% load static %}
 {% load compress %}
+{% load render_bundle from webpack_loader %}
 
 {# Bootstrap first, requires jquery from head_script #}
-<script src="{% static 'vendored/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+{% render_bundle 'bootstrap' 'js' %}
 
 {# Floating scrollbar: floating-scroll, used by DataTables #}
 <script src="{% static 'vendored/floating-scroll/dist/jquery.floatingscroll.min.js' %}" defer></script>
