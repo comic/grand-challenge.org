@@ -34,12 +34,6 @@ p {
     padding-right: 0 !important;
 }
 
-.navbar-toggle {
-    margin-left: 0.9rem;
-    float: left;
-    margin-right: 0;
-}
-
 /* fix title tooltips when using .stretched-link */
 .above-stretched-link {
     z-index: 1;
@@ -136,52 +130,6 @@ ul.socialaccount_providers > li {
 }
 .nav-pills > li > .nav-link.active {
     border-radius: 1.2rem;
-}
-
-.nav-tabs > .nav-item > .nav-link {
-    color: #000;
-    border-top: 0 transparent;
-    border-right: 0 transparent;
-    border-left: 0 transparent;
-    border-bottom: 0.25rem solid transparent;
-}
-
-.nav-tabs > .nav-item > .nav-link:hover {
-    border: inherit;
-    border-bottom: 0.25rem solid #f0f0f0;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-.nav-tabs > .nav-item > .nav-link.active {
-    border: inherit;
-    font-weight: bold;
-    border-bottom: 0.25rem solid #2c3e50;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-.challengeDropdown {
-    padding: 0;
-}
-
-.challengeDropdown > .nav-link {
-    color: #000;
-}
-
-.challengeDropdown:hover {
-    background-color: #f0f0f0;
-}
-
-.phaseButton {
-    color: #000;
-    padding-top: 0.2rem;
-    padding-bottom: 0.2rem;
-}
-
-.phaseButton:focus,
-.phaseButton:hover {
-    box-shadow: none !important;
 }
 
 .gc-card {
