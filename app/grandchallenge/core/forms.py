@@ -13,6 +13,12 @@ from grandchallenge.workstations.models import Workstation
 
 
 class SaveFormInitMixin:
+    """
+    Mixin that adds some save features to a form via init:
+      - a 'Save' button
+      - disabling fieldsets after the form is submitted
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper(self)
