@@ -67,9 +67,11 @@ function disable(form) {
         fs.disabled = true;
     }
 
-    // Add a spinner
+    // Disable buttons and add a spinner
     const submitButtons = form.querySelectorAll('button[type="submit"]');
     for (const btn of submitButtons) {
+        btn.disabled = true;
+
         const spinner = document.createElement("span");
         spinner.setAttribute(spinnerAttributeName, "");
         spinner.setAttribute("role", "status");
@@ -103,10 +105,15 @@ function enable(form) {
         fs.disabled = false;
     }
 
-    // Remove the spinners.
-    const spinners = form.querySelectorAll(`span[${spinnerAttributeName}]`);
-    for (const spinner of spinners) {
-        spinner.remove();
+    // Re-enable buttons and remove the spinners.
+    const submitButtons = form.querySelectorAll('button[type="submit"]');
+    for (const btn of submitButtons) {
+        btn.disabled = false;
+
+        const spinners = btn.querySelectorAll(`span[${spinnerAttributeName}]`);
+        for (const spinner of spinners) {
+            spinner.remove();
+        }
     }
 }
 
@@ -124,7 +131,7 @@ function cleanUp() {
     for (const form of forms) {
         enable(form);
 
-        // Revernt initialization
+        // Revert initialization
         form.removeEventListener("submit", handleFormSubmit);
         form.removeAttribute(initAttributeName);
     }
