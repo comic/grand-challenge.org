@@ -22,12 +22,12 @@
 {% endblock %}
 
 {% block sidebar %}
-    <div class="col-sm-5 col-md-4 col-lg-3">
+    <div class="col-xl-5 col-lg-4 col-md-3">
         <ul class="nav nav-pills flex-column mb-3">
             {% for page in pages %}
                 {% if not page.hidden %}
                     <li class="nav-item">
-                        <a class="nav-link px-4 py-1 mb-1 d-flex align-items-center {% if page == object %}active{% endif %}"
+                        <a class="nav-link px-2 py-1 mb-1 d-flex align-items-center {% if page == object %}active{% endif %}"
                            href="{{ page.get_absolute_url }}">
                             {% if page.permission_level == page.REGISTERED_ONLY %}
                                 <i class="fas fa-lock fa-fw mr-1 flex-shrink-0" title="Page is only visible by participants of this challenge"></i>
@@ -43,7 +43,7 @@
             {% endfor %}
             {% if challenge.contact_email %}
                 <li class="nav-item">
-                    <a class="nav-link px-4 py-1 mb-1 d-flex align-items-center" href="mailto:{{ challenge.contact_email|random_encode|clean }}">
+                    <a class="nav-link px-2 py-1 mb-1 d-flex align-items-center" href="mailto:{{ challenge.contact_email|random_encode|clean }}">
                         <i class="fas fa-envelope fa-fw mr-1"></i>
                         Email organizers
                     </a>
