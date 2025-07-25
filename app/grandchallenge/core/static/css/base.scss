@@ -71,6 +71,20 @@ div.codehilite {
     padding: $nav-link-padding-y 1rem;
 }
 
+.nav-pills > li > .nav-link {
+    color: $body-color;
+}
+
+.nav-pills > li > .nav-link:hover {
+    border-radius: 1.2rem;
+    color: $body-color;
+    background-color: $light;
+}
+
+.nav-pills > li > .nav-link.active {
+    border-radius: 1.2rem;
+}
+
 .nav-tabs > .nav-item > .nav-link {
     color: $body-color;
     border-top: 0 transparent;

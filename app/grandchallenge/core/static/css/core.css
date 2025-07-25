@@ -120,18 +120,6 @@ ul.socialaccount_providers > li {
     min-width: 19rem;
 }
 
-.nav-pills > li > .nav-link {
-    color: #000;
-}
-.nav-pills > li > .nav-link:hover {
-    border-radius: 1.2rem;
-    color: #000;
-    background-color: #ecf0f1;
-}
-.nav-pills > li > .nav-link.active {
-    border-radius: 1.2rem;
-}
-
 .gc-card {
     border-radius: 0.9rem;
 }
