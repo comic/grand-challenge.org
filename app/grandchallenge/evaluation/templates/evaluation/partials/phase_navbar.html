@@ -2,7 +2,7 @@
 {% load profiles %}
 {% load evaluation_extras %}
 
-<nav class="navbar navbar-expand p-0">
+<nav class="navbar navbar-expand p-0 d-block">
     <ul class="navbar-nav nav-pills p-1 flex-wrap">
         {% if leaderboard_nav %}
             {% for combined_leaderboard in challenge.combinedleaderboard_set.all %}
