@@ -1201,7 +1201,7 @@ def test_create_algorithm_for_phase_limits(client):
     )
     # u3 has not created any algorithms for the phase yet,
     # so will immediately see the form
-    assert '<div id="test-form-added-marker" class="d-none"></div>' in str(
+    assert "Use the below form to create a new algorithm." in str(
         response.content
     )
 
@@ -1232,7 +1232,7 @@ def test_create_algorithm_for_phase_limits(client):
         user=u2,
         data={"show_form": "True"},
     )
-    assert '<div id="test-form-added-marker" class="d-none"></div>' in str(
+    assert "Use the below form to create a new algorithm." in str(
         response.content
     )
 
