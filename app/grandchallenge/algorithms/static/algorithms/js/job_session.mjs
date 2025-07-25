@@ -1,23 +1,29 @@
-const timeout = 5000;
-
-const cards = {
-    imageImport: document.getElementById("imageImportCard"),
-    job: document.getElementById("jobCard"),
-    resultImport: document.getElementById("resultImportCard"),
-};
-
-const averageJobDuration = moment.duration(
-    JSON.parse(document.getElementById("averageJobDuration").textContent),
+const numImageInputs = JSON.parse(
+    document.getElementById("numImageInputs").textContent,
+);
+const numFileInputs = JSON.parse(
+    document.getElementById("numFileInputs").textContent,
 );
 const jobDetailAPI = JSON.parse(
     document.getElementById("jobDetailAPI").textContent,
 );
+const averageJobDuration = moment.duration(
+    JSON.parse(document.getElementById("averageJobDuration").textContent),
+);
+
+const timeout = 5000;
+
+const cards = {
+    imageImport: document.getElementById("imageImportCard"),
+    fileImport: document.getElementById("fileImportCard"),
+    job: document.getElementById("jobCard"),
+    resultImport: document.getElementById("resultImportCard"),
+};
 
 // Set anything less than 1s to "a few seconds"
 moment.relativeTimeThreshold("ss", 1);
 
 function getJobStatus(jobUrl) {
-    // Checks on the status of the Job (queued, running, started, etc)
     fetch(jobUrl)
         .then(response => response.json())
         .then(job => handleJobStatus(job));
@@ -28,8 +34,24 @@ function handleJobStatus(job) {
     const imageInputs = job.inputs.filter(i =>
         ["Image", "Heat Map", "Segmentation"].includes(i.interface.kind),
     );
+    const fileInputs = job.inputs.filter(
+        i => i.interface.super_kind === "File",
+    );
 
-    handleImageImports(jobStatus, imageInputs);
+    updateCardStatus(
+        cards.imageImport,
+        jobStatus,
+        imageInputs,
+        numImageInputs,
+        "image",
+    );
+    updateCardStatus(
+        cards.fileImport,
+        jobStatus,
+        fileInputs,
+        numFileInputs,
+        "file",
+    );
 
     if (jobStatus === "succeeded") {
         setCardCompleteMessage(cards.job, "View Results");
@@ -49,7 +71,7 @@ function handleJobStatus(job) {
             cards.job,
             `Job is being executed <br> Average job duration: ${moment.duration(averageJobDuration).humanize()}`,
         );
-    } else if (jobStatus === "queued" || jobStatus === "re-queued") {
+    } else if (["queued", "re-queued"].includes(jobStatus)) {
         setCardAwaitingMessage(cards.job, "Queued");
     } else {
         setCardErrorMessage(cards.job, "Errored");
@@ -69,27 +91,32 @@ function handleJobStatus(job) {
         ].includes(jobStatus)
     ) {
         setTimeout(
-            () => {
-                getJobStatus(job.api_url);
-            },
+            () => getJobStatus(job.api_url),
             Math.floor(Math.random() * timeout) + 100,
         );
     }
 }
 
-function handleImageImports(jobStatus, imageInputs) {
-    if (imageInputs.length === 0) {
-        setCardInactiveMessage(cards.imageImport, "No images for this job");
-    } else if (imageInputs.every(i => i.image != null)) {
-        const msg = `Total of ${imageInputs.length} images`;
-        setCardCompleteMessage(cards.imageImport, msg);
+function updateCardStatus(card, jobStatus, inputs, expectedCount, typeLabel) {
+    if (expectedCount === 0) {
+        setCardInactiveMessage(card, `No ${typeLabel}s for this job`);
+        return;
+    }
+
+    const importedCount = inputs.filter(i => i[typeLabel] != null).length;
+    const msg = `${importedCount} of ${expectedCount} ${typeLabel}s imported`;
+
+    const isNotPending = !["queued", "re-queued", "validating inputs"].includes(
+        jobStatus,
+    );
+    const isIncomplete = importedCount < expectedCount;
+
+    if (isNotPending && isIncomplete) {
+        setCardErrorMessage(card, msg);
+    } else if (isIncomplete) {
+        setCardAwaitingMessage(card, msg);
     } else {
-        const msg = `${imageInputs.filter(i => i.image != null).length} of ${imageInputs.length} images imported`;
-        if (jobStatus === "queued" || jobStatus === "re-queued") {
-            setCardAwaitingMessage(cards.imageImport, msg);
-        } else {
-            setCardErrorMessage(cards.imageImport, `Errored: ${msg}`);
-        }
+        setCardCompleteMessage(card, msg);
     }
 }
 

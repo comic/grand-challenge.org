@@ -355,20 +355,21 @@ class TestObjectPermissionRequiredViews:
     def test_group_permission_required_views(self, client):
         ai = AlgorithmImageFactory(is_manifest_valid=True, is_in_registry=True)
         am = AlgorithmModelFactory()
+        interface = AlgorithmInterfaceFactory(
+            inputs=[ComponentInterfaceFactory()],
+            outputs=[ComponentInterfaceFactory()],
+        )
+        ai.algorithm.interfaces.set([interface])
         u = UserFactory()
         group = Group.objects.create(name="test-group")
         group.user_set.add(u)
         j = AlgorithmJobFactory(
             algorithm_image=ai,
+            algorithm_interface=interface,
             status=Job.SUCCESS,
             time_limit=ai.algorithm.time_limit,
         )
         p = AlgorithmPermissionRequestFactory(algorithm=ai.algorithm)
-        interface = AlgorithmInterfaceFactory(
-            inputs=[ComponentInterfaceFactory()],
-            outputs=[ComponentInterfaceFactory()],
-        )
-        ai.algorithm.interfaces.add(interface)
 
         VerificationFactory(user=u, is_verified=True)
 
