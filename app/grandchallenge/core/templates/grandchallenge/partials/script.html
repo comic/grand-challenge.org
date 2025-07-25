@@ -6,8 +6,7 @@
 {% render_bundle 'bootstrap' 'js' %}
 
 {# Floating scrollbar: floating-scroll, used by DataTables #}
-<script src="{% static 'vendored/floating-scroll/dist/jquery.floatingscroll.min.js' %}" defer></script>
-
+{% render_bundle 'floating-scroll' 'js' %}
 
 {# DataTables with colvis #}
 {% compress js %}
