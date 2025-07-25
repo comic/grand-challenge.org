@@ -27,13 +27,13 @@ class SaveFormInitMixin:
             Fieldset(
                 None,  # Legend
                 self.helper.layout,
-                StrictButton(
-                    "Save",
-                    css_class="btn-primary",
-                    type="submit",
-                    css_id="submit-id-save",
-                ),
-            )
+            ),
+            StrictButton(
+                "Save",
+                css_class="btn-primary",
+                type="submit",
+                css_id="submit-id-save",
+            ),
         )
 
     class Media:
