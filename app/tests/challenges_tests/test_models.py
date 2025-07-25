@@ -88,7 +88,12 @@ def test_participants_follow_forum(group):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("group", ("participant", "admin"))
-def test_non_posters_notified(group):
+def test_non_posters_notified(
+    group, settings, django_capture_on_commit_callbacks
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     p = UserFactory()
     u = UserFactory()
     c = ChallengeFactory()
@@ -100,11 +105,12 @@ def test_non_posters_notified(group):
     # delete all notifications for easier testing below
     Notification.objects.all().delete()
 
-    ForumTopicFactory(
-        forum=c.discussion_forum,
-        creator=p,
-        kind=ForumTopicKindChoices.ANNOUNCE,
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        ForumTopicFactory(
+            forum=c.discussion_forum,
+            creator=p,
+            kind=ForumTopicKindChoices.ANNOUNCE,
+        )
 
     assert u.user_profile.has_unread_notifications is True
     assert p.user_profile.has_unread_notifications is False

@@ -158,6 +158,8 @@ class Notification(UUIDModel):
         description=None,
         context_class=None,
     ):
+        from grandchallenge.components.tasks import lock_model_instance
+
         receivers = Notification.get_receivers(
             action_object=action_object, actor=actor, kind=kind, target=target
         )
@@ -178,7 +180,12 @@ class Notification(UUIDModel):
                 receiver.user_profile.notification_email_choice
                 == NotificationEmailOptions.INSTANT
             ):
-                receiver.user_profile.dispatch_unread_notifications_email(
+                user_profile = lock_model_instance(
+                    app_label="profiles",
+                    model_name="userprofile",
+                    pk=receiver.user_profile.pk,
+                )
+                user_profile.dispatch_unread_notifications_email(
                     site=site, unread_notification_count=1
                 )
 
