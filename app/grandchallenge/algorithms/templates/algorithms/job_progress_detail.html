@@ -78,8 +78,8 @@
 
     {{ object.algorithm_image.algorithm.average_duration|json_script:"averageJobDuration" }}
     {{ job_detail_api|json_script:"jobDetailAPI" }}
-    {{ algorithm_detail_api|json_script:"algorithmDetailAPI" }}
-    {{ object.algorithm_interface.pk|json_script:"interfacePk" }}
+    {{ num_image_inputs|json_script:"numImageInputs" }}
+    {{ num_file_inputs|json_script:"numFileInputs" }}
     <script src="{% static 'vendored/moment.js/moment.min.js' %}"></script>
     <script type="module" src="{% static 'algorithms/js/job_session.mjs' %}"></script>
 

@@ -1,11 +1,8 @@
-let numImageInputs = 0;
-let numFileInputs = 0;
-
-const algorithmDetailAPI = JSON.parse(
-    document.getElementById("algorithmDetailAPI").textContent,
+const numImageInputs = JSON.parse(
+    document.getElementById("numImageInputs").textContent,
 );
-const interfacePk = JSON.parse(
-    document.getElementById("interfacePk").textContent,
+const numFileInputs = JSON.parse(
+    document.getElementById("numFileInputs").textContent,
 );
 const jobDetailAPI = JSON.parse(
     document.getElementById("jobDetailAPI").textContent,
@@ -25,28 +22,6 @@ const cards = {
 
 // Set anything less than 1s to "a few seconds"
 moment.relativeTimeThreshold("ss", 1);
-
-function getAlgorithmDetails(algorithmURL) {
-    return fetch(algorithmURL)
-        .then(response => response.json())
-        .then(data => {
-            const targetInterface = data.interfaces.find(
-                i => i.pk === interfacePk,
-            );
-
-            if (!targetInterface || !Array.isArray(targetInterface.inputs)) {
-                throw new Error(
-                    `Interface with pk=${interfacePk} not found or missing inputs.`,
-                );
-            }
-
-            const inputs = targetInterface.inputs;
-            numImageInputs = inputs.filter(
-                i => i.super_kind === "Image",
-            ).length;
-            numFileInputs = inputs.filter(i => i.super_kind === "File").length;
-        });
-}
 
 function getJobStatus(jobUrl) {
     fetch(jobUrl)
@@ -200,6 +175,4 @@ function setCardInactiveMessage(card, msg) {
         '<i class="text-success fa fa-minus fa-2x"></i>';
 }
 
-getAlgorithmDetails(algorithmDetailAPI)
-    .then(() => getJobStatus(jobDetailAPI))
-    .catch(err => console.error("Failed to initialize:", err));
+getJobStatus(jobDetailAPI);
