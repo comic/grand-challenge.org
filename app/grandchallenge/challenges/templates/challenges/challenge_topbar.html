@@ -3,15 +3,19 @@
 {% load guardian_tags %}
 
 {% if challenge %}
-    <div class="row mb-3 mx-0 border-bottom challenge-topbar">
+    <nav class="navbar navbar-expand-lg navbar-light p-0 mb-3 mx-0 border-bottom align-items-start">
         <div class="col-auto mr-auto px-0">
-            <div class="nav-tab-dropdown-container">
-                <a class="d-lg-none btn btn-outline-dark mb-1"
-                   data-toggle="dropdown"
-                   href="#"
-                   role="button"
-                   aria-expanded="false"><i class="fas fa-bars"></i></a>
-                <ul class="nav nav-tabs border-0">
+            <button class="navbar-toggler"
+                    type="button"
+                    data-toggle="collapse"
+                    data-target="#collapsibleChallengeNavbar"
+                    aria-controls="collapsibleChallengeNavbar"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="collapsibleChallengeNavbar">
+                <ul class="nav navbar-nav challenge-topbar">
                     <li class="nav-item">
                         <a class="nav-link {% if request.resolver_match.view_name == 'pages:home' or request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
                            href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
@@ -87,7 +91,7 @@
                 </div>
             </div>
         {% endif %}
-    </div>
+    </nav>
 
     {% if "change_challenge" in challenge_perms or challenge.first_visible_phase and user_is_participant %}
         <div class="dropdown">
