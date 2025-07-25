@@ -102,7 +102,7 @@
                 {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
             </div>
         </div>
-    {% elif "change_challenge" in challenge_perms or challenge.first_visible_phase and not challenge.hidden %}
+    {% elif challenge.first_visible_phase and not challenge.hidden %}
         <div class="dropdown">
             <button id="leaderboardPhaseNavDropdown" class="d-none" data-display="static" data-toggle="dropdown" type="button"></button>
             <div class="dropdown-menu mt-n3 border-top-0 rounded-0 phase-nav-dropdown">
