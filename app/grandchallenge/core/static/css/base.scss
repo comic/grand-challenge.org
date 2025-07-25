@@ -67,8 +67,24 @@ div.codehilite {
     font-weight: bold;
 }
 
-.challenge-topbar .nav-link {
-    padding: $nav-link-padding-y 1rem;
+.challenge-topbar > .nav-item > .nav-link {
+    border-top: 0 transparent;
+    border-right: 0 transparent;
+    border-left: 0 transparent;
+    border-bottom: 0.25rem solid transparent;
+}
+
+.challenge-topbar > .nav-item > .nav-link:hover {
+    border-bottom: 0.25rem solid $light;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.challenge-topbar > .nav-item > .nav-link.active {
+    font-weight: bold;
+    border-bottom: 0.25rem solid $primary;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
 mark, .mark {
