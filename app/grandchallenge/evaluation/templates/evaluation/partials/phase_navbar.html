@@ -2,35 +2,32 @@
 {% load profiles %}
 {% load evaluation_extras %}
 
-<nav class="navbar navbar-expand p-0 d-block">
-    <ul class="navbar-nav nav-pills p-1 flex-column">
+{% if leaderboard_nav %}
+    {% for combined_leaderboard in challenge.combinedleaderboard_set.all %}
+         <a class="dropdown-item px-4 py-1 {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-detail,evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-delete' and request.resolver_match.kwargs.slug == combined_leaderboard.slug %}active{% endif %}"
+            href="{% url 'evaluation:combined-leaderboard-detail' challenge_short_name=challenge.short_name slug=combined_leaderboard.slug %}">
+             {{ combined_leaderboard.title|title }}
+         </a>
+    {% endfor %}
+{%  endif %}
+{% for phase in challenge.phase_set.all %}
+    {% if "change_challenge" in challenge_perms or phase.public %}
         {% if leaderboard_nav %}
-            {% for combined_leaderboard in challenge.combinedleaderboard_set.all %}
-                <li class="nav-item">
-                     <a class="nav-link text-nowrap px-4 py-1 {% if request.resolver_match.view_name in 'evaluation:combined-leaderboard-detail,evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-delete' and request.resolver_match.kwargs.slug == combined_leaderboard.slug %}active{% endif %}"
-                        href="{% url 'evaluation:combined-leaderboard-detail' challenge_short_name=challenge.short_name slug=combined_leaderboard.slug %}">{{ combined_leaderboard.title|title }}</a>
-                </li>
-            {% endfor %}
-        {%  endif %}
-        {% for phase in challenge.phase_set.all %}
-            {% if "change_challenge" in challenge_perms or phase.public %}
-                <li class="nav-item">
-                    {% if leaderboard_nav %}
-                        <a class="nav-link text-nowrap px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:leaderboard' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:detail' and object.submission.phase.slug == phase.slug %}active{% endif %}"
-                    href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}">{%if not phase.public %}<i class="fa fa-lock mr-1 ml-n3"></i>{% endif %}{{ phase.title }}</a>
-                    {% elif submission_nav %}
-                        <a class="nav-link text-nowrap px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-create' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:submission-detail' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
-                            href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=phase.slug %}">{%if not phase.public %}<i class="fa fa-lock mr-1 ml-n3"></i>{% endif %}{{ phase.title }}</a>
-                    {% endif %}
-                </li>
-            {% endif %}
-        {% endfor %}
-        {% if submission_nav %}
-            <li class="nav-item">
-                <a class="nav-link text-nowrap px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
-                   href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">{% if "change_challenge" in challenge_perms %}All {% else %}Your {% endif %} Submissions
-                </a>
-            </li>
+            <a class="dropdown-item px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:leaderboard' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:detail' and object.submission.phase.slug == phase.slug %}active{% endif %}"
+               href="{% url 'evaluation:leaderboard' challenge_short_name=challenge.short_name slug=phase.slug %}">
+                {%if not phase.public %}<i class="fa fa-lock mr-1 ml-n3"></i>{% endif %}{{ phase.title }}
+            </a>
+        {% elif submission_nav %}
+            <a class="dropdown-item px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-create' and request.resolver_match.kwargs.slug == phase.slug or request.resolver_match.view_name == 'evaluation:submission-detail' and request.resolver_match.kwargs.slug == phase.slug %}active{% endif %}"
+               href="{% url 'evaluation:submission-create' challenge_short_name=challenge.short_name slug=phase.slug %}">
+                {%if not phase.public %}<i class="fa fa-lock mr-1 ml-n3"></i>{% endif %}{{ phase.title }}
+            </a>
         {% endif %}
-    </ul>
-</nav>
+    {% endif %}
+{% endfor %}
+{% if submission_nav %}
+    <a class="dropdown-item px-4 py-1 {% if request.resolver_match.view_name == 'evaluation:submission-list' %}active{% endif %}"
+       href="{% url 'evaluation:submission-list' challenge_short_name=challenge.short_name %}">
+        {% if "change_challenge" in challenge_perms %}All {% else %}Your {% endif %} Submissions
+    </a>
+{% endif %}
