@@ -7,7 +7,7 @@
         <div class="col-auto mr-auto px-0">
             <ul class="nav navbar-nav nav-tabs">
                 <li class="nav-item">
-                    <a class="nav-link mt-1 mr-1 {% if request.resolver_match.view_name == 'pages:home' or request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
+                    <a class="nav-link {% if request.resolver_match.view_name == 'pages:home' or request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
                        href="{% url 'pages:home' challenge_short_name=challenge.short_name %}">
                         <i class="fas fa-info fa-fw"></i>&nbsp;&nbsp;Info
                     </a>
@@ -16,7 +16,7 @@
                 {% get_obj_perms request.user for challenge.discussion_forum as "forum_perms" %}
                 {% if challenge.display_forum_link and 'view_forum' in forum_perms %}
                     <li class="nav-item">
-                        <a class="nav-link mt-1 mr-1 {% if request.resolver_match.view_name == 'discussion-forums:topic-list' or request.resolver_match.view_name == 'discussion-forums:topic-create' or request.resolver_match.view_name == 'discussion-forums:topic-post-list' or request.resolver_match.view_name == 'discussion-forums:topic-delete' %} show active {% endif %}"
+                        <a class="nav-link {% if request.resolver_match.view_name == 'discussion-forums:topic-list' or request.resolver_match.view_name == 'discussion-forums:topic-create' or request.resolver_match.view_name == 'discussion-forums:topic-post-list' or request.resolver_match.view_name == 'discussion-forums:topic-delete' %} show active {% endif %}"
                            href="{% url 'discussion-forums:topic-list' challenge_short_name=challenge.short_name %}">
                             <i class="fas fa-comments fa-fw"></i>&nbsp;&nbsp;Forum
                         </a>
@@ -27,40 +27,49 @@
                     {% if challenge.use_teams %}
                         {% if "change_challenge" in challenge_perms or user_is_participant %}
                             <li class="nav-item">
-                                <a class="nav-link mt-1 mr-1 {% if request.resolver_match.app_name == 'teams' %}active{% endif %}"
+                                <a class="nav-link {% if request.resolver_match.app_name == 'teams' %}active{% endif %}"
                                    href="{% url 'teams:list' challenge_short_name=challenge.short_name %}">
                                     <i class="fas fa-users fa-fw"></i>&nbsp;&nbsp;Teams</a>
                             </li>
                         {% endif %}
                     {% endif %}
                     {% if "change_challenge" in challenge_perms or challenge.first_visible_phase and user_is_participant %}
-                        <li class="nav-item">
-                            <button id="submissionPhaseNavTrigger" type="button" class="nav-link btn m-0 mt-1 mr-1 rounded-0 dropdown-toggle {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' or request.resolver_match.view_name == 'evaluation:phase-algorithm-create' %}active{% endif %}">
+                        <li class="nav-item dropdown">
+                            <a href="#" type="button" data-toggle="dropdown"  class="nav-link dropdown-toggle {% if request.resolver_match.view_name == 'evaluation:submission-create' or request.resolver_match.view_name == 'evaluation:submission-list' or request.resolver_match.view_name == 'evaluation:submission-detail' or request.resolver_match.view_name == 'evaluation:phase-algorithm-create' %}active{% endif %}">
                                 <i class="fas fa-upload fa-fw"></i>&nbsp;&nbsp;Submit
-                            </button>
+                            </a>
+                            <div class="dropdown-menu phase-nav-dropdown">
+                                {% include "evaluation/partials/phase_navbar.html" with submission_nav=True %}
+                            </div>
                         </li>
-                        <li class="nav-item">
-                            <button id="leaderboardPhaseNavTrigger" type="button" class="nav-link btn m-0 mt-1 mr-1 rounded-0 dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}">
+                        <li class="nav-item dropdown">
+                            <a href="#" type="button" data-toggle="dropdown" class="nav-link dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}">
                                 <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
-                            </button>
+                            </a>
+                            <div class="dropdown-menu phase-nav-dropdown">
+                                {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
+                            </div>
                         </li>
                     {% elif challenge.first_visible_phase and not challenge.hidden %}
-                        <li class="nav-item">
-                            <button id="leaderboardPhaseNavTrigger" type="button" class="nav-link btn m-0 mt-1 mr-1 rounded-0 dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}">
+                        <li class="nav-item dropdown">
+                            <a href="#" type="button" data-toggle="dropdown" class="nav-link dropdown-toggle {% if request.resolver_match.view_name in 'evaluation:leaderboard,evaluation:detail,evaluation:update,evaluation:combined-leaderboard-detail' %}active{% endif %}">
                                 <i class="fas fa-trophy fa-fw"></i>&nbsp;&nbsp;Leaderboard{{ challenge.phase_set.all|pluralize }}
-                            </button>
+                            </a>
+                            <div class="dropdown-menu phase-nav-dropdown">
+                                {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
+                            </div>
                         </li>
                     {% endif %}
                 {% endif %}
                 <li class="nav-item">
-                    <a class="nav-link mt-1 mr-1 {% if request.resolver_match.view_name == 'pages:statistics' %}active{% endif %}"
+                    <a class="nav-link {% if request.resolver_match.view_name == 'pages:statistics' %}active{% endif %}"
                        href="{% url 'pages:statistics' challenge_short_name=challenge.short_name %}">
                         <i class="fas fa-chart-bar fa-fw"></i>&nbsp;&nbsp;Statistics
                     </a>
                 </li>
                 {% if "change_challenge" in challenge_perms %}
                     <li class="nav-item">
-                        <a class="nav-link mt-1 mr-1 {% if request.resolver_match.view_name in 'challenge-update,invoices:list,challenge-onboarding-task-list,pages:content-update,pages:metadata-update,pages:delete,pages:create,update,pages:list,participants:registration-question-create,participants:registration-question-delete, participants:registration-question-list,participants:list,participants:registration-list,evaluation:phase-create,evaluation:phase-update,evaluation:create,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail,evaluation:phase-archive-info,evaluation:phase-starter-kit-detail,evaluation:interface-list, evaluation:interface-create, evaluation:interface-delete,evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-create,evaluation:combined-leaderboard-delete' or request.resolver_match.app_name == 'admins' %}active{% endif %}"
+                        <a class="nav-link {% if request.resolver_match.view_name in 'challenge-update,invoices:list,challenge-onboarding-task-list,pages:content-update,pages:metadata-update,pages:delete,pages:create,update,pages:list,participants:registration-question-create,participants:registration-question-delete, participants:registration-question-list,participants:list,participants:registration-list,evaluation:phase-create,evaluation:phase-update,evaluation:create,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail,evaluation:phase-archive-info,evaluation:phase-starter-kit-detail,evaluation:interface-list, evaluation:interface-create, evaluation:interface-delete,evaluation:combined-leaderboard-update,evaluation:combined-leaderboard-create,evaluation:combined-leaderboard-delete' or request.resolver_match.app_name == 'admins' %}active{% endif %}"
                            href="{% url 'challenge-update' challenge_short_name=challenge.short_name %}">
                             <i class="fas fa-cog fa-fw"></i>&nbsp;&nbsp;Admin{% include "challenges/partials/attention_required_items_due.html" %}
                         </a>
@@ -79,29 +88,5 @@
             </div>
         {% endif %}
     </nav>
-
-    {% if "change_challenge" in challenge_perms or challenge.first_visible_phase and user_is_participant %}
-        <div class="dropdown">
-            <button id="submissionPhaseNavDropdown" class="d-none" data-display="static" data-toggle="dropdown" type="button"></button>
-            <div class="dropdown-menu mt-n3 border-top-0 w-100 rounded-0 phase-nav-dropdown">
-                {% include "evaluation/partials/phase_navbar.html" with submission_nav=True %}
-            </div>
-        </div>
-        <div class="dropdown">
-            <button id="leaderboardPhaseNavDropdown" class="d-none" data-display="static" data-toggle="dropdown" type="button"></button>
-            <div class="dropdown-menu mt-n3 border-top-0 w-100 rounded-0 phase-nav-dropdown">
-                {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
-            </div>
-        </div>
-    {% elif challenge.first_visible_phase and not challenge.hidden %}
-        <div class="dropdown">
-            <button id="leaderboardPhaseNavDropdown" class="d-none" data-display="static" data-toggle="dropdown" type="button"></button>
-            <div class="dropdown-menu mt-n3 border-top-0 rounded-0 phase-nav-dropdown">
-                {% include "evaluation/partials/phase_navbar.html" with leaderboard_nav=True %}
-            </div>
-        </div>
-    {% endif %}
-
-    <script src="{% static 'js/challenges/dropdown.js' %}" type="module" defer></script>
 
 {% endif %}
