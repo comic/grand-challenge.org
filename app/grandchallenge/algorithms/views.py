@@ -260,7 +260,8 @@ class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
             ).count()
         )
 
-        editors = reversed(self.object.editors_group.user_set.all())
+        editors = list(self.object.editors_group.user_set.all())
+        editors.reverse()  # Reverse order to show original creator first.
 
         context.update(
             {
