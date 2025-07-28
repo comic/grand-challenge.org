@@ -1201,7 +1201,9 @@ def test_create_algorithm_for_phase_limits(client):
     )
     # u3 has not created any algorithms for the phase yet,
     # so will immediately see the form
-    assert '<form  method="post" >' in str(response.content)
+    assert "Use the below form to create a new algorithm." in str(
+        response.content
+    )
 
     # u2 has created 2 algos, so will see a confirmation button and links to
     # existing algorithms with the same inputs and outputs
@@ -1230,7 +1232,9 @@ def test_create_algorithm_for_phase_limits(client):
         user=u2,
         data={"show_form": "True"},
     )
-    assert '<form  method="post" >' in str(response.content)
+    assert "Use the below form to create a new algorithm." in str(
+        response.content
+    )
 
     # u1 has reached the limit of algorithms,
     # will see links to existing algorithms
