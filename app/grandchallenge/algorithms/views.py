@@ -13,7 +13,7 @@ from django.contrib.auth.mixins import (
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Window
+from django.db.models import Q, Window
 from django.db.models.functions import Rank
 from django.forms.utils import ErrorList
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
@@ -82,7 +82,7 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
-from grandchallenge.components.models import ImportStatusChoices
+from grandchallenge.components.models import ImportStatusChoices, InterfaceKind
 from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -661,7 +661,17 @@ class JobProgressDetail(
             {
                 "job_detail_api": reverse(
                     "api:algorithms-job-detail", kwargs={"pk": self.object.pk}
-                )
+                ),
+                "num_image_inputs": self.object.algorithm_interface.inputs.filter(
+                    kind__in=InterfaceKind.interface_type_image()
+                ).count(),
+                "num_file_inputs": self.object.algorithm_interface.inputs.filter(
+                    Q(kind__in=InterfaceKind.interface_type_file())
+                    | Q(
+                        kind__in=InterfaceKind.interface_type_json(),
+                        store_in_database=False,
+                    )
+                ).count(),
             }
         )
         return context
