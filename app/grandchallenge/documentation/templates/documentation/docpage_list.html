@@ -23,7 +23,7 @@
         {% endif %}
     </div>
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm w-100" id="pagesTable" data-reorderable-rows="true">
+        <table data-data-table class="table table-hover table-borderless table-sm w-100">
             <thead class="thead-light">
             <tr>
                 <th data-field="order">Order</th>
@@ -63,8 +63,4 @@
             </tbody>
         </table>
     </div>
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
 {% endblock %}

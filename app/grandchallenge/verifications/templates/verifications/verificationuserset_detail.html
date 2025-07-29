@@ -28,7 +28,11 @@
     <h3>Users</h3>
 
     <div class="table-responsive">
-        <table id="usersTable" class="table table-hover table-borderless table-sm w-100">
+        <table
+            data-data-table
+            data-dt-page-length="25"
+            class="table table-hover table-borderless table-sm w-100"
+        >
             <thead class="thead-light">
                 <tr>
                     <th>Username</th>
@@ -63,7 +67,12 @@
     <h3>Submissions</h3>
 
     <div class="table-responsive">
-        <table id="submissionsTable" class="table table-hover table-borderless table-sm w-100">
+        <table
+            data-data-table
+            data-dt-order='[[0, "desc"]]'
+            data-dt-page-length="25"
+            class="table table-hover table-borderless table-sm w-100"
+        >
             <thead class="thead-light">
                 <tr>
                     <th>Created</th>
@@ -85,9 +94,4 @@
         </table>
     </div>
 
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-    <script type="module" src="{% static 'verifications/js/verificationuserset_tables.mjs' %}"></script>
 {% endblock %}

@@ -32,7 +32,11 @@
     {% endif %}
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm w-100" id="evaluationsTable">
+        <table
+            data-data-table
+            data-dt-order='[[2, "desc"]]'
+            class="table table-hover table-borderless table-sm w-100"
+        >
             <thead class="thead-light">
             <tr>
                 <th>Submission ID</th>
@@ -150,9 +154,4 @@
             </tbody>
         </table>
     </div>
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-    <script type="text/javascript" src="{% static 'js/evaluation/evaluations_table.js' %}"></script>
 {% endblock %}

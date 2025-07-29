@@ -55,7 +55,15 @@
         <h4>Invoices</h4>
 
         <div class="table-responsive">
-            <table class="table sortable table-hover table-borderless table-sm w-100" id="challengeInvoicesOverviewTable" data-order="[[ 1, &quot;asc&quot; ]]">
+            <table
+                data-data-table
+                data-dt-paginate="false"
+                data-dt-lengthChange="false"
+                data-dt-filter="false"
+                data-dt-info="false"
+                data-dt-order='[[1, "asc"]]'
+                class="table table-hover table-borderless table-sm w-100"
+            >
                 <thead class="thead-light">
                     <tr>
                         <th>Number</th>
@@ -158,7 +166,13 @@
         </p>
 
         <div class="table-responsive">
-            <table class="table table-hover table-borderless table-sm w-100" id="phaseCostsOverviewTable">
+            <table
+                data-data-table
+                data-dt-order='[[0, "asc"]]'
+                data-dt-length-change="false"
+                data-dt-page-length="100"
+                class="table table-hover table-borderless table-sm w-100"
+            >
                 <thead class="thead-light">
                     <tr>
                         <th>Phase</th>
@@ -201,7 +215,4 @@
     <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
     <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
     <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
-
-    <script type="module" src="{% static 'js/evaluation/phase_costs_overview.mjs' %}"></script>
-    <script type="module" src="{% static "js/sort_tables.js" %}"></script>
 {% endblock %}

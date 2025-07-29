@@ -43,7 +43,11 @@
     </p>
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm w-100" id="interfacesTable">
+        <table
+            data-data-table
+            data-dt-page-length="100"
+            class="table table-hover table-borderless table-sm w-100"
+        >
             <thead class="thead-light">
             <tr>
                 <th>Title</th>
@@ -121,12 +125,5 @@
             </tbody>
         </table>
     </div>
-
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    <script type="module" src="{% static 'components/js/interfaces_table.mjs' %}"></script>
 
 {% endblock %}
