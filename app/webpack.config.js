@@ -12,9 +12,16 @@ module.exports = {
     'jquery': 'jquery',
     'bootstrap': 'bootstrap',
     'floating-scroll': 'floating-scroll',
+    'datatables.net': 'datatables.net',
+    'datatables.net-bs4': 'datatables.net-bs4',
+    'datatables.net-buttons': 'datatables.net-buttons',
+    'datatables.net-buttons-bs4': 'datatables.net-buttons-bs4',
+
+    // Custom JavaScript files
     'jsoneditor_widget': './grandchallenge/core/javascript/jsoneditor_widget.mjs',
     'sentry': './grandchallenge/core/javascript/sentry.mjs',
     'cards_info_modal': './grandchallenge/core/javascript/cards_info_modal.js',
+    'datatables.defaults': './grandchallenge/core/javascript/datatables.defaults.mjs',
   },
 
   output: {
@@ -31,7 +38,10 @@ module.exports = {
         test: require.resolve('jquery'),
         loader: 'expose-loader',
         options: {
-          exposes: ['$', 'jQuery'],
+          exposes: [
+            { globalName: '$', override: true },
+            { globalName: 'jQuery', override: true }
+          ],
         },
       },
       {

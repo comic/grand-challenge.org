@@ -8,17 +8,8 @@
 {# Floating scrollbar: floating-scroll, used by DataTables #}
 {% render_bundle 'floating-scroll' 'js' %}
 
-{# DataTables with colvis #}
-{% compress js %}
-    <script src="{% static 'vendored/datatables.net/js/dataTables.min.js' %}"></script>
-    <script src="{% static 'vendored/datatables.net-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
-    <script src="{% static 'vendored/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
-    <script src="{% static 'vendored/datatables.net-buttons-bs4/js/buttons.bootstrap4.min.js' %}"></script>
-    <script src="{% static 'vendored/datatables.net-buttons/js/buttons.colVis.min.js' %}"></script>
-{% endcompress %}
-
 {# Set global defaults for datatables #}
-<script type="module" src="{% static 'js/datatables.defaults.mjs' %}"></script>
+{% render_bundle 'datatables.defaults' 'js' %}
 
 {# Htmx #}
 <script id="htmx-script" src="{% static 'vendored/htmx/htmx.min.js' %}" defer></script>

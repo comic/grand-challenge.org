@@ -1,4 +1,9 @@
-$.extend($.fn.dataTable.defaults, {
+import $ from "jquery";
+
+import DataTable from "datatables.net-dt";
+import "datatables.net-buttons-bs4";
+
+Object.assign(DataTable.defaults, {
     scrollX: true,
     lengthChange: false,
     language: {
