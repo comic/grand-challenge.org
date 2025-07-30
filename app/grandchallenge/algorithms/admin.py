@@ -68,6 +68,8 @@ class AlgorithmAdmin(admin.ModelAdmin):
     search_fields = ("title", "slug")
     form = AlgorithmAdminForm
 
+    actions = ["unpublish_algorithms"]
+
     def container_count(self, obj):
         return obj.container_count
 
@@ -84,6 +86,13 @@ class AlgorithmAdmin(admin.ModelAdmin):
             container_count=Count("algorithm_container_images")
         )
         return queryset
+
+    @admin.action(
+        description="Unpublish selected algorithms", permissions=("change",)
+    )
+    def unpublish_algorithms(self, request, queryset):
+        updated = queryset.update(public=False)
+        self.message_user(request, f"{updated} algorithm(s) unpublished.")
 
 
 @admin.register(AlgorithmUserCredit)
