@@ -522,6 +522,50 @@ def test_execute_algorithm_job_for_missing_inputs(settings):
 
 
 @pytest.mark.django_db
+def test_execute_algorithm_job_sets_on_failed_jobs(
+    settings, django_capture_on_commit_callbacks
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    creator = UserFactory()
+
+    # Create the algorithm image
+    alg = AlgorithmImageFactory()
+    alg.algorithm.add_editor(creator)
+
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    civ = ComponentInterfaceValueFactory(interface=ci, value="foo")
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci], outputs=[ComponentInterfaceFactory()]
+    )
+    alg.algorithm.interfaces.add(interface)
+    job = AlgorithmJobFactory(
+        creator=creator,
+        algorithm_image=alg,
+        time_limit=alg.algorithm.time_limit,
+        algorithm_interface=interface,
+        status=Job.VALIDATING_INPUTS,
+    )
+    job.inputs.set([civ])
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        execute_algorithm_job_for_inputs(job_pk=job.pk)
+
+    # Sanity: task should run till execution
+    assert len(callbacks) == 1
+    assert "ComponentJob.execute" in str(callbacks[0])
+
+    job.refresh_from_db()
+    assert job.status == Job.PENDING
+    assert (
+        job.task_on_failure["task"]
+        == "grandchallenge.algorithms.tasks.send_failed_job_notification"
+    )  # Full task is tested somewhere else
+
+
+@pytest.mark.django_db
 class TestJobCreation:
     def test_interface_matching(self):
         ai1, ai2, ai3, ai4 = AlgorithmImageFactory.create_batch(4)
