@@ -25,7 +25,12 @@
     <h2>Permission Requests for {{ archive.title }}</h2>
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm w-100" id="usersTable">
+        <table
+            data-data-table
+            data-dt-page-length="25"
+            data-dt-order='[[7, "asc"], [0, "desc"]]'
+            class="table table-hover table-borderless table-sm w-100"
+        >
             <thead class="thead-light">
             <tr>
                 <th>Created</th>
@@ -83,10 +88,4 @@
 
         </table>
     </div>
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    <script type="module" src="{% static 'js/permission_request_display_table.mjs' %}"></script>
 {% endblock %}

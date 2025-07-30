@@ -29,7 +29,11 @@
     </a></p>
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm w-100" id="pagesTable">
+        <table
+            data-data-table
+            data-dt-page-length="10"
+            class="table table-hover table-borderless table-sm w-100"
+        >
             <thead class="thead-light">
             <tr>
                 <th>Order</th>
@@ -89,11 +93,4 @@
             </tbody>
         </table>
     </div>
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    <script type="module" src="{% static 'pages/js/page_list.mjs' %}"></script>
-
 {% endblock %}

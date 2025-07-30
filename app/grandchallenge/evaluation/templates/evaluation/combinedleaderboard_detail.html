@@ -41,7 +41,12 @@
     {% endif %}
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm w-100" id="combinedRanksTable">
+        <table
+            data-data-table
+            data-dt-order='[[0, "asc"], [2, "asc"]]'
+            data-dt-length-change="false"
+            class="table table-hover table-borderless table-sm w-100"
+        >
             <thead class="thead-light">
             <tr>
                 <th>#</th>
@@ -79,9 +84,4 @@
         </table>
     </div>
 
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-    <script type="module" src="{% static 'js/evaluation/combined_ranks_table.mjs' %}"></script>
 {% endblock %}

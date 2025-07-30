@@ -98,10 +98,3 @@
     {% include 'evaluation/partials/evaluations_for_object_table.html' %}
 
 {% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    <script type="module" src="{% static "js/sort_tables.js" %}"></script>
-
-{% endblock %}

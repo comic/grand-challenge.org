@@ -95,10 +95,3 @@
         {% endif %}
     </div>
 {% endblock %}
-
-
-{% block script %}
-    {{ block.super }}
-    {# make the tables sortable #}
-    <script type="module" src="{% static "js/sort_tables.js" %}"></script>
-{% endblock %}
