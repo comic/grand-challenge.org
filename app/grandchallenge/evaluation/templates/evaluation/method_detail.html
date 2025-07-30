@@ -118,7 +118,7 @@
     </dl>
 
     <h3>Evaluations for this Evaluation Method</h3>
-    <a class="btn btn-primary btn-sm" hx-get="{% url 'evaluation:method-evaluations' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}" hx-swap="outerHTML">Show evaluations</a>
+    <a class="btn btn-primary btn-sm" hx-get="{% url 'evaluation:method-evaluation-list' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}" hx-swap="outerHTML">Show evaluations</a>
 
 {% endblock %}
 

@@ -95,7 +95,7 @@
     </dl>
 
     <h3>Evaluations using this ground truth</h3>
-    <a class="btn btn-primary btn-sm" hx-get="{% url 'evaluation:ground-truth-evaluations' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}" hx-swap="outerHTML">Show evaluations</a>
+    <a class="btn btn-primary btn-sm" hx-get="{% url 'evaluation:ground-truth-evaluation-list' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}" hx-swap="outerHTML">Show evaluations</a>
 
 {% endblock %}
 

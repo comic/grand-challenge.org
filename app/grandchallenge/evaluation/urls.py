@@ -155,7 +155,7 @@ urlpatterns = [
     path(
         "<slug:slug>/ground-truths/<uuid:pk>/evaluations/",
         EvaluationGroundTruthEvaluationList.as_view(),
-        name="ground-truth-evaluations",
+        name="ground-truth-evaluation-list",
     ),
     path(
         "<slug:slug>/ground-truths/<uuid:pk>/update/",
@@ -186,7 +186,7 @@ urlpatterns = [
     path(
         "<slug:slug>/methods/<uuid:pk>/evaluations/",
         MethodEvaluationList.as_view(),
-        name="method-evaluations",
+        name="method-evaluation-list",
     ),
     path(
         "<slug:slug>/methods/<uuid:pk>/update/",
