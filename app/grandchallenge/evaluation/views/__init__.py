@@ -303,6 +303,18 @@ class MethodImportStatusDetail(
     login_url = reverse_lazy("account_login")
 
 
+class MethodEvaluationList(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
+    permission_required = "view_method"
+    template_name = "evaluation/partials/evaluations_for_object_table.html"
+    model = Method
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+
 class MethodUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
@@ -1234,6 +1246,18 @@ class EvaluationGroundTruthImportStatusDetail(
     model = EvaluationGroundTruth
     permission_required = "evaluation.view_evaluationgroundtruth"
     template_name = "components/import_status_detail.html"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+
+class EvaluationGroundTruthEvaluationList(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    DetailView,
+):
+    model = EvaluationGroundTruth
+    permission_required = "view_evaluationgroundtruth"
+    template_name = "evaluation/partials/evaluations_for_object_table.html"
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
