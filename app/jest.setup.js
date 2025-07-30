@@ -18,3 +18,7 @@ if (global.Blob && !global.Blob.prototype.arrayBuffer) {
         });
     };
 }
+
+// Make jQuery available globally
+const $ = require("jquery");
+global.$ = global.jQuery = $;
