@@ -25,7 +25,12 @@
     <h2>Participation Requests for {{ challenge.short_name }}</h2>
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm w-100" id="participantsTable">
+        <table
+            data-data-table
+            data-dt-order='[[0, "desc"]]'
+            data-dt-page-length="10"
+            class="table table-hover table-borderless table-sm w-100"
+        >
             <thead class="thead-light">
             <tr>
                 <th>Created</th>
@@ -83,11 +88,4 @@
 
         </table>
     </div>
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    <script type="module" src="{% static 'participants/js/registrationrequest_list.mjs' %}"></script>
-
 {% endblock %}

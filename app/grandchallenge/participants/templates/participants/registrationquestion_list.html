@@ -34,7 +34,12 @@
     {% endif %}
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm w-100" id="registrationQuestionsTable">
+        <table
+            data-data-table
+            data-dt-order='[[0, "asc"]]'
+            data-dt-page-length="10"
+            class="table table-hover table-borderless table-sm w-100"
+        >
             <thead class="thead-light">
             <tr>
                 <th>Created</th>
@@ -86,11 +91,4 @@
 
         </table>
     </div>
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    <script type="module" src="{% static 'participants/js/registrationquestion_list.mjs' %}"></script>
-
 {% endblock %}

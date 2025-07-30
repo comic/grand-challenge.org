@@ -52,6 +52,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         OverdueListFilter,
         "payment_status",
         "payment_type",
+        "challenge__short_name",
     )
     autocomplete_fields = ("challenge",)
     readonly_fields = ["invoice_request_text"]

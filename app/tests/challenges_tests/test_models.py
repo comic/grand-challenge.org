@@ -10,17 +10,17 @@ from dateutil.utils import today
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
 from django.utils.timezone import datetime, now, timedelta
-from machina.apps.forum_conversation.models import Topic
 
 from grandchallenge.challenges.models import Challenge, OnboardingTask
+from grandchallenge.discussion_forums.models import ForumTopicKindChoices
 from grandchallenge.notifications.models import Notification
+from tests.discussion_forums_tests.factories import ForumTopicFactory
 from tests.factories import (
     ChallengeFactory,
     ChallengeRequestFactory,
     OnboardingTaskFactory,
     UserFactory,
 )
-from tests.notifications_tests.factories import TopicFactory
 from tests.organizations_tests.factories import OrganizationFactory
 
 
@@ -74,16 +74,16 @@ def test_participants_follow_forum(group):
     remove_method = getattr(c, f"remove_{group}")
 
     add_method(user=u)
-    assert is_following(user=u, obj=c.forum)
+    assert is_following(user=u, obj=c.discussion_forum)
 
     remove_method(user=u)
-    assert is_following(user=u, obj=c.forum) is False
+    assert is_following(user=u, obj=c.discussion_forum) is False
 
     # No actions involving the forum should be created
     for i in Action.objects.all():
-        assert c.forum != i.target
-        assert c.forum != i.action_object
-        assert c.forum != i.actor
+        assert c.discussion_forum != i.target
+        assert c.discussion_forum != i.action_object
+        assert c.discussion_forum != i.actor
 
 
 @pytest.mark.django_db
@@ -100,7 +100,11 @@ def test_non_posters_notified(group):
     # delete all notifications for easier testing below
     Notification.objects.all().delete()
 
-    TopicFactory(forum=c.forum, poster=p, type=Topic.TOPIC_ANNOUNCE)
+    ForumTopicFactory(
+        forum=c.discussion_forum,
+        creator=p,
+        kind=ForumTopicKindChoices.ANNOUNCE,
+    )
 
     assert u.user_profile.has_unread_notifications is True
     assert p.user_profile.has_unread_notifications is False
@@ -271,3 +275,41 @@ def test_default_onboarding_tasks_creation():
     }
 
     assert tasks_title_and_responsible_party == expected_tasks
+
+
+@pytest.mark.django_db
+def test_discussion_forum_permissions():
+    challenge = ChallengeFactory(display_forum_link=True)
+    admin, participant = UserFactory.create_batch(2)
+    challenge.add_admin(admin)
+    challenge.add_participant(participant)
+
+    assert challenge.discussion_forum
+    assert admin.has_perm("view_forum", challenge.discussion_forum)
+    assert participant.has_perm("view_forum", challenge.discussion_forum)
+    assert admin.has_perm("create_forum_topic", challenge.discussion_forum)
+    assert admin.has_perm(
+        "create_sticky_and_announcement_topic", challenge.discussion_forum
+    )
+    assert participant.has_perm(
+        "create_forum_topic", challenge.discussion_forum
+    )
+    assert not participant.has_perm(
+        "create_sticky_and_announcement_topic", challenge.discussion_forum
+    )
+
+    challenge.display_forum_link = False
+    challenge.save()
+
+    assert not admin.has_perm("view_forum", challenge.discussion_forum)
+    assert not participant.has_perm("view_forum", challenge.discussion_forum)
+    assert not admin.has_perm("create_forum_topic", challenge.discussion_forum)
+    assert not participant.has_perm(
+        "create_forum_topic", challenge.discussion_forum
+    )
+    assert not admin.has_perm(
+        "create_sticky_and_announcement_topic", challenge.discussion_forum
+    )
+    assert not participant.has_perm(
+        "create_sticky_and_announcement_topic", challenge.discussion_forum
+    )

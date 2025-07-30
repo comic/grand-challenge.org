@@ -880,7 +880,7 @@ def test_runtime_metrics_chart():
                 "gpu_type": None,
                 "gpus": 0,
                 "memory": 8,
-                "name": "ml.m5.large",
+                "name": "ml.m7i.large",
             },
             "metrics": [
                 {
@@ -909,7 +909,7 @@ def test_runtime_metrics_chart():
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
         "width": "container",
         "padding": 0,
-        "title": "ml.m5.large / 2 CPU / 8 GB Memory / No GPU",
+        "title": "ml.m7i.large / 2 CPU / 8 GB Memory / No GPU",
         "data": {
             "values": [
                 {

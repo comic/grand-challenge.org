@@ -22,6 +22,7 @@ from grandchallenge.evaluation.models import (
     SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT,
     CombinedLeaderboard,
     Evaluation,
+    Method,
     Phase,
     PhaseAdditionalEvaluationInput,
     get_archive_items_for_interfaces,
@@ -1127,6 +1128,17 @@ def test_read_only_fields_for_dependent_phases():
 @pytest.mark.django_db
 def test_external_evaluation_validation():
     phase = PhaseFactory(external_evaluation=True)
+    MethodFactory(phase=phase)
+
+    with pytest.raises(ValidationError) as e:
+        phase._clean_external_evaluation()
+    assert (
+        "Phases that have an evaluation method cannot be turned into external evaluation phases. Remove the method and try again."
+        in str(e)
+    )
+
+    Method.objects.all().delete()
+
     with pytest.raises(ValidationError) as e:
         phase._clean_external_evaluation()
     assert (
@@ -2489,3 +2501,15 @@ def test_phase_submission_kind_change():
     # Can change again after removing submission
     submission.delete()
     phase.full_clean()
+
+
+@pytest.mark.django_db
+def test_method_cannot_be_added_to_external_phase():
+    phase = PhaseFactory(external_evaluation=True)
+
+    method = MethodFactory(phase=phase)
+
+    with pytest.raises(ValidationError) as e:
+        method.full_clean()
+
+    assert "You cannot add a method to an external evaluation." in str(e)

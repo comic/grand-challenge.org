@@ -66,8 +66,14 @@
     <h3>Evaluations for this submission</h3>
 
     <div class="table-responsive">
-        <table class="table sortable table-hover table-borderless table-sm w-100"
-               id="evaluationTable">
+        <table
+            data-data-table
+            data-dt-paginate="false"
+            data-dt-lengthChange="false"
+            data-dt-filter="false"
+            data-dt-info="false"
+            class="table table-hover table-borderless table-sm w-100"
+        >
             <thead class="thead-light">
             <tr>
                 <th>Created</th>
@@ -156,7 +162,7 @@
 
             {% with object.phase.additional_evaluation_inputs.all as additional_inputs_required %}
 
-                {% if not object.is_evaluated_with_active_image_and_ground_truth or additional_inputs_required %}
+                {% if not object.phase.external_evaluation and not object.is_evaluated_with_active_image_and_ground_truth or additional_inputs_required %}
                     <div class="card-body">
                         <h4 class="card-title">Re-Evaluate Submission with
                             {% if not object.is_evaluated_with_active_image_and_ground_truth %} Active Method and Active Ground Truth {% endif %}
@@ -202,11 +208,4 @@
             {% endwith %}
         </div>
     {% endif %}
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    <script type="module" src="{% static "js/sort_tables.js" %}"></script>
-
 {% endblock %}
