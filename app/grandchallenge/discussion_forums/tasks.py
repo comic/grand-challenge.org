@@ -24,7 +24,7 @@ def create_forum_notifications(*, object_pk, app_label, model_name):
 
     if model not in (ForumPost, ForumTopic):
         logger.error(
-            f"Forum notifications can only be created for posts or topics, not for {type(object)}"
+            f"Forum notifications can only be created for posts or topics, not for {model}"
         )
         return
 
