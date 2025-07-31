@@ -2,6 +2,7 @@
 {% load static %}
 {% load url %}
 {% load meta_attr %}
+{% load render_bundle from webpack_loader %}
 
 {% block title %}
     {{ base_object.civ_set_model|verbose_name_plural|title }} - {{ base_object }} - {{ block.super }}
@@ -64,5 +65,5 @@
     <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
     <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
     <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
-    <script type="module" src="{% static 'js/charts/render_charts.mjs' %}"></script>
+    {% render_bundle 'charts_render_charts' 'js' %}
 {% endblock %}

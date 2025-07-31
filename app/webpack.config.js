@@ -22,6 +22,8 @@ module.exports = {
     'sentry': './grandchallenge/core/javascript/sentry.mjs',
     'cards_info_modal': './grandchallenge/core/javascript/cards_info_modal.js',
     'datatables.defaults': './grandchallenge/core/javascript/datatables.defaults.mjs',
+
+    'charts_render_charts': './grandchallenge/charts/javascript/render_charts.mjs',
   },
 
   output: {

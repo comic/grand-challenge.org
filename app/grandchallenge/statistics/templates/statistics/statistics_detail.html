@@ -4,6 +4,7 @@
 {% load static %}
 {% load naturaldelta %}
 {% load costs %}
+{% load render_bundle from webpack_loader %}
 
 {% block title %}
     Statistics - {{ block.super }}
@@ -259,5 +260,5 @@
     <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
     <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
     <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
-    <script type="module" src="{% static "js/charts/render_charts.mjs" %}"></script>
+    {% render_bundle 'charts_render_charts' 'js' %}
 {% endblock %}

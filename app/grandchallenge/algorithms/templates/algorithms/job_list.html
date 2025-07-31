@@ -2,6 +2,7 @@
 {% load url %}
 {% load guardian_tags %}
 {% load static %}
+{% load render_bundle from webpack_loader %}
 
 {% block title %}
     Results - {{ algorithm.title }} - {{ block.super }}
@@ -41,5 +42,5 @@
     <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
     <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
     <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
-    <script type="module" src="{% static 'js/charts/render_charts.mjs' %}"></script>
+    {% render_bundle 'charts_render_charts' 'js' %}
 {% endblock %}
