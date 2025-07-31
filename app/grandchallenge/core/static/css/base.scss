@@ -33,6 +33,8 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
 // Show heading permalinks only on hover
 :is(h1, h2, h3, h4, h5, h6) > .headerlink {
     visibility: hidden;
+    position: absolute;
+    align-self: end;
 }
 
 :is(h1, h2, h3, h4, h5, h6):hover > .headerlink {
