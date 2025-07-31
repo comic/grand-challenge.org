@@ -21,45 +21,43 @@ def create_forum_notifications(*, object_pk, app_label, model_name):
     )
 
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    object = model.objects.get(pk=object_pk)
 
-    if not isinstance(object, (ForumPost, ForumTopic)):
+    if model not in (ForumPost, ForumTopic):
         logger.error(
             f"Forum notifications can only be created for posts or topics, not for {type(object)}"
         )
         return
 
+    obj = model.objects.get(pk=object_pk)
+
     follow(
-        user=object.creator,
-        obj=object.topic if isinstance(object, ForumPost) else object,
+        user=obj.creator,
+        obj=obj.topic if isinstance(obj, ForumPost) else obj,
         actor_only=False,
         send_action=False,
     )
 
-    if isinstance(object, ForumPost):
+    if isinstance(obj, ForumPost):
         Notification.send(
             kind=NotificationType.NotificationTypeChoices.FORUM_POST_REPLY,
-            actor=object.creator,
+            actor=obj.creator,
             message="replied to",
-            target=object.topic,
+            target=obj.topic,
         )
-    elif (
-        isinstance(object, ForumTopic)
-        and object.kind == ForumTopicKindChoices.ANNOUNCE
-    ):
+    elif obj.kind == ForumTopicKindChoices.ANNOUNCE:
         Notification.send(
             kind=NotificationType.NotificationTypeChoices.FORUM_POST,
-            actor=object.creator,
+            actor=obj.creator,
             message="announced",
-            action_object=object,
-            target=object.forum,
+            action_object=obj,
+            target=obj.forum,
             context_class="info",
         )
     else:
         Notification.send(
             kind=NotificationType.NotificationTypeChoices.FORUM_POST,
-            actor=object.creator,
+            actor=obj.creator,
             message="posted",
-            action_object=object,
-            target=object.forum,
+            action_object=obj,
+            target=obj.forum,
         )

@@ -163,9 +163,9 @@ def test_follow_if_post_in_topic(settings, django_capture_on_commit_callbacks):
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     u = UserFactory()
+    f = ForumFactory()
 
     with django_capture_on_commit_callbacks(execute=True):
-        f = ForumFactory()
         t = ForumTopicFactory(forum=f, post_count=1)
     assert not is_following(user=u, obj=t)
 
