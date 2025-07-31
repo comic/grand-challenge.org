@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Q
+from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from stdimage import JPEGField
@@ -273,6 +274,22 @@ class Archive(
     @property
     def create_civ_set_batch_url(self):
         return reverse("archives:cases-create", kwargs={"slug": self.slug})
+
+    @cached_property
+    def allowed_socket_slugs(self):
+        if self.phase_set.count() != 0:
+            allowed_slugs = []
+            for phase in self.phase_set.all():
+                allowed_slugs.extend(
+                    [
+                        inp.slug
+                        for interface in phase.algorithm_interfaces.all()
+                        for inp in interface.inputs.all()
+                    ]
+                )
+            return allowed_slugs
+        else:
+            raise NotImplementedError
 
 
 class ArchiveUserObjectPermission(UserObjectPermissionBase):

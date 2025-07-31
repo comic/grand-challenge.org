@@ -2712,6 +2712,10 @@ class ValuesForInterfacesMixin:
             ).values_list("values__interface__pk", flat=True)
         ).distinct()
 
+    @cached_property
+    def allowed_socket_slugs(self):
+        raise NotImplementedError
+
 
 class Tarball(UUIDModel):
     ImportStatusChoices = ImportStatusChoices

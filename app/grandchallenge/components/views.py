@@ -115,6 +115,8 @@ class ComponentInterfaceAutocomplete(
         if self.forwarded:
             object_slug = self.forwarded.pop("object")
             model_name = self.forwarded.pop("model")
+            image_only = self.forwarded.pop("image_only")
+
             if model_name == ReaderStudy._meta.model_name:
                 object = ReaderStudy.objects.get(slug=object_slug)
             elif model_name == Archive._meta.model_name:
@@ -123,9 +125,25 @@ class ComponentInterfaceAutocomplete(
                 raise RuntimeError(
                     f"Autocomplete for objects of type {model_name} not defined."
                 )
-            qs = ComponentInterface.objects.exclude(
-                slug__in=object.values_for_interfaces.keys()
-            ).exclude(pk__in=self.forwarded.values())
+
+            try:
+                extra_filter_kwargs = {"slug__in": object.allowed_socket_slugs}
+            except NotImplementedError:
+                extra_filter_kwargs = {}
+
+            if image_only:
+                qs = ComponentInterface.objects.filter(
+                    kind__in=InterfaceKind.interface_type_image(),
+                    **extra_filter_kwargs,
+                )
+            else:
+                qs = (
+                    ComponentInterface.objects.all()
+                    .filter(**extra_filter_kwargs)
+                    .exclude(slug__in=object.values_for_interfaces.keys())
+                    .exclude(pk__in=self.forwarded.values())
+                )
+
         else:
             qs = ComponentInterface.objects.filter(
                 kind__in=InterfaceKind.interface_type_image()
