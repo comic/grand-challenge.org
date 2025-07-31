@@ -6,7 +6,7 @@ from django.conf import settings
 from django.utils.html import format_html
 from factory.fuzzy import FuzzyChoice
 
-from grandchallenge.archives.models import ArchiveItem
+from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
     FileWidgetChoices,
@@ -19,6 +19,7 @@ from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
@@ -27,6 +28,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import UserFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
@@ -143,6 +145,59 @@ def test_component_interface_autocomplete(client):
     assert str(ci_img.id) not in ids
     assert str(ci_img_2.id) not in ids
     assert str(ci_json.id) in ids
+
+
+@pytest.mark.django_db
+def test_ci_autocomplete_for_archives(client):
+    ci_json = ComponentInterfaceFactory(title="test-json", kind="JSON")
+    ci_img = ComponentInterfaceFactory(title="test-img", kind="IMG")
+    ci_img_2 = ComponentInterfaceFactory(title="foo-img", kind="IMG")
+
+    user = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_editor(user)
+    phase = PhaseFactory(archive=archive)
+    interface = AlgorithmInterfaceFactory(inputs=[ci_img, ci_json])
+    phase.algorithm_interfaces.set([interface])
+
+    response = get_view_for_user(
+        client=client,
+        viewname="components:component-interface-autocomplete",
+        user=user,
+        data={
+            "forward": json.dumps(
+                {
+                    "object": archive.slug,
+                    "model": Archive._meta.model_name,
+                }
+            )
+        },
+    )
+    assert response.status_code == 200
+    ids = [x["id"] for x in response.json()["results"]]
+    assert str(ci_img.id) in ids
+    assert str(ci_img_2.id) not in ids
+    assert str(ci_json.id) in ids
+
+    response = get_view_for_user(
+        client=client,
+        viewname="components:component-interface-autocomplete",
+        user=user,
+        data={
+            "forward": json.dumps(
+                {
+                    "object": archive.slug,
+                    "model": Archive._meta.model_name,
+                    "image_only": True,
+                }
+            )
+        },
+    )
+    assert response.status_code == 200
+    ids = [x["id"] for x in response.json()["results"]]
+    assert str(ci_img.id) in ids
+    assert str(ci_img_2.id) not in ids
+    assert str(ci_json.id) not in ids
 
 
 @pytest.mark.parametrize(

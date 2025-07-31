@@ -287,7 +287,7 @@ class Archive(
                         for inp in interface.inputs.all()
                     ]
                 )
-            return allowed_slugs
+            return set(allowed_slugs)
         else:
             raise NotImplementedError
 

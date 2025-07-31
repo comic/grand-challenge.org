@@ -115,7 +115,7 @@ class ComponentInterfaceAutocomplete(
         if self.forwarded:
             object_slug = self.forwarded.pop("object")
             model_name = self.forwarded.pop("model")
-            image_only = self.forwarded.pop("image_only")
+            image_only = self.forwarded.pop("image_only", False)
 
             if model_name == ReaderStudy._meta.model_name:
                 object = ReaderStudy.objects.get(slug=object_slug)
