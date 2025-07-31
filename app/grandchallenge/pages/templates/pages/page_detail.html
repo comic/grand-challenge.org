@@ -22,7 +22,8 @@
 {% endblock %}
 
 {% block sidebar %}
-    <div class="col-lg-3 col-md-4 col-sm-6">
+    <div class="col-md-3 col-sm-6 pr-lg-3 pr-md-0">
+{#    <div class="col-lg-3 col-md-4 col-sm-6">#}
         <ul class="nav nav-pills flex-column mb-3">
             {% for page in pages %}
                 {% if not page.hidden %}
@@ -53,7 +54,7 @@
     </div>
 {% endblock %}
 
-{% block content_col %}col-xl-7 col-md-8 px-lg-5{% endblock %}
+{% block content_col %}col-xl-7 col-lg-8 col-md-9 px-lg-5{% endblock %}
 {% block content %}
     <div class="mx-3 mx-xl-5">
         {% if challenge.should_show_verification_warning and user_is_participant %}
