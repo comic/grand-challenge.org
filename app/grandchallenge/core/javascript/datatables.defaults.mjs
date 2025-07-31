@@ -1,6 +1,6 @@
 import $ from "jquery";
 
-import DataTable from "datatables.net-dt";
+import DataTable from "datatables.net-bs4";
 import "datatables.net-buttons-bs4";
 
 Object.assign(DataTable.defaults, {
@@ -56,8 +56,13 @@ $(document).on("init.dt", () => {
  * ```
  */
 const DT_ATTRIBUTE_PREFIX = "data-dt-";
+const DT_INITIALIZED_ATTRIBUTE = "data-dt-initialized";
 document.addEventListener("DOMContentLoaded", () => {
     for (const table of document.querySelectorAll("table[data-data-table]")) {
+        table.removeAttribute("data-data-table");
+        if (table.hasAttribute(DT_INITIALIZED_ATTRIBUTE)) {
+            continue; // Skip if already initialized
+        }
         const options = {};
         for (const attr of table.attributes) {
             if (attr.name.startsWith(DT_ATTRIBUTE_PREFIX)) {
@@ -83,5 +88,6 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             console.warn("DataTables is not available for", table);
         }
+        table.setAttribute(DT_INITIALIZED_ATTRIBUTE, "true");
     }
 });
