@@ -53,9 +53,9 @@
     </div>
 {% endblock %}
 
-{% block content_col %}col-xl-6 col-lg-7 col-md-8{% endblock %}
+{% block content_col %}col-xl-7 col-md-8 px-lg-5{% endblock %}
 {% block content %}
-    <div class="mx-3">
+    <div class="mx-3 mx-xl-5">
         {% if challenge.should_show_verification_warning and user_is_participant %}
             {% include "challenges/partials/participant_verification_warning.html" %}
         {% endif %}
@@ -95,8 +95,4 @@
             {% endif %}
         {% endif %}
     </div>
-{% endblock %}
-
-{% block sidebar_right %}
-    <div class="col-lg-1"></div>
 {% endblock %}

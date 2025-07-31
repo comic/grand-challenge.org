@@ -88,14 +88,13 @@
                 {% block topbar %}
                     {% include 'challenges/challenge_topbar.html' %}
                 {% endblock %}
-                <div class="row justify-content-between">
+                <div class="row">
                     {% block sidebar %}{% endblock %}
                     <div class="{% block content_col %}col{% endblock %} overflow-auto">
                         {% block content %}
                             {# Block used by us and django-allauth #}
                         {% endblock %}
                     </div>
-                    {% block sidebar_right %}{% endblock %}
                 </div>
             {% endblock %}
         </div>
