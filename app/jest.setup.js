@@ -18,3 +18,16 @@ if (global.Blob && !global.Blob.prototype.arrayBuffer) {
         });
     };
 }
+
+// Make jQuery available globally
+const $ = require("jquery");
+global.$ = global.jQuery = $;
+
+// Polyfill for IntersectionObserver
+export class IntersectionObserver {
+    disconnect() {}
+    observe() {}
+    unobserve() {}
+}
+window.IntersectionObserver = IntersectionObserver;
+global.IntersectionObserver = IntersectionObserver;

@@ -1,4 +1,10 @@
-$.extend($.fn.dataTable.defaults, {
+import DataTable from "datatables.net-bs4";
+import $ from "jquery";
+import "datatables.net-buttons-bs4";
+
+import { renderVegaChartsObserver } from "../../charts/javascript/render_charts.mjs";
+
+Object.assign(DataTable.defaults, {
     scrollX: true,
     lengthChange: false,
     language: {
@@ -51,9 +57,14 @@ $(document).on("init.dt", () => {
  * ```
  */
 const DT_ATTRIBUTE_PREFIX = "data-dt-";
+const DT_INITIALIZED_ATTRIBUTE = "data-dt-initialized";
 document.addEventListener("DOMContentLoaded", () => {
     for (const table of document.querySelectorAll("table[data-data-table]")) {
-        const options = {};
+        table.removeAttribute("data-data-table");
+        if (table.hasAttribute(DT_INITIALIZED_ATTRIBUTE)) {
+            continue; // Skip if already initialized
+        }
+        let options = {};
         for (const attr of table.attributes) {
             if (attr.name.startsWith(DT_ATTRIBUTE_PREFIX)) {
                 // Convert data-dt-foo-bar to fooBar
@@ -67,6 +78,51 @@ document.addEventListener("DOMContentLoaded", () => {
                 options[camelKey] = value;
             }
         }
+
+        if (table.id === "ajaxDataTable") {
+            const defaultSortColumn = JSON.parse(
+                document.getElementById("defaultSortColumn").textContent,
+            );
+            const textAlign = JSON.parse(
+                document.getElementById("textAlign").textContent,
+            );
+            const defaultSortOrder = JSON.parse(
+                document.getElementById("defaultSortOrder").textContent,
+            );
+            renderVegaChartsObserver.observe(
+                document.getElementById("ajaxDataTable"),
+                {
+                    childList: true,
+                    subtree: true,
+                },
+            );
+            const ajaxTableOptions = {
+                order: [[defaultSortColumn, defaultSortOrder]],
+                lengthChange: false,
+                pageLength: 25,
+                serverSide: true,
+                columnDefs: [
+                    ...$.fn.dataTable.defaults.columnDefs,
+                    {
+                        className: `align-middle text-${textAlign}`,
+                        targets: "_all",
+                    },
+                ],
+                ajax: {
+                    url: ".",
+                },
+                ordering: true,
+                drawCallback: settings => {
+                    // trigger htmx process after the page has been updated.
+                    htmx.process("#ajaxDataTable");
+                },
+            };
+            options = {
+                ...options,
+                ...ajaxTableOptions,
+            };
+        }
+
         // Prefer DataTable global, fallback to jQuery if available
         if (typeof window.DataTable !== "undefined") {
             new window.DataTable(table, options);
@@ -78,5 +134,6 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             console.warn("DataTables is not available for", table);
         }
+        table.setAttribute(DT_INITIALIZED_ATTRIBUTE, "true");
     }
 });

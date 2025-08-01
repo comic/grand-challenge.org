@@ -10,12 +10,25 @@ const isProduction = process.env.NODE_ENV === 'production';
 module.exports = {
   entry: {
     'jquery': 'jquery',
+    'bootstrap': 'bootstrap',
+    'floating-scroll': 'floating-scroll',
+    'datatables.net': 'datatables.net',
+    'datatables.net-bs4': 'datatables.net-bs4',
+    'datatables.net-buttons': 'datatables.net-buttons',
+    'datatables.net-buttons-bs4': 'datatables.net-buttons-bs4',
+
+    // Custom JavaScript files
     'jsoneditor_widget': './grandchallenge/core/javascript/jsoneditor_widget.mjs',
+    'sentry': './grandchallenge/core/javascript/sentry.mjs',
+    'cards_info_modal': './grandchallenge/core/javascript/cards_info_modal.js',
+    'datatables.defaults': './grandchallenge/core/javascript/datatables.defaults.mjs',
+
+    'charts_render_charts': './grandchallenge/charts/javascript/render_charts.mjs',
   },
 
   output: {
     path: path.resolve(__dirname, 'grandchallenge/core/static/npm_vendored'),
-    filename: '[name]-[contenthash].js',
+    filename: isProduction ? '[name].js' : '[name]-[contenthash].js',
     publicPath: '',
     clean: true,
   },
@@ -27,7 +40,10 @@ module.exports = {
         test: require.resolve('jquery'),
         loader: 'expose-loader',
         options: {
-          exposes: ['$', 'jQuery'],
+          exposes: [
+            { globalName: '$', override: true },
+            { globalName: 'jQuery', override: true }
+          ],
         },
       },
       {
@@ -41,7 +57,7 @@ module.exports = {
         test: /\.(png|jpe?g|gif|svg|woff|woff2|ttf|eot)$/,
         type: 'asset/resource',
         generator: {
-          filename: 'assets/[name]-[contenthash][ext]'
+          filename: isProduction ? 'assets/[name][ext]' : 'assets/[name]-[contenthash][ext]',
         }
       }
     ]
@@ -50,7 +66,7 @@ module.exports = {
   plugins: [
     new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
-      filename: '[name]-[contenthash].css'
+      filename: isProduction ? '[name].css' : '[name]-[contenthash].css'
     }),
     new webpack.ProvidePlugin({
       $: 'jquery',
@@ -67,7 +83,11 @@ module.exports = {
   mode: isProduction ? 'production' : 'development',
   devtool: isProduction ? 'source-map' : 'eval-source-map',
   optimization: {
-    splitChunks: false, // Keep each package separate
+    splitChunks: {
+      chunks: 'all',
+      minSize: 0,
+    },
+    runtimeChunk: 'single',
     minimizer: [
       '...', // keep existing minimizers (like Terser for JS)
       new CssMinimizerPlugin(),

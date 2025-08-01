@@ -84,7 +84,7 @@ check_migrations:
 migrations:
 	docker compose run -u $(USER_ID) --rm web python manage.py makemigrations
 
-runserver: build_web_test build_http development_fixtures
+runserver: build_web_test build_http development_fixtures build_dev_js_libraries
 	bash -c "trap 'docker compose down' EXIT; docker compose up"
 
 rundeps:
@@ -96,6 +96,9 @@ minio:
 		--rm \
 		web \
 		bash -c "python manage.py runscript minio"
+
+build_dev_js_libraries:
+	bash -c "cd app && npm install && npm run build"
 
 development_fixtures:
 	docker compose run \
