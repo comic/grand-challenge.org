@@ -16,6 +16,7 @@ RUN apt-get update \
         libffi-dev \
         wget \
         gettext \
+        xz-utils \
         # postgres packages for psycopg2
         libpq-dev \
         # curl and ssl for pycurl
@@ -79,11 +80,22 @@ RUN mkdir -p /opt/docker \
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false\
     COMPONENTS_SAGEMAKER_SHIM_VERSION=0.3.5\
-    PATH="/opt/grand-challenge/.venv/bin:/home/django/.local/bin:${PATH}"
+    PATH="/opt/grand-challenge/.venv/bin:/home/django/.local/bin:${PATH}"\
+    NODE_VERSION=22.17.1
 
 RUN mkdir -p /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs \
     && groupadd -r django && useradd -m -r -g django django \
     && chown django:django /opt/grand-challenge /app /static /opt/sagemaker-shim /opt/virtualenvs
+
+# Install Node.js v22.17.1 (LTS)
+RUN mkdir -p /opt/node \
+    && wget https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz -O /opt/node/node.tar.xz \
+    && echo "ff04bc7c3ed7699ceb708dbaaf3580d899ff8bf67f17114f979e83aa74fc5a49  /opt/node/node.tar.xz" | shasum -a 256 -c - || exit 1 \
+    && tar -xJf /opt/node/node.tar.xz -C /usr/local --strip-components=1 \
+    && rm /opt/node/node.tar.xz \
+    && ln -s /usr/local/bin/node /usr/bin/node \
+    && ln -s /usr/local/bin/npm /usr/bin/npm \
+    && ln -s /usr/local/bin/npx /usr/bin/npx
 
 USER django:django
 

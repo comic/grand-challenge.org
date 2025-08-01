@@ -4,3 +4,5 @@ Makefile text=auto eol=lf
 
 # Exclude third party code from language analysis
 app/grandchallenge/core/static/vendored/** linguist-vendored
+app/grandchallenge/core/static/npm_vendored/** linguist-generated
+app/package-lock.json linguist-generated

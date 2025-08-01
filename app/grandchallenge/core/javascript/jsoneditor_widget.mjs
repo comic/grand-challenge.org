@@ -1,3 +1,6 @@
+import JSONEditor from "jsoneditor";
+import "jsoneditor/dist/jsoneditor.css";
+
 function initialize_jsoneditor_widget(jsoneditorWidgetID) {
     const schema = JSON.parse(
         document.getElementById(`schema_${jsoneditorWidgetID}`).textContent,
@@ -89,6 +92,7 @@ document.addEventListener("DOMContentLoaded", event => {
     htmx.onLoad(elem => {
         search_for_jsoneditor_widgets(elem);
     });
+    search_for_jsoneditor_widgets();
 });
 
 // this is necessary for when an invalid form is returned through htmx (e.g. in display set views)
@@ -99,4 +103,3 @@ if (typeof htmx !== "undefined") {
         }
     });
 }
-search_for_jsoneditor_widgets();

@@ -1,4 +1,5 @@
 {% load static %}
+{% load render_bundle from webpack_loader %}
 
 {% if SENTRY_ENABLE_JS_REPORTING %}
     {# Setup sentry before anything else loads #}
@@ -9,4 +10,4 @@
 {% endif %}
 
 {# jquery must be loaded first (e.g. for django_select2) #}
-<script type="text/javascript" src="{% static "vendored/jquery/jquery.min.js" %}"></script>
+{% render_bundle 'jquery' 'js' %}

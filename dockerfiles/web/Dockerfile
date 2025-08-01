@@ -14,7 +14,7 @@ COPY --chown=django:django setup.cfg /home/django
 WORKDIR /app
 RUN mkdir /tmp/.pytest_cache
 COPY --chown=django:django ./app/ /app/
-
+RUN npm ci && npm run dev
 ##################
 # Dist Container #
 ##################
@@ -22,7 +22,7 @@ FROM ${GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${LOCKFILE_HAS
 
 WORKDIR /app
 COPY --chown=django:django ./app/ /app/
-
+RUN npm ci && npm run build
 ARG COMMIT_ID=unknown
 ENV COMMIT_ID=$COMMIT_ID
 
