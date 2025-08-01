@@ -257,8 +257,5 @@
 {% block script %}
     {{ block.super }}
 
-    <script src="{% static 'vendored/vega/vega.min.js' %}"></script>
-    <script src="{% static 'vendored/vega-lite/vega-lite.min.js' %}"></script>
-    <script src="{% static 'vendored/vega-embed/vega-embed.min.js' %}"></script>
     {% render_bundle 'charts_render_charts' 'js' %}
 {% endblock %}
