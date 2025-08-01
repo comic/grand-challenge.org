@@ -117,6 +117,7 @@
         <dd>{{ object.comment }}</dd>
     </dl>
 
-    <h2>Evaluations for this Evaluation Method</h2>
-    {% include 'evaluation/partials/evaluations_for_object_table.html' %}
+    <h3>Evaluations for this Evaluation Method</h3>
+    <a class="btn btn-primary btn-sm" hx-get="{% url 'evaluation:method-evaluation-list' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}" hx-swap="outerHTML">Show evaluations</a>
+
 {% endblock %}

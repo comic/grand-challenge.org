@@ -497,6 +497,82 @@ class TestObjectPermissionRequiredViews:
             assert response.status_code == 200
             assert obj not in response.context[-1]["object_list"]
 
+    @pytest.mark.parametrize(
+        "view_name, obj_name, obj_factory, permission",
+        [
+            ("method-evaluation-list", "method", MethodFactory, "view_method"),
+            (
+                "ground-truth-evaluation-list",
+                "ground_truth",
+                EvaluationGroundTruthFactory,
+                "view_evaluationgroundtruth",
+            ),
+        ],
+    )
+    def test_permission_filtered_object_list_views(
+        self, client, view_name, obj_name, obj_factory, permission
+    ):
+        u = UserFactory()
+        p = PhaseFactory()
+        obj = obj_factory(phase=p)
+        s = SubmissionFactory(phase=p)
+        e = EvaluationFactory(
+            submission=s,
+            rank=1,
+            status=Evaluation.SUCCESS,
+            time_limit=s.phase.evaluation_time_limit,
+            **{
+                obj_name: obj,
+            },
+        )
+        group = Group.objects.create(name="test-group")
+        group.user_set.add(u)
+
+        response = get_view_for_user(
+            client=client,
+            viewname=f"evaluation:{view_name}",
+            reverse_kwargs={
+                "challenge_short_name": e.submission.phase.challenge.short_name,
+                "slug": p.slug,
+                "pk": obj.pk,
+            },
+            user=u,
+        )
+
+        assert response.status_code == 403
+
+        assign_perm(permission, group, obj)
+
+        response = get_view_for_user(
+            client=client,
+            viewname=f"evaluation:{view_name}",
+            reverse_kwargs={
+                "challenge_short_name": e.submission.phase.challenge.short_name,
+                "slug": p.slug,
+                "pk": obj.pk,
+            },
+            user=u,
+        )
+
+        assert response.status_code == 200
+        assert e not in response.context["object_list"]
+
+        assign_perm("view_evaluation", group, e)
+
+        response = get_view_for_user(
+            client=client,
+            viewname=f"evaluation:{view_name}",
+            reverse_kwargs={
+                "challenge_short_name": e.submission.phase.challenge.short_name,
+                "slug": p.slug,
+                "pk": obj.pk,
+            },
+            user=u,
+        )
+
+        assert response.status_code == 200
+        assert e in response.context["object_list"]
+
     def test_group_only_permission_filtered_views(self, client):
         u = UserFactory()
         p = PhaseFactory()

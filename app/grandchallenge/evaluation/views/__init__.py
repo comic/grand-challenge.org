@@ -303,6 +303,30 @@ class MethodImportStatusDetail(
     login_url = reverse_lazy("account_login")
 
 
+class MethodEvaluationList(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    ViewObjectPermissionListMixin,
+    ListView,
+):
+    model = Evaluation
+    permission_required = "view_method"
+    template_name = "evaluation/partials/evaluations_for_object_table.html"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    @property
+    def method(self):
+        return get_object_or_404(Method, pk=self.kwargs["pk"])
+
+    def get_permission_object(self):
+        return self.method
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(method=self.method)
+
+
 class MethodUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
@@ -1236,6 +1260,30 @@ class EvaluationGroundTruthImportStatusDetail(
     template_name = "components/import_status_detail.html"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+
+
+class EvaluationGroundTruthEvaluationList(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    ViewObjectPermissionListMixin,
+    ListView,
+):
+    model = Evaluation
+    permission_required = "view_evaluationgroundtruth"
+    template_name = "evaluation/partials/evaluations_for_object_table.html"
+    raise_exception = True
+    login_url = reverse_lazy("account_login")
+
+    @property
+    def ground_truth(self):
+        return get_object_or_404(EvaluationGroundTruth, pk=self.kwargs["pk"])
+
+    def get_permission_object(self):
+        return self.ground_truth
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.filter(ground_truth=self.ground_truth)
 
 
 class EvaluationGroundTruthList(
