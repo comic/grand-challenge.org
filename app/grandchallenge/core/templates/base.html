@@ -90,7 +90,7 @@
                 {% endblock %}
                 <div class="row">
                     {% block sidebar %}{% endblock %}
-                    <div class="col overflow-auto">
+                    <div class="{% block content_col %}col{% endblock %} overflow-auto">
                         {% block content %}
                             {# Block used by us and django-allauth #}
                         {% endblock %}
