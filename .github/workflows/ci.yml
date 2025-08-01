@@ -37,6 +37,17 @@ jobs:
             - name: Build the test container
               run: |
                   make build_web_test
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '22'
+                  cache: 'npm'
+                  cache-dependency-path: app/package-lock.json
+            - name: Install JS dependencies and build dependencies
+              working-directory: app
+              run: |
+                  npm ci
+                  npm run dev
             - name: Set DOCKER_GID
               run: |
                   echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
