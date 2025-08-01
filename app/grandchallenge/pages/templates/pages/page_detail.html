@@ -22,12 +22,12 @@
 {% endblock %}
 
 {% block sidebar %}
-    <div class="nav-pill-pages-container col-12 col-sm-5 col-md-4 col-lg-3 pl-3">
-        <ul class="nav nav-pills flex-column">
+    <div class="col-md-3 col-sm-6 pr-lg-3 pr-md-0 mr-xl-5">
+        <ul class="nav nav-pills flex-column mb-3">
             {% for page in pages %}
                 {% if not page.hidden %}
                     <li class="nav-item">
-                        <a class="nav-link px-4 py-1 mb-1 d-flex align-items-center {% if page == object %}active{% endif %}"
+                        <a class="nav-link px-2 py-1 mb-1 d-flex align-items-center {% if page == object %}active{% endif %}"
                            href="{{ page.get_absolute_url }}">
                             {% if page.permission_level == page.REGISTERED_ONLY %}
                                 <i class="fas fa-lock fa-fw mr-1 flex-shrink-0" title="Page is only visible by participants of this challenge"></i>
@@ -43,15 +43,19 @@
             {% endfor %}
             {% if challenge.contact_email %}
                 <li class="nav-item">
-                    <a class="nav-link px-4 py-1 mb-1" href="mailto:{{ challenge.contact_email|random_encode|clean }}"><i class="fas fa-envelope fa-fw"></i> Email organizers</a>
+                    <a class="nav-link px-2 py-1 mb-1 d-flex align-items-center" href="mailto:{{ challenge.contact_email|random_encode|clean }}">
+                        <i class="fas fa-envelope fa-fw mr-1"></i>
+                        Email organizers
+                    </a>
                 </li>
             {% endif %}
         </ul>
     </div>
 {% endblock %}
 
+{% block content_col %}col-xl-8 col-md-9 px-lg-5{% endblock %}
 {% block content %}
-    <div class="mx-3">
+    <div class="mx-3 mr-xl-5 ml-xl-4">
         {% if challenge.should_show_verification_warning and user_is_participant %}
             {% include "challenges/partials/participant_verification_warning.html" %}
         {% endif %}
@@ -91,11 +95,4 @@
             {% endif %}
         {% endif %}
     </div>
-{% endblock %}
-
-
-{% block script %}
-    {{ block.super }}
-    {# make the tables sortable #}
-    <script type="module" src="{% static "js/sort_tables.js" %}"></script>
 {% endblock %}

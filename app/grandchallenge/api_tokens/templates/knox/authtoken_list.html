@@ -27,7 +27,12 @@
     </p>
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless w-100">
+        <table
+            data-data-table
+            data-dt-paging="false"
+            data-dt-order='[[1, "desc"]]'
+            class="table table-hover table-borderless w-100"
+        >
             <thead class="thead-light">
             <tr>
                 <th>Token</th>
@@ -68,11 +73,4 @@
             </tbody>
         </table>
     </div>
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    <script type="module" src="{% static 'api_tokens/js/display_tokens.mjs' %}"></script>
-
 {% endblock %}

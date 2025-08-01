@@ -34,7 +34,14 @@
     {% endif %}
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm w-100" id="onboardingTasksTable">
+        <table
+            data-data-table
+            data-dt-paging="false"
+            data-dt-info="false"
+            data-dt-searching="false"
+            data-dt-order='[[0, "asc"], [5, "asc"]]'
+            class="table table-hover table-borderless table-sm w-100"
+        >
             <thead class="thead-light">
             <tr>
                 <th class="text-center">Status</th>
@@ -106,9 +113,4 @@
             </tbody>
         </table>
     </div>
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-    <script type="module" src="{% static 'js/challenges/challengeonboardingtask_list_table.mjs' %}"></script>
 {% endblock %}

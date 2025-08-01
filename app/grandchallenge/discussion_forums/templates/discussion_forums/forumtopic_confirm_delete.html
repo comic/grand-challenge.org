@@ -1,0 +1,44 @@
+{% extends "discussion_forums/forum_base.html" %}
+
+{% block sub_title %}Delete {{ object }} - {% endblock %}
+
+{% block extra_breadcrumbs %}
+    <li class="breadcrumb-item">
+        <a href="{% url 'discussion-forums:topic-list' %}">Forum</a>
+    </li>
+    <li class="breadcrumb-item active">Delete Topic</li>
+{% endblock %}
+
+{% block extra_top_row_buttons %}
+    {% include 'discussion_forums/partials/extra_top_row_buttons.html' %}
+{% endblock %}
+
+{% block extra_content %}
+    <div id="{{ post.id }}" class="my-3 card">
+        <div class="card-header">
+            <h3 class="m-0 h5 card-title">Confirm Topic Deletion</h3>
+        </div>
+        <div class="card-body">
+            <div class="row px-3">
+                <form action="" method="post">
+                    {% csrf_token %}
+                    <p>Are you sure that you want to delete the topic "{{ object }}"?</p>
+                    <p>Deleting a topic also deletes all associated posts.</p>
+                    <p>
+                        <b class="text-danger">
+                            WARNING: You are not able to undo this action. Once the topic is deleted, it is deleted
+                            forever.
+                        </b>
+                    </p>
+                    <a href="{% url 'discussion-forums:topic-post-list' slug=object.slug %}"
+                       type="button"
+                       class="btn btn-secondary">Cancel</a>
+                    <input type="submit"
+                           value="I understand, delete topic"
+                           class="btn btn-danger"/>
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

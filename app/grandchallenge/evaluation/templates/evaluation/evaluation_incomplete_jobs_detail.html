@@ -5,6 +5,10 @@
         <h3 class="card-title">Prerequisite Jobs</h3>
 
         <p>
+            <strong>Runtime Environment</strong>: {{ object.submission.get_algorithm_requires_gpu_type_display }}, {{ object.submission.algorithm_requires_memory_gb }} GB DRAM.
+        </p>
+
+        <p>
             The successful completion of the algorithm jobs listed below is a prerequisite for executing
             the evaluation method on the predictions.
             Any algorithm jobs mentioned here that have not encountered failures or been cancelled are

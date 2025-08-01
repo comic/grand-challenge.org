@@ -4,7 +4,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 from django.views.generic import RedirectView
-from machina import urls as machina_urls
 
 from grandchallenge.algorithms.sitemaps import AlgorithmsSitemap
 from grandchallenge.archives.sitemaps import ArchivesSitemap
@@ -153,7 +152,6 @@ urlpatterns = [
             "grandchallenge.organizations.urls", namespace="organizations"
         ),
     ),
-    path("forums/", include(machina_urls)),
     path(
         "publications/",
         include("grandchallenge.publications.urls", namespace="publications"),

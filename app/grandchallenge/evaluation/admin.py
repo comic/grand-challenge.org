@@ -138,6 +138,12 @@ def reevaluate_submissions(modeladmin, request, queryset):
                 f"Please reschedule through the challenge UI.",
                 messages.WARNING,
             )
+        elif submission.phase.external_evaluation:
+            modeladmin.message_user(
+                request,
+                "External evaluations cannot be requeued.",
+                messages.WARNING,
+            )
         else:
             submission.create_evaluation(additional_inputs=None)
 

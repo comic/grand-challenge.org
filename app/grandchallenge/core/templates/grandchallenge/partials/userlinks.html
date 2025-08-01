@@ -14,7 +14,8 @@
             <h6 class="dropdown-header">{% firstof challenge.title challenge.short_name %} Support</h6>
             {% if challenge.display_forum_link %}
                 <a class="dropdown-item"
-                   href="{% url 'forum:forum' slug=challenge.forum.slug pk=challenge.forum.pk %}">
+                   href="{% url 'discussion-forums:topic-list' challenge_short_name=challenge.short_name %}"
+                >
                     <i class="fas fa-comments fa-fw"></i>
                     &nbsp;{% firstof challenge.title challenge.short_name %} Forum
                 </a>

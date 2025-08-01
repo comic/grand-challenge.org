@@ -29,7 +29,14 @@ class ForumAdmin(admin.ModelAdmin):
 
 @admin.register(ForumTopic)
 class TopicAdmin(admin.ModelAdmin):
-    list_display = ("subject", "linked_forum", "kind", "creator", "created")
+    list_display = (
+        "subject",
+        "linked_forum",
+        "kind",
+        "creator",
+        "created",
+        "modified",
+    )
     search_fields = ("subject", "creator__username")
     list_filter = ("kind",)
     readonly_fields = (
@@ -48,7 +55,7 @@ class TopicAdmin(admin.ModelAdmin):
 
 @admin.register(ForumPost)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ("topic", "creator", "created")
+    list_display = ("topic", "creator", "created", "modified")
     search_fields = ("creator__username",)
     readonly_fields = (
         "created",

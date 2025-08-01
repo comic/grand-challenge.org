@@ -25,7 +25,11 @@
     <h1>{{ object.title }} Leaderboard</h1>
 
     <div class="table-responsive mt-3">
-        <table class="table table-hover table-borderless table-sm">
+        <table
+            data-data-table
+            data-dt-page-length="100"
+            class="table table-hover table-borderless table-sm"
+        >
             <thead class="thead-light">
                 <tr>
                     <th>#</th>
@@ -50,11 +54,4 @@
             </tbody>
         </table>
     </div>
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    <script type="module" src="{% static 'reader_studies/js/leaderboard.mjs' %}"></script>
-
 {% endblock %}

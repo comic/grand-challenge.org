@@ -2,12 +2,31 @@ from django.contrib import admin
 from django.db.transaction import on_commit
 
 from grandchallenge.components.models import (
+    ComponentImage,
     ComponentInterface,
     ComponentInterfaceExampleValue,
     ComponentInterfaceValue,
     ComponentJob,
 )
 from grandchallenge.components.tasks import deprovision_job
+from grandchallenge.evaluation.models import Evaluation
+
+
+@admin.action(
+    description="Cancel selected image imports",
+    permissions=("change",),
+)
+def cancel_image_imports(modeladmin, request, queryset):
+    queryset.filter(
+        import_status__in=[
+            ComponentImage.ImportStatusChoices.STARTED,
+            ComponentImage.ImportStatusChoices.QUEUED,
+            ComponentImage.ImportStatusChoices.INITIALIZED,
+            ComponentImage.ImportStatusChoices.RETRY,
+        ]
+    ).select_for_update(of=("self",), skip_locked=True).update(
+        import_status=ComponentImage.ImportStatusChoices.CANCELLED
+    )
 
 
 class ComponentImageAdmin(admin.ModelAdmin):
@@ -35,6 +54,7 @@ class ComponentImageAdmin(admin.ModelAdmin):
         "is_removed",
     )
     search_fields = ("pk", "creator__username", "image_sha256")
+    actions = (cancel_image_imports,)
 
 
 @admin.register(ComponentInterface)
@@ -85,6 +105,10 @@ def requeue_jobs(modeladmin, request, queryset):
             ComponentJob.CANCELLED,
         ]
     )
+    if queryset.model == Evaluation:
+        queryset = queryset.exclude(
+            submission__phase__external_evaluation=True
+        )
 
     jobs = []
 
