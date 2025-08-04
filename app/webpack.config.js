@@ -11,7 +11,6 @@ module.exports = {
   entry: {
     'jquery': 'jquery',
     'bootstrap': 'bootstrap',
-    'floating-scroll': 'floating-scroll',
     'datatables.net': 'datatables.net',
     'datatables.net-bs4': 'datatables.net-bs4',
     'datatables.net-buttons': 'datatables.net-buttons',

@@ -1,6 +1,7 @@
 import DataTable from "datatables.net-bs4";
 import $ from "jquery";
 import "datatables.net-buttons-bs4";
+import "floating-scroll";
 
 import { renderVegaChartsObserver } from "../../charts/javascript/render_charts.mjs";
 
