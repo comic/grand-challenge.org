@@ -7,8 +7,15 @@ const textAlign = JSON.parse(document.getElementById("textAlign").textContent);
 const defaultSortOrder = JSON.parse(
     document.getElementById("defaultSortOrder").textContent,
 );
+const ajaxURL = JSON.parse(document.getElementById("ajaxURL").textContent);
 
-document.addEventListener("DOMContentLoaded", () => {
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadDataTable);
+} else {
+    loadDataTable();
+}
+
+function loadDataTable() {
     renderVegaChartsObserver.observe(document.getElementById("ajaxDataTable"), {
         childList: true,
         subtree: true,
@@ -27,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
             },
         ],
         ajax: {
-            url: ".",
+            url: ajaxURL,
         },
         ordering: true,
         drawCallback: settings => {
@@ -35,4 +42,4 @@ document.addEventListener("DOMContentLoaded", () => {
             htmx.process("#ajaxDataTable");
         },
     });
-});
+}

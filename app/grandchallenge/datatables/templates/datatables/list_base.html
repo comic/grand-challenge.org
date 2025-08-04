@@ -11,6 +11,7 @@
     {{ default_sort_column|json_script:"defaultSortColumn" }}
     {{ text_align|json_script:"textAlign" }}
     {{ default_sort_order|json_script:"defaultSortOrder" }}
+    {{ ajax_url|json_script:"ajaxURL" }}
 
     <script type="module" src="{% static 'js/datatables/list.mjs' %}"></script>
 {% endblock %}

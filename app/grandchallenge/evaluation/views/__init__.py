@@ -307,7 +307,7 @@ class MethodEvaluationList(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     ViewObjectPermissionListMixin,
-    ListView,
+    PaginatedTableListView,
 ):
     model = Evaluation
     permission_required = "view_method"
@@ -315,9 +315,24 @@ class MethodEvaluationList(
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
+    row_template = "evaluation/partials/evaluations_for_object_row.html"
+    search_fields = ["id", "submission__id"]
+    columns = [
+        Column(title="Created", sort_field="created"),
+        Column(title="Modified", sort_field="modified"),
+        Column(title="Evaluation"),
+        Column(title="Submission"),
+        Column(title="Status", sort_field="status"),
+        Column(title="Result"),
+    ]
+
     @property
     def method(self):
         return get_object_or_404(Method, pk=self.kwargs["pk"])
+
+    @property
+    def ajax_url(self):
+        return self.method.evaluations_url
 
     def get_permission_object(self):
         return self.method
@@ -1266,7 +1281,7 @@ class EvaluationGroundTruthEvaluationList(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     ViewObjectPermissionListMixin,
-    ListView,
+    PaginatedTableListView,
 ):
     model = Evaluation
     permission_required = "view_evaluationgroundtruth"
@@ -1274,9 +1289,24 @@ class EvaluationGroundTruthEvaluationList(
     raise_exception = True
     login_url = reverse_lazy("account_login")
 
+    row_template = "evaluation/partials/evaluations_for_object_row.html"
+    search_fields = ["id", "submission__id"]
+    columns = [
+        Column(title="Created", sort_field="created"),
+        Column(title="Modified", sort_field="modified"),
+        Column(title="Evaluation"),
+        Column(title="Submission"),
+        Column(title="Status", sort_field="status"),
+        Column(title="Result"),
+    ]
+
     @property
     def ground_truth(self):
         return get_object_or_404(EvaluationGroundTruth, pk=self.kwargs["pk"])
+
+    @property
+    def ajax_url(self):
+        return self.ground_truth.evaluations_url
 
     def get_permission_object(self):
         return self.ground_truth
