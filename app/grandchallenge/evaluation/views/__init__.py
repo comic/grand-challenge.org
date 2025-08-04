@@ -303,45 +303,6 @@ class MethodImportStatusDetail(
     login_url = reverse_lazy("account_login")
 
 
-class MethodEvaluationList(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    ViewObjectPermissionListMixin,
-    PaginatedTableListView,
-):
-    model = Evaluation
-    permission_required = "view_method"
-    template_name = "evaluation/partials/evaluations_for_object_table.html"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    row_template = "evaluation/partials/evaluations_for_object_row.html"
-    search_fields = ["id", "submission__id"]
-    columns = [
-        Column(title="Created", sort_field="created"),
-        Column(title="Modified", sort_field="modified"),
-        Column(title="Evaluation"),
-        Column(title="Submission"),
-        Column(title="Status", sort_field="status"),
-        Column(title="Result"),
-    ]
-
-    @property
-    def method(self):
-        return get_object_or_404(Method, pk=self.kwargs["pk"])
-
-    @property
-    def ajax_url(self):
-        return self.method.evaluations_url
-
-    def get_permission_object(self):
-        return self.method
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        return queryset.filter(method=self.method)
-
-
 class MethodUpdate(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
@@ -1275,45 +1236,6 @@ class EvaluationGroundTruthImportStatusDetail(
     template_name = "components/import_status_detail.html"
     raise_exception = True
     login_url = reverse_lazy("account_login")
-
-
-class EvaluationGroundTruthEvaluationList(
-    LoginRequiredMixin,
-    ObjectPermissionRequiredMixin,
-    ViewObjectPermissionListMixin,
-    PaginatedTableListView,
-):
-    model = Evaluation
-    permission_required = "view_evaluationgroundtruth"
-    template_name = "evaluation/partials/evaluations_for_object_table.html"
-    raise_exception = True
-    login_url = reverse_lazy("account_login")
-
-    row_template = "evaluation/partials/evaluations_for_object_row.html"
-    search_fields = ["id", "submission__id"]
-    columns = [
-        Column(title="Created", sort_field="created"),
-        Column(title="Modified", sort_field="modified"),
-        Column(title="Evaluation"),
-        Column(title="Submission"),
-        Column(title="Status", sort_field="status"),
-        Column(title="Result"),
-    ]
-
-    @property
-    def ground_truth(self):
-        return get_object_or_404(EvaluationGroundTruth, pk=self.kwargs["pk"])
-
-    @property
-    def ajax_url(self):
-        return self.ground_truth.evaluations_url
-
-    def get_permission_object(self):
-        return self.ground_truth
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        return queryset.filter(ground_truth=self.ground_truth)
 
 
 class EvaluationGroundTruthList(

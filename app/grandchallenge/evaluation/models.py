@@ -1452,17 +1452,6 @@ class Method(UUIDModel, ComponentImage):
         )
 
     @property
-    def evaluations_url(self):
-        return reverse(
-            "evaluation:method-evaluation-list",
-            kwargs={
-                "pk": self.pk,
-                "challenge_short_name": self.phase.challenge.short_name,
-                "slug": self.phase.slug,
-            },
-        )
-
-    @property
     def import_status_url(self) -> str:
         return reverse(
             "evaluation:method-import-status-detail",
@@ -1812,16 +1801,6 @@ class EvaluationGroundTruth(Tarball):
     def get_absolute_url(self):
         return reverse(
             "evaluation:ground-truth-detail",
-            kwargs={
-                "slug": self.phase.slug,
-                "pk": self.pk,
-                "challenge_short_name": self.phase.challenge.short_name,
-            },
-        )
-
-    def evaluations_url(self):
-        return reverse(
-            "evaluation:ground-truth-evaluation-list",
             kwargs={
                 "slug": self.phase.slug,
                 "pk": self.pk,
