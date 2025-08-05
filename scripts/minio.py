@@ -48,9 +48,8 @@ def _setup_public_storage():
     subprocess.check_call(
         [
             "mc",
-            "config",
-            "host",
-            "add",
+            "alias",
+            "set",
             host_alias,
             settings.AWS_S3_ENDPOINT_URL,
             os.environ["AWS_ACCESS_KEY_ID"],
@@ -108,9 +107,8 @@ def _setup_components_storage():
     subprocess.check_call(
         [
             "mc",
-            "config",
-            "host",
-            "add",
+            "alias",
+            "set",
             host_alias,
             settings.AWS_S3_ENDPOINT_URL,
             os.environ["AWS_ACCESS_KEY_ID"],

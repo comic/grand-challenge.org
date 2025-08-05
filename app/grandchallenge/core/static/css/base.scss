@@ -126,3 +126,7 @@ a.mark:hover {
     background-clip: border-box;
     z-index: 1001;  // place above .vega-embed summary
 }
+
+textarea.form-control, textarea.form-control:focus {
+    color: $black;
+}
