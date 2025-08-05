@@ -33,6 +33,8 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
 // Show heading permalinks only on hover
 :is(h1, h2, h3, h4, h5, h6) > .headerlink {
     visibility: hidden;
+    position: absolute;
+    align-self: end;
 }
 
 :is(h1, h2, h3, h4, h5, h6):hover > .headerlink {
@@ -67,8 +69,43 @@ div.codehilite {
     font-weight: bold;
 }
 
-.challenge-topbar .nav-link {
+.challenge-topbar .navbar-nav .nav-link {
     padding: $nav-link-padding-y 1rem;
+}
+
+.nav-pills > li > .nav-link {
+    color: $body-color;
+}
+
+.nav-pills > li > .nav-link:hover {
+    border-radius: 1.2rem;
+    color: $body-color;
+    background-color: $light;
+}
+
+.nav-pills > li > .nav-link.active {
+    border-radius: 1.2rem;
+}
+
+.nav-tabs > .nav-item > .nav-link {
+    color: $body-color;
+    border-top: 0 transparent;
+    border-right: 0 transparent;
+    border-left: 0 transparent;
+    border-bottom: 0.25rem solid transparent;
+}
+
+.nav-tabs > .nav-item > .nav-link:hover {
+    border-bottom: 0.25rem solid $light;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.nav-tabs > .nav-item > .nav-link.active {
+    font-weight: bold;
+    border-bottom: 0.25rem solid $primary;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
 mark, .mark {
@@ -83,4 +120,13 @@ a.mark {
 a.mark:hover {
     color: $link-hover-color;
     text-decoration: underline;
+}
+
+.phase-nav-dropdown {
+    background-clip: border-box;
+    z-index: 1001;  // place above .vega-embed summary
+}
+
+textarea.form-control, textarea.form-control:focus {
+    color: $black;
 }

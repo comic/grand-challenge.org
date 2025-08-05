@@ -85,7 +85,14 @@
 
 
     <div class="table-responsive">
-        <table class="table sortable table-hover table-borderless table-sm" id="teamsTable">
+        <table
+            data-data-table
+            data-dt-paginate="false"
+            data-dt-lengthChange="false"
+            data-dt-filter="false"
+            data-dt-info="false"
+            class="table table-hover table-borderless table-sm"
+        >
             <thead class="thead-light">
             <tr>
                 <th>Team Name</th>
@@ -124,11 +131,4 @@
             </tbody>
         </table>
     </div>
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-
-    <script type="module" src="{% static "js/sort_tables.js" %}"></script>
-
 {% endblock %}

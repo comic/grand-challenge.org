@@ -34,7 +34,7 @@
     {% endif %}
 
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm w-100" id="methodsTable">
+        <table data-data-table class="table table-hover table-borderless table-sm w-100">
             <thead class="thead-light">
             <tr>
                 <th class="nonSortable"></th>
@@ -51,7 +51,7 @@
                     <td>
                         <a href="{{ method.get_absolute_url }}"><i class="fa fa-eye"></i></a>
                     </td>
-                    <td class="d-flex justify-content-center">{% if method.is_desired_version %}<i class="fa fa-check-circle text-success pt-1"></i>{% else %}<i class="fas fa-times-circle text-danger pt-1"></i>{% endif %}</td>
+                    <td class="d-flex justify-content-center"><span>{% if method.is_desired_version %}<i class="fa fa-check-circle text-success pt-1"></i>{% else %}<i class="fas fa-times-circle text-danger pt-1"></i>{% endif %}</span></td>
                     <td data-order="{{ method.created|date:"c" }}">{{ method.created }}</td>
                     <td><a
                             href="{% url 'profile-detail' method.creator.username %}">{{ method.creator }}</a>
@@ -63,9 +63,4 @@
             </tbody>
         </table>
     </div>
-{% endblock %}
-
-{% block script %}
-    {{ block.super }}
-    <script type="text/javascript" src="{% static 'js/evaluation/methods_table.js' %}"></script>
 {% endblock %}

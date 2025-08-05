@@ -19,7 +19,12 @@
 {% block content %}
     <h2>{% if not perms.challenges.change_challengerequest %}Your{% endif %} Challenge Requests</h2>
     <div class="table-responsive">
-        <table class="table table-hover table-borderless table-sm w-100" id="challengeRequestsTable">
+        <table
+            data-data-table
+            data-dt-order='[[3, "desc"]]'
+            data-dt-length-change="false"
+            class="table table-hover table-borderless table-sm w-100"
+        >
             <thead class="thead-light">
             <tr>
                 <th class="nonSortable"></th>
@@ -62,10 +67,4 @@
             </tbody>
         </table>
     </div>
-{% endblock %}
-
-
-{% block script %}
-    {{ block.super }}
-    <script type="module" src="{% static 'js/challenges/challengerequest_list_table.mjs' %}"></script>
 {% endblock %}
