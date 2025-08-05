@@ -1148,7 +1148,8 @@ class Job(CIVForObjectMixin, ComponentJob):
             self.init_permissions()
             self.init_followers()
 
-        self.update_viewer_groups_for_public()
+        if adding or self.has_changed("public"):
+            self.update_viewer_groups_for_public()
 
         if self.has_changed("status") and self.status == self.SUCCESS:
             on_commit(
