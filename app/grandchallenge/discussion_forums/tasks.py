@@ -1,6 +1,5 @@
-import logging
-
 from actstream.actions import follow
+from celery.utils.log import get_task_logger
 from django.apps import apps
 from django.db import transaction
 
@@ -8,7 +7,7 @@ from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.notifications.models import Notification, NotificationType
 
-logger = logging.getLogger(__name__)
+logger = get_task_logger(__name__)
 
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
