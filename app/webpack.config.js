@@ -10,13 +10,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 module.exports = {
   entry: {
     'jquery': 'jquery',
-    'bootstrap': 'bootstrap',
-    'datatables.net': 'datatables.net',
-    'datatables.net-bs4': 'datatables.net-bs4',
-    'datatables.net-buttons': 'datatables.net-buttons',
-    'datatables.net-buttons-bs4': 'datatables.net-buttons-bs4',
-
     // Custom JavaScript files
+    'core': './grandchallenge/core/javascript/core.js',
     'jsoneditor_widget': './grandchallenge/core/javascript/jsoneditor_widget.mjs',
     'sentry': './grandchallenge/core/javascript/sentry.mjs',
     'cards_info_modal': './grandchallenge/core/javascript/cards_info_modal.js',

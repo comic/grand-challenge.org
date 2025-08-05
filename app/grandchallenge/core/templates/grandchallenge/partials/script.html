@@ -2,8 +2,8 @@
 {% load compress %}
 {% load render_bundle from webpack_loader %}
 
-{# Bootstrap first, requires jquery from head_script #}
-{% render_bundle 'bootstrap' 'js' %}
+{% render_bundle 'core' 'js' %}
+{% render_bundle 'core' 'css' %}
 
 {# Set global defaults for datatables #}
 {% render_bundle 'datatables.defaults' 'js' %}

@@ -794,6 +794,11 @@ MARKDOWNX_MARKDOWN_EXTENSION_CONFIGS = {
 MARKDOWNX_IMAGE_MAX_SIZE = {"size": (2000, 0), "quality": 90}
 MARKDOWNX_EDITOR_RESIZABLE = "False"
 
+# Disable select2 dependency loading as we load it manually via webpack
+SELECT2_JS = []
+SELECT2_CSS = []
+SELECT2_I18N_AVAILABLE_LANGUAGES = []
+
 HAYSTACK_CONNECTIONS = {
     "default": {"ENGINE": "haystack.backends.simple_backend.SimpleEngine"}
 }
