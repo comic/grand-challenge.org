@@ -259,13 +259,25 @@ def test_public_job_group_permissions():
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
-    algorithm_job = AlgorithmJobFactory(time_limit=60)
+    algorithm_job = AlgorithmJobFactory(time_limit=60, public=False)
 
     assert "view_job" not in get_perms(g_reg, algorithm_job)
     assert "view_job" not in get_perms(g_reg_anon, algorithm_job)
 
     algorithm_job.public = True
     algorithm_job.save()
+
+    assert "view_job" not in get_perms(g_reg, algorithm_job)
+    assert "view_job" in get_perms(g_reg_anon, algorithm_job)
+
+
+@pytest.mark.django_db
+def test_unpublic_job_group_permissions():
+    g_reg_anon = Group.objects.get(
+        name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+    )
+    g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
+    algorithm_job = AlgorithmJobFactory(time_limit=60, public=True)
 
     assert "view_job" not in get_perms(g_reg, algorithm_job)
     assert "view_job" in get_perms(g_reg_anon, algorithm_job)
