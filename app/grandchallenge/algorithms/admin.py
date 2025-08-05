@@ -91,8 +91,13 @@ class AlgorithmAdmin(admin.ModelAdmin):
         description="Unpublish selected algorithms", permissions=("change",)
     )
     def unpublish_algorithms(self, request, queryset):
-        updated = queryset.update(public=False)
-        self.message_user(request, f"{updated} algorithm(s) unpublished.")
+        for algorithm in queryset:
+            algorithm.public = False
+            algorithm.save()
+
+        self.message_user(
+            request, f"{len(queryset)} algorithm(s) unpublished."
+        )
 
 
 @admin.register(AlgorithmUserCredit)
