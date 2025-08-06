@@ -324,9 +324,12 @@ def handle_failed_jobs(*, evaluation_pk):
         app_label="algorithms", model_name="Job"
     )
     Job.objects.filter(
+        creator=None,
         algorithm_image=evaluation.submission.algorithm_image,
         status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY],
-    ).select_for_update(skip_locked=True).update(status=Job.CANCELLED)
+    ).select_for_update(of=("self",), skip_locked=True).update(
+        status=Job.CANCELLED
+    )
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
