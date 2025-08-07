@@ -8,7 +8,7 @@ Welcome to grand-challenge.org's documentation!
 
 In the era of Deep Learning, developing robust machine learning solutions to problems in biomedical imaging
 requires access to large amounts of annotated training data,
-objective comparisons of state of the art machine learning solutions,
+fair comparisons of state of the art machine learning solutions,
 and clinical validation using real world data.
 `Grand Challenge`_ can assist Researchers, Data Scientists, and Clinicians in collaborating
 to develop these solutions by providing:
@@ -18,7 +18,7 @@ Archives
 Reader Studies
    Train experts and have them annotate medical imaging data.
 Challenges
-   Gather and objectively assess machine learning solutions.
+   Gather and assess machine learning solutions.
 Algorithms
    Deploy machine learning solutions for clinical validation.
 
