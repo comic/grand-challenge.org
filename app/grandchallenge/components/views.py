@@ -112,42 +112,36 @@ class ComponentInterfaceAutocomplete(
     LoginRequiredMixin, autocomplete.Select2QuerySetView
 ):
     def get_queryset(self):
-        if self.forwarded:
-            object_slug = self.forwarded.pop("object_slug")
-            model_name = self.forwarded.pop("model_name")
-            image_only = self.forwarded.pop("image_only", False)
+        object_slug = self.forwarded.pop("object_slug")
+        model_name = self.forwarded.pop("model_name")
+        image_only = self.forwarded.pop("image_only", False)
 
-            if model_name == ReaderStudy._meta.model_name:
-                obj = ReaderStudy.objects.get(slug=object_slug)
-            elif model_name == Archive._meta.model_name:
-                obj = Archive.objects.get(slug=object_slug)
-            else:
-                raise RuntimeError(
-                    f"Autocomplete for objects of type {model_name} not defined."
-                )
-
-            try:
-                extra_filter_kwargs = {"slug__in": obj.allowed_socket_slugs}
-            except NotImplementedError:
-                extra_filter_kwargs = {}
-
-            if image_only:
-                qs = ComponentInterface.objects.filter(
-                    kind__in=InterfaceKind.interface_type_image(),
-                    **extra_filter_kwargs,
-                )
-            else:
-                qs = (
-                    ComponentInterface.objects.all()
-                    .filter(**extra_filter_kwargs)
-                    .exclude(slug__in=obj.values_for_interfaces.keys())
-                    .exclude(pk__in=self.forwarded.values())
-                )
-
+        if model_name == ReaderStudy._meta.model_name:
+            obj = ReaderStudy.objects.get(slug=object_slug)
+        elif model_name == Archive._meta.model_name:
+            obj = Archive.objects.get(slug=object_slug)
         else:
+            raise RuntimeError(
+                f"Autocomplete for objects of type {model_name} not defined."
+            )
+
+        try:
+            extra_filter_kwargs = {"slug__in": obj.allowed_socket_slugs}
+        except NotImplementedError:
+            extra_filter_kwargs = {}
+
+        if image_only:
             qs = ComponentInterface.objects.filter(
-                kind__in=InterfaceKind.interface_type_image()
-            ).order_by("title")
+                kind__in=InterfaceKind.interface_type_image(),
+                **extra_filter_kwargs,
+            )
+        else:
+            qs = (
+                ComponentInterface.objects.all()
+                .filter(**extra_filter_kwargs)
+                .exclude(slug__in=obj.values_for_interfaces.keys())
+                .exclude(pk__in=self.forwarded.values())
+            )
 
         if self.q:
             qs = qs.filter(
@@ -156,7 +150,7 @@ class ComponentInterfaceAutocomplete(
                 | Q(description__icontains=self.q)
             )
 
-        return qs
+        return qs.order_by("title")
 
     def get_result_label(self, result):
         return result.title

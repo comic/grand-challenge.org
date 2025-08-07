@@ -69,11 +69,21 @@ def test_component_interface_autocomplete(client):
     ci_img = ComponentInterfaceFactory(title="test-img", kind="IMG")
     ci_img_2 = ComponentInterfaceFactory(title="foo-img", kind="IMG")
     user = UserFactory()
+    rs = ReaderStudyFactory()
 
     response = get_view_for_user(
         client=client,
         viewname="components:component-interface-autocomplete",
         user=user,
+        data={
+            "forward": json.dumps(
+                {
+                    "object_slug": rs.slug,
+                    "model_name": ReaderStudy._meta.model_name,
+                    "image_only": True,
+                }
+            )
+        },
     )
     assert response.status_code == 200
     ids = [x["id"] for x in response.json()["results"]]
@@ -85,7 +95,16 @@ def test_component_interface_autocomplete(client):
         client=client,
         viewname="components:component-interface-autocomplete",
         user=user,
-        data={"q": "test"},
+        data={
+            "q": "test",
+            "forward": json.dumps(
+                {
+                    "object_slug": rs.slug,
+                    "model_name": ReaderStudy._meta.model_name,
+                    "image_only": True,
+                }
+            ),
+        },
     )
     assert response.status_code == 200
     ids = [x["id"] for x in response.json()["results"]]
@@ -97,7 +116,15 @@ def test_component_interface_autocomplete(client):
         client=client,
         viewname="components:component-interface-autocomplete",
         user=user,
-        data={"q": "foo"},
+        data={
+            "q": "foo",
+            "forward": json.dumps(
+                {
+                    "object_slug": rs.slug,
+                    "model_name": ReaderStudy._meta.model_name,
+                },
+            ),
+        },
     )
     assert response.status_code == 200
     ids = [x["id"] for x in response.json()["results"]]
@@ -105,7 +132,6 @@ def test_component_interface_autocomplete(client):
     assert str(ci_img_2.id) in ids
     assert str(ci_json.id) not in ids
 
-    rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
     civ = ComponentInterfaceValueFactory(interface=ci_img)
     ds.values.add(civ)
