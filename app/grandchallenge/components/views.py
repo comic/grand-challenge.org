@@ -118,16 +118,16 @@ class ComponentInterfaceAutocomplete(
             image_only = self.forwarded.pop("image_only", False)
 
             if model_name == ReaderStudy._meta.model_name:
-                object = ReaderStudy.objects.get(slug=object_slug)
+                obj = ReaderStudy.objects.get(slug=object_slug)
             elif model_name == Archive._meta.model_name:
-                object = Archive.objects.get(slug=object_slug)
+                obj = Archive.objects.get(slug=object_slug)
             else:
                 raise RuntimeError(
                     f"Autocomplete for objects of type {model_name} not defined."
                 )
 
             try:
-                extra_filter_kwargs = {"slug__in": object.allowed_socket_slugs}
+                extra_filter_kwargs = {"slug__in": obj.allowed_socket_slugs}
             except NotImplementedError:
                 extra_filter_kwargs = {}
 
@@ -140,7 +140,7 @@ class ComponentInterfaceAutocomplete(
                 qs = (
                     ComponentInterface.objects.all()
                     .filter(**extra_filter_kwargs)
-                    .exclude(slug__in=object.values_for_interfaces.keys())
+                    .exclude(slug__in=obj.values_for_interfaces.keys())
                     .exclude(pk__in=self.forwarded.values())
                 )
 
@@ -212,15 +212,11 @@ class MultipleCIVProcessingBaseView(
         for form_class in self.included_form_classes:
             for widget in form_class.possible_widgets:
                 media = media + widget().media
-        if hasattr(self, "object"):
-            object = self.object
-        else:
-            object = None
         context.update(
             {
                 "base_object": self.base_object,
                 "form_media": media,
-                "object": object,
+                "object": getattr(self, "object", None),
             }
         )
         return context
