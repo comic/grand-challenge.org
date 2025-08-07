@@ -1,8 +1,7 @@
-from dal import autocomplete
+from dal import autocomplete, forward
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms import (
-    BooleanField,
     CharField,
     Form,
     ModelChoiceField,
@@ -192,12 +191,11 @@ class ArchiveItemsToReaderStudyForm(SaveFormInitMixin, Form):
 class AddCasesForm(UploadRawImagesForm):
     model = CharField(widget=HiddenInput)
     object = CharField(widget=HiddenInput)
-    image_only = BooleanField(widget=HiddenInput, initial=True)
     socket = ModelChoiceField(
         queryset=None,
         widget=autocomplete.ModelSelect2(
             url="components:component-interface-autocomplete",
-            forward=["model", "object", "image_only"],
+            forward=["model", "object", forward.Const(True, "image_only")],
             attrs={
                 "data-placeholder": "Search for a socket ...",
                 "data-minimum-input-length": 3,
