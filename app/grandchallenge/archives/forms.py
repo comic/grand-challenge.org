@@ -197,6 +197,7 @@ class AddCasesForm(UploadRawImagesForm):
         queryset=None,
         widget=autocomplete.ModelSelect2(
             url="components:component-interface-autocomplete",
+            forward=["model", "object", "image_only"],
             attrs={
                 "data-placeholder": "Search for a socket ...",
                 "data-minimum-input-length": 3,
@@ -226,11 +227,6 @@ class AddCasesForm(UploadRawImagesForm):
             .order_by("title")
         )
         self.fields["socket"].queryset = qs
-        self.fields["socket"].widget.forward = [
-            "model",
-            "object",
-            "image_only",
-        ]
 
         self.fields["socket"].help_text = format_lazy(
             (
