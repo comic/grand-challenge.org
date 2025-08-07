@@ -48,6 +48,14 @@ module.exports = {
         ]
       },
       {
+        test: /\.scss$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader',
+          'sass-loader'
+        ]
+      },
+      {
         test: /\.(png|jpe?g|gif|svg|woff|woff2|ttf|eot)$/,
         type: 'asset/resource',
         generator: {
@@ -66,6 +74,7 @@ module.exports = {
       $: 'jquery',
       jQuery: 'jquery',
       'window.jQuery': 'jquery',
+      Popper: ['popper.js', 'default'],
     }),
     new BundleTracker({
       path: path.resolve(__dirname, 'grandchallenge/core/static/npm_vendored'),

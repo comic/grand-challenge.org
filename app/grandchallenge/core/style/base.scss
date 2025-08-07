@@ -1,0 +1,134 @@
+
+
+// Defined in flatly/variables
+$gray-500: #b4bcc2 !default;
+$blue: #2c3e50 !default;
+$cyan: #3498db !default;
+
+// Override flatly success colours
+$link-color: $cyan !default;
+
+$navbar-dark-hover-color: $gray-500 !default;
+$navbar-light-color: $blue !default;
+$navbar-light-brand-color: $blue !default;
+$navbar-light-brand-hover-color: $blue !default;
+
+$pagination-bg: $blue !default;
+$pagination-hover-bg: darken($blue, 15%) !default;
+$pagination-disabled-bg: lighten($blue, 15%) !default;
+
+@import "~bootswatch/dist/flatly/variables";
+@import "~bootstrap/scss/bootstrap";
+@import "~bootswatch/dist/flatly/bootswatch";
+@import "datatables";
+
+// Fix https://github.com/comic/grand-challenge.org/issues/1201
+.custom-select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.custom-select-sm {
+    padding-left: $custom-select-padding-x;
+}
+
+// Show heading permalinks only on hover
+:is(h1, h2, h3, h4, h5, h6) > .headerlink {
+    visibility: hidden;
+    position: absolute;
+    align-self: end;
+}
+
+:is(h1, h2, h3, h4, h5, h6):hover > .headerlink {
+    visibility: visible;
+}
+
+// Reserve space for focus box-shadow
+.btn {
+    margin: $btn-focus-width;
+}
+
+blockquote {
+    padding: 0 $spacer;
+    font-size: inherit !important;
+    border-left: $spacer * .25 solid $primary;
+    color: $primary;
+}
+
+div.codehilite {
+    margin-bottom: $paragraph-margin-bottom;
+}
+
+.docpage h3:first-of-type {
+    text-align: center;
+}
+
+.docpage h3:has(+h4){
+    margin-bottom: 2 * $paragraph-margin-bottom;
+}
+
+.docpage :is(h1, h2, h3, h4, h5, h6) {
+    font-weight: bold;
+}
+
+.challenge-topbar .navbar-nav .nav-link {
+    padding: $nav-link-padding-y 1rem;
+}
+
+.nav-pills > li > .nav-link {
+    color: $body-color;
+}
+
+.nav-pills > li > .nav-link:hover {
+    border-radius: 1.2rem;
+    color: $body-color;
+    background-color: $light;
+}
+
+.nav-pills > li > .nav-link.active {
+    border-radius: 1.2rem;
+}
+
+.nav-tabs > .nav-item > .nav-link {
+    color: $body-color;
+    border-top: 0 transparent;
+    border-right: 0 transparent;
+    border-left: 0 transparent;
+    border-bottom: 0.25rem solid transparent;
+}
+
+.nav-tabs > .nav-item > .nav-link:hover {
+    border-bottom: 0.25rem solid $light;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.nav-tabs > .nav-item > .nav-link.active {
+    font-weight: bold;
+    border-bottom: 0.25rem solid $primary;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+mark, .mark {
+    padding: 0;
+}
+
+a.mark {
+    color: $link-color;
+    text-decoration: none;
+}
+
+a.mark:hover {
+    color: $link-hover-color;
+    text-decoration: underline;
+}
+
+.phase-nav-dropdown {
+    background-clip: border-box;
+    z-index: 1001;  // place above .vega-embed summary
+}
+
+textarea.form-control, textarea.form-control:focus {
+    color: $black;
+}

@@ -1,0 +1,30 @@
+
+.dt-layout-start,
+.dt-layout-end {
+    padding-top: $spacer * 0.5;
+    padding-bottom: $spacer * 0.5;
+}
+
+.dt-container ul.pagination {
+    justify-content: right;
+}
+
+.dt-layout-full,
+.dt-layout-start,
+.dt-layout-end {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.dt-scroll-body {
+    border-bottom: none !important;
+}
+
+.dt-orderable-none .dt-column-order {
+    display: none;
+}
+
+table.dataTable th.dt-type-date,
+table.dataTable td.dt-type-date {
+  text-align: left !important;
+}
