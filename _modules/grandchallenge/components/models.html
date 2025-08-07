@@ -2010,7 +2010,7 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">runtime_metrics_chart</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">instance_metrics</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime_metrics</span><span class="p">[</span><span class="s2">&quot;instance&quot;</span><span class="p">]</span>
-        <span class="n">cpu_limit</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">instance_metrics</span><span class="p">[</span><span class="s2">&quot;cpu&quot;</span><span class="p">]</span>
+        <span class="n">n_cpu</span> <span class="o">=</span> <span class="n">instance_metrics</span><span class="p">[</span><span class="s2">&quot;cpu&quot;</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="n">instance_metrics</span><span class="p">[</span><span class="s2">&quot;gpus&quot;</span><span class="p">]:</span>
             <span class="n">gpu_str</span> <span class="o">=</span> <span class="p">(</span>
@@ -2018,6 +2018,7 @@
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">gpu_str</span> <span class="o">=</span> <span class="s2">&quot;No&quot;</span>
+
         <span class="n">title</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">instance_metrics</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">instance_metrics</span><span class="p">[</span><span class="s1">&#39;cpu&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> CPU / </span><span class="si">{</span><span class="n">instance_metrics</span><span class="p">[</span><span class="s1">&#39;memory&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> GB Memory / </span><span class="si">{</span><span class="n">gpu_str</span><span class="si">}</span><span class="s2"> GPU&quot;</span>
 
         <span class="k">return</span> <span class="n">components_line</span><span class="p">(</span>
@@ -2025,7 +2026,11 @@
                 <span class="p">{</span>
                     <span class="s2">&quot;Metric&quot;</span><span class="p">:</span> <span class="n">metric</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">],</span>
                     <span class="s2">&quot;Timestamp&quot;</span><span class="p">:</span> <span class="n">timestamp</span><span class="p">,</span>
-                    <span class="s2">&quot;Percent&quot;</span><span class="p">:</span> <span class="n">value</span> <span class="o">/</span> <span class="mf">100.0</span><span class="p">,</span>
+                    <span class="s2">&quot;Percent&quot;</span><span class="p">:</span> <span class="p">(</span>
+                        <span class="n">value</span> <span class="o">/</span> <span class="p">(</span><span class="n">n_cpu</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">metric</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;CPUUtilization&quot;</span>
+                        <span class="k">else</span> <span class="n">value</span> <span class="o">/</span> <span class="mf">100.0</span>
+                    <span class="p">),</span>
                 <span class="p">}</span>
                 <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime_metrics</span><span class="p">[</span><span class="s2">&quot;metrics&quot;</span><span class="p">]</span>
                 <span class="k">for</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
@@ -2033,7 +2038,7 @@
                 <span class="p">)</span>
             <span class="p">],</span>
             <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span>
-            <span class="n">cpu_limit</span><span class="o">=</span><span class="n">cpu_limit</span><span class="p">,</span>
+            <span class="n">single_thread_limit</span><span class="o">=</span><span class="mf">100.0</span> <span class="o">/</span> <span class="n">n_cpu</span><span class="p">,</span>
             <span class="n">tooltip</span><span class="o">=</span><span class="p">[</span>
                 <span class="p">{</span>
                     <span class="s2">&quot;field&quot;</span><span class="p">:</span> <span class="n">metric</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">],</span>
