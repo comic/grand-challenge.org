@@ -1,10 +1,9 @@
 import io
 import logging
-from datetime import datetime
+from datetime import datetime, time, timezone
 from pathlib import Path
 from zipfile import ZipFile
 
-from dateutil import parser, tz
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -885,17 +884,16 @@ class LeaderboardDetail(
             return queryset
 
         try:
-            before = parser.parse(
-                timestr=timestr,
-                yearfirst=True,
-                dayfirst=False,
-                default=datetime.max.replace(tzinfo=tz.tzutc()),
-            )
-        except parser.ParserError:
-            logger.error(f"Could not parse {timestr=}")
+            date = datetime.strptime(timestr, "%Y-%m-%d").date()
+        except ValueError:
+            logger.warning(f"Could not parse {timestr=}")
             return queryset.none()
 
-        return queryset.filter(submission__created__lte=before)
+        return queryset.filter(
+            submission__created__lte=datetime.combine(date, time.max).replace(
+                tzinfo=timezone.utc
+            )
+        )
 
 
 class EvaluationUpdate(
