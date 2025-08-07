@@ -1578,6 +1578,9 @@ class Submission(FieldChangeMixin, UUIDModel):
                 "algorithm_model",
             ),
         )
+        indexes = [
+            models.Index(fields=["created"]),
+        ]
 
     @cached_property
     def is_evaluated_with_active_image_and_ground_truth(self):

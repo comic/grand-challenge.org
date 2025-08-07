@@ -1,8 +1,10 @@
 import io
+import logging
 from datetime import datetime
 from pathlib import Path
 from zipfile import ZipFile
 
+from dateutil import parser, tz
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
@@ -83,6 +85,8 @@ from grandchallenge.subdomains.utils import reverse, reverse_lazy
 from grandchallenge.teams.models import Team
 from grandchallenge.verifications.views import VerificationRequiredMixin
 from grandchallenge.workstations.models import Workstation
+
+logger = logging.getLogger(__name__)
 
 
 class CachedPhaseMixin:
@@ -875,13 +879,26 @@ class LeaderboardDetail(
 
     def filter_by_date(self, queryset):
         if "date" in self.request.GET:
-            year, month, day = self.request.GET["date"].split("-")
-            before = datetime(
-                year=int(year), month=int(month), day=int(day)
-            ) + relativedelta(days=1)
-            return queryset.filter(submission__created__lt=before)
+            timestr = self.request.GET["date"]
+        elif "date" in self.request.POST:
+            timestr = self.request.POST["date"]
         else:
             return queryset
+
+        try:
+            before = parser.parse(
+                timestr=timestr,
+                yearfirst=True,
+                dayfirst=False,
+                default=datetime.min.replace(tzinfo=tz.tzutc()),
+            )
+        except parser.ParserError:
+            logger.error(f"Could not parse {timestr=}")
+            return queryset.none()
+
+        return queryset.filter(
+            submission__created__lt=before + relativedelta(days=1)
+        )
 
 
 class EvaluationUpdate(
