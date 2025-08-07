@@ -8,6 +8,9 @@ module.exports = {
     testMatch: ["<rootDir>/tests/*/js/*.test.js"],
 
     transform: {
-        "^.+\\.(js|mjs)$": "babel-jest",
+        "^.+.(js|mjs)$": "babel-jest",
+    },
+    moduleNameMapper: {
+        ".css$": "identity-obj-proxy",
     },
 };
