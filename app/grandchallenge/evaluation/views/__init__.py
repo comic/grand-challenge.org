@@ -5,7 +5,6 @@ from pathlib import Path
 from zipfile import ZipFile
 
 from dateutil import parser, tz
-from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -890,15 +889,13 @@ class LeaderboardDetail(
                 timestr=timestr,
                 yearfirst=True,
                 dayfirst=False,
-                default=datetime.min.replace(tzinfo=tz.tzutc()),
+                default=datetime.max.replace(tzinfo=tz.tzutc()),
             )
         except parser.ParserError:
             logger.error(f"Could not parse {timestr=}")
             return queryset.none()
 
-        return queryset.filter(
-            submission__created__lt=before + relativedelta(days=1)
-        )
+        return queryset.filter(submission__created__lte=before)
 
 
 class EvaluationUpdate(
