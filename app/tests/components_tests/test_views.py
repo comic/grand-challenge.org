@@ -116,7 +116,10 @@ def test_component_interface_autocomplete(client):
         user=user,
         data={
             "forward": json.dumps(
-                {"object": rs.slug, "model": ReaderStudy._meta.model_name}
+                {
+                    "object_slug": rs.slug,
+                    "model_name": ReaderStudy._meta.model_name,
+                }
             )
         },
     )
@@ -133,8 +136,8 @@ def test_component_interface_autocomplete(client):
         data={
             "forward": json.dumps(
                 {
-                    "object": rs.slug,
-                    "model": ReaderStudy._meta.model_name,
+                    "object_slug": rs.slug,
+                    "model_name": ReaderStudy._meta.model_name,
                     "interface-0": ci_img_2.pk,
                 }
             )
@@ -167,8 +170,8 @@ def test_ci_autocomplete_for_archives(client):
         data={
             "forward": json.dumps(
                 {
-                    "object": archive.slug,
-                    "model": Archive._meta.model_name,
+                    "object_slug": archive.slug,
+                    "model_name": Archive._meta.model_name,
                 }
             )
         },
@@ -186,8 +189,8 @@ def test_ci_autocomplete_for_archives(client):
         data={
             "forward": json.dumps(
                 {
-                    "object": archive.slug,
-                    "model": Archive._meta.model_name,
+                    "object_slug": archive.slug,
+                    "model_name": Archive._meta.model_name,
                     "image_only": True,
                 }
             )

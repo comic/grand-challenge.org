@@ -113,8 +113,8 @@ class ComponentInterfaceAutocomplete(
 ):
     def get_queryset(self):
         if self.forwarded:
-            object_slug = self.forwarded.pop("object")
-            model_name = self.forwarded.pop("model")
+            object_slug = self.forwarded.pop("object_slug")
+            model_name = self.forwarded.pop("model_name")
             image_only = self.forwarded.pop("image_only", False)
 
             if model_name == ReaderStudy._meta.model_name:

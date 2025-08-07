@@ -189,13 +189,17 @@ class ArchiveItemsToReaderStudyForm(SaveFormInitMixin, Form):
 
 
 class AddCasesForm(UploadRawImagesForm):
-    model = CharField(widget=HiddenInput)
-    object = CharField(widget=HiddenInput)
+    model_name = CharField(widget=HiddenInput)
+    object_slug = CharField(widget=HiddenInput)
     socket = ModelChoiceField(
         queryset=None,
         widget=autocomplete.ModelSelect2(
             url="components:component-interface-autocomplete",
-            forward=["model", "object", forward.Const(True, "image_only")],
+            forward=[
+                "model_name",
+                "object_slug",
+                forward.Const(True, "image_only"),
+            ],
             attrs={
                 "data-placeholder": "Search for a socket ...",
                 "data-minimum-input-length": 3,
@@ -208,8 +212,8 @@ class AddCasesForm(UploadRawImagesForm):
     def __init__(self, *args, base_obj, interface_viewname, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["model"].initial = base_obj._meta.model_name
-        self.fields["object"].initial = base_obj.slug
+        self.fields["model_name"].initial = base_obj._meta.model_name
+        self.fields["object_slug"].initial = base_obj.slug
 
         try:
             socket_filter_kwargs = {"slug__in": base_obj.allowed_socket_slugs}
