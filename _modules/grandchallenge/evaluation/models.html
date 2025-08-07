@@ -1628,6 +1628,9 @@
                 <span class="s2">&quot;algorithm_model&quot;</span><span class="p">,</span>
             <span class="p">),</span>
         <span class="p">)</span>
+        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">]),</span>
+        <span class="p">]</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_evaluated_with_active_image_and_ground_truth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
