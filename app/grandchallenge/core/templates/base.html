@@ -25,13 +25,13 @@
         {% include "grandchallenge/partials/head_script.html" %}
     {% endblock %}
 
-    {% block style %}
-        {% include "grandchallenge/partials/style.html" %}
-    {% endblock %}
-
     {% block extra_head %}
         {# Block used by django-allauth #}
     {% endblock extra_head %}
+
+    {% block style %}
+        {% include "grandchallenge/partials/style.html" %}
+    {% endblock %}
 </head>
 
 <body class="d-flex flex-column min-vh-100">
