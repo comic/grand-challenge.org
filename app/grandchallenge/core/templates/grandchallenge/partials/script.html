@@ -1,24 +1,14 @@
 {% load static %}
 {% load compress %}
+{% load render_bundle from webpack_loader %}
 
-{# Bootstrap first, requires jquery from head_script #}
-<script src="{% static 'vendored/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+{% render_bundle 'vendor' 'js' %}
 
-{# Floating scrollbar: floating-scroll, used by DataTables #}
-<script src="{% static 'vendored/floating-scroll/dist/jquery.floatingscroll.min.js' %}" defer></script>
-
-
-{# DataTables with colvis #}
-{% compress js %}
-    <script src="{% static 'vendored/datatables.net/js/dataTables.min.js' %}"></script>
-    <script src="{% static 'vendored/datatables.net-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
-    <script src="{% static 'vendored/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
-    <script src="{% static 'vendored/datatables.net-buttons-bs4/js/buttons.bootstrap4.min.js' %}"></script>
-    <script src="{% static 'vendored/datatables.net-buttons/js/buttons.colVis.min.js' %}"></script>
-{% endcompress %}
+{% render_bundle 'core' 'js' %}
 
 {# Set global defaults for datatables #}
-<script type="module" src="{% static 'js/datatables.defaults.mjs' %}"></script>
+{% render_bundle 'datatables.defaults' 'js' %}
+{% render_bundle 'datatables.defaults' 'css' %}
 
 {# Htmx #}
 <script id="htmx-script" src="{% static 'vendored/htmx/htmx.min.js' %}" defer></script>

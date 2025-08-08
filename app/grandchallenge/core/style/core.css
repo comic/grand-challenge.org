@@ -1,0 +1,184 @@
+html {
+    overflow-y: scroll;
+    position: relative;
+    min-height: 100%;
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
+}
+
+p {
+    line-height: 1.6;
+}
+
+.child-p-mb-0 > p {
+    margin-bottom: 0;
+}
+
+.jumbotron {
+    text-shadow: 0.1rem 0.1rem 0.2rem #000000;
+}
+
+.jumbotron-image {
+    filter: drop-shadow(0.1rem 0.1rem 0.2rem #000000);
+}
+
+.background-fill {
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+}
+
+/* fix modal display with overflow-y: scroll on html */
+.modal,
+.modal-open {
+    padding-right: 0 !important;
+}
+
+/* fix title tooltips when using .stretched-link */
+.above-stretched-link {
+    z-index: 1;
+    position: relative;
+}
+
+/* for square images */
+.embed-responsive .card-img-top {
+    object-fit: cover;
+}
+
+/* for responsive card-decks */
+.row.equal-height {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.row.equal-height > [class*="col-"] {
+    display: flex;
+    flex-direction: column;
+}
+
+.row.equal-height > [class*="col-"] .card {
+    flex: 1;
+}
+
+/* definition lists */
+dl.inline dd {
+    display: inline;
+    margin: 0;
+}
+
+dl.inline dd:after {
+    display: block;
+    content: "";
+}
+
+dl.inline dt {
+    display: inline-block;
+}
+
+dl.inline dt:after {
+    content: ":";
+}
+
+/* Fix display of error messages on forms. See: https://github.com/twbs/bootstrap/issues/23454 */
+.invalid-feedback {
+    display: block;
+}
+
+.breadcrumb {
+    margin-bottom: 0;
+    background-color: inherit;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.breadcrumb-item.active {
+    color: var(--light);
+}
+
+.breadcrumb-item > a {
+    color: var(--secondary);
+}
+
+/* Fix display of select2 dropdowns when used in collapsible bootstrap elements */
+.select2-container,
+.select2-container li:only-child,
+.select2-container input:placeholder-shown {
+    width: 100% !important;
+}
+
+.console {
+    background-color: var(--gray-dark);
+    color: var(--light);
+}
+
+ul.socialaccount_providers {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul.socialaccount_providers > li {
+    min-width: 19rem;
+}
+
+.gc-card {
+    border-radius: 0.9rem;
+}
+
+.gc-card:hover,
+.gc-card:focus-within {
+    box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Reset card shadow when above-stretched-link elements are focused */
+.gc-card:has(.above-stretched-link:focus) {
+    box-shadow: none;
+}
+
+.gc-card .card-img-top {
+    border-top-left-radius: 0.9rem;
+    border-top-right-radius: 0.9rem;
+}
+
+.carousel-control-next,
+.carousel-control-prev {
+    width: 3rem;
+}
+
+.documentation-sidebar {
+    top: 5rem;
+    z-index: 1;
+}
+
+.thumbnail {
+    max-height: 90px;
+    max-width: 90px;
+}
+
+.box-shadow {
+    box-shadow: 0 0 1rem 0 rgba(0, 0, 0, 0.1);
+}
+
+.color-box {
+    display: inline-block;
+    border: black solid 1px;
+    min-width: 0.9375rem;
+    min-height: 0.9375rem;
+}
+
+a[aria-expanded="true"] .fa-chevron-right {
+    display: none;
+}
+a[aria-expanded="false"] .fa-chevron-down {
+    display: none;
+}
+
+/* htmx */
+.htmx-indicator {
+    display: none;
+}
+.htmx-request .htmx-indicator {
+    display: inline-block;
+}
+.htmx-request.htmx-indicator {
+    display: inline-block;
+}

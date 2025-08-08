@@ -1,3 +1,5 @@
+import vegaEmbed from "vega-embed";
+
 function renderVegaLiteChart(element) {
     const spec = JSON.parse(element.children[0].textContent);
     vegaEmbed(element, spec);
@@ -22,7 +24,7 @@ function handleInterSection(entries) {
         renderVegaLiteChart(element);
 
         // Tag the element as being handled
-        element.setAttribute(handledAttribute, "");
+        element.setAttribute(handledAttribute, "true");
         this.unobserve(element);
     }
 }
@@ -47,7 +49,7 @@ function renderVegaChartsInAddedNodes(mutationList, observer) {
                 )) {
                     if (!element.getAttribute(handledAttribute)) {
                         renderVegaLiteChart(element);
-                        element.setAttribute(handledAttribute, "");
+                        element.setAttribute(handledAttribute, "true");
                     }
                 }
             }

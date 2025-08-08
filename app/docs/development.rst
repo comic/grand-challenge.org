@@ -222,6 +222,153 @@ and commit the updated ``uv.lock``.
 
 The containers will need to be rebuilt after running these steps, so stop the ``make runserver`` process with ``CTRL+C`` and restart.
 
+Frontend Asset Management
+-------------------------
+
+This project uses `webpack <https://webpack.js.org/>`_ to manage frontend assets like JavaScript and CSS. This allows us to use modern JavaScript features, manage dependencies through ``npm``, and bundle our assets for production.
+
+The main configuration file for this process is ``webpack.config.js`` located in the ``/app/`` directory so all ``npm`` commands below need to be ran from that directory.
+
+Key Concepts
+~~~~~~~~~~~~
+
+*   **Entry Points**: Each entry in the ``entry`` object in ``webpack.config.js`` corresponds to a "bundle". A bundle is a set of output files (JS and CSS) that can be included in a template or widget.
+*   **Bundling**: Webpack takes the entry point, finds all its dependencies (other JS/CSS files it imports), and bundles them into a single JS file and a single CSS file.
+*   **Output**: The bundled files are placed in ``/app/grandchallenge/core/static/npm_vendored/``. In development filenames include a content hash for cache-busting (e.g., ``jquery-a1b2c3d4.js``), in production this is not needed.
+*   **Stats File**: ``webpack-bundle-tracker`` generates a ``webpack-stats.json`` file in the output directory. This file maps bundle names to their generated, hashed filenames.
+*   **Django Integration**: ``django-webpack-loader`` reads the ``webpack-stats.json`` file and provides a template tag (``render_bundle``) to easily include the correct, hashed asset files in Django templates.
+
+How to Add a JavaScript Dependency
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Add a 3rd-party library (from npm)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you need to use a library like ``htmx`` or ``d3``, you can add it as a separate bundle.
+
+1.  **Install the package**:
+
+    .. code-block:: bash
+
+        npm install htmx.org
+
+2.  **Add an entry point in ``webpack.config.js``**:
+    Open ``/app/webpack.config.js`` and add a new entry to the ``entry`` object. The key is the name you'll use to refer to this bundle, and the value is the package name.
+
+    .. code-block:: javascript
+
+        // webpack.config.js
+        module.exports = {
+          entry: {
+            'jquery': 'jquery',
+            'htmx': 'htmx.org', // <-- Add this line
+            'jsoneditor_widget': './grandchallenge/core/javascript/jsoneditor_widget.mjs',
+            'sentry': './grandchallenge/core/javascript/sentry.mjs',
+          },
+          // ...
+        };
+
+3.  **Include the bundle in a template**:
+    See the "Using Bundles" section below.
+
+Add a custom JavaScript file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For your own custom JavaScript code, follow these steps:
+
+1.  **Create your JavaScript file**:
+    Create a new file in ``/app/grandchallenge/core/javascript/``. For example, ``my_new_feature.mjs``. You can import any npm packages or other custom modules within this file.
+
+    .. code-block:: javascript
+
+        // /app/grandchallenge/core/javascript/my_new_feature.mjs
+        import $ from 'jquery';
+
+        console.log("My new feature is loaded!");
+        // Your code here...
+
+2.  **Add an entry point in ``webpack.config.js``**:
+    Add your new file as an entry point. The key is the bundle name, and the value is the path to your file.
+
+    .. code-block:: javascript
+
+        // webpack.config.js
+        module.exports = {
+          entry: {
+            'jquery': 'jquery',
+            'jsoneditor_widget': './grandchallenge/core/javascript/jsoneditor_widget.mjs',
+            'sentry': './grandchallenge/core/javascript/sentry.mjs',
+            'my_new_feature': './grandchallenge/core/javascript/my_new_feature.mjs', // <-- Add this line
+          },
+          // ...
+        };
+
+3.  **Include the bundle**:
+    See the "Using Bundles" section below.
+
+Using Bundles
+~~~~~~~~~~~~~
+
+Once you've defined a bundle in ``webpack.config.js`` and run the webpack build, you can include it in your Django templates or widgets.
+
+In Django Templates
+^^^^^^^^^^^^^^^^^^^
+
+To include a bundle directly in a template:
+
+1.  **Load the template tag**:
+    At the top of your template, add ``{% load render_bundle from webpack_loader %}``.
+
+2.  **Render the bundle**:
+    Use the ``render_bundle`` tag where you want to include the ``<script>`` and ``<link>`` tags. The first argument is the bundle name (from your ``webpack.config.js`` entry key), and the second is the file type ('js' or 'css').
+
+    .. code-block:: html
+
+        {# my_template.html #}
+        {% load render_bundle from webpack_loader %}
+
+        ...
+
+        {% block extra_js %}
+          {% render_bundle 'my_new_feature' 'js' %}
+          {% render_bundle 'my_new_feature' 'css' %}
+        {% endblock %}
+
+    This will render the appropriate ``<script>`` and ``<link>`` tags with the correct hashed filenames.
+
+In Django Widgets
+^^^^^^^^^^^^^^^^^^
+
+To associate a JavaScript bundle with a Django widget:
+
+1.  **Inherit from ``WebpackWidgetMixin``**:
+    Your widget class in ``widgets.py`` should inherit from ``grandchallenge.core.utils.webpack.WebpackWidgetMixin``.
+
+2.  **Define ``webpack_bundles``**:
+    Add a class attribute ``webpack_bundles`` to your widget. This should be a list of strings, where each string is a bundle name from your ``webpack.config.js``.
+
+    **Example from ``/app/grandchallenge/core/widgets.py``**:
+
+    .. code-block:: python
+
+        from grandchallenge.core.utils.webpack import WebpackWidgetMixin
+
+        class MyWidget(WebpackWidgetMixin, forms.Textarea):
+            template_name = "my_app/my_widget.html"
+            webpack_bundles = ["my_new_feature"] # <-- Associate the bundle
+
+            # ... rest of your widget code
+
+    The ``WebpackWidgetMixin`` automatically adds the necessary JS and CSS files for the specified bundles to the form's media.
+
+Development and Production
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+*   **Development**: Run ``npm run dev`` or ``npm run watch``. This creates bundles with source maps for easier debugging.
+*   **Production**: The build process in the container will run ``npm run build``, which creates minified, production-ready assets.
+
+The ``webpack.config.js`` file uses the ``NODE_ENV`` environment variable to determine which build to perform.
+
 Going to Production
 -------------------
 

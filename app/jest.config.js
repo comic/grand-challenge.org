@@ -6,4 +6,11 @@ module.exports = {
 
     // The glob patterns Jest uses to detect test files
     testMatch: ["<rootDir>/tests/*/js/*.test.js"],
+
+    transform: {
+        "^.+.(js|mjs)$": "babel-jest",
+    },
+    moduleNameMapper: {
+        ".css$": "identity-obj-proxy",
+    },
 };

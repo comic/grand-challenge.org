@@ -12,20 +12,42 @@
   "author": "DIAG",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@babel/core": "^7.28.0",
+    "@babel/preset-env": "^7.28.0",
+    "babel-jest": "^30.0.5",
+    "canvas": "^3.1.2",
     "clean-webpack-plugin": "^4.0.0",
     "css-loader": "^7.1.2",
     "css-minimizer-webpack-plugin": "^7.0.2",
     "expose-loader": "^5.0.1",
+    "identity-obj-proxy": "^3.0.0",
     "jest": "^30.0.4",
     "jest-environment-jsdom": "^30.0.4",
     "mini-css-extract-plugin": "^2.9.2",
+    "sass": "^1.90.0",
+    "sass-loader": "^16.0.5",
     "webpack": "^5.100.1",
     "webpack-bundle-tracker": "^3.2.1",
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
+    "@sentry/browser": "^9.40.0",
+    "bootstrap": "^4.6.2",
+    "bootswatch": "^4.6.2",
+    "datatables.net": "^2.1.8",
+    "datatables.net-bs4": "^2.1.8",
+    "datatables.net-buttons": "^3.2.0",
+    "datatables.net-buttons-bs4": "^3.2.0",
+    "datatables.net-dt": "^2.3.2",
     "dcmjs": "^0.43.0",
+    "floating-scroll": "^3.2.0",
+    "import": "^0.0.6",
     "jquery": "^3.7.0",
-    "jsoneditor": "^10.2.0"
+    "jsoneditor": "^10.2.0",
+    "popper.js": "^1.16.1",
+    "select2": "^4.0.13",
+    "vega": "^5.20.2",
+    "vega-embed": "^6.17.0",
+    "vega-lite": "^5.1.0"
   }
 }
