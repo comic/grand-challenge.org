@@ -2,9 +2,6 @@
 {% load compress %}
 {% load render_bundle from webpack_loader %}
 
-{# jquery must be loaded first (e.g. for django_select2) #}
-{% render_bundle 'jquery' 'js' %}
-
 {% render_bundle 'vendor' 'js' %}
 {% render_bundle 'vendor' 'css' %}
 

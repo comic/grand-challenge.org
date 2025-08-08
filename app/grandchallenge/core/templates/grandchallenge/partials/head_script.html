@@ -7,3 +7,6 @@
     {{ COMMIT_ID|json_script:"commitID" }}
     {% render_bundle 'sentry' 'js' %}
 {% endif %}
+
+{# jquery must be loaded in head for django_select2 #}
+{% render_bundle 'jquery' 'js' %}
