@@ -10,14 +10,38 @@ const isProduction = process.env.NODE_ENV === 'production';
 module.exports = {
   entry: {
     'jquery': 'jquery',
-    // Custom JavaScript files
-    'core': './grandchallenge/core/javascript/core.js',
-    'jsoneditor_widget': './grandchallenge/core/javascript/jsoneditor_widget.mjs',
-    'sentry': './grandchallenge/core/javascript/sentry.mjs',
-    'cards_info_modal': './grandchallenge/core/javascript/cards_info_modal.js',
-    'datatables.defaults': './grandchallenge/core/javascript/datatables.defaults.mjs',
+    'vendor': {
+      'import': [
+        'bootstrap',
+        'bootswatch/dist/flatly/bootstrap.min.css',
+        'select2',
+        'select2/dist/css/select2.css',
+      ],
+      'dependOn': 'jquery',
+    },
 
-    'charts_render_charts': './grandchallenge/charts/javascript/render_charts.mjs',
+    // Custom JavaScript files
+    'core': {
+      'import': './grandchallenge/core/javascript/core.js',
+      'dependOn': 'vendor',
+    },
+    'jsoneditor_widget': {
+      'import': './grandchallenge/core/javascript/jsoneditor_widget.mjs',
+      'dependOn': 'vendor',
+    },
+    'sentry': './grandchallenge/core/javascript/sentry.mjs',
+    'cards_info_modal': {
+      'import': './grandchallenge/core/javascript/cards_info_modal.js',
+      'dependOn': 'vendor',
+    },
+    'datatables.defaults': {
+      'import': './grandchallenge/core/javascript/datatables.defaults.mjs',
+      'dependOn': 'vendor',
+    },
+    'charts_render_charts': {
+      'import': './grandchallenge/charts/javascript/render_charts.mjs',
+      'dependOn': 'vendor',
+    },
   },
 
   output: {
@@ -74,7 +98,6 @@ module.exports = {
       $: 'jquery',
       jQuery: 'jquery',
       'window.jQuery': 'jquery',
-      Popper: ['popper.js', 'default'],
     }),
     new BundleTracker({
       path: path.resolve(__dirname, 'grandchallenge/core/static/npm_vendored'),
@@ -86,10 +109,6 @@ module.exports = {
   mode: isProduction ? 'production' : 'development',
   devtool: isProduction ? 'source-map' : 'eval-source-map',
   optimization: {
-    splitChunks: {
-      chunks: 'all',
-      minSize: 0,
-    },
     runtimeChunk: 'single',
     minimizer: [
       '...', // keep existing minimizers (like Terser for JS)
