@@ -15,10 +15,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("forum_tracking", "0002_auto_20160607_0502"),
-        ("forum_conversation", "0013_auto_20201220_1745"),
         ("auth", "0012_alter_user_first_name_max_length"),
-        ("forum", "0011_auto_20190627_2132"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -37,16 +34,6 @@ class Migration(migrations.Migration):
                 ),
                 ("created", models.DateTimeField()),
                 ("modified", models.DateTimeField()),
-                (
-                    "source_object",
-                    models.OneToOneField(
-                        null=True,
-                        blank=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="migrated_forum",
-                        to="forum.forum",
-                    ),
-                ),
             ],
             options={
                 "permissions": (
@@ -80,16 +67,6 @@ class Migration(migrations.Migration):
                         on_delete=django.db.models.deletion.SET_NULL,
                         related_name="created_forum_posts",
                         to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "source_object",
-                    models.OneToOneField(
-                        null=True,
-                        blank=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="migrated_post",
-                        to="forum_conversation.post",
                     ),
                 ),
             ],
@@ -165,16 +142,6 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         to="discussion_forums.forumpost",
-                    ),
-                ),
-                (
-                    "source_object",
-                    models.OneToOneField(
-                        null=True,
-                        blank=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="migrated_topic",
-                        to="forum_conversation.topic",
                     ),
                 ),
             ],
@@ -324,16 +291,6 @@ class Migration(migrations.Migration):
                 ),
                 ("created", models.DateTimeField()),
                 ("modified", models.DateTimeField()),
-                (
-                    "source_object",
-                    models.OneToOneField(
-                        null=True,
-                        blank=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="migrated_track",
-                        to="forum_tracking.topicreadtrack",
-                    ),
-                ),
                 (
                     "topic",
                     models.ForeignKey(

@@ -21,8 +21,6 @@ class Migration(migrations.Migration):
         ("auth", "0012_alter_user_first_name_max_length"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("task_categories", "0001_initial"),
-        ("modalities", "0001_initial"),
-        ("forum", "0011_auto_20190627_2132"),
         ("publications", "0003_auto_20201001_0758"),
     ]
 
@@ -455,14 +453,6 @@ class Migration(migrations.Migration):
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
                         to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-                (
-                    "forum",
-                    models.OneToOneField(
-                        editable=False,
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="forum.forum",
                     ),
                 ),
                 (

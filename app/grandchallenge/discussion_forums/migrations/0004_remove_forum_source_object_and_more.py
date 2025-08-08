@@ -9,21 +9,4 @@ class Migration(migrations.Migration):
         ("discussion_forums", "0003_add_auto_now"),
     ]
 
-    operations = [
-        migrations.RemoveField(
-            model_name="forum",
-            name="source_object",
-        ),
-        migrations.RemoveField(
-            model_name="forumpost",
-            name="source_object",
-        ),
-        migrations.RemoveField(
-            model_name="forumtopic",
-            name="source_object",
-        ),
-        migrations.RemoveField(
-            model_name="topicreadrecord",
-            name="source_object",
-        ),
-    ]
+    operations = []

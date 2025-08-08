@@ -866,28 +866,6 @@ wheels = [
 ]
 
 [[package]]
-name = "django-haystack"
-version = "3.3.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-    { name = "packaging" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b4/09/623634ca5f8b9fe99d07d284491724eb1b0704022e942a1fe815c1d13a02/django_haystack-3.3.0.tar.gz", hash = "sha256:e3ceed6b8000625da14d409eb4dac69894905e2ac8ac18f9bfdb59323ca02eab", size = 467287, upload-time = "2024-06-04T15:09:58.707Z" }
-
-[[package]]
-name = "django-js-asset"
-version = "3.1.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/e6/91/c63f136f553ec24fc46ccf20ac7292a8df04815b383975b6f3f7f0060217/django_js_asset-3.1.2.tar.gz", hash = "sha256:1fc7584199ed1941ed7c8e7b87ca5524bb0f2ba941561d2a104e88ee9f07bedd", size = 9471, upload-time = "2025-03-04T15:22:49.789Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a6/cf/b208767db5e56b5189829f753eec6a14ee75d074922dc2bd19220b22a34d/django_js_asset-3.1.2-py3-none-any.whl", hash = "sha256:b5ffe376aebbd73b7af886d675ac9f43ca63b39540190fa8409c9f8e79145f68", size = 5905, upload-time = "2025-03-04T15:22:51.152Z" },
-]
-
-[[package]]
 name = "django-libsass"
 version = "0.9"
 source = { registry = "https://pypi.org/simple" }
@@ -898,23 +876,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d2/6c/fe7c95536eed569960daf139726c8f83eaf8c4ae01d908c22d94d60f31c2/django-libsass-0.9.tar.gz", hash = "sha256:bfbbb55a8950bb40fa04dd416605f92da34ad1f303b10a41abc3232386ec27b5", size = 6754, upload-time = "2021-07-08T14:16:55.346Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1b/ee/65935acc5a36c418fa17d5190a4aeb339cfdf98b6a93ca1c59134cf1e6aa/django_libsass-0.9-py3-none-any.whl", hash = "sha256:5234d29100889cac79e36a0f44207ec6d275adfd2da1acb6a94b55c89fe2bd97", size = 6572, upload-time = "2021-07-08T14:16:53.501Z" },
-]
-
-[[package]]
-name = "django-machina"
-version = "1.3.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-    { name = "django-haystack" },
-    { name = "django-mptt" },
-    { name = "django-widget-tweaks" },
-    { name = "markdown2" },
-    { name = "pillow" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/14/2d/72e3ce6e9c13b83216ff5020e1138b80b16acb87b5678cec0e80f9c8ea48/django_machina-1.3.1.tar.gz", hash = "sha256:5f696e307a2e09ae26aa817146448284b4c56a44f6d576b36d49e8844f0b7d8c", size = 1445268, upload-time = "2023-10-17T01:24:49.562Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/9a/92d13acaee99cc745a360a8d0642c5d88dfa9bd980a0490aa3a576630281/django_machina-1.3.1-py3-none-any.whl", hash = "sha256:df1779b49480269e3fdcc888ac26a501ab4428fe4e62b0e40d63c7a91bb2a6e5", size = 1627756, upload-time = "2023-10-17T01:24:45.732Z" },
 ]
 
 [[package]]
@@ -929,18 +890,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/4a/80/e4ff7b93b7518efe7fbe9b18ac5735b53fae943063df6fbef53bc454e045/django-markdownx-4.0.9.tar.gz", hash = "sha256:f82949beaddcaf5cbe765f580b1bf062b3aa5eea94633fdbbb6466514311a907", size = 32649, upload-time = "2025-04-23T12:13:32.864Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/1a/76/53574402650befe1ee7b7bb2ddf49b2862a2a080c8042ff3c853922363bb/django_markdownx-4.0.9-py2.py3-none-any.whl", hash = "sha256:0e78759a8701073fee3e4883764a9bf1cdf3fe4c2941747acbe4f093f9285805", size = 42411, upload-time = "2025-04-23T12:13:31.554Z" },
-]
-
-[[package]]
-name = "django-mptt"
-version = "0.17.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django-js-asset" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/24/67/90f48b70f854d24a0c73db2837fa63746ebf548ba2075c4c829cb25674a9/django_mptt-0.17.0.tar.gz", hash = "sha256:e2dca00536450b91bdc80d8fc1454993b84307728394ae42c72947fc09574d3d", size = 71428, upload-time = "2025-04-04T08:30:43.697Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8d/81/ce5576765cea3cdb37c983400f76050194c354d55a3facf39561cf24adc2/django_mptt-0.17.0-py3-none-any.whl", hash = "sha256:e77dd4b4d0de14f50239b0900def44c1d31403664ab3682b80b27fa1319fe7f0", size = 120170, upload-time = "2025-04-04T08:30:45.352Z" },
 ]
 
 [[package]]
@@ -1034,15 +983,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ba/5b/0dbe271fef3c2274b83dbcb1b19fa3dacf1f7e542382819294644e78ea8b/django_timezone_field-7.1.tar.gz", hash = "sha256:b3ef409d88a2718b566fabe10ea996f2838bc72b22d3a2900c0aa905c761380c", size = 13727, upload-time = "2025-01-11T17:49:54.486Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ec/09/7a808392a751a24ffa62bec00e3085a9c1a151d728c323a5bab229ea0e58/django_timezone_field-7.1-py3-none-any.whl", hash = "sha256:93914713ed882f5bccda080eda388f7006349f25930b6122e9b07bf8db49c4b4", size = 13177, upload-time = "2025-01-11T17:49:52.142Z" },
-]
-
-[[package]]
-name = "django-widget-tweaks"
-version = "1.5.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a5/fe/26eb92fba83844e71bbec0ced7fc2e843e5990020e3cc676925204031654/django-widget-tweaks-1.5.0.tar.gz", hash = "sha256:1c2180681ebb994e922c754804c7ffebbe1245014777ac47897a81f57cc629c7", size = 14767, upload-time = "2023-08-25T15:29:12.778Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/46/6a/6cb6deb5c38b785c77c3ba66f53051eada49205979c407323eb666930915/django_widget_tweaks-1.5.0-py3-none-any.whl", hash = "sha256:a41b7b2f05bd44d673d11ebd6c09a96f1d013ee98121cb98c384fe84e33b881e", size = 8960, upload-time = "2023-08-25T15:29:05.644Z" },
 ]
 
 [[package]]
@@ -1239,9 +1179,7 @@ dependencies = [
     { name = "django-filter" },
     { name = "django-forms-dynamic" },
     { name = "django-guardian" },
-    { name = "django-haystack" },
     { name = "django-libsass" },
-    { name = "django-machina" },
     { name = "django-markdownx" },
     { name = "django-permissions-policy" },
     { name = "django-redis" },
@@ -1323,9 +1261,7 @@ requires-dist = [
     { name = "django-filter" },
     { name = "django-forms-dynamic" },
     { name = "django-guardian", specifier = "!=2.2.0" },
-    { name = "django-haystack" },
     { name = "django-libsass" },
-    { name = "django-machina" },
     { name = "django-markdownx" },
     { name = "django-permissions-policy" },
     { name = "django-redis" },
@@ -1644,15 +1580,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d7/c2/4ab49206c17f75cb08d6311171f2d65798988db4360c4d1485bd0eedd67c/markdown-3.8.2.tar.gz", hash = "sha256:247b9a70dd12e27f67431ce62523e675b866d254f900c4fe75ce3dda62237c45", size = 362071, upload-time = "2025-06-19T17:12:44.483Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/96/2b/34cc11786bc00d0f04d0f5fdc3a2b1ae0b6239eef72d3d345805f9ad92a1/markdown-3.8.2-py3-none-any.whl", hash = "sha256:5c83764dbd4e00bdd94d85a19b8d55ccca20fe35b2e678a1422b380324dd5f24", size = 106827, upload-time = "2025-06-19T17:12:42.994Z" },
-]
-
-[[package]]
-name = "markdown2"
-version = "2.5.4"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/42/f8/b2ae8bf5f28f9b510ae097415e6e4cb63226bb28d7ee01aec03a755ba03b/markdown2-2.5.4.tar.gz", hash = "sha256:a09873f0b3c23dbfae589b0080587df52ad75bb09a5fa6559147554736676889", size = 145652, upload-time = "2025-07-27T16:16:24.307Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b8/06/2697b5043c3ecb720ce0d243fc7cf5024c0b5b1e450506e9b21939019963/markdown2-2.5.4-py3-none-any.whl", hash = "sha256:3c4b2934e677be7fec0e6f2de4410e116681f4ad50ec8e5ba7557be506d3f439", size = 49954, upload-time = "2025-07-27T16:16:23.026Z" },
 ]
 
 [[package]]

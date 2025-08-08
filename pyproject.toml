@@ -35,8 +35,6 @@ dependencies = [
     "djangorestframework-csv",
     "humanize",
     "disposable-email-domains",
-    "django-machina",
-    "django-haystack",
     "citeproc-py",
     "pyswot",
     "django-redis",

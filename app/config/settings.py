@@ -567,20 +567,6 @@ LOCAL_APPS = [
 
 LEGACY_APPS = [
     # Applications that can be removed when all instances are up-to-date
-    "django_otp.plugins.otp_static",
-    "django_otp.plugins.otp_totp",
-    # Machina and dependencies
-    "mptt",
-    "haystack",
-    "widget_tweaks",
-    "machina",
-    "machina.apps.forum",
-    "machina.apps.forum_conversation.forum_attachments",
-    "machina.apps.forum_conversation.forum_polls",
-    "machina.apps.forum_tracking",
-    "machina.apps.forum_permission",
-    "machina.apps.forum_conversation",
-    "machina.apps.forum_member",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS + LEGACY_APPS

@@ -9,9 +9,4 @@ class Migration(migrations.Migration):
         ("challenges", "0056_alter_challenge_forum"),
     ]
 
-    operations = [
-        migrations.RemoveField(
-            model_name="challenge",
-            name="forum",
-        ),
-    ]
+    operations = []
