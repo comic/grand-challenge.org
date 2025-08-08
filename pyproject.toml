@@ -24,7 +24,6 @@ dependencies = [
     "django-storages[s3]>=1.14.2",
     "boto3>1.18.8",
     "django-extensions",
-    "django-simple-history",
     "sentry-sdk",
     "django-cors-headers",
     "django-celery-beat!=1.6.0",
