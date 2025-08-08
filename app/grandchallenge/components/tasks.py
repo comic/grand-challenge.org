@@ -907,7 +907,7 @@ def handle_event(*, event, backend):  # noqa: C901
         attempt=job_params.attempt,
         app_label=job_params.app_label,
         model_name=job_params.model_name,
-        of=("self", "utilization"),
+        of=("self",),
     )
 
     executor = job.get_executor(backend=backend)
