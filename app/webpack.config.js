@@ -47,7 +47,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'grandchallenge/core/static/npm_vendored'),
     filename: isProduction ? '[name].js' : '[name]-[contenthash].js',
-    publicPath: '',
+    publicPath: 'auto',
     clean: true,
   },
 
