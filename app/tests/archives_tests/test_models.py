@@ -1,8 +1,13 @@
 import pytest
 from django.db import IntegrityError, transaction
 
+from tests.algorithms_tests.factories import AlgorithmInterfaceFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
+from tests.evaluation_tests.factories import PhaseFactory
 
 
 @pytest.mark.django_db
@@ -109,3 +114,15 @@ def test_archive_item_set_title():
 def test_archive_item_editable():
     ai = ArchiveItemFactory()
     assert ai.is_editable
+
+
+@pytest.mark.django_db
+def test_archive_allowed_socket_slugs():
+    archive = ArchiveFactory()
+    phase = PhaseFactory(archive=archive)
+    ci1, ci2, ci3, ci4, ci5 = ComponentInterfaceFactory.create_batch(5)
+    int1 = AlgorithmInterfaceFactory(inputs=[ci1, ci2], outputs=[ci4])
+    int2 = AlgorithmInterfaceFactory(inputs=[ci3], outputs=[ci5])
+    phase.algorithm_interfaces.set([int1, int2])
+
+    assert archive.allowed_socket_slugs == {ci1.slug, ci2.slug, ci3.slug}
