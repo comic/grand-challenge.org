@@ -9,11 +9,6 @@ from django.db.transaction import on_commit
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
-from machina.apps.forum.models import Forum as MachinaForum
-from machina.apps.forum_conversation import (
-    models as machina_conversation_models,
-)
-from machina.apps.forum_tracking import models as machina_tracking_models
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
@@ -41,13 +36,6 @@ class ForumTopicKindChoices(models.TextChoices):
 
 
 class Forum(UUIDModel):
-    source_object = models.OneToOneField(
-        MachinaForum,
-        related_name="migrated_forum",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-    )
 
     class Meta:
         permissions = (
@@ -76,13 +64,6 @@ class Forum(UUIDModel):
 
 
 class ForumTopic(FieldChangeMixin, UUIDModel):
-    source_object = models.OneToOneField(
-        machina_conversation_models.Topic,
-        related_name="migrated_topic",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-    )
     forum = models.ForeignKey(
         Forum,
         related_name="topics",
@@ -256,13 +237,6 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
 
 
 class ForumPost(UUIDModel):
-    source_object = models.OneToOneField(
-        machina_conversation_models.Post,
-        related_name="migrated_post",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-    )
     topic = models.ForeignKey(
         ForumTopic,
         null=False,
@@ -426,13 +400,6 @@ class ForumPostGroupObjectPermission(GroupObjectPermissionBase):
 
 
 class TopicReadRecord(UUIDModel):
-    source_object = models.OneToOneField(
-        machina_tracking_models.TopicReadTrack,
-        related_name="migrated_track",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-    )
     user = models.ForeignKey(
         get_user_model(),
         related_name="read_topics",

@@ -529,9 +529,8 @@ THIRD_PARTY_APPS = [
     "machina.apps.forum_search",
     "machina.apps.forum_tracking",
     "machina.apps.forum_permission",
-    # Overridden apps
-    "grandchallenge.forum_conversation",
-    "grandchallenge.forum_member",
+    "machina.apps.forum_conversation",
+    "machina.apps.forum_member",
 ]
 
 LOCAL_APPS = [
@@ -573,7 +572,6 @@ LOCAL_APPS = [
     "grandchallenge.emails",
     "grandchallenge.hanging_protocols",
     "grandchallenge.charts",
-    "grandchallenge.forums",
     "grandchallenge.invoices",
     "grandchallenge.direct_messages",
     "grandchallenge.incentives",
