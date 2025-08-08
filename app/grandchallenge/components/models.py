@@ -40,6 +40,7 @@ from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
+    CINotAllowedException,
     CIVNotEditableException,
 )
 from grandchallenge.components.schemas import (
@@ -2438,6 +2439,18 @@ class CIVForObjectMixin:
             raise CIVNotEditableException(
                 f"{self} is not editable. CIVs cannot be added or removed from it.",
             )
+
+        try:
+            if (
+                civ_data.interface_slug
+                not in self.base_object.allowed_socket_slugs
+            ):
+                raise CINotAllowedException(
+                    f"Socket {civ_data.interface_slug!r} is not allowed "
+                    f"for this {self.base_object._meta.model_name}."
+                )
+        except NotImplementedError:
+            pass
 
         ci = ComponentInterface.objects.get(slug=civ_data.interface_slug)
         current_civ = self.get_current_value_for_interface(
