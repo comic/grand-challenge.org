@@ -1056,7 +1056,7 @@ def test_create_algorithm_for_phase_presets(client):
         method=client.post,
         user=admin,
         data={
-            "title": "Test algorithm",
+            "title": "GPT-5",
             "job_requires_memory_gb": 8,  # Fixed at 16 in disabled field
             "interfaces": [
                 interface.pk
@@ -1119,7 +1119,7 @@ def test_create_algorithm_for_phase_presets(client):
         method=client.post,
         user=admin,
         data={
-            "title": "Test algorithm",
+            "title": "GPT-5",
             "job_requires_memory_gb": 8,  # Fixed at 16 in disabled field
             "interfaces": [interface1.pk],
             "workstation": ws.pk,

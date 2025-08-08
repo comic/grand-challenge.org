@@ -625,7 +625,7 @@ class AlgorithmForPhaseForm(
         if len(title) < 3:
             raise ValidationError("Please enter a more descriptive title")
 
-        for word in ["test", "try", "attempt", "docker"]:
+        for word in ["test", "try", "attempt", "docker", "algorithm"]:
             if word in title.lower().split(" "):
                 raise ValidationError(
                     f"{word!r} should not be included in your algorithm title."
