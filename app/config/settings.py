@@ -1379,6 +1379,12 @@ DISALLOWED_EMAIL_DOMAINS = {
     "inbox.ru",
     "hotmail.com",
     "outlook.com",
+    "temporam.com",
+    "mona.edu.kg",
+    "mona.edu.pl",
+    "zl.edu.kg",
+    "lw.edu.kg",
+    "edumail.edu.pl",
     *blocklist,
 }
 
