@@ -20,7 +20,7 @@ def test_image_permission_with_public_job():
     )
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
 
-    job = AlgorithmJobFactory(time_limit=60)
+    job = AlgorithmJobFactory(time_limit=60, public=False)
 
     output_image = ImageFactory()
     civ = ComponentInterfaceValueFactory(image=output_image)
@@ -33,6 +33,25 @@ def test_image_permission_with_public_job():
 
     job.public = True
     job.save()
+
+    assert "view_image" not in get_perms(g_reg, output_image)
+    assert "view_image" in get_perms(g_reg_anon, output_image)
+    assert "view_image" not in get_perms(g_reg, job.inputs.first().image)
+    assert "view_image" in get_perms(g_reg_anon, job.inputs.first().image)
+
+
+@pytest.mark.django_db
+def test_image_permission_with_non_public_job():
+    g_reg_anon = Group.objects.get(
+        name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+    )
+    g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
+
+    job = AlgorithmJobFactory(time_limit=60, public=True)
+
+    output_image = ImageFactory()
+    civ = ComponentInterfaceValueFactory(image=output_image)
+    job.outputs.add(civ)
 
     assert "view_image" not in get_perms(g_reg, output_image)
     assert "view_image" in get_perms(g_reg_anon, output_image)

@@ -1901,7 +1901,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     @property
     def runtime_metrics_chart(self):
         instance_metrics = self.runtime_metrics["instance"]
-        cpu_limit = 100 * instance_metrics["cpu"]
+        n_cpu = instance_metrics["cpu"]
 
         if instance_metrics["gpus"]:
             gpu_str = (
@@ -1909,6 +1909,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             )
         else:
             gpu_str = "No"
+
         title = f"{instance_metrics['name']} / {instance_metrics['cpu']} CPU / {instance_metrics['memory']} GB Memory / {gpu_str} GPU"
 
         return components_line(
@@ -1916,7 +1917,11 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                 {
                     "Metric": metric["label"],
                     "Timestamp": timestamp,
-                    "Percent": value / 100.0,
+                    "Percent": (
+                        value / (n_cpu * 100.0)
+                        if metric["label"] == "CPUUtilization"
+                        else value / 100.0
+                    ),
                 }
                 for metric in self.runtime_metrics["metrics"]
                 for timestamp, value in zip(
@@ -1924,7 +1929,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                 )
             ],
             title=title,
-            cpu_limit=cpu_limit,
+            single_thread_limit=100.0 / n_cpu,
             tooltip=[
                 {
                     "field": metric["label"],

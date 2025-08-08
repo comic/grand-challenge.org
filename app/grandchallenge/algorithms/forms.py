@@ -535,6 +535,13 @@ class AlgorithmForPhaseForm(
             "job_requires_memory_gb": HiddenInput(),
         }
         help_texts = {
+            "title": (
+                "A descriptive name of your algorithm for identification. "
+                "This title will appear on the leaderboard. "
+                "This should be human readable and is used to inform other "
+                "people what your algorithm does, think about what problem "
+                "your algorithm solves and the model you are using."
+            ),
             "description": (
                 "Short description of this algorithm, max 1024 characters. "
                 "This will appear in the info modal on the algorithm overview list."
@@ -606,6 +613,32 @@ class AlgorithmForPhaseForm(
             16, phase.algorithm_maximum_settable_memory_gb
         )
         self.fields["job_requires_memory_gb"].disabled = True
+
+    def clean_title(self):
+        title = self.cleaned_data["title"]
+
+        for sep in ["_", "-"]:
+            title = title.replace(sep, " ")
+
+        title = title.strip()
+
+        if len(title) < 3:
+            raise ValidationError("Please enter a more descriptive title")
+
+        for word in ["test", "try", "attempt", "docker", "algorithm"]:
+            if word in title.lower().split(" "):
+                raise ValidationError(
+                    f"{word!r} should not be included in your algorithm title."
+                )
+
+        if title.lower() == "baseline":
+            raise ValidationError(
+                "The baseline method will already have been submitted to "
+                "the challenge. Please only create algorithms for your own "
+                "approach to solving the challenge's problem."
+            )
+
+        return title
 
     def clean(self):
         cleaned_data = super().clean()

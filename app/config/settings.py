@@ -595,7 +595,13 @@ LOCAL_APPS = [
     "grandchallenge.discussion_forums",
 ]
 
-INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS
+LEGACY_APPS = [
+    # Applications that can be removed when all instances are up-to-date
+    "django_otp.plugins.otp_static",
+    "django_otp.plugins.otp_totp",
+]
+
+INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRD_PARTY_APPS + LEGACY_APPS
 
 ADMIN_URL = os.environ.get("DJANGO_ADMIN_URL", "django-admin")
 
@@ -1393,6 +1399,15 @@ DISALLOWED_EMAIL_DOMAINS = {
     "mail.ru",
     "verizon.net",
     "comcast.net",
+    "inbox.ru",
+    "hotmail.com",
+    "outlook.com",
+    "temporam.com",
+    "mona.edu.kg",
+    "mona.edu.pl",
+    "zl.edu.kg",
+    "lw.edu.kg",
+    "edumail.edu.pl",
     *blocklist,
 }
 
