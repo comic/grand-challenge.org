@@ -2440,9 +2440,11 @@ class CIVForObjectMixin:
                 f"{self} is not editable. CIVs cannot be added or removed from it.",
             )
 
-        base_object = self.base_object
         try:
-            if civ_data.interface_slug not in base_object.allowed_socket_slugs:
+            if (
+                civ_data.interface_slug
+                not in self.base_object.allowed_socket_slugs
+            ):
                 raise CINotAllowedException(
                     f"Socket {civ_data.interface_slug!r} is not allowed "
                     f"for this {self.base_object._meta.model_name}."
