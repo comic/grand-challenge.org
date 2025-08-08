@@ -28,6 +28,10 @@
     {% block style %}
         {% include "grandchallenge/partials/style.html" %}
     {% endblock %}
+
+    {% block extra_head %}
+        {# Block used by django-allauth #}
+    {% endblock extra_head %}
 </head>
 
 <body class="d-flex flex-column min-vh-100">
