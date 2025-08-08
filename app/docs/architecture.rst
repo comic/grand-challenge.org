@@ -17,7 +17,7 @@ Researcher
     A Researcher is a user who wants to manage medical imaging data and reports,
     collect annotations on medical imaging data,
     create a challenge for the data science community to generate solutions to clinical problems,
-    and objectively evaluate the submitted algorithms to challenges.
+    and fairly evaluate the submitted algorithms to challenges.
 
 Data Scientist
     A Data Scientist is a user who participates in a challenge,

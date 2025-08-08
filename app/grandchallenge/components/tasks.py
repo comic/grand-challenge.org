@@ -729,7 +729,7 @@ def _get_image_config_file(
     return {"image_sha256": image_sha256, "config": config}
 
 
-def lock_model_instance(*, app_label, model_name, **kwargs):
+def lock_model_instance(*, app_label, model_name, of=(), **kwargs):
     """
     Locks a model instance for update.
 
@@ -740,7 +740,9 @@ def lock_model_instance(*, app_label, model_name, **kwargs):
     Raises `LockNotAcquiredException` if the lock could not be acquired.
     """
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    queryset = model.objects.filter(**kwargs).select_for_update(nowait=True)
+    queryset = model.objects.filter(**kwargs).select_for_update(
+        of=of, nowait=True
+    )
 
     try:
         return queryset.get()
@@ -905,6 +907,7 @@ def handle_event(*, event, backend):  # noqa: C901
         attempt=job_params.attempt,
         app_label=job_params.app_label,
         model_name=job_params.model_name,
+        of=("self",),
     )
 
     executor = job.get_executor(backend=backend)

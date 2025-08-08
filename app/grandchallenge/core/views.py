@@ -91,7 +91,7 @@ class HomeTemplate(TemplateView):
                 bullet_points=[
                     "Manage your annotated training, test and validation data sets",
                     "Gather machine learning solutions for your clinical question",
-                    "Objectively assess the performance of algorithms",
+                    "Fair assessment of algorithm performance",
                 ],
                 url=reverse("challenges:list"),
                 url_title="Challenges",

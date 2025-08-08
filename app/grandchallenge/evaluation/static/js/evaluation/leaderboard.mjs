@@ -21,6 +21,13 @@ $(document).ready(() => {
             headers: {
                 "X-CSRFToken": getCookie("_csrftoken"),
             },
+            data: d => {
+                const url = new URL(location.href);
+                if (url.searchParams.has("date")) {
+                    d.date = url.searchParams.get("date");
+                }
+                return d;
+            },
         },
         columnDefs: [
             ...$.fn.dataTable.defaults.columnDefs,

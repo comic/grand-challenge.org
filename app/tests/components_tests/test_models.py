@@ -915,12 +915,12 @@ def test_runtime_metrics_chart():
                 {
                     "Metric": "CPUUtilization",
                     "Timestamp": "2022-06-09T09:38:00+00:00",
-                    "Percent": 0.00677884,
+                    "Percent": 0.00338942,
                 },
                 {
                     "Metric": "CPUUtilization",
                     "Timestamp": "2022-06-09T09:37:00+00:00",
-                    "Percent": 0.00130367,
+                    "Percent": 0.000651835,
                 },
                 {
                     "Metric": "MemoryUtilization",
@@ -937,7 +937,7 @@ def test_runtime_metrics_chart():
         "layer": [
             {
                 "transform": [
-                    {"calculate": "100*datum.Percent", "as": "Percent100"},
+                    {"calculate": "100*datum.Percent", "as": "Percent100"}
                 ],
                 "encoding": {
                     "x": {
@@ -949,6 +949,7 @@ def test_runtime_metrics_chart():
                         "field": "Percent100",
                         "type": "quantitative",
                         "title": "Utilization / %",
+                        "scale": {"domain": [0, 100]},
                     },
                     "color": {"field": "Metric", "type": "nominal"},
                 },
@@ -1014,29 +1015,14 @@ def test_runtime_metrics_chart():
             {
                 "data": {"values": [{}]},
                 "mark": {"type": "rule", "strokeDash": [8, 8]},
-                "encoding": {"y": {"datum": 200}},
+                "encoding": {"y": {"datum": 50.0}},
             },
             {
                 "data": {"values": [{}]},
                 "mark": {"type": "text", "baseline": "line-bottom"},
                 "encoding": {
-                    "text": {"datum": "CPU Utilization Limit"},
-                    "y": {"datum": 200},
-                },
-            },
-            {
-                "data": {"values": [{}]},
-                "mark": {"type": "rule", "strokeDash": [8, 8]},
-                "encoding": {"y": {"datum": 100}},
-            },
-            {
-                "data": {"values": [{}]},
-                "mark": {"type": "text", "baseline": "line-bottom"},
-                "encoding": {
-                    "text": {
-                        "datum": "Memory / GPU / GPU Memory Utilization Limit"
-                    },
-                    "y": {"datum": 100},
+                    "text": {"datum": "Single CPU Thread"},
+                    "y": {"datum": 50.0},
                 },
             },
         ],

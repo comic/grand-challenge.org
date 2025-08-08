@@ -190,7 +190,7 @@ def world_map(*, values):
     }
 
 
-def components_line(*, values, title, cpu_limit, tooltip):
+def components_line(*, values, title, single_thread_limit, tooltip):
     return {
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
         "width": "container",
@@ -212,6 +212,7 @@ def components_line(*, values, title, cpu_limit, tooltip):
                         "field": "Percent100",
                         "type": "quantitative",
                         "title": "Utilization / %",
+                        "scale": {"domain": [0, 100]},
                     },
                     "color": {"field": "Metric", "type": "nominal"},
                 },
@@ -266,29 +267,14 @@ def components_line(*, values, title, cpu_limit, tooltip):
             {
                 "data": {"values": [{}]},
                 "mark": {"type": "rule", "strokeDash": [8, 8]},
-                "encoding": {"y": {"datum": cpu_limit}},
+                "encoding": {"y": {"datum": single_thread_limit}},
             },
             {
                 "data": {"values": [{}]},
                 "mark": {"type": "text", "baseline": "line-bottom"},
                 "encoding": {
-                    "text": {"datum": "CPU Utilization Limit"},
-                    "y": {"datum": cpu_limit},
-                },
-            },
-            {
-                "data": {"values": [{}]},
-                "mark": {"type": "rule", "strokeDash": [8, 8]},
-                "encoding": {"y": {"datum": 100}},
-            },
-            {
-                "data": {"values": [{}]},
-                "mark": {"type": "text", "baseline": "line-bottom"},
-                "encoding": {
-                    "text": {
-                        "datum": "Memory / GPU / GPU Memory Utilization Limit"
-                    },
-                    "y": {"datum": 100},
+                    "text": {"datum": "Single CPU Thread"},
+                    "y": {"datum": single_thread_limit},
                 },
             },
         ],

@@ -22,7 +22,7 @@
 {% endblock %}
 
 {% block sidebar %}
-    <div class="col-md-3 col-sm-6 pr-lg-3 pr-md-0 mr-xl-5">
+    <div class="col-md-3">
         <ul class="nav nav-pills flex-column mb-3">
             {% for page in pages %}
                 {% if not page.hidden %}
@@ -53,9 +53,8 @@
     </div>
 {% endblock %}
 
-{% block content_col %}col-xl-8 col-md-9 px-lg-5{% endblock %}
 {% block content %}
-    <div class="mx-3 mr-xl-5 ml-xl-4">
+    <div class="ml-lg-3">
         {% if challenge.should_show_verification_warning and user_is_participant %}
             {% include "challenges/partials/participant_verification_warning.html" %}
         {% endif %}

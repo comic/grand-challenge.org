@@ -196,14 +196,20 @@ def test_forum_subscribe_and_unsubscribe(client):
 
 
 @pytest.mark.django_db
-def test_topic_subscribe_and_unsubscribe(client):
+def test_topic_subscribe_and_unsubscribe(
+    client, settings, django_capture_on_commit_callbacks
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     admin = UserFactory()
     user = UserFactory()
     f = ForumFactory()
     f.linked_challenge.add_admin(admin)
     f.linked_challenge.add_participant(user)
 
-    t = ForumTopicFactory(forum=f, creator=admin)
+    with django_capture_on_commit_callbacks(execute=True):
+        t = ForumTopicFactory(forum=f, creator=admin)
 
     assert is_following(admin, t)
     assert not is_following(user, t)
