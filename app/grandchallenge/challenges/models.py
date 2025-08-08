@@ -42,7 +42,6 @@ from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
-from machina.apps.forum import models as machina_forum_models
 from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
@@ -410,14 +409,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         editable=False,
         on_delete=models.PROTECT,
         related_name="external_evaluators_of_challenge",
-    )
-    forum = deprecate_field(
-        models.OneToOneField(
-            machina_forum_models.Forum,
-            null=True,
-            editable=False,
-            on_delete=models.PROTECT,
-        )
     )
     discussion_forum = models.OneToOneField(
         discussion_forum_models.Forum,

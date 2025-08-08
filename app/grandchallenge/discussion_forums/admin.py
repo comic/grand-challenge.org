@@ -21,7 +21,7 @@ from grandchallenge.discussion_forums.models import (
 @admin.register(Forum)
 class ForumAdmin(admin.ModelAdmin):
     list_display = ("id", "parent_object")
-    readonly_fields = ("parent_object", "source_object", "created", "modified")
+    readonly_fields = ("parent_object", "created", "modified")
 
     def parent_object(self, obj):
         return obj.parent_object
@@ -42,7 +42,6 @@ class TopicAdmin(admin.ModelAdmin):
     readonly_fields = (
         "created",
         "modified",
-        "source_object",
         "forum",
         "creator",
         "last_post",
@@ -60,7 +59,6 @@ class PostAdmin(admin.ModelAdmin):
     readonly_fields = (
         "created",
         "modified",
-        "source_object",
         "topic",
         "creator",
     )
@@ -68,7 +66,7 @@ class PostAdmin(admin.ModelAdmin):
 
 @admin.register(TopicReadRecord)
 class TopicReadRecordAdmin(admin.ModelAdmin):
-    readonly_fields = ("topic", "user", "source_object", "created", "modified")
+    readonly_fields = ("topic", "user", "created", "modified")
 
 
 admin.site.register(ForumUserObjectPermission, UserObjectPermissionAdmin)
