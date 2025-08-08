@@ -2440,16 +2440,14 @@ class CIVForObjectMixin:
                 f"{self} is not editable. CIVs cannot be added or removed from it.",
             )
 
+        base_object = self.base_object
         try:
-            if (
-                civ_data.interface_slug
-                not in self.base_object.allowed_socket_slugs
-            ):
+            if civ_data.interface_slug not in base_object.allowed_socket_slugs:
                 raise CINotAllowedException(
                     f"Socket {civ_data.interface_slug!r} is not allowed "
                     f"for this {self.base_object._meta.model_name}."
                 )
-        except NotImplementedError:
+        except AttributeError:
             pass
 
         ci = ComponentInterface.objects.get(slug=civ_data.interface_slug)
@@ -2724,10 +2722,6 @@ class ValuesForInterfacesMixin:
                 values__isnull=True
             ).values_list("values__interface__pk", flat=True)
         ).distinct()
-
-    @cached_property
-    def allowed_socket_slugs(self):
-        raise NotImplementedError
 
 
 class Tarball(UUIDModel):

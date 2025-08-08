@@ -127,7 +127,7 @@ class ComponentInterfaceAutocomplete(
 
         try:
             extra_filter_kwargs = {"slug__in": obj.allowed_socket_slugs}
-        except NotImplementedError:
+        except AttributeError:
             extra_filter_kwargs = {}
 
         if image_only:

@@ -289,7 +289,7 @@ class Archive(
                 )
             return set(allowed_slugs)
         else:
-            raise NotImplementedError
+            raise AttributeError
 
 
 class ArchiveUserObjectPermission(UserObjectPermissionBase):

@@ -217,7 +217,7 @@ class AddCasesForm(UploadRawImagesForm):
 
         try:
             socket_filter_kwargs = {"slug__in": base_obj.allowed_socket_slugs}
-        except NotImplementedError:
+        except AttributeError:
             socket_filter_kwargs = {}
 
         qs = (
