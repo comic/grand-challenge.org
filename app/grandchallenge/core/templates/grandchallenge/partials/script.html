@@ -3,10 +3,8 @@
 {% load render_bundle from webpack_loader %}
 
 {% render_bundle 'vendor' 'js' %}
-{% render_bundle 'vendor' 'css' %}
 
 {% render_bundle 'core' 'js' %}
-{% render_bundle 'core' 'css' %}
 
 {# Set global defaults for datatables #}
 {% render_bundle 'datatables.defaults' 'js' %}

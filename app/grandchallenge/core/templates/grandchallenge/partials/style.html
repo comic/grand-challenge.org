@@ -1,5 +1,10 @@
 {% load static %}
 {% load compress %}
+{% load render_bundle from webpack_loader %}
+
+{% render_bundle 'vendor' 'css' %}
+{% render_bundle 'core' 'css' %}
+
 
 {% compress css %}
     <link href="{% static 'vendored/font-awesome/css/all.min.css' %}" rel="stylesheet">
