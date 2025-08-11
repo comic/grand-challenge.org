@@ -6,13 +6,11 @@ from pathlib import Path
 from typing import NamedTuple
 from unittest.mock import patch
 
-import factory
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.files.base import ContentFile
-from django.db.models import signals
 from django.test import override_settings
 from django.utils import timezone
 from factory.django import ImageField
@@ -686,85 +684,6 @@ def test_submission_time_limit(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-@factory.django.mute_signals(signals.post_save)
-def test_evaluation_list(client, two_challenge_sets):
-    # participant 0, submission 1, challenge 1, etc
-    e_p_s1 = EvaluationFactory(
-        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__creator=two_challenge_sets.challenge_set_1.participant,
-        time_limit=60,
-    )
-    e_p_s2 = EvaluationFactory(
-        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__creator=two_challenge_sets.challenge_set_1.participant,
-        time_limit=60,
-    )
-    e_p1_s1 = EvaluationFactory(
-        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__creator=two_challenge_sets.challenge_set_1.participant1,
-        time_limit=60,
-    )
-    # participant12, submission 1 to each challenge
-    e_p12_s1_c1 = EvaluationFactory(
-        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__creator=two_challenge_sets.participant12,
-        time_limit=60,
-    )
-    e_p12_s1_c2 = EvaluationFactory(
-        method__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
-        submission__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
-        submission__creator=two_challenge_sets.participant12,
-        time_limit=60,
-    )
-    e_p_s3_p2 = EvaluationFactory(
-        method__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
-        submission__phase=PhaseFactory(
-            challenge=two_challenge_sets.challenge_set_2.challenge
-        ),
-        submission__creator=two_challenge_sets.challenge_set_1.participant,
-        time_limit=60,
-    )
-
-    # Participants should only be able to see their own evaluations from a phase
-    response = get_view_for_user(
-        viewname="evaluation:list",
-        reverse_kwargs={
-            "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.first().slug
-        },
-        challenge=two_challenge_sets.challenge_set_1.challenge,
-        client=client,
-        user=two_challenge_sets.challenge_set_1.participant,
-    )
-    assert str(e_p_s1.pk) in str(response.content)
-    assert str(e_p_s2.pk) in str(response.content)
-    assert str(e_p1_s1.pk) not in str(response.content)
-    assert str(e_p12_s1_c1.pk) not in str(response.content)
-    assert str(e_p12_s1_c2.pk) not in str(response.content)
-    assert str(e_p_s3_p2.pk) not in str(response.content)
-
-    # Admins should be able to see all evaluations from a phase
-    response = get_view_for_user(
-        viewname="evaluation:list",
-        reverse_kwargs={
-            "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.first().slug
-        },
-        challenge=two_challenge_sets.challenge_set_1.challenge,
-        client=client,
-        user=two_challenge_sets.challenge_set_1.admin,
-    )
-    assert str(e_p_s1.pk) in str(response.content)
-    assert str(e_p_s2.pk) in str(response.content)
-    assert str(e_p1_s1.pk) in str(response.content)
-    assert str(e_p12_s1_c1.pk) in str(response.content)
-    assert str(e_p12_s1_c2.pk) not in str(response.content)
-    assert str(e_p_s3_p2.pk) not in str(response.content)
-
-
-@pytest.mark.django_db
 def test_hidden_phase_visible_for_admins_but_not_participants(client):
     ch = ChallengeFactory()
     PhaseFactory(challenge=ch)
@@ -1296,7 +1215,7 @@ def test_evaluation_admin_list(client):
 
     response = get_view_for_user(
         client=client,
-        viewname="evaluation:evaluation-admin-list",
+        viewname="evaluation:list",
         reverse_kwargs={
             "challenge_short_name": ch.short_name,
             "slug": ch.phase_set.get().slug,
@@ -1308,7 +1227,7 @@ def test_evaluation_admin_list(client):
 
     response = get_view_for_user(
         client=client,
-        viewname="evaluation:evaluation-admin-list",
+        viewname="evaluation:list",
         reverse_kwargs={
             "challenge_short_name": ch.short_name,
             "slug": ch.phase_set.get().slug,

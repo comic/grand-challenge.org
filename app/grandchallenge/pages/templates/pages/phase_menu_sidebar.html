@@ -4,14 +4,14 @@
     <a class="nav-link px-4 py-1 mb-1"
        data-toggle="collapse"
        data-target="#collapse-{{ phase.slug }}"
-       aria-expanded={% if request.resolver_match.view_name in 'evaluation:phase-update,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail,evaluation:phase-archive-info,evaluation:phase-starter-kit-detail,evaluation:interface-list, evaluation:interface-create, evaluation:interface-delete' and request.resolver_match.kwargs.slug == phase.slug %}"true"{% else %}"false"{% endif %}
+       aria-expanded={% if request.resolver_match.view_name in 'evaluation:phase-update,evaluation:method-list,evaluation:method-create,evaluation:list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail,evaluation:phase-archive-info,evaluation:phase-starter-kit-detail,evaluation:interface-list, evaluation:interface-create, evaluation:interface-delete' and request.resolver_match.kwargs.slug == phase.slug %}"true"{% else %}"false"{% endif %}
     >
         <i class="fas fa-chevron-right fa-fw pr-1"></i>
         <i class="fas fa-chevron-down fa-fw pr-1"></i>
         {% if not phase.public %}<i class="fas fa-lock" title="Phase is private"></i>{% endif %}
         {{ phase.title }}
     </a>
-    <div class="collapse {% if request.resolver_match.view_name in 'evaluation:phase-update,evaluation:method-list,evaluation:method-create,evaluation:evaluation-admin-list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail,evaluation:phase-archive-info,evaluation:phase-starter-kit-detail,evaluation:interface-list, evaluation:interface-create, evaluation:interface-delete' and request.resolver_match.kwargs.slug == phase.slug %}show{% endif %}"
+    <div class="collapse {% if request.resolver_match.view_name in 'evaluation:phase-update,evaluation:method-list,evaluation:method-create,evaluation:list,evaluation:method-detail,evaluation:method-update,evaluation:ground-truth-list,evaluation:ground-truth-create,evaluation:ground-truth-update,evaluation:ground-truth-detail,evaluation:phase-archive-info,evaluation:phase-starter-kit-detail,evaluation:interface-list, evaluation:interface-create, evaluation:interface-delete' and request.resolver_match.kwargs.slug == phase.slug %}show{% endif %}"
          id="collapse-{{ phase.slug }}">
         <ul class="nav nav-pills flex-column">
             <li class="nav-item pl-4">
@@ -55,8 +55,8 @@
                 </a>
             </li>
             <li class="nav-item pl-4">
-                <a href="{% url "evaluation:evaluation-admin-list" slug=phase.slug %}"
-                   class="nav-link py-1 pl-2 {% if request.resolver_match.view_name == 'evaluation:evaluation-admin-list' and request.resolver_match.kwargs.slug == phase.slug %} active {% endif %}">
+                <a href="{% url "evaluation:list" slug=phase.slug %}"
+                   class="nav-link py-1 pl-2 {% if request.resolver_match.view_name == 'evaluation:list' and request.resolver_match.kwargs.slug == phase.slug %} active {% endif %}">
                     <i class="fas fa-list fa-fw pr-2"></i> Submissions & Evaluations
                 </a>
             </li>

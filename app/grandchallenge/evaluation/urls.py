@@ -10,7 +10,6 @@ from grandchallenge.evaluation.views import (
     CombinedLeaderboardDetail,
     CombinedLeaderboardUpdate,
     ConfigureAlgorithmPhasesView,
-    EvaluationAdminList,
     EvaluationCreate,
     EvaluationDetail,
     EvaluationGroundTruthCreate,
@@ -85,11 +84,6 @@ urlpatterns = [
         name="combined-leaderboard-delete",
     ),
     path("<slug:slug>/", EvaluationList.as_view(), name="list"),
-    path(
-        "<slug:slug>/admin/",
-        EvaluationAdminList.as_view(),
-        name="evaluation-admin-list",
-    ),
     path(
         "<slug:slug>/algorithms/create/",
         PhaseAlgorithmCreate.as_view(),
