@@ -268,11 +268,24 @@ class MethodList(
     LoginRequiredMixin,
     ViewObjectPermissionListMixin,
     CachedPhaseMixin,
-    ListView,
+    PaginatedTableListView,
 ):
     model = Method
     login_url = reverse_lazy("account_login")
-    ordering = ("-is_desired_version", "-created")
+    row_template = "evaluation/method_list_row.html"
+    columns = [
+        Column(title=""),
+        Column(title="Active", sort_field="is_desired_version"),
+        Column(title="Created", sort_field="created"),
+        Column(title="Uploaded by", sort_field="creator"),
+        Column(title="Comment", sort_field="comment"),
+        Column(title="Status"),
+    ]
+    search_fields = [
+        "creator__username",
+        "comment",
+    ]
+    default_sort_column = 2
 
     def get_queryset(self):
         queryset = super().get_queryset()
