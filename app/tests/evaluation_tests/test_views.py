@@ -511,7 +511,6 @@ class TestObjectPermissionRequiredViews:
         g.user_set.add(u)
 
         for view_name, kwargs, permission, obj in [
-            ("list", {"slug": e.submission.phase.slug}, "view_evaluation", e),
             (
                 "leaderboard",
                 {"slug": e.submission.phase.slug},
@@ -589,7 +588,6 @@ class TestViewFilters:
         for view_name, obj, extra_kwargs in [
             ("method-list", e1.method, {"slug": e1.submission.phase.slug}),
             ("submission-list", e1.submission, {}),
-            ("list", e1, {"slug": e1.submission.phase.slug}),
         ]:
             response = get_view_for_user(
                 client=client,
