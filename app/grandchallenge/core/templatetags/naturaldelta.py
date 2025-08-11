@@ -9,6 +9,9 @@ register = template.Library()
 def naturaldelta(value):
     return humanize.naturaldelta(value, months=False)
 
+@register.filter
+def precisedelta(value):
+    return humanize.precisedelta(value, minimum_unit="milliseconds")
 
 @register.filter
 def timedifference(value):
