@@ -1,0 +1,29 @@
+{% load url %}
+
+<a href="{{ object.get_absolute_url }}"><i class="fa fa-eye"></i></a>
+
+<split></split>
+
+<span>
+    {% if object.is_desired_version %}
+        <i class="fa fa-check-circle text-success pt-1"></i>
+    {% else %}
+        <i class="fas fa-times-circle text-danger pt-1"></i>
+    {% endif %}
+</span>
+
+<split></split>
+
+{{ object.created }}
+
+<split></split>
+
+<a href="{% url 'profile-detail' object.creator.username %}">{{ object.creator }}</a>
+
+<split></split>
+
+{{ object.comment }}
+
+<split></split>
+
+{{ object.status }}

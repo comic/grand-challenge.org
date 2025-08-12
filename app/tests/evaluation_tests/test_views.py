@@ -441,6 +441,81 @@ class TestObjectPermissionRequiredViews:
 
             remove_perm(permission, g, obj)
 
+    def test_permission_required_permission_filtered_views(self, client):
+        u = UserFactory()
+        p = PhaseFactory()
+        m = MethodFactory(phase=p)
+        s = SubmissionFactory(phase=p)
+        e = EvaluationFactory(
+            method=m,
+            submission=s,
+            rank=1,
+            status=Evaluation.SUCCESS,
+            time_limit=s.phase.evaluation_time_limit,
+        )
+        group = Group.objects.create(name="test-group")
+        group.user_set.add(u)
+
+        for (
+            view_name,
+            kwargs,
+            view_obj,
+            permission,
+            perm_obj,
+        ) in [
+            (
+                "method-list",
+                {"slug": e.submission.phase.slug},
+                m,
+                "change_phase",
+                e.submission.phase,
+            ),
+        ]:
+            response = get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": e.submission.phase.challenge.short_name,
+                    **kwargs,
+                },
+                user=u,
+            )
+
+            assert response.status_code == 403
+
+            assign_perm(permission, group, perm_obj)
+            assign_perm(f"view_{view_obj._meta.model_name}", group, view_obj)
+
+            response = get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": e.submission.phase.challenge.short_name,
+                    **kwargs,
+                },
+                user=u,
+            )
+
+            assert response.status_code == 200
+            assert view_obj in response.context[-1]["object_list"]
+
+            remove_perm(f"view_{view_obj._meta.model_name}", group, view_obj)
+
+            response = get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": e.submission.phase.challenge.short_name,
+                    **kwargs,
+                },
+                user=u,
+            )
+
+            assert response.status_code == 200
+            assert view_obj not in response.context[-1]["object_list"]
+
+            remove_perm(permission, group, perm_obj)
+
     def test_permission_filtered_views(self, client):
         u = UserFactory()
         p = PhaseFactory()
@@ -457,12 +532,6 @@ class TestObjectPermissionRequiredViews:
         group.user_set.add(u)
 
         for view_name, kwargs, permission, obj in [
-            (
-                "method-list",
-                {"slug": e.submission.phase.slug},
-                "view_method",
-                m,
-            ),
             ("submission-list", {}, "view_submission", s),
         ]:
             assign_perm(permission, group, obj)
@@ -582,6 +651,8 @@ class TestViewFilters:
         group = Group.objects.create(name="test-group")
         group.user_set.add(u)
 
+        assign_perm("change_phase", group, e1.submission.phase)
+        assign_perm("change_phase", group, e2.submission.phase)
         assign_perm("view_method", group, e1.method)
         assign_perm("view_method", group, e2.method)
 
