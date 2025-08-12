@@ -267,10 +267,13 @@ class MethodCreate(
 class MethodList(
     LoginRequiredMixin,
     ViewObjectPermissionListMixin,
+    ObjectPermissionRequiredMixin,
     CachedPhaseMixin,
     PaginatedTableListView,
 ):
     model = Method
+    permission_required = "change_challenge"
+    raise_exception = True
     login_url = reverse_lazy("account_login")
     row_template = "evaluation/method_list_row.html"
     columns = [
@@ -286,6 +289,9 @@ class MethodList(
         "comment",
     ]
     default_sort_column = 2
+
+    def get_permission_object(self):
+        return self.request.challenge
 
     def get_queryset(self):
         queryset = super().get_queryset()
