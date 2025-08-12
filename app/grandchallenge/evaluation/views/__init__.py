@@ -272,7 +272,7 @@ class MethodList(
     PaginatedTableListView,
 ):
     model = Method
-    permission_required = "change_challenge"
+    permission_required = "change_phase"
     raise_exception = True
     login_url = reverse_lazy("account_login")
     row_template = "evaluation/method_list_row.html"
@@ -291,13 +291,11 @@ class MethodList(
     default_sort_column = 2
 
     def get_permission_object(self):
-        return self.request.challenge
+        return self.phase
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(
-            phase__challenge=self.request.challenge, phase=self.phase
-        )
+        return queryset.filter(phase=self.phase)
 
 
 class MethodDetail(
