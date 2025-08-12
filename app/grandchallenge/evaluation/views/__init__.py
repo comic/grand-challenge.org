@@ -531,12 +531,33 @@ class EvaluationAdminList(
     ObjectPermissionRequiredMixin,
     TeamContextMixin,
     CachedPhaseMixin,
-    ListView,
+    PaginatedTableListView,
 ):
     model = Evaluation
     permission_required = "change_challenge"
+    row_template = "evaluation/evaluation_list_row.html"
     login_url = reverse_lazy("account_login")
     raise_exception = True
+    columns = [
+        Column(title="Submission ID", sort_field="submission__id"),
+        Column(title="Evaluation ID", sort_field="id"),
+        Column(title="Evaluation Created", sort_field="created"),
+        Column(title="User", sort_field="creator__username"),
+        Column(title="Inputs"),
+        Column(title="Status", sort_field="status"),
+        Column(title="Hide/Publish", sort_field="published"),
+        Column(title="Algorithm Results"),
+        Column(title="Position", sort_field="rank"),
+        Column(title="Comment", sort_field="submission__comment"),
+    ]
+    search_fields = [
+        "submission__id",
+        "id",
+        "creator__username",
+        "status",
+        "submission__comment",
+    ]
+    default_sort_column = 2
 
     def get_permission_object(self):
         return self.request.challenge
