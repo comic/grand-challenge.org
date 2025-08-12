@@ -234,6 +234,8 @@ def algorithm_phase_with_multiple_inputs():
 class TestLoginViews:
     def test_login_redirect(self, client):
         e = EvaluationFactory(time_limit=60)
+        cl = CombinedLeaderboardFactory()
+        gt = EvaluationGroundTruthFactory()
 
         for view_name, kwargs in [
             ("phase-create", {}),
@@ -244,14 +246,45 @@ class TestLoginViews:
                 "method-detail",
                 {"pk": e.method.pk, "slug": e.submission.phase.slug},
             ),
+            (
+                "method-import-status-detail",
+                {"pk": e.method.pk, "slug": e.submission.phase.slug},
+            ),
+            (
+                "method-update",
+                {"pk": e.method.pk, "slug": e.submission.phase.slug},
+            ),
             ("submission-create", {"slug": e.submission.phase.slug}),
             ("submission-list", {}),
             (
                 "submission-detail",
                 {"pk": e.submission.pk, "slug": e.submission.phase.slug},
             ),
-            ("list", {"slug": e.submission.phase.slug}),
+            (
+                "evaluation-create",
+                {"pk": e.submission.pk, "slug": e.submission.phase.slug},
+            ),
+            ("evaluation-admin-list", {"slug": e.submission.phase.slug}),
             ("update", {"pk": e.pk}),
+            ("phase-algorithm-create", {"slug": e.submission.phase.slug}),
+            ("combined-leaderboard-create", {}),
+            ("combined-leaderboard-update", {"slug": cl.slug}),
+            ("combined-leaderboard-delete", {"slug": cl.slug}),
+            ("ground-truth-create", {"slug": e.submission.phase.slug}),
+            (
+                "ground-truth-detail",
+                {"pk": gt.pk, "slug": e.submission.phase.slug},
+            ),
+            (
+                "ground-truth-import-status-detail",
+                {"pk": gt.pk, "slug": e.submission.phase.slug},
+            ),
+            ("ground-truth-list", {"slug": e.submission.phase.slug}),
+            (
+                "ground-truth-update",
+                {"pk": gt.pk, "slug": e.submission.phase.slug},
+            ),
+            ("ground-truth-deactivate", {"slug": e.submission.phase.slug}),
         ]:
             response = get_view_for_user(
                 client=client,
