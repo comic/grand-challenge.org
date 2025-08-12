@@ -557,11 +557,6 @@ class EvaluationAdminList(
             .prefetch_related("submission__phase__optional_hanging_protocols")
         )
 
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data()
-        context.update({"base_template": "pages/challenge_settings_base.html"})
-        return context
-
 
 class EvaluationIncompleteJobsMixin:
     def get_context_data(self, **kwargs):
