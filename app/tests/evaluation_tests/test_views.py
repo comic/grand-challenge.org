@@ -534,11 +534,6 @@ class TestObjectPermissionRequiredViews:
         group.user_set.add(u)
 
         for view_name, kwargs, permission, obj in [
-            (
-                {"slug": e.submission.phase.slug},
-                "view_method",
-                m,
-            ),
             ("submission-list", {}, "view_submission", s),
         ]:
             assign_perm(permission, group, obj)
