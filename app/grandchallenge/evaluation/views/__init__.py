@@ -870,7 +870,7 @@ class EvaluationUpdate(
     def get_success_url(self):
         next = self.request.GET.get("next")
         admin_list_url = reverse(
-            "evaluation:list",
+            "evaluation:evaluation-admin-list",
             kwargs={
                 "slug": self.object.submission.phase.slug,
                 "challenge_short_name": self.object.submission.phase.challenge.short_name,
