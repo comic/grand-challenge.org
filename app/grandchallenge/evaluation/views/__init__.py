@@ -14,7 +14,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Prefetch, Q
+from django.db.models import Prefetch
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
@@ -267,18 +267,35 @@ class MethodCreate(
 class MethodList(
     LoginRequiredMixin,
     ViewObjectPermissionListMixin,
+    ObjectPermissionRequiredMixin,
     CachedPhaseMixin,
-    ListView,
+    PaginatedTableListView,
 ):
     model = Method
+    permission_required = "change_phase"
+    raise_exception = True
     login_url = reverse_lazy("account_login")
-    ordering = ("-is_desired_version", "-created")
+    row_template = "evaluation/method_list_row.html"
+    columns = [
+        Column(title=""),
+        Column(title="Active", sort_field="is_desired_version"),
+        Column(title="Created", sort_field="created"),
+        Column(title="Uploaded by", sort_field="creator"),
+        Column(title="Comment", sort_field="comment"),
+        Column(title="Status"),
+    ]
+    search_fields = [
+        "creator__username",
+        "comment",
+    ]
+    default_sort_column = 2
+
+    def get_permission_object(self):
+        return self.phase
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.filter(
-            phase__challenge=self.request.challenge, phase=self.phase
-        )
+        return queryset.filter(phase=self.phase)
 
 
 class MethodDetail(
@@ -506,48 +523,6 @@ class EvaluationCreate(
         context.update(
             {"submission": self.submission, "phase": self.submission.phase}
         )
-        return context
-
-
-class EvaluationList(
-    LoginRequiredMixin,
-    ViewObjectPermissionListMixin,
-    TeamContextMixin,
-    CachedPhaseMixin,
-    ListView,
-):
-    model = Evaluation
-    login_url = reverse_lazy("account_login")
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        queryset = (
-            queryset.filter(
-                submission__phase__challenge=self.request.challenge,
-                submission__phase=self.phase,
-            )
-            .select_related(
-                "submission__creator__user_profile",
-                "submission__creator__verification",
-                "submission__phase__challenge",
-                "submission__algorithm_image__algorithm",
-            )
-            .prefetch_related(
-                "submission__phase__optional_hanging_protocols",
-                "inputs__interface",
-            )
-        )
-
-        if self.request.challenge.is_admin(self.request.user):
-            return queryset
-        else:
-            return queryset.filter(
-                Q(submission__creator__pk=self.request.user.pk)
-            )
-
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data()
-        context.update({"base_template": "base.html"})
         return context
 
 

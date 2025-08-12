@@ -6,13 +6,11 @@ from pathlib import Path
 from typing import NamedTuple
 from unittest.mock import patch
 
-import factory
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.files.base import ContentFile
-from django.db.models import signals
 from django.test import override_settings
 from django.utils import timezone
 from factory.django import ImageField
@@ -476,6 +474,81 @@ class TestObjectPermissionRequiredViews:
 
             remove_perm(permission, g, obj)
 
+    def test_permission_required_permission_filtered_views(self, client):
+        u = UserFactory()
+        p = PhaseFactory()
+        m = MethodFactory(phase=p)
+        s = SubmissionFactory(phase=p)
+        e = EvaluationFactory(
+            method=m,
+            submission=s,
+            rank=1,
+            status=Evaluation.SUCCESS,
+            time_limit=s.phase.evaluation_time_limit,
+        )
+        group = Group.objects.create(name="test-group")
+        group.user_set.add(u)
+
+        for (
+            view_name,
+            kwargs,
+            view_obj,
+            permission,
+            perm_obj,
+        ) in [
+            (
+                "method-list",
+                {"slug": e.submission.phase.slug},
+                m,
+                "change_phase",
+                e.submission.phase,
+            ),
+        ]:
+            response = get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": e.submission.phase.challenge.short_name,
+                    **kwargs,
+                },
+                user=u,
+            )
+
+            assert response.status_code == 403
+
+            assign_perm(permission, group, perm_obj)
+            assign_perm(f"view_{view_obj._meta.model_name}", group, view_obj)
+
+            response = get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": e.submission.phase.challenge.short_name,
+                    **kwargs,
+                },
+                user=u,
+            )
+
+            assert response.status_code == 200
+            assert view_obj in response.context[-1]["object_list"]
+
+            remove_perm(f"view_{view_obj._meta.model_name}", group, view_obj)
+
+            response = get_view_for_user(
+                client=client,
+                viewname=f"evaluation:{view_name}",
+                reverse_kwargs={
+                    "challenge_short_name": e.submission.phase.challenge.short_name,
+                    **kwargs,
+                },
+                user=u,
+            )
+
+            assert response.status_code == 200
+            assert view_obj not in response.context[-1]["object_list"]
+
+            remove_perm(permission, group, perm_obj)
+
     def test_permission_filtered_views(self, client):
         u = UserFactory()
         p = PhaseFactory()
@@ -492,12 +565,6 @@ class TestObjectPermissionRequiredViews:
         group.user_set.add(u)
 
         for view_name, kwargs, permission, obj in [
-            (
-                "method-list",
-                {"slug": e.submission.phase.slug},
-                "view_method",
-                m,
-            ),
             ("submission-list", {}, "view_submission", s),
         ]:
             assign_perm(permission, group, obj)
@@ -546,7 +613,6 @@ class TestObjectPermissionRequiredViews:
         g.user_set.add(u)
 
         for view_name, kwargs, permission, obj in [
-            ("list", {"slug": e.submission.phase.slug}, "view_evaluation", e),
             (
                 "leaderboard",
                 {"slug": e.submission.phase.slug},
@@ -618,13 +684,14 @@ class TestViewFilters:
         group = Group.objects.create(name="test-group")
         group.user_set.add(u)
 
+        assign_perm("change_phase", group, e1.submission.phase)
+        assign_perm("change_phase", group, e2.submission.phase)
         assign_perm("view_method", group, e1.method)
         assign_perm("view_method", group, e2.method)
 
         for view_name, obj, extra_kwargs in [
             ("method-list", e1.method, {"slug": e1.submission.phase.slug}),
             ("submission-list", e1.submission, {}),
-            ("list", e1, {"slug": e1.submission.phase.slug}),
         ]:
             response = get_view_for_user(
                 client=client,
@@ -716,85 +783,6 @@ def test_submission_time_limit(client, two_challenge_sets):
     s.created = timezone.now() - timedelta(hours=25)
     s.save()
     assert "create 8 more" in get_submission_view().rendered_content
-
-
-@pytest.mark.django_db
-@factory.django.mute_signals(signals.post_save)
-def test_evaluation_list(client, two_challenge_sets):
-    # participant 0, submission 1, challenge 1, etc
-    e_p_s1 = EvaluationFactory(
-        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__creator=two_challenge_sets.challenge_set_1.participant,
-        time_limit=60,
-    )
-    e_p_s2 = EvaluationFactory(
-        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__creator=two_challenge_sets.challenge_set_1.participant,
-        time_limit=60,
-    )
-    e_p1_s1 = EvaluationFactory(
-        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__creator=two_challenge_sets.challenge_set_1.participant1,
-        time_limit=60,
-    )
-    # participant12, submission 1 to each challenge
-    e_p12_s1_c1 = EvaluationFactory(
-        method__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__phase=two_challenge_sets.challenge_set_1.challenge.phase_set.get(),
-        submission__creator=two_challenge_sets.participant12,
-        time_limit=60,
-    )
-    e_p12_s1_c2 = EvaluationFactory(
-        method__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
-        submission__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
-        submission__creator=two_challenge_sets.participant12,
-        time_limit=60,
-    )
-    e_p_s3_p2 = EvaluationFactory(
-        method__phase=two_challenge_sets.challenge_set_2.challenge.phase_set.get(),
-        submission__phase=PhaseFactory(
-            challenge=two_challenge_sets.challenge_set_2.challenge
-        ),
-        submission__creator=two_challenge_sets.challenge_set_1.participant,
-        time_limit=60,
-    )
-
-    # Participants should only be able to see their own evaluations from a phase
-    response = get_view_for_user(
-        viewname="evaluation:list",
-        reverse_kwargs={
-            "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.first().slug
-        },
-        challenge=two_challenge_sets.challenge_set_1.challenge,
-        client=client,
-        user=two_challenge_sets.challenge_set_1.participant,
-    )
-    assert str(e_p_s1.pk) in str(response.content)
-    assert str(e_p_s2.pk) in str(response.content)
-    assert str(e_p1_s1.pk) not in str(response.content)
-    assert str(e_p12_s1_c1.pk) not in str(response.content)
-    assert str(e_p12_s1_c2.pk) not in str(response.content)
-    assert str(e_p_s3_p2.pk) not in str(response.content)
-
-    # Admins should be able to see all evaluations from a phase
-    response = get_view_for_user(
-        viewname="evaluation:list",
-        reverse_kwargs={
-            "slug": two_challenge_sets.challenge_set_1.challenge.phase_set.first().slug
-        },
-        challenge=two_challenge_sets.challenge_set_1.challenge,
-        client=client,
-        user=two_challenge_sets.challenge_set_1.admin,
-    )
-    assert str(e_p_s1.pk) in str(response.content)
-    assert str(e_p_s2.pk) in str(response.content)
-    assert str(e_p1_s1.pk) in str(response.content)
-    assert str(e_p12_s1_c1.pk) in str(response.content)
-    assert str(e_p12_s1_c2.pk) not in str(response.content)
-    assert str(e_p_s3_p2.pk) not in str(response.content)
 
 
 @pytest.mark.django_db

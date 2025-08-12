@@ -20,7 +20,6 @@ from grandchallenge.evaluation.views import (
     EvaluationGroundTruthUpdate,
     EvaluationGroundTruthVersionManagement,
     EvaluationIncompleteJobsDetail,
-    EvaluationList,
     EvaluationStatusDetail,
     EvaluationUpdate,
     LeaderboardDetail,
@@ -84,7 +83,6 @@ urlpatterns = [
         CombinedLeaderboardDelete.as_view(),
         name="combined-leaderboard-delete",
     ),
-    path("<slug:slug>/", EvaluationList.as_view(), name="list"),
     path(
         "<slug:slug>/admin/",
         EvaluationAdminList.as_view(),
