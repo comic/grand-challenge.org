@@ -509,7 +509,7 @@ class EvaluationCreate(
         return context
 
 
-class EvaluationList(
+class EvaluationAdminList(
     LoginRequiredMixin,
     ObjectPermissionRequiredMixin,
     TeamContextMixin,

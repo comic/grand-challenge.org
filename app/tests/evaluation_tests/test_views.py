@@ -1213,7 +1213,7 @@ def test_evaluation_admin_list(client):
 
     response = get_view_for_user(
         client=client,
-        viewname="evaluation:list",
+        viewname="evaluation:evaluation-admin-list",
         reverse_kwargs={
             "challenge_short_name": ch.short_name,
             "slug": ch.phase_set.get().slug,
@@ -1225,7 +1225,7 @@ def test_evaluation_admin_list(client):
 
     response = get_view_for_user(
         client=client,
-        viewname="evaluation:list",
+        viewname="evaluation:evaluation-admin-list",
         reverse_kwargs={
             "challenge_short_name": ch.short_name,
             "slug": ch.phase_set.get().slug,
