@@ -907,6 +907,7 @@ class PhaseAlgorithmCreate(
 ):
     model = Algorithm
     form_class = AlgorithmForPhaseForm
+    login_url = reverse_lazy("account_login")
 
     def form_valid(self, form):
         response = super().form_valid(form=form)
@@ -1174,6 +1175,7 @@ class EvaluationGroundTruthCreate(
     permission_required = "evaluation.change_phase"
     raise_exception = True
     success_message = "Ground truth upload in progress."
+    login_url = reverse_lazy("account_login")
 
     def get_permission_object(self):
         return self.phase
@@ -1187,6 +1189,7 @@ class EvaluationGroundTruthDetail(
     model = EvaluationGroundTruth
     permission_required = "evaluation.view_evaluationgroundtruth"
     raise_exception = True
+    login_url = reverse_lazy("account_login")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1270,6 +1273,7 @@ class EvaluationGroundTruthVersionManagement(
     template_name = "evaluation/ground_truth_version_management.html"
     success_message = "Ground truth successfully activated."
     activate = None
+    login_url = reverse_lazy("account_login")
 
     def get_permission_object(self):
         return self.phase
