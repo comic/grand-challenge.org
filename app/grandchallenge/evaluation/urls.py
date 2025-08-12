@@ -84,7 +84,7 @@ urlpatterns = [
         name="combined-leaderboard-delete",
     ),
     path(
-        "<slug:slug>/",
+        "<slug:slug>/admin/",
         EvaluationAdminList.as_view(),
         name="evaluation-admin-list",
     ),
