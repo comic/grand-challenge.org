@@ -248,7 +248,7 @@ class TestLoginViews:
                 "submission-detail",
                 {"pk": e.submission.pk, "slug": e.submission.phase.slug},
             ),
-            ("list", {"slug": e.submission.phase.slug}),
+            ("evaluation-admin-list", {"slug": e.submission.phase.slug}),
             ("update", {"pk": e.pk}),
         ]:
             response = get_view_for_user(
