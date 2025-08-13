@@ -158,13 +158,6 @@ class ChallengeSet(models.QuerySet):
             ),
         )
 
-    def with_most_recent_submission_datetime(self):
-        return self.annotate(
-            most_recent_submission_datetime=models.Max(
-                "phase__submission__created"
-            )
-        )
-
 
 def validate_nounderscores(value):
     if "_" in value:

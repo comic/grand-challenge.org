@@ -271,7 +271,6 @@ class ChallengeCostOverview(
             super()
             .get_queryset()
             .with_available_compute()
-            .with_most_recent_submission_datetime()
             .prefetch_related("phase_set")
         )
 

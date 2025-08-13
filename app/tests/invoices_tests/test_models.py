@@ -6,7 +6,6 @@ from grandchallenge.invoices.models import (
     PaymentStatusChoices,
     PaymentTypeChoices,
 )
-from tests.evaluation_tests.factories import PhaseFactory, SubmissionFactory
 from tests.factories import ChallengeFactory
 from tests.invoices_tests.factories import InvoiceFactory
 
@@ -292,42 +291,6 @@ def test_approved_compute_costs_postpaid_with_cancelled_invoice():
 
     challenge = Challenge.objects.with_available_compute().first()
     assert challenge.approved_compute_costs_euro_millicents == 0 * 1000 * 100
-
-
-@pytest.mark.django_db
-def test_most_recent_submission_datetime_no_submissions():
-    ChallengeFactory()
-
-    challenge = (
-        Challenge.objects.with_most_recent_submission_datetime().first()
-    )
-    assert challenge.most_recent_submission_datetime is None
-
-
-@pytest.mark.django_db
-def test_most_recent_submission_datetime_single_submission():
-    submission = SubmissionFactory()
-
-    challenge = (
-        Challenge.objects.with_most_recent_submission_datetime().first()
-    )
-    assert challenge.most_recent_submission_datetime == submission.created
-
-
-@pytest.mark.django_db
-def test_most_recent_submission_datetime_multiple_submissions():
-    challenge = ChallengeFactory()
-
-    phase1 = PhaseFactory(challenge=challenge)
-    SubmissionFactory(phase=phase1)
-    phase2 = PhaseFactory(challenge=challenge)
-    SubmissionFactory(phase=phase2)
-    last_submission = SubmissionFactory(phase=phase2)
-
-    challenge = (
-        Challenge.objects.with_most_recent_submission_datetime().first()
-    )
-    assert challenge.most_recent_submission_datetime == last_submission.created
 
 
 @pytest.mark.django_db
