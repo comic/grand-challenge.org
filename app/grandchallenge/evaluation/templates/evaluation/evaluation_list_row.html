@@ -43,7 +43,7 @@
 
 {% if object.status == object.SUCCESS %}
     <form method="post"
-          action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}?next={{ request.build_absolute_uri }}">
+          action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}?next={% url 'evaluation:evaluation-admin-list' challenge_short_name=challenge.short_name slug=object.submission.phase.slug %}">
         {% csrf_token %}
         {% if object.published %}
             <input type="hidden" name="published"
