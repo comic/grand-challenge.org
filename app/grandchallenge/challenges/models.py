@@ -22,9 +22,7 @@ from django.db.models import (
     Count,
     ExpressionWrapper,
     F,
-    OuterRef,
     Q,
-    Subquery,
     Sum,
     Value,
     When,
@@ -161,14 +159,9 @@ class ChallengeSet(models.QuerySet):
         )
 
     def with_most_recent_submission_datetime(self):
-        from grandchallenge.evaluation.models import Submission
-
-        latest_submission = Submission.objects.filter(
-            phase__challenge=OuterRef("pk")
-        ).order_by("-created")
         return self.annotate(
-            most_recent_submission_datetime=Subquery(
-                latest_submission.values("created")[:1]
+            most_recent_submission_datetime=models.Max(
+                "phase__submission__created"
             )
         )
 
