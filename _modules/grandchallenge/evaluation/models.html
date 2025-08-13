@@ -1630,6 +1630,7 @@
         <span class="p">)</span>
         <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">]),</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="s2">&quot;-created&quot;</span><span class="p">]),</span>
         <span class="p">]</span>
 
     <span class="nd">@cached_property</span>
