@@ -546,7 +546,10 @@ class EvaluationAdminList(
         Column(title="Inputs"),
         Column(title="Status", sort_field="status"),
         Column(title="Hide/Publish", sort_field="published"),
-        Column(title="Algorithm Results"),
+        Column(
+            title="Algorithm Results",
+            sort_field="submission__algorithm_image__algorithm__title",
+        ),
         Column(title="Position", sort_field="rank"),
         Column(title="Comment", sort_field="submission__comment"),
     ]
@@ -555,6 +558,7 @@ class EvaluationAdminList(
         "id",
         "submission__creator__username",
         "status",
+        "submission__algorithm_image__algorithm__title",
         "submission__comment",
     ]
     default_sort_column = 2
