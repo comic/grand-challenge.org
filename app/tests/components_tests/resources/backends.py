@@ -121,6 +121,10 @@ class IOCopyExecutor(Executor):
         return
 
     @property
+    def external_admin_url(self):
+        return ""
+
+    @property
     def warm_pool_retained_billable_time_in_seconds(self):
         raise NotImplementedError
 

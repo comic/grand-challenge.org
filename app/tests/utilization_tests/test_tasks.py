@@ -12,6 +12,10 @@ from tests.factories import ChallengeFactory
 
 class TestUtilizationExecutor(Executor):
     @property
+    def external_admin_url(self):
+        return ""
+
+    @property
     def warm_pool_retained_billable_time_in_seconds(self):
         return 1337
 

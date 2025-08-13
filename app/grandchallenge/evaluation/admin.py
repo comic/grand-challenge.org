@@ -1,5 +1,6 @@
 import json
 
+from django.conf import settings
 from django.contrib import admin, messages
 from django.forms import ModelForm
 from django.utils.html import format_html
@@ -175,6 +176,7 @@ class SubmissionAdmin(admin.ModelAdmin):
 class EvaluationAdmin(admin.ModelAdmin):
     list_display = (
         "pk",
+        "external_admin",
         "created",
         "submission",
         "time_limit",
@@ -222,6 +224,15 @@ class EvaluationAdmin(admin.ModelAdmin):
         "evaluation_utilization",
     )
     actions = (requeue_jobs, cancel_jobs, deprovision_jobs)
+
+    def external_admin(self, obj):
+        executor = obj.get_executor(
+            backend=settings.COMPONENTS_DEFAULT_BACKEND
+        )
+        return format_html(
+            "<a target=_blank href='{url}'>🔗</a>",
+            url=executor.external_admin_url,
+        )
 
 
 @admin.register(CombinedLeaderboard)

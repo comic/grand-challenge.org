@@ -2,6 +2,7 @@ import botocore
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils._os import safe_join
+from django.utils.html import format_html
 
 from grandchallenge.components.backends.amazon_sagemaker_base import (
     AmazonSageMakerBaseExecutor,
@@ -25,6 +26,15 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
     @property
     def _training_output_prefix(self):
         return safe_join("/training-outputs", *self.job_path_parts)
+
+    @property
+    def external_admin_url(self):
+        return format_html(
+            "https://{region}.console.aws.amazon.com/sagemaker/home#/jobs/{job_name}",
+            job_name=self._sagemaker_job_name,
+            region=settings.COMPONENTS_AMAZON_ECR_REGION
+            or settings.AWS_DEFAULT_REGION,
+        )
 
     @property
     def warm_pool_retained_billable_time_in_seconds(self):
