@@ -1580,6 +1580,7 @@ class Submission(FieldChangeMixin, UUIDModel):
         )
         indexes = [
             models.Index(fields=["created"]),
+            models.Index(fields=["phase", "-created"]),
         ]
 
     @cached_property
