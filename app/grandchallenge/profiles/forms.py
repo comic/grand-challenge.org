@@ -3,11 +3,10 @@ from crispy_forms.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import CheckboxInput, Select
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 from grandchallenge.core.forms import SaveFormInitMixin
-from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.policies.models import Policy
 from grandchallenge.profiles.models import UserProfile
 
@@ -82,21 +81,26 @@ class UserProfileForm(forms.ModelForm):
 
 
 class SignupForm(UserProfileForm):
-    accept_terms = forms.BooleanField(required=True)
+    only_account = forms.BooleanField(
+        required=True,
+        label=(
+            "I confirm that I do not have an existing account "
+            "and that this will be my only account on the platform"
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # mark_safe ok here as we control the policy page titles
-        self.fields["accept_terms"].label = mark_safe(
-            "I have read and agree to {}.".format(
-                oxford_comma(
-                    [
-                        f"the <a href={p.get_absolute_url()!r}>{p.title}</a>"
-                        for p in Policy.objects.all()
-                    ]
-                )
+
+        for idx, policy in enumerate(Policy.objects.all()):
+            self.fields[f"accept_policy_{idx}"] = forms.BooleanField(
+                required=True,
+                label=format_html(
+                    "I have read and agree to the <a href={absolute_url}>{title}</a> policy",
+                    absolute_url=policy.get_absolute_url(),
+                    title=policy.title,
+                ),
             )
-        )
 
     def signup(self, request, user):
         user.first_name = self.cleaned_data["first_name"]
@@ -116,11 +120,11 @@ class SignupForm(UserProfileForm):
                 "email",
                 "email2",
                 "username",
-                "accept_terms",
+                "only_account",
                 "password1",
                 "password2",
                 "phone_number",
-            }:
+            } or field.startswith("accept_policy_"):
                 continue
 
             if field in user_profile_fields:

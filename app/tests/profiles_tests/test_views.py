@@ -366,7 +366,7 @@ def test_notification_email_choice_after_user_signup(client):
             "department": "Department",
             "country": "NL",
             "receive_newsletter": False,
-            "accept_terms": True,
+            "only_account": True,
             "password1": "ENwfuftURoZgFdq",
             "password2": "ENwfuftURoZgFdq   ",
             "notification_email_choice": NotificationEmailOptions.DISABLED,
@@ -378,3 +378,61 @@ def test_notification_email_choice_after_user_signup(client):
 
     u = User.objects.get(username="user123")
     assert u.user_profile.notification_email_choice == "DISABLED"
+
+
+@pytest.mark.django_db
+def test_policies_must_be_accepted(client):
+    PolicyFactory.create_batch(2)
+
+    response = get_view_for_user(
+        url="/accounts/signup/",
+        client=client,
+        method=client.post,
+        data={
+            "email": "user123@domain.com",
+            "email2": "user123@domain.com",
+            "username": "user123",
+            "first_name": "Firstname",
+            "last_name": "Lastname",
+            "institution": "Institution",
+            "department": "Department",
+            "country": "NL",
+            "receive_newsletter": False,
+            "only_account": True,
+            "accept_policy_0": False,
+            "password1": "ENwfuftURoZgFdq",
+            "password2": "ENwfuftURoZgFdq   ",
+            "notification_email_choice": NotificationEmailOptions.DISABLED,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.context["form"].errors == {
+        "accept_policy_0": ["This field is required."],
+        "accept_policy_1": ["This field is required."],
+    }
+
+    response = get_view_for_user(
+        url="/accounts/signup/",
+        client=client,
+        method=client.post,
+        data={
+            "email": "user123@domain.com",
+            "email2": "user123@domain.com",
+            "username": "user123",
+            "first_name": "Firstname",
+            "last_name": "Lastname",
+            "institution": "Institution",
+            "department": "Department",
+            "country": "NL",
+            "receive_newsletter": False,
+            "only_account": True,
+            "accept_policy_0": True,
+            "accept_policy_1": True,
+            "password1": "ENwfuftURoZgFdq",
+            "password2": "ENwfuftURoZgFdq   ",
+            "notification_email_choice": NotificationEmailOptions.DISABLED,
+        },
+    )
+
+    assert response.status_code == 302
