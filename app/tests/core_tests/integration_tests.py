@@ -172,7 +172,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
             "department": "test",
             "country": "NL",
             "website": "https://www.example.com",
-            "accept_terms": True,
+            "only_account": True,
             "notification_email_choice": NotificationEmailOptions.DAILY_SUMMARY,
         }
         data.update(override)
