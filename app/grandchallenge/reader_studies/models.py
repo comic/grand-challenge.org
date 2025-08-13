@@ -1443,7 +1443,18 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             )
         ]
 
-    copy_fields = [
+    _non_copy_fields = {
+        "questionuserobjectpermission",
+        "questiongroupobjectpermission",
+        "options",
+        "answer",
+        "id",
+        "created",
+        "modified",
+        "reader_study",
+    }
+
+    copy_fields = {
         "question_text",
         "help_text",
         "answer_type",
@@ -1466,7 +1477,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         "answer_match_pattern",
         "empty_answer_confirmation",
         "empty_answer_confirmation_label",
-    ]
+    }
 
     def __str__(self):
         return (
