@@ -772,9 +772,6 @@
             <span class="p">(</span><span class="s2">&quot;create_phase_submission&quot;</span><span class="p">,</span> <span class="s2">&quot;Create Phase Submission&quot;</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">&quot;configure_algorithm_phase&quot;</span><span class="p">,</span> <span class="s2">&quot;Configure Algorithm Phase&quot;</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;challenge&quot;</span><span class="p">,</span> <span class="s2">&quot;id&quot;</span><span class="p">]),</span>
-        <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> Evaluation for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">short_name</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -1633,7 +1630,6 @@
         <span class="p">)</span>
         <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;created&quot;</span><span class="p">]),</span>
-            <span class="n">models</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;phase&quot;</span><span class="p">,</span> <span class="s2">&quot;-created&quot;</span><span class="p">]),</span>
         <span class="p">]</span>
 
     <span class="nd">@cached_property</span>
