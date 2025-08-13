@@ -542,7 +542,7 @@ class EvaluationAdminList(
         Column(title="Submission ID", sort_field="submission__id"),
         Column(title="Evaluation ID", sort_field="id"),
         Column(title="Evaluation Created", sort_field="created"),
-        Column(title="User", sort_field="creator__username"),
+        Column(title="User", sort_field="submission__creator__username"),
         Column(title="Inputs"),
         Column(title="Status", sort_field="status"),
         Column(title="Hide/Publish", sort_field="published"),
@@ -553,7 +553,7 @@ class EvaluationAdminList(
     search_fields = [
         "submission__id",
         "id",
-        "creator__username",
+        "submission__creator__username",
         "status",
         "submission__comment",
     ]
