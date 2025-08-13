@@ -1,4 +1,5 @@
 import { renderVegaChartsObserver } from "../../js/charts/render_charts.mjs";
+import { getCookie } from "../../js/get_cookie.mjs";
 
 const defaultSortColumn = JSON.parse(
     document.getElementById("defaultSortColumn").textContent,
@@ -28,6 +29,10 @@ document.addEventListener("DOMContentLoaded", () => {
         ],
         ajax: {
             url: ".",
+            type: "POST",
+            headers: {
+                "X-CSRFToken": getCookie("_csrftoken"),
+            },
         },
         ordering: true,
         drawCallback: settings => {

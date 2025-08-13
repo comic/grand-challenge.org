@@ -56,6 +56,7 @@ class PaginatedTableListView(ListView):
         return f"{'-' if direction == 'desc' else ''}{order_by}"
 
     def draw_response(self, *, request):
+        # TODO: I think we only have POST data now
         form_data = request.POST or request.GET
         start = int(form_data.get("start", 0))
         page_size = int(form_data.get("length"))
