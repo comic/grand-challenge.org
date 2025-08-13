@@ -610,11 +610,17 @@ class ReaderStudyCopy(
             title=form.cleaned_data["title"],
             description=form.cleaned_data["description"],
             **{
-                field: getattr(reader_study, field)
-                for field in ReaderStudy.copy_fields
+                field_name: getattr(reader_study, field_name)
+                for field_name in ReaderStudy.copy_fields
+                if not ReaderStudy._meta.get_field(field_name).many_to_many
             },
         )
         rs.add_editor(self.request.user)
+        for field_name in ReaderStudy.copy_fields:
+            if ReaderStudy._meta.get_field(field_name).many_to_many:
+                getattr(rs, field_name).set(
+                    getattr(reader_study, field_name).all()
+                )
 
         if form.cleaned_data["copy_view_content"]:
             rs.view_content = reader_study.view_content
