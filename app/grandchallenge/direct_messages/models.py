@@ -7,10 +7,8 @@ from django.db.models import (
     BooleanField,
     Case,
     Count,
-    OuterRef,
     Prefetch,
     Q,
-    Subquery,
     Value,
     When,
 )
@@ -173,20 +171,16 @@ class ConversationQuerySet(models.QuerySet):
         and whether the conversation has unread messages which can be used for
         ordering.
         """
-        most_recent_message = DirectMessage.objects.order_by("-created")
-
         return self.prefetch_related(
             "participants__user_profile",
             Prefetch(
                 "direct_messages",
-                queryset=most_recent_message.select_related("sender"),
+                queryset=DirectMessage.objects.order_by(
+                    "-created"
+                ).select_related("sender"),
             ),
         ).annotate(
-            most_recent_message_created=Subquery(
-                most_recent_message.filter(conversation=OuterRef("pk")).values(
-                    "created"
-                )[:1]
-            ),
+            most_recent_message_created=models.Max("direct_messages__created"),
             unread_message_count=Count(
                 "direct_messages",
                 filter=Q(direct_messages__unread_by=user),
