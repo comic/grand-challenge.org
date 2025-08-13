@@ -365,7 +365,35 @@ class ReaderStudy(
             ("view_leaderboard", "Can view leaderboard"),
         ]
 
-    copy_fields = (
+    _non_copy_fields = {
+        "readerstudyuserobjectpermission",
+        "readerstudygroupobjectpermission",
+        "workstationsessionreaderstudy",
+        "display_sets",
+        "questions",
+        "readerstudypermissionrequest",
+        "optionalhangingprotocolreaderstudy",
+        "session_utilizations",
+        "sessionutilizationreaderstudy",
+        "title",
+        "description",
+        "slug",
+        "id",
+        "created",
+        "modified",
+        "view_content",
+        "hanging_protocol",
+        "editors_group",
+        "readers_group",
+        "max_credits",
+        "workstation_sessions",
+        "case_text",
+        "actor_actions",
+        "target_actions",
+        "action_object_actions",
+    }
+
+    copy_fields = {
         "workstation",
         "workstation_config",
         "logo",
@@ -380,7 +408,14 @@ class ReaderStudy(
         "allow_case_navigation",
         "allow_show_all_annotations",
         "access_request_handling",
-    )
+        "public",
+        "leaderboard_accessible_to_readers",
+        "optional_hanging_protocols",
+        "publications",
+        "modalities",
+        "structures",
+        "organizations",
+    }
 
     def __str__(self):
         return f"{self.title}"
