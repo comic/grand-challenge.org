@@ -632,28 +632,10 @@ class ReaderStudyCopy(
             for question in reader_study.questions.all():
                 q = Question.objects.create(
                     reader_study=rs,
-                    question_text=question.question_text,
-                    help_text=question.help_text,
-                    answer_type=question.answer_type,
-                    image_port=question.image_port,
-                    default_annotation_color=question.default_annotation_color,
-                    required=question.required,
-                    direction=question.direction,
-                    scoring_function=question.scoring_function,
-                    order=question.order,
-                    interface=question.interface,
-                    look_up_table=question.look_up_table,
-                    overlay_segments=question.overlay_segments,
-                    widget=question.widget,
-                    interactive_algorithm=question.interactive_algorithm,
-                    answer_max_value=question.answer_max_value,
-                    answer_min_value=question.answer_min_value,
-                    answer_step_size=question.answer_step_size,
-                    answer_min_length=question.answer_min_length,
-                    answer_max_length=question.answer_max_length,
-                    answer_match_pattern=question.answer_match_pattern,
-                    empty_answer_confirmation=question.empty_answer_confirmation,
-                    empty_answer_confirmation_label=question.empty_answer_confirmation_label,
+                    **{
+                        field: getattr(question, field)
+                        for field in Question.copy_fields
+                    },
                 )
                 for option in question.options.all():
                     CategoricalOption.objects.create(
