@@ -1278,7 +1278,9 @@ def test_reader_study_not_launchable_when_max_credits_consumed():
     assert not reader_study.is_launchable
 
 
-def test_all_question_fields_defined_in_copy_or_non_copy():
-    assert {
-        f.name for f in Question._meta.get_fields()
-    } == Question.copy_fields | Question._non_copy_fields
+@pytest.mark.parametrize("model", (ReaderStudy, Question))
+def test_all_model_fields_defined_in_copy_or_non_copy(model):
+    intersection = model.copy_fields & model._non_copy_fields
+    union = model.copy_fields | model._non_copy_fields
+    assert not intersection
+    assert {f.name for f in model._meta.get_fields()} == union
