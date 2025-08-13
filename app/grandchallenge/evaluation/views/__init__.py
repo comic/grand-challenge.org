@@ -535,7 +535,8 @@ class EvaluationAdminList(
 ):
     model = Evaluation
     permission_required = "change_challenge"
-    row_template = "evaluation/evaluation_list_row.html"
+    template_name_suffix = "_admin_list"
+    row_template = "evaluation/evaluation_admin_list_row.html"
     login_url = reverse_lazy("account_login")
     raise_exception = True
     columns = [
