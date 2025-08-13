@@ -167,6 +167,10 @@ class Executor(ABC):
 
     @property
     @abstractmethod
+    def external_admin_url(self): ...
+
+    @property
+    @abstractmethod
     def warm_pool_retained_billable_time_in_seconds(self): ...
 
     @property
