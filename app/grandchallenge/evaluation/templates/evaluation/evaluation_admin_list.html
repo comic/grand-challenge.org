@@ -1,0 +1,30 @@
+{% extends "datatables/list_challenge_settings_base.html" %}
+{% load url %}
+
+
+{% block title %}
+    Evaluations for {{ phase.title }} - {% firstof challenge.title challenge.short_name %} - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a
+                href="{% url 'challenges:list' %}">Challenges</a>
+        </li>
+        <li class="breadcrumb-item"><a
+                href="{{ challenge.get_absolute_url }}">{% firstof challenge.title challenge.short_name %}</a></li>
+        <li class="breadcrumb-item active"
+            aria-current="page">Evaluations for {{ phase.title }}
+        </li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Submissions and Evaluations for {{ phase.title }}</h2>
+
+    {% include "evaluation/partials/phase_admin_warnings.html" with phase=phase %}
+
+    {{ block.super }}
+
+{% endblock %}

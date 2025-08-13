@@ -28,15 +28,19 @@ class PaginatedTableListView(ListView):
         )
         return context
 
-    def render_row(self, *, object_, page_context):
+    def render_row(self, *, object_, page_context, request):
         return render_to_string(
-            self.row_template, context={**page_context, "object": object_}
+            self.row_template,
+            context={**page_context, "object": object_},
+            request=request,
         ).split("<split></split>")
 
-    def render_rows(self, *, object_list):
+    def render_rows(self, *, object_list, request):
         page_context = self.get_context_data(object_list=object_list)
         return [
-            self.render_row(object_=o, page_context=page_context)
+            self.render_row(
+                object_=o, page_context=page_context, request=request
+            )
             for o in object_list
         ]
 
@@ -51,7 +55,8 @@ class PaginatedTableListView(ListView):
         direction = form_data.get("order[0][dir]") or self.default_sort_order
         return f"{'-' if direction == 'desc' else ''}{order_by}"
 
-    def draw_response(self, *, form_data):
+    def draw_response(self, *, request):
+        form_data = request.POST or request.GET
         start = int(form_data.get("start", 0))
         page_size = int(form_data.get("length"))
         search = form_data.get("search[value]")
@@ -71,14 +76,14 @@ class PaginatedTableListView(ListView):
                 "draw": int(form_data.get("draw")),
                 "recordsTotal": self.object_list.count(),
                 "recordsFiltered": paginator.count,
-                "data": self.render_rows(object_list=objects),
+                "data": self.render_rows(object_list=objects, request=request),
             }
         )
 
     def get(self, request, *args, **kwargs):
         response = super().get(request, *args, **kwargs)
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return self.draw_response(form_data=request.POST or request.GET)
+            return self.draw_response(request=request)
         else:
             return response
 

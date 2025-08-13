@@ -1,0 +1,85 @@
+{% load evaluation_extras %}
+{% load user_profile_link from profiles %}
+{% load url %}
+{% load civ %}
+
+
+<a href="{{ object.submission.get_absolute_url }}">{{ object.submission.id|split_first:"-" }}</a>
+
+<split></split>
+
+<a href="{{ object.get_absolute_url }}">{{ object.id|split_first:"-" }}</a>
+
+<split></split>
+
+{{ object.created }}
+
+<split></split>
+
+{{ object.submission.creator|user_profile_link }}
+{% if challenge.use_teams %}
+    {% with user_teams|get_key:object.submission.creator.username as team %}
+        {% if team %}
+            (<a href="{{ team.1 }}">{{ team.0 }}</a>)
+        {% endif %}
+    {% endwith %}
+{% endif %}
+
+<split></split>
+
+{% for input in object.additional_inputs.all|sort_civs %}
+    <dd>
+        {% include 'components/partials/civ.html' with object=input display_inline=True only %}
+    </dd>
+{% empty %}
+    <span class="text-muted">Empty</span>
+{% endfor %}
+
+<split></split>
+
+{% include 'evaluation/evaluation_status_detail.html' %}
+
+<split></split>
+
+{% if object.status == object.SUCCESS %}
+    <form method="post"
+          action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=object.pk %}?next={% url 'evaluation:evaluation-admin-list' challenge_short_name=challenge.short_name slug=object.submission.phase.slug %}">
+        {% csrf_token %}
+        {% if object.published %}
+            <input type="hidden" name="published"
+                   value="false">
+            <button type="submit"
+                    class="btn btn-xs btn-danger">
+                Hide Result
+            </button>
+        {% else %}
+            <input type="hidden" name="published"
+                   value="true">
+            <button type="submit"
+                    class="btn btn-xs btn-primary">
+                Publish Result
+            </button>
+        {% endif %}
+    </form>
+{% endif %}
+
+<split></split>
+
+{% if object.submission.phase.submission_kind == object.submission.phase.SubmissionKindChoices.ALGORITHM and object.submission.algorithm_image %}
+    <a href="{% url 'algorithms:job-list' slug=object.submission.algorithm_image.algorithm.slug %}">{{ object.submission.algorithm_image.algorithm.title }}</a>
+{% endif %}
+
+<split></split>
+
+{% if object.rank > 0 %}
+    {{ object.rank }}
+{% endif %}
+{% if object.submission.supplementary_file %}
+    <a href="{{ object.submission.supplementary_file.url }}">
+        <i class="fa fa-file"></i>
+    </a>
+{% endif %}
+
+<split></split>
+
+{{ object.submission.comment }}
