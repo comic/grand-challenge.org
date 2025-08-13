@@ -732,6 +732,9 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             ("create_phase_submission", "Create Phase Submission"),
             ("configure_algorithm_phase", "Configure Algorithm Phase"),
         )
+        indexes = [
+            models.Index(fields=["challenge", "id"]),
+        ]
 
     def __str__(self):
         return f"{self.title} Evaluation for {self.challenge.short_name}"
