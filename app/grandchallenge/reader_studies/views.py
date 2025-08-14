@@ -628,10 +628,10 @@ class ReaderStudyCopy(
             rs.hanging_protocol = reader_study.hanging_protocol
         if form.cleaned_data["copy_case_text"]:
             rs.case_text = reader_study.case_text
-        if form.cleaned_data["copy_readers"]:
+        if form.cleaned_data["copy_readers_group"]:
             for reader in reader_study.readers_group.user_set.all():
                 rs.add_reader(reader)
-        if form.cleaned_data["copy_editors"]:
+        if form.cleaned_data["copy_editors_group"]:
             for editor in reader_study.editors_group.user_set.all():
                 rs.add_editor(editor)
         if form.cleaned_data["copy_questions"]:

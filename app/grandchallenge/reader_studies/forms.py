@@ -299,8 +299,8 @@ class ReaderStudyCopyForm(Form):
     copy_view_content = BooleanField(required=False, initial=True)
     copy_case_text = BooleanField(required=False, initial=True)
     copy_questions = BooleanField(required=False, initial=True)
-    copy_readers = BooleanField(required=False, initial=True)
-    copy_editors = BooleanField(required=False, initial=True)
+    copy_readers_group = BooleanField(required=False, initial=True)
+    copy_editors_group = BooleanField(required=False, initial=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
