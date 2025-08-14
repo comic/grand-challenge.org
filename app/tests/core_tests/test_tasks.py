@@ -202,6 +202,31 @@ def test_get_metrics():
             ],
         },
         {
+            "MetricData": [
+                {
+                    "MetricName": "PostProcessImageTasksInitialized",
+                    "Unit": "Count",
+                    "Value": 0,
+                },
+                {
+                    "MetricName": "PostProcessImageTasksCancelled",
+                    "Unit": "Count",
+                    "Value": 0,
+                },
+                {
+                    "MetricName": "PostProcessImageTasksFailed",
+                    "Unit": "Count",
+                    "Value": 0,
+                },
+                {
+                    "MetricName": "PostProcessImageTasksCompleted",
+                    "Unit": "Count",
+                    "Value": 0,
+                },
+            ],
+            "Namespace": "testserver/cases",
+        },
+        {
             "Namespace": "testserver/AsyncTasks",
             "MetricData": [
                 {
