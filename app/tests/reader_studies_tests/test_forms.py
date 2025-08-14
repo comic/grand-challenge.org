@@ -563,6 +563,7 @@ reader_study_optional_copy_fields = {
     "questions",
     "view_content",
     "hanging_protocol",
+    "optional_hanging_protocols",
     "editors_group",
     "readers_group",
     "case_text",
@@ -828,6 +829,7 @@ def test_reader_study_copy_all_optional_fields_implemented(
         view_content={"main": interfaces[0], "secondary": interfaces[1]},
         hanging_protocol=HangingProtocolFactory(),
     )
+    rs.optional_hanging_protocols.set([HangingProtocolFactory()])
     for index in range(2):
         ds = DisplaySetFactory(
             reader_study=rs,

@@ -382,7 +382,6 @@ class ReaderStudy(
         "access_request_handling",
         "public",
         "leaderboard_accessible_to_readers",
-        "optional_hanging_protocols",
         "publications",
         "modalities",
         "structures",

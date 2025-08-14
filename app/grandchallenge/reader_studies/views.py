@@ -626,6 +626,10 @@ class ReaderStudyCopy(
             rs.view_content = reader_study.view_content
         if form.cleaned_data["copy_hanging_protocol"]:
             rs.hanging_protocol = reader_study.hanging_protocol
+        if form.cleaned_data["copy_optional_hanging_protocols"]:
+            rs.optional_hanging_protocols.set(
+                reader_study.optional_hanging_protocols.all()
+            )
         if form.cleaned_data["copy_case_text"]:
             rs.case_text = reader_study.case_text
         if form.cleaned_data["copy_readers_group"]:

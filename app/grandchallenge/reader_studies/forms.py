@@ -296,6 +296,9 @@ class ReaderStudyCopyForm(Form):
     description = CharField(required=False, widget=Textarea())
     copy_display_sets = BooleanField(required=False, initial=True)
     copy_hanging_protocol = BooleanField(required=False, initial=True)
+    copy_optional_hanging_protocols = BooleanField(
+        required=False, initial=True
+    )
     copy_view_content = BooleanField(required=False, initial=True)
     copy_case_text = BooleanField(required=False, initial=True)
     copy_questions = BooleanField(required=False, initial=True)
