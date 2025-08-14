@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField
@@ -9,7 +10,13 @@ from rest_framework.relations import (
 
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.archives.tasks import add_images_to_archive
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import (
+    Image,
+    ImageFile,
+    PostProcessImageTask,
+    PostProcessImageTaskStatusChoices,
+    RawImageUploadSession,
+)
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import add_image_to_object
 from grandchallenge.core.guardian import filter_by_permission
@@ -196,6 +203,19 @@ class RawImageUploadSessionSerializer(serializers.ModelSerializer):
         attrs["creator"] = self.context["request"].user
 
         uploads = attrs.get("user_uploads", [])
+
+        num_user_post_processing_tasks = PostProcessImageTask.objects.filter(
+            status=PostProcessImageTaskStatusChoices.INITIALIZED,
+            image__origin__creator=attrs["creator"],
+        ).count()
+        if (
+            num_user_post_processing_tasks
+            >= settings.CASES_MAX_NUM_USER_POST_PROCESSING_TASKS
+        ):
+            raise ValidationError(
+                f"You currently have {num_user_post_processing_tasks} active image post processing tasks. "
+                "Please wait for them to complete before trying again."
+            )
 
         if len(uploads) > 100:
             raise ValidationError(

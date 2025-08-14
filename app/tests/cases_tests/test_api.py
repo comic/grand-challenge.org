@@ -3,7 +3,10 @@ from pathlib import Path
 import pytest
 
 from grandchallenge.archives.models import ArchiveItem
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.models import (
+    PostProcessImageTaskStatusChoices,
+    RawImageUploadSession,
+)
 from grandchallenge.components.models import ComponentInterface
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -11,7 +14,10 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
-from tests.cases_tests.factories import RawImageUploadSessionFactory
+from tests.cases_tests.factories import (
+    PostProcessImageTaskFactory,
+    RawImageUploadSessionFactory,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -560,3 +566,49 @@ def test_user_upload_to_display_set_without_interface(
         "An interface needs to be defined to upload to a display set."
         in response.json()["non_field_errors"]
     )
+
+
+@pytest.mark.django_db
+def test_upload_with_too_many_preprocessing(client, settings):
+    settings.CASES_MAX_NUM_USER_POST_PROCESSING_TASKS = 1
+
+    user = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_editor(user=user)
+    item = ArchiveItemFactory(archive=archive)
+
+    upload = create_upload_from_file(
+        file_path=Path(__file__).parent / "resources" / "image10x10x10.mha",
+        creator=user,
+    )
+
+    PostProcessImageTaskFactory()  # Active for another user
+    task = PostProcessImageTaskFactory(image__origin__creator=user)
+
+    def do_request():
+        return get_view_for_user(
+            viewname="api:upload-session-list",
+            user=user,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            data={
+                "uploads": [upload.api_url],
+                "archive_item": item.pk,
+                "interface": "generic-overlay",
+            },
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+    response = do_request()
+    assert response.status_code == 400
+    assert (
+        "You currently have 1 active image post processing tasks. Please wait for them to complete before trying again."
+        in response.json()["non_field_errors"]
+    )
+
+    task.status = PostProcessImageTaskStatusChoices.COMPLETED
+    task.save()
+
+    respose = do_request()
+    assert respose.status_code == 201
