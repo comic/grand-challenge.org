@@ -478,15 +478,6 @@ def execute_post_process_image_task(*, post_process_image_task_pk):
         return
 
 
-@acks_late_micro_short_task
-@transaction.atomic
-def post_process_image(*, image_pk):
-    # TODO this is a legacy task to handle the API migration, can be removed
-    task = PostProcessImageTask(image_id=image_pk)
-    task.full_clean()
-    task.save()
-
-
 def _download_image_files(*, image_files, dir):
     """
     Downloads a set of image files to a directory
