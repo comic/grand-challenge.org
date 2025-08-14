@@ -16,3 +16,4 @@ class AuthTokenAdmin(admin.ModelAdmin):
         "token_key",
         "key",
     )
+    search_fields = ("user__username",)
