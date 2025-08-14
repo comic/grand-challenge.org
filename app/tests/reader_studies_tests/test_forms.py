@@ -3,6 +3,7 @@ import html
 import io
 
 import pytest
+from actstream import action
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 from django.db.models import BLANK_CHOICE_DASH
@@ -748,6 +749,9 @@ def test_reader_study_copy_and_non_copy_fields(client):
         codename=f"add_{ReaderStudy._meta.model_name}"
     )
     admin.user_permissions.add(add_perm)
+    action.send(rs, verb="started")
+    action.send(reader, verb="joined", target=rs)
+    action.send(admin, verb="will copy", action_object=rs)
 
     assert ReaderStudy.objects.count() == 1
 
@@ -778,13 +782,6 @@ def test_reader_study_copy_and_non_copy_fields(client):
             and len(ReaderStudyUserObjectPermission.allowed_permissions) == 0
         ):
             # cannot test if there can be no value
-            continue
-
-        if field_name in [
-            "actor_actions",
-            "target_actions",
-            "action_object_actions",
-        ]:
             continue
 
         field = ReaderStudy._meta.get_field(field_name)
