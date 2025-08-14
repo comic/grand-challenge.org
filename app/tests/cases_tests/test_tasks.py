@@ -3,7 +3,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from panimg.models import ImageType, PanImgFile, PostProcessorResult
 from panimg.post_processors import DEFAULT_POST_PROCESSORS
 
@@ -18,11 +18,11 @@ from grandchallenge.cases.tasks import (
     _check_post_processor_result,
     execute_post_process_image_task,
     import_images,
-    post_process_image,
 )
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.storage import protected_s3_storage
 from tests.cases_tests import RESOURCE_PATH
+from tests.factories import ImageFactory
 from tests.utils import create_raw_upload_image_session
 
 
@@ -178,10 +178,6 @@ def test_post_processing(
         post_process_image_task_pk=image_file.image.postprocessimagetask.pk
     )
 
-    # Shouldn't be able to create more than one post process task per image
-    with pytest.raises(ValidationError):
-        post_process_image(image_pk=new_image.pk)
-
     all_image_files = ImageFile.objects.filter(image=new_image)
 
     assert len(all_image_files) == expected_files
@@ -191,3 +187,13 @@ def test_post_processing(
         sum(file.size_in_storage for file in ImageFile.objects.all())
         == expected_bytes
     )
+
+
+@pytest.mark.django_db
+def test_unique_post_processing():
+    image = ImageFactory()
+
+    PostProcessImageTask.objects.create(image=image)
+
+    with pytest.raises(IntegrityError):
+        PostProcessImageTask.objects.create(image=image)

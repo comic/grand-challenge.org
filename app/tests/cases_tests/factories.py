@@ -3,7 +3,12 @@ import datetime
 import factory
 from factory import fuzzy
 
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import (
+    Image,
+    ImageFile,
+    PostProcessImageTask,
+    RawImageUploadSession,
+)
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import (
     ImageFactory,
@@ -130,3 +135,10 @@ class ImageFactoryWithImageFileTiff(ImageFactoryWithoutImageFile):
 class RawImageUploadSessionFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = RawImageUploadSession
+
+
+class PostProcessImageTaskFactory(factory.django.DjangoModelFactory):
+    image = factory.SubFactory(ImageFactory)
+
+    class Meta:
+        model = PostProcessImageTask
