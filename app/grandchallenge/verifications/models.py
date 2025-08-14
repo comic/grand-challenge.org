@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils.html import format_html
-from pyswot import is_academic
+from pyswot import is_academic, is_free
 
 from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.core.utils.access_requests import (
@@ -22,9 +22,6 @@ from grandchallenge.profiles.models import (
     EmailSubscriptionTypes,
 )
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.verifications.resources.free_email_domains import (
-    FREE_EMAIL_DOMAINS,
-)
 from grandchallenge.verifications.tokens import (
     email_verification_token_generator,
 )
@@ -55,7 +52,7 @@ class Verification(FieldChangeMixin, models.Model):
 
         self.email = clean_email(email=self.email)
 
-        if self.email.split("@")[1].lower() in FREE_EMAIL_DOMAINS:
+        if is_free(self.email):
             raise ValidationError(
                 "Email hosted on this domain cannot be used for verification, "
                 "please provide your work, corporate or institutional email."

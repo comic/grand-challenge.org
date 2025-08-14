@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.11, <3.13"
 
 [[package]]
@@ -2128,11 +2128,11 @@ wheels = [
 
 [[package]]
 name = "pyswot"
-version = "0.3.4"
+version = "0.4.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/4f/b5/647ee66d71318eb9456db060b704b65bee1479675b9bd70b8202a57d6cf8/pyswot-0.3.4.tar.gz", hash = "sha256:54997efbc245b29c93aecb13305a20d1176a8d13a6c50d0de71b11b39c82596b", size = 502153, upload-time = "2025-08-08T08:17:48.788Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a3/9d/c17c26541c539a38d1cc7ac22d115f7f4b7fe24c213f56629c857c347f97/pyswot-0.4.1.tar.gz", hash = "sha256:0a91d1bc621d01f2de0c8a92c2299596efbf895c7c43878327d271702d1ebc91", size = 527344, upload-time = "2025-08-14T07:20:54.145Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/9e/87/e95bee2f0bc459c5e7d8806a13c2e1580ad09c722176c2fdcb986f5708b5/pyswot-0.3.4-py3-none-any.whl", hash = "sha256:455ebad950be652227c29800c0d8b9c304239005bca01d44df71b0545cc261b1", size = 505048, upload-time = "2025-08-08T08:17:47.713Z" },
+    { url = "https://files.pythonhosted.org/packages/07/f4/f5cc7ff2deaf42df8f9a3dd0a7837ad16c1614d5a21fc563602a06f93fa6/pyswot-0.4.1-py3-none-any.whl", hash = "sha256:d97f5ee1381be451e69b25347d85cc8e01d5b3877779d4a712ff4cf33b5b0007", size = 530779, upload-time = "2025-08-14T07:20:52.808Z" },
 ]
 
 [[package]]
