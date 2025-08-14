@@ -388,6 +388,17 @@ class ReaderStudy(
         "organizations",
     }
 
+    optional_copy_fields = [
+        "editors_group",
+        "readers_group",
+        "questions",
+        "display_sets",
+        "case_text",
+        "view_content",
+        "hanging_protocol",
+        "optional_hanging_protocols",
+    ]
+
     def __str__(self):
         return f"{self.title}"
 
