@@ -558,7 +558,7 @@ def test_image_port_only_with_bounding_box(
 
 
 reader_study_copy_fields = ReaderStudy.copy_fields
-reader_study_optional_copy_fields = ReaderStudy.optional_copy_fields
+reader_study_optional_copy_fields = set(ReaderStudy.optional_copy_fields)
 reader_study_non_copy_fields = {
     "readerstudyuserobjectpermission",
     "readerstudygroupobjectpermission",
