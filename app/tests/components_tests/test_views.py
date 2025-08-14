@@ -6,7 +6,7 @@ from django.conf import settings
 from django.utils.html import format_html
 from factory.fuzzy import FuzzyChoice
 
-from grandchallenge.archives.models import ArchiveItem
+from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
     FileWidgetChoices,
@@ -19,6 +19,7 @@ from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
+    AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
@@ -27,6 +28,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
+from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import UserFactory
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
@@ -67,11 +69,21 @@ def test_component_interface_autocomplete(client):
     ci_img = ComponentInterfaceFactory(title="test-img", kind="IMG")
     ci_img_2 = ComponentInterfaceFactory(title="foo-img", kind="IMG")
     user = UserFactory()
+    rs = ReaderStudyFactory()
 
     response = get_view_for_user(
         client=client,
         viewname="components:component-interface-autocomplete",
         user=user,
+        data={
+            "forward": json.dumps(
+                {
+                    "object_slug": rs.slug,
+                    "model_name": ReaderStudy._meta.model_name,
+                    "image_only": True,
+                }
+            )
+        },
     )
     assert response.status_code == 200
     ids = [x["id"] for x in response.json()["results"]]
@@ -83,7 +95,16 @@ def test_component_interface_autocomplete(client):
         client=client,
         viewname="components:component-interface-autocomplete",
         user=user,
-        data={"q": "test"},
+        data={
+            "q": "test",
+            "forward": json.dumps(
+                {
+                    "object_slug": rs.slug,
+                    "model_name": ReaderStudy._meta.model_name,
+                    "image_only": True,
+                }
+            ),
+        },
     )
     assert response.status_code == 200
     ids = [x["id"] for x in response.json()["results"]]
@@ -95,7 +116,15 @@ def test_component_interface_autocomplete(client):
         client=client,
         viewname="components:component-interface-autocomplete",
         user=user,
-        data={"q": "foo"},
+        data={
+            "q": "foo",
+            "forward": json.dumps(
+                {
+                    "object_slug": rs.slug,
+                    "model_name": ReaderStudy._meta.model_name,
+                },
+            ),
+        },
     )
     assert response.status_code == 200
     ids = [x["id"] for x in response.json()["results"]]
@@ -103,7 +132,6 @@ def test_component_interface_autocomplete(client):
     assert str(ci_img_2.id) in ids
     assert str(ci_json.id) not in ids
 
-    rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
     civ = ComponentInterfaceValueFactory(interface=ci_img)
     ds.values.add(civ)
@@ -114,7 +142,10 @@ def test_component_interface_autocomplete(client):
         user=user,
         data={
             "forward": json.dumps(
-                {"object": rs.slug, "model": ReaderStudy._meta.model_name}
+                {
+                    "object_slug": rs.slug,
+                    "model_name": ReaderStudy._meta.model_name,
+                }
             )
         },
     )
@@ -131,8 +162,8 @@ def test_component_interface_autocomplete(client):
         data={
             "forward": json.dumps(
                 {
-                    "object": rs.slug,
-                    "model": ReaderStudy._meta.model_name,
+                    "object_slug": rs.slug,
+                    "model_name": ReaderStudy._meta.model_name,
                     "interface-0": ci_img_2.pk,
                 }
             )
@@ -143,6 +174,59 @@ def test_component_interface_autocomplete(client):
     assert str(ci_img.id) not in ids
     assert str(ci_img_2.id) not in ids
     assert str(ci_json.id) in ids
+
+
+@pytest.mark.django_db
+def test_ci_autocomplete_for_archives(client):
+    ci_json = ComponentInterfaceFactory(title="test-json", kind="JSON")
+    ci_img = ComponentInterfaceFactory(title="test-img", kind="IMG")
+    ci_img_2 = ComponentInterfaceFactory(title="foo-img", kind="IMG")
+
+    user = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_editor(user)
+    phase = PhaseFactory(archive=archive)
+    interface = AlgorithmInterfaceFactory(inputs=[ci_img, ci_json])
+    phase.algorithm_interfaces.set([interface])
+
+    response = get_view_for_user(
+        client=client,
+        viewname="components:component-interface-autocomplete",
+        user=user,
+        data={
+            "forward": json.dumps(
+                {
+                    "object_slug": archive.slug,
+                    "model_name": Archive._meta.model_name,
+                }
+            )
+        },
+    )
+    assert response.status_code == 200
+    ids = [x["id"] for x in response.json()["results"]]
+    assert str(ci_img.id) in ids
+    assert str(ci_img_2.id) not in ids
+    assert str(ci_json.id) in ids
+
+    response = get_view_for_user(
+        client=client,
+        viewname="components:component-interface-autocomplete",
+        user=user,
+        data={
+            "forward": json.dumps(
+                {
+                    "object_slug": archive.slug,
+                    "model_name": Archive._meta.model_name,
+                    "image_only": True,
+                }
+            )
+        },
+    )
+    assert response.status_code == 200
+    ids = [x["id"] for x in response.json()["results"]]
+    assert str(ci_img.id) in ids
+    assert str(ci_img_2.id) not in ids
+    assert str(ci_json.id) not in ids
 
 
 @pytest.mark.parametrize(

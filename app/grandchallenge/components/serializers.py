@@ -7,6 +7,7 @@ from rest_framework.relations import SlugRelatedField
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.components.backends.exceptions import (
+    CINotAllowedException,
     CIVNotEditableException,
 )
 from grandchallenge.components.models import (
@@ -263,6 +264,8 @@ class CIVSetPostSerializerMixin:
                 user=request.user,
             )
             logger.error(e, exc_info=True)
+        except CINotAllowedException as e:
+            raise DRFValidationError(e)
 
         if not self.partial:
             instance.refresh_from_db()
