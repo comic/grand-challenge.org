@@ -294,16 +294,15 @@ class ReaderStudyUpdateForm(
 class ReaderStudyCopyForm(Form):
     title = CharField(required=True)
     description = CharField(required=False, widget=Textarea())
-    copy_display_sets = BooleanField(required=False, initial=True)
-    copy_hanging_protocol = BooleanField(required=False, initial=True)
-    copy_view_content = BooleanField(required=False, initial=True)
-    copy_case_text = BooleanField(required=False, initial=True)
-    copy_questions = BooleanField(required=False, initial=True)
-    copy_readers = BooleanField(required=False, initial=True)
-    copy_editors = BooleanField(required=False, initial=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        for field_name in ReaderStudy.optional_copy_fields:
+            self.fields[f"copy_{field_name}"] = BooleanField(
+                required=False, initial=True
+            )
+
         self.helper = FormHelper(self)
         self.helper.layout.append(Submit("save", "Copy"))
 

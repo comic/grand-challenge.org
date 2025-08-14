@@ -610,46 +610,42 @@ class ReaderStudyCopy(
             title=form.cleaned_data["title"],
             description=form.cleaned_data["description"],
             **{
-                field: getattr(reader_study, field)
-                for field in ReaderStudy.copy_fields
+                field_name: getattr(reader_study, field_name)
+                for field_name in ReaderStudy.copy_fields
+                if not ReaderStudy._meta.get_field(field_name).many_to_many
             },
         )
         rs.add_editor(self.request.user)
+        for field_name in ReaderStudy.copy_fields:
+            if ReaderStudy._meta.get_field(field_name).many_to_many:
+                getattr(rs, field_name).set(
+                    getattr(reader_study, field_name).all()
+                )
 
         if form.cleaned_data["copy_view_content"]:
             rs.view_content = reader_study.view_content
         if form.cleaned_data["copy_hanging_protocol"]:
             rs.hanging_protocol = reader_study.hanging_protocol
+        if form.cleaned_data["copy_optional_hanging_protocols"]:
+            rs.optional_hanging_protocols.set(
+                reader_study.optional_hanging_protocols.all()
+            )
         if form.cleaned_data["copy_case_text"]:
             rs.case_text = reader_study.case_text
-        if form.cleaned_data["copy_readers"]:
+        if form.cleaned_data["copy_readers_group"]:
             for reader in reader_study.readers_group.user_set.all():
                 rs.add_reader(reader)
-        if form.cleaned_data["copy_editors"]:
+        if form.cleaned_data["copy_editors_group"]:
             for editor in reader_study.editors_group.user_set.all():
                 rs.add_editor(editor)
         if form.cleaned_data["copy_questions"]:
             for question in reader_study.questions.all():
                 q = Question.objects.create(
                     reader_study=rs,
-                    question_text=question.question_text,
-                    help_text=question.help_text,
-                    answer_type=question.answer_type,
-                    image_port=question.image_port,
-                    required=question.required,
-                    direction=question.direction,
-                    scoring_function=question.scoring_function,
-                    order=question.order,
-                    interface=question.interface,
-                    look_up_table=question.look_up_table,
-                    overlay_segments=question.overlay_segments,
-                    widget=question.widget,
-                    answer_max_value=question.answer_max_value,
-                    answer_min_value=question.answer_min_value,
-                    answer_step_size=question.answer_step_size,
-                    answer_min_length=question.answer_min_length,
-                    answer_max_length=question.answer_max_length,
-                    answer_match_pattern=question.answer_match_pattern,
+                    **{
+                        field: getattr(question, field)
+                        for field in Question.copy_fields
+                    },
                 )
                 for option in question.options.all():
                     CategoricalOption.objects.create(

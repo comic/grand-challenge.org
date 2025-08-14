@@ -365,7 +365,7 @@ class ReaderStudy(
             ("view_leaderboard", "Can view leaderboard"),
         ]
 
-    copy_fields = (
+    copy_fields = {
         "workstation",
         "workstation_config",
         "logo",
@@ -380,7 +380,24 @@ class ReaderStudy(
         "allow_case_navigation",
         "allow_show_all_annotations",
         "access_request_handling",
-    )
+        "public",
+        "leaderboard_accessible_to_readers",
+        "publications",
+        "modalities",
+        "structures",
+        "organizations",
+    }
+
+    optional_copy_fields = [
+        "editors_group",
+        "readers_group",
+        "questions",
+        "display_sets",
+        "case_text",
+        "view_content",
+        "hanging_protocol",
+        "optional_hanging_protocols",
+    ]
 
     def __str__(self):
         return f"{self.title}"
@@ -1442,6 +1459,31 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "Can add interactive algorithm to question",
             )
         ]
+
+    copy_fields = {
+        "question_text",
+        "help_text",
+        "answer_type",
+        "image_port",
+        "default_annotation_color",
+        "required",
+        "direction",
+        "scoring_function",
+        "order",
+        "interface",
+        "look_up_table",
+        "overlay_segments",
+        "widget",
+        "interactive_algorithm",
+        "answer_max_value",
+        "answer_min_value",
+        "answer_step_size",
+        "answer_min_length",
+        "answer_max_length",
+        "answer_match_pattern",
+        "empty_answer_confirmation",
+        "empty_answer_confirmation_label",
+    }
 
     def __str__(self):
         return (
