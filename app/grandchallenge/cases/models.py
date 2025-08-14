@@ -15,6 +15,7 @@ from django.dispatch import receiver
 from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
+from django.utils.translation import gettext_lazy as _
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from panimg.image_builders.metaio_utils import load_sitk_image
 from panimg.models import (
@@ -685,8 +686,6 @@ class ImageFile(FieldChangeMixin, UUIDModel):
         (IMAGE_TYPE_DZI, "DZI"),
     )
 
-    post_processed = models.BooleanField(default=False, editable=False)
-
     image = models.ForeignKey(
         to=Image, null=True, on_delete=models.CASCADE, related_name="files"
     )
@@ -786,3 +785,55 @@ def delete_image_files(*_, instance: ImageFile, **__):
     """
     if instance.file:
         instance.file.storage.delete(name=instance.file.name)
+
+
+class PostProcessImageTaskStatusChoices(models.TextChoices):
+    INITIALIZED = "INITIALIZED", _("Initialized")
+    CANCELLED = "CANCELLED", _("Cancelled")
+    FAILED = "FAILED", _("Failed")
+    COMPLETED = "COMPLETED", _("Completed")
+
+
+class PostProcessImageTask(UUIDModel):
+    image = models.OneToOneField(
+        to=Image,
+        on_delete=models.CASCADE,
+    )
+    status = models.CharField(
+        max_length=12,
+        choices=PostProcessImageTaskStatusChoices.choices,
+        blank=False,
+        default=PostProcessImageTaskStatusChoices.INITIALIZED,
+    )
+
+    PostProcessImageTaskStatusChoices = PostProcessImageTaskStatusChoices
+
+    class Meta:
+        indexes = (
+            models.Index(fields=["-created"]),
+            models.Index(fields=["status"]),
+        )
+        constraints = (
+            models.CheckConstraint(
+                check=models.Q(
+                    status__in=PostProcessImageTaskStatusChoices.values
+                ),
+                name="valid_post_process_image_task_status",
+            ),
+        )
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            from grandchallenge.cases.tasks import (
+                execute_post_process_image_task,
+            )
+
+            on_commit(
+                execute_post_process_image_task.signature(
+                    kwargs={"post_process_image_task_pk": self.pk}
+                ).apply_async
+            )

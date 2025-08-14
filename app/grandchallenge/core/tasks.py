@@ -12,7 +12,10 @@ from django_celery_results.models import TaskResult
 from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.models import (
+    PostProcessImageTask,
+    RawImageUploadSession,
+)
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.evaluation.models import Evaluation, Method
 from grandchallenge.workstations.models import Session
@@ -57,7 +60,13 @@ def _get_metrics():
     metric_data = []
 
     # Create CloudWatch metrics for a choice field in a model
-    models = [Job, Evaluation, Session, RawImageUploadSession]
+    models = [
+        Job,
+        Evaluation,
+        Session,
+        RawImageUploadSession,
+        PostProcessImageTask,
+    ]
     field = "status"
 
     for model in models:

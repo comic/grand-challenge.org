@@ -5,6 +5,7 @@ from grandchallenge.cases.models import (
     ImageFile,
     ImageGroupObjectPermission,
     ImageUserObjectPermission,
+    PostProcessImageTask,
     RawImageUploadSession,
     RawImageUploadSessionGroupObjectPermission,
     RawImageUploadSessionUserObjectPermission,
@@ -72,6 +73,15 @@ class RawImageUploadSessionAdmin(admin.ModelAdmin):
     readonly_fields = ("creator", "status")
     list_filter = ("status",)
     search_fields = ("creator__username", "pk", "error_message")
+
+
+@admin.register(PostProcessImageTask)
+class PostProcessImageTaskAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = ("pk", "created", "image", "status")
+    readonly_fields = ("image",)
+    list_filter = ("status",)
+    search_fields = ("pk", "image__pk")
 
 
 admin.site.register(ImageUserObjectPermission, UserObjectPermissionAdmin)

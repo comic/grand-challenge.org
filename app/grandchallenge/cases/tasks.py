@@ -18,7 +18,13 @@ from django.utils.module_loading import import_string
 from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
 
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import (
+    Image,
+    ImageFile,
+    PostProcessImageTask,
+    PostProcessImageTaskStatusChoices,
+    RawImageUploadSession,
+)
 from grandchallenge.components.backends.utils import safe_extract
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import lock_model_instance
@@ -326,11 +332,9 @@ def import_images(
         )
 
         for image in django_result.new_images:
-            on_commit(
-                post_process_image.signature(
-                    kwargs={"image_pk": image.pk}
-                ).apply_async
-            )
+            task = PostProcessImageTask(image=image)
+            task.full_clean()
+            task.save()
 
     return ImporterResult(
         new_images=django_result.new_images,
@@ -425,38 +429,62 @@ def _handle_raw_files(
     }
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
+def execute_post_process_image_task(*, post_process_image_task_pk):
+    task = lock_model_instance(
+        pk=post_process_image_task_pk,
+        app_label="cases",
+        model_name="PostProcessImageTask",
+        of=("self",),
+    )
+
+    if task.status != PostProcessImageTaskStatusChoices.INITIALIZED:
+        logger.info(f"Task status is {task.status}, nothing to do")
+        return
+
+    try:
+        with TemporaryDirectory() as output_directory:
+            image_files = ImageFile.objects.filter(image=task.image)
+
+            panimg_files = _download_image_files(
+                image_files=image_files, dir=output_directory
+            )
+
+            post_processor_result = post_process(
+                image_files=panimg_files, post_processors=POST_PROCESSORS
+            )
+
+            _check_post_processor_result(
+                post_processor_result=post_processor_result, image=task.image
+            )
+
+            django_result = _convert_panimg_to_internal(
+                new_images=[],
+                new_image_files=post_processor_result.new_image_files,
+            )
+
+            for obj in django_result.new_image_files:
+                obj.full_clean()
+                obj.save()
+
+            task.status = PostProcessImageTaskStatusChoices.COMPLETED
+            task.save()
+
+    except Exception as error:
+        task.status = PostProcessImageTaskStatusChoices.FAILED
+        task.save()
+        logger.error(error, exc_info=True)
+        return
+
+
+@acks_late_micro_short_task
 @transaction.atomic
 def post_process_image(*, image_pk):
-    with TemporaryDirectory() as output_directory:
-        image_files = ImageFile.objects.filter(
-            image__pk=image_pk, post_processed=False
-        ).select_for_update(nowait=True)
-
-        # Acquire the locks
-        image_files = list(image_files)
-
-        panimg_files = _download_image_files(
-            image_files=image_files, dir=output_directory
-        )
-
-        post_processor_result = post_process(
-            image_files=panimg_files, post_processors=POST_PROCESSORS
-        )
-
-        _check_post_processor_result(
-            post_processor_result=post_processor_result, image_pk=image_pk
-        )
-
-        django_result = _convert_panimg_to_internal(
-            new_images=[],
-            new_image_files=post_processor_result.new_image_files,
-        )
-
-        _store_post_processed_images(
-            image_files=image_files,
-            new_image_files=django_result.new_image_files,
-        )
+    # TODO this is a legacy task to handle the API migration, can be removed
+    task = PostProcessImageTask(image_id=image_pk)
+    task.full_clean()
+    task.save()
 
 
 def _download_image_files(*, image_files, dir):
@@ -487,22 +515,11 @@ def _download_image_files(*, image_files, dir):
     return panimg_files
 
 
-def _check_post_processor_result(*, post_processor_result, image_pk):
+def _check_post_processor_result(*, post_processor_result, image):
     """Ensure all post processed results belong to the given image"""
     created_ids = {
         str(f.image_id) for f in post_processor_result.new_image_files
     }
 
-    if created_ids not in [{str(image_pk)}, set()]:
+    if created_ids not in [{str(image.pk)}, set()]:
         raise RuntimeError("Created image IDs do not match")
-
-
-def _store_post_processed_images(*, image_files, new_image_files):
-    """Save the post processed files"""
-    for im_file in image_files:
-        im_file.post_processed = True
-        im_file.save(update_fields=["post_processed"])
-
-    for obj in new_image_files:
-        obj.full_clean()
-        obj.save()

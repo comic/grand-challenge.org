@@ -3,13 +3,20 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+from django.core.exceptions import ValidationError
 from panimg.models import ImageType, PanImgFile, PostProcessorResult
 from panimg.post_processors import DEFAULT_POST_PROCESSORS
 
-from grandchallenge.cases.models import ImageFile
+from grandchallenge.cases.models import (
+    Image,
+    ImageFile,
+    PostProcessImageTask,
+    PostProcessImageTaskStatusChoices,
+)
 from grandchallenge.cases.tasks import (
     POST_PROCESSORS,
     _check_post_processor_result,
+    execute_post_process_image_task,
     import_images,
     post_process_image,
 )
@@ -47,14 +54,14 @@ def test_post_processors_setting():
 
 
 def test_check_post_processor_result():
-    pk = uuid4()
+    image = Image()
 
     assert (
         _check_post_processor_result(
             post_processor_result=PostProcessorResult(
                 new_image_files=set(),
             ),
-            image_pk=pk,
+            image=image,
         )
         is None
     )
@@ -63,11 +70,13 @@ def test_check_post_processor_result():
             post_processor_result=PostProcessorResult(
                 new_image_files={
                     PanImgFile(
-                        image_id=pk, image_type=ImageType.MHD, file=Path("foo")
+                        image_id=image.pk,
+                        image_type=ImageType.MHD,
+                        file=Path("foo"),
                     )
                 },
             ),
-            image_pk=pk,
+            image=image,
         )
         is None
     )
@@ -76,14 +85,14 @@ def test_check_post_processor_result():
             post_processor_result=PostProcessorResult(
                 new_image_files={
                     PanImgFile(
-                        image_id=pk,
+                        image_id=image.pk,
                         image_type=ImageType.MHD,
                         file=Path("foo"),
                         directory=Path("bar"),
                     )
                 },
             ),
-            image_pk=pk,
+            image=image,
         )
         is None
     )
@@ -99,14 +108,14 @@ def test_check_post_processor_result():
                     )
                 },
             ),
-            image_pk=pk,
+            image=image,
         )
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "filename, expected_bytes",
-    [("valid_tiff.tif", 246717), ("no_dzi.tif", 258038)],
+    "filename, expected_bytes, expected_files",
+    [("valid_tiff.tif", 246717, 2), ("no_dzi.tif", 258038, 1)],
 )
 def test_post_processing(
     filename,
@@ -114,6 +123,7 @@ def test_post_processing(
     settings,
     django_capture_on_commit_callbacks,
     expected_bytes,
+    expected_files,
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
@@ -135,7 +145,10 @@ def test_post_processing(
     assert len(image_files) == 1
     image_file = image_files[0]
 
-    assert image_file.post_processed is False
+    assert (
+        image_file.image.postprocessimagetask.status
+        == PostProcessImageTaskStatusChoices.INITIALIZED
+    )
 
     callbacks[0]()
 
@@ -152,24 +165,27 @@ def test_post_processing(
         assert len(all_image_files) == 1
 
     image_file.refresh_from_db()
-    assert image_file.post_processed is True
+    assert (
+        image_file.image.postprocessimagetask.status
+        == PostProcessImageTaskStatusChoices.COMPLETED
+    )
 
-    # Newly created images should not be marked as post processed
-    assert ImageFile.objects.filter(post_processed=True).count() == 1
+    # Newly created images should not have a post process task created
+    assert PostProcessImageTask.objects.count() == 1
 
-    # Task should be idempotent, but all related
-    # files are now marked as post processed
-    post_process_image(image_pk=new_image.pk)
+    # Task should be idempotent
+    execute_post_process_image_task(
+        post_process_image_task_pk=image_file.image.postprocessimagetask.pk
+    )
+
+    # Shouldn't be able to create more than one post process task per image
+    with pytest.raises(ValidationError):
+        post_process_image(image_pk=new_image.pk)
 
     all_image_files = ImageFile.objects.filter(image=new_image)
-    if filename == "valid_tiff.tif":
-        assert len(all_image_files) == 2
-        assert ImageFile.objects.count() == 2
-        assert ImageFile.objects.filter(post_processed=True).count() == 2
-    else:
-        assert len(all_image_files) == 1
-        assert ImageFile.objects.count() == 1
-        assert ImageFile.objects.filter(post_processed=True).count() == 1
+
+    assert len(all_image_files) == expected_files
+    assert ImageFile.objects.count() == expected_files
 
     assert (
         sum(file.size_in_storage for file in ImageFile.objects.all())
