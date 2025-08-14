@@ -809,7 +809,10 @@ class PostProcessImageTask(UUIDModel):
     PostProcessImageTaskStatusChoices = PostProcessImageTaskStatusChoices
 
     class Meta:
-        indexes = (models.Index(fields=["-created"]),)
+        indexes = (
+            models.Index(fields=["-created"]),
+            models.Index(fields=["status"]),
+        )
         constraints = (
             models.CheckConstraint(
                 check=models.Q(
