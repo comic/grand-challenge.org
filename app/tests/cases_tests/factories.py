@@ -139,6 +139,7 @@ class RawImageUploadSessionFactory(factory.django.DjangoModelFactory):
 
 class PostProcessImageTaskFactory(factory.django.DjangoModelFactory):
     image = factory.SubFactory(ImageFactory)
+    status = PostProcessImageTask.PostProcessImageTaskStatusChoices.INITIALIZED
 
     class Meta:
         model = PostProcessImageTask
