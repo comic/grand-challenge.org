@@ -331,8 +331,14 @@ def import_images(
             image_files=django_result.new_image_files,
         )
 
-        for image in django_result.new_images:
-            task = PostProcessImageTask(image=image)
+        post_process_image_ids = {
+            f.image.pk
+            for f in django_result.new_image_files
+            if f.image_type == ImageFile.IMAGE_TYPE_TIFF
+        }
+
+        for image_id in post_process_image_ids:
+            task = PostProcessImageTask(image_id=image_id)
             task.full_clean()
             task.save()
 
