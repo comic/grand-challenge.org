@@ -38,22 +38,29 @@ from grandchallenge.reader_studies.models import (
     Answer,
     AnswerType,
     Question,
+    QuestionUserObjectPermission,
     QuestionWidgetKindChoices,
     ReaderStudy,
+    ReaderStudyUserObjectPermission,
 )
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstation_configs.models import LookUpTable
+from tests.anatomy_tests.factories import BodyStructureFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
 from tests.factories import (
     ImageFactory,
+    ImagingModalityFactory,
+    SessionFactory,
     UserFactory,
     WorkstationConfigFactory,
     WorkstationFactory,
 )
 from tests.hanging_protocols_tests.factories import HangingProtocolFactory
+from tests.organizations_tests.factories import OrganizationFactory
+from tests.publications_tests.factories import PublicationFactory
 from tests.reader_studies_tests import RESOURCE_PATH
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
@@ -61,9 +68,11 @@ from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     QuestionFactory,
     ReaderStudyFactory,
+    ReaderStudyPermissionRequestFactory,
 )
 from tests.reader_studies_tests.utils import TwoReaderStudies, get_rs_creator
 from tests.uploads_tests.factories import UserUploadFactory
+from tests.utilization_tests.factories import SessionUtilizationFactory
 from tests.utils import get_view_for_user
 
 
@@ -548,20 +557,362 @@ def test_image_port_only_with_bounding_box(
     assert Question.objects.all().count() == questions_created
 
 
-@pytest.mark.django_db
-def test_reader_study_copy(
-    client, settings, django_capture_on_commit_callbacks
-):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+reader_study_copy_fields = ReaderStudy.copy_fields
+reader_study_optional_copy_fields = {
+    "display_sets",
+    "questions",
+    "view_content",
+    "hanging_protocol",
+    "editors_group",
+    "readers_group",
+    "case_text",
+}
+reader_study_non_copy_fields = {
+    "readerstudyuserobjectpermission",
+    "readerstudygroupobjectpermission",
+    "workstationsessionreaderstudy",
+    "readerstudypermissionrequest",
+    "optionalhangingprotocolreaderstudy",
+    "session_utilizations",
+    "sessionutilizationreaderstudy",
+    "title",
+    "description",
+    "slug",
+    "id",
+    "created",
+    "modified",
+    "max_credits",
+    "workstation_sessions",
+    "actor_actions",
+    "target_actions",
+    "action_object_actions",
+}
 
-    rs = ReaderStudyFactory(title="copied")
+
+def test_reader_study_fields_only_once_defined_in_copy_sets():
+    intersection = reader_study_copy_fields & reader_study_optional_copy_fields
+
+    assert not intersection
+
+    intersection = reader_study_copy_fields & reader_study_non_copy_fields
+
+    assert not intersection
+
+    intersection = (
+        reader_study_optional_copy_fields & reader_study_non_copy_fields
+    )
+
+    assert not intersection
+
+
+def test_all_reader_study_fields_defined_in_copy_sets():
+    model = ReaderStudy
+    union = (
+        reader_study_copy_fields
+        | reader_study_optional_copy_fields
+        | reader_study_non_copy_fields
+    )
+
+    assert {f.name for f in model._meta.get_fields()} == union
+
+
+question_copy_fields = Question.copy_fields.union({"options"})
+question_non_copy_fields = {
+    "questionuserobjectpermission",
+    "questiongroupobjectpermission",
+    "answer",
+    "id",
+    "created",
+    "modified",
+    "reader_study",
+}
+
+
+def test_question_fields_only_once_defined_in_copy_sets():
+    intersection = question_copy_fields & question_non_copy_fields
+
+    assert not intersection
+
+
+def test_all_question_fields_defined_in_copy_sets():
+    model = Question
+    union = question_copy_fields | question_non_copy_fields
+
+    assert {f.name for f in model._meta.get_fields()} == union
+
+
+@pytest.mark.django_db
+def test_reader_study_copy_permission(client):
+    rs = ReaderStudyFactory(title="original")
+    admin = UserFactory()
+    editor = UserFactory()
+    reader = UserFactory()
+    rs.add_editor(admin)
+    rs.add_editor(editor)
+    rs.add_reader(reader)
+    add_perm = Permission.objects.get(
+        codename=f"add_{ReaderStudy._meta.model_name}"
+    )
+    admin.user_permissions.add(add_perm)
+
+    kwargs = dict(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"title": "copy"},
+        follow=True,
+    )
+
+    assert ReaderStudy.objects.count() == 1
+
+    response = get_view_for_user(
+        user=reader,
+        **kwargs,
+    )
+
+    assert response.status_code == 403
+    assert ReaderStudy.objects.count() == 1
+
+    response = get_view_for_user(
+        user=editor,
+        **kwargs,
+    )
+
+    assert response.status_code == 403
+    assert ReaderStudy.objects.count() == 1
+
+    response = get_view_for_user(
+        user=admin,
+        **kwargs,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 2
+
+    rs_copy = ReaderStudy.objects.order_by("created").last()
+    assert rs_copy.title == "copy"
+
+
+def get_values(original, copy, field):
+    try:
+        accessor_name = field.get_accessor_name()
+    except AttributeError:
+        accessor_name = field.name
+    original_value = getattr(original, accessor_name)
+    value_in_copy = getattr(copy, accessor_name)
+    return original_value, value_in_copy
+
+
+def assert_value_copied(field, original_value, value_in_copy):
+    if field.many_to_many or field.one_to_many:
+        assert original_value.count() != 0
+        assert value_in_copy.count() == original_value.count()
+    else:
+        assert original_value != field.default
+        assert value_in_copy == original_value
+
+
+def assert_value_not_copied(field, original_value, value_in_copy):
+    if field.many_to_many or field.one_to_many:
+        assert original_value.count() != 0
+        assert value_in_copy.count() == 0
+    else:
+        assert original_value != field.default
+        assert value_in_copy != original_value
+
+
+@pytest.mark.django_db
+def test_reader_study_copy_and_non_copy_fields(client):
+    rs = ReaderStudyFactory(
+        title="original",
+        workstation_config=WorkstationConfigFactory(),
+        public=True,
+        access_request_handling=AccessRequestHandlingOptions.ACCEPT_ALL,
+        shuffle_hanging_list=True,
+        is_educational=True,
+        instant_verification=True,
+        allow_answer_modification=True,
+        enable_autosaving=True,
+        allow_case_navigation=True,
+        allow_show_all_annotations=True,
+        roll_over_answers_for_n_cases=1,
+        leaderboard_accessible_to_readers=True,
+        max_credits=1,
+    )
+    rs.workstation_sessions.set([SessionFactory()])
+    rs.optional_hanging_protocols.set([HangingProtocolFactory()])
+    rs.publications.set([PublicationFactory()])
+    rs.modalities.set([ImagingModalityFactory()])
+    rs.structures.set([BodyStructureFactory()])
+    rs.organizations.set([OrganizationFactory()])
+    rs.session_utilizations.set([SessionUtilizationFactory()])
+    ReaderStudyPermissionRequestFactory(reader_study=rs)
+    admin = UserFactory()
+    reader = UserFactory()
+    rs.add_reader(reader)
+    rs.add_editor(admin)
+    add_perm = Permission.objects.get(
+        codename=f"add_{ReaderStudy._meta.model_name}"
+    )
+    admin.user_permissions.add(add_perm)
+
+    assert ReaderStudy.objects.count() == 1
+
+    response = get_view_for_user(
+        viewname="reader-studies:copy",
+        client=client,
+        method=client.post,
+        reverse_kwargs={"slug": rs.slug},
+        data={"title": "copy"},
+        user=admin,
+        follow=True,
+    )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 2
+
+    copied_rs = ReaderStudy.objects.order_by("created").last()
+    assert copied_rs.title == "copy"
+
+    for field_name in reader_study_copy_fields:
+        field = ReaderStudy._meta.get_field(field_name)
+        original_value, value_in_copy = get_values(rs, copied_rs, field)
+        assert_value_copied(field, original_value, value_in_copy)
+
+    for field_name in reader_study_non_copy_fields:
+        if (
+            field_name == "readerstudyuserobjectpermission"
+            and len(ReaderStudyUserObjectPermission.allowed_permissions) == 0
+        ):
+            # cannot test if there can be no value
+            continue
+
+        if field_name in [
+            "actor_actions",
+            "target_actions",
+            "action_object_actions",
+        ]:
+            continue
+
+        field = ReaderStudy._meta.get_field(field_name)
+        original_value, value_in_copy = get_values(rs, copied_rs, field)
+
+        if field_name == "readerstudygroupobjectpermission":
+            assert value_in_copy.count() == 10
+            assert set(value_in_copy.all()) != set(original_value.all())
+        else:
+            assert_value_not_copied(field, original_value, value_in_copy)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "optional_field_name", reader_study_optional_copy_fields
+)
+def test_reader_study_copy_all_optional_fields_implemented(
+    client, settings, django_capture_on_commit_callbacks, optional_field_name
+):
+    settings.task_eager_propagates = True
+    settings.task_always_eager = True
+
+    images = ImageFactory.create_batch(2)
+    civs = []
+    interfaces = []
+    for im in images:
+        civ = ComponentInterfaceValueFactory(image=im)
+        civs.append(civ)
+        interfaces.append(civ.interface.slug)
+    rs = ReaderStudyFactory(
+        title="original",
+        case_text={images[0].name: "test", images[1].name: "test2"},
+        view_content={"main": interfaces[0], "secondary": interfaces[1]},
+        hanging_protocol=HangingProtocolFactory(),
+    )
+    for index in range(2):
+        ds = DisplaySetFactory(
+            reader_study=rs,
+            title=f"display set title {index}",
+            order=index,
+        )
+        ds.values.add(civs[index])
+    QuestionFactory(reader_study=rs)
+    admin = UserFactory()
+    editor = UserFactory()
+    reader = UserFactory()
+    rs.add_editor(admin)
+    rs.add_editor(editor)
+    rs.add_reader(reader)
+    add_perm = Permission.objects.get(
+        codename=f"add_{ReaderStudy._meta.model_name}"
+    )
+    admin.user_permissions.add(add_perm)
+
+    assert ReaderStudy.objects.count() == 1
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:copy",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": rs.slug},
+            data={"title": "copy", f"copy_{optional_field_name}": True},
+            user=admin,
+            follow=True,
+        )
+
+    assert response.status_code == 200
+    assert ReaderStudy.objects.count() == 2
+
+    copied_rs = ReaderStudy.objects.order_by("created").last()
+    assert copied_rs.title == "copy"
+
+    # assert specified optional field has been copied
+    field = ReaderStudy._meta.get_field(optional_field_name)
+    original_value, value_in_copy = get_values(rs, copied_rs, field)
+
+    if optional_field_name == "readers_group":
+        assert original_value.user_set.count() == 1
+        assert (
+            value_in_copy.user_set.count() == original_value.user_set.count()
+        )
+    elif optional_field_name == "editors_group":
+        assert original_value.user_set.count() == 2
+        assert (
+            value_in_copy.user_set.count() == original_value.user_set.count()
+        )
+    else:
+        assert_value_copied(field, original_value, value_in_copy)
+
+    # assert other optional fields have not been copied
+    for field_name in reader_study_optional_copy_fields:
+        if field_name == optional_field_name:
+            continue
+        field = ReaderStudy._meta.get_field(field_name)
+        original_value, value_in_copy = get_values(rs, copied_rs, field)
+
+        if field_name == "readers_group":
+            assert original_value.user_set.count() == 1
+            assert value_in_copy.user_set.count() == 0
+        elif field_name == "editors_group":
+            assert original_value.user_set.count() == 2
+            assert value_in_copy.user_set.count() == 1
+        else:
+            assert_value_not_copied(field, original_value, value_in_copy)
+
+
+@pytest.mark.django_db
+def test_reader_study_copy_questions_copy_fields_and_non_copy_fields(client):
+    rs = ReaderStudyFactory(title="original")
     editor = UserFactory()
     editor2 = UserFactory()
     reader = UserFactory()
     rs.add_reader(reader)
     rs.add_editor(editor)
     rs.add_editor(editor2)
+    add_perm = Permission.objects.get(
+        codename=f"add_{ReaderStudy._meta.model_name}"
+    )
+    editor.user_permissions.add(add_perm)
     lut = LookUpTable.objects.create(
         title="foo",
         color="[1 2 3 4, 5 6 7 8]",
@@ -589,32 +940,12 @@ def test_reader_study_copy(
         answer_min_length=1,
         answer_max_length=3,
         answer_match_pattern=r"^hello world$",
+        default_annotation_color="#FF0000",
+        empty_answer_confirmation=True,
+        empty_answer_confirmation_label="test",
     )
     CategoricalOptionFactory(question=question, title="option1")
-    QuestionFactory(
-        reader_study=rs,
-        answer_type=Question.AnswerType.BOOL,
-        question_text="q2",
-        order=4664,
-    )
-
-    im1, im2 = ImageFactory(), ImageFactory()
-    interfaces = []
-    for index, im in enumerate([im1, im2]):
-        civ = ComponentInterfaceValueFactory(image=im)
-        interfaces.append(civ.interface.slug)
-        count = index + 1
-        ds = DisplaySetFactory(
-            reader_study=rs,
-            title=f"display set title {count}",
-            order=count,
-        )
-        ds.values.add(civ)
-    rs.view_content = {"main": interfaces[0], "secondary": interfaces[1]}
-    rs.hanging_protocol = HangingProtocolFactory()
-    rs.case_text = {im1.name: "test", im2.name: "test2"}
-    rs.workstation_config = WorkstationConfigFactory()
-    rs.save()
+    AnswerFactory(question=question)
 
     assert ReaderStudy.objects.count() == 1
 
@@ -623,38 +954,7 @@ def test_reader_study_copy(
         client=client,
         method=client.post,
         reverse_kwargs={"slug": rs.slug},
-        data={"title": "1"},
-        user=reader,
-        follow=True,
-    )
-
-    assert response.status_code == 403
-    assert ReaderStudy.objects.count() == 1
-
-    response = get_view_for_user(
-        viewname="reader-studies:copy",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": rs.slug},
-        data={"title": "1"},
-        user=editor,
-        follow=True,
-    )
-
-    assert response.status_code == 403
-    assert ReaderStudy.objects.count() == 1
-
-    add_perm = Permission.objects.get(
-        codename=f"add_{ReaderStudy._meta.model_name}"
-    )
-    editor.user_permissions.add(add_perm)
-
-    response = get_view_for_user(
-        viewname="reader-studies:copy",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": rs.slug},
-        data={"title": "1"},
+        data={"title": "copy", "copy_questions": True},
         user=editor,
         follow=True,
     )
@@ -662,198 +962,52 @@ def test_reader_study_copy(
     assert response.status_code == 200
     assert ReaderStudy.objects.count() == 2
 
-    _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "1"
-    assert _rs.display_sets.count() == 0
-    assert _rs.questions.count() == 0
-    assert _rs.view_content == {}
-    assert _rs.hanging_protocol is None
-    assert _rs.readers_group.user_set.count() == 0
-    assert _rs.editors_group.user_set.count() == 1
-    assert _rs.case_text == {}
-    assert _rs.workstation_config == rs.workstation_config
-
-    response = get_view_for_user(
-        viewname="reader-studies:copy",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": rs.slug},
-        data={"title": "2", "copy_questions": True},
-        user=editor,
-        follow=True,
-    )
-
-    assert response.status_code == 200
-    assert ReaderStudy.objects.count() == 3
-
-    _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "2"
-    assert _rs.questions.count() == 2
-    assert _rs.display_sets.count() == 0
-    assert _rs.view_content == {}
-    assert _rs.hanging_protocol is None
-    assert _rs.case_text == {}
-    assert _rs.readers_group.user_set.count() == 0
-    assert _rs.editors_group.user_set.count() == 1
+    copied_rs = ReaderStudy.objects.order_by("created").last()
+    assert copied_rs.title == "copy"
+    assert copied_rs.questions.count() == 1
 
     question.refresh_from_db()
-    copied_question = _rs.questions.first()
+    copied_question = copied_rs.questions.first()
 
     assert question.reader_study == rs
     assert copied_question.pk != question.pk
     assert copied_question.reader_study != question.reader_study
 
-    # check that all but the specified fields have been copied over
-    non_copied_fields = [
-        "questionuserobjectpermission",
-        "questiongroupobjectpermission",
-        "answer",
-        "reader_study",
-        "id",
-        "created",
-        "modified",
-        "options",
-    ]
-    for field in copied_question._meta.get_fields():
-        if field.name not in non_copied_fields:
-            assert getattr(copied_question, field.name) == getattr(
-                question, field.name
-            )
+    for field_name in question_copy_fields:
+        if (
+            field_name == "scoring_function"
+            and len(Question.SCORING_FUNCTIONS) == 1
+        ):
+            # Cannot test if copied or not if only one possible value
+            continue
+
+        field = Question._meta.get_field(field_name)
+        original_value, value_in_copy = get_values(
+            question, copied_question, field
+        )
+        assert_value_copied(field, original_value, value_in_copy)
+
+    for field_name in question_non_copy_fields:
+        if (
+            field_name == "questionuserobjectpermission"
+            and len(QuestionUserObjectPermission.allowed_permissions) == 0
+        ):
+            # cannot test if there can be no value
+            continue
+
+        field = Question._meta.get_field(field_name)
+        original_value, value_in_copy = get_values(
+            question, copied_question, field
+        )
+
+        if field_name == "questiongroupobjectpermission":
+            assert value_in_copy.count() == 2
+            assert set(value_in_copy.all()) != set(original_value.all())
+        else:
+            assert_value_not_copied(field, original_value, value_in_copy)
 
     assert copied_question.options.get().title == question.options.get().title
     assert copied_question.options.get().pk != question.options.get().pk
-
-    with django_capture_on_commit_callbacks(execute=True):
-        response = get_view_for_user(
-            viewname="reader-studies:copy",
-            client=client,
-            method=client.post,
-            reverse_kwargs={"slug": rs.slug},
-            data={"title": "3", "copy_display_sets": True},
-            user=editor,
-            follow=True,
-        )
-
-    assert response.status_code == 200
-    assert ReaderStudy.objects.count() == 4
-
-    _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "3"
-    assert _rs.questions.count() == 0
-
-    assert _rs.display_sets.count() == 2
-    _ds = _rs.display_sets.first()
-    assert _ds.title == "display set title 1"
-    assert _ds.order == 1
-
-    assert _rs.view_content == {}
-    assert _rs.hanging_protocol is None
-    assert _rs.case_text == {}
-    assert _rs.readers_group.user_set.count() == 0
-    assert _rs.editors_group.user_set.count() == 1
-
-    with django_capture_on_commit_callbacks(execute=True):
-        response = get_view_for_user(
-            viewname="reader-studies:copy",
-            client=client,
-            method=client.post,
-            reverse_kwargs={"slug": rs.slug},
-            data={
-                "title": "4",
-                "copy_display_sets": True,
-                "copy_view_content": True,
-                "copy_hanging_protocol": True,
-            },
-            user=editor,
-            follow=True,
-        )
-
-    assert response.status_code == 200
-    assert ReaderStudy.objects.count() == 5
-
-    _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "4"
-    assert _rs.questions.count() == 0
-    assert _rs.display_sets.count() == 2
-    assert _rs.view_content == rs.view_content
-    assert _rs.hanging_protocol == rs.hanging_protocol
-    assert _rs.case_text == {}
-    assert _rs.readers_group.user_set.count() == 0
-    assert _rs.editors_group.user_set.count() == 1
-
-    with django_capture_on_commit_callbacks(execute=True):
-        response = get_view_for_user(
-            viewname="reader-studies:copy",
-            client=client,
-            method=client.post,
-            reverse_kwargs={"slug": rs.slug},
-            data={
-                "title": "5",
-                "copy_display_sets": True,
-                "copy_case_text": True,
-            },
-            user=editor,
-            follow=True,
-        )
-
-    assert response.status_code == 200
-    assert ReaderStudy.objects.count() == 6
-
-    _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "5"
-    assert _rs.questions.count() == 0
-    assert _rs.display_sets.count() == 2
-    assert _rs.view_content == {}
-    assert _rs.hanging_protocol is None
-    assert _rs.case_text == rs.case_text
-    assert _rs.readers_group.user_set.count() == 0
-    assert _rs.editors_group.user_set.count() == 1
-
-    response = get_view_for_user(
-        viewname="reader-studies:copy",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": rs.slug},
-        data={"title": "6", "copy_readers": True},
-        user=editor,
-        follow=True,
-    )
-
-    assert response.status_code == 200
-    assert ReaderStudy.objects.count() == 7
-
-    _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "6"
-    assert _rs.questions.count() == 0
-    assert _rs.display_sets.count() == 0
-    assert _rs.view_content == {}
-    assert _rs.hanging_protocol is None
-    assert _rs.case_text == {}
-    assert _rs.readers_group.user_set.count() == 1
-    assert _rs.editors_group.user_set.count() == 1
-
-    response = get_view_for_user(
-        viewname="reader-studies:copy",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": rs.slug},
-        data={"title": "7", "copy_editors": True},
-        user=editor,
-        follow=True,
-    )
-
-    assert response.status_code == 200
-    assert ReaderStudy.objects.count() == 8
-
-    _rs = ReaderStudy.objects.order_by("created").last()
-    assert _rs.title == "7"
-    assert _rs.questions.count() == 0
-    assert _rs.display_sets.count() == 0
-    assert _rs.view_content == {}
-    assert _rs.hanging_protocol is None
-    assert _rs.case_text == {}
-    assert _rs.readers_group.user_set.count() == 0
-    assert _rs.editors_group.user_set.count() == 2
 
 
 @pytest.mark.django_db

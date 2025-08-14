@@ -365,37 +365,6 @@ class ReaderStudy(
             ("view_leaderboard", "Can view leaderboard"),
         ]
 
-    _non_copy_fields = {
-        "readerstudyuserobjectpermission",
-        "readerstudygroupobjectpermission",
-        "workstationsessionreaderstudy",
-        "display_sets",
-        "readerstudypermissionrequest",
-        "optionalhangingprotocolreaderstudy",
-        "session_utilizations",
-        "sessionutilizationreaderstudy",
-        "title",
-        "description",
-        "slug",
-        "id",
-        "created",
-        "modified",
-        "max_credits",
-        "workstation_sessions",
-        "actor_actions",
-        "target_actions",
-        "action_object_actions",
-    }
-
-    _optional_copy_fields = {
-        "questions",
-        "view_content",
-        "hanging_protocol",
-        "editors_group",
-        "readers_group",
-        "case_text",
-    }
-
     copy_fields = {
         "workstation",
         "workstation_config",
@@ -1480,17 +1449,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
                 "Can add interactive algorithm to question",
             )
         ]
-
-    _non_copy_fields = {
-        "questionuserobjectpermission",
-        "questiongroupobjectpermission",
-        "options",
-        "answer",
-        "id",
-        "created",
-        "modified",
-        "reader_study",
-    }
 
     copy_fields = {
         "question_text",
