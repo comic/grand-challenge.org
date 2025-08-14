@@ -370,7 +370,6 @@ class ReaderStudy(
         "readerstudygroupobjectpermission",
         "workstationsessionreaderstudy",
         "display_sets",
-        "questions",
         "readerstudypermissionrequest",
         "optionalhangingprotocolreaderstudy",
         "session_utilizations",
@@ -381,16 +380,20 @@ class ReaderStudy(
         "id",
         "created",
         "modified",
+        "max_credits",
+        "workstation_sessions",
+        "actor_actions",
+        "target_actions",
+        "action_object_actions",
+    }
+
+    _optional_copy_fields = {
+        "questions",
         "view_content",
         "hanging_protocol",
         "editors_group",
         "readers_group",
-        "max_credits",
-        "workstation_sessions",
         "case_text",
-        "actor_actions",
-        "target_actions",
-        "action_object_actions",
     }
 
     copy_fields = {
