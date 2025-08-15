@@ -341,8 +341,7 @@ class CivSetListView(
     columns = [
         Column(title=""),
         Column(title="Detail"),
-        Column(title="ID", sort_field="pk"),
-        Column(title="Title", sort_field="title"),
+        Column(title="Title/Id", sort_field="title"),
         Column(title="Values"),
         Column(title="Viewer"),
         Column(title="Edit"),

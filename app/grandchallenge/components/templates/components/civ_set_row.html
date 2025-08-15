@@ -33,10 +33,11 @@
 
 <split></split>
 
-<span class="text-nowrap">{{ object.pk }}</span>
-<split></split>
+{% if object.title %}
+<p class="m-0">{{ object.title }}</p>
+{%  endif %}
+<span class="text-nowrap">ID: {{ object.pk }}</span>
 
-{{ object.title }}
 <split></split>
 
 {% if object.base_object|model_name == base_model_options.READER_STUDY %}
