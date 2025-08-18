@@ -288,6 +288,7 @@ class AlgorithmChoiceField(ModelChoiceField):
 class SubmissionForm(
     UserAlgorithmsForPhaseMixin,
     AdditionalInputsMixin,
+    SaveFormInitMixin,
     forms.ModelForm,
 ):
     user_upload = ModelChoiceField(
@@ -452,11 +453,9 @@ class SubmissionForm(
             inputs=self._phase.additional_evaluation_inputs.all()
         )
 
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
-
     def clean(self):
         cleaned_data = super().clean()
+
         if (
             not self._phase.external_evaluation
             and not self._phase.active_image
@@ -690,7 +689,7 @@ class CombinedLeaderboardForm(SaveFormInitMixin, forms.ModelForm):
         widgets = {"phases": forms.CheckboxSelectMultiple}
 
 
-class EvaluationForm(AdditionalInputsMixin, forms.Form):
+class EvaluationForm(AdditionalInputsMixin, SaveFormInitMixin, forms.Form):
     submission = ModelChoiceField(
         queryset=None, disabled=True, widget=HiddenInput()
     )
@@ -710,9 +709,6 @@ class EvaluationForm(AdditionalInputsMixin, forms.Form):
         self.init_additional_inputs(
             inputs=submission.phase.additional_evaluation_inputs.all()
         )
-
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
 
     def clean(self):
         cleaned_data = super().clean()
