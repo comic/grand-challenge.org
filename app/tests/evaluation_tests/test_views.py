@@ -2551,9 +2551,7 @@ class TestSubmissionCreationWithExtraInputs:
         # so no job and no CIVs get created if validation fails
         # error message is reported back to user directly in the form
         assert response.status_code == 200
-        assert "JSON does not fulfill schema" in str(
-            response.context["form"].errors
-        )
+        assert "JSON does not fulfill schema" in str(response.content)
         assert Submission.objects.count() == 0
         assert Evaluation.objects.count() == 0
         assert ComponentInterfaceValue.objects.count() == old_civ_count

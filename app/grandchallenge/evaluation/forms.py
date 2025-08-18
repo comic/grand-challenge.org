@@ -453,9 +453,10 @@ class SubmissionForm(
             inputs=self._phase.additional_evaluation_inputs.all()
         )
 
+        self.init_form_helper()
+
     def clean(self):
         cleaned_data = super().clean()
-
         if (
             not self._phase.external_evaluation
             and not self._phase.active_image
@@ -709,6 +710,8 @@ class EvaluationForm(AdditionalInputsMixin, SaveFormInitMixin, forms.Form):
         self.init_additional_inputs(
             inputs=submission.phase.additional_evaluation_inputs.all()
         )
+
+        self.init_form_helper()
 
     def clean(self):
         cleaned_data = super().clean()
