@@ -44,37 +44,22 @@ $(document).on("init.dt", () => {
  * Enable DataTable by setting data attributes on the table element.
  * This allows for easy configuration without needing to write JavaScript.
  * `data-data-table` is required to enable DataTable on the table.
- * Other attributes prefixed with `data-dt-` can be used to configure DataTable
+ * Other attributes can be used to configure DataTable
  * Example:
  * ```html
- * <table data-data-table data-dt-page-length="50" data-dt-order='[[0, "asc"]]'>
+ * <table data-data-table data-page-length="50" data-order='[[0, "asc"]]'>
  * ```
  */
-const DT_ATTRIBUTE_PREFIX = "data-dt-";
 document.addEventListener("DOMContentLoaded", () => {
     for (const table of document.querySelectorAll("table[data-data-table]")) {
-        const options = {};
-        for (const attr of table.attributes) {
-            if (attr.name.startsWith(DT_ATTRIBUTE_PREFIX)) {
-                // Convert data-dt-foo-bar to fooBar
-                const camelKey = attr.name
-                    .slice(DT_ATTRIBUTE_PREFIX.length)
-                    .replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-                let value = attr.value;
-                try {
-                    value = JSON.parse(value);
-                } catch {}
-                options[camelKey] = value;
-            }
-        }
         // Prefer DataTable global, fallback to jQuery if available
         if (typeof window.DataTable !== "undefined") {
-            new window.DataTable(table, options);
+            new window.DataTable(table);
         } else if (
             typeof window.jQuery !== "undefined" &&
             window.jQuery.fn.dataTable
         ) {
-            window.jQuery(table).DataTable(options);
+            window.jQuery(table).DataTable();
         } else {
             console.warn("DataTables is not available for", table);
         }
