@@ -609,6 +609,8 @@ def test_all_reader_study_fields_defined_in_copy_sets():
     assert {f.name for f in model._meta.get_fields()} == union
 
 
+# The `options` field is also copied but is not in the
+# `copy_fields` list on the model because it is handled manually.
 question_copy_fields = Question.copy_fields.union({"options"})
 question_non_copy_fields = {
     "questionuserobjectpermission",
