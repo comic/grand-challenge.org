@@ -392,9 +392,19 @@ def test_set_task_logs(settings):
                 "logStreamName": f"localhost-A-{pk}/i-whatever",
                 "limit": LOGLINES,
                 "startFromHead": False,
+                "endTime": 1654767781000,
             },
         )
-        executor._set_task_logs()
+        executor._set_task_logs(
+            event={
+                "TrainingStartTime": 1654767467000,
+                "TrainingEndTime": 1654767481000,
+                "ResourceConfig": {
+                    "InstanceType": "ml.m7i.large",
+                    "InstanceCount": 1,
+                },
+            }
+        )
 
     assert executor.stdout == "2022-06-08T10:23:58+00:00 hello from stdout"
     assert executor.stderr == "2022-06-08T10:23:58+00:00 hello from stderr"
@@ -584,6 +594,7 @@ def test_handle_stopped_event(settings):
                 "logStreamName": f"localhost-A-{pk}/i-whatever",
                 "limit": LOGLINES,
                 "startFromHead": False,
+                "endTime": 1654767781000,
             },
         )
 
@@ -592,6 +603,7 @@ def test_handle_stopped_event(settings):
                 event={
                     "TrainingJobStatus": "Stopped",
                     "SecondaryStatus": "Stopped",
+                    "TrainingEndTime": 1654767481000,
                 }
             )
 
