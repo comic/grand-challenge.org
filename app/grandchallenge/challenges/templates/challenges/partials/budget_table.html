@@ -1,5 +1,7 @@
 {% load url %}
 {% load naturaldelta %}
+{% load costs %}
+{% load timedelta %}
 
 <p>
 Based on the following information provided by the challenge requester:
@@ -14,29 +16,15 @@ Based on the following information provided by the challenge requester:
     {% endfor %}
 </ul>
 
-{% if object.phase_1_number_of_test_images > 1000 or object.phase_2_number_of_test_images > 1000 %}
-    <div class="bg-warning rounded text-whit p-3 my-3"><i class="fa fa-exclamation-circle" aria-hidden="true"></i>
-        The user specified more than 1000 images in one or both phases. Grand Challenge starts one algorithm job per image. Consider batching them to limit costs and overhead.
-    </div>
-{% endif %}
-
 <div class="table-responsive">
     <table class="table table-hover table-sm">
-        <tr class="table-primary">
-            <td class="text-center font-weight-bold" colspan="2">Capacity reservation estimate</td>
-        </tr>
-        {% for field, value in object.budget.items %}
-            <tr class="{% if "Total" in field %}table-light{% endif %}">
-                <td class="col-9 font-weight-bold">{{ field }}</td>
-                <td class="col-3 text-right">{{ value }} €</td>
-            </tr>
-        {% endfor %}
         <tr>
             <td class="col-9 font-italic">Total number of submissions to the challenge</td>
-            <td class="col-3 text-right">{{ object.total_num_submissions }}
+            <td class="col-3 text-right">
                 {% if object.total_num_submissions > 500 %}
-                    <br><small class="text-danger">This is an unusually high number of submissions. Reconsider the number of submissions for each phase. </small>
+                    <i class="fa fa-exclamation-triangle text-warning"></i>
                 {% endif %}
+                {{ object.total_num_submissions }}
             </td>
         </tr>
         <tr>
@@ -47,36 +35,139 @@ Based on the following information provided by the challenge requester:
             <td class="col-9 font-italic">Total estimated on-demand GPU time</td>
             <td class="col-3 text-right">{{ object.total_compute_time|naturaldelta }}</td>
         </tr>
-        <tr class="table-primary">
-            <td class="text-center font-weight-bold" colspan="2">To be invoiced</td>
-        </tr>
-        <tr>
-            <td class="col-9 font-weight-bold">
-                Base cost
-                <br><small class="text-dark">This covers a contribution towards platform maintenance, development and support.</small>
-            </td>
-            <td class="col-3 text-right font-weight-bold">{{ object.base_cost_euros }} €</td>
-        </tr>
-        <tr>
-            <td class="col-9 font-weight-bold">
-                Total compute cost
-                <br><small class="text-dark">Total compute costs adjusted based on "Total to be invoiced".</small>
-            </td>
-            <td class="col-3 text-right font-weight-bold">{{ object.total_compute_to_be_invoiced }} €</td>
-        </tr>
-        <tr>
-            <td class="col-9 font-weight-bold">
-                Total storage cost
-                <br><small class="text-dark">Total storage costs adjusted based on "Total to be invoiced".</small>
-            </td>
-            <td class="col-3 text-right font-weight-bold">{{ object.total_storage_to_be_invoiced }} €</td>
-        </tr>
-        <tr class="table-info">
-            <td class="col-9 font-weight-bold">
-                Total to be invoiced
-                <br><small class="text-dark">Base cost + initial compute and storage ({{ minimal_storage_and_compute }}€) + additional compute and storage rounded to the nearest {{ additional_capacity_pack_size }}€</small>
-            </td>
-            <td class="col-3 text-right font-weight-bold">{{ object.total_challenge_cost }} €</td>
-        </tr>
+    </table>
+</div>
+
+{% if object.total_num_submissions > 500 %}
+    <div class="alert alert-warning">
+        <i class="fa fa-exclamation-triangle"></i>
+        This is an unusually high number of total submissions (more than 500). Reconsider the number of submissions for each phase.
+    </div>
+{% endif %}
+{% if object.phase_1_number_of_test_images > 1000 or object.phase_2_number_of_test_images > 1000 %}
+    <div class="alert alert-warning">
+        <i class="fa fa-exclamation-triangle"></i>
+        The user specified more than 1000 images in one or both phases. Grand Challenge starts one algorithm job per image. Consider batching them to limit costs and overhead.
+    </div>
+{% endif %}
+
+<h4>To be invoiced</h4>
+
+<div class="table-responsive">
+    <table class="table table-hover table-sm">
+        <thead class="thead-light">
+            <tr>
+                <th>Item</th>
+                <th class="col-5">Description</th>
+                <th class="text-right">Price per unit</th>
+                <th>Number</th>
+                <th>Unit</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="font-weight-bold">
+                    Base cost
+                </td>
+                <td><small class="text-dark">This covers a contribution towards platform maintenance, development and support.</small></td>
+                <td class="text-right">{{ object.base_cost_euros|euro_no_cents }}</td>
+                <td>1</td>
+                <td>Challenge</td>
+                <td class="text-right font-weight-bold">{{ object.base_cost_euros|euro_no_cents }}</td>
+            </tr>
+            <tr>
+                <td class="font-weight-bold">
+                    Capacity reservation
+                </td>
+                <td><small class="text-dark">Capacity reservation units for data storage, compute storage and container registry storage.</small></td>
+                <td class="text-right">{{ object.capacity_reservation_euros_per_unit|euro_no_cents }}</td>
+                <td>{{ object.capacity_reservation_units }}</td>
+                <td>Units</td>
+                <td class="text-right font-weight-bold">{{ object.capacity_reservation_euros|euro_no_cents }}</td>
+            </tr>
+            <tr class="table-info">
+                <td class="font-weight-bold">
+                    Total
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="text-right font-weight-bold">{{ object.total_challenge_cost|euro_no_cents }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<h4>Capacity reservation estimate</h4>
+
+<div class="table-responsive">
+    <table class="table table-hover table-sm">
+        <thead class="thead-light">
+            <tr>
+                <th>Item</th>
+                <th class="col-5">Description</th>
+                <th class="text-right">Price per unit</th>
+                <th>Number</th>
+                <th>Unit</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for phase in object.costs_for_phases %}
+                <tr>
+                    <td>Compute {{ phase.name }}</td>
+                    <td>{{ phase.number_of_submissions_per_team }} submissions times {{ object.expected_number_of_teams }} teams times {{ phase.number_of_test_images }} images times {{ object.inference_time_limit_in_minutes }} minutes average job time per image</td>
+                    <td class="text-right">{{ object.compute_costs_euros_per_hour|euro }}</td>
+                    <td>{{ phase.compute_time|total_hours|floatformat }}</td>
+                    <td>Hours</td>
+                    <td class="text-right">{{ phase.compute_costs_euros|euro }}</td>
+                </tr>
+                <tr>
+                    <td>Container storage {{ phase.name }}</td>
+                    <td>{{ phase.number_of_submissions_per_team }} submissions times {{ object.expected_number_of_teams }} teams times {{ object.average_algorithm_container_size_in_gb }} GB per container, for 5 years</td>
+                    <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
+                    <td>{{ phase.docker_storage_size_gb|floatformat }}</td>
+                    <td>GB</td>
+                    <td class="text-right">{{ phase.docker_storage_costs_euros|euro }}</td>
+                </tr>
+                <tr>
+                    <td>Data storage {{ phase.name }}</td>
+                    <td>{{ phase.number_of_test_images }} images, average size {{ object.average_size_of_test_image_in_mb }} MB, for 5 years</td>
+                    <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
+                    <td>{{ phase.data_storage_size_gb|floatformat }}</td>
+                    <td>GB</td>
+                    <td class="text-right">{{ phase.data_storage_costs_euros|euro }}</td>
+                </tr>
+                <tr class="table-light">
+                    <td>Total {{ phase.name }}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="text-right">{{ phase.total_euros|euro }}</td>
+                </tr>
+                <tr>
+                    <td>&nbsp;</td>
+                </tr>
+            {% endfor %}
+            <tr class="table-secondary">
+                <td class="font-weight-bold">Total</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="text-right font-weight-bold">{{ object.total_compute_and_storage_costs_euros|euro }}</td>
+            </tr>
+            <tr class="table-info">
+                <td class="font-weight-bold">Capacity reservation</td>
+                <td>Required capacity reservation units</td>
+                <td class="text-right">{{ object.capacity_reservation_euros_per_unit|euro_no_cents }}</td>
+                <td>{{ object.capacity_reservation_units }}</td>
+                <td>Units</td>
+                <td class="text-right font-weight-bold">{{ object.capacity_reservation_euros|euro }}</td>
+            </tr>
+        </tbody>
     </table>
 </div>

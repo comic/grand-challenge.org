@@ -5,13 +5,27 @@ register = template.Library()
 
 
 @register.filter
+def euro(value):
+    try:
+        return f"€ {value:,.2f}"
+    except ValueError:
+        return ""
+
+
+@register.filter
+def euro_no_cents(value):
+    try:
+        return f"€ {value:,.0f}"
+    except ValueError:
+        return ""
+
+
+@register.filter
 def millicents_to_euro(millicents):
     try:
-        euros = millicents / 1000 / 100
+        return euro(millicents / 1000 / 100)
     except TypeError:
         return "-"
-
-    return f"€ {euros:.2f}"
 
 
 @register.filter
