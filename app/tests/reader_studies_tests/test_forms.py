@@ -709,8 +709,8 @@ def assert_value_not_copied(field, original_value, value_in_copy):
         assert value_in_copy != original_value
 
 
-@pytest.mark.django_db
-def test_reader_study_copy_and_non_copy_fields(client):
+@pytest.fixture
+def reader_study_with_fields():
     rs = ReaderStudyFactory(
         title="original",
         workstation_config=WorkstationConfigFactory(),
@@ -735,17 +735,23 @@ def test_reader_study_copy_and_non_copy_fields(client):
     rs.organizations.set([OrganizationFactory()])
     rs.session_utilizations.set([SessionUtilizationFactory()])
     ReaderStudyPermissionRequestFactory(reader_study=rs)
-    admin = UserFactory()
     reader = UserFactory()
     rs.add_reader(reader)
-    rs.add_editor(admin)
+    action.send(rs, verb="started")
+    action.send(reader, verb="joined", target=rs)
+    action.send(reader, verb="has read", action_object=rs)
+
+    return rs
+
+
+@pytest.fixture
+def copied_reader_study_with_fields(client, reader_study_with_fields):
+    admin = UserFactory()
+    reader_study_with_fields.add_editor(admin)
     add_perm = Permission.objects.get(
         codename=f"add_{ReaderStudy._meta.model_name}"
     )
     admin.user_permissions.add(add_perm)
-    action.send(rs, verb="started")
-    action.send(reader, verb="joined", target=rs)
-    action.send(admin, verb="will copy", action_object=rs)
 
     assert ReaderStudy.objects.count() == 1
 
@@ -753,7 +759,7 @@ def test_reader_study_copy_and_non_copy_fields(client):
         viewname="reader-studies:copy",
         client=client,
         method=client.post,
-        reverse_kwargs={"slug": rs.slug},
+        reverse_kwargs={"slug": reader_study_with_fields.slug},
         data={"title": "copy"},
         user=admin,
         follow=True,
@@ -765,39 +771,73 @@ def test_reader_study_copy_and_non_copy_fields(client):
     copied_rs = ReaderStudy.objects.order_by("created").last()
     assert copied_rs.title == "copy"
 
-    for field_name in reader_study_copy_fields:
-        field = ReaderStudy._meta.get_field(field_name)
-        original_value, value_in_copy = get_values(rs, copied_rs, field)
-        assert_value_copied(field, original_value, value_in_copy)
+    return copied_rs
 
-    for field_name in reader_study_non_copy_fields:
-        if (
-            field_name == "readerstudyuserobjectpermission"
-            and len(ReaderStudyUserObjectPermission.allowed_permissions) == 0
-        ):
-            # cannot test if there can be no value
-            continue
 
-        field = ReaderStudy._meta.get_field(field_name)
-        original_value, value_in_copy = get_values(rs, copied_rs, field)
-
-        if field_name == "readerstudygroupobjectpermission":
-            assert value_in_copy.count() == 10
-            assert set(value_in_copy.all()).isdisjoint(original_value.all())
-        else:
-            assert_value_not_copied(field, original_value, value_in_copy)
+@pytest.mark.django_db
+@pytest.mark.parametrize("field_name", reader_study_copy_fields)
+def test_reader_study_copy_fields(
+    reader_study_with_fields, copied_reader_study_with_fields, field_name
+):
+    field = ReaderStudy._meta.get_field(field_name)
+    original_value, value_in_copy = get_values(
+        reader_study_with_fields, copied_reader_study_with_fields, field
+    )
+    assert_value_copied(field, original_value, value_in_copy)
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "optional_field_name", reader_study_optional_copy_fields
+    "field_name",
+    reader_study_non_copy_fields.difference(
+        [
+            "readerstudyuserobjectpermission",
+            "readerstudygroupobjectpermission",
+        ]
+    ),
 )
-def test_reader_study_copy_all_optional_fields_implemented(
-    client, settings, django_capture_on_commit_callbacks, optional_field_name
+def test_reader_study_non_copy_fields(
+    reader_study_with_fields, copied_reader_study_with_fields, field_name
 ):
-    settings.task_eager_propagates = True
-    settings.task_always_eager = True
+    field = ReaderStudy._meta.get_field(field_name)
+    original_value, value_in_copy = get_values(
+        reader_study_with_fields, copied_reader_study_with_fields, field
+    )
 
+    assert_value_not_copied(field, original_value, value_in_copy)
+
+
+@pytest.mark.django_db
+def test_reader_study_non_copy_field_readerstudyuserobjectpermission(
+    reader_study_with_fields, copied_reader_study_with_fields
+):
+    if len(ReaderStudyUserObjectPermission.allowed_permissions) == 0:
+        # cannot test if there can be no value
+        return
+
+    test_reader_study_non_copy_fields(
+        reader_study_with_fields=reader_study_with_fields,
+        copied_reader_study_with_fields=copied_reader_study_with_fields,
+        field_name="readerstudyuserobjectpermission",
+    )
+
+
+@pytest.mark.django_db
+def test_reader_study_non_copy_field_readerstudygroupobjectpermission(
+    reader_study_with_fields, copied_reader_study_with_fields
+):
+    field_name = "readerstudygroupobjectpermission"
+    field = ReaderStudy._meta.get_field(field_name)
+    original_value, value_in_copy = get_values(
+        reader_study_with_fields, copied_reader_study_with_fields, field
+    )
+
+    assert value_in_copy.count() == 10
+    assert set(value_in_copy.all()).isdisjoint(original_value.all())
+
+
+@pytest.fixture()
+def reader_study_with_optional_fields():
     images = ImageFactory.create_batch(2)
     civs = []
     interfaces = []
@@ -820,12 +860,26 @@ def test_reader_study_copy_all_optional_fields_implemented(
         )
         ds.values.add(civs[index])
     QuestionFactory(reader_study=rs)
-    admin = UserFactory()
     editor = UserFactory()
     reader = UserFactory()
-    rs.add_editor(admin)
     rs.add_editor(editor)
     rs.add_reader(reader)
+
+    return rs
+
+
+def copy_reader_study_with_optional_field(
+    settings,
+    client,
+    django_capture_on_commit_callbacks,
+    reader_study,
+    field_name,
+):
+    settings.task_eager_propagates = True
+    settings.task_always_eager = True
+
+    admin = UserFactory()
+    reader_study.add_editor(admin)
     add_perm = Permission.objects.get(
         codename=f"add_{ReaderStudy._meta.model_name}"
     )
@@ -838,8 +892,8 @@ def test_reader_study_copy_all_optional_fields_implemented(
             viewname="reader-studies:copy",
             client=client,
             method=client.post,
-            reverse_kwargs={"slug": rs.slug},
-            data={"title": "copy", f"copy_{optional_field_name}": True},
+            reverse_kwargs={"slug": reader_study.slug},
+            data={"title": "copy", f"copy_{field_name}": True},
             user=admin,
             follow=True,
         )
@@ -850,9 +904,33 @@ def test_reader_study_copy_all_optional_fields_implemented(
     copied_rs = ReaderStudy.objects.order_by("created").last()
     assert copied_rs.title == "copy"
 
+    return copied_rs
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "optional_field_name", reader_study_optional_copy_fields
+)
+def test_reader_study_copy_all_optional_fields_implemented(
+    settings,
+    client,
+    django_capture_on_commit_callbacks,
+    reader_study_with_optional_fields,
+    optional_field_name,
+):
+    copied_reader_study = copy_reader_study_with_optional_field(
+        settings=settings,
+        client=client,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+        reader_study=reader_study_with_optional_fields,
+        field_name=optional_field_name,
+    )
+
     # assert specified optional field has been copied
     field = ReaderStudy._meta.get_field(optional_field_name)
-    original_value, value_in_copy = get_values(rs, copied_rs, field)
+    original_value, value_in_copy = get_values(
+        reader_study_with_optional_fields, copied_reader_study, field
+    )
 
     if optional_field_name == "readers_group":
         assert original_value.user_set.count() == 1
@@ -867,36 +945,55 @@ def test_reader_study_copy_all_optional_fields_implemented(
     else:
         assert_value_copied(field, original_value, value_in_copy)
 
-    # assert other optional fields have not been copied
-    for field_name in reader_study_optional_copy_fields:
-        if field_name == optional_field_name:
-            continue
-        field = ReaderStudy._meta.get_field(field_name)
-        original_value, value_in_copy = get_values(rs, copied_rs, field)
-
-        if field_name == "readers_group":
-            assert original_value.user_set.count() == 1
-            assert value_in_copy.user_set.count() == 0
-        elif field_name == "editors_group":
-            assert original_value.user_set.count() == 2
-            assert value_in_copy.user_set.count() == 1
-        else:
-            assert_value_not_copied(field, original_value, value_in_copy)
-
 
 @pytest.mark.django_db
-def test_reader_study_copy_questions_copy_fields_and_non_copy_fields(client):
+@pytest.mark.parametrize(
+    "optional_field_name_copied", reader_study_optional_copy_fields
+)
+@pytest.mark.parametrize(
+    "optional_field_name_not_copied", reader_study_optional_copy_fields
+)
+def test_reader_study_copy_selected_optional_field_only(
+    settings,
+    client,
+    django_capture_on_commit_callbacks,
+    reader_study_with_optional_fields,
+    optional_field_name_copied,
+    optional_field_name_not_copied,
+):
+    copied_reader_study = copy_reader_study_with_optional_field(
+        settings=settings,
+        client=client,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+        reader_study=reader_study_with_optional_fields,
+        field_name=optional_field_name_copied,
+    )
+
+    if optional_field_name_not_copied == optional_field_name_copied:
+        return
+
+    field = ReaderStudy._meta.get_field(optional_field_name_not_copied)
+    original_value, value_in_copy = get_values(
+        reader_study_with_optional_fields, copied_reader_study, field
+    )
+
+    if optional_field_name_not_copied == "readers_group":
+        assert original_value.user_set.count() == 1
+        assert value_in_copy.user_set.count() == 0
+    elif optional_field_name_not_copied == "editors_group":
+        assert original_value.user_set.count() == 2
+        assert value_in_copy.user_set.count() == 1
+    else:
+        assert_value_not_copied(field, original_value, value_in_copy)
+
+
+@pytest.fixture()
+def reader_study_with_question():
     rs = ReaderStudyFactory(title="original")
     editor = UserFactory()
-    editor2 = UserFactory()
     reader = UserFactory()
     rs.add_reader(reader)
     rs.add_editor(editor)
-    rs.add_editor(editor2)
-    add_perm = Permission.objects.get(
-        codename=f"add_{ReaderStudy._meta.model_name}"
-    )
-    editor.user_permissions.add(add_perm)
     lut = LookUpTable.objects.create(
         title="foo",
         color="[1 2 3 4, 5 6 7 8]",
@@ -930,6 +1027,17 @@ def test_reader_study_copy_questions_copy_fields_and_non_copy_fields(client):
     )
     CategoricalOptionFactory(question=question, title="option1")
     AnswerFactory(question=question)
+    return rs
+
+
+@pytest.fixture()
+def copied_question(client, reader_study_with_question):
+    admin = UserFactory()
+    reader_study_with_question.add_editor(admin)
+    add_perm = Permission.objects.get(
+        codename=f"add_{ReaderStudy._meta.model_name}"
+    )
+    admin.user_permissions.add(add_perm)
 
     assert ReaderStudy.objects.count() == 1
 
@@ -937,9 +1045,9 @@ def test_reader_study_copy_questions_copy_fields_and_non_copy_fields(client):
         viewname="reader-studies:copy",
         client=client,
         method=client.post,
-        reverse_kwargs={"slug": rs.slug},
+        reverse_kwargs={"slug": reader_study_with_question.slug},
         data={"title": "copy", "copy_questions": True},
-        user=editor,
+        user=admin,
         follow=True,
     )
 
@@ -950,48 +1058,106 @@ def test_reader_study_copy_questions_copy_fields_and_non_copy_fields(client):
     assert copied_rs.title == "copy"
     assert copied_rs.questions.count() == 1
 
-    question.refresh_from_db()
+    question = reader_study_with_question.questions.first()
     copied_question = copied_rs.questions.first()
 
-    assert question.reader_study == rs
     assert copied_question.pk != question.pk
     assert copied_question.reader_study != question.reader_study
 
-    for field_name in question_copy_fields:
-        if (
-            field_name == "scoring_function"
-            and len(Question.SCORING_FUNCTIONS) == 1
-        ):
-            # Cannot test if copied or not if only one possible value
-            continue
+    return copied_question
 
-        field = Question._meta.get_field(field_name)
-        original_value, value_in_copy = get_values(
-            question, copied_question, field
-        )
-        assert_value_copied(field, original_value, value_in_copy)
 
-    for field_name in question_non_copy_fields:
-        if (
-            field_name == "questionuserobjectpermission"
-            and len(QuestionUserObjectPermission.allowed_permissions) == 0
-        ):
-            # cannot test if there can be no value
-            continue
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "field_name", question_copy_fields.difference(["scoring_function"])
+)
+def test_reader_study_copy_question_copy_fields(
+    reader_study_with_question, copied_question, field_name
+):
+    question = reader_study_with_question.questions.first()
+    field = Question._meta.get_field(field_name)
+    original_value, value_in_copy = get_values(
+        question, copied_question, field
+    )
 
-        field = Question._meta.get_field(field_name)
-        original_value, value_in_copy = get_values(
-            question, copied_question, field
-        )
+    assert_value_copied(field, original_value, value_in_copy)
 
-        if field_name == "questiongroupobjectpermission":
-            assert value_in_copy.count() == 2
-            assert set(value_in_copy.all()).isdisjoint(original_value.all())
-        else:
-            assert_value_not_copied(field, original_value, value_in_copy)
+
+@pytest.mark.django_db
+def test_reader_study_copy_questions_copy_scoring_function(
+    reader_study_with_question, copied_question
+):
+    if len(Question.SCORING_FUNCTIONS) == 1:
+        # Cannot test if copied or not if only one possible value
+        return
+
+    test_reader_study_copy_question_copy_fields(
+        reader_study_with_question=reader_study_with_question,
+        copied_question=copied_question,
+        field_name="scoring_function",
+    )
+
+
+@pytest.mark.django_db
+def test_reader_study_copy_question_options(
+    reader_study_with_question, copied_question
+):
+    question = reader_study_with_question.questions.first()
 
     assert copied_question.options.get().title == question.options.get().title
     assert copied_question.options.get().pk != question.options.get().pk
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "field_name",
+    question_non_copy_fields.difference(
+        [
+            "questionuserobjectpermission",
+            "questiongroupobjectpermission",
+        ]
+    ),
+)
+def test_reader_study_copy_questions_non_copy_fields(
+    reader_study_with_question, copied_question, field_name
+):
+    question = reader_study_with_question.questions.first()
+    field = Question._meta.get_field(field_name)
+    original_value, value_in_copy = get_values(
+        question, copied_question, field
+    )
+
+    assert_value_not_copied(field, original_value, value_in_copy)
+
+
+@pytest.mark.django_db
+def test_reader_study_copy_questions_non_copy_questionuserobjectpermission(
+    reader_study_with_question, copied_question
+):
+    if len(QuestionUserObjectPermission.allowed_permissions) == 0:
+        # cannot test if there can be no value
+        return
+
+    test_reader_study_copy_questions_non_copy_fields(
+        reader_study_with_question=reader_study_with_question,
+        copied_question=copied_question,
+        field_name="questionuserobjectpermission",
+    )
+
+
+@pytest.mark.django_db
+def test_reader_study_copy_questions_non_copy_questiongroupobjectpermission(
+    reader_study_with_question, copied_question
+):
+    question = reader_study_with_question.questions.first()
+    field_name = "questiongroupobjectpermission"
+    field = Question._meta.get_field(field_name)
+    original_value, value_in_copy = get_values(
+        question, copied_question, field
+    )
+
+    assert value_in_copy.count() == 2
+    assert set(value_in_copy.all()).isdisjoint(original_value.all())
 
 
 @pytest.mark.django_db
