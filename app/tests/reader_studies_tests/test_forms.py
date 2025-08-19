@@ -790,36 +790,26 @@ def test_reader_study_copy_fields(
 @pytest.mark.parametrize(
     "field_name",
     reader_study_non_copy_fields.difference(
-        [
-            "readerstudyuserobjectpermission",
-            "readerstudygroupobjectpermission",
-        ]
+        ["readerstudygroupobjectpermission"]
     ),
 )
 def test_reader_study_non_copy_fields(
     reader_study_with_fields, copied_reader_study_with_fields, field_name
 ):
+    if (
+        field_name == "readerstudyuserobjectpermission"
+        and len(ReaderStudyUserObjectPermission.allowed_permissions) == 0
+    ):
+        pytest.xfail(
+            reason="Cannot test if copied or not if no possible value"
+        )
+
     field = ReaderStudy._meta.get_field(field_name)
     original_value, value_in_copy = get_values(
         reader_study_with_fields, copied_reader_study_with_fields, field
     )
 
     assert_value_not_copied(field, original_value, value_in_copy)
-
-
-@pytest.mark.django_db
-def test_reader_study_non_copy_field_readerstudyuserobjectpermission(
-    reader_study_with_fields, copied_reader_study_with_fields
-):
-    if len(ReaderStudyUserObjectPermission.allowed_permissions) == 0:
-        # cannot test if there can be no value
-        return
-
-    test_reader_study_non_copy_fields(
-        reader_study_with_fields=reader_study_with_fields,
-        copied_reader_study_with_fields=copied_reader_study_with_fields,
-        field_name="readerstudyuserobjectpermission",
-    )
 
 
 @pytest.mark.django_db
@@ -1068,12 +1058,18 @@ def copied_question(client, reader_study_with_question):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "field_name", question_copy_fields.difference(["scoring_function"])
-)
+@pytest.mark.parametrize("field_name", question_copy_fields)
 def test_reader_study_copy_question_copy_fields(
     reader_study_with_question, copied_question, field_name
 ):
+    if (
+        field_name == "scoring_function"
+        and len(Question.SCORING_FUNCTIONS) == 1
+    ):
+        pytest.xfail(
+            reason="Cannot test if copied or not if only one possible value"
+        )
+
     question = reader_study_with_question.questions.first()
     field = Question._meta.get_field(field_name)
     original_value, value_in_copy = get_values(
@@ -1081,21 +1077,6 @@ def test_reader_study_copy_question_copy_fields(
     )
 
     assert_value_copied(field, original_value, value_in_copy)
-
-
-@pytest.mark.django_db
-def test_reader_study_copy_questions_copy_scoring_function(
-    reader_study_with_question, copied_question
-):
-    if len(Question.SCORING_FUNCTIONS) == 1:
-        # Cannot test if copied or not if only one possible value
-        return
-
-    test_reader_study_copy_question_copy_fields(
-        reader_study_with_question=reader_study_with_question,
-        copied_question=copied_question,
-        field_name="scoring_function",
-    )
 
 
 @pytest.mark.django_db
@@ -1111,16 +1092,19 @@ def test_reader_study_copy_question_options(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "field_name",
-    question_non_copy_fields.difference(
-        [
-            "questionuserobjectpermission",
-            "questiongroupobjectpermission",
-        ]
-    ),
+    question_non_copy_fields.difference(["questiongroupobjectpermission"]),
 )
 def test_reader_study_copy_questions_non_copy_fields(
     reader_study_with_question, copied_question, field_name
 ):
+    if (
+        field_name == "questionuserobjectpermission"
+        and len(QuestionUserObjectPermission.allowed_permissions) == 0
+    ):
+        pytest.xfail(
+            reason="Cannot test if copied or not if no possible value"
+        )
+
     question = reader_study_with_question.questions.first()
     field = Question._meta.get_field(field_name)
     original_value, value_in_copy = get_values(
@@ -1128,21 +1112,6 @@ def test_reader_study_copy_questions_non_copy_fields(
     )
 
     assert_value_not_copied(field, original_value, value_in_copy)
-
-
-@pytest.mark.django_db
-def test_reader_study_copy_questions_non_copy_questionuserobjectpermission(
-    reader_study_with_question, copied_question
-):
-    if len(QuestionUserObjectPermission.allowed_permissions) == 0:
-        # cannot test if there can be no value
-        return
-
-    test_reader_study_copy_questions_non_copy_fields(
-        reader_study_with_question=reader_study_with_question,
-        copied_question=copied_question,
-        field_name="questionuserobjectpermission",
-    )
 
 
 @pytest.mark.django_db
