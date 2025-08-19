@@ -1244,6 +1244,40 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
+
+        if adding:
+            self.number_of_teams_for_phases = (
+                [self.expected_number_of_teams] * 2 * self.number_of_tasks
+            )
+            self.inference_time_average_minutes_for_phases = (
+                [self.inference_time_limit_in_minutes]
+                * 2
+                * self.number_of_tasks
+            )
+            self.algorithm_selectable_gpu_type_choices_for_phases = (
+                [self.algorithm_selectable_gpu_type_choices]
+                * 2
+                * self.number_of_tasks
+            )
+            self.algorithm_maximum_settable_memory_gb_for_phases = (
+                [self.algorithm_maximum_settable_memory_gb]
+                * 2
+                * self.number_of_tasks
+            )
+            self.average_size_test_image_mb_for_phases = (
+                [self.average_size_of_test_image_in_mb]
+                * 2
+                * self.number_of_tasks
+            )
+            self.number_of_submissions_per_team_for_phases = [
+                self.phase_1_number_of_submissions_per_team,
+                self.phase_2_number_of_submissions_per_team,
+            ] * self.number_of_tasks
+            self.number_of_test_images_for_phases = [
+                self.phase_1_number_of_test_images,
+                self.phase_2_number_of_test_images,
+            ] * self.number_of_tasks
+
         super().save(*args, **kwargs)
 
         if adding:
