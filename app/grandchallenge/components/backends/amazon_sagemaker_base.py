@@ -570,15 +570,18 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             logger.warning(str(error))
             return
 
-        # Add buffer time to allow metrics to be delivered
-        buffer_time_ms = 5 * 60 * 1000  # 5 minutes
+        end_time = self._get_end_time(event=event)
+
+        if end_time is not None:
+            # Add 5 minutes buffer time to allow metrics to be delivered
+            end_time += 5 * 60 * 1000
 
         response = self._logs_client.get_log_events(
             logGroupName=self._log_group_name,
             logStreamName=log_stream_name,
             limit=LOGLINES,
             startFromHead=False,
-            endTime=self._get_end_time(event=event) + buffer_time_ms,
+            endTime=end_time,
         )
         stdout = []
         stderr = []
