@@ -1025,6 +1025,22 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         help_text="How many teams do you expect to participate in your challenge?",
         validators=[MinValueValidator(limit_value=1)],
     )
+    number_of_teams_for_phases = models.JSONField(
+        help_text="Number of teams for each phase",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 1,
+                    },
+                }
+            )
+        ],
+    )
     average_algorithm_container_size_in_gb = models.PositiveIntegerField(
         default=6,
         help_text="Average algorithm container size in GB.",
@@ -1042,6 +1058,23 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             MaxValueValidator(limit_value=60),
         ],
     )
+    inference_time_average_minutes_for_phases = models.JSONField(
+        help_text="Average run time per algorithm job in minutes for each phase.",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 5,
+                        "maximum": 60,
+                    },
+                }
+            )
+        ],
+    )
     algorithm_selectable_gpu_type_choices = models.JSONField(
         default=get_default_gpu_type_choices,
         help_text=(
@@ -1051,8 +1084,40 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ),
         validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
     )
+    algorithm_selectable_gpu_type_choices_for_phases = models.JSONField(
+        default=list,
+        help_text=(
+            "The GPU type choices that participants will be able to select for their "
+            "algorithm inference jobs. Options are "
+            f"{GPUTypeChoices.values}.".replace("'", '"')
+        ),
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "title": "The Selectable GPU Types Schema",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "enum": GPUTypeChoices.values,
+                            "type": "string",
+                        },
+                        "uniqueItems": True,
+                    },
+                }
+            )
+        ],
+    )
     algorithm_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
         default=settings.ALGORITHMS_MAX_MEMORY_GB,
+        help_text=(
+            "Maximum amount of main memory (DRAM) that participants will be allowed to "
+            "assign to algorithm inference jobs for submission."
+        ),
+    )
+    algorithm_maximum_settable_memory_gb_for_phases = models.JSONField(
+        default=list,
         help_text=(
             "Maximum amount of main memory (DRAM) that participants will be allowed to "
             "assign to algorithm inference jobs for submission."
@@ -1065,17 +1130,66 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             MaxValueValidator(limit_value=10000),
         ],
     )
+    average_size_test_image_mb_for_phases = models.JSONField(
+        help_text="Average size of a test image in MB.",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000,
+                    },
+                }
+            )
+        ],
+    )
     phase_1_number_of_submissions_per_team = models.PositiveIntegerField(
         help_text="How many submissions do you expect per team in this phase?",
     )
     phase_2_number_of_submissions_per_team = models.PositiveIntegerField(
         help_text="How many submissions do you expect per team in this phase?",
     )
+    number_of_submissions_per_team_for_phases = models.JSONField(
+        help_text="Number of submissions per team for each phase",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 1,
+                    },
+                }
+            )
+        ],
+    )
     phase_1_number_of_test_images = models.PositiveIntegerField(
         help_text="Number of test images for this phase.",
     )
     phase_2_number_of_test_images = models.PositiveIntegerField(
         help_text="Number of test images for this phase.",
+    )
+    number_of_test_images_for_phases = models.JSONField(
+        help_text="Number of test images for each phase.",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 1,
+                    },
+                }
+            )
+        ],
     )
     number_of_tasks = models.PositiveIntegerField(
         default=1,
@@ -1188,132 +1302,115 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             if field.name in budget_fields
         }
 
-    @property
-    def phase_1_num_submissions(self):
-        return (
-            self.phase_1_number_of_submissions_per_team
-            * self.expected_number_of_teams
-            * self.number_of_tasks
-        )
-
-    @property
-    def phase_2_num_submissions(self):
-        return (
-            self.phase_2_number_of_submissions_per_team
-            * self.expected_number_of_teams
-            * self.number_of_tasks
-        )
+    @cached_property
+    def number_of_submissions_for_phases(self):
+        return [
+            n_submissions * n_teams
+            for n_submissions, n_teams in zip(
+                self.number_of_submissions_per_team_for_phases,
+                self.number_of_teams_for_phases,
+                strict=True,
+            )
+        ]
 
     @property
     def total_num_submissions(self):
-        return self.phase_1_num_submissions + self.phase_2_num_submissions
+        return sum(self.number_of_submissions_for_phases)
 
-    @property
-    def phase_1_num_algorithm_jobs(self):
-        return (
-            self.phase_1_num_submissions * self.phase_1_number_of_test_images
-        )
-
-    @property
-    def phase_2_num_algorithm_jobs(self):
-        return (
-            self.phase_2_num_submissions * self.phase_2_number_of_test_images
-        )
+    @cached_property
+    def number_of_algorithm_jobs_for_phases(self):
+        return [
+            n_submissions * n_images
+            for n_submissions, n_images in zip(
+                self.number_of_submissions_for_phases,
+                self.number_of_test_images_for_phases,
+                strict=True,
+            )
+        ]
 
     @property
     def total_num_algorithm_jobs(self):
-        return (
-            self.phase_1_num_algorithm_jobs + self.phase_2_num_algorithm_jobs
-        )
+        return sum(self.number_of_algorithm_jobs_for_phases)
 
-    @property
-    def phase_1_compute_time(self):
-        return self.phase_1_num_algorithm_jobs * datetime.timedelta(
-            minutes=self.inference_time_limit_in_minutes
-        )
-
-    @property
-    def phase_2_compute_time(self):
-        return self.phase_2_num_algorithm_jobs * datetime.timedelta(
-            minutes=self.inference_time_limit_in_minutes
-        )
+    @cached_property
+    def compute_time_for_phases(self):
+        return [
+            n_jobs * datetime.timedelta(minutes=minutes)
+            for n_jobs, minutes in zip(
+                self.number_of_algorithm_jobs_for_phases,
+                self.inference_time_average_minutes_for_phases,
+                strict=True,
+            )
+        ]
 
     @property
     def total_compute_time(self):
-        return self.phase_1_compute_time + self.phase_2_compute_time
+        return sum(self.compute_time_for_phases, timedelta(0))
+
+    @cached_property
+    def data_storage_size_gb_for_phases(self):
+        return [
+            n_images * image_mb * settings.MEGABYTE / settings.GIGABYTE
+            for n_images, image_mb in zip(
+                self.number_of_test_images_for_phases,
+                self.average_size_test_image_mb_for_phases,
+                strict=True,
+            )
+        ]
+
+    @cached_property
+    def docker_storage_size_gb_for_phases(self):
+        return [
+            n_submissions * self.average_algorithm_container_size_in_gb
+            for n_submissions in self.number_of_submissions_for_phases
+        ]
 
     @property
-    def phase_1_data_storage_size_bytes(self):
-        return (
-            self.phase_1_number_of_test_images
-            * (self.average_size_of_test_image_in_mb * settings.MEGABYTE)
-            * self.number_of_tasks
+    def total_data_and_docker_storage_gb(self):
+        return sum(self.data_storage_size_gb_for_phases) + sum(
+            self.docker_storage_size_gb_for_phases
         )
-
-    @property
-    def phase_2_data_storage_size_bytes(self):
-        return (
-            self.phase_2_number_of_test_images
-            * (self.average_size_of_test_image_in_mb * settings.MEGABYTE)
-            * self.number_of_tasks
-        )
-
-    @property
-    def phase_1_docker_storage_size_bytes(self):
-        return (
-            self.average_algorithm_container_size_in_gb * settings.GIGABYTE
-        ) * self.phase_1_num_submissions
-
-    @property
-    def phase_2_docker_storage_size_bytes(self):
-        return (
-            self.average_algorithm_container_size_in_gb * settings.GIGABYTE
-        ) * self.phase_2_num_submissions
 
     @property
     def total_data_and_docker_storage_bytes(self):
-        return (
-            self.phase_1_docker_storage_size_bytes
-            + self.phase_2_docker_storage_size_bytes
-            + self.phase_1_data_storage_size_bytes
-            + self.phase_2_data_storage_size_bytes
-        )
+        return self.total_data_and_docker_storage_gb * settings.GIGABYTE
 
     @cached_property
-    def compute_costs_euro_cents_per_hour(self):
-        executors = [
-            import_string(settings.COMPONENTS_DEFAULT_BACKEND)(
-                job_id="",
-                exec_image_repo_tag="",
-                memory_limit=self.algorithm_maximum_settable_memory_gb,
-                time_limit=self.inference_time_limit_in_minutes,
-                requires_gpu_type=gpu_type,
-                use_warm_pool=False,
+    def compute_costs_euro_cents_per_hour_for_phases(self):
+        costs_for_phases = []
+        for gpu_choices, max_memory_gb, average_time in zip(
+            self.algorithm_selectable_gpu_type_choices_for_phases,
+            self.algorithm_maximum_settable_memory_gb_for_phases,
+            self.inference_time_average_minutes_for_phases,
+            strict=True,
+        ):
+            executors = [
+                import_string(settings.COMPONENTS_DEFAULT_BACKEND)(
+                    job_id="",
+                    exec_image_repo_tag="",
+                    memory_limit=max_memory_gb,
+                    time_limit=average_time,
+                    requires_gpu_type=gpu_type,
+                    use_warm_pool=False,
+                )
+                for gpu_type in gpu_choices
+            ]
+            usd_cents_per_hour = max(
+                executor.usd_cents_per_hour for executor in executors
             )
-            for gpu_type in self.algorithm_selectable_gpu_type_choices
+            costs_for_phases.append(
+                usd_cents_per_hour
+                * settings.COMPONENTS_USD_TO_EUR
+                * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
+            )
+        return costs_for_phases
+
+    @cached_property
+    def compute_costs_euros_per_hour_for_phases(self):
+        return [
+            euro_cents_per_hour / 100
+            for euro_cents_per_hour in self.compute_costs_euro_cents_per_hour_for_phases
         ]
-        usd_cents_per_hour = max(
-            executor.usd_cents_per_hour for executor in executors
-        )
-        return (
-            usd_cents_per_hour
-            * settings.COMPONENTS_USD_TO_EUR
-            * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
-        )
-
-    @property
-    def compute_costs_euros_per_hour(self):
-        return self.compute_costs_euro_cents_per_hour / 100
-
-    def get_compute_costs_euros(self, duration):
-        return (
-            math.ceil(
-                self.compute_costs_euro_cents_per_hour
-                * duration.total_seconds()
-                / 3600
-            )
-            / 100
-        )
 
     @property
     def storage_costs_euros_per_gb(self):
@@ -1328,64 +1425,50 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             * settings.GIGABYTE
         )
 
-    def get_storage_costs_euros(self, size_bytes):
-        return (
-            math.ceil(
-                self.storage_costs_euros_per_gb
-                * 100
-                * size_bytes
-                / settings.GIGABYTE
+    def get_storage_costs_euros(self, size_gb):
+        return math.ceil(self.storage_costs_euros_per_gb * 100 * size_gb) / 100
+
+    @cached_property
+    def compute_costs_euros_for_phases(self):
+        return [
+            (
+                math.ceil(
+                    euro_cents_per_hour * compute_time.total_seconds() / 3600
+                )
+                / 100
             )
-            / 100
-        )
+            for euro_cents_per_hour, compute_time in zip(
+                self.compute_costs_euro_cents_per_hour_for_phases,
+                self.compute_time_for_phases,
+                strict=True,
+            )
+        ]
 
-    @property
-    def phase_1_data_storage_costs_euros(self):
-        return self.get_storage_costs_euros(
-            self.phase_1_data_storage_size_bytes
-        )
+    @cached_property
+    def data_storage_costs_euros_for_phases(self):
+        return [
+            self.get_storage_costs_euros(size_gb)
+            for size_gb in self.data_storage_size_gb_for_phases
+        ]
 
-    @property
-    def phase_2_data_storage_costs_euros(self):
-        return self.get_storage_costs_euros(
-            self.phase_2_data_storage_size_bytes
-        )
+    @cached_property
+    def docker_storage_costs_euros_for_phases(self):
+        return [
+            self.get_storage_costs_euros(size_gb)
+            for size_gb in self.docker_storage_size_gb_for_phases
+        ]
 
-    @property
-    def phase_1_compute_costs_euros(self):
-        return self.get_compute_costs_euros(self.phase_1_compute_time)
-
-    @property
-    def phase_2_compute_costs_euros(self):
-        return self.get_compute_costs_euros(self.phase_2_compute_time)
-
-    @property
-    def phase_1_docker_storage_costs_euros(self):
-        return self.get_storage_costs_euros(
-            self.phase_1_docker_storage_size_bytes
-        )
-
-    @property
-    def phase_2_docker_storage_costs_euros(self):
-        return self.get_storage_costs_euros(
-            self.phase_2_docker_storage_size_bytes
-        )
-
-    @property
-    def phase_1_total_euros(self):
-        return (
-            self.phase_1_data_storage_costs_euros
-            + self.phase_1_compute_costs_euros
-            + self.phase_1_docker_storage_costs_euros
-        )
-
-    @property
-    def phase_2_total_euros(self):
-        return (
-            self.phase_2_data_storage_costs_euros
-            + self.phase_2_compute_costs_euros
-            + self.phase_2_docker_storage_costs_euros
-        )
+    @cached_property
+    def total_euros_for_phases(self):
+        return [
+            compute_costs + data_storage_costs + docker_storage_costs
+            for compute_costs, data_storage_costs, docker_storage_costs in zip(
+                self.compute_costs_euros_for_phases,
+                self.data_storage_costs_euros_for_phases,
+                self.docker_storage_costs_euros_for_phases,
+                strict=True,
+            )
+        ]
 
     @cached_property
     def base_cost_euros(self):
@@ -1401,18 +1484,18 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @property
     def total_storage_costs_euros(self):
-        return (
-            self.phase_1_data_storage_costs_euros
-            + self.phase_2_data_storage_costs_euros
-            + self.phase_1_docker_storage_costs_euros
-            + self.phase_2_docker_storage_costs_euros
+        return sum(
+            data_storage_costs + docker_storage_costs
+            for data_storage_costs, docker_storage_costs in zip(
+                self.data_storage_costs_euros_for_phases,
+                self.docker_storage_costs_euros_for_phases,
+                strict=True,
+            )
         )
 
     @property
     def total_compute_costs_euros(self):
-        return (
-            self.phase_1_compute_costs_euros + self.phase_2_compute_costs_euros
-        )
+        return sum(self.compute_costs_euros_for_phases)
 
     @property
     def total_compute_and_storage_costs_euros(self):
