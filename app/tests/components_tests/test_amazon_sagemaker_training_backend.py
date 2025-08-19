@@ -392,7 +392,7 @@ def test_set_task_logs(settings):
                 "logStreamName": f"localhost-A-{pk}/i-whatever",
                 "limit": LOGLINES,
                 "startFromHead": False,
-                "endTime": 1654767481000,
+                "endTime": 1654767781000,
             },
         )
         executor._set_task_logs(
@@ -594,6 +594,7 @@ def test_handle_stopped_event(settings):
                 "logStreamName": f"localhost-A-{pk}/i-whatever",
                 "limit": LOGLINES,
                 "startFromHead": False,
+                "endTime": 1654767781000,
             },
         )
 
@@ -602,6 +603,7 @@ def test_handle_stopped_event(settings):
                 event={
                     "TrainingJobStatus": "Stopped",
                     "SecondaryStatus": "Stopped",
+                    "TrainingEndTime": 1654767481000,
                 }
             )
 
