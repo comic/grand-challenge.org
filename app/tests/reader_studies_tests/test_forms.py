@@ -791,7 +791,7 @@ def test_reader_study_copy_and_non_copy_fields(client):
 
         if field_name == "readerstudygroupobjectpermission":
             assert value_in_copy.count() == 10
-            assert set(value_in_copy.all()) != set(original_value.all())
+            assert set(value_in_copy.all()).isdisjoint(original_value.all())
         else:
             assert_value_not_copied(field, original_value, value_in_copy)
 
@@ -994,7 +994,7 @@ def test_reader_study_copy_questions_copy_fields_and_non_copy_fields(client):
 
         if field_name == "questiongroupobjectpermission":
             assert value_in_copy.count() == 2
-            assert set(value_in_copy.all()) != set(original_value.all())
+            assert set(value_in_copy.all()).isdisjoint(original_value.all())
         else:
             assert_value_not_copied(field, original_value, value_in_copy)
 
