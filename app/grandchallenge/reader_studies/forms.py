@@ -147,6 +147,7 @@ class ReaderStudyCreateForm(
             "enable_autosaving",
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
+            "end_of_study_text_markdown",
         )
         help_texts = READER_STUDY_HELP_TEXTS
         widgets = {
@@ -252,6 +253,7 @@ class ReaderStudyUpdateForm(
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
             "case_text",
+            "end_of_study_text_markdown",
         )
         widgets = {
             "case_text": JSONEditorWidget(schema=CASE_TEXT_SCHEMA),
@@ -263,6 +265,7 @@ class ReaderStudyUpdateForm(
             "organizations": Select2MultipleWidget,
             "optional_hanging_protocols": Select2MultipleWidget,
             "view_content": JSONEditorWidget(schema=VIEW_CONTENT_SCHEMA),
+            "end_of_study_text_markdown": MarkdownEditorInlineWidget,
         }
         help_texts = {
             **READER_STUDY_HELP_TEXTS,
