@@ -80,7 +80,7 @@ Based on the following information provided by the challenge requester:
                 <td class="font-weight-bold">
                     Capacity reservation
                 </td>
-                <td><small class="text-dark">Capacity reservation units for data storage, compute storage and container registry storage.</small></td>
+                <td><small class="text-dark">Capacity reservation units for compute and storage costs.</small></td>
                 <td class="text-right">{{ object.capacity_reservation_euros_per_unit|euro_no_cents }}</td>
                 <td>{{ object.capacity_reservation_units }}</td>
                 <td>Units</td>
@@ -149,16 +149,20 @@ Based on the following information provided by the challenge requester:
                     <td class="text-right">{{ phase.total_euros|euro }}</td>
                 </tr>
                 <tr>
-                    <td>&nbsp;</td>
+                    <td colspan="6">&nbsp;</td>
                 </tr>
             {% endfor %}
-            <tr class="table-secondary">
-                <td class="font-weight-bold">Total</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td class="text-right font-weight-bold">{{ object.total_compute_and_storage_costs_euros|euro }}</td>
+            <tr>
+                <td class="font-weight-bold" colspan="5">Total compute</td>
+                <td class="text-right font-weight-bold">{{ object.total_compute_costs_euros|euro }}</td>
+            </tr>
+            <tr>
+                <td class="font-weight-bold" colspan="5">Total storage</td>
+                <td class="text-right font-weight-bold">{{ object.total_storage_costs_euros|euro }}</td>
+            </tr>
+            <tr class="table-light">
+                <td class="font-weight-bold border-top border-dark" colspan="5">Total</td>
+                <td class="text-right font-weight-bold border-top border-dark">{{ object.total_compute_and_storage_costs_euros|euro }}</td>
             </tr>
             <tr class="table-info">
                 <td class="font-weight-bold">Capacity reservation</td>
