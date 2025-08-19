@@ -4,11 +4,7 @@ import pytest
 from django.core import mail
 from django.utils.timezone import datetime, timedelta
 
-from grandchallenge.challenges.models import (
-    Challenge,
-    ChallengeRequest,
-    OnboardingTask,
-)
+from grandchallenge.challenges.models import Challenge, OnboardingTask
 from grandchallenge.challenges.tasks import (
     send_onboarding_task_reminder_emails,
     update_challenge_compute_costs,
@@ -66,118 +62,6 @@ def test_challenge_creation_from_request():
     assert challenge.short_name == challenge_request.short_name
     # requester is admin of challenge
     assert challenge_request.creator in challenge.admins_group.user_set.all()
-
-
-def test_challenge_request_budget_calculation(settings):
-    settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
-    challenge_request = ChallengeRequest(
-        expected_number_of_teams=10,
-        inference_time_limit_in_minutes=10,
-        average_size_of_test_image_in_mb=100,
-        phase_1_number_of_submissions_per_team=10,
-        phase_2_number_of_submissions_per_team=100,
-        phase_1_number_of_test_images=100,
-        phase_2_number_of_test_images=500,
-        number_of_tasks=1,
-    )
-
-    assert challenge_request.costs_for_phases == [
-        {
-            "name": "Phase 1",
-            "number_of_submissions_per_team": 10,
-            "number_of_test_images": 100,
-            "compute_time": timedelta(minutes=10) * 10 * 10 * 100,
-            "compute_costs_euros": 1958.11,
-            "docker_storage_size_gb": 6 * 10 * 10,
-            "docker_storage_costs_euros": 403.21,
-            "data_storage_size_gb": 100 * 100 / 1024,
-            "data_storage_costs_euros": 6.57,
-            "total_euros": 2367.89,
-        },
-        {
-            "name": "Phase 2",
-            "number_of_submissions_per_team": 100,
-            "number_of_test_images": 500,
-            "compute_time": timedelta(minutes=10) * 10 * 100 * 500,
-            "compute_costs_euros": 97905.48,
-            "docker_storage_size_gb": 6 * 10 * 100,
-            "docker_storage_costs_euros": 4032.05,
-            "data_storage_size_gb": 500 * 100 / 1024,
-            "data_storage_costs_euros": 32.82,
-            "total_euros": 101970.35,
-        },
-    ]
-    assert (
-        pytest.approx(
-            challenge_request.total_compute_and_storage_costs_euros, abs=0.01
-        )
-        == 104338.24
-    )
-
-    for phase in challenge_request.costs_for_phases:
-        assert (
-            phase["total_euros"]
-            == phase["compute_costs_euros"]
-            + phase["docker_storage_costs_euros"]
-            + phase["data_storage_costs_euros"]
-        )
-
-    assert (
-        pytest.approx(challenge_request.total_compute_and_storage_costs_euros)
-        == challenge_request.costs_for_phases[0]["total_euros"]
-        + challenge_request.costs_for_phases[1]["total_euros"]
-    )
-
-    challenge_request.number_of_tasks = 2
-
-    del challenge_request.costs_for_phases
-
-    assert challenge_request.costs_for_phases == [
-        {
-            "name": "Phase 1",
-            "number_of_submissions_per_team": 10,
-            "number_of_test_images": 100,
-            "compute_time": timedelta(minutes=10) * 10 * 10 * 100 * 2,
-            "compute_costs_euros": 3916.22,
-            "docker_storage_size_gb": 6 * 10 * 10 * 2,
-            "docker_storage_costs_euros": 806.41,
-            "data_storage_size_gb": 100 * 100 / 1024 * 2,
-            "data_storage_costs_euros": 13.13,
-            "total_euros": 4735.76,
-        },
-        {
-            "name": "Phase 2",
-            "number_of_submissions_per_team": 100,
-            "number_of_test_images": 500,
-            "compute_time": timedelta(minutes=10) * 10 * 100 * 500 * 2,
-            "compute_costs_euros": 195810.96,
-            "docker_storage_size_gb": 6 * 10 * 100 * 2,
-            "docker_storage_costs_euros": 8064.09,
-            "data_storage_size_gb": 500 * 100 / 1024 * 2,
-            "data_storage_costs_euros": 65.63,
-            "total_euros": 203940.68,
-        },
-    ]
-    assert (
-        pytest.approx(
-            challenge_request.total_compute_and_storage_costs_euros, abs=0.01
-        )
-        == 208676.44
-    )
-
-    for phase in challenge_request.costs_for_phases:
-        assert (
-            phase["total_euros"]
-            == phase["compute_costs_euros"]
-            + phase["docker_storage_costs_euros"]
-            + phase["data_storage_costs_euros"]
-        )
-
-    assert (
-        pytest.approx(challenge_request.total_compute_and_storage_costs_euros)
-        == challenge_request.costs_for_phases[0]["total_euros"]
-        + challenge_request.costs_for_phases[1]["total_euros"]
-    )
 
 
 @pytest.mark.django_db

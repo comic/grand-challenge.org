@@ -3,7 +3,6 @@ import datetime
 import pytest
 
 from grandchallenge.challenges.forms import (
-    HTMX_BLANK_CHOICE_KEY,
     ChallengeRequestBudgetUpdateForm,
     ChallengeRequestForm,
     ChallengeRequestStatusUpdateForm,
@@ -96,35 +95,28 @@ def test_budget_update_form():
     challenge_request = ChallengeRequestFactory()
     # all budget fields need to be filled
     data = {
-        "expected_number_of_teams": 100,
-        "average_size_of_test_image_in_mb": 10,
-        "phase_1_number_of_submissions_per_team": 10,
-        "phase_2_number_of_submissions_per_team": 1,
-        "phase_1_number_of_test_images": 100,
-        "phase_2_number_of_test_images": 500,
-        "number_of_tasks": 1,
+        "number_of_teams_for_phases": [100, 100],
+        "average_size_test_image_mb_for_phases": [10, 10],
+        "number_of_submissions_per_team_for_phases": [10, 1],
+        "number_of_test_images_for_phases": [100, 500],
     }
     form = ChallengeRequestBudgetUpdateForm(
         data=data, instance=challenge_request
     )
     assert not form.is_valid()
-    assert "inference_time_limit_in_minutes" in form.errors.keys()
+    assert "inference_time_average_minutes_for_phases" in form.errors.keys()
 
     data2 = {
-        "expected_number_of_teams": 100,
-        "inference_time_limit_in_minutes": 10,
-        "algorithm_selectable_gpu_type_choices": [
-            HTMX_BLANK_CHOICE_KEY,
-            "A10G",
-            "T4",
+        "number_of_teams_for_phases": [100, 100],
+        "inference_time_average_minutes_for_phases": [10, 10],
+        "algorithm_selectable_gpu_type_choices_for_phases": [
+            ["", "A10G", "T4"],
+            ["", "A10G", "T4"],
         ],
-        "algorithm_maximum_settable_memory_gb": 32,
-        "average_size_of_test_image_in_mb": 10,
-        "phase_1_number_of_submissions_per_team": 10,
-        "phase_2_number_of_submissions_per_team": 1,
-        "phase_1_number_of_test_images": 100,
-        "phase_2_number_of_test_images": 500,
-        "number_of_tasks": 1,
+        "algorithm_maximum_settable_memory_gb_for_phases": [32, 32],
+        "average_size_test_image_mb_for_phases": [10, 10],
+        "number_of_submissions_per_team_for_phases": [10, 1],
+        "number_of_test_images_for_phases": [100, 500],
     }
     form2 = ChallengeRequestBudgetUpdateForm(
         data=data2, instance=challenge_request
