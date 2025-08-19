@@ -1575,39 +1575,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     def total_challenge_cost(self):
         return self.base_cost_euros + self.capacity_reservation_euros
 
-    @cached_property
-    def costs_for_phases(self):
-        return [
-            {
-                "name": "Phase 1",
-                "number_of_submissions_per_team": self.phase_1_number_of_submissions_per_team,
-                "number_of_test_images": self.phase_1_number_of_test_images,
-                "compute_time": self.phase_1_compute_time,
-                "compute_costs_euros": self.phase_1_compute_costs_euros,
-                "docker_storage_size_gb": self.phase_1_docker_storage_size_bytes
-                / settings.GIGABYTE,
-                "docker_storage_costs_euros": self.phase_1_docker_storage_costs_euros,
-                "data_storage_size_gb": self.phase_1_data_storage_size_bytes
-                / settings.GIGABYTE,
-                "data_storage_costs_euros": self.phase_1_data_storage_costs_euros,
-                "total_euros": self.phase_1_total_euros,
-            },
-            {
-                "name": "Phase 2",
-                "number_of_submissions_per_team": self.phase_2_number_of_submissions_per_team,
-                "number_of_test_images": self.phase_2_number_of_test_images,
-                "compute_time": self.phase_2_compute_time,
-                "compute_costs_euros": self.phase_2_compute_costs_euros,
-                "docker_storage_size_gb": self.phase_2_docker_storage_size_bytes
-                / settings.GIGABYTE,
-                "docker_storage_costs_euros": self.phase_2_docker_storage_costs_euros,
-                "data_storage_size_gb": self.phase_2_data_storage_size_bytes
-                / settings.GIGABYTE,
-                "data_storage_costs_euros": self.phase_2_data_storage_costs_euros,
-                "total_euros": self.phase_2_total_euros,
-            },
-        ]
-
 
 class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset({"view_challengerequest"})
