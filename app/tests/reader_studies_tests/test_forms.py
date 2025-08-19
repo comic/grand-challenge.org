@@ -582,20 +582,14 @@ reader_study_non_copy_fields = {
 }
 
 
-def test_reader_study_fields_only_once_defined_in_copy_sets():
-    intersection = reader_study_copy_fields & reader_study_optional_copy_fields
-
-    assert not intersection
-
-    intersection = reader_study_copy_fields & reader_study_non_copy_fields
-
-    assert not intersection
-
-    intersection = (
-        reader_study_optional_copy_fields & reader_study_non_copy_fields
+def test_reader_study_fields_copy_sets_disjoint():
+    assert reader_study_copy_fields.isdisjoint(
+        reader_study_optional_copy_fields
     )
-
-    assert not intersection
+    assert reader_study_copy_fields.isdisjoint(reader_study_non_copy_fields)
+    assert reader_study_optional_copy_fields.isdisjoint(
+        reader_study_non_copy_fields
+    )
 
 
 def test_all_reader_study_fields_defined_in_copy_sets():
@@ -623,10 +617,8 @@ question_non_copy_fields = {
 }
 
 
-def test_question_fields_only_once_defined_in_copy_sets():
-    intersection = question_copy_fields & question_non_copy_fields
-
-    assert not intersection
+def test_question_fields_copy_sets_disjoint():
+    assert question_copy_fields.isdisjoint(question_non_copy_fields)
 
 
 def test_all_question_fields_defined_in_copy_sets():
