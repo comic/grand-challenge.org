@@ -1442,6 +1442,22 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         )
 
     @property
+    def capacity_reservation_compute_euros(self):
+        return (
+            self.total_compute_costs_euros
+            / self.total_compute_and_storage_costs_euros
+            * self.capacity_reservation_euros
+        )
+
+    @property
+    def capacity_reservation_storage_euros(self):
+        return (
+            self.total_storage_costs_euros
+            / self.total_compute_and_storage_costs_euros
+            * self.capacity_reservation_euros
+        )
+
+    @property
     def total_challenge_cost(self):
         return self.base_cost_euros + self.capacity_reservation_euros
 

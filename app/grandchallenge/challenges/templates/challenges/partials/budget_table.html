@@ -171,3 +171,20 @@ Based on the following information provided by the challenge requester:
         </tbody>
     </table>
 </div>
+
+<h4>Compute/storage split for budget</h4>
+
+<div class="table-responsive">
+    <table class="table table-hover table-sm">
+        <tbody>
+            <tr>
+                <td>Compute</td>
+                <td class="text-right">€ {{ object.capacity_reservation_compute_euros|floatformat:0 }}</td>
+            </tr>
+            <tr>
+                <td>Storage</td>
+                <td class="text-right">€ {{ object.capacity_reservation_storage_euros|floatformat:0 }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
