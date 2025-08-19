@@ -497,7 +497,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         job_status = self._get_job_status(event=event)
 
         self._set_duration(event=event)
-        self._set_task_logs()
+        self._set_task_logs(event=event)
         self._set_runtime_metrics(event=event)
 
         if job_status == "Completed":
@@ -563,7 +563,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         else:
             raise LogStreamNotFound("Log stream not found")
 
-    def _set_task_logs(self):
+    def _set_task_logs(self, *, event):
         try:
             log_stream_name = self._get_log_stream_name(data_log=False)
         except LogStreamNotFound as error:
@@ -575,6 +575,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             logStreamName=log_stream_name,
             limit=LOGLINES,
             startFromHead=False,
+            endTime=self._get_end_time(event=event),
         )
         stdout = []
         stderr = []
