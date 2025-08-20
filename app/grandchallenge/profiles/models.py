@@ -1,4 +1,4 @@
-from hashlib import md5
+import hashlib
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -113,13 +113,10 @@ class UserProfile(models.Model):
             return self.get_gravatar_url(size=64)
 
     def get_gravatar_url(self, *, size=512):
-        gravatar_url = (
-            "https://www.gravatar.com/avatar/"
-            + md5(self.user.email.lower().encode("utf-8")).hexdigest()
-            + "?"
-        )
-        gravatar_url += urlencode({"d": "identicon", "s": size})
-        return gravatar_url
+        email_encoded = self.user.email.lower().encode("utf-8")
+        email_hash = hashlib.sha256(email_encoded).hexdigest()
+        params = urlencode({"d": "identicon", "s": str(size)})
+        return f"https://www.gravatar.com/avatar/{email_hash}?{params}"
 
     @property
     def has_unread_notifications(self):
