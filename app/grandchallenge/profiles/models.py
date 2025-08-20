@@ -1,4 +1,4 @@
-from hashlib import md5
+import hashlib
 from urllib.parse import urlencode
 
 from django.conf import settings
@@ -106,16 +106,17 @@ class UserProfile(models.Model):
         )
 
     def get_mugshot_url(self):
+        """Returns a small profile image"""
         try:
             return self.mugshot.x02.url
         except AttributeError:
-            gravatar_url = (
-                "https://www.gravatar.com/avatar/"
-                + md5(self.user.email.lower().encode("utf-8")).hexdigest()
-                + "?"
-            )
-            gravatar_url += urlencode({"d": "identicon", "s": "64"})
-            return gravatar_url
+            return self.get_gravatar_url(size=64)
+
+    def get_gravatar_url(self, *, size=512):
+        email_encoded = self.user.email.lower().encode("utf-8")
+        email_hash = hashlib.sha256(email_encoded).hexdigest()
+        params = urlencode({"d": "identicon", "s": str(size)})
+        return f"https://www.gravatar.com/avatar/{email_hash}?{params}"
 
     @property
     def has_unread_notifications(self):
