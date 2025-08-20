@@ -78,6 +78,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.cases.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span><span class="p">,</span> <span class="n">RawImageUploadSession</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.charts.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">components_line</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.backends.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">CINotAllowedException</span><span class="p">,</span>
     <span class="n">CIVNotEditableException</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -2562,6 +2563,18 @@
             <span class="k">raise</span> <span class="n">CIVNotEditableException</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> is not editable. CIVs cannot be added or removed from it.&quot;</span><span class="p">,</span>
             <span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">civ_data</span><span class="o">.</span><span class="n">interface_slug</span>
+                <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_object</span><span class="o">.</span><span class="n">allowed_socket_slugs</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="n">CINotAllowedException</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Socket </span><span class="si">{</span><span class="n">civ_data</span><span class="o">.</span><span class="n">interface_slug</span><span class="si">!r}</span><span class="s2"> is not allowed &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;for this </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">base_object</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
 
         <span class="n">ci</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">interface_slug</span><span class="p">)</span>
         <span class="n">current_civ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_current_value_for_interface</span><span class="p">(</span>
