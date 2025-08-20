@@ -405,7 +405,7 @@
             <span class="p">(</span><span class="s2">&quot;view_leaderboard&quot;</span><span class="p">,</span> <span class="s2">&quot;Can view leaderboard&quot;</span><span class="p">),</span>
         <span class="p">]</span>
 
-    <span class="n">copy_fields</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">copy_fields</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;workstation&quot;</span><span class="p">,</span>
         <span class="s2">&quot;workstation_config&quot;</span><span class="p">,</span>
         <span class="s2">&quot;logo&quot;</span><span class="p">,</span>
@@ -420,7 +420,24 @@
         <span class="s2">&quot;allow_case_navigation&quot;</span><span class="p">,</span>
         <span class="s2">&quot;allow_show_all_annotations&quot;</span><span class="p">,</span>
         <span class="s2">&quot;access_request_handling&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
+        <span class="s2">&quot;public&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;leaderboard_accessible_to_readers&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;publications&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;modalities&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;structures&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;organizations&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">optional_copy_fields</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;editors_group&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;readers_group&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;questions&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;display_sets&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;case_text&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;view_content&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;hanging_protocol&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;optional_hanging_protocols&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -1551,6 +1568,31 @@
                 <span class="s2">&quot;Can add interactive algorithm to question&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">]</span>
+
+    <span class="n">copy_fields</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;question_text&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;help_text&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;answer_type&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;image_port&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;default_annotation_color&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;required&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;direction&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;scoring_function&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;order&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;interface&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;look_up_table&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;overlay_segments&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;widget&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;interactive_algorithm&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;answer_max_value&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;answer_min_value&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;answer_step_size&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;answer_min_length&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;answer_max_length&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;answer_match_pattern&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;empty_answer_confirmation&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;empty_answer_confirmation_label&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
