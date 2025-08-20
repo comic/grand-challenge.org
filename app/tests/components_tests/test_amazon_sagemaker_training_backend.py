@@ -17,7 +17,6 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     TaskCancelled,
 )
-from grandchallenge.components.backends.utils import LOGLINES
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.models import Evaluation, Method
 
@@ -385,14 +384,41 @@ def test_set_task_logs(settings):
                         ),
                         "timestamp": 1654683838000,
                     },
-                ]
+                ],
+                "nextBackwardToken": "foo",
             },
             expected_params={
                 "logGroupName": "/aws/sagemaker/TrainingJobs",
                 "logStreamName": f"localhost-A-{pk}/i-whatever",
-                "limit": LOGLINES,
                 "startFromHead": False,
-                "endTime": 1654767781000,
+                "startTime": 1654767467000,
+                "endTime": 1654767481000,
+            },
+        )
+        logs.add_response(
+            method="get_log_events",
+            service_response={
+                "events": [
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "first message",
+                                "source": "stdout",
+                                "internal": False,
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                ],
+                "nextBackwardToken": "foo",
+            },
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TrainingJobs",
+                "logStreamName": f"localhost-A-{pk}/i-whatever",
+                "startFromHead": False,
+                "startTime": 1654767467000,
+                "endTime": 1654767481000,
+                "nextToken": "foo",
             },
         )
         executor._set_task_logs(
@@ -406,7 +432,10 @@ def test_set_task_logs(settings):
             }
         )
 
-    assert executor.stdout == "2022-06-08T10:23:58+00:00 hello from stdout"
+    assert (
+        executor.stdout
+        == "2022-06-08T10:23:58+00:00 first message\n2022-06-08T10:23:58+00:00 hello from stdout"
+    )
     assert executor.stderr == "2022-06-08T10:23:58+00:00 hello from stderr"
 
 
@@ -573,7 +602,49 @@ def test_handle_stopped_event(settings):
         use_warm_pool=False,
     )
 
-    with Stubber(executor._logs_client) as logs:
+    with (
+        Stubber(executor._logs_client) as logs,
+        Stubber(executor._cloudwatch_client) as cloudwatch,
+    ):
+        cloudwatch.add_response(
+            method="get_metric_data",
+            service_response={
+                "MetricDataResults": [
+                    {
+                        "Id": "q",
+                        "Label": "CPUUtilization",
+                        "Timestamps": [
+                            datetime(2022, 6, 9, 9, 38, tzinfo=tzlocal()),
+                            datetime(2022, 6, 9, 9, 37, tzinfo=tzlocal()),
+                        ],
+                        "Values": [0.677884, 0.130367],
+                        "StatusCode": "Complete",
+                    },
+                    {
+                        "Id": "q",
+                        "Label": "MemoryUtilization",
+                        "Timestamps": [
+                            datetime(2022, 6, 9, 9, 38, tzinfo=tzlocal()),
+                            datetime(2022, 6, 9, 9, 37, tzinfo=tzlocal()),
+                        ],
+                        "Values": [1.14447, 0.875619],
+                        "StatusCode": "Complete",
+                    },
+                ]
+            },
+            expected_params={
+                "EndTime": datetime(2022, 6, 9, 9, 43, 1, tzinfo=timezone.utc),
+                "MetricDataQueries": [
+                    {
+                        "Expression": f"SEARCH('{{/aws/sagemaker/TrainingJobs,Host}} Host=localhost-A-{pk}/algo-1', 'Average', 60)",
+                        "Id": "q",
+                    }
+                ],
+                "StartTime": datetime(
+                    2022, 6, 9, 9, 36, 47, tzinfo=timezone.utc
+                ),
+            },
+        )
         logs.add_response(
             method="describe_log_streams",
             service_response={
@@ -588,13 +659,25 @@ def test_handle_stopped_event(settings):
         )
         logs.add_response(
             method="get_log_events",
-            service_response={"events": []},
+            service_response={"events": [], "nextBackwardToken": "foo"},
             expected_params={
                 "logGroupName": "/aws/sagemaker/TrainingJobs",
                 "logStreamName": f"localhost-A-{pk}/i-whatever",
-                "limit": LOGLINES,
                 "startFromHead": False,
-                "endTime": 1654767781000,
+                "startTime": 1654767467000,
+                "endTime": 1654767481000,
+            },
+        )
+        logs.add_response(
+            method="get_log_events",
+            service_response={"events": [], "nextBackwardToken": "foo"},
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TrainingJobs",
+                "logStreamName": f"localhost-A-{pk}/i-whatever",
+                "startFromHead": False,
+                "startTime": 1654767467000,
+                "endTime": 1654767481000,
+                "nextToken": "foo",
             },
         )
 
@@ -603,7 +686,12 @@ def test_handle_stopped_event(settings):
                 event={
                     "TrainingJobStatus": "Stopped",
                     "SecondaryStatus": "Stopped",
+                    "TrainingStartTime": 1654767467000,
                     "TrainingEndTime": 1654767481000,
+                    "ResourceConfig": {
+                        "InstanceType": "ml.m7i.large",
+                        "InstanceCount": 1,
+                    },
                 }
             )
 

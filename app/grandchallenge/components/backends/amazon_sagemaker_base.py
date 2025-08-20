@@ -564,34 +564,15 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             raise LogStreamNotFound("Log stream not found")
 
     def _set_task_logs(self, *, event):
-        try:
-            log_stream_name = self._get_log_stream_name(data_log=False)
-        except LogStreamNotFound as error:
-            logger.warning(str(error))
-            return
-
-        end_time = self._get_end_time(event=event)
-
-        if end_time is not None:
-            # Add 5 minutes buffer time to allow metrics to be delivered
-            end_time += 5 * 60 * 1000
-
-        response = self._logs_client.get_log_events(
-            logGroupName=self._log_group_name,
-            logStreamName=log_stream_name,
-            limit=LOGLINES,
-            startFromHead=False,
-            endTime=end_time,
-        )
         stdout = []
         stderr = []
 
-        for event in response["events"]:
+        for log_event in self._get_log_events(event=event):
             try:
                 parsed_log = parse_structured_log(
-                    log=event["message"].replace("\x00", "")
+                    log=log_event["message"].replace("\x00", "")
                 )
-                timestamp = ms_timestamp_to_datetime(event["timestamp"])
+                timestamp = ms_timestamp_to_datetime(log_event["timestamp"])
             except (JSONDecodeError, KeyError, ValueError):
                 logger.warning("Could not parse log")
                 continue
@@ -605,8 +586,47 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                 else:
                     logger.error("Invalid source")
 
-        self._stdout = stdout
-        self._stderr = stderr
+        self._stdout = stdout[-LOGLINES:] if len(stdout) > LOGLINES else stdout
+        self._stderr = stderr[-LOGLINES:] if len(stderr) > LOGLINES else stderr
+
+    def _get_log_events(self, *, event):
+        log_events = []
+
+        try:
+            log_stream_name = self._get_log_stream_name(data_log=False)
+        except LogStreamNotFound as error:
+            logger.warning(str(error))
+            return log_events
+
+        n_calls = 0
+        next_token = None
+
+        call_args = {
+            "logGroupName": self._log_group_name,
+            "logStreamName": log_stream_name,
+            "startFromHead": False,
+            "startTime": self._get_start_time(event=event),
+            "endTime": self._get_end_time(event=event),
+        }
+
+        while n_calls < 10:
+            if next_token:
+                call_args["nextToken"] = next_token
+
+            response = self._logs_client.get_log_events(**call_args)
+            n_calls += 1
+
+            # Prepend the new events as we are working backwards with
+            # nextBackwardToken and startFromHead = False
+            log_events = response["events"] + log_events
+            new_token = response["nextBackwardToken"]
+
+            if new_token == next_token:
+                break
+            else:
+                next_token = new_token
+
+        return log_events
 
     def _set_runtime_metrics(self, *, event):
         try:

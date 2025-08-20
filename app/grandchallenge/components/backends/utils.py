@@ -14,7 +14,7 @@ from django.utils._os import safe_join
 logger = logging.getLogger(__name__)
 
 
-LOGLINES = 2000  # The number of loglines to keep
+LOGLINES = 500  # The number of loglines to keep
 
 # Docker logline error message with optional RFC3339 timestamp
 LOGLINE_REGEX = r"^(?P<timestamp>([\d]+)-(0[1-9]|1[012])-(0[1-9]|[12][\d]|3[01])[Tt]([01][\d]|2[0-3]):([0-5][\d]):([0-5][\d]|60)(\.[\d]+)?(([Zz])|([\+|\-]([01][\d]|2[0-3]):[0-5][\d])))?(?P<error_message>.*)$"
