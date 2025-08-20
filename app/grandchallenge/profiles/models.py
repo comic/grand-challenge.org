@@ -106,16 +106,20 @@ class UserProfile(models.Model):
         )
 
     def get_mugshot_url(self):
+        """Returns a small profile image"""
         try:
             return self.mugshot.x02.url
         except AttributeError:
-            gravatar_url = (
-                "https://www.gravatar.com/avatar/"
-                + md5(self.user.email.lower().encode("utf-8")).hexdigest()
-                + "?"
-            )
-            gravatar_url += urlencode({"d": "identicon", "s": "64"})
-            return gravatar_url
+            return self.get_gravatar_url(size=64)
+
+    def get_gravatar_url(self, *, size=512):
+        gravatar_url = (
+            "https://www.gravatar.com/avatar/"
+            + md5(self.user.email.lower().encode("utf-8")).hexdigest()
+            + "?"
+        )
+        gravatar_url += urlencode({"d": "identicon", "s": size})
+        return gravatar_url
 
     @property
     def has_unread_notifications(self):

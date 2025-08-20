@@ -6,7 +6,7 @@
              {{ profile.mugshot.x15.url }} 1.5x,
              {{ profile.mugshot.x20.url }} 2x"
             {% else %}
-         src="{{ profile.get_mugshot_url }}"
+         src="{{ profile.get_gravatar_url }}"
             {% endif %}
          style="display: block; margin: auto;"
          alt="Your mugshot"/>
