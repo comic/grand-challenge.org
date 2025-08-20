@@ -342,6 +342,7 @@ class ArchiveUploadSessionCreate(
                     kwargs={"archive_pk": self.archive.pk}, immutable=True
                 ),
                 "interface_viewname": "components:component-interface-list-archives",
+                "base_obj": self.archive,
             }
         )
         return kwargs

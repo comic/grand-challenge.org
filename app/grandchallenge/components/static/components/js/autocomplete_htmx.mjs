@@ -50,11 +50,11 @@ htmx.onLoad(elem => {
         );
     }
 
-    const objectSlugVal = document.getElementById("objectSlug").dataset.slug;
-    const objectModel = document.getElementById("modelName").dataset.modelName;
+    const objectSlug = document.getElementById("objectSlug").dataset.objectSlug;
+    const modelName = document.getElementById("modelName").dataset.modelName;
     vals.push(
-        `{"type": "const", "dst": "object", "val": "${objectSlugVal}"}`,
-        `{"type": "const", "dst": "model", "val": "${objectModel}"}`,
+        `{"type": "const", "dst": "object_slug", "val": "${objectSlug}"}`,
+        `{"type": "const", "dst": "model_name", "val": "${modelName}"}`,
     );
 
     for (const script of dalForwardConfScripts) {

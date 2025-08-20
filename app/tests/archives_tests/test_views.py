@@ -15,6 +15,7 @@ from grandchallenge.components.models import ComponentInterface, InterfaceKind
 from grandchallenge.notifications.models import Notification
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
+from tests.algorithms_tests.factories import AlgorithmInterfaceFactory
 from tests.archives_tests.factories import (
     ArchiveFactory,
     ArchiveItemFactory,
@@ -27,6 +28,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.conftest import get_interface_form_data
+from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import GroupFactory, ImageFactory, UserFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 from tests.uploads_tests.factories import (
@@ -300,6 +302,82 @@ def test_api_archive_item_retrieve_permissions(client):
     )
     assert response.status_code == 200
     assert response.json()["pk"] == str(i1.pk)
+
+
+@pytest.mark.django_db
+def test_api_archive_item_allowed_sockets(
+    client, settings, django_capture_on_commit_callbacks
+):
+    # Override the celery settings
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+    item = ArchiveItemFactory(archive=archive)
+    ci_bool = ComponentInterfaceFactory(
+        kind=InterfaceKind.InterfaceKindChoices.BOOL
+    )
+    phase = PhaseFactory(archive=archive)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        response = get_view_for_user(
+            viewname="api:archives-item-detail",
+            reverse_kwargs={"pk": item.pk},
+            data={
+                "values": [
+                    {"interface": ci_bool.slug, "value": True},
+                ]
+            },
+            user=editor,
+            client=client,
+            method=client.patch,
+            content_type="application/json",
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
+
+    # User does not have access to the archive
+    assert response.status_code == 400
+    assert (
+        f"Socket {ci_bool.slug!r} is not allowed for this archive."
+        in response.json()
+    )
+    assert item.values.count() == 0
+
+    interface = AlgorithmInterfaceFactory(
+        inputs=[ci_bool],
+        outputs=[ComponentInterfaceFactory()],
+    )
+    phase.algorithm_interfaces.add(interface)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        response = get_view_for_user(
+            viewname="api:archives-item-detail",
+            reverse_kwargs={"pk": item.pk},
+            data={
+                "values": [
+                    {"interface": ci_bool.slug, "value": True},
+                ]
+            },
+            user=editor,
+            client=client,
+            method=client.patch,
+            content_type="application/json",
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+    recurse_callbacks(
+        callbacks=callbacks,
+        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    )
+
+    assert response.status_code == 200, response.content
+    assert response.json()["pk"] == str(item.pk)
+    assert item.values.count() == 1
 
 
 @pytest.mark.django_db

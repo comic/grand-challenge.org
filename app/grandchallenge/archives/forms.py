@@ -1,13 +1,15 @@
-from dal import autocomplete
+from dal import autocomplete, forward
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.forms import (
+    CharField,
     Form,
     ModelChoiceField,
     ModelForm,
     ModelMultipleChoiceField,
     TextInput,
 )
+from django.forms.widgets import HiddenInput
 from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 
@@ -187,12 +189,17 @@ class ArchiveItemsToReaderStudyForm(SaveFormInitMixin, Form):
 
 
 class AddCasesForm(UploadRawImagesForm):
+    model_name = CharField(widget=HiddenInput)
+    object_slug = CharField(widget=HiddenInput)
     socket = ModelChoiceField(
-        queryset=ComponentInterface.objects.filter(
-            kind__in=InterfaceKind.interface_type_image()
-        ).order_by("title"),
+        queryset=None,
         widget=autocomplete.ModelSelect2(
             url="components:component-interface-autocomplete",
+            forward=[
+                "model_name",
+                "object_slug",
+                forward.Const(True, "image_only"),
+            ],
             attrs={
                 "data-placeholder": "Search for a socket ...",
                 "data-minimum-input-length": 3,
@@ -202,8 +209,27 @@ class AddCasesForm(UploadRawImagesForm):
         ),
     )
 
-    def __init__(self, *args, interface_viewname, **kwargs):
+    def __init__(self, *args, base_obj, interface_viewname, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields["model_name"].initial = base_obj._meta.model_name
+        self.fields["object_slug"].initial = base_obj.slug
+
+        try:
+            socket_filter_kwargs = {"slug__in": base_obj.allowed_socket_slugs}
+        except AttributeError:
+            socket_filter_kwargs = {}
+
+        qs = (
+            ComponentInterface.objects.all()
+            .filter(
+                kind__in=InterfaceKind.interface_type_image(),
+                **socket_filter_kwargs,
+            )
+            .order_by("title")
+        )
+        self.fields["socket"].queryset = qs
+
         self.fields["socket"].help_text = format_lazy(
             (
                 'See the <a href="{}">list of sockets</a> for more '

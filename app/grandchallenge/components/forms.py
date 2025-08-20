@@ -297,8 +297,16 @@ class SingleCIVForm(Form):
     ):
         super().__init__(*args, **kwargs)
         data = kwargs.get("data")
-        qs = ComponentInterface.objects.exclude(
-            slug__in=base_obj.values_for_interfaces.keys()
+
+        try:
+            socket_filter_kwargs = {"slug__in": base_obj.allowed_socket_slugs}
+        except AttributeError:
+            socket_filter_kwargs = {}
+
+        qs = (
+            ComponentInterface.objects.all()
+            .filter(**socket_filter_kwargs)
+            .exclude(slug__in=base_obj.values_for_interfaces.keys())
         )
 
         if interface:

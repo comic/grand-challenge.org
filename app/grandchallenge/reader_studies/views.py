@@ -689,6 +689,7 @@ class AddDisplaySetsToReaderStudy(BaseAddObjectToReaderStudyMixin, CreateView):
                     immutable=True,
                 ),
                 "interface_viewname": "components:component-interface-list-reader-studies",
+                "base_obj": self.reader_study,
             }
         )
         return kwargs
