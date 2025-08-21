@@ -17,7 +17,7 @@
 <split></split>
 
 {{ object.submission.creator|user_profile_link }}
-{% if challenge.use_teams %}
+{% if challenge.use_teams and object.submission.creator %}
     {% with user_teams|get_key:object.submission.creator.username as team %}
         {% if team %}
             (<a href="{{ team.1 }}">{{ team.0 }}</a>)
