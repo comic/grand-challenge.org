@@ -1718,10 +1718,11 @@ class Submission(FieldChangeMixin, UUIDModel):
                     self.algorithm_model,
                 )
 
-        if self.phase.public:
-            assign_perm("view_submission", self.creator, self)
-        else:
-            remove_perm("view_submission", self.creator, self)
+        if self.creator:
+            if self.phase.public:
+                assign_perm("view_submission", self.creator, self)
+            else:
+                remove_perm("view_submission", self.creator, self)
 
     def get_absolute_url(self):
         return reverse(
