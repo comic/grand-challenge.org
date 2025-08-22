@@ -1295,11 +1295,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         usd_cents_per_hour = max(
             executor.usd_cents_per_hour for executor in executors
         )
-        return (
-            usd_cents_per_hour
-            * settings.COMPONENTS_USD_TO_EUR
-            * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
-        )
+        return usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR
 
     @property
     def compute_costs_euros_per_hour(self):
@@ -1319,7 +1315,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     def storage_costs_euros_per_gb(self):
         return (
             settings.CHALLENGE_NUM_SUPPORT_YEARS
-            * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
             * settings.COMPONENTS_USD_TO_EUR
             * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB
             / 1000

@@ -144,7 +144,7 @@ DOCUMENTATION_HELP_INTERFACES_SLUG = os.environ.get(
 # About Flatpage
 FLATPAGE_ABOUT_URL = os.environ.get("FLATPAGE_ABOUT_URL", "/about/")
 
-# All costs exclude Tax
+# All costs include Tax
 COMPONENTS_TAX_RATE_PERCENT = 0.21
 if COMPONENTS_TAX_RATE_PERCENT > 1:
     raise ImproperlyConfigured("Tax rate should be less than 1")
@@ -152,10 +152,10 @@ COMPONENTS_USD_TO_EUR = float(
     os.environ.get("COMPONENTS_USD_TO_EUR", "0.92472705")
 )
 COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB = (
-    12_300_000  # Last calculated 23/08/2023
+    14_883_000  # Last calculated 23/08/2023
 )
 COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB = (
-    39_600_000  # Last calculated 23/08/2023
+    47_916_000  # Last calculated 23/08/2023
 )
 
 CHALLENGE_BASE_COST_IN_EURO = int(

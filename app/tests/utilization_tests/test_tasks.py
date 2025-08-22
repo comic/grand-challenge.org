@@ -21,7 +21,7 @@ class TestUtilizationExecutor(Executor):
 
     @property
     def usd_cents_per_hour(self):
-        return 10
+        return 12
 
     @property
     def duration(self):
