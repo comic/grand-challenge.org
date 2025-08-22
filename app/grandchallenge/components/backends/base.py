@@ -61,8 +61,6 @@ def duration_to_millicents(*, duration, usd_cents_per_hour):
 
 
 class Executor(ABC):
-    IS_EVENT_DRIVEN = False
-
     def __init__(
         self,
         *args,
