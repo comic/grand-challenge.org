@@ -324,8 +324,6 @@ class ModelChoices(TextChoices):
 
 
 class AmazonSageMakerBaseExecutor(Executor, ABC):
-    IS_EVENT_DRIVEN = True
-
     @property
     @abstractmethod
     def _log_group_name(self):
