@@ -115,9 +115,14 @@ class ChallengeRequestAdmin(ModelAdmin):
         "creator",
         "created",
         "status",
+        "total_cost",
     )
     actions = ["create_challenge", "send_status_update_email"]
     list_filter = ["status"]
+
+    @admin.display(description="Total cost")
+    def total_cost(self, obj):
+        return obj.total_challenge_cost
 
     @admin.action(description="Create challenge for this request")
     def create_challenge(self, request, queryset):
