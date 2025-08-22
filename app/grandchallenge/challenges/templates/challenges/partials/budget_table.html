@@ -81,7 +81,7 @@ Based on the following information provided by the challenge requester:
                     Capacity reservation
                 </td>
                 <td><small class="text-dark">Capacity reservation units for compute and storage costs.</small></td>
-                <td class="text-right">{{ object.capacity_reservation_euros_per_unit|euro_no_cents }}</td>
+                <td class="text-right">{{ capacity_reservation_pack_size_in_euro|euro_no_cents }}</td>
                 <td>{{ object.capacity_reservation_units }}</td>
                 <td>Units</td>
                 <td class="text-right font-weight-bold">{{ object.capacity_reservation_euros|euro_no_cents }}</td>
@@ -167,7 +167,7 @@ Based on the following information provided by the challenge requester:
             <tr class="table-info">
                 <td class="font-weight-bold">Capacity reservation</td>
                 <td>Required capacity reservation units</td>
-                <td class="text-right">{{ object.capacity_reservation_euros_per_unit|euro_no_cents }}</td>
+                <td class="text-right">{{ capacity_reservation_pack_size_in_euro|euro_no_cents }}</td>
                 <td>{{ object.capacity_reservation_units }}</td>
                 <td>Units</td>
                 <td class="text-right font-weight-bold">{{ object.capacity_reservation_euros|euro }}</td>

@@ -1420,20 +1420,14 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO,
                 self.total_compute_and_storage_costs_euros,
             )
-            / settings.CHALLENGE_ADDITIONAL_COMPUTE_AND_STORAGE_PACK_SIZE_IN_EURO
-        )
-
-    @property
-    def capacity_reservation_euros_per_unit(self):
-        return (
-            settings.CHALLENGE_ADDITIONAL_COMPUTE_AND_STORAGE_PACK_SIZE_IN_EURO
+            / settings.CHALLENGE_CAPACITY_RESERVATION_PACK_SIZE_IN_EURO
         )
 
     @property
     def capacity_reservation_euros(self):
         return (
             self.capacity_reservation_units
-            * self.capacity_reservation_euros_per_unit
+            * settings.CHALLENGE_CAPACITY_RESERVATION_PACK_SIZE_IN_EURO
         )
 
     @property
