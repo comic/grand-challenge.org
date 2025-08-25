@@ -216,6 +216,21 @@ AWS_S3_URL_PROTOCOL = os.environ.get("AWS_S3_URL_PROTOCOL", "https:")
 AWS_CLOUDWATCH_REGION_NAME = os.environ.get("AWS_CLOUDWATCH_REGION_NAME")
 AWS_CODEBUILD_REGION_NAME = os.environ.get("AWS_CODEBUILD_REGION_NAME")
 AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
+AWS_HEALTH_IMAGING_DATASTORE_ID = os.environ.get(
+    "AWS_HEALTH_IMAGING_DATASTORE_ID"
+)
+AWS_HEALTH_IMAGING_INPUT_BUCKET_NAME = os.environ.get(
+    "AWS_HEALTH_IMAGING_INPUT_BUCKET_NAME"
+)
+AWS_HEALTH_IMAGING_OUTPUT_BUCKET_NAME = os.environ.get(
+    "AWS_HEALTH_IMAGING_OUTPUT_BUCKET_NAME"
+)
+AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN = os.environ.get(
+    "AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN"
+)
+AWS_HEALTH_IMAGING_REGION_NAME = os.environ.get(
+    "AWS_HEALTH_IMAGING_REGION_NAME", "eu-west-1"
+)
 
 # This is for storing files that should not be served to the public
 PRIVATE_S3_STORAGE_KWARGS = {
@@ -563,6 +578,7 @@ LOCAL_APPS = [
     "grandchallenge.well_known",
     "grandchallenge.utilization",
     "grandchallenge.discussion_forums",
+    "grandchallenge.healthimaging",
 ]
 
 LEGACY_APPS = [
