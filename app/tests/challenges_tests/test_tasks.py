@@ -81,102 +81,112 @@ def test_challenge_request_budget_calculation(settings):
         number_of_tasks=1,
     )
 
-    assert challenge_request.costs_for_phases == [
+    costs_for_phases = [
         {
-            "name": "Phase 1",
+            # "name": "Phase 1",
             "number_of_submissions_per_team": 10,
             "number_of_test_images": 100,
             "compute_time": timedelta(minutes=10) * 10 * 10 * 100,
             "compute_costs_euros": 1958.11,
-            "docker_storage_size_gb": 6 * 10 * 10,
-            "docker_storage_costs_euros": 403.21,
             "data_storage_size_gb": 100 * 100 / 1024,
             "data_storage_costs_euros": 6.57,
-            "total_euros": 2367.89,
+            "total_euros": 1964.68,
         },
         {
-            "name": "Phase 2",
+            # "name": "Phase 2",
             "number_of_submissions_per_team": 100,
             "number_of_test_images": 500,
             "compute_time": timedelta(minutes=10) * 10 * 100 * 500,
             "compute_costs_euros": 97905.48,
-            "docker_storage_size_gb": 6 * 10 * 100,
-            "docker_storage_costs_euros": 4032.05,
             "data_storage_size_gb": 500 * 100 / 1024,
             "data_storage_costs_euros": 32.82,
-            "total_euros": 101970.35,
+            "total_euros": 97938.30,
         },
     ]
+    for i_phase in range(2):
+        for k, v in costs_for_phases[i_phase].items():
+            assert (
+                pytest.approx(
+                    challenge_request.costs_for_phases[i_phase][k], abs=0.01
+                )
+                == v
+            )
+    assert challenge_request.docker_storage_size_gb == 6 * 10 * 100
+    assert challenge_request.docker_storage_costs_euros == 4032.05
     assert (
         pytest.approx(
             challenge_request.total_compute_and_storage_costs_euros, abs=0.01
         )
-        == 104338.24
+        == 103935.03
     )
 
     for phase in challenge_request.costs_for_phases:
         assert (
             phase["total_euros"]
-            == phase["compute_costs_euros"]
-            + phase["docker_storage_costs_euros"]
-            + phase["data_storage_costs_euros"]
+            == phase["compute_costs_euros"] + phase["data_storage_costs_euros"]
         )
 
     assert (
         pytest.approx(challenge_request.total_compute_and_storage_costs_euros)
         == challenge_request.costs_for_phases[0]["total_euros"]
         + challenge_request.costs_for_phases[1]["total_euros"]
+        + challenge_request.docker_storage_costs_euros
     )
 
     challenge_request.number_of_tasks = 2
 
     del challenge_request.costs_for_phases
 
-    assert challenge_request.costs_for_phases == [
+    costs_for_phases = [
         {
-            "name": "Phase 1",
+            # "name": "Phase 1",
             "number_of_submissions_per_team": 10,
             "number_of_test_images": 100,
             "compute_time": timedelta(minutes=10) * 10 * 10 * 100 * 2,
             "compute_costs_euros": 3916.22,
-            "docker_storage_size_gb": 6 * 10 * 10 * 2,
-            "docker_storage_costs_euros": 806.41,
             "data_storage_size_gb": 100 * 100 / 1024 * 2,
             "data_storage_costs_euros": 13.13,
-            "total_euros": 4735.76,
+            "total_euros": 3929.35,
         },
         {
-            "name": "Phase 2",
+            # "name": "Phase 2",
             "number_of_submissions_per_team": 100,
             "number_of_test_images": 500,
             "compute_time": timedelta(minutes=10) * 10 * 100 * 500 * 2,
             "compute_costs_euros": 195810.96,
-            "docker_storage_size_gb": 6 * 10 * 100 * 2,
-            "docker_storage_costs_euros": 8064.09,
             "data_storage_size_gb": 500 * 100 / 1024 * 2,
             "data_storage_costs_euros": 65.63,
-            "total_euros": 203940.68,
+            "total_euros": 195876.59,
         },
     ]
+    for i_phase in range(2):
+        for k, v in costs_for_phases[i_phase].items():
+            assert (
+                pytest.approx(
+                    challenge_request.costs_for_phases[i_phase][k], abs=0.01
+                )
+                == v
+            )
+    assert challenge_request.docker_storage_size_gb == 6 * 10 * 100 * 2
+    assert challenge_request.docker_storage_costs_euros == 8064.09
     assert (
         pytest.approx(
             challenge_request.total_compute_and_storage_costs_euros, abs=0.01
         )
-        == 208676.44
+        == 207870.03
     )
 
     for phase in challenge_request.costs_for_phases:
         assert (
             phase["total_euros"]
-            == phase["compute_costs_euros"]
-            + phase["docker_storage_costs_euros"]
-            + phase["data_storage_costs_euros"]
+            == phase["compute_costs_euros"] + phase["data_storage_costs_euros"]
         )
 
     assert (
         pytest.approx(challenge_request.total_compute_and_storage_costs_euros)
         == challenge_request.costs_for_phases[0]["total_euros"]
         + challenge_request.costs_for_phases[1]["total_euros"]
+        + challenge_request.docker_storage_costs_euros
     )
 
 
