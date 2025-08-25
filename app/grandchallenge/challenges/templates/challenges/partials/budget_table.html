@@ -125,14 +125,6 @@ Based on the following information provided by the challenge requester:
                     <td class="text-right">{{ phase.compute_costs_euros|euro }}</td>
                 </tr>
                 <tr>
-                    <td>Container storage {{ phase.name }}</td>
-                    <td>{{ phase.number_of_submissions_per_team }} submissions times {{ object.expected_number_of_teams }} teams times {{ object.average_algorithm_container_size_in_gb }} GB per container, for 5 years</td>
-                    <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
-                    <td>{{ phase.docker_storage_size_gb|floatformat }}</td>
-                    <td>GB</td>
-                    <td class="text-right">{{ phase.docker_storage_costs_euros|euro }}</td>
-                </tr>
-                <tr>
                     <td>Data storage {{ phase.name }}</td>
                     <td>{{ phase.number_of_test_images }} images, average size {{ object.average_size_of_test_image_in_mb }} MB, for 5 years</td>
                     <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
@@ -152,6 +144,14 @@ Based on the following information provided by the challenge requester:
                     <td colspan="6">&nbsp;</td>
                 </tr>
             {% endfor %}
+            <tr>
+                <td>Container storage</td>
+                <td>{{ object.num_unique_docker_images_per_team }} unique submissions times {{ object.expected_number_of_teams }} teams times {{ object.average_algorithm_container_size_in_gb }} GB per container, for 5 years</td>
+                <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
+                <td>{{ object.docker_storage_size_gb|floatformat }}</td>
+                <td>GB</td>
+                <td class="text-right">{{ object.docker_storage_costs_euros|euro }}</td>
+            </tr>
             <tr>
                 <td class="font-weight-bold" colspan="5">Total compute</td>
                 <td class="text-right font-weight-bold">{{ object.total_compute_costs_euros|euro }}</td>

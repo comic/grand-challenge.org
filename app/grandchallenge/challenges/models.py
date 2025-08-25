@@ -1259,22 +1259,36 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         )
 
     @property
-    def phase_1_docker_storage_size_bytes(self):
-        return (
-            self.average_algorithm_container_size_in_gb * settings.GIGABYTE
-        ) * self.phase_1_num_submissions
+    def num_unique_docker_images_per_team(self):
+        # A docker for a later phase should also be submitted to an earlier one.
+        return max(
+            self.phase_1_number_of_submissions_per_team,
+            self.phase_2_number_of_submissions_per_team,
+        )
 
     @property
-    def phase_2_docker_storage_size_bytes(self):
+    def num_unique_docker_images(self):
         return (
-            self.average_algorithm_container_size_in_gb * settings.GIGABYTE
-        ) * self.phase_2_num_submissions
+            self.num_unique_docker_images_per_team
+            * self.expected_number_of_teams
+            * self.number_of_tasks
+        )
+
+    @property
+    def docker_storage_size_gb(self):
+        return (
+            self.average_algorithm_container_size_in_gb
+            * self.num_unique_docker_images
+        )
+
+    @property
+    def docker_storage_size_bytes(self):
+        return self.docker_storage_size_gb * settings.GIGABYTE
 
     @property
     def total_data_and_docker_storage_bytes(self):
         return (
-            self.phase_1_docker_storage_size_bytes
-            + self.phase_2_docker_storage_size_bytes
+            self.docker_storage_size_bytes
             + self.phase_1_data_storage_size_bytes
             + self.phase_2_data_storage_size_bytes
         )
@@ -1355,23 +1369,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         return self.get_compute_costs_euros(self.phase_2_compute_time)
 
     @property
-    def phase_1_docker_storage_costs_euros(self):
-        return self.get_storage_costs_euros(
-            self.phase_1_docker_storage_size_bytes
-        )
-
-    @property
-    def phase_2_docker_storage_costs_euros(self):
-        return self.get_storage_costs_euros(
-            self.phase_2_docker_storage_size_bytes
-        )
-
-    @property
     def phase_1_total_euros(self):
         return (
             self.phase_1_data_storage_costs_euros
             + self.phase_1_compute_costs_euros
-            + self.phase_1_docker_storage_costs_euros
         )
 
     @property
@@ -1379,8 +1380,11 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         return (
             self.phase_2_data_storage_costs_euros
             + self.phase_2_compute_costs_euros
-            + self.phase_2_docker_storage_costs_euros
         )
+
+    @property
+    def docker_storage_costs_euros(self):
+        return self.get_storage_costs_euros(self.docker_storage_size_bytes)
 
     @cached_property
     def base_cost_euros(self):
@@ -1399,8 +1403,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         return (
             self.phase_1_data_storage_costs_euros
             + self.phase_2_data_storage_costs_euros
-            + self.phase_1_docker_storage_costs_euros
-            + self.phase_2_docker_storage_costs_euros
+            + self.docker_storage_costs_euros
         )
 
     @property
@@ -1459,9 +1462,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 "number_of_test_images": self.phase_1_number_of_test_images,
                 "compute_time": self.phase_1_compute_time,
                 "compute_costs_euros": self.phase_1_compute_costs_euros,
-                "docker_storage_size_gb": self.phase_1_docker_storage_size_bytes
-                / settings.GIGABYTE,
-                "docker_storage_costs_euros": self.phase_1_docker_storage_costs_euros,
                 "data_storage_size_gb": self.phase_1_data_storage_size_bytes
                 / settings.GIGABYTE,
                 "data_storage_costs_euros": self.phase_1_data_storage_costs_euros,
@@ -1473,9 +1473,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 "number_of_test_images": self.phase_2_number_of_test_images,
                 "compute_time": self.phase_2_compute_time,
                 "compute_costs_euros": self.phase_2_compute_costs_euros,
-                "docker_storage_size_gb": self.phase_2_docker_storage_size_bytes
-                / settings.GIGABYTE,
-                "docker_storage_costs_euros": self.phase_2_docker_storage_costs_euros,
                 "data_storage_size_gb": self.phase_2_data_storage_size_bytes
                 / settings.GIGABYTE,
                 "data_storage_costs_euros": self.phase_2_data_storage_costs_euros,
