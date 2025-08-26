@@ -103,7 +103,7 @@ app/algorithm.tar.gz
 app/tests/resources/gc_demo_algorithm/algorithm_io.tar
 
 # Users environment file
-.env
+*.env
 
 # Editor files
 .vscode/
