@@ -466,7 +466,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     @property
     def usd_cents_per_hour(self):
         return self._instance_type.usd_cents_per_hour_excluding_tax * (
-            1 + settings.COMPONENTS_TAX_RATE_PERCENT
+            1 + settings.COMPONENTS_TAX_RATE
         )
 
     @property

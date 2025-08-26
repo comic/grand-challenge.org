@@ -1329,8 +1329,9 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     def storage_costs_euros_per_gb(self):
         return (
             settings.CHALLENGE_NUM_SUPPORT_YEARS
+            * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB_EXCLUDING_TAX
+            * (1 + settings.COMPONENTS_TAX_RATE)
             * settings.COMPONENTS_USD_TO_EUR
-            * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB
             / 1000
             / 100
             / settings.TERABYTE
