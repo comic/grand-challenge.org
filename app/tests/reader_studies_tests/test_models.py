@@ -1,7 +1,10 @@
+import base64
+import json
 from contextlib import nullcontext
 from datetime import timedelta
 
 import pytest
+from bs4 import BeautifulSoup
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 from django.db.utils import IntegrityError
@@ -25,6 +28,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
+from tests.reader_studies_tests import RESOURCE_PATH
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     DisplaySetFactory,
@@ -368,10 +372,27 @@ def test_score_for_user(
     assert score["score__avg"] == 0.5
 
 
+@pytest.mark.parametrize(
+    "markdown_field,rendered_field",
+    (
+        ("help_text_markdown", "help_text"),
+        ("end_of_study_text_markdown", "end_of_study_text"),
+    ),
+)
 @pytest.mark.django_db
-def test_help_markdown_is_scrubbed(client):
+def test_help_markdown_is_scrubbed(client, markdown_field, rendered_field):
+    with open(RESOURCE_PATH / "blns.base64.json") as f:
+        naughty_string = "\n\n".join(
+            base64.b64decode(s).decode("iso-8859-1") for s in json.load(f)
+        )
+
+    assert "<script>" in naughty_string.lower()
+    assert "javascript:alert" in naughty_string.lower()
+
     rs = ReaderStudyFactory(
-        help_text_markdown="<b>My Help Text</b><script>naughty</script>",
+        **{
+            markdown_field: f"# Here come some naughty strings\n\n{naughty_string}"
+        }
     )
     u = UserFactory()
     rs.add_reader(u)
@@ -379,7 +400,30 @@ def test_help_markdown_is_scrubbed(client):
     response = get_view_for_user(client=client, url=rs.api_url, user=u)
 
     assert response.status_code == 200
-    assert response.json()["help_text"] == "<p><b>My Help Text</b>naughty</p>"
+
+    rendered_text = response.json()[rendered_field]
+    parsed_text = BeautifulSoup(rendered_text, "html.parser")
+    assert parsed_text, "Parsing output failed"
+
+    # Check that there are not <script> tags, event handlers, and
+    # javascript: URLs in the generated output
+    assert not parsed_text.find_all("script")
+    for element in parsed_text.find_all():
+        for attribute in element.attrs:
+            has_on_attr = attribute.lower().startswith("on")
+            assert not has_on_attr, "Found event handler"
+    for element in parsed_text.find_all():
+        for attr_value in element.attrs.values():
+            if isinstance(attr_value, str):
+                attr_values = [attr_value]
+            elif isinstance(attr_value, (tuple, list)):
+                attr_values = list(attr_value)
+            else:
+                continue
+
+            for value in attr_values:
+                if isinstance(value, str):
+                    assert not value.lower().strip().startswith("javascript:")
 
 
 @pytest.mark.django_db
