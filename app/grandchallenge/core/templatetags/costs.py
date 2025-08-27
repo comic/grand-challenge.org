@@ -42,7 +42,8 @@ def storage_bytes_to_euro_per_year(storage_size):
 @register.filter
 def registry_bytes_to_euro_per_year(storage_size):
     return millicents_to_euro(
-        settings.COMPONENTS_ECR_USD_MILLICENTS_PER_YEAR_PER_TB
+        settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB_EXCLUDING_TAX
+        * (1 + settings.COMPONENTS_TAX_RATE)
         * settings.COMPONENTS_USD_TO_EUR
         * storage_size
         / settings.TERABYTE
