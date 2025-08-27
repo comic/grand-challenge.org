@@ -894,6 +894,7 @@ class DicomImageSetUpload(UUIDModel):
         if self.__health_imaging_client is None:
             self.__health_imaging_client = boto3.client(
                 "medical-imaging",
+                region_name=settings.AWS_DEFAULT_REGION,
             )
         return self.__health_imaging_client
 
