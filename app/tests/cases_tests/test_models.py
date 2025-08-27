@@ -203,15 +203,15 @@ def test_start_dicom_import_job():
 @pytest.mark.django_db
 def test_error_in_start_dicom_import_job(mocker):
     di_upload = DicomImageSetUploadFactory()
-    mocker.patch.object(
-        di_upload._health_imaging_client,
-        "start_dicom_import_job",
-        side_effect=ClientError(
-            error_response={
-                "Error": {"Code": "ValidationError", "Message": "Foo"}
-            },
-            operation_name="StartDICOMImportJob",
-        ),
+    fake_client = mocker.Mock()
+    fake_client.start_dicom_import_job.side_effect = ClientError(
+        error_response={
+            "Error": {"Code": "ValidationError", "Message": "Foo"}
+        },
+        operation_name="StartDICOMImportJob",
+    )
+    mocker.patch(
+        "grandchallenge.cases.models.boto3.client", return_value=fake_client
     )
 
     with pytest.raises(ClientError):
