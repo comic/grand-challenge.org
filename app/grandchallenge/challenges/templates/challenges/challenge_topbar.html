@@ -4,7 +4,7 @@
 
 {% if challenge %}
     <nav class="navbar navbar-expand-sm navbar-light p-0 mb-3 mx-0 border-bottom align-items-start challenge-topbar">
-        <div class="col-auto mr-auto px-0">
+        <div class="col mr-auto px-0">
             <ul class="nav navbar-nav nav-tabs">
                 <li class="nav-item">
                     <a class="nav-link {% if request.resolver_match.view_name == 'pages:home' or request.resolver_match.view_name == 'pages:detail' %} show active{% endif %}"
