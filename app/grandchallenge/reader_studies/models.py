@@ -560,11 +560,8 @@ class ReaderStudy(
     @property
     def help_text(self) -> str:
         """The cleaned help text from the markdown sources"""
-        return md2html(
-            self.help_text_markdown,
-            link_blank_target=True,
-            create_permalink_for_headers=False,
-        )
+        # Deprecated method
+        return self.help_text_safe
 
     @property
     def help_text_safe(self) -> str:
