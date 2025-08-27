@@ -525,11 +525,11 @@ def _check_post_processor_result(*, post_processor_result, image):
 
 @acks_late_micro_short_task
 @transaction.atomic
-def import_dicom_to_healthimaging(*, dicom_import_job_pk):
+def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
     job = lock_model_instance(
         app_label="cases",
         model_name="DicomImageSetUpload",
-        pk=dicom_import_job_pk,
+        pk=dicom_imageset_upload_pk,
     )
 
     # the status to check here will ultimately have to be DicomImageSetUploadStatusChoices.DEIDENTIFIED

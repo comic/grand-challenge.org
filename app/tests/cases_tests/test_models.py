@@ -3,11 +3,15 @@ from pathlib import Path
 
 import factory
 import pytest
+from botocore.exceptions import ClientError
+from botocore.stub import Stubber
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.files import File
 
+from grandchallenge.cases.models import DicomImageSetUploadStatusChoices
 from tests.cases_tests.factories import (
+    DicomImageSetUploadFactory,
     ImageFactory,
     ImageFactoryWithImageFile,
     ImageFactoryWithImageFile4D,
@@ -150,3 +154,68 @@ def test_directory_file_destination():
         file._directory_file_destination(file=Path(__file__))
         == "images/34/d4/34d4df58-03eb-4bf8-a424-713e601e694e/4c572c72-1f76-44fa-b2a4-019e822eeb3f/tests/cases_tests/test_models.py"
     )
+
+
+@pytest.mark.django_db
+def test_dicomimagesetupload_import_properties():
+    di_upload = DicomImageSetUploadFactory()
+
+    assert (
+        di_upload._import_job_name
+        == f"{settings.COMPONENTS_REGISTRY_PREFIX}-HI-{di_upload.pk}"
+    )
+    assert (
+        di_upload._import_input_s3_uri
+        == f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/inputs/{di_upload.pk}"
+    )
+    assert (
+        di_upload._import_output_s3_uri
+        == f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/logs/{di_upload.pk}"
+    )
+
+
+@pytest.mark.django_db
+def test_start_dicom_import_job():
+    di_upload = DicomImageSetUploadFactory()
+
+    with Stubber(di_upload._health_imaging_client) as s:
+        s.add_response(
+            method="start_dicom_import_job",
+            service_response={
+                "datastoreId": settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+                "jobId": di_upload._import_job_name,
+                "jobStatus": "SUBMITTED",
+                "submittedAt": "2025-08-27T12:00:00Z",
+            },
+            expected_params={
+                "datastoreId": settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+                "inputS3Uri": di_upload._import_input_s3_uri,
+                "outputS3Uri": di_upload._import_output_s3_uri,
+                "dataAccessRoleArn": settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
+                "jobName": di_upload._import_job_name,
+            },
+        )
+        response = di_upload.start_dicom_import_job()
+
+    assert response["jobStatus"] == "SUBMITTED"
+
+
+@pytest.mark.django_db
+def test_error_in_start_dicom_import_job(mocker):
+    di_upload = DicomImageSetUploadFactory()
+    mocker.patch.object(
+        di_upload._health_imaging_client,
+        "start_dicom_import_job",
+        side_effect=ClientError(
+            error_response={
+                "Error": {"Code": "ValidationError", "Message": "Foo"}
+            },
+            operation_name="StartDICOMImportJob",
+        ),
+    )
+
+    with pytest.raises(ClientError):
+        di_upload.start_dicom_import_job()
+
+    assert di_upload.status == DicomImageSetUploadStatusChoices.FAILURE
+    assert di_upload.error_message == "An unexpected error occurred"

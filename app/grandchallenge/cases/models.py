@@ -907,14 +907,13 @@ class DicomImageSetUpload(UUIDModel):
         Start a HealthImaging DICOM import job.
         """
         try:
-            job = self._health_imaging_client.start_dicom_import_job(
+            return self._health_imaging_client.start_dicom_import_job(
                 jobName=self._import_job_name,
                 datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
                 dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
                 inputS3Uri=self._import_input_s3_uri,
                 outputS3Uri=self._import_output_s3_uri,
             )
-            return job["jobId"]
         except ClientError:
             self.status = DicomImageSetUploadStatusChoices.FAILURE
             self.error_message = "An unexpected error occurred"
