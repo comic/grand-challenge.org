@@ -1,5 +1,4 @@
 import base64
-import json
 from contextlib import nullcontext
 from datetime import timedelta
 
@@ -37,6 +36,19 @@ from tests.reader_studies_tests.factories import (
 )
 from tests.utilization_tests.factories import SessionUtilizationFactory
 from tests.utils import get_view_for_user
+
+
+def load_naughty_strings():
+    strings = []
+    with open(RESOURCE_PATH / "blns.base64.txt") as f:
+        for line in f:
+            if not line.strip() or line.strip().startswith("#"):
+                continue
+            strings.append(base64.b64decode(line).decode("iso-8859-1"))
+    return "\n".join(strings)
+
+
+NAUGHTY_STRING = load_naughty_strings()
 
 
 @pytest.mark.django_db
@@ -376,22 +388,17 @@ def test_score_for_user(
     "markdown_field,rendered_field",
     (
         ("help_text_markdown", "help_text"),
-        ("end_of_study_text_markdown", "end_of_study_text"),
+        ("help_text_markdown", "help_text_safe"),
+        ("end_of_study_text_markdown", "end_of_study_text_safe"),
     ),
 )
 @pytest.mark.django_db
 def test_help_markdown_is_scrubbed(client, markdown_field, rendered_field):
-    with open(RESOURCE_PATH / "blns.base64.json") as f:
-        naughty_string = "\n\n".join(
-            base64.b64decode(s).decode("iso-8859-1") for s in json.load(f)
-        )
-
-    assert "<script>" in naughty_string.lower()
-    assert "javascript:alert" in naughty_string.lower()
-
+    assert "<script>" in NAUGHTY_STRING.lower()
+    assert "javascript:alert" in NAUGHTY_STRING.lower()
     rs = ReaderStudyFactory(
         **{
-            markdown_field: f"# Here come some naughty strings\n\n{naughty_string}"
+            markdown_field: f"# Here come some naughty strings\n\n{NAUGHTY_STRING}"
         }
     )
     u = UserFactory()
@@ -424,6 +431,10 @@ def test_help_markdown_is_scrubbed(client, markdown_field, rendered_field):
             for value in attr_values:
                 if isinstance(value, str):
                     assert not value.lower().strip().startswith("javascript:")
+
+    # Make sure that there are no headerlinks in the output
+    for element in parsed_text.find_all():
+        assert "headerlink" not in element.get("class", [])
 
 
 @pytest.mark.django_db

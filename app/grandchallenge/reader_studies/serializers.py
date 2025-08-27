@@ -182,6 +182,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "logo",
             "description",
             "help_text",
+            "help_text_safe",
             "pk",
             "questions",
             "title",
@@ -193,7 +194,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "allow_case_navigation",
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
-            "end_of_study_text",
+            "end_of_study_text_safe",
         )
 
 

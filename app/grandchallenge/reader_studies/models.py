@@ -560,11 +560,28 @@ class ReaderStudy(
     @property
     def help_text(self) -> str:
         """The cleaned help text from the markdown sources"""
-        return md2html(self.help_text_markdown, link_blank_target=True)
+        return md2html(
+            self.help_text_markdown,
+            link_blank_target=True,
+            create_permalink_for_headers=False,
+        )
 
     @property
-    def end_of_study_text(self) -> str:
-        return md2html(self.end_of_study_text_markdown, link_blank_target=True)
+    def help_text_safe(self) -> str:
+        """The cleaned help text from the markdown sources"""
+        return md2html(
+            self.help_text_markdown,
+            link_blank_target=True,
+            create_permalink_for_headers=False,
+        )
+
+    @property
+    def end_of_study_text_safe(self) -> str:
+        return md2html(
+            self.end_of_study_text_markdown,
+            link_blank_target=True,
+            create_permalink_for_headers=False,
+        )
 
     @cached_property
     def study_image_names(self):
