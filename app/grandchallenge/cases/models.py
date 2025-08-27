@@ -875,6 +875,16 @@ class DicomImageSetUpload(UUIDModel):
 
     error_message = models.TextField(blank=False, null=True, default=None)
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(
+                    status__in=DicomImageSetUploadStatusChoices.values
+                ),
+                name="dicomuimagesetupload_status_valid",
+            )
+        ]
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__health_imaging_client = None
