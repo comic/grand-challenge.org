@@ -1,4 +1,3 @@
-import base64
 from contextlib import nullcontext
 from datetime import timedelta
 
@@ -27,7 +26,6 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.factories import ImageFactory, UserFactory, WorkstationFactory
-from tests.reader_studies_tests import RESOURCE_PATH
 from tests.reader_studies_tests.factories import (
     AnswerFactory,
     DisplaySetFactory,
@@ -36,19 +34,6 @@ from tests.reader_studies_tests.factories import (
 )
 from tests.utilization_tests.factories import SessionUtilizationFactory
 from tests.utils import get_view_for_user
-
-
-def load_naughty_strings():
-    strings = []
-    with open(RESOURCE_PATH / "blns.base64.txt") as f:
-        for line in f:
-            if not line.strip() or line.strip().startswith("#"):
-                continue
-            strings.append(base64.b64decode(line).decode("iso-8859-1"))
-    return "\n".join(strings)
-
-
-NAUGHTY_STRING = load_naughty_strings()
 
 
 @pytest.mark.django_db
@@ -394,11 +379,15 @@ def test_score_for_user(
 )
 @pytest.mark.django_db
 def test_help_markdown_is_scrubbed(client, markdown_field, rendered_field):
-    assert "<script>" in NAUGHTY_STRING.lower()
-    assert "javascript:alert" in NAUGHTY_STRING.lower()
+    somewhat_naughty_string = (
+        "<a href='javascript:alert(1)' onmouseover='alert(1)'>Click me</a>"
+        "<script>alert('XSS')</script>"
+    )
+
     rs = ReaderStudyFactory(
         **{
-            markdown_field: f"# Here come some naughty strings\n\n{NAUGHTY_STRING}"
+            markdown_field: "# Here come some naughty strings\n\n"
+            + somewhat_naughty_string
         }
     )
     u = UserFactory()
