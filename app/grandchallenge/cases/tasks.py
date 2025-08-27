@@ -526,19 +526,19 @@ def _check_post_processor_result(*, post_processor_result, image):
 @acks_late_micro_short_task
 @transaction.atomic
 def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
-    job = lock_model_instance(
+    upload = lock_model_instance(
         app_label="cases",
         model_name="DicomImageSetUpload",
         pk=dicom_imageset_upload_pk,
     )
 
     # the status to check here will ultimately have to be DicomImageSetUploadStatusChoices.DEIDENTIFIED
-    if not job.status == DicomImageSetUploadStatusChoices.PENDING:
+    if not upload.status == DicomImageSetUploadStatusChoices.PENDING:
         raise RuntimeError(
-            "Job is not ready for importing into HealthImaging."
+            "Upload is not ready for importing into HealthImaging."
         )
 
-    job.status = DicomImageSetUploadStatusChoices.STARTED
-    job.save()
+    upload.status = DicomImageSetUploadStatusChoices.STARTED
+    upload.save()
 
-    on_commit(job.start_dicom_import_job)
+    on_commit(upload.start_dicom_import_job)
