@@ -3,8 +3,10 @@ import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import boto3
 from actstream.actions import follow
 from actstream.models import Follow
+from botocore.exceptions import ClientError
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
@@ -837,3 +839,83 @@ class PostProcessImageTask(UUIDModel):
                     kwargs={"post_process_image_task_pk": self.pk}
                 ).apply_async
             )
+
+
+class DicomImageSetUploadStatusChoices(models.TextChoices):
+    INITIALIZED = "INITIALIZED", "Initialized"
+    PENDING = "PENDING", "Queued"
+    DEIDENTIFYING = "DEIDENTIFYING", "De-Identifying"
+    DEIDENTIFIED = "DEIDENTIFIED", "De-Identified"
+    STARTED = "STARTED", "Importing"
+    REQUEUED = "REQUEUED", "Re-Queued"
+    FAILURE = "FAILURE", "Failed"
+    SUCCESS = "SUCCESS", "Succeeded"
+    CANCELLED = "CANCELLED", "Cancelled"
+
+
+class DicomImageSetUpload(UUIDModel):
+    creator = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL,
+        null=True,
+        default=None,
+        on_delete=models.SET_NULL,
+    )
+
+    user_uploads = models.ManyToManyField(
+        UserUpload, blank=True, related_name="dicom_import_jobs"
+    )
+
+    DicomImageSetUploadStatusChoices = DicomImageSetUploadStatusChoices
+    status = models.CharField(
+        max_length=13,
+        choices=DicomImageSetUploadStatusChoices.choices,
+        default=DicomImageSetUploadStatusChoices.PENDING,
+        db_index=True,
+    )
+
+    error_message = models.TextField(blank=False, null=True, default=None)
+
+    @property
+    def _health_imaging_client(self):
+        if self.__health_imaging_client is None:
+            self.__health_imaging_client = boto3.client(
+                "medical-imaging",
+                region_name=settings.AWS_HEALTH_IMAGING_REGION_NAME,
+            )
+        return self.__health_imaging_client
+
+    @property
+    def _import_job_name(self):
+        # HealthImaging requires job names to be max 64 chars
+        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-HI-{self.pk}"
+
+    @property
+    def _import_input_s3_uri(self):
+        return (
+            f"s3://{settings.AWS_HEALTH_IMAGING_INPUT_BUCKET_NAME}/{self.pk}"
+        )
+
+    @property
+    def _import_output_s3_uri(self):
+        return (
+            f"s3://{settings.AWS_HEALTH_IMAGING_OUTPUT_BUCKET_NAME}/{self.pk}"
+        )
+
+    def start_dicom_import_job(self):
+        """
+        Start a HealthImaging DICOM import job.
+        """
+        try:
+            job = self._health_imaging_client.start_dicom_import_job(
+                jobName=self._import_job_name,
+                datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+                dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
+                inputS3Uri=self._import_input_s3_uri,
+                outputS3Uri=self._import_output_s3_uri,
+            )
+            return job["jobId"]
+        except ClientError:
+            self.status = DicomImageSetUploadStatusChoices.FAILURE
+            self.error_message = "An unexpected error occurred"
+            self.save()
+            raise

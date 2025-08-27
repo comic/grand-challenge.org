@@ -19,6 +19,7 @@ from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
 
 from grandchallenge.cases.models import (
+    DicomImageSetUploadStatusChoices,
     Image,
     ImageFile,
     PostProcessImageTask,
@@ -520,3 +521,24 @@ def _check_post_processor_result(*, post_processor_result, image):
 
     if created_ids not in [{str(image.pk)}, set()]:
         raise RuntimeError("Created image IDs do not match")
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def import_dicom_to_healthimaging(*, dicom_import_job_pk):
+    job = lock_model_instance(
+        app_label="cases",
+        model_name="DicomImageSetUpload",
+        pk=dicom_import_job_pk,
+    )
+
+    # the status to check here will ultimately have to be DicomImageSetUploadStatusChoices.DEIDENTIFIED
+    if not job.status == DicomImageSetUploadStatusChoices.PENDING:
+        raise RuntimeError(
+            "Job is not ready for importing into HealthImaging."
+        )
+
+    job.status = DicomImageSetUploadStatusChoices.STARTED
+    job.save()
+
+    on_commit(job.import_images)

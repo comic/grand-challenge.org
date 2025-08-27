@@ -578,7 +578,6 @@ LOCAL_APPS = [
     "grandchallenge.well_known",
     "grandchallenge.utilization",
     "grandchallenge.discussion_forums",
-    "grandchallenge.healthimaging",
 ]
 
 LEGACY_APPS = [
