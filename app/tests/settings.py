@@ -51,5 +51,3 @@ INSTALLED_APPS += [  # noqa F405
 ]
 
 SOCIALACCOUNT_PROVIDERS.update({"dummy": {}})  # noqa F405
-
-AWS_DEFAULT_REGION = "eu-central-1"

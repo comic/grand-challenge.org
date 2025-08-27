@@ -210,17 +210,17 @@ def test_import_dicom_to_healthimaging_for_not_pending_upload():
         status=DicomImageSetUploadStatusChoices.STARTED
     )
 
-    with pytest.raises(RuntimeError):
-        di_upload.start_dicom_import_job()
+    with patch.object(DicomImageSetUpload, "start_dicom_import_job"):
+        with pytest.raises(RuntimeError):
+            import_dicom_to_healthimaging(
+                dicom_imageset_upload_pk=di_upload.pk
+            )
 
 
 @pytest.mark.django_db
 def test_import_dicom_to_healthimaging_updates_status_when_successful(
-    settings, django_capture_on_commit_callbacks
+    django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
     di_upload = DicomImageSetUploadFactory()
     with patch.object(
         DicomImageSetUpload, "start_dicom_import_job"
