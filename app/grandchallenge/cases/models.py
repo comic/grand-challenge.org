@@ -875,12 +875,15 @@ class DicomImageSetUpload(UUIDModel):
 
     error_message = models.TextField(blank=False, null=True, default=None)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__health_imaging_client = None
+
     @property
     def _health_imaging_client(self):
         if self.__health_imaging_client is None:
             self.__health_imaging_client = boto3.client(
                 "medical-imaging",
-                region_name=settings.AWS_HEALTH_IMAGING_REGION_NAME,
             )
         return self.__health_imaging_client
 
@@ -892,14 +895,12 @@ class DicomImageSetUpload(UUIDModel):
     @property
     def _import_input_s3_uri(self):
         return (
-            f"s3://{settings.AWS_HEALTH_IMAGING_INPUT_BUCKET_NAME}/{self.pk}"
+            f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/inputs/{self.pk}"
         )
 
     @property
     def _import_output_s3_uri(self):
-        return (
-            f"s3://{settings.AWS_HEALTH_IMAGING_OUTPUT_BUCKET_NAME}/{self.pk}"
-        )
+        return f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/logs/{self.pk}"
 
     def start_dicom_import_job(self):
         """

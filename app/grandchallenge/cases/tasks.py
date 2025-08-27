@@ -541,4 +541,4 @@ def import_dicom_to_healthimaging(*, dicom_import_job_pk):
     job.status = DicomImageSetUploadStatusChoices.STARTED
     job.save()
 
-    on_commit(job.import_images)
+    on_commit(job.start_dicom_import_job)
