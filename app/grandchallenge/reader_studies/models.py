@@ -351,6 +351,10 @@ class ReaderStudy(
             "Usernames and avatars will be hidden to protect other readers' privacy."
         ),
     )
+    end_of_study_text_markdown = models.TextField(
+        blank=True,
+        help_text="Text to show when a user has completed the reader study",
+    )
     max_credits = models.PositiveIntegerField(
         null=True,
         blank=True,
@@ -386,6 +390,7 @@ class ReaderStudy(
         "modalities",
         "structures",
         "organizations",
+        "end_of_study_text_markdown",
     }
 
     optional_copy_fields = [
@@ -555,7 +560,25 @@ class ReaderStudy(
     @property
     def help_text(self) -> str:
         """The cleaned help text from the markdown sources"""
-        return md2html(self.help_text_markdown, link_blank_target=True)
+        # Deprecated method
+        return self.help_text_safe
+
+    @property
+    def help_text_safe(self) -> str:
+        """The cleaned help text from the markdown sources"""
+        return md2html(
+            self.help_text_markdown,
+            link_blank_target=True,
+            create_permalink_for_headers=False,
+        )
+
+    @property
+    def end_of_study_text_safe(self) -> str:
+        return md2html(
+            self.end_of_study_text_markdown,
+            link_blank_target=True,
+            create_permalink_for_headers=False,
+        )
 
     @cached_property
     def study_image_names(self):
