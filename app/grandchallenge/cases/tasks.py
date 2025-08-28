@@ -532,8 +532,8 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         pk=dicom_imageset_upload_pk,
     )
 
-    # the status to check here will ultimately have to be DicomImageSetUploadStatusChoices.DEIDENTIFIED
-    if not upload.status == DicomImageSetUploadStatusChoices.PENDING:
+    # the status to check here will ultimately have to be something like DicomImageSetUploadStatusChoices.DEIDENTIFIED
+    if not upload.status == DicomImageSetUploadStatusChoices.INITIALIZED:
         raise RuntimeError(
             "Upload is not ready for importing into HealthImaging."
         )

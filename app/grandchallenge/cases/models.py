@@ -6,7 +6,6 @@ from tempfile import TemporaryDirectory
 import boto3
 from actstream.actions import follow
 from actstream.models import Follow
-from botocore.exceptions import ClientError
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
@@ -842,18 +841,12 @@ class PostProcessImageTask(UUIDModel):
 
 
 class DicomImageSetUploadStatusChoices(models.TextChoices):
-    INITIALIZED = "INITIALIZED", "Initialized"
-    PENDING = "PENDING", "Queued"
-    DEIDENTIFYING = "DEIDENTIFYING", "De-Identifying"
-    DEIDENTIFIED = "DEIDENTIFIED", "De-Identified"
-    STARTED = "STARTED", "Importing"
-    REQUEUED = "REQUEUED", "Re-Queued"
-    FAILURE = "FAILURE", "Failed"
-    SUCCESS = "SUCCESS", "Succeeded"
-    CANCELLED = "CANCELLED", "Cancelled"
+    INITIALIZED = "INITIALIZED", _("Initialized")
+    STARTED = "STARTED", _("Started")
+    FAILED = "FAILED", _("Failed")
 
 
-class DicomImageSetUpload(UUIDModel):
+class DICOMImageSetUpload(UUIDModel):
     creator = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
         null=True,
@@ -867,15 +860,16 @@ class DicomImageSetUpload(UUIDModel):
 
     DicomImageSetUploadStatusChoices = DicomImageSetUploadStatusChoices
     status = models.CharField(
-        max_length=13,
+        max_length=11,
         choices=DicomImageSetUploadStatusChoices.choices,
-        default=DicomImageSetUploadStatusChoices.PENDING,
-        db_index=True,
+        default=DicomImageSetUploadStatusChoices.INITIALIZED,
+        blank=False,
     )
 
-    error_message = models.TextField(blank=False, null=True, default=None)
+    error_message = models.TextField(blank=True, default="")
 
     class Meta:
+        verbose_name = "DICOM image set upload"
         constraints = [
             models.CheckConstraint(
                 check=models.Q(
@@ -884,10 +878,15 @@ class DicomImageSetUpload(UUIDModel):
                 name="dicomuimagesetupload_status_valid",
             )
         ]
+        indexes = (models.Index(fields=["status"]),)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__health_imaging_client = None
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     @property
     def _health_imaging_client(self):
@@ -901,7 +900,7 @@ class DicomImageSetUpload(UUIDModel):
     @property
     def _import_job_name(self):
         # HealthImaging requires job names to be max 64 chars
-        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-HI-{self.pk}"
+        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-{self.pk}"
 
     @property
     def _import_input_s3_uri(self):
@@ -925,8 +924,8 @@ class DicomImageSetUpload(UUIDModel):
                 inputS3Uri=self._import_input_s3_uri,
                 outputS3Uri=self._import_output_s3_uri,
             )
-        except ClientError:
-            self.status = DicomImageSetUploadStatusChoices.FAILURE
+        except Exception as e:
+            self.status = DicomImageSetUploadStatusChoices.FAILED
             self.error_message = "An unexpected error occurred"
             self.save()
-            raise
+            logger.error(e, exc_info=True)
