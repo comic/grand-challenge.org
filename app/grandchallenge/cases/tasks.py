@@ -19,12 +19,14 @@ from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
 
 from grandchallenge.cases.models import (
+    DICOMImageSetUploadStatusChoices,
     Image,
     ImageFile,
     PostProcessImageTask,
     PostProcessImageTaskStatusChoices,
     RawImageUploadSession,
 )
+from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.components.backends.utils import safe_extract
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import lock_model_instance
@@ -520,3 +522,24 @@ def _check_post_processor_result(*, post_processor_result, image):
 
     if created_ids not in [{str(image.pk)}, set()]:
         raise RuntimeError("Created image IDs do not match")
+
+
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException, RetryStep))
+@transaction.atomic
+def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
+    upload = lock_model_instance(
+        app_label="cases",
+        model_name="DICOMImageSetUpload",
+        pk=dicom_imageset_upload_pk,
+    )
+
+    # the status to check here will ultimately have to be something like DICOMImageSetUploadStatusChoices.DEIDENTIFIED
+    if not upload.status == DICOMImageSetUploadStatusChoices.INITIALIZED:
+        raise RuntimeError(
+            "Upload is not ready for importing into HealthImaging."
+        )
+
+    upload.status = DICOMImageSetUploadStatusChoices.STARTED
+    upload.save()
+
+    upload.start_dicom_import_job()

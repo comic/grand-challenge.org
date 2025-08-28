@@ -3,8 +3,10 @@ import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import boto3
 from actstream.actions import follow
 from actstream.models import Follow
+from botocore.exceptions import ClientError
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
@@ -26,6 +28,7 @@ from panimg.models import (
 )
 from storages.utils import clean_name
 
+from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
 )
@@ -836,4 +839,112 @@ class PostProcessImageTask(UUIDModel):
                 execute_post_process_image_task.signature(
                     kwargs={"post_process_image_task_pk": self.pk}
                 ).apply_async
+            )
+
+
+class DICOMImageSetUploadStatusChoices(models.TextChoices):
+    INITIALIZED = "INITIALIZED", _("Initialized")
+    STARTED = "STARTED", _("Started")
+    FAILED = "FAILED", _("Failed")
+
+
+class DICOMImageSetUpload(UUIDModel):
+    creator = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL,
+        null=True,
+        default=None,
+        on_delete=models.SET_NULL,
+    )
+
+    user_uploads = models.ManyToManyField(
+        UserUpload, blank=True, related_name="dicom_import_jobs"
+    )
+
+    DICOMImageSetUploadStatusChoices = DICOMImageSetUploadStatusChoices
+    status = models.CharField(
+        max_length=11,
+        choices=DICOMImageSetUploadStatusChoices.choices,
+        default=DICOMImageSetUploadStatusChoices.INITIALIZED,
+        blank=False,
+    )
+
+    error_message = models.TextField(blank=True, default="")
+
+    class Meta:
+        verbose_name = "DICOM image set upload"
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(
+                    status__in=DICOMImageSetUploadStatusChoices.values
+                ),
+                name="dicomuimagesetupload_status_valid",
+            )
+        ]
+        indexes = (models.Index(fields=["status"]),)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__health_imaging_client = None
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    @property
+    def _health_imaging_client(self):
+        if self.__health_imaging_client is None:
+            self.__health_imaging_client = boto3.client(
+                "medical-imaging",
+                region_name=settings.AWS_DEFAULT_REGION,
+            )
+        return self.__health_imaging_client
+
+    @property
+    def _import_job_name(self):
+        # HealthImaging requires job names to be max 64 chars
+        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-{self.pk}"
+
+    @property
+    def _import_input_s3_uri(self):
+        return (
+            f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/inputs/{self.pk}"
+        )
+
+    @property
+    def _import_output_s3_uri(self):
+        return f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/logs/{self.pk}"
+
+    def _mark_failed(self, *, error_message, exc):
+        self.status = DICOMImageSetUploadStatusChoices.FAILED
+        self.error_message = error_message
+        self.save()
+        if exc:
+            logger.error(exc, exc_info=True)
+
+    def start_dicom_import_job(self):
+        """
+        Start a HealthImaging DICOM import job.
+        """
+        try:
+            return self._health_imaging_client.start_dicom_import_job(
+                jobName=self._import_job_name,
+                datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+                dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
+                inputS3Uri=self._import_input_s3_uri,
+                outputS3Uri=self._import_output_s3_uri,
+            )
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "ThrottlingException":
+                raise RetryStep("Request throttled") from e
+            elif (
+                e.response["Error"]["Code"] == " ServiceQuotaExceededException"
+            ):
+                raise RetryStep("Service quota exceeded") from e
+            else:
+                self._mark_failed(
+                    error_message="An unexpected error occurred", exc=e
+                )
+        except Exception as e:
+            self._mark_failed(
+                error_message="An unexpected error occurred", exc=e
             )
