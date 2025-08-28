@@ -543,3 +543,9 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
     upload.save()
 
     upload.start_dicom_import_job()
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def handle_healthimaging_event(*, event):
+    pass
