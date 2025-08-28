@@ -936,6 +936,10 @@ class DICOMImageSetUpload(UUIDModel):
         except ClientError as e:
             if e.response["Error"]["Code"] == "ThrottlingException":
                 raise RetryStep("Request throttled") from e
+            elif (
+                e.response["Error"]["Code"] == " ServiceQuotaExceededException"
+            ):
+                raise RetryStep("Service quota exceeded") from e
             else:
                 self._mark_failed(
                     error_message="An unexpected error occurred", exc=e
