@@ -1,11 +1,18 @@
 import io
 import json
 import logging
+import re
 
 from django.conf import settings
+from django.db.transaction import on_commit
 from django.utils.timezone import now
 
-from grandchallenge.components.backends.base import Executor
+from grandchallenge.components.backends.amazon_sagemaker_base import (
+    UUID4_REGEX,
+    ModelChoices,
+)
+from grandchallenge.components.backends.base import Executor, JobParams
+from grandchallenge.components.tasks import handle_event
 
 logger = logging.getLogger(__name__)
 
@@ -96,16 +103,50 @@ class IOCopyExecutor(Executor):
 
         self._handle_completed_job()
 
+        on_commit(
+            handle_event.signature(
+                kwargs={
+                    "event": {
+                        "_job_id": self._job_id,
+                        "_stdout": self._stdout,
+                        "_stderr": self._stderr,
+                        "__start_time": self.__start_time,
+                    },
+                    "backend": f"{self.__class__.__module__}.{self.__class__.__qualname__}",
+                }
+            ).apply_async
+        )
+
     def handle_event(self, *, event):
-        raise RuntimeError("This backend is not event-driven")
+        self._stdout = event["_stdout"]
+        self._stderr = event["_stderr"]
+        self.__start_time = event["__start_time"]
 
     @staticmethod
     def get_job_name(*, event):
-        raise NotImplementedError
+        return event["_job_id"]
 
     @staticmethod
     def get_job_params(*, job_name):
-        raise NotImplementedError
+        model_regex = r"|".join(ModelChoices.labels)
+        pattern = rf"(?P<job_model>{model_regex})\-(?P<job_pk>{UUID4_REGEX})\-(?P<attempt>\d{{2}})$"
+
+        result = re.match(pattern, job_name)
+
+        if result is None:
+            raise ValueError("Invalid job name")
+        else:
+            job_app_label, job_model_name = result.group("job_model").split(
+                "-"
+            )
+            job_pk = result.group("job_pk")
+            attempt = int(result.group("attempt"))
+            return JobParams(
+                app_label=job_app_label,
+                model_name=job_model_name,
+                pk=job_pk,
+                attempt=attempt,
+            )
 
     @property
     def duration(self):

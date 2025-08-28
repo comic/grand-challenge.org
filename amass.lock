@@ -1,15 +1,15 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:7323d757c1b86dd251c2109a0a3257b22a10f6ef7e2bfc0948d243abf0bd7fb8",
+  "content_hash": "sha256:dea343037bf43507bc0ebc532063f62a4ede582c20086903f0409b15118c433c",
   "dependencies": [
     {
-      "name": "@diagnijmegen/rse-grand-challenge-dicom-deid-procedure",
-      "version": "0.20250704.7",
+      "name": "@diagnijmegen/rse-grand-challenge-dicom-de-id-procedure",
+      "version": "2025.8.5",
       "provider": "unpkg",
       "assets": [
         {
           "name": "dist/grand-challenge-dicom-de-id-procedure.umd.min.js",
-          "sri": "sha256-ofmzUtNjHpFbloBjYXjRAlxB9Ojj3CTKFm2ODf9kWO4="
+          "sri": "sha256-77UMyT680wXKkQmsQxLkpXoFIrIokFff81G5PlK4YTQ="
         },
         {
           "name": "dist/grand-challenge-dicom-de-id-procedure.umd.min.js.map",
