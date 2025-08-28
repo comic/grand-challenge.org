@@ -391,6 +391,10 @@
             <span class="s2">&quot;Usernames and avatars will be hidden to protect other readers&#39; privacy.&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">end_of_study_text_markdown</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span>
+        <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Text to show when a user has completed the reader study&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">max_credits</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -426,6 +430,7 @@
         <span class="s2">&quot;modalities&quot;</span><span class="p">,</span>
         <span class="s2">&quot;structures&quot;</span><span class="p">,</span>
         <span class="s2">&quot;organizations&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;end_of_study_text_markdown&quot;</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="n">optional_copy_fields</span> <span class="o">=</span> <span class="p">[</span>
@@ -619,7 +624,25 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">help_text</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The cleaned help text from the markdown sources&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">md2html</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">help_text_markdown</span><span class="p">,</span> <span class="n">link_blank_target</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Deprecated method</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">help_text_safe</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">help_text_safe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The cleaned help text from the markdown sources&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">md2html</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">help_text_markdown</span><span class="p">,</span>
+            <span class="n">link_blank_target</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">create_permalink_for_headers</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">end_of_study_text_safe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">md2html</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">end_of_study_text_markdown</span><span class="p">,</span>
+            <span class="n">link_blank_target</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">create_permalink_for_headers</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">study_image_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

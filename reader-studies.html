@@ -689,6 +689,7 @@ a set of questions on a set of images (cases).</p>
 <li><p><strong>allow_show_all_annotations</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v5.2)"><em>BooleanField</em></a>) – Allow show all annotations. If true, readers are allowed to show/hide all annotations for a case.</p></li>
 <li><p><strong>roll_over_answers_for_n_cases</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v5.2)"><em>PositiveSmallIntegerField</em></a>) – Roll over answers for n cases. The number of cases for which answers should roll over. It can be used for repeated readings with slightly different hangings. For instance, if set to 1. Case 2 will start with the answers from case 1; whereas case 3 starts anew but its answers will roll over to case 4. Setting it to 0 (default) means answers will not roll over.</p></li>
 <li><p><strong>leaderboard_accessible_to_readers</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BooleanField" title="(in Django v5.2)"><em>BooleanField</em></a>) – Leaderboard accessible to readers. If checked, readers can see the leaderboard. Usernames and avatars will be hidden to protect other readers’ privacy.</p></li>
+<li><p><strong>end_of_study_text_markdown</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v5.2)"><em>TextField</em></a>) – End of study text markdown. Text to show when a user has completed the reader study</p></li>
 <li><p><strong>max_credits</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveIntegerField" title="(in Django v5.2)"><em>PositiveIntegerField</em></a>) – Max credits. The maximum number of credits that may be consumed for this reader study. Leave blank to allow unlimited usage.</p></li>
 </ul>
 </dd>
@@ -781,6 +782,12 @@ have a special-case association with the field defined by NON_FIELD_ERRORS.</p>
 <dl class="py property">
 <dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.help_text">
 <em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">help_text</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.help_text" title="Link to this definition">¶</a></dt>
+<dd><p>The cleaned help text from the markdown sources</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudy.help_text_safe">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">help_text_safe</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></em><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudy.help_text_safe" title="Link to this definition">¶</a></dt>
 <dd><p>The cleaned help text from the markdown sources</p>
 </dd></dl>
 
