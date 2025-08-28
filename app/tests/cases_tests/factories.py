@@ -15,6 +15,7 @@ from tests.factories import (
     ImageFactory,
     ImageFileFactory,
     ImagingModalityFactory,
+    UserFactory,
 )
 
 
@@ -147,5 +148,7 @@ class PostProcessImageTaskFactory(factory.django.DjangoModelFactory):
 
 
 class DICOMImageSetUploadFactory(factory.django.DjangoModelFactory):
+    creator = factory.SubFactory(UserFactory)
+
     class Meta:
         model = DICOMImageSetUpload

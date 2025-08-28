@@ -218,8 +218,7 @@ def test_error_in_start_dicom_import_job(mocker):
         "grandchallenge.cases.models.boto3.client", return_value=fake_client
     )
 
-    with pytest.raises(ClientError):
-        di_upload.start_dicom_import_job()
+    di_upload.start_dicom_import_job()
 
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
     assert di_upload.error_message == "An unexpected error occurred"
