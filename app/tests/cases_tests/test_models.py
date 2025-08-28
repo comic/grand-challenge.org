@@ -9,9 +9,9 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.files import File
 
-from grandchallenge.cases.models import DicomImageSetUploadStatusChoices
+from grandchallenge.cases.models import DICOMImageSetUploadStatusChoices
 from tests.cases_tests.factories import (
-    DicomImageSetUploadFactory,
+    DICOMImageSetUploadFactory,
     ImageFactory,
     ImageFactoryWithImageFile,
     ImageFactoryWithImageFile4D,
@@ -158,7 +158,7 @@ def test_directory_file_destination():
 
 @pytest.mark.django_db
 def test_dicomimagesetupload_import_properties():
-    di_upload = DicomImageSetUploadFactory()
+    di_upload = DICOMImageSetUploadFactory()
 
     assert (
         di_upload._import_job_name
@@ -180,7 +180,7 @@ def test_start_dicom_import_job(settings):
     settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN = (
         "arn:aws:iam::123456789012:role/healthimaging-importjob-access"
     )
-    di_upload = DicomImageSetUploadFactory()
+    di_upload = DICOMImageSetUploadFactory()
 
     with Stubber(di_upload._health_imaging_client) as s:
         s.add_response(
@@ -206,7 +206,7 @@ def test_start_dicom_import_job(settings):
 
 @pytest.mark.django_db
 def test_error_in_start_dicom_import_job(mocker):
-    di_upload = DicomImageSetUploadFactory()
+    di_upload = DICOMImageSetUploadFactory()
     fake_client = mocker.Mock()
     fake_client.start_dicom_import_job.side_effect = ClientError(
         error_response={
@@ -221,5 +221,5 @@ def test_error_in_start_dicom_import_job(mocker):
     with pytest.raises(ClientError):
         di_upload.start_dicom_import_job()
 
-    assert di_upload.status == DicomImageSetUploadStatusChoices.FAILURE
+    assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
     assert di_upload.error_message == "An unexpected error occurred"

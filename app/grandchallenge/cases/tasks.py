@@ -19,7 +19,7 @@ from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
 
 from grandchallenge.cases.models import (
-    DicomImageSetUploadStatusChoices,
+    DICOMImageSetUploadStatusChoices,
     Image,
     ImageFile,
     PostProcessImageTask,
@@ -528,17 +528,17 @@ def _check_post_processor_result(*, post_processor_result, image):
 def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
     upload = lock_model_instance(
         app_label="cases",
-        model_name="DicomImageSetUpload",
+        model_name="DICOMImageSetUpload",
         pk=dicom_imageset_upload_pk,
     )
 
-    # the status to check here will ultimately have to be something like DicomImageSetUploadStatusChoices.DEIDENTIFIED
-    if not upload.status == DicomImageSetUploadStatusChoices.INITIALIZED:
+    # the status to check here will ultimately have to be something like DICOMImageSetUploadStatusChoices.DEIDENTIFIED
+    if not upload.status == DICOMImageSetUploadStatusChoices.INITIALIZED:
         raise RuntimeError(
             "Upload is not ready for importing into HealthImaging."
         )
 
-    upload.status = DicomImageSetUploadStatusChoices.STARTED
+    upload.status = DICOMImageSetUploadStatusChoices.STARTED
     upload.save()
 
     on_commit(upload.start_dicom_import_job)

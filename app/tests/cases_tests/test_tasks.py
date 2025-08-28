@@ -9,8 +9,8 @@ from panimg.models import ImageType, PanImgFile, PostProcessorResult
 from panimg.post_processors import DEFAULT_POST_PROCESSORS
 
 from grandchallenge.cases.models import (
-    DicomImageSetUpload,
-    DicomImageSetUploadStatusChoices,
+    DICOMImageSetUpload,
+    DICOMImageSetUploadStatusChoices,
     Image,
     ImageFile,
     PostProcessImageTask,
@@ -26,7 +26,7 @@ from grandchallenge.cases.tasks import (
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.storage import protected_s3_storage
 from tests.cases_tests import RESOURCE_PATH
-from tests.cases_tests.factories import DicomImageSetUploadFactory
+from tests.cases_tests.factories import DICOMImageSetUploadFactory
 from tests.factories import ImageFactory
 from tests.utils import create_raw_upload_image_session
 
@@ -206,11 +206,11 @@ def test_unique_post_processing():
 
 @pytest.mark.django_db
 def test_import_dicom_to_healthimaging_for_not_pending_upload():
-    di_upload = DicomImageSetUploadFactory(
-        status=DicomImageSetUploadStatusChoices.STARTED
+    di_upload = DICOMImageSetUploadFactory(
+        status=DICOMImageSetUploadStatusChoices.STARTED
     )
 
-    with patch.object(DicomImageSetUpload, "start_dicom_import_job"):
+    with patch.object(DICOMImageSetUpload, "start_dicom_import_job"):
         with pytest.raises(RuntimeError):
             import_dicom_to_healthimaging(
                 dicom_imageset_upload_pk=di_upload.pk
@@ -221,9 +221,9 @@ def test_import_dicom_to_healthimaging_for_not_pending_upload():
 def test_import_dicom_to_healthimaging_updates_status_when_successful(
     django_capture_on_commit_callbacks,
 ):
-    di_upload = DicomImageSetUploadFactory()
+    di_upload = DICOMImageSetUploadFactory()
     with patch.object(
-        DicomImageSetUpload, "start_dicom_import_job"
+        DICOMImageSetUpload, "start_dicom_import_job"
     ) as mocked_method:
         with django_capture_on_commit_callbacks(execute=True):
             import_dicom_to_healthimaging(
@@ -233,4 +233,4 @@ def test_import_dicom_to_healthimaging_updates_status_when_successful(
         mocked_method.assert_called_once()
 
     di_upload.refresh_from_db()
-    assert di_upload.status == DicomImageSetUploadStatusChoices.STARTED
+    assert di_upload.status == DICOMImageSetUploadStatusChoices.STARTED

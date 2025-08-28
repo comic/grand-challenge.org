@@ -840,7 +840,7 @@ class PostProcessImageTask(UUIDModel):
             )
 
 
-class DicomImageSetUploadStatusChoices(models.TextChoices):
+class DICOMImageSetUploadStatusChoices(models.TextChoices):
     INITIALIZED = "INITIALIZED", _("Initialized")
     STARTED = "STARTED", _("Started")
     FAILED = "FAILED", _("Failed")
@@ -858,11 +858,11 @@ class DICOMImageSetUpload(UUIDModel):
         UserUpload, blank=True, related_name="dicom_import_jobs"
     )
 
-    DicomImageSetUploadStatusChoices = DicomImageSetUploadStatusChoices
+    DICOMImageSetUploadStatusChoices = DICOMImageSetUploadStatusChoices
     status = models.CharField(
         max_length=11,
-        choices=DicomImageSetUploadStatusChoices.choices,
-        default=DicomImageSetUploadStatusChoices.INITIALIZED,
+        choices=DICOMImageSetUploadStatusChoices.choices,
+        default=DICOMImageSetUploadStatusChoices.INITIALIZED,
         blank=False,
     )
 
@@ -873,7 +873,7 @@ class DICOMImageSetUpload(UUIDModel):
         constraints = [
             models.CheckConstraint(
                 check=models.Q(
-                    status__in=DicomImageSetUploadStatusChoices.values
+                    status__in=DICOMImageSetUploadStatusChoices.values
                 ),
                 name="dicomuimagesetupload_status_valid",
             )
@@ -925,7 +925,7 @@ class DICOMImageSetUpload(UUIDModel):
                 outputS3Uri=self._import_output_s3_uri,
             )
         except Exception as e:
-            self.status = DicomImageSetUploadStatusChoices.FAILED
+            self.status = DICOMImageSetUploadStatusChoices.FAILED
             self.error_message = "An unexpected error occurred"
             self.save()
             logger.error(e, exc_info=True)
