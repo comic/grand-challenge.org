@@ -162,7 +162,7 @@ def test_dicomimagesetupload_import_properties():
 
     assert (
         di_upload._import_job_name
-        == f"{settings.COMPONENTS_REGISTRY_PREFIX}-HI-{di_upload.pk}"
+        == f"{settings.COMPONENTS_REGISTRY_PREFIX}-{di_upload.pk}"
     )
     assert (
         di_upload._import_input_s3_uri

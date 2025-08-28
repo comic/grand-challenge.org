@@ -542,7 +542,4 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
     upload.status = DICOMImageSetUploadStatusChoices.STARTED
     upload.save()
 
-    try:
-        on_commit(upload.start_dicom_import_job)
-    except RetryStep:
-        raise
+    upload.start_dicom_import_job()
