@@ -26,6 +26,7 @@ from grandchallenge.cases.models import (
     PostProcessImageTaskStatusChoices,
     RawImageUploadSession,
 )
+from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.components.backends.utils import safe_extract
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import lock_model_instance
@@ -523,7 +524,7 @@ def _check_post_processor_result(*, post_processor_result, image):
         raise RuntimeError("Created image IDs do not match")
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException, RetryStep))
 @transaction.atomic
 def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
     upload = lock_model_instance(
@@ -541,4 +542,7 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
     upload.status = DICOMImageSetUploadStatusChoices.STARTED
     upload.save()
 
-    on_commit(upload.start_dicom_import_job)
+    try:
+        on_commit(upload.start_dicom_import_job)
+    except RetryStep:
+        raise

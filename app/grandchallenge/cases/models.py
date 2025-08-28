@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 import boto3
 from actstream.actions import follow
 from actstream.models import Follow
+from botocore.exceptions import ClientError
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
@@ -27,6 +28,7 @@ from panimg.models import (
 )
 from storages.utils import clean_name
 
+from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
 )
@@ -912,6 +914,13 @@ class DICOMImageSetUpload(UUIDModel):
     def _import_output_s3_uri(self):
         return f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/logs/{self.pk}"
 
+    def _mark_failed(self, *, error_message, exc):
+        self.status = DICOMImageSetUploadStatusChoices.FAILED
+        self.error_message = error_message
+        self.save()
+        if exc:
+            logger.error(exc, exc_info=True)
+
     def start_dicom_import_job(self):
         """
         Start a HealthImaging DICOM import job.
@@ -924,8 +933,14 @@ class DICOMImageSetUpload(UUIDModel):
                 inputS3Uri=self._import_input_s3_uri,
                 outputS3Uri=self._import_output_s3_uri,
             )
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "ThrottlingException":
+                raise RetryStep("Request throttled") from e
+            else:
+                self._mark_failed(
+                    error_message="An unexpected error occurred", exc=e
+                )
         except Exception as e:
-            self.status = DICOMImageSetUploadStatusChoices.FAILED
-            self.error_message = "An unexpected error occurred"
-            self.save()
-            logger.error(e, exc_info=True)
+            self._mark_failed(
+                error_message="An unexpected error occurred", exc=e
+            )
