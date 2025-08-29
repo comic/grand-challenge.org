@@ -937,7 +937,6 @@ class DICOMImageSetUpload(UUIDModel):
             logger.error(exc, exc_info=True)
 
     def delete_image_set(self, image_set_id):
-        pass
         try:
             delete_results = self._health_imaging_client.delete_image_set(
                 imageSetId=image_set_id,
