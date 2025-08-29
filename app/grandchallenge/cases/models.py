@@ -980,7 +980,7 @@ class DICOMImageSetUpload(UUIDModel):
                 obj = self._s3_client.get_object(bucket=bucket, key=key)
                 body = obj["Body"]
                 break
-            except ClientError:
+            except self._s3_client.exceptions.NoSuchKey:
                 retries = retries - 1
                 time.sleep(3)
         try:
