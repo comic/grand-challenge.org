@@ -988,7 +988,7 @@ class DICOMImageSetUpload(UUIDModel):
 
         # Try to get the manifest.
         try:
-            obj = self._s3_client.get_object(bucket=bucket, key=key)
+            obj = self._s3_client.get_object(Bucket=bucket, Key=key)
             return obj["Body"]
         except self._s3_client.exceptions.NoSuchKey as e:
             raise RetryStep("Manifest not (yet) found for job output") from e
