@@ -6,7 +6,6 @@ from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
 
 import boto3
-import jmespath
 from actstream.actions import follow
 from actstream.models import Follow
 from botocore.exceptions import ClientError
@@ -1006,8 +1005,7 @@ class DICOMImageSetUpload(UUIDModel):
         except json.decoder.JSONDecodeError:
             return []
 
-        expression = jmespath.compile("jobSummary.imageSetsSummary[]")
-        image_sets = expression.search(data)
+        image_sets = data.get("jobSummary", {}).get("imageSetsSummary", [])
 
         return image_sets
 
