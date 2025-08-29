@@ -963,11 +963,7 @@ class DICOMImageSetUpload(UUIDModel):
                 error_message="An unexpected error occurred", exc=e
             )
 
-    def get_image_sets_for_dicom_import_job(self, *, import_job):
-        """
-        Retrieves the image sets created for an import job.
-        """
-
+    def get_job_output_manifest(self, *, import_job):
         output_uri = import_job["outputS3Uri"]
         parsed = urlparse(output_uri)
         bucket = parsed.netloc
@@ -975,21 +971,32 @@ class DICOMImageSetUpload(UUIDModel):
 
         # Try to get the manifest.
         retries = 3
-        while retries > 0:
+        while retries:
             try:
                 obj = self._s3_client.get_object(bucket=bucket, key=key)
-                body = obj["Body"]
-                break
+                return obj["Body"]
             except self._s3_client.exceptions.NoSuchKey:
-                retries = retries - 1
-                time.sleep(3)
+                retries -= 1
+                if not retries:
+                    raise
+                else:
+                    time.sleep(3)
+
+    def get_image_sets_for_dicom_import_job(self, *, import_job):
+        """
+        Retrieves the image sets created for an import job.
+        """
+
+        manifest = self.get_job_output_manifest(import_job=import_job)
+
         try:
-            data = json.load(body)
-            expression = jmespath.compile(
-                "jobSummary.imageSetsSummary[].imageSetId"
-            )
-            image_sets = expression.search(data)
+            data = json.load(manifest)
         except json.decoder.JSONDecodeError:
-            image_sets = import_job["jobProperties"]
+            return []
+
+        expression = jmespath.compile(
+            "jobSummary.imageSetsSummary[].imageSetId"
+        )
+        image_sets = expression.search(data)
 
         return image_sets
