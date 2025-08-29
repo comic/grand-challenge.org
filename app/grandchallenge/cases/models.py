@@ -30,6 +30,7 @@ from panimg.models import (
 )
 from storages.utils import clean_name
 
+from grandchallenge.cases.exceptions import DICOMImportJobFailedError
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
@@ -994,14 +995,23 @@ class DICOMImageSetUpload(UUIDModel):
 
         return json.load(obj["Body"])["jobSummary"]
 
+    def get_job_output_failure_log(self, *, manifest):
+        output_uri = manifest["failureOutputS3Uri"]
+        parsed = urlparse(output_uri)
+        bucket = parsed.netloc
+        key = parsed.path.lstrip("/") + "failure.ndjson"
+
+        obj = self._s3_client.get_object(Bucket=bucket, Key=key)
+
+        return [json.loads(line) for line in obj["Body"]]
+
     def handle_event(self, *, event):
-        job_status = event["jobStatus"]
         try:
+            job_status = event["jobStatus"]
             if job_status == "COMPLETED":
                 self.handle_completed_job(event=event)
             elif job_status == "FAILED":
                 self.handle_failed_job(event=event)
-                raise ValueError("Import job failed")
             else:
                 raise ValueError("Invalid job status")
         except Exception as e:
@@ -1019,17 +1029,21 @@ class DICOMImageSetUpload(UUIDModel):
             raise ValueError("No image sets created.")
         valid = self.validate_image_sets(image_sets)
         if not valid:
-            self.cleanup_image_sets(image_sets)
+            self.cleanup_image_sets(manifest=manifest)
             raise ValueError("Image sets invalid.")
         self.convert_image_sets_to_internal(image_sets)
 
     def handle_failed_job(self, *, event):
         manifest = self.get_job_output_manifest(event=event)
-        image_sets = manifest["imageSetsSummary"]
-        if image_sets:
-            self.cleanup_image_sets(image_sets)
+        self.cleanup_image_sets(manifest=manifest)
+        failure_log = self.get_job_output_failure_log(manifest=manifest)
+        job_id = manifest["jobId"]
+        raise DICOMImportJobFailedError(
+            message=f"Import job {job_id} failed", message_details=failure_log
+        )
 
-    def cleanup_image_sets(self, image_sets):
+    def cleanup_image_sets(self, *, manifest):
+        image_sets = manifest.get("imageSetsSummary", [])
         for image_set in image_sets:
             self.delete_image_set(image_set["imageSetId"])
 
