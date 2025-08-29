@@ -1,7 +1,9 @@
 import copy
+import json
 import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from urllib.parse import urlparse
 
 import boto3
 from actstream.actions import follow
@@ -28,6 +30,10 @@ from panimg.models import (
 )
 from storages.utils import clean_name
 
+from grandchallenge.cases.exceptions import (
+    DICOMImportJobFailedError,
+    DICOMImportJobValidationError,
+)
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
@@ -846,6 +852,7 @@ class DICOMImageSetUploadStatusChoices(models.TextChoices):
     INITIALIZED = "INITIALIZED", _("Initialized")
     STARTED = "STARTED", _("Started")
     FAILED = "FAILED", _("Failed")
+    COMPLETED = "COMPLETED", _("Completed")
 
 
 class DICOMImageSetUpload(UUIDModel):
@@ -885,6 +892,7 @@ class DICOMImageSetUpload(UUIDModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__health_imaging_client = None
+        self.__s3_client = None
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -898,6 +906,15 @@ class DICOMImageSetUpload(UUIDModel):
                 region_name=settings.AWS_DEFAULT_REGION,
             )
         return self.__health_imaging_client
+
+    @property
+    def _s3_client(self):
+        if self.__s3_client is None:
+            self.__s3_client = boto3.client(
+                "s3",
+                region_name=settings.AWS_DEFAULT_REGION,
+            )
+        return self.__s3_client
 
     @property
     def _import_job_name(self):
@@ -920,6 +937,24 @@ class DICOMImageSetUpload(UUIDModel):
         self.save()
         if exc:
             logger.error(exc, exc_info=True)
+
+    def delete_image_set(self, image_set_id):
+        try:
+            delete_results = self._health_imaging_client.delete_image_set(
+                imageSetId=image_set_id,
+                datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            )
+        except self._health_imaging_client.exceptions.ThrottlingException as e:
+            raise RetryStep("Request throttled") from e
+        except (
+            self._health_imaging_client.exceptions.InternalServerException
+        ) as e:
+            raise RetryStep("Server side error") from e
+        except self._health_imaging_client.exceptions.ConflictException:
+            # todo: check status and maybe retry
+            raise
+        else:
+            return delete_results
 
     def start_dicom_import_job(self):
         """
@@ -948,3 +983,85 @@ class DICOMImageSetUpload(UUIDModel):
             self._mark_failed(
                 error_message="An unexpected error occurred", exc=e
             )
+
+    def get_job_output_manifest(self, *, event):
+        output_uri = event["outputS3Uri"]
+        parsed = urlparse(output_uri)
+        bucket = parsed.netloc
+        key = parsed.path.lstrip("/") + "job-output-manifest.json"
+
+        # Try to get the manifest.
+        try:
+            obj = self._s3_client.get_object(Bucket=bucket, Key=key)
+        except self._s3_client.exceptions.NoSuchKey as e:
+            raise RetryStep("Manifest not (yet) found for job output") from e
+
+        return json.load(obj["Body"])["jobSummary"]
+
+    def get_job_output_failure_log(self, *, manifest):
+        output_uri = manifest["failureOutputS3Uri"]
+        parsed = urlparse(output_uri)
+        bucket = parsed.netloc
+        key = parsed.path.lstrip("/") + "failure.ndjson"
+
+        obj = self._s3_client.get_object(Bucket=bucket, Key=key)
+
+        return [json.loads(line) for line in obj["Body"]]
+
+    def handle_event(self, *, event):
+        try:
+            job_status = event["jobStatus"]
+            if job_status == "COMPLETED":
+                self.handle_completed_job(event=event)
+            elif job_status == "FAILED":
+                self.handle_failed_job(event=event)
+            else:
+                raise ValueError("Invalid job status")
+        except Exception as e:
+            self._mark_failed(
+                error_message="An unexpected error occurred", exc=e
+            )
+        else:
+            self.status = self.DICOMImageSetUploadStatusChoices.COMPLETED
+            self.save()
+
+    def handle_completed_job(self, *, event):
+        manifest = self.get_job_output_manifest(event=event)
+        if manifest["numberOfGeneratedImageSets"] > 1:
+            self.cleanup_image_sets(manifest=manifest)
+            raise DICOMImportJobValidationError(
+                "Multiple image sets created. Expected only one."
+            )
+        image_set = manifest["imageSetsSummary"][0]
+        if not image_set["isPrimary"]:
+            self.cleanup_image_sets(manifest=manifest)
+            raise DICOMImportJobValidationError(
+                "New instance is not primary: "
+                "metadata conflicts with already existing instance."
+            )
+        if not image_set["imageSetVersion"] == 1:
+            self.revert_image_set_to_initial_version(image_set)
+            raise DICOMImportJobValidationError(
+                "Instance already exists. This should never happen!"
+            )
+        self.convert_image_set_to_internal(image_set)
+
+    def handle_failed_job(self, *, event):
+        manifest = self.get_job_output_manifest(event=event)
+        self.cleanup_image_sets(manifest=manifest)
+        failure_log = self.get_job_output_failure_log(manifest=manifest)
+        job_id = manifest["jobId"]
+        raise DICOMImportJobFailedError(
+            message=f"Import job {job_id} failed", message_details=failure_log
+        )
+
+    def cleanup_image_sets(self, *, manifest):
+        image_sets = manifest.get("imageSetsSummary", [])
+        for image_set in image_sets:
+            self.delete_image_set(image_set["imageSetId"])
+
+    def revert_image_set_to_initial_version(self, image_set):
+        pass
+
+    def convert_image_set_to_internal(self, image_set):
+        pass

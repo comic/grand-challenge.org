@@ -21,6 +21,7 @@ from grandchallenge.components.backends.exceptions import (
 )
 from grandchallenge.components.backends.utils import (
     LOGLINES,
+    UUID4_REGEX,
     SourceChoices,
     ms_timestamp_to_datetime,
     parse_structured_log,
@@ -29,10 +30,6 @@ from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.utils import get
 
 logger = logging.getLogger(__name__)
-
-UUID4_REGEX = (
-    r"[0-9a-f]{8}\-[0-9a-f]{4}\-4[0-9a-f]{3}\-[89ab][0-9a-f]{3}\-[0-9a-f]{12}"
-)
 
 
 class LogStreamNotFound(Exception):
