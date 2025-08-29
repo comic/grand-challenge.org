@@ -4,6 +4,7 @@ import logging
 import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from urllib.parse import urlparse
 
 import boto3
 import jmespath
@@ -968,11 +969,9 @@ class DICOMImageSetUpload(UUIDModel):
         """
 
         output_uri = import_job["outputS3Uri"]
-
-        bucket = output_uri.split("/")[2]
-        key = "/".join(
-            output_uri.split("/")[3:] + ["job-output-manifest.json"]
-        )
+        parsed = urlparse(output_uri)
+        bucket = parsed.netloc
+        key = parsed.path.lstrip("/") + "job-output-manifest.json"
 
         # Try to get the manifest.
         retries = 3
