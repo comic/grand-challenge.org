@@ -1,9 +1,12 @@
 import copy
+import json
 import logging
+import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import boto3
+import jmespath
 from actstream.actions import follow
 from actstream.models import Follow
 from botocore.exceptions import ClientError
@@ -885,6 +888,7 @@ class DICOMImageSetUpload(UUIDModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__health_imaging_client = None
+        self.__s3_client = None
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -898,6 +902,15 @@ class DICOMImageSetUpload(UUIDModel):
                 region_name=settings.AWS_DEFAULT_REGION,
             )
         return self.__health_imaging_client
+
+    @property
+    def _s3_client(self):
+        if self.__s3_client is None:
+            self.__s3_client = boto3.client(
+                "s3",
+                region_name=settings.AWS_DEFAULT_REGION,
+            )
+        return self.__s3_client
 
     @property
     def _import_job_name(self):
@@ -948,3 +961,36 @@ class DICOMImageSetUpload(UUIDModel):
             self._mark_failed(
                 error_message="An unexpected error occurred", exc=e
             )
+
+    def get_image_sets_for_dicom_import_job(self, *, import_job):
+        """
+        Retrieves the image sets created for an import job.
+        """
+
+        output_uri = import_job["outputS3Uri"]
+
+        bucket = output_uri.split("/")[2]
+        key = "/".join(
+            output_uri.split("/")[3:] + ["job-output-manifest.json"]
+        )
+
+        # Try to get the manifest.
+        retries = 3
+        while retries > 0:
+            try:
+                obj = self._s3_client.get_object(bucket=bucket, key=key)
+                body = obj["Body"]
+                break
+            except ClientError:
+                retries = retries - 1
+                time.sleep(3)
+        try:
+            data = json.load(body)
+            expression = jmespath.compile(
+                "jobSummary.imageSetsSummary[].imageSetId"
+            )
+            image_sets = expression.search(data)
+        except json.decoder.JSONDecodeError:
+            image_sets = import_job["jobProperties"]
+
+        return image_sets
