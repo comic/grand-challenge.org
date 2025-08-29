@@ -1006,9 +1006,7 @@ class DICOMImageSetUpload(UUIDModel):
         except json.decoder.JSONDecodeError:
             return []
 
-        expression = jmespath.compile(
-            "jobSummary.imageSetsSummary[].imageSetId"
-        )
+        expression = jmespath.compile("jobSummary.imageSetsSummary[]")
         image_sets = expression.search(data)
 
         return image_sets
