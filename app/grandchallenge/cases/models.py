@@ -980,8 +980,8 @@ class DICOMImageSetUpload(UUIDModel):
                 error_message="An unexpected error occurred", exc=e
             )
 
-    def get_job_output_manifest(self, *, import_job):
-        output_uri = import_job["outputS3Uri"]
+    def get_job_output_manifest(self, *, event):
+        output_uri = event["outputS3Uri"]
         parsed = urlparse(output_uri)
         bucket = parsed.netloc
         key = parsed.path.lstrip("/") + "job-output-manifest.json"
@@ -989,25 +989,10 @@ class DICOMImageSetUpload(UUIDModel):
         # Try to get the manifest.
         try:
             obj = self._s3_client.get_object(Bucket=bucket, Key=key)
-            return obj["Body"]
         except self._s3_client.exceptions.NoSuchKey as e:
             raise RetryStep("Manifest not (yet) found for job output") from e
 
-    def get_image_sets_for_dicom_import_job(self, *, import_job):
-        """
-        Retrieves the image sets created for an import job.
-        """
-
-        manifest = self.get_job_output_manifest(import_job=import_job)
-
-        try:
-            data = json.load(manifest)
-        except json.decoder.JSONDecodeError:
-            return []
-
-        image_sets = data.get("jobSummary", {}).get("imageSetsSummary", [])
-
-        return image_sets
+        return json.load(obj["Body"])["jobSummary"]
 
     def handle_event(self, *, event):
         job_status = event["jobStatus"]
@@ -1028,7 +1013,8 @@ class DICOMImageSetUpload(UUIDModel):
             self.save()
 
     def handle_completed_job(self, *, event):
-        image_sets = self.get_image_sets_for_dicom_import_job(import_job=event)
+        manifest = self.get_job_output_manifest(event=event)
+        image_sets = manifest["imageSetsSummary"]
         if not image_sets:
             raise ValueError("No image sets created.")
         valid = self.validate_image_sets(image_sets)
@@ -1038,7 +1024,8 @@ class DICOMImageSetUpload(UUIDModel):
         self.convert_image_sets_to_internal(image_sets)
 
     def handle_failed_job(self, *, event):
-        image_sets = self.get_image_sets_for_dicom_import_job(import_job=event)
+        manifest = self.get_job_output_manifest(event=event)
+        image_sets = manifest["imageSetsSummary"]
         if image_sets:
             self.cleanup_image_sets(image_sets)
 
