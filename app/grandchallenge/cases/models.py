@@ -1000,3 +1000,6 @@ class DICOMImageSetUpload(UUIDModel):
         image_sets = expression.search(data)
 
         return image_sets
+
+    def handle_event(self, *, event):
+        pass

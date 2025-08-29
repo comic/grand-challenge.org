@@ -1,3 +1,4 @@
+import re
 import zipfile
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
@@ -27,7 +28,7 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
 )
 from grandchallenge.components.backends.exceptions import RetryStep
-from grandchallenge.components.backends.utils import safe_extract
+from grandchallenge.components.backends.utils import UUID4_REGEX, safe_extract
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import (
@@ -545,7 +546,22 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
     upload.start_dicom_import_job()
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException, RetryStep))
 @transaction.atomic
-def handle_healthimaging_event(*, event):
-    pass
+def handle_healthimaging_import_job_event(*, event):
+    job_name = event["jobName"]
+    prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
+    pattern = rf"^{prefix_regex}\-(?P<pk>{UUID4_REGEX})$"
+    result = re.match(pattern, job_name)
+    pk = result.group("pk")
+
+    upload = lock_model_instance(
+        pk=pk,
+        app_label="cases",
+        model_name="DICOMImageSetUpload",
+    )
+
+    if upload.status != DICOMImageSetUploadStatusChoices.STARTED:
+        return
+
+    upload.handle_event(event=event)
