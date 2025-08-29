@@ -1180,7 +1180,6 @@ class Job(CIVForObjectMixin, ComponentJob):
         maximum_cents_per_job = (
             (self.time_limit / 3600)
             * executor.usd_cents_per_hour
-            * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
             * settings.COMPONENTS_USD_TO_EUR
         )
 
