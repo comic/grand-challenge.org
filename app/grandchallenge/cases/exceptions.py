@@ -6,5 +6,9 @@ class DICOMImportJobError(Exception):
         self.message_details = message_details
 
 
+class DICOMImportJobValidationError(DICOMImportJobError):
+    """The created image set from a dicom import job is invalid."""
+
+
 class DICOMImportJobFailedError(DICOMImportJobError):
     """Raised for failed dicom import jobs."""

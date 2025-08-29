@@ -30,7 +30,10 @@ from panimg.models import (
 )
 from storages.utils import clean_name
 
-from grandchallenge.cases.exceptions import DICOMImportJobFailedError
+from grandchallenge.cases.exceptions import (
+    DICOMImportJobFailedError,
+    DICOMImportJobValidationError,
+)
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
@@ -1024,14 +1027,24 @@ class DICOMImageSetUpload(UUIDModel):
 
     def handle_completed_job(self, *, event):
         manifest = self.get_job_output_manifest(event=event)
-        image_sets = manifest["imageSetsSummary"]
-        if not image_sets:
-            raise ValueError("No image sets created.")
-        valid = self.validate_image_sets(image_sets)
-        if not valid:
+        if manifest["numberOfGeneratedImageSets"] > 1:
             self.cleanup_image_sets(manifest=manifest)
-            raise ValueError("Image sets invalid.")
-        self.convert_image_sets_to_internal(image_sets)
+            raise DICOMImportJobValidationError(
+                "Multiple image sets created. Expected only one."
+            )
+        image_set = manifest["imageSetsSummary"][0]
+        if not image_set["isPrimary"]:
+            self.cleanup_image_sets(manifest=manifest)
+            raise DICOMImportJobValidationError(
+                "New instance is not primary: "
+                "metadata conflicts with already existing instance."
+            )
+        if not image_set["imageSetVersion"] == 1:
+            self.revert_image_set_to_initial_version(image_set)
+            raise DICOMImportJobValidationError(
+                "Instance already exists. This should never happen!"
+            )
+        self.convert_image_set_to_internal(image_set)
 
     def handle_failed_job(self, *, event):
         manifest = self.get_job_output_manifest(event=event)
@@ -1047,16 +1060,8 @@ class DICOMImageSetUpload(UUIDModel):
         for image_set in image_sets:
             self.delete_image_set(image_set["imageSetId"])
 
-    @staticmethod
-    def validate_image_sets(image_sets):
-        for image_set in image_sets:
-            if not image_set["imageSetId"]:
-                return False
-            if not image_set["isPrimary"]:
-                return False
-            if not image_set["imageSetVersion"] == 1:
-                return False
-        return True
+    def revert_image_set_to_initial_version(self, image_set):
+        pass
 
-    def convert_image_sets_to_internal(self, image_sets):
+    def convert_image_set_to_internal(self, image_set):
         pass
