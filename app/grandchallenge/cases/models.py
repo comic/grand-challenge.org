@@ -1,7 +1,6 @@
 import copy
 import json
 import logging
-import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
@@ -989,17 +988,11 @@ class DICOMImageSetUpload(UUIDModel):
         key = parsed.path.lstrip("/") + "job-output-manifest.json"
 
         # Try to get the manifest.
-        retries = 3
-        while retries:
-            try:
-                obj = self._s3_client.get_object(bucket=bucket, key=key)
-                return obj["Body"]
-            except self._s3_client.exceptions.NoSuchKey:
-                retries -= 1
-                if not retries:
-                    raise
-                else:
-                    time.sleep(3)
+        try:
+            obj = self._s3_client.get_object(bucket=bucket, key=key)
+            return obj["Body"]
+        except self._s3_client.exceptions.NoSuchKey as e:
+            raise RetryStep("Manifest not (yet) found for job output") from e
 
     def get_image_sets_for_dicom_import_job(self, *, import_job):
         """
