@@ -850,6 +850,7 @@ class DICOMImageSetUploadStatusChoices(models.TextChoices):
     INITIALIZED = "INITIALIZED", _("Initialized")
     STARTED = "STARTED", _("Started")
     FAILED = "FAILED", _("Failed")
+    COMPLETED = "COMPLETED", _("Completed")
 
 
 class DICOMImageSetUpload(UUIDModel):
@@ -935,6 +936,25 @@ class DICOMImageSetUpload(UUIDModel):
         if exc:
             logger.error(exc, exc_info=True)
 
+    def delete_image_set(self, image_set_id):
+        pass
+        try:
+            delete_results = self._health_imaging_client.delete_image_set(
+                imageSetId=image_set_id,
+                datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            )
+        except self._health_imaging_client.exceptions.ThrottlingException as e:
+            raise RetryStep("Request throttled") from e
+        except (
+            self._health_imaging_client.exceptions.InternalServerException
+        ) as e:
+            raise RetryStep("Server side error") from e
+        except self._health_imaging_client.exceptions.ConflictException:
+            # todo: check status and maybe retry
+            raise
+        else:
+            return delete_results
+
     def start_dicom_import_job(self):
         """
         Start a HealthImaging DICOM import job.
@@ -1002,4 +1022,53 @@ class DICOMImageSetUpload(UUIDModel):
         return image_sets
 
     def handle_event(self, *, event):
+        job_status = event["jobStatus"]
+        try:
+            if job_status == "COMPLETED":
+                self.handle_completed_job(event=event)
+            elif job_status == "FAILED":
+                self.handle_failed_job(event=event)
+                raise ValueError("Import job failed")
+            else:
+                raise ValueError("Invalid job status")
+        except Exception as e:
+            self._mark_failed(
+                error_message="An unexpected error occurred", exc=e
+            )
+            raise
+        else:
+            self.status = self.DICOMImageSetUploadStatusChoices.COMPLETED
+            self.save()
+
+    def handle_completed_job(self, *, event):
+        image_sets = self.get_image_sets_for_dicom_import_job(import_job=event)
+        if not image_sets:
+            raise ValueError("No image sets created.")
+        valid = self.validate_image_sets(image_sets)
+        if not valid:
+            self.cleanup_image_sets(image_sets)
+            raise ValueError("Image sets invalid.")
+        self.convert_image_sets_to_internal(image_sets)
+
+    def handle_failed_job(self, *, event):
+        image_sets = self.get_image_sets_for_dicom_import_job(import_job=event)
+        if image_sets:
+            self.cleanup_image_sets(image_sets)
+
+    def cleanup_image_sets(self, image_sets):
+        for image_set in image_sets:
+            self.delete_image_set(image_set["imageSetId"])
+
+    @staticmethod
+    def validate_image_sets(image_sets):
+        for image_set in image_sets:
+            if not image_set["imageSetId"]:
+                return False
+            if not image_set["isPrimary"]:
+                return False
+            if not image_set["imageSetVersion"] == 1:
+                return False
+        return True
+
+    def convert_image_sets_to_internal(self, image_sets):
         pass
