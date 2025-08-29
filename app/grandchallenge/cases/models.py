@@ -1023,7 +1023,6 @@ class DICOMImageSetUpload(UUIDModel):
             self._mark_failed(
                 error_message="An unexpected error occurred", exc=e
             )
-            raise
         else:
             self.status = self.DICOMImageSetUploadStatusChoices.COMPLETED
             self.save()
