@@ -540,6 +540,9 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
 
     try:
         upload.deidentify_user_uploads()
+        upload.start_dicom_import_job()
+    except RetryStep:
+        raise
     except Exception as e:
         upload._mark_failed(
             error_message="An unexpected error occurred", exc=e
@@ -547,4 +550,3 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
     else:
         upload.status = DICOMImageSetUploadStatusChoices.STARTED
         upload.save()
-        upload.start_dicom_import_job()
