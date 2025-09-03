@@ -876,6 +876,7 @@ class DICOMImageSetUpload(UUIDModel):
     )
 
     error_message = models.TextField(blank=True, default="")
+    internal_failure_log = models.TextField(blank=True, default="")
 
     class Meta:
         verbose_name = "DICOM image set upload"
