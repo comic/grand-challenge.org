@@ -901,7 +901,7 @@ class HealthImagingWrapper:
             return self._health_imaging_client.update_image_set_metadata(
                 imageSetId=image_set_id,
                 datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
-                latestVersionId=version_id,
+                latestVersionId=str(version_id),
                 updateImageSetMetadataUpdates=metadata,
                 force=force,
             )
