@@ -43,6 +43,8 @@ def test_dicom_user_upload_media_includes_expected_js():
     widget = DICOMUserUploadMultipleWidget()
 
     for js_file in (
+        "vendored/uppy/uppy.min.js",
+        "js/user_upload.js",
         "vendored/dcmjs/build/dcmjs.min.js",
         "js/file_preprocessors.js",
     ):
