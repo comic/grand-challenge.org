@@ -1063,6 +1063,8 @@ class DICOMImageSetUpload(UUIDModel):
 
     def handle_completed_job(self, *, event):
         job_summary = self.get_job_summary(event=event)
+        if job_summary["numberOfGeneratedImageSets"] == 0:
+            self.handle_failed_job(event=event)
         if job_summary["numberOfGeneratedImageSets"] > 1:
             self.cleanup_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
