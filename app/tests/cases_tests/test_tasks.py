@@ -222,16 +222,18 @@ def test_import_dicom_to_healthimaging_updates_status_when_successful(
     django_capture_on_commit_callbacks,
 ):
     di_upload = DICOMImageSetUploadFactory()
-    with patch.object(
-        DICOMImageSetUpload, "start_dicom_import_job"
-    ) as mocked_method:
-        with patch.object(DICOMImageSetUpload, "deidentify_user_uploads"):
-            with django_capture_on_commit_callbacks(execute=True):
-                import_dicom_to_healthimaging(
-                    dicom_imageset_upload_pk=di_upload.pk
-                )
+    with (
+        patch.object(
+            DICOMImageSetUpload, "start_dicom_import_job"
+        ) as mocked_import_method,
+        patch.object(DICOMImageSetUpload, "deidentify_user_uploads"),
+    ):
+        with django_capture_on_commit_callbacks(execute=True):
+            import_dicom_to_healthimaging(
+                dicom_imageset_upload_pk=di_upload.pk
+            )
 
-        mocked_method.assert_called_once()
+        mocked_import_method.assert_called_once()
 
     di_upload.refresh_from_db()
     assert di_upload.status == DICOMImageSetUploadStatusChoices.STARTED
@@ -242,20 +244,22 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
     django_capture_on_commit_callbacks,
 ):
     di_upload = DICOMImageSetUploadFactory()
-    with patch.object(
-        DICOMImageSetUpload, "start_dicom_import_job"
-    ) as mocked_method:
-        with patch.object(
+    with (
+        patch.object(
+            DICOMImageSetUpload, "start_dicom_import_job"
+        ) as mocked_import_method,
+        patch.object(
             DICOMImageSetUpload,
             "deidentify_user_uploads",
             side_effect=Exception(),
-        ):
-            with django_capture_on_commit_callbacks(execute=True):
-                import_dicom_to_healthimaging(
-                    dicom_imageset_upload_pk=di_upload.pk
-                )
+        ),
+    ):
+        with django_capture_on_commit_callbacks(execute=True):
+            import_dicom_to_healthimaging(
+                dicom_imageset_upload_pk=di_upload.pk
+            )
         # start_dicom_import_job does not get called
-        mocked_method.assert_not_called()
+        mocked_import_method.assert_not_called()
 
     di_upload.refresh_from_db()
     # upload gets marked as failed
