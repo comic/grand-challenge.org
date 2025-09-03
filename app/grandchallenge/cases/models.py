@@ -858,16 +858,10 @@ class DICOMImageSetUploadStatusChoices(models.TextChoices):
 class HealthImagingWrapper:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__health_imaging_client = None
-
-    @property
-    def _health_imaging_client(self):
-        if self.__health_imaging_client is None:
-            self.__health_imaging_client = boto3.client(
-                "medical-imaging",
-                region_name=settings.AWS_HEALTH_IMAGING_REGION_NAME,
-            )
-        return self.__health_imaging_client
+        self._health_imaging_client = boto3.client(
+            "medical-imaging",
+            region_name=settings.AWS_HEALTH_IMAGING_REGION_NAME,
+        )
 
     def start_dicom_import_job(self, *, job_name, input_s3_uri, output_s3_uri):
         """
