@@ -36,3 +36,11 @@ class UserUploadMultipleWidget(UserUploadWidgetMixin, MultipleHiddenInput):
         context = super().get_context(name, value, attrs)
         context["widget"]["attrs"]["multiple"] = True
         return context
+
+
+class DICOMUserUploadMultipleWidget(UserUploadMultipleWidget):
+    class Media:
+        js = (
+            "vendored/dcmjs/build/dcmjs.min.js",
+            "js/file_preprocessors.js",
+        )
