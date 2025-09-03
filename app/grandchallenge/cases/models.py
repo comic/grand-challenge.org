@@ -28,6 +28,7 @@ from panimg.models import (
 )
 from storages.utils import clean_name
 
+from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
 )
@@ -942,13 +943,29 @@ class DICOMImageSetUpload(UUIDModel):
         """
         Start a HealthImaging DICOM import job.
         """
-        return self._health_imaging_client.start_dicom_import_job(
-            jobName=self._import_job_name,
-            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
-            dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
-            inputS3Uri=self._import_input_s3_uri,
-            outputS3Uri=self._import_output_s3_uri,
-        )
+        try:
+            return self._health_imaging_client.start_dicom_import_job(
+                jobName=self._import_job_name,
+                datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+                dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
+                inputS3Uri=self._import_input_s3_uri,
+                outputS3Uri=self._import_output_s3_uri,
+            )
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "ThrottlingException":
+                raise RetryStep("Request throttled") from e
+            elif (
+                e.response["Error"]["Code"] == " ServiceQuotaExceededException"
+            ):
+                raise RetryStep("Service quota exceeded") from e
+            else:
+                self._mark_failed(
+                    error_message="An unexpected error occurred", exc=e
+                )
+        except Exception as e:
+            self._mark_failed(
+                error_message="An unexpected error occurred", exc=e
+            )
 
     def _deidentify_files(self):
         # this will need to iterate over all linked UserUploads
@@ -984,3 +1001,5 @@ class DICOMImageSetUpload(UUIDModel):
             Key=self._marker_file_key,
             Body=b"",
         )
+
+        self.user_uploads.all().delete()

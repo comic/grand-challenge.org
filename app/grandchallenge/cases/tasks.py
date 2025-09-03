@@ -6,7 +6,6 @@ from shutil import rmtree
 from tempfile import TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
-from botocore.exceptions import ClientError
 from celery import signature
 from celery.utils.log import get_task_logger
 from django.conf import settings
@@ -541,21 +540,11 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
 
     try:
         upload.deidentify_user_uploads()
-        upload.status = DICOMImageSetUploadStatusChoices.STARTED
-        upload.save()
-        upload.start_dicom_import_job()
-    except ClientError as e:
-        if e.response["Error"]["Code"] == "ThrottlingException":
-            raise RetryStep("Request throttled") from e
-        elif e.response["Error"]["Code"] == "ServiceQuotaExceededException":
-            raise RetryStep("Service quota exceeded") from e
-        else:
-            upload._mark_failed(
-                error_message="An unexpected error occurred", exc=e
-            )
     except Exception as e:
         upload._mark_failed(
             error_message="An unexpected error occurred", exc=e
         )
     else:
-        upload.user_uploads.all().delete()
+        upload.status = DICOMImageSetUploadStatusChoices.STARTED
+        upload.save()
+        upload.start_dicom_import_job()
