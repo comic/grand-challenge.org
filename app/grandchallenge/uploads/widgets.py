@@ -27,11 +27,26 @@ class UserUploadWidgetMixin:
         )
 
 
+class DICOMUserUploadMixin(UserUploadWidgetMixin):
+    class Media(UserUploadWidgetMixin.Media):
+        js = UserUploadWidgetMixin.Media.js + (
+            "vendored/dcmjs/build/dcmjs.min.js",
+            "js/file_preprocessors.js",
+        )
+
+
 class UserUploadSingleWidget(UserUploadWidgetMixin, HiddenInput):
     pass
 
 
 class UserUploadMultipleWidget(UserUploadWidgetMixin, MultipleHiddenInput):
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context["widget"]["attrs"]["multiple"] = True
+        return context
+
+
+class DICOMUserUploadMultipleWidget(DICOMUserUploadMixin, MultipleHiddenInput):
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         context["widget"]["attrs"]["multiple"] = True
