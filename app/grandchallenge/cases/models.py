@@ -860,7 +860,7 @@ class HealthImagingWrapper:
         super().__init__(*args, **kwargs)
         self._health_imaging_client = boto3.client(
             "medical-imaging",
-            region_name=settings.AWS_HEALTH_IMAGING_REGION_NAME,
+            region_name=settings.AWS_DEFAULT_REGION,
         )
 
     def start_dicom_import_job(self, *, job_name, input_s3_uri, output_s3_uri):
