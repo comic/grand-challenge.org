@@ -984,7 +984,7 @@ class DICOMImageSetUpload(UUIDModel):
                 error_message="An unexpected error occurred", exc=e
             )
 
-    def get_job_output_manifest(self, *, event):
+    def get_job_summary(self, *, event):
         output_uri = event["outputS3Uri"]
         parsed = urlparse(output_uri)
         bucket = parsed.netloc
@@ -998,8 +998,8 @@ class DICOMImageSetUpload(UUIDModel):
 
         return json.load(obj["Body"])["jobSummary"]
 
-    def get_job_output_failure_log(self, *, manifest):
-        output_uri = manifest["failureOutputS3Uri"]
+    def get_job_output_failure_log(self, *, job_summary):
+        output_uri = job_summary["failureOutputS3Uri"]
         parsed = urlparse(output_uri)
         bucket = parsed.netloc
         key = parsed.path.lstrip("/") + "failure.ndjson"
@@ -1026,15 +1026,15 @@ class DICOMImageSetUpload(UUIDModel):
             self.save()
 
     def handle_completed_job(self, *, event):
-        manifest = self.get_job_output_manifest(event=event)
-        if manifest["numberOfGeneratedImageSets"] > 1:
-            self.cleanup_image_sets(manifest=manifest)
+        job_summary = self.get_job_summary(event=event)
+        if job_summary["numberOfGeneratedImageSets"] > 1:
+            self.cleanup_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
                 "Multiple image sets created. Expected only one."
             )
-        image_set = manifest["imageSetsSummary"][0]
+        image_set = job_summary["imageSetsSummary"][0]
         if not image_set["isPrimary"]:
-            self.cleanup_image_sets(manifest=manifest)
+            self.cleanup_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
                 "New instance is not primary: "
                 "metadata conflicts with already existing instance."
@@ -1047,16 +1047,16 @@ class DICOMImageSetUpload(UUIDModel):
         self.convert_image_set_to_internal(image_set)
 
     def handle_failed_job(self, *, event):
-        manifest = self.get_job_output_manifest(event=event)
-        self.cleanup_image_sets(manifest=manifest)
-        failure_log = self.get_job_output_failure_log(manifest=manifest)
-        job_id = manifest["jobId"]
+        job_summary = self.get_job_summary(event=event)
+        self.cleanup_image_sets(job_summary=job_summary)
+        failure_log = self.get_job_output_failure_log(job_summary=job_summary)
+        job_id = job_summary["jobId"]
         raise DICOMImportJobFailedError(
             message=f"Import job {job_id} failed", message_details=failure_log
         )
 
-    def cleanup_image_sets(self, *, manifest):
-        image_sets = manifest.get("imageSetsSummary", [])
+    def cleanup_image_sets(self, *, job_summary):
+        image_sets = job_summary.get("imageSetsSummary", [])
         for image_set in image_sets:
             self.delete_image_set(image_set["imageSetId"])
 
