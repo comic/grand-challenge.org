@@ -533,13 +533,18 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         pk=dicom_imageset_upload_pk,
     )
 
-    # the status to check here will ultimately have to be something like DICOMImageSetUploadStatusChoices.DEIDENTIFIED
     if not upload.status == DICOMImageSetUploadStatusChoices.INITIALIZED:
         raise RuntimeError(
-            "Upload is not ready for importing into HealthImaging."
+            "Upload is not ready for de-identification and importing into HealthImaging."
         )
 
-    upload.status = DICOMImageSetUploadStatusChoices.STARTED
-    upload.save()
-
-    upload.start_dicom_import_job()
+    try:
+        upload.deidentify()
+    except Exception as e:
+        upload._mark_failed(
+            error_message="An unexpected error occurred", exc=e
+        )
+    else:
+        upload.status = DICOMImageSetUploadStatusChoices.STARTED
+        upload.save()
+        upload.start_dicom_import_job()

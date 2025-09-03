@@ -885,10 +885,20 @@ class DICOMImageSetUpload(UUIDModel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__health_imaging_client = None
+        self.__s3_client = None
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+    @property
+    def _s3_client(self):
+        if self.__s3_client is None:
+            self.__s3_client = boto3.client(
+                "s3",
+                region_name=settings.AWS_DEFAULT_REGION,
+            )
+        return self.__s3_client
 
     @property
     def _health_imaging_client(self):
@@ -905,9 +915,13 @@ class DICOMImageSetUpload(UUIDModel):
         return f"{settings.COMPONENTS_REGISTRY_PREFIX}-{self.pk}"
 
     @property
+    def _input_key(self):
+        return f"inputs/{self.pk}"
+
+    @property
     def _import_input_s3_uri(self):
         return (
-            f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/inputs/{self.pk}"
+            f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/{self._input_key}"
         )
 
     @property
@@ -937,7 +951,7 @@ class DICOMImageSetUpload(UUIDModel):
             if e.response["Error"]["Code"] == "ThrottlingException":
                 raise RetryStep("Request throttled") from e
             elif (
-                e.response["Error"]["Code"] == " ServiceQuotaExceededException"
+                e.response["Error"]["Code"] == "ServiceQuotaExceededException"
             ):
                 raise RetryStep("Service quota exceeded") from e
             else:
@@ -947,4 +961,16 @@ class DICOMImageSetUpload(UUIDModel):
         except Exception as e:
             self._mark_failed(
                 error_message="An unexpected error occurred", exc=e
+            )
+
+    def deidentify(self):
+        # this will need to iterate over all linked UserUploads
+        # for each, download the file from the uploads bucket, run the
+        # deidentifier and upload the deidentified file to the HI bucket
+        # for the time being just copy each upload to the HI bucket
+        for upload in self.user_uploads.all():
+            self._s3_client.copy(
+                CopySource={"Bucket": upload.bucket, "Key": upload.key},
+                Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+                Key=f"{self._input_key}/{upload.filename}",
             )
