@@ -28,7 +28,6 @@ from panimg.models import (
 )
 from storages.utils import clean_name
 
-from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
 )
@@ -928,6 +927,10 @@ class DICOMImageSetUpload(UUIDModel):
     def _import_output_s3_uri(self):
         return f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/logs/{self.pk}"
 
+    @property
+    def _marker_file_key(self):
+        return f"{self._input_key}/deidentification.done"
+
     def _mark_failed(self, *, error_message, exc):
         self.status = DICOMImageSetUploadStatusChoices.FAILED
         self.error_message = error_message
@@ -939,31 +942,15 @@ class DICOMImageSetUpload(UUIDModel):
         """
         Start a HealthImaging DICOM import job.
         """
-        try:
-            return self._health_imaging_client.start_dicom_import_job(
-                jobName=self._import_job_name,
-                datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
-                dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
-                inputS3Uri=self._import_input_s3_uri,
-                outputS3Uri=self._import_output_s3_uri,
-            )
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "ThrottlingException":
-                raise RetryStep("Request throttled") from e
-            elif (
-                e.response["Error"]["Code"] == "ServiceQuotaExceededException"
-            ):
-                raise RetryStep("Service quota exceeded") from e
-            else:
-                self._mark_failed(
-                    error_message="An unexpected error occurred", exc=e
-                )
-        except Exception as e:
-            self._mark_failed(
-                error_message="An unexpected error occurred", exc=e
-            )
+        return self._health_imaging_client.start_dicom_import_job(
+            jobName=self._import_job_name,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
+            inputS3Uri=self._import_input_s3_uri,
+            outputS3Uri=self._import_output_s3_uri,
+        )
 
-    def deidentify(self):
+    def _deidentify_files(self):
         # this will need to iterate over all linked UserUploads
         # for each, download the file from the uploads bucket, run the
         # deidentifier and upload the deidentified file to the HI bucket
@@ -974,3 +961,26 @@ class DICOMImageSetUpload(UUIDModel):
                 Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
                 Key=f"{self._input_key}/{upload.filename}",
             )
+
+    def deidentify_user_uploads(self):
+        # Check if marker file exists
+        try:
+            self._s3_client.head_object(
+                Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+                Key=self._marker_file_key,
+            )
+            logger.info("Deidentification already done, nothing to do.")
+            return
+        except ClientError as e:
+            if e.response["Error"]["Code"] != "404":
+                # unexpected error
+                raise
+
+        self._deidentify_files()
+
+        # Create empty marker file to indicate success
+        self._s3_client.put_object(
+            Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+            Key=self._marker_file_key,
+            Body=b"",
+        )
