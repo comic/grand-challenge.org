@@ -891,6 +891,27 @@ class HealthImagingWrapper:
             # todo: check status and maybe retry
             raise
 
+    def update_image_set_metadata(
+        self, image_set_id, version_id, metadata, force=False
+    ):
+        """
+        Update the metadata of an image set.
+        """
+        try:
+            return self._health_imaging_client.update_image_set_metadata(
+                imageSetId=image_set_id,
+                datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+                latestVersionId=version_id,
+                updateImageSetMetadataUpdates=metadata,
+                force=force,
+            )
+        except ClientError as err:
+            logger.error(
+                "Couldn't update image set metadata. Here's why: %s: %s",
+                err.response["Error"]["Code"],
+                err.response["Error"]["Message"],
+            )
+
 
 class DICOMImageSetUpload(UUIDModel):
     creator = models.ForeignKey(
@@ -1081,7 +1102,14 @@ class DICOMImageSetUpload(UUIDModel):
             )
 
     def revert_image_set_to_initial_version(self, image_set):
-        pass
+        from grandchallenge.cases.tasks import (
+            revert_image_set_to_initial_version,
+        )
+
+        revert_image_set_to_initial_version(
+            image_set_id=image_set["imageSetId"],
+            version_id=image_set["imageSetVersion"],
+        )
 
     def convert_image_set_to_internal(self, image_set):
         pass

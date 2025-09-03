@@ -573,3 +573,14 @@ def handle_healthimaging_import_job_event(*, event):
 def cleanup_healthimaging_image_set(*, image_set_id):
     health_imaging_wrapper = HealthImagingWrapper()
     health_imaging_wrapper.delete_image_set(image_set_id=image_set_id)
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def revert_image_set_to_initial_version(*, image_set_id, version_id):
+    health_imaging_wrapper = HealthImagingWrapper()
+    health_imaging_wrapper.update_image_set_metadata(
+        image_set_id=image_set_id,
+        version_id=version_id,
+        metadata={"revertToVersionId": "1"},
+    )
