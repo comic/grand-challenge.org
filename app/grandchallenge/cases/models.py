@@ -1086,7 +1086,7 @@ class DICOMImageSetUpload(UUIDModel):
         image_sets = job_summary.get("imageSetsSummary", [])
         for image_set in image_sets:
             cleanup_healthimaging_image_set(
-                upload_pk=self.pk, image_set_id=image_set["imageSetId"]
+                image_set_id=image_set["imageSetId"]
             )
 
     def revert_image_set_to_initial_version(self, image_set):
