@@ -189,6 +189,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "pk",
             "questions",
             "title",
+            "title_safe",
             "is_educational",
             "instant_verification",
             "has_ground_truth",

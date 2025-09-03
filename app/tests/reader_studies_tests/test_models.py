@@ -35,6 +35,11 @@ from tests.reader_studies_tests.factories import (
 from tests.utilization_tests.factories import SessionUtilizationFactory
 from tests.utils import get_view_for_user
 
+SOMEWHAT_NAUGHTY_STRING = (
+    "<a href='javascript:alert(1)' onmouseover='alert(1)'>Click me</a>"
+    "<script>alert('XSS')</script>"
+)
+
 
 @pytest.mark.django_db
 def test_group_deletion():
@@ -369,35 +374,7 @@ def test_score_for_user(
     assert score["score__avg"] == 0.5
 
 
-@pytest.mark.parametrize(
-    "markdown_field,rendered_field",
-    (
-        ("help_text_markdown", "help_text"),
-        ("help_text_markdown", "help_text_safe"),
-        ("end_of_study_text_markdown", "end_of_study_text_safe"),
-    ),
-)
-@pytest.mark.django_db
-def test_help_markdown_is_scrubbed(client, markdown_field, rendered_field):
-    somewhat_naughty_string = (
-        "<a href='javascript:alert(1)' onmouseover='alert(1)'>Click me</a>"
-        "<script>alert('XSS')</script>"
-    )
-
-    rs = ReaderStudyFactory(
-        **{
-            markdown_field: "# Here come some naughty strings\n\n"
-            + somewhat_naughty_string
-        }
-    )
-    u = UserFactory()
-    rs.add_reader(u)
-
-    response = get_view_for_user(client=client, url=rs.api_url, user=u)
-
-    assert response.status_code == 200
-
-    rendered_text = response.json()[rendered_field]
+def verify_string_is_safe(rendered_text):
     parsed_text = BeautifulSoup(rendered_text, "html.parser")
     assert parsed_text, "Parsing output failed"
 
@@ -424,6 +401,83 @@ def test_help_markdown_is_scrubbed(client, markdown_field, rendered_field):
     # Make sure that there are no headerlinks in the output
     for element in parsed_text.find_all():
         assert "headerlink" not in element.get("class", [])
+
+
+@pytest.mark.parametrize(
+    "markdown_field,rendered_field",
+    (
+        ("help_text_markdown", "help_text"),
+        ("help_text_markdown", "help_text_safe"),
+        ("end_of_study_text_markdown", "end_of_study_text_safe"),
+        ("title", "title_safe"),
+    ),
+)
+@pytest.mark.django_db
+def test_help_markdown_is_scrubbed(client, markdown_field, rendered_field):
+    rs = ReaderStudyFactory(
+        **{
+            markdown_field: "# Here come some naughty strings\n\n"
+            + SOMEWHAT_NAUGHTY_STRING
+        }
+    )
+    u = UserFactory()
+    rs.add_reader(u)
+
+    response = get_view_for_user(client=client, url=rs.api_url, user=u)
+    assert response.status_code == 200
+
+    rendered_text = response.json()[rendered_field]
+    verify_string_is_safe(rendered_text)
+
+
+@pytest.mark.parametrize(
+    "text_field,rendered_field",
+    (("title", "title_safe"),),
+)
+@pytest.mark.django_db
+def test_display_set_texts_are_scrubbed(client, text_field, rendered_field):
+    rs = ReaderStudyFactory()
+    ds = DisplaySetFactory(
+        reader_study=rs,
+        **{text_field: SOMEWHAT_NAUGHTY_STRING},
+    )
+
+    u = UserFactory()
+    rs.add_reader(u)
+
+    response = get_view_for_user(client=client, url=ds.api_url, user=u)
+    assert response.status_code == 200
+
+    verify_string_is_safe(response.json()[rendered_field])
+
+
+@pytest.mark.parametrize(
+    "text_field,rendered_field",
+    (
+        ("help_text", "help_text_safe"),
+        ("question_text", "question_text_safe"),
+        (
+            "empty_answer_confirmation_label",
+            "empty_answer_confirmation_label_safe",
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_question_texts_are_scrubbed(client, text_field, rendered_field):
+    rs = ReaderStudyFactory()
+    q = QuestionFactory(
+        reader_study=rs,
+        answer_type=Question.AnswerType.BOOL,
+        **{text_field: SOMEWHAT_NAUGHTY_STRING},
+    )
+
+    u = UserFactory()
+    rs.add_reader(u)
+
+    response = get_view_for_user(client=client, url=q.api_url, user=u)
+    assert response.status_code == 200
+
+    verify_string_is_safe(response.json()[rendered_field])
 
 
 @pytest.mark.django_db
