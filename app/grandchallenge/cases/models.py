@@ -1049,12 +1049,13 @@ class DICOMImageSetUpload(UUIDModel):
 
     def handle_failed_job(self, *, event):
         job_summary = self.get_job_summary(event=event)
-        self.cleanup_image_sets(job_summary=job_summary)
-        failure_log = self.get_job_output_failure_log(job_summary=job_summary)
-        job_id = job_summary["jobId"]
-        raise DICOMImportJobFailedError(
-            message=f"Import job {job_id} failed", message_details=failure_log
+        self.internal_failure_log = self.get_job_output_failure_log(
+            job_summary=job_summary
         )
+        self.save()
+        self.cleanup_image_sets(job_summary=job_summary)
+        job_id = job_summary["jobId"]
+        raise DICOMImportJobFailedError(message=f"Import job {job_id} failed")
 
     def cleanup_image_sets(self, *, job_summary):
         image_sets = job_summary.get("imageSetsSummary", [])
