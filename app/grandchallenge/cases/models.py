@@ -34,6 +34,7 @@ from grandchallenge.cases.exceptions import (
     DICOMImportJobFailedError,
     DICOMImportJobValidationError,
 )
+from grandchallenge.cases.tasks import cleanup_healthimaging_image_set
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
@@ -939,7 +940,7 @@ class DICOMImageSetUpload(UUIDModel):
         if exc:
             logger.error(exc, exc_info=True)
 
-    def delete_image_set(self, image_set_id):
+    def delete_image_set(self, *, image_set_id):
         try:
             delete_results = self._health_imaging_client.delete_image_set(
                 imageSetId=image_set_id,
@@ -1060,7 +1061,9 @@ class DICOMImageSetUpload(UUIDModel):
     def cleanup_image_sets(self, *, job_summary):
         image_sets = job_summary.get("imageSetsSummary", [])
         for image_set in image_sets:
-            self.delete_image_set(image_set["imageSetId"])
+            cleanup_healthimaging_image_set(
+                upload_pk=self.pk, image_set_id=image_set["imageSetId"]
+            )
 
     def revert_image_set_to_initial_version(self, image_set):
         pass
