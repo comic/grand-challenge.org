@@ -21,6 +21,7 @@ from panimg.models import PanImgFile, PanImgResult
 
 from grandchallenge.cases.models import (
     DICOMImageSetUploadStatusChoices,
+    HealthImagingWrapper,
     Image,
     ImageFile,
     PostProcessImageTask,
@@ -567,13 +568,8 @@ def handle_healthimaging_import_job_event(*, event):
     upload.handle_event(event=event)
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task
 @transaction.atomic
-def cleanup_healthimaging_image_set(*, upload_pk, image_set_id):
-    upload = lock_model_instance(
-        pk=upload_pk,
-        app_label="cases",
-        model_name="DICOMImageSetUpload",
-    )
-
-    upload.delete_image_set(image_set_id=image_set_id)
+def cleanup_healthimaging_image_set(*, image_set_id):
+    health_imaging_wrapper = HealthImagingWrapper()
+    health_imaging_wrapper.delete_image_set(image_set_id=image_set_id)

@@ -855,6 +855,52 @@ class DICOMImageSetUploadStatusChoices(models.TextChoices):
     COMPLETED = "COMPLETED", _("Completed")
 
 
+class HealthImagingWrapper:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__health_imaging_client = None
+
+    @property
+    def _health_imaging_client(self):
+        if self.__health_imaging_client is None:
+            self.__health_imaging_client = boto3.client(
+                "medical-imaging",
+                region_name=settings.AWS_HEALTH_IMAGING_REGION_NAME,
+            )
+        return self.__health_imaging_client
+
+    def start_dicom_import_job(self, *, job_name, input_s3_uri, output_s3_uri):
+        """
+        Start a HealthImaging DICOM import job.
+        """
+        job = self._health_imaging_client.start_dicom_import_job(
+            jobName=job_name,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
+            inputS3Uri=input_s3_uri,
+            outputS3Uri=output_s3_uri,
+        )
+        return job["jobId"]
+
+    def delete_image_set(self, *, image_set_id):
+        try:
+            delete_results = self._health_imaging_client.delete_image_set(
+                imageSetId=image_set_id,
+                datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            )
+        except self._health_imaging_client.exceptions.ThrottlingException as e:
+            raise RetryStep("Request throttled") from e
+        except (
+            self._health_imaging_client.exceptions.InternalServerException
+        ) as e:
+            raise RetryStep("Server side error") from e
+        except self._health_imaging_client.exceptions.ConflictException:
+            # todo: check status and maybe retry
+            raise
+        else:
+            return delete_results
+
+
 class DICOMImageSetUpload(UUIDModel):
     creator = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
@@ -892,7 +938,7 @@ class DICOMImageSetUpload(UUIDModel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__health_imaging_client = None
+        self.__health_imaging_wrapper = None
         self.__s3_client = None
 
     def save(self, *args, **kwargs):
@@ -900,13 +946,10 @@ class DICOMImageSetUpload(UUIDModel):
         super().save(*args, **kwargs)
 
     @property
-    def _health_imaging_client(self):
-        if self.__health_imaging_client is None:
-            self.__health_imaging_client = boto3.client(
-                "medical-imaging",
-                region_name=settings.AWS_DEFAULT_REGION,
-            )
-        return self.__health_imaging_client
+    def _health_imaging_wrapper(self):
+        if self.__health_imaging_wrapper is None:
+            self.__health_imaging_wrapper = HealthImagingWrapper()
+        return self.__health_imaging_wrapper
 
     @property
     def _s3_client(self):
@@ -939,35 +982,15 @@ class DICOMImageSetUpload(UUIDModel):
         if exc:
             logger.error(exc, exc_info=True)
 
-    def delete_image_set(self, *, image_set_id):
-        try:
-            delete_results = self._health_imaging_client.delete_image_set(
-                imageSetId=image_set_id,
-                datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
-            )
-        except self._health_imaging_client.exceptions.ThrottlingException as e:
-            raise RetryStep("Request throttled") from e
-        except (
-            self._health_imaging_client.exceptions.InternalServerException
-        ) as e:
-            raise RetryStep("Server side error") from e
-        except self._health_imaging_client.exceptions.ConflictException:
-            # todo: check status and maybe retry
-            raise
-        else:
-            return delete_results
-
     def start_dicom_import_job(self):
         """
         Start a HealthImaging DICOM import job.
         """
         try:
-            return self._health_imaging_client.start_dicom_import_job(
-                jobName=self._import_job_name,
-                datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
-                dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
-                inputS3Uri=self._import_input_s3_uri,
-                outputS3Uri=self._import_output_s3_uri,
+            return self._health_imaging_wrapper.start_dicom_import_job(
+                job_name=self._import_job_name,
+                input_s3_uri=self._import_input_s3_uri,
+                output_s3_uri=self._import_output_s3_uri,
             )
         except ClientError as e:
             if e.response["Error"]["Code"] == "ThrottlingException":
