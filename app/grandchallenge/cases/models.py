@@ -883,7 +883,7 @@ class HealthImagingWrapper:
 
     def delete_image_set(self, *, image_set_id):
         try:
-            delete_results = self._health_imaging_client.delete_image_set(
+            return self._health_imaging_client.delete_image_set(
                 imageSetId=image_set_id,
                 datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
             )
@@ -896,8 +896,6 @@ class HealthImagingWrapper:
         except self._health_imaging_client.exceptions.ConflictException:
             # todo: check status and maybe retry
             raise
-        else:
-            return delete_results
 
 
 class DICOMImageSetUpload(UUIDModel):
