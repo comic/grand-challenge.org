@@ -34,7 +34,6 @@ from grandchallenge.cases.exceptions import (
     DICOMImportJobFailedError,
     DICOMImportJobValidationError,
 )
-from grandchallenge.cases.tasks import cleanup_healthimaging_image_set
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
@@ -1059,6 +1058,8 @@ class DICOMImageSetUpload(UUIDModel):
         raise DICOMImportJobFailedError(message=f"Import job {job_id} failed")
 
     def cleanup_image_sets(self, *, job_summary):
+        from grandchallenge.cases.tasks import cleanup_healthimaging_image_set
+
         image_sets = job_summary.get("imageSetsSummary", [])
         for image_set in image_sets:
             cleanup_healthimaging_image_set(
