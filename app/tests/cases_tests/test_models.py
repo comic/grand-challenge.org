@@ -176,13 +176,18 @@ def test_dicomimagesetupload_import_properties():
 
 @pytest.mark.django_db
 def test_start_dicom_import_job(settings):
-    settings.AWS_HEALTH_IMAGING_DATASTORE_ID = "eu-west-1"
+    settings.AWS_HEALTH_IMAGING_REGION_NAME = "eu-west-1"
+    settings.AWS_HEALTH_IMAGING_DATASTORE_ID = (
+        "efd11ef2121b451d934757a4d14b182c"
+    )
     settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN = (
         "arn:aws:iam::123456789012:role/healthimaging-importjob-access"
     )
     di_upload = DICOMImageSetUploadFactory()
 
-    with Stubber(di_upload._health_imaging_client) as s:
+    with Stubber(
+        di_upload._health_imaging_wrapper._health_imaging_client
+    ) as s:
         s.add_response(
             method="start_dicom_import_job",
             service_response={

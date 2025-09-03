@@ -873,14 +873,13 @@ class HealthImagingWrapper:
         """
         Start a HealthImaging DICOM import job.
         """
-        job = self._health_imaging_client.start_dicom_import_job(
+        return self._health_imaging_client.start_dicom_import_job(
             jobName=job_name,
             datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
             dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
             inputS3Uri=input_s3_uri,
             outputS3Uri=output_s3_uri,
         )
-        return job["jobId"]
 
     def delete_image_set(self, *, image_set_id):
         try:
