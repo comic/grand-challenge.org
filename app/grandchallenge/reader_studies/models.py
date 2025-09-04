@@ -1515,6 +1515,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         "answer_match_pattern",
         "empty_answer_confirmation",
         "empty_answer_confirmation_label",
+        "empty_answer_confirmation_label_safe",
     }
 
     def __str__(self):
@@ -1883,7 +1884,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
 
     @property
     def help_text_safe(self) -> str:
-        """The cleaned help text allowing some HTML tags"""
         return clean(self.help_text)
 
     @property
@@ -1894,6 +1894,10 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         annotations.
         """
         return clean(self.question_text, tags=[])
+
+    @property
+    def empty_answer_confirmation_label_safe(self) -> str:
+        return clean(self.empty_answer_confirmation_label)
 
 
 class QuestionUserObjectPermission(UserObjectPermissionBase):

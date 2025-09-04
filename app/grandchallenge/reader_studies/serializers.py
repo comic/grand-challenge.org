@@ -84,6 +84,7 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "answer_match_pattern",
             "empty_answer_confirmation",
             "empty_answer_confirmation_label",
+            "empty_answer_confirmation_label_safe",
             "interactive_algorithms",
         )
 
