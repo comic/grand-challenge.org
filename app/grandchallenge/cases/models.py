@@ -1109,11 +1109,11 @@ class DICOMImageSetUpload(UUIDModel):
                 "metadata conflicts with already existing instance."
             )
         if not image_set["imageSetVersion"] == 1:
-            self.revert_image_set_to_initial_version(image_set)
+            self.revert_image_set_to_initial_version(image_set=image_set)
             raise DICOMImportJobValidationError(
                 "Instance already exists. This should never happen!"
             )
-        self.convert_image_set_to_internal(image_set)
+        self.convert_image_set_to_internal(image_set=image_set)
 
     def handle_failed_job(self, *, event):
         job_summary = self.get_job_summary(event=event)
@@ -1136,7 +1136,7 @@ class DICOMImageSetUpload(UUIDModel):
             )
 
     @staticmethod
-    def revert_image_set_to_initial_version(image_set):
+    def revert_image_set_to_initial_version(*, image_set):
         from grandchallenge.cases.tasks import (
             revert_image_set_to_initial_version,
         )
@@ -1147,5 +1147,5 @@ class DICOMImageSetUpload(UUIDModel):
         )
 
     @staticmethod
-    def convert_image_set_to_internal(image_set):
+    def convert_image_set_to_internal(*, image_set):
         pass
