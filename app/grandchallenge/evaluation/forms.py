@@ -592,7 +592,7 @@ class SubmissionForm(
             >= 1
         )
         has_active_evaluations = self._phase.has_active_evaluations(
-            users=[creator]
+            users={creator}
         )
 
         can_submit = (
