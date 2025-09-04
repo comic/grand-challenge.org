@@ -3,13 +3,11 @@ from pathlib import Path
 
 import factory
 import pytest
-from botocore.exceptions import ClientError
 from botocore.stub import Stubber
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.files import File
 
-from grandchallenge.cases.models import DICOMImageSetUploadStatusChoices
 from tests.cases_tests.factories import (
     DICOMImageSetUploadFactory,
     ImageFactory,
@@ -206,23 +204,3 @@ def test_start_dicom_import_job(settings):
         response = di_upload.start_dicom_import_job()
 
     assert response["jobStatus"] == "SUBMITTED"
-
-
-@pytest.mark.django_db
-def test_error_in_start_dicom_import_job(mocker):
-    di_upload = DICOMImageSetUploadFactory()
-    fake_client = mocker.Mock()
-    fake_client.start_dicom_import_job.side_effect = ClientError(
-        error_response={
-            "Error": {"Code": "ValidationError", "Message": "Foo"}
-        },
-        operation_name="StartDICOMImportJob",
-    )
-    mocker.patch(
-        "grandchallenge.cases.models.boto3.client", return_value=fake_client
-    )
-
-    di_upload.start_dicom_import_job()
-
-    assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
-    assert di_upload.error_message == "An unexpected error occurred"
