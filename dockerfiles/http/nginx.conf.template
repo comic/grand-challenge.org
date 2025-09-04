@@ -120,25 +120,6 @@ http {
   }
 
   server {
-    # Remove the www and mobile subdomains
-    listen 443 ssl;
-    listen [::]:443 ssl;
-
-    server_name www.${SERVER_NAME} mobile.${SERVER_NAME} m.${SERVER_NAME};
-
-    return 301 $scheme://${SERVER_NAME}$request_uri;
-  }
-
-  server {
-    listen 9113;
-    listen [::]:9113;
-
-    server_name http;
-
-    stub_status;
-  }
-
-  server {
     # Try to serve files, otherwise proxy to app
     listen 443 ssl default_server;
     listen [::]:443 ssl default_server;
@@ -147,6 +128,11 @@ http {
     client_max_body_size 16m;
 
     server_name .${SERVER_NAME};
+
+    if ($host ~* ^(?:www|m|mobile)\.(.+)$) {
+        # Remove the www and mobile subdomains
+        return 301 https://$1$request_uri;
+    }
 
     error_page 413 = @error_413;
 
