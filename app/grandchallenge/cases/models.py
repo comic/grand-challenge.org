@@ -1133,7 +1133,10 @@ class DICOMImageSetUpload(UUIDModel):
         self.save()
         self.delete_image_sets(job_summary=job_summary)
         job_id = job_summary["jobId"]
-        raise DICOMImportJobFailedError(message=f"Import job {job_id} failed")
+        raise DICOMImportJobFailedError(
+            message=f"Import job {job_id} failed "
+            f"for DICOMImageSetUpload {self.pk}"
+        )
 
     @staticmethod
     def delete_image_sets(*, job_summary):
