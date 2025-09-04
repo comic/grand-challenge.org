@@ -890,7 +890,7 @@ class ReaderStudy(
 
     @property
     def title_safe(self) -> str:
-        return clean(self.title, tags=[])
+        return clean(self.title, no_tags=True)
 
 
 class ReaderStudyUserObjectPermission(UserObjectPermissionBase):
@@ -1074,7 +1074,7 @@ class DisplaySet(
 
     @property
     def title_safe(self) -> str:
-        return clean(self.title, tags=[])
+        return clean(self.title, no_tags=True)
 
 
 class DisplaySetUserObjectPermission(UserObjectPermissionBase):
@@ -1514,7 +1514,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         "answer_match_pattern",
         "empty_answer_confirmation",
         "empty_answer_confirmation_label",
-        "empty_answer_confirmation_label_safe",
     }
 
     def __str__(self):
@@ -1892,7 +1891,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         because this is rendered outside of DOM trees as well for
         annotations.
         """
-        return clean(self.question_text, tags=[])
+        return clean(self.question_text, no_tags=True)
 
     @property
     def empty_answer_confirmation_label_safe(self) -> str:
