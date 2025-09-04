@@ -8,10 +8,10 @@ from django.db.transaction import on_commit
 from django.utils.timezone import now
 
 from grandchallenge.components.backends.amazon_sagemaker_base import (
-    UUID4_REGEX,
     ModelChoices,
 )
 from grandchallenge.components.backends.base import Executor, JobParams
+from grandchallenge.components.backends.utils import UUID4_REGEX
 from grandchallenge.components.tasks import handle_event
 
 logger = logging.getLogger(__name__)

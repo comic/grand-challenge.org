@@ -1,3 +1,4 @@
+import re
 import zipfile
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
@@ -20,6 +21,7 @@ from panimg.models import PanImgFile, PanImgResult
 
 from grandchallenge.cases.models import (
     DICOMImageSetUploadStatusChoices,
+    HealthImagingWrapper,
     Image,
     ImageFile,
     PostProcessImageTask,
@@ -27,7 +29,7 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
 )
 from grandchallenge.components.backends.exceptions import RetryStep
-from grandchallenge.components.backends.utils import safe_extract
+from grandchallenge.components.backends.utils import UUID4_REGEX, safe_extract
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import (
@@ -550,3 +552,42 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
     else:
         upload.status = DICOMImageSetUploadStatusChoices.STARTED
         upload.save()
+
+
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException, RetryStep))
+@transaction.atomic
+def handle_healthimaging_import_job_event(*, event):
+    job_name = event["jobName"]
+    prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
+    pattern = rf"^{prefix_regex}\-(?P<pk>{UUID4_REGEX})$"
+    result = re.match(pattern, job_name)
+    pk = result.group("pk")
+
+    upload = lock_model_instance(
+        pk=pk,
+        app_label="cases",
+        model_name="DICOMImageSetUpload",
+    )
+
+    if upload.status != DICOMImageSetUploadStatusChoices.STARTED:
+        return
+
+    upload.handle_event(event=event)
+
+
+@acks_late_micro_short_task(retry_on=(RetryStep,))
+@transaction.atomic
+def delete_healthimaging_image_set(*, image_set_id):
+    health_imaging_wrapper = HealthImagingWrapper()
+    health_imaging_wrapper.delete_image_set(image_set_id=image_set_id)
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def revert_image_set_to_initial_version(*, image_set_id, version_id):
+    health_imaging_wrapper = HealthImagingWrapper()
+    health_imaging_wrapper.update_image_set_metadata(
+        image_set_id=image_set_id,
+        version_id=version_id,
+        metadata={"revertToVersionId": "1"},
+    )

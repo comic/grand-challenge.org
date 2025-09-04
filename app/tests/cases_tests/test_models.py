@@ -8,6 +8,10 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.files import File
 
+from grandchallenge.cases.exceptions import (
+    DICOMImportJobFailedError,
+    DICOMImportJobValidationError,
+)
 from tests.cases_tests.factories import (
     DICOMImageSetUploadFactory,
     ImageFactory,
@@ -174,13 +178,17 @@ def test_dicomimagesetupload_import_properties():
 
 @pytest.mark.django_db
 def test_start_dicom_import_job(settings):
-    settings.AWS_HEALTH_IMAGING_DATASTORE_ID = "eu-west-1"
+    settings.AWS_HEALTH_IMAGING_DATASTORE_ID = (
+        "efd11ef2121b451d934757a4d14b182c"
+    )
     settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN = (
         "arn:aws:iam::123456789012:role/healthimaging-importjob-access"
     )
     di_upload = DICOMImageSetUploadFactory()
 
-    with Stubber(di_upload._health_imaging_client) as s:
+    with Stubber(
+        di_upload._health_imaging_wrapper._health_imaging_client
+    ) as s:
         s.add_response(
             method="start_dicom_import_job",
             service_response={
@@ -200,3 +208,204 @@ def test_start_dicom_import_job(settings):
         response = di_upload.start_dicom_import_job()
 
     assert response["jobStatus"] == "SUBMITTED"
+
+
+@pytest.mark.django_db
+def test_handle_failed_job(mocker):
+    di_upload = DICOMImageSetUploadFactory()
+    event = {
+        "imagingVersion": "1.0",
+        "datastoreId": "bbc4f3cccbae4095a34170fddc19b13d",
+        "jobName": f"gc.localhost-{di_upload.pk}",
+        "jobId": "3d8e036cc21a83e10bbb98c9d29258a5",
+        "jobStatus": "FAILED",
+        "inputS3Uri": f"s3://healthimaging/inputs/{di_upload.pk}/",
+        "outputS3Uri": "s3://healthimaging/logs/bbc4f3cccbae4095a34170fddc19b13d-DicomImport-3d8e036cc21a83e10bbb98c9d29258a5/",
+    }
+    job_summary = {
+        "jobId": "381d850256f30b24358c0a3d9e389670",
+        "datastoreId": "bbc4f3cccbae4095a34170fddc19b13d",
+        "inputS3Uri": f"s3://healthimaging/inputs/{di_upload.pk}/",
+        "outputS3Uri": "s3://healthimaging/logs/bbc4f3cccbae4095a34170fddc19b13d-DicomImport-3d8e036cc21a83e10bbb98c9d29258a5/",
+        "successOutputS3Uri": "s3://healthimaging/logs/bbc4f3cccbae4095a34170fddc19b13d-DicomImport-3d8e036cc21a83e10bbb98c9d29258a5/SUCCESS/",
+        "failureOutputS3Uri": "s3://healthimaging/logs/bbc4f3cccbae4095a34170fddc19b13d-DicomImport-3d8e036cc21a83e10bbb98c9d29258a5/FAILURE/",
+        "numberOfScannedFiles": 1,
+        "numberOfImportedFiles": 0,
+        "numberOfFilesWithCustomerError": 0,
+        "numberOfFilesWithServerError": 1,
+        "numberOfGeneratedImageSets": 0,
+        "imageSetsSummary": [],
+    }
+    failure_log = [
+        {
+            "inputFile": f"inputs/{di_upload.pk}/",
+            "exception": {
+                "exceptionType": "SomeException",
+                "message": "The import job failed.",
+            },
+        }
+    ]
+    mock_get_summary = mocker.patch.object(
+        di_upload, "get_job_summary", return_value=job_summary
+    )
+    mock_get_failure_log = mocker.patch.object(
+        di_upload, "get_job_output_failure_log", return_value=failure_log
+    )
+    spy_delete_image_sets = mocker.spy(di_upload, "delete_image_sets")
+
+    with pytest.raises(DICOMImportJobFailedError):
+        di_upload.handle_failed_job(event=event)
+
+    mock_get_summary.assert_called_once_with(event=event)
+    mock_get_failure_log.assert_called_once_with(job_summary=job_summary)
+    spy_delete_image_sets.assert_called_once_with(job_summary=job_summary)
+    assert di_upload.internal_failure_log == str(failure_log)
+
+
+@pytest.mark.django_db
+def test_validate_image_set_no_generated_image_set(mocker):
+    di_upload = DICOMImageSetUploadFactory()
+    event = {
+        "jobStatus": "COMPLETED",
+    }
+    job_summary = {
+        "jobId": "1",
+        "numberOfGeneratedImageSets": 0,
+    }
+    mocker.patch.object(di_upload, "get_job_summary", return_value=job_summary)
+    mock_get_failure_log = mocker.patch.object(
+        di_upload, "get_job_output_failure_log"
+    )
+
+    with pytest.raises(DICOMImportJobFailedError):
+        di_upload.validate_image_set(event=event)
+    mock_get_failure_log.assert_called_once_with(job_summary=job_summary)
+
+
+@pytest.mark.django_db
+def test_validate_image_set_multiple_generated_image_sets(mocker):
+    di_upload = DICOMImageSetUploadFactory()
+    event = {
+        "jobStatus": "COMPLETED",
+    }
+    job_summary = {
+        "jobId": "1",
+        "numberOfGeneratedImageSets": 2,
+        "imageSetsSummary": [
+            {
+                "imageSetId": "1",
+            },
+            {
+                "imageSetId": "2",
+            },
+        ],
+    }
+    mocker.patch.object(di_upload, "get_job_summary", return_value=job_summary)
+    mock_delete_image_set_task = mocker.patch(
+        "grandchallenge.cases.tasks.delete_healthimaging_image_set"
+    )
+
+    with pytest.raises(DICOMImportJobValidationError) as e:
+        di_upload.validate_image_set(event=event)
+    assert str(e.value) == "Multiple image sets created. Expected only one."
+    assert mock_delete_image_set_task.call_count == 2
+    mock_delete_image_set_task.assert_any_call(image_set_id="1")
+    mock_delete_image_set_task.assert_any_call(image_set_id="2")
+
+
+@pytest.mark.django_db
+def test_validate_image_set_generated_image_set_not_primary(mocker):
+    di_upload = DICOMImageSetUploadFactory()
+    event = {
+        "jobStatus": "COMPLETED",
+    }
+    job_summary = {
+        "jobId": "1",
+        "numberOfGeneratedImageSets": 1,
+        "imageSetsSummary": [
+            {
+                "imageSetId": "1",
+                "imageSetVersion": 1,
+                "isPrimary": False,
+                "numberOfMatchedSOPInstances": 1,
+            },
+        ],
+    }
+    mocker.patch.object(di_upload, "get_job_summary", return_value=job_summary)
+    mock_delete_image_set_task = mocker.patch(
+        "grandchallenge.cases.tasks.delete_healthimaging_image_set"
+    )
+
+    with pytest.raises(DICOMImportJobValidationError) as e:
+        di_upload.validate_image_set(event=event)
+    assert (
+        str(e.value)
+        == "New instance is not primary: metadata conflicts with already existing instance."
+    )
+    mock_delete_image_set_task.assert_called_once_with(image_set_id="1")
+
+
+@pytest.mark.django_db
+def test_validate_image_set_generated_image_set_not_first_version(mocker):
+    di_upload = DICOMImageSetUploadFactory()
+    event = {
+        "jobStatus": "COMPLETED",
+    }
+    job_summary = {
+        "jobId": "1",
+        "numberOfGeneratedImageSets": 1,
+        "imageSetsSummary": [
+            {
+                "imageSetId": "1",
+                "imageSetVersion": 2,
+                "isPrimary": True,
+                "numberOfMatchedSOPInstances": 1,
+            },
+        ],
+    }
+    mocker.patch.object(di_upload, "get_job_summary", return_value=job_summary)
+    mock_revert_image_set_to_initial_version = mocker.patch(
+        "grandchallenge.cases.tasks.revert_image_set_to_initial_version"
+    )
+
+    with pytest.raises(DICOMImportJobValidationError) as e:
+        di_upload.validate_image_set(event=event)
+    assert str(e.value) == "Instance already exists. This should never happen!"
+    mock_revert_image_set_to_initial_version.assert_called_once_with(
+        image_set_id="1", version_id=2
+    )
+
+
+@pytest.mark.django_db
+def test_handle_completed_job_generated_image_set_not_first_version(mocker):
+    di_upload = DICOMImageSetUploadFactory()
+    event = {
+        "jobStatus": "COMPLETED",
+    }
+    job_summary = {
+        "jobId": "1",
+        "numberOfGeneratedImageSets": 1,
+        "imageSetsSummary": [
+            {
+                "imageSetId": "1",
+                "imageSetVersion": 1,
+                "isPrimary": True,
+                "numberOfMatchedSOPInstances": 1,
+            },
+        ],
+    }
+    mocker.patch.object(di_upload, "get_job_summary", return_value=job_summary)
+    mock_convert_image_set_to_internal = mocker.patch.object(
+        di_upload, "convert_image_set_to_internal"
+    )
+
+    di_upload.handle_completed_job(event=event)
+
+    mock_convert_image_set_to_internal.assert_called_once_with(
+        image_set={
+            "imageSetId": "1",
+            "imageSetVersion": 1,
+            "isPrimary": True,
+            "numberOfMatchedSOPInstances": 1,
+        }
+    )
