@@ -14,7 +14,7 @@ register = template.Library()
 
 
 @register.filter
-def clean(html: str, no_tags=False):
+def clean(html: str, *, no_tags=False):
     """Clean the html with bleach."""
     if no_tags:
         tags = []
