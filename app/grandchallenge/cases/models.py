@@ -883,6 +883,12 @@ class HealthImagingWrapper:
             )
         except self._health_imaging_client.exceptions.ThrottlingException as e:
             raise RetryStep("Request throttled") from e
+        except ClientError as err:
+            logger.error(
+                "Couldn't delete image set. Here's why: %s: %s",
+                err.response["Error"]["Code"],
+                err.response["Error"]["Message"],
+            )
 
     def update_image_set_metadata(
         self, image_set_id, version_id, metadata, force=False
