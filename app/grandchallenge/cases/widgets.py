@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
 from django.forms import (
@@ -60,16 +62,26 @@ class FlexibleImageWidget(MultiWidget):
         if not value:
             return [None, None]
 
-        if len(value) == 1:
-            item = value[0]
-            if item in ImageWidgetChoices.names:
-                return [None, None]
-            if Image.objects.filter(pk=item).exists():
-                return [str(item), None]
-            # can also just be a single UserUpload
-            return [None, value]
+        if isinstance(value, (list, tuple)):
+            if len(value) == 1:
+                item = value[0]
+                if item in ImageWidgetChoices.names:
+                    return [None, None]
+                if Image.objects.filter(pk=item).exists():
+                    return [str(item), None]
+                # can also just be a single UserUpload
+                return [None, value]
+            else:
+                # can be a list of UserUploads or
+                # a single image UUID (when an image is preselected)
+                return [None, value]
 
-        return [None, value]
+        if isinstance(value, UUID):
+            # when an image is preselected as current_value
+            if Image.objects.filter(pk=value).exists():
+                return [value, None]
+
+        raise RuntimeError("Unrecognized value type")
 
     def value_from_datadict(self, data, files, name):
         try:
