@@ -1,7 +1,6 @@
 from math import ceil
 
 from actstream.models import Follow
-from grandchallenge.core.templatetags.bleach import clean, md2html
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -48,7 +47,7 @@ from grandchallenge.core.storage import (
     get_social_image_path,
     public_s3_storage,
 )
-from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.core.templatetags.bleach import clean, md2html
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
