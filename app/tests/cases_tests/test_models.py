@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.files import File
 
+from grandchallenge.cases.exceptions import DICOMImportJobFailedError
 from tests.cases_tests.factories import (
     DICOMImageSetUploadFactory,
     ImageFactory,
@@ -204,3 +205,55 @@ def test_start_dicom_import_job(settings):
         response = di_upload.start_dicom_import_job()
 
     assert response["jobStatus"] == "SUBMITTED"
+
+
+@pytest.mark.django_db
+def test_handle_failed_job(mocker):
+    di_upload = DICOMImageSetUploadFactory()
+    event = {
+        "imagingVersion": "1.0",
+        "datastoreId": "bbc4f3cccbae4095a34170fddc19b13d",
+        "jobName": f"gc.localhost-{di_upload.pk}",
+        "jobId": "3d8e036cc21a83e10bbb98c9d29258a5",
+        "jobStatus": "FAILED",
+        "inputS3Uri": f"s3://healthimaging/inputs/{di_upload.pk}/",
+        "outputS3Uri": "s3://healthimaging/logs/bbc4f3cccbae4095a34170fddc19b13d-DicomImport-3d8e036cc21a83e10bbb98c9d29258a5/",
+    }
+    job_summary = {
+        "jobId": "381d850256f30b24358c0a3d9e389670",
+        "datastoreId": "bbc4f3cccbae4095a34170fddc19b13d",
+        "inputS3Uri": f"s3://healthimaging/inputs/{di_upload.pk}/",
+        "outputS3Uri": "s3://healthimaging/logs/bbc4f3cccbae4095a34170fddc19b13d-DicomImport-3d8e036cc21a83e10bbb98c9d29258a5/",
+        "successOutputS3Uri": "s3://healthimaging/logs/bbc4f3cccbae4095a34170fddc19b13d-DicomImport-3d8e036cc21a83e10bbb98c9d29258a5/SUCCESS/",
+        "failureOutputS3Uri": "s3://healthimaging/logs/bbc4f3cccbae4095a34170fddc19b13d-DicomImport-3d8e036cc21a83e10bbb98c9d29258a5/FAILURE/",
+        "numberOfScannedFiles": 1,
+        "numberOfImportedFiles": 0,
+        "numberOfFilesWithCustomerError": 0,
+        "numberOfFilesWithServerError": 1,
+        "numberOfGeneratedImageSets": 0,
+        "imageSetsSummary": [],
+    }
+    failure_log = [
+        {
+            "inputFile": f"inputs/{di_upload.pk}/",
+            "exception": {
+                "exceptionType": "SomeException",
+                "message": "The import job failed.",
+            },
+        }
+    ]
+    mock_get_summary = mocker.patch.object(
+        di_upload, "get_job_summary", return_value=job_summary
+    )
+    mock_get_failure_log = mocker.patch.object(
+        di_upload, "get_job_output_failure_log", return_value=failure_log
+    )
+    spy_cleanup_image_sets = mocker.spy(di_upload, "cleanup_image_sets")
+
+    with pytest.raises(DICOMImportJobFailedError):
+        di_upload.handle_failed_job(event=event)
+
+    mock_get_summary.assert_called_once_with(event=event)
+    mock_get_failure_log.assert_called_once_with(job_summary=job_summary)
+    spy_cleanup_image_sets.assert_called_once_with(job_summary=job_summary)
+    assert di_upload.internal_failure_log == str(failure_log)
