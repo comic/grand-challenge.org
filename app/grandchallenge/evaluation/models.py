@@ -1064,17 +1064,12 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
             "next_submission_at": next_sub_at,
         }
 
-    def has_pending_evaluations(self, *, user_pks):
+    def has_active_evaluations(self, *, users):
         return (
-            Evaluation.objects.filter(
-                submission__phase=self, submission__creator__pk__in=user_pks
-            )
-            .exclude(
-                status__in=(
-                    Evaluation.SUCCESS,
-                    Evaluation.FAILURE,
-                    Evaluation.CANCELLED,
-                )
+            Evaluation.objects.active()
+            .filter(
+                submission__phase__challenge=self.challenge,
+                submission__creator__in=users,
             )
             .exists()
         )

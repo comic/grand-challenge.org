@@ -591,13 +591,13 @@ class SubmissionForm(
             ]
             >= 1
         )
-        has_pending_evaluations = self._phase.has_pending_evaluations(
-            user_pks=[creator.pk]
+        has_active_evaluations = self._phase.has_active_evaluations(
+            users={creator}
         )
 
         can_submit = (
             has_available_compute
-            and not has_pending_evaluations
+            and not has_active_evaluations
             and (has_remaining_submissions or is_challenge_admin)
         )
 
@@ -629,8 +629,8 @@ class SubmissionForm(
         related_users = self._get_submission_relevant_users(creator=creator)
 
         if related_users and (
-            self._phase.has_pending_evaluations(
-                user_pks=[related_user.pk for related_user in related_users]
+            self._phase.has_active_evaluations(
+                users={related_user for related_user in related_users}
             )
             or any(
                 self._phase.get_next_submission(user=related_user)[

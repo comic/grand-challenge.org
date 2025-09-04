@@ -374,8 +374,8 @@ class SubmissionCreate(
         context.update(
             {
                 **self.phase.get_next_submission(user=self.request.user),
-                "has_pending_evaluations": self.phase.has_pending_evaluations(
-                    user_pks=[self.request.user.pk]
+                "has_active_evaluations": self.phase.has_active_evaluations(
+                    users={self.request.user}
                 ),
                 "phase": self.phase,
             }
