@@ -1099,6 +1099,10 @@ class DICOMImageSetUpload(UUIDModel):
             self.save()
 
     def handle_completed_job(self, *, event):
+        image_set = self.validate_image_set(event=event)
+        self.convert_image_set_to_internal(image_set=image_set)
+
+    def validate_image_set(self, *, event):
         job_summary = self.get_job_summary(event=event)
         if job_summary["numberOfGeneratedImageSets"] == 0:
             self.handle_failed_job(event=event)
@@ -1119,7 +1123,7 @@ class DICOMImageSetUpload(UUIDModel):
             raise DICOMImportJobValidationError(
                 "Instance already exists. This should never happen!"
             )
-        self.convert_image_set_to_internal(image_set=image_set)
+        return image_set
 
     def handle_failed_job(self, *, event):
         job_summary = self.get_job_summary(event=event)

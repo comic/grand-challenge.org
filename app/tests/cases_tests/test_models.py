@@ -263,7 +263,7 @@ def test_handle_failed_job(mocker):
 
 
 @pytest.mark.django_db
-def test_handle_invalid_job_no_generated_image_set(mocker):
+def test_validate_image_set_no_generated_image_set(mocker):
     di_upload = DICOMImageSetUploadFactory()
     event = {
         "jobStatus": "COMPLETED",
@@ -273,14 +273,17 @@ def test_handle_invalid_job_no_generated_image_set(mocker):
         "numberOfGeneratedImageSets": 0,
     }
     mocker.patch.object(di_upload, "get_job_summary", return_value=job_summary)
-    mocker.patch.object(di_upload, "get_job_output_failure_log")
+    mock_get_failure_log = mocker.patch.object(
+        di_upload, "get_job_output_failure_log"
+    )
 
     with pytest.raises(DICOMImportJobFailedError):
-        di_upload.handle_completed_job(event=event)
+        di_upload.validate_image_set(event=event)
+    mock_get_failure_log.assert_called_once_with(job_summary=job_summary)
 
 
 @pytest.mark.django_db
-def test_handle_invalid_job_multiple_generated_image_sets(mocker):
+def test_validate_image_set_multiple_generated_image_sets(mocker):
     di_upload = DICOMImageSetUploadFactory()
     event = {
         "jobStatus": "COMPLETED",
@@ -303,7 +306,7 @@ def test_handle_invalid_job_multiple_generated_image_sets(mocker):
     )
 
     with pytest.raises(DICOMImportJobValidationError) as e:
-        di_upload.handle_completed_job(event=event)
+        di_upload.validate_image_set(event=event)
     assert str(e.value) == "Multiple image sets created. Expected only one."
     assert mock_delete_image_set_task.call_count == 2
     mock_delete_image_set_task.assert_any_call(image_set_id="1")
@@ -311,7 +314,7 @@ def test_handle_invalid_job_multiple_generated_image_sets(mocker):
 
 
 @pytest.mark.django_db
-def test_handle_invalid_job_generated_image_set_not_primary(mocker):
+def test_validate_image_set_generated_image_set_not_primary(mocker):
     di_upload = DICOMImageSetUploadFactory()
     event = {
         "jobStatus": "COMPLETED",
@@ -334,7 +337,7 @@ def test_handle_invalid_job_generated_image_set_not_primary(mocker):
     )
 
     with pytest.raises(DICOMImportJobValidationError) as e:
-        di_upload.handle_completed_job(event=event)
+        di_upload.validate_image_set(event=event)
     assert (
         str(e.value)
         == "New instance is not primary: metadata conflicts with already existing instance."
@@ -343,7 +346,7 @@ def test_handle_invalid_job_generated_image_set_not_primary(mocker):
 
 
 @pytest.mark.django_db
-def test_handle_invalid_job_generated_image_set_not_first_version(mocker):
+def test_validate_image_set_generated_image_set_not_first_version(mocker):
     di_upload = DICOMImageSetUploadFactory()
     event = {
         "jobStatus": "COMPLETED",
@@ -366,7 +369,7 @@ def test_handle_invalid_job_generated_image_set_not_first_version(mocker):
     )
 
     with pytest.raises(DICOMImportJobValidationError) as e:
-        di_upload.handle_completed_job(event=event)
+        di_upload.validate_image_set(event=event)
     assert str(e.value) == "Instance already exists. This should never happen!"
     mock_revert_image_set_to_initial_version.assert_called_once_with(
         image_set_id="1", version_id=2
