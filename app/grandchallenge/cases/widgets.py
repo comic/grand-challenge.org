@@ -57,23 +57,27 @@ class FlexibleImageWidget(MultiWidget):
         super().__init__(widgets, attrs)
 
     def decompress(self, value):
-        if value:
-            if value in ImageWidgetChoices.names:
-                return [None, None]
-            elif Image.objects.filter(pk=value).exists():
-                return [value, None]
-            else:
-                return [None, [value]]
-        else:
+        if not value:
             return [None, None]
+
+        if len(value) == 1:
+            item = value[0]
+            if item in ImageWidgetChoices.names:
+                return [None, None]
+            if Image.objects.filter(pk=item).exists():
+                return [str(item), None]
+            # can also just be a single UserUpload
+            return [None, value]
+
+        return [None, value]
 
     def value_from_datadict(self, data, files, name):
         try:
-            value = data[name]
+            value = data.getlist(name)
         except KeyError:
             # this happens if the data comes from the DS create / update form
             try:
-                value = data[f"widget-choice-{name}"]
+                value = data.getlist(f"widget-choice-{name}")
             except KeyError:
                 value = None
         return self.decompress(value)
