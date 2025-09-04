@@ -883,13 +883,6 @@ class HealthImagingWrapper:
             )
         except self._health_imaging_client.exceptions.ThrottlingException as e:
             raise RetryStep("Request throttled") from e
-        except (
-            self._health_imaging_client.exceptions.InternalServerException
-        ) as e:
-            raise RetryStep("Server side error") from e
-        except self._health_imaging_client.exceptions.ConflictException:
-            # todo: check status and maybe retry
-            raise
 
     def update_image_set_metadata(
         self, image_set_id, version_id, metadata, force=False

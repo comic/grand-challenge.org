@@ -575,7 +575,7 @@ def handle_healthimaging_import_job_event(*, event):
     upload.handle_event(event=event)
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(retry_on=(RetryStep,))
 @transaction.atomic
 def delete_healthimaging_image_set(*, image_set_id):
     health_imaging_wrapper = HealthImagingWrapper()
