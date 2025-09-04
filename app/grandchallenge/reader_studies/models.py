@@ -1,7 +1,7 @@
 from math import ceil
 
 from actstream.models import Follow
-from bleach import clean
+from grandchallenge.core.templatetags.bleach import clean, md2html
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
