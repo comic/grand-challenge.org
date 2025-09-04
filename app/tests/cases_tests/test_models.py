@@ -248,12 +248,12 @@ def test_handle_failed_job(mocker):
     mock_get_failure_log = mocker.patch.object(
         di_upload, "get_job_output_failure_log", return_value=failure_log
     )
-    spy_cleanup_image_sets = mocker.spy(di_upload, "cleanup_image_sets")
+    spy_delete_image_sets = mocker.spy(di_upload, "delete_image_sets")
 
     with pytest.raises(DICOMImportJobFailedError):
         di_upload.handle_failed_job(event=event)
 
     mock_get_summary.assert_called_once_with(event=event)
     mock_get_failure_log.assert_called_once_with(job_summary=job_summary)
-    spy_cleanup_image_sets.assert_called_once_with(job_summary=job_summary)
+    spy_delete_image_sets.assert_called_once_with(job_summary=job_summary)
     assert di_upload.internal_failure_log == str(failure_log)
