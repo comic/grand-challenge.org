@@ -577,7 +577,7 @@ def handle_healthimaging_import_job_event(*, event):
 
 @acks_late_micro_short_task
 @transaction.atomic
-def cleanup_healthimaging_image_set(*, image_set_id):
+def delete_healthimaging_image_set(*, image_set_id):
     health_imaging_wrapper = HealthImagingWrapper()
     health_imaging_wrapper.delete_image_set(image_set_id=image_set_id)
 

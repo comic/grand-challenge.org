@@ -1104,13 +1104,13 @@ class DICOMImageSetUpload(UUIDModel):
         if job_summary["numberOfGeneratedImageSets"] == 0:
             self.handle_failed_job(event=event)
         if job_summary["numberOfGeneratedImageSets"] > 1:
-            self.cleanup_image_sets(job_summary=job_summary)
+            self.delete_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
                 "Multiple image sets created. Expected only one."
             )
         image_set = job_summary["imageSetsSummary"][0]
         if not image_set["isPrimary"]:
-            self.cleanup_image_sets(job_summary=job_summary)
+            self.delete_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
                 "New instance is not primary: "
                 "metadata conflicts with already existing instance."
@@ -1128,20 +1128,22 @@ class DICOMImageSetUpload(UUIDModel):
             job_summary=job_summary
         )
         self.save()
-        self.cleanup_image_sets(job_summary=job_summary)
+        self.delete_image_sets(job_summary=job_summary)
         job_id = job_summary["jobId"]
         raise DICOMImportJobFailedError(message=f"Import job {job_id} failed")
 
-    def cleanup_image_sets(self, *, job_summary):
-        from grandchallenge.cases.tasks import cleanup_healthimaging_image_set
+    @staticmethod
+    def delete_image_sets(*, job_summary):
+        from grandchallenge.cases.tasks import delete_healthimaging_image_set
 
         image_sets = job_summary.get("imageSetsSummary", [])
         for image_set in image_sets:
-            cleanup_healthimaging_image_set(
+            delete_healthimaging_image_set(
                 image_set_id=image_set["imageSetId"]
             )
 
-    def revert_image_set_to_initial_version(self, image_set):
+    @staticmethod
+    def revert_image_set_to_initial_version(image_set):
         from grandchallenge.cases.tasks import (
             revert_image_set_to_initial_version,
         )
@@ -1151,5 +1153,6 @@ class DICOMImageSetUpload(UUIDModel):
             version_id=image_set["imageSetVersion"],
         )
 
-    def convert_image_set_to_internal(self, image_set):
+    @staticmethod
+    def convert_image_set_to_internal(image_set):
         pass
