@@ -183,15 +183,16 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                         codename="change_userupload",
                     ):
                         uploads.append(pk)
-                return HttpResponse(
-                    [
-                        HiddenInput().render(
-                            name=prefixed_interface_slug,
-                            value=upload,
-                        )
-                        for upload in uploads
-                    ]
-                )
+                if uploads:
+                    return HttpResponse(
+                        [
+                            HiddenInput().render(
+                                name=prefixed_interface_slug,
+                                value=upload,
+                            )
+                            for upload in uploads
+                        ]
+                    )
 
             raise Http404(f"Selected image {current_value_pk} not found")
         elif widget_choice == ImageWidgetChoices.UNDEFINED:
