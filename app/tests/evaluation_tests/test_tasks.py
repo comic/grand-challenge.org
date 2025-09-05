@@ -687,8 +687,7 @@ def test_evaluation_notifications(
     recipients = list(submission.phase.challenge.get_admins())
     recipients.append(submission.creator)
     assert Notification.objects.count() == len(recipients)
-    for recipient in recipients:
-        assert str(recipient) in str(Notification.objects.all())
+    assert {*recipients} == {n.user for n in Notification.objects.all()}
     result_string = format_html(
         '<a href="{}">result</a>', submission.get_absolute_url()
     )
@@ -721,8 +720,7 @@ def test_evaluation_notifications(
     assert evaluation.status == evaluation.FAILURE
     # notifications for admin and creator of submission
     assert Notification.objects.count() == len(recipients)
-    for recipient in recipients:
-        assert str(recipient) in str(Notification.objects.all())
+    assert {*recipients} == {n.user for n in Notification.objects.all()}
     assert f"The {submission_string} from {user_profile_link(Notification.objects.filter(user=recipients[0]).get().actor)} to {challenge_string} failed" in Notification.objects.filter(
         user=recipients[0]
     ).get().print_notification(
