@@ -1823,6 +1823,7 @@ def test_submission_create_sets_limits_correctly_with_algorithm(client):
     )
 
     participant = UserFactory()
+    VerificationFactory(user=participant, is_verified=True)
     phase.challenge.add_participant(user=participant)
     algorithm_image.algorithm.add_editor(user=participant)
 
@@ -1871,6 +1872,7 @@ def test_submission_create_sets_limits_correctly_with_predictions(client):
     )
 
     participant = UserFactory()
+    VerificationFactory(user=participant, is_verified=True)
     phase.challenge.add_participant(user=participant)
 
     user_upload = UserUploadFactory(creator=participant)
