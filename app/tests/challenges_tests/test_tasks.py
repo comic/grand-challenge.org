@@ -4,11 +4,7 @@ import pytest
 from django.core import mail
 from django.utils.timezone import datetime, timedelta
 
-from grandchallenge.challenges.models import (
-    Challenge,
-    ChallengeRequest,
-    OnboardingTask,
-)
+from grandchallenge.challenges.models import Challenge, OnboardingTask
 from grandchallenge.challenges.tasks import (
     send_onboarding_task_reminder_emails,
     update_challenge_compute_costs,
@@ -66,80 +62,6 @@ def test_challenge_creation_from_request():
     assert challenge.short_name == challenge_request.short_name
     # requester is admin of challenge
     assert challenge_request.creator in challenge.admins_group.user_set.all()
-
-
-def test_challenge_request_budget_calculation(settings):
-    settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
-    challenge_request = ChallengeRequest(
-        expected_number_of_teams=10,
-        inference_time_limit_in_minutes=10,
-        average_size_of_test_image_in_mb=100,
-        phase_1_number_of_submissions_per_team=10,
-        phase_2_number_of_submissions_per_team=100,
-        phase_1_number_of_test_images=100,
-        phase_2_number_of_test_images=500,
-        number_of_tasks=1,
-    )
-
-    assert challenge_request.budget == {
-        "Data storage cost for phase 1": 10,
-        "Compute costs for phase 1": 1960,
-        "Total phase 1": 1970,
-        "Data storage cost for phase 2": 40,
-        "Compute costs for phase 2": 97910,
-        "Total phase 2": 97950,
-        "Docker storage cost": 4440,
-        "Total across phases": 104360,
-    }
-
-    assert (
-        challenge_request.budget["Total phase 2"]
-        == challenge_request.budget["Data storage cost for phase 2"]
-        + challenge_request.budget["Compute costs for phase 2"]
-    )
-    assert (
-        challenge_request.budget["Total phase 1"]
-        == challenge_request.budget["Data storage cost for phase 1"]
-        + challenge_request.budget["Compute costs for phase 1"]
-    )
-    assert (
-        challenge_request.budget["Total across phases"]
-        == challenge_request.budget["Total phase 1"]
-        + challenge_request.budget["Total phase 2"]
-        + challenge_request.budget["Docker storage cost"]
-    )
-
-    challenge_request.number_of_tasks = 2
-
-    del challenge_request.budget
-
-    assert challenge_request.budget == {
-        "Data storage cost for phase 1": 20,
-        "Compute costs for phase 1": 3920,
-        "Total phase 1": 3940,
-        "Data storage cost for phase 2": 70,
-        "Compute costs for phase 2": 195820,
-        "Total phase 2": 195890,
-        "Docker storage cost": 8880,
-        "Total across phases": 208710,
-    }
-
-    assert (
-        challenge_request.budget["Total phase 2"]
-        == challenge_request.budget["Data storage cost for phase 2"]
-        + challenge_request.budget["Compute costs for phase 2"]
-    )
-    assert (
-        challenge_request.budget["Total phase 1"]
-        == challenge_request.budget["Data storage cost for phase 1"]
-        + challenge_request.budget["Compute costs for phase 1"]
-    )
-    assert (
-        challenge_request.budget["Total across phases"]
-        == challenge_request.budget["Total phase 1"]
-        + challenge_request.budget["Total phase 2"]
-        + challenge_request.budget["Docker storage cost"]
-    )
 
 
 @pytest.mark.django_db

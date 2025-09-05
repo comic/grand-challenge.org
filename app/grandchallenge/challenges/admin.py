@@ -115,17 +115,9 @@ class ChallengeRequestAdmin(ModelAdmin):
         "creator",
         "created",
         "status",
-        "total_cost",
     )
     actions = ["create_challenge", "send_status_update_email"]
     list_filter = ["status"]
-
-    @admin.display(description="Total cost")
-    def total_cost(self, obj):
-        if obj.budget:
-            return obj.budget.get("Total")
-        else:
-            return None
 
     @admin.action(description="Create challenge for this request")
     def create_challenge(self, request, queryset):
