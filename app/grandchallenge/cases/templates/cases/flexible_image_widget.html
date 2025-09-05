@@ -10,8 +10,8 @@
         hx-request='{"credentials":"include"}'
         hx-include="[id='values-{{ widget.name }}']"
 >
-    {% if widget.attrs.current_value %}
-        <option value="{{ widget.attrs.widget_choices.IMAGE_SELECTED }}">{{ widget.attrs.current_value.title }}</option>
+    {% if widget.attrs.display_name %}
+        <option value="{{ widget.attrs.widget_choices.IMAGE_SELECTED }}">{{ widget.attrs.display_name }}</option>
     {% else %}
         <option value="{{ widget.attrs.widget_choices.UNDEFINED }}">Choose data source...</option>
     {% endif %}
@@ -21,7 +21,9 @@
 
 <div id="values-{{ widget.name }}">
     <input type="hidden" name="prefixed-interface-slug" value="{{ widget.name }}">
-    <input type="hidden" name="current-value-pk" value="{{ widget.attrs.current_value.pk }}">
+    {% for value in widget.attrs.current_value %}
+        <input type="hidden" name="current-value-pk" value="{{ value.pk }}">
+    {% endfor %}
 </div>
 
 <div class="mt-3" id="area-{{ widget.name }}"></div>

@@ -89,7 +89,7 @@ def test_image_widget_current_value_in_archive_item_and_display_set_create_forms
     assert form1.is_valid()
     assert (
         form1.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{image_ci.slug}"]
-        .widget.attrs["current_value"]
+        .widget.attrs["current_value"][0]
         .pk
         == image.pk
     )
@@ -108,7 +108,7 @@ def test_image_widget_current_value_in_archive_item_and_display_set_create_forms
     assert form2.is_valid()
     assert (
         form2.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{image_ci.slug}"]
-        .widget.attrs["current_value"]
+        .widget.attrs["current_value"][0]
         .pk
         == user_upload.pk
     )
@@ -167,7 +167,7 @@ def test_image_widget_current_value_in_archive_item_and_display_set_update_forms
     assert form1.is_valid()
     assert (
         form1.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{image_ci.slug}"]
-        .widget.attrs["current_value"]
+        .widget.attrs["current_value"][0]
         .pk
         == image2.pk
     )
@@ -186,7 +186,7 @@ def test_image_widget_current_value_in_archive_item_and_display_set_update_forms
     assert form2.is_valid()
     assert (
         form2.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{image_ci.slug}"]
-        .widget.attrs["current_value"]
+        .widget.attrs["current_value"][0]
         .pk
         == user_upload.pk
     )

@@ -118,15 +118,12 @@ class AdditionalInputsMixin:
             )
 
             if prefixed_interface_slug in self.data:
-                if (
-                    not input.requires_file
-                    and input.kind == ComponentInterface.Kind.ANY
-                ):
-                    # interfaces for which the data can be a list need
-                    # to be retrieved with getlist() from the QueryDict
+                try:
                     initial = self.data.getlist(prefixed_interface_slug)
-                else:
-                    initial = self.data[prefixed_interface_slug]
+                    if len(initial) == 1:
+                        initial = initial[0]
+                except AttributeError:
+                    initial = self.data.get(prefixed_interface_slug)
             else:
                 initial = None
 
@@ -160,7 +157,7 @@ class AdditionalInputsMixin:
 class MultipleCIVForm(Form):
     possible_widgets = InterfaceFormFieldFactory.possible_widgets
 
-    def __init__(self, *args, instance, base_obj, user, **kwargs):
+    def __init__(self, *args, instance, base_obj, user, **kwargs):  # noqa C901
         super().__init__(*args, **kwargs)
         self.instance = instance
         self.user = user
@@ -175,13 +172,12 @@ class MultipleCIVForm(Form):
             prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{slug}"
 
             if prefixed_interface_slug in self.data:
-                if (
-                    not interface.requires_file
-                    and interface.kind == ComponentInterface.Kind.ANY
-                ):
+                try:
                     current_value = self.data.getlist(prefixed_interface_slug)
-                else:
-                    current_value = self.data[prefixed_interface_slug]
+                    if len(current_value) == 1:
+                        current_value = current_value[0]
+                except AttributeError:
+                    current_value = self.data.get(prefixed_interface_slug)
 
             if not current_value and instance:
                 current_value = instance.values.filter(
@@ -209,13 +205,12 @@ class MultipleCIVForm(Form):
                     slug=interface_slug
                 ).get()
 
-                if (
-                    not interface.requires_file
-                    and interface.kind == ComponentInterface.Kind.ANY
-                ):
+                try:
                     current_value = self.data.getlist(slug)
-                else:
-                    current_value = self.data[slug]
+                    if len(current_value) == 1:
+                        current_value = current_value[0]
+                except AttributeError:
+                    current_value = self.data.get(slug)
 
                 self.fields[slug] = InterfaceFormFieldFactory(
                     interface=interface,
