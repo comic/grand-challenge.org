@@ -105,7 +105,7 @@ class RawImageUploadSessionViewSet(
 
 
 class ImageWidgetSelectView(LoginRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):  # noqa C901
         prefixed_interface_slug = self.request.GET.get(
             "prefixed-interface-slug"
         )
@@ -122,7 +122,11 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
             widget_choice = ImageWidgetChoices(widget_choice_name)
         except ValueError:
             raise Http404(f"Widget choice {widget_choice_name} not found")
-        current_value_pk = request.GET.get("current-value-pk")
+
+        current_value_list = request.GET.getlist("current-value-pk")
+        current_value_pk = None
+        if len(current_value_list) == 1:
+            current_value_pk = current_value_list[0]
 
         if widget_choice == ImageWidgetChoices.IMAGE_SEARCH:
             return HttpResponse(
@@ -168,6 +172,27 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                         value=current_value_pk,
                     )
                 )
+            elif current_value_list:
+                # if it's a list of user uploads
+                uploads = []
+                for pk in current_value_list:
+                    if get_object_if_allowed(
+                        model=UserUpload,
+                        pk=pk,
+                        user=request.user,
+                        codename="change_userupload",
+                    ):
+                        uploads.append(pk)
+                return HttpResponse(
+                    [
+                        HiddenInput().render(
+                            name=prefixed_interface_slug,
+                            value=upload,
+                        )
+                        for upload in uploads
+                    ]
+                )
+
             raise Http404(f"Selected image {current_value_pk} not found")
         elif widget_choice == ImageWidgetChoices.UNDEFINED:
             # this happens when switching back from one of the
