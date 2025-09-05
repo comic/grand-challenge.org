@@ -154,7 +154,7 @@ class IOCopyExecutor(Executor):
 
     @property
     def usd_cents_per_hour(self):
-        return 100
+        return 121
 
     @property
     def runtime_metrics(self):
