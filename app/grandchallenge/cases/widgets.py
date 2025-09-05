@@ -96,7 +96,7 @@ class FlexibleImageWidget(MultiWidget):
 class FlexibleImageField(MultiValueField):
     widget = FlexibleImageWidget
 
-    def __init__( #noqa C901
+    def __init__(  # noqa C901
         self,
         *args,
         user=None,
