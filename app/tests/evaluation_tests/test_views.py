@@ -902,7 +902,6 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
     )
 
     phase.submission_kind = SubmissionKindChoices.ALGORITHM
-    phase.creator_must_be_verified = True
     phase.archive = ArchiveFactory()
     interface = AlgorithmInterfaceFactory()
     phase.algorithm_interfaces.set([interface])
@@ -1005,7 +1004,6 @@ def test_create_algorithm_for_phase_presets(client):
     VerificationFactory(user=admin, is_verified=True)
 
     phase.submission_kind = SubmissionKindChoices.ALGORITHM
-    phase.creator_must_be_verified = True
     phase.archive = ArchiveFactory()
     ci1 = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     optional_protocol = HangingProtocolFactory()
@@ -1171,7 +1169,6 @@ def test_create_algorithm_for_phase_presets(client):
 def test_create_algorithm_for_phase_limits(client):
     phase = PhaseFactory(challenge__logo=ImageField(filename="test.jpeg"))
     phase.submission_kind = SubmissionKindChoices.ALGORITHM
-    phase.creator_must_be_verified = True
     phase.archive = ArchiveFactory()
     ci1 = ComponentInterfaceFactory()
     ci2 = ComponentInterfaceFactory()
@@ -1581,7 +1578,6 @@ def test_configure_algorithm_phases_view(client):
     assert response.status_code == 302
     phase.refresh_from_db()
     assert phase.submission_kind == SubmissionKindChoices.ALGORITHM
-    assert phase.creator_must_be_verified
     assert (
         phase.archive.title
         == f"{phase.challenge.short_name} {phase.title} dataset"
@@ -1827,6 +1823,7 @@ def test_submission_create_sets_limits_correctly_with_algorithm(client):
     )
 
     participant = UserFactory()
+    VerificationFactory(user=participant, is_verified=True)
     phase.challenge.add_participant(user=participant)
     algorithm_image.algorithm.add_editor(user=participant)
 
@@ -1875,6 +1872,7 @@ def test_submission_create_sets_limits_correctly_with_predictions(client):
     )
 
     participant = UserFactory()
+    VerificationFactory(user=participant, is_verified=True)
     phase.challenge.add_participant(user=participant)
 
     user_upload = UserUploadFactory(creator=participant)

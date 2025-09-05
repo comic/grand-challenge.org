@@ -1177,7 +1177,6 @@ class ConfigureAlgorithmPhasesView(
         )
         phase.archive = archive
         phase.submission_kind = phase.SubmissionKindChoices.ALGORITHM
-        phase.creator_must_be_verified = True
         phase.save()
 
 

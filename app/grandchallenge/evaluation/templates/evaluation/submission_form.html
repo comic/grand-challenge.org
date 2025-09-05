@@ -26,9 +26,7 @@
 {% endblock %}
 
 {% block content %}
-    {% if phase.creator_must_be_verified %}
-        {% include "challenges/partials/participant_verification_warning.html" %}
-    {% endif %}
+    {% include "challenges/partials/participant_verification_warning.html" %}
 
     <h2>{{ phase.title }} Submission</h2>
 

@@ -415,6 +415,7 @@ class TestSubmissionForm:
 
     def test_algorithm_with_permission(self):
         user = UserFactory()
+        VerificationFactory(user=user, is_verified=True)
         alg = AlgorithmFactory()
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
@@ -473,6 +474,7 @@ class TestSubmissionForm:
 
     def test_algorithm_image_and_model_set(self):
         user = UserFactory()
+        VerificationFactory(user=user, is_verified=True)
         alg = AlgorithmFactory()
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()
@@ -535,7 +537,7 @@ class TestSubmissionForm:
 
         form = SubmissionForm(
             user=user,
-            phase=PhaseFactory(creator_must_be_verified=True),
+            phase=PhaseFactory(),
             data={"creator": user},
         )
 
@@ -552,7 +554,6 @@ class TestSubmissionForm:
         VerificationFactory(user=user, is_verified=is_verified)
 
         phase = PhaseFactory(
-            creator_must_be_verified=True,
             submissions_limit_per_user_per_period=10,
         )
         InvoiceFactory(
@@ -574,6 +575,7 @@ class TestSubmissionForm:
 
     def test_no_valid_archive_items(self):
         user = UserFactory()
+        VerificationFactory(user=user, is_verified=True)
         p_pred = PhaseFactory(
             submission_kind=SubmissionKindChoices.CSV,
             submissions_limit_per_user_per_period=10,
@@ -777,6 +779,7 @@ class TestSubmissionForm:
         self, model_active, submission_with_model_present, form_is_valid
     ):
         user = UserFactory()
+        VerificationFactory(user=user, is_verified=True)
         alg = AlgorithmFactory()
         alg.add_editor(user=user)
         ci1 = ComponentInterfaceFactory()

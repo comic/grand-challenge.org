@@ -376,13 +376,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         default=ALL,
         help_text=("Which results should be displayed on the leaderboard?"),
     )
-    creator_must_be_verified = models.BooleanField(
-        default=False,
-        help_text=(
-            "If True, only participants with verified accounts can make "
-            "submissions to this phase"
-        ),
-    )
     submission_kind = models.PositiveSmallIntegerField(
         default=SubmissionKindChoices.CSV,
         choices=SubmissionKindChoices.choices,
@@ -797,11 +790,6 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     def _clean_algorithm_submission_settings(self):
         if self.submission_kind == SubmissionKindChoices.ALGORITHM:
-            if not self.creator_must_be_verified:
-                raise ValidationError(
-                    "For phases that take an algorithm as submission input, "
-                    "the creator_must_be_verified box needs to be checked."
-                )
             if (
                 self.submissions_limit_per_user_per_period > 0
                 and not self.external_evaluation

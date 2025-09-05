@@ -10,7 +10,6 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import BooleanField, Case, Exists, OuterRef, When
 from django.db.transaction import on_commit
 from django.forms import (
-    CheckboxInput,
     CheckboxSelectMultiple,
     Form,
     HiddenInput,
@@ -63,7 +62,6 @@ submission_options = (
     "submissions_open_at",
     "submissions_close_at",
     "submission_page_markdown",
-    "creator_must_be_verified",
     "submissions_limit_per_user_per_period",
     "submission_limit_period",
     "allow_submission_comments",
@@ -191,9 +189,6 @@ class PhaseUpdateForm(
                     ),
                     *algorithm_setting_options,
                 )
-            )
-            self.fields["creator_must_be_verified"].widget = CheckboxInput(
-                attrs={"checked": True}
             )
 
     class Meta:
@@ -568,7 +563,7 @@ class SubmissionForm(
         except ObjectDoesNotExist:
             user_is_verified = False
 
-        if self._phase.creator_must_be_verified and not user_is_verified:
+        if not user_is_verified:
             error_message = format_html(
                 "You must verify your account before you can make a "
                 "submission to this phase. Please "
