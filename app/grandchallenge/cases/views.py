@@ -141,47 +141,47 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                     },
                 )
             )
-        elif widget_choice == ImageWidgetChoices.IMAGE_SELECTED:
+        elif widget_choice == ImageWidgetChoices.IMAGE_SELECTED and (
+            current_value_list := request.GET.getlist("current-value-pk")
+        ):
             # this can happen on the display set update view or redisplay of
             # form upon validation, where one of the options is the current
             # image, this enables switching back from one of the above widgets
             # to the chosen image. This makes sure the form element with the
             # right name is available on resubmission.
-            if current_value_list := request.GET.getlist("current-value-pk"):
-                image = get_object_if_allowed(
-                    model=Image,
-                    pk=current_value_list[0],
-                    user=request.user,
-                    codename="view_image",
+            image = get_object_if_allowed(
+                model=Image,
+                pk=current_value_list[0],
+                user=request.user,
+                codename="view_image",
+            )
+            if image:
+                return HttpResponse(
+                    HiddenInput().render(
+                        name=prefixed_interface_slug,
+                        value=image.pk,
+                    )
                 )
-                if image:
-                    return HttpResponse(
+            uploads = [
+                get_object_if_allowed(
+                    model=UserUpload,
+                    pk=pk,
+                    user=request.user,
+                    codename="change_userupload",
+                )
+                for pk in current_value_list
+            ]
+            uploads = [upload for upload in uploads if upload]
+            if uploads:
+                return HttpResponse(
+                    [
                         HiddenInput().render(
                             name=prefixed_interface_slug,
-                            value=image.pk,
+                            value=upload.pk,
                         )
-                    )
-                uploads = [
-                    get_object_if_allowed(
-                        model=UserUpload,
-                        pk=pk,
-                        user=request.user,
-                        codename="change_userupload",
-                    )
-                    for pk in current_value_list
-                ]
-                uploads = [upload for upload in uploads if upload]
-                if uploads:
-                    return HttpResponse(
-                        [
-                            HiddenInput().render(
-                                name=prefixed_interface_slug,
-                                value=upload.pk,
-                            )
-                            for upload in uploads
-                        ]
-                    )
-
+                        for upload in uploads
+                    ]
+                )
             raise Http404(f"Selected image {current_value_list} not found")
         elif widget_choice == ImageWidgetChoices.UNDEFINED:
             # this happens when switching back from one of the
