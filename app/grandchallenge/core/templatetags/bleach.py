@@ -14,11 +14,16 @@ register = template.Library()
 
 
 @register.filter
-def clean(html: str):
+def clean(html: str, *, no_tags=False):
     """Clean the html with bleach."""
+    if no_tags:
+        tags = []
+    else:
+        tags = settings.BLEACH_ALLOWED_TAGS
+
     cleaned_html = bleach.clean(
         html,
-        tags=settings.BLEACH_ALLOWED_TAGS,
+        tags=tags,
         attributes=settings.BLEACH_ALLOWED_ATTRIBUTES,
         css_sanitizer=CSSSanitizer(
             allowed_css_properties=settings.BLEACH_ALLOWED_STYLES
