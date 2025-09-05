@@ -535,7 +535,7 @@ class TestSubmissionForm:
 
         form = SubmissionForm(
             user=user,
-            phase=PhaseFactory(creator_must_be_verified=True),
+            phase=PhaseFactory(),
             data={"creator": user},
         )
 
@@ -552,7 +552,6 @@ class TestSubmissionForm:
         VerificationFactory(user=user, is_verified=is_verified)
 
         phase = PhaseFactory(
-            creator_must_be_verified=True,
             submissions_limit_per_user_per_period=10,
         )
         InvoiceFactory(
