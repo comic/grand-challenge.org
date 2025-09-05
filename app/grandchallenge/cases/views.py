@@ -170,6 +170,7 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                     )
                     for pk in current_value_list
                 ]
+                uploads = [upload for upload in uploads if upload]
                 if uploads:
                     return HttpResponse(
                         [
