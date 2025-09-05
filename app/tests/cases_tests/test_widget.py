@@ -141,13 +141,13 @@ def test_flexible_image_widget_prepopulated_value():
     field = InterfaceFormFieldFactory(
         interface=ci, user=user_with_perm, initial=civ
     )
-    assert field.widget.attrs["current_value"] == civ.image
+    assert field.widget.attrs["current_value"] == [civ.image]
     assert field.initial == civ.image.pk
 
     field = InterfaceFormFieldFactory(
         interface=ci, user=user_with_perm, initial=civ.image.pk
     )
-    assert field.widget.attrs["current_value"] == civ.image
+    assert field.widget.attrs["current_value"] == [civ.image]
     assert field.initial == civ.image.pk
 
     field = InterfaceFormFieldFactory(

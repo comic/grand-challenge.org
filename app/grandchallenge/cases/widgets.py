@@ -78,7 +78,7 @@ class FlexibleImageWidget(MultiWidget):
         if isinstance(value, UUID):
             # when an image or user upload is preselected as current_value
             if Image.objects.filter(pk=value).exists():
-                return [[value], None]
+                return [value, None]
             elif UserUpload.objects.filter(pk=value).exists():
                 return [None, [value]]
 
@@ -177,7 +177,7 @@ class FlexibleImageField(MultiValueField):
         attrs["current_value"] = self.current_value
 
         if self.current_value:
-            if (self.current_value) == 1:
+            if len(self.current_value) == 1:
                 attrs["display_name"] = self.current_value[0].title
             else:
                 attrs["display_name"] = (
