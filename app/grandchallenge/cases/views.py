@@ -162,26 +162,21 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                         value=image.pk,
                     )
                 )
-            uploads = [
-                get_object_if_allowed(
+            hidden_inputs_for_uploads = [
+                HiddenInput().render(
+                    name=prefixed_interface_slug,
+                    value=pk,
+                )
+                for pk in current_value_list
+                if get_object_if_allowed(
                     model=UserUpload,
                     pk=pk,
                     user=request.user,
                     codename="change_userupload",
                 )
-                for pk in current_value_list
             ]
-            uploads = [upload for upload in uploads if upload]
-            if uploads:
-                return HttpResponse(
-                    [
-                        HiddenInput().render(
-                            name=prefixed_interface_slug,
-                            value=upload.pk,
-                        )
-                        for upload in uploads
-                    ]
-                )
+            if hidden_inputs_for_uploads:
+                return HttpResponse(hidden_inputs_for_uploads)
             raise Http404(f"Selected image {current_value_list} not found")
         elif widget_choice == ImageWidgetChoices.UNDEFINED:
             # this happens when switching back from one of the
