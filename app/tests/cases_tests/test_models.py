@@ -1,5 +1,6 @@
 import uuid
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import factory
 import pytest
@@ -283,7 +284,9 @@ def test_validate_image_set_no_generated_image_set(mocker):
 
 
 @pytest.mark.django_db
-def test_validate_image_set_multiple_generated_image_sets(mocker):
+def test_validate_image_set_multiple_generated_image_sets(
+    mocker, django_capture_on_commit_callbacks
+):
     di_upload = DICOMImageSetUploadFactory()
     event = {
         "jobStatus": "COMPLETED",
@@ -301,20 +304,29 @@ def test_validate_image_set_multiple_generated_image_sets(mocker):
         ],
     }
     mocker.patch.object(di_upload, "get_job_summary", return_value=job_summary)
+    mock_signature = MagicMock()
+    mock_signature.apply_async = MagicMock()
     mock_delete_image_set_task = mocker.patch(
-        "grandchallenge.cases.tasks.delete_healthimaging_image_set"
+        "grandchallenge.cases.tasks.delete_healthimaging_image_set.signature",
+        return_value=mock_signature,
     )
 
-    with pytest.raises(DICOMImportJobValidationError) as e:
+    with (
+        django_capture_on_commit_callbacks(execute=True),
+        pytest.raises(DICOMImportJobValidationError) as e,
+    ):
         di_upload.validate_image_set(event=event)
     assert str(e.value) == "Multiple image sets created. Expected only one."
     assert mock_delete_image_set_task.call_count == 2
-    mock_delete_image_set_task.assert_any_call(image_set_id="1")
-    mock_delete_image_set_task.assert_any_call(image_set_id="2")
+    mock_delete_image_set_task.assert_any_call(kwargs=dict(image_set_id="1"))
+    mock_delete_image_set_task.assert_any_call(kwargs=dict(image_set_id="2"))
+    assert mock_signature.apply_async.call_count == 2
 
 
 @pytest.mark.django_db
-def test_validate_image_set_generated_image_set_not_primary(mocker):
+def test_validate_image_set_generated_image_set_not_primary(
+    mocker, django_capture_on_commit_callbacks
+):
     di_upload = DICOMImageSetUploadFactory()
     event = {
         "jobStatus": "COMPLETED",
@@ -332,21 +344,32 @@ def test_validate_image_set_generated_image_set_not_primary(mocker):
         ],
     }
     mocker.patch.object(di_upload, "get_job_summary", return_value=job_summary)
+    mock_signature = MagicMock()
+    mock_signature.apply_async = MagicMock()
     mock_delete_image_set_task = mocker.patch(
-        "grandchallenge.cases.tasks.delete_healthimaging_image_set"
+        "grandchallenge.cases.tasks.delete_healthimaging_image_set.signature",
+        return_value=mock_signature,
     )
 
-    with pytest.raises(DICOMImportJobValidationError) as e:
+    with (
+        django_capture_on_commit_callbacks(execute=True),
+        pytest.raises(DICOMImportJobValidationError) as e,
+    ):
         di_upload.validate_image_set(event=event)
     assert (
         str(e.value)
         == "New instance is not primary: metadata conflicts with already existing instance."
     )
-    mock_delete_image_set_task.assert_called_once_with(image_set_id="1")
+    mock_delete_image_set_task.assert_called_once_with(
+        kwargs=dict(image_set_id="1")
+    )
+    assert mock_signature.apply_async.call_count == 1
 
 
 @pytest.mark.django_db
-def test_validate_image_set_generated_image_set_not_first_version(mocker):
+def test_validate_image_set_generated_image_set_not_first_version(
+    mocker, django_capture_on_commit_callbacks
+):
     di_upload = DICOMImageSetUploadFactory()
     event = {
         "jobStatus": "COMPLETED",
@@ -364,16 +387,23 @@ def test_validate_image_set_generated_image_set_not_first_version(mocker):
         ],
     }
     mocker.patch.object(di_upload, "get_job_summary", return_value=job_summary)
+    mock_signature = MagicMock()
+    mock_signature.apply_async = MagicMock()
     mock_revert_image_set_to_initial_version = mocker.patch(
-        "grandchallenge.cases.tasks.revert_image_set_to_initial_version"
+        "grandchallenge.cases.tasks.revert_image_set_to_initial_version.signature",
+        return_value=mock_signature,
     )
 
-    with pytest.raises(DICOMImportJobValidationError) as e:
+    with (
+        django_capture_on_commit_callbacks(execute=True),
+        pytest.raises(DICOMImportJobValidationError) as e,
+    ):
         di_upload.validate_image_set(event=event)
     assert str(e.value) == "Instance already exists. This should never happen!"
     mock_revert_image_set_to_initial_version.assert_called_once_with(
-        image_set_id="1", version_id=2
+        kwargs=dict(image_set_id="1", version_id=2)
     )
+    assert mock_signature.apply_async.call_count == 1
 
 
 @pytest.mark.django_db
