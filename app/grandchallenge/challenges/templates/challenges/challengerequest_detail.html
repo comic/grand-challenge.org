@@ -75,7 +75,7 @@
     </div>
     <br>
     {% get_obj_perms request.user for object as "user_perms" %}
-    {% if 'change_challengerequest' in user_perms and object.budget %}
+    {% if 'change_challengerequest' in user_perms %}
         <div class="mt-3" id="budget">
             <div class="row">
                 <div class="col-6">
