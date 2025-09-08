@@ -416,13 +416,6 @@
         <span class="n">default</span><span class="o">=</span><span class="n">ALL</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Which results should be displayed on the leaderboard?&quot;</span><span class="p">),</span>
     <span class="p">)</span>
-    <span class="n">creator_must_be_verified</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;If True, only participants with verified accounts can make &quot;</span>
-            <span class="s2">&quot;submissions to this phase&quot;</span>
-        <span class="p">),</span>
-    <span class="p">)</span>
     <span class="n">submission_kind</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
         <span class="n">choices</span><span class="o">=</span><span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
@@ -843,11 +836,6 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_algorithm_submission_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission_kind</span> <span class="o">==</span> <span class="n">SubmissionKindChoices</span><span class="o">.</span><span class="n">ALGORITHM</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator_must_be_verified</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                    <span class="s2">&quot;For phases that take an algorithm as submission input, &quot;</span>
-                    <span class="s2">&quot;the creator_must_be_verified box needs to be checked.&quot;</span>
-                <span class="p">)</span>
             <span class="k">if</span> <span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">submissions_limit_per_user_per_period</span> <span class="o">&gt;</span> <span class="mi">0</span>
                 <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">external_evaluation</span>
