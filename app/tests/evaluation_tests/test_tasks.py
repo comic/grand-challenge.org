@@ -48,6 +48,7 @@ from tests.uploads_tests.factories import (
     create_upload_from_file,
 )
 from tests.utils import get_view_for_user, recurse_callbacks
+from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
@@ -85,6 +86,7 @@ def test_submission_evaluation(
     )
 
     participant = UserFactory()
+    VerificationFactory(user=participant, is_verified=True)
     phase.challenge.add_participant(user=participant)
 
     user_upload = create_upload_from_file(
@@ -581,6 +583,7 @@ def test_non_zip_submission_failure(
     )
 
     participant = UserFactory()
+    VerificationFactory(user=participant, is_verified=True)
     phase.challenge.add_participant(user=participant)
 
     user_upload = create_upload_from_file(
@@ -652,6 +655,7 @@ def test_evaluation_notifications(
     )
 
     participant = UserFactory()
+    VerificationFactory(user=participant, is_verified=True)
     phase.challenge.add_participant(user=participant)
 
     user_upload = create_upload_from_file(
@@ -868,6 +872,7 @@ def test_evaluation_time_limit_set(
     )
 
     participant = UserFactory()
+    VerificationFactory(user=participant, is_verified=True)
     phase.challenge.add_participant(user=participant)
 
     user_upload = create_completed_upload(user=participant)
