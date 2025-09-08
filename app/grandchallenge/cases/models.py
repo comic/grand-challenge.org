@@ -883,12 +883,8 @@ class HealthImagingWrapper:
             )
         except self._health_imaging_client.exceptions.ThrottlingException as e:
             raise RetryStep("Request throttled") from e
-        except ClientError as err:
-            logger.error(
-                "Couldn't delete image set. Here's why: %s: %s",
-                err.response["Error"]["Code"],
-                err.response["Error"]["Message"],
-            )
+        except ClientError:
+            logger.error("Couldn't delete image set", exc_info=True)
 
     def update_image_set_metadata(
         self, image_set_id, version_id, metadata, force=False
@@ -904,12 +900,8 @@ class HealthImagingWrapper:
                 updateImageSetMetadataUpdates=metadata,
                 force=force,
             )
-        except ClientError as err:
-            logger.error(
-                "Couldn't update image set metadata. Here's why: %s: %s",
-                err.response["Error"]["Code"],
-                err.response["Error"]["Message"],
-            )
+        except ClientError:
+            logger.error("Couldn't update image set metadata.", exc_info=True)
 
 
 class DICOMImageSetUpload(UUIDModel):
@@ -1104,7 +1096,7 @@ class DICOMImageSetUpload(UUIDModel):
 
     def validate_image_set(self, *, event):
         job_summary = self.get_job_summary(event=event)
-        
+
         if job_summary["numberOfGeneratedImageSets"] == 0:
             self.handle_failed_job(event=event)
         elif job_summary["numberOfGeneratedImageSets"] > 1:
@@ -1112,22 +1104,22 @@ class DICOMImageSetUpload(UUIDModel):
             raise DICOMImportJobValidationError(
                 "Multiple image sets created. Expected only one."
             )
-            
+
         image_set = job_summary["imageSetsSummary"][0]
-        
+
         if not image_set["isPrimary"]:
             self.delete_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
                 "New instance is not primary: "
                 "metadata conflicts with already existing instance."
             )
-            
+
         if not image_set["imageSetVersion"] == 1:
             self.revert_image_set_to_initial_version(image_set=image_set)
             raise DICOMImportJobValidationError(
                 "Instance already exists. This should never happen!"
             )
-            
+
         return image_set
 
     def handle_failed_job(self, *, event):
