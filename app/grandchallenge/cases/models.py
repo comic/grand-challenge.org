@@ -1104,25 +1104,30 @@ class DICOMImageSetUpload(UUIDModel):
 
     def validate_image_set(self, *, event):
         job_summary = self.get_job_summary(event=event)
+        
         if job_summary["numberOfGeneratedImageSets"] == 0:
             self.handle_failed_job(event=event)
-        if job_summary["numberOfGeneratedImageSets"] > 1:
+        elif job_summary["numberOfGeneratedImageSets"] > 1:
             self.delete_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
                 "Multiple image sets created. Expected only one."
             )
+            
         image_set = job_summary["imageSetsSummary"][0]
+        
         if not image_set["isPrimary"]:
             self.delete_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
                 "New instance is not primary: "
                 "metadata conflicts with already existing instance."
             )
+            
         if not image_set["imageSetVersion"] == 1:
             self.revert_image_set_to_initial_version(image_set=image_set)
             raise DICOMImportJobValidationError(
                 "Instance already exists. This should never happen!"
             )
+            
         return image_set
 
     def handle_failed_job(self, *, event):
