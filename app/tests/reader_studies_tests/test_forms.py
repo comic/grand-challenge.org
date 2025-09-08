@@ -2442,7 +2442,7 @@ def test_validate_autosave_requires_answer_modification(client):
 
 
 @pytest.mark.django_db
-def test_error_on_text_field_xss(client):
+def test_error_on_reader_study_text_fields_xss(client):
     user = UserFactory()
     form = ReaderStudyCreateForm(
         user=user,
@@ -2467,3 +2467,53 @@ def test_error_on_text_field_xss(client):
     )
 
     assert "title" not in form.errors
+
+
+@pytest.mark.django_db
+def test_error_on_question_text_fields_xss(client):
+    rs = ReaderStudyFactory()
+    editor = UserFactory()
+    rs.editors_group.user_set.add(editor)
+
+    question = QuestionFactory(
+        question_text="foo",
+        reader_study=rs,
+        answer_type=Question.AnswerType.TEXT,
+        direction=Question.Direction.HORIZONTAL,
+        order=100,
+    )
+
+    form = QuestionForm(
+        reader_study=question.reader_study,
+        user=editor,
+        instance=question,
+        data={
+            "question_text": "<b>No tags allowed</b>",
+            "empty_answer_confirmation_label": "<b>No tags allowed either</b>",
+            "help_text": "<script>alert('XSS')</script>",
+        },
+    )
+    assert set(form.errors.keys()) >= {
+        "question_text",
+        "empty_answer_confirmation_label",
+        "help_text",
+    }
+
+    form = QuestionForm(
+        reader_study=question.reader_study,
+        user=editor,
+        instance=question,
+        data={
+            "question_text": "No tags allowed",
+            "empty_answer_confirmation_label": "No tags allowed either",
+            "help_text": "<b>Fat allowed</b>",
+        },
+    )
+    assert not (
+        set(form.errors.keys())
+        >= {
+            "question_text",
+            "empty_answer_confirmation_label",
+            "help_text",
+        }
+    )
