@@ -1143,8 +1143,10 @@ class DICOMImageSetUpload(UUIDModel):
 
         image_sets = job_summary.get("imageSetsSummary", [])
         for image_set in image_sets:
-            delete_healthimaging_image_set(
-                image_set_id=image_set["imageSetId"]
+            on_commit(
+                delete_healthimaging_image_set.signature(
+                    kwargs=dict(image_set_id=image_set["imageSetId"])
+                ).apply_async
             )
 
     @staticmethod
@@ -1153,9 +1155,13 @@ class DICOMImageSetUpload(UUIDModel):
             revert_image_set_to_initial_version,
         )
 
-        revert_image_set_to_initial_version(
-            image_set_id=image_set["imageSetId"],
-            version_id=image_set["imageSetVersion"],
+        on_commit(
+            revert_image_set_to_initial_version.signature(
+                kwargs=dict(
+                    image_set_id=image_set["imageSetId"],
+                    version_id=image_set["imageSetVersion"],
+                )
+            ).apply_async
         )
 
     @staticmethod
