@@ -2439,3 +2439,31 @@ def test_validate_autosave_requires_answer_modification(client):
     )
 
     assert "enable_autosaving" not in form.errors
+
+
+@pytest.mark.django_db
+def test_error_on_text_field_xss(client):
+    user = UserFactory()
+    form = ReaderStudyCreateForm(
+        user=user,
+        data={
+            "roll_over_answers_for_n_cases": 0,
+            "leaderboard_accessible_to_readers": True,
+            "is_educational": False,
+            "title": "<b>No tags allowed</b>",
+        },
+    )
+
+    assert "title" in form.errors
+
+    form = ReaderStudyCreateForm(
+        user=user,
+        data={
+            "roll_over_answers_for_n_cases": 0,
+            "leaderboard_accessible_to_readers": True,
+            "is_educational": False,
+            "title": "No tags allowed",
+        },
+    )
+
+    assert "title" not in form.errors

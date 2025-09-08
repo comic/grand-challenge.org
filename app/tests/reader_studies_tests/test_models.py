@@ -406,10 +406,8 @@ def verify_string_is_safe(rendered_text):
 @pytest.mark.parametrize(
     "markdown_field,rendered_field",
     (
-        ("help_text_markdown", "help_text"),
         ("help_text_markdown", "help_text_safe"),
         ("end_of_study_text_markdown", "end_of_study_text_safe"),
-        ("title", "title_safe"),
     ),
 )
 @pytest.mark.django_db
@@ -428,56 +426,6 @@ def test_help_markdown_is_scrubbed(client, markdown_field, rendered_field):
 
     rendered_text = response.json()[rendered_field]
     verify_string_is_safe(rendered_text)
-
-
-@pytest.mark.parametrize(
-    "text_field,rendered_field",
-    (("title", "title_safe"),),
-)
-@pytest.mark.django_db
-def test_display_set_texts_are_scrubbed(client, text_field, rendered_field):
-    rs = ReaderStudyFactory()
-    ds = DisplaySetFactory(
-        reader_study=rs,
-        **{text_field: SOMEWHAT_NAUGHTY_STRING},
-    )
-
-    u = UserFactory()
-    rs.add_reader(u)
-
-    response = get_view_for_user(client=client, url=ds.api_url, user=u)
-    assert response.status_code == 200
-
-    verify_string_is_safe(response.json()[rendered_field])
-
-
-@pytest.mark.parametrize(
-    "text_field,rendered_field",
-    (
-        ("help_text", "help_text_safe"),
-        ("question_text", "question_text_safe"),
-        (
-            "empty_answer_confirmation_label",
-            "empty_answer_confirmation_label_safe",
-        ),
-    ),
-)
-@pytest.mark.django_db
-def test_question_texts_are_scrubbed(client, text_field, rendered_field):
-    rs = ReaderStudyFactory()
-    q = QuestionFactory(
-        reader_study=rs,
-        answer_type=Question.AnswerType.BOOL,
-        **{text_field: SOMEWHAT_NAUGHTY_STRING},
-    )
-
-    u = UserFactory()
-    rs.add_reader(u)
-
-    response = get_view_for_user(client=client, url=q.api_url, user=u)
-    assert response.status_code == 200
-
-    verify_string_is_safe(response.json()[rendered_field])
 
 
 @pytest.mark.django_db

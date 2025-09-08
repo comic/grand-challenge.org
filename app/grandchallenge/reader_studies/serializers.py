@@ -63,12 +63,10 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "api_url",
             "form_direction",
             "help_text",
-            "help_text_safe",
             "image_port",
             "default_annotation_color",
             "pk",
             "question_text",
-            "question_text_safe",
             "reader_study",
             "required",
             "options",
@@ -84,7 +82,6 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "answer_match_pattern",
             "empty_answer_confirmation",
             "empty_answer_confirmation_label",
-            "empty_answer_confirmation_label_safe",
             "interactive_algorithms",
         )
 
@@ -131,7 +128,6 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         fields = (
             "pk",
             "title",
-            "title_safe",
             "reader_study",
             "values",
             "order",
@@ -190,7 +186,6 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "pk",
             "questions",
             "title",
-            "title_safe",
             "is_educational",
             "instant_verification",
             "has_ground_truth",

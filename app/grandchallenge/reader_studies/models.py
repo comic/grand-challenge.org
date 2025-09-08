@@ -888,10 +888,6 @@ class ReaderStudy(
     def questions_with_interactive_algorithm(self):
         return self.questions.exclude(interactive_algorithm="")
 
-    @property
-    def title_safe(self) -> str:
-        return clean(self.title, no_tags=True)
-
 
 class ReaderStudyUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset()
@@ -1071,10 +1067,6 @@ class DisplaySet(
 
     def get_civ_for_interface(self, interface):
         return self.values.get(interface=interface)
-
-    @property
-    def title_safe(self) -> str:
-        return clean(self.title, no_tags=True)
 
 
 class DisplaySetUserObjectPermission(UserObjectPermissionBase):
@@ -1879,23 +1871,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
 
     def get_absolute_url(self):
         return self.reader_study.get_absolute_url() + "#questions"
-
-    @property
-    def help_text_safe(self) -> str:
-        return clean(self.help_text)
-
-    @property
-    def question_text_safe(self) -> str:
-        """
-        The cleaned question text, without any HTML tags. No HTML
-        because this is rendered outside of DOM trees as well for
-        annotations.
-        """
-        return clean(self.question_text, no_tags=True)
-
-    @property
-    def empty_answer_confirmation_label_safe(self) -> str:
-        return clean(self.empty_answer_confirmation_label)
 
 
 class QuestionUserObjectPermission(UserObjectPermissionBase):
