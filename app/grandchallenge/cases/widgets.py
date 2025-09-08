@@ -81,6 +81,8 @@ class FlexibleImageWidget(MultiWidget):
                 return [value, None]
             elif UserUpload.objects.filter(pk=value).exists():
                 return [None, [value]]
+            else:
+                return [None, None]
 
         raise RuntimeError("Unrecognized value type")
 
