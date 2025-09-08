@@ -25,6 +25,7 @@ from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
+from grandchallenge.reader_studies.forms import verify_cleaned_html
 from grandchallenge.reader_studies.models import (
     Answer,
     CategoricalOption,
@@ -35,6 +36,25 @@ from grandchallenge.reader_studies.models import (
 from grandchallenge.workstation_configs.serializers import (
     LookUpTableSerializer,
 )
+
+
+class CleanedHtmlValidator:
+    def __init__(self, *, field, readable_field_name, no_tags):
+        self.__field = field
+        self.__readable_field_name = readable_field_name
+        self.__no_tags = no_tags
+
+    def __call__(self, value):
+        def do_raise(*, error, field):
+            raise error
+
+        verify_cleaned_html(
+            data=value,
+            field_name=self.__field,
+            readable_field_name=self.__readable_field_name,
+            no_tags=self.__no_tags,
+            add_error_func=do_raise,
+        )
 
 
 class CategoricalOptionSerializer(ModelSerializer):
@@ -138,6 +158,13 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
             "description",
             "index",
         )
+        validators = [
+            CleanedHtmlValidator(
+                field="title",
+                readable_field_name="Title",
+                no_tags=True,
+            )
+        ]
 
 
 class DisplaySetPostSerializer(

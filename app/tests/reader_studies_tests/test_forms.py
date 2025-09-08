@@ -2517,3 +2517,40 @@ def test_error_on_question_text_fields_xss(client):
             "help_text",
         }
     )
+
+
+@pytest.mark.django_db
+def test_error_on_display_set_text_fields_xss(client):
+    rs = ReaderStudyFactory()
+    QuestionFactory(
+        reader_study=rs,
+        question_text="bar",
+        answer_type=Question.AnswerType.TEXT,
+    )
+
+    civ = ComponentInterfaceValueFactory(image=ImageFactory())
+    ds = DisplaySetFactory(reader_study=rs)
+    ds.values.add(civ)
+
+    editor = UserFactory()
+    rs.editors_group.user_set.add(editor)
+
+    form = DisplaySetUpdateForm(
+        user=editor,
+        instance=ds,
+        base_obj=rs,
+        data={
+            "title": "<b>No tags allowed</b>",
+        },
+    )
+    assert "title" in form.errors
+
+    form = DisplaySetUpdateForm(
+        user=editor,
+        instance=ds,
+        base_obj=rs,
+        data={
+            "title": "No tags allowed",
+        },
+    )
+    assert "title" not in form.errors

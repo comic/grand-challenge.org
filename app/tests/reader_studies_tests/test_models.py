@@ -35,11 +35,6 @@ from tests.reader_studies_tests.factories import (
 from tests.utilization_tests.factories import SessionUtilizationFactory
 from tests.utils import get_view_for_user
 
-SOMEWHAT_NAUGHTY_STRING = (
-    "<a href='javascript:alert(1)' onmouseover='alert(1)'>Click me</a>"
-    "<script>alert('XSS')</script>"
-)
-
 
 @pytest.mark.django_db
 def test_group_deletion():
@@ -415,7 +410,8 @@ def test_help_markdown_is_scrubbed(client, markdown_field, rendered_field):
     rs = ReaderStudyFactory(
         **{
             markdown_field: "# Here come some naughty strings\n\n"
-            + SOMEWHAT_NAUGHTY_STRING
+            "<a href='javascript:alert(1)' onmouseover='alert(1)'>Click me</a>"
+            "<script>alert('XSS')</script>"
         }
     )
     u = UserFactory()
