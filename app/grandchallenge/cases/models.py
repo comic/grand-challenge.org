@@ -986,7 +986,7 @@ class DICOMImageSetUpload(UUIDModel):
     def _marker_file_key(self):
         return f"{self._input_key}/deidentification.done"
 
-    def _mark_failed(self, *, error_message, exc):
+    def mark_failed(self, *, error_message, exc):
         self.status = DICOMImageSetUploadStatusChoices.FAILED
         self.error_message = error_message
         self.save()
@@ -1083,7 +1083,7 @@ class DICOMImageSetUpload(UUIDModel):
             else:
                 raise ValueError("Invalid job status")
         except Exception as e:
-            self._mark_failed(
+            self.mark_failed(
                 error_message="An unexpected error occurred", exc=e
             )
         else:
