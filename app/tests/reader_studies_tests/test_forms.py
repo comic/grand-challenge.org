@@ -2550,6 +2550,7 @@ def test_error_on_display_set_text_fields_xss(client):
         instance=ds,
         base_obj=rs,
         data={
+            "order": 10,
             "title": "No tags allowed",
         },
     )

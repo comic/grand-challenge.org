@@ -54,7 +54,6 @@ from grandchallenge.core.forms import (
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.layout import Formset
-from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.widgets import (
     ColorEditorWidget,
     JSONEditorWidget,
@@ -121,33 +120,6 @@ READER_STUDY_HELP_TEXTS = {
 }
 
 
-def verify_cleaned_html(
-    *,
-    data: dict,
-    field_name: str,
-    readable_field_name: str,
-    add_error_func: callable,
-    no_tags: bool,
-):
-    if field_name in data:
-        unclean = data[field_name].replace("\r", "")
-        cleaned = clean(unclean, no_tags=no_tags)
-        if unclean == cleaned:
-            return
-
-        if no_tags:
-            error = ValidationError(
-                f"{readable_field_name} cannot contain HTML tags",
-                code="invalid",
-            )
-        else:
-            error = ValidationError(
-                f"{readable_field_name} contains disallowed HTML tags or attributes",
-                code="invalid",
-            )
-        add_error_func(error=error, field=field_name)
-
-
 class ReaderStudyCreateForm(
     WorkstationUserFilterMixin, SaveFormInitMixin, ModelForm
 ):
@@ -192,14 +164,6 @@ class ReaderStudyCreateForm(
 
     def clean(self):
         cleaned_data = super().clean()
-
-        verify_cleaned_html(
-            data=cleaned_data,
-            field_name="title",
-            readable_field_name="Title",
-            add_error_func=self.add_error,
-            no_tags=True,
-        )
 
         if cleaned_data["roll_over_answers_for_n_cases"] > 0 and (
             cleaned_data["allow_case_navigation"]
@@ -607,28 +571,6 @@ class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
                     field=None,
                 )
 
-        verify_cleaned_html(
-            data=self.cleaned_data,
-            field_name="question_text",
-            readable_field_name="Question text",
-            add_error_func=self.add_error,
-            no_tags=True,
-        )
-        verify_cleaned_html(
-            data=self.cleaned_data,
-            field_name="empty_answer_confirmation_label",
-            readable_field_name="Empty answer confirmation label",
-            add_error_func=self.add_error,
-            no_tags=True,
-        )
-        verify_cleaned_html(
-            data=self.cleaned_data,
-            field_name="help_text",
-            readable_field_name="Help text",
-            add_error_func=self.add_error,
-            no_tags=False,
-        )
-
         return super().clean()
 
     def save(self, *args, **kwargs):
@@ -1017,14 +959,6 @@ class DisplaySetFormMixin:
 
     def clean(self):
         cleaned_data = super().clean()
-
-        verify_cleaned_html(
-            data=cleaned_data,
-            field_name="title",
-            readable_field_name="Title",
-            add_error_func=self.add_error,
-            no_tags=True,
-        )
 
         return cleaned_data
 

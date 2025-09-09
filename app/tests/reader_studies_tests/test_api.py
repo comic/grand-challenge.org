@@ -2325,4 +2325,4 @@ def test_display_set_text_fields_xss(client):
         data={"title": "<b>No tags allowed</b>"},
     )
     assert response.status_code == 400
-    assert "Title cannot contain HTML" in response.content.decode("utf-8")
+    assert "Field cannot contain HTML tags" in response.content.decode("utf-8")

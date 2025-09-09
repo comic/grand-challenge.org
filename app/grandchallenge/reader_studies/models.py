@@ -18,6 +18,7 @@ from django.db.models import Avg, Count, Q, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from referencing.exceptions import Unresolvable
@@ -47,7 +48,7 @@ from grandchallenge.core.storage import (
     get_social_image_path,
     public_s3_storage,
 )
-from grandchallenge.core.templatetags.bleach import md2html
+from grandchallenge.core.templatetags.bleach import clean, md2html
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
@@ -180,6 +181,31 @@ CASE_TEXT_SCHEMA = {
 }
 
 
+class CleanedHtmlValidator:
+    def __init__(self, *, no_tags):
+        self.__no_tags = no_tags
+
+    def __call__(self, value):
+        unclean = value.replace("\r", "")
+        cleaned = clean(unclean, no_tags=self.__no_tags)
+        if unclean == cleaned:
+            return
+
+        if self.__no_tags:
+            raise ValidationError(_("Field cannot contain HTML tags"))
+        else:
+            raise ValidationError(
+                _("Field contains disallowed HTML tags or attributes"),
+            )
+
+    def deconstruct(self):
+        return (
+            self.__class__.__module__ + "." + self.__class__.__name__,
+            (),
+            {"no_tags": self.__no_tags},
+        )
+
+
 class ReaderStudy(
     UUIDModel,
     TitleSlugDescriptionModel,
@@ -192,6 +218,12 @@ class ReaderStudy(
     A reader study is a tool that allows users to have a set of readers answer
     a set of questions on a set of images (cases).
     """
+
+    title = models.CharField(
+        _("title"),
+        max_length=255,
+        validators=[CleanedHtmlValidator(no_tags=True)],
+    )
 
     editors_group = models.OneToOneField(
         Group,
@@ -952,7 +984,12 @@ class DisplaySet(
         ComponentInterfaceValue, blank=True, related_name="display_sets"
     )
     order = models.PositiveIntegerField(default=0)
-    title = models.CharField(max_length=255, default="", blank=True)
+    title = models.CharField(
+        max_length=255,
+        default="",
+        blank=True,
+        validators=[CleanedHtmlValidator(no_tags=True)],
+    )
 
     def assign_permissions(self):
         assign_perm(
@@ -1391,12 +1428,13 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     reader_study = models.ForeignKey(
         ReaderStudy, on_delete=models.PROTECT, related_name="questions"
     )
-    question_text = models.TextField()
-    help_text = models.TextField(blank=True)
-    answer_type = models.CharField(
-        max_length=4,
-        choices=AnswerType.choices,
+    question_text = models.TextField(
+        validators=[CleanedHtmlValidator(no_tags=True)]
     )
+    help_text = models.TextField(
+        blank=True, validators=[CleanedHtmlValidator(no_tags=False)]
+    )
+    answer_type = models.CharField(max_length=4, choices=AnswerType.choices)
     # Set blank because the requirement is dependent on answer_type and handled in the front end
     image_port = models.CharField(
         max_length=14, choices=ImagePort.choices, blank=True, default=""
@@ -1472,6 +1510,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     empty_answer_confirmation_label = models.TextField(
         blank=True,
         help_text="Label to show when confirming an empty answer.",
+        validators=[CleanedHtmlValidator(no_tags=True)],
     )
 
     class Meta:
