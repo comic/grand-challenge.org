@@ -187,9 +187,7 @@ def test_start_dicom_import_job(settings):
     )
     di_upload = DICOMImageSetUploadFactory()
 
-    with Stubber(
-        di_upload._health_imaging_wrapper._health_imaging_client
-    ) as s:
+    with Stubber(di_upload._health_imaging_wrapper.client) as s:
         s.add_response(
             method="start_dicom_import_job",
             service_response={

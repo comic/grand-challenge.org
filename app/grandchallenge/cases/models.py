@@ -878,7 +878,7 @@ class DICOMImageSetUploadStatusChoices(models.TextChoices):
 class HealthImagingWrapper:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._health_imaging_client = boto3.client(
+        self.client = boto3.client(
             "medical-imaging",
             region_name=settings.AWS_DEFAULT_REGION,
         )
@@ -887,7 +887,7 @@ class HealthImagingWrapper:
         """
         Start a HealthImaging DICOM import job.
         """
-        return self._health_imaging_client.start_dicom_import_job(
+        return self.client.start_dicom_import_job(
             jobName=job_name,
             datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
             dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
@@ -897,11 +897,11 @@ class HealthImagingWrapper:
 
     def delete_image_set(self, *, image_set_id):
         try:
-            return self._health_imaging_client.delete_image_set(
+            return self.client.delete_image_set(
                 imageSetId=image_set_id,
                 datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
             )
-        except self._health_imaging_client.exceptions.ThrottlingException as e:
+        except self.client.exceptions.ThrottlingException as e:
             raise RetryStep("Request throttled") from e
         except ClientError:
             logger.error("Couldn't delete image set", exc_info=True)
@@ -913,7 +913,7 @@ class HealthImagingWrapper:
         Update the metadata of an image set.
         """
         try:
-            return self._health_imaging_client.update_image_set_metadata(
+            return self.client.update_image_set_metadata(
                 imageSetId=image_set_id,
                 datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
                 latestVersionId=str(version_id),
