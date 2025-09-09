@@ -333,6 +333,17 @@ class DICOMImageSet(UUIDModel):
     )
 
 
+@receiver(post_delete, sender=DICOMImageSet)
+def delete_image_set(*_, instance: DICOMImageSet, **__):
+    from grandchallenge.cases.tasks import delete_healthimaging_image_set
+
+    on_commit(
+        delete_healthimaging_image_set.signature(
+            kwargs=dict(image_set_id=instance.image_set_id)
+        ).apply_async
+    )
+
+
 class Image(UUIDModel):
     COLOR_SPACE_GRAY = ColorSpace.GRAY.value
     COLOR_SPACE_RGB = ColorSpace.RGB.value
