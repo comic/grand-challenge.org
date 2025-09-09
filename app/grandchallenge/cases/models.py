@@ -66,6 +66,26 @@ SEGMENTS_SCHEMA = {
     "uniqueItems": True,
 }
 
+IMPORT_JOB_FAILURE_NDJSON_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "inputFile": {"type": "string"},
+            "exception": {
+                "type": "object",
+                "properties": {
+                    "exceptionType": {"type": "string"},
+                    "message": {"type": "string"},
+                },
+                "required": ["exceptionType", "message"],
+            },
+        },
+        "required": ["inputFile", "exception"],
+    },
+}
+
 
 class RawImageUploadSession(UUIDModel):
     """
@@ -924,8 +944,14 @@ class DICOMImageSetUpload(UUIDModel):
         blank=False,
     )
 
-    error_message = models.TextField(blank=True, default="")
-    internal_failure_log = models.TextField(blank=True, default="")
+    error_message = models.TextField(editable=False, default="")
+    internal_failure_log = models.JSONField(
+        default=list,
+        editable=False,
+        help_text="Contents of failure.ndjson from the health imaging "
+        "import job if the job failed or did not pass validation.",
+        validators=[JSONValidator(schema=IMPORT_JOB_FAILURE_NDJSON_SCHEMA)],
+    )
 
     class Meta:
         verbose_name = "DICOM image set upload"
