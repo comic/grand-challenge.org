@@ -211,6 +211,14 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
         )
         return
 
+    # Lock the algorithm image and algorithm to avoid conflicts when updating later
+    lock_model_instance(
+        pk=evaluation.submission.algorithm_image.pk,
+        app_label="algorithms",
+        model_name="algorithm_image",
+        of=("self", "algorithm"),
+    )
+
     slots_available = min(
         settings.ALGORITHMS_MAX_ACTIVE_JOBS - Job.objects.active().count(),
         settings.ALGORITHMS_MAX_ACTIVE_JOBS_PER_ALGORITHM,

@@ -904,6 +904,16 @@ def handle_event(*, event, backend):  # noqa: C901
         # Nothing to do
         return
 
+    if hasattr(job, "algorithm_image"):
+        # Lock the algorithm image and algorithm to
+        # avoid conflicts when updating later
+        lock_model_instance(
+            pk=job.algorithm_image.pk,
+            app_label="algorithms",
+            model_name="algorithm_image",
+            of=("self", "algorithm"),
+        )
+
     try:
         executor.handle_event(event=event)
     except TaskCancelled:
