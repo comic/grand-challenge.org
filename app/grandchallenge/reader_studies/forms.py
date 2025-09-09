@@ -957,11 +957,6 @@ class DisplaySetFormMixin:
     def model(self):
         return self.base_obj.civ_set_model
 
-    def clean(self):
-        cleaned_data = super().clean()
-
-        return cleaned_data
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
