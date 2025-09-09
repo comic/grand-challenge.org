@@ -4,16 +4,22 @@ from typing import NamedTuple
 import boto3
 from botocore.exceptions import ClientError
 from celery.utils.log import get_task_logger
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.base import File
 from django.db import transaction
+from django.db.models import F, Max
 from django.db.transaction import on_commit
+from django.utils import timezone
 from django.utils._os import safe_join
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.components.schemas import GPUTypeChoices
-from grandchallenge.components.tasks import lock_model_instance
+from grandchallenge.components.tasks import (
+    lock_model_instance,
+    remove_container_image_from_registry,
+)
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
@@ -351,3 +357,28 @@ def update_algorithm_average_duration(*, algorithm_pk):
         algorithm=algorithm, job__status=Job.SUCCESS
     ).average_duration()
     algorithm.save(update_fields=("average_duration",))
+
+
+@acks_late_2xlarge_task
+@transaction.atomic
+def deactivate_old_algorithm_images():
+    from grandchallenge.algorithms.models import AlgorithmImage
+
+    images_to_remove = AlgorithmImage.objects.annotate(
+        most_recent_job=Max("job__created", default=F("created"))
+    ).filter(
+        most_recent_job__lt=timezone.now() - relativedelta(years=1),
+        algorithm__public=False,
+        is_in_registry=True,
+    )
+
+    for image in images_to_remove:
+        on_commit(
+            remove_container_image_from_registry.signature(
+                kwargs={
+                    "pk": image.pk,
+                    "app_label": "algorithms",
+                    "model_name": "algorithmimage",
+                }
+            ).apply_async
+        )

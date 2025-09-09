@@ -1,13 +1,16 @@
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
 from actstream.models import Follow
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.algorithms.tasks import (
     create_algorithm_jobs,
+    deactivate_old_algorithm_images,
     execute_algorithm_job_for_inputs,
     filter_archive_items_for_algorithm,
     send_failed_job_notification,
@@ -861,3 +864,37 @@ def test_importing_same_sha_fails(
         "This container image has already been uploaded. "
         "Please re-activate the existing container image or upload a new version."
     )
+
+
+@pytest.mark.django_db
+def test_deactivate_old_algorithm_images(django_capture_on_commit_callbacks):
+    old_unused_image = AlgorithmImageFactory(is_in_registry=True)
+    AlgorithmImageFactory(is_in_registry=False)  # already removed
+    AlgorithmImageFactory(
+        is_in_registry=True, algorithm__public=True
+    )  # is public so should still work
+    old_with_recent_job = AlgorithmImageFactory(is_in_registry=True)
+    old_with_old_job = AlgorithmImageFactory(is_in_registry=True)
+
+    AlgorithmJobFactory(algorithm_image=old_with_recent_job, time_limit=60)
+    AlgorithmJobFactory(algorithm_image=old_with_old_job, time_limit=60)
+
+    # Set old image and job dates
+    old_created = now() - timedelta(days=400)
+    AlgorithmImage.objects.update(created=old_created)
+    Job.objects.update(created=old_created)
+
+    # Create recent image and jobs
+    AlgorithmImageFactory(is_in_registry=True)  # too new
+    AlgorithmJobFactory(algorithm_image=old_with_recent_job, time_limit=60)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        deactivate_old_algorithm_images()
+
+    expected_callbacks = {
+        f"<bound method Signature.apply_async of grandchallenge.components.tasks.remove_container_image_from_registry(pk=UUID({image.pk!r}), app_label='algorithms', model_name='algorithmimage')>"
+        # Private algorithm images not used for a long time, or ever, should be removed from the registry
+        for image in {old_unused_image, old_with_old_job}
+    }
+
+    assert {str(callback) for callback in callbacks} == expected_callbacks
