@@ -892,7 +892,7 @@ def test_deactivate_old_algorithm_images(django_capture_on_commit_callbacks):
         deactivate_old_algorithm_images()
 
     expected_callbacks = {
-        f"<bound method Signature.apply_async of grandchallenge.components.tasks.remove_container_image_from_registry(pk=UUID({image.pk!r}), app_label='algorithms', model_name='algorithmimage')>"
+        f"<bound method Signature.apply_async of grandchallenge.components.tasks.remove_container_image_from_registry(pk={image.pk!r}, app_label='algorithms', model_name='algorithmimage')>"
         # Private algorithm images not used for a long time, or ever, should be removed from the registry
         for image in {old_unused_image, old_with_old_job}
     }

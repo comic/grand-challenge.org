@@ -377,8 +377,8 @@ def deactivate_old_algorithm_images():
             remove_container_image_from_registry.signature(
                 kwargs={
                     "pk": image.pk,
-                    "app_label": "algorithms",
-                    "model_name": "algorithmimage",
+                    "app_label": AlgorithmImage._meta.app_label,
+                    "model_name": AlgorithmImage._meta.model_name,
                 }
             ).apply_async
         )
