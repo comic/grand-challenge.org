@@ -325,6 +325,14 @@ def image_file_path(instance, filename):
     )
 
 
+class DICOMImageSet(UUIDModel):
+    image_set_id = models.CharField(
+        max_length=32,
+        unique=True,
+        help_text="The ID of the image set in AWS Health Imaging.",
+    )
+
+
 class Image(UUIDModel):
     COLOR_SPACE_GRAY = ColorSpace.GRAY.value
     COLOR_SPACE_RGB = ColorSpace.RGB.value
@@ -469,6 +477,12 @@ class Image(UUIDModel):
         null=True,
         blank=True,
         help_text="What is the field of view of this image?",
+    )
+    dicom_image_set = models.OneToOneField(
+        to=DICOMImageSet,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="image",
     )
 
     def __str__(self):
@@ -1132,17 +1146,3 @@ class DICOMImageSetUpload(UUIDModel):
     @staticmethod
     def convert_image_set_to_internal(*, image_set):
         pass
-
-
-class DICOMImageSet(UUIDModel):
-    image = models.ForeignKey(
-        to=Image,
-        null=True,
-        on_delete=models.CASCADE,
-        related_name="dicom_image_sets",
-    )
-    image_set_id = models.CharField(
-        max_length=32,
-        unique=True,
-        help_text="The ID of the image set in AWS Health Imaging.",
-    )
