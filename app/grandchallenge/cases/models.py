@@ -884,9 +884,6 @@ class HealthImagingWrapper:
         )
 
     def start_dicom_import_job(self, *, job_name, input_s3_uri, output_s3_uri):
-        """
-        Start a HealthImaging DICOM import job.
-        """
         return self.client.start_dicom_import_job(
             jobName=job_name,
             datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
@@ -909,9 +906,6 @@ class HealthImagingWrapper:
     def update_image_set_metadata(
         self, image_set_id, version_id, metadata, force=False
     ):
-        """
-        Update the metadata of an image set.
-        """
         try:
             return self.client.update_image_set_metadata(
                 imageSetId=image_set_id,
@@ -1020,9 +1014,6 @@ class DICOMImageSetUpload(UUIDModel):
             logger.error(exc, exc_info=True)
 
     def start_dicom_import_job(self):
-        """
-        Start a HealthImaging DICOM import job.
-        """
         return self._health_imaging_wrapper.start_dicom_import_job(
             job_name=self._import_job_name,
             input_s3_uri=self._import_input_s3_uri,
