@@ -1097,7 +1097,11 @@ class DICOMImageSetUpload(UUIDModel):
     def validate_image_set(self, *, event):
         job_summary = self.get_job_summary(event=event)
 
-        if job_summary["numberOfGeneratedImageSets"] == 0:
+        if (
+            job_summary["numberOfFilesWithCustomerError"] != 0
+            or job_summary["numberOfFilesWithServerError"] != 0
+            or job_summary["numberOfGeneratedImageSets"] == 0
+        ):
             self.handle_failed_job(event=event)
         elif job_summary["numberOfGeneratedImageSets"] > 1:
             self.delete_image_sets(job_summary=job_summary)
