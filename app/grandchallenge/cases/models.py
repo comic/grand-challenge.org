@@ -1079,7 +1079,7 @@ class DICOMImageSetUpload(UUIDModel):
 
         obj = self._s3_client.get_object(Bucket=bucket, Key=key)
 
-        return [json.loads(line) for line in obj["Body"]]
+        return [json.loads(line) for line in obj["Body"].iter_lines()]
 
     def handle_event(self, *, event):
         try:
