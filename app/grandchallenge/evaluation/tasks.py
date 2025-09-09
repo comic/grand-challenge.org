@@ -215,7 +215,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
     lock_model_instance(
         pk=evaluation.submission.algorithm_image.pk,
         app_label="algorithms",
-        model_name="algorithm_image",
+        model_name="algorithmimage",
         of=("self", "algorithm"),
     )
 

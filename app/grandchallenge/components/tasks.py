@@ -910,7 +910,7 @@ def handle_event(*, event, backend):  # noqa: C901
         lock_model_instance(
             pk=job.algorithm_image.pk,
             app_label="algorithms",
-            model_name="algorithm_image",
+            model_name="algorithmimage",
             of=("self", "algorithm"),
         )
 
