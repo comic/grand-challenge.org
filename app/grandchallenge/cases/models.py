@@ -1023,20 +1023,11 @@ class DICOMImageSetUpload(UUIDModel):
         """
         Start a HealthImaging DICOM import job.
         """
-        try:
-            return self._health_imaging_wrapper.start_dicom_import_job(
-                job_name=self._import_job_name,
-                input_s3_uri=self._import_input_s3_uri,
-                output_s3_uri=self._import_output_s3_uri,
-            )
-        except ClientError as e:
-            if e.response["Error"]["Code"] in {
-                "ThrottlingException",
-                "ServiceQuotaExceededException",
-            }:
-                raise RetryStep from e
-            else:
-                raise
+        return self._health_imaging_wrapper.start_dicom_import_job(
+            job_name=self._import_job_name,
+            input_s3_uri=self._import_input_s3_uri,
+            output_s3_uri=self._import_output_s3_uri,
+        )
 
     def _deidentify_files(self):
         # this will need to iterate over all linked UserUploads

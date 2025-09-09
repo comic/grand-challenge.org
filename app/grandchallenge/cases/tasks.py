@@ -543,8 +543,11 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
     try:
         upload.deidentify_user_uploads()
         upload.start_dicom_import_job()
-    except RetryStep:
-        raise
+    except (
+        upload._health_imaging_wrapper.client.exceptions.ThrottlingException,
+        upload._health_imaging_wrapper.client.exceptions.ServiceQuotaExceededException,
+    ) as e:
+        raise RetryStep from e
     except Exception as e:
         upload.mark_failed(error_message="An unexpected error occurred", exc=e)
     else:
