@@ -893,33 +893,21 @@ class HealthImagingWrapper:
         )
 
     def delete_image_set(self, *, image_set_id):
-        try:
-            return self.client.delete_image_set(
-                imageSetId=image_set_id,
-                datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
-            )
-        except self.client.exceptions.ResourceNotFoundException:
-            pass  # image set already deleted
-        except self.client.exceptions.ThrottlingException as e:
-            raise RetryStep("Request throttled") from e
-        except ClientError:
-            logger.error("Couldn't delete image set", exc_info=True)
+        return self.client.delete_image_set(
+            imageSetId=image_set_id,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+        )
 
     def update_image_set_metadata(
         self, image_set_id, version_id, metadata, force=False
     ):
-        try:
-            return self.client.update_image_set_metadata(
-                imageSetId=image_set_id,
-                datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
-                latestVersionId=str(version_id),
-                updateImageSetMetadataUpdates=metadata,
-                force=force,
-            )
-        except self.client.exceptions.ResourceNotFoundException:
-            pass  # requested version not the latest, assume already updated.
-        except ClientError:
-            logger.error("Couldn't update image set metadata.", exc_info=True)
+        return self.client.update_image_set_metadata(
+            imageSetId=image_set_id,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            latestVersionId=str(version_id),
+            updateImageSetMetadataUpdates=metadata,
+            force=force,
+        )
 
 
 class DICOMImageSetUpload(UUIDModel):

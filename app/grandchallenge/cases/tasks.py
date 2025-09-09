@@ -7,6 +7,7 @@ from shutil import rmtree
 from tempfile import TemporaryDirectory
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from botocore.exceptions import ClientError
 from celery import signature
 from celery.utils.log import get_task_logger
 from django.conf import settings
@@ -580,15 +581,29 @@ def handle_healthimaging_import_job_event(*, event):
 @transaction.atomic
 def delete_healthimaging_image_set(*, image_set_id):
     health_imaging_wrapper = HealthImagingWrapper()
-    health_imaging_wrapper.delete_image_set(image_set_id=image_set_id)
+
+    try:
+        health_imaging_wrapper.delete_image_set(image_set_id=image_set_id)
+    except health_imaging_wrapper.client.exceptions.ResourceNotFoundException:
+        pass  # image set already deleted
+    except health_imaging_wrapper.client.exceptions.ThrottlingException as e:
+        raise RetryStep("Request throttled") from e
+    except ClientError:
+        logger.error("Couldn't delete image set", exc_info=True)
 
 
 @acks_late_micro_short_task
 @transaction.atomic
 def revert_image_set_to_initial_version(*, image_set_id, version_id):
     health_imaging_wrapper = HealthImagingWrapper()
-    health_imaging_wrapper.update_image_set_metadata(
-        image_set_id=image_set_id,
-        version_id=version_id,
-        metadata={"revertToVersionId": "1"},
-    )
+
+    try:
+        health_imaging_wrapper.update_image_set_metadata(
+            image_set_id=image_set_id,
+            version_id=version_id,
+            metadata={"revertToVersionId": "1"},
+        )
+    except health_imaging_wrapper.client.exceptions.ResourceNotFoundException:
+        pass  # requested version not the latest, assume already updated.
+    except ClientError:
+        logger.error("Couldn't update image set metadata.", exc_info=True)
