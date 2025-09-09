@@ -258,7 +258,7 @@ def test_handle_failed_job(mocker):
     mock_get_summary.assert_called_once_with(event=event)
     mock_get_failure_log.assert_called_once_with(job_summary=job_summary)
     spy_delete_image_sets.assert_called_once_with(job_summary=job_summary)
-    assert di_upload.internal_failure_log == str(failure_log)
+    assert di_upload.internal_failure_log == failure_log
 
 
 @pytest.mark.django_db
