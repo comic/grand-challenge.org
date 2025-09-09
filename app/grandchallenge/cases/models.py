@@ -1127,7 +1127,6 @@ class DICOMImageSetUpload(UUIDModel):
         self.internal_failure_log = self.get_job_output_failure_log(
             job_summary=job_summary
         )
-        self.save()
         self.delete_image_sets(job_summary=job_summary)
         job_id = job_summary["jobId"]
         raise DICOMImportJobFailedError(
