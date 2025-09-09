@@ -898,6 +898,8 @@ class HealthImagingWrapper:
                 imageSetId=image_set_id,
                 datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
             )
+        except self.client.exceptions.ResourceNotFoundException:
+            pass  # image set already deleted
         except self.client.exceptions.ThrottlingException as e:
             raise RetryStep("Request throttled") from e
         except ClientError:
@@ -914,6 +916,8 @@ class HealthImagingWrapper:
                 updateImageSetMetadataUpdates=metadata,
                 force=force,
             )
+        except self.client.exceptions.ResourceNotFoundException:
+            pass  # requested version not the latest, assume already updated.
         except ClientError:
             logger.error("Couldn't update image set metadata.", exc_info=True)
 
