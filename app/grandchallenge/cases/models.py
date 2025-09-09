@@ -705,6 +705,12 @@ class Image(UUIDModel):
         ordering = ("name",)
 
 
+@receiver(post_delete, sender=Image)
+def delete_dicom_image_set(*_, instance: Image, **__):
+    if instance.dicom_image_set:
+        instance.dicom_image_set.delete()
+
+
 class ImageUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset({"view_image"})
 
