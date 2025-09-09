@@ -603,7 +603,12 @@ def revert_image_set_to_initial_version(*, image_set_id, version_id):
             version_id=version_id,
             metadata={"revertToVersionId": "1"},
         )
-    except health_imaging_wrapper.client.exceptions.ResourceNotFoundException:
-        pass  # requested version not the latest, assume already updated.
-    except ClientError:
-        logger.error("Couldn't update image set metadata.", exc_info=True)
+    except ClientError as e:
+        if (
+            e.response["Error"]["Code"] == "ResourceNotFoundException"
+            and e.response["Error"]["Message"]
+            == "Requested version(s) of ImageSet(s) is not the latest."
+        ):
+            pass  # already updated
+        else:
+            logger.error("Couldn't update image set metadata.", exc_info=True)
