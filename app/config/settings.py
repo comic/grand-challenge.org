@@ -1179,6 +1179,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.components.tasks.delete_old_unsuccessful_container_images",
         "schedule": crontab(hour=2, minute=0),
     },
+    "deactivate_old_algorithm_images": {
+        "task": "grandchallenge.algorithms.tasks.deactivate_old_algorithm_images",
+        "schedule": crontab(hour=2, minute=30),
+    },
     "update_associated_challenges": {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
         "schedule": crontab(hour=3, minute=0),
