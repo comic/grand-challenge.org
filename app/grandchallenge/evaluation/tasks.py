@@ -216,7 +216,13 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
         pk=evaluation.submission.algorithm_image.pk,
         app_label="algorithms",
         model_name="algorithmimage",
-        of=("self", "algorithm"),
+        of=("self",),
+    )
+    lock_model_instance(
+        pk=evaluation.submission.algorithm_image.algorithm.pk,
+        app_label="algorithms",
+        model_name="algorithm",
+        of=("self",),
     )
 
     slots_available = min(

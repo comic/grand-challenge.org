@@ -911,7 +911,13 @@ def handle_event(*, event, backend):  # noqa: C901
             pk=job.algorithm_image.pk,
             app_label="algorithms",
             model_name="algorithmimage",
-            of=("self", "algorithm"),
+            of=("self",),
+        )
+        lock_model_instance(
+            pk=job.algorithm_image.algorithm.pk,
+            app_label="algorithms",
+            model_name="algorithm",
+            of=("self",),
         )
 
     try:
