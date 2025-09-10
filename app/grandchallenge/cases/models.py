@@ -1,7 +1,8 @@
 import copy
+import hashlib
 import logging
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import SpooledTemporaryFile, TemporaryDirectory
 
 import boto3
 from actstream.actions import follow
@@ -842,6 +843,26 @@ class PostProcessImageTask(UUIDModel):
             )
 
 
+# Fixed placeholders for DICOM elements passed to Deidentifier
+# Important: Do not change as long as HealthImaging is used as storage backend!
+STUDY_DATE = "20000101"
+ACCESSION_NUMBER = ""
+PATIENT_ID = "ANONYMOUS"
+STUDY_ID = ""
+SERIES_NUMBER = "0"
+
+
+def generate_dicom_id_suffix(pk: str, suffix_type: str) -> int:
+    """
+    Generates a unique numerical suffix for a DICOM UID based on the primary key
+    and a string to differentiate the type (e.g., 'study' or 'series').
+    """
+    seed = f"{pk}-{suffix_type}"
+
+    digest = hashlib.sha512(seed.encode("utf8")).digest()
+    return int.from_bytes(digest[:14])
+
+
 class DICOMImageSetUploadStatusChoices(models.TextChoices):
     INITIALIZED = "INITIALIZED", _("Initialized")
     STARTED = "STARTED", _("Started")
@@ -870,6 +891,15 @@ class DICOMImageSetUpload(UUIDModel):
 
     error_message = models.TextField(blank=True, default="")
 
+    study_instance_uuid = models.CharField(
+        editable=False,
+        unique=True,
+    )
+    series_instance_uuid = models.CharField(
+        editable=False,
+        unique=True,
+    )
+
     class Meta:
         verbose_name = "DICOM image set upload"
         constraints = [
@@ -888,8 +918,20 @@ class DICOMImageSetUpload(UUIDModel):
         self.__s3_client = None
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        adding = self._state.adding
+
         super().save(*args, **kwargs)
+
+        if adding:
+            self.study_instance_uid = generate_dicom_id_suffix(
+                self.pk, "study"
+            )
+            self.series_instance_uid = generate_dicom_id_suffix(
+                self.pk, "series"
+            )
+            super().save(
+                update_fields=["study_instance_uuid", "series_instance_uuid"]
+            )
 
     @property
     def _s3_client(self):
@@ -961,16 +1003,38 @@ class DICOMImageSetUpload(UUIDModel):
                 raise
 
     def _deidentify_files(self):
-        # this will need to iterate over all linked UserUploads
-        # for each, download the file from the uploads bucket, run the
-        # deidentifier and upload the deidentified file to the HI bucket
-        # for the time being just copy each upload to the HI bucket
+        # deid = DicomDeidentifier(
+        #     study_instance_uuid=self.study_instance_uuid,
+        #     series_instance_uuid=self.series_instance_uuid,
+        #     patient_id=PATIENT_ID,
+        #     study_id=STUDY_ID,
+        #     study_date=STUDY_DATE,
+        #     accession_number=ACCESSION_NUMBER,
+        #     series_number=SERIES_NUMBER,
+        # )
         for upload in self.user_uploads.all():
-            self._s3_client.copy(
-                CopySource={"Bucket": upload.bucket, "Key": upload.key},
-                Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
-                Key=f"{self._input_key}/{upload.filename}",
-            )
+            with (
+                SpooledTemporaryFile() as infile,
+                SpooledTemporaryFile() as outfile,
+            ):
+                self._s3_client.download_fileobj(
+                    Fileobj=infile,
+                    Bucket=upload.bucket,
+                    Key=upload.key,
+                )
+                infile.seek(0)
+                try:
+                    pass
+                    # deid.process(infile, output=outfile)
+                except Exception:
+                    # log the error or something
+                    break
+                outfile.seek(0)
+                self._s3_client.upload_fileobj(
+                    Fileobj=outfile,
+                    Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+                    Key=f"{self._input_key}/{upload.filename}",
+                )
 
     def deidentify_user_uploads(self):
         # Check if marker file exists
