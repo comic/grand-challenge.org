@@ -26,9 +26,7 @@
 {% endblock %}
 
 {% block content %}
-    {% if phase.creator_must_be_verified %}
-        {% include "challenges/partials/participant_verification_warning.html" %}
-    {% endif %}
+    {% include "challenges/partials/participant_verification_warning.html" %}
 
     <h2>{{ phase.title }} Submission</h2>
 
@@ -82,7 +80,7 @@
 
     {% else %}
 
-        {% if has_pending_evaluations %}
+        {% if has_active_evaluations %}
 
             <div class="alert alert-danger" role="alert">
                 You need to wait until all of your existing submissions have

@@ -351,6 +351,10 @@ class ReaderStudy(
             "Usernames and avatars will be hidden to protect other readers' privacy."
         ),
     )
+    end_of_study_text_markdown = models.TextField(
+        blank=True,
+        help_text="Text to show when a user has completed the reader study",
+    )
     max_credits = models.PositiveIntegerField(
         null=True,
         blank=True,
@@ -386,6 +390,7 @@ class ReaderStudy(
         "modalities",
         "structures",
         "organizations",
+        "end_of_study_text_markdown",
     }
 
     optional_copy_fields = [
@@ -551,11 +556,6 @@ class ReaderStudy(
     def remove_reader(self, user):
         """Removes ``user`` as a reader for this ``ReaderStudy``."""
         return user.groups.remove(self.readers_group)
-
-    @property
-    def help_text(self) -> str:
-        """The cleaned help text from the markdown sources"""
-        return md2html(self.help_text_markdown, link_blank_target=True)
 
     @cached_property
     def study_image_names(self):

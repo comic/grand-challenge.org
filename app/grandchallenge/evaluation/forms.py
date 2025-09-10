@@ -10,7 +10,6 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import BooleanField, Case, Exists, OuterRef, When
 from django.db.transaction import on_commit
 from django.forms import (
-    CheckboxInput,
     CheckboxSelectMultiple,
     Form,
     HiddenInput,
@@ -63,7 +62,6 @@ submission_options = (
     "submissions_open_at",
     "submissions_close_at",
     "submission_page_markdown",
-    "creator_must_be_verified",
     "submissions_limit_per_user_per_period",
     "submission_limit_period",
     "allow_submission_comments",
@@ -191,9 +189,6 @@ class PhaseUpdateForm(
                     ),
                     *algorithm_setting_options,
                 )
-            )
-            self.fields["creator_must_be_verified"].widget = CheckboxInput(
-                attrs={"checked": True}
             )
 
     class Meta:
@@ -568,7 +563,7 @@ class SubmissionForm(
         except ObjectDoesNotExist:
             user_is_verified = False
 
-        if self._phase.creator_must_be_verified and not user_is_verified:
+        if not user_is_verified:
             error_message = format_html(
                 "You must verify your account before you can make a "
                 "submission to this phase. Please "
@@ -591,13 +586,13 @@ class SubmissionForm(
             ]
             >= 1
         )
-        has_pending_evaluations = self._phase.has_pending_evaluations(
-            user_pks=[creator.pk]
+        has_active_evaluations = self._phase.has_active_evaluations(
+            users={creator}
         )
 
         can_submit = (
             has_available_compute
-            and not has_pending_evaluations
+            and not has_active_evaluations
             and (has_remaining_submissions or is_challenge_admin)
         )
 
@@ -629,8 +624,8 @@ class SubmissionForm(
         related_users = self._get_submission_relevant_users(creator=creator)
 
         if related_users and (
-            self._phase.has_pending_evaluations(
-                user_pks=[related_user.pk for related_user in related_users]
+            self._phase.has_active_evaluations(
+                users={related_user for related_user in related_users}
             )
             or any(
                 self._phase.get_next_submission(user=related_user)[

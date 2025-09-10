@@ -132,7 +132,7 @@ class Notification(UUIDModel):
     )
 
     def __str__(self):
-        return f"Notification for {self.user}"
+        return f"Notification {self.pk}"
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
