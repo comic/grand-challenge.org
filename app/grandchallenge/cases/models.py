@@ -1,6 +1,8 @@
 import copy
+import gzip
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
@@ -1167,13 +1169,51 @@ class DICOMImageSetUpload(UUIDModel):
         )
 
     def convert_image_set_to_internal(self, *, image_set):
+        image_set_id = image_set["imageSetId"]
         dicom_image_set = DICOMImageSet.objects.create(
-            image_set_id=image_set["imageSetId"],
+            image_set_id=image_set_id,
             dicom_image_set_upload=self,
         )
+
+        try:
+            image_metadata = self.get_image_metadata(image_set_id=image_set_id)
+        except Exception as e:
+            logger.error(e, exc_info=True)
+            image_metadata = dict(
+                width=0,
+                height=0,
+            )
+
         Image.objects.create(
             dicom_image_set=dicom_image_set,
-            modality=ImagingModality.objects.get(modality="CT"),
-            width=0,
-            height=0,
+            **image_metadata,
+        )
+
+    def get_image_metadata(self, *, image_set_id):
+        response = self._health_imaging_client.get_image_set_metadata(
+            imageSetId=image_set_id,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+        )
+        metadata = json.loads(
+            gzip.decompress(response["imageSetMetadataBlob"].read())
+        )
+
+        study = metadata["Study"]
+        study_metadata = study["DICOM"]
+        series = next(iter(study["Series"].values()))
+        series_metadata = series["DICOM"]
+        instance = next(iter(series["Instances"].values()))
+        instance_metadata = instance["DICOM"]
+
+        return dict(
+            height=instance_metadata["Rows"],
+            width=instance_metadata["Columns"],
+            modality=ImagingModality.objects.get(
+                modality=series_metadata["Modality"]
+            ),
+            study_instance_uid=study_metadata["StudyInstanceUID"],
+            study_date=datetime.strptime(
+                study_metadata["StudyDate"], "%Y%m%d"
+            ),
+            series_instance_uid=series_metadata["SeriesInstanceUID"],
         )
