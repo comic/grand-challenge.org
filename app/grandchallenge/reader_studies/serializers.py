@@ -146,7 +146,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         model = DisplaySet
         fields = (
             "pk",
-            "title",  # Can be set by users, can be made write only after 2025.10
+            "title",  # Can be set by users, deprecated for reads, can be made write only after 2025.10
             "title_safe",  # Safe to use in rendered html
             "reader_study",
             "values",
