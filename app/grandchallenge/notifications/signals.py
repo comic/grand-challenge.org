@@ -89,8 +89,10 @@ def clean_up_notifications(instance, **_):
         app_label=instance._meta.app_label, model=instance._meta.model_name
     ).get()
     Notification.objects.filter(
-        Q(actor_object_id=instance.pk) & Q(actor_content_type=ct)
-        | Q(action_object_object_id=instance.pk)
-        & Q(action_object_content_type=ct)
-        | Q(target_object_id=instance.pk) & Q(target_content_type=ct)
+        (Q(actor_object_id=instance.pk) & Q(actor_content_type=ct))
+        | (
+            Q(action_object_object_id=instance.pk)
+            & Q(action_object_content_type=ct)
+        )
+        | (Q(target_object_id=instance.pk) & Q(target_content_type=ct))
     ).delete()

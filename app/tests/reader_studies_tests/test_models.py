@@ -369,20 +369,6 @@ def test_score_for_user(
 
 
 @pytest.mark.django_db
-def test_help_markdown_is_scrubbed(client):
-    rs = ReaderStudyFactory(
-        help_text_markdown="<b>My Help Text</b><script>naughty</script>",
-    )
-    u = UserFactory()
-    rs.add_reader(u)
-
-    response = get_view_for_user(client=client, url=rs.api_url, user=u)
-
-    assert response.status_code == 200
-    assert response.json()["help_text"] == "<p><b>My Help Text</b>naughty</p>"
-
-
-@pytest.mark.django_db
 def test_description_is_scrubbed(client):
     u = UserFactory()
     im, im1 = ImageFactory(), ImageFactory()

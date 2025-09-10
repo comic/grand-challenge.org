@@ -998,7 +998,6 @@ def test_email_sent_to_editors_when_permissions_enabled():
 @pytest.mark.django_db
 def test_give_algorithm_editors_job_view_permissions_only_for_algorithm_phase():
     phase = PhaseFactory(
-        creator_must_be_verified=True,
         submission_kind=Phase.SubmissionKindChoices.CSV,
         give_algorithm_editors_job_view_permissions=False,
     )
@@ -1071,9 +1070,7 @@ def test_parent_phase_choices_no_circular_dependency():
 
 @pytest.mark.django_db
 def test_clean_parent_phase():
-    p1, p2, p3, p4 = PhaseFactory.create_batch(
-        4, challenge=ChallengeFactory(), creator_must_be_verified=True
-    )
+    p1, p2, p3, p4 = PhaseFactory.create_batch(4, challenge=ChallengeFactory())
     ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
     interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
 

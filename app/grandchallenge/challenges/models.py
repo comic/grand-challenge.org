@@ -783,13 +783,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         unfollow(user=user, obj=self.discussion_forum, send_action=False)
 
     @cached_property
-    def should_show_verification_warning(self):
-        for phase in self.visible_phases:
-            if phase.creator_must_be_verified:
-                return True
-        return False
-
-    @cached_property
     def status(self) -> str:
         phase_status = {phase.status for phase in self.visible_phases}
 
@@ -1243,7 +1236,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         return self.phase_1_compute_time + self.phase_2_compute_time
 
     @property
-    def phase_1_storage_size_bytes(self):
+    def phase_1_data_storage_size_bytes(self):
         return (
             self.phase_1_number_of_test_images
             * (self.average_size_of_test_image_in_mb * settings.MEGABYTE)
@@ -1251,7 +1244,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         )
 
     @property
-    def phase_2_storage_size_bytes(self):
+    def phase_2_data_storage_size_bytes(self):
         return (
             self.phase_2_number_of_test_images
             * (self.average_size_of_test_image_in_mb * settings.MEGABYTE)
@@ -1259,23 +1252,42 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         )
 
     @property
-    def docker_s3_storage_size_bytes(self):
-        return (
-            # 1 unique container image per submission
-            (self.average_algorithm_container_size_in_gb * settings.GIGABYTE)
-            * self.total_num_submissions
+    def num_unique_docker_images_per_team(self):
+        # A docker for a later phase should also be submitted to an earlier one.
+        return max(
+            self.phase_1_number_of_submissions_per_team,
+            self.phase_2_number_of_submissions_per_team,
         )
+
+    @property
+    def num_unique_docker_images(self):
+        return (
+            self.num_unique_docker_images_per_team
+            * self.expected_number_of_teams
+            * self.number_of_tasks
+        )
+
+    @property
+    def docker_storage_size_gb(self):
+        return (
+            self.average_algorithm_container_size_in_gb
+            * self.num_unique_docker_images
+        )
+
+    @property
+    def docker_storage_size_bytes(self):
+        return self.docker_storage_size_gb * settings.GIGABYTE
 
     @property
     def total_data_and_docker_storage_bytes(self):
         return (
-            self.docker_s3_storage_size_bytes
-            + self.phase_1_storage_size_bytes
-            + self.phase_2_storage_size_bytes
+            self.docker_storage_size_bytes
+            + self.phase_1_data_storage_size_bytes
+            + self.phase_2_data_storage_size_bytes
         )
 
     @cached_property
-    def compute_euro_cents_per_hour(self):
+    def compute_costs_euro_cents_per_hour(self):
         executors = [
             import_string(settings.COMPONENTS_DEFAULT_BACKEND)(
                 job_id="",
@@ -1292,40 +1304,54 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         )
         return usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR
 
+    @property
+    def compute_costs_euros_per_hour(self):
+        return self.compute_costs_euro_cents_per_hour / 100
+
     def get_compute_costs_euros(self, duration):
-        return self.round_to_10_euros(
-            duration.total_seconds()
-            * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
-            * self.compute_euro_cents_per_hour
-            / 3600
+        return (
+            math.ceil(
+                self.compute_costs_euro_cents_per_hour
+                * duration.total_seconds()
+                / 3600
+            )
+            / 100
         )
 
-    @classmethod
-    def get_data_storage_costs_euros(cls, size_bytes):
-        return cls.round_to_10_euros(
-            size_bytes
-            * settings.CHALLENGE_NUM_SUPPORT_YEARS
-            * (1 + settings.COMPONENTS_TAX_RATE_PERCENT)
+    @property
+    def storage_costs_euros_per_gb(self):
+        return (
+            settings.CHALLENGE_NUM_SUPPORT_YEARS
+            * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB_EXCLUDING_TAX
+            * (1 + settings.COMPONENTS_TAX_RATE)
             * settings.COMPONENTS_USD_TO_EUR
-            * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB
             / 1000
+            / 100
             / settings.TERABYTE
+            * settings.GIGABYTE
         )
 
-    @classmethod
-    def round_to_10_euros(cls, cents):
-        return 10 * math.ceil(cents / 100 / 10)
-
-    @property
-    def phase_1_data_storage_euros(self):
-        return self.get_data_storage_costs_euros(
-            self.phase_1_storage_size_bytes
+    def get_storage_costs_euros(self, size_bytes):
+        return (
+            math.ceil(
+                self.storage_costs_euros_per_gb
+                * 100
+                * size_bytes
+                / settings.GIGABYTE
+            )
+            / 100
         )
 
     @property
-    def phase_2_data_storage_euros(self):
-        return self.get_data_storage_costs_euros(
-            self.phase_2_storage_size_bytes
+    def phase_1_data_storage_costs_euros(self):
+        return self.get_storage_costs_euros(
+            self.phase_1_data_storage_size_bytes
+        )
+
+    @property
+    def phase_2_data_storage_costs_euros(self):
+        return self.get_storage_costs_euros(
+            self.phase_2_data_storage_size_bytes
         )
 
     @property
@@ -1339,20 +1365,20 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @property
     def phase_1_total_euros(self):
         return (
-            self.phase_1_data_storage_euros + self.phase_1_compute_costs_euros
+            self.phase_1_data_storage_costs_euros
+            + self.phase_1_compute_costs_euros
         )
 
     @property
     def phase_2_total_euros(self):
         return (
-            self.phase_2_data_storage_euros + self.phase_2_compute_costs_euros
+            self.phase_2_data_storage_costs_euros
+            + self.phase_2_compute_costs_euros
         )
 
     @property
     def docker_storage_costs_euros(self):
-        return self.get_data_storage_costs_euros(
-            self.docker_s3_storage_size_bytes
-        )
+        return self.get_storage_costs_euros(self.docker_storage_size_bytes)
 
     @cached_property
     def base_cost_euros(self):
@@ -1367,41 +1393,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             return settings.CHALLENGE_BASE_COST_IN_EURO
 
     @property
-    def total_euros_storage_and_compute(self):
-        return (
-            self.phase_1_total_euros
-            + self.phase_2_total_euros
-            + self.docker_storage_costs_euros
-        )
-
-    @cached_property
-    def budget(self):
-        try:
-            return {
-                "Data storage cost for phase 1": self.phase_1_data_storage_euros,
-                "Compute costs for phase 1": self.phase_1_compute_costs_euros,
-                "Total phase 1": self.phase_1_total_euros,
-                "Data storage cost for phase 2": self.phase_2_data_storage_euros,
-                "Compute costs for phase 2": self.phase_2_compute_costs_euros,
-                "Total phase 2": self.phase_2_total_euros,
-                "Docker storage cost": self.docker_storage_costs_euros,
-                "Total across phases": self.total_euros_storage_and_compute,
-            }
-        except TypeError:
-            return None
-
-    @property
-    def storage_and_compute_cost_surplus(self):
-        return (
-            self.total_euros_storage_and_compute
-            - settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO
-        )
-
-    @property
     def total_storage_costs_euros(self):
         return (
-            self.phase_1_data_storage_euros
-            + self.phase_2_data_storage_euros
+            self.phase_1_data_storage_costs_euros
+            + self.phase_2_data_storage_costs_euros
             + self.docker_storage_costs_euros
         )
 
@@ -1411,69 +1406,73 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             self.phase_1_compute_costs_euros + self.phase_2_compute_costs_euros
         )
 
-    def calculate_invoiced_amount(self, *, cost, ratio):
-        if self.storage_and_compute_cost_surplus <= 0:
-            # Below minimum price, add proportional shortfall
-            return round(
-                cost + ratio * abs(self.storage_and_compute_cost_surplus)
-            )
-        else:
-            # Above minimum price, allocate surplus proportionally
-            return round(
-                ratio
-                * (
-                    self.additional_compute_and_storage_costs
-                    + settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO
-                )
-            )
+    @property
+    def total_compute_and_storage_costs_euros(self):
+        return self.total_storage_costs_euros + self.total_compute_costs_euros
 
     @property
-    def compute_cost_ratio(self):
+    def capacity_reservation_units(self):
+        return math.ceil(
+            max(
+                settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO,
+                self.total_compute_and_storage_costs_euros,
+            )
+            / settings.CHALLENGE_CAPACITY_RESERVATION_PACK_SIZE_IN_EURO
+        )
+
+    @property
+    def capacity_reservation_euros(self):
+        return (
+            self.capacity_reservation_units
+            * settings.CHALLENGE_CAPACITY_RESERVATION_PACK_SIZE_IN_EURO
+        )
+
+    @property
+    def capacity_reservation_compute_euros(self):
         return (
             self.total_compute_costs_euros
-            / self.total_euros_storage_and_compute
+            / self.total_compute_and_storage_costs_euros
+            * self.capacity_reservation_euros
         )
 
     @property
-    def total_storage_to_be_invoiced(self):
-        return self.calculate_invoiced_amount(
-            cost=self.total_storage_costs_euros,
-            ratio=1 - self.compute_cost_ratio,
-        )
-
-    @property
-    def total_compute_to_be_invoiced(self):
-        return self.calculate_invoiced_amount(
-            cost=self.total_compute_costs_euros,
-            ratio=self.compute_cost_ratio,
-        )
-
-    @property
-    def minimal_challenge_cost(self):
+    def capacity_reservation_storage_euros(self):
         return (
-            self.base_cost_euros
-            + settings.CHALLENGE_MINIMAL_COMPUTE_AND_STORAGE_IN_EURO
+            self.total_storage_costs_euros
+            / self.total_compute_and_storage_costs_euros
+            * self.capacity_reservation_euros
         )
-
-    @property
-    def additional_compute_and_storage_costs(self):
-        if self.storage_and_compute_cost_surplus <= 0:
-            return 0
-        else:
-            return (
-                math.ceil(
-                    self.storage_and_compute_cost_surplus
-                    / settings.CHALLENGE_ADDITIONAL_COMPUTE_AND_STORAGE_PACK_SIZE_IN_EURO
-                )
-                * settings.CHALLENGE_ADDITIONAL_COMPUTE_AND_STORAGE_PACK_SIZE_IN_EURO
-            )
 
     @property
     def total_challenge_cost(self):
-        return (
-            self.minimal_challenge_cost
-            + self.additional_compute_and_storage_costs
-        )
+        return self.base_cost_euros + self.capacity_reservation_euros
+
+    @cached_property
+    def costs_for_phases(self):
+        return [
+            {
+                "name": "Phase 1",
+                "number_of_submissions_per_team": self.phase_1_number_of_submissions_per_team,
+                "number_of_test_images": self.phase_1_number_of_test_images,
+                "compute_time": self.phase_1_compute_time,
+                "compute_costs_euros": self.phase_1_compute_costs_euros,
+                "data_storage_size_gb": self.phase_1_data_storage_size_bytes
+                / settings.GIGABYTE,
+                "data_storage_costs_euros": self.phase_1_data_storage_costs_euros,
+                "total_euros": self.phase_1_total_euros,
+            },
+            {
+                "name": "Phase 2",
+                "number_of_submissions_per_team": self.phase_2_number_of_submissions_per_team,
+                "number_of_test_images": self.phase_2_number_of_test_images,
+                "compute_time": self.phase_2_compute_time,
+                "compute_costs_euros": self.phase_2_compute_costs_euros,
+                "data_storage_size_gb": self.phase_2_data_storage_size_bytes
+                / settings.GIGABYTE,
+                "data_storage_costs_euros": self.phase_2_data_storage_costs_euros,
+                "total_euros": self.phase_2_total_euros,
+            },
+        ]
 
 
 class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):

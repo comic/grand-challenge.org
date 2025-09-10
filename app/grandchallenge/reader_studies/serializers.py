@@ -5,7 +5,6 @@ from rest_framework.fields import (
     CharField,
     DurationField,
     JSONField,
-    ReadOnlyField,
     URLField,
 )
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
@@ -22,6 +21,7 @@ from grandchallenge.components.serializers import (
     HyperlinkedComponentInterfaceValueSerializer,
 )
 from grandchallenge.core.guardian import filter_by_permission
+from grandchallenge.core.templatetags.bleach import clean, md2html
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
@@ -55,6 +55,16 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     look_up_table = LookUpTableSerializer(read_only=True, allow_null=True)
     widget = CharField(source="get_widget_display", read_only=True)
     interactive_algorithms = SerializerMethodField()
+    question_text_safe = SerializerMethodField()
+    help_text_safe = SerializerMethodField()
+    empty_answer_confirmation_label_safe = SerializerMethodField()
+
+    # Deprecated fields, remove after 2025.10
+    help_text = SerializerMethodField(method_name="get_help_text_safe")
+    question_text = SerializerMethodField(method_name="get_question_text_safe")
+    empty_answer_confirmation_label = SerializerMethodField(
+        method_name="get_empty_answer_confirmation_label_safe"
+    )
 
     class Meta:
         model = Question
@@ -62,11 +72,13 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "answer_type",
             "api_url",
             "form_direction",
-            "help_text",
+            "help_text",  # Deprecated, remove after 2025.10
+            "help_text_safe",  # Safe to use in rendered html
             "image_port",
             "default_annotation_color",
             "pk",
-            "question_text",
+            "question_text",  # Deprecated, remove after 2025.10
+            "question_text_safe",  # Safe to use in rendered html
             "reader_study",
             "required",
             "options",
@@ -81,7 +93,8 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "answer_max_length",
             "answer_match_pattern",
             "empty_answer_confirmation",
-            "empty_answer_confirmation_label",
+            "empty_answer_confirmation_label",  # Deprecated, remove after 2025.10
+            "empty_answer_confirmation_label_safe",  # Safe to use in rendered html
             "interactive_algorithms",
         )
 
@@ -92,6 +105,15 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             return [obj.interactive_algorithm]
         else:
             return []
+
+    def get_question_text_safe(self, obj) -> str:
+        return clean(obj.question_text, no_tags=True)
+
+    def get_help_text_safe(self, obj) -> str:
+        return clean(obj.help_text, no_tags=False)
+
+    def get_empty_answer_confirmation_label_safe(self, obj) -> str:
+        return clean(obj.empty_answer_confirmation_label, no_tags=True)
 
 
 class DisplaySetSerializer(HyperlinkedModelSerializer):
@@ -112,6 +134,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         source="reader_study.view_content", read_only=True
     )
     index = SerializerMethodField()
+    title_safe = SerializerMethodField()
 
     def get_index(self, obj) -> int | None:
         if obj.reader_study.shuffle_hanging_list:
@@ -123,11 +146,15 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         else:
             return obj.standard_index
 
+    def get_title_safe(self, obj) -> str:
+        return clean(obj.title, no_tags=True)
+
     class Meta:
         model = DisplaySet
         fields = (
             "pk",
-            "title",
+            "title",  # Can be set by users, deprecated for reads, can be made write only after 2025.10
+            "title_safe",  # Safe to use in rendered html
             "reader_study",
             "values",
             "order",
@@ -169,9 +196,32 @@ class DisplaySetPostSerializer(
 
 class ReaderStudySerializer(HyperlinkedModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
-    help_text = ReadOnlyField()
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
+    help_text_safe = SerializerMethodField()
+    end_of_study_text_safe = SerializerMethodField()
+    title_safe = SerializerMethodField()
+
+    # Deprecated fields, remove after 2025.10
+    help_text = SerializerMethodField(method_name="get_help_text_safe")
+    title = SerializerMethodField(method_name="get_title_safe")
+
+    def get_help_text_safe(self, obj) -> str:
+        return md2html(
+            obj.help_text_markdown,
+            link_blank_target=True,
+            create_permalink_for_headers=False,
+        )
+
+    def get_end_of_study_text_safe(self, obj) -> str:
+        return md2html(
+            obj.end_of_study_text_markdown,
+            link_blank_target=True,
+            create_permalink_for_headers=False,
+        )
+
+    def get_title_safe(self, obj) -> str:
+        return clean(obj.title, no_tags=True)
 
     class Meta:
         model = ReaderStudy
@@ -181,10 +231,12 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "slug",
             "logo",
             "description",
-            "help_text",
+            "help_text",  # Deprecated, remove after 2025.10
+            "help_text_safe",  # Safe to use in rendered html
             "pk",
             "questions",
-            "title",
+            "title",  # Deprecated, remove after 2025.10
+            "title_safe",  # Safe to use in rendered html
             "is_educational",
             "instant_verification",
             "has_ground_truth",
@@ -193,6 +245,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "allow_case_navigation",
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
+            "end_of_study_text_safe",  # Safe to use in rendered html
         )
 
 

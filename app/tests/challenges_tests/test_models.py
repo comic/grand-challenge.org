@@ -1,4 +1,3 @@
-import random
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
@@ -145,40 +144,17 @@ def test_total_challenge_cost(settings):
     organisation = OrganizationFactory(exempt_from_base_costs=True)
     organisation.members_group.user_set.add(user_exempt_from_base_cost)
 
-    assert request1.storage_and_compute_cost_surplus == -270
+    assert request1.total_compute_and_storage_costs_euros == 709.07
     assert request1.total_challenge_cost == 1000
 
-    assert request2.storage_and_compute_cost_surplus == -270
+    assert request2.total_compute_and_storage_costs_euros == 709.07
     assert request2.total_challenge_cost == 6000
 
-    assert request3.storage_and_compute_cost_surplus == 1380
+    assert request3.total_compute_and_storage_costs_euros == 2361.98
     assert request3.total_challenge_cost == 7500
 
-    assert request4.storage_and_compute_cost_surplus == 2580
+    assert request4.total_compute_and_storage_costs_euros == 3555.5
     assert request4.total_challenge_cost == 9000
-
-
-@pytest.mark.django_db
-def test_storage_and_compute_cost_add_up_to_total():
-    user = UserFactory()
-
-    for _ in range(10):
-        request = ChallengeRequestFactory(
-            creator=user,
-            expected_number_of_teams=random.randint(0, 50),
-            inference_time_limit_in_minutes=random.randint(0, 50),
-            average_size_of_test_image_in_mb=random.randint(0, 500),
-            phase_1_number_of_submissions_per_team=random.randint(0, 50),
-            phase_2_number_of_submissions_per_team=random.randint(0, 50),
-            phase_1_number_of_test_images=random.randint(0, 50),
-            phase_2_number_of_test_images=random.randint(0, 50),
-        )
-        assert (
-            request.total_challenge_cost
-            == request.base_cost_euros
-            + request.total_storage_to_be_invoiced
-            + request.total_compute_to_be_invoiced
-        )
 
 
 @pytest.mark.django_db

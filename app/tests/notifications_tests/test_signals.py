@@ -369,6 +369,14 @@ def test_notification_for_new_admin_only():
         ],
         [
             "action_object",
+            Notification.Type.FORUM_POST,
+            UserFactory,
+            ForumFactory,
+            ForumTopicFactory,
+            {},
+        ],
+        [
+            "action_object",
             Notification.Type.EVALUATION_STATUS,
             UserFactory,
             PhaseFactory,
