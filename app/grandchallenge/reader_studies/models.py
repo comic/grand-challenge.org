@@ -48,13 +48,13 @@ from grandchallenge.core.storage import (
     get_social_image_path,
     public_s3_storage,
 )
-from grandchallenge.core.templatetags.bleach import clean, md2html
+from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
-from grandchallenge.core.validators import JSONValidator
+from grandchallenge.core.validators import CleanHtmlValidator, JSONValidator
 from grandchallenge.core.vendored.django.validators import StepValueValidator
 from grandchallenge.hanging_protocols.models import (
     HangingProtocolMixin,
@@ -181,31 +181,6 @@ CASE_TEXT_SCHEMA = {
 }
 
 
-class CleanedHtmlValidator:
-    def __init__(self, *, no_tags):
-        self.__no_tags = no_tags
-
-    def __call__(self, value):
-        unclean = value.replace("\r", "")
-        cleaned = clean(unclean, no_tags=self.__no_tags)
-        if unclean == cleaned:
-            return
-
-        if self.__no_tags:
-            raise ValidationError(_("Field cannot contain HTML tags"))
-        else:
-            raise ValidationError(
-                _("Field contains disallowed HTML tags or attributes"),
-            )
-
-    def deconstruct(self):
-        return (
-            self.__class__.__module__ + "." + self.__class__.__name__,
-            (),
-            {"no_tags": self.__no_tags},
-        )
-
-
 class ReaderStudy(
     UUIDModel,
     TitleSlugDescriptionModel,
@@ -222,7 +197,7 @@ class ReaderStudy(
     title = models.CharField(
         _("title"),
         max_length=255,
-        validators=[CleanedHtmlValidator(no_tags=True)],
+        validators=[CleanHtmlValidator(no_tags=True)],
     )
 
     editors_group = models.OneToOneField(
@@ -988,7 +963,7 @@ class DisplaySet(
         max_length=255,
         default="",
         blank=True,
-        validators=[CleanedHtmlValidator(no_tags=True)],
+        validators=[CleanHtmlValidator(no_tags=True)],
     )
 
     def assign_permissions(self):
@@ -1429,10 +1404,10 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         ReaderStudy, on_delete=models.PROTECT, related_name="questions"
     )
     question_text = models.TextField(
-        validators=[CleanedHtmlValidator(no_tags=True)]
+        validators=[CleanHtmlValidator(no_tags=True)]
     )
     help_text = models.TextField(
-        blank=True, validators=[CleanedHtmlValidator(no_tags=False)]
+        blank=True, validators=[CleanHtmlValidator(no_tags=False)]
     )
     answer_type = models.CharField(max_length=4, choices=AnswerType.choices)
     # Set blank because the requirement is dependent on answer_type and handled in the front end
@@ -1510,7 +1485,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     empty_answer_confirmation_label = models.TextField(
         blank=True,
         help_text="Label to show when confirming an empty answer.",
-        validators=[CleanedHtmlValidator(no_tags=True)],
+        validators=[CleanHtmlValidator(no_tags=True)],
     )
 
     class Meta:

@@ -2,6 +2,7 @@
 
 from django.db import migrations, models
 
+import grandchallenge.core.validators
 import grandchallenge.reader_studies.models
 
 
@@ -20,7 +21,7 @@ class Migration(migrations.Migration):
                 default="",
                 max_length=255,
                 validators=[
-                    grandchallenge.reader_studies.models.CleanedHtmlValidator(
+                    grandchallenge.core.validators.CleanHtmlValidator(
                         no_tags=True
                     )
                 ],
@@ -33,7 +34,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 help_text="Label to show when confirming an empty answer.",
                 validators=[
-                    grandchallenge.reader_studies.models.CleanedHtmlValidator(
+                    grandchallenge.core.validators.CleanHtmlValidator(
                         no_tags=True
                     )
                 ],
@@ -45,7 +46,7 @@ class Migration(migrations.Migration):
             field=models.TextField(
                 blank=True,
                 validators=[
-                    grandchallenge.reader_studies.models.CleanedHtmlValidator(
+                    grandchallenge.core.validators.CleanHtmlValidator(
                         no_tags=False
                     )
                 ],
@@ -56,7 +57,7 @@ class Migration(migrations.Migration):
             name="question_text",
             field=models.TextField(
                 validators=[
-                    grandchallenge.reader_studies.models.CleanedHtmlValidator(
+                    grandchallenge.core.validators.CleanHtmlValidator(
                         no_tags=True
                     )
                 ]
@@ -68,7 +69,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 max_length=255,
                 validators=[
-                    grandchallenge.reader_studies.models.CleanedHtmlValidator(
+                    grandchallenge.core.validators.CleanHtmlValidator(
                         no_tags=True
                     )
                 ],

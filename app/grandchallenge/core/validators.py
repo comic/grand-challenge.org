@@ -9,9 +9,12 @@ import requests
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
+from django.utils.translation import gettext_lazy as _
 from jsonschema import SchemaError
 from jsonschema import ValidationError as JSONValidationError
 from jsonschema import validate, validators
+
+from grandchallenge.core.templatetags.bleach import clean
 
 
 @deconstructible
@@ -188,3 +191,22 @@ class JSONSchemaValidator:
 
     def __ne__(self, other):
         return not (self == other)
+
+
+@deconstructible
+class CleanHtmlValidator:
+    def __init__(self, *, no_tags):
+        self.__no_tags = no_tags
+
+    def __call__(self, value):
+        unclean = value.replace("\r", "")
+        cleaned = clean(unclean, no_tags=self.__no_tags)
+        if unclean == cleaned:
+            return
+
+        if self.__no_tags:
+            raise ValidationError(_("Field cannot contain HTML tags"))
+        else:
+            raise ValidationError(
+                _("Field contains disallowed HTML tags or attributes"),
+            )
