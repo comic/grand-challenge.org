@@ -7,6 +7,7 @@ from shutil import rmtree
 from tempfile import TemporaryDirectory
 
 import boto3
+import botocore.exceptions
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from botocore.exceptions import ClientError
 from celery import signature
@@ -550,6 +551,7 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         upload.deidentify_user_uploads()
         upload.start_dicom_import_job()
     except (
+        botocore.exceptions.EndpointConnectionError,
         health_imaging_client.exceptions.ThrottlingException,
         health_imaging_client.exceptions.ServiceQuotaExceededException,
     ) as e:
