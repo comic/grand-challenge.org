@@ -34,7 +34,6 @@ from grandchallenge.cases.exceptions import (
     DICOMImportJobFailedError,
     DICOMImportJobValidationError,
 )
-from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
 )
@@ -1025,11 +1024,7 @@ class DICOMImageSetUpload(UUIDModel):
         bucket = parsed.netloc
         key = parsed.path.lstrip("/") + "job-output-manifest.json"
 
-        # Try to get the manifest.
-        try:
-            obj = self._s3_client.get_object(Bucket=bucket, Key=key)
-        except self._s3_client.exceptions.NoSuchKey as e:
-            raise RetryStep("Manifest not (yet) found for job output") from e
+        obj = self._s3_client.get_object(Bucket=bucket, Key=key)
 
         return json.load(obj["Body"])["jobSummary"]
 
