@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from grandchallenge.cases.models import (
+    DICOMImageSet,
     DICOMImageSetUpload,
     Image,
     ImageFile,
@@ -41,7 +42,7 @@ class ImageAdmin(admin.ModelAdmin):
         "stereoscopic_choice",
     )
     inlines = [ImageFileInline]
-    readonly_fields = ("origin",)
+    readonly_fields = ("origin", "dicom_image_set")
 
 
 class MhdOrRawFilter(admin.SimpleListFilter):
@@ -93,6 +94,12 @@ admin.site.register(
 admin.site.register(
     RawImageUploadSessionGroupObjectPermission, GroupObjectPermissionAdmin
 )
+
+
+@admin.register(DICOMImageSet)
+class DICOMImageSetAdmin(admin.ModelAdmin):
+    search_fields = ("pk", "image_set_id", "image__name")
+    readonly_fields = ("image",)
 
 
 @admin.register(DICOMImageSetUpload)
