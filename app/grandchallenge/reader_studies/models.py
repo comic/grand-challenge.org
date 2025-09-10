@@ -18,7 +18,6 @@ from django.db.models import Avg, Count, Q, Sum
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from referencing.exceptions import Unresolvable
@@ -54,7 +53,7 @@ from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
     process_access_request,
 )
-from grandchallenge.core.validators import CleanHtmlValidator, JSONValidator
+from grandchallenge.core.validators import JSONValidator
 from grandchallenge.core.vendored.django.validators import StepValueValidator
 from grandchallenge.hanging_protocols.models import (
     HangingProtocolMixin,
@@ -193,12 +192,6 @@ class ReaderStudy(
     A reader study is a tool that allows users to have a set of readers answer
     a set of questions on a set of images (cases).
     """
-
-    title = models.CharField(
-        _("title"),
-        max_length=255,
-        validators=[CleanHtmlValidator(no_tags=True)],
-    )
 
     editors_group = models.OneToOneField(
         Group,
@@ -963,7 +956,6 @@ class DisplaySet(
         max_length=255,
         default="",
         blank=True,
-        validators=[CleanHtmlValidator(no_tags=True)],
     )
 
     def assign_permissions(self):
@@ -1403,12 +1395,9 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     reader_study = models.ForeignKey(
         ReaderStudy, on_delete=models.PROTECT, related_name="questions"
     )
-    question_text = models.TextField(
-        validators=[CleanHtmlValidator(no_tags=True)],
-    )
+    question_text = models.TextField()
     help_text = models.TextField(
         blank=True,
-        validators=[CleanHtmlValidator(no_tags=False)],
     )
     answer_type = models.CharField(
         max_length=4,
@@ -1489,7 +1478,6 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     empty_answer_confirmation_label = models.TextField(
         blank=True,
         help_text="Label to show when confirming an empty answer.",
-        validators=[CleanHtmlValidator(no_tags=True)],
     )
 
     class Meta:

@@ -6,7 +6,6 @@ from django.core.exceptions import ValidationError
 from django.forms import CharField, ModelForm
 
 from grandchallenge.core.guardian import filter_by_permission
-from grandchallenge.core.validators import CleanHtmlValidator
 from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstations.models import Workstation
 
@@ -96,7 +95,6 @@ class UniqueTitleCreateFormMixin:
             required=False,
             initial=self.instance and self.instance.title or "",
             max_length=self.model._meta.get_field("title").max_length,
-            validators=[CleanHtmlValidator(no_tags=True)],
         )
         self.order_fields(["title", *field_order])
 

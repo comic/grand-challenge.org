@@ -2308,21 +2308,3 @@ def test_query_unanswered_display_sets_for_another_user(client, settings):
     )
 
     assert response.json()["count"] == 2
-
-
-@pytest.mark.django_db
-def test_display_set_text_fields_xss(client):
-    ds = DisplaySetFactory()
-    user = UserFactory()
-    ds.reader_study.add_editor(user)
-    response = get_view_for_user(
-        viewname="api:reader-studies-display-set-detail",
-        reverse_kwargs={"pk": ds.pk},
-        user=user,
-        client=client,
-        method=client.patch,
-        content_type="application/json",
-        data={"title": "<b>No tags allowed</b>"},
-    )
-    assert response.status_code == 400
-    assert "Field cannot contain HTML tags" in response.content.decode("utf-8")
