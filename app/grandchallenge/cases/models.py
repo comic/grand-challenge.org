@@ -875,41 +875,6 @@ class DICOMImageSetUploadStatusChoices(models.TextChoices):
     COMPLETED = "COMPLETED", _("Completed")
 
 
-class HealthImagingWrapper:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.client = boto3.client(
-            "medical-imaging",
-            region_name=settings.AWS_DEFAULT_REGION,
-        )
-
-    def start_dicom_import_job(self, *, job_name, input_s3_uri, output_s3_uri):
-        return self.client.start_dicom_import_job(
-            jobName=job_name,
-            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
-            dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
-            inputS3Uri=input_s3_uri,
-            outputS3Uri=output_s3_uri,
-        )
-
-    def delete_image_set(self, *, image_set_id):
-        return self.client.delete_image_set(
-            imageSetId=image_set_id,
-            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
-        )
-
-    def update_image_set_metadata(
-        self, image_set_id, version_id, metadata, force=False
-    ):
-        return self.client.update_image_set_metadata(
-            imageSetId=image_set_id,
-            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
-            latestVersionId=str(version_id),
-            updateImageSetMetadataUpdates=metadata,
-            force=force,
-        )
-
-
 class DICOMImageSetUpload(UUIDModel):
     creator = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
@@ -953,7 +918,7 @@ class DICOMImageSetUpload(UUIDModel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__health_imaging_wrapper = None
+        self.__health_imaging_client = None
         self.__s3_client = None
 
     def save(self, *args, **kwargs):
@@ -961,10 +926,13 @@ class DICOMImageSetUpload(UUIDModel):
         super().save(*args, **kwargs)
 
     @property
-    def _health_imaging_wrapper(self):
-        if self.__health_imaging_wrapper is None:
-            self.__health_imaging_wrapper = HealthImagingWrapper()
-        return self.__health_imaging_wrapper
+    def _health_imaging_client(self):
+        if self.__health_imaging_client is None:
+            self.__health_imaging_client = boto3.client(
+                "medical-imaging",
+                region_name=settings.AWS_DEFAULT_REGION,
+            )
+        return self._health_imaging_client
 
     @property
     def _s3_client(self):
@@ -1006,10 +974,12 @@ class DICOMImageSetUpload(UUIDModel):
             logger.error(exc, exc_info=True)
 
     def start_dicom_import_job(self):
-        return self._health_imaging_wrapper.start_dicom_import_job(
-            job_name=self._import_job_name,
-            input_s3_uri=self._import_input_s3_uri,
-            output_s3_uri=self._import_output_s3_uri,
+        return self._health_imaging_client.start_dicom_import_job(
+            jobName=self._import_job_name,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
+            inputS3Uri=self._import_input_s3_uri,
+            outputS3Uri=self._import_output_s3_uri,
         )
 
     def _deidentify_files(self):

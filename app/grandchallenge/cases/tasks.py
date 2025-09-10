@@ -6,6 +6,7 @@ from pathlib import Path
 from shutil import rmtree
 from tempfile import TemporaryDirectory
 
+import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from botocore.exceptions import ClientError
 from celery import signature
@@ -22,7 +23,6 @@ from panimg.models import PanImgFile, PanImgResult
 
 from grandchallenge.cases.models import (
     DICOMImageSetUploadStatusChoices,
-    HealthImagingWrapper,
     Image,
     ImageFile,
     PostProcessImageTask,
@@ -536,6 +536,8 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         pk=dicom_imageset_upload_pk,
     )
 
+    health_imaging_client = boto3.client("medical-imaging")
+
     if not upload.status == DICOMImageSetUploadStatusChoices.INITIALIZED:
         raise RuntimeError(
             "Upload is not ready for de-identification and importing into HealthImaging."
@@ -545,8 +547,8 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         upload.deidentify_user_uploads()
         upload.start_dicom_import_job()
     except (
-        upload._health_imaging_wrapper.client.exceptions.ThrottlingException,
-        upload._health_imaging_wrapper.client.exceptions.ServiceQuotaExceededException,
+        health_imaging_client.exceptions.ThrottlingException,
+        health_imaging_client.exceptions.ServiceQuotaExceededException,
     ) as e:
         raise RetryStep from e
     except Exception as e:
@@ -580,13 +582,19 @@ def handle_healthimaging_import_job_event(*, event):
 @acks_late_micro_short_task(retry_on=(RetryStep,))
 @transaction.atomic
 def delete_healthimaging_image_set(*, image_set_id):
-    health_imaging_wrapper = HealthImagingWrapper()
+    health_imaging_client = boto3.client(
+        "medical-imaging",
+        region_name=settings.AWS_DEFAULT_REGION,
+    )
 
     try:
-        health_imaging_wrapper.delete_image_set(image_set_id=image_set_id)
-    except health_imaging_wrapper.client.exceptions.ResourceNotFoundException:
+        health_imaging_client.delete_image_set(
+            imageSetId=image_set_id,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+        )
+    except health_imaging_client.exceptions.ResourceNotFoundException:
         pass  # image set already deleted
-    except health_imaging_wrapper.client.exceptions.ThrottlingException as e:
+    except health_imaging_client.exceptions.ThrottlingException as e:
         raise RetryStep("Request throttled") from e
     except ClientError:
         logger.error("Couldn't delete image set", exc_info=True)
@@ -595,13 +603,18 @@ def delete_healthimaging_image_set(*, image_set_id):
 @acks_late_micro_short_task
 @transaction.atomic
 def revert_image_set_to_initial_version(*, image_set_id, version_id):
-    health_imaging_wrapper = HealthImagingWrapper()
+    health_imaging_client = boto3.client(
+        "medical-imaging",
+        region_name=settings.AWS_DEFAULT_REGION,
+    )
 
     try:
-        health_imaging_wrapper.update_image_set_metadata(
-            image_set_id=image_set_id,
-            version_id=version_id,
-            metadata={"revertToVersionId": "1"},
+        health_imaging_client.update_image_set_metadata(
+            imageSetId=image_set_id,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            latestVersionId=str(version_id),
+            updateImageSetMetadataUpdates={"revertToVersionId": "1"},
+            force=False,
         )
     except ClientError as e:
         if (
