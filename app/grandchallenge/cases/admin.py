@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from grandchallenge.cases.models import (
+    DICOMImageSetUpload,
     Image,
     ImageFile,
     ImageGroupObjectPermission,
@@ -92,3 +93,17 @@ admin.site.register(
 admin.site.register(
     RawImageUploadSessionGroupObjectPermission, GroupObjectPermissionAdmin
 )
+
+
+@admin.register(DICOMImageSetUpload)
+class DICOMImageSetUploadAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = ("pk", "created", "creator", "status", "error_message")
+    readonly_fields = (
+        "creator",
+        "status",
+        "error_message",
+        "internal_failure_log",
+    )
+    list_filter = ("status",)
+    search_fields = ("creator__username", "pk", "error_message")

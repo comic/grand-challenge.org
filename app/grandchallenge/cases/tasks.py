@@ -1,3 +1,4 @@
+import re
 import zipfile
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
@@ -5,7 +6,9 @@ from pathlib import Path
 from shutil import rmtree
 from tempfile import TemporaryDirectory
 
+import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from botocore.exceptions import ClientError
 from celery import signature
 from celery.utils.log import get_task_logger
 from django.conf import settings
@@ -27,7 +30,7 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
 )
 from grandchallenge.components.backends.exceptions import RetryStep
-from grandchallenge.components.backends.utils import safe_extract
+from grandchallenge.components.backends.utils import UUID4_REGEX, safe_extract
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import (
@@ -533,6 +536,11 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         pk=dicom_imageset_upload_pk,
     )
 
+    health_imaging_client = boto3.client(
+        "medical-imaging",
+        region_name=settings.AWS_DEFAULT_REGION,
+    )
+
     if not upload.status == DICOMImageSetUploadStatusChoices.INITIALIZED:
         raise RuntimeError(
             "Upload is not ready for de-identification and importing into HealthImaging."
@@ -541,12 +549,82 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
     try:
         upload.deidentify_user_uploads()
         upload.start_dicom_import_job()
-    except RetryStep:
-        raise
+    except (
+        health_imaging_client.exceptions.ThrottlingException,
+        health_imaging_client.exceptions.ServiceQuotaExceededException,
+    ) as e:
+        raise RetryStep from e
     except Exception as e:
-        upload._mark_failed(
-            error_message="An unexpected error occurred", exc=e
-        )
+        upload.mark_failed(error_message="An unexpected error occurred", exc=e)
     else:
         upload.status = DICOMImageSetUploadStatusChoices.STARTED
         upload.save()
+
+
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException, RetryStep))
+@transaction.atomic
+def handle_healthimaging_import_job_event(*, event):
+    job_name = event["jobName"]
+    prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
+    pattern = rf"^{prefix_regex}\-(?P<pk>{UUID4_REGEX})$"
+    result = re.match(pattern, job_name)
+    pk = result.group("pk")
+
+    upload = lock_model_instance(
+        pk=pk,
+        app_label="cases",
+        model_name="DICOMImageSetUpload",
+    )
+
+    if upload.status != DICOMImageSetUploadStatusChoices.STARTED:
+        return
+
+    upload.handle_event(event=event)
+
+
+@acks_late_micro_short_task(retry_on=(RetryStep,))
+@transaction.atomic
+def delete_healthimaging_image_set(*, image_set_id):
+    health_imaging_client = boto3.client(
+        "medical-imaging",
+        region_name=settings.AWS_DEFAULT_REGION,
+    )
+
+    try:
+        health_imaging_client.delete_image_set(
+            imageSetId=image_set_id,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+        )
+    except health_imaging_client.exceptions.ResourceNotFoundException:
+        pass  # image set already deleted
+    except health_imaging_client.exceptions.ThrottlingException as e:
+        raise RetryStep("Request throttled") from e
+    except ClientError:
+        logger.error("Couldn't delete image set", exc_info=True)
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def revert_image_set_to_initial_version(*, image_set_id, version_id):
+    health_imaging_client = boto3.client(
+        "medical-imaging",
+        region_name=settings.AWS_DEFAULT_REGION,
+    )
+
+    try:
+        health_imaging_client.update_image_set_metadata(
+            imageSetId=image_set_id,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            latestVersionId=str(version_id),
+            updateImageSetMetadataUpdates={"revertToVersionId": "1"},
+            force=False,
+        )
+    except ClientError as e:
+        if (
+            e.response["Error"]["Code"] == "ResourceNotFoundException"
+            and e.response["Error"]["Message"]
+            == "Requested version(s) of ImageSet(s) is not the latest."
+        ):
+            pass  # already updated
+        else:
+            logger.error("Couldn't update image set metadata.", exc_info=True)

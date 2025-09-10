@@ -1,7 +1,9 @@
 import copy
+import json
 import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from urllib.parse import urlparse
 
 import boto3
 from actstream.actions import follow
@@ -28,7 +30,10 @@ from panimg.models import (
 )
 from storages.utils import clean_name
 
-from grandchallenge.components.backends.exceptions import RetryStep
+from grandchallenge.cases.exceptions import (
+    DICOMImportJobFailedError,
+    DICOMImportJobValidationError,
+)
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
 )
@@ -58,6 +63,26 @@ SEGMENTS_SCHEMA = {
         "maxItems": MAXIMUM_SEGMENTS_LENGTH,
     },
     "uniqueItems": True,
+}
+
+IMPORT_JOB_FAILURE_NDJSON_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "inputFile": {"type": "string"},
+            "exception": {
+                "type": "object",
+                "properties": {
+                    "exceptionType": {"type": "string"},
+                    "message": {"type": "string"},
+                },
+                "required": ["exceptionType", "message"],
+            },
+        },
+        "required": ["inputFile", "exception"],
+    },
 }
 
 
@@ -846,6 +871,7 @@ class DICOMImageSetUploadStatusChoices(models.TextChoices):
     INITIALIZED = "INITIALIZED", _("Initialized")
     STARTED = "STARTED", _("Started")
     FAILED = "FAILED", _("Failed")
+    COMPLETED = "COMPLETED", _("Completed")
 
 
 class DICOMImageSetUpload(UUIDModel):
@@ -868,7 +894,14 @@ class DICOMImageSetUpload(UUIDModel):
         blank=False,
     )
 
-    error_message = models.TextField(blank=True, default="")
+    error_message = models.TextField(editable=False, default="")
+    internal_failure_log = models.JSONField(
+        default=list,
+        editable=False,
+        help_text="Contents of failure.ndjson from the health imaging "
+        "import job if the job failed or did not pass validation.",
+        validators=[JSONValidator(schema=IMPORT_JOB_FAILURE_NDJSON_SCHEMA)],
+    )
 
     class Meta:
         verbose_name = "DICOM image set upload"
@@ -932,7 +965,7 @@ class DICOMImageSetUpload(UUIDModel):
     def _marker_file_key(self):
         return f"{self._input_key}/deidentification.done"
 
-    def _mark_failed(self, *, error_message, exc):
+    def mark_failed(self, *, error_message, exc):
         self.status = DICOMImageSetUploadStatusChoices.FAILED
         self.error_message = error_message
         self.save()
@@ -940,25 +973,13 @@ class DICOMImageSetUpload(UUIDModel):
             logger.error(exc, exc_info=True)
 
     def start_dicom_import_job(self):
-        """
-        Start a HealthImaging DICOM import job.
-        """
-        try:
-            return self._health_imaging_client.start_dicom_import_job(
-                jobName=self._import_job_name,
-                datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
-                dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
-                inputS3Uri=self._import_input_s3_uri,
-                outputS3Uri=self._import_output_s3_uri,
-            )
-        except ClientError as e:
-            if e.response["Error"]["Code"] in {
-                "ThrottlingException",
-                "ServiceQuotaExceededException",
-            }:
-                raise RetryStep from e
-            else:
-                raise
+        return self._health_imaging_client.start_dicom_import_job(
+            jobName=self._import_job_name,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
+            inputS3Uri=self._import_input_s3_uri,
+            outputS3Uri=self._import_output_s3_uri,
+        )
 
     def _deidentify_files(self):
         # this will need to iterate over all linked UserUploads
@@ -996,3 +1017,118 @@ class DICOMImageSetUpload(UUIDModel):
         )
 
         self.user_uploads.all().delete()
+
+    def get_job_summary(self, *, event):
+        output_uri = event["outputS3Uri"]
+        parsed = urlparse(output_uri)
+        bucket = parsed.netloc
+        key = parsed.path.lstrip("/") + "job-output-manifest.json"
+
+        obj = self._s3_client.get_object(Bucket=bucket, Key=key)
+
+        return json.load(obj["Body"])["jobSummary"]
+
+    def get_job_output_failure_log(self, *, job_summary):
+        output_uri = job_summary["failureOutputS3Uri"]
+        parsed = urlparse(output_uri)
+        bucket = parsed.netloc
+        key = parsed.path.lstrip("/") + "failure.ndjson"
+
+        obj = self._s3_client.get_object(Bucket=bucket, Key=key)
+
+        return [json.loads(line) for line in obj["Body"].iter_lines()]
+
+    def handle_event(self, *, event):
+        try:
+            job_status = event["jobStatus"]
+            if job_status == "COMPLETED":
+                self.handle_completed_job(event=event)
+            elif job_status == "FAILED":
+                self.handle_failed_job(event=event)
+            else:
+                raise ValueError("Invalid job status")
+        except Exception as e:
+            self.mark_failed(
+                error_message="An unexpected error occurred", exc=e
+            )
+        else:
+            self.status = self.DICOMImageSetUploadStatusChoices.COMPLETED
+            self.save()
+
+    def handle_completed_job(self, *, event):
+        image_set = self.validate_image_set(event=event)
+        self.convert_image_set_to_internal(image_set=image_set)
+
+    def validate_image_set(self, *, event):
+        job_summary = self.get_job_summary(event=event)
+
+        if (
+            job_summary["numberOfFilesWithCustomerError"] != 0
+            or job_summary["numberOfFilesWithServerError"] != 0
+            or job_summary["numberOfGeneratedImageSets"] == 0
+        ):
+            self.handle_failed_job(event=event)
+        elif job_summary["numberOfGeneratedImageSets"] > 1:
+            self.delete_image_sets(job_summary=job_summary)
+            raise DICOMImportJobValidationError(
+                "Multiple image sets created. Expected only one."
+            )
+
+        image_set = job_summary["imageSetsSummary"][0]
+
+        if not image_set["isPrimary"]:
+            self.delete_image_sets(job_summary=job_summary)
+            raise DICOMImportJobValidationError(
+                "New instance is not primary: "
+                "metadata conflicts with already existing instance."
+            )
+
+        if not image_set["imageSetVersion"] == 1:
+            self.revert_image_set_to_initial_version(image_set=image_set)
+            raise DICOMImportJobValidationError(
+                "Instance already exists. This should never happen!"
+            )
+
+        return image_set
+
+    def handle_failed_job(self, *, event):
+        job_summary = self.get_job_summary(event=event)
+        self.internal_failure_log = self.get_job_output_failure_log(
+            job_summary=job_summary
+        )
+        self.delete_image_sets(job_summary=job_summary)
+        job_id = job_summary["jobId"]
+        raise DICOMImportJobFailedError(
+            f"Import job {job_id} failed for DICOMImageSetUpload {self.pk}"
+        )
+
+    @staticmethod
+    def delete_image_sets(*, job_summary):
+        from grandchallenge.cases.tasks import delete_healthimaging_image_set
+
+        image_sets = job_summary.get("imageSetsSummary", [])
+        for image_set in image_sets:
+            on_commit(
+                delete_healthimaging_image_set.signature(
+                    kwargs=dict(image_set_id=image_set["imageSetId"])
+                ).apply_async
+            )
+
+    @staticmethod
+    def revert_image_set_to_initial_version(*, image_set):
+        from grandchallenge.cases.tasks import (
+            revert_image_set_to_initial_version,
+        )
+
+        on_commit(
+            revert_image_set_to_initial_version.signature(
+                kwargs=dict(
+                    image_set_id=image_set["imageSetId"],
+                    version_id=image_set["imageSetVersion"],
+                )
+            ).apply_async
+        )
+
+    @staticmethod
+    def convert_image_set_to_internal(*, image_set):
+        pass
