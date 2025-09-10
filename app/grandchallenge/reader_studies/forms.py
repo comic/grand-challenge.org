@@ -946,7 +946,7 @@ class GroundTruthCSVForm(SaveFormInitMixin, Form):
         )
 
 
-class DisplaySetFormMixin:
+class DisplaySetFormMixin(Form):
     class Meta:
         non_interface_fields = (
             "title",
@@ -977,6 +977,13 @@ class DisplaySetFormMixin:
             .unique_title_query(*args, **kwargs)
             .filter(reader_study=self.base_obj)
         )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for field in self.model._meta.fields:
+            if value := cleaned_data.get(field.name, None):
+                cleaned_data[field.name] = field.clean(value, self.model)
+        return cleaned_data
 
 
 class DisplaySetCreateForm(
