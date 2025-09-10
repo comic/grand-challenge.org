@@ -196,15 +196,16 @@ class JSONSchemaValidator:
 @deconstructible
 class CleanHtmlValidator:
     def __init__(self, *, no_tags):
-        self.__no_tags = no_tags
+        self._no_tags = no_tags
 
     def __call__(self, value):
         unclean = value.replace("\r", "")
-        cleaned = clean(unclean, no_tags=self.__no_tags)
+        cleaned = clean(unclean, no_tags=self._no_tags)
+
         if unclean == cleaned:
             return
 
-        if self.__no_tags:
+        if self._no_tags:
             raise ValidationError(_("Field cannot contain HTML tags"))
         else:
             raise ValidationError(

@@ -1404,12 +1404,16 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         ReaderStudy, on_delete=models.PROTECT, related_name="questions"
     )
     question_text = models.TextField(
-        validators=[CleanHtmlValidator(no_tags=True)]
+        validators=[CleanHtmlValidator(no_tags=True)],
     )
     help_text = models.TextField(
-        blank=True, validators=[CleanHtmlValidator(no_tags=False)]
+        blank=True,
+        validators=[CleanHtmlValidator(no_tags=False)],
     )
-    answer_type = models.CharField(max_length=4, choices=AnswerType.choices)
+    answer_type = models.CharField(
+        max_length=4,
+        choices=AnswerType.choices,
+    )
     # Set blank because the requirement is dependent on answer_type and handled in the front end
     image_port = models.CharField(
         max_length=14, choices=ImagePort.choices, blank=True, default=""
