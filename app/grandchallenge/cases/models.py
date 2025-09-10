@@ -499,6 +499,7 @@ class Image(UUIDModel):
     )
     dicom_image_set = models.OneToOneField(
         to=DICOMImageSet,
+        editable=False,
         null=True,
         on_delete=models.SET_NULL,
         related_name="image",
