@@ -59,6 +59,13 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     help_text_safe = SerializerMethodField()
     empty_answer_confirmation_label_safe = SerializerMethodField()
 
+    # Deprecated fields, remove after 2025.10
+    help_text = SerializerMethodField(method_name="get_help_text_safe")
+    question_text = SerializerMethodField(method_name="get_question_text_safe")
+    empty_answer_confirmation_label = SerializerMethodField(
+        method_name="get_empty_answer_confirmation_label_safe"
+    )
+
     class Meta:
         model = Question
         fields = (
@@ -191,12 +198,13 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
-    help_text = SerializerMethodField(
-        method_name="get_help_text_safe"
-    )  # Deprecated, remove after 2025.10
     help_text_safe = SerializerMethodField()
     end_of_study_text_safe = SerializerMethodField()
     title_safe = SerializerMethodField()
+
+    # Deprecated fields, remove after 2025.10
+    help_text = SerializerMethodField(method_name="get_help_text_safe")
+    title = SerializerMethodField(method_name="get_title_safe")
 
     def get_help_text_safe(self, obj) -> str:
         return md2html(
