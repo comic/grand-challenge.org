@@ -331,6 +331,12 @@ class DICOMImageSet(UUIDModel):
         unique=True,
         help_text="The ID of the image set in AWS Health Imaging.",
     )
+    dicom_image_set_upload = models.OneToOneField(
+        to="DICOMImageSetUpload",
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="dicom_image_set",
+    )
 
 
 @receiver(post_delete, sender=DICOMImageSet)
@@ -1160,10 +1166,10 @@ class DICOMImageSetUpload(UUIDModel):
             ).apply_async
         )
 
-    @staticmethod
-    def convert_image_set_to_internal(*, image_set):
+    def convert_image_set_to_internal(self, *, image_set):
         dicom_image_set = DICOMImageSet.objects.create(
-            image_set_id=image_set["imageSetId"]
+            image_set_id=image_set["imageSetId"],
+            dicom_image_set_upload=self,
         )
         Image.objects.create(
             dicom_image_set=dicom_image_set,

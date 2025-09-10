@@ -99,7 +99,7 @@ admin.site.register(
 @admin.register(DICOMImageSet)
 class DICOMImageSetAdmin(admin.ModelAdmin):
     search_fields = ("pk", "image_set_id", "image__name")
-    readonly_fields = ("image",)
+    readonly_fields = ("image", "dicom_image_set_upload")
 
 
 @admin.register(DICOMImageSetUpload)
@@ -111,6 +111,7 @@ class DICOMImageSetUploadAdmin(admin.ModelAdmin):
         "status",
         "error_message",
         "internal_failure_log",
+        "dicom_image_set",
     )
     list_filter = ("status",)
     search_fields = ("creator__username", "pk", "error_message")
