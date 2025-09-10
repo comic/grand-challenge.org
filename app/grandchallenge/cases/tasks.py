@@ -15,6 +15,9 @@ from django.db import transaction
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
 from django.utils.module_loading import import_string
+from grand_challenge_dicom_de_identifier.exceptions import (
+    RejectedDICOMFileError,
+)
 from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
 
@@ -543,6 +546,8 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         upload.start_dicom_import_job()
     except RetryStep:
         raise
+    except RejectedDICOMFileError as e:
+        upload._mark_failed(error_message=e.justification)
     except Exception as e:
         upload._mark_failed(
             error_message="An unexpected error occurred", exc=e

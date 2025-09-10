@@ -19,6 +19,7 @@ from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
+from grand_challenge_dicom_de_identifier.deidentifier import DicomDeidentifier
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from panimg.image_builders.metaio_utils import load_sitk_image
 from panimg.models import (
@@ -892,10 +893,14 @@ class DICOMImageSetUpload(UUIDModel):
     error_message = models.TextField(blank=True, default="")
 
     study_instance_uuid = models.CharField(
+        default="",
+        max_length=36,
         editable=False,
         unique=True,
     )
     series_instance_uuid = models.CharField(
+        default="",
+        max_length=36,
         editable=False,
         unique=True,
     )
@@ -923,10 +928,10 @@ class DICOMImageSetUpload(UUIDModel):
         super().save(*args, **kwargs)
 
         if adding:
-            self.study_instance_uid = generate_dicom_id_suffix(
+            self.study_instance_uuid = generate_dicom_id_suffix(
                 self.pk, "study"
             )
-            self.series_instance_uid = generate_dicom_id_suffix(
+            self.series_instance_uuid = generate_dicom_id_suffix(
                 self.pk, "series"
             )
             super().save(
@@ -1003,15 +1008,18 @@ class DICOMImageSetUpload(UUIDModel):
                 raise
 
     def _deidentify_files(self):
-        # deid = DicomDeidentifier(
-        #     study_instance_uuid=self.study_instance_uuid,
-        #     series_instance_uuid=self.series_instance_uuid,
-        #     patient_id=PATIENT_ID,
-        #     study_id=STUDY_ID,
-        #     study_date=STUDY_DATE,
-        #     accession_number=ACCESSION_NUMBER,
-        #     series_number=SERIES_NUMBER,
-        # )
+        deid = DicomDeidentifier(
+            # forced_inserts={
+            #     "StudyInstanceUID": self.study_instance_uuid,
+            #     "SeriesInstanceUID": self.series_instance_uuid,
+            #     "PatientID": PATIENT_ID,
+            #     "StudyID": STUDY_ID,
+            #     "StudyDate": STUDY_DATE,
+            #     "AccessionNumber": ACCESSION_NUMBER,
+            #     "SeriesNumber": SERIES_NUMBER,
+            # },
+            # assert_unique_value_for=["StudyInstanceUID", "SeriesInstanceUID"]
+        )
         for upload in self.user_uploads.all():
             with (
                 SpooledTemporaryFile() as infile,
@@ -1023,12 +1031,9 @@ class DICOMImageSetUpload(UUIDModel):
                     Key=upload.key,
                 )
                 infile.seek(0)
-                try:
-                    pass
-                    # deid.process(infile, output=outfile)
-                except Exception:
-                    # log the error or something
-                    break
+
+                deid.deidentify_file(infile, output=outfile)
+
                 outfile.seek(0)
                 self._s3_client.upload_fileobj(
                     Fileobj=outfile,
