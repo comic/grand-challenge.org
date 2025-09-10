@@ -1123,28 +1123,6 @@ wheels = [
 ]
 
 [[package]]
-name = "grand-challenge-dicom-de-id-procedure"
-version = "2025.9.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ce/e1/6f974b14cbca189945b3029e2555726d716d29d8ed5e51d3f5c764a4b02e/grand_challenge_dicom_de_id_procedure-2025.9.0.tar.gz", hash = "sha256:f1ea8adc6e37a0ded058ebbce5850b403ac0135e2b5fd322111eba7eedf96ccf", size = 18041, upload-time = "2025-09-09T11:40:05.325Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6b/4a/3328dc2653686e4dbe14cd26b40a30a0c929dbdec5ee85457c2b9d72cf86/grand_challenge_dicom_de_id_procedure-2025.9.0-py3-none-any.whl", hash = "sha256:6b14df4517bd9aad42ae378b1465872a6a4b266f3a8b1f40c8827004f4b088ed", size = 16451, upload-time = "2025-09-09T11:40:03.877Z" },
-]
-
-[[package]]
-name = "grand-challenge-dicom-de-identifier"
-version = "0.0.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "grand-challenge-dicom-de-id-procedure" },
-    { name = "pydicom" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/06/c9/84f4cb2fd7c2bc4368b2a26ce1f4b09f06fa202d2489e14ecd18e6edf42a/grand_challenge_dicom_de_identifier-0.0.1.tar.gz", hash = "sha256:3fa75a73ceb000de94432cb7886b383fe59de136c036b2eae922f565f81c7859", size = 12551, upload-time = "2025-09-10T07:06:45.417Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/0e/4a941fa24979370adb14b3abfdb032079c69fcd014a4ac81d94fd1f819df/grand_challenge_dicom_de_identifier-0.0.1-py3-none-any.whl", hash = "sha256:0c548f25479adf88137bb3b30a9cdf9fecbdd593591fbe5646949ff46046d734", size = 10767, upload-time = "2025-09-10T07:06:44.188Z" },
-]
-
-[[package]]
 name = "grand-challenge-forge"
 version = "0.7.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1201,7 +1179,6 @@ dependencies = [
     { name = "djangorestframework" },
     { name = "djangorestframework-csv" },
     { name = "drf-spectacular" },
-    { name = "grand-challenge-dicom-de-identifier" },
     { name = "grand-challenge-forge" },
     { name = "gunicorn" },
     { name = "humanize" },
@@ -1283,7 +1260,6 @@ requires-dist = [
     { name = "djangorestframework" },
     { name = "djangorestframework-csv" },
     { name = "drf-spectacular" },
-    { name = "grand-challenge-dicom-de-identifier" },
     { name = "grand-challenge-forge", specifier = ">=0.7.1" },
     { name = "gunicorn" },
     { name = "humanize" },
