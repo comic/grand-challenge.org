@@ -5,7 +5,6 @@ from rest_framework.fields import (
     CharField,
     DurationField,
     JSONField,
-    ReadOnlyField,
     URLField,
 )
 from rest_framework.relations import HyperlinkedRelatedField, SlugRelatedField
@@ -22,7 +21,7 @@ from grandchallenge.components.serializers import (
     HyperlinkedComponentInterfaceValueSerializer,
 )
 from grandchallenge.core.guardian import filter_by_permission
-from grandchallenge.core.templatetags.bleach import clean
+from grandchallenge.core.templatetags.bleach import clean, md2html
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
@@ -190,10 +189,28 @@ class DisplaySetPostSerializer(
 
 class ReaderStudySerializer(HyperlinkedModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
-    help_text = ReadOnlyField()
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
+    help_text = SerializerMethodField(
+        method_name="get_help_text_safe"
+    )  # Deprecated, remove after 2025.10
+    help_text_safe = SerializerMethodField()
+    end_of_study_text_safe = SerializerMethodField()
     title_safe = SerializerMethodField()
+
+    def get_help_text_safe(self, obj) -> str:
+        return md2html(
+            obj.help_text_markdown,
+            link_blank_target=True,
+            create_permalink_for_headers=False,
+        )
+
+    def get_end_of_study_text_safe(self, obj) -> str:
+        return md2html(
+            obj.end_of_study_text_markdown,
+            link_blank_target=True,
+            create_permalink_for_headers=False,
+        )
 
     def get_title_safe(self, obj) -> str:
         return clean(obj.title, no_tags=True)
@@ -220,7 +237,7 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "allow_case_navigation",
             "allow_show_all_annotations",
             "roll_over_answers_for_n_cases",
-            "end_of_study_text_safe",
+            "end_of_study_text_safe",  # Safe to use in rendered html
         )
 
 
