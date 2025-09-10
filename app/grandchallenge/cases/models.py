@@ -926,15 +926,6 @@ class DICOMImageSetUpload(UUIDModel):
         super().save(*args, **kwargs)
 
     @property
-    def _health_imaging_client(self):
-        if self.__health_imaging_client is None:
-            self.__health_imaging_client = boto3.client(
-                "medical-imaging",
-                region_name=settings.AWS_DEFAULT_REGION,
-            )
-        return self._health_imaging_client
-
-    @property
     def _s3_client(self):
         if self.__s3_client is None:
             self.__s3_client = boto3.client(
@@ -942,6 +933,15 @@ class DICOMImageSetUpload(UUIDModel):
                 region_name=settings.AWS_DEFAULT_REGION,
             )
         return self.__s3_client
+
+    @property
+    def _health_imaging_client(self):
+        if self.__health_imaging_client is None:
+            self.__health_imaging_client = boto3.client(
+                "medical-imaging",
+                region_name=settings.AWS_DEFAULT_REGION,
+            )
+        return self._health_imaging_client
 
     @property
     def _import_job_name(self):
