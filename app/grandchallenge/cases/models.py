@@ -1162,4 +1162,12 @@ class DICOMImageSetUpload(UUIDModel):
 
     @staticmethod
     def convert_image_set_to_internal(*, image_set):
-        pass
+        dicom_image_set = DICOMImageSet.objects.create(
+            image_set_id=image_set["imageSetId"]
+        )
+        Image.objects.create(
+            dicom_image_set=dicom_image_set,
+            modality=ImagingModality.objects.get(modality="CT"),
+            width=0,
+            height=0,
+        )
