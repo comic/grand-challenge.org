@@ -536,7 +536,10 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         pk=dicom_imageset_upload_pk,
     )
 
-    health_imaging_client = boto3.client("medical-imaging")
+    health_imaging_client = boto3.client(
+        "medical-imaging",
+        region_name=settings.AWS_DEFAULT_REGION,
+    )
 
     if not upload.status == DICOMImageSetUploadStatusChoices.INITIALIZED:
         raise RuntimeError(
