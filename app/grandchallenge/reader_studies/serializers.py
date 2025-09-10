@@ -22,6 +22,7 @@ from grandchallenge.components.serializers import (
     HyperlinkedComponentInterfaceValueSerializer,
 )
 from grandchallenge.core.guardian import filter_by_permission
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.hanging_protocols.serializers import (
     HangingProtocolSerializer,
 )
@@ -55,6 +56,9 @@ class QuestionSerializer(HyperlinkedModelSerializer):
     look_up_table = LookUpTableSerializer(read_only=True, allow_null=True)
     widget = CharField(source="get_widget_display", read_only=True)
     interactive_algorithms = SerializerMethodField()
+    question_text_safe = SerializerMethodField()
+    help_text_safe = SerializerMethodField()
+    empty_answer_confirmation_label_safe = SerializerMethodField()
 
     class Meta:
         model = Question
@@ -62,11 +66,13 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "answer_type",
             "api_url",
             "form_direction",
-            "help_text",
+            "help_text",  # Deprecated, remove after 2025.10
+            "help_text_safe",  # Safe to use in rendered html
             "image_port",
             "default_annotation_color",
             "pk",
-            "question_text",
+            "question_text",  # Deprecated, remove after 2025.10
+            "question_text_safe",  # Safe to use in rendered html
             "reader_study",
             "required",
             "options",
@@ -81,7 +87,8 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             "answer_max_length",
             "answer_match_pattern",
             "empty_answer_confirmation",
-            "empty_answer_confirmation_label",
+            "empty_answer_confirmation_label",  # Deprecated, remove after 2025.10
+            "empty_answer_confirmation_label_safe",  # Safe to use in rendered html
             "interactive_algorithms",
         )
 
@@ -92,6 +99,15 @@ class QuestionSerializer(HyperlinkedModelSerializer):
             return [obj.interactive_algorithm]
         else:
             return []
+
+    def get_question_text_safe(self, obj) -> str:
+        return clean(obj.question_text, no_tags=True)
+
+    def get_help_text_safe(self, obj) -> str:
+        return clean(obj.help_text, no_tags=False)
+
+    def get_empty_answer_confirmation_label_safe(self, obj) -> str:
+        return clean(obj.empty_answer_confirmation_label, no_tags=True)
 
 
 class DisplaySetSerializer(HyperlinkedModelSerializer):
@@ -112,6 +128,7 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         source="reader_study.view_content", read_only=True
     )
     index = SerializerMethodField()
+    title_safe = SerializerMethodField()
 
     def get_index(self, obj) -> int | None:
         if obj.reader_study.shuffle_hanging_list:
@@ -123,11 +140,15 @@ class DisplaySetSerializer(HyperlinkedModelSerializer):
         else:
             return obj.standard_index
 
+    def get_title_safe(self, obj) -> str:
+        return clean(obj.title, no_tags=True)
+
     class Meta:
         model = DisplaySet
         fields = (
             "pk",
-            "title",
+            "title",  # Can be set by users
+            "title_safe",  # Safe to use in rendered html
             "reader_study",
             "values",
             "order",
@@ -172,6 +193,10 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
     help_text = ReadOnlyField()
     logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
+    title_safe = SerializerMethodField()
+
+    def get_title_safe(self, obj) -> str:
+        return clean(obj.title, no_tags=True)
 
     class Meta:
         model = ReaderStudy
@@ -181,11 +206,12 @@ class ReaderStudySerializer(HyperlinkedModelSerializer):
             "slug",
             "logo",
             "description",
-            "help_text",
-            "help_text_safe",
+            "help_text",  # Deprecated, remove after 2025.10
+            "help_text_safe",  # Safe to use in rendered html
             "pk",
             "questions",
-            "title",
+            "title",  # Deprecated, remove after 2025.10
+            "title_safe",  # Safe to use in rendered html
             "is_educational",
             "instant_verification",
             "has_ground_truth",
