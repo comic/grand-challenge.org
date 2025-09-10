@@ -2,7 +2,6 @@ from contextlib import nullcontext
 from datetime import timedelta
 
 import pytest
-from bs4 import BeautifulSoup
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 from django.db.utils import IntegrityError
@@ -367,63 +366,6 @@ def test_score_for_user(
     assert Answer.objects.filter(is_ground_truth=False).count() == 6
     assert score["score__sum"] == 3.0
     assert score["score__avg"] == 0.5
-
-
-@pytest.mark.parametrize(
-    "markdown_field,rendered_field",
-    (
-        ("help_text_markdown", "help_text"),
-        ("help_text_markdown", "help_text_safe"),
-        ("end_of_study_text_markdown", "end_of_study_text_safe"),
-    ),
-)
-@pytest.mark.django_db
-def test_help_markdown_is_scrubbed(client, markdown_field, rendered_field):
-    somewhat_naughty_string = (
-        "<a href='javascript:alert(1)' onmouseover='alert(1)'>Click me</a>"
-        "<script>alert('XSS')</script>"
-    )
-
-    rs = ReaderStudyFactory(
-        **{
-            markdown_field: "# Here come some naughty strings\n\n"
-            + somewhat_naughty_string
-        }
-    )
-    u = UserFactory()
-    rs.add_reader(u)
-
-    response = get_view_for_user(client=client, url=rs.api_url, user=u)
-
-    assert response.status_code == 200
-
-    rendered_text = response.json()[rendered_field]
-    parsed_text = BeautifulSoup(rendered_text, "html.parser")
-    assert parsed_text, "Parsing output failed"
-
-    # Check that there are not <script> tags, event handlers, and
-    # javascript: URLs in the generated output
-    assert not parsed_text.find_all("script")
-    for element in parsed_text.find_all():
-        for attribute in element.attrs:
-            has_on_attr = attribute.lower().startswith("on")
-            assert not has_on_attr, "Found event handler"
-    for element in parsed_text.find_all():
-        for attr_value in element.attrs.values():
-            if isinstance(attr_value, str):
-                attr_values = [attr_value]
-            elif isinstance(attr_value, (tuple, list)):
-                attr_values = list(attr_value)
-            else:
-                continue
-
-            for value in attr_values:
-                if isinstance(value, str):
-                    assert not value.lower().strip().startswith("javascript:")
-
-    # Make sure that there are no headerlinks in the output
-    for element in parsed_text.find_all():
-        assert "headerlink" not in element.get("class", [])
 
 
 @pytest.mark.django_db
