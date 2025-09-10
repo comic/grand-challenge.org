@@ -941,7 +941,7 @@ class DICOMImageSetUpload(UUIDModel):
                 "medical-imaging",
                 region_name=settings.AWS_DEFAULT_REGION,
             )
-        return self._health_imaging_client
+        return self.__health_imaging_client
 
     @property
     def _import_job_name(self):
