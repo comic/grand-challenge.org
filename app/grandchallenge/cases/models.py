@@ -893,13 +893,11 @@ class DICOMImageSetUpload(UUIDModel):
     error_message = models.TextField(blank=True, default="")
 
     study_instance_uuid = models.CharField(
-        default="",
         max_length=36,
         editable=False,
         unique=True,
     )
     series_instance_uuid = models.CharField(
-        default="",
         max_length=36,
         editable=False,
         unique=True,
@@ -923,20 +921,13 @@ class DICOMImageSetUpload(UUIDModel):
         self.__s3_client = None
 
     def save(self, *args, **kwargs):
-        adding = self._state.adding
-
+        self.study_instance_uuid = generate_dicom_id_suffix(
+            self.pk, suffix_type="study"
+        )
+        self.series_instance_uuid = generate_dicom_id_suffix(
+            self.pk, suffix_type="series"
+        )
         super().save(*args, **kwargs)
-
-        if adding:
-            self.study_instance_uuid = generate_dicom_id_suffix(
-                self.pk, "study"
-            )
-            self.series_instance_uuid = generate_dicom_id_suffix(
-                self.pk, "series"
-            )
-            super().save(
-                update_fields=["study_instance_uuid", "series_instance_uuid"]
-            )
 
     @property
     def _s3_client(self):
@@ -979,7 +970,7 @@ class DICOMImageSetUpload(UUIDModel):
     def _marker_file_key(self):
         return f"{self._input_key}/deidentification.done"
 
-    def _mark_failed(self, *, error_message, exc):
+    def _mark_failed(self, *, error_message, exc=None):
         self.status = DICOMImageSetUploadStatusChoices.FAILED
         self.error_message = error_message
         self.save()
@@ -1065,3 +1056,9 @@ class DICOMImageSetUpload(UUIDModel):
         )
 
         self.user_uploads.all().delete()
+
+    def delete_input_files(self):
+        self._s3_client.delete_objects(
+            Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+            Delete={"Objects": [{"Key": self._input_key}]},
+        )

@@ -548,6 +548,7 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         raise
     except RejectedDICOMFileError as e:
         upload._mark_failed(error_message=e.justification)
+        upload.delete_input_files()
     except Exception as e:
         upload._mark_failed(
             error_message="An unexpected error occurred", exc=e
