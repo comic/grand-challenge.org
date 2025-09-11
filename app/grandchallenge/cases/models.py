@@ -1178,28 +1178,33 @@ class DICOMImageSetUpload(UUIDModel):
         )
 
         try:
-            image_metadata = self.get_image_metadata(image_set_id=image_set_id)
+            metadata = self.get_image_set_metadata(image_set_id=image_set_id)
+            image_kwargs = self.convert_image_set_metadata_to_image_kwargs(
+                metadata=metadata
+            )
         except Exception as e:
             logger.error(e, exc_info=True)
-            image_metadata = dict(
+            image_kwargs = dict(
                 width=0,
                 height=0,
             )
 
         Image.objects.create(
             dicom_image_set=dicom_image_set,
-            **image_metadata,
+            **image_kwargs,
         )
 
-    def get_image_metadata(self, *, image_set_id):
+    def get_image_set_metadata(self, *, image_set_id):
         response = self._health_imaging_client.get_image_set_metadata(
             imageSetId=image_set_id,
             datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
         )
-        metadata = json.loads(
+        return json.loads(
             gzip.decompress(response["imageSetMetadataBlob"].read())
         )
 
+    @staticmethod
+    def convert_image_set_metadata_to_image_kwargs(metadata):
         study = metadata["Study"]
         study_metadata = study["DICOM"]
         series = next(iter(study["Series"].values()))
