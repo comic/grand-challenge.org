@@ -122,7 +122,6 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
             widget_choice = ImageWidgetChoices(widget_choice_name)
         except ValueError:
             raise Http404(f"Widget choice {widget_choice_name} not found")
-        current_value_pk = request.GET.get("current-value-pk")
 
         if widget_choice == ImageWidgetChoices.IMAGE_SEARCH:
             return HttpResponse(
@@ -142,33 +141,43 @@ class ImageWidgetSelectView(LoginRequiredMixin, View):
                     },
                 )
             )
-        elif widget_choice == ImageWidgetChoices.IMAGE_SELECTED:
-            if current_value_pk and (
-                get_object_if_allowed(
-                    model=Image,
-                    pk=current_value_pk,
-                    user=request.user,
-                    codename="view_image",
-                )
-                or get_object_if_allowed(
-                    model=UserUpload,
-                    pk=current_value_pk,
-                    user=request.user,
-                    codename="change_userupload",
-                )
-            ):
-                # this can happen on the display set update view or redisplay of
-                # form upon validation, where one of the options is the current
-                # image, this enables switching back from one of the above widgets
-                # to the chosen image. This makes sure the form element with the
-                # right name is available on resubmission.
+        elif widget_choice == ImageWidgetChoices.IMAGE_SELECTED and (
+            current_value_list := request.GET.getlist("current-value-pk")
+        ):
+            # this can happen on the display set update view or redisplay of
+            # form upon validation, where one of the options is the current
+            # image, this enables switching back from one of the above widgets
+            # to the chosen image. This makes sure the form element with the
+            # right name is available on resubmission.
+            image = get_object_if_allowed(
+                model=Image,
+                pk=current_value_list[0],
+                user=request.user,
+                codename="view_image",
+            )
+            if image:
                 return HttpResponse(
                     HiddenInput().render(
                         name=prefixed_interface_slug,
-                        value=current_value_pk,
+                        value=image.pk,
                     )
                 )
-            raise Http404(f"Selected image {current_value_pk} not found")
+            hidden_inputs_for_uploads = [
+                HiddenInput().render(
+                    name=prefixed_interface_slug,
+                    value=pk,
+                )
+                for pk in current_value_list
+                if get_object_if_allowed(
+                    model=UserUpload,
+                    pk=pk,
+                    user=request.user,
+                    codename="change_userupload",
+                )
+            ]
+            if hidden_inputs_for_uploads:
+                return HttpResponse(hidden_inputs_for_uploads)
+            raise Http404(f"Selected image {current_value_list} not found")
         elif widget_choice == ImageWidgetChoices.UNDEFINED:
             # this happens when switching back from one of the
             # above widgets to the "Choose data source" option
