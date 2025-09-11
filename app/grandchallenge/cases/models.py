@@ -1,6 +1,8 @@
 import copy
+import gzip
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
@@ -325,6 +327,32 @@ def image_file_path(instance, filename):
     )
 
 
+class DICOMImageSet(UUIDModel):
+    image_set_id = models.CharField(
+        max_length=32,
+        unique=True,
+        help_text="The ID of the image set in AWS Health Imaging.",
+    )
+    dicom_image_set_upload = models.OneToOneField(
+        to="DICOMImageSetUpload",
+        editable=False,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="dicom_image_set",
+    )
+
+
+@receiver(post_delete, sender=DICOMImageSet)
+def delete_image_set(*_, instance: DICOMImageSet, **__):
+    from grandchallenge.cases.tasks import delete_healthimaging_image_set
+
+    on_commit(
+        delete_healthimaging_image_set.signature(
+            kwargs=dict(image_set_id=instance.image_set_id)
+        ).apply_async
+    )
+
+
 class Image(UUIDModel):
     COLOR_SPACE_GRAY = ColorSpace.GRAY.value
     COLOR_SPACE_RGB = ColorSpace.RGB.value
@@ -469,6 +497,13 @@ class Image(UUIDModel):
         null=True,
         blank=True,
         help_text="What is the field of view of this image?",
+    )
+    dicom_image_set = models.OneToOneField(
+        to=DICOMImageSet,
+        editable=False,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="image",
     )
 
     def __str__(self):
@@ -689,6 +724,12 @@ class Image(UUIDModel):
 
     class Meta:
         ordering = ("name",)
+
+
+@receiver(post_delete, sender=Image)
+def delete_dicom_image_set(*_, instance: Image, **__):
+    if instance.dicom_image_set:
+        instance.dicom_image_set.delete()
 
 
 class ImageUserObjectPermission(UserObjectPermissionBase):
@@ -1056,8 +1097,8 @@ class DICOMImageSetUpload(UUIDModel):
             self.save()
 
     def handle_completed_job(self, *, event):
-        image_set = self.validate_image_set(event=event)
-        self.convert_image_set_to_internal(image_set=image_set)
+        image_set_id = self.validate_image_set(event=event)
+        self.convert_image_set_to_internal(image_set_id=image_set_id)
 
     def validate_image_set(self, *, event):
         job_summary = self.get_job_summary(event=event)
@@ -1074,22 +1115,24 @@ class DICOMImageSetUpload(UUIDModel):
                 "Multiple image sets created. Expected only one."
             )
 
-        image_set = job_summary["imageSetsSummary"][0]
+        image_set_summary = job_summary["imageSetsSummary"][0]
 
-        if not image_set["isPrimary"]:
+        if not image_set_summary["isPrimary"]:
             self.delete_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
                 "New instance is not primary: "
                 "metadata conflicts with already existing instance."
             )
 
-        if not image_set["imageSetVersion"] == 1:
-            self.revert_image_set_to_initial_version(image_set=image_set)
+        if not image_set_summary["imageSetVersion"] == 1:
+            self.revert_image_set_to_initial_version(
+                image_set_summary=image_set_summary
+            )
             raise DICOMImportJobValidationError(
                 "Instance already exists. This should never happen!"
             )
 
-        return image_set
+        return image_set_summary["imageSetId"]
 
     def handle_failed_job(self, *, event):
         job_summary = self.get_job_summary(event=event)
@@ -1106,16 +1149,15 @@ class DICOMImageSetUpload(UUIDModel):
     def delete_image_sets(*, job_summary):
         from grandchallenge.cases.tasks import delete_healthimaging_image_set
 
-        image_sets = job_summary.get("imageSetsSummary", [])
-        for image_set in image_sets:
+        for image_set_summary in job_summary.get("imageSetsSummary", []):
             on_commit(
                 delete_healthimaging_image_set.signature(
-                    kwargs=dict(image_set_id=image_set["imageSetId"])
+                    kwargs=dict(image_set_id=image_set_summary["imageSetId"])
                 ).apply_async
             )
 
     @staticmethod
-    def revert_image_set_to_initial_version(*, image_set):
+    def revert_image_set_to_initial_version(*, image_set_summary):
         from grandchallenge.cases.tasks import (
             revert_image_set_to_initial_version,
         )
@@ -1123,12 +1165,62 @@ class DICOMImageSetUpload(UUIDModel):
         on_commit(
             revert_image_set_to_initial_version.signature(
                 kwargs=dict(
-                    image_set_id=image_set["imageSetId"],
-                    version_id=image_set["imageSetVersion"],
+                    image_set_id=image_set_summary["imageSetId"],
+                    version_id=image_set_summary["imageSetVersion"],
                 )
             ).apply_async
         )
 
+    def convert_image_set_to_internal(self, *, image_set_id):
+        dicom_image_set = DICOMImageSet.objects.create(
+            image_set_id=image_set_id,
+            dicom_image_set_upload=self,
+        )
+
+        try:
+            metadata = self.get_image_set_metadata(image_set_id=image_set_id)
+            image_kwargs = self.convert_image_set_metadata_to_image_kwargs(
+                metadata=metadata
+            )
+        except Exception as e:
+            logger.error(e, exc_info=True)
+            image_kwargs = dict(
+                width=0,
+                height=0,
+            )
+
+        Image.objects.create(
+            dicom_image_set=dicom_image_set,
+            **image_kwargs,
+        )
+
+    def get_image_set_metadata(self, *, image_set_id):
+        response = self._health_imaging_client.get_image_set_metadata(
+            imageSetId=image_set_id,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+        )
+        return json.loads(
+            gzip.decompress(response["imageSetMetadataBlob"].read())
+        )
+
     @staticmethod
-    def convert_image_set_to_internal(*, image_set):
-        pass
+    def convert_image_set_metadata_to_image_kwargs(metadata):
+        study = metadata["Study"]
+        study_metadata = study["DICOM"]
+        series = next(iter(study["Series"].values()))
+        series_metadata = series["DICOM"]
+        instance = next(iter(series["Instances"].values()))
+        instance_metadata = instance["DICOM"]
+
+        return dict(
+            height=instance_metadata["Rows"],
+            width=instance_metadata["Columns"],
+            modality=ImagingModality.objects.get(
+                modality=series_metadata["Modality"]
+            ),
+            study_instance_uid=study_metadata["StudyInstanceUID"],
+            study_date=datetime.strptime(
+                study_metadata["StudyDate"], "%Y%m%d"
+            ),
+            series_instance_uid=series_metadata["SeriesInstanceUID"],
+        )

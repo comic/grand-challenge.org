@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from grandchallenge.cases.models import (
+    DICOMImageSet,
     DICOMImageSetUpload,
     Image,
     ImageFile,
@@ -41,7 +42,7 @@ class ImageAdmin(admin.ModelAdmin):
         "stereoscopic_choice",
     )
     inlines = [ImageFileInline]
-    readonly_fields = ("origin",)
+    readonly_fields = ("origin", "dicom_image_set")
 
 
 class MhdOrRawFilter(admin.SimpleListFilter):
@@ -95,6 +96,12 @@ admin.site.register(
 )
 
 
+@admin.register(DICOMImageSet)
+class DICOMImageSetAdmin(admin.ModelAdmin):
+    search_fields = ("pk", "image_set_id", "image__name")
+    readonly_fields = ("image", "dicom_image_set_upload")
+
+
 @admin.register(DICOMImageSetUpload)
 class DICOMImageSetUploadAdmin(admin.ModelAdmin):
     ordering = ("-created",)
@@ -104,6 +111,7 @@ class DICOMImageSetUploadAdmin(admin.ModelAdmin):
         "status",
         "error_message",
         "internal_failure_log",
+        "dicom_image_set",
     )
     list_filter = ("status",)
     search_fields = ("creator__username", "pk", "error_message")
