@@ -21,9 +21,14 @@ def create_job_warm_pool_utilizations():
             .filter(use_warm_pool=True, job_warm_pool_utilization__isnull=True)
             .select_related("job_utilization", "algorithm_image__algorithm")
             .select_for_update(
-                # Lock the algorithm to avoid conflicts when updating later
-                of=("self", "algorithm_image__algorithm"),
+                of=("self",),
                 nowait=True,
+            )
+            .select_for_update(
+                # Lock the algorithm to avoid conflicts when updating later
+                of=("algorithm_image__algorithm",),
+                nowait=True,
+                no_key=True,
             )
         )
     except OperationalError as error:
