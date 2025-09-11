@@ -51,12 +51,12 @@
             </p>
             <a class="btn btn-primary" href="{% url 'archives:items-list' slug=phase.archive.slug %}"> <i class="fa fa-upload mr-1"></i> Upload data to {{ phase.archive }}</a>
         {% else %}
-            <p> Before you can upload data to your archive, <b>you need to define the interfaces (i.e. possible input and output combinations) for algorithms submitted to this phase</b>. Contact <a href="mailto:support@grand-challenge.org"> Grand Challenge Support</a> for help with getting this set up.</p>
+            <p> Before you can upload data to your archive, <b>you need to define the interfaces (i.e. possible input and output combinations) for algorithms submitted to this phase</b>. Contact <a target="_blank" href="mailto:support@grand-challenge.org"> Grand Challenge Support</a> for help with getting this set up.</p>
         {% endif %}
 
     {% elif phase.submission_kind == phase.SubmissionKindChoices.ALGORITHM and not phase.external_evaluation and not phase.archive %}
         <p>This phase <b>does not have an archive</b> linked to it yet.</p>
-        <p>Contact <a href="mailto:support@grand-challenge.org"> Grand Challenge Support</a> for help with getting this set up.</p>
+        <p>Contact <a target="_blank" href="mailto:support@grand-challenge.org"> Grand Challenge Support</a> for help with getting this set up.</p>
     {% else %}
         <p>This phase does not require a linked archive.</p>
     {% endif %}

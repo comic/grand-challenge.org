@@ -91,8 +91,9 @@ class ArchiveList(FilterMixin, ViewObjectPermissionListMixin, ListView):
                     (
                         "An archive can be used to collect set of medical "
                         "images, which can later be used in a reader study, "
-                        "challenge or algorithm. Please <a href='{}'>contact "
-                        "us</a> if you would like to set up your own archive."
+                        "challenge or algorithm. Please <a target='_blank' "
+                        "href='{}'>contact us</a> if you would like to set up "
+                        "your own archive."
                     ),
                     mark_safe(
                         random_encode("mailto:support@grand-challenge.org")
