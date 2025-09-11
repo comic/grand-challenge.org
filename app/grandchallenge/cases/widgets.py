@@ -120,8 +120,9 @@ class FlexibleImageField(MultiValueField):
             ModelMultipleChoiceField(queryset=upload_queryset, required=False),
         ]
 
-        # The `current_value` is added to the widget attrs to display in the initial dropdown.
-        # We get the object so we can present the user with the image name rather than the pk.
+        # The `current_value` is added to the widget attrs to display an appropriate
+        # title in the initial dropdown and to add the pk(s) as hidden input
+        # in the widget template.
         self.current_value = None
         if initial:
             if isinstance(initial, ComponentInterfaceValue):
