@@ -770,7 +770,7 @@ def lock_for_utilization_update(*, algorithm_image_id):
             of=("self", "algorithm"),
             nowait=True,
             no_key=True,
-        )
+        ).get()
     except OperationalError as error:
         check_operational_error(error)
         raise
