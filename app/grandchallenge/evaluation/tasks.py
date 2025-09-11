@@ -19,6 +19,7 @@ from grandchallenge.components.models import (
 )
 from grandchallenge.components.tasks import (
     check_operational_error,
+    lock_for_utilization_update,
     lock_model_instance,
 )
 from grandchallenge.core.celery import (
@@ -205,12 +206,8 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
         pk=evaluation_pk,
         app_label="evaluation",
         model_name="Evaluation",
-        select_related=("submission__algorithm_image__algorithm",),
-        # Lock the algorithm to avoid conflicts when updating later
-        of=(
-            "self",
-            "submission__algorithm_image__algorithm",
-        ),
+        select_related=("submission",),
+        of=("self",),
     )
 
     if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
@@ -218,6 +215,10 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
             f"Nothing to do: evaluation is {evaluation.get_status_display()}."
         )
         return
+
+    lock_for_utilization_update(
+        algorithm_image_id=evaluation.submission.algorithm_image_id
+    )
 
     slots_available = min(
         settings.ALGORITHMS_MAX_ACTIVE_JOBS - Job.objects.active().count(),

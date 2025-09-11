@@ -729,9 +729,7 @@ def _get_image_config_file(
     return {"image_sha256": image_sha256, "config": config}
 
 
-def lock_model_instance(
-    *, app_label, model_name, of=(), select_related=None, **kwargs
-):
+def lock_model_instance(*, app_label, model_name, of=(), **kwargs):
     """
     Locks a model instance for update.
 
@@ -742,13 +740,9 @@ def lock_model_instance(
     Raises `LockNotAcquiredException` if the lock could not be acquired.
     """
     model = apps.get_model(app_label=app_label, model_name=model_name)
-
-    queryset = model.objects.filter(**kwargs)
-
-    if select_related is not None:
-        queryset = queryset.select_related(*select_related)
-
-    queryset = queryset.select_for_update(of=of, nowait=True)
+    queryset = model.objects.filter(**kwargs).select_for_update(
+        of=of, nowait=True
+    )
 
     try:
         return queryset.get()
@@ -762,6 +756,24 @@ def check_operational_error(error):
         raise LockNotAcquiredException from error
     else:
         raise error
+
+
+def lock_for_utilization_update(*, algorithm_image_id):
+    from grandchallenge.algorithms.models import AlgorithmImage
+
+    # Lock the algorithm and algorithm image to avoid conflicts
+    # when modifying JobUtilization objects
+    try:
+        AlgorithmImage.objects.filter(pk=algorithm_image_id).select_related(
+            "algorithm"
+        ).select_for_update(
+            of=("self", "algorithm"),
+            nowait=True,
+            no_key=True,
+        )
+    except OperationalError as error:
+        check_operational_error(error)
+        raise
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
@@ -911,17 +923,7 @@ def handle_event(*, event, backend):  # noqa: C901
         return
 
     if hasattr(job, "algorithm_image"):
-        # Lock the algorithm to avoid conflicts when updating later
-        lock_model_instance(
-            pk=job.algorithm_image.pk,
-            app_label="algorithms",
-            model_name="algorithmimage",
-            select_related=("algorithm",),
-            of=(
-                "self",
-                "algorithm",
-            ),
-        )
+        lock_for_utilization_update(algorithm_image_id=job.algorithm_image_id)
 
     try:
         executor.handle_event(event=event)
