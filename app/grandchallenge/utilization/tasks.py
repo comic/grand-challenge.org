@@ -2,38 +2,31 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import OperationalError, transaction
+from django.db import transaction
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.backends.base import duration_to_millicents
-from grandchallenge.components.tasks import check_operational_error
 from grandchallenge.core.celery import acks_late_2xlarge_task
-from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.utilization.models import JobWarmPoolUtilization
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_2xlarge_task
 @transaction.atomic
 def create_job_warm_pool_utilizations():
-    try:
-        jobs = list(
-            Job.objects.only_completed()
-            .filter(use_warm_pool=True, job_warm_pool_utilization__isnull=True)
-            .select_related("job_utilization", "algorithm_image__algorithm")
-            .select_for_update(
-                of=("self",),
-                nowait=True,
-            )
-            .select_for_update(
-                # Lock the algorithm to avoid conflicts when updating later
-                of=("algorithm_image__algorithm",),
-                nowait=True,
-                no_key=True,
-            )
+    jobs = (
+        Job.objects.only_completed()
+        .filter(use_warm_pool=True, job_warm_pool_utilization__isnull=True)
+        .select_related("job_utilization", "algorithm_image__algorithm")
+        .select_for_update(
+            # Lock the algorithm to avoid conflicts when updating later
+            of=(
+                "self",
+                "algorithm_image__algorithm",
+            ),
+            nowait=True,
+            no_key=True,
         )
-    except OperationalError as error:
-        check_operational_error(error)
-        raise
+    )
 
     for job in jobs:
         executor = job.get_executor(
