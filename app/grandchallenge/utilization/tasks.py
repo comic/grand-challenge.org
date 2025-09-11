@@ -6,20 +6,43 @@ from django.db import transaction
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.backends.base import duration_to_millicents
+from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import acks_late_2xlarge_task
+from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.utilization.models import JobWarmPoolUtilization
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def create_job_warm_pool_utilizations():
-    queryset = (
+    job_pks = (
         Job.objects.only_completed()
         .filter(use_warm_pool=True, job_warm_pool_utilization__isnull=True)
         .select_related("job_utilization", "algorithm_image")
+        .values_list("pk", flat=True)
     )
 
-    for job in queryset:
+    for job_pk in job_pks:
+        job = lock_model_instance(
+            pk=job_pk,
+            app_label=Job._meta.app_label,
+            model_name=Job._meta.model_name,
+            of=("self",),
+        )
+        # Lock the algorithm image and algorithm to avoid conflicts when updating later
+        lock_model_instance(
+            pk=job.algorithm_image.pk,
+            app_label="algorithms",
+            model_name="algorithmimage",
+            of=("self",),
+        )
+        lock_model_instance(
+            pk=job.algorithm_image.algorithm.pk,
+            app_label="algorithms",
+            model_name="algorithm",
+            of=("self",),
+        )
+
         executor = job.get_executor(
             backend=settings.COMPONENTS_DEFAULT_BACKEND
         )
