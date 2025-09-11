@@ -202,7 +202,15 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
         Whether this is the first run of create_algorithm_jobs_for_evaluation
     """
     evaluation = lock_model_instance(
-        pk=evaluation_pk, app_label="evaluation", model_name="Evaluation"
+        pk=evaluation_pk,
+        app_label="evaluation",
+        model_name="Evaluation",
+        select_related=("submission__algorithm_image__algorithm",),
+        # Lock the algorithm to avoid conflicts when updating later
+        of=(
+            "self",
+            "submission__algorithm_image__algorithm",
+        ),
     )
 
     if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
@@ -210,20 +218,6 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
             f"Nothing to do: evaluation is {evaluation.get_status_display()}."
         )
         return
-
-    # Lock the algorithm image and algorithm to avoid conflicts when updating later
-    lock_model_instance(
-        pk=evaluation.submission.algorithm_image.pk,
-        app_label="algorithms",
-        model_name="algorithmimage",
-        of=("self",),
-    )
-    lock_model_instance(
-        pk=evaluation.submission.algorithm_image.algorithm.pk,
-        app_label="algorithms",
-        model_name="algorithm",
-        of=("self",),
-    )
 
     slots_available = min(
         settings.ALGORITHMS_MAX_ACTIVE_JOBS - Job.objects.active().count(),
@@ -337,13 +331,18 @@ def handle_failed_jobs(*, evaluation_pk):
     Job = apps.get_model(  # noqa: N806
         app_label="algorithms", model_name="Job"
     )
-    Job.objects.filter(
-        creator=None,
-        algorithm_image=evaluation.submission.algorithm_image,
-        status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY],
-    ).select_for_update(of=("self",), skip_locked=True).update(
-        status=Job.CANCELLED
-    )
+
+    try:
+        Job.objects.filter(
+            creator=None,
+            algorithm_image=evaluation.submission.algorithm_image,
+            status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY],
+        ).select_for_update(of=("self",), skip_locked=True).update(
+            status=Job.CANCELLED
+        )
+    except OperationalError as error:
+        check_operational_error(error)
+        raise
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))

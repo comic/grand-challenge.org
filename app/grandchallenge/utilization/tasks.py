@@ -2,11 +2,11 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from django.db import OperationalError, transaction
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.backends.base import duration_to_millicents
-from grandchallenge.components.tasks import lock_model_instance
+from grandchallenge.components.tasks import check_operational_error
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.utilization.models import JobWarmPoolUtilization
@@ -15,34 +15,22 @@ from grandchallenge.utilization.models import JobWarmPoolUtilization
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def create_job_warm_pool_utilizations():
-    job_pks = (
-        Job.objects.only_completed()
-        .filter(use_warm_pool=True, job_warm_pool_utilization__isnull=True)
-        .select_related("job_utilization", "algorithm_image")
-        .values_list("pk", flat=True)
-    )
+    try:
+        jobs = (
+            Job.objects.only_completed()
+            .filter(use_warm_pool=True, job_warm_pool_utilization__isnull=True)
+            .select_related("job_utilization", "algorithm_image__algorithm")
+            .select_for_update(
+                # Lock the algorithm to avoid conflicts when updating later
+                of=("self", "algorithm_image__algorithm"),
+                nowait=True,
+            )
+        )
+    except OperationalError as error:
+        check_operational_error(error)
+        raise
 
-    for job_pk in job_pks:
-        job = lock_model_instance(
-            pk=job_pk,
-            app_label=Job._meta.app_label,
-            model_name=Job._meta.model_name,
-            of=("self",),
-        )
-        # Lock the algorithm image and algorithm to avoid conflicts when updating later
-        lock_model_instance(
-            pk=job.algorithm_image.pk,
-            app_label="algorithms",
-            model_name="algorithmimage",
-            of=("self",),
-        )
-        lock_model_instance(
-            pk=job.algorithm_image.algorithm.pk,
-            app_label="algorithms",
-            model_name="algorithm",
-            of=("self",),
-        )
-
+    for job in jobs:
         executor = job.get_executor(
             backend=settings.COMPONENTS_DEFAULT_BACKEND
         )

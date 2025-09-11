@@ -729,7 +729,9 @@ def _get_image_config_file(
     return {"image_sha256": image_sha256, "config": config}
 
 
-def lock_model_instance(*, app_label, model_name, of=(), **kwargs):
+def lock_model_instance(
+    *, app_label, model_name, of=(), select_related=None, **kwargs
+):
     """
     Locks a model instance for update.
 
@@ -740,9 +742,13 @@ def lock_model_instance(*, app_label, model_name, of=(), **kwargs):
     Raises `LockNotAcquiredException` if the lock could not be acquired.
     """
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    queryset = model.objects.filter(**kwargs).select_for_update(
-        of=of, nowait=True
-    )
+
+    queryset = model.objects.filter(**kwargs)
+
+    if select_related is not None:
+        queryset = queryset.select_related(select_related)
+
+    queryset = queryset.select_for_update(of=of, nowait=True)
 
     try:
         return queryset.get()
@@ -905,19 +911,16 @@ def handle_event(*, event, backend):  # noqa: C901
         return
 
     if hasattr(job, "algorithm_image"):
-        # Lock the algorithm image and algorithm to
-        # avoid conflicts when updating later
+        # Lock the algorithm to avoid conflicts when updating later
         lock_model_instance(
             pk=job.algorithm_image.pk,
             app_label="algorithms",
             model_name="algorithmimage",
-            of=("self",),
-        )
-        lock_model_instance(
-            pk=job.algorithm_image.algorithm.pk,
-            app_label="algorithms",
-            model_name="algorithm",
-            of=("self",),
+            select_related=("algorithm",),
+            of=(
+                "self",
+                "algorithm",
+            ),
         )
 
     try:
