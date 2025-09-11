@@ -13,13 +13,27 @@ from grandchallenge.utilization.models import JobWarmPoolUtilization
 @acks_late_2xlarge_task
 @transaction.atomic
 def create_job_warm_pool_utilizations():
-    queryset = (
+    jobs = (
         Job.objects.only_completed()
         .filter(use_warm_pool=True, job_warm_pool_utilization__isnull=True)
-        .select_related("job_utilization", "algorithm_image")
+        .select_related(
+            "job_utilization",
+            "algorithm_image",
+            "algorithm_image__algorithm",
+        )
+        .select_for_update(
+            # Lock the algorithm and algorithm_image to avoid conflicts when updating later
+            of=(
+                "self",
+                "algorithm_image",
+                "algorithm_image__algorithm",
+            ),
+            nowait=True,
+            no_key=True,
+        )
     )
 
-    for job in queryset:
+    for job in jobs:
         executor = job.get_executor(
             backend=settings.COMPONENTS_DEFAULT_BACKEND
         )
