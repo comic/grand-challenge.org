@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
 from django.forms import (
@@ -57,32 +59,46 @@ class FlexibleImageWidget(MultiWidget):
         super().__init__(widgets, attrs)
 
     def decompress(self, value):
-        if value:
-            if value in ImageWidgetChoices.names:
-                return [None, None]
-            elif Image.objects.filter(pk=value).exists():
-                return [value, None]
-            else:
-                return [None, [value]]
-        else:
+        if not value:
             return [None, None]
+
+        if isinstance(value, (list, tuple)):
+            if len(value) == 1:
+                item = value[0]
+                if item in ImageWidgetChoices.names:
+                    return [None, None]
+                if Image.objects.filter(pk=item).exists():
+                    return [str(item), None]
+                # can also just be a single UserUpload
+                return [None, value]
+            else:
+                # can be a list of UserUploads
+                return [None, value]
+
+        if isinstance(value, UUID):
+            # when an image or user upload is preselected as current_value
+            if Image.objects.filter(pk=value).exists():
+                return [value, None]
+            elif UserUpload.objects.filter(pk=value).exists():
+                return [None, [value]]
+            else:
+                return [None, None]
+
+        raise RuntimeError("Unrecognized value type")
 
     def value_from_datadict(self, data, files, name):
         try:
-            value = data[name]
-        except KeyError:
-            # this happens if the data comes from the DS create / update form
-            try:
-                value = data[f"widget-choice-{name}"]
-            except KeyError:
-                value = None
+            value = data.getlist(name)
+        except AttributeError:
+            value = data.get(name)
+
         return self.decompress(value)
 
 
 class FlexibleImageField(MultiValueField):
     widget = FlexibleImageWidget
 
-    def __init__(
+    def __init__(  # noqa C901
         self,
         *args,
         user=None,
@@ -104,8 +120,9 @@ class FlexibleImageField(MultiValueField):
             ModelMultipleChoiceField(queryset=upload_queryset, required=False),
         ]
 
-        # The `current_value` is added to the widget attrs to display in the initial dropdown.
-        # We get the object so we can present the user with the image name rather than the pk.
+        # The `current_value` is added to the widget attrs to display an appropriate
+        # title in the initial dropdown and to add the pk(s) as hidden input
+        # in the widget template.
         self.current_value = None
         if initial:
             if isinstance(initial, ComponentInterfaceValue):
@@ -113,23 +130,40 @@ class FlexibleImageField(MultiValueField):
                 # the value is then taken from the model instance
                 # unless the value is in the form data.
                 if user.has_perm("view_image", initial.image):
-                    self.current_value = initial.image
+                    self.current_value = [initial.image]
                     initial = initial.image.pk
                 else:
                     initial = None
+            elif isinstance(initial, (list, tuple)):
+                # It can be a list of UserUpload objects
+                uploads = []
+                for i in initial:
+                    if isinstance(i, UserUpload):
+                        uploads.append(i)
+                    else:
+                        if upload := get_object_if_allowed(
+                            model=UserUpload,
+                            pk=i,
+                            user=user,
+                            codename="change_userupload",
+                        ):
+                            uploads.append(upload)
+                if len(uploads) != 0:
+                    self.current_value = uploads
+
             # Otherwise the value is taken from the form data and will always take
             # the form of a pk for either an Image object or a UserUpload object.
             elif image := get_object_if_allowed(
                 model=Image, pk=initial, user=user, codename="view_image"
             ):
-                self.current_value = image
+                self.current_value = [image]
             elif upload := get_object_if_allowed(
                 model=UserUpload,
                 pk=initial,
                 user=user,
                 codename="change_userupload",
             ):
-                self.current_value = upload
+                self.current_value = [upload]
             else:
                 initial = None
 
@@ -144,6 +178,15 @@ class FlexibleImageField(MultiValueField):
     def widget_attrs(self, widget):
         attrs = super().widget_attrs(widget)
         attrs["current_value"] = self.current_value
+
+        if self.current_value:
+            if len(self.current_value) == 1:
+                attrs["display_name"] = self.current_value[0].title
+            else:
+                attrs["display_name"] = (
+                    f"Recently uploaded image(s): {[upload.title for upload in self.current_value]}"
+                )
+
         attrs["widget_choices"] = {
             choice.name: choice.value for choice in ImageWidgetChoices
         }
