@@ -43,7 +43,7 @@
             {% endfor %}
             {% if challenge.contact_email %}
                 <li class="nav-item">
-                    <a class="nav-link px-2 py-1 mb-1 d-flex align-items-center" href="mailto:{{ challenge.contact_email|random_encode|clean }}">
+                    <a class="nav-link px-2 py-1 mb-1 d-flex align-items-center" target="_blank" href="mailto:{{ challenge.contact_email|random_encode|clean }}">
                         <i class="fas fa-envelope fa-fw mr-1"></i>
                         Email organizers
                     </a>
