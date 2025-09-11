@@ -335,6 +335,7 @@ class DICOMImageSet(UUIDModel):
     )
     dicom_image_set_upload = models.OneToOneField(
         to="DICOMImageSetUpload",
+        editable=False,
         null=True,
         on_delete=models.SET_NULL,
         related_name="dicom_image_set",
