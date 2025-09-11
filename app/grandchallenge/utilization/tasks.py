@@ -18,14 +18,14 @@ def create_job_warm_pool_utilizations():
         .filter(use_warm_pool=True, job_warm_pool_utilization__isnull=True)
         .select_related(
             "job_utilization",
-            "algorithm",
+            "algorithm_image",
             "algorithm_image__algorithm",
         )
         .select_for_update(
             # Lock the algorithm and algorithm_image to avoid conflicts when updating later
             of=(
                 "self",
-                "algorithm",
+                "algorithm_image",
                 "algorithm_image__algorithm",
             ),
             nowait=True,
