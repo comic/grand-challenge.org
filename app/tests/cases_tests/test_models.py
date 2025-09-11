@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -13,7 +14,9 @@ from grandchallenge.cases.exceptions import (
     DICOMImportJobFailedError,
     DICOMImportJobValidationError,
 )
+from grandchallenge.cases.models import DICOMImageSet, Image
 from tests.cases_tests.factories import (
+    DICOMImageSetFactory,
     DICOMImageSetUploadFactory,
     ImageFactory,
     ImageFactoryWithImageFile,
@@ -21,7 +24,7 @@ from tests.cases_tests.factories import (
     ImageFileFactoryWithMHDFile,
     ImageFileFactoryWithRAWFile,
 )
-from tests.factories import ImageFileFactory
+from tests.factories import ImageFileFactory, ImagingModalityFactory
 
 
 @pytest.mark.django_db
@@ -487,4 +490,303 @@ def test_handle_completed_job_generated_image_set(
 
     mock_convert_image_set_to_internal.assert_called_once_with(
         image_set=job_summary["imageSetsSummary"][0],
+    )
+
+
+@pytest.mark.django_db
+def test_delete_dicom_image_set_post_delete_image():
+    dicom_image_set = DICOMImageSetFactory()
+    image = ImageFactory(dicom_image_set=dicom_image_set)
+
+    assert DICOMImageSet.objects.count() != 0
+
+    image.delete()
+
+    assert DICOMImageSet.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_delete_healthimaging_image_set_post_delete_dicom_image_set(
+    django_capture_on_commit_callbacks,
+    mocker,
+):
+    dicom_image_set = DICOMImageSetFactory()
+    mock_signature = MagicMock()
+    mock_signature.apply_async = MagicMock()
+    mock_delete_healthimaging_image_set = mocker.patch(
+        "grandchallenge.cases.tasks.delete_healthimaging_image_set.signature",
+        return_value=mock_signature,
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        dicom_image_set.delete()
+
+    mock_delete_healthimaging_image_set.assert_called_once_with(
+        kwargs=dict(image_set_id=dicom_image_set.image_set_id)
+    )
+    assert mock_signature.apply_async.call_count == 1
+
+
+@pytest.mark.django_db
+def test_convert_image_set_to_internal(mocker):
+    dicom_image_set_upload = DICOMImageSetUploadFactory()
+    image_set_id = "e616d1f717da6f80fed6271ad184b7f0"
+    mocker.patch.object(
+        dicom_image_set_upload,
+        "get_image_set_metadata",
+    )
+    mocker.patch.object(
+        dicom_image_set_upload,
+        "convert_image_set_metadata_to_image_kwargs",
+        return_value=dict(
+            height=10,
+            width=11,
+        ),
+    )
+
+    assert Image.objects.count() == 0
+    assert DICOMImageSet.objects.count() == 0
+
+    dicom_image_set_upload.convert_image_set_to_internal(
+        image_set_id=image_set_id,
+    )
+
+    assert Image.objects.count() == 1
+    assert DICOMImageSet.objects.count() == 1
+
+    dicom_image_set = DICOMImageSet.objects.first()
+
+    assert dicom_image_set.image_set_id == image_set_id
+
+    image = Image.objects.first()
+
+    assert image.height == 10
+    assert image.width == 11
+
+
+@pytest.fixture
+def image_set_metadata():
+    return {
+        "SchemaVersion": "1.1",
+        "DatastoreID": "5bb1dcedf7c14ece969d7fe73c5b87a1",
+        "ImageSetID": "3a19e171a2a4f56dd78abf493bd07bda",
+        "Patient": {
+            "DICOM": {
+                "DeidentificationMethod": [
+                    "Deidentified",
+                    "Descriptors removed",
+                    "Patient Characteristics removed",
+                    "Device identity removed",
+                    "Institution identity removed",
+                    "Dates modified",
+                    "Unsafe private removed",
+                    "UIDs remapped",
+                ],
+                "DeidentificationMethodCodeSequence": [
+                    {
+                        "CodeValue": "113100",
+                        "CodingSchemeDesignator": "DCM",
+                        "CodeMeaning": "Basic Application Confidentiality Profile",
+                    },
+                    {
+                        "CodeValue": "210004",
+                        "CodingSchemeDesignator": "99PMP",
+                        "CodeMeaning": "Remove all descriptors",
+                    },
+                    {
+                        "CodeValue": "113107",
+                        "CodingSchemeDesignator": "DCM",
+                        "CodeMeaning": "Retain Longitudinal Temporal Information Modified Dates Option",
+                    },
+                    {
+                        "CodeValue": "113111",
+                        "CodingSchemeDesignator": "DCM",
+                        "CodeMeaning": "Retain Safe Private Option",
+                    },
+                    {
+                        "CodeValue": "210001",
+                        "CodingSchemeDesignator": "99PMP",
+                        "CodeMeaning": "Remap UIDs",
+                    },
+                ],
+                "PatientBirthDate": None,
+                "PatientID": "NOID",
+                "PatientIdentityRemoved": "YES",
+                "PatientName": "NAME^NONE",
+                "PatientSex": None,
+            }
+        },
+        "Study": {
+            "DICOM": {
+                "AccessionNumber": None,
+                "ReferringPhysicianName": None,
+                "StudyDate": "20000101",
+                "StudyID": None,
+                "StudyInstanceUID": "1.3.6.1.4.1.5962.99.1.5128099.2103784727.1533308485539.4.0",
+                "StudyTime": "000000.000",
+            },
+            "Series": {
+                "1.3.6.1.4.1.5962.99.1.5128099.2103784727.1533308485539.5.0": {
+                    "DICOM": {
+                        "DeviceSerialNumber": "SN000000",
+                        "FrameOfReferenceUID": "1.3.6.1.4.1.5962.99.1.5128099.2103784727.1533308485539.6.0",
+                        "Manufacturer": "Imaging Sciences International",
+                        "ManufacturerModelName": "i-CAT",
+                        "Modality": "CT",
+                        "PositionReferenceIndicator": None,
+                        "SeriesDate": "20000101",
+                        "SeriesInstanceUID": "1.3.6.1.4.1.5962.99.1.5128099.2103784727.1533308485539.5.0",
+                        "SeriesNumber": "1 ",
+                        "SeriesTime": "000000.000",
+                        "SoftwareVersions": ["3.1.62"],
+                    },
+                    "Instances": {
+                        "1.3.6.1.4.1.5962.99.1.5128099.2103784727.1533308485539.26.0": {
+                            "DICOM": {
+                                "FileMetaInformationGroupLength": 218,
+                                "FileMetaInformationVersion": "AAE=",
+                                "MediaStorageSOPClassUID": "1.2.840.10008.5.1.4.1.1.2",
+                                "MediaStorageSOPInstanceUID": "1.3.6.1.4.1.5962.99.1.5128099.2103784727.1533308485539.26.0",
+                                "TransferSyntaxUID": "1.2.840.10008.1.2.4.51",
+                                "ImplementationClassUID": "1.3.6.1.4.1.5962.99.2",
+                                "ImplementationVersionName": "PIXELMEDJAVA001",
+                                "SourceApplicationEntityTitle": "STUDIO5_11112",
+                                "ImageType": ["DERIVED", "PRIMARY", "AXIAL"],
+                                "InstanceCreationDate": "20000101",
+                                "InstanceCreationTime": "000000.000",
+                                "SOPClassUID": "1.2.840.10008.5.1.4.1.1.2",
+                                "SOPInstanceUID": "1.3.6.1.4.1.5962.99.1.5128099.2103784727.1533308485539.26.0",
+                                "AcquisitionDate": "20000101",
+                                "ContentDate": "20000101",
+                                "AcquisitionTime": "131344.000",
+                                "ContentTime": "000000.000",
+                                "SourceImageSequence": [
+                                    {
+                                        "ReferencedSOPClassUID": "1.2.840.10008.5.1.4.1.1.2",
+                                        "ReferencedSOPInstanceUID": "1.3.6.1.4.1.5962.99.1.5128099.2103784727.1533308485539.25.0",
+                                        "PurposeOfReferenceCodeSequence": [
+                                            {
+                                                "CodeValue": "121320",
+                                                "CodingSchemeDesignator": "DCM",
+                                                "CodeMeaning": "Uncompressed predecessor",
+                                            }
+                                        ],
+                                    }
+                                ],
+                                "DerivationCodeSequence": [
+                                    {
+                                        "CodeValue": "113040",
+                                        "CodingSchemeDesignator": "DCM",
+                                        "CodeMeaning": "Lossy Compression",
+                                    }
+                                ],
+                                "SliceThickness": "0.25",
+                                "KVP": "120 ",
+                                "FrameTime": "67",
+                                "DistanceSourceToDetector": "699.29",
+                                "DistanceSourceToPatient": "478.0145",
+                                "GantryDetectorTilt": "0.0 ",
+                                "RotationDirection": "CW",
+                                "XRayTubeCurrent": "36",
+                                "DetectorPrimaryAngle": "341 ",
+                                "DetectorSecondaryAngle": "701.011962890625",
+                                "ContributingEquipmentSequence": [
+                                    {
+                                        "Manufacturer": "PixelMed",
+                                        "StationName": "STUDIO5_11112",
+                                        "ManufacturerModelName": "DicomCleaner",
+                                        "SoftwareVersions": [
+                                            "Thu Apr 19 11:14:42 EDT 2018"
+                                        ],
+                                        "ContributionDateTime": "20180803160125.605+0100",
+                                        "ContributionDescription": "Cleaned",
+                                        "PurposeOfReferenceCodeSequence": [
+                                            {
+                                                "CodeValue": "109104",
+                                                "CodingSchemeDesignator": "DCM",
+                                                "CodeMeaning": "De-identifying Equipment",
+                                            }
+                                        ],
+                                    }
+                                ],
+                                "AcquisitionNumber": None,
+                                "InstanceNumber": "11",
+                                "PatientOrientation": ["L", "P"],
+                                "ImagePositionPatient": [
+                                    "0.000000",
+                                    "0.000000",
+                                    "-2.625000 ",
+                                ],
+                                "ImageOrientationPatient": [
+                                    "1.000000",
+                                    "0.000000",
+                                    "0.000000",
+                                    "0.000000",
+                                    "1.000000",
+                                    "0.000000 ",
+                                ],
+                                "SliceLocation": "-2.625000 ",
+                                "SamplesPerPixel": 1,
+                                "PhotometricInterpretation": "MONOCHROME2",
+                                "NumberOfFrames": "1 ",
+                                "Rows": 640,
+                                "Columns": 640,
+                                "PixelSpacing": ["0.25", "0.25 "],
+                                "PixelAspectRatio": ["1", "1 "],
+                                "BitsAllocated": 16,
+                                "BitsStored": 12,
+                                "HighBit": 11,
+                                "PixelRepresentation": 0,
+                                "WindowCenter": ["0 "],
+                                "WindowWidth": ["0 "],
+                                "RescaleIntercept": "-1000 ",
+                                "RescaleSlope": "1 ",
+                                "RescaleType": "HU",
+                                "LossyImageCompression": "01",
+                                "LossyImageCompressionRatio": ["27.951"],
+                                "LossyImageCompressionMethod": ["ISO_10918_1"],
+                            },
+                            "DICOMVRs": {},
+                            "StoredTransferSyntaxUID": "1.2.840.10008.1.2.4.202",
+                            "ChecksumType": "DECOMPRESSED",
+                            "ImageFrames": [
+                                {
+                                    "ID": "586e9e248987bf6aa761ff5b9d790473",
+                                    "PixelDataChecksumFromBaseToFullResolution": [
+                                        {
+                                            "Width": 640,
+                                            "Height": 640,
+                                            "Checksum": 989529591,
+                                        }
+                                    ],
+                                    "MinPixelValue": 0,
+                                    "MaxPixelValue": 2025,
+                                    "FrameSizeInBytes": 168371,
+                                }
+                            ],
+                        }
+                    },
+                }
+            },
+        },
+    }
+
+
+@pytest.mark.django_db
+def test_convert_(image_set_metadata):
+    modality = ImagingModalityFactory(modality="CT")
+    dicom_image_set_upload = DICOMImageSetUploadFactory()
+    image_kwargs = (
+        dicom_image_set_upload.convert_image_set_metadata_to_image_kwargs(
+            image_set_metadata
+        )
+    )
+
+    assert image_kwargs == dict(
+        height=640,
+        width=640,
+        modality=modality,
+        study_instance_uid="1.3.6.1.4.1.5962.99.1.5128099.2103784727.1533308485539.4.0",
+        study_date=datetime(2000, 1, 1),
+        series_instance_uid="1.3.6.1.4.1.5962.99.1.5128099.2103784727.1533308485539.5.0",
     )
