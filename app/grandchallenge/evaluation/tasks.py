@@ -217,7 +217,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
         return
 
     lock_for_utilization_update(
-        algorithm_image_id=evaluation.submission.algorithm_image_id
+        algorithm_image_pk=evaluation.submission.algorithm_image_id
     )
 
     slots_available = min(
@@ -317,7 +317,11 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
 def handle_failed_jobs(*, evaluation_pk):
     # Set the evaluation to failed
     evaluation = lock_model_instance(
-        pk=evaluation_pk, app_label="evaluation", model_name="Evaluation"
+        pk=evaluation_pk,
+        app_label="evaluation",
+        model_name="Evaluation",
+        select_related=("submission",),
+        of=("self",),
     )
 
     if evaluation.status != evaluation.FAILURE:
@@ -336,7 +340,7 @@ def handle_failed_jobs(*, evaluation_pk):
     try:
         Job.objects.filter(
             creator=None,
-            algorithm_image=evaluation.submission.algorithm_image,
+            algorithm_image_id=evaluation.submission.algorithm_image_id,
             status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY],
         ).select_for_update(of=("self",), skip_locked=True).update(
             status=Job.CANCELLED

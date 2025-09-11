@@ -764,13 +764,13 @@ def check_operational_error(error):
         raise error
 
 
-def lock_for_utilization_update(*, algorithm_image_id):
+def lock_for_utilization_update(*, algorithm_image_pk):
     from grandchallenge.algorithms.models import AlgorithmImage
 
     # Lock the algorithm and algorithm image to avoid conflicts
     # when modifying JobUtilization objects
     try:
-        AlgorithmImage.objects.filter(pk=algorithm_image_id).select_related(
+        AlgorithmImage.objects.filter(pk=algorithm_image_pk).select_related(
             "algorithm"
         ).select_for_update(
             of=("self", "algorithm"),
@@ -929,7 +929,7 @@ def handle_event(*, event, backend):  # noqa: C901
         return
 
     if hasattr(job, "algorithm_image"):
-        lock_for_utilization_update(algorithm_image_id=job.algorithm_image_id)
+        lock_for_utilization_update(algorithm_image_pk=job.algorithm_image_id)
 
     try:
         executor.handle_event(event=event)
