@@ -60,26 +60,48 @@ def duration_to_millicents(*, duration, usd_cents_per_hour):
 
 
 def list_and_delete_objects_from_prefix(*, s3_client, bucket, prefix):
-    objects_list = s3_client.list_objects_v2(
+    paginator = s3_client.get_paginator("list_objects_v2")
+
+    page_iterator = paginator.paginate(
         Bucket=bucket,
         Prefix=(prefix.lstrip("/") if settings.USING_MINIO else prefix),
     )
 
-    if contents := objects_list.get("Contents"):
-        response = s3_client.delete_objects(
-            Bucket=bucket,
-            Delete={
-                "Objects": [{"Key": content["Key"]} for content in contents],
-            },
-        )
-        logger.debug(f"Deleted {response.get('Deleted')} from {bucket}")
-        errors = response.get("Errors")
-    else:
-        logger.debug(f"No objects found in {bucket}/{prefix}")
-        errors = None
+    all_errors = []
+    total_deleted = 0
 
-    if objects_list["IsTruncated"] or errors:
-        logger.error("Not all files were deleted")
+    for page in page_iterator:
+        if contents := page.get("Contents"):
+            # AWS delete_objects API has a hard limit of 1000 objects per request
+            # The list_objects_v2 paginator returns max 1000 objects per page by default,
+            # so this should always fit within the delete_objects limit
+            response = s3_client.delete_objects(
+                Bucket=bucket,
+                Delete={
+                    "Objects": [
+                        {"Key": content["Key"]} for content in contents
+                    ],
+                },
+            )
+
+            deleted_count = len(response.get("Deleted", []))
+            total_deleted += deleted_count
+            logger.debug(f"Deleted {deleted_count} objects from {bucket}")
+
+            if errors := response.get("Errors"):
+                all_errors.extend(errors)
+
+    if total_deleted == 0:
+        logger.debug(f"No objects found in {bucket}/{prefix}")
+    else:
+        logger.debug(
+            f"Total deleted: {total_deleted} objects from {bucket}/{prefix}"
+        )
+
+    if all_errors:
+        logger.error(
+            f"Errors occurred while deleting: {len(all_errors)} failed deletions"
+        )
 
 
 class Executor(ABC):
