@@ -489,7 +489,7 @@ def test_handle_completed_job_generated_image_set(
     di_upload.handle_completed_job(event=event)
 
     mock_convert_image_set_to_internal.assert_called_once_with(
-        image_set=job_summary["imageSetsSummary"][0],
+        image_set_id=job_summary["imageSetsSummary"][0]["imageSetId"],
     )
 
 
