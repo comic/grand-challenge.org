@@ -59,6 +59,29 @@ def duration_to_millicents(*, duration, usd_cents_per_hour):
     )
 
 
+def list_and_delete_objects_from_prefix(*, s3_client, bucket, prefix):
+    objects_list = s3_client.list_objects_v2(
+        Bucket=bucket,
+        Prefix=(prefix.lstrip("/") if settings.USING_MINIO else prefix),
+    )
+
+    if contents := objects_list.get("Contents"):
+        response = s3_client.delete_objects(
+            Bucket=bucket,
+            Delete={
+                "Objects": [{"Key": content["Key"]} for content in contents],
+            },
+        )
+        logger.debug(f"Deleted {response.get('Deleted')} from {bucket}")
+        errors = response.get("Errors")
+    else:
+        logger.debug(f"No objects found in {bucket}/{prefix}")
+        errors = None
+
+    if objects_list["IsTruncated"] or errors:
+        logger.error("Not all files were deleted")
+
+
 class Executor(ABC):
     def __init__(
         self,
@@ -591,25 +614,8 @@ class Executor(ABC):
                 "Deleting from this prefix or bucket is not allowed"
             )
 
-        objects_list = self._s3_client.list_objects_v2(
-            Bucket=bucket,
-            Prefix=(prefix.lstrip("/") if settings.USING_MINIO else prefix),
+        list_and_delete_objects_from_prefix(
+            s3_client=self._s3_client,
+            bucket=bucket,
+            prefix=prefix,
         )
-
-        if contents := objects_list.get("Contents"):
-            response = self._s3_client.delete_objects(
-                Bucket=bucket,
-                Delete={
-                    "Objects": [
-                        {"Key": content["Key"]} for content in contents
-                    ],
-                },
-            )
-            logger.debug(f"Deleted {response.get('Deleted')} from {bucket}")
-            errors = response.get("Errors")
-        else:
-            logger.debug(f"No objects found in {bucket}/{prefix}")
-            errors = None
-
-        if objects_list["IsTruncated"] or errors:
-            logger.error("Not all files were deleted")

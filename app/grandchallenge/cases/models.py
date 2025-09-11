@@ -986,14 +986,12 @@ class DICOMImageSetUpload(UUIDModel):
         return f"{settings.COMPONENTS_REGISTRY_PREFIX}-{self.pk}"
 
     @property
-    def _input_key(self):
+    def _input_prefix(self):
         return f"inputs/{self.pk}"
 
     @property
     def _import_input_s3_uri(self):
-        return (
-            f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/{self._input_key}"
-        )
+        return f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/{self._input_prefix}"
 
     @property
     def _import_output_s3_uri(self):
@@ -1001,7 +999,7 @@ class DICOMImageSetUpload(UUIDModel):
 
     @property
     def _marker_file_key(self):
-        return f"{self._input_key}/deidentification.done"
+        return f"{self._input_prefix}/deidentification.done"
 
     def mark_failed(self, *, error_message, exc=None):
         self.status = DICOMImageSetUploadStatusChoices.FAILED
@@ -1050,7 +1048,7 @@ class DICOMImageSetUpload(UUIDModel):
                 self._s3_client.upload_fileobj(
                     Fileobj=outfile,
                     Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
-                    Key=f"{self._input_key}/{upload.filename}",
+                    Key=f"{self._input_prefix}/{upload.pk}.dcm",
                 )
 
     def deidentify_user_uploads(self):
@@ -1079,9 +1077,14 @@ class DICOMImageSetUpload(UUIDModel):
         self.user_uploads.all().delete()
 
     def delete_input_files(self):
-        self._s3_client.delete_objects(
-            Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
-            Delete={"Objects": [{"Key": self._input_key}]},
+        from grandchallenge.components.backends.base import (
+            list_and_delete_objects_from_prefix,
+        )
+
+        list_and_delete_objects_from_prefix(
+            s3_client=self._s3_client,
+            bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+            prefix=self._input_prefix,
         )
 
     def get_job_summary(self, *, event):
