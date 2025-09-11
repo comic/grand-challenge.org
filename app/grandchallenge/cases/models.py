@@ -925,12 +925,12 @@ class DICOMImageSetUpload(UUIDModel):
         validators=[JSONValidator(schema=IMPORT_JOB_FAILURE_NDJSON_SCHEMA)],
     )
 
-    study_instance_uuid = models.CharField(
+    study_instance_uid = models.CharField(
         max_length=36,
         editable=False,
         unique=True,
     )
-    series_instance_uuid = models.CharField(
+    series_instance_uid = models.CharField(
         max_length=36,
         editable=False,
         unique=True,
@@ -954,10 +954,10 @@ class DICOMImageSetUpload(UUIDModel):
         self.__s3_client = None
 
     def save(self, *args, **kwargs):
-        self.study_instance_uuid = generate_dicom_id_suffix(
+        self.study_instance_uid = generate_dicom_id_suffix(
             self.pk, suffix_type="study"
         )
-        self.series_instance_uuid = generate_dicom_id_suffix(
+        self.series_instance_uid = generate_dicom_id_suffix(
             self.pk, suffix_type="series"
         )
         super().save(*args, **kwargs)
@@ -1022,8 +1022,8 @@ class DICOMImageSetUpload(UUIDModel):
     def _deidentify_files(self):
         deid = DicomDeidentifier(
             # forced_inserts={
-            #     "StudyInstanceUID": self.study_instance_uuid,
-            #     "SeriesInstanceUID": self.series_instance_uuid,
+            #     "StudyInstanceUID": self.study_instance_uid,
+            #     "SeriesInstanceUID": self.series_instance_uid,
             #     "PatientID": PATIENT_ID,
             #     "StudyID": STUDY_ID,
             #     "StudyDate": STUDY_DATE,
