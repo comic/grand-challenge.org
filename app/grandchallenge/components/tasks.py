@@ -746,7 +746,7 @@ def lock_model_instance(
     queryset = model.objects.filter(**kwargs)
 
     if select_related is not None:
-        queryset = queryset.select_related(select_related)
+        queryset = queryset.select_related(*select_related)
 
     queryset = queryset.select_for_update(of=of, nowait=True)
 
