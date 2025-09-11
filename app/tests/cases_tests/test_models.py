@@ -526,6 +526,7 @@ def test_deidentify_user_uploads_idempotency(mocker, settings):
 
 @pytest.mark.django_db
 def test_deidentify_user_uploads(mocker, settings):
+    settings.AWS_HEALTH_IMAGING_BUCKET_NAME = "test-bucket"
     di_upload = DICOMImageSetUploadFactory()
     mock_deidentify_files = mocker.patch.object(di_upload, "_deidentify_files")
 
