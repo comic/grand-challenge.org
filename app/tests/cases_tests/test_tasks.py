@@ -257,6 +257,10 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
             "deidentify_user_uploads",
             side_effect=Exception(),
         ),
+        patch.object(
+            DICOMImageSetUpload,
+            "delete_input_files",
+        ) as mocked_delete_input_files,
     ):
         with django_capture_on_commit_callbacks(execute=True):
             import_dicom_to_healthimaging(
@@ -269,6 +273,7 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
     # upload gets marked as failed
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
     assert di_upload.error_message == "An unexpected error occurred"
+    mocked_delete_input_files.assert_called_once()
 
 
 @pytest.mark.django_db
@@ -290,6 +295,10 @@ def test_error_in_start_dicom_import_job(django_capture_on_commit_callbacks):
             DICOMImageSetUpload,
             "deidentify_user_uploads",
         ),
+        patch.object(
+            DICOMImageSetUpload,
+            "delete_input_files",
+        ) as mock_delete_input_files,
     ):
         with django_capture_on_commit_callbacks(execute=True):
             import_dicom_to_healthimaging(
@@ -299,6 +308,7 @@ def test_error_in_start_dicom_import_job(django_capture_on_commit_callbacks):
     di_upload.refresh_from_db()
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
     assert di_upload.error_message == "An unexpected error occurred"
+    mock_delete_input_files.assert_called_once()
 
 
 @pytest.mark.django_db
