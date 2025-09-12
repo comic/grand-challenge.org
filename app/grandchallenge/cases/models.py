@@ -869,15 +869,6 @@ class PostProcessImageTask(UUIDModel):
             )
 
 
-# Fixed placeholders for DICOM elements passed to Deidentifier
-# Important: Do not change as long as HealthImaging is used as storage backend!
-STUDY_DATE = "20000101"
-ACCESSION_NUMBER = ""
-PATIENT_ID = "ANONYMOUS"
-STUDY_ID = ""
-SERIES_NUMBER = "0"
-
-
 def generate_dicom_id_suffix(*, pk, suffix_type):
     """
     Generates a unique numerical suffix for a DICOM UID based on the primary key
