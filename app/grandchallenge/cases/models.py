@@ -878,7 +878,7 @@ STUDY_ID = ""
 SERIES_NUMBER = "0"
 
 
-def generate_dicom_id_suffix(pk: str, suffix_type: str) -> int:
+def generate_dicom_id_suffix(*, pk, suffix_type):
     """
     Generates a unique numerical suffix for a DICOM UID based on the primary key
     and a string to differentiate the type (e.g., 'study' or 'series').
@@ -886,7 +886,7 @@ def generate_dicom_id_suffix(pk: str, suffix_type: str) -> int:
     seed = f"{pk}-{suffix_type}"
 
     digest = hashlib.sha512(seed.encode("utf8")).digest()
-    return int.from_bytes(digest[:14])
+    return str(int.from_bytes(digest[:14]))
 
 
 class DICOMImageSetUploadStatusChoices(models.TextChoices):
@@ -955,10 +955,10 @@ class DICOMImageSetUpload(UUIDModel):
 
     def save(self, *args, **kwargs):
         self.study_instance_uid = generate_dicom_id_suffix(
-            self.pk, suffix_type="study"
+            pk=self.pk, suffix_type="study"
         )
         self.series_instance_uid = generate_dicom_id_suffix(
-            self.pk, suffix_type="series"
+            pk=self.pk, suffix_type="series"
         )
         super().save(*args, **kwargs)
 
@@ -1018,18 +1018,7 @@ class DICOMImageSetUpload(UUIDModel):
         )
 
     def _deidentify_files(self):
-        deid = DicomDeidentifier(
-            # forced_inserts={
-            #     "StudyInstanceUID": self.study_instance_uid,
-            #     "SeriesInstanceUID": self.series_instance_uid,
-            #     "PatientID": PATIENT_ID,
-            #     "StudyID": STUDY_ID,
-            #     "StudyDate": STUDY_DATE,
-            #     "AccessionNumber": ACCESSION_NUMBER,
-            #     "SeriesNumber": SERIES_NUMBER,
-            # },
-            # assert_unique_value_for=["StudyInstanceUID", "SeriesInstanceUID"]
-        )
+        deid = DicomDeidentifier()
         for upload in self.user_uploads.all():
             with (
                 SpooledTemporaryFile() as infile,

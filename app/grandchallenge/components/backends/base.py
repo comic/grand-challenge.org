@@ -60,6 +60,22 @@ def duration_to_millicents(*, duration, usd_cents_per_hour):
 
 
 def list_and_delete_objects_from_prefix(*, s3_client, bucket, prefix):
+    if not (
+        prefix.startswith("/io/")
+        or prefix.startswith("/invocations/")
+        or prefix.startswith("/training-outputs/")
+        or prefix.startswith("/auxiliary-data/")
+        or prefix.startswith("inputs/")
+    ) or bucket not in {
+        settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        settings.COMPONENTS_INPUT_BUCKET_NAME,
+        settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+    }:
+        # Guard against deleting something unexpected
+        raise RuntimeError(
+            "Deleting from this prefix or bucket is not allowed"
+        )
+
     paginator = s3_client.get_paginator("list_objects_v2")
 
     page_iterator = paginator.paginate(
@@ -622,19 +638,6 @@ class Executor(ABC):
 
     def _delete_objects(self, *, bucket, prefix):
         """Deletes all objects with a given prefix"""
-        if not (
-            prefix.startswith("/io/")
-            or prefix.startswith("/invocations/")
-            or prefix.startswith("/training-outputs/")
-            or prefix.startswith("/auxiliary-data/")
-        ) or bucket not in {
-            settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            settings.COMPONENTS_INPUT_BUCKET_NAME,
-        }:
-            # Guard against deleting something unexpected
-            raise RuntimeError(
-                "Deleting from this prefix or bucket is not allowed"
-            )
 
         list_and_delete_objects_from_prefix(
             s3_client=self._s3_client,
