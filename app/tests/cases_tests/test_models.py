@@ -577,7 +577,11 @@ def test_deidentify_files_processes_all_user_uploads(mocker):
 
     di_upload._deidentify_files()
 
-    mock_deid.assert_called_once()
+    mock_deid.assert_called_once_with(
+        study_instance_uid_suffix=di_upload.study_instance_uid,
+        series_instance_uid_suffix=di_upload.series_instance_uid,
+        assert_unique_value_for=["StudyInstanceUID", "SeriesInstanceUID"],
+    )
     assert mock_download.call_count == len(uploads)
     assert mock_upload.call_count == len(uploads)
     assert mock_instance.deidentify_file.call_count == len(uploads)

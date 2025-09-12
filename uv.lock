@@ -1133,15 +1133,15 @@ wheels = [
 
 [[package]]
 name = "grand-challenge-dicom-de-identifier"
-version = "0.0.1"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "grand-challenge-dicom-de-id-procedure" },
     { name = "pydicom" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/06/c9/84f4cb2fd7c2bc4368b2a26ce1f4b09f06fa202d2489e14ecd18e6edf42a/grand_challenge_dicom_de_identifier-0.0.1.tar.gz", hash = "sha256:3fa75a73ceb000de94432cb7886b383fe59de136c036b2eae922f565f81c7859", size = 12551, upload-time = "2025-09-10T07:06:45.417Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/18/36/9f989f4ab812d47b7bc69c60af00b55dcf593645f2d1b1abade6a68281e3/grand_challenge_dicom_de_identifier-0.1.1.tar.gz", hash = "sha256:fa2969a3e82727416b7d4aded37c5475b97756c018c36782e395a41b4e6a7171", size = 14061, upload-time = "2025-09-12T09:17:43.52Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/0e/4a941fa24979370adb14b3abfdb032079c69fcd014a4ac81d94fd1f819df/grand_challenge_dicom_de_identifier-0.0.1-py3-none-any.whl", hash = "sha256:0c548f25479adf88137bb3b30a9cdf9fecbdd593591fbe5646949ff46046d734", size = 10767, upload-time = "2025-09-10T07:06:44.188Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/7c/a0749d268c9a2f4fac420ce3c1cbd39065e01ab98463d78f597e1d3ff2f7/grand_challenge_dicom_de_identifier-0.1.1-py3-none-any.whl", hash = "sha256:905e553beaa09848bc62e60df05399b956c671ce8b88eb2e6c2bd5a484859fce", size = 11556, upload-time = "2025-09-12T09:17:42.318Z" },
 ]
 
 [[package]]
@@ -1283,7 +1283,7 @@ requires-dist = [
     { name = "djangorestframework" },
     { name = "djangorestframework-csv" },
     { name = "drf-spectacular" },
-    { name = "grand-challenge-dicom-de-identifier" },
+    { name = "grand-challenge-dicom-de-identifier", specifier = ">=0.1.1" },
     { name = "grand-challenge-forge", specifier = ">=0.7.1" },
     { name = "gunicorn" },
     { name = "humanize" },

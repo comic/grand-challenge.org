@@ -554,6 +554,7 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         upload.start_dicom_import_job()
     except RejectedDICOMFileError as e:
         upload.mark_failed(error_message=e.justification)
+        upload.user_uploads.all().delete()
         upload.delete_input_files()
     except (
         health_imaging_client.exceptions.ThrottlingException,

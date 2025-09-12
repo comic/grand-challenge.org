@@ -313,9 +313,14 @@ def test_error_in_start_dicom_import_job(django_capture_on_commit_callbacks):
 
 @pytest.mark.django_db
 def test_start_dicom_import_job_sets_error_message_when_deid_fails(
-    django_capture_on_commit_callbacks,
+    django_capture_on_commit_callbacks, mocker
 ):
     di_upload = DICOMImageSetUploadFactory()
+
+    mock_qs = mocker.MagicMock()
+    mocker.patch.object(
+        type(di_upload.user_uploads), "all", return_value=mock_qs
+    )
 
     with (
         patch.object(
@@ -338,6 +343,7 @@ def test_start_dicom_import_job_sets_error_message_when_deid_fails(
         # start_dicom_import_job does not get called
         mocked_import_method.assert_not_called()
         mocked_delete_input_files.assert_called_once()
+        mock_qs.delete.assert_called_once()
 
     di_upload.refresh_from_db()
     # upload gets marked as failed

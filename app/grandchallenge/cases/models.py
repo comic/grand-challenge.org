@@ -1018,7 +1018,11 @@ class DICOMImageSetUpload(UUIDModel):
         )
 
     def _deidentify_files(self):
-        deid = DicomDeidentifier()
+        deid = DicomDeidentifier(
+            study_instance_uid_suffix=self.study_instance_uid,
+            series_instance_uid_suffix=self.series_instance_uid,
+            assert_unique_value_for=["StudyInstanceUID", "SeriesInstanceUID"],
+        )
         for upload in self.user_uploads.all():
             with (
                 SpooledTemporaryFile() as infile,
