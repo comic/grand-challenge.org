@@ -1308,16 +1308,15 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @property
     def budget_fields(self):
         budget_fields = (
-            "expected_number_of_teams",
-            "number_of_tasks",
-            "inference_time_limit_in_minutes",
-            "algorithm_selectable_gpu_type_choices",
-            "algorithm_maximum_settable_memory_gb",
-            "average_size_of_test_image_in_mb",
-            "phase_1_number_of_submissions_per_team",
-            "phase_1_number_of_test_images",
-            "phase_2_number_of_submissions_per_team",
-            "phase_2_number_of_test_images",
+            "inference_time_average_minutes_for_tasks",
+            "algorithm_selectable_gpu_type_choices_for_tasks",
+            "algorithm_maximum_settable_memory_gb_for_tasks",
+            "average_size_test_image_mb_for_tasks",
+            "task_ids",
+            "task_id_for_phases",
+            "number_of_teams_for_phases",
+            "number_of_submissions_per_team_for_phases",
+            "number_of_test_images_for_phases",
         )
         return {
             field.verbose_name: field.value_to_string(self)

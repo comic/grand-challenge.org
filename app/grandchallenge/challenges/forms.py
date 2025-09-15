@@ -522,56 +522,22 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
 
 
 class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
-    algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
-        choices=[
-            (HTMX_BLANK_CHOICE_KEY, GPUTypeChoices.NO_GPU.label),
-            (GPUTypeChoices.T4, GPUTypeChoices.T4.label),
-            (GPUTypeChoices.A10G, GPUTypeChoices.A10G.label),
-        ],
-        widget=forms.CheckboxSelectMultiple,
-        label="Selectable GPU types for algorithm jobs",
-        help_text="The GPU type choices that participants will be able to select for "
-        "their algorithm inference jobs.",
-    )
-
     class Meta:
         model = ChallengeRequest
         fields = (
-            "expected_number_of_teams",
-            "number_of_tasks",
-            "inference_time_limit_in_minutes",
-            "algorithm_selectable_gpu_type_choices",
-            "algorithm_maximum_settable_memory_gb",
-            "average_size_of_test_image_in_mb",
-            "phase_1_number_of_submissions_per_team",
-            "phase_1_number_of_test_images",
-            "phase_2_number_of_submissions_per_team",
-            "phase_2_number_of_test_images",
+            "inference_time_average_minutes_for_tasks",
+            "algorithm_selectable_gpu_type_choices_for_tasks",
+            "algorithm_maximum_settable_memory_gb_for_tasks",
+            "average_size_test_image_mb_for_tasks",
+            "task_ids",
+            "task_id_for_phases",
+            "number_of_teams_for_phases",
+            "number_of_submissions_per_team_for_phases",
+            "number_of_test_images_for_phases",
         )
-        labels = {
-            "phase_1_number_of_submissions_per_team": "Expected number of submissions per team to Phase 1",
-            "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
-            "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
-            "algorithm_maximum_settable_memory_gb": "Maximum memory for algorithm jobs in GB",
-        }
-        help_texts = {
-            "inference_time_limit_in_minutes": (
-                "The average time that you expect an algorithm job to take in minutes. "
-                "This time estimate should account for everything that needs to happen "
-                "for an algorithm container to process <u>one single image, including "
-                "model loading, i/o, preprocessing and inference.</u>"
-            ),
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if "" in (
-            initial := self.instance.algorithm_selectable_gpu_type_choices
-        ):
-            initial[initial.index("")] = HTMX_BLANK_CHOICE_KEY
-            self.fields["algorithm_selectable_gpu_type_choices"].initial = (
-                initial
-            )
         self.helper = FormHelper(self)
         self.helper.form_id = "budget"
         self.helper.attrs.update(
@@ -585,11 +551,3 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
             }
         )
         self.helper.layout.append(Submit("save", "Save"))
-
-    def clean_algorithm_selectable_gpu_type_choices(self):
-        data = self.cleaned_data.get(
-            "algorithm_selectable_gpu_type_choices", []
-        )
-        if HTMX_BLANK_CHOICE_KEY in data:
-            data[data.index(HTMX_BLANK_CHOICE_KEY)] = ""
-        return data
