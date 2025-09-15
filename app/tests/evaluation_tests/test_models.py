@@ -2510,3 +2510,53 @@ def test_method_cannot_be_added_to_external_phase():
         method.full_clean()
 
     assert "You cannot add a method to an external evaluation." in str(e)
+
+
+@pytest.mark.django_db
+def test_has_active_evaluations_filters_on_partially_overlapping_algorithm_interfaces():
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+    interface_1 = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+    interface_2 = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci3])
+    interface_3 = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci4])
+    phase_1 = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    phase_2 = PhaseFactory(
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        challenge=phase_1.challenge,
+    )
+    phase_1.algorithm_interfaces.set([interface_1, interface_2])
+    phase_2.algorithm_interfaces.set([interface_2, interface_3])
+    submission = SubmissionFactory(
+        phase=phase_1, algorithm_image=AlgorithmImageFactory()
+    )
+
+    EvaluationFactory(
+        submission=submission,
+        time_limit=phase_1.evaluation_time_limit,
+    )
+
+    assert phase_2.has_active_evaluations(users={submission.creator})
+
+
+@pytest.mark.django_db
+def test_has_active_evaluations_excludes_disjoint_algorithm_interfaces():
+    ci1, ci2, ci3, ci4 = ComponentInterfaceFactory.create_batch(4)
+    interface_1 = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+    interface_2 = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci3])
+    interface_3 = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci4])
+    phase_1 = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
+    phase_2 = PhaseFactory(
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        challenge=phase_1.challenge,
+    )
+    phase_1.algorithm_interfaces.set([interface_1, interface_2])
+    phase_2.algorithm_interfaces.set([interface_3])
+    submission = SubmissionFactory(
+        phase=phase_1, algorithm_image=AlgorithmImageFactory()
+    )
+
+    EvaluationFactory(
+        submission=submission,
+        time_limit=phase_1.evaluation_time_limit,
+    )
+
+    assert not phase_2.has_active_evaluations(users={submission.creator})
