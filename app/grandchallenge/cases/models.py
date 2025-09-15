@@ -1,8 +1,6 @@
 import copy
-import gzip
 import json
 import logging
-from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
@@ -1177,50 +1175,10 @@ class DICOMImageSetUpload(UUIDModel):
             dicom_image_set_upload=self,
         )
 
-        try:
-            metadata = self.get_image_set_metadata(image_set_id=image_set_id)
-            image_kwargs = self.convert_image_set_metadata_to_image_kwargs(
-                metadata=metadata
-            )
-        except Exception as e:
-            logger.error(e, exc_info=True)
-            image_kwargs = dict(
-                width=0,
-                height=0,
-            )
-
         Image.objects.create(
             dicom_image_set=dicom_image_set,
-            **image_kwargs,
-        )
-
-    def get_image_set_metadata(self, *, image_set_id):
-        response = self._health_imaging_client.get_image_set_metadata(
-            imageSetId=image_set_id,
-            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
-        )
-        return json.loads(
-            gzip.decompress(response["imageSetMetadataBlob"].read())
-        )
-
-    @staticmethod
-    def convert_image_set_metadata_to_image_kwargs(metadata):
-        study = metadata["Study"]
-        study_metadata = study["DICOM"]
-        series = next(iter(study["Series"].values()))
-        series_metadata = series["DICOM"]
-        instance = next(iter(series["Instances"].values()))
-        instance_metadata = instance["DICOM"]
-
-        return dict(
-            height=instance_metadata["Rows"],
-            width=instance_metadata["Columns"],
-            modality=ImagingModality.objects.get(
-                modality=series_metadata["Modality"]
-            ),
-            study_instance_uid=study_metadata["StudyInstanceUID"],
-            study_date=datetime.strptime(
-                study_metadata["StudyDate"], "%Y%m%d"
-            ),
-            series_instance_uid=series_metadata["SeriesInstanceUID"],
+            # name="",  # todo: get name for set during upload
+            color_space=ColorSpace.GRAY.value,
+            width=-1,
+            height=-1,
         )
