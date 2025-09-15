@@ -276,9 +276,17 @@ function deidentifyDataset(
 function setDeidentificationMethodTag(dataset, version) {
     const tagKey = "00120063"; // DICOM tag for De-identification Method
     const vr = "LO";
-    const method = `De-identified by Grand Challenge client-side using procedure version ${version} on ${new Date().toISOString()}.`;
-    if (dataset[tagKey]) {
-        dataset[tagKey].Value[0] += `; ${method}`;
+    const method = `grand-challenge-dicom-client-de-identifier:procedure:${version}:date:${new Date().toISOString()}`;
+    const existing = dataset[tagKey]?.Value;
+    if (existing && existing.length > 0) {
+        let methods;
+        if (existing.length === 1) {
+            methods = [existing[0]];
+        } else {
+            methods = existing.slice();
+        }
+        methods.push(method);
+        dataset[tagKey] = { vr: vr, Value: methods };
     } else {
         dataset[tagKey] = {
             vr: vr,
