@@ -354,4 +354,19 @@ describe("preprocessDicomFile", () => {
         );
         expect(processedSequence[0]["00540017"]).toBeUndefined();
     });
+
+    test("should set Patient Identity Removed tag (0012,0062) to 'YES'", async () => {
+        const file = createDicomFile({
+            "00100010": { vr: "PN", Value: ["Patient Name"] },
+        });
+        // No special procedure required; use defaults
+        global.GrandChallengeDICOMDeIdProcedure = {};
+
+        const processedFile = await preprocessDicomFile(file);
+        const dataset = await getProcessedDataset(processedFile);
+
+        expect(dataset["00120062"]).toBeDefined();
+        expect(dataset["00120062"].vr).toBe("CS");
+        expect(dataset["00120062"].Value[0]).toBe("YES");
+    });
 });

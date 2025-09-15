@@ -288,6 +288,23 @@ function setDeidentificationMethodTag(dataset, version) {
     return dataset;
 }
 
+function setPatientIdentityRemovedTag(dataset) {
+    const tagKey = "00120062"; // DICOM tag for Patient Identity Removed
+    const vr = "CS";
+    const value = "YES";
+    if (dataset[tagKey]) {
+        // Overwrite or ensure value is YES
+        dataset[tagKey].vr = vr;
+        dataset[tagKey].Value[0] = value;
+    } else {
+        dataset[tagKey] = {
+            vr: vr,
+            Value: [value],
+        };
+    }
+    return dataset;
+}
+
 async function preprocessDicomFile(file) {
     if (
         typeof dcmjs === "undefined" ||
@@ -316,6 +333,7 @@ async function preprocessDicomFile(file) {
         newDataset,
         protocol.version || "unknown",
     );
+    newDataset = setPatientIdentityRemovedTag(newDataset);
     const dicomDict = new dcmjs.data.DicomDict(dicomData.meta);
     dicomDict.dict = newDataset;
     dicomDict._elements = dicomData._elements;
