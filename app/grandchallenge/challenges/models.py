@@ -1051,6 +1051,23 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             MaxValueValidator(limit_value=60),
         ],
     )
+    inference_time_average_minutes_for_tasks = models.JSONField(
+        help_text="Average run time per algorithm job in minutes, for each task.",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 5,
+                        "maximum": 60,
+                    },
+                }
+            )
+        ],
+    )
     algorithm_selectable_gpu_type_choices = models.JSONField(
         default=get_default_gpu_type_choices,
         help_text=(
@@ -1060,8 +1077,40 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ),
         validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
     )
+    algorithm_selectable_gpu_type_choices_for_tasks = models.JSONField(
+        default=list,
+        help_text=(
+            "The GPU type choices that participants will be able to select for their "
+            "algorithm inference jobs, for each task. Options are "
+            f"{GPUTypeChoices.values}.".replace("'", '"')
+        ),
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "title": "The Selectable GPU Types Schema",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "enum": GPUTypeChoices.values,
+                            "type": "string",
+                        },
+                        "uniqueItems": True,
+                    },
+                }
+            )
+        ],
+    )
     algorithm_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
         default=settings.ALGORITHMS_MAX_MEMORY_GB,
+        help_text=(
+            "Maximum amount of main memory (DRAM) that participants will be allowed to "
+            "assign to algorithm inference jobs for submission."
+        ),
+    )
+    algorithm_maximum_settable_memory_gb_for_tasks = models.JSONField(
+        default=list,
         help_text=(
             "Maximum amount of main memory (DRAM) that participants will be allowed to "
             "assign to algorithm inference jobs for submission."
@@ -1072,6 +1121,23 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         validators=[
             MinValueValidator(limit_value=1),
             MaxValueValidator(limit_value=10000),
+        ],
+    )
+    average_size_test_image_mb_for_tasks = models.JSONField(
+        help_text="Average size of a test image in MB.",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000,
+                    },
+                }
+            )
         ],
     )
     phase_1_number_of_submissions_per_team = models.PositiveIntegerField(
@@ -1123,6 +1189,36 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         help_text="If your challenge has multiple tasks, we multiply the "
         "phase 1 and 2 cost estimates by the number of tasks.",
         validators=[MinValueValidator(limit_value=1)],
+    )
+    task_ids = models.JSONField(
+        help_text="List the task id's, e.g. [1, 2, 3].",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                    },
+                }
+            )
+        ],
+    )
+    task_id_for_phases = models.JSONField(
+        help_text="Indicate which phase belongs to which task, e.g. [1, 1, 2, 2] means the first two phases below to task 1, the last two phases below to task 2.",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                    },
+                }
+            )
+        ],
     )
     data_license = models.BooleanField(
         default=False,
@@ -1230,6 +1326,26 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         }
 
     @cached_property
+    def task_index_for_phases(self):
+        return [
+            self.task_ids.index(task_id) for task_id in self.task_id_for_phases
+        ]
+
+    @cached_property
+    def inference_time_average_minutes_for_phases(self):
+        return [
+            self.inference_time_average_minutes_for_tasks[task_index]
+            for task_index in self.task_index_for_phases
+        ]
+
+    @cached_property
+    def average_size_test_image_mb_for_phases(self):
+        return [
+            self.average_size_test_image_mb_for_tasks[task_index]
+            for task_index in self.task_index_for_phases
+        ]
+
+    @cached_property
     def number_of_submissions_for_phases(self):
         return [
             n_submissions * n_teams
@@ -1262,9 +1378,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @cached_property
     def compute_time_for_phases(self):
         return [
-            n_jobs
-            * datetime.timedelta(minutes=self.inference_time_limit_in_minutes)
-            for n_jobs in self.number_of_algorithm_jobs_for_phases
+            n_jobs * datetime.timedelta(minutes=average_minutes)
+            for n_jobs, average_minutes in zip(
+                self.number_of_algorithm_jobs_for_phases,
+                self.inference_time_average_minutes_for_phases,
+                strict=True,
+            )
         ]
 
     @property
@@ -1274,11 +1393,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @cached_property
     def data_storage_size_gb_for_phases(self):
         return [
-            n_images
-            * self.average_size_of_test_image_in_mb
-            * settings.MEGABYTE
-            / settings.GIGABYTE
-            for n_images in self.number_of_test_images_for_phases
+            n_images * image_mb * settings.MEGABYTE / settings.GIGABYTE
+            for n_images, image_mb in zip(
+                self.number_of_test_images_for_phases,
+                self.average_size_test_image_mb_for_phases,
+                strict=True,
+            )
         ]
 
     @property
@@ -1313,22 +1433,42 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         return math.ceil(euros * 100) / 100
 
     @cached_property
-    def compute_costs_euros_per_hour(self):
-        executors = [
-            import_string(settings.COMPONENTS_DEFAULT_BACKEND)(
-                job_id="",
-                exec_image_repo_tag="",
-                memory_limit=self.algorithm_maximum_settable_memory_gb,
-                time_limit=self.inference_time_limit_in_minutes,
-                requires_gpu_type=gpu_type,
-                use_warm_pool=False,
-            )
-            for gpu_type in self.algorithm_selectable_gpu_type_choices
-        ]
-        usd_cents_per_hour = max(
-            executor.usd_cents_per_hour for executor in executors
+    def compute_costs_euros_per_hour_for_tasks(self):
+        Executor = import_string(  # noqa: N806
+            settings.COMPONENTS_DEFAULT_BACKEND
         )
-        return usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR / 100
+        costs_for_tasks = []
+        for gpu_choices, max_memory_gb, average_time in zip(
+            self.algorithm_selectable_gpu_type_choices_for_tasks,
+            self.algorithm_maximum_settable_memory_gb_for_tasks,
+            self.inference_time_average_minutes_for_tasks,
+            strict=True,
+        ):
+            executors = [
+                Executor(
+                    job_id="",
+                    exec_image_repo_tag="",
+                    memory_limit=max_memory_gb,
+                    time_limit=average_time,
+                    requires_gpu_type=gpu_type,
+                    use_warm_pool=False,
+                )
+                for gpu_type in gpu_choices
+            ]
+            usd_cents_per_hour = max(
+                executor.usd_cents_per_hour for executor in executors
+            )
+            costs_for_tasks.append(
+                usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR / 100
+            )
+        return costs_for_tasks
+
+    @cached_property
+    def compute_costs_euros_per_hour_for_phases(self):
+        return [
+            self.compute_costs_euros_per_hour_for_tasks[task_index]
+            for task_index in self.task_index_for_phases
+        ]
 
     @property
     def storage_costs_euros_per_gb(self):
@@ -1347,11 +1487,15 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     def compute_costs_euros_for_phases(self):
         return [
             self.round_to_cents(
-                self.compute_costs_euros_per_hour
+                compute_costs_euros_per_hour
                 * compute_time.total_seconds()
                 / 3600
             )
-            for compute_time in self.compute_time_for_phases
+            for compute_time, compute_costs_euros_per_hour in zip(
+                self.compute_time_for_phases,
+                self.compute_costs_euros_per_hour_for_phases,
+                strict=True,
+            )
         ]
 
     @cached_property
