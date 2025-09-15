@@ -2,6 +2,8 @@
 {% load naturaldelta %}
 {% load costs %}
 {% load timedelta %}
+{% load index %}
+{% load budget %}
 
 <p>
 Based on the following information provided by the challenge requester:
@@ -102,6 +104,122 @@ Based on the following information provided by the challenge requester:
 
 <h4>Capacity reservation estimate</h4>
 
+
+{% for task_id in object.task_ids %}
+    {% with task_idx=forloop.counter0 %}
+
+        <h5>Costs for task {{ task_id }}</h5>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-sm">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Item</th>
+                        <th class="col-5">Description</th>
+                        <th class="text-right">Price per unit</th>
+                        <th>Number</th>
+                        <th>Unit</th>
+                        <th class="text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% get_phase_indices_for_task object.task_id_for_phases task_id as phase_indices %}
+                    {% for phase_idx in phase_indices %}
+                        {% with phase_total_euros=object.total_euros_for_phases|index:phase_idx %}
+                        {% with n_submissions=object.number_of_submissions_per_team_for_phases|index:phase_idx %}
+                        {% with n_teams=object.number_of_teams_for_phases|index:phase_idx %}
+                        {% with n_images=object.number_of_test_images_for_phases|index:phase_idx %}
+                        {% with avg_job_time=object.inference_time_average_minutes_for_tasks|index:task_idx %}
+                        {% with compute_costs_per_hour=object.compute_costs_euros_per_hour_for_tasks|index:task_idx %}
+                        {% with compute_time=object.compute_time_for_phases|index:phase_idx %}
+                        {% with compute_costs=object.compute_costs_euros_for_phases|index:phase_idx %}
+                        {% with data_storage_size=object.data_storage_size_gb_for_phases|index:phase_idx %}
+                        {% with data_storage_costs=object.data_storage_costs_euros_for_phases|index:phase_idx %}
+                        {% with avg_image_size=object.average_size_test_image_mb_for_tasks|index:task_idx %}
+
+                            <tr>
+                                <td>Compute phase {{ forloop.counter }}</td>
+                                <td>{{ n_submissions }} submission{{ n_submissions|pluralize }} times {{ n_teams }} teams times {{ n_images }} image{{ n_images|pluralize }} times {{ avg_job_time }} minutes average job time per image</td>
+                                <td class="text-right">{{ compute_costs_per_hour|euro }}</td>
+                                <td>{{ compute_time|total_hours|floatformat }}</td>
+                                <td>Hours</td>
+                                <td class="text-right">{{ compute_costs|euro }}</td>
+                            </tr>
+                            <tr>
+                                <td>Data storage phase {{ forloop.counter }}</td>
+                                <td>{{ n_images }} image{{ n_images|pluralize }}, average size {{ avg_image_size }} MB, for 5 years</td>
+                                <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
+                                <td>{{ data_storage_size|floatformat }}</td>
+                                <td>GB</td>
+                                <td class="text-right">{{ data_storage_costs|euro }}</td>
+                            </tr>
+                            <tr class="table-light">
+                                <td>Total phase {{ forloop.counter }}</td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td class="text-right">{{ phase_total_euros|euro }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="6">&nbsp;</td>
+                            </tr>
+
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                    {% endfor %}
+
+                    {% with n_dockers_per_team=object.number_of_docker_images_per_team_for_tasks|index:task_idx %}
+                    {% with n_teams=object.number_of_teams_for_tasks|index:task_idx %}
+                    {% with docker_storage_size_gb=object.docker_storage_size_gb_for_tasks|index:task_idx %}
+                    {% with docker_storage_costs_euros=object.docker_storage_costs_euros_for_tasks|index:task_idx %}
+
+                        <tr>
+                            <td>Container storage task {{ task_id }}</td>
+                            <td>{{ n_dockers_per_team }} unique submission{{ n_dockers_per_team|pluralize }} times {{ n_teams }} teams times {{ object.average_algorithm_container_size_in_gb }} GB per container, for 5 years</td>
+                            <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
+                            <td>{{ docker_storage_size_gb|floatformat }}</td>
+                            <td>GB</td>
+                            <td class="text-right">{{ docker_storage_costs_euros|euro }}</td>
+                        </tr>
+
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+
+                    <tr>
+                        <td class="font-weight-bold" colspan="5">Total compute task {{ task_id }}</td>
+                        <td class="text-right font-weight-bold">{{ object.compute_costs_euros_for_tasks|index:task_idx|euro }}</td>
+                    </tr>
+                    <tr>
+                        <td class="font-weight-bold" colspan="5">Total storage task {{ task_id }}</td>
+                        <td class="text-right font-weight-bold">{{ object.total_storage_costs_euros_for_tasks|index:task_idx|euro }}</td>
+                    </tr>
+                    <tr class="table-light">
+                        <td class="font-weight-bold border-top border-dark" colspan="5">Total task {{ task_id }}</td>
+                        <td class="text-right font-weight-bold border-top border-dark">{{ object.total_compute_and_storage_costs_euros_for_tasks|index:task_idx|euro }}</td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+    {% endwith %}
+{% endfor %}
+
+<br>
+
 <div class="table-responsive">
     <table class="table table-hover table-sm">
         <thead class="thead-light">
@@ -115,43 +233,8 @@ Based on the following information provided by the challenge requester:
             </tr>
         </thead>
         <tbody>
-            {% for phase in object.costs_for_phases %}
-                <tr>
-                    <td>Compute {{ phase.name }}</td>
-                    <td>{{ phase.number_of_submissions_per_team }} submissions times {{ object.expected_number_of_teams }} teams times {{ phase.number_of_test_images }} images times {{ object.inference_time_limit_in_minutes }} minutes average job time per image</td>
-                    <td class="text-right">{{ object.compute_costs_euros_per_hour|euro }}</td>
-                    <td>{{ phase.compute_time|total_hours|floatformat }}</td>
-                    <td>Hours</td>
-                    <td class="text-right">{{ phase.compute_costs_euros|euro }}</td>
-                </tr>
-                <tr>
-                    <td>Data storage {{ phase.name }}</td>
-                    <td>{{ phase.number_of_test_images }} images, average size {{ object.average_size_of_test_image_in_mb }} MB, for 5 years</td>
-                    <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
-                    <td>{{ phase.data_storage_size_gb|floatformat }}</td>
-                    <td>GB</td>
-                    <td class="text-right">{{ phase.data_storage_costs_euros|euro }}</td>
-                </tr>
-                <tr class="table-light">
-                    <td>Total {{ phase.name }}</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td class="text-right">{{ phase.total_euros|euro }}</td>
-                </tr>
-                <tr>
-                    <td colspan="6">&nbsp;</td>
-                </tr>
-            {% endfor %}
-            <tr>
-                <td>Container storage</td>
-                <td>{{ object.num_unique_docker_images_per_team }} unique submissions times {{ object.expected_number_of_teams }} teams times {{ object.average_algorithm_container_size_in_gb }} GB per container, for 5 years</td>
-                <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
-                <td>{{ object.docker_storage_size_gb|floatformat }}</td>
-                <td>GB</td>
-                <td class="text-right">{{ object.docker_storage_costs_euros|euro }}</td>
-            </tr>
+
+
             <tr>
                 <td class="font-weight-bold" colspan="5">Total compute</td>
                 <td class="text-right font-weight-bold">{{ object.total_compute_costs_euros|euro }}</td>

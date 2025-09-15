@@ -1402,17 +1402,49 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
 
     @property
-    def number_of_docker_images_per_team(self):
+    def number_of_docker_images_per_team_for_tasks(self):
         # A docker for a later phase should also be submitted to an earlier one.
-        return self.number_of_submissions_per_team_for_phases[0]
+        return [
+            self.number_of_submissions_per_team_for_phases[
+                self.task_id_for_phases.index(task_id)
+            ]
+            for task_id in self.task_ids
+        ]
+
+    @property
+    def number_of_teams_for_tasks(self):
+        return [
+            self.number_of_teams_for_phases[
+                self.task_id_for_phases.index(task_id)
+            ]
+            for task_id in self.task_ids
+        ]
+
+    @property
+    def number_of_docker_images_for_tasks(self):
+        # A docker for a later phase should also be submitted to an earlier one.
+        return [
+            self.number_of_submissions_for_phases[
+                self.task_id_for_phases.index(task_id)
+            ]
+            for task_id in self.task_ids
+        ]
+
+    @property
+    def docker_storage_size_gb_for_tasks(self):
+        return [
+            self.average_algorithm_container_size_in_gb
+            * number_of_docker_images
+            for number_of_docker_images in self.number_of_docker_images_for_tasks
+        ]
 
     @property
     def total_number_of_docker_images(self):
         # A docker for a later phase should also be submitted to an earlier one.
-        return self.number_of_submissions_for_phases[0]
+        return sum(self.number_of_docker_images_for_tasks)
 
     @property
-    def docker_storage_size_gb(self):
+    def total_docker_storage_size_gb(self):
         return (
             self.average_algorithm_container_size_in_gb
             * self.total_number_of_docker_images
@@ -1420,7 +1452,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @property
     def total_data_and_docker_storage_gb(self):
-        return self.docker_storage_size_gb + sum(
+        return self.total_docker_storage_size_gb + sum(
             self.data_storage_size_gb_for_phases
         )
 
@@ -1517,10 +1549,15 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
 
     @property
+    def docker_storage_costs_euros_for_tasks(self):
+        return [
+            self.round_to_cents(self.storage_costs_euros_per_gb * size_gb)
+            for size_gb in self.docker_storage_size_gb_for_tasks
+        ]
+
+    @property
     def docker_storage_costs_euros(self):
-        return self.round_to_cents(
-            self.storage_costs_euros_per_gb * self.docker_storage_size_gb
-        )
+        return sum(self.docker_storage_costs_euros_for_tasks)
 
     @cached_property
     def base_cost_euros(self):
@@ -1533,6 +1570,58 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             return 0
         else:
             return settings.CHALLENGE_BASE_COST_IN_EURO
+
+    @cached_property
+    def data_storage_costs_euros_for_tasks(self):
+        return [
+            sum(
+                [
+                    self.data_storage_costs_euros_for_phases[phase_index]
+                    for phase_index, task_id_phase in enumerate(
+                        self.task_id_for_phases
+                    )
+                    if task_id_phase == task_id
+                ]
+            )
+            for task_id in self.task_ids
+        ]
+
+    @cached_property
+    def compute_costs_euros_for_tasks(self):
+        return [
+            sum(
+                [
+                    self.compute_costs_euros_for_phases[phase_index]
+                    for phase_index, task_id_phase in enumerate(
+                        self.task_id_for_phases
+                    )
+                    if task_id_phase == task_id
+                ]
+            )
+            for task_id in self.task_ids
+        ]
+
+    @property
+    def total_storage_costs_euros_for_tasks(self):
+        return [
+            docker_storage_costs_euros + data_storage_costs_euros
+            for docker_storage_costs_euros, data_storage_costs_euros in zip(
+                self.docker_storage_costs_euros_for_tasks,
+                self.data_storage_costs_euros_for_tasks,
+                strict=True,
+            )
+        ]
+
+    @property
+    def total_compute_and_storage_costs_euros_for_tasks(self):
+        return [
+            storage_costs_euros + compute_costs_euros
+            for storage_costs_euros, compute_costs_euros in zip(
+                self.total_storage_costs_euros_for_tasks,
+                self.compute_costs_euros_for_tasks,
+                strict=True,
+            )
+        ]
 
     @property
     def total_storage_costs_euros(self):
