@@ -1,3 +1,5 @@
+const GRAND_CHALLENGE_ROOT_UID = "1.2.826.0.1.3680043.10.1666.";
+
 /**
  * Returns a dummy value based on the DICOM Value Representation (VR).
  * This is used to replace sensitive data during de-identification.
@@ -136,6 +138,15 @@ async function isDicomFile(file) {
 
 const uidMap = new Map(); // Map to store unique identifiers for UIDs
 
+const generateUid = () => {
+    let uid = GRAND_CHALLENGE_ROOT_UID + Math.floor(1 + Math.random() * 9);
+    const numbersToAdd = 64 - uid.length;
+    for (let index = 0; index < numbersToAdd; index++) {
+        uid = uid + Math.floor(Math.random() * 10);
+    }
+    return uid;
+};
+
 // Recursive de-identification for a dataset (object with DICOM tags)
 function deidentifyDataset(
     dataset,
@@ -250,10 +261,7 @@ function deidentifyDataset(
             case "U":
                 if (tagValue) {
                     if (!uidMap.has(tagValue)) {
-                        uidMap.set(
-                            tagValue,
-                            dcmjs.data.DicomMetaDictionary.uid(),
-                        );
+                        uidMap.set(tagValue, generateUid());
                     }
                     newDataset[tagKey] = {
                         ...dataset[tagKey],
@@ -378,6 +386,7 @@ globalThis.UPPY_FILE_PREPROCESSORS = [
 // Export for testing in Node.js environment
 if (typeof module !== "undefined" && module.exports) {
     module.exports = {
+        GRAND_CHALLENGE_ROOT_UID,
         getDummyValue,
         isDicomFile,
         preprocessDicomFile,
