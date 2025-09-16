@@ -2,7 +2,6 @@ import uuid
 from datetime import timedelta
 
 from celery.utils.log import get_task_logger
-from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -352,10 +351,6 @@ def handle_failed_jobs(*, evaluation_pk):
     # Cancel any pending jobs for this algorithm image,
     # we could limit by archive here but if non-evaluation
     # jobs are cancelled then it is no big loss.
-    Job = apps.get_model(  # noqa: N806
-        app_label="algorithms", model_name="Job"
-    )
-
     with check_lock_acquired():
         Job.objects.filter(
             creator=None,
@@ -493,12 +488,7 @@ def filter_by_creators_best(*, evaluations, ranks):
 )
 @transaction.atomic
 def calculate_ranks(*, phase_pk: uuid.UUID):
-    Phase = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Phase"
-    )
-    Evaluation = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Evaluation"
-    )
+    from grandchallenge.evaluation.models import Evaluation, Phase
 
     phase = Phase.objects.get(pk=phase_pk)
 
@@ -567,9 +557,7 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
 @acks_late_2xlarge_task
 @transaction.atomic
 def update_combined_leaderboard(*, pk):
-    CombinedLeaderboard = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="CombinedLeaderboard"
-    )
+    from grandchallenge.evaluation.models import CombinedLeaderboard
 
     leaderboard = CombinedLeaderboard.objects.get(pk=pk)
     leaderboard.update_combined_ranks_cache()
@@ -578,9 +566,8 @@ def update_combined_leaderboard(*, pk):
 @acks_late_2xlarge_task
 @transaction.atomic
 def assign_evaluation_permissions(*, phase_pks: uuid.UUID):
-    Evaluation = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Evaluation"
-    )
+    from grandchallenge.evaluation.models import Evaluation
+
     evals = Evaluation.objects.filter(
         submission__phase__id__in=phase_pks,
     )
@@ -592,9 +579,8 @@ def assign_evaluation_permissions(*, phase_pks: uuid.UUID):
 @acks_late_2xlarge_task
 @transaction.atomic
 def assign_submission_permissions(*, phase_pk: uuid.UUID):
-    Submission = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Submission"
-    )
+    from grandchallenge.evaluation.models import Submission
+
     for sub in Submission.objects.filter(phase__id=phase_pk):
         sub.assign_permissions()
 
@@ -602,9 +588,8 @@ def assign_submission_permissions(*, phase_pk: uuid.UUID):
 @acks_late_micro_short_task
 @transaction.atomic
 def cancel_external_evaluations_past_timeout():
-    Evaluation = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Evaluation"
-    )
+    from grandchallenge.evaluation.models import Evaluation
+
     timeout_threshold = now() - timedelta(
         seconds=settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS
     )
