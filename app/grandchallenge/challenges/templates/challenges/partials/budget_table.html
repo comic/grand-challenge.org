@@ -197,7 +197,7 @@ Based on the following information provided by the challenge requester:
 
                     <tr>
                         <td class="font-weight-bold" colspan="5">Total compute task {{ task_id }}</td>
-                        <td class="text-right font-weight-bold">{{ object.compute_costs_euros_for_tasks|index:task_idx|euro }}</td>
+                        <td class="text-right font-weight-bold">{{ object.total_compute_costs_euros_for_tasks|index:task_idx|euro }}</td>
                     </tr>
                     <tr>
                         <td class="font-weight-bold" colspan="5">Total storage task {{ task_id }}</td>
