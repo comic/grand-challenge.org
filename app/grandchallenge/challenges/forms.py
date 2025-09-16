@@ -594,18 +594,38 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         if not self._clean_all_fields_nonempty_cleaned_data(cleaned_data):
             raise ValidationError("Please fix the errors below.")
 
-        self._clean_task_lists_equal_length(cleaned_data)
-        self._clean_task_id_for_phases(cleaned_data)
+        task_ids = cleaned_data.get("task_ids")
+        task_id_for_phases = cleaned_data.get("task_id_for_phases")
 
-        if not self._clean_phases_lists_equal_length(cleaned_data):
+        self._clean_task_lists_equal_length(cleaned_data)
+
+        self._clean_task_id_for_phases(task_ids, task_id_for_phases)
+
+        if not self._clean_phases_lists_equal_length(
+            task_id_for_phases, cleaned_data
+        ):
             raise ValidationError(
                 "All fields defining phases must be of equal length."
             )
-        self._clean_later_phases_not_more_teams_or_submissions(cleaned_data)
+        self._clean_later_phases_not_more_teams_or_submissions(
+            task_id_for_phases, cleaned_data
+        )
 
         return cleaned_data
 
     def _clean_all_fields_nonempty_cleaned_data(self, cleaned_data):
+        print(
+            [cleaned_data.get(field_name) for field_name in self._meta.fields]
+        )
+        print(
+            "all is ",
+            all(
+                [
+                    cleaned_data.get(field_name)
+                    for field_name in self._meta.fields
+                ]
+            ),
+        )
         return all(
             [cleaned_data.get(field_name) for field_name in self._meta.fields]
         )
@@ -625,10 +645,7 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
                     field_name, "Must be of equal length as number of tasks."
                 )
 
-    def _clean_task_id_for_phases(self, cleaned_data):
-        task_ids = cleaned_data.get("task_ids")
-        task_id_for_phases = cleaned_data.get("task_id_for_phases")
-
+    def _clean_task_id_for_phases(self, task_ids, task_id_for_phases):
         if not set(task_id_for_phases).issubset(task_ids):
             self.add_error(
                 "task_id_for_phases", "Ids must be defined in task ids."
@@ -636,8 +653,9 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         elif set(task_id_for_phases) != set(task_ids):
             self.add_error("task_id_for_phases", "Not all task ids are used.")
 
-    def _clean_phases_lists_equal_length(self, cleaned_data):
-        task_id_for_phases = cleaned_data.get("task_id_for_phases")
+    def _clean_phases_lists_equal_length(
+        self, task_id_for_phases, cleaned_data
+    ):
         all_phases_list_equal_length = True
 
         for field_name in (
@@ -654,9 +672,9 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
 
         return all_phases_list_equal_length
 
-    def _clean_later_phases_not_more_teams_or_submissions(self, cleaned_data):
-        task_id_for_phases = cleaned_data.get("task_id_for_phases")
-
+    def _clean_later_phases_not_more_teams_or_submissions(
+        self, task_id_for_phases, cleaned_data
+    ):
         for field_name in (
             "number_of_teams_for_phases",
             "number_of_submissions_per_team_for_phases",
