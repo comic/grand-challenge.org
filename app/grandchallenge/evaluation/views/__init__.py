@@ -38,6 +38,7 @@ from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.algorithms.views import AlgorithmInterfaceCreateBase
 from grandchallenge.archives.models import Archive
+from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
@@ -1152,6 +1153,28 @@ class ConfigureAlgorithmPhasesView(
 
         for user in phase.challenge.admins_group.user_set.all():
             archive.add_editor(user)
+
+        try:
+            challenge_request = ChallengeRequest.objects.get(
+                short_name=phase.challenge.short_name
+            )
+        except ObjectDoesNotExist:
+            pass
+        else:
+            # Fill in runtime limits from challenge request if there is only one task.
+            if len(challenge_request.task_ids) == 1:
+                phase.algorithm_selectable_gpu_type_choices = challenge_request.algorithm_selectable_gpu_type_choices_for_tasks[
+                    0
+                ]
+                phase.algorithm_maximum_settable_memory_gb = challenge_request.algorithm_maximum_settable_memory_gb_for_tasks[
+                    0
+                ]
+                phase.algorithm_time_limit = (
+                    challenge_request.inference_time_average_minutes_for_tasks[
+                        0
+                    ]
+                    * 60
+                )
 
         phase.archive = archive
         phase.submission_kind = phase.SubmissionKindChoices.ALGORITHM
