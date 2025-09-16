@@ -506,13 +506,13 @@ def test_archive_and_reader_study_forms_view_content_help_text(
     )
     civ_list = [ComponentInterfaceValueFactory(interface=ci) for ci in ci_list]
 
-    object = object_factory()
-    object.values.set(civ_list)
+    instance = object_factory()
+    instance.values.set(civ_list)
 
-    form = form_class(user=UserFactory(), instance=object.base_object)
+    form = form_class(user=UserFactory(), instance=instance.base_object)
 
     assert form.fields["view_content"].help_text == format_lazy(
-        expected_help_text, object.base_object._meta.verbose_name
+        expected_help_text, instance.base_object._meta.verbose_name
     )
 
 
@@ -827,8 +827,8 @@ def test_reader_study_forms_view_content_example_with_hanging_protocol(
     )
     civ_list = [ComponentInterfaceValueFactory(interface=ci) for ci in ci_list]
 
-    object = DisplaySetFactory()
-    object.values.set(civ_list)
+    instance = DisplaySetFactory()
+    instance.values.set(civ_list)
 
     ws = WorkstationFactory()
     creator = UserFactory()

@@ -47,15 +47,15 @@ class UserUploadViewSet(
         url_path="(?P<s3_upload_id>[^/]+)/list-parts",
     )
     def list_parts(self, request, pk, s3_upload_id):
-        object = self.get_object()
+        instance = self.get_object()
 
-        if object.s3_upload_id != s3_upload_id:
+        if instance.s3_upload_id != s3_upload_id:
             logger.warning(
-                f"Upload ID did not match: {object=}, {s3_upload_id=}"
+                f"Upload ID did not match: {instance=}, {s3_upload_id=}"
             )
             raise Http404
 
-        serializer = self.get_serializer(instance=object)
+        serializer = self.get_serializer(instance=instance)
         return Response(data=serializer.data)
 
     @action(
@@ -65,19 +65,19 @@ class UserUploadViewSet(
         url_path="(?P<s3_upload_id>[^/]+)/generate-presigned-urls",
     )
     def generate_presigned_urls(self, request, pk, s3_upload_id):
-        object = self.get_object()
+        instance = self.get_object()
 
-        if object.s3_upload_id != s3_upload_id:
+        if instance.s3_upload_id != s3_upload_id:
             logger.warning(
-                f"Upload ID did not match: {object=}, {s3_upload_id=}"
+                f"Upload ID did not match: {instance=}, {s3_upload_id=}"
             )
             raise Http404
 
-        if not object.can_upload_more:
+        if not instance.can_upload_more:
             self.permission_denied(request, message="Upload limit reached")
 
         serializer = self.get_serializer(
-            instance=object, data=request.data, partial=True
+            instance=instance, data=request.data, partial=True
         )
 
         if serializer.is_valid():
@@ -94,16 +94,16 @@ class UserUploadViewSet(
         url_path="(?P<s3_upload_id>[^/]+)/complete-multipart-upload",
     )
     def complete_multipart_upload(self, request, pk, s3_upload_id):
-        object = self.get_object()
+        instance = self.get_object()
 
-        if object.s3_upload_id != s3_upload_id:
+        if instance.s3_upload_id != s3_upload_id:
             logger.warning(
-                f"Upload ID did not match: {object=}, {s3_upload_id=}"
+                f"Upload ID did not match: {instance=}, {s3_upload_id=}"
             )
             raise Http404
 
         serializer = self.get_serializer(
-            instance=object, data=request.data, partial=True
+            instance=instance, data=request.data, partial=True
         )
 
         if serializer.is_valid():
@@ -120,16 +120,16 @@ class UserUploadViewSet(
         url_path="(?P<s3_upload_id>[^/]+)/abort-multipart-upload",
     )
     def abort_multipart_upload(self, request, pk, s3_upload_id):
-        object = self.get_object()
+        instance = self.get_object()
 
-        if object.s3_upload_id != s3_upload_id:
+        if instance.s3_upload_id != s3_upload_id:
             logger.warning(
-                f"Upload ID did not match: {object=}, {s3_upload_id=}"
+                f"Upload ID did not match: {instance=}, {s3_upload_id=}"
             )
             raise Http404
 
-        object.abort_multipart_upload()
-        object.save()
+        instance.abort_multipart_upload()
+        instance.save()
 
-        serializer = self.get_serializer(instance=object)
+        serializer = self.get_serializer(instance=instance)
         return Response(serializer.data)
