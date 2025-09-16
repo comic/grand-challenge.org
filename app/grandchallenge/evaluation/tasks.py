@@ -356,9 +356,7 @@ def handle_failed_jobs(*, evaluation_pk):
             creator=None,
             algorithm_image_id=evaluation.submission.algorithm_image_id,
             status__in=[Job.PENDING, Job.PROVISIONED, Job.RETRY],
-        ).select_for_update(of=("self",), skip_locked=True).update(
-            status=Job.CANCELLED
-        )
+        ).select_for_update(skip_locked=True).update(status=Job.CANCELLED)
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
@@ -382,9 +380,9 @@ def set_evaluation_inputs(*, evaluation_pk):
     from grandchallenge.evaluation.models import Evaluation
 
     with check_lock_acquired():
-        evaluation = Evaluation.objects.select_for_update(
-            nowait=True, of=("self",)
-        ).get(pk=evaluation_pk)
+        evaluation = Evaluation.objects.select_for_update(nowait=True).get(
+            pk=evaluation_pk
+        )
 
     if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
         logger.info(

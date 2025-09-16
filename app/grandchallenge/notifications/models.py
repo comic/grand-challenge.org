@@ -184,7 +184,7 @@ class Notification(UUIDModel):
             ):
                 with check_lock_acquired():
                     user_profile = UserProfile.objects.select_for_update(
-                        nowait=True, of=("self",)
+                        nowait=True
                     ).get(pk=receiver.user_profile.pk)
 
                 user_profile.dispatch_unread_notifications_email(

@@ -739,7 +739,6 @@ def lock_for_utilization_update(*, algorithm_image_pk):
         AlgorithmImage.objects.filter(pk=algorithm_image_pk).select_related(
             "algorithm"
         ).select_for_update(
-            of=("self", "algorithm"),
             nowait=True,
             no_key=True,
         ).get()
@@ -753,9 +752,7 @@ def provision_job(
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
 
     with check_lock_acquired():
-        job = model.objects.select_for_update(nowait=True, of=("self",)).get(
-            pk=job_pk
-        )
+        job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
 
     executor = job.get_executor(backend=backend)
 
@@ -887,7 +884,7 @@ def handle_event(*, event, backend):  # noqa: C901
     )
 
     with check_lock_acquired():
-        job = model.objects.select_for_update(nowait=True, of=("self",)).get(
+        job = model.objects.select_for_update(nowait=True).get(
             pk=job_params.pk, attempt=job_params.attempt
         )
 
@@ -946,9 +943,7 @@ def parse_job_outputs(
     model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
 
     with check_lock_acquired():
-        job = model.objects.select_for_update(nowait=True, of=("self",)).get(
-            pk=job_pk
-        )
+        job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
 
     executor = job.get_executor(backend=backend)
 
@@ -1257,9 +1252,9 @@ def add_image_to_object(  # noqa: C901
 
     try:
         with check_lock_acquired():
-            obj = model.objects.select_for_update(
-                nowait=True, of=("self",)
-            ).get(pk=object_pk)
+            obj = model.objects.select_for_update(nowait=True).get(
+                pk=object_pk
+            )
     except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
         logger.info(f"Nothing to do: {model_name} no longer exists.")
         return
@@ -1360,9 +1355,9 @@ def add_file_to_object(
 
     try:
         with check_lock_acquired():
-            obj = model.objects.select_for_update(
-                nowait=True, of=("self",)
-            ).get(pk=object_pk)
+            obj = model.objects.select_for_update(nowait=True).get(
+                pk=object_pk
+            )
     except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
         logger.info(f"Nothing to do: {model_name} no longer exists.")
         return
@@ -1435,7 +1430,7 @@ def assign_tarball_from_upload(
 
     with check_lock_acquired():
         current_tarball = TarballModel.objects.select_for_update(
-            nowait=True, of=("self",)
+            nowait=True
         ).get(pk=tarball_pk, import_status=ImportStatusChoices.INITIALIZED)
         peer_tarballs = list(
             current_tarball.get_peer_tarballs().select_for_update(nowait=True)

@@ -145,7 +145,7 @@ def build_images(  # noqa:C901
     with check_lock_acquired():
         upload_session = (
             RawImageUploadSession.objects.prefetch_related("user_uploads")
-            .select_for_update(nowait=True, of=("self",))
+            .select_for_update(nowait=True)
             .get(pk=upload_session_pk)
         )
 
@@ -243,7 +243,7 @@ def handle_build_images_error(
 ):
     with check_lock_acquired():
         upload_session = RawImageUploadSession.objects.select_for_update(
-            nowait=True, of=("self",)
+            nowait=True
         ).get(pk=upload_session_pk)
 
     if linked_object_pk:
@@ -253,7 +253,7 @@ def handle_build_images_error(
             )
             with check_lock_acquired():
                 linked_object = model.objects.select_for_update(
-                    nowait=True, of=("self",)
+                    nowait=True
                 ).get(pk=linked_object_pk)
         except ObjectDoesNotExist:
             # Linked object may have been deleted
@@ -442,9 +442,9 @@ def _handle_raw_files(
 @transaction.atomic
 def execute_post_process_image_task(*, post_process_image_task_pk):
     with check_lock_acquired():
-        task = PostProcessImageTask.objects.select_for_update(
-            nowait=True, of=("self",)
-        ).get(pk=post_process_image_task_pk)
+        task = PostProcessImageTask.objects.select_for_update(nowait=True).get(
+            pk=post_process_image_task_pk
+        )
 
     if task.status != PostProcessImageTaskStatusChoices.INITIALIZED:
         logger.info(f"Task status is {task.status}, nothing to do")

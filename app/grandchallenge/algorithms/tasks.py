@@ -39,9 +39,7 @@ def execute_algorithm_job_for_inputs(*, job_pk):
     from grandchallenge.algorithms.models import Job
 
     with check_lock_acquired():
-        job = Job.objects.select_for_update(nowait=True, of=("self",)).get(
-            pk=job_pk,
-        )
+        job = Job.objects.select_for_update(nowait=True).get(pk=job_pk)
 
     if not job.inputs_complete:
         logger.info("Nothing to do, inputs are still being validated")
@@ -351,9 +349,9 @@ def update_algorithm_average_duration(*, algorithm_pk):
     from grandchallenge.utilization.models import JobUtilization
 
     with check_lock_acquired():
-        algorithm = Algorithm.objects.select_for_update(
-            nowait=True, of=("self",)
-        ).get(pk=algorithm_pk)
+        algorithm = Algorithm.objects.select_for_update(nowait=True).get(
+            pk=algorithm_pk
+        )
 
     algorithm.average_duration = JobUtilization.objects.filter(
         algorithm=algorithm, job__status=Job.SUCCESS
