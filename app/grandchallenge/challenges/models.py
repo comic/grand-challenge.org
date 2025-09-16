@@ -1330,11 +1330,11 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @property
     def budget_fields(self):
         budget_fields = (
-            "inference_time_average_minutes_for_tasks",
+            "task_ids",
             "algorithm_selectable_gpu_type_choices_for_tasks",
             "algorithm_maximum_settable_memory_gb_for_tasks",
             "average_size_test_image_mb_for_tasks",
-            "task_ids",
+            "inference_time_average_minutes_for_tasks",
             "task_id_for_phases",
             "number_of_teams_for_phases",
             "number_of_submissions_per_team_for_phases",
@@ -1378,7 +1378,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
 
     @property
-    def total_num_submissions(self):
+    def total_number_of_submissions(self):
         return sum(self.number_of_submissions_for_phases)
 
     @cached_property
@@ -1391,10 +1391,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 strict=True,
             )
         ]
-
-    @property
-    def total_num_algorithm_jobs(self):
-        return sum(self.number_of_algorithm_jobs_for_phases)
 
     @cached_property
     def compute_time_for_phases(self):
@@ -1559,7 +1555,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
 
     @cached_property
-    def total_euros_for_phases(self):
+    def compute_and_storage_costs_euros_for_phases(self):
         return [
             compute_costs + data_storage_costs
             for compute_costs, data_storage_costs in zip(
@@ -1569,28 +1565,20 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             )
         ]
 
-    @property
-    def docker_storage_costs_euros_for_tasks(self):
-        return [
-            self.round_to_cents(self.storage_costs_euros_per_gb * size_gb)
-            for size_gb in self.docker_storage_size_gb_for_tasks
-        ]
-
-    @property
-    def total_docker_storage_costs_euros(self):
-        return sum(self.docker_storage_costs_euros_for_tasks)
-
     @cached_property
-    def base_cost_euros(self):
-        if (
-            self.creator
-            and Organization.objects.filter(
-                exempt_from_base_costs=True, members_group__user=self.creator
-            ).exists()
-        ):
-            return 0
-        else:
-            return settings.CHALLENGE_BASE_COST_IN_EURO
+    def compute_costs_euros_for_tasks(self):
+        return [
+            sum(
+                [
+                    self.compute_costs_euros_for_phases[phase_index]
+                    for phase_index, task_id_phase in enumerate(
+                        self.task_id_for_phases
+                    )
+                    if task_id_phase == task_id
+                ]
+            )
+            for task_id in self.task_ids
+        ]
 
     @cached_property
     def data_storage_costs_euros_for_tasks(self):
@@ -1607,23 +1595,15 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             for task_id in self.task_ids
         ]
 
-    @cached_property
-    def total_compute_costs_euros_for_tasks(self):
+    @property
+    def docker_storage_costs_euros_for_tasks(self):
         return [
-            sum(
-                [
-                    self.compute_costs_euros_for_phases[phase_index]
-                    for phase_index, task_id_phase in enumerate(
-                        self.task_id_for_phases
-                    )
-                    if task_id_phase == task_id
-                ]
-            )
-            for task_id in self.task_ids
+            self.round_to_cents(self.storage_costs_euros_per_gb * size_gb)
+            for size_gb in self.docker_storage_size_gb_for_tasks
         ]
 
     @property
-    def total_storage_costs_euros_for_tasks(self):
+    def storage_costs_euros_for_tasks(self):
         return [
             docker_storage_costs_euros + data_storage_costs_euros
             for docker_storage_costs_euros, data_storage_costs_euros in zip(
@@ -1634,25 +1614,29 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
 
     @property
-    def total_compute_and_storage_costs_euros_for_tasks(self):
+    def compute_and_storage_costs_euros_for_tasks(self):
         return [
             storage_costs_euros + compute_costs_euros
             for storage_costs_euros, compute_costs_euros in zip(
-                self.total_storage_costs_euros_for_tasks,
-                self.total_compute_costs_euros_for_tasks,
+                self.storage_costs_euros_for_tasks,
+                self.compute_costs_euros_for_tasks,
                 strict=True,
             )
         ]
+
+    @property
+    def total_compute_costs_euros(self):
+        return sum(self.compute_costs_euros_for_phases)
+
+    @property
+    def total_docker_storage_costs_euros(self):
+        return sum(self.docker_storage_costs_euros_for_tasks)
 
     @property
     def total_storage_costs_euros(self):
         return self.total_docker_storage_costs_euros + sum(
             self.data_storage_costs_euros_for_phases
         )
-
-    @property
-    def total_compute_costs_euros(self):
-        return sum(self.compute_costs_euros_for_phases)
 
     @property
     def total_compute_and_storage_costs_euros(self):
@@ -1675,6 +1659,22 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             * settings.CHALLENGE_CAPACITY_RESERVATION_PACK_SIZE_IN_EURO
         )
 
+    @cached_property
+    def base_cost_euros(self):
+        if (
+            self.creator
+            and Organization.objects.filter(
+                exempt_from_base_costs=True, members_group__user=self.creator
+            ).exists()
+        ):
+            return 0
+        else:
+            return settings.CHALLENGE_BASE_COST_IN_EURO
+
+    @property
+    def total_challenge_price(self):
+        return self.base_cost_euros + self.capacity_reservation_euros
+
     @property
     def capacity_reservation_compute_euros(self):
         return (
@@ -1690,37 +1690,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             / self.total_compute_and_storage_costs_euros
             * self.capacity_reservation_euros
         )
-
-    @property
-    def total_challenge_cost(self):
-        return self.base_cost_euros + self.capacity_reservation_euros
-
-    @cached_property
-    def costs_for_phases(self):
-        return [
-            {
-                "name": "Phase 1",
-                "number_of_submissions_per_team": self.phase_1_number_of_submissions_per_team,
-                "number_of_test_images": self.phase_1_number_of_test_images,
-                "compute_time": self.phase_1_compute_time,
-                "compute_costs_euros": self.phase_1_compute_costs_euros,
-                "data_storage_size_gb": self.phase_1_data_storage_size_bytes
-                / settings.GIGABYTE,
-                "data_storage_costs_euros": self.phase_1_data_storage_costs_euros,
-                "total_euros": self.phase_1_total_euros,
-            },
-            {
-                "name": "Phase 2",
-                "number_of_submissions_per_team": self.phase_2_number_of_submissions_per_team,
-                "number_of_test_images": self.phase_2_number_of_test_images,
-                "compute_time": self.phase_2_compute_time,
-                "compute_costs_euros": self.phase_2_compute_costs_euros,
-                "data_storage_size_gb": self.phase_2_data_storage_size_bytes
-                / settings.GIGABYTE,
-                "data_storage_costs_euros": self.phase_2_data_storage_costs_euros,
-                "total_euros": self.phase_2_total_euros,
-            },
-        ]
 
 
 class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
