@@ -69,6 +69,7 @@ from tests.evaluation_tests.factories import (
 )
 from tests.factories import (
     ChallengeFactory,
+    ChallengeRequestFactory,
     GroupFactory,
     ImageFactory,
     UserFactory,
@@ -1578,6 +1579,59 @@ def test_configure_algorithm_phases_view(client):
     assert (
         phase.archive.title
         == f"{phase.challenge.short_name} {phase.title} dataset"
+    )
+
+
+@pytest.mark.django_db
+def test_configure_algorithm_phases_view_challenge_request_one_task(client):
+    user = UserFactory()
+    ch = ChallengeFactory()
+    phase = PhaseFactory(
+        challenge=ch, submission_kind=SubmissionKindChoices.CSV
+    )
+    challenge_request = ChallengeRequestFactory(
+        short_name=ch.short_name,
+        task_ids=[1],
+        algorithm_maximum_settable_memory_gb_for_tasks=[32],
+        algorithm_selectable_gpu_type_choices_for_tasks=[["", "T4"]],
+        average_size_test_image_mb_for_tasks=[10],
+        inference_time_average_minutes_for_tasks=[5],
+        task_id_for_phases=[1, 1],
+        number_of_submissions_per_team_for_phases=[10, 1],
+        number_of_teams_for_phases=[3, 3],
+        number_of_test_images_for_phases=[3, 100],
+    )
+    assign_perm("evaluation.configure_algorithm_phase", user)
+    response = get_view_for_user(
+        viewname="evaluation:configure-algorithm-phases",
+        client=client,
+        method=client.post,
+        user=user,
+        reverse_kwargs={
+            "challenge_short_name": ch.short_name,
+        },
+        data={
+            "phases": [phase.pk],
+        },
+    )
+    assert response.status_code == 302
+    phase.refresh_from_db()
+    assert phase.submission_kind == SubmissionKindChoices.ALGORITHM
+    assert (
+        phase.archive.title
+        == f"{phase.challenge.short_name} {phase.title} dataset"
+    )
+    assert (
+        phase.algorithm_time_limit
+        == challenge_request.inference_time_average_minutes_for_tasks[0] * 60
+    )
+    assert (
+        phase.algorithm_selectable_gpu_type_choices
+        == challenge_request.algorithm_selectable_gpu_type_choices_for_tasks[0]
+    )
+    assert (
+        phase.algorithm_maximum_settable_memory_gb
+        == challenge_request.algorithm_maximum_settable_memory_gb_for_tasks[0]
     )
 
 
