@@ -1555,7 +1555,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
 
     @property
-    def docker_storage_costs_euros(self):
+    def total_docker_storage_costs_euros(self):
         return sum(self.docker_storage_costs_euros_for_tasks)
 
     @cached_property
@@ -1586,7 +1586,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
 
     @cached_property
-    def compute_costs_euros_for_tasks(self):
+    def total_compute_costs_euros_for_tasks(self):
         return [
             sum(
                 [
@@ -1617,14 +1617,14 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             storage_costs_euros + compute_costs_euros
             for storage_costs_euros, compute_costs_euros in zip(
                 self.total_storage_costs_euros_for_tasks,
-                self.compute_costs_euros_for_tasks,
+                self.total_compute_costs_euros_for_tasks,
                 strict=True,
             )
         ]
 
     @property
     def total_storage_costs_euros(self):
-        return self.docker_storage_costs_euros + sum(
+        return self.total_docker_storage_costs_euros + sum(
             self.data_storage_costs_euros_for_phases
         )
 
