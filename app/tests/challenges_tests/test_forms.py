@@ -126,3 +126,66 @@ def test_budget_update_form():
         data=data2, instance=challenge_request
     )
     assert form2.is_valid()
+
+
+@pytest.mark.parametrize(
+    "invalid_data",
+    [
+        {"task_ids": "[1]"},  # not all task ids defined
+        {
+            "algorithm_maximum_settable_memory_gb_for_tasks": "[32]"
+        },  # not all tasks defined
+        {
+            "algorithm_selectable_gpu_type_choices_for_tasks": '["", "T4"]'
+        },  # not all tasks defined
+        {
+            "average_size_test_image_mb_for_tasks": "[10]"
+        },  # not all tasks defined
+        {
+            "inference_time_average_minutes_for_tasks": "[10]"
+        },  # not all tasks defined
+        {"task_id_for_phases": "[1, 1]"},  # not all task ids used
+        {"task_id_for_phases": "[1, 1, 2, 3]"},  # using undefined task id
+        {
+            "number_of_teams_for_phases": "[10, 10, 10]"
+        },  # not all phases defined
+        {
+            "number_of_submissions_per_team_for_phases": "[10, 1, 10]"
+        },  # not all phases defined
+        {
+            "number_of_test_images_for_phases": "[3, 100, 3]"
+        },  # not all phases defined
+        {
+            "number_of_teams_for_phases": "[1, 10, 10, 10]"
+        },  # later phase has more teams
+        {
+            "number_of_submissions_per_team_for_phases": "[1, 10, 10, 10]"
+        },  # later phase has more submissions
+    ],
+)
+@pytest.mark.django_db
+def test_budget_update_form_invalid(invalid_data):
+    challenge_request = ChallengeRequestFactory()
+    data = {
+        "task_ids": "[1, 2]",
+        "algorithm_maximum_settable_memory_gb_for_tasks": "[32, 32]",
+        "algorithm_selectable_gpu_type_choices_for_tasks": '[["", "T4"],["", "A10G", "T4"]]',
+        "average_size_test_image_mb_for_tasks": "[10, 100]",
+        "inference_time_average_minutes_for_tasks": "[5, 10]",
+        "task_id_for_phases": "[1, 1, 2, 2]",
+        "number_of_teams_for_phases": "[10, 10, 10, 10]",
+        "number_of_submissions_per_team_for_phases": "[10, 1, 10, 1]",
+        "number_of_test_images_for_phases": "[3, 100, 3, 100]",
+    }
+    form = ChallengeRequestBudgetUpdateForm(
+        data=data, instance=challenge_request
+    )
+
+    assert form.is_valid()
+
+    data.update(invalid_data)
+    form = ChallengeRequestBudgetUpdateForm(
+        data=data, instance=challenge_request
+    )
+
+    assert not form.is_valid()
