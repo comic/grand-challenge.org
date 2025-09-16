@@ -1121,16 +1121,7 @@ class ConfigureAlgorithmPhasesView(
 
     def form_valid(self, form):
         for phase in form.cleaned_data["phases"]:
-            self.turn_phase_into_algorithm_phase(
-                phase=phase,
-                algorithm_time_limit=form.cleaned_data["algorithm_time_limit"],
-                algorithm_selectable_gpu_type_choices=form.cleaned_data[
-                    "algorithm_selectable_gpu_type_choices"
-                ],
-                algorithm_maximum_settable_memory_gb=form.cleaned_data[
-                    "algorithm_maximum_settable_memory_gb"
-                ],
-            )
+            self.turn_phase_into_algorithm_phase(phase=phase)
         messages.success(self.request, "Phases were successfully updated")
         return super().form_valid(form)
 
@@ -1139,14 +1130,8 @@ class ConfigureAlgorithmPhasesView(
             "challenges:requests-list",
         )
 
-    def turn_phase_into_algorithm_phase(
-        self,
-        *,
-        phase,
-        algorithm_time_limit,
-        algorithm_selectable_gpu_type_choices,
-        algorithm_maximum_settable_memory_gb,
-    ):
+    @staticmethod
+    def turn_phase_into_algorithm_phase(*, phase):
         archive = Archive.objects.create(
             title=format_html(
                 "{challenge_name} {phase_title} dataset",
@@ -1168,13 +1153,6 @@ class ConfigureAlgorithmPhasesView(
         for user in phase.challenge.admins_group.user_set.all():
             archive.add_editor(user)
 
-        phase.algorithm_time_limit = algorithm_time_limit
-        phase.algorithm_selectable_gpu_type_choices = (
-            algorithm_selectable_gpu_type_choices
-        )
-        phase.algorithm_maximum_settable_memory_gb = (
-            algorithm_maximum_settable_memory_gb
-        )
         phase.archive = archive
         phase.submission_kind = phase.SubmissionKindChoices.ALGORITHM
         phase.save()

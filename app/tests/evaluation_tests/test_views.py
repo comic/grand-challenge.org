@@ -69,7 +69,6 @@ from tests.evaluation_tests.factories import (
 )
 from tests.factories import (
     ChallengeFactory,
-    ChallengeRequestFactory,
     GroupFactory,
     ImageFactory,
     UserFactory,
@@ -1560,8 +1559,6 @@ def test_configure_algorithm_phases_view(client):
     phase = PhaseFactory(
         challenge=ch, submission_kind=SubmissionKindChoices.CSV
     )
-    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
-    challenge_request = ChallengeRequestFactory(short_name=ch.short_name)
     assign_perm("evaluation.configure_algorithm_phase", user)
     response = get_view_for_user(
         viewname="evaluation:configure-algorithm-phases",
@@ -1581,18 +1578,6 @@ def test_configure_algorithm_phases_view(client):
     assert (
         phase.archive.title
         == f"{phase.challenge.short_name} {phase.title} dataset"
-    )
-    assert (
-        phase.algorithm_time_limit
-        == challenge_request.inference_time_limit_in_minutes * 60
-    )
-    assert (
-        phase.algorithm_selectable_gpu_type_choices
-        == challenge_request.algorithm_selectable_gpu_type_choices
-    )
-    assert (
-        phase.algorithm_maximum_settable_memory_gb
-        == challenge_request.algorithm_maximum_settable_memory_gb
     )
 
 
