@@ -20,10 +20,10 @@ Based on the following information provided by the challenge requester:
         <tr>
             <td class="col-9 font-italic">Total number of submissions to the challenge</td>
             <td class="col-3 text-right">
-                {% if object.total_num_submissions > 500 %}
+                {% if object.total_number_of_submissions > 500 %}
                     <i class="fa fa-exclamation-triangle text-warning"></i>
                 {% endif %}
-                {{ object.total_num_submissions }}
+                {{ object.total_number_of_submissions }}
             </td>
         </tr>
         <tr>
@@ -37,7 +37,7 @@ Based on the following information provided by the challenge requester:
     </table>
 </div>
 
-{% if object.total_num_submissions > 500 %}
+{% if object.total_number_of_submissions > 500 %}
     <div class="alert alert-warning">
         <i class="fa fa-exclamation-triangle"></i>
         This is an unusually high number of total submissions (more than 500). Reconsider the number of submissions for each phase.
@@ -93,7 +93,7 @@ Based on the following information provided by the challenge requester:
                 <td></td>
                 <td></td>
                 <td></td>
-                <td class="text-right font-weight-bold">{{ object.total_challenge_cost|euro_no_cents }}</td>
+                <td class="text-right font-weight-bold">{{ object.total_challenge_price|euro_no_cents }}</td>
             </tr>
         </tbody>
     </table>
@@ -123,7 +123,7 @@ Based on the following information provided by the challenge requester:
 
                     {% get_phase_indices_for_task object.task_id_for_phases task_id as phase_indices %}
                     {% for phase_idx in phase_indices %}
-                        {% with phase_total_euros=object.total_euros_for_phases|index:phase_idx %}
+                        {% with phase_total_euros=object.compute_and_storage_costs_euros_for_phases|index:phase_idx %}
                         {% with n_submissions=object.number_of_submissions_per_team_for_phases|index:phase_idx %}
                         {% with n_teams=object.number_of_teams_for_phases|index:phase_idx %}
                         {% with n_images=object.number_of_test_images_for_phases|index:phase_idx %}
@@ -196,16 +196,16 @@ Based on the following information provided by the challenge requester:
                     {% endwith %}
 
                     <tr>
-                        <td class="font-weight-bold" colspan="5">Total compute task {{ task_id }}</td>
-                        <td class="text-right font-weight-bold">{{ object.total_compute_costs_euros_for_tasks|index:task_idx|euro }}</td>
+                        <td class="font-weight-bold" colspan="5">Compute task {{ task_id }}</td>
+                        <td class="text-right font-weight-bold">{{ object.compute_costs_euros_for_tasks|index:task_idx|euro }}</td>
                     </tr>
                     <tr>
-                        <td class="font-weight-bold" colspan="5">Total storage task {{ task_id }}</td>
-                        <td class="text-right font-weight-bold">{{ object.total_storage_costs_euros_for_tasks|index:task_idx|euro }}</td>
+                        <td class="font-weight-bold" colspan="5">Storage task {{ task_id }}</td>
+                        <td class="text-right font-weight-bold">{{ object.storage_costs_euros_for_tasks|index:task_idx|euro }}</td>
                     </tr>
                     <tr class="table-light">
                         <td class="font-weight-bold border-top border-dark" colspan="5">Total task {{ task_id }}</td>
-                        <td class="text-right font-weight-bold border-top border-dark">{{ object.total_compute_and_storage_costs_euros_for_tasks|index:task_idx|euro }}</td>
+                        <td class="text-right font-weight-bold border-top border-dark">{{ object.compute_and_storage_costs_euros_for_tasks|index:task_idx|euro }}</td>
                     </tr>
 
                 </tbody>
