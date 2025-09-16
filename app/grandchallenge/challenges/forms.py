@@ -553,11 +553,11 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
     class Meta:
         model = ChallengeRequest
         fields = (
-            "task_ids",
             "algorithm_selectable_gpu_type_choices_for_tasks",
             "algorithm_maximum_settable_memory_gb_for_tasks",
             "average_size_test_image_mb_for_tasks",
             "inference_time_average_minutes_for_tasks",
+            "task_ids",
             "task_id_for_phases",
             "number_of_teams_for_phases",
             "number_of_submissions_per_team_for_phases",
