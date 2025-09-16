@@ -17,16 +17,13 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
 )
-from grandchallenge.components.tasks import (
-    check_lock_acquired,
-    lock_for_utilization_update,
-    lock_model_instance,
-)
+from grandchallenge.components.tasks import lock_for_utilization_update
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
 from grandchallenge.core.exceptions import LockNotAcquiredException
+from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.core.validators import get_file_mimetype
 from grandchallenge.evaluation.utils import SubmissionKindChoices, rank_results
 
@@ -37,29 +34,42 @@ logger = get_task_logger(__name__)
 @transaction.atomic
 def check_prerequisites_for_evaluation_execution(*, evaluation_pk):
     from grandchallenge.evaluation.models import (
+        Evaluation,
         get_archive_items_for_interfaces,
         get_valid_jobs_for_interfaces_and_archive_items,
     )
 
-    Evaluation = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Evaluation"
-    )
-    evaluation = lock_model_instance(
-        app_label="evaluation", model_name="evaluation", pk=evaluation_pk
-    )
-    submission = evaluation.submission
+    with check_lock_acquired():
+        evaluation = (
+            Evaluation.objects.select_related(
+                "submission",
+                "submission__algorithm_image",
+                "submission__algorithm_model",
+            )
+            .prefetch_related(
+                "submission__phase__archive__items",
+                "submission__phase__algorithm_interfaces",
+            )
+            .select_for_update(nowait=True, of=("self",))
+            .get(pk=evaluation_pk)
+        )
 
     if evaluation.status != evaluation.VALIDATING_INPUTS:
         # the evaluation might have been queued for execution already, so ignore
         logger.info("Evaluation has already been scheduled for execution.")
         return
 
-    if submission.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
-        algorithm_interfaces = submission.phase.algorithm_interfaces.all()
+    if (
+        evaluation.submission.phase.submission_kind
+        == SubmissionKindChoices.ALGORITHM
+    ):
+        algorithm_interfaces = (
+            evaluation.submission.phase.algorithm_interfaces.all()
+        )
 
         items = get_archive_items_for_interfaces(
             algorithm_interfaces=algorithm_interfaces,
-            archive_items=submission.phase.archive.items.all(),
+            archive_items=evaluation.submission.phase.archive.items.all(),
         )
         non_success_statuses = [
             status[0]
@@ -68,8 +78,8 @@ def check_prerequisites_for_evaluation_execution(*, evaluation_pk):
         ]
 
         jobs = get_valid_jobs_for_interfaces_and_archive_items(
-            algorithm_image=submission.algorithm_image,
-            algorithm_model=submission.algorithm_model,
+            algorithm_image=evaluation.submission.algorithm_image,
+            algorithm_model=evaluation.submission.algorithm_model,
             algorithm_interfaces=algorithm_interfaces,
             valid_archive_items_per_interface=items,
             subset_by_status=non_success_statuses,
@@ -104,13 +114,18 @@ def prepare_and_execute_evaluation(*, evaluation_pk):  # noqa: C901
     evaluation_pk
         The primary key of the Evaluation
     """
-    Evaluation = apps.get_model(  # noqa: N806
-        app_label="evaluation", model_name="Evaluation"
-    )
-    evaluation = lock_model_instance(
-        app_label="evaluation", model_name="Evaluation", pk=evaluation_pk
-    )
-    submission = evaluation.submission
+    from grandchallenge.evaluation.models import Evaluation
+
+    with check_lock_acquired():
+        evaluation = (
+            Evaluation.objects.select_related(
+                "submission",
+                "submission__algorithm_image",
+                "submission__user_upload",
+            )
+            .select_for_update(nowait=True, of=("self",))
+            .get(pk=evaluation_pk)
+        )
 
     if not evaluation.additional_inputs_complete:
         logger.info("Nothing to do, inputs are still being validated.")
@@ -122,13 +137,16 @@ def prepare_and_execute_evaluation(*, evaluation_pk):  # noqa: C901
         logger.info("Evaluation has already been scheduled for execution.")
         return
 
-    if not submission.predictions_file and submission.user_upload:
-        submission.user_upload.copy_object(
-            to_field=submission.predictions_file
+    if (
+        not evaluation.submission.predictions_file
+        and evaluation.submission.user_upload
+    ):
+        evaluation.submission.user_upload.copy_object(
+            to_field=evaluation.submission.predictions_file
         )
-        submission.user_upload.delete()
+        evaluation.submission.user_upload.delete()
 
-    if submission.algorithm_image:
+    if evaluation.submission.algorithm_image:
         evaluation.status = Evaluation.EXECUTING_PREREQUISITES
         evaluation.save()
         on_commit(
@@ -139,8 +157,8 @@ def prepare_and_execute_evaluation(*, evaluation_pk):  # noqa: C901
                 }
             )
         )
-    elif submission.predictions_file:
-        mimetype = get_file_mimetype(submission.predictions_file)
+    elif evaluation.submission.predictions_file:
+        mimetype = get_file_mimetype(evaluation.submission.predictions_file)
 
         if mimetype == "application/zip":
             interface = ComponentInterface.objects.get(
@@ -159,7 +177,7 @@ def prepare_and_execute_evaluation(*, evaluation_pk):  # noqa: C901
             return
 
         civ = ComponentInterfaceValue(
-            interface=interface, file=submission.predictions_file
+            interface=interface, file=evaluation.submission.predictions_file
         )
 
         try:
@@ -202,13 +220,14 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
     first_run
         Whether this is the first run of create_algorithm_jobs_for_evaluation
     """
-    evaluation = lock_model_instance(
-        pk=evaluation_pk,
-        app_label="evaluation",
-        model_name="Evaluation",
-        select_related=("submission",),
-        of=("self",),
-    )
+    from grandchallenge.evaluation.models import Evaluation
+
+    with check_lock_acquired():
+        evaluation = (
+            Evaluation.objects.select_related("submission")
+            .select_for_update(nowait=True, of=("self",))
+            .get(pk=evaluation_pk)
+        )
 
     if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
         logger.info(
@@ -315,14 +334,14 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
 )
 @transaction.atomic
 def handle_failed_jobs(*, evaluation_pk):
-    # Set the evaluation to failed
-    evaluation = lock_model_instance(
-        pk=evaluation_pk,
-        app_label="evaluation",
-        model_name="Evaluation",
-        select_related=("submission",),
-        of=("self",),
-    )
+    from grandchallenge.evaluation.models import Evaluation
+
+    with check_lock_acquired():
+        evaluation = (
+            Evaluation.objects.select_related("submission")
+            .select_for_update(nowait=True, of=("self",))
+            .get(pk=evaluation_pk)
+        )
 
     if evaluation.status != evaluation.FAILURE:
         evaluation.update_status(
@@ -365,19 +384,18 @@ def set_evaluation_inputs(*, evaluation_pk):
     evaluation_pk
         The primary key of the evaluation.Evaluation object
     """
-    evaluation = lock_model_instance(
-        pk=evaluation_pk, app_label="evaluation", model_name="Evaluation"
-    )
+    from grandchallenge.evaluation.models import Evaluation
+
+    with check_lock_acquired():
+        evaluation = Evaluation.objects.select_for_update(
+            nowait=True, of=("self",)
+        ).get(pk=evaluation_pk)
 
     if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
         logger.info(
             f"Nothing to do: evaluation is {evaluation.get_status_display()}."
         )
         return
-
-    Job = apps.get_model(  # noqa: N806
-        app_label="algorithms", model_name="Job"
-    )
 
     if AlgorithmModel.objects.filter(
         submission__evaluation=evaluation_pk

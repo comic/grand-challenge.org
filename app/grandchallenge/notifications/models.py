@@ -15,7 +15,11 @@ from grandchallenge.core.guardian import (
     UserObjectPermissionBase,
 )
 from grandchallenge.core.models import UUIDModel
-from grandchallenge.profiles.models import NotificationEmailOptions
+from grandchallenge.core.utils.query import check_lock_acquired
+from grandchallenge.profiles.models import (
+    NotificationEmailOptions,
+    UserProfile,
+)
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.subdomains.utils import reverse
 
@@ -158,8 +162,6 @@ class Notification(UUIDModel):
         description=None,
         context_class=None,
     ):
-        from grandchallenge.components.tasks import lock_model_instance
-
         receivers = Notification.get_receivers(
             action_object=action_object, actor=actor, kind=kind, target=target
         )
@@ -180,11 +182,11 @@ class Notification(UUIDModel):
                 receiver.user_profile.notification_email_choice
                 == NotificationEmailOptions.INSTANT
             ):
-                user_profile = lock_model_instance(
-                    app_label="profiles",
-                    model_name="userprofile",
-                    pk=receiver.user_profile.pk,
-                )
+                with check_lock_acquired():
+                    user_profile = UserProfile.objects.select_for_update(
+                        nowait=True, of=("self",)
+                    ).get(pk=receiver.user_profile.pk)
+
                 user_profile.dispatch_unread_notifications_email(
                     site=site, unread_notification_count=1
                 )

@@ -8,6 +8,7 @@ from tempfile import TemporaryDirectory
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import signature
 from celery.utils.log import get_task_logger
+from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files import File
@@ -27,12 +28,12 @@ from grandchallenge.cases.models import (
 )
 from grandchallenge.components.backends.utils import safe_extract
 from grandchallenge.components.models import ComponentInterface
-from grandchallenge.components.tasks import lock_model_instance
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
 from grandchallenge.core.exceptions import LockNotAcquiredException
+from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.uploads.models import UserUpload
 
 logger = get_task_logger(__name__)
@@ -141,11 +142,12 @@ def build_images(  # noqa:C901
         The signature of the task to run on success
     """
 
-    upload_session = lock_model_instance(
-        pk=upload_session_pk,
-        app_label=RawImageUploadSession._meta.app_label,
-        model_name=RawImageUploadSession._meta.model_name,
-    )
+    with check_lock_acquired():
+        upload_session = (
+            RawImageUploadSession.objects.prefetch_related("user_uploads")
+            .select_for_update(nowait=True, of=("self",))
+            .get(pk=upload_session_pk)
+        )
 
     if upload_session.status != upload_session.REQUEUED:
         logger.info(
@@ -239,19 +241,20 @@ def handle_build_images_error(
     linked_object_pk,
     linked_interface_slug,
 ):
-    upload_session = lock_model_instance(
-        pk=upload_session_pk,
-        app_label=RawImageUploadSession._meta.app_label,
-        model_name=RawImageUploadSession._meta.model_name,
-    )
+    with check_lock_acquired():
+        upload_session = RawImageUploadSession.objects.select_for_update(
+            nowait=True, of=("self",)
+        ).get(pk=upload_session_pk)
 
     if linked_object_pk:
         try:
-            linked_object = lock_model_instance(
-                pk=linked_object_pk,
-                app_label=linked_app_label,
-                model_name=linked_model_name,
+            model = apps.get_model(
+                app_label=linked_app_label, model_name=linked_model_name
             )
+            with check_lock_acquired():
+                linked_object = model.objects.select_for_update(
+                    nowait=True, of=("self",)
+                ).get(pk=linked_object_pk)
         except ObjectDoesNotExist:
             # Linked object may have been deleted
             logger.info(
@@ -438,12 +441,10 @@ def _handle_raw_files(
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def execute_post_process_image_task(*, post_process_image_task_pk):
-    task = lock_model_instance(
-        pk=post_process_image_task_pk,
-        app_label="cases",
-        model_name="PostProcessImageTask",
-        of=("self",),
-    )
+    with check_lock_acquired():
+        task = PostProcessImageTask.objects.select_for_update(
+            nowait=True, of=("self",)
+        ).get(pk=post_process_image_task_pk)
 
     if task.status != PostProcessImageTaskStatusChoices.INITIALIZED:
         logger.info(f"Task status is {task.status}, nothing to do")

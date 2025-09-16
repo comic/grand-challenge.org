@@ -1,4 +1,8 @@
-from django.db import connection
+from contextlib import contextmanager
+
+from django.db import OperationalError, connection
+
+from grandchallenge.core.exceptions import LockNotAcquiredException
 
 
 def index(queryset, obj):
@@ -19,3 +23,14 @@ def set_seed(seed):
     cursor = connection.cursor()
     cursor.execute(f"SELECT setseed({seed});")
     cursor.close()
+
+
+@contextmanager
+def check_lock_acquired():
+    try:
+        yield
+    except OperationalError as error:
+        if "could not obtain lock" in str(error):
+            raise LockNotAcquiredException from error
+        else:
+            raise error

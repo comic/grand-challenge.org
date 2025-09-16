@@ -17,7 +17,6 @@ from django.utils._os import safe_join
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import (
-    lock_model_instance,
     remove_container_image_from_registry,
 )
 from grandchallenge.core.celery import (
@@ -25,6 +24,7 @@ from grandchallenge.core.celery import (
     acks_late_micro_short_task,
 )
 from grandchallenge.core.exceptions import LockNotAcquiredException
+from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.notifications.models import Notification, NotificationType
 from grandchallenge.subdomains.utils import reverse
 
@@ -38,9 +38,10 @@ logger = get_task_logger(__name__)
 def execute_algorithm_job_for_inputs(*, job_pk):
     from grandchallenge.algorithms.models import Job
 
-    job = lock_model_instance(
-        app_label="algorithms", model_name="job", pk=job_pk
-    )
+    with check_lock_acquired():
+        job = Job.objects.select_for_update(nowait=True, of=("self",)).get(
+            pk=job_pk,
+        )
 
     if not job.inputs_complete:
         logger.info("Nothing to do, inputs are still being validated")
@@ -346,12 +347,13 @@ def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def update_algorithm_average_duration(*, algorithm_pk):
-    from grandchallenge.algorithms.models import Job
+    from grandchallenge.algorithms.models import Algorithm, Job
     from grandchallenge.utilization.models import JobUtilization
 
-    algorithm = lock_model_instance(
-        app_label="algorithms", model_name="algorithm", pk=algorithm_pk
-    )
+    with check_lock_acquired():
+        algorithm = Algorithm.objects.select_for_update(
+            nowait=True, of=("self",)
+        ).get(pk=algorithm_pk)
 
     algorithm.average_duration = JobUtilization.objects.filter(
         algorithm=algorithm, job__status=Job.SUCCESS
