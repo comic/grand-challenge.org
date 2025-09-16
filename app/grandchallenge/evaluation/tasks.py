@@ -5,7 +5,7 @@ from celery.utils.log import get_task_logger
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import OperationalError, transaction
+from django.db import transaction
 from django.db.models import Case, IntegerField, Value, When
 from django.db.transaction import on_commit
 from django.utils.timezone import now
@@ -18,7 +18,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.components.tasks import (
-    check_operational_error,
+    check_lock_acquired,
     lock_for_utilization_update,
     lock_model_instance,
 )
@@ -337,7 +337,7 @@ def handle_failed_jobs(*, evaluation_pk):
         app_label="algorithms", model_name="Job"
     )
 
-    try:
+    with check_lock_acquired():
         Job.objects.filter(
             creator=None,
             algorithm_image_id=evaluation.submission.algorithm_image_id,
@@ -345,9 +345,6 @@ def handle_failed_jobs(*, evaluation_pk):
         ).select_for_update(of=("self",), skip_locked=True).update(
             status=Job.CANCELLED
         )
-    except OperationalError as error:
-        check_operational_error(error)
-        raise
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
@@ -487,7 +484,7 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
 
     phase = Phase.objects.get(pk=phase_pk)
 
-    try:
+    with check_lock_acquired():
         # Acquire locks
         evaluations = list(
             Evaluation.objects.filter(
@@ -499,9 +496,6 @@ def calculate_ranks(*, phase_pk: uuid.UUID):
             .select_related("submission__creator", "submission__phase")
             .prefetch_related("outputs__interface")
         )
-    except OperationalError as error:
-        check_operational_error(error)
-        raise
 
     valid_evaluations = [
         e

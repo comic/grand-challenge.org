@@ -8,6 +8,7 @@ import uuid
 import zlib
 from base64 import b64decode, b64encode
 from binascii import hexlify
+from contextlib import contextmanager
 from lzma import LZMAError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -729,6 +730,17 @@ def _get_image_config_file(
     return {"image_sha256": image_sha256, "config": config}
 
 
+@contextmanager
+def check_lock_acquired():
+    try:
+        yield
+    except OperationalError as error:
+        if "could not obtain lock" in str(error):
+            raise LockNotAcquiredException from error
+        else:
+            raise error
+
+
 def lock_model_instance(
     *, app_label, model_name, of=(), select_related=(), **kwargs
 ):
@@ -750,18 +762,8 @@ def lock_model_instance(
 
     queryset = queryset.select_for_update(of=of, nowait=True)
 
-    try:
+    with check_lock_acquired():
         return queryset.get()
-    except OperationalError as error:
-        check_operational_error(error)
-        raise
-
-
-def check_operational_error(error):
-    if "could not obtain lock" in str(error):
-        raise LockNotAcquiredException from error
-    else:
-        raise error
 
 
 def lock_for_utilization_update(*, algorithm_image_pk):
@@ -769,7 +771,7 @@ def lock_for_utilization_update(*, algorithm_image_pk):
 
     # Lock the algorithm and algorithm image to avoid conflicts
     # when modifying JobUtilization objects
-    try:
+    with check_lock_acquired():
         AlgorithmImage.objects.filter(pk=algorithm_image_pk).select_related(
             "algorithm"
         ).select_for_update(
@@ -777,9 +779,6 @@ def lock_for_utilization_update(*, algorithm_image_pk):
             nowait=True,
             no_key=True,
         ).get()
-    except OperationalError as error:
-        check_operational_error(error)
-        raise
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
@@ -1458,14 +1457,11 @@ def assign_tarball_from_upload(
         model_name=model_name,
     )
 
-    try:
+    with check_lock_acquired():
         # Acquire locks
         peer_tarballs = list(
             current_tarball.get_peer_tarballs().select_for_update(nowait=True)
         )
-    except OperationalError as error:
-        check_operational_error(error)
-        raise
 
     current_tarball.user_upload.copy_object(
         to_field=getattr(current_tarball, field_to_copy)
