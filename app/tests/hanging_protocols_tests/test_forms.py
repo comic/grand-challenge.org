@@ -855,7 +855,7 @@ def test_reader_study_forms_view_content_example_with_hanging_protocol(
 
     form = ReaderStudyUpdateForm(
         user=creator,
-        instance=object.base_object,
+        instance=instance.base_object,
         data=form_data,
     )
 
