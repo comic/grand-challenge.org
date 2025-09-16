@@ -50,6 +50,7 @@ Based on the following information provided by the challenge requester:
     </div>
 {% endif %}
 
+<br>
 <h4>To be invoiced</h4>
 
 <div class="table-responsive">
@@ -99,13 +100,15 @@ Based on the following information provided by the challenge requester:
     </table>
 </div>
 
+<br>
 <h4>Capacity reservation estimate</h4>
 
 
 {% for task_id in object.task_ids %}
     {% with task_idx=forloop.counter0 %}
 
-        <h5>Costs for task {{ task_id }}</h5>
+        <br>
+        <h5>Task {{ task_id }}</h5>
 
         <div class="table-responsive">
             <table class="table table-hover table-sm">
@@ -181,7 +184,7 @@ Based on the following information provided by the challenge requester:
                     {% with docker_storage_size_gb=object.docker_storage_size_gb_for_tasks|index:task_idx %}
                     {% with docker_storage_costs_euros=object.docker_storage_costs_euros_for_tasks|index:task_idx %}
 
-                        <tr>
+                        <tr class="table-light">
                             <td>Container storage task {{ task_id }}</td>
                             <td>{{ n_dockers_per_team }} unique submission{{ n_dockers_per_team|pluralize }} times {{ n_teams }} teams times {{ object.average_algorithm_container_size_in_gb }} GB per container, for 5 years</td>
                             <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
@@ -203,7 +206,7 @@ Based on the following information provided by the challenge requester:
                         <td class="font-weight-bold" colspan="5">Storage task {{ task_id }}</td>
                         <td class="text-right font-weight-bold">{{ object.storage_costs_euros_for_tasks|index:task_idx|euro }}</td>
                     </tr>
-                    <tr class="table-light">
+                    <tr class="table-info">
                         <td class="font-weight-bold border-top border-dark" colspan="5">Total task {{ task_id }}</td>
                         <td class="text-right font-weight-bold border-top border-dark">{{ object.compute_and_storage_costs_euros_for_tasks|index:task_idx|euro }}</td>
                     </tr>
@@ -256,6 +259,7 @@ Based on the following information provided by the challenge requester:
     </table>
 </div>
 
+<br>
 <h4>Compute/storage split for budget</h4>
 
 <div class="table-responsive">
