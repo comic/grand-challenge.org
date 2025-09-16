@@ -1,4 +1,5 @@
 import copy
+import gzip
 import json
 import logging
 from pathlib import Path
@@ -1181,4 +1182,13 @@ class DICOMImageSetUpload(UUIDModel):
             color_space=ColorSpace.GRAY.value,
             width=-1,
             height=-1,
+        )
+
+    def get_image_set_metadata(self, *, image_set_id):
+        response = self._health_imaging_client.get_image_set_metadata(
+            imageSetId=image_set_id,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+        )
+        return json.loads(
+            gzip.decompress(response["imageSetMetadataBlob"].read())
         )
