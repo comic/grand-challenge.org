@@ -47,7 +47,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">billiard.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">SoftTimeLimitExceeded</span><span class="p">,</span> <span class="n">TimeLimitExceeded</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">celery</span><span class="w"> </span><span class="kn">import</span> <span class="n">signature</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django</span><span class="w"> </span><span class="kn">import</span> <span class="n">forms</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.apps</span><span class="w"> </span><span class="kn">import</span> <span class="n">apps</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">MultipleObjectsReturned</span><span class="p">,</span>
@@ -669,6 +668,8 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_overlay_segments</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.reader_studies.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Question</span>
+
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SEGMENTATION</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span>
@@ -690,7 +691,6 @@
                 <span class="s2">&quot;Voxel values for overlay segments must be contiguous.&quot;</span>
             <span class="p">)</span>
 
-        <span class="n">Question</span> <span class="o">=</span> <span class="n">apps</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s2">&quot;reader_studies&quot;</span><span class="p">,</span> <span class="s2">&quot;question&quot;</span><span class="p">)</span>  <span class="c1"># noqa: N806</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">pk</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_overlay_segments_orig</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span>
