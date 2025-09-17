@@ -349,7 +349,7 @@ def delete_image_set(*_, instance: DICOMImageSet, **__):
 
     on_commit(
         delete_healthimaging_image_set.signature(
-            kwargs=dict(image_set_id=instance.image_set_id)
+            kwargs={"image_set_id": instance.image_set_id}
         ).apply_async
     )
 
@@ -1184,7 +1184,7 @@ class DICOMImageSetUpload(UUIDModel):
         for image_set_summary in job_summary.image_sets_summary:
             on_commit(
                 delete_healthimaging_image_set.signature(
-                    kwargs=dict(image_set_id=image_set_summary.image_set_id)
+                    kwargs={"image_set_id": image_set_summary.image_set_id}
                 ).apply_async
             )
 
@@ -1196,10 +1196,10 @@ class DICOMImageSetUpload(UUIDModel):
 
         on_commit(
             revert_image_set_to_initial_version.signature(
-                kwargs=dict(
-                    image_set_id=image_set_summary.image_set_id,
-                    version_id=image_set_summary.image_set_version,
-                )
+                kwargs={
+                    "image_set_id": image_set_summary.image_set_id,
+                    "version_id": image_set_summary.image_set_version,
+                }
             ).apply_async
         )
 

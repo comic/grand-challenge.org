@@ -350,10 +350,10 @@ def test_validate_image_set_multiple_generated_image_sets(
     assert str(e.value) == "Multiple image sets created. Expected only one."
     assert mock_delete_image_set_task.call_count == 2
     mock_delete_image_set_task.assert_any_call(
-        kwargs=dict(image_set_id=image_set_id_1)
+        kwargs={"image_set_id": image_set_id_1}
     )
     mock_delete_image_set_task.assert_any_call(
-        kwargs=dict(image_set_id=image_set_id_2)
+        kwargs={"image_set_id": image_set_id_2}
     )
     assert mock_signature.apply_async.call_count == 2
 
@@ -397,7 +397,7 @@ def test_validate_image_set_generated_image_set_not_primary(
         == "New instance is not primary: metadata conflicts with already existing instance."
     )
     mock_delete_image_set_task.assert_called_once_with(
-        kwargs=dict(image_set_id=image_set_id)
+        kwargs={"image_set_id": image_set_id}
     )
     assert mock_signature.apply_async.call_count == 1
 
@@ -438,7 +438,7 @@ def test_validate_image_set_generated_image_set_not_first_version(
         di_upload.validate_image_set(job_summary=job_summary)
     assert str(e.value) == "Instance already exists. This should never happen!"
     mock_revert_image_set_to_initial_version.assert_called_once_with(
-        kwargs=dict(image_set_id=image_set_id, version_id=2)
+        kwargs={"image_set_id": image_set_id, "version_id": 2}
     )
     assert mock_signature.apply_async.call_count == 1
 
@@ -488,7 +488,7 @@ def test_delete_healthimaging_image_set_post_delete_dicom_image_set(
         dicom_image_set.delete()
 
     mock_delete_healthimaging_image_set.assert_called_once_with(
-        kwargs=dict(image_set_id=dicom_image_set.image_set_id)
+        kwargs={"image_set_id": dicom_image_set.image_set_id}
     )
     assert mock_signature.apply_async.call_count == 1
 
