@@ -1136,6 +1136,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     "items": {
                         "type": "integer",
                     },
+                    "uniqueItems": True,
                 }
             )
         ],

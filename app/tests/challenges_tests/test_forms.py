@@ -132,6 +132,7 @@ def test_budget_update_form():
     "invalid_data",
     [
         {"task_ids": "[1]"},  # not all task ids defined
+        {"task_ids": "[1, 1]"},  # task ids are not unique
         {
             "algorithm_maximum_settable_memory_gb_for_tasks": "[32]"
         },  # not all tasks defined

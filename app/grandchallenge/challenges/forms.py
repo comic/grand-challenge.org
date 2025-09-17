@@ -580,14 +580,6 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         )
         self.helper.layout.append(Submit("save", "Save"))
 
-    def clean_task_ids(self):
-        task_ids = self.cleaned_data.get("task_ids")
-
-        if not len(task_ids) == len(set(task_ids)):
-            raise ValidationError("Task ids must be unique.")
-
-        return task_ids
-
     def clean(self):
         cleaned_data = super().clean()
 
