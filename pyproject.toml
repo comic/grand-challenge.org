@@ -59,6 +59,7 @@ dependencies = [
     "grand-challenge-forge>=0.7.1",
     "biopython",
     "cachetools",
+    "grand-challenge-dicom-de-identifier>=0.1.1",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"

@@ -18,6 +18,9 @@ from django.db import transaction
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
 from django.utils.module_loading import import_string
+from grand_challenge_dicom_de_identifier.exceptions import (
+    RejectedDICOMFileError,
+)
 from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
 
@@ -549,6 +552,10 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
     try:
         upload.deidentify_user_uploads()
         upload.start_dicom_import_job()
+    except RejectedDICOMFileError as e:
+        upload.mark_failed(error_message=e.justification)
+        upload.user_uploads.all().delete()
+        upload.delete_input_files()
     except (
         health_imaging_client.exceptions.ThrottlingException,
         health_imaging_client.exceptions.ServiceQuotaExceededException,
@@ -556,6 +563,7 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         raise RetryStep from e
     except Exception as e:
         upload.mark_failed(error_message="An unexpected error occurred", exc=e)
+        upload.delete_input_files()
     else:
         upload.status = DICOMImageSetUploadStatusChoices.STARTED
         upload.save()
