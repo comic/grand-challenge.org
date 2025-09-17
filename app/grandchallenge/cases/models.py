@@ -434,8 +434,8 @@ class Image(UUIDModel):
         ImagingModality, null=True, blank=True, on_delete=models.SET_NULL
     )
 
-    width = models.IntegerField(blank=False)
-    height = models.IntegerField(blank=False)
+    width = models.IntegerField(null=True, blank=True)
+    height = models.IntegerField(null=True, blank=True)
     depth = models.IntegerField(null=True, blank=True)
     voxel_width_mm = models.FloatField(null=True, blank=True)
     voxel_height_mm = models.FloatField(null=True, blank=True)
@@ -445,7 +445,7 @@ class Image(UUIDModel):
     window_center = models.FloatField(null=True, blank=True)
     window_width = models.FloatField(null=True, blank=True)
     color_space = models.CharField(
-        max_length=5, blank=False, choices=COLOR_SPACES
+        max_length=5, blank=True, choices=COLOR_SPACES
     )
     patient_id = models.CharField(max_length=64, default="", blank=True)
     # Max length for patient_name is 5 * 64 + 4 = 324, as described for value
