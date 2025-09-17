@@ -1,8 +1,9 @@
 import copy
+import hashlib
 import json
 import logging
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import SpooledTemporaryFile, TemporaryDirectory
 from urllib.parse import urlparse
 
 import boto3
@@ -20,6 +21,7 @@ from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
+from grand_challenge_dicom_de_identifier.deidentifier import DicomDeidentifier
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from panimg.image_builders.metaio_utils import load_sitk_image
 from panimg.models import (
@@ -909,6 +911,17 @@ class PostProcessImageTask(UUIDModel):
             )
 
 
+def generate_dicom_id_suffix(*, pk, suffix_type):
+    """
+    Generates a unique numerical suffix for a DICOM UID based on the primary key
+    and a string to differentiate the type (e.g., 'study' or 'series').
+    """
+    seed = f"{pk}-{suffix_type}"
+
+    digest = hashlib.sha512(seed.encode("utf8")).digest()
+    return str(int.from_bytes(digest[:14]))
+
+
 class DICOMImageSetUploadStatusChoices(models.TextChoices):
     INITIALIZED = "INITIALIZED", _("Initialized")
     STARTED = "STARTED", _("Started")
@@ -979,6 +992,17 @@ class DICOMImageSetUpload(UUIDModel):
         validators=[JSONValidator(schema=IMPORT_JOB_FAILURE_NDJSON_SCHEMA)],
     )
 
+    study_instance_uid = models.CharField(
+        max_length=36,
+        editable=False,
+        unique=True,
+    )
+    series_instance_uid = models.CharField(
+        max_length=36,
+        editable=False,
+        unique=True,
+    )
+
     class Meta:
         verbose_name = "DICOM image set upload"
         constraints = [
@@ -997,7 +1021,12 @@ class DICOMImageSetUpload(UUIDModel):
         self.__s3_client = None
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        self.study_instance_uid = generate_dicom_id_suffix(
+            pk=self.pk, suffix_type="study"
+        )
+        self.series_instance_uid = generate_dicom_id_suffix(
+            pk=self.pk, suffix_type="series"
+        )
         super().save(*args, **kwargs)
 
     @property
@@ -1024,14 +1053,12 @@ class DICOMImageSetUpload(UUIDModel):
         return f"{settings.COMPONENTS_REGISTRY_PREFIX}-{self.pk}"
 
     @property
-    def _input_key(self):
+    def _input_prefix(self):
         return f"inputs/{self.pk}"
 
     @property
     def _import_input_s3_uri(self):
-        return (
-            f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/{self._input_key}"
-        )
+        return f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/{self._input_prefix}"
 
     @property
     def _import_output_s3_uri(self):
@@ -1039,9 +1066,9 @@ class DICOMImageSetUpload(UUIDModel):
 
     @property
     def _marker_file_key(self):
-        return f"{self._input_key}/deidentification.done"
+        return f"{self._input_prefix}/deidentification.done"
 
-    def mark_failed(self, *, error_message, exc):
+    def mark_failed(self, *, error_message, exc=None):
         self.status = DICOMImageSetUploadStatusChoices.FAILED
         self.error_message = error_message
         self.save()
@@ -1058,16 +1085,39 @@ class DICOMImageSetUpload(UUIDModel):
         )
 
     def _deidentify_files(self):
-        # this will need to iterate over all linked UserUploads
-        # for each, download the file from the uploads bucket, run the
-        # deidentifier and upload the deidentified file to the HI bucket
-        # for the time being just copy each upload to the HI bucket
+        deid = DicomDeidentifier(
+            study_instance_uid_suffix=self.study_instance_uid,
+            series_instance_uid_suffix=self.series_instance_uid,
+            assert_unique_value_for=[
+                "StudyInstanceUID",
+                "SeriesInstanceUID",
+                "PatientID",
+                "StudyID",
+                "StudyDate",
+                "AccessionNumber",
+                "SeriesNumber",
+            ],
+        )
         for upload in self.user_uploads.all():
-            self._s3_client.copy(
-                CopySource={"Bucket": upload.bucket, "Key": upload.key},
-                Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
-                Key=f"{self._input_key}/{upload.filename}",
-            )
+            with (
+                SpooledTemporaryFile() as infile,
+                SpooledTemporaryFile() as outfile,
+            ):
+                self._s3_client.download_fileobj(
+                    Fileobj=infile,
+                    Bucket=upload.bucket,
+                    Key=upload.key,
+                )
+                infile.seek(0)
+
+                deid.deidentify_file(infile, output=outfile)
+
+                outfile.seek(0)
+                self._s3_client.upload_fileobj(
+                    Fileobj=outfile,
+                    Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+                    Key=f"{self._input_prefix}/{upload.pk}.dcm",
+                )
 
     def deidentify_user_uploads(self):
         # Check if marker file exists
@@ -1093,6 +1143,17 @@ class DICOMImageSetUpload(UUIDModel):
         )
 
         self.user_uploads.all().delete()
+
+    def delete_input_files(self):
+        from grandchallenge.components.backends.base import (
+            list_and_delete_objects_from_prefix,
+        )
+
+        list_and_delete_objects_from_prefix(
+            s3_client=self._s3_client,
+            bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+            prefix=self._input_prefix,
+        )
 
     def get_job_summary(self, *, event):
         output_uri = event["outputS3Uri"]

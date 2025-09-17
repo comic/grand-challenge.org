@@ -6,6 +6,9 @@ from uuid import uuid4
 import pytest
 from botocore.exceptions import ClientError
 from django.db import IntegrityError
+from grand_challenge_dicom_de_identifier.exceptions import (
+    RejectedDICOMFileError,
+)
 from panimg.models import ImageType, PanImgFile, PostProcessorResult
 from panimg.post_processors import DEFAULT_POST_PROCESSORS
 
@@ -254,6 +257,10 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
             "deidentify_user_uploads",
             side_effect=Exception(),
         ),
+        patch.object(
+            DICOMImageSetUpload,
+            "delete_input_files",
+        ) as mocked_delete_input_files,
     ):
         with django_capture_on_commit_callbacks(execute=True):
             import_dicom_to_healthimaging(
@@ -266,6 +273,7 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
     # upload gets marked as failed
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
     assert di_upload.error_message == "An unexpected error occurred"
+    mocked_delete_input_files.assert_called_once()
 
 
 @pytest.mark.django_db
@@ -287,6 +295,10 @@ def test_error_in_start_dicom_import_job(django_capture_on_commit_callbacks):
             DICOMImageSetUpload,
             "deidentify_user_uploads",
         ),
+        patch.object(
+            DICOMImageSetUpload,
+            "delete_input_files",
+        ) as mock_delete_input_files,
     ):
         with django_capture_on_commit_callbacks(execute=True):
             import_dicom_to_healthimaging(
@@ -296,3 +308,44 @@ def test_error_in_start_dicom_import_job(django_capture_on_commit_callbacks):
     di_upload.refresh_from_db()
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
     assert di_upload.error_message == "An unexpected error occurred"
+    mock_delete_input_files.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_start_dicom_import_job_sets_error_message_when_deid_fails(
+    django_capture_on_commit_callbacks, mocker
+):
+    di_upload = DICOMImageSetUploadFactory()
+
+    mock_qs = mocker.MagicMock()
+    mocker.patch.object(
+        type(di_upload.user_uploads), "all", return_value=mock_qs
+    )
+
+    with (
+        patch.object(
+            DICOMImageSetUpload, "start_dicom_import_job"
+        ) as mocked_import_method,
+        patch.object(
+            DICOMImageSetUpload,
+            "deidentify_user_uploads",
+            side_effect=RejectedDICOMFileError(justification="Foo"),
+        ),
+        patch.object(
+            DICOMImageSetUpload,
+            "delete_input_files",
+        ) as mocked_delete_input_files,
+    ):
+        with django_capture_on_commit_callbacks(execute=True):
+            import_dicom_to_healthimaging(
+                dicom_imageset_upload_pk=di_upload.pk
+            )
+        # start_dicom_import_job does not get called
+        mocked_import_method.assert_not_called()
+        mocked_delete_input_files.assert_called_once()
+        mock_qs.delete.assert_called_once()
+
+    di_upload.refresh_from_db()
+    # upload gets marked as failed
+    assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
+    assert di_upload.error_message == "Foo"

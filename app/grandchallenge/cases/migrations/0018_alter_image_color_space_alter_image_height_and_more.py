@@ -118,6 +118,18 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
+                    "study_instance_uid",
+                    models.CharField(
+                        editable=False, max_length=36, unique=True
+                    ),
+                ),
+                (
+                    "series_instance_uid",
+                    models.CharField(
+                        editable=False, max_length=36, unique=True
+                    ),
+                ),
+                (
                     "creator",
                     models.ForeignKey(
                         default=None,

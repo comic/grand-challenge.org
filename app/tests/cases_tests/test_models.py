@@ -13,7 +13,12 @@ from grandchallenge.cases.exceptions import (
     DICOMImportJobFailedError,
     DICOMImportJobValidationError,
 )
-from grandchallenge.cases.models import DICOMImageSet, Image, JobSummary
+from grandchallenge.cases.models import (
+    DICOMImageSet,
+    Image,
+    JobSummary,
+    generate_dicom_id_suffix,
+)
 from tests.cases_tests.factories import (
     DICOMImageSetFactory,
     DICOMImageSetUploadFactory,
@@ -24,6 +29,7 @@ from tests.cases_tests.factories import (
     ImageFileFactoryWithRAWFile,
 )
 from tests.factories import ImageFileFactory
+from tests.uploads_tests.factories import UserUploadFactory
 
 
 @pytest.mark.django_db
@@ -457,6 +463,109 @@ def test_handle_completed_job_generated_image_set(mocker, import_job_summary):
     mock_convert_image_set_to_internal.assert_called_once_with(
         image_set_id=job_summary.image_sets_summary[0].image_set_id,
     )
+
+
+@pytest.mark.django_db
+def test_instance_uuid_generation():
+    di_upload = DICOMImageSetUploadFactory()
+
+    assert di_upload.study_instance_uid == generate_dicom_id_suffix(
+        pk=di_upload.pk, suffix_type="study"
+    )
+    assert di_upload.series_instance_uid == generate_dicom_id_suffix(
+        pk=di_upload.pk, suffix_type="series"
+    )
+
+
+@pytest.mark.django_db
+def test_deidentify_user_uploads_idempotency(mocker, settings):
+    settings.AWS_HEALTH_IMAGING_BUCKET_NAME = "test-bucket"
+    di_upload = DICOMImageSetUploadFactory()
+    mock_deidentify_files = mocker.patch.object(di_upload, "_deidentify_files")
+
+    with Stubber(di_upload._s3_client) as s:
+        s.add_response(
+            method="head_object",
+            service_response={},  # response indicating there already is a marker file
+            expected_params={
+                "Bucket": settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+                "Key": di_upload._marker_file_key,
+            },
+        )
+        di_upload.deidentify_user_uploads()
+
+    mock_deidentify_files.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_deidentify_user_uploads(mocker, settings):
+    settings.AWS_HEALTH_IMAGING_BUCKET_NAME = "test-bucket"
+    di_upload = DICOMImageSetUploadFactory()
+    mock_deidentify_files = mocker.patch.object(di_upload, "_deidentify_files")
+
+    mock_qs = mocker.MagicMock()
+    mocker.patch.object(
+        type(di_upload.user_uploads), "all", return_value=mock_qs
+    )
+
+    with Stubber(di_upload._s3_client) as s:
+        s.add_client_error(
+            method="head_object",
+            service_error_code="404",
+            service_message="Not Found",
+            expected_params={
+                "Bucket": settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+                "Key": di_upload._marker_file_key,
+            },
+        )
+        s.add_response(
+            method="put_object",
+            expected_params={
+                "Bucket": settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+                "Key": di_upload._marker_file_key,
+                "Body": b"",
+            },
+            service_response={},
+        )
+        di_upload.deidentify_user_uploads()
+
+    mock_deidentify_files.assert_called_once()
+    mock_qs.delete.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_deidentify_files_processes_all_user_uploads(mocker):
+    di_upload = DICOMImageSetUploadFactory()
+    uploads = UserUploadFactory.create_batch(3)
+    di_upload.user_uploads.set(uploads)
+
+    mock_download = mocker.patch.object(
+        type(di_upload._s3_client), "download_fileobj"
+    )
+    mock_upload = mocker.patch.object(
+        type(di_upload._s3_client), "upload_fileobj"
+    )
+    mock_deid = mocker.patch("grandchallenge.cases.models.DicomDeidentifier")
+    mock_instance = mock_deid.return_value
+
+    di_upload._deidentify_files()
+
+    mock_deid.assert_called_once_with(
+        study_instance_uid_suffix=di_upload.study_instance_uid,
+        series_instance_uid_suffix=di_upload.series_instance_uid,
+        assert_unique_value_for=[
+            "StudyInstanceUID",
+            "SeriesInstanceUID",
+            "PatientID",
+            "StudyID",
+            "StudyDate",
+            "AccessionNumber",
+            "SeriesNumber",
+        ],
+    )
+    assert mock_download.call_count == len(uploads)
+    assert mock_upload.call_count == len(uploads)
+    assert mock_instance.deidentify_file.call_count == len(uploads)
 
 
 @pytest.mark.django_db
