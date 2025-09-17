@@ -1012,7 +1012,15 @@ class DICOMImageSetUpload(UUIDModel):
         deid = DicomDeidentifier(
             study_instance_uid_suffix=self.study_instance_uid,
             series_instance_uid_suffix=self.series_instance_uid,
-            assert_unique_value_for=["StudyInstanceUID", "SeriesInstanceUID"],
+            assert_unique_value_for=[
+                "StudyInstanceUID",
+                "SeriesInstanceUID",
+                "PatientID",
+                "StudyID",
+                "StudyDate",
+                "AccessionNumber",
+                "SeriesNumber",
+            ],
         )
         for upload in self.user_uploads.all():
             with (
