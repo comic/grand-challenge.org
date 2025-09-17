@@ -1170,15 +1170,16 @@ class DICOMImageSetUpload(UUIDModel):
         )
 
     def convert_image_set_to_internal(self, *, image_set_id):
-        dicom_image_set = DICOMImageSet.objects.create(
+        dicom_image_set = DICOMImageSet(
             image_set_id=image_set_id,
             dicom_image_set_upload=self,
         )
+        dicom_image_set.full_clean()
+        dicom_image_set.save()
 
-        Image.objects.create(
+        image = Image(
             dicom_image_set=dicom_image_set,
             # name="",  # todo: get name for set during upload
-            color_space=ColorSpace.GRAY.value,
-            width=-1,
-            height=-1,
         )
+        image.full_clean()
+        image.save()
