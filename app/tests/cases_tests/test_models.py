@@ -13,7 +13,7 @@ from grandchallenge.cases.exceptions import (
     DICOMImportJobFailedError,
     DICOMImportJobValidationError,
 )
-from grandchallenge.cases.models import DICOMImageSet, Image
+from grandchallenge.cases.models import DICOMImageSet, Image, JobSummary
 from tests.cases_tests.factories import (
     DICOMImageSetFactory,
     DICOMImageSetUploadFactory,
@@ -230,7 +230,7 @@ def import_job_event():
 @pytest.fixture
 def import_job_summary():
     def _import_job_summary(*, di_upload, **kwargs):
-        job_summary = {
+        job_summary_data = {
             "jobId": "381d850256f30b24358c0a3d9e389670",
             "datastoreId": "bbc4f3cccbae4095a34170fddc19b13d",
             "inputS3Uri": f"s3://healthimaging/inputs/{di_upload.pk}/",
@@ -251,8 +251,8 @@ def import_job_summary():
                 }
             ],
         }
-        job_summary.update(kwargs)
-        return job_summary
+        job_summary_data.update(kwargs)
+        return JobSummary(**job_summary_data)
 
     return _import_job_summary
 
@@ -488,7 +488,7 @@ def test_handle_completed_job_generated_image_set(
     di_upload.handle_completed_job(event=event)
 
     mock_convert_image_set_to_internal.assert_called_once_with(
-        image_set_id=job_summary["imageSetsSummary"][0]["imageSetId"],
+        image_set_id=job_summary.image_sets_summary[0].image_set_id,
     )
 
 
@@ -547,7 +547,5 @@ def test_convert_image_set_to_internal(mocker):
 
     image = Image.objects.first()
 
-    assert image.height == -1
-    assert image.width == -1
-    assert image.color_space == "GRAY"
-    assert image.name == ""
+    assert image.dicom_image_set == dicom_image_set
+    assert image.name == "placeholder"

@@ -28,6 +28,9 @@ from panimg.models import (
     ImageType,
     PatientSex,
 )
+from pydantic import ConfigDict, Field, field_validator
+from pydantic.alias_generators import to_camel
+from pydantic.dataclasses import dataclass
 from storages.utils import clean_name
 
 from grandchallenge.cases.exceptions import (
@@ -913,6 +916,40 @@ class DICOMImageSetUploadStatusChoices(models.TextChoices):
     COMPLETED = "COMPLETED", _("Completed")
 
 
+@dataclass(config=ConfigDict(alias_generator=to_camel))
+class ImageSetSummary:
+    image_set_id: str
+    image_set_version: int
+    is_primary: bool
+    number_of_matched_sop_instances: int = Field(
+        alias="numberOfMatchedSOPInstances"
+    )
+
+
+@dataclass(config=ConfigDict(alias_generator=to_camel))
+class JobSummary:
+    job_id: str
+    datastore_id: str
+    input_s3_uri: str
+    output_s3_uri: str
+    success_output_s3_uri: str
+    failure_output_s3_uri: str
+    number_of_scanned_files: int
+    number_of_imported_files: int
+    number_of_files_with_customer_error: int
+    number_of_files_with_server_error: int
+    number_of_generated_image_sets: int
+    image_sets_summary: list[ImageSetSummary]
+
+    @field_validator("image_sets_summary", mode="before")
+    @classmethod
+    def convert_image_set_summaries(cls, data):
+        return [
+            ImageSetSummary(**image_set_summary_data)
+            for image_set_summary_data in data
+        ]
+
+
 class DICOMImageSetUpload(UUIDModel):
     creator = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
@@ -1065,10 +1102,10 @@ class DICOMImageSetUpload(UUIDModel):
 
         obj = self._s3_client.get_object(Bucket=bucket, Key=key)
 
-        return json.load(obj["Body"])["jobSummary"]
+        return JobSummary(**json.load(obj["Body"])["jobSummary"])
 
     def get_job_output_failure_log(self, *, job_summary):
-        output_uri = job_summary["failureOutputS3Uri"]
+        output_uri = job_summary.failure_output_s3_uri
         parsed = urlparse(output_uri)
         bucket = parsed.netloc
         key = parsed.path.lstrip("/") + "failure.ndjson"
@@ -1102,27 +1139,27 @@ class DICOMImageSetUpload(UUIDModel):
         job_summary = self.get_job_summary(event=event)
 
         if (
-            job_summary["numberOfFilesWithCustomerError"] != 0
-            or job_summary["numberOfFilesWithServerError"] != 0
-            or job_summary["numberOfGeneratedImageSets"] == 0
+            job_summary.number_of_files_with_customer_error != 0
+            or job_summary.number_of_files_with_server_error != 0
+            or job_summary.number_of_generated_image_sets == 0
         ):
             self.handle_failed_job(event=event)
-        elif job_summary["numberOfGeneratedImageSets"] > 1:
+        elif job_summary.number_of_generated_image_sets > 1:
             self.delete_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
                 "Multiple image sets created. Expected only one."
             )
 
-        image_set_summary = job_summary["imageSetsSummary"][0]
+        image_set_summary = job_summary.image_sets_summary[0]
 
-        if not image_set_summary["isPrimary"]:
+        if not image_set_summary.is_primary:
             self.delete_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
                 "New instance is not primary: "
                 "metadata conflicts with already existing instance."
             )
 
-        if not image_set_summary["imageSetVersion"] == 1:
+        if not image_set_summary.image_set_version == 1:
             self.revert_image_set_to_initial_version(
                 image_set_summary=image_set_summary
             )
@@ -1130,7 +1167,7 @@ class DICOMImageSetUpload(UUIDModel):
                 "Instance already exists. This should never happen!"
             )
 
-        return image_set_summary["imageSetId"]
+        return image_set_summary.image_set_id
 
     def handle_failed_job(self, *, event):
         job_summary = self.get_job_summary(event=event)
@@ -1138,7 +1175,7 @@ class DICOMImageSetUpload(UUIDModel):
             job_summary=job_summary
         )
         self.delete_image_sets(job_summary=job_summary)
-        job_id = job_summary["jobId"]
+        job_id = job_summary.job_id
         raise DICOMImportJobFailedError(
             f"Import job {job_id} failed for DICOMImageSetUpload {self.pk}"
         )
@@ -1147,10 +1184,10 @@ class DICOMImageSetUpload(UUIDModel):
     def delete_image_sets(*, job_summary):
         from grandchallenge.cases.tasks import delete_healthimaging_image_set
 
-        for image_set_summary in job_summary.get("imageSetsSummary", []):
+        for image_set_summary in job_summary.image_sets_summary:
             on_commit(
                 delete_healthimaging_image_set.signature(
-                    kwargs=dict(image_set_id=image_set_summary["imageSetId"])
+                    kwargs=dict(image_set_id=image_set_summary.image_set_id)
                 ).apply_async
             )
 
@@ -1163,8 +1200,8 @@ class DICOMImageSetUpload(UUIDModel):
         on_commit(
             revert_image_set_to_initial_version.signature(
                 kwargs=dict(
-                    image_set_id=image_set_summary["imageSetId"],
-                    version_id=image_set_summary["imageSetVersion"],
+                    image_set_id=image_set_summary.image_set_id,
+                    version_id=image_set_summary.image_set_version,
                 )
             ).apply_async
         )
