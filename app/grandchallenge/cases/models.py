@@ -1192,6 +1192,7 @@ class DICOMImageSetUpload(UUIDModel):
         else:
             self.status = self.DICOMImageSetUploadStatusChoices.COMPLETED
             self.save()
+        finally:
             self.delete_input_files()
 
     def handle_completed_job(self, *, job_summary):
