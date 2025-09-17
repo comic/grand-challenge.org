@@ -10,11 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.core.validators import (
-    MaxValueValidator,
-    MinValueValidator,
-    validate_slug,
-)
+from django.core.validators import MinValueValidator, validate_slug
 from django.db import models
 from django.db.models import (
     BooleanField,
@@ -49,11 +45,7 @@ from grandchallenge.challenges.emails import (
     send_email_percent_budget_consumed_alert,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
-from grandchallenge.components.schemas import (
-    SELECTABLE_GPU_TYPES_SCHEMA,
-    GPUTypeChoices,
-    get_default_gpu_type_choices,
-)
+from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
@@ -1014,12 +1006,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     code_availability = models.TextField(
         help_text="Will the participants’ code be accessible after the challenge?"
     )
-    expected_number_of_teams = deprecate_field(
-        models.PositiveIntegerField(
-            help_text="How many teams do you expect to participate in your challenge?",
-            validators=[MinValueValidator(limit_value=1)],
-        )
-    )
     number_of_teams_for_phases = models.JSONField(
         help_text="Number of teams for each phase",
         default=list,
@@ -1041,22 +1027,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         help_text="Average algorithm container size in GB.",
         validators=[MinValueValidator(limit_value=1)],
     )
-    average_number_of_containers_per_team = deprecate_field(
-        models.PositiveIntegerField(
-            default=5,
-            help_text="Average number of algorithm containers per team.",
-            validators=[MinValueValidator(limit_value=1)],
-        )
-    )
-    inference_time_limit_in_minutes = deprecate_field(
-        models.PositiveIntegerField(
-            help_text="Average run time per algorithm job in minutes.",
-            validators=[
-                MinValueValidator(limit_value=5),
-                MaxValueValidator(limit_value=60),
-            ],
-        )
-    )
     inference_time_average_minutes_for_tasks = models.JSONField(
         help_text="Average run time per algorithm job in minutes, for each task.",
         default=list,
@@ -1073,17 +1043,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 }
             )
         ],
-    )
-    algorithm_selectable_gpu_type_choices = deprecate_field(
-        models.JSONField(
-            default=get_default_gpu_type_choices,
-            help_text=(
-                "The GPU type choices that participants will be able to select for their "
-                "algorithm inference jobs. Options are "
-                f"{GPUTypeChoices.values}.".replace("'", '"')
-            ),
-            validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
-        )
     )
     algorithm_selectable_gpu_type_choices_for_tasks = models.JSONField(
         default=list,
@@ -1110,30 +1069,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             )
         ],
     )
-    algorithm_maximum_settable_memory_gb = deprecate_field(
-        models.PositiveSmallIntegerField(
-            default=settings.ALGORITHMS_MAX_MEMORY_GB,
-            help_text=(
-                "Maximum amount of main memory (DRAM) that participants will be allowed to "
-                "assign to algorithm inference jobs for submission."
-            ),
-        )
-    )
     algorithm_maximum_settable_memory_gb_for_tasks = models.JSONField(
         default=list,
         help_text=(
             "Maximum amount of main memory (DRAM) that participants will be allowed to "
             "assign to algorithm inference jobs for submission."
         ),
-    )
-    average_size_of_test_image_in_mb = deprecate_field(
-        models.PositiveIntegerField(
-            help_text="Average size of a test image in MB.",
-            validators=[
-                MinValueValidator(limit_value=1),
-                MaxValueValidator(limit_value=10000),
-            ],
-        )
     )
     average_size_test_image_mb_for_tasks = models.JSONField(
         help_text="Average size of a test image in MB, for each task.",
@@ -1152,16 +1093,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             )
         ],
     )
-    phase_1_number_of_submissions_per_team = deprecate_field(
-        models.PositiveIntegerField(
-            help_text="How many submissions do you expect per team in this phase?",
-        )
-    )
-    phase_2_number_of_submissions_per_team = deprecate_field(
-        models.PositiveIntegerField(
-            help_text="How many submissions do you expect per team in this phase?",
-        )
-    )
     number_of_submissions_per_team_for_phases = models.JSONField(
         help_text="Number of submissions per team for each phase",
         default=list,
@@ -1178,16 +1109,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             )
         ],
     )
-    phase_1_number_of_test_images = deprecate_field(
-        models.PositiveIntegerField(
-            help_text="Number of test images for this phase.",
-        )
-    )
-    phase_2_number_of_test_images = deprecate_field(
-        models.PositiveIntegerField(
-            help_text="Number of test images for this phase.",
-        )
-    )
     number_of_test_images_for_phases = models.JSONField(
         help_text="Number of test images for each phase.",
         default=list,
@@ -1203,14 +1124,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 }
             )
         ],
-    )
-    number_of_tasks = deprecate_field(
-        models.PositiveIntegerField(
-            default=1,
-            help_text="If your challenge has multiple tasks, we multiply the "
-            "phase 1 and 2 cost estimates by the number of tasks.",
-            validators=[MinValueValidator(limit_value=1)],
-        )
     )
     task_ids = models.JSONField(
         help_text="List the task id's, e.g. [1, 2, 3].",
