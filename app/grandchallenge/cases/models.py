@@ -335,7 +335,7 @@ class DICOMImageSet(UUIDModel):
         to="DICOMImageSetUpload",
         editable=False,
         null=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="dicom_image_set",
     )
 
