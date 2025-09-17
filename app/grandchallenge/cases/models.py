@@ -12,7 +12,11 @@ from actstream.models import Follow
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+    SuspiciousFileOperation,
+    ValidationError,
+)
 from django.db import models
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
@@ -1185,6 +1189,8 @@ class DICOMImageSetUpload(UUIDModel):
                 self.handle_failed_job(job_summary=job_summary)
             else:
                 raise ValueError("Invalid job status")
+        except ValidationError as e:
+            self.mark_failed(error_message=e.message, exc=e)
         except Exception as e:
             self.mark_failed(
                 error_message="An unexpected error occurred", exc=e
