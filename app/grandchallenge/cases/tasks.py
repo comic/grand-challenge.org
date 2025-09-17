@@ -571,7 +571,7 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         upload.save()
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException, RetryStep))
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def handle_healthimaging_import_job_event(*, event):
     job_name = event["jobName"]
