@@ -1,4 +1,3 @@
-from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.transaction import on_commit
@@ -13,14 +12,10 @@ from grandchallenge.core.celery import (
 @acks_late_micro_short_task
 @transaction.atomic
 def create_codebuild_build(*, pk):
-    GitHubWebhookMessage = apps.get_model(  # noqa: N806
-        app_label="github", model_name="GitHubWebhookMessage"
-    )
-    ghwm = GitHubWebhookMessage.objects.get(pk=pk)
+    from grandchallenge.codebuild.models import Build
+    from grandchallenge.github.models import GitHubWebhookMessage
 
-    Build = apps.get_model(  # noqa: N806
-        app_label="codebuild", model_name="Build"
-    )
+    ghwm = GitHubWebhookMessage.objects.get(pk=pk)
 
     if Build.objects.filter(webhook_message=ghwm).exists():
         # Build already exists
@@ -42,12 +37,9 @@ def create_codebuild_build(*, pk):
 @acks_late_micro_short_task
 @transaction.atomic
 def handle_completed_build_event(*, build_arn, build_status):
+    from grandchallenge.codebuild.models import Build
+
     build_id = build_arn.split("/")[-1]
-
-    Build = apps.get_model(  # noqa: N806
-        app_label="codebuild", model_name="Build"
-    )
-
     build = Build.objects.get(build_id=build_id)
 
     if build.status != build.BuildStatusChoices.IN_PROGRESS:
@@ -69,9 +61,7 @@ def handle_completed_build_event(*, build_arn, build_status):
 
 @acks_late_2xlarge_task
 def add_image_to_algorithm(*, build_pk):
-    Build = apps.get_model(  # noqa: N806
-        app_label="codebuild", model_name="Build"
-    )
+    from grandchallenge.codebuild.models import Build
 
     build = Build.objects.get(pk=build_pk)
 

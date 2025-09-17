@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from allauth.account.models import EmailAddress
 from allauth.account.signals import email_confirmed
-from django.apps import apps
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
@@ -137,6 +136,12 @@ class Verification(FieldChangeMixin, models.Model):
         )
 
     def accept_pending_requests_for_verified_users(self):
+        from grandchallenge.algorithms.models import AlgorithmPermissionRequest
+        from grandchallenge.archives.models import ArchivePermissionRequest
+        from grandchallenge.participants.models import RegistrationRequest
+        from grandchallenge.reader_studies.models import (
+            ReaderStudyPermissionRequest,
+        )
 
         if not self.is_verified:
             raise RuntimeError(
@@ -144,20 +149,10 @@ class Verification(FieldChangeMixin, models.Model):
             )
 
         permission_request_classes = {
-            "algorithm": apps.get_model(
-                app_label="algorithms",
-                model_name="AlgorithmPermissionRequest",
-            ),
-            "archive": apps.get_model(
-                app_label="archives", model_name="ArchivePermissionRequest"
-            ),
-            "reader_study": apps.get_model(
-                app_label="reader_studies",
-                model_name="ReaderStudyPermissionRequest",
-            ),
-            "challenge": apps.get_model(
-                app_label="participants", model_name="RegistrationRequest"
-            ),
+            "algorithm": AlgorithmPermissionRequest,
+            "archive": ArchivePermissionRequest,
+            "reader_study": ReaderStudyPermissionRequest,
+            "challenge": RegistrationRequest,
         }
 
         for (

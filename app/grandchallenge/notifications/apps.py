@@ -1,5 +1,6 @@
-from django.apps import AppConfig, apps
+from django.apps import AppConfig
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db.models.signals import post_migrate
 
 
@@ -35,26 +36,48 @@ class NotificationsConfig(AppConfig):
     def ready(self):
         from actstream import registry
 
-        registry.register(apps.get_model("auth.User"))
-        registry.register(apps.get_model("algorithms.Algorithm"))
-        registry.register(
-            apps.get_model("algorithms.AlgorithmPermissionRequest")
+        from grandchallenge.algorithms.models import (
+            Algorithm,
+            AlgorithmPermissionRequest,
         )
-        registry.register(apps.get_model("archives.Archive"))
-        registry.register(apps.get_model("archives.ArchivePermissionRequest"))
-        registry.register(apps.get_model("reader_studies.ReaderStudy"))
-        registry.register(
-            apps.get_model("reader_studies.ReaderStudyPermissionRequest")
+        from grandchallenge.archives.models import (
+            Archive,
+            ArchivePermissionRequest,
         )
-        registry.register(apps.get_model("challenges.Challenge"))
-        registry.register(apps.get_model("participants.RegistrationRequest"))
-        registry.register(apps.get_model("evaluation.Submission"))
-        registry.register(apps.get_model("evaluation.Evaluation"))
-        registry.register(apps.get_model("evaluation.Phase"))
-        registry.register(apps.get_model("cases.RawImageUploadSession"))
-        registry.register(apps.get_model("discussion_forums.Forum"))
-        registry.register(apps.get_model("discussion_forums.ForumTopic"))
-        registry.register(apps.get_model("discussion_forums.ForumPost"))
+        from grandchallenge.cases.models import RawImageUploadSession
+        from grandchallenge.challenges.models import Challenge
+        from grandchallenge.discussion_forums.models import (
+            Forum,
+            ForumPost,
+            ForumTopic,
+        )
+        from grandchallenge.evaluation.models import (
+            Evaluation,
+            Phase,
+            Submission,
+        )
+        from grandchallenge.participants.models import RegistrationRequest
+        from grandchallenge.reader_studies.models import (
+            ReaderStudy,
+            ReaderStudyPermissionRequest,
+        )
+
+        registry.register(get_user_model())
+        registry.register(Algorithm)
+        registry.register(AlgorithmPermissionRequest)
+        registry.register(Archive)
+        registry.register(ArchivePermissionRequest)
+        registry.register(ReaderStudy)
+        registry.register(ReaderStudyPermissionRequest)
+        registry.register(Challenge)
+        registry.register(RegistrationRequest)
+        registry.register(Submission)
+        registry.register(Evaluation)
+        registry.register(Phase)
+        registry.register(RawImageUploadSession)
+        registry.register(Forum)
+        registry.register(ForumTopic)
+        registry.register(ForumPost)
         post_migrate.connect(init_notification_permissions, sender=self)
 
         # noinspection PyUnresolvedReferences

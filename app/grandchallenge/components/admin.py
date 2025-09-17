@@ -24,7 +24,7 @@ def cancel_image_imports(modeladmin, request, queryset):
             ComponentImage.ImportStatusChoices.INITIALIZED,
             ComponentImage.ImportStatusChoices.RETRY,
         ]
-    ).select_for_update(of=("self",), skip_locked=True).update(
+    ).select_for_update(skip_locked=True).update(
         import_status=ComponentImage.ImportStatusChoices.CANCELLED
     )
 
@@ -151,9 +151,7 @@ def cancel_jobs(modeladmin, request, queryset):
             ComponentJob.EXECUTING_PREREQUISITES,
             ComponentJob.VALIDATING_INPUTS,
         ]
-    ).select_for_update(of=("self",), skip_locked=True).update(
-        status=ComponentJob.CANCELLED
-    )
+    ).select_for_update(skip_locked=True).update(status=ComponentJob.CANCELLED)
 
 
 @admin.action(
