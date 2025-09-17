@@ -146,7 +146,7 @@ def prepare_and_execute_evaluation(*, evaluation_pk):  # noqa: C901
         evaluation.submission.user_upload.delete()
 
     if evaluation.submission.algorithm_image:
-        evaluation.status = Evaluation.EXECUTING_PREREQUISITES
+        evaluation.status = Evaluation.PENDING
         evaluation.save()
         on_commit(
             lambda: create_algorithm_jobs_for_evaluation.apply_async(
@@ -223,14 +223,18 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
 
     with check_lock_acquired():
         evaluation = (
-            Evaluation.objects.select_related("submission")
+            Evaluation.objects.select_related("submission__creator")
             .select_for_update(nowait=True, of=("self",))
             .get(pk=evaluation_pk)
         )
 
-    if evaluation.status != evaluation.EXECUTING_PREREQUISITES:
+    expected_status = (
+        evaluation.PENDING if first_run else evaluation.EXECUTING_PREREQUISITES
+    )
+
+    if evaluation.status != expected_status:
         logger.info(
-            f"Nothing to do: evaluation is {evaluation.get_status_display()}."
+            f"Nothing to do: evaluation {first_run=} is {evaluation.get_status_display()}."
         )
         return
 
@@ -263,6 +267,24 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
         )
 
     if first_run:
+        # Only go ahead if this is the users only active evaluation to
+        # prevent flooding of the system
+        user_has_other_active_evaluations = (
+            Evaluation.objects.filter(
+                submission__creator=evaluation.submission.creator,
+                status=Evaluation.EXECUTING_PREREQUISITES,
+            )
+            .exclude(pk=evaluation.pk)
+            .exists()
+        )
+
+        if user_has_other_active_evaluations:
+            logger.info("Nothing to do: user has other active evaluations.")
+            raise TooManyJobsScheduled
+        else:
+            evaluation.status = Evaluation.EXECUTING_PREREQUISITES
+            evaluation.save()
+
         # Run with 1 job and then if that goes well, come back and
         # run all jobs.
         task_on_success = create_algorithm_jobs_for_evaluation.signature(
