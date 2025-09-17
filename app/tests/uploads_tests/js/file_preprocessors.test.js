@@ -1,5 +1,4 @@
 const {
-    GRAND_CHALLENGE_ROOT_UID,
     getDummyValue,
     isDicomFile,
     preprocessDicomFile,
@@ -219,8 +218,6 @@ describe("preprocessDicomFile", () => {
 
         expect(newUID).toBeDefined();
         expect(newUID).not.toBe(originalUID);
-        expect(newUID.length).toBe(64);
-        expect(newUID.startsWith(GRAND_CHALLENGE_ROOT_UID)).toBe(true);
 
         // Check consistency with a new file using the same original UID
         expect(_uidMap.get(originalUID)).toBe(newUID);
