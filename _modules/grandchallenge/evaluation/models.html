@@ -1105,7 +1105,7 @@
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">Evaluation</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">active</span><span class="p">()</span>
             <span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                <span class="n">submission__phase__challenge</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="p">,</span>
+                <span class="n">submission__phase</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
                 <span class="n">submission__creator__in</span><span class="o">=</span><span class="n">users</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">exists</span><span class="p">()</span>
