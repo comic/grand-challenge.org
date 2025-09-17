@@ -176,6 +176,7 @@ class Migration(migrations.Migration):
                             "$schema": "http://json-schema.org/draft-07/schema",
                             "items": {"type": "integer"},
                             "type": "array",
+                            "uniqueItems": True,
                         }
                     )
                 ],
