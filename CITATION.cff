@@ -35,5 +35,8 @@ authors:
       family-names: van Ginneken
       given-names: Bram
       orcid: https://orcid.org/0000-0003-2028-8972
+    - affiliation: Informatics Institute, Faculty of Science, University of Amsterdam, P.O. Box 94323, 1090 GH Amsterdam, the Netherlands
+      family-names: Koopman
+      given-names: Thomas
 doi: 10.5281/zenodo.3356819
 repository-code: https://github.com/comic/grand-challenge.org
