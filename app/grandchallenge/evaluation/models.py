@@ -1056,7 +1056,7 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         return (
             Evaluation.objects.active()
             .filter(
-                submission__phase__challenge=self.challenge,
+                submission__phase=self,
                 submission__creator__in=users,
             )
             .exists()
