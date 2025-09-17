@@ -1117,10 +1117,11 @@ class DICOMImageSetUpload(UUIDModel):
     def handle_event(self, *, event):
         try:
             job_status = event["jobStatus"]
+            job_summary = self.get_job_summary(event=event)
             if job_status == "COMPLETED":
-                self.handle_completed_job(event=event)
+                self.handle_completed_job(job_summary=job_summary)
             elif job_status == "FAILED":
-                self.handle_failed_job(event=event)
+                self.handle_failed_job(job_summary=job_summary)
             else:
                 raise ValueError("Invalid job status")
         except Exception as e:
@@ -1131,19 +1132,18 @@ class DICOMImageSetUpload(UUIDModel):
             self.status = self.DICOMImageSetUploadStatusChoices.COMPLETED
             self.save()
 
-    def handle_completed_job(self, *, event):
-        image_set_id = self.validate_image_set(event=event)
+    def handle_completed_job(self, *, job_summary):
+        self.validate_image_set(job_summary=job_summary)
+        image_set_id = job_summary.image_sets_summary[0].image_set_id
         self.convert_image_set_to_internal(image_set_id=image_set_id)
 
-    def validate_image_set(self, *, event):
-        job_summary = self.get_job_summary(event=event)
-
+    def validate_image_set(self, *, job_summary):
         if (
             job_summary.number_of_files_with_customer_error != 0
             or job_summary.number_of_files_with_server_error != 0
             or job_summary.number_of_generated_image_sets == 0
         ):
-            self.handle_failed_job(event=event)
+            self.handle_failed_job(job_summary=job_summary)
         elif job_summary.number_of_generated_image_sets > 1:
             self.delete_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
@@ -1167,10 +1167,7 @@ class DICOMImageSetUpload(UUIDModel):
                 "Instance already exists. This should never happen!"
             )
 
-        return image_set_summary.image_set_id
-
-    def handle_failed_job(self, *, event):
-        job_summary = self.get_job_summary(event=event)
+    def handle_failed_job(self, *, job_summary):
         self.internal_failure_log = self.get_job_output_failure_log(
             job_summary=job_summary
         )
