@@ -1,15 +1,17 @@
+from typing import NamedTuple
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
 from django.forms import (
+    CharField,
     HiddenInput,
     ModelChoiceField,
     ModelMultipleChoiceField,
     MultiValueField,
     MultiWidget,
 )
-from django.forms.widgets import ChoiceWidget
+from django.forms.widgets import ChoiceWidget, TextInput
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterfaceValue
@@ -18,7 +20,10 @@ from grandchallenge.core.guardian import (
     get_object_if_allowed,
 )
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadMultipleWidget
+from grandchallenge.uploads.widgets import (
+    DICOMUserUploadMultipleWidget,
+    UserUploadMultipleWidget,
+)
 
 
 class ImageWidgetChoices(TextChoices):
@@ -200,3 +205,91 @@ class FlexibleImageField(MultiValueField):
             if len(non_empty_values) != 1:
                 raise ValidationError("Too many values returned.")
             return non_empty_values[0]
+
+
+DICOMUploadWidgetSuffixes = ["dicom-image-name", "dicom-user-uploads"]
+
+
+class DICOMUploadWithName(NamedTuple):
+    name: str
+    user_uploads: list[UserUpload]
+
+
+class DICOMFileNameInput(TextInput):
+    template_name = "cases/file_name.html"
+
+
+class DICOMUploadWidget(MultiWidget):
+    template_name = "cases/dicom_upload_widget.html"
+
+    def __init__(self, attrs=None):
+        # pass in the widgets as dictionary with the proper suffixes as keys,
+        # so we can reliably tell these fields apart from regular socket fields
+        # in forms that include this field
+        widgets = {
+            DICOMUploadWidgetSuffixes[0]: DICOMFileNameInput(),
+            DICOMUploadWidgetSuffixes[1]: DICOMUserUploadMultipleWidget(),
+        }
+        super().__init__(widgets, attrs)
+
+    def decompress(self, value: DICOMUploadWithName):
+        if value:
+            return [
+                value.name,
+                value.user_uploads,
+            ]
+        return [None, None]
+
+
+class DICOMUploadField(MultiValueField):
+    widget = DICOMUploadWidget
+
+    def __init__(self, *args, user, initial, **kwargs):
+        upload_qs = filter_by_permission(
+            queryset=UserUpload.objects.all(),
+            user=user,
+            codename="change_userupload",
+        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+
+        fields = [
+            CharField(),
+            ModelMultipleChoiceField(queryset=upload_qs),
+        ]
+
+        self.current_value = None
+        if initial:
+            # This can be either an image CIV, or an instance of DICOMUploadWithName
+            # If it's an image CIV, we don't want to show the widgets, and instead
+            # display the current image name.
+            # For that the template needs current_value to be set
+            if isinstance(initial, ComponentInterfaceValue):
+                self.current_value = initial.image
+                # turn initial to the internal data type that this widget expects
+                initial = DICOMUploadWithName(
+                    name=initial.image.name, user_uploads=[initial.image.pk]
+                )
+            elif isinstance(initial, DICOMUploadWithName):
+                # if initial is already a DICOMUploadWithName, just leave it be
+                pass
+            else:
+                raise RuntimeError(
+                    f"Unexpected initial value of type {type(initial)}"
+                )
+
+        super().__init__(
+            *args,
+            fields=fields,
+            initial=initial,
+            **kwargs,
+        )
+
+    def compress(self, values):
+        return DICOMUploadWithName(
+            name=values[0] if values else "",
+            user_uploads=values[1] if values else [],
+        )
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        attrs["current_value"] = self.current_value
+        return attrs

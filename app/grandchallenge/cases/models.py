@@ -927,6 +927,10 @@ class DICOMImageSetUpload(UUIDModel):
         unique=True,
     )
 
+    name = models.CharField(
+        max_length=255, help_text="The name for the resulting Image instance"
+    )
+
     class Meta:
         verbose_name = "DICOM image set upload"
         constraints = [

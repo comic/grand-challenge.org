@@ -4,6 +4,7 @@ from django.db.models import TextChoices
 from django.forms import ModelChoiceField, MultiValueField
 
 from grandchallenge.cases.widgets import (
+    DICOMUploadField,
     FlexibleImageField,
     FlexibleImageWidget,
     ImageSearchWidget,
@@ -76,6 +77,12 @@ class InterfaceFormFieldFactory:
 
         if interface.is_image_kind:
             return FlexibleImageField(
+                user=user,
+                initial=initial,
+                **kwargs,
+            )
+        elif interface.is_dicom_image_kind:
+            return DICOMUploadField(
                 user=user,
                 initial=initial,
                 **kwargs,
