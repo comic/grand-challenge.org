@@ -1677,6 +1677,80 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         return self.base_cost_euros + self.capacity_reservation_euros
 
     @property
+    def costs_for_tasks(self):
+        return [
+            {
+                "id": task_id,
+                "costs_for_phases_in_task": self.get_costs_for_phases_in_task(
+                    task_id
+                ),
+                "number_of_docker_images_per_team": self.number_of_docker_images_per_team_for_tasks[
+                    task_index
+                ],
+                "number_of_teams": self.number_of_teams_for_tasks[task_index],
+                "docker_storage_size_gb": self.docker_storage_size_gb_for_tasks[
+                    task_index
+                ],
+                "docker_storage_costs_euros": self.docker_storage_costs_euros_for_tasks[
+                    task_index
+                ],
+                "inference_time_average_minutes": self.inference_time_average_minutes_for_tasks[
+                    task_index
+                ],
+                "compute_costs_euros_per_hour": self.compute_costs_euros_per_hour_for_tasks[
+                    task_index
+                ],
+                "average_size_test_image_mb": self.average_size_test_image_mb_for_tasks[
+                    task_index
+                ],
+                "compute_costs_euros": self.compute_costs_euros_for_tasks[
+                    task_index
+                ],
+                "storage_costs_euros": self.storage_costs_euros_for_tasks[
+                    task_index
+                ],
+                "compute_and_storage_costs_euros": self.compute_and_storage_costs_euros_for_tasks[
+                    task_index
+                ],
+            }
+            for task_index, task_id in enumerate(self.task_ids)
+        ]
+
+    def get_costs_for_phases_in_task(self, task_id):
+        phase_indices = [
+            idx
+            for idx, val in enumerate(self.task_id_for_phases)
+            if val == task_id
+        ]
+        return [
+            {
+                "number_of_submissions_per_team": self.number_of_submissions_per_team_for_phases[
+                    phase_index
+                ],
+                "number_of_teams": self.number_of_teams_for_phases[
+                    phase_index
+                ],
+                "number_of_test_images": self.number_of_test_images_for_phases[
+                    phase_index
+                ],
+                "compute_time": self.compute_time_for_phases[phase_index],
+                "data_storage_size_gb": self.data_storage_size_gb_for_phases[
+                    phase_index
+                ],
+                "compute_costs_euros": self.compute_costs_euros_for_phases[
+                    phase_index
+                ],
+                "data_storage_costs_euros": self.data_storage_costs_euros_for_phases[
+                    phase_index
+                ],
+                "compute_and_storage_costs_euros": self.compute_and_storage_costs_euros_for_phases[
+                    phase_index
+                ],
+            }
+            for phase_index in phase_indices
+        ]
+
+    @property
     def capacity_reservation_compute_euros(self):
         return (
             self.total_compute_costs_euros
