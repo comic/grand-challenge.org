@@ -60,6 +60,7 @@ dependencies = [
     "biopython",
     "cachetools",
     "grand-challenge-dicom-de-identifier>=0.1.1",
+    "pydantic",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"
