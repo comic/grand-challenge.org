@@ -4,6 +4,7 @@ import factory
 from factory import fuzzy
 
 from grandchallenge.cases.models import (
+    DICOMImageSet,
     DICOMImageSetUpload,
     Image,
     ImageFile,
@@ -152,3 +153,8 @@ class DICOMImageSetUploadFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = DICOMImageSetUpload
+
+
+class DICOMImageSetFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = DICOMImageSet

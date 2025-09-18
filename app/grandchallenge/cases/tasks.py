@@ -7,6 +7,7 @@ from shutil import rmtree
 from tempfile import TemporaryDirectory
 
 import boto3
+import botocore.exceptions
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from botocore.exceptions import ClientError
 from celery import signature
@@ -557,6 +558,7 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         upload.user_uploads.all().delete()
         upload.delete_input_files()
     except (
+        botocore.exceptions.EndpointConnectionError,
         health_imaging_client.exceptions.ThrottlingException,
         health_imaging_client.exceptions.ServiceQuotaExceededException,
     ) as e:
@@ -569,7 +571,7 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
         upload.save()
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException, RetryStep))
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def handle_healthimaging_import_job_event(*, event):
     job_name = event["jobName"]

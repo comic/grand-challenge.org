@@ -12,7 +12,11 @@ from actstream.models import Follow
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
+from django.core.exceptions import (
+    ObjectDoesNotExist,
+    SuspiciousFileOperation,
+    ValidationError,
+)
 from django.db import models
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
@@ -30,6 +34,9 @@ from panimg.models import (
     ImageType,
     PatientSex,
 )
+from pydantic import ConfigDict, Field, field_validator
+from pydantic.alias_generators import to_camel
+from pydantic.dataclasses import dataclass
 from storages.utils import clean_name
 
 from grandchallenge.cases.exceptions import (
@@ -327,6 +334,32 @@ def image_file_path(instance, filename):
     )
 
 
+class DICOMImageSet(UUIDModel):
+    image_set_id = models.CharField(
+        max_length=32,
+        unique=True,
+        help_text="The ID of the image set in AWS Health Imaging.",
+    )
+    dicom_image_set_upload = models.OneToOneField(
+        to="DICOMImageSetUpload",
+        editable=False,
+        null=True,
+        on_delete=models.PROTECT,
+        related_name="dicom_image_set",
+    )
+
+
+@receiver(post_delete, sender=DICOMImageSet)
+def delete_image_set(*_, instance: DICOMImageSet, **__):
+    from grandchallenge.cases.tasks import delete_healthimaging_image_set
+
+    on_commit(
+        delete_healthimaging_image_set.signature(
+            kwargs={"image_set_id": instance.image_set_id}
+        ).apply_async
+    )
+
+
 class Image(UUIDModel):
     COLOR_SPACE_GRAY = ColorSpace.GRAY.value
     COLOR_SPACE_RGB = ColorSpace.RGB.value
@@ -410,8 +443,8 @@ class Image(UUIDModel):
         ImagingModality, null=True, blank=True, on_delete=models.SET_NULL
     )
 
-    width = models.IntegerField(blank=False)
-    height = models.IntegerField(blank=False)
+    width = models.IntegerField(null=True, blank=True)
+    height = models.IntegerField(null=True, blank=True)
     depth = models.IntegerField(null=True, blank=True)
     voxel_width_mm = models.FloatField(null=True, blank=True)
     voxel_height_mm = models.FloatField(null=True, blank=True)
@@ -421,7 +454,7 @@ class Image(UUIDModel):
     window_center = models.FloatField(null=True, blank=True)
     window_width = models.FloatField(null=True, blank=True)
     color_space = models.CharField(
-        max_length=5, blank=False, choices=COLOR_SPACES
+        max_length=5, blank=True, choices=COLOR_SPACES
     )
     patient_id = models.CharField(max_length=64, default="", blank=True)
     # Max length for patient_name is 5 * 64 + 4 = 324, as described for value
@@ -471,6 +504,13 @@ class Image(UUIDModel):
         null=True,
         blank=True,
         help_text="What is the field of view of this image?",
+    )
+    dicom_image_set = models.OneToOneField(
+        to=DICOMImageSet,
+        editable=False,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="image",
     )
 
     def __str__(self):
@@ -693,6 +733,12 @@ class Image(UUIDModel):
         ordering = ("name",)
 
 
+@receiver(post_delete, sender=Image)
+def delete_dicom_image_set(*_, instance: Image, **__):
+    if instance.dicom_image_set:
+        instance.dicom_image_set.delete()
+
+
 class ImageUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset({"view_image"})
 
@@ -885,6 +931,40 @@ class DICOMImageSetUploadStatusChoices(models.TextChoices):
     STARTED = "STARTED", _("Started")
     FAILED = "FAILED", _("Failed")
     COMPLETED = "COMPLETED", _("Completed")
+
+
+@dataclass(config=ConfigDict(alias_generator=to_camel))
+class ImageSetSummary:
+    image_set_id: str
+    image_set_version: int
+    is_primary: bool
+    number_of_matched_sop_instances: int = Field(
+        alias="numberOfMatchedSOPInstances"
+    )
+
+
+@dataclass(config=ConfigDict(alias_generator=to_camel))
+class JobSummary:
+    job_id: str
+    datastore_id: str
+    input_s3_uri: str
+    output_s3_uri: str
+    success_output_s3_uri: str
+    failure_output_s3_uri: str
+    number_of_scanned_files: int
+    number_of_imported_files: int
+    number_of_files_with_customer_error: int
+    number_of_files_with_server_error: int
+    number_of_generated_image_sets: int
+    image_sets_summary: list[ImageSetSummary]
+
+    @field_validator("image_sets_summary", mode="before")
+    @classmethod
+    def convert_image_set_summaries(cls, data):
+        return [
+            ImageSetSummary(**image_set_summary_data)
+            for image_set_summary_data in data
+        ]
 
 
 class DICOMImageSetUpload(UUIDModel):
@@ -1087,10 +1167,10 @@ class DICOMImageSetUpload(UUIDModel):
 
         obj = self._s3_client.get_object(Bucket=bucket, Key=key)
 
-        return json.load(obj["Body"])["jobSummary"]
+        return JobSummary(**json.load(obj["Body"])["jobSummary"])
 
     def get_job_output_failure_log(self, *, job_summary):
-        output_uri = job_summary["failureOutputS3Uri"]
+        output_uri = job_summary.failure_output_s3_uri
         parsed = urlparse(output_uri)
         bucket = parsed.netloc
         key = parsed.path.lstrip("/") + "failure.ndjson"
@@ -1102,12 +1182,15 @@ class DICOMImageSetUpload(UUIDModel):
     def handle_event(self, *, event):
         try:
             job_status = event["jobStatus"]
+            job_summary = self.get_job_summary(event=event)
             if job_status == "COMPLETED":
-                self.handle_completed_job(event=event)
+                self.handle_completed_job(job_summary=job_summary)
             elif job_status == "FAILED":
-                self.handle_failed_job(event=event)
+                self.handle_failed_job(job_summary=job_summary)
             else:
                 raise ValueError("Invalid job status")
+        except ValidationError as e:
+            self.mark_failed(error_message=e.message, exc=e)
         except Exception as e:
             self.mark_failed(
                 error_message="An unexpected error occurred", exc=e
@@ -1115,50 +1198,50 @@ class DICOMImageSetUpload(UUIDModel):
         else:
             self.status = self.DICOMImageSetUploadStatusChoices.COMPLETED
             self.save()
+        finally:
+            self.delete_input_files()
 
-    def handle_completed_job(self, *, event):
-        image_set = self.validate_image_set(event=event)
-        self.convert_image_set_to_internal(image_set=image_set)
+    def handle_completed_job(self, *, job_summary):
+        self.validate_image_set(job_summary=job_summary)
+        image_set_id = job_summary.image_sets_summary[0].image_set_id
+        self.convert_image_set_to_internal(image_set_id=image_set_id)
 
-    def validate_image_set(self, *, event):
-        job_summary = self.get_job_summary(event=event)
-
+    def validate_image_set(self, *, job_summary):
         if (
-            job_summary["numberOfFilesWithCustomerError"] != 0
-            or job_summary["numberOfFilesWithServerError"] != 0
-            or job_summary["numberOfGeneratedImageSets"] == 0
+            job_summary.number_of_files_with_customer_error != 0
+            or job_summary.number_of_files_with_server_error != 0
+            or job_summary.number_of_generated_image_sets == 0
         ):
-            self.handle_failed_job(event=event)
-        elif job_summary["numberOfGeneratedImageSets"] > 1:
+            self.handle_failed_job(job_summary=job_summary)
+        elif job_summary.number_of_generated_image_sets > 1:
             self.delete_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
                 "Multiple image sets created. Expected only one."
             )
 
-        image_set = job_summary["imageSetsSummary"][0]
+        image_set_summary = job_summary.image_sets_summary[0]
 
-        if not image_set["isPrimary"]:
+        if not image_set_summary.is_primary:
             self.delete_image_sets(job_summary=job_summary)
             raise DICOMImportJobValidationError(
                 "New instance is not primary: "
                 "metadata conflicts with already existing instance."
             )
 
-        if not image_set["imageSetVersion"] == 1:
-            self.revert_image_set_to_initial_version(image_set=image_set)
+        if not image_set_summary.image_set_version == 1:
+            self.revert_image_set_to_initial_version(
+                image_set_summary=image_set_summary
+            )
             raise DICOMImportJobValidationError(
                 "Instance already exists. This should never happen!"
             )
 
-        return image_set
-
-    def handle_failed_job(self, *, event):
-        job_summary = self.get_job_summary(event=event)
+    def handle_failed_job(self, *, job_summary):
         self.internal_failure_log = self.get_job_output_failure_log(
             job_summary=job_summary
         )
         self.delete_image_sets(job_summary=job_summary)
-        job_id = job_summary["jobId"]
+        job_id = job_summary.job_id
         raise DICOMImportJobFailedError(
             f"Import job {job_id} failed for DICOMImageSetUpload {self.pk}"
         )
@@ -1167,29 +1250,39 @@ class DICOMImageSetUpload(UUIDModel):
     def delete_image_sets(*, job_summary):
         from grandchallenge.cases.tasks import delete_healthimaging_image_set
 
-        image_sets = job_summary.get("imageSetsSummary", [])
-        for image_set in image_sets:
+        for image_set_summary in job_summary.image_sets_summary:
             on_commit(
                 delete_healthimaging_image_set.signature(
-                    kwargs=dict(image_set_id=image_set["imageSetId"])
+                    kwargs={"image_set_id": image_set_summary.image_set_id}
                 ).apply_async
             )
 
     @staticmethod
-    def revert_image_set_to_initial_version(*, image_set):
+    def revert_image_set_to_initial_version(*, image_set_summary):
         from grandchallenge.cases.tasks import (
             revert_image_set_to_initial_version,
         )
 
         on_commit(
             revert_image_set_to_initial_version.signature(
-                kwargs=dict(
-                    image_set_id=image_set["imageSetId"],
-                    version_id=image_set["imageSetVersion"],
-                )
+                kwargs={
+                    "image_set_id": image_set_summary.image_set_id,
+                    "version_id": image_set_summary.image_set_version,
+                }
             ).apply_async
         )
 
-    @staticmethod
-    def convert_image_set_to_internal(*, image_set):
-        pass
+    def convert_image_set_to_internal(self, *, image_set_id):
+        dicom_image_set = DICOMImageSet(
+            image_set_id=image_set_id,
+            dicom_image_set_upload=self,
+        )
+        dicom_image_set.full_clean()
+        dicom_image_set.save()
+
+        image = Image(
+            dicom_image_set=dicom_image_set,
+            name="placeholder",  # todo: get name for set during upload
+        )
+        image.full_clean()
+        image.save()
