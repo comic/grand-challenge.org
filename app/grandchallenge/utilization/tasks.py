@@ -7,31 +7,34 @@ from django.db import transaction
 from grandchallenge.algorithms.models import Job
 from grandchallenge.components.backends.base import duration_to_millicents
 from grandchallenge.core.celery import acks_late_2xlarge_task
+from grandchallenge.core.exceptions import LockNotAcquiredException
+from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.utilization.models import JobWarmPoolUtilization
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def create_job_warm_pool_utilizations():
-    jobs = (
-        Job.objects.only_completed()
-        .filter(use_warm_pool=True, job_warm_pool_utilization__isnull=True)
-        .select_related(
-            "job_utilization",
-            "algorithm_image",
-            "algorithm_image__algorithm",
-        )
-        .select_for_update(
-            # Lock the algorithm and algorithm_image to avoid conflicts when updating later
-            of=(
-                "self",
+    with check_lock_acquired():
+        jobs = list(
+            Job.objects.only_completed()
+            .filter(use_warm_pool=True, job_warm_pool_utilization__isnull=True)
+            .select_related(
+                "job_utilization",
                 "algorithm_image",
                 "algorithm_image__algorithm",
-            ),
-            nowait=True,
-            no_key=True,
+            )
+            .select_for_update(
+                # Lock the algorithm and algorithm_image to avoid conflicts when updating later
+                of=(
+                    "self",
+                    "algorithm_image",
+                    "algorithm_image__algorithm",
+                ),
+                nowait=True,
+                no_key=True,
+            )
         )
-    )
 
     for job in jobs:
         executor = job.get_executor(
