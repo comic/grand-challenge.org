@@ -606,18 +606,6 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         return cleaned_data
 
     def _clean_all_fields_nonempty_cleaned_data(self, cleaned_data):
-        print(
-            [cleaned_data.get(field_name) for field_name in self._meta.fields]
-        )
-        print(
-            "all is ",
-            all(
-                [
-                    cleaned_data.get(field_name)
-                    for field_name in self._meta.fields
-                ]
-            ),
-        )
         return all(
             [cleaned_data.get(field_name) for field_name in self._meta.fields]
         )
