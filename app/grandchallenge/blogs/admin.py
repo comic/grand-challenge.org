@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.forms import ModelForm
-from markdownx.admin import MarkdownxModelAdmin
 
 from grandchallenge.blogs.models import (
     Post,
@@ -29,7 +28,7 @@ class AdminPostForm(ModelForm):
 
 
 @admin.register(Post)
-class PostAdmin(MarkdownxModelAdmin):
+class PostAdmin(ModelAdmin):
     form = AdminPostForm
     list_display = ("pk", "slug", "title", "published", "highlight")
     list_filter = ("tags", "highlight")
