@@ -78,7 +78,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         try:
             clean_email(email=email)
         except ValidationError as error:
-            logger.error(f"Social signup disallowed: {error.message}")
+            logger.info(f"Social signup disallowed: {error.message}")
             raise ImmediateHttpResponse(
                 HttpResponseForbidden(
                     loader.get_template("403.html").render(
