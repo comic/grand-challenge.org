@@ -1421,7 +1421,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @property
     def number_of_docker_images_per_team_for_tasks(self):
-        # A docker for a later phase should also be submitted to an earlier one.
+        # A docker image for a later phase should also be submitted to an earlier one.
         return [
             self.number_of_submissions_per_team_for_phases[
                 self.task_id_for_phases.index(task_id)
@@ -1440,7 +1440,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @property
     def number_of_docker_images_for_tasks(self):
-        # A docker for a later phase should also be submitted to an earlier one.
+        # A docker image for a later phase should also be submitted to an earlier one.
         return [
             self.number_of_submissions_for_phases[
                 self.task_id_for_phases.index(task_id)
