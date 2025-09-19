@@ -2,7 +2,7 @@ from typing import NamedTuple
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
-from django.db.models import TextChoices
+from django.db.models import QuerySet, TextChoices
 from django.forms import (
     CharField,
     HiddenInput,
@@ -212,7 +212,9 @@ DICOMUploadWidgetSuffixes = ["dicom-image-name", "dicom-user-uploads"]
 
 class DICOMUploadWithName(NamedTuple):
     name: str
-    user_uploads: list[UserUpload]
+    user_uploads: list[
+        str
+    ]  # UserUpload pks, as expected by DICOMUserUploadMultipleWidget
 
 
 class DICOMFileNameInput(TextInput):
@@ -233,18 +235,20 @@ class DICOMUploadWidget(MultiWidget):
         super().__init__(widgets, attrs)
 
     def decompress(self, value: DICOMUploadWithName):
+        # takes a DICOMUploadField value and breaks it into subvalues for
+        # the subwidgets
         if value:
             return [
                 value.name,
                 value.user_uploads,
             ]
-        return [None, None]
+        return ["", []]
 
 
 class DICOMUploadField(MultiValueField):
     widget = DICOMUploadWidget
 
-    def __init__(self, *args, user, initial, **kwargs):
+    def __init__(self, *args, user, initial=None, **kwargs):
         upload_qs = filter_by_permission(
             queryset=UserUpload.objects.all(),
             user=user,
@@ -274,9 +278,12 @@ class DICOMUploadField(MultiValueField):
                     initial = DICOMUploadWithName(
                         name=image.name,
                         user_uploads=[
-                            image.dicom_image_set.dicom_image_set_upload.user_uploads
+                            str(upload.pk)
+                            for upload in image.dicom_image_set.dicom_image_set_upload.user_uploads.all()
                         ],
                     )
+                else:
+                    initial = None
             else:
                 raise RuntimeError(
                     f"Unexpected initial value of type {type(initial)}"
@@ -289,10 +296,11 @@ class DICOMUploadField(MultiValueField):
             **kwargs,
         )
 
-    def compress(self, values: list[str, list]):
+    def compress(self, values: list[str, QuerySet[UserUpload]]):
+        # receives a list of the outputs of the subfields’ clean() methods
         return DICOMUploadWithName(
             name=values[0] if values else "",
-            user_uploads=values[1] if values else [],
+            user_uploads=[str(v.pk) for v in values[1]] if values else [],
         )
 
     def widget_attrs(self, widget):
