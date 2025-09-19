@@ -4,37 +4,63 @@ title: Grand-Challenge.org
 abstract: A platform for end-to-end development of machine learning solutions in biomedical imaging
 license: Apache-2.0
 authors:
-    - affiliation: Department of Radiology, Nuclear Medicine and Anatomy, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+    - affiliation: Imaging Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: Meakin
       given-names: James
-    - affiliation: Department of Radiology, Nuclear Medicine and Anatomy, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+    - affiliation: Imaging Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: Gerke
       given-names: Paul K.
       orcid: https://orcid.org/0000-0003-1473-5705
-    - affiliation: Department of Radiology, Nuclear Medicine and Anatomy, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+    - affiliation: Imaging Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: Kerkstra
       given-names: Sjoerd
-    - affiliation: Department of Radiology, Nuclear Medicine and Anatomy, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+    - affiliation: Imaging Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: Groeneveld
       given-names: Miriam
-    - affiliation: Department of Radiology, Nuclear Medicine and Anatomy, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
-      family-names: van Leeuwen
-      given-names: Kicky
-    - affiliation: Department of Radiology, Nuclear Medicine and Anatomy, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+    - affiliation: Imaging Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: Mickan
       given-names: Anne
-    - affiliation: Department of Radiology, Nuclear Medicine and Anatomy, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
-      family-names: Overkamp
-      given-names: Mike
-    - affiliation: Department of Radiology, Nuclear Medicine and Anatomy, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+    - affiliation: Imaging Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: van Run
       given-names: Chris
-    - affiliation: Department of Radiology, Nuclear Medicine and Anatomy, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+    - affiliation: Pathology Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: van Zeeland
       given-names: Harm
-    - affiliation: Department of Radiology, Nuclear Medicine and Anatomy, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
-      family-names: van Ginneken
-      given-names: Bram
-      orcid: https://orcid.org/0000-0003-2028-8972
+    - affiliation: Departments of Biomedical Engineering and Physics, University Medical Center Amsterdam, Science Park 904, 1098 XH Amsterdam, the Netherlands
+      family-names: Koopman
+      given-names: Thomas
+    - affiliation: Imaging Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+      family-names: Huisman
+      given-names: Henkjan
+    - affiliation: Imaging Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+      family-names: Jacobs
+      given-names: Colin
+    - affiliation: Pathology Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+      family-names: van der Laak
+      given-names: Jeroen
+    - affiliation: Pathology Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+      family-names: Litjens
+      given-names: Geert
+    - affiliation: Pathology Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+      family-names: Ciompi
+      given-names: Francesco
+    - affiliation: Cardiology Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+      family-names: Tannhauser
+      given-names: Jos
+    - affiliation: Imaging Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+      family-names: Hering
+      given-names: Alessa
+    - affiliation: Imaging Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+      family-names: Quax
+      given-names: Silvan
+    - affiliation: Imaging Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+      family-names: Khalili
+      given-names: Nadieh
+    - affiliation: Radiotherapy Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+      family-names: Koopmans
+      given-names: Peter
+    - affiliation: Departments of Biomedical Engineering and Physics, University Medical Center Amsterdam, Science Park 904, 1098 XH Amsterdam, the Netherlands
+      family-names: Sánchez
+      given-names: Clarisa
 doi: 10.5281/zenodo.3356819
 repository-code: https://github.com/comic/grand-challenge.org
