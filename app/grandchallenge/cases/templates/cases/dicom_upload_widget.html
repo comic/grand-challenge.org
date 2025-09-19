@@ -1,0 +1,16 @@
+{% if widget.attrs.current_value %}
+    <input type="text"
+            class="textinput form-control"
+            id="{{ widget.name }}"
+            name="{{ widget.name }}"
+            value="{{ widget.attrs.current_value.name }}"
+            disabled
+    >
+    <small id="{{ widget.name }}_helptext" class="form-text text-muted">To upload a different DICOM image for this socket, please delete this archive item and start from scratch.</small>
+{% else %}
+    <div class="dicom-upload-widget">
+        {% for subwidget in widget.subwidgets %}
+            {% include subwidget.template_name with widget=subwidget %}
+        {% endfor %}
+    </div>
+{% endif %}
