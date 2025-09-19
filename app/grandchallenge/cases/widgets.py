@@ -263,11 +263,20 @@ class DICOMUploadField(MultiValueField):
             # display the current image name, so pass the image as
             # current_value to the widget template
             if isinstance(initial, ComponentInterfaceValue):
-                self.current_value = initial.image
-                # turn initial to the internal data type that this widget expects
-                initial = DICOMUploadWithName(
-                    name=initial.image.name, user_uploads=[initial.image.pk]
-                )
+                if image := get_object_if_allowed(
+                    model=Image,
+                    pk=initial.image.pk,
+                    user=user,
+                    codename="view_image",
+                ):
+                    self.current_value = image
+                    # turn initial to the internal data type that this widget expects
+                    initial = DICOMUploadWithName(
+                        name=image.name,
+                        user_uploads=[
+                            image.dicom_image_set.dicom_image_set_upload.user_uploads
+                        ],
+                    )
             else:
                 raise RuntimeError(
                     f"Unexpected initial value of type {type(initial)}"
