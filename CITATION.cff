@@ -26,7 +26,7 @@ authors:
     - affiliation: Pathology Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: van Zeeland
       given-names: Harm
-    - affiliation: Departments of Biomedical Engineering and Physics, University Medical Center Amsterdam, Science Park 904, 1098 XH Amsterdam, the Netherlands
+    - affiliation: Informatics Institute, University of Amsterdam, The Netherlands
       family-names: Koopman
       given-names: Thomas
     - affiliation: Imaging Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
@@ -59,8 +59,8 @@ authors:
     - affiliation: Radiotherapy Department, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: Koopmans
       given-names: Peter
-    - affiliation: Departments of Biomedical Engineering and Physics, University Medical Center Amsterdam, Science Park 904, 1098 XH Amsterdam, the Netherlands
+    - affiliation: Informatics Institute, University of Amsterdam, The Netherlands
       family-names: Sánchez
-      given-names: Clarisa
+      given-names: Clara I.
 doi: 10.5281/zenodo.3356819
 repository-code: https://github.com/comic/grand-challenge.org
