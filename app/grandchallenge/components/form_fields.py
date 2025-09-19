@@ -75,9 +75,9 @@ class InterfaceFormFieldFactory:
             "label": interface.title.title(),
         }
 
-        if interface.is_image_kind:
-            return FlexibleImageField(
-                user=user,
+        if interface.requires_value:
+            return cls.get_json_field(
+                interface=interface,
                 initial=initial,
                 **kwargs,
             )
@@ -87,15 +87,15 @@ class InterfaceFormFieldFactory:
                 initial=initial,
                 **kwargs,
             )
-        elif interface.requires_file:
-            return FlexibleFileField(
+        elif interface.is_image_kind:
+            return FlexibleImageField(
                 user=user,
-                interface=interface,
                 initial=initial,
                 **kwargs,
             )
-        elif interface.is_json_kind:
-            return cls.get_json_field(
+        elif interface.requires_file:
+            return FlexibleFileField(
+                user=user,
                 interface=interface,
                 initial=initial,
                 **kwargs,

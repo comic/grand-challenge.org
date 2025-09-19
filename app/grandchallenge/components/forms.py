@@ -18,10 +18,7 @@ from django.utils.functional import empty
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.cases.widgets import (
-    DICOMUploadWidgetSuffixes,
-    DICOMUploadWithName,
-)
+from grandchallenge.cases.widgets import DICOMUploadWidgetSuffixes
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
@@ -175,7 +172,12 @@ class MultipleCIVForm(Form):
             interface = ComponentInterface.objects.filter(slug=slug).get()
             prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{slug}"
 
-            if prefixed_interface_slug in self.data:
+            # For interfaces that use the FlexibleImageWidget or FlexibleFileWidget
+            # we need to pass in the initial value explicitly, for all other
+            # fields the value in self.data is picked up automatically
+            if prefixed_interface_slug in self.data and (
+                interface.is_image_kind or interface.requires_file
+            ):
                 try:
                     current_value = self.data.getlist(prefixed_interface_slug)
                     if len(current_value) == 1:
@@ -196,23 +198,39 @@ class MultipleCIVForm(Form):
             )
 
         # Add fields for dynamically added new interfaces
-        self.interface_data_map = self.group_form_data_by_interface_slug()
+        for slug in self.data.keys():
+            interface_slug, suffix = self.parse_slug(slug=slug)
 
-        for interface, data in self.interface_data_map.items():
-            try:
-                initial = data.get("value")
-            except KeyError:
-                initial = DICOMUploadWithName(
-                    name=data.get(DICOMUploadWidgetSuffixes[0]),
-                    user_uploads=data.get(DICOMUploadWidgetSuffixes[1]),
+            if (
+                ComponentInterface.objects.filter(slug=interface_slug).exists()
+                and slug not in self.fields.keys()
+            ):
+                interface = ComponentInterface.objects.filter(
+                    slug=interface_slug
+                ).get()
+
+                current_value = None
+
+                # For interfaces that use the FlexibleImageWidget or
+                # FlexibleFileWidget we need
+                # to pass in the initial value explicitly, for all other
+                # fields the value in self.data is picked up automatically
+                if interface.is_image_kind or interface.requires_file:
+                    try:
+                        current_value = self.data.getlist(slug)
+                        if len(current_value) == 1:
+                            current_value = current_value[0]
+                    except AttributeError:
+                        current_value = self.data.get(slug)
+
+                self.fields[
+                    f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+                ] = InterfaceFormFieldFactory(
+                    interface=interface,
+                    user=self.user,
+                    required=False,
+                    initial=current_value,
                 )
-
-            self.fields[data.get("field_name")] = InterfaceFormFieldFactory(
-                interface=interface,
-                user=self.user,
-                required=False,
-                initial=initial,
-            )
 
     @staticmethod
     def parse_slug(*, slug):
@@ -230,60 +248,6 @@ class MultipleCIVForm(Form):
                 return base_slug, known_suffix
 
         return interface_slug, None
-
-    def group_form_data_by_interface_slug(self):
-        interface_data_map = {}
-
-        # Extract relevant slugs
-        slug_info = {}
-        candidate_slugs = set()
-
-        for slug in self.data.keys():
-            if (
-                not slug.startswith(INTERFACE_FORM_FIELD_PREFIX)
-                or slug in self.fields
-            ):
-                # we only care about dynamically added interface fields,
-                # i.e. fields that start with the relevant prefix and
-                # that do not have a field on the form yet (as defined through
-                # sockets attached to other items from the same base object)
-                continue
-
-            base_slug, suffix = self.parse_slug(slug=slug)
-            slug_info[slug] = (base_slug, suffix)
-            candidate_slugs.add(base_slug)
-
-        # Fetch all interfaces in one go
-        interfaces_by_slug = {
-            ci.slug: ci
-            for ci in ComponentInterface.objects.filter(
-                slug__in=candidate_slugs
-            )
-        }
-
-        for slug, (base_slug, suffix) in slug_info.items():
-
-            if not (interface := interfaces_by_slug.get(base_slug)):
-                # only existing sockets should be processed further
-                continue
-
-            try:
-                value = self.data.getlist(slug)
-                if len(value) == 1:
-                    value = value[0]
-            except AttributeError:
-                value = self.data.get(slug)
-
-            key = suffix or "value"
-            if interface not in interface_data_map.keys():
-                interface_data_map[interface] = {
-                    key: value,
-                    "field_name": f"{INTERFACE_FORM_FIELD_PREFIX}{base_slug}",
-                }
-            else:
-                interface_data_map[interface][key] = value
-
-        return interface_data_map
 
     def process_object_data(self):
         civs = []

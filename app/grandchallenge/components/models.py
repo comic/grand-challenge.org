@@ -471,7 +471,7 @@ class ComponentInterface(OverlaySegmentsMixin):
     @property
     def is_dicom_image_kind(self):
         # implementation up to Thomas
-        pass
+        return True
 
     @property
     def is_json_kind(self):

@@ -258,19 +258,16 @@ class DICOMUploadField(MultiValueField):
 
         self.current_value = None
         if initial:
-            # This can be either an image CIV, or an instance of DICOMUploadWithName
-            # If it's an image CIV, we don't want to show the widgets, and instead
-            # display the current image name.
-            # For that the template needs current_value to be set
+            # Initial data can only be an image CIV.
+            # We don't want to show the widgets in this case, and instead
+            # display the current image name, so pass the image as
+            # current_value to the widget template
             if isinstance(initial, ComponentInterfaceValue):
                 self.current_value = initial.image
                 # turn initial to the internal data type that this widget expects
                 initial = DICOMUploadWithName(
                     name=initial.image.name, user_uploads=[initial.image.pk]
                 )
-            elif isinstance(initial, DICOMUploadWithName):
-                # if initial is already a DICOMUploadWithName, just leave it be
-                pass
             else:
                 raise RuntimeError(
                     f"Unexpected initial value of type {type(initial)}"
@@ -283,7 +280,7 @@ class DICOMUploadField(MultiValueField):
             **kwargs,
         )
 
-    def compress(self, values):
+    def compress(self, values: list[str, list]):
         return DICOMUploadWithName(
             name=values[0] if values else "",
             user_uploads=values[1] if values else [],
