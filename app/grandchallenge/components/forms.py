@@ -199,7 +199,7 @@ class MultipleCIVForm(Form):
 
         # Add fields for dynamically added new interfaces
         for slug in self.data.keys():
-            interface_slug, suffix = self.parse_slug(slug=slug)
+            interface_slug = self.parse_slug(slug=slug)
 
             if (
                 ComponentInterface.objects.filter(slug=interface_slug).exists()
@@ -234,20 +234,18 @@ class MultipleCIVForm(Form):
 
     @staticmethod
     def parse_slug(*, slug):
-        """
-        Return (base_slug, suffix) given a full form slug.
-        If no known suffix is found, suffix is None.
-        """
         # remove prefix
         interface_slug = slug[len(INTERFACE_FORM_FIELD_PREFIX) :]
 
         # separate known suffix
+        # known suffix might still be followed by another suffix,
+        # which we can ignore, we just need the base slug
         for known_suffix in DICOMUploadWidgetSuffixes:
             if known_suffix in interface_slug:
                 base_slug = interface_slug.split(f"_{known_suffix}", 1)[0]
-                return base_slug, known_suffix
+                return base_slug
 
-        return interface_slug, None
+        return interface_slug
 
     def process_object_data(self):
         civs = []
