@@ -238,11 +238,9 @@ class MultipleCIVForm(Form):
         interface_slug = slug[len(INTERFACE_FORM_FIELD_PREFIX) :]
 
         # separate known suffix
-        # known suffix might still be followed by another suffix,
-        # which we can ignore, we just need the base slug
         for known_suffix in DICOMUploadWidgetSuffixes:
-            if known_suffix in interface_slug:
-                base_slug = interface_slug.split(f"_{known_suffix}", 1)[0]
+            if interface_slug.endswith(f"_{known_suffix}"):
+                base_slug = interface_slug[: -len(f"_{known_suffix}")]
                 return base_slug
 
         return interface_slug

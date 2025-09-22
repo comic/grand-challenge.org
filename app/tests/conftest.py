@@ -596,7 +596,17 @@ def get_interface_form_data(
     existing_data=False,
 ):
     ci = ComponentInterface.objects.get(slug=interface_slug)
-    form_data = {f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": data}
+    if ci.is_dicom_image_kind:
+        form_data = {
+            f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}_dicom-image-name": data[
+                0
+            ],
+            f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}_dicom-user-uploads": data[
+                1
+            ],
+        }
+    else:
+        form_data = {f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": data}
     if ci.is_image_kind:
         if existing_data:
             form_data[
