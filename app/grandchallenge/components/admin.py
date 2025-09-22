@@ -151,7 +151,9 @@ def cancel_jobs(modeladmin, request, queryset):
             ComponentJob.EXECUTING_PREREQUISITES,
             ComponentJob.VALIDATING_INPUTS,
         ]
-    ).select_for_update(skip_locked=True).update(status=ComponentJob.CANCELLED)
+    ).select_for_update(skip_locked=True, of=("self",)).update(
+        status=ComponentJob.CANCELLED
+    )
 
 
 @admin.action(
