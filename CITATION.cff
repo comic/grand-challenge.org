@@ -4,10 +4,12 @@ title: Grand-Challenge.org
 abstract: A platform for end-to-end development of machine learning solutions in biomedical imaging
 license: Apache-2.0
 authors:
+    # Primary author(s)
     - affiliation: Department of Medical Imaging, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: Meakin
       given-names: James
 
+    # RSEs, alphabetical order
     - affiliation: Department of Medical Imaging, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: Gerke
       given-names: Paul K.
@@ -28,6 +30,7 @@ authors:
       family-names: van Zeeland
       given-names: Harm
 
+    # Primary stakeholders, alphabetical order
     - affiliation: Department of Pathology, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: Ciompi
       given-names: Francesco
@@ -59,6 +62,7 @@ authors:
       family-names: Tannhauser
       given-names: Jos
 
+    # Product owners
     - affiliation: Department of Medical Imaging, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: Groeneveld
       given-names: Miriam
