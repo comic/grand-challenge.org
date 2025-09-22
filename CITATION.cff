@@ -30,9 +30,6 @@ authors:
       family-names: Koopman
       given-names: Thomas
     - affiliation: Department of Medical Imaging, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
-      family-names: Huisman
-      given-names: Henkjan
-    - affiliation: Department of Medical Imaging, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
       family-names: Jacobs
       given-names: Colin
     - affiliation: Department of Pathology, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
@@ -62,5 +59,8 @@ authors:
     - affiliation: Informatics Institute, University of Amsterdam, The Netherlands
       family-names: Sánchez
       given-names: Clara I.
+    - affiliation: Department of Medical Imaging, Radboud University Medical Center, P.O. Box 9101, 6500 HB Nijmegen, the Netherlands
+      family-names: Huisman
+      given-names: Henkjan
 doi: 10.5281/zenodo.3356819
 repository-code: https://github.com/comic/grand-challenge.org
