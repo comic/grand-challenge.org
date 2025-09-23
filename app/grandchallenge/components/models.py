@@ -135,6 +135,7 @@ class InterfaceKindChoices(models.TextChoices):
     SEGMENTATION = "SEG", _("Segmentation")
     HEAT_MAP = "HMAP", _("Heat Map")
     DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
+    DICOM_IMAGE_SET = "DCMIS", _("DICOM Image Set")
 
     # File types
     PDF = "PDF", _("PDF file")
@@ -250,12 +251,14 @@ class InterfaceKind:
         * Heat Map
         * Segmentation
         * Displacement Field
+        * DICOM Image Set
         """
         return {
             InterfaceKind.InterfaceKindChoices.IMAGE,
             InterfaceKind.InterfaceKindChoices.HEAT_MAP,
             InterfaceKind.InterfaceKindChoices.SEGMENTATION,
             InterfaceKind.InterfaceKindChoices.DISPLACEMENT_FIELD,
+            InterfaceKind.InterfaceKindChoices.DICOM_IMAGE_SET,
         }
 
     @staticmethod
