@@ -26,7 +26,6 @@ from django.db import models, transaction
 from django.db.models import IntegerChoices, QuerySet
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
-from django.forms.models import model_to_dict
 from django.template.defaultfilters import truncatewords
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
@@ -1392,14 +1391,8 @@ class ComponentInterfaceValue(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._value_orig = self.value
-        self._image_orig = self._dict["image"]
+        self._image_orig = self.image.pk
         self._file_orig = self.file
-
-    @property
-    def _dict(self):
-        return model_to_dict(
-            self, fields=[field.name for field in self._meta.fields]
-        )
 
     def save(self, *args, **kwargs):
         if (
