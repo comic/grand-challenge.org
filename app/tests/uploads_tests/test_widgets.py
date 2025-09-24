@@ -49,3 +49,10 @@ def test_dicom_user_upload_media_includes_expected_js():
         "js/file_preprocessors.js",
     ):
         assert js_file in widget.media._js
+
+
+def test_dicom_user_upload_multiple_widget_increased_max_number_of_files():
+    widget = DICOMUserUploadMultipleWidget()
+    context = widget.get_context(name="foo", value="bar", attrs={"id": "foo"})
+
+    assert context["widget"]["attrs"].get("max_number_files") == 2000
