@@ -22,7 +22,8 @@
             {% endif %}
             {% if challenge.contact_email %}
                 <a class="dropdown-item"
-                   href="mailto:{{ challenge.contact_email|random_encode|clean }}">
+                    target="_blank"
+                    href="mailto:{{ challenge.contact_email|random_encode|clean }}">
                     <i class="fas fa-envelope fa-fw"></i>
                     &nbsp;Email {% firstof challenge.title challenge.short_name %} Organizers
                 </a>

@@ -1,6 +1,6 @@
 from django.contrib import admin
+from django.contrib.admin import ModelAdmin
 from django.forms import ModelForm
-from markdownx.admin import MarkdownxModelAdmin
 
 from grandchallenge.core.widgets import MarkdownEditorAdminWidget
 from grandchallenge.documentation.models import DocPage
@@ -15,6 +15,6 @@ class AdminDocPageForm(ModelForm):
 
 
 @admin.register(DocPage)
-class DocPageAdmin(MarkdownxModelAdmin):
+class DocPageAdmin(ModelAdmin):
     form = AdminDocPageForm
     list_display = ("pk", "title", "order")

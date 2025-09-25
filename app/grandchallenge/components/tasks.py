@@ -24,7 +24,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
-from django.db import OperationalError, transaction
+from django.db import transaction
 from django.db.models import Count, DateTimeField, ExpressionWrapper, F, Q
 from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
@@ -52,6 +52,7 @@ from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
 )
+from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.uploads.models import UserUpload
 
 logger = get_task_logger(__name__)
@@ -729,57 +730,18 @@ def _get_image_config_file(
     return {"image_sha256": image_sha256, "config": config}
 
 
-def lock_model_instance(
-    *, app_label, model_name, of=(), select_related=(), **kwargs
-):
-    """
-    Locks a model instance for update.
-
-    This is useful when you want to update a model instance and want to make
-    sure that no other process is updating the same instance at the same time.
-    Must be used inside a transaction.
-
-    Raises `LockNotAcquiredException` if the lock could not be acquired.
-    """
-    model = apps.get_model(app_label=app_label, model_name=model_name)
-
-    queryset = model.objects.filter(**kwargs)
-
-    if select_related:
-        queryset = queryset.select_related(*select_related)
-
-    queryset = queryset.select_for_update(of=of, nowait=True)
-
-    try:
-        return queryset.get()
-    except OperationalError as error:
-        check_operational_error(error)
-        raise
-
-
-def check_operational_error(error):
-    if "could not obtain lock" in str(error):
-        raise LockNotAcquiredException from error
-    else:
-        raise error
-
-
 def lock_for_utilization_update(*, algorithm_image_pk):
     from grandchallenge.algorithms.models import AlgorithmImage
 
     # Lock the algorithm and algorithm image to avoid conflicts
     # when modifying JobUtilization objects
-    try:
+    with check_lock_acquired():
         AlgorithmImage.objects.filter(pk=algorithm_image_pk).select_related(
             "algorithm"
         ).select_for_update(
-            of=("self", "algorithm"),
             nowait=True,
             no_key=True,
         ).get()
-    except OperationalError as error:
-        check_operational_error(error)
-        raise
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
@@ -787,9 +749,11 @@ def lock_for_utilization_update(*, algorithm_image_pk):
 def provision_job(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
-    job = lock_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
-    )
+    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
+
+    with check_lock_acquired():
+        job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
+
     executor = job.get_executor(backend=backend)
 
     if not job.inputs_complete or job.status not in [job.PENDING, job.RETRY]:
@@ -914,13 +878,15 @@ def handle_event(*, event, backend):  # noqa: C901
     job_name = Backend.get_job_name(event=event)
     job_params = Backend.get_job_params(job_name=job_name)
 
-    job = lock_model_instance(
-        pk=job_params.pk,
-        attempt=job_params.attempt,
+    model = apps.get_model(
         app_label=job_params.app_label,
         model_name=job_params.model_name,
-        of=("self",),
     )
+
+    with check_lock_acquired():
+        job = model.objects.select_for_update(nowait=True).get(
+            pk=job_params.pk, attempt=job_params.attempt
+        )
 
     executor = job.get_executor(backend=backend)
 
@@ -974,9 +940,11 @@ def handle_event(*, event, backend):  # noqa: C901
 def parse_job_outputs(
     *, job_pk: uuid.UUID, job_app_label: str, job_model_name: str, backend: str
 ):
-    job = lock_model_instance(
-        pk=job_pk, app_label=job_app_label, model_name=job_model_name
-    )
+    model = apps.get_model(app_label=job_app_label, model_name=job_model_name)
+
+    with check_lock_acquired():
+        job = model.objects.select_for_update(nowait=True).get(pk=job_pk)
+
     executor = job.get_executor(backend=backend)
 
     if job.status != job.EXECUTED:
@@ -1277,10 +1245,16 @@ def add_image_to_object(  # noqa: C901
     )
     from grandchallenge.reader_studies.models import DisplaySet
 
+    model = apps.get_model(
+        app_label=app_label,
+        model_name=model_name,
+    )
+
     try:
-        object = lock_model_instance(
-            app_label=app_label, model_name=model_name, pk=object_pk
-        )
+        with check_lock_acquired():
+            obj = model.objects.select_for_update(nowait=True).get(
+                pk=object_pk
+            )
     except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
         logger.info(f"Nothing to do: {model_name} no longer exists.")
         return
@@ -1292,7 +1266,7 @@ def add_image_to_object(  # noqa: C901
         logger.info("Nothing to do: upload session was not successful.")
         return
 
-    error_handler = object.get_error_handler(linked_object=upload_session)
+    error_handler = obj.get_error_handler(linked_object=upload_session)
 
     try:
         image = Image.objects.get(origin_id=upload_session_pk)
@@ -1305,7 +1279,7 @@ def add_image_to_object(  # noqa: C901
         logger.info("Upload session should only have one image")
         return
 
-    current_value = object.get_current_value_for_interface(
+    current_value = obj.get_current_value_for_interface(
         interface=interface, user=upload_session.creator
     )
 
@@ -1334,10 +1308,10 @@ def add_image_to_object(  # noqa: C901
             return
 
     try:
-        object.remove_civ(civ=current_value)
-        object.add_civ(civ=civ)
+        obj.remove_civ(civ=current_value)
+        obj.add_civ(civ=civ)
     except CIVNotEditableException as e:
-        if isinstance(object, Job) and object.status == Job.CANCELLED:
+        if isinstance(obj, Job) and obj.status == Job.CANCELLED:
             logger.info("Job has been cancelled, exiting")
             return
         else:
@@ -1377,19 +1351,22 @@ def add_file_to_object(
     )
     from grandchallenge.reader_studies.models import DisplaySet
 
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
     try:
-        object = lock_model_instance(
-            app_label=app_label, model_name=model_name, pk=object_pk
-        )
+        with check_lock_acquired():
+            obj = model.objects.select_for_update(nowait=True).get(
+                pk=object_pk
+            )
     except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
         logger.info(f"Nothing to do: {model_name} no longer exists.")
         return
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
     user_upload = UserUpload.objects.get(pk=user_upload_pk)
-    error_handler = object.get_error_handler(linked_object=user_upload)
+    error_handler = obj.get_error_handler(linked_object=user_upload)
 
-    current_value = object.get_current_value_for_interface(
+    current_value = obj.get_current_value_for_interface(
         interface=interface, user=user_upload.creator
     )
 
@@ -1418,10 +1395,10 @@ def add_file_to_object(
         return
 
     try:
-        object.remove_civ(civ=current_value)
-        object.add_civ(civ=civ)
+        obj.remove_civ(civ=current_value)
+        obj.add_civ(civ=civ)
     except CIVNotEditableException as e:
-        if isinstance(object, Job) and object.status == Job.CANCELLED:
+        if isinstance(obj, Job) and obj.status == Job.CANCELLED:
             logger.info("Job has been cancelled, exiting")
             return
         else:
@@ -1451,21 +1428,13 @@ def assign_tarball_from_upload(
         app_label=app_label, model_name=model_name
     )
 
-    current_tarball = lock_model_instance(
-        pk=tarball_pk,
-        import_status=ImportStatusChoices.INITIALIZED,
-        app_label=app_label,
-        model_name=model_name,
-    )
-
-    try:
-        # Acquire locks
+    with check_lock_acquired():
+        current_tarball = TarballModel.objects.select_for_update(
+            nowait=True
+        ).get(pk=tarball_pk, import_status=ImportStatusChoices.INITIALIZED)
         peer_tarballs = list(
             current_tarball.get_peer_tarballs().select_for_update(nowait=True)
         )
-    except OperationalError as error:
-        check_operational_error(error)
-        raise
 
     current_tarball.user_upload.copy_object(
         to_field=getattr(current_tarball, field_to_copy)

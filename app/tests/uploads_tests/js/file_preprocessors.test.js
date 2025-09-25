@@ -354,4 +354,76 @@ describe("preprocessDicomFile", () => {
         );
         expect(processedSequence[0]["00540017"]).toBeUndefined();
     });
+
+    test("should set Patient Identity Removed tag (0012,0062) to 'YES'", async () => {
+        const file = createDicomFile({
+            "00100010": { vr: "PN", Value: ["Patient Name"] },
+        });
+        // No special procedure required; use defaults
+        global.GrandChallengeDICOMDeIdProcedure = {};
+
+        const processedFile = await preprocessDicomFile(file);
+        const dataset = await getProcessedDataset(processedFile);
+
+        expect(dataset["00120062"]).toBeDefined();
+        expect(dataset["00120062"].vr).toBe("CS");
+        expect(dataset["00120062"].Value[0]).toBe("YES");
+    });
+
+    describe("setDeidentificationMethodTag", () => {
+        test("adds description when tag absent", async () => {
+            const file = createDicomFile({}, "absent.dcm");
+            global.GrandChallengeDICOMDeIdProcedure = {
+                default: "K",
+                version: "2.5",
+            };
+            const processedFile = await preprocessDicomFile(file);
+            const dataset = await getProcessedDataset(processedFile);
+            expect(dataset["00120063"]).toBeDefined();
+            expect(dataset["00120063"].Value[0]).toMatch(
+                /^grand-challenge-dicom-client-de-identifier:procedure:2\.5:date:/,
+            );
+        });
+
+        test("appends description when single existing value present", async () => {
+            const file = createDicomFile(
+                {
+                    "00120063": { vr: "LO", Value: "existing" },
+                },
+                "single.dcm",
+            );
+            global.GrandChallengeDICOMDeIdProcedure = {
+                default: "K",
+                version: "v1",
+            };
+            const processedFile = await preprocessDicomFile(file);
+            const dataset = await getProcessedDataset(processedFile);
+            expect(dataset["00120063"].Value[0]).toBe("existing");
+            const appended = dataset["00120063"].Value.slice(-1)[0];
+            expect(dataset["00120063"].Value[1]).toMatch(
+                /^grand-challenge-dicom-client-de-identifier:procedure:v1:date:/,
+            );
+        });
+
+        test("appends description when multiple existing values present", async () => {
+            const file = createDicomFile(
+                {
+                    "00120063": { vr: "LO", Value: ["a", "b"] },
+                },
+                "multiple.dcm",
+            );
+            global.GrandChallengeDICOMDeIdProcedure = {
+                default: "K",
+                version: "v2",
+            };
+            const processedFile = await preprocessDicomFile(file);
+            const dataset = await getProcessedDataset(processedFile);
+            expect(dataset["00120063"].Value[0]).toBe("a");
+            expect(dataset["00120063"].Value[1]).toBe("b");
+            const appended = dataset["00120063"].Value.slice(-1)[0];
+            expect(dataset["00120063"].Value[2]).toMatch(
+                /^grand-challenge-dicom-client-de-identifier:procedure:v2:date:/,
+            );
+        });
+    });
 });

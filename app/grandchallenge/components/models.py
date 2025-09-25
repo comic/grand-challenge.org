@@ -9,7 +9,6 @@ from typing import NamedTuple
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import signature
 from django import forms
-from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import (
     MultipleObjectsReturned,
@@ -596,6 +595,8 @@ class ComponentInterface(OverlaySegmentsMixin):
         self._clean_default_value()
 
     def _clean_overlay_segments(self):
+        from grandchallenge.reader_studies.models import Question
+
         if (
             self.kind == InterfaceKindChoices.SEGMENTATION
             and not self.overlay_segments
@@ -617,7 +618,6 @@ class ComponentInterface(OverlaySegmentsMixin):
                 "Voxel values for overlay segments must be contiguous."
             )
 
-        Question = apps.get_model("reader_studies", "question")  # noqa: N806
         if (
             self.pk is not None
             and self._overlay_segments_orig != self.overlay_segments

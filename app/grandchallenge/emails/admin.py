@@ -2,7 +2,6 @@ from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
 from django.db.transaction import on_commit
 from django.forms import ModelForm
-from markdownx.admin import MarkdownxModelAdmin
 
 from grandchallenge.core.widgets import MarkdownEditorAdminWidget
 from grandchallenge.emails.models import Email, RawEmail
@@ -34,7 +33,7 @@ class EmailAdminForm(ModelForm):
 
 
 @admin.register(Email)
-class EmailAdmin(MarkdownxModelAdmin):
+class EmailAdmin(ModelAdmin):
     list_display = ("subject", "sent", "sent_at")
     actions = [*SendActionChoices]
     form = EmailAdminForm

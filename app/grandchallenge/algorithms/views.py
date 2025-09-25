@@ -176,8 +176,8 @@ class AlgorithmList(FilterMixin, ViewObjectPermissionListMixin, ListView):
                         "We have made several machine learning algorithms "
                         "available that you can try out by uploading your "
                         "own anonymised medical imaging data. "
-                        "Please <a href='{}'>contact us</a> if you would like "
-                        "to make your own algorithm available here."
+                        "Please <a target='_blank' href='{}'>contact us</a> if you "
+                        "would like to make your own algorithm available here."
                     ),
                     mark_safe(
                         random_encode("mailto:support@grand-challenge.org")

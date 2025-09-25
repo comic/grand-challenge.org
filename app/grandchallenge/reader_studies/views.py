@@ -139,8 +139,8 @@ class ReaderStudyList(FilterMixin, ViewObjectPermissionListMixin, ListView):
                     (
                         "A reader study can be used to collect annotations or "
                         "score algorithm results for a set of medical images. "
-                        "Please <a href='{}'>contact us</a> if you would like "
-                        "to set up your own reader study."
+                        "Please <a target='_blank' href='{}'>contact us</a> if "
+                        "you would like to set up your own reader study."
                     ),
                     mark_safe(
                         random_encode("mailto:support@grand-challenge.org")

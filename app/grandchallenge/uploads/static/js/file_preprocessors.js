@@ -276,13 +276,38 @@ function deidentifyDataset(
 function setDeidentificationMethodTag(dataset, version) {
     const tagKey = "00120063"; // DICOM tag for De-identification Method
     const vr = "LO";
-    const method = `De-identified by Grand Challenge client-side using procedure version ${version} on ${new Date().toISOString()}.`;
-    if (dataset[tagKey]) {
-        dataset[tagKey].Value[0] += `; ${method}`;
+    const method = `grand-challenge-dicom-client-de-identifier:procedure:${version}:date:${new Date().toISOString()}`;
+    const existing = dataset[tagKey]?.Value;
+    if (existing && existing.length > 0) {
+        let methods;
+        if (existing.length === 1) {
+            methods = [existing[0]];
+        } else {
+            methods = existing.slice();
+        }
+        methods.push(method);
+        dataset[tagKey] = { vr: vr, Value: methods };
     } else {
         dataset[tagKey] = {
             vr: vr,
             Value: [method],
+        };
+    }
+    return dataset;
+}
+
+function setPatientIdentityRemovedTag(dataset) {
+    const tagKey = "00120062"; // DICOM tag for Patient Identity Removed
+    const vr = "CS";
+    const value = "YES";
+    if (dataset[tagKey]) {
+        // Overwrite or ensure value is YES
+        dataset[tagKey].vr = vr;
+        dataset[tagKey].Value[0] = value;
+    } else {
+        dataset[tagKey] = {
+            vr: vr,
+            Value: [value],
         };
     }
     return dataset;
@@ -316,6 +341,7 @@ async function preprocessDicomFile(file) {
         newDataset,
         protocol.version || "unknown",
     );
+    newDataset = setPatientIdentityRemovedTag(newDataset);
     const dicomDict = new dcmjs.data.DicomDict(dicomData.meta);
     dicomDict.dict = newDataset;
     dicomDict._elements = dicomData._elements;

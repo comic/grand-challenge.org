@@ -464,17 +464,17 @@ def test_display_set_bulk_delete(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "object",
+    "factory",
     [
         ReaderStudyFactory,
         ArchiveFactory,
         AlgorithmFactory,
     ],
 )
-def test_file_upload_form_field_view(client, object):
-    object = object()
+def test_file_upload_form_field_view(client, factory):
+    instance = factory()
     u, editor = UserFactory.create_batch(2)
-    object.add_editor(editor)
+    instance.add_editor(editor)
 
     ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
 
@@ -539,16 +539,16 @@ def test_display_ci_example_value(client):
 def test_interfaces_list_link_in_new_interface_form(
     client, object_factory, viewname, interface_list_viewname
 ):
-    object = object_factory()
+    instance = object_factory()
     u = UserFactory()
-    object.add_editor(u)
+    instance.add_editor(u)
 
     response = get_view_for_user(
         viewname=viewname,
         client=client,
         method=client.get,
         reverse_kwargs={
-            "slug": object.slug,
+            "slug": instance.slug,
         },
         user=u,
     )

@@ -55,9 +55,9 @@ class TestHangingProtocolSerializer:
     ):
         """Each item should get the hanging protocol and content from the parent"""
         hp = HangingProtocolFactory(json=[{"viewport_name": "main"}])
-        object = factory(hanging_protocol=hp, view_content={"main": "test"})
+        instance = factory(hanging_protocol=hp, view_content={"main": "test"})
 
-        item_factory_kwargs.update({relation: object})
+        item_factory_kwargs.update({relation: instance})
 
         item = item_factory(**item_factory_kwargs)
 
@@ -86,10 +86,10 @@ class TestHangingProtocolSerializer:
     ):
         """Each item should get the optional hanging protocol from the parent"""
         hps = HangingProtocolFactory.create_batch(3)
-        object = factory()
-        object.optional_hanging_protocols.set(hps)
+        instance = factory()
+        instance.optional_hanging_protocols.set(hps)
 
-        item_factory_kwargs.update({relation: object})
+        item_factory_kwargs.update({relation: instance})
 
         item = item_factory(**item_factory_kwargs)
 
@@ -114,9 +114,9 @@ class TestHangingProtocolSerializer:
         serializer,
     ):
         """If no optional hanging protocols are present, none should be serialized"""
-        object = factory()
+        instance = factory()
 
-        item_factory_kwargs.update({relation: object})
+        item_factory_kwargs.update({relation: instance})
 
         item = item_factory(**item_factory_kwargs)
 
