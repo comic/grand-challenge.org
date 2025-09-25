@@ -27,6 +27,7 @@ from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
 
 from grandchallenge.cases.models import (
+    DICOMImageSetUpload,
     DICOMImageSetUploadStatusChoices,
     Image,
     ImageFile,
@@ -535,11 +536,10 @@ def _check_post_processor_result(*, post_processor_result, image):
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException, RetryStep))
 @transaction.atomic
 def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
-    upload = lock_model_instance(
-        app_label="cases",
-        model_name="DICOMImageSetUpload",
-        pk=dicom_imageset_upload_pk,
-    )
+    with check_lock_acquired():
+        upload = DICOMImageSetUpload.objects.select_for_update(
+            nowait=True
+        ).get(pk=dicom_imageset_upload_pk)
 
     health_imaging_client = boto3.client(
         "medical-imaging",
@@ -581,11 +581,10 @@ def handle_healthimaging_import_job_event(*, event):
     result = re.match(pattern, job_name)
     pk = result.group("pk")
 
-    upload = lock_model_instance(
-        pk=pk,
-        app_label="cases",
-        model_name="DICOMImageSetUpload",
-    )
+    with check_lock_acquired():
+        upload = DICOMImageSetUpload.objects.select_for_update(
+            nowait=True
+        ).get(pk=pk)
 
     if upload.status != DICOMImageSetUploadStatusChoices.STARTED:
         return
