@@ -17,12 +17,12 @@ from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 from django.utils._os import safe_join
 from django.utils.timezone import now
-from health_imaging.settings import HEALTH_IMAGING_JWT_ALGORITHM  # noqa: F401
-from health_imaging.settings import HEALTH_IMAGING_JWT_AUDIENCE  # noqa: F401
-from health_imaging.settings import HEALTH_IMAGING_JWT_ISSUER  # noqa: F401
 from health_imaging.settings import (  # noqa: F401
     AWS_DEFAULT_REGION,
     AWS_HEALTH_IMAGING_DATASTORE_ID,
+    HEALTH_IMAGING_JWT_ALGORITHM,
+    HEALTH_IMAGING_JWT_AUDIENCE,
+    HEALTH_IMAGING_JWT_ISSUER,
 )
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
