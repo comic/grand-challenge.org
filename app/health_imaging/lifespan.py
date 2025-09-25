@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 
 import aioboto3
-from django.conf import settings
+from health_imaging import settings
 
 CLIENTS = {}
 

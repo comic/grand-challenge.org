@@ -1,8 +1,8 @@
 import gzip
 import json
 
-from django.conf import settings
 from fastapi import APIRouter, HTTPException
+from health_imaging import settings
 from health_imaging.auth import VALIDATED_PAYLOAD
 from health_imaging.lifespan import CLIENTS
 from health_imaging.models import HealthImagingJWTPayload

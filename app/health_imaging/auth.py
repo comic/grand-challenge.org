@@ -1,9 +1,9 @@
 import logging
 
 import jwt
-from django.conf import settings
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from health_imaging import settings
 from health_imaging.models import HealthImagingJWTPayload
 from starlette import status
 
