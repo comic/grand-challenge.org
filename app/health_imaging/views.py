@@ -20,7 +20,7 @@ async def get_metadata(
         raise HTTPException(status_code=404, detail="Image not found")
 
     response = await CLIENTS["medical_imaging"].get_image_set_metadata(
-        datastoreId=settings.HEALTH_IMAGING_DATASTORE_ID,
+        datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
         imageSetId=validated_payload.image_set_id,
     )
 
@@ -41,7 +41,7 @@ async def get_instances(
         raise HTTPException(status_code=404, detail="Image not found")
 
     response = await CLIENTS["medical_imaging"].get_image_frame(
-        datastoreId=settings.HEALTH_IMAGING_DATASTORE_ID,
+        datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
         imageSetId=validated_payload.image_set_id,
         imageFrameInformation={"imageFrameId": frame_id},
     )

@@ -1430,9 +1430,6 @@ CASES_MAX_NUM_USER_POST_PROCESSING_TASKS = int(
     os.environ.get("CASES_MAX_NUM_USER_POST_PROCESSING_TASKS", "16")
 )
 
-HEALTH_IMAGING_DATASTORE_ID = os.environ.get(
-    "HEALTH_IMAGING_DATASTORE_ID",
-)
 HEALTH_IMAGING_JWT_AUDIENCE = os.environ.get(
     "HEALTH_IMAGING_JWT_AUDIENCE",
     "urn:grand-challenge-health-imaging",  # TODO Should be a URI
