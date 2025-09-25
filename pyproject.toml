@@ -65,7 +65,6 @@ dependencies = [
     "pydantic",
     "aioboto3",
     "cryptography",
-    "pydantic-settings",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"

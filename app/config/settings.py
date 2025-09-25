@@ -1429,6 +1429,23 @@ CASES_MAX_NUM_USER_POST_PROCESSING_TASKS = int(
     os.environ.get("CASES_MAX_NUM_USER_POST_PROCESSING_TASKS", "16")
 )
 
+HEALTH_IMAGING_JWT_AUDIENCE = os.environ.get(
+    "HEALTH_IMAGING_JWT_AUDIENCE",
+    "urn:grand-challenge-health-imaging",  # TODO Should be a URI
+)
+HEALTH_IMAGING_JWT_ISSUER = os.environ.get(
+    "HEALTH_IMAGING_JWT_ISSUER",
+    "urn:grand-challenge-django-api",  # TODO Should be a URI
+)
+HEALTH_IMAGING_JWT_ALGORTIHM = os.environ.get(
+    "HEALTH_IMAGING_JWT_ALGORTIHM", "RS256"
+)
+# TODO should get this from settings
+HEALTH_IMAGING_JWT_PUBLIC_KEY = os.environ.get(
+    "HEALTH_IMAGING_JWT_PUBLIC_KEY",
+    b"-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwhvqCC+37A+UXgcvDl+7\nnbVjDI3QErdZBkI1VypVBMkKKWHMNLMdHk0bIKL+1aDYTRRsCKBy9ZmSSX1pwQlO\n/3+gRs/MWG27gdRNtf57uLk1+lQI6hBDozuyBR0YayQDIx6VsmpBn3Y8LS13p4pT\nBvirlsdX+jXrbOEaQphn0OdQo0WDoOwwsPCNCKoIMbUOtUCowvjesFXlWkwG1zeM\nzlD1aDDS478PDZdckPjT96ICzqe4O1Ok6fRGnor2UTmuPy0f1tI0F7Ol5DHAD6pZ\nbkhB70aTBuWDGLDR0iLenzyQecmD4aU19r1XC9AHsVbQzxHrP8FveZGlV/nJOBJw\nFwIDAQAB\n-----END PUBLIC KEY-----\n",
+)
+
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in Image.sitk_image
 MAX_SITK_FILE_SIZE = 256 * MEGABYTE
 
