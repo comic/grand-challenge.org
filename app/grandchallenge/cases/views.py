@@ -100,7 +100,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
 
     @action(detail=True)
     def health_imaging_token(self, request, pk=None):
-        dicom_image_set = {}  # TODO
+        image = self.get_object()
 
         encoded = jwt.encode(
             payload=HealthImagingJWTPayload(
@@ -109,7 +109,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
                 aud=[
                     settings.HEALTH_IMAGING_JWT_AUDIENCE,
                 ],
-                image_set_id=dicom_image_set["image_set_id"],
+                image_set_id=image.dicom_image_set.image_set_id,
             ).model_dump(),
             key=settings.HEALTH_IMAGING_JWT_PRIVATE_KEY,
             algorithm=settings.HEALTH_IMAGING_JWT_ALGORITHM,
@@ -118,8 +118,8 @@ class ImageViewSet(ReadOnlyModelViewSet):
         return JsonResponse(
             {
                 "token": encoded,
-                "image_set_id": dicom_image_set["image_set_id"],
-                "frame_ids": dicom_image_set["frame_ids"],
+                # TODO serialize the data instead
+                "image_set_id": image.dicom_image_set.image_set_id,
             }
         )
 
