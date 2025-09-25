@@ -17,13 +17,13 @@ def get_validated_payload(token: str = JWT_SCHEME):
     try:
         payload = jwt.decode(
             jwt=token,
-            audience=settings.HEALTH_IMAGING_JWT_AUDIENCE,
+            options={"require": ["exp", "iss", "aud"]},
             issuer=settings.HEALTH_IMAGING_JWT_ISSUER,
+            audience=settings.HEALTH_IMAGING_JWT_AUDIENCE,
             key=settings.HEALTH_IMAGING_JWT_PUBLIC_KEY,
             algorithms=[
                 settings.HEALTH_IMAGING_JWT_ALGORITHM,
             ],
-            options={"require": ["exp", "iss", "aud"]},
         )
     except jwt.PyJWTError as error:
         logger.info(f"Invalid token: {error}")

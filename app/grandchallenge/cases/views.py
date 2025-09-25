@@ -104,12 +104,12 @@ class ImageViewSet(ReadOnlyModelViewSet):
 
         encoded = jwt.encode(
             payload=HealthImagingJWTPayload(
-                image_set_id=dicom_image_set["image_set_id"],
                 exp=now() + settings.HEALTH_IMAGING_JWT_TIMEOUT,
                 iss=settings.HEALTH_IMAGING_JWT_ISSUER,
                 aud=[
                     settings.HEALTH_IMAGING_JWT_AUDIENCE,
                 ],
+                image_set_id=dicom_image_set["image_set_id"],
             ).model_dump(),
             key=settings.HEALTH_IMAGING_JWT_PRIVATE_KEY,
             algorithm=settings.HEALTH_IMAGING_JWT_ALGORITHM,
