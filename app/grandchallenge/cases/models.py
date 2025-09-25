@@ -338,7 +338,13 @@ class DICOMImageSet(UUIDModel):
     image_set_id = models.CharField(
         max_length=32,
         unique=True,
-        help_text="The ID of the image set in AWS Health Imaging.",
+        help_text="The ID of the image set in AWS Health Imaging",
+        editable=False,
+    )
+    image_frame_ids = models.JSONField(
+        # TODO add a schema
+        editable=False,
+        help_text="The IDs of the image frames in AWS Health Imaging",
     )
     dicom_image_set_upload = models.OneToOneField(
         to="DICOMImageSetUpload",

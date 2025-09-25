@@ -1,15 +1,20 @@
+import json
 from functools import reduce
 from operator import or_
 
+import boto3
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
 from django.conf import settings
 from django.db.models import Q
 from django.forms import HiddenInput
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views import View
 from django.views.generic import DetailView, ListView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
+from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
@@ -93,6 +98,55 @@ class ImageViewSet(ReadOnlyModelViewSet):
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
     )
+
+    @action(detail=True)
+    def health_imaging_signed_urls(self, request, pk=None):
+        image = self.get_object()
+
+        session = boto3.Session(
+            region_name=settings.AWS_DEFAULT_REGION,
+        )
+        medical_imaging_auth = SigV4Auth(
+            credentials=session.get_credentials(),
+            service_name="medical-imaging",
+            region_name=settings.AWS_DEFAULT_REGION,
+        )
+
+        image_set_url = f"https://runtime-medical-imaging.{settings.AWS_DEFAULT_REGION}.amazonaws.com/datastore/{settings.AWS_HEALTH_IMAGING_DATASTORE_ID}/imageSet/{image.dicom_image_set.image_set_id}"
+
+        image_frame_requests = {}
+
+        for frame_id in image.dicom_image_set.image_frame_ids:
+            frame_request = AWSRequest(
+                method="POST",
+                url=f"{image_set_url}/getImageFrame",
+                data=json.dumps({"imageFrameId": frame_id}),
+            )
+            medical_imaging_auth.add_auth(frame_request)
+
+            image_frame_requests[frame_id] = {
+                "url": frame_request.url,
+                "method": frame_request.method,
+                "data": frame_request.data,
+                "headers": dict(frame_request.headers.items()),
+            }
+
+        metadata_request = AWSRequest(
+            method="POST", url=f"{image_set_url}/getImageSetMetadata"
+        )
+        medical_imaging_auth.add_auth(metadata_request)
+
+        return JsonResponse(
+            {
+                "get_image_set_metadata": {
+                    "url": metadata_request.url,
+                    "method": metadata_request.method,
+                    "data": metadata_request.data,
+                    "headers": dict(metadata_request.headers.items()),
+                },
+                "get_image_frames": image_frame_requests,
+            }
+        )
 
 
 class RawImageUploadSessionViewSet(
