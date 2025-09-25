@@ -1,10 +1,11 @@
 import gzip
 import json
 
+from django.conf import settings
 from fastapi import APIRouter, HTTPException
 from health_imaging.auth import VALIDATED_PAYLOAD
 from health_imaging.lifespan import CLIENTS
-from health_imaging.models import Payload
+from health_imaging.models import HealthImagingJWTPayload
 from starlette.responses import StreamingResponse
 
 router = APIRouter()
@@ -13,13 +14,13 @@ router = APIRouter()
 @router.get("/api/v1/cases/images/{image_set_id}/dicom/metadata/")
 async def get_metadata(
     image_set_id: str,
-    validated_payload: Payload = VALIDATED_PAYLOAD,
+    validated_payload: HealthImagingJWTPayload = VALIDATED_PAYLOAD,
 ):
     if image_set_id != validated_payload.image_set_id:
         raise HTTPException(status_code=404, detail="Image not found")
 
     response = await CLIENTS["medical_imaging"].get_image_set_metadata(
-        datastoreId=validated_payload.datastore_id,
+        datastoreId=settings.HEALTH_IMAGING_DATASTORE_ID,
         imageSetId=validated_payload.image_set_id,
     )
 
@@ -34,13 +35,13 @@ async def get_metadata(
 async def get_instances(
     image_set_id: str,
     frame_id: str,
-    validated_payload: Payload = VALIDATED_PAYLOAD,
+    validated_payload: HealthImagingJWTPayload = VALIDATED_PAYLOAD,
 ):
     if image_set_id != validated_payload.image_set_id:
         raise HTTPException(status_code=404, detail="Image not found")
 
     response = await CLIENTS["medical_imaging"].get_image_frame(
-        datastoreId=validated_payload.datastore_id,
+        datastoreId=settings.HEALTH_IMAGING_DATASTORE_ID,
         imageSetId=validated_payload.image_set_id,
         imageFrameInformation={"imageFrameId": frame_id},
     )

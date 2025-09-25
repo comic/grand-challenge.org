@@ -1,15 +1,19 @@
 from functools import reduce
 from operator import or_
 
+import jwt
 from django.conf import settings
 from django.db.models import Q
 from django.forms import HiddenInput
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
+from django.utils.timezone import now
 from django.views import View
 from django.views.generic import DetailView, ListView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
+from health_imaging.models import HealthImagingJWTPayload
+from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
@@ -93,6 +97,31 @@ class ImageViewSet(ReadOnlyModelViewSet):
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
     )
+
+    @action(detail=True)
+    def health_imaging_token(self, request, pk=None):
+        dicom_image_set = {}  # TODO
+
+        encoded = jwt.encode(
+            payload=HealthImagingJWTPayload(
+                image_set_id=dicom_image_set["image_set_id"],
+                exp=now() + settings.HEALTH_IMAGING_JWT_TIMEOUT,
+                iss=settings.HEALTH_IMAGING_JWT_ISSUER,
+                aud=[
+                    settings.HEALTH_IMAGING_JWT_AUDIENCE,
+                ],
+            ).model_dump(),
+            key=settings.HEALTH_IMAGING_JWT_PRIVATE_KEY,
+            algorithm=settings.HEALTH_IMAGING_JWT_ALGORITHM,
+        )
+
+        return JsonResponse(
+            {
+                "token": encoded,
+                "image_set_id": dicom_image_set["image_set_id"],
+                "frame_ids": dicom_image_set["frame_ids"],
+            }
+        )
 
 
 class RawImageUploadSessionViewSet(
