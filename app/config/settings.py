@@ -2,6 +2,7 @@ import json
 import os
 import re
 import socket
+from base64 import b64decode
 from datetime import timedelta
 from itertools import product
 from pathlib import Path
@@ -16,6 +17,13 @@ from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 from django.utils._os import safe_join
 from django.utils.timezone import now
+from health_imaging.settings import (  # noqa: F401
+    AWS_DEFAULT_REGION,
+    AWS_HEALTH_IMAGING_DATASTORE_ID,
+    HEALTH_IMAGING_JWT_ALGORITHM,
+    HEALTH_IMAGING_JWT_AUDIENCE,
+    HEALTH_IMAGING_JWT_ISSUER,
+)
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
@@ -207,15 +215,11 @@ AWS_BUCKET_ACL = "private"
 AWS_DEFAULT_ACL = "private"
 AWS_S3_MAX_MEMORY_SIZE = 1_048_576  # 100 MB
 AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
-AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
 AWS_S3_URL_PROTOCOL = os.environ.get("AWS_S3_URL_PROTOCOL", "https:")
 AWS_CLOUDWATCH_REGION_NAME = os.environ.get("AWS_CLOUDWATCH_REGION_NAME")
 AWS_CODEBUILD_REGION_NAME = os.environ.get("AWS_CODEBUILD_REGION_NAME")
 AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
-AWS_HEALTH_IMAGING_DATASTORE_ID = os.environ.get(
-    "AWS_HEALTH_IMAGING_DATASTORE_ID", ""
-)
 AWS_HEALTH_IMAGING_BUCKET_NAME = os.environ.get(
     "AWS_HEALTH_IMAGING_BUCKET_NAME", ""
 )
@@ -1427,6 +1431,17 @@ CASES_POST_PROCESSORS = os.environ.get(
 ).split(",")
 CASES_MAX_NUM_USER_POST_PROCESSING_TASKS = int(
     os.environ.get("CASES_MAX_NUM_USER_POST_PROCESSING_TASKS", "16")
+)
+
+HEALTH_IMAGING_JWT_TIMEOUT = timedelta(
+    seconds=int(
+        os.environ.get(
+            "HEALTH_IMAGING_JWT_TIMEOUT_SECONDS", "60"  # TODO is this correct
+        )
+    )
+)
+HEALTH_IMAGING_JWT_PRIVATE_KEY = b64decode(
+    os.environ.get("HEALTH_IMAGING_JWT_PRIVATE_KEY_BASE64", "").encode("ascii")
 )
 
 # Maximum file size in bytes to be opened by SimpleITK.ReadImage in Image.sitk_image
