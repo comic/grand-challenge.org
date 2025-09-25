@@ -53,14 +53,19 @@ dependencies = [
     "django-libsass",
     "django-csp",
     "psycopg[c]>3.1.8",
-    "pyjwt",
+    "pyjwt[crypto]",
     "beautifulsoup4",
     "pymdown-extensions",
-    "grand-challenge-forge>=0.7.1",
+    "grand-challenge-forge",
     "biopython",
     "cachetools",
     "grand-challenge-dicom-de-identifier>=0.1.1",
     "pydantic",
+    "fastapi[standard]",
+    "pydantic",
+    "aioboto3",
+    "cryptography",
+    "pydantic-settings",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"
