@@ -18,6 +18,7 @@ from django.utils.functional import empty
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.cases.widgets import DICOMUploadWidgetSuffixes
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
@@ -171,7 +172,12 @@ class MultipleCIVForm(Form):
             interface = ComponentInterface.objects.filter(slug=slug).get()
             prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{slug}"
 
-            if prefixed_interface_slug in self.data:
+            # For interfaces that use the FlexibleImageWidget or FlexibleFileWidget
+            # we need to pass in the initial value explicitly, for all other
+            # fields the value in self.data is picked up automatically
+            if prefixed_interface_slug in self.data and (
+                interface.is_image_kind or interface.requires_file
+            ):
                 try:
                     current_value = self.data.getlist(prefixed_interface_slug)
                     if len(current_value) == 1:
@@ -191,12 +197,10 @@ class MultipleCIVForm(Form):
                 initial=current_value,
             )
 
-        # Add fields for dynamically added new interfaces:
-        # These are sent along as form data like all other fields, so we can't
-        # tell them apart from the form fields initialized above. Hence
-        # the check if they already have a corresponding field on the form or not.
+        # Add fields for dynamically added new interfaces
         for slug in self.data.keys():
-            interface_slug = slug[len(INTERFACE_FORM_FIELD_PREFIX) :]
+            interface_slug = self.parse_slug(slug=slug)
+
             if (
                 ComponentInterface.objects.filter(slug=interface_slug).exists()
                 and slug not in self.fields.keys()
@@ -205,19 +209,38 @@ class MultipleCIVForm(Form):
                     slug=interface_slug
                 ).get()
 
-                try:
-                    current_value = self.data.getlist(slug)
-                    if len(current_value) == 1:
-                        current_value = current_value[0]
-                except AttributeError:
-                    current_value = self.data.get(slug)
+                current_value = None
 
-                self.fields[slug] = InterfaceFormFieldFactory(
+                # For interfaces that use the FlexibleImageWidget or
+                # FlexibleFileWidget we need
+                # to pass in the initial value explicitly, for all other
+                # fields the value in self.data is picked up automatically
+                if interface.is_image_kind or interface.requires_file:
+                    try:
+                        current_value = self.data.getlist(slug)
+                        if len(current_value) == 1:
+                            current_value = current_value[0]
+                    except AttributeError:
+                        current_value = self.data.get(slug)
+
+                self.fields[
+                    f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+                ] = InterfaceFormFieldFactory(
                     interface=interface,
                     user=self.user,
                     required=False,
                     initial=current_value,
                 )
+
+    @staticmethod
+    def parse_slug(*, slug):
+        interface_slug = slug[len(INTERFACE_FORM_FIELD_PREFIX) :]
+        for known_suffix in DICOMUploadWidgetSuffixes:
+            if interface_slug.endswith(f"_{known_suffix}"):
+                base_slug = interface_slug[: -len(f"_{known_suffix}")]
+                return base_slug
+
+        return interface_slug
 
     def process_object_data(self):
         civs = []

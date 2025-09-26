@@ -468,6 +468,11 @@ class ComponentInterface(OverlaySegmentsMixin):
         return self.kind in InterfaceKind.interface_type_image()
 
     @property
+    def is_dicom_image_kind(self):
+        # implementation up to Thomas
+        return False
+
+    @property
     def is_json_kind(self):
         return self.kind in InterfaceKind.interface_type_json()
 
@@ -2293,6 +2298,10 @@ class CIVData:
     def file_civ(self):
         return self._file_civ
 
+    @property
+    def image_name(self):
+        return self._image_name
+
     def __init__(self, *, interface_slug, value):
         self._interface_slug = interface_slug
         self._initial_value = value
@@ -2302,11 +2311,14 @@ class CIVData:
         self._user_upload = None
         self._user_upload_queryset = None
         self._file_civ = None
+        self._image_name = None
 
         ci = ComponentInterface.objects.get(slug=interface_slug)
 
         if ci.requires_value:
             self._init_json_civ_data()
+        elif ci.is_dicom_image_kind:
+            self._init_dicom_civ_data()
         elif ci.is_image_kind:
             self._init_image_civ_data()
         elif ci.requires_file:
@@ -2320,6 +2332,17 @@ class CIVData:
             (str | bool | int | float | dict | list | None),
         ):
             self._json_value = self._initial_value
+        else:
+            ValidationError(
+                f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
+            )
+
+    def _init_dicom_civ_data(self):
+        from grandchallenge.cases.widgets import DICOMUploadWithName
+
+        if isinstance(self._initial_value, DICOMUploadWithName):
+            self._user_upload_queryset = self._initial_value.user_uploads
+            self._image_name = self._initial_value.name
         else:
             ValidationError(
                 f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
