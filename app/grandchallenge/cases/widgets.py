@@ -225,9 +225,6 @@ class DICOMUploadWidget(MultiWidget):
     template_name = "cases/dicom_upload_widget.html"
 
     def __init__(self, attrs=None):
-        # pass in the widgets as dictionary with the proper suffixes as keys,
-        # so we can reliably tell these fields apart from regular socket fields
-        # in forms that include this field
         widgets = {
             DICOMUploadWidgetSuffixes[0]: DICOMFileNameInput(),
             DICOMUploadWidgetSuffixes[1]: DICOMUserUploadMultipleWidget(),
@@ -235,8 +232,6 @@ class DICOMUploadWidget(MultiWidget):
         super().__init__(widgets, attrs)
 
     def decompress(self, value: DICOMUploadWithName):
-        # takes a DICOMUploadField value and breaks it into subvalues for
-        # the subwidgets
         if value:
             return [
                 value.name,
@@ -275,12 +270,11 @@ class DICOMUploadField(MultiValueField):
                 ):
                     self.current_value = image
                     # turn initial to the internal data type that this widget expects
-                    initial = DICOMUploadWithName(
-                        name=image.name,
-                        user_uploads=[
-                            str(upload.pk)
-                            for upload in image.dicom_image_set.dicom_image_set_upload.user_uploads.all()
-                        ],
+                    initial = self.compress(
+                        values=[
+                            image.name,
+                            image.dicom_image_set.dicom_image_set_upload.user_uploads.all(),
+                        ]
                     )
                 else:
                     initial = None
@@ -297,7 +291,6 @@ class DICOMUploadField(MultiValueField):
         )
 
     def compress(self, values: list[str, QuerySet[UserUpload]]):
-        # receives a list of the outputs of the subfields’ clean() methods
         return DICOMUploadWithName(
             name=values[0] if values else "",
             user_uploads=[str(v.pk) for v in values[1]] if values else [],

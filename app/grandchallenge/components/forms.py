@@ -234,10 +234,7 @@ class MultipleCIVForm(Form):
 
     @staticmethod
     def parse_slug(*, slug):
-        # remove prefix
         interface_slug = slug[len(INTERFACE_FORM_FIELD_PREFIX) :]
-
-        # separate known suffix
         for known_suffix in DICOMUploadWidgetSuffixes:
             if interface_slug.endswith(f"_{known_suffix}"):
                 base_slug = interface_slug[: -len(f"_{known_suffix}")]
