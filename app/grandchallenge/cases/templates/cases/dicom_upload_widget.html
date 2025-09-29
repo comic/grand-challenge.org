@@ -1,0 +1,15 @@
+{% if widget.attrs.current_value %}
+    <input type="text"
+           class="textinput form-control"
+           id="{{ widget.name }}"
+           name="{{ widget.name }}"
+           value="{{ widget.attrs.current_value.name }}"
+           disabled
+    >
+    <small id="{{ widget.name }}_helptext" class="form-text text-muted">To upload a different DICOM image for this
+        socket, please delete the entire case/item and start from scratch.</small>
+{% else %}
+    <div class="dicom-upload-widget">
+        {% include 'django/forms/widgets/multiwidget.html' %}
+    </div>
+{% endif %}

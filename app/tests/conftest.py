@@ -13,7 +13,10 @@ from guardian.shortcuts import assign_perm
 from requests import put
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.cases.widgets import ImageWidgetChoices
+from grandchallenge.cases.widgets import (
+    DICOMUploadWidgetSuffixes,
+    ImageWidgetChoices,
+)
 from grandchallenge.components.backends import docker_client
 from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
@@ -596,7 +599,17 @@ def get_interface_form_data(
     existing_data=False,
 ):
     ci = ComponentInterface.objects.get(slug=interface_slug)
-    form_data = {f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": data}
+    if ci.is_dicom_image_kind:
+        form_data = {
+            f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}_{DICOMUploadWidgetSuffixes[0]}": data[
+                0
+            ],
+            f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}_{DICOMUploadWidgetSuffixes[1]}": data[
+                1
+            ],
+        }
+    else:
+        form_data = {f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": data}
     if ci.is_image_kind:
         if existing_data:
             form_data[
