@@ -643,7 +643,6 @@ class ComponentInterface(OverlaySegmentsMixin):
                     "Relative path should start with images/"
                 )
             if Path(self.relative_path).name != Path(self.relative_path).stem:
-                # Maybe not in the future
                 raise ValidationError("Images should be a directory")
         else:
             if self.relative_path.startswith("images/"):
