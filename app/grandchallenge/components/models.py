@@ -156,7 +156,7 @@ class InterfaceSuperKindChoices(models.TextChoices):
     IMAGE = "I", "Image"
     FILE = "F", "File"
     VALUE = "V", "Value"
-    
+
 
 class InterfaceKind:
     """Interface kind choices."""
@@ -718,10 +718,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         value_required = True
         if self.kind == InterfaceKindChoices.BOOL:
             value_required = False
-        elif (
-            not self.is_image_kind
-            and not self.requires_file
-        ):
+        elif not self.is_image_kind and not self.requires_file:
             try:
                 self.validate_against_schema(value=None)
                 value_required = False
