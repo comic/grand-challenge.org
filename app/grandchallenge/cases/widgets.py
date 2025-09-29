@@ -217,8 +217,8 @@ class DICOMUploadWithName(NamedTuple):
     ]  # UserUpload pks, as expected by DICOMUserUploadMultipleWidget
 
 
-class DICOMFileNameInput(TextInput):
-    template_name = "cases/file_name.html"
+class DICOMImageSetNameInput(TextInput):
+    template_name = "cases/dicom_image_set_name_input.html"
 
 
 class DICOMUploadWidget(MultiWidget):
@@ -226,7 +226,7 @@ class DICOMUploadWidget(MultiWidget):
 
     def __init__(self, attrs=None):
         widgets = {
-            DICOMUploadWidgetSuffixes[0]: DICOMFileNameInput(),
+            DICOMUploadWidgetSuffixes[0]: DICOMImageSetNameInput(),
             DICOMUploadWidgetSuffixes[1]: DICOMUserUploadMultipleWidget(),
         }
         super().__init__(widgets, attrs)

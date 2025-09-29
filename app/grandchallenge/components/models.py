@@ -1,5 +1,6 @@
 import json
 import logging
+import random
 import re
 from json import JSONDecodeError
 from pathlib import Path
@@ -37,7 +38,12 @@ from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import (
+    DICOMImageSet,
+    Image,
+    ImageFile,
+    RawImageUploadSession,
+)
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
     CINotAllowedException,
@@ -136,6 +142,7 @@ class InterfaceKindChoices(models.TextChoices):
     SEGMENTATION = "SEG", _("Segmentation")
     HEAT_MAP = "HMAP", _("Heat Map")
     DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
+    DICOM_IMAGE_SET = "DCM", _("Dicom image set")
 
     # File types
     PDF = "PDF", _("PDF file")
@@ -156,6 +163,7 @@ class InterfaceSuperKindChoices(models.TextChoices):
     IMAGE = "I", "Image"
     FILE = "F", "File"
     VALUE = "V", "Value"
+    DICOM = "D", "Dicom"
 
 
 class InterfaceKind:
@@ -257,6 +265,12 @@ class InterfaceKind:
             InterfaceKind.InterfaceKindChoices.HEAT_MAP,
             InterfaceKind.InterfaceKindChoices.SEGMENTATION,
             InterfaceKind.InterfaceKindChoices.DISPLACEMENT_FIELD,
+        }
+
+    @staticmethod
+    def interface_type_dicom():
+        return {
+            InterfaceKind.InterfaceKindChoices.DICOM_IMAGE_SET,
         }
 
     @staticmethod
@@ -471,7 +485,7 @@ class ComponentInterface(OverlaySegmentsMixin):
     @property
     def is_dicom_image_kind(self):
         # implementation up to Thomas
-        return False
+        return self.kind in InterfaceKind.interface_type_dicom()
 
     @property
     def is_json_kind(self):
@@ -718,7 +732,11 @@ class ComponentInterface(OverlaySegmentsMixin):
         value_required = True
         if self.kind == InterfaceKindChoices.BOOL:
             value_required = False
-        elif not self.is_image_kind and not self.requires_file:
+        elif (
+            not self.is_image_kind
+            and not self.requires_file
+            and not self.is_dicom_image_kind
+        ):
             try:
                 self.validate_against_schema(value=None)
                 value_required = False
@@ -2493,6 +2511,13 @@ class CIVForObjectMixin:
                 user=user,
                 linked_task=linked_task,
             )
+        elif ci.is_dicom_image_kind:
+            return self.create_civ_for_dicom_image(
+                ci=ci,
+                user=user,
+                user_upload_queryset=civ_data.user_upload_queryset,
+                image_name=civ_data.image_name,
+            )
         elif ci.is_image_kind:
             return self.create_civ_for_image(
                 ci=ci,
@@ -2617,6 +2642,46 @@ class CIVForObjectMixin:
                     immutable=True,
                 ),
             )
+
+    def create_civ_for_dicom_image(
+        self,
+        *,
+        ci,
+        user=None,
+        user_upload_queryset=None,
+        image_name=None,
+    ):
+        from grandchallenge.cases.models import DICOMImageSetUpload
+
+        if user_upload_queryset:
+            if not user:
+                raise RuntimeError(
+                    f"You need to provide a user along with the user upload "
+                    f"queryset for interface {ci}"
+                )
+            upload_session = DICOMImageSetUpload.objects.create(
+                creator=user, name=image_name
+            )
+            upload_session.user_uploads.set(user_upload_queryset)
+
+            # TODO: start the DICOM import job and make sure the linked task gets called on success
+
+            # for now, create the final objects to test the widget properly
+            image_set = DICOMImageSet.objects.create(
+                image_set_id=random.randint(1, 10**32 - 1),
+                dicom_image_set_upload=upload_session,
+            )
+            image = Image.objects.create(
+                name=image_name, width=10, height=10, dicom_image_set=image_set
+            )
+            current_value = self.get_current_value_for_interface(
+                interface=ci, user=upload_session.creator
+            )
+            civ, created = ComponentInterfaceValue.objects.get_first_or_create(
+                interface=ci, image=image
+            )
+            self.remove_civ(civ=current_value)
+            self.add_civ(civ=civ)
 
     def create_civ_for_file(
         self,
