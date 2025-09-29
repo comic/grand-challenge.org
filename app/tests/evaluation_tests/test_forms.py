@@ -1485,13 +1485,16 @@ def test_phase_copy_algorithm_interfaces():
 def test_reevaluation_blocked_when_pending_evaluation_exists():
     algorithm_image = AlgorithmImageFactory()
     user = UserFactory()
+    phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
 
     EvaluationFactory(
         time_limit=10,
         submission__algorithm_image=algorithm_image,
         status=Evaluation.PENDING,
     )
-    sub = SubmissionFactory(algorithm_image=algorithm_image, creator=user)
+    sub = SubmissionFactory(
+        phase=phase, algorithm_image=algorithm_image, creator=user
+    )
     form = EvaluationForm(
         submission=sub,
         user=user,

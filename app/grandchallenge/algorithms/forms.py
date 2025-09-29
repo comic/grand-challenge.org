@@ -555,7 +555,11 @@ class AlgorithmForPhaseForm(
         phase,
         **kwargs,
     ):
-        super().__init__(*args, user=user, phase=phase, **kwargs)
+        self._user = user
+        self._phase = phase
+
+        super().__init__(*args, **kwargs)
+
         self.fields["workstation_config"].initial = workstation_config
         self.fields["workstation_config"].disabled = True
         self.fields["hanging_protocol"].initial = hanging_protocol
