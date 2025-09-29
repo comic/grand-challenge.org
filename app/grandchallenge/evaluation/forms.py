@@ -282,8 +282,8 @@ class AlgorithmChoiceField(ModelChoiceField):
 
 class SubmissionForm(
     UserAlgorithmsForPhaseMixin,
-    AdditionalInputsMixin,
     SaveFormInitMixin,
+    AdditionalInputsMixin,
     forms.ModelForm,
 ):
     user_upload = ModelChoiceField(
@@ -317,7 +317,12 @@ class SubmissionForm(
     )
 
     def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
-        super().__init__(*args, user=user, phase=phase, **kwargs)
+        self.additional_inputs = phase.additional_evaluation_inputs.all()
+        self._user = user
+        self._phase = phase
+
+        super().__init__(*args, **kwargs)
+
         self.fields["creator"].queryset = get_user_model().objects.filter(
             pk=user.pk
         )
@@ -444,12 +449,6 @@ class SubmissionForm(
             if not self._phase.active_image:
                 self.fields["user_upload"].disabled = True
 
-        self.init_additional_inputs(
-            inputs=self._phase.additional_evaluation_inputs.all()
-        )
-
-        self.init_form_helper()
-
     def clean(self):
         cleaned_data = super().clean()
         if (
@@ -466,8 +465,6 @@ class SubmissionForm(
             raise ValidationError(
                 "You must confirm that you want to submit to this phase."
             )
-
-        cleaned_data["additional_inputs"] = self.clean_additional_inputs()
 
         return cleaned_data
 
@@ -685,15 +682,18 @@ class CombinedLeaderboardForm(SaveFormInitMixin, forms.ModelForm):
         widgets = {"phases": forms.CheckboxSelectMultiple}
 
 
-class EvaluationForm(AdditionalInputsMixin, SaveFormInitMixin, forms.Form):
+class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
     submission = ModelChoiceField(
         queryset=None, disabled=True, widget=HiddenInput()
     )
 
     def __init__(self, submission, user, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+        self.additional_inputs = (
+            submission.phase.additional_evaluation_inputs.all()
+        )
         self._user = user
+
+        super().__init__(*args, **kwargs)
 
         self.fields["submission"].queryset = filter_by_permission(
             queryset=Submission.objects.filter(pk=submission.pk),
@@ -701,12 +701,6 @@ class EvaluationForm(AdditionalInputsMixin, SaveFormInitMixin, forms.Form):
             codename="view_submission",
         )
         self.fields["submission"].initial = submission
-
-        self.init_additional_inputs(
-            inputs=submission.phase.additional_evaluation_inputs.all()
-        )
-
-        self.init_form_helper()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -728,21 +722,21 @@ class EvaluationForm(AdditionalInputsMixin, SaveFormInitMixin, forms.Form):
                     "defined for the phase."
                 )
 
-        if (
-            Evaluation.objects.active()
-            .filter(
-                submission__algorithm_image__image_sha256=cleaned_data[
-                    "submission"
-                ].algorithm_image.image_sha256,
-            )
-            .exists()
-        ):
-            # This causes problems in `set_evaluation_inputs` if two
-            # evaluations are running for the same image at the same time
-            raise ValidationError(
-                "An evaluation for this algorithm is already in progress. "
-                "Please wait for the other evaluation to complete."
-            )
+            if (
+                Evaluation.objects.active()
+                .filter(
+                    submission__algorithm_image__image_sha256=cleaned_data[
+                        "submission"
+                    ].algorithm_image.image_sha256,
+                )
+                .exists()
+            ):
+                # This causes problems in `set_evaluation_inputs` if two
+                # evaluations are running for the same image at the same time
+                raise ValidationError(
+                    "An evaluation for this algorithm is already in progress. "
+                    "Please wait for the other evaluation to complete."
+                )
 
         # Fetch from the db to get the cost annotations
         # Maybe this is solved with GeneratedField (Django 5)?
@@ -756,8 +750,6 @@ class EvaluationForm(AdditionalInputsMixin, SaveFormInitMixin, forms.Form):
 
         if challenge.available_compute_euro_millicents <= 0:
             raise ValidationError("This challenge has exceeded its budget")
-
-        cleaned_data["additional_inputs"] = self.clean_additional_inputs()
 
         if Evaluation.objects.get_evaluations_with_same_inputs(
             inputs=cleaned_data["additional_inputs"],

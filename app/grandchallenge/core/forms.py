@@ -15,6 +15,9 @@ class SaveFormInitMixin:
     Mixin that adds some save features to a form via init:
       - a 'Save' button
       - disabling fieldsets after the form is submitted
+
+    When used in a form with dynamically created fields,
+    this mixin needs to be placed before any other mixins.
     """
 
     def __init__(self, *args, **kwargs):

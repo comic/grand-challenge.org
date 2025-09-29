@@ -106,7 +106,7 @@ class ModelFactsTextField(Field):
     template = "algorithms/model_facts_field.html"
 
 
-class JobCreateForm(AdditionalInputsMixin, Form):
+class JobCreateForm(SaveFormInitMixin, AdditionalInputsMixin, Form):
     algorithm_image = ModelChoiceField(
         queryset=None, disabled=True, required=True, widget=HiddenInput
     )
@@ -124,11 +124,12 @@ class JobCreateForm(AdditionalInputsMixin, Form):
     )
 
     def __init__(self, *args, algorithm, user, interface, **kwargs):
+        self._algorithm = algorithm
+        self._user = user
+        self.additional_inputs = interface.inputs.all()
+
         super().__init__(*args, **kwargs)
 
-        self._algorithm = algorithm
-
-        self._user = user
         self.fields["creator"].queryset = get_user_model().objects.filter(
             pk=self._user.pk
         )
@@ -154,11 +155,6 @@ class JobCreateForm(AdditionalInputsMixin, Form):
                 AlgorithmModel.objects.filter(pk=active_model.pk)
             )
             self.fields["algorithm_model"].initial = active_model
-
-        self.init_additional_inputs(inputs=interface.inputs.all())
-
-        self.helper = FormHelper(self)
-        self.helper.layout.append(Submit("save", "Save"))
 
     @cached_property
     def jobs_limit(self):
@@ -187,10 +183,8 @@ class JobCreateForm(AdditionalInputsMixin, Form):
                 "please try again after they have completed"
             )
 
-        cleaned_data["inputs"] = self.clean_additional_inputs()
-
         if Job.objects.get_jobs_with_same_inputs(
-            inputs=cleaned_data["inputs"],
+            inputs=cleaned_data["additional_inputs"],
             algorithm_image=cleaned_data["algorithm_image"],
             algorithm_model=cleaned_data["algorithm_model"],
         ):
@@ -441,11 +435,6 @@ class AlgorithmForm(
 
 
 class UserAlgorithmsForPhaseMixin:
-    def __init__(self, *args, user, phase, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._user = user
-        self._phase = phase
-
     @cached_property
     def user_algorithms_for_phase(self):
         interfaces = self._phase.algorithm_interfaces.all()
