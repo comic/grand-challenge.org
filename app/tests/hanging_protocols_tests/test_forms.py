@@ -422,7 +422,7 @@ def make_ci_list(
 
     for i in range(number_of_images):
         ci = ComponentInterfaceFactory(
-            kind=InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
+            kind=InterfaceKindChoices.IMAGE,
             title=f"test-ci-image-{i}",
         )
         ci_list.append(ci)

@@ -577,8 +577,7 @@ def test_api_archive_item_add_and_update_image(
     archive.add_editor(editor)
     item = ArchiveItemFactory(archive=archive)
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
-        store_in_database=False,
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE, store_in_database=False
     )
 
     def patch_archive_item(data):
@@ -903,7 +902,7 @@ def test_archive_item_add_image(
     editor = UserFactory()
     archive.add_editor(editor)
     ci_img = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
     )
     ci_value = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.BOOL
@@ -1175,10 +1174,10 @@ def test_archive_item_create_view(
         kind=InterfaceKind.InterfaceKindChoices.STRING
     )
     ci_img = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
     )
     ci_img2 = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE
+        kind=InterfaceKind.InterfaceKindChoices.IMAGE
     )
     ci_json = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False

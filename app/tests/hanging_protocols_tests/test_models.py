@@ -509,12 +509,8 @@ def test_view_content_validation():
 
 @pytest.mark.django_db
 def test_at_most_two_images():
-    image = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.MHA_OR_TIFF_IMAGE
-    )
-    image2 = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.MHA_OR_TIFF_IMAGE
-    )
+    image = ComponentInterfaceFactory(kind=InterfaceKindChoices.IMAGE)
+    image2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.IMAGE)
     heatmap = ComponentInterfaceFactory(kind=InterfaceKindChoices.HEAT_MAP)
     segmentation = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.SEGMENTATION

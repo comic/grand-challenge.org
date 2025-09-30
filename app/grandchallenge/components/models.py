@@ -131,7 +131,7 @@ class InterfaceKindChoices(models.TextChoices):
     MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
 
     # Image types
-    MHA_OR_TIFF_IMAGE = "IMG", _("Image")
+    IMAGE = "IMG", _("Image")
     SEGMENTATION = "SEG", _("Segmentation")
     HEAT_MAP = "HMAP", _("Heat Map")
     DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
@@ -254,7 +254,7 @@ class InterfaceKind:
         * DICOM Image Set
         """
         return {
-            InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
+            InterfaceKind.InterfaceKindChoices.IMAGE,
             InterfaceKind.InterfaceKindChoices.HEAT_MAP,
             InterfaceKind.InterfaceKindChoices.SEGMENTATION,
             InterfaceKind.InterfaceKindChoices.DISPLACEMENT_FIELD,
