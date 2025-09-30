@@ -64,7 +64,7 @@ def _get_or_create_component_interfaces():
         },
         {
             "title": "Broken Image CI",
-            "kind": InterfaceKindChoices.IMAGE,
+            "kind": InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
             "store_in_database": False,
             "relative_path": "images/broken-image",
         },

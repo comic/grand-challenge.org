@@ -38,7 +38,9 @@ def test_interface_form_field_image_queryset_filter():
     upload2 = UserUploadFactory()
     upload1.status = UserUpload.StatusChoices.COMPLETED
     upload1.save()
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.MHA_OR_TIFF_IMAGE
+    )
     field = InterfaceFormFieldFactory(interface=ci, user=user)
     assert im1 in field.fields[0].queryset.all()
     assert im2 not in field.fields[0].queryset.all()
@@ -66,7 +68,9 @@ def test_image_widget_current_value_in_archive_item_and_display_set_create_forms
     form_class, base_object_factory, extra_form_kwargs
 ):
     user = UserFactory()
-    image_ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    image_ci = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.MHA_OR_TIFF_IMAGE
+    )
 
     image = ImageFactory()
     assign_perm("cases.view_image", user, image)
@@ -134,7 +138,9 @@ def test_image_widget_current_value_in_archive_item_and_display_set_update_forms
     form_class, object_factory, extra_form_kwargs
 ):
     user = UserFactory()
-    image_ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    image_ci = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.MHA_OR_TIFF_IMAGE
+    )
 
     image1 = ImageFactory()
     assign_perm("cases.view_image", user, image1)

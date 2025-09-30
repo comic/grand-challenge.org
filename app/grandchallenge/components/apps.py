@@ -8,7 +8,7 @@ def init_default_interfaces(*_, **__):
     default_interfaces = [
         {
             "title": "Generic Medical Image",
-            "kind": ComponentInterface.Kind.IMAGE,
+            "kind": ComponentInterface.Kind.MHA_OR_TIFF_IMAGE,
             "relative_path": "",
         },
         {

@@ -69,9 +69,9 @@ from tests.factories import ImageFactory, ImageFileFactory
             dict(),
             "<img",
         ),
-        (  # IMAGE
+        (  # MHA_OR_TIFF_IMAGE
             dict(
-                kind=InterfaceKindChoices.IMAGE,
+                kind=InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
                 store_in_database=False,
             ),
             dict(),
@@ -108,7 +108,7 @@ def test_civ(
             ContentFile(b"<bh:ff><bh:d8><bh:ff><bh:e0><bh:00><bh:10>JFIF"),
         )
 
-    if ci.kind == InterfaceKindChoices.IMAGE:
+    if ci.kind == InterfaceKindChoices.MHA_OR_TIFF_IMAGE:
         civ.image = ImageFactory()
         ImageFileFactory(image=civ.image)
 
