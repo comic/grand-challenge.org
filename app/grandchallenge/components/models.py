@@ -160,7 +160,7 @@ class InterfaceSuperKindChoices(models.TextChoices):
 class InterfaceKind:
 
     @staticmethod
-    def interface_type_json():
+    def interface_kind_json():
         """Interface kinds that are json serializable:
 
         * String
@@ -198,9 +198,9 @@ class InterfaceKind:
             os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
             django.setup()
 
-            from grandchallenge.components.models import INTERFACE_TYPE_JSON_EXAMPLES
+            from grandchallenge.components.models import INTERFACE_KIND_JSON_EXAMPLES
 
-            for key, example in INTERFACE_TYPE_JSON_EXAMPLES.items():
+            for key, example in INTERFACE_KIND_JSON_EXAMPLES.items():
                 title = f"Example JSON file contents for {key.label}"
 
                 if example.extra_info:
@@ -240,7 +240,7 @@ class InterfaceKind:
         }
 
     @staticmethod
-    def interface_type_image():
+    def interface_kind_image():
         """Interface kinds that are images:
 
         * Image
@@ -256,7 +256,7 @@ class InterfaceKind:
         }
 
     @staticmethod
-    def interface_type_file():
+    def interface_kind_file():
         """Interface kinds that are files:
 
         * CSV file
@@ -284,7 +284,7 @@ class InterfaceKind:
         }
 
     @staticmethod
-    def interface_type_mandatory_isolation():
+    def interface_kind_mandatory_isolation():
         """Interfaces that can only be displayed in isolation."""
         return {
             InterfaceKindChoices.CHART,
@@ -295,7 +295,7 @@ class InterfaceKind:
         }
 
     @staticmethod
-    def interface_type_undisplayable():
+    def interface_kind_undisplayable():
         """Interfaces that cannot be displayed."""
         return {
             InterfaceKindChoices.CSV,
@@ -462,15 +462,15 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def is_image_kind(self):
-        return self.kind in InterfaceKind.interface_type_image()
+        return self.kind in InterfaceKind.interface_kind_image()
 
     @property
     def is_json_kind(self):
-        return self.kind in InterfaceKind.interface_type_json()
+        return self.kind in InterfaceKind.interface_kind_json()
 
     @property
     def is_file_kind(self):
-        return self.kind in InterfaceKind.interface_type_file()
+        return self.kind in InterfaceKind.interface_kind_file()
 
     @property
     def is_thumbnail_kind(self):
@@ -493,7 +493,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         try:
             return self.example_value
         except ObjectDoesNotExist:
-            return INTERFACE_TYPE_JSON_EXAMPLES.get(self.kind)
+            return INTERFACE_KIND_JSON_EXAMPLES.get(self.kind)
 
     @property
     def super_kind(self):
@@ -663,8 +663,8 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     def _clean_store_in_database(self):
         object_store_required = self.kind in {
-            *InterfaceKind.interface_type_image(),
-            *InterfaceKind.interface_type_file(),
+            *InterfaceKind.interface_kind_image(),
+            *InterfaceKind.interface_kind_file(),
             # These values can be large, so for any new interfaces of this
             # type always add them to the object store
             InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
@@ -760,7 +760,7 @@ class ComponentInterfaceExampleValue(UUIDModel):
             )
 
 
-INTERFACE_TYPE_JSON_EXAMPLES = {
+INTERFACE_KIND_JSON_EXAMPLES = {
     InterfaceKindChoices.STRING: ComponentInterfaceExampleValue(
         value="Example String"
     ),
@@ -1222,7 +1222,7 @@ INTERFACE_KIND_TO_ALLOWED_FILE_TYPES = {
             "text/plain",
             "application/json",
         )
-        for kind in InterfaceKind.interface_type_json()
+        for kind in InterfaceKind.interface_kind_json()
     },
 }
 
@@ -1238,7 +1238,7 @@ INTERFACE_KIND_TO_FILE_EXTENSION = {
     InterfaceKindChoices.MP4: ".mp4",
     InterfaceKindChoices.NEWICK: ".newick",
     InterfaceKindChoices.BIOM: ".biom",
-    **{kind: ".json" for kind in InterfaceKind.interface_type_json()},
+    **{kind: ".json" for kind in InterfaceKind.interface_kind_json()},
 }
 
 INTERFACE_KIND_TO_CUSTOM_QUEUE = {

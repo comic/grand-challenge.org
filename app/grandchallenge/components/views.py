@@ -132,7 +132,7 @@ class ComponentInterfaceAutocomplete(
 
         if image_only:
             qs = ComponentInterface.objects.filter(
-                kind__in=InterfaceKind.interface_type_image(),
+                kind__in=InterfaceKind.interface_kind_image(),
                 **extra_filter_kwargs,
             )
         else:

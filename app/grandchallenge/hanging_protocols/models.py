@@ -387,7 +387,7 @@ class HangingProtocolMixin(models.Model):
             mandatory_isolation_interfaces = [
                 i
                 for i in viewport_interfaces
-                if i.kind in InterfaceKind.interface_type_mandatory_isolation()
+                if i.kind in InterfaceKind.interface_kind_mandatory_isolation()
             ]
 
             if len(mandatory_isolation_interfaces) > 1 or (
@@ -403,7 +403,7 @@ class HangingProtocolMixin(models.Model):
             undisplayable_interfaces = [
                 i
                 for i in viewport_interfaces
-                if i.kind in InterfaceKind.interface_type_undisplayable()
+                if i.kind in InterfaceKind.interface_kind_undisplayable()
             ]
 
             if len(undisplayable_interfaces) > 0:

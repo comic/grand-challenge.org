@@ -13,7 +13,7 @@ from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
-    INTERFACE_TYPE_JSON_EXAMPLES,
+    INTERFACE_KIND_JSON_EXAMPLES,
     CIVData,
     ComponentInterface,
     ComponentInterfaceExampleValue,
@@ -182,15 +182,15 @@ def test_clean_store_in_db(kind, object_store_required):
 
 
 def test_all_interfaces_in_schema():
-    for i in InterfaceKind.interface_type_json():
+    for i in InterfaceKind.interface_kind_json():
         assert str(i) in INTERFACE_VALUE_SCHEMA["definitions"]
 
 
 def test_all_interfaces_covered():
     assert {str(i) for i in InterfaceKindChoices} == {
-        *InterfaceKind.interface_type_image(),
-        *InterfaceKind.interface_type_file(),
-        *InterfaceKind.interface_type_json(),
+        *InterfaceKind.interface_kind_image(),
+        *InterfaceKind.interface_kind_file(),
+        *InterfaceKind.interface_kind_json(),
     }
 
 
@@ -199,11 +199,11 @@ def test_all_interfaces_covered():
     (
         *(
             (k, nullcontext())
-            for k in sorted(InterfaceKind.interface_type_file())
+            for k in sorted(InterfaceKind.interface_kind_file())
         ),
         *(
             (k, nullcontext())
-            for k in sorted(InterfaceKind.interface_type_json())
+            for k in sorted(InterfaceKind.interface_kind_json())
         ),
         (
             InterfaceKindChoices.PANIMG_IMAGE,
@@ -248,7 +248,7 @@ def test_no_uuid_validation():
         (InterfaceKindChoices.MP4, "mp4"),
         (InterfaceKindChoices.NEWICK, "newick"),
         (InterfaceKindChoices.BIOM, "biom"),
-        *((k, "json") for k in InterfaceKind.interface_type_json()),
+        *((k, "json") for k in InterfaceKind.interface_kind_json()),
     ),
 )
 def test_relative_path_file_ending(kind, good_suffix):
@@ -1678,7 +1678,7 @@ def test_schema_must_be_valid_for_example_value():
             kind,
             example,
         )
-        for kind, example in INTERFACE_TYPE_JSON_EXAMPLES.items()
+        for kind, example in INTERFACE_KIND_JSON_EXAMPLES.items()
     ],
 )
 @pytest.mark.django_db
@@ -1697,8 +1697,8 @@ def test_interface_kind_json_type_examples(kind, example):
 
 
 def test_all_examples_present():
-    assert set(INTERFACE_TYPE_JSON_EXAMPLES.keys()) == set(
-        InterfaceKind.interface_type_json()
+    assert set(INTERFACE_KIND_JSON_EXAMPLES.keys()) == set(
+        InterfaceKind.interface_kind_json()
     )
 
 
