@@ -709,3 +709,42 @@ def test_dicom_signed_urls(client, settings, monkeypatch):
         metadata_request["url"]
         == "https://runtime-medical-imaging.test-region.amazonaws.com/datastore/test-datastore-id/imageSet/test-image-set-id/getImageSetMetadata"
     )
+
+
+@pytest.mark.django_db
+def test_dicom_image_set_serialized(client):
+    image = ImageFactory(
+        dicom_image_set=DICOMImageSetFactory(
+            image_set_id="test-image-set-id",
+            image_frame_ids=["test-1", "test-2"],
+        )
+    )
+    user = UserFactory()
+    assign_perm("view_image", user, image)
+
+    response = get_view_for_user(
+        viewname="api:image-detail",
+        reverse_kwargs={"pk": image.pk},
+        user=user,
+        client=client,
+    )
+
+    assert response.json()["dicom_image_set"] == {
+        "image_set_id": "test-image-set-id"
+    }
+
+
+@pytest.mark.django_db
+def test_no_dicom_image_set_serialized(client):
+    image = ImageFactory()
+    user = UserFactory()
+    assign_perm("view_image", user, image)
+
+    response = get_view_for_user(
+        viewname="api:image-detail",
+        reverse_kwargs={"pk": image.pk},
+        user=user,
+        client=client,
+    )
+
+    assert response.json()["dicom_image_set"] is None
