@@ -1391,7 +1391,9 @@ class ComponentInterfaceValue(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._value_orig = self.value
-        self._image_orig = self.image.pk if self.image else None
+        self._image_orig = self._meta.get_field("image").value_from_object(
+            self
+        )
         self._file_orig = self.file
 
     def save(self, *args, **kwargs):
