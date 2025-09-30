@@ -326,7 +326,7 @@ def test_permission_request_notifications_flow_for_manual_review(
     assert user_notification.user == user
     assert (
         f"Your registration request for {base_obj_str} was accepted"
-        in Notification.objects.all()[0].print_notification(user=user)
+        in user_notification.print_notification(user=user)
     )
 
     # reject permission request
@@ -347,7 +347,7 @@ def test_permission_request_notifications_flow_for_manual_review(
     assert new_user_notification.user == user
     assert (
         f"Your registration request for {base_obj_str} was rejected"
-        in Notification.objects.all()[1].print_notification(user=user)
+        in new_user_notification.print_notification(user=user)
     )
 
 
