@@ -132,7 +132,9 @@ class ImageViewSet(ReadOnlyModelViewSet):
             }
 
         metadata_request = AWSRequest(
-            method="POST", url=f"{image_set_url}/getImageSetMetadata"
+            method="POST",
+            url=f"{image_set_url}/getImageSetMetadata",
+            data=json.dumps({"versionId": "1"}),
         )
         medical_imaging_auth.add_auth(metadata_request)
 

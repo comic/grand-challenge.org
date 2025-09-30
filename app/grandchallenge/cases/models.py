@@ -1103,6 +1103,7 @@ class DICOMImageSetUpload(UUIDModel):
         response = self._health_imaging_client.get_image_set_metadata(
             datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
             imageSetId=image_set_id,
+            versionId="1",
         )
 
         metadata = json.loads(

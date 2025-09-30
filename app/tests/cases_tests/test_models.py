@@ -640,6 +640,7 @@ def test_convert_image_set_to_internal(mocker):
             expected_params={
                 "datastoreId": settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
                 "imageSetId": image_set_id,
+                "versionId": "1",
             },
         )
         dicom_image_set_upload.convert_image_set_to_internal(
