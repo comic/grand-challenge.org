@@ -83,7 +83,7 @@ from tests.utils import create_raw_upload_image_session
         (InterfaceKindChoices.MULTIPLE_ELLIPSES, False, False),
         (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, False, False),
         # Image types
-        (InterfaceKindChoices.IMAGE, True, True),
+        (InterfaceKindChoices.MHA_OR_TIFF_IMAGE, True, True),
         (InterfaceKindChoices.HEAT_MAP, True, True),
         (InterfaceKindChoices.SEGMENTATION, True, True),
         (InterfaceKindChoices.DISPLACEMENT_FIELD, True, True),
@@ -151,7 +151,7 @@ def test_saved_in_object_store(kind, object_store_required, is_image):
         (InterfaceKindChoices.MULTIPLE_ELLIPSES, True),
         (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, False),
         # Image types
-        (InterfaceKindChoices.IMAGE, True),
+        (InterfaceKindChoices.MHA_OR_TIFF_IMAGE, True),
         (InterfaceKindChoices.HEAT_MAP, True),
         (InterfaceKindChoices.SEGMENTATION, True),
         # File types
