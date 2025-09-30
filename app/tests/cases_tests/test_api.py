@@ -11,6 +11,7 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
 )
 from grandchallenge.components.models import ComponentInterface
+from grandchallenge.serving.models import Download
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -651,6 +652,7 @@ def test_dicom_404_if_no_image_set(client):
     assert response.json() == {
         "detail": "This image does not have a DICOM Image Set."
     }
+    assert not Download.objects.filter(creator=user, image=image).exists()
 
 
 @pytest.mark.django_db
@@ -709,6 +711,34 @@ def test_dicom_signed_urls(client, settings, monkeypatch):
         metadata_request["url"]
         == "https://runtime-medical-imaging.test-region.amazonaws.com/datastore/test-datastore-id/imageSet/test-image-set-id/getImageSetMetadata"
     )
+
+
+@pytest.mark.django_db
+def test_dicom_signed_urls_creates_download_object(
+    client, settings, monkeypatch
+):
+    settings.AWS_HEALTH_IMAGING_DATASTORE_ID = "test-datastore-id"
+    settings.AWS_DEFAULT_REGION = "test-region"
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "test-access-key")
+
+    image = ImageFactory(
+        dicom_image_set=DICOMImageSetFactory(
+            image_set_id="test-image-set-id",
+            image_frame_ids=["test-1", "test-2"],
+        )
+    )
+    user = UserFactory()
+    assign_perm("view_image", user, image)
+
+    response = get_view_for_user(
+        viewname="api:image-dicom",
+        reverse_kwargs={"pk": image.pk},
+        user=user,
+        client=client,
+    )
+
+    assert response.status_code == 200
+    assert Download.objects.filter(creator=user, image=image).exists()
 
 
 @pytest.mark.django_db

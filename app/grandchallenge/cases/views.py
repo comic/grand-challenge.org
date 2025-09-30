@@ -43,6 +43,7 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.serving.models import Download
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
@@ -115,6 +116,8 @@ class ImageViewSet(ReadOnlyModelViewSet):
 
         if not image.dicom_image_set:
             raise NotFound("This image does not have a DICOM Image Set.")
+
+        Download.objects.create(creator=self.request.user, image=image)
 
         session = boto3.Session(
             region_name=settings.AWS_DEFAULT_REGION,
