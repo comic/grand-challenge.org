@@ -515,9 +515,11 @@ def test_at_most_two_images():
     image2 = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.MHA_OR_TIFF_IMAGE
     )
-    heatmap = ComponentInterfaceFactory(kind=InterfaceKindChoices.HEAT_MAP)
+    heatmap = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.MHA_OR_TIFF_HEAT_MAP
+    )
     segmentation = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.SEGMENTATION
+        kind=InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION
     )
     text = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
 

@@ -429,7 +429,7 @@ def make_ci_list(
 
     for i in range(number_of_overlays):
         ci = ComponentInterfaceFactory(
-            kind=InterfaceKindChoices.SEGMENTATION,
+            kind=InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION,
             title=f"test-ci-overlay-{i}",
         )
         ci_list.append(ci)

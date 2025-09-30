@@ -79,7 +79,7 @@ from tests.factories import ImageFactory, ImageFileFactory
         ),
         (  # Broken / fallback
             dict(
-                kind=InterfaceKindChoices.SEGMENTATION,
+                kind=InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION,
                 store_in_database=False,
             ),
             dict(),
@@ -113,7 +113,9 @@ def test_civ(
         ImageFileFactory(image=civ.image)
 
     # Actually create the CIV
-    if ci.kind != InterfaceKindChoices.SEGMENTATION:  # Intentionally broken
+    if (
+        ci.kind != InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION
+    ):  # Intentionally broken
         civ.full_clean()
     civ.save()
 

@@ -335,7 +335,7 @@ def test_question_update(client):
     assert question.interface is None
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.SEGMENTATION,
+        kind=InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION,
         overlay_segments=[
             {"name": "s1", "visible": True, "voxel_value": 0},
             {"name": "s2", "visible": True, "voxel_value": 1},
@@ -473,7 +473,7 @@ def test_question_update(client):
         (AnswerType.MULTIPLE_ANGLES, InterfaceKindChoices.MULTIPLE_ANGLES),
         (AnswerType.CHOICE, InterfaceKindChoices.CHOICE),
         (AnswerType.MULTIPLE_CHOICE, InterfaceKindChoices.MULTIPLE_CHOICE),
-        (AnswerType.MASK, InterfaceKindChoices.SEGMENTATION),
+        (AnswerType.MASK, InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION),
         (AnswerType.ELLIPSE, InterfaceKindChoices.ELLIPSE),
         (AnswerType.MULTIPLE_ELLIPSES, InterfaceKindChoices.MULTIPLE_ELLIPSES),
     ),

@@ -13,7 +13,7 @@ def init_default_interfaces(*_, **__):
         },
         {
             "title": "Generic Overlay",
-            "kind": ComponentInterface.Kind.HEAT_MAP,
+            "kind": ComponentInterface.Kind.MHA_OR_TIFF_HEAT_MAP,
             "relative_path": "images",
         },
         {

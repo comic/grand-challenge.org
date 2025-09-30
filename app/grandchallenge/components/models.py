@@ -132,9 +132,9 @@ class InterfaceKindChoices(models.TextChoices):
 
     # Image types
     MHA_OR_TIFF_IMAGE = "IMG", _("Image")
-    SEGMENTATION = "SEG", _("Segmentation")
-    HEAT_MAP = "HMAP", _("Heat Map")
-    DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
+    MHA_OR_TIFF_SEGMENTATION = "SEG", _("Segmentation")
+    MHA_OR_TIFF_HEAT_MAP = "HMAP", _("Heat Map")
+    MHA_OR_TIFF_DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
 
     # File types
     PDF = "PDF", _("PDF file")
@@ -253,9 +253,9 @@ class InterfaceKind:
         """
         return {
             InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
-            InterfaceKind.InterfaceKindChoices.HEAT_MAP,
-            InterfaceKind.InterfaceKindChoices.SEGMENTATION,
-            InterfaceKind.InterfaceKindChoices.DISPLACEMENT_FIELD,
+            InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_HEAT_MAP,
+            InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION,
+            InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_DISPLACEMENT_FIELD,
         }
 
     @staticmethod
@@ -598,7 +598,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         from grandchallenge.reader_studies.models import Question
 
         if (
-            self.kind == InterfaceKindChoices.SEGMENTATION
+            self.kind == InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION
             and not self.overlay_segments
         ):
             raise ValidationError(
@@ -606,7 +606,7 @@ class ComponentInterface(OverlaySegmentsMixin):
             )
 
         if (
-            self.kind != InterfaceKindChoices.SEGMENTATION
+            self.kind != InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION
             and self.overlay_segments
         ):
             raise ValidationError(
@@ -1451,9 +1451,15 @@ class ComponentInterfaceValue(models.Model):
 
         if self.interface.is_image_kind:
             self._validate_image_only()
-            if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
+            if (
+                self.interface.kind
+                == InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION
+            ):
                 self.interface._validate_voxel_values(self.image)
-            if self.interface.kind == InterfaceKindChoices.DISPLACEMENT_FIELD:
+            if (
+                self.interface.kind
+                == InterfaceKindChoices.MHA_OR_TIFF_DISPLACEMENT_FIELD
+            ):
                 self.interface._validate_vector_field(self.image)
         elif self.interface.is_file_kind:
             self._validate_file_only()

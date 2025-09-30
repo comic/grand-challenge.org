@@ -1160,7 +1160,7 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.CHOICE: [InterfaceKindChoices.CHOICE],
     AnswerType.MULTIPLE_CHOICE: [InterfaceKindChoices.MULTIPLE_CHOICE],
     AnswerType.MASK: [
-        InterfaceKindChoices.SEGMENTATION,
+        InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION,
     ],
     AnswerType.ANGLE: [InterfaceKindChoices.ANGLE],
     AnswerType.MULTIPLE_ANGLES: [InterfaceKindChoices.MULTIPLE_ANGLES],

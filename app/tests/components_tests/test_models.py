@@ -84,9 +84,9 @@ from tests.utils import create_raw_upload_image_session
         (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, False, False),
         # Image types
         (InterfaceKindChoices.MHA_OR_TIFF_IMAGE, True, True),
-        (InterfaceKindChoices.HEAT_MAP, True, True),
-        (InterfaceKindChoices.SEGMENTATION, True, True),
-        (InterfaceKindChoices.DISPLACEMENT_FIELD, True, True),
+        (InterfaceKindChoices.MHA_OR_TIFF_HEAT_MAP, True, True),
+        (InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION, True, True),
+        (InterfaceKindChoices.MHA_OR_TIFF_DISPLACEMENT_FIELD, True, True),
         # File types
         (InterfaceKindChoices.CSV, True, False),
         (InterfaceKindChoices.ZIP, True, False),
@@ -152,8 +152,8 @@ def test_saved_in_object_store(kind, object_store_required, is_image):
         (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, False),
         # Image types
         (InterfaceKindChoices.MHA_OR_TIFF_IMAGE, True),
-        (InterfaceKindChoices.HEAT_MAP, True),
-        (InterfaceKindChoices.SEGMENTATION, True),
+        (InterfaceKindChoices.MHA_OR_TIFF_HEAT_MAP, True),
+        (InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION, True),
         # File types
         (InterfaceKindChoices.CSV, True),
         (InterfaceKindChoices.ZIP, True),
@@ -1032,7 +1032,7 @@ def test_runtime_metrics_chart():
 @pytest.mark.django_db
 def test_clean_overlay_segments_with_values():
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.SEGMENTATION,
+        kind=InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION,
         overlay_segments=[{"name": "s1", "visible": True, "voxel_value": 1}],
     )
     ci._clean_overlay_segments()
@@ -1058,7 +1058,7 @@ def test_clean_overlay_segments_with_questions(reader_study_with_gt):
     assert question.interface is None
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.SEGMENTATION,
+        kind=InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION,
         relative_path="images/test",
         overlay_segments=[{"name": "s1", "visible": True, "voxel_value": 1}],
     )
@@ -1088,7 +1088,7 @@ def test_clean_overlay_segments():
         == "Overlay segments should only be set for segmentations"
     )
 
-    ci = ComponentInterface(kind=InterfaceKindChoices.SEGMENTATION)
+    ci = ComponentInterface(kind=InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION)
     with pytest.raises(ValidationError) as e:
         ci._clean_overlay_segments()
     assert e.value.message == "Overlay segments must be set for this interface"
@@ -1138,7 +1138,7 @@ def test_clean_overlay_segments():
 @pytest.mark.django_db
 def test_overlay_segments_can_be_extended(updated_segments, expectation):
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.SEGMENTATION,
+        kind=InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION,
         overlay_segments=[
             {"name": "s1", "visible": True, "voxel_value": 1},
             {"name": "s2", "visible": True, "voxel_value": 2},
@@ -1154,7 +1154,9 @@ def test_overlay_segments_can_be_extended(updated_segments, expectation):
 
 @pytest.mark.django_db
 def test_validate_voxel_values():
-    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION
+    )
     im = ImageFactory(segments=None)
     assert ci._validate_voxel_values(im) is None
 
@@ -1585,7 +1587,7 @@ def test_displacement_field_validation(
     image = Image.objects.filter(origin=session).get()
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.DISPLACEMENT_FIELD
+        kind=InterfaceKindChoices.MHA_OR_TIFF_DISPLACEMENT_FIELD
     )
     civ = ComponentInterfaceValueFactory(interface=ci, image=image)
 
