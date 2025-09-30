@@ -651,22 +651,24 @@ class ComponentInterface(OverlaySegmentsMixin):
                 )
 
     def _clean_store_in_database(self):
-        object_store_required = self.kind in {
-            *InterfaceKind.interface_kind_image(),
-            *InterfaceKind.interface_kind_file(),
-            # These values can be large, so for any new interfaces of this
-            # type always add them to the object store
-            InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-            InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-            InterfaceKindChoices.MULTIPLE_POINTS,
-            InterfaceKindChoices.MULTIPLE_POLYGONS,
-            InterfaceKindChoices.MULTIPLE_LINES,
-            InterfaceKindChoices.MULTIPLE_ANGLES,
-            InterfaceKindChoices.MULTIPLE_ELLIPSES,
-            InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
-        }
+        allow_store_in_database = self.kind in (
+            InterfaceKind.interface_kind_json().difference(
+                {
+                    # These values can be large, so for any new interfaces
+                    # of this type do not allow storing in the database.
+                    InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+                    InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+                    InterfaceKindChoices.MULTIPLE_POINTS,
+                    InterfaceKindChoices.MULTIPLE_POLYGONS,
+                    InterfaceKindChoices.MULTIPLE_LINES,
+                    InterfaceKindChoices.MULTIPLE_ANGLES,
+                    InterfaceKindChoices.MULTIPLE_ELLIPSES,
+                    InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+                }
+            )
+        )
 
-        if object_store_required and self.store_in_database:
+        if self.store_in_database and not allow_store_in_database:
             raise ValidationError(
                 f"Interface {self.kind} objects cannot be stored in the database"
             )
