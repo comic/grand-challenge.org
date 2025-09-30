@@ -171,10 +171,10 @@
     <span class="n">MULTIPLE_CHOICE</span> <span class="o">=</span> <span class="s2">&quot;MCHO&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Multiple choice&quot;</span><span class="p">)</span>
 
     <span class="c1"># Image types</span>
-    <span class="n">IMAGE</span> <span class="o">=</span> <span class="s2">&quot;IMG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Image&quot;</span><span class="p">)</span>
-    <span class="n">SEGMENTATION</span> <span class="o">=</span> <span class="s2">&quot;SEG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Segmentation&quot;</span><span class="p">)</span>
-    <span class="n">HEAT_MAP</span> <span class="o">=</span> <span class="s2">&quot;HMAP&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Heat Map&quot;</span><span class="p">)</span>
-    <span class="n">DISPLACEMENT_FIELD</span> <span class="o">=</span> <span class="s2">&quot;DSPF&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Displacement field&quot;</span><span class="p">)</span>
+    <span class="n">PANIMG_IMAGE</span> <span class="o">=</span> <span class="s2">&quot;IMG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Image&quot;</span><span class="p">)</span>
+    <span class="n">PANIMG_SEGMENTATION</span> <span class="o">=</span> <span class="s2">&quot;SEG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Segmentation&quot;</span><span class="p">)</span>
+    <span class="n">PANIMG_HEAT_MAP</span> <span class="o">=</span> <span class="s2">&quot;HMAP&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Heat Map&quot;</span><span class="p">)</span>
+    <span class="n">PANIMG_DISPLACEMENT_FIELD</span> <span class="o">=</span> <span class="s2">&quot;DSPF&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Displacement field&quot;</span><span class="p">)</span>
 
     <span class="c1"># File types</span>
     <span class="n">PDF</span> <span class="o">=</span> <span class="s2">&quot;PDF&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;PDF file&quot;</span><span class="p">)</span>
@@ -303,10 +303,10 @@
 <span class="sd">        * Displacement Field</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
-            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
-            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">HEAT_MAP</span><span class="p">,</span>
-            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">,</span>
-            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">DISPLACEMENT_FIELD</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_IMAGE</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_HEAT_MAP</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_SEGMENTATION</span><span class="p">,</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_DISPLACEMENT_FIELD</span><span class="p">,</span>
         <span class="p">}</span></div>
 
 
@@ -671,7 +671,7 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.reader_studies.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Question</span>
 
         <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SEGMENTATION</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_SEGMENTATION</span>
             <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
@@ -679,7 +679,7 @@
             <span class="p">)</span>
 
         <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SEGMENTATION</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_SEGMENTATION</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
@@ -1544,9 +1544,12 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_image_only</span><span class="p">()</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SEGMENTATION</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_SEGMENTATION</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">_validate_voxel_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">DISPLACEMENT_FIELD</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">kind</span>
+                <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_DISPLACEMENT_FIELD</span>
+            <span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">_validate_vector_field</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">is_file_kind</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_file_only</span><span class="p">()</span>
