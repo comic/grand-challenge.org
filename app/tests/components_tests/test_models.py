@@ -206,7 +206,7 @@ def test_all_interfaces_covered():
             for k in sorted(InterfaceKind.interface_kind_json())
         ),
         (
-            InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE,
+            InterfaceKindChoices.PANIMG_IMAGE,
             pytest.raises(RuntimeError),
         ),
     ),
@@ -238,16 +238,16 @@ def test_no_uuid_validation():
 @pytest.mark.parametrize(
     "kind, good_suffix",
     (
-        (InterfaceKind.InterfaceKindChoices.CSV, "csv"),
-        (InterfaceKind.InterfaceKindChoices.ZIP, "zip"),
-        (InterfaceKind.InterfaceKindChoices.PDF, "pdf"),
-        (InterfaceKind.InterfaceKindChoices.SQREG, "sqreg"),
-        (InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG, "jpeg"),
-        (InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG, "png"),
-        (InterfaceKind.InterfaceKindChoices.OBJ, "obj"),
-        (InterfaceKind.InterfaceKindChoices.MP4, "mp4"),
-        (InterfaceKind.InterfaceKindChoices.NEWICK, "newick"),
-        (InterfaceKind.InterfaceKindChoices.BIOM, "biom"),
+        (InterfaceKindChoices.CSV, "csv"),
+        (InterfaceKindChoices.ZIP, "zip"),
+        (InterfaceKindChoices.PDF, "pdf"),
+        (InterfaceKindChoices.SQREG, "sqreg"),
+        (InterfaceKindChoices.THUMBNAIL_JPG, "jpeg"),
+        (InterfaceKindChoices.THUMBNAIL_PNG, "png"),
+        (InterfaceKindChoices.OBJ, "obj"),
+        (InterfaceKindChoices.MP4, "mp4"),
+        (InterfaceKindChoices.NEWICK, "newick"),
+        (InterfaceKindChoices.BIOM, "biom"),
         *((k, "json") for k in InterfaceKind.interface_kind_json()),
     ),
 )
@@ -1846,7 +1846,7 @@ def test_inputs_json_reserved():
 @pytest.mark.django_db
 def test_no_default_value_allowed_when_file_required():
     i = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        kind=InterfaceKindChoices.ANY,
         relative_path="foo/bar.json",
         store_in_database=True,
         default_value="foobar",

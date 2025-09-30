@@ -158,9 +158,6 @@ class InterfaceSuperKindChoices(models.TextChoices):
 
 
 class InterfaceKind:
-    """Interface kind choices."""
-
-    InterfaceKindChoices = InterfaceKindChoices
 
     @staticmethod
     def interface_kind_json():
@@ -215,31 +212,31 @@ class InterfaceKind:
 
         """
         return {
-            InterfaceKind.InterfaceKindChoices.STRING,
-            InterfaceKind.InterfaceKindChoices.INTEGER,
-            InterfaceKind.InterfaceKindChoices.FLOAT,
-            InterfaceKind.InterfaceKindChoices.BOOL,
-            InterfaceKind.InterfaceKindChoices.TWO_D_BOUNDING_BOX,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-            InterfaceKind.InterfaceKindChoices.DISTANCE_MEASUREMENT,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-            InterfaceKind.InterfaceKindChoices.POINT,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
-            InterfaceKind.InterfaceKindChoices.POLYGON,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
-            InterfaceKind.InterfaceKindChoices.CHOICE,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
-            InterfaceKind.InterfaceKindChoices.ANY,
-            InterfaceKind.InterfaceKindChoices.CHART,
-            InterfaceKind.InterfaceKindChoices.LINE,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
-            InterfaceKind.InterfaceKindChoices.ANGLE,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
-            InterfaceKind.InterfaceKindChoices.ELLIPSE,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
-            InterfaceKind.InterfaceKindChoices.THREE_POINT_ANGLE,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
-            InterfaceKind.InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
+            InterfaceKindChoices.STRING,
+            InterfaceKindChoices.INTEGER,
+            InterfaceKindChoices.FLOAT,
+            InterfaceKindChoices.BOOL,
+            InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+            InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+            InterfaceKindChoices.DISTANCE_MEASUREMENT,
+            InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+            InterfaceKindChoices.POINT,
+            InterfaceKindChoices.MULTIPLE_POINTS,
+            InterfaceKindChoices.POLYGON,
+            InterfaceKindChoices.MULTIPLE_POLYGONS,
+            InterfaceKindChoices.CHOICE,
+            InterfaceKindChoices.MULTIPLE_CHOICE,
+            InterfaceKindChoices.ANY,
+            InterfaceKindChoices.CHART,
+            InterfaceKindChoices.LINE,
+            InterfaceKindChoices.MULTIPLE_LINES,
+            InterfaceKindChoices.ANGLE,
+            InterfaceKindChoices.MULTIPLE_ANGLES,
+            InterfaceKindChoices.ELLIPSE,
+            InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            InterfaceKindChoices.THREE_POINT_ANGLE,
+            InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+            InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
         }
 
     @staticmethod
@@ -252,10 +249,10 @@ class InterfaceKind:
         * Displacement Field
         """
         return {
-            InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE,
-            InterfaceKind.InterfaceKindChoices.PANIMG_HEAT_MAP,
-            InterfaceKind.InterfaceKindChoices.PANIMG_SEGMENTATION,
-            InterfaceKind.InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD,
+            InterfaceKindChoices.PANIMG_IMAGE,
+            InterfaceKindChoices.PANIMG_HEAT_MAP,
+            InterfaceKindChoices.PANIMG_SEGMENTATION,
+            InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD,
         }
 
     @staticmethod
@@ -274,38 +271,38 @@ class InterfaceKind:
         * BIOM file
         """
         return {
-            InterfaceKind.InterfaceKindChoices.CSV,
-            InterfaceKind.InterfaceKindChoices.ZIP,
-            InterfaceKind.InterfaceKindChoices.PDF,
-            InterfaceKind.InterfaceKindChoices.SQREG,
-            InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
-            InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
-            InterfaceKind.InterfaceKindChoices.OBJ,
-            InterfaceKind.InterfaceKindChoices.MP4,
-            InterfaceKind.InterfaceKindChoices.NEWICK,
-            InterfaceKind.InterfaceKindChoices.BIOM,
+            InterfaceKindChoices.CSV,
+            InterfaceKindChoices.ZIP,
+            InterfaceKindChoices.PDF,
+            InterfaceKindChoices.SQREG,
+            InterfaceKindChoices.THUMBNAIL_JPG,
+            InterfaceKindChoices.THUMBNAIL_PNG,
+            InterfaceKindChoices.OBJ,
+            InterfaceKindChoices.MP4,
+            InterfaceKindChoices.NEWICK,
+            InterfaceKindChoices.BIOM,
         }
 
     @staticmethod
     def interface_kind_mandatory_isolation():
         """Interfaces that can only be displayed in isolation."""
         return {
-            InterfaceKind.InterfaceKindChoices.CHART,
-            InterfaceKind.InterfaceKindChoices.PDF,
-            InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
-            InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
-            InterfaceKind.InterfaceKindChoices.MP4,
+            InterfaceKindChoices.CHART,
+            InterfaceKindChoices.PDF,
+            InterfaceKindChoices.THUMBNAIL_JPG,
+            InterfaceKindChoices.THUMBNAIL_PNG,
+            InterfaceKindChoices.MP4,
         }
 
     @staticmethod
     def interface_kind_undisplayable():
         """Interfaces that cannot be displayed."""
         return {
-            InterfaceKind.InterfaceKindChoices.CSV,
-            InterfaceKind.InterfaceKindChoices.ZIP,
-            InterfaceKind.InterfaceKindChoices.OBJ,
-            InterfaceKind.InterfaceKindChoices.NEWICK,
-            InterfaceKind.InterfaceKindChoices.BIOM,
+            InterfaceKindChoices.CSV,
+            InterfaceKindChoices.ZIP,
+            InterfaceKindChoices.OBJ,
+            InterfaceKindChoices.NEWICK,
+            InterfaceKindChoices.BIOM,
         }
 
 
@@ -391,7 +388,7 @@ class OverlaySegmentsMixin(models.Model):
 
 
 class ComponentInterface(OverlaySegmentsMixin):
-    Kind = InterfaceKind.InterfaceKindChoices
+    Kind = InterfaceKindChoices
     SuperKind = InterfaceSuperKindChoices
 
     title = models.CharField(
@@ -536,15 +533,15 @@ class ComponentInterface(OverlaySegmentsMixin):
         elif self.is_image_kind:
             return ModelChoiceField
         elif self.kind in {
-            InterfaceKind.InterfaceKindChoices.STRING,
-            InterfaceKind.InterfaceKindChoices.CHOICE,
+            InterfaceKindChoices.STRING,
+            InterfaceKindChoices.CHOICE,
         }:
             return forms.CharField
-        elif self.kind == InterfaceKind.InterfaceKindChoices.INTEGER:
+        elif self.kind == InterfaceKindChoices.INTEGER:
             return forms.IntegerField
-        elif self.kind == InterfaceKind.InterfaceKindChoices.FLOAT:
+        elif self.kind == InterfaceKindChoices.FLOAT:
             return forms.FloatField
-        elif self.kind == InterfaceKind.InterfaceKindChoices.BOOL:
+        elif self.kind == InterfaceKindChoices.BOOL:
             return forms.BooleanField
         else:
             return forms.JSONField
@@ -670,14 +667,14 @@ class ComponentInterface(OverlaySegmentsMixin):
             *InterfaceKind.interface_kind_file(),
             # These values can be large, so for any new interfaces of this
             # type always add them to the object store
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+            InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+            InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+            InterfaceKindChoices.MULTIPLE_POINTS,
+            InterfaceKindChoices.MULTIPLE_POLYGONS,
+            InterfaceKindChoices.MULTIPLE_LINES,
+            InterfaceKindChoices.MULTIPLE_ANGLES,
+            InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
         }
 
         if object_store_required and self.store_in_database:
@@ -1233,7 +1230,7 @@ INTERFACE_KIND_TO_ALLOWED_FILE_TYPES = {
 INTERFACE_KIND_TO_FILE_EXTENSION = {
     InterfaceKindChoices.CSV: ".csv",
     InterfaceKindChoices.ZIP: ".zip",
-    InterfaceKind.InterfaceKindChoices.PDF: ".pdf",
+    InterfaceKindChoices.PDF: ".pdf",
     InterfaceKindChoices.SQREG: ".sqreg",
     InterfaceKindChoices.THUMBNAIL_JPG: ".jpeg",
     InterfaceKindChoices.THUMBNAIL_PNG: ".png",

@@ -10,7 +10,7 @@ from django.utils.html import format_html
 from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.components.tasks import (
     push_container_image,
     validate_docker_image,
@@ -911,9 +911,7 @@ def test_evaluation_order_with_title():
         status=Evaluation.PENDING,
     )
 
-    input_ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     interface = AlgorithmInterfaceFactory(inputs=[input_ci])
     ai.algorithm.interfaces.set([interface])
     evaluation.submission.phase.algorithm_interfaces.set([interface])
@@ -951,9 +949,7 @@ def test_evaluation_order_without_title():
         status=Evaluation.PENDING,
     )
 
-    input_ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     interface = AlgorithmInterfaceFactory(inputs=[input_ci])
     ai.algorithm.interfaces.set([interface])
 

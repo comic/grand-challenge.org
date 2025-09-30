@@ -16,7 +16,6 @@ from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.forms import SingleCIVForm
 from grandchallenge.components.models import (
     ComponentInterface,
-    InterfaceKind,
     InterfaceKindChoices,
 )
 from grandchallenge.components.widgets import FlexibleFileWidget
@@ -1554,7 +1553,7 @@ def test_display_set_update_form_image_field_queryset_filters():
     user = UserFactory()
     rs.add_editor(user)
     ci_img = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE,
+        kind=InterfaceKindChoices.PANIMG_IMAGE,
         title="image",
     )
     im1, im2 = ImageFactory.create_batch(2)
