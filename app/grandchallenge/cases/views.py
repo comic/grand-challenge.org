@@ -15,6 +15,7 @@ from django.views.generic import DetailView, ListView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
@@ -89,7 +90,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
     queryset = (
         Image.objects.all()
         .prefetch_related("files")
-        .select_related("modality")
+        .select_related("modality", "dicom_image_set")
     )
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = (DjangoFilterBackend, ViewObjectPermissionsFilter)
@@ -108,9 +109,12 @@ class ImageViewSet(ReadOnlyModelViewSet):
             "headers": dict(request.headers.items()),
         }
 
-    @action(detail=True)
-    def health_imaging_signed_urls(self, request, pk=None):
+    @action(detail=True, url_path="dicom")
+    def dicom(self, request, pk=None):
         image = self.get_object()
+
+        if not image.dicom_image_set:
+            raise NotFound("This image does not have a DICOM Image Set.")
 
         session = boto3.Session(
             region_name=settings.AWS_DEFAULT_REGION,
