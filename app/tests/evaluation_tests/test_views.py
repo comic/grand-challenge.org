@@ -165,10 +165,10 @@ def algorithm_phase_with_multiple_inputs():
         kind=InterfaceKind.InterfaceKindChoices.BOOL
     )
     ci_img_upload = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+        kind=InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE
     )
     ci_existing_img = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+        kind=InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE
     )
     ci_json_in_db_with_schema = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY,
@@ -3058,7 +3058,7 @@ def test_phase_starter_kit_detail(client):
             AlgorithmInterfaceFactory(
                 inputs=[
                     ComponentInterfaceFactory(
-                        kind=ComponentInterface.Kind.IMAGE
+                        kind=ComponentInterface.Kind.PANIMG_IMAGE
                     ),
                 ],
                 outputs=[
@@ -3113,7 +3113,7 @@ def test_phase_starter_kit_download(client):
             AlgorithmInterfaceFactory(
                 inputs=[
                     ComponentInterfaceFactory(
-                        kind=ComponentInterface.Kind.IMAGE
+                        kind=ComponentInterface.Kind.PANIMG_IMAGE
                     ),
                 ],
                 outputs=[

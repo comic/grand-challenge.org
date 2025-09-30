@@ -209,8 +209,12 @@ def test_algorithm_job_post_serializer_create(
         kind=ComponentInterface.Kind.STRING,
         default_value="default",
     )
-    ci_img1 = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
-    ci_img2 = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci_img1 = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.PANIMG_IMAGE
+    )
+    ci_img2 = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.PANIMG_IMAGE
+    )
 
     interface = AlgorithmInterfaceFactory(inputs=[ci_string, ci_img2, ci_img1])
     algorithm_image.algorithm.interfaces.add(interface)
@@ -417,8 +421,12 @@ class TestJobCreateLimits:
 @pytest.mark.django_db
 def test_reformat_inputs(rf):
     ci_str = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
-    ci_img = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
-    ci_img2 = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci_img = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.PANIMG_IMAGE
+    )
+    ci_img2 = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.PANIMG_IMAGE
+    )
     ci_file = ComponentInterfaceFactory(
         kind=ComponentInterface.Kind.ANY, store_in_database=False
     )

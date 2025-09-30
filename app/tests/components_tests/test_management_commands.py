@@ -17,7 +17,8 @@ def test_add_overlay_segments(settings, django_capture_on_commit_callbacks):
 
     im = ImageFactoryWithImageFile4D()
     ci = ComponentInterfaceFactory(
-        title="foo", kind=InterfaceKind.InterfaceKindChoices.SEGMENTATION
+        title="foo",
+        kind=InterfaceKind.InterfaceKindChoices.PANIMG_SEGMENTATION,
     )
     ComponentInterfaceValueFactory(interface=ci, image=im)
 

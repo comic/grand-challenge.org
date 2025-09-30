@@ -1300,7 +1300,7 @@ def test_phase_update_form_gpu_type_with_additional_selectable_gpu_types():
 @pytest.mark.django_db
 def test_additional_inputs_on_submission_form():
     phase = PhaseFactory()
-    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.IMAGE)
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     ci_file = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.ANY, store_in_database=False

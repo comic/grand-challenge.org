@@ -131,10 +131,10 @@ class InterfaceKindChoices(models.TextChoices):
     MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
 
     # Image types
-    IMAGE = "IMG", _("Image")
-    SEGMENTATION = "SEG", _("Segmentation")
-    HEAT_MAP = "HMAP", _("Heat Map")
-    DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
+    PANIMG_IMAGE = "IMG", _("Image")
+    PANIMG_SEGMENTATION = "SEG", _("Segmentation")
+    PANIMG_HEAT_MAP = "HMAP", _("Heat Map")
+    PANIMG_DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
 
     # File types
     PDF = "PDF", _("PDF file")
@@ -252,10 +252,10 @@ class InterfaceKind:
         * Displacement Field
         """
         return {
-            InterfaceKind.InterfaceKindChoices.IMAGE,
-            InterfaceKind.InterfaceKindChoices.HEAT_MAP,
-            InterfaceKind.InterfaceKindChoices.SEGMENTATION,
-            InterfaceKind.InterfaceKindChoices.DISPLACEMENT_FIELD,
+            InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE,
+            InterfaceKind.InterfaceKindChoices.PANIMG_HEAT_MAP,
+            InterfaceKind.InterfaceKindChoices.PANIMG_SEGMENTATION,
+            InterfaceKind.InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD,
         }
 
     @staticmethod
@@ -598,7 +598,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         from grandchallenge.reader_studies.models import Question
 
         if (
-            self.kind == InterfaceKindChoices.SEGMENTATION
+            self.kind == InterfaceKindChoices.PANIMG_SEGMENTATION
             and not self.overlay_segments
         ):
             raise ValidationError(
@@ -606,7 +606,7 @@ class ComponentInterface(OverlaySegmentsMixin):
             )
 
         if (
-            self.kind != InterfaceKindChoices.SEGMENTATION
+            self.kind != InterfaceKindChoices.PANIMG_SEGMENTATION
             and self.overlay_segments
         ):
             raise ValidationError(
@@ -1451,9 +1451,12 @@ class ComponentInterfaceValue(models.Model):
 
         if self.interface.is_image_kind:
             self._validate_image_only()
-            if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
+            if self.interface.kind == InterfaceKindChoices.PANIMG_SEGMENTATION:
                 self.interface._validate_voxel_values(self.image)
-            if self.interface.kind == InterfaceKindChoices.DISPLACEMENT_FIELD:
+            if (
+                self.interface.kind
+                == InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD
+            ):
                 self.interface._validate_vector_field(self.image)
         elif self.interface.is_file_kind:
             self._validate_file_only()

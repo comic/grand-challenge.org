@@ -422,14 +422,14 @@ def make_ci_list(
 
     for i in range(number_of_images):
         ci = ComponentInterfaceFactory(
-            kind=InterfaceKindChoices.IMAGE,
+            kind=InterfaceKindChoices.PANIMG_IMAGE,
             title=f"test-ci-image-{i}",
         )
         ci_list.append(ci)
 
     for i in range(number_of_overlays):
         ci = ComponentInterfaceFactory(
-            kind=InterfaceKindChoices.SEGMENTATION,
+            kind=InterfaceKindChoices.PANIMG_SEGMENTATION,
             title=f"test-ci-overlay-{i}",
         )
         ci_list.append(ci)
