@@ -497,22 +497,12 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def super_kind(self):
-        if self.saved_in_object_store:
-            if self.is_image_kind:
-                return InterfaceSuperKindChoices.IMAGE
-            else:
-                return InterfaceSuperKindChoices.FILE
-        else:
+        if self.is_image_kind:
+            return InterfaceSuperKindChoices.IMAGE
+        elif self.is_json_kind and self.store_in_database:
             return InterfaceSuperKindChoices.VALUE
-
-    @property
-    def saved_in_object_store(self):
-        # files and images should always be saved to S3, others are optional
-        return (
-            self.is_image_kind
-            or self.is_file_kind
-            or not self.store_in_database
-        )
+        else:
+            return InterfaceSuperKindChoices.FILE
 
     @property
     def requires_file(self):
@@ -1487,7 +1477,10 @@ class ComponentInterfaceValue(models.Model):
     def _validate_value(self):
         if self._user_upload_validated:
             return
-        if self.interface.saved_in_object_store:
+        if self.interface.store_in_database:
+            self._validate_value_only()
+            value = self.value
+        else:
             self._validate_file_only()
             with self.file.open("r") as f:
                 try:
@@ -1501,9 +1494,6 @@ class ComponentInterfaceValue(models.Model):
                         "The file was too large to process, "
                         "please try again with a smaller file"
                     ) from error
-        else:
-            self._validate_value_only()
-            value = self.value
 
         self.interface.validate_against_schema(value=value)
 
