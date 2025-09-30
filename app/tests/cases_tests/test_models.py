@@ -1,4 +1,7 @@
+import gzip
+import json
 import uuid
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -610,9 +613,38 @@ def test_convert_image_set_to_internal(mocker):
     assert Image.objects.count() == 0
     assert DICOMImageSet.objects.count() == 0
 
-    dicom_image_set_upload.convert_image_set_to_internal(
-        image_set_id=image_set_id,
-    )
+    with (
+        Stubber(dicom_image_set_upload._health_imaging_client) as s,
+        BytesIO() as buffer,
+    ):
+        content = json.dumps(
+            {
+                "Study": {
+                    "Series": {
+                        "foo": {
+                            "Instances": {
+                                "bar": {"ImageFrames": [{"ID": "baz"}]}
+                            }
+                        }
+                    }
+                }
+            }
+        ).encode("utf-8")
+
+        buffer.write(gzip.compress(data=content))
+        buffer.seek(0)
+
+        s.add_response(
+            method="get_image_set_metadata",
+            service_response={"imageSetMetadataBlob": buffer},
+            expected_params={
+                "datastoreId": settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+                "imageSetId": image_set_id,
+            },
+        )
+        dicom_image_set_upload.convert_image_set_to_internal(
+            image_set_id=image_set_id,
+        )
 
     assert Image.objects.count() == 1
     assert DICOMImageSet.objects.count() == 1
@@ -620,6 +652,7 @@ def test_convert_image_set_to_internal(mocker):
     dicom_image_set = DICOMImageSet.objects.first()
 
     assert dicom_image_set.image_set_id == image_set_id
+    assert dicom_image_set.image_frame_ids == ["baz"]
 
     image = Image.objects.first()
 

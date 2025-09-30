@@ -1,4 +1,5 @@
 import copy
+import gzip
 import hashlib
 import json
 import logging
@@ -1098,6 +1099,27 @@ class DICOMImageSetUpload(UUIDModel):
             outputS3Uri=self._import_output_s3_uri,
         )
 
+    def _get_image_set_metadata(self, *, image_set_id):
+        response = self._health_imaging_client.get_image_set_metadata(
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            imageSetId=image_set_id,
+        )
+
+        metadata = json.loads(
+            gzip.decompress(response["imageSetMetadataBlob"].read())
+        )
+
+        return metadata
+
+    def _get_image_frame_ids(self, *, image_set_id):
+        metadata = self._get_image_set_metadata(image_set_id=image_set_id)
+        return [
+            frame["ID"]
+            for series in metadata["Study"]["Series"].values()
+            for instance in series["Instances"].values()
+            for frame in instance["ImageFrames"]
+        ]
+
     def _deidentify_files(self):
         deid = DicomDeidentifier(
             study_instance_uid_suffix=self.study_instance_uid,
@@ -1285,6 +1307,9 @@ class DICOMImageSetUpload(UUIDModel):
     def convert_image_set_to_internal(self, *, image_set_id):
         dicom_image_set = DICOMImageSet(
             image_set_id=image_set_id,
+            image_frame_ids=self._get_image_frame_ids(
+                image_set_id=image_set_id
+            ),
             dicom_image_set_upload=self,
         )
         dicom_image_set.full_clean()

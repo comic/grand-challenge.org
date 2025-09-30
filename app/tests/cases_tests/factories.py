@@ -1,4 +1,5 @@
 import datetime
+import random
 
 import factory
 from factory import fuzzy
@@ -155,6 +156,15 @@ class DICOMImageSetUploadFactory(factory.django.DjangoModelFactory):
         model = DICOMImageSetUpload
 
 
+def fake_image_frame_id():
+    characters = "abcdef0123456789"
+    return "".join(random.choices(characters, k=32))
+
+
 class DICOMImageSetFactory(factory.django.DjangoModelFactory):
+    image_frame_ids = factory.LazyAttribute(
+        lambda _: [fake_image_frame_id() for _ in range(5)]
+    )
+
     class Meta:
         model = DICOMImageSet
