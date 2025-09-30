@@ -69,9 +69,9 @@ from tests.factories import ImageFactory, ImageFileFactory
             dict(),
             "<img",
         ),
-        (  # MHA_OR_TIFF_IMAGE
+        (  # PANIMG_IMAGE
             dict(
-                kind=InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
+                kind=InterfaceKindChoices.PANIMG_IMAGE,
                 store_in_database=False,
             ),
             dict(),
@@ -79,7 +79,7 @@ from tests.factories import ImageFactory, ImageFileFactory
         ),
         (  # Broken / fallback
             dict(
-                kind=InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION,
+                kind=InterfaceKindChoices.PANIMG_SEGMENTATION,
                 store_in_database=False,
             ),
             dict(),
@@ -108,13 +108,13 @@ def test_civ(
             ContentFile(b"<bh:ff><bh:d8><bh:ff><bh:e0><bh:00><bh:10>JFIF"),
         )
 
-    if ci.kind == InterfaceKindChoices.MHA_OR_TIFF_IMAGE:
+    if ci.kind == InterfaceKindChoices.PANIMG_IMAGE:
         civ.image = ImageFactory()
         ImageFileFactory(image=civ.image)
 
     # Actually create the CIV
     if (
-        ci.kind != InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION
+        ci.kind != InterfaceKindChoices.PANIMG_SEGMENTATION
     ):  # Intentionally broken
         civ.full_clean()
     civ.save()

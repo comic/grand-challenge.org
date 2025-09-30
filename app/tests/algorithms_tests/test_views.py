@@ -1024,7 +1024,7 @@ def test_import_view(
         slug="transverse-adc-prostate-mri"
     )
     assert image_interface.store_in_database is False
-    assert image_interface.kind == ComponentInterface.Kind.MHA_OR_TIFF_IMAGE
+    assert image_interface.kind == ComponentInterface.Kind.PANIMG_IMAGE
 
 
 @pytest.mark.django_db
@@ -1101,7 +1101,7 @@ def test_algorithm_job_create_with_image_input(
     VerificationFactory(user=editor, is_verified=True)
     ai.algorithm.add_editor(editor)
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
+        kind=InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE,
         store_in_database=False,
     )
     interface = AlgorithmInterfaceFactory(
@@ -1621,7 +1621,7 @@ class TestJobCreateView:
     ):
         # configure multiple inputs
         ci1, ci2 = ComponentInterfaceFactory.create_batch(
-            2, kind=InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION
+            2, kind=InterfaceKindChoices.PANIMG_SEGMENTATION
         )
 
         for ci in [ci1, ci2]:
@@ -2052,7 +2052,7 @@ def test_job_create_denied_for_same_input_model_and_image(client):
     alg = AlgorithmFactory()
     alg.add_editor(user=creator)
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE
+        kind=InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE
     )
     interface = AlgorithmInterfaceFactory(
         inputs=[ci], outputs=[ComponentInterfaceFactory()]

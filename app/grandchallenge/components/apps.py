@@ -8,12 +8,12 @@ def init_default_interfaces(*_, **__):
     default_interfaces = [
         {
             "title": "Generic Medical Image",
-            "kind": ComponentInterface.Kind.MHA_OR_TIFF_IMAGE,
+            "kind": ComponentInterface.Kind.PANIMG_IMAGE,
             "relative_path": "",
         },
         {
             "title": "Generic Overlay",
-            "kind": ComponentInterface.Kind.MHA_OR_TIFF_HEAT_MAP,
+            "kind": ComponentInterface.Kind.PANIMG_HEAT_MAP,
             "relative_path": "images",
         },
         {

@@ -370,8 +370,7 @@ class HangingProtocolMixin(models.Model):
             image_interfaces = [
                 i
                 for i in viewport_interfaces
-                if i.kind
-                == InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE
+                if i.kind == InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE
             ]
 
             if len(image_interfaces) > 1:

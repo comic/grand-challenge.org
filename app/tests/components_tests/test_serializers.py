@@ -499,14 +499,14 @@ def test_civ_serializer_list_ordering():
     civs = [
         ComponentInterfaceValueFactory(
             interface=ComponentInterfaceFactory(
-                kind=InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
+                kind=InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE,
                 title="B Image Interface",
                 store_in_database=False,
             )
         ),
         ComponentInterfaceValueFactory(
             interface=ComponentInterfaceFactory(
-                kind=InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
+                kind=InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE,
                 title="A Image Interface",
                 store_in_database=False,
             )

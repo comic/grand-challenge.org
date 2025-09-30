@@ -114,9 +114,7 @@ class TestCreateAlgorithmJobs:
         ai = AlgorithmImageFactory()
         image = ImageFactory()
         ci1 = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
-        ci2 = ComponentInterfaceFactory(
-            kind=InterfaceKindChoices.MHA_OR_TIFF_IMAGE
-        )
+        ci2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
         ci3 = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
 
         interface1 = AlgorithmInterfaceFactory(inputs=[ci1])

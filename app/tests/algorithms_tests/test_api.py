@@ -502,7 +502,7 @@ class TestJobCreationThroughAPI:
         algorithm_with_multiple_inputs,
     ):
         ci1, ci2 = ComponentInterfaceFactory.create_batch(
-            2, kind=InterfaceKindChoices.MHA_OR_TIFF_SEGMENTATION
+            2, kind=InterfaceKindChoices.PANIMG_SEGMENTATION
         )
 
         for ci in [ci1, ci2]:

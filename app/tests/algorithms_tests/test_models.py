@@ -551,7 +551,7 @@ def test_retrieve_existing_civs(
     ci_str = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
     ci_bool = ComponentInterfaceFactory(kind=ComponentInterface.Kind.BOOL)
     ci_im = ComponentInterfaceFactory(
-        kind=ComponentInterface.Kind.MHA_OR_TIFF_IMAGE
+        kind=ComponentInterface.Kind.PANIMG_IMAGE
     )
     ci_file = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PDF)
 
