@@ -131,7 +131,7 @@ class InterfaceKindChoices(models.TextChoices):
     MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
 
     # Image types
-    MHA_OR_TIFF_IMAGE = "IMG", _("MHA or TIFF Image")
+    MHA_OR_TIFF_IMAGE = "IMG", _("Image")
     SEGMENTATION = "SEG", _("Segmentation")
     HEAT_MAP = "HMAP", _("Heat Map")
     DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
