@@ -4,7 +4,11 @@ from django.db import models
 from django.utils.html import format_html
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKind,
+    InterfaceKindChoices,
+)
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
@@ -370,7 +374,7 @@ class HangingProtocolMixin(models.Model):
             image_interfaces = [
                 i
                 for i in viewport_interfaces
-                if i.kind == InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE
+                if i.kind == InterfaceKindChoices.PANIMG_IMAGE
             ]
 
             if len(image_interfaces) > 1:

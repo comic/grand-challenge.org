@@ -11,7 +11,10 @@ from requests import put
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.archives.views import ArchiveItemsList
 from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKindChoices,
+)
 from grandchallenge.notifications.models import Notification
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
@@ -316,9 +319,7 @@ def test_api_archive_item_allowed_sockets(
     editor = UserFactory()
     archive.add_editor(editor)
     item = ArchiveItemFactory(archive=archive)
-    ci_bool = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
+    ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     phase = PhaseFactory(archive=archive)
 
     with django_capture_on_commit_callbacks() as callbacks:
@@ -392,12 +393,8 @@ def test_api_archive_item_add_and_update_value(
     editor = UserFactory()
     archive.add_editor(editor)
     item = ArchiveItemFactory(archive=archive)
-    ci_bool = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
-    ci_int = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.INTEGER
-    )
+    ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    ci_int = ComponentInterfaceFactory(kind=InterfaceKindChoices.INTEGER)
 
     # add civ
     with django_capture_on_commit_callbacks() as callbacks:
@@ -495,7 +492,7 @@ def test_api_archive_item_add_and_update_non_image_file(
     archive.add_editor(editor)
     item = ArchiveItemFactory(archive=archive)
     assert item.values.count() == 0
-    ci = ComponentInterfaceFactory(kind=InterfaceKind.InterfaceKindChoices.PDF)
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PDF)
     upload = create_upload_from_file(
         creator=editor, file_path=RESOURCE_PATH / "test.pdf"
     )
@@ -577,7 +574,7 @@ def test_api_archive_item_add_and_update_image(
     archive.add_editor(editor)
     item = ArchiveItemFactory(archive=archive)
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE,
+        kind=InterfaceKindChoices.PANIMG_IMAGE,
         store_in_database=False,
     )
 
@@ -685,7 +682,7 @@ def test_api_archive_item_add_and_update_json_file(
     item = ArchiveItemFactory(archive=archive)
     assert item.values.count() == 0
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
+        kind=InterfaceKindChoices.ANY, store_in_database=False
     )
 
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
@@ -902,12 +899,8 @@ def test_archive_item_add_image(
     item = ArchiveItemFactory(archive=archive)
     editor = UserFactory()
     archive.add_editor(editor)
-    ci_img = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE
-    )
-    ci_value = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    ci_value = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     civ_value = ComponentInterfaceValueFactory(interface=ci_value, value=True)
     item.values.add(civ_value)
     upload = create_upload_from_file(
@@ -995,7 +988,7 @@ def test_archive_item_add_file(
     item = ArchiveItemFactory(archive=archive)
     editor = UserFactory()
     archive.add_editor(editor)
-    ci = ComponentInterfaceFactory(kind=InterfaceKind.InterfaceKindChoices.PDF)
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PDF)
     upload = create_upload_from_file(
         creator=editor, file_path=RESOURCE_PATH / "test.pdf"
     )
@@ -1033,7 +1026,7 @@ def test_archive_item_add_json_file(
     editor = UserFactory()
     archive.add_editor(editor)
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
+        kind=InterfaceKindChoices.ANY, store_in_database=False
     )
 
     with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
@@ -1102,9 +1095,7 @@ def test_archive_item_add_value(
     item = ArchiveItemFactory(archive=archive)
     editor = UserFactory()
     archive.add_editor(editor)
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
 
     with django_capture_on_commit_callbacks(execute=True):
         with django_capture_on_commit_callbacks(execute=True):
@@ -1171,20 +1162,14 @@ def test_archive_item_create_view(
     editor = UserFactory()
     archive.add_editor(editor)
     ai1 = ArchiveItemFactory(archive=archive)
-    ci_str = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.STRING
-    )
-    ci_img = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE
-    )
-    ci_img2 = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE
-    )
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    ci_img2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
     ci_json = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
+        kind=InterfaceKindChoices.ANY, store_in_database=False
     )
     ci_json2 = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
+        kind=InterfaceKindChoices.ANY, store_in_database=True
     )
 
     im1, im2 = ImageFactory.create_batch(2)

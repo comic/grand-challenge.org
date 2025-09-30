@@ -7,7 +7,10 @@ from grandchallenge.components.form_fields import (
     FlexibleFileField,
     InterfaceFormFieldFactory,
 )
-from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.models import (
+    InterfaceKind,
+    InterfaceKindChoices,
+)
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
@@ -295,7 +298,7 @@ def test_flexible_file_field_validation_with_archive_items():
     "ci_kind, initial_pk",
     [
         (FuzzyChoice(InterfaceKind.interface_type_file()), "abc"),
-        (InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE, "999"),
+        (InterfaceKindChoices.PANIMG_IMAGE, "999"),
     ],
 )
 def test_interface_form_field_factory_wrong_pk_type(ci_kind, initial_pk):

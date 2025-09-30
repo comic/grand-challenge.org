@@ -5,7 +5,7 @@ import pytest
 from django.urls import reverse
 
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.core.utils.query import set_seed
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -1685,9 +1685,7 @@ def test_display_set_add_and_edit(
     rs.add_editor(r1)
     rs.add_reader(r2)
 
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
 
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-list",
@@ -1790,9 +1788,7 @@ def test_display_set_add_and_edit(
     ds.refresh_from_db()
     assert ds.values.count() == 2
 
-    ci_csv = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.CSV
-    )
+    ci_csv = ComponentInterfaceFactory(kind=InterfaceKindChoices.CSV)
     upload = create_upload_from_file(
         file_path=Path(__file__).parent / "resources" / "ground_truth.csv",
         creator=r1,
@@ -1887,9 +1883,7 @@ def test_display_set_partial_update_errors_returned(client):
     ds = DisplaySetFactory()
     user = UserFactory()
     ds.reader_study.add_editor(user)
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.STRING
-    )
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     response = get_view_for_user(
         viewname="api:reader-studies-display-set-detail",
         reverse_kwargs={"pk": ds.pk},
