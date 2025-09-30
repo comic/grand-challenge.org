@@ -700,7 +700,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         value_required = True
         if self.kind == InterfaceKindChoices.BOOL:
             value_required = False
-        elif not self.is_image_kind and not self.requires_file:
+        elif self.requires_value:
             try:
                 self.validate_against_schema(value=None)
                 value_required = False
