@@ -559,7 +559,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         elif fileobj:
             container = File(fileobj)
             civ.file.save(Path(self.relative_path).name, container)
-        elif self.saved_in_object_store:
+        elif value and not self.store_in_database:
             civ.file = ContentFile(
                 json.dumps(value).encode("utf-8"),
                 name=Path(self.relative_path).name,
