@@ -343,9 +343,23 @@ class DICOMImageSet(UUIDModel):
         editable=False,
     )
     image_frame_ids = models.JSONField(
-        # TODO add a schema
         editable=False,
         help_text="The IDs of the image frames in AWS Health Imaging",
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{32}$",
+                        "minLength": 32,
+                        "maxLength": 32,
+                    },
+                    "minItems": 1,
+                }
+            )
+        ],
     )
     dicom_image_set_upload = models.OneToOneField(
         to="DICOMImageSetUpload",

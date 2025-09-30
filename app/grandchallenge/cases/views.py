@@ -99,6 +99,15 @@ class ImageViewSet(ReadOnlyModelViewSet):
         PaginatedCSVRenderer,
     )
 
+    @staticmethod
+    def serialize_aws_request(request):
+        return {
+            "url": request.url,
+            "method": request.method,
+            "data": request.data,
+            "headers": dict(request.headers.items()),
+        }
+
     @action(detail=True)
     def health_imaging_signed_urls(self, request, pk=None):
         image = self.get_object()
@@ -124,12 +133,9 @@ class ImageViewSet(ReadOnlyModelViewSet):
             )
             medical_imaging_auth.add_auth(frame_request)
 
-            image_frame_requests[frame_id] = {
-                "url": frame_request.url,
-                "method": frame_request.method,
-                "data": frame_request.data,
-                "headers": dict(frame_request.headers.items()),
-            }
+            image_frame_requests[frame_id] = self.serialize_aws_request(
+                frame_request
+            )
 
         metadata_request = AWSRequest(
             method="POST",
@@ -140,12 +146,9 @@ class ImageViewSet(ReadOnlyModelViewSet):
 
         return JsonResponse(
             {
-                "get_image_set_metadata": {
-                    "url": metadata_request.url,
-                    "method": metadata_request.method,
-                    "data": metadata_request.data,
-                    "headers": dict(metadata_request.headers.items()),
-                },
+                "get_image_set_metadata": self.serialize_aws_request(
+                    metadata_request
+                ),
                 "get_image_frames": image_frame_requests,
             }
         )
