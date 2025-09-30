@@ -481,7 +481,7 @@ def test_question_update(client):
 def test_question_form_interface_field(answer_type, interface_kind):
     ci = ComponentInterfaceFactory(kind=interface_kind)
     ci_img = ComponentInterface.objects.filter(
-        kind=InterfaceKindChoices.IMAGE
+        kind=InterfaceKindChoices.MHA_OR_TIFF_IMAGE
     ).first()
     assert ci_img is not None
     form = QuestionForm(
@@ -1554,7 +1554,8 @@ def test_display_set_update_form_image_field_queryset_filters():
     user = UserFactory()
     rs.add_editor(user)
     ci_img = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE, title="image"
+        kind=InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
+        title="image",
     )
     im1, im2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", user, im1)

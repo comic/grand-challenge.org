@@ -295,7 +295,7 @@ def test_flexible_file_field_validation_with_archive_items():
     "ci_kind, initial_pk",
     [
         (FuzzyChoice(InterfaceKind.interface_type_file()), "abc"),
-        (InterfaceKind.InterfaceKindChoices.IMAGE, "999"),
+        (InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE, "999"),
     ],
 )
 def test_interface_form_field_factory_wrong_pk_type(ci_kind, initial_pk):

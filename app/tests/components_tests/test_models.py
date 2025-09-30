@@ -206,7 +206,7 @@ def test_all_interfaces_covered():
             for k in sorted(InterfaceKind.interface_type_json())
         ),
         (
-            InterfaceKind.InterfaceKindChoices.IMAGE,
+            InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
             pytest.raises(RuntimeError),
         ),
     ),
@@ -268,9 +268,9 @@ def test_relative_path_file_ending(kind, good_suffix):
 @pytest.mark.parametrize(
     "kind,image,file,value",
     (
-        (InterfaceKindChoices.IMAGE, True, True, None),
-        (InterfaceKindChoices.IMAGE, True, None, True),
-        (InterfaceKindChoices.IMAGE, True, True, True),
+        (InterfaceKindChoices.MHA_OR_TIFF_IMAGE, True, True, None),
+        (InterfaceKindChoices.MHA_OR_TIFF_IMAGE, True, None, True),
+        (InterfaceKindChoices.MHA_OR_TIFF_IMAGE, True, True, True),
         (InterfaceKindChoices.CSV, True, True, None),
         (InterfaceKindChoices.CSV, None, True, True),
         (InterfaceKindChoices.CSV, True, True, True),
@@ -299,7 +299,7 @@ def test_multi_value_fails(kind, image, file, value):
 @pytest.mark.parametrize(
     "kind",
     (
-        InterfaceKindChoices.IMAGE,
+        InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
         InterfaceKindChoices.CSV,
         InterfaceKindChoices.BOOL,
         InterfaceKindChoices.STRING,
@@ -313,7 +313,7 @@ def test_civ_updating(kind):
     civ = ComponentInterfaceValueFactory(interface=ci)
 
     # updating from None or default value to a file, image, value works
-    if kind == InterfaceKindChoices.IMAGE:
+    if kind == InterfaceKindChoices.MHA_OR_TIFF_IMAGE:
         image = ImageFactory()
         civ.image = image
         civ.full_clean()
@@ -336,7 +336,7 @@ def test_civ_updating(kind):
 
     # updating existing values does not work
 
-    if kind == InterfaceKindChoices.IMAGE:
+    if kind == InterfaceKindChoices.MHA_OR_TIFF_IMAGE:
         image = ImageFactory()
         civ.image = image
     elif kind == InterfaceKindChoices.CSV:
@@ -1640,7 +1640,7 @@ def test_ci_example_value(example_value, context):
 @pytest.mark.django_db
 def test_ci_example_value_non_json_kind_fail():
     v = ComponentInterfaceExampleValueFactory(
-        interface__kind=InterfaceKindChoices.IMAGE,
+        interface__kind=InterfaceKindChoices.MHA_OR_TIFF_IMAGE,
     )
 
     with pytest.raises(

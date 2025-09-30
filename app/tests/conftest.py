@@ -530,10 +530,10 @@ def algorithm_with_multiple_inputs():
         kind=InterfaceKind.InterfaceKindChoices.BOOL
     )
     ci_img_upload = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+        kind=InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE
     )
     ci_existing_img = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+        kind=InterfaceKind.InterfaceKindChoices.MHA_OR_TIFF_IMAGE
     )
     ci_json_in_db_with_schema = ComponentInterfaceFactory(
         kind=InterfaceKind.InterfaceKindChoices.ANY,

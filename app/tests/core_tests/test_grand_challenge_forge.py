@@ -26,7 +26,9 @@ def test_get_challenge_pack_context():
     challenge = ChallengeFactory()
     inputs = [
         ComponentInterfaceFactory(kind=ComponentInterface.Kind.INTEGER),
-        ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE),
+        ComponentInterfaceFactory(
+            kind=ComponentInterface.Kind.MHA_OR_TIFF_IMAGE
+        ),
     ]
     outputs = ComponentInterfaceFactory.create_batch(3)
 

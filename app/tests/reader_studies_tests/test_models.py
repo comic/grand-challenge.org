@@ -753,7 +753,7 @@ def test_question_interface():
     assert q.interface == ci_str
 
     ci_img = ComponentInterface.objects.filter(
-        kind=InterfaceKindChoices.IMAGE
+        kind=InterfaceKindChoices.MHA_OR_TIFF_IMAGE
     ).first()
     q.interface = ci_img
 
@@ -1012,7 +1012,7 @@ def test_clean_widget_options(
 @pytest.mark.django_db
 def test_annotation_view_port_contains_image():
     image_interface = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.IMAGE
+        kind=InterfaceKindChoices.MHA_OR_TIFF_IMAGE
     )
     mp4_interface = ComponentInterfaceFactory(kind=InterfaceKindChoices.MP4)
 
