@@ -10,7 +10,10 @@ from guardian.shortcuts import (
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.algorithms.serializers import JobPostSerializer
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKindChoices,
+)
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.tasks import (
     create_algorithm_jobs_for_evaluation,
@@ -323,7 +326,7 @@ class TestJobPermissions:
         algorithm_image.algorithm.add_user(user)
         algorithm_image.algorithm.add_editor(editor)
         ci = ComponentInterfaceFactory(
-            kind=InterfaceKind.InterfaceKindChoices.ANY,
+            kind=InterfaceKindChoices.ANY,
             store_in_database=True,
         )
         interface = AlgorithmInterfaceFactory(

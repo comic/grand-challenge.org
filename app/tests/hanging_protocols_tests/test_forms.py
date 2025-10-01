@@ -7,10 +7,7 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.algorithms.forms import AlgorithmForm
 from grandchallenge.archives.forms import ArchiveForm
-from grandchallenge.components.models import (
-    InterfaceKind,
-    InterfaceKindChoices,
-)
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
@@ -436,7 +433,7 @@ def make_ci_list(
 
     for i in range(number_of_undisplayable_interfaces):
         ci = ComponentInterfaceFactory(
-            kind=InterfaceKind.InterfaceKindChoices.ZIP,
+            kind=InterfaceKindChoices.ZIP,
             title=f"test-ci-undisplayable-{i}",
         )
         ci_list.append(ci)
