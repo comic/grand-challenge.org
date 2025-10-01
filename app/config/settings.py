@@ -201,27 +201,13 @@ COMPONENTS_FILES_SUBDIRECTORY = "components"
 #  - sha256 sums are not implemented
 USING_MINIO = strtobool(os.environ.get("USING_MINIO", "False"))
 
-AWS_S3_FILE_OVERWRITE = False
-# Note: deprecated in django storages 2.0
-AWS_BUCKET_ACL = "private"
+# Django storages settings, see https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html
 AWS_DEFAULT_ACL = "private"
+AWS_S3_FILE_OVERWRITE = False
 AWS_S3_MAX_MEMORY_SIZE = 1_048_576  # 100 MB
 AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
-AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
 AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME")
 AWS_S3_URL_PROTOCOL = os.environ.get("AWS_S3_URL_PROTOCOL", "https:")
-AWS_CLOUDWATCH_REGION_NAME = os.environ.get("AWS_CLOUDWATCH_REGION_NAME")
-AWS_CODEBUILD_REGION_NAME = os.environ.get("AWS_CODEBUILD_REGION_NAME")
-AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
-AWS_HEALTH_IMAGING_DATASTORE_ID = os.environ.get(
-    "AWS_HEALTH_IMAGING_DATASTORE_ID", ""
-)
-AWS_HEALTH_IMAGING_BUCKET_NAME = os.environ.get(
-    "AWS_HEALTH_IMAGING_BUCKET_NAME", ""
-)
-AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN = os.environ.get(
-    "AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN", ""
-)
 
 # This is for storing files that should not be served to the public
 PRIVATE_S3_STORAGE_KWARGS = {
@@ -288,6 +274,26 @@ CLOUDFRONT_PRIVATE_KEY_BASE64 = os.environ.get(
 )
 CLOUDFRONT_URL_EXPIRY_SECONDS = int(
     os.environ.get("CLOUDFRONT_URL_EXPIRY_SECONDS", "300")  # 5 mins
+)
+
+##############################################################################
+#
+# AWS
+#
+##############################################################################
+
+AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION", "eu-central-1")
+AWS_CLOUDWATCH_REGION_NAME = os.environ.get("AWS_CLOUDWATCH_REGION_NAME")
+AWS_CODEBUILD_REGION_NAME = os.environ.get("AWS_CODEBUILD_REGION_NAME")
+AWS_SES_REGION_NAME = os.environ.get("AWS_SES_REGION_NAME")
+AWS_HEALTH_IMAGING_DATASTORE_ID = os.environ.get(
+    "AWS_HEALTH_IMAGING_DATASTORE_ID"
+)
+AWS_HEALTH_IMAGING_BUCKET_NAME = os.environ.get(
+    "AWS_HEALTH_IMAGING_BUCKET_NAME"
+)
+AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN = os.environ.get(
+    "AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN"
 )
 
 ##############################################################################
