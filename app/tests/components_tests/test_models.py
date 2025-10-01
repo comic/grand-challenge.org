@@ -82,6 +82,10 @@ def interface_kind_choices_allow_store_in_db():
             (InterfaceKindChoices.ELLIPSE, nullcontext()),
             (InterfaceKindChoices.THREE_POINT_ANGLE, nullcontext()),
             (
+                InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
+                nullcontext(),
+            ),
+            (
                 InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
                 pytest.raises(ValidationError),
             ),
@@ -111,10 +115,6 @@ def interface_kind_choices_allow_store_in_db():
             ),
             (
                 InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
-                pytest.raises(ValidationError),
-            ),
-            (
-                InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
                 pytest.raises(ValidationError),
             ),
         ]
