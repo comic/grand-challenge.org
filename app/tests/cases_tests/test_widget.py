@@ -247,7 +247,7 @@ def test_dicom_upload_widget_prepopulated_value(mocker):
         dicom_image_set=DICOMImageSetFactory(dicom_image_set_upload=upload),
     )
     assign_perm("cases.view_image", user_with_perm, im)
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
     civ = ComponentInterfaceValueFactory(interface=ci, image=im)
 
     # fake DICOM ci for now
