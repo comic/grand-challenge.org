@@ -2289,6 +2289,10 @@ class CIVData:
             self._init_image_civ_data()
         elif ci.super_kind == ci.SuperKind.FILE:
             self._init_file_civ_data()
+        else:
+            raise NotImplementedError(
+                f"CIV data initialization for {ci} not handled."
+            )
 
         self.validate()
 
