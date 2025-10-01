@@ -1330,9 +1330,6 @@ class DICOMImageSetUpload(UUIDModel):
         dicom_image_set.full_clean()
         dicom_image_set.save()
 
-        image = Image(
-            dicom_image_set=dicom_image_set,
-            name="placeholder",  # todo: get name for set during upload
-        )
+        image = Image(dicom_image_set=dicom_image_set, name=self.name)
         image.full_clean()
         image.save()
