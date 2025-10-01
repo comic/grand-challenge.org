@@ -191,7 +191,7 @@ def test_start_dicom_import_job(settings):
         "efd11ef2121b451d934757a4d14b182c"
     )
     settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN = (
-        "arn:aws:iam::123456789012:role/healthimaging-importjob-access"
+        "arn:aws:iam::123456789012:role/health-imaging-import-job-access"
     )
     di_upload = DICOMImageSetUploadFactory()
 
@@ -355,7 +355,7 @@ def test_validate_image_set_multiple_generated_image_sets(
     mock_signature = MagicMock()
     mock_signature.apply_async = MagicMock()
     mock_delete_image_set_task = mocker.patch(
-        "grandchallenge.cases.tasks.delete_healthimaging_image_set.signature",
+        "grandchallenge.cases.tasks.delete_health_imaging_image_set.signature",
         return_value=mock_signature,
     )
 
@@ -404,7 +404,7 @@ def test_validate_image_set_generated_image_set_not_primary(
     mock_signature = MagicMock()
     mock_signature.apply_async = MagicMock()
     mock_delete_image_set_task = mocker.patch(
-        "grandchallenge.cases.tasks.delete_healthimaging_image_set.signature",
+        "grandchallenge.cases.tasks.delete_health_imaging_image_set.signature",
         return_value=mock_signature,
     )
 
@@ -603,22 +603,22 @@ def test_delete_dicom_image_set_post_delete_image():
 
 
 @pytest.mark.django_db
-def test_delete_healthimaging_image_set_post_delete_dicom_image_set(
+def test_delete_health_imaging_image_set_post_delete_dicom_image_set(
     django_capture_on_commit_callbacks,
     mocker,
 ):
     dicom_image_set = DICOMImageSetFactory()
     mock_signature = MagicMock()
     mock_signature.apply_async = MagicMock()
-    mock_delete_healthimaging_image_set = mocker.patch(
-        "grandchallenge.cases.tasks.delete_healthimaging_image_set.signature",
+    mock_delete_health_imaging_image_set = mocker.patch(
+        "grandchallenge.cases.tasks.delete_health_imaging_image_set.signature",
         return_value=mock_signature,
     )
 
     with django_capture_on_commit_callbacks(execute=True):
         dicom_image_set.delete()
 
-    mock_delete_healthimaging_image_set.assert_called_once_with(
+    mock_delete_health_imaging_image_set.assert_called_once_with(
         kwargs={"image_set_id": dicom_image_set.image_set_id}
     )
     assert mock_signature.apply_async.call_count == 1

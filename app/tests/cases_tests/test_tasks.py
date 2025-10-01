@@ -24,7 +24,7 @@ from grandchallenge.cases.tasks import (
     POST_PROCESSORS,
     _check_post_processor_result,
     execute_post_process_image_task,
-    import_dicom_to_healthimaging,
+    import_dicom_to_health_imaging,
     import_images,
 )
 from grandchallenge.core.celery import acks_late_micro_short_task
@@ -209,20 +209,20 @@ def test_unique_post_processing():
 
 
 @pytest.mark.django_db
-def test_import_dicom_to_healthimaging_for_not_pending_upload():
+def test_import_dicom_to_health_imaging_for_not_pending_upload():
     di_upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.STARTED
     )
 
     with patch.object(DICOMImageSetUpload, "start_dicom_import_job"):
         with pytest.raises(RuntimeError):
-            import_dicom_to_healthimaging(
+            import_dicom_to_health_imaging(
                 dicom_imageset_upload_pk=di_upload.pk
             )
 
 
 @pytest.mark.django_db
-def test_import_dicom_to_healthimaging_updates_status_when_successful(
+def test_import_dicom_to_health_imaging_updates_status_when_successful(
     django_capture_on_commit_callbacks,
 ):
     di_upload = DICOMImageSetUploadFactory()
@@ -233,7 +233,7 @@ def test_import_dicom_to_healthimaging_updates_status_when_successful(
         patch.object(DICOMImageSetUpload, "deidentify_user_uploads"),
     ):
         with django_capture_on_commit_callbacks(execute=True):
-            import_dicom_to_healthimaging(
+            import_dicom_to_health_imaging(
                 dicom_imageset_upload_pk=di_upload.pk
             )
 
@@ -263,7 +263,7 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
         ) as mocked_delete_input_files,
     ):
         with django_capture_on_commit_callbacks(execute=True):
-            import_dicom_to_healthimaging(
+            import_dicom_to_health_imaging(
                 dicom_imageset_upload_pk=di_upload.pk
             )
         # start_dicom_import_job does not get called
@@ -301,7 +301,7 @@ def test_error_in_start_dicom_import_job(django_capture_on_commit_callbacks):
         ) as mock_delete_input_files,
     ):
         with django_capture_on_commit_callbacks(execute=True):
-            import_dicom_to_healthimaging(
+            import_dicom_to_health_imaging(
                 dicom_imageset_upload_pk=di_upload.pk
             )
 
@@ -337,7 +337,7 @@ def test_start_dicom_import_job_sets_error_message_when_deid_fails(
         ) as mocked_delete_input_files,
     ):
         with django_capture_on_commit_callbacks(execute=True):
-            import_dicom_to_healthimaging(
+            import_dicom_to_health_imaging(
                 dicom_imageset_upload_pk=di_upload.pk
             )
         # start_dicom_import_job does not get called

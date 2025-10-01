@@ -535,7 +535,7 @@ def _check_post_processor_result(*, post_processor_result, image):
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException, RetryStep))
 @transaction.atomic
-def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
+def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk):
     with check_lock_acquired():
         upload = DICOMImageSetUpload.objects.select_for_update(
             nowait=True
@@ -548,7 +548,7 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
 
     if not upload.status == DICOMImageSetUploadStatusChoices.INITIALIZED:
         raise RuntimeError(
-            "Upload is not ready for de-identification and importing into HealthImaging."
+            "Upload is not ready for de-identification and importing into Health Imaging."
         )
 
     try:
@@ -575,7 +575,7 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
-def handle_healthimaging_import_job_event(*, event):
+def handle_health_imaging_import_job_event(*, event):
     job_name = event["jobName"]
     prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
     pattern = rf"^{prefix_regex}\-(?P<pk>{UUID4_REGEX})$"
@@ -595,7 +595,7 @@ def handle_healthimaging_import_job_event(*, event):
 
 @acks_late_micro_short_task(retry_on=(RetryStep,))
 @transaction.atomic
-def delete_healthimaging_image_set(*, image_set_id):
+def delete_health_imaging_image_set(*, image_set_id):
     health_imaging_client = boto3.client(
         "medical-imaging",
         region_name=settings.AWS_DEFAULT_REGION,
