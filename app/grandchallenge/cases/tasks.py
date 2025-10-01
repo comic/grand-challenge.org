@@ -628,10 +628,12 @@ def revert_image_set_to_initial_version(*, image_set_id, version_id):
             updateImageSetMetadataUpdates={"revertToVersionId": "1"},
             force=False,
         )
-    except ClientError as e:
+    except ClientError as error:
         if (
-            e.response["Error"]["Code"] == "ResourceNotFoundException"
-            and e.response["Error"]["Message"]
+            error.response["Error"]["Code"] == "ResourceNotFoundException"
+            and error.response["Error"]["Message"]
             == "Requested version(s) of ImageSet(s) is not the latest."
         ):
             pass  # already updated
+        else:
+            raise
