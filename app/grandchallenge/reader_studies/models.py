@@ -1666,7 +1666,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             if (
                 ComponentInterface.objects.filter(
                     slug__in=viewport_content,
-                    kind__in=InterfaceKind.interface_type_image(),
+                    kind__in=InterfaceKind.interface_kind_image(),
                 ).count()
                 < 1
             ):

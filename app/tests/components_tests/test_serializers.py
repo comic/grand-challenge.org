@@ -375,7 +375,7 @@ def test_civ_post_value_or_user_upload_required_validation(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", (InterfaceKind.interface_type_image()))
+@pytest.mark.parametrize("kind,", (InterfaceKind.interface_kind_image()))
 def test_civ_post_image_or_upload_required_validation(kind):
     # setup
     interface = ComponentInterfaceFactory(kind=kind)
@@ -394,7 +394,7 @@ def test_civ_post_image_or_upload_required_validation(kind):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", (InterfaceKind.interface_type_image()))
+@pytest.mark.parametrize("kind,", (InterfaceKind.interface_kind_image()))
 def test_civ_post_image_permission_validation(kind, rf):
     # setup
     user = UserFactory()
@@ -419,7 +419,7 @@ def test_civ_post_image_permission_validation(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", (InterfaceKind.interface_type_image()))
+@pytest.mark.parametrize("kind,", (InterfaceKind.interface_kind_image()))
 def test_civ_post_upload_permission_validation(kind, rf):
     # setup
     user = UserFactory()
@@ -444,7 +444,7 @@ def test_civ_post_upload_permission_validation(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", (InterfaceKind.interface_type_image()))
+@pytest.mark.parametrize("kind,", (InterfaceKind.interface_kind_image()))
 def test_civ_post_image_not_ready_validation(kind, rf):
     # setup
     user = UserFactory()
@@ -471,7 +471,7 @@ def test_civ_post_image_not_ready_validation(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", (InterfaceKind.interface_type_image()))
+@pytest.mark.parametrize("kind,", (InterfaceKind.interface_kind_image()))
 def test_civ_post_image_valid(kind, rf):
     # setup
     user = UserFactory()
