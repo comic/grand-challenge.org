@@ -364,7 +364,6 @@ class DICOMImageSet(UUIDModel):
     dicom_image_set_upload = models.OneToOneField(
         to="DICOMImageSetUpload",
         editable=False,
-        null=True,
         on_delete=models.PROTECT,
         related_name="dicom_image_set",
     )
@@ -989,25 +988,23 @@ class JobSummary:
 
 
 class DICOMImageSetUpload(UUIDModel):
+    DICOMImageSetUploadStatusChoices = DICOMImageSetUploadStatusChoices
+
     creator = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
         null=True,
         default=None,
         on_delete=models.SET_NULL,
     )
-
     user_uploads = models.ManyToManyField(
         UserUpload, blank=True, related_name="dicom_import_jobs"
     )
-
-    DICOMImageSetUploadStatusChoices = DICOMImageSetUploadStatusChoices
     status = models.CharField(
         max_length=11,
         choices=DICOMImageSetUploadStatusChoices.choices,
         default=DICOMImageSetUploadStatusChoices.INITIALIZED,
         blank=False,
     )
-
     error_message = models.TextField(editable=False, default="")
     internal_failure_log = models.JSONField(
         default=list,
@@ -1016,7 +1013,6 @@ class DICOMImageSetUpload(UUIDModel):
         "import job if the job failed or did not pass validation.",
         validators=[JSONValidator(schema=IMPORT_JOB_FAILURE_NDJSON_SCHEMA)],
     )
-
     study_instance_uid = models.CharField(
         max_length=36,
         editable=False,
@@ -1027,7 +1023,6 @@ class DICOMImageSetUpload(UUIDModel):
         editable=False,
         unique=True,
     )
-
     name = models.CharField(
         max_length=255, help_text="The name for the resulting Image instance"
     )

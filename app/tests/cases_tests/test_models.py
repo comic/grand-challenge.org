@@ -607,7 +607,9 @@ def test_delete_healthimaging_image_set_post_delete_dicom_image_set(
 
 
 @pytest.mark.django_db
-def test_convert_image_set_to_internal(mocker):
+def test_convert_image_set_to_internal(settings):
+    settings.AWS_HEALTH_IMAGING_DATASTORE_ID = "test-datastore-id"
+
     dicom_image_set_upload = DICOMImageSetUploadFactory(name="foo")
     image_set_id = "e616d1f717da6f80fed6271ad184b7f0"
     image_frame_ids = [fake_image_frame_id() for _ in range(4)]

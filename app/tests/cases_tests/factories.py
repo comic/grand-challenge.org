@@ -165,6 +165,7 @@ class DICOMImageSetFactory(factory.django.DjangoModelFactory):
     image_frame_ids = factory.LazyAttribute(
         lambda _: [fake_image_frame_id() for _ in range(5)]
     )
+    dicom_image_set_upload = factory.SubFactory(DICOMImageSetUploadFactory)
 
     class Meta:
         model = DICOMImageSet
