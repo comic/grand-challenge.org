@@ -317,11 +317,13 @@ class SubmissionForm(
     )
 
     def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
-        self.additional_inputs = phase.additional_evaluation_inputs.all()
-        self._user = user
-        self._phase = phase
-
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            *args,
+            user=user,
+            phase=phase,
+            additional_inputs=phase.additional_evaluation_inputs.all(),
+            **kwargs,
+        )
 
         self.fields["creator"].queryset = get_user_model().objects.filter(
             pk=user.pk
@@ -688,12 +690,12 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
     )
 
     def __init__(self, submission, user, *args, **kwargs):
-        self.additional_inputs = (
-            submission.phase.additional_evaluation_inputs.all()
+        super().__init__(
+            *args,
+            user=user,
+            additional_inputs=submission.phase.additional_evaluation_inputs.all(),
+            **kwargs,
         )
-        self._user = user
-
-        super().__init__(*args, **kwargs)
 
         self.fields["submission"].queryset = filter_by_permission(
             queryset=Submission.objects.filter(pk=submission.pk),

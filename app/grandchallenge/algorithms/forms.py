@@ -124,11 +124,15 @@ class JobCreateForm(SaveFormInitMixin, AdditionalInputsMixin, Form):
     )
 
     def __init__(self, *args, algorithm, user, interface, **kwargs):
+        super().__init__(
+            *args,
+            user=user,
+            additional_inputs=interface.inputs.all(),
+            **kwargs,
+        )
+
         self._algorithm = algorithm
         self._user = user
-        self.additional_inputs = interface.inputs.all()
-
-        super().__init__(*args, **kwargs)
 
         self.fields["creator"].queryset = get_user_model().objects.filter(
             pk=self._user.pk
@@ -435,6 +439,12 @@ class AlgorithmForm(
 
 
 class UserAlgorithmsForPhaseMixin:
+
+    def __init__(self, *args, user, phase, **kwargs):
+        super().__init__(*args, user=user, **kwargs)
+        self._user = user
+        self._phase = phase
+
     @cached_property
     def user_algorithms_for_phase(self):
         interfaces = self._phase.algorithm_interfaces.all()
@@ -555,10 +565,7 @@ class AlgorithmForPhaseForm(
         phase,
         **kwargs,
     ):
-        self._user = user
-        self._phase = phase
-
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, user=user, phase=phase, **kwargs)
 
         self.fields["workstation_config"].initial = workstation_config
         self.fields["workstation_config"].disabled = True

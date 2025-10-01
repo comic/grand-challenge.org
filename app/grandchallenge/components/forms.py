@@ -111,12 +111,11 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 
 
 class AdditionalInputsMixin:
-    additional_inputs = ComponentInterface.objects.none()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user, additional_inputs, **kwargs):
         super().__init__(*args, **kwargs)
 
-        for input in self.additional_inputs:
+        for input in additional_inputs:
             prefixed_interface_slug = (
                 f"{INTERFACE_FORM_FIELD_PREFIX}{input.slug}"
             )
@@ -133,7 +132,7 @@ class AdditionalInputsMixin:
 
             self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
                 interface=input,
-                user=self._user,
+                user=user,
                 required=input.value_required,
                 initial=initial if initial else input.default_value,
             )
