@@ -608,7 +608,7 @@ def test_delete_healthimaging_image_set_post_delete_dicom_image_set(
 
 @pytest.mark.django_db
 def test_convert_image_set_to_internal(mocker):
-    dicom_image_set_upload = DICOMImageSetUploadFactory()
+    dicom_image_set_upload = DICOMImageSetUploadFactory(name="foo")
     image_set_id = "e616d1f717da6f80fed6271ad184b7f0"
     image_frame_ids = [fake_image_frame_id() for _ in range(4)]
 
@@ -677,4 +677,4 @@ def test_convert_image_set_to_internal(mocker):
     image = Image.objects.first()
 
     assert image.dicom_image_set == dicom_image_set
-    assert image.name == "placeholder"
+    assert image.name == "foo"
