@@ -54,26 +54,64 @@ from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import create_raw_upload_image_session
 
 
+@pytest.mark.parametrize("kind", InterfaceKindChoices)
+def test_clean_store_in_db_false(kind):
+    ci = ComponentInterface(kind=kind, store_in_database=False)
+    ci._clean_store_in_database()
+
+
+def interface_kind_choices_allow_store_in_db():
+    return (
+        [(choice, False) for choice in InterfaceKind.interface_kind_image()]
+        + [(choice, False) for choice in InterfaceKind.interface_kind_file()]
+        + [
+            (InterfaceKindChoices.STRING, True),
+            (InterfaceKindChoices.INTEGER, True),
+            (InterfaceKindChoices.FLOAT, True),
+            (InterfaceKindChoices.BOOL, True),
+            (InterfaceKindChoices.TWO_D_BOUNDING_BOX, True),
+            (InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES, False),
+            (InterfaceKindChoices.DISTANCE_MEASUREMENT, True),
+            (InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS, False),
+            (InterfaceKindChoices.POINT, True),
+            (InterfaceKindChoices.MULTIPLE_POINTS, False),
+            (InterfaceKindChoices.POLYGON, True),
+            (InterfaceKindChoices.MULTIPLE_POLYGONS, False),
+            (InterfaceKindChoices.CHOICE, True),
+            (InterfaceKindChoices.MULTIPLE_CHOICE, True),
+            (InterfaceKindChoices.ANY, True),
+            (InterfaceKindChoices.CHART, True),
+            (InterfaceKindChoices.LINE, True),
+            (InterfaceKindChoices.MULTIPLE_LINES, False),
+            (InterfaceKindChoices.ANGLE, True),
+            (InterfaceKindChoices.MULTIPLE_ANGLES, False),
+            (InterfaceKindChoices.ELLIPSE, True),
+            (InterfaceKindChoices.MULTIPLE_ELLIPSES, False),
+            (InterfaceKindChoices.THREE_POINT_ANGLE, True),
+            (InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES, False),
+            (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, True),
+        ]
+    )
+
+
+def test_all_interface_kind_choices_covered_for_allow_store_in_db():
+    assert {
+        choice for choice, _ in interface_kind_choices_allow_store_in_db()
+    } == set(InterfaceKindChoices)
+
+
 @pytest.mark.parametrize(
-    "kind",
-    (
-        InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-        InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-        InterfaceKindChoices.MULTIPLE_POINTS,
-        InterfaceKindChoices.MULTIPLE_POLYGONS,
-        InterfaceKindChoices.MULTIPLE_LINES,
-        InterfaceKindChoices.MULTIPLE_ANGLES,
-        InterfaceKindChoices.MULTIPLE_ELLIPSES,
-        InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
-        *InterfaceKind.interface_kind_image(),
-        *InterfaceKind.interface_kind_file(),
-    ),
+    "kind, allow_store_in_db",
+    interface_kind_choices_allow_store_in_db(),
 )
-def test_clean_store_in_db(kind):
+def test_clean_store_in_db_true(kind, allow_store_in_db):
     ci = ComponentInterface(kind=kind, store_in_database=True)
 
-    with pytest.raises(ValidationError):
+    if allow_store_in_db:
         ci._clean_store_in_database()
+    else:
+        with pytest.raises(ValidationError):
+            ci._clean_store_in_database()
 
 
 def test_all_interfaces_in_schema():
