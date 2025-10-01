@@ -208,10 +208,10 @@
 
     <span class="n">InterfaceKindChoices</span> <span class="o">=</span> <span class="n">InterfaceKindChoices</span>
 
-<div class="viewcode-block" id="InterfaceKind.interface_type_json">
-<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_json">[docs]</a>
+<div class="viewcode-block" id="InterfaceKind.interface_kind_json">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_kind_json">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">interface_type_json</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interface_kind_json</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are json serializable:</span>
 
 <span class="sd">        * String</span>
@@ -249,9 +249,9 @@
 <span class="sd">            os.environ.setdefault(&#39;DJANGO_SETTINGS_MODULE&#39;, &#39;config.settings&#39;)</span>
 <span class="sd">            django.setup()</span>
 
-<span class="sd">            from grandchallenge.components.models import INTERFACE_TYPE_JSON_EXAMPLES</span>
+<span class="sd">            from grandchallenge.components.models import INTERFACE_KIND_JSON_EXAMPLES</span>
 
-<span class="sd">            for key, example in INTERFACE_TYPE_JSON_EXAMPLES.items():</span>
+<span class="sd">            for key, example in INTERFACE_KIND_JSON_EXAMPLES.items():</span>
 <span class="sd">                title = f&quot;Example JSON file contents for {key.label}&quot;</span>
 
 <span class="sd">                if example.extra_info:</span>
@@ -291,10 +291,10 @@
         <span class="p">}</span></div>
 
 
-<div class="viewcode-block" id="InterfaceKind.interface_type_image">
-<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_image">[docs]</a>
+<div class="viewcode-block" id="InterfaceKind.interface_kind_image">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_kind_image">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">interface_type_image</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interface_kind_image</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are images:</span>
 
 <span class="sd">        * Image</span>
@@ -310,10 +310,10 @@
         <span class="p">}</span></div>
 
 
-<div class="viewcode-block" id="InterfaceKind.interface_type_file">
-<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_file">[docs]</a>
+<div class="viewcode-block" id="InterfaceKind.interface_kind_file">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_kind_file">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">interface_type_file</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interface_kind_file</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are files:</span>
 
 <span class="sd">        * CSV file</span>
@@ -341,10 +341,10 @@
         <span class="p">}</span></div>
 
 
-<div class="viewcode-block" id="InterfaceKind.interface_type_mandatory_isolation">
-<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_mandatory_isolation">[docs]</a>
+<div class="viewcode-block" id="InterfaceKind.interface_kind_mandatory_isolation">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_kind_mandatory_isolation">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">interface_type_mandatory_isolation</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interface_kind_mandatory_isolation</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Interfaces that can only be displayed in isolation.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHART</span><span class="p">,</span>
@@ -355,10 +355,10 @@
         <span class="p">}</span></div>
 
 
-<div class="viewcode-block" id="InterfaceKind.interface_type_undisplayable">
-<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_type_undisplayable">[docs]</a>
+<div class="viewcode-block" id="InterfaceKind.interface_kind_undisplayable">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKind.interface_kind_undisplayable">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">interface_type_undisplayable</span><span class="p">():</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">interface_kind_undisplayable</span><span class="p">():</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Interfaces that cannot be displayed.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
@@ -535,15 +535,15 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_image_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_image</span><span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_json_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_json</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_json</span><span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_file_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_file</span><span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_thumbnail_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -566,7 +566,7 @@
         <span class="k">try</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">example_value</span>
         <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">INTERFACE_TYPE_JSON_EXAMPLES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">INTERFACE_KIND_JSON_EXAMPLES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">super_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -739,8 +739,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_store_in_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">object_store_required</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span>
-            <span class="o">*</span><span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_image</span><span class="p">(),</span>
-            <span class="o">*</span><span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_file</span><span class="p">(),</span>
+            <span class="o">*</span><span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_image</span><span class="p">(),</span>
+            <span class="o">*</span><span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_file</span><span class="p">(),</span>
             <span class="c1"># These values can be large, so for any new interfaces of this</span>
             <span class="c1"># type always add them to the object store</span>
             <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_TWO_D_BOUNDING_BOXES</span><span class="p">,</span>
@@ -846,7 +846,7 @@
 
 
 
-<span class="n">INTERFACE_TYPE_JSON_EXAMPLES</span> <span class="o">=</span> <span class="p">{</span>
+<span class="n">INTERFACE_KIND_JSON_EXAMPLES</span> <span class="o">=</span> <span class="p">{</span>
     <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">:</span> <span class="n">ComponentInterfaceExampleValue</span><span class="p">(</span>
         <span class="n">value</span><span class="o">=</span><span class="s2">&quot;Example String&quot;</span>
     <span class="p">),</span>
@@ -1308,7 +1308,7 @@
             <span class="s2">&quot;text/plain&quot;</span><span class="p">,</span>
             <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_json</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_json</span><span class="p">()</span>
     <span class="p">},</span>
 <span class="p">}</span>
 
@@ -1324,7 +1324,7 @@
     <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MP4</span><span class="p">:</span> <span class="s2">&quot;.mp4&quot;</span><span class="p">,</span>
     <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">NEWICK</span><span class="p">:</span> <span class="s2">&quot;.newick&quot;</span><span class="p">,</span>
     <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BIOM</span><span class="p">:</span> <span class="s2">&quot;.biom&quot;</span><span class="p">,</span>
-    <span class="o">**</span><span class="p">{</span><span class="n">kind</span><span class="p">:</span> <span class="s2">&quot;.json&quot;</span> <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_type_json</span><span class="p">()},</span>
+    <span class="o">**</span><span class="p">{</span><span class="n">kind</span><span class="p">:</span> <span class="s2">&quot;.json&quot;</span> <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_json</span><span class="p">()},</span>
 <span class="p">}</span>
 
 <span class="n">INTERFACE_KIND_TO_CUSTOM_QUEUE</span> <span class="o">=</span> <span class="p">{</span>
