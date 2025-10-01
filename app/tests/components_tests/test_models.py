@@ -83,10 +83,10 @@ from tests.utils import create_raw_upload_image_session
         (InterfaceKindChoices.MULTIPLE_ELLIPSES, False, False),
         (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, False, False),
         # Image types
-        (InterfaceKindChoices.IMAGE, True, True),
-        (InterfaceKindChoices.HEAT_MAP, True, True),
-        (InterfaceKindChoices.SEGMENTATION, True, True),
-        (InterfaceKindChoices.DISPLACEMENT_FIELD, True, True),
+        (InterfaceKindChoices.PANIMG_IMAGE, True, True),
+        (InterfaceKindChoices.PANIMG_HEAT_MAP, True, True),
+        (InterfaceKindChoices.PANIMG_SEGMENTATION, True, True),
+        (InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD, True, True),
         # File types
         (InterfaceKindChoices.CSV, True, False),
         (InterfaceKindChoices.ZIP, True, False),
@@ -151,9 +151,9 @@ def test_saved_in_object_store(kind, object_store_required, is_image):
         (InterfaceKindChoices.MULTIPLE_ELLIPSES, True),
         (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, False),
         # Image types
-        (InterfaceKindChoices.IMAGE, True),
-        (InterfaceKindChoices.HEAT_MAP, True),
-        (InterfaceKindChoices.SEGMENTATION, True),
+        (InterfaceKindChoices.PANIMG_IMAGE, True),
+        (InterfaceKindChoices.PANIMG_HEAT_MAP, True),
+        (InterfaceKindChoices.PANIMG_SEGMENTATION, True),
         # File types
         (InterfaceKindChoices.CSV, True),
         (InterfaceKindChoices.ZIP, True),
@@ -206,7 +206,7 @@ def test_all_interfaces_covered():
             for k in sorted(InterfaceKind.interface_type_json())
         ),
         (
-            InterfaceKind.InterfaceKindChoices.IMAGE,
+            InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE,
             pytest.raises(RuntimeError),
         ),
     ),
@@ -268,9 +268,9 @@ def test_relative_path_file_ending(kind, good_suffix):
 @pytest.mark.parametrize(
     "kind,image,file,value",
     (
-        (InterfaceKindChoices.IMAGE, True, True, None),
-        (InterfaceKindChoices.IMAGE, True, None, True),
-        (InterfaceKindChoices.IMAGE, True, True, True),
+        (InterfaceKindChoices.PANIMG_IMAGE, True, True, None),
+        (InterfaceKindChoices.PANIMG_IMAGE, True, None, True),
+        (InterfaceKindChoices.PANIMG_IMAGE, True, True, True),
         (InterfaceKindChoices.CSV, True, True, None),
         (InterfaceKindChoices.CSV, None, True, True),
         (InterfaceKindChoices.CSV, True, True, True),
@@ -299,7 +299,7 @@ def test_multi_value_fails(kind, image, file, value):
 @pytest.mark.parametrize(
     "kind",
     (
-        InterfaceKindChoices.IMAGE,
+        InterfaceKindChoices.PANIMG_IMAGE,
         InterfaceKindChoices.CSV,
         InterfaceKindChoices.BOOL,
         InterfaceKindChoices.STRING,
@@ -313,7 +313,7 @@ def test_civ_updating(kind):
     civ = ComponentInterfaceValueFactory(interface=ci)
 
     # updating from None or default value to a file, image, value works
-    if kind == InterfaceKindChoices.IMAGE:
+    if kind == InterfaceKindChoices.PANIMG_IMAGE:
         image = ImageFactory()
         civ.image = image
         civ.full_clean()
@@ -336,7 +336,7 @@ def test_civ_updating(kind):
 
     # updating existing values does not work
 
-    if kind == InterfaceKindChoices.IMAGE:
+    if kind == InterfaceKindChoices.PANIMG_IMAGE:
         image = ImageFactory()
         civ.image = image
     elif kind == InterfaceKindChoices.CSV:
@@ -1032,7 +1032,7 @@ def test_runtime_metrics_chart():
 @pytest.mark.django_db
 def test_clean_overlay_segments_with_values():
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.SEGMENTATION,
+        kind=InterfaceKindChoices.PANIMG_SEGMENTATION,
         overlay_segments=[{"name": "s1", "visible": True, "voxel_value": 1}],
     )
     ci._clean_overlay_segments()
@@ -1058,7 +1058,7 @@ def test_clean_overlay_segments_with_questions(reader_study_with_gt):
     assert question.interface is None
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.SEGMENTATION,
+        kind=InterfaceKindChoices.PANIMG_SEGMENTATION,
         relative_path="images/test",
         overlay_segments=[{"name": "s1", "visible": True, "voxel_value": 1}],
     )
@@ -1088,7 +1088,7 @@ def test_clean_overlay_segments():
         == "Overlay segments should only be set for segmentations"
     )
 
-    ci = ComponentInterface(kind=InterfaceKindChoices.SEGMENTATION)
+    ci = ComponentInterface(kind=InterfaceKindChoices.PANIMG_SEGMENTATION)
     with pytest.raises(ValidationError) as e:
         ci._clean_overlay_segments()
     assert e.value.message == "Overlay segments must be set for this interface"
@@ -1138,7 +1138,7 @@ def test_clean_overlay_segments():
 @pytest.mark.django_db
 def test_overlay_segments_can_be_extended(updated_segments, expectation):
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.SEGMENTATION,
+        kind=InterfaceKindChoices.PANIMG_SEGMENTATION,
         overlay_segments=[
             {"name": "s1", "visible": True, "voxel_value": 1},
             {"name": "s2", "visible": True, "voxel_value": 2},
@@ -1154,7 +1154,9 @@ def test_overlay_segments_can_be_extended(updated_segments, expectation):
 
 @pytest.mark.django_db
 def test_validate_voxel_values():
-    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.PANIMG_SEGMENTATION
+    )
     im = ImageFactory(segments=None)
     assert ci._validate_voxel_values(im) is None
 
@@ -1585,7 +1587,7 @@ def test_displacement_field_validation(
     image = Image.objects.filter(origin=session).get()
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.DISPLACEMENT_FIELD
+        kind=InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD
     )
     civ = ComponentInterfaceValueFactory(interface=ci, image=image)
 
@@ -1640,7 +1642,7 @@ def test_ci_example_value(example_value, context):
 @pytest.mark.django_db
 def test_ci_example_value_non_json_kind_fail():
     v = ComponentInterfaceExampleValueFactory(
-        interface__kind=InterfaceKindChoices.IMAGE,
+        interface__kind=InterfaceKindChoices.PANIMG_IMAGE,
     )
 
     with pytest.raises(
