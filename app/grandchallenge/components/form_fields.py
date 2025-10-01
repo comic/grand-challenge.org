@@ -4,6 +4,7 @@ from django.db.models import TextChoices
 from django.forms import ModelChoiceField, MultiValueField
 
 from grandchallenge.cases.widgets import (
+    DICOMUploadField,
     FlexibleImageField,
     FlexibleImageWidget,
     ImageSearchWidget,
@@ -74,7 +75,19 @@ class InterfaceFormFieldFactory:
             "label": interface.title.title(),
         }
 
-        if interface.is_image_kind:
+        if interface.requires_value:
+            return cls.get_json_field(
+                interface=interface,
+                initial=initial,
+                **kwargs,
+            )
+        elif interface.is_dicom_image_kind:
+            return DICOMUploadField(
+                user=user,
+                initial=initial,
+                **kwargs,
+            )
+        elif interface.is_image_kind:
             return FlexibleImageField(
                 user=user,
                 initial=initial,
@@ -83,12 +96,6 @@ class InterfaceFormFieldFactory:
         elif interface.requires_file:
             return FlexibleFileField(
                 user=user,
-                interface=interface,
-                initial=initial,
-                **kwargs,
-            )
-        elif interface.is_json_kind:
-            return cls.get_json_field(
                 interface=interface,
                 initial=initial,
                 **kwargs,

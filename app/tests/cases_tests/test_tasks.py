@@ -1,13 +1,20 @@
 import shutil
 from pathlib import Path
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
+from botocore.exceptions import ClientError
 from django.db import IntegrityError
+from grand_challenge_dicom_de_identifier.exceptions import (
+    RejectedDICOMFileError,
+)
 from panimg.models import ImageType, PanImgFile, PostProcessorResult
 from panimg.post_processors import DEFAULT_POST_PROCESSORS
 
 from grandchallenge.cases.models import (
+    DICOMImageSetUpload,
+    DICOMImageSetUploadStatusChoices,
     Image,
     ImageFile,
     PostProcessImageTask,
@@ -17,11 +24,13 @@ from grandchallenge.cases.tasks import (
     POST_PROCESSORS,
     _check_post_processor_result,
     execute_post_process_image_task,
+    import_dicom_to_health_imaging,
     import_images,
 )
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.storage import protected_s3_storage
 from tests.cases_tests import RESOURCE_PATH
+from tests.cases_tests.factories import DICOMImageSetUploadFactory
 from tests.factories import ImageFactory
 from tests.utils import create_raw_upload_image_session
 
@@ -197,3 +206,146 @@ def test_unique_post_processing():
 
     with pytest.raises(IntegrityError):
         PostProcessImageTask.objects.create(image=image)
+
+
+@pytest.mark.django_db
+def test_import_dicom_to_health_imaging_for_not_pending_upload():
+    di_upload = DICOMImageSetUploadFactory(
+        status=DICOMImageSetUploadStatusChoices.STARTED
+    )
+
+    with patch.object(DICOMImageSetUpload, "start_dicom_import_job"):
+        with pytest.raises(RuntimeError):
+            import_dicom_to_health_imaging(
+                dicom_imageset_upload_pk=di_upload.pk
+            )
+
+
+@pytest.mark.django_db
+def test_import_dicom_to_health_imaging_updates_status_when_successful(
+    django_capture_on_commit_callbacks,
+):
+    di_upload = DICOMImageSetUploadFactory()
+    with (
+        patch.object(
+            DICOMImageSetUpload, "start_dicom_import_job"
+        ) as mocked_import_method,
+        patch.object(DICOMImageSetUpload, "deidentify_user_uploads"),
+    ):
+        with django_capture_on_commit_callbacks(execute=True):
+            import_dicom_to_health_imaging(
+                dicom_imageset_upload_pk=di_upload.pk
+            )
+
+        mocked_import_method.assert_called_once()
+
+    di_upload.refresh_from_db()
+    assert di_upload.status == DICOMImageSetUploadStatusChoices.STARTED
+
+
+@pytest.mark.django_db
+def test_start_dicom_import_job_does_not_run_when_deid_fails(
+    django_capture_on_commit_callbacks,
+):
+    di_upload = DICOMImageSetUploadFactory()
+    with (
+        patch.object(
+            DICOMImageSetUpload, "start_dicom_import_job"
+        ) as mocked_import_method,
+        patch.object(
+            DICOMImageSetUpload,
+            "deidentify_user_uploads",
+            side_effect=Exception(),
+        ),
+        patch.object(
+            DICOMImageSetUpload,
+            "delete_input_files",
+        ) as mocked_delete_input_files,
+    ):
+        with django_capture_on_commit_callbacks(execute=True):
+            import_dicom_to_health_imaging(
+                dicom_imageset_upload_pk=di_upload.pk
+            )
+        # start_dicom_import_job does not get called
+        mocked_import_method.assert_not_called()
+
+    di_upload.refresh_from_db()
+    # upload gets marked as failed
+    assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
+    assert di_upload.error_message == "An unexpected error occurred"
+    mocked_delete_input_files.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_error_in_start_dicom_import_job(django_capture_on_commit_callbacks):
+    di_upload = DICOMImageSetUploadFactory()
+
+    with (
+        patch.object(
+            DICOMImageSetUpload,
+            "start_dicom_import_job",
+            side_effect=ClientError(
+                error_response={
+                    "Error": {"Code": "ValidationError", "Message": "Foo"}
+                },
+                operation_name="StartDICOMImportJob",
+            ),
+        ),
+        patch.object(
+            DICOMImageSetUpload,
+            "deidentify_user_uploads",
+        ),
+        patch.object(
+            DICOMImageSetUpload,
+            "delete_input_files",
+        ) as mock_delete_input_files,
+    ):
+        with django_capture_on_commit_callbacks(execute=True):
+            import_dicom_to_health_imaging(
+                dicom_imageset_upload_pk=di_upload.pk
+            )
+
+    di_upload.refresh_from_db()
+    assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
+    assert di_upload.error_message == "An unexpected error occurred"
+    mock_delete_input_files.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_start_dicom_import_job_sets_error_message_when_deid_fails(
+    django_capture_on_commit_callbacks, mocker
+):
+    di_upload = DICOMImageSetUploadFactory()
+
+    mock_qs = mocker.MagicMock()
+    mocker.patch.object(
+        type(di_upload.user_uploads), "all", return_value=mock_qs
+    )
+
+    with (
+        patch.object(
+            DICOMImageSetUpload, "start_dicom_import_job"
+        ) as mocked_import_method,
+        patch.object(
+            DICOMImageSetUpload,
+            "deidentify_user_uploads",
+            side_effect=RejectedDICOMFileError(justification="Foo"),
+        ),
+        patch.object(
+            DICOMImageSetUpload,
+            "delete_input_files",
+        ) as mocked_delete_input_files,
+    ):
+        with django_capture_on_commit_callbacks(execute=True):
+            import_dicom_to_health_imaging(
+                dicom_imageset_upload_pk=di_upload.pk
+            )
+        # start_dicom_import_job does not get called
+        mocked_import_method.assert_not_called()
+        mocked_delete_input_files.assert_called_once()
+        mock_qs.delete.assert_called_once()
+
+    di_upload.refresh_from_db()
+    # upload gets marked as failed
+    assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
+    assert di_upload.error_message == "Foo"

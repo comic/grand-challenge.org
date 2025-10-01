@@ -11,6 +11,7 @@ from rest_framework.relations import (
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.archives.tasks import add_images_to_archive
 from grandchallenge.cases.models import (
+    DICOMImageSet,
     Image,
     ImageFile,
     PostProcessImageTask,
@@ -32,9 +33,16 @@ class ImageFileSerializer(serializers.ModelSerializer):
         fields = ("pk", "image", "file", "image_type")
 
 
+class DICOMImageSetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DICOMImageSet
+        fields = ("image_set_id",)
+
+
 class HyperlinkedImageSerializer(serializers.ModelSerializer):
     files = ImageFileSerializer(many=True, read_only=True)
     modality = ImagingModalitySerializer(allow_null=True, read_only=True)
+    dicom_image_set = DICOMImageSetSerializer(read_only=True)
 
     class Meta:
         model = Image
@@ -42,6 +50,7 @@ class HyperlinkedImageSerializer(serializers.ModelSerializer):
             "pk",
             "name",
             "files",
+            "dicom_image_set",
             "width",
             "height",
             "depth",

@@ -1,9 +1,12 @@
 import datetime
+import random
 
 import factory
 from factory import fuzzy
 
 from grandchallenge.cases.models import (
+    DICOMImageSet,
+    DICOMImageSetUpload,
     Image,
     ImageFile,
     PostProcessImageTask,
@@ -14,6 +17,7 @@ from tests.factories import (
     ImageFactory,
     ImageFileFactory,
     ImagingModalityFactory,
+    UserFactory,
 )
 
 
@@ -143,3 +147,25 @@ class PostProcessImageTaskFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = PostProcessImageTask
+
+
+class DICOMImageSetUploadFactory(factory.django.DjangoModelFactory):
+    creator = factory.SubFactory(UserFactory)
+
+    class Meta:
+        model = DICOMImageSetUpload
+
+
+def fake_image_frame_id():
+    characters = "abcdef0123456789"
+    return "".join(random.choices(characters, k=32))
+
+
+class DICOMImageSetFactory(factory.django.DjangoModelFactory):
+    image_frame_ids = factory.LazyAttribute(
+        lambda _: [fake_image_frame_id() for _ in range(5)]
+    )
+    dicom_image_set_upload = factory.SubFactory(DICOMImageSetUploadFactory)
+
+    class Meta:
+        model = DICOMImageSet

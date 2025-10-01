@@ -1,10 +1,16 @@
 import copy
+import gzip
+import hashlib
+import json
 import logging
 from pathlib import Path
-from tempfile import TemporaryDirectory
+from tempfile import SpooledTemporaryFile, TemporaryDirectory
+from urllib.parse import urlparse
 
+import boto3
 from actstream.actions import follow
 from actstream.models import Follow
+from botocore.exceptions import ClientError
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
@@ -16,6 +22,7 @@ from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
+from grand_challenge_dicom_de_identifier.deidentifier import DicomDeidentifier
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from panimg.image_builders.metaio_utils import load_sitk_image
 from panimg.models import (
@@ -24,6 +31,9 @@ from panimg.models import (
     ImageType,
     PatientSex,
 )
+from pydantic import ConfigDict, Field, field_validator
+from pydantic.alias_generators import to_camel
+from pydantic.dataclasses import dataclass
 from storages.utils import clean_name
 
 from grandchallenge.core.error_handlers import (
@@ -55,6 +65,26 @@ SEGMENTS_SCHEMA = {
         "maxItems": MAXIMUM_SEGMENTS_LENGTH,
     },
     "uniqueItems": True,
+}
+
+IMPORT_JOB_FAILURE_NDJSON_SCHEMA = {
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "inputFile": {"type": "string"},
+            "exception": {
+                "type": "object",
+                "properties": {
+                    "exceptionType": {"type": "string"},
+                    "message": {"type": "string"},
+                },
+                "required": ["exceptionType", "message"],
+            },
+        },
+        "required": ["inputFile", "exception"],
+    },
 }
 
 
@@ -297,6 +327,51 @@ def image_file_path(instance, filename):
     )
 
 
+class DICOMImageSet(UUIDModel):
+    image_set_id = models.CharField(
+        max_length=32,
+        unique=True,
+        help_text="The ID of the image set in AWS Health Imaging",
+        editable=False,
+    )
+    image_frame_ids = models.JSONField(
+        editable=False,
+        help_text="The IDs of the image frames in AWS Health Imaging",
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{32}$",
+                        "minLength": 32,
+                        "maxLength": 32,
+                    },
+                    "minItems": 1,
+                }
+            )
+        ],
+    )
+    dicom_image_set_upload = models.OneToOneField(
+        to="DICOMImageSetUpload",
+        editable=False,
+        on_delete=models.PROTECT,
+        related_name="dicom_image_set",
+    )
+
+
+@receiver(post_delete, sender=DICOMImageSet)
+def delete_image_set(*_, instance: DICOMImageSet, **__):
+    from grandchallenge.cases.tasks import delete_health_imaging_image_set
+
+    on_commit(
+        delete_health_imaging_image_set.signature(
+            kwargs={"image_set_id": instance.image_set_id}
+        ).apply_async
+    )
+
+
 class Image(UUIDModel):
     COLOR_SPACE_GRAY = ColorSpace.GRAY.value
     COLOR_SPACE_RGB = ColorSpace.RGB.value
@@ -380,8 +455,8 @@ class Image(UUIDModel):
         ImagingModality, null=True, blank=True, on_delete=models.SET_NULL
     )
 
-    width = models.IntegerField(blank=False)
-    height = models.IntegerField(blank=False)
+    width = models.IntegerField(null=True, blank=True)
+    height = models.IntegerField(null=True, blank=True)
     depth = models.IntegerField(null=True, blank=True)
     voxel_width_mm = models.FloatField(null=True, blank=True)
     voxel_height_mm = models.FloatField(null=True, blank=True)
@@ -391,7 +466,7 @@ class Image(UUIDModel):
     window_center = models.FloatField(null=True, blank=True)
     window_width = models.FloatField(null=True, blank=True)
     color_space = models.CharField(
-        max_length=5, blank=False, choices=COLOR_SPACES
+        max_length=5, blank=True, choices=COLOR_SPACES
     )
     patient_id = models.CharField(max_length=64, default="", blank=True)
     # Max length for patient_name is 5 * 64 + 4 = 324, as described for value
@@ -441,6 +516,13 @@ class Image(UUIDModel):
         null=True,
         blank=True,
         help_text="What is the field of view of this image?",
+    )
+    dicom_image_set = models.OneToOneField(
+        to=DICOMImageSet,
+        editable=False,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="image",
     )
 
     def __str__(self):
@@ -663,6 +745,12 @@ class Image(UUIDModel):
         ordering = ("name",)
 
 
+@receiver(post_delete, sender=Image)
+def delete_dicom_image_set(*_, instance: Image, **__):
+    if instance.dicom_image_set:
+        instance.dicom_image_set.delete()
+
+
 class ImageUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset({"view_image"})
 
@@ -837,3 +925,395 @@ class PostProcessImageTask(UUIDModel):
                     kwargs={"post_process_image_task_pk": self.pk}
                 ).apply_async
             )
+
+
+def generate_dicom_id_suffix(*, pk, suffix_type):
+    """
+    Generates a unique numerical suffix for a DICOM UID based on the primary key
+    and a string to differentiate the type (e.g., 'study' or 'series').
+    """
+    seed = f"{pk}-{suffix_type}"
+
+    digest = hashlib.sha512(seed.encode("utf8")).digest()
+    return str(int.from_bytes(digest[:14]))
+
+
+class DICOMImageSetUploadStatusChoices(models.TextChoices):
+    INITIALIZED = "INITIALIZED", _("Initialized")
+    STARTED = "STARTED", _("Started")
+    FAILED = "FAILED", _("Failed")
+    COMPLETED = "COMPLETED", _("Completed")
+
+
+@dataclass(config=ConfigDict(alias_generator=to_camel))
+class ImageSetSummary:
+    image_set_id: str
+    image_set_version: int
+    is_primary: bool
+    number_of_matched_sop_instances: int = Field(
+        alias="numberOfMatchedSOPInstances"
+    )
+
+
+@dataclass(config=ConfigDict(alias_generator=to_camel))
+class JobSummary:
+    job_id: str
+    datastore_id: str
+    input_s3_uri: str
+    output_s3_uri: str
+    success_output_s3_uri: str
+    failure_output_s3_uri: str
+    number_of_scanned_files: int
+    number_of_imported_files: int
+    number_of_files_with_customer_error: int
+    number_of_files_with_server_error: int
+    number_of_generated_image_sets: int
+    image_sets_summary: list[ImageSetSummary]
+
+    @field_validator("image_sets_summary", mode="before")
+    @classmethod
+    def convert_image_set_summaries(cls, data):
+        return [
+            ImageSetSummary(**image_set_summary_data)
+            for image_set_summary_data in data
+        ]
+
+
+class DICOMImageSetUpload(UUIDModel):
+    DICOMImageSetUploadStatusChoices = DICOMImageSetUploadStatusChoices
+
+    creator = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL,
+        null=True,
+        default=None,
+        on_delete=models.SET_NULL,
+    )
+    user_uploads = models.ManyToManyField(
+        UserUpload, blank=True, related_name="dicom_import_jobs"
+    )
+    status = models.CharField(
+        max_length=11,
+        choices=DICOMImageSetUploadStatusChoices.choices,
+        default=DICOMImageSetUploadStatusChoices.INITIALIZED,
+        blank=False,
+    )
+    error_message = models.TextField(editable=False, default="")
+    internal_failure_log = models.JSONField(
+        default=list,
+        editable=False,
+        help_text="Contents of failure.ndjson from the health imaging "
+        "import job if the job failed or did not pass validation.",
+        validators=[JSONValidator(schema=IMPORT_JOB_FAILURE_NDJSON_SCHEMA)],
+    )
+    study_instance_uid = models.CharField(
+        max_length=36,
+        editable=False,
+        unique=True,
+    )
+    series_instance_uid = models.CharField(
+        max_length=36,
+        editable=False,
+        unique=True,
+    )
+    name = models.CharField(
+        max_length=255, help_text="The name for the resulting Image instance"
+    )
+
+    class Meta:
+        verbose_name = "DICOM image set upload"
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(
+                    status__in=DICOMImageSetUploadStatusChoices.values
+                ),
+                name="dicomuimagesetupload_status_valid",
+            )
+        ]
+        indexes = (models.Index(fields=["status"]),)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__health_imaging_client = None
+        self.__s3_client = None
+
+    def save(self, *args, **kwargs):
+        self.study_instance_uid = generate_dicom_id_suffix(
+            pk=self.pk, suffix_type="study"
+        )
+        self.series_instance_uid = generate_dicom_id_suffix(
+            pk=self.pk, suffix_type="series"
+        )
+        super().save(*args, **kwargs)
+
+    @property
+    def _s3_client(self):
+        if self.__s3_client is None:
+            self.__s3_client = boto3.client(
+                "s3",
+                region_name=settings.AWS_DEFAULT_REGION,
+            )
+        return self.__s3_client
+
+    @property
+    def _health_imaging_client(self):
+        if self.__health_imaging_client is None:
+            self.__health_imaging_client = boto3.client(
+                "medical-imaging",
+                region_name=settings.AWS_DEFAULT_REGION,
+            )
+        return self.__health_imaging_client
+
+    @property
+    def _import_job_name(self):
+        # Health Imaging requires job names to be max 64 chars
+        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-{self.pk}"
+
+    @property
+    def _input_prefix(self):
+        return f"inputs/{self.pk}"
+
+    @property
+    def _import_input_s3_uri(self):
+        return f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/{self._input_prefix}"
+
+    @property
+    def _import_output_s3_uri(self):
+        return f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/logs/{self.pk}"
+
+    @property
+    def _marker_file_key(self):
+        return f"{self._input_prefix}/deidentification.done"
+
+    def mark_failed(self, *, error_message, exc=None):
+        self.status = DICOMImageSetUploadStatusChoices.FAILED
+        self.error_message = error_message
+        self.save()
+        if exc:
+            logger.error(exc, exc_info=True)
+
+    def start_dicom_import_job(self):
+        return self._health_imaging_client.start_dicom_import_job(
+            jobName=self._import_job_name,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            dataAccessRoleArn=settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN,
+            inputS3Uri=self._import_input_s3_uri,
+            outputS3Uri=self._import_output_s3_uri,
+        )
+
+    def _get_image_set_metadata(self, *, image_set_id):
+        response = self._health_imaging_client.get_image_set_metadata(
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            imageSetId=image_set_id,
+            versionId="1",
+        )
+
+        metadata = json.loads(
+            gzip.decompress(response["imageSetMetadataBlob"].read())
+        )
+
+        return metadata
+
+    def _get_image_frame_ids(self, *, image_set_id):
+        metadata = self._get_image_set_metadata(image_set_id=image_set_id)
+        return [
+            frame["ID"]
+            for series in metadata["Study"]["Series"].values()
+            for instance in series["Instances"].values()
+            for frame in instance["ImageFrames"]
+        ]
+
+    def _deidentify_files(self):
+        deid = DicomDeidentifier(
+            study_instance_uid_suffix=self.study_instance_uid,
+            series_instance_uid_suffix=self.series_instance_uid,
+            assert_unique_value_for=[
+                "StudyInstanceUID",
+                "SeriesInstanceUID",
+                "PatientID",
+                "StudyID",
+                "StudyDate",
+                "AccessionNumber",
+                "SeriesNumber",
+            ],
+        )
+        for upload in self.user_uploads.all():
+            with (
+                SpooledTemporaryFile() as infile,
+                SpooledTemporaryFile() as outfile,
+            ):
+                self._s3_client.download_fileobj(
+                    Fileobj=infile,
+                    Bucket=upload.bucket,
+                    Key=upload.key,
+                )
+                infile.seek(0)
+
+                deid.deidentify_file(infile, output=outfile)
+
+                outfile.seek(0)
+                self._s3_client.upload_fileobj(
+                    Fileobj=outfile,
+                    Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+                    Key=f"{self._input_prefix}/{upload.pk}.dcm",
+                )
+
+    def deidentify_user_uploads(self):
+        # Check if marker file exists
+        try:
+            self._s3_client.head_object(
+                Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+                Key=self._marker_file_key,
+            )
+            logger.info("Deidentification already done, nothing to do.")
+            return
+        except ClientError as e:
+            if e.response["Error"]["Code"] != "404":
+                # unexpected error
+                raise
+
+        self._deidentify_files()
+
+        # Create empty marker file to indicate success
+        self._s3_client.put_object(
+            Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+            Key=self._marker_file_key,
+            Body=b"",
+        )
+
+        self.user_uploads.all().delete()
+
+    def delete_input_files(self):
+        from grandchallenge.components.backends.base import (
+            list_and_delete_objects_from_prefix,
+        )
+
+        list_and_delete_objects_from_prefix(
+            s3_client=self._s3_client,
+            bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
+            prefix=self._input_prefix,
+        )
+
+    def get_job_summary(self, *, event):
+        output_uri = event["outputS3Uri"]
+        parsed = urlparse(output_uri)
+        bucket = parsed.netloc
+        key = parsed.path.lstrip("/") + "job-output-manifest.json"
+
+        obj = self._s3_client.get_object(Bucket=bucket, Key=key)
+
+        return JobSummary(**json.load(obj["Body"])["jobSummary"])
+
+    def get_job_output_failure_log(self, *, job_summary):
+        output_uri = job_summary.failure_output_s3_uri
+        parsed = urlparse(output_uri)
+        bucket = parsed.netloc
+        key = parsed.path.lstrip("/") + "failure.ndjson"
+
+        obj = self._s3_client.get_object(Bucket=bucket, Key=key)
+
+        return [json.loads(line) for line in obj["Body"].iter_lines()]
+
+    def handle_event(self, *, event):
+        try:
+            job_status = event["jobStatus"]
+            job_summary = self.get_job_summary(event=event)
+            if job_status == "COMPLETED":
+                self.handle_completed_job(job_summary=job_summary)
+            elif job_status == "FAILED":
+                self.handle_failed_job(job_summary=job_summary)
+            else:
+                raise ValueError("Invalid job status")
+        except Exception as e:
+            self.mark_failed(
+                error_message="An unexpected error occurred", exc=e
+            )
+        else:
+            self.status = self.DICOMImageSetUploadStatusChoices.COMPLETED
+            self.save()
+        finally:
+            self.delete_input_files()
+
+    def handle_completed_job(self, *, job_summary):
+        self.validate_image_set(job_summary=job_summary)
+        image_set_id = job_summary.image_sets_summary[0].image_set_id
+        self.convert_image_set_to_internal(image_set_id=image_set_id)
+
+    def validate_image_set(self, *, job_summary):
+        if (
+            job_summary.number_of_files_with_customer_error != 0
+            or job_summary.number_of_files_with_server_error != 0
+            or job_summary.number_of_generated_image_sets == 0
+        ):
+            self.handle_failed_job(job_summary=job_summary)
+        elif job_summary.number_of_generated_image_sets > 1:
+            self.delete_image_sets(job_summary=job_summary)
+            raise RuntimeError(
+                "Multiple image sets created. Expected only one."
+            )
+
+        image_set_summary = job_summary.image_sets_summary[0]
+
+        if not image_set_summary.is_primary:
+            self.delete_image_sets(job_summary=job_summary)
+            raise RuntimeError(
+                "New instance is not primary: "
+                "metadata conflicts with already existing instance."
+            )
+
+        if not image_set_summary.image_set_version == 1:
+            self.revert_image_set_to_initial_version(
+                image_set_summary=image_set_summary
+            )
+            raise RuntimeError(
+                "Instance already exists. This should never happen!"
+            )
+
+    def handle_failed_job(self, *, job_summary):
+        self.internal_failure_log = self.get_job_output_failure_log(
+            job_summary=job_summary
+        )
+        self.delete_image_sets(job_summary=job_summary)
+        raise RuntimeError(
+            f"Import job {job_summary.job_id} failed for DICOMImageSetUpload {self.pk}"
+        )
+
+    @staticmethod
+    def delete_image_sets(*, job_summary):
+        from grandchallenge.cases.tasks import delete_health_imaging_image_set
+
+        for image_set_summary in job_summary.image_sets_summary:
+            on_commit(
+                delete_health_imaging_image_set.signature(
+                    kwargs={"image_set_id": image_set_summary.image_set_id}
+                ).apply_async
+            )
+
+    @staticmethod
+    def revert_image_set_to_initial_version(*, image_set_summary):
+        from grandchallenge.cases.tasks import (
+            revert_image_set_to_initial_version,
+        )
+
+        on_commit(
+            revert_image_set_to_initial_version.signature(
+                kwargs={
+                    "image_set_id": image_set_summary.image_set_id,
+                    "version_id": image_set_summary.image_set_version,
+                }
+            ).apply_async
+        )
+
+    def convert_image_set_to_internal(self, *, image_set_id):
+        dicom_image_set = DICOMImageSet(
+            image_set_id=image_set_id,
+            image_frame_ids=self._get_image_frame_ids(
+                image_set_id=image_set_id
+            ),
+            dicom_image_set_upload=self,
+        )
+        dicom_image_set.full_clean()
+        dicom_image_set.save()
+
+        image = Image(dicom_image_set=dicom_image_set, name=self.name)
+        image.full_clean()
+        image.save()
