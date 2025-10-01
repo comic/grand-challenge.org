@@ -554,18 +554,19 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
     try:
         upload.deidentify_user_uploads()
         upload.start_dicom_import_job()
-    except RejectedDICOMFileError as e:
-        upload.mark_failed(error_message=e.justification)
-        upload.user_uploads.all().delete()
-        upload.delete_input_files()
     except (
         botocore.exceptions.EndpointConnectionError,
         health_imaging_client.exceptions.ThrottlingException,
         health_imaging_client.exceptions.ServiceQuotaExceededException,
     ) as e:
         raise RetryStep from e
+    except RejectedDICOMFileError as e:
+        upload.mark_failed(error_message=e.justification)
+        upload.user_uploads.all().delete()
+        upload.delete_input_files()
     except Exception as e:
         upload.mark_failed(error_message="An unexpected error occurred", exc=e)
+        upload.user_uploads.all().delete()
         upload.delete_input_files()
     else:
         upload.status = DICOMImageSetUploadStatusChoices.STARTED
