@@ -714,13 +714,7 @@ def test_dicom_signed_urls(client, settings, monkeypatch):
 
 
 @pytest.mark.django_db
-def test_dicom_signed_urls_creates_download_object(
-    client, settings, monkeypatch
-):
-    settings.AWS_HEALTH_IMAGING_DATASTORE_ID = "test-datastore-id"
-    settings.AWS_DEFAULT_REGION = "test-region"
-    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "test-access-key")
-
+def test_dicom_signed_urls_creates_download_object(client):
     image = ImageFactory(
         dicom_image_set=DICOMImageSetFactory(
             image_set_id="test-image-set-id",

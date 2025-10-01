@@ -535,7 +535,7 @@ def _check_post_processor_result(*, post_processor_result, image):
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException, RetryStep))
 @transaction.atomic
-def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
+def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk):
     with check_lock_acquired():
         upload = DICOMImageSetUpload.objects.select_for_update(
             nowait=True
@@ -548,24 +548,25 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
 
     if not upload.status == DICOMImageSetUploadStatusChoices.INITIALIZED:
         raise RuntimeError(
-            "Upload is not ready for de-identification and importing into HealthImaging."
+            "Upload is not ready for de-identification and importing into Health Imaging."
         )
 
     try:
         upload.deidentify_user_uploads()
         upload.start_dicom_import_job()
-    except RejectedDICOMFileError as e:
-        upload.mark_failed(error_message=e.justification)
-        upload.user_uploads.all().delete()
-        upload.delete_input_files()
     except (
         botocore.exceptions.EndpointConnectionError,
         health_imaging_client.exceptions.ThrottlingException,
         health_imaging_client.exceptions.ServiceQuotaExceededException,
     ) as e:
         raise RetryStep from e
+    except RejectedDICOMFileError as e:
+        upload.mark_failed(error_message=e.justification)
+        upload.user_uploads.all().delete()
+        upload.delete_input_files()
     except Exception as e:
         upload.mark_failed(error_message="An unexpected error occurred", exc=e)
+        upload.user_uploads.all().delete()
         upload.delete_input_files()
     else:
         upload.status = DICOMImageSetUploadStatusChoices.STARTED
@@ -574,7 +575,7 @@ def import_dicom_to_healthimaging(*, dicom_imageset_upload_pk):
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
-def handle_healthimaging_import_job_event(*, event):
+def handle_health_imaging_import_job_event(*, event):
     job_name = event["jobName"]
     prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
     pattern = rf"^{prefix_regex}\-(?P<pk>{UUID4_REGEX})$"
@@ -594,7 +595,7 @@ def handle_healthimaging_import_job_event(*, event):
 
 @acks_late_micro_short_task(retry_on=(RetryStep,))
 @transaction.atomic
-def delete_healthimaging_image_set(*, image_set_id):
+def delete_health_imaging_image_set(*, image_set_id):
     health_imaging_client = boto3.client(
         "medical-imaging",
         region_name=settings.AWS_DEFAULT_REGION,
@@ -609,8 +610,6 @@ def delete_healthimaging_image_set(*, image_set_id):
         pass  # image set already deleted
     except health_imaging_client.exceptions.ThrottlingException as e:
         raise RetryStep("Request throttled") from e
-    except ClientError:
-        logger.error("Couldn't delete image set", exc_info=True)
 
 
 @acks_late_micro_short_task
@@ -629,12 +628,12 @@ def revert_image_set_to_initial_version(*, image_set_id, version_id):
             updateImageSetMetadataUpdates={"revertToVersionId": "1"},
             force=False,
         )
-    except ClientError as e:
+    except ClientError as error:
         if (
-            e.response["Error"]["Code"] == "ResourceNotFoundException"
-            and e.response["Error"]["Message"]
+            error.response["Error"]["Code"] == "ResourceNotFoundException"
+            and error.response["Error"]["Message"]
             == "Requested version(s) of ImageSet(s) is not the latest."
         ):
             pass  # already updated
         else:
-            logger.error("Couldn't update image set metadata.", exc_info=True)
+            raise

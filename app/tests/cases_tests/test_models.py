@@ -12,10 +12,6 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.files import File
 
-from grandchallenge.cases.exceptions import (
-    DICOMImportJobFailedError,
-    DICOMImportJobValidationError,
-)
 from grandchallenge.cases.models import (
     DICOMImageSet,
     Image,
@@ -195,7 +191,7 @@ def test_start_dicom_import_job(settings):
         "efd11ef2121b451d934757a4d14b182c"
     )
     settings.AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN = (
-        "arn:aws:iam::123456789012:role/healthimaging-importjob-access"
+        "arn:aws:iam::123456789012:role/health-imaging-import-job-access"
     )
     di_upload = DICOMImageSetUploadFactory()
 
@@ -279,8 +275,13 @@ def test_handle_failed_job(mocker, import_job_summary):
     )
     spy_delete_image_sets = mocker.spy(di_upload, "delete_image_sets")
 
-    with pytest.raises(DICOMImportJobFailedError):
+    with pytest.raises(RuntimeError) as error:
         di_upload.handle_failed_job(job_summary=job_summary)
+
+    assert (
+        str(error.value)
+        == f"Import job {job_summary.job_id} failed for DICOMImageSetUpload {di_upload.pk}"
+    )
 
     mock_get_failure_log.assert_called_once_with(job_summary=job_summary)
     spy_delete_image_sets.assert_called_once_with(job_summary=job_summary)
@@ -306,8 +307,14 @@ def test_validate_image_set_no_generated_image_set(mocker, import_job_summary):
         di_upload, "get_job_output_failure_log"
     )
 
-    with pytest.raises(DICOMImportJobFailedError):
+    with pytest.raises(RuntimeError) as error:
         di_upload.validate_image_set(job_summary=job_summary)
+
+    assert (
+        str(error.value)
+        == f"Import job {job_summary.job_id} failed for DICOMImageSetUpload {di_upload.pk}"
+    )
+
     mock_get_failure_log.assert_called_once_with(job_summary=job_summary)
 
 
@@ -348,16 +355,20 @@ def test_validate_image_set_multiple_generated_image_sets(
     mock_signature = MagicMock()
     mock_signature.apply_async = MagicMock()
     mock_delete_image_set_task = mocker.patch(
-        "grandchallenge.cases.tasks.delete_healthimaging_image_set.signature",
+        "grandchallenge.cases.tasks.delete_health_imaging_image_set.signature",
         return_value=mock_signature,
     )
 
     with (
         django_capture_on_commit_callbacks(execute=True),
-        pytest.raises(DICOMImportJobValidationError) as e,
+        pytest.raises(RuntimeError) as error,
     ):
         di_upload.validate_image_set(job_summary=job_summary)
-    assert str(e.value) == "Multiple image sets created. Expected only one."
+
+    assert (
+        str(error.value) == "Multiple image sets created. Expected only one."
+    )
+
     assert mock_delete_image_set_task.call_count == 2
     mock_delete_image_set_task.assert_any_call(
         kwargs={"image_set_id": image_set_id_1}
@@ -393,19 +404,21 @@ def test_validate_image_set_generated_image_set_not_primary(
     mock_signature = MagicMock()
     mock_signature.apply_async = MagicMock()
     mock_delete_image_set_task = mocker.patch(
-        "grandchallenge.cases.tasks.delete_healthimaging_image_set.signature",
+        "grandchallenge.cases.tasks.delete_health_imaging_image_set.signature",
         return_value=mock_signature,
     )
 
     with (
         django_capture_on_commit_callbacks(execute=True),
-        pytest.raises(DICOMImportJobValidationError) as e,
+        pytest.raises(RuntimeError) as error,
     ):
         di_upload.validate_image_set(job_summary=job_summary)
+
     assert (
-        str(e.value)
+        str(error.value)
         == "New instance is not primary: metadata conflicts with already existing instance."
     )
+
     mock_delete_image_set_task.assert_called_once_with(
         kwargs={"image_set_id": image_set_id}
     )
@@ -443,10 +456,15 @@ def test_validate_image_set_generated_image_set_not_first_version(
 
     with (
         django_capture_on_commit_callbacks(execute=True),
-        pytest.raises(DICOMImportJobValidationError) as e,
+        pytest.raises(RuntimeError) as error,
     ):
         di_upload.validate_image_set(job_summary=job_summary)
-    assert str(e.value) == "Instance already exists. This should never happen!"
+
+    assert (
+        str(error.value)
+        == "Instance already exists. This should never happen!"
+    )
+
     mock_revert_image_set_to_initial_version.assert_called_once_with(
         kwargs={"image_set_id": image_set_id, "version_id": 2}
     )
@@ -585,29 +603,31 @@ def test_delete_dicom_image_set_post_delete_image():
 
 
 @pytest.mark.django_db
-def test_delete_healthimaging_image_set_post_delete_dicom_image_set(
+def test_delete_health_imaging_image_set_post_delete_dicom_image_set(
     django_capture_on_commit_callbacks,
     mocker,
 ):
     dicom_image_set = DICOMImageSetFactory()
     mock_signature = MagicMock()
     mock_signature.apply_async = MagicMock()
-    mock_delete_healthimaging_image_set = mocker.patch(
-        "grandchallenge.cases.tasks.delete_healthimaging_image_set.signature",
+    mock_delete_health_imaging_image_set = mocker.patch(
+        "grandchallenge.cases.tasks.delete_health_imaging_image_set.signature",
         return_value=mock_signature,
     )
 
     with django_capture_on_commit_callbacks(execute=True):
         dicom_image_set.delete()
 
-    mock_delete_healthimaging_image_set.assert_called_once_with(
+    mock_delete_health_imaging_image_set.assert_called_once_with(
         kwargs={"image_set_id": dicom_image_set.image_set_id}
     )
     assert mock_signature.apply_async.call_count == 1
 
 
 @pytest.mark.django_db
-def test_convert_image_set_to_internal(mocker):
+def test_convert_image_set_to_internal(settings):
+    settings.AWS_HEALTH_IMAGING_DATASTORE_ID = "test-datastore-id"
+
     dicom_image_set_upload = DICOMImageSetUploadFactory(name="foo")
     image_set_id = "e616d1f717da6f80fed6271ad184b7f0"
     image_frame_ids = [fake_image_frame_id() for _ in range(4)]

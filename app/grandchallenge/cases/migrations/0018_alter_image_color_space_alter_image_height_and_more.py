@@ -207,7 +207,7 @@ class Migration(migrations.Migration):
                     "dicom_image_set_upload",
                     models.OneToOneField(
                         editable=False,
-                        null=True,
+                        null=False,
                         on_delete=django.db.models.deletion.PROTECT,
                         related_name="dicom_image_set",
                         to="cases.dicomimagesetupload",

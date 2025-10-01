@@ -13,11 +13,7 @@ from actstream.models import Follow
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import (
-    ObjectDoesNotExist,
-    SuspiciousFileOperation,
-    ValidationError,
-)
+from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
 from django.db import models
 from django.db.models.signals import post_delete, pre_delete
 from django.db.transaction import on_commit
@@ -40,10 +36,6 @@ from pydantic.alias_generators import to_camel
 from pydantic.dataclasses import dataclass
 from storages.utils import clean_name
 
-from grandchallenge.cases.exceptions import (
-    DICOMImportJobFailedError,
-    DICOMImportJobValidationError,
-)
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
 )
@@ -364,7 +356,6 @@ class DICOMImageSet(UUIDModel):
     dicom_image_set_upload = models.OneToOneField(
         to="DICOMImageSetUpload",
         editable=False,
-        null=True,
         on_delete=models.PROTECT,
         related_name="dicom_image_set",
     )
@@ -372,10 +363,10 @@ class DICOMImageSet(UUIDModel):
 
 @receiver(post_delete, sender=DICOMImageSet)
 def delete_image_set(*_, instance: DICOMImageSet, **__):
-    from grandchallenge.cases.tasks import delete_healthimaging_image_set
+    from grandchallenge.cases.tasks import delete_health_imaging_image_set
 
     on_commit(
-        delete_healthimaging_image_set.signature(
+        delete_health_imaging_image_set.signature(
             kwargs={"image_set_id": instance.image_set_id}
         ).apply_async
     )
@@ -989,25 +980,23 @@ class JobSummary:
 
 
 class DICOMImageSetUpload(UUIDModel):
+    DICOMImageSetUploadStatusChoices = DICOMImageSetUploadStatusChoices
+
     creator = models.ForeignKey(
         to=settings.AUTH_USER_MODEL,
         null=True,
         default=None,
         on_delete=models.SET_NULL,
     )
-
     user_uploads = models.ManyToManyField(
         UserUpload, blank=True, related_name="dicom_import_jobs"
     )
-
-    DICOMImageSetUploadStatusChoices = DICOMImageSetUploadStatusChoices
     status = models.CharField(
         max_length=11,
         choices=DICOMImageSetUploadStatusChoices.choices,
         default=DICOMImageSetUploadStatusChoices.INITIALIZED,
         blank=False,
     )
-
     error_message = models.TextField(editable=False, default="")
     internal_failure_log = models.JSONField(
         default=list,
@@ -1016,7 +1005,6 @@ class DICOMImageSetUpload(UUIDModel):
         "import job if the job failed or did not pass validation.",
         validators=[JSONValidator(schema=IMPORT_JOB_FAILURE_NDJSON_SCHEMA)],
     )
-
     study_instance_uid = models.CharField(
         max_length=36,
         editable=False,
@@ -1027,7 +1015,6 @@ class DICOMImageSetUpload(UUIDModel):
         editable=False,
         unique=True,
     )
-
     name = models.CharField(
         max_length=255, help_text="The name for the resulting Image instance"
     )
@@ -1078,7 +1065,7 @@ class DICOMImageSetUpload(UUIDModel):
 
     @property
     def _import_job_name(self):
-        # HealthImaging requires job names to be max 64 chars
+        # Health Imaging requires job names to be max 64 chars
         return f"{settings.COMPONENTS_REGISTRY_PREFIX}-{self.pk}"
 
     @property
@@ -1236,8 +1223,6 @@ class DICOMImageSetUpload(UUIDModel):
                 self.handle_failed_job(job_summary=job_summary)
             else:
                 raise ValueError("Invalid job status")
-        except ValidationError as e:
-            self.mark_failed(error_message=e.message, exc=e)
         except Exception as e:
             self.mark_failed(
                 error_message="An unexpected error occurred", exc=e
@@ -1262,7 +1247,7 @@ class DICOMImageSetUpload(UUIDModel):
             self.handle_failed_job(job_summary=job_summary)
         elif job_summary.number_of_generated_image_sets > 1:
             self.delete_image_sets(job_summary=job_summary)
-            raise DICOMImportJobValidationError(
+            raise RuntimeError(
                 "Multiple image sets created. Expected only one."
             )
 
@@ -1270,7 +1255,7 @@ class DICOMImageSetUpload(UUIDModel):
 
         if not image_set_summary.is_primary:
             self.delete_image_sets(job_summary=job_summary)
-            raise DICOMImportJobValidationError(
+            raise RuntimeError(
                 "New instance is not primary: "
                 "metadata conflicts with already existing instance."
             )
@@ -1279,7 +1264,7 @@ class DICOMImageSetUpload(UUIDModel):
             self.revert_image_set_to_initial_version(
                 image_set_summary=image_set_summary
             )
-            raise DICOMImportJobValidationError(
+            raise RuntimeError(
                 "Instance already exists. This should never happen!"
             )
 
@@ -1288,18 +1273,17 @@ class DICOMImageSetUpload(UUIDModel):
             job_summary=job_summary
         )
         self.delete_image_sets(job_summary=job_summary)
-        job_id = job_summary.job_id
-        raise DICOMImportJobFailedError(
-            f"Import job {job_id} failed for DICOMImageSetUpload {self.pk}"
+        raise RuntimeError(
+            f"Import job {job_summary.job_id} failed for DICOMImageSetUpload {self.pk}"
         )
 
     @staticmethod
     def delete_image_sets(*, job_summary):
-        from grandchallenge.cases.tasks import delete_healthimaging_image_set
+        from grandchallenge.cases.tasks import delete_health_imaging_image_set
 
         for image_set_summary in job_summary.image_sets_summary:
             on_commit(
-                delete_healthimaging_image_set.signature(
+                delete_health_imaging_image_set.signature(
                     kwargs={"image_set_id": image_set_summary.image_set_id}
                 ).apply_async
             )
