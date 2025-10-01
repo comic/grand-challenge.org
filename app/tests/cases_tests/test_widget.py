@@ -238,7 +238,7 @@ def test_dicom_upload_field_validation():
 
 
 @pytest.mark.django_db
-def test_dicom_upload_widget_prepopulated_value(mocker):
+def test_dicom_upload_widget_prepopulated_value():
     user_with_perm, user_without_perm = UserFactory.create_batch(2)
     upload = DICOMImageSetUploadFactory()
     upload.user_uploads.set([UserUploadFactory(creator=user_with_perm)])
