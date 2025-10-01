@@ -21,6 +21,7 @@ from tests.serializer_helpers import (
                     "pk",
                     "name",
                     "files",
+                    "dicom_image_set",
                     "width",
                     "height",
                     "depth",

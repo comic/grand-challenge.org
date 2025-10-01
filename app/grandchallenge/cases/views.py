@@ -1,15 +1,21 @@
+import json
 from functools import reduce
 from operator import or_
 
+import boto3
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
 from django.conf import settings
 from django.db.models import Q
 from django.forms import HiddenInput
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views import View
 from django.views.generic import DetailView, ListView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
+from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.mixins import (
     CreateModelMixin,
     ListModelMixin,
@@ -37,6 +43,7 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
+from grandchallenge.serving.models import Download
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.uploads.widgets import UserUploadMultipleWidget
@@ -84,7 +91,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
     queryset = (
         Image.objects.all()
         .prefetch_related("files")
-        .select_related("modality")
+        .select_related("modality", "dicom_image_set")
     )
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = (DjangoFilterBackend, ViewObjectPermissionsFilter)
@@ -93,6 +100,65 @@ class ImageViewSet(ReadOnlyModelViewSet):
         *api_settings.DEFAULT_RENDERER_CLASSES,
         PaginatedCSVRenderer,
     )
+
+    @staticmethod
+    def serialize_aws_request(request):
+        return {
+            "url": request.url,
+            "method": request.method,
+            "data": request.data,
+            "headers": dict(request.headers.items()),
+        }
+
+    @action(detail=True, url_path="dicom")
+    def dicom(self, request, pk=None):
+        image = self.get_object()
+
+        if not image.dicom_image_set:
+            raise NotFound("This image does not have a DICOM Image Set.")
+
+        Download.objects.create(creator=self.request.user, image=image)
+
+        session = boto3.Session(
+            region_name=settings.AWS_DEFAULT_REGION,
+        )
+        medical_imaging_auth = SigV4Auth(
+            credentials=session.get_credentials(),
+            service_name="medical-imaging",
+            region_name=settings.AWS_DEFAULT_REGION,
+        )
+
+        image_set_url = f"https://runtime-medical-imaging.{settings.AWS_DEFAULT_REGION}.amazonaws.com/datastore/{settings.AWS_HEALTH_IMAGING_DATASTORE_ID}/imageSet/{image.dicom_image_set.image_set_id}"
+
+        image_frame_requests = {}
+
+        for frame_id in image.dicom_image_set.image_frame_ids:
+            frame_request = AWSRequest(
+                method="POST",
+                url=f"{image_set_url}/getImageFrame",
+                data=json.dumps({"imageFrameId": frame_id}),
+            )
+            medical_imaging_auth.add_auth(frame_request)
+
+            image_frame_requests[frame_id] = self.serialize_aws_request(
+                frame_request
+            )
+
+        metadata_request = AWSRequest(
+            method="POST",
+            url=f"{image_set_url}/getImageSetMetadata",
+            data=json.dumps({"versionId": "1"}),
+        )
+        medical_imaging_auth.add_auth(metadata_request)
+
+        return JsonResponse(
+            {
+                "get_image_set_metadata": self.serialize_aws_request(
+                    metadata_request
+                ),
+                "get_image_frames": image_frame_requests,
+            }
+        )
 
 
 class RawImageUploadSessionViewSet(

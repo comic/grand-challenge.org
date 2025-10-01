@@ -1,4 +1,7 @@
+import gzip
+import json
 import uuid
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -27,6 +30,7 @@ from tests.cases_tests.factories import (
     ImageFactoryWithImageFile4D,
     ImageFileFactoryWithMHDFile,
     ImageFileFactoryWithRAWFile,
+    fake_image_frame_id,
 )
 from tests.factories import ImageFileFactory
 from tests.uploads_tests.factories import UserUploadFactory
@@ -606,13 +610,61 @@ def test_delete_healthimaging_image_set_post_delete_dicom_image_set(
 def test_convert_image_set_to_internal(mocker):
     dicom_image_set_upload = DICOMImageSetUploadFactory()
     image_set_id = "e616d1f717da6f80fed6271ad184b7f0"
+    image_frame_ids = [fake_image_frame_id() for _ in range(4)]
 
     assert Image.objects.count() == 0
     assert DICOMImageSet.objects.count() == 0
 
-    dicom_image_set_upload.convert_image_set_to_internal(
-        image_set_id=image_set_id,
-    )
+    with (
+        Stubber(dicom_image_set_upload._health_imaging_client) as s,
+        BytesIO() as buffer,
+    ):
+        content = json.dumps(
+            {
+                "Study": {
+                    "Series": {
+                        "foo": {
+                            "Instances": {
+                                "bar": {
+                                    "ImageFrames": [
+                                        {"ID": image_frame_ids[0]},
+                                        {"ID": image_frame_ids[1]},
+                                    ]
+                                },
+                                "baz": {
+                                    "ImageFrames": [{"ID": image_frame_ids[2]}]
+                                },
+                            }
+                        },
+                        "foobar": {
+                            "Instances": {
+                                "bar": {
+                                    "ImageFrames": [
+                                        {"ID": image_frame_ids[3]},
+                                    ]
+                                },
+                            }
+                        },
+                    }
+                }
+            }
+        ).encode("utf-8")
+
+        buffer.write(gzip.compress(data=content))
+        buffer.seek(0)
+
+        s.add_response(
+            method="get_image_set_metadata",
+            service_response={"imageSetMetadataBlob": buffer},
+            expected_params={
+                "datastoreId": settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+                "imageSetId": image_set_id,
+                "versionId": "1",
+            },
+        )
+        dicom_image_set_upload.convert_image_set_to_internal(
+            image_set_id=image_set_id,
+        )
 
     assert Image.objects.count() == 1
     assert DICOMImageSet.objects.count() == 1
@@ -620,6 +672,7 @@ def test_convert_image_set_to_internal(mocker):
     dicom_image_set = DICOMImageSet.objects.first()
 
     assert dicom_image_set.image_set_id == image_set_id
+    assert dicom_image_set.image_frame_ids == image_frame_ids
 
     image = Image.objects.first()
 
