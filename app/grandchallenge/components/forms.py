@@ -176,7 +176,11 @@ class MultipleCIVForm(Form):
             # we need to pass in the initial value explicitly, for all other
             # fields the value in self.data is picked up automatically
             if prefixed_interface_slug in self.data and (
-                interface.is_image_kind or interface.requires_file
+                interface.super_kind
+                in (
+                    interface.SuperKind.FILE,
+                    interface.SuperKind.IMAGE,
+                )
             ):
                 try:
                     current_value = self.data.getlist(prefixed_interface_slug)
@@ -215,7 +219,10 @@ class MultipleCIVForm(Form):
                 # FlexibleFileWidget we need
                 # to pass in the initial value explicitly, for all other
                 # fields the value in self.data is picked up automatically
-                if interface.is_image_kind or interface.requires_file:
+                if interface.super_kind in (
+                    interface.SuperKind.FILE,
+                    interface.SuperKind.IMAGE,
+                ):
                     try:
                         current_value = self.data.getlist(slug)
                         if len(current_value) == 1:
