@@ -177,7 +177,7 @@ class UserProfile(models.Model):
         elif subscription_type == EmailSubscriptionTypes.SYSTEM:
             return None
         else:
-            return NotImplementedError(
+            raise NotImplementedError(
                 f"Unknown subscription type: {subscription_type}"
             )
 

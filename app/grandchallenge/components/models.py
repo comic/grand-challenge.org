@@ -2303,7 +2303,7 @@ class CIVData:
         ):
             self._json_value = self._initial_value
         else:
-            ValidationError(
+            raise ValidationError(
                 f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
             )
 
@@ -2329,7 +2329,7 @@ class CIVData:
         elif self._initial_value is None:
             self._file_civ = None
         else:
-            return ValidationError(
+            raise ValidationError(
                 f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
             )
 
@@ -2471,7 +2471,7 @@ class CIVForObjectMixin:
                 linked_task=linked_task,
             )
         else:
-            NotImplementedError(f"CIV creation for {ci} not handled.")
+            raise NotImplementedError(f"CIV creation for {ci} not handled.")
 
     def create_civ_for_value(
         self, *, ci, current_civ, new_value, user, linked_task=None
@@ -2660,7 +2660,7 @@ class CIVForObjectMixin:
         elif isinstance(self, (ArchiveItem, DisplaySet)) and not linked_object:
             return FallbackCIVValidationErrorHandler()
         else:
-            return RuntimeError("No appropriate error handler found.")
+            raise RuntimeError("No appropriate error handler found.")
 
 
 class InterfacesAndValues(NamedTuple):

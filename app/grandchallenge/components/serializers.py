@@ -162,7 +162,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                     f"kind {interface.kind}"
                 )
         else:
-            NotImplementedError(f"Unsupported interface {interface}")
+            raise NotImplementedError(f"Unsupported interface {interface}")
 
         if not attrs.get("upload_session") and not attrs.get("user_upload"):
             # Instances without an image or a file are never valid, this will be checked
