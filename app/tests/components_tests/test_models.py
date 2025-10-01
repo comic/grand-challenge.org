@@ -57,39 +57,74 @@ from tests.utils import create_raw_upload_image_session
 @pytest.mark.parametrize("kind", InterfaceKindChoices)
 def test_clean_store_in_db_false(kind):
     ci = ComponentInterface(kind=kind, store_in_database=False)
+
     ci._clean_store_in_database()
+    assert True  # no exception raised
 
 
 def interface_kind_choices_allow_store_in_db():
     return (
-        [(choice, False) for choice in InterfaceKind.interface_kind_image()]
-        + [(choice, False) for choice in InterfaceKind.interface_kind_file()]
+        [
+            (InterfaceKindChoices.STRING, nullcontext()),
+            (InterfaceKindChoices.INTEGER, nullcontext()),
+            (InterfaceKindChoices.FLOAT, nullcontext()),
+            (InterfaceKindChoices.BOOL, nullcontext()),
+            (InterfaceKindChoices.TWO_D_BOUNDING_BOX, nullcontext()),
+            (InterfaceKindChoices.DISTANCE_MEASUREMENT, nullcontext()),
+            (InterfaceKindChoices.POINT, nullcontext()),
+            (InterfaceKindChoices.POLYGON, nullcontext()),
+            (InterfaceKindChoices.CHOICE, nullcontext()),
+            (InterfaceKindChoices.MULTIPLE_CHOICE, nullcontext()),
+            (InterfaceKindChoices.ANY, nullcontext()),
+            (InterfaceKindChoices.CHART, nullcontext()),
+            (InterfaceKindChoices.LINE, nullcontext()),
+            (InterfaceKindChoices.ANGLE, nullcontext()),
+            (InterfaceKindChoices.ELLIPSE, nullcontext()),
+            (InterfaceKindChoices.THREE_POINT_ANGLE, nullcontext()),
+            (
+                InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+                pytest.raises(ValidationError),
+            ),
+            (
+                InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+                pytest.raises(ValidationError),
+            ),
+            (
+                InterfaceKindChoices.MULTIPLE_POINTS,
+                pytest.raises(ValidationError),
+            ),
+            (
+                InterfaceKindChoices.MULTIPLE_POLYGONS,
+                pytest.raises(ValidationError),
+            ),
+            (
+                InterfaceKindChoices.MULTIPLE_LINES,
+                pytest.raises(ValidationError),
+            ),
+            (
+                InterfaceKindChoices.MULTIPLE_ANGLES,
+                pytest.raises(ValidationError),
+            ),
+            (
+                InterfaceKindChoices.MULTIPLE_ELLIPSES,
+                pytest.raises(ValidationError),
+            ),
+            (
+                InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+                pytest.raises(ValidationError),
+            ),
+            (
+                InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
+                pytest.raises(ValidationError),
+            ),
+        ]
         + [
-            (InterfaceKindChoices.STRING, True),
-            (InterfaceKindChoices.INTEGER, True),
-            (InterfaceKindChoices.FLOAT, True),
-            (InterfaceKindChoices.BOOL, True),
-            (InterfaceKindChoices.TWO_D_BOUNDING_BOX, True),
-            (InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES, False),
-            (InterfaceKindChoices.DISTANCE_MEASUREMENT, True),
-            (InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS, False),
-            (InterfaceKindChoices.POINT, True),
-            (InterfaceKindChoices.MULTIPLE_POINTS, False),
-            (InterfaceKindChoices.POLYGON, True),
-            (InterfaceKindChoices.MULTIPLE_POLYGONS, False),
-            (InterfaceKindChoices.CHOICE, True),
-            (InterfaceKindChoices.MULTIPLE_CHOICE, True),
-            (InterfaceKindChoices.ANY, True),
-            (InterfaceKindChoices.CHART, True),
-            (InterfaceKindChoices.LINE, True),
-            (InterfaceKindChoices.MULTIPLE_LINES, False),
-            (InterfaceKindChoices.ANGLE, True),
-            (InterfaceKindChoices.MULTIPLE_ANGLES, False),
-            (InterfaceKindChoices.ELLIPSE, True),
-            (InterfaceKindChoices.MULTIPLE_ELLIPSES, False),
-            (InterfaceKindChoices.THREE_POINT_ANGLE, True),
-            (InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES, False),
-            (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, True),
+            (choice, pytest.raises(ValidationError))
+            for choice in InterfaceKind.interface_kind_image()
+        ]
+        + [
+            (choice, pytest.raises(ValidationError))
+            for choice in InterfaceKind.interface_kind_file()
         ]
     )
 
@@ -101,17 +136,14 @@ def test_all_interface_kind_choices_covered_for_allow_store_in_db():
 
 
 @pytest.mark.parametrize(
-    "kind, allow_store_in_db",
+    "kind, expectation",
     interface_kind_choices_allow_store_in_db(),
 )
-def test_clean_store_in_db_true(kind, allow_store_in_db):
+def test_clean_store_in_db_true(kind, expectation):
     ci = ComponentInterface(kind=kind, store_in_database=True)
 
-    if allow_store_in_db:
+    with expectation:
         ci._clean_store_in_database()
-    else:
-        with pytest.raises(ValidationError):
-            ci._clean_store_in_database()
 
 
 def test_all_interfaces_in_schema():
