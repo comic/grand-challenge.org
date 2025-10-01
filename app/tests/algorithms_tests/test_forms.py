@@ -27,7 +27,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentJob,
     ImportStatusChoices,
-    InterfaceKind,
+    InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.core.utils.access_requests import (
@@ -862,7 +862,7 @@ class TestJobCreateForm:
 @pytest.mark.django_db
 def test_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
     ci_json_in_db_without_schema = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        kind=InterfaceKindChoices.ANY,
         store_in_database=True,
     )
     interface = AlgorithmInterfaceFactory(

@@ -27,7 +27,6 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
     ImportStatusChoices,
-    InterfaceKind,
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -1045,7 +1044,7 @@ def test_create_job_with_json_file(
     VerificationFactory(user=editor, is_verified=True)
     ai.algorithm.add_editor(editor)
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=False
+        kind=InterfaceKindChoices.ANY, store_in_database=False
     )
     interface = AlgorithmInterfaceFactory(
         inputs=[ci],
@@ -1101,7 +1100,7 @@ def test_algorithm_job_create_with_image_input(
     VerificationFactory(user=editor, is_verified=True)
     ai.algorithm.add_editor(editor)
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE,
+        kind=InterfaceKindChoices.PANIMG_IMAGE,
         store_in_database=False,
     )
     interface = AlgorithmInterfaceFactory(
@@ -1783,7 +1782,7 @@ def test_job_time_limit(client):
     algorithm.add_editor(user=user)
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
+        kind=InterfaceKindChoices.ANY, store_in_database=True
     )
     interface = AlgorithmInterfaceFactory(
         inputs=[ci], outputs=[ComponentInterfaceFactory()]
@@ -1834,7 +1833,7 @@ def test_job_gpu_type_set(client, settings):
     algorithm.add_editor(user=user)
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
+        kind=InterfaceKindChoices.ANY, store_in_database=True
     )
     interface = AlgorithmInterfaceFactory(
         inputs=[ci], outputs=[ComponentInterfaceFactory()]
@@ -1888,7 +1887,7 @@ def test_job_gpu_type_set_with_api(client, settings):
     algorithm.add_editor(user=user)
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY, store_in_database=True
+        kind=InterfaceKindChoices.ANY, store_in_database=True
     )
     interface = AlgorithmInterfaceFactory(
         inputs=[ci],
@@ -2051,9 +2050,7 @@ def test_job_create_denied_for_same_input_model_and_image(client):
     VerificationFactory(user=creator, is_verified=True)
     alg = AlgorithmFactory()
     alg.add_editor(user=creator)
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.PANIMG_IMAGE
-    )
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
     interface = AlgorithmInterfaceFactory(
         inputs=[ci], outputs=[ComponentInterfaceFactory()]
     )

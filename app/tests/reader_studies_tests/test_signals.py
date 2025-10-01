@@ -2,7 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
-from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.models import InterfaceKindChoices
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -20,9 +20,7 @@ from tests.reader_studies_tests.factories import (
 @pytest.mark.django_db
 def test_assert_modification_allowed():
     rs = ReaderStudyFactory()
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     civ = ComponentInterfaceValueFactory(interface=ci, value=True)
     ds = DisplaySetFactory(reader_study=rs)
     ds.values.add(civ)
