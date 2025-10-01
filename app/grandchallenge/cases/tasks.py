@@ -610,8 +610,6 @@ def delete_healthimaging_image_set(*, image_set_id):
         pass  # image set already deleted
     except health_imaging_client.exceptions.ThrottlingException as e:
         raise RetryStep("Request throttled") from e
-    except ClientError:
-        logger.error("Couldn't delete image set", exc_info=True)
 
 
 @acks_late_micro_short_task
@@ -637,5 +635,3 @@ def revert_image_set_to_initial_version(*, image_set_id, version_id):
             == "Requested version(s) of ImageSet(s) is not the latest."
         ):
             pass  # already updated
-        else:
-            logger.error("Couldn't update image set metadata.", exc_info=True)
