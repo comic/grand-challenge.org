@@ -63,7 +63,7 @@ def test_clean_store_in_db_false(kind):
 
 
 def interface_kind_choices_allow_store_in_db():
-    return (
+    return sorted(
         [
             (InterfaceKindChoices.STRING, nullcontext()),
             (InterfaceKindChoices.INTEGER, nullcontext()),
