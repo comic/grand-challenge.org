@@ -1250,7 +1250,7 @@ class ComponentInterfaceValueManager(models.Manager):
             return self.filter(**kwargs).first(), False
 
 
-class ComponentInterfaceValue(models.Model):
+class ComponentInterfaceValue(models.Model, FieldChangeMixin):
     """Encapsulates the value of an interface at a certain point in the graph."""
 
     id = models.BigAutoField(primary_key=True)
@@ -1380,33 +1380,23 @@ class ComponentInterfaceValue(models.Model):
         else:
             return f"Component Interface Value {self.pk} for {self.interface}"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._value_orig = self.value
-        self._image_orig = self._meta.get_field("image").value_from_object(
-            self
-        )
-        self._file_orig = self.file
-
     def save(self, *args, **kwargs):
         if (
             (
-                self._value_orig not in (None, self.interface.default_value)
+                self.initial_value("value")
+                not in (None, self.interface.default_value)
                 and self.value is not None
-                and self._value_orig != self.value
+                and self.has_changed("value")
             )
-            or (self._image_orig and self._image_orig != self.image.pk)
-            or (
-                self._file_orig.name not in (None, "")
-                and self._file_orig != self.file
-            )
+            or (self.initial_value("image") and self.has_changed("image"))
+            or (self.initial_value("file") and self.has_changed("file"))
         ):
             raise ValidationError(
                 "You cannot change the value, file or image of an existing CIV. "
                 "Please create a new CIV instead."
             )
 
-        if self._file_orig != self.file:
+        if self.has_changed("file"):
             self.update_size_in_storage()
 
         super().save(*args, **kwargs)
