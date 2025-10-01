@@ -507,18 +507,11 @@ class ComponentInterface(OverlaySegmentsMixin):
             return InterfaceSuperKindChoices.FILE
 
     @property
-    def requires_file(self):
-        return (
-            self.is_file_kind
-            or self.is_json_kind
-            and not self.store_in_database
-        )
-
-    @property
     def default_field(self):
-        if self.requires_file:
-            return ModelChoiceField
-        elif self.is_image_kind:
+        if self.super_kind in (
+            InterfaceSuperKindChoices.FILE,
+            InterfaceSuperKindChoices.IMAGE,
+        ):
             return ModelChoiceField
         elif self.kind in {
             InterfaceKind.InterfaceKindChoices.STRING,
@@ -682,7 +675,10 @@ class ComponentInterface(OverlaySegmentsMixin):
             )
 
     def _clean_default_value(self):
-        if self.requires_file and self.default_value:
+        if (
+            self.super_kind == InterfaceSuperKindChoices.FILE
+            and self.default_value
+        ):
             raise ValidationError(
                 "A socket that requires a file should not have a default value"
             )

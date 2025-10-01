@@ -74,20 +74,20 @@ class InterfaceFormFieldFactory:
             "label": interface.title.title(),
         }
 
-        if interface.is_image_kind:
+        if interface.super_kind == interface.SuperKind.IMAGE:
             return FlexibleImageField(
                 user=user,
                 initial=initial,
                 **kwargs,
             )
-        elif interface.requires_file:
+        elif interface.super_kind == interface.SuperKind.FILE:
             return FlexibleFileField(
                 user=user,
                 interface=interface,
                 initial=initial,
                 **kwargs,
             )
-        elif interface.is_json_kind:
+        elif interface.super_kind == interface.SuperKind.VALUE:
             return cls.get_json_field(
                 interface=interface,
                 initial=initial,
