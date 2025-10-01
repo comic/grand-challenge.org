@@ -24,7 +24,10 @@ from grandchallenge.components.forms import (
     CIVSetUpdateFormMixin,
     MultipleCIVForm,
 )
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKindSets,
+)
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -223,7 +226,7 @@ class AddCasesForm(UploadRawImagesForm):
         qs = (
             ComponentInterface.objects.all()
             .filter(
-                kind__in=InterfaceKind.interface_kind_image(),
+                kind__in=InterfaceKindSets.image_kinds,
                 **socket_filter_kwargs,
             )
             .order_by("title")
