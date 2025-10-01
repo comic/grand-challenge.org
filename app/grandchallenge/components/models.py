@@ -515,10 +515,6 @@ class ComponentInterface(OverlaySegmentsMixin):
         )
 
     @property
-    def requires_value(self):
-        return self.is_json_kind and self.store_in_database
-
-    @property
     def default_field(self):
         if self.requires_file:
             return ModelChoiceField
@@ -703,7 +699,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         value_required = True
         if self.kind == InterfaceKindChoices.BOOL:
             value_required = False
-        elif not self.is_image_kind and not self.requires_file:
+        elif self.super_kind == InterfaceSuperKindChoices.VALUE:
             try:
                 self.validate_against_schema(value=None)
                 value_required = False
@@ -2294,11 +2290,11 @@ class CIVData:
 
         ci = ComponentInterface.objects.get(slug=interface_slug)
 
-        if ci.requires_value:
+        if ci.super_kind == ci.SuperKind.VALUE:
             self._init_json_civ_data()
-        elif ci.is_image_kind:
+        elif ci.super_kind == ci.SuperKind.IMAGE:
             self._init_image_civ_data()
-        elif ci.requires_file:
+        elif ci.super_kind == ci.SuperKind.FILE:
             self._init_file_civ_data()
 
         self.validate()
@@ -2451,7 +2447,7 @@ class CIVForObjectMixin:
             interface=ci, user=user
         )
 
-        if ci.requires_value:
+        if ci.super_kind == ci.SuperKind.VALUE:
             return self.create_civ_for_value(
                 ci=ci,
                 current_civ=current_civ,
@@ -2459,7 +2455,7 @@ class CIVForObjectMixin:
                 user=user,
                 linked_task=linked_task,
             )
-        elif ci.is_image_kind:
+        elif ci.super_kind == ci.SuperKind.IMAGE:
             return self.create_civ_for_image(
                 ci=ci,
                 current_civ=current_civ,
@@ -2469,7 +2465,7 @@ class CIVForObjectMixin:
                 user_upload_queryset=civ_data.user_upload_queryset,
                 linked_task=linked_task,
             )
-        elif ci.requires_file:
+        elif ci.super_kind == ci.SuperKind.FILE:
             return self.create_civ_for_file(
                 ci=ci,
                 current_civ=current_civ,
