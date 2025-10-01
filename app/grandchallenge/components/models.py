@@ -500,13 +500,12 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def super_kind(self):
-        if self.saved_in_object_store:
-            if self.is_image_kind:
-                return InterfaceSuperKindChoices.IMAGE
-            else:
-                return InterfaceSuperKindChoices.FILE
-        else:
+        if self.is_image_kind:
+            return InterfaceSuperKindChoices.IMAGE
+        elif self.is_json_kind and self.store_in_database:
             return InterfaceSuperKindChoices.VALUE
+        else:
+            return InterfaceSuperKindChoices.FILE
 
     @property
     def saved_in_object_store(self):
