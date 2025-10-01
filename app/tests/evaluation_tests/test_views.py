@@ -22,7 +22,6 @@ from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
     ImportStatusChoices,
-    InterfaceKind,
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -118,9 +117,7 @@ def algorithm_phase_with_multiple_inputs():
         is_desired_version=True,
     )
 
-    alg_in = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.STRING
-    )
+    alg_in = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     interface = AlgorithmInterfaceFactory(
         inputs=[alg_in],
         outputs=[ComponentInterfaceFactory()],
@@ -158,20 +155,16 @@ def algorithm_phase_with_multiple_inputs():
     )
 
     # create interfaces of different kinds
-    ci_str = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.STRING
-    )
-    ci_bool = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     ci_img_upload = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+        kind=InterfaceKindChoices.PANIMG_IMAGE
     )
     ci_existing_img = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+        kind=InterfaceKindChoices.PANIMG_IMAGE
     )
     ci_json_in_db_with_schema = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        kind=InterfaceKindChoices.ANY,
         store_in_database=True,
         schema={
             "$schema": "http://json-schema.org/draft-07/schema",
@@ -179,7 +172,7 @@ def algorithm_phase_with_multiple_inputs():
         },
     )
     ci_json_file = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        kind=InterfaceKindChoices.ANY,
         store_in_database=False,
         schema={
             "$schema": "http://json-schema.org/draft-07/schema",
@@ -3058,7 +3051,7 @@ def test_phase_starter_kit_detail(client):
             AlgorithmInterfaceFactory(
                 inputs=[
                     ComponentInterfaceFactory(
-                        kind=ComponentInterface.Kind.IMAGE
+                        kind=ComponentInterface.Kind.PANIMG_IMAGE
                     ),
                 ],
                 outputs=[
@@ -3113,7 +3106,7 @@ def test_phase_starter_kit_download(client):
             AlgorithmInterfaceFactory(
                 inputs=[
                     ComponentInterfaceFactory(
-                        kind=ComponentInterface.Kind.IMAGE
+                        kind=ComponentInterface.Kind.PANIMG_IMAGE
                     ),
                 ],
                 outputs=[

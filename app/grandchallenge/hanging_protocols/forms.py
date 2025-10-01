@@ -190,22 +190,22 @@ class ViewContentExampleMixin:
         images = [
             interface.slug
             for interface in sorted_interfaces
-            if interface.kind == InterfaceKindChoices.IMAGE
+            if interface.kind == InterfaceKindChoices.PANIMG_IMAGE
         ]
         mandatory_isolation_interfaces = [
             interface.slug
             for interface in sorted_interfaces
             if interface.kind
-            in InterfaceKind.interface_type_mandatory_isolation()
+            in InterfaceKind.interface_kind_mandatory_isolation()
         ]
         overlays = [
             interface.slug
             for interface in sorted_interfaces
             if interface.kind
             not in (
-                *InterfaceKind.interface_type_undisplayable(),
-                *InterfaceKind.interface_type_mandatory_isolation(),
-                InterfaceKindChoices.IMAGE,
+                *InterfaceKind.interface_kind_undisplayable(),
+                *InterfaceKind.interface_kind_mandatory_isolation(),
+                InterfaceKindChoices.PANIMG_IMAGE,
             )
         ]
         return InterfaceLists(

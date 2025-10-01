@@ -131,10 +131,10 @@ class InterfaceKindChoices(models.TextChoices):
     MULTIPLE_CHOICE = "MCHO", _("Multiple choice")
 
     # Image types
-    IMAGE = "IMG", _("Image")
-    SEGMENTATION = "SEG", _("Segmentation")
-    HEAT_MAP = "HMAP", _("Heat Map")
-    DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
+    PANIMG_IMAGE = "IMG", _("Image")
+    PANIMG_SEGMENTATION = "SEG", _("Segmentation")
+    PANIMG_HEAT_MAP = "HMAP", _("Heat Map")
+    PANIMG_DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
     DICOM_IMAGE_SET = "DCMIS", _("DICOM Image Set")
 
     # File types
@@ -159,12 +159,9 @@ class InterfaceSuperKindChoices(models.TextChoices):
 
 
 class InterfaceKind:
-    """Interface kind choices."""
-
-    InterfaceKindChoices = InterfaceKindChoices
 
     @staticmethod
-    def interface_type_json():
+    def interface_kind_json():
         """Interface kinds that are json serializable:
 
         * String
@@ -202,9 +199,9 @@ class InterfaceKind:
             os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
             django.setup()
 
-            from grandchallenge.components.models import INTERFACE_TYPE_JSON_EXAMPLES
+            from grandchallenge.components.models import INTERFACE_KIND_JSON_EXAMPLES
 
-            for key, example in INTERFACE_TYPE_JSON_EXAMPLES.items():
+            for key, example in INTERFACE_KIND_JSON_EXAMPLES.items():
                 title = f"Example JSON file contents for {key.label}"
 
                 if example.extra_info:
@@ -216,35 +213,35 @@ class InterfaceKind:
 
         """
         return {
-            InterfaceKind.InterfaceKindChoices.STRING,
-            InterfaceKind.InterfaceKindChoices.INTEGER,
-            InterfaceKind.InterfaceKindChoices.FLOAT,
-            InterfaceKind.InterfaceKindChoices.BOOL,
-            InterfaceKind.InterfaceKindChoices.TWO_D_BOUNDING_BOX,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-            InterfaceKind.InterfaceKindChoices.DISTANCE_MEASUREMENT,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-            InterfaceKind.InterfaceKindChoices.POINT,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
-            InterfaceKind.InterfaceKindChoices.POLYGON,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
-            InterfaceKind.InterfaceKindChoices.CHOICE,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
-            InterfaceKind.InterfaceKindChoices.ANY,
-            InterfaceKind.InterfaceKindChoices.CHART,
-            InterfaceKind.InterfaceKindChoices.LINE,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
-            InterfaceKind.InterfaceKindChoices.ANGLE,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
-            InterfaceKind.InterfaceKindChoices.ELLIPSE,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
-            InterfaceKind.InterfaceKindChoices.THREE_POINT_ANGLE,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
-            InterfaceKind.InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
+            InterfaceKindChoices.STRING,
+            InterfaceKindChoices.INTEGER,
+            InterfaceKindChoices.FLOAT,
+            InterfaceKindChoices.BOOL,
+            InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+            InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+            InterfaceKindChoices.DISTANCE_MEASUREMENT,
+            InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+            InterfaceKindChoices.POINT,
+            InterfaceKindChoices.MULTIPLE_POINTS,
+            InterfaceKindChoices.POLYGON,
+            InterfaceKindChoices.MULTIPLE_POLYGONS,
+            InterfaceKindChoices.CHOICE,
+            InterfaceKindChoices.MULTIPLE_CHOICE,
+            InterfaceKindChoices.ANY,
+            InterfaceKindChoices.CHART,
+            InterfaceKindChoices.LINE,
+            InterfaceKindChoices.MULTIPLE_LINES,
+            InterfaceKindChoices.ANGLE,
+            InterfaceKindChoices.MULTIPLE_ANGLES,
+            InterfaceKindChoices.ELLIPSE,
+            InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            InterfaceKindChoices.THREE_POINT_ANGLE,
+            InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+            InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
         }
 
     @staticmethod
-    def interface_type_image():
+    def interface_kind_image():
         """Interface kinds that are images:
 
         * Image
@@ -254,15 +251,15 @@ class InterfaceKind:
         * DICOM Image Set
         """
         return {
-            InterfaceKind.InterfaceKindChoices.IMAGE,
-            InterfaceKind.InterfaceKindChoices.HEAT_MAP,
-            InterfaceKind.InterfaceKindChoices.SEGMENTATION,
-            InterfaceKind.InterfaceKindChoices.DISPLACEMENT_FIELD,
-            InterfaceKind.InterfaceKindChoices.DICOM_IMAGE_SET,
+            InterfaceKindChoices.PANIMG_IMAGE,
+            InterfaceKindChoices.PANIMG_HEAT_MAP,
+            InterfaceKindChoices.PANIMG_SEGMENTATION,
+            InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD,
+            InterfaceKindChoices.DICOM_IMAGE_SET,
         }
 
     @staticmethod
-    def interface_type_file():
+    def interface_kind_file():
         """Interface kinds that are files:
 
         * CSV file
@@ -277,38 +274,38 @@ class InterfaceKind:
         * BIOM file
         """
         return {
-            InterfaceKind.InterfaceKindChoices.CSV,
-            InterfaceKind.InterfaceKindChoices.ZIP,
-            InterfaceKind.InterfaceKindChoices.PDF,
-            InterfaceKind.InterfaceKindChoices.SQREG,
-            InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
-            InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
-            InterfaceKind.InterfaceKindChoices.OBJ,
-            InterfaceKind.InterfaceKindChoices.MP4,
-            InterfaceKind.InterfaceKindChoices.NEWICK,
-            InterfaceKind.InterfaceKindChoices.BIOM,
+            InterfaceKindChoices.CSV,
+            InterfaceKindChoices.ZIP,
+            InterfaceKindChoices.PDF,
+            InterfaceKindChoices.SQREG,
+            InterfaceKindChoices.THUMBNAIL_JPG,
+            InterfaceKindChoices.THUMBNAIL_PNG,
+            InterfaceKindChoices.OBJ,
+            InterfaceKindChoices.MP4,
+            InterfaceKindChoices.NEWICK,
+            InterfaceKindChoices.BIOM,
         }
 
     @staticmethod
-    def interface_type_mandatory_isolation():
+    def interface_kind_mandatory_isolation():
         """Interfaces that can only be displayed in isolation."""
         return {
-            InterfaceKind.InterfaceKindChoices.CHART,
-            InterfaceKind.InterfaceKindChoices.PDF,
-            InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG,
-            InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
-            InterfaceKind.InterfaceKindChoices.MP4,
+            InterfaceKindChoices.CHART,
+            InterfaceKindChoices.PDF,
+            InterfaceKindChoices.THUMBNAIL_JPG,
+            InterfaceKindChoices.THUMBNAIL_PNG,
+            InterfaceKindChoices.MP4,
         }
 
     @staticmethod
-    def interface_type_undisplayable():
+    def interface_kind_undisplayable():
         """Interfaces that cannot be displayed."""
         return {
-            InterfaceKind.InterfaceKindChoices.CSV,
-            InterfaceKind.InterfaceKindChoices.ZIP,
-            InterfaceKind.InterfaceKindChoices.OBJ,
-            InterfaceKind.InterfaceKindChoices.NEWICK,
-            InterfaceKind.InterfaceKindChoices.BIOM,
+            InterfaceKindChoices.CSV,
+            InterfaceKindChoices.ZIP,
+            InterfaceKindChoices.OBJ,
+            InterfaceKindChoices.NEWICK,
+            InterfaceKindChoices.BIOM,
         }
 
 
@@ -394,7 +391,7 @@ class OverlaySegmentsMixin(models.Model):
 
 
 class ComponentInterface(OverlaySegmentsMixin):
-    Kind = InterfaceKind.InterfaceKindChoices
+    Kind = InterfaceKindChoices
     SuperKind = InterfaceSuperKindChoices
 
     title = models.CharField(
@@ -468,7 +465,7 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def is_image_kind(self):
-        return self.kind in InterfaceKind.interface_type_image()
+        return self.kind in InterfaceKind.interface_kind_image()
 
     @property
     def is_dicom_image_kind(self):
@@ -477,11 +474,11 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def is_json_kind(self):
-        return self.kind in InterfaceKind.interface_type_json()
+        return self.kind in InterfaceKind.interface_kind_json()
 
     @property
     def is_file_kind(self):
-        return self.kind in InterfaceKind.interface_type_file()
+        return self.kind in InterfaceKind.interface_kind_file()
 
     @property
     def is_thumbnail_kind(self):
@@ -504,7 +501,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         try:
             return self.example_value
         except ObjectDoesNotExist:
-            return INTERFACE_TYPE_JSON_EXAMPLES.get(self.kind)
+            return INTERFACE_KIND_JSON_EXAMPLES.get(self.kind)
 
     @property
     def super_kind(self):
@@ -544,15 +541,15 @@ class ComponentInterface(OverlaySegmentsMixin):
         elif self.is_image_kind:
             return ModelChoiceField
         elif self.kind in {
-            InterfaceKind.InterfaceKindChoices.STRING,
-            InterfaceKind.InterfaceKindChoices.CHOICE,
+            InterfaceKindChoices.STRING,
+            InterfaceKindChoices.CHOICE,
         }:
             return forms.CharField
-        elif self.kind == InterfaceKind.InterfaceKindChoices.INTEGER:
+        elif self.kind == InterfaceKindChoices.INTEGER:
             return forms.IntegerField
-        elif self.kind == InterfaceKind.InterfaceKindChoices.FLOAT:
+        elif self.kind == InterfaceKindChoices.FLOAT:
             return forms.FloatField
-        elif self.kind == InterfaceKind.InterfaceKindChoices.BOOL:
+        elif self.kind == InterfaceKindChoices.BOOL:
             return forms.BooleanField
         else:
             return forms.JSONField
@@ -606,7 +603,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         from grandchallenge.reader_studies.models import Question
 
         if (
-            self.kind == InterfaceKindChoices.SEGMENTATION
+            self.kind == InterfaceKindChoices.PANIMG_SEGMENTATION
             and not self.overlay_segments
         ):
             raise ValidationError(
@@ -614,7 +611,7 @@ class ComponentInterface(OverlaySegmentsMixin):
             )
 
         if (
-            self.kind != InterfaceKindChoices.SEGMENTATION
+            self.kind != InterfaceKindChoices.PANIMG_SEGMENTATION
             and self.overlay_segments
         ):
             raise ValidationError(
@@ -674,18 +671,18 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     def _clean_store_in_database(self):
         object_store_required = self.kind in {
-            *InterfaceKind.interface_type_image(),
-            *InterfaceKind.interface_type_file(),
+            *InterfaceKind.interface_kind_image(),
+            *InterfaceKind.interface_kind_file(),
             # These values can be large, so for any new interfaces of this
             # type always add them to the object store
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
-            InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+            InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+            InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+            InterfaceKindChoices.MULTIPLE_POINTS,
+            InterfaceKindChoices.MULTIPLE_POLYGONS,
+            InterfaceKindChoices.MULTIPLE_LINES,
+            InterfaceKindChoices.MULTIPLE_ANGLES,
+            InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
         }
 
         if object_store_required and self.store_in_database:
@@ -771,7 +768,7 @@ class ComponentInterfaceExampleValue(UUIDModel):
             )
 
 
-INTERFACE_TYPE_JSON_EXAMPLES = {
+INTERFACE_KIND_JSON_EXAMPLES = {
     InterfaceKindChoices.STRING: ComponentInterfaceExampleValue(
         value="Example String"
     ),
@@ -1233,7 +1230,7 @@ INTERFACE_KIND_TO_ALLOWED_FILE_TYPES = {
             "text/plain",
             "application/json",
         )
-        for kind in InterfaceKind.interface_type_json()
+        for kind in InterfaceKind.interface_kind_json()
     },
 }
 
@@ -1241,7 +1238,7 @@ INTERFACE_KIND_TO_ALLOWED_FILE_TYPES = {
 INTERFACE_KIND_TO_FILE_EXTENSION = {
     InterfaceKindChoices.CSV: ".csv",
     InterfaceKindChoices.ZIP: ".zip",
-    InterfaceKind.InterfaceKindChoices.PDF: ".pdf",
+    InterfaceKindChoices.PDF: ".pdf",
     InterfaceKindChoices.SQREG: ".sqreg",
     InterfaceKindChoices.THUMBNAIL_JPG: ".jpeg",
     InterfaceKindChoices.THUMBNAIL_PNG: ".png",
@@ -1249,7 +1246,7 @@ INTERFACE_KIND_TO_FILE_EXTENSION = {
     InterfaceKindChoices.MP4: ".mp4",
     InterfaceKindChoices.NEWICK: ".newick",
     InterfaceKindChoices.BIOM: ".biom",
-    **{kind: ".json" for kind in InterfaceKind.interface_type_json()},
+    **{kind: ".json" for kind in InterfaceKind.interface_kind_json()},
 }
 
 INTERFACE_KIND_TO_CUSTOM_QUEUE = {
@@ -1459,9 +1456,12 @@ class ComponentInterfaceValue(models.Model):
 
         if self.interface.is_image_kind:
             self._validate_image_only()
-            if self.interface.kind == InterfaceKindChoices.SEGMENTATION:
+            if self.interface.kind == InterfaceKindChoices.PANIMG_SEGMENTATION:
                 self.interface._validate_voxel_values(self.image)
-            if self.interface.kind == InterfaceKindChoices.DISPLACEMENT_FIELD:
+            if (
+                self.interface.kind
+                == InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD
+            ):
                 self.interface._validate_vector_field(self.image)
         elif self.interface.is_file_kind:
             self._validate_file_only()

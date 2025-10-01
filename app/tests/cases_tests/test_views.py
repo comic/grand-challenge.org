@@ -142,7 +142,7 @@ def test_image_search_view(client):
     assign_perm("cases.view_image", user, im2)
     im2.name = "test.mha"
     im2.save()
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
 
     response = get_view_for_user(
         viewname="cases:image-search",
@@ -176,7 +176,7 @@ def test_image_search_view(client):
 @pytest.mark.django_db
 def test_image_widget_select_view(client):
     user = UserFactory()
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
     response = get_view_for_user(
         viewname="cases:select-image-widget",
         client=client,
@@ -214,7 +214,7 @@ def test_image_widget_select_view(client):
 @pytest.mark.django_db
 def test_image_widget_select_view_image_selected_object_permission(client):
     user_with_perm, user_wo_perm = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
     prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
     image = ImageFactory()
     assign_perm("cases.view_image", user_with_perm, image)
@@ -253,7 +253,7 @@ def test_file_widget_select_view_file_selected_object_permission_user_upload(
     client,
 ):
     user, creator = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
     prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
     user_upload = UserUploadFactory(creator=creator)
 

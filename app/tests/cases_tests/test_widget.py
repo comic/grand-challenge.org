@@ -43,7 +43,7 @@ def test_flexible_image_field_validation():
     upload3.save()
     im1, im2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", user, im1)
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
     field = FlexibleImageField(user=user)
     parsed_value_for_empty_data = field.widget.value_from_datadict(
         data=QueryDict(""), name=ci.slug, files={}
@@ -147,7 +147,7 @@ def test_flexible_image_widget_prepopulated_value():
     user_with_perm, user_without_perm = UserFactory.create_batch(2)
     im = ImageFactory(name="test_image")
     assign_perm("cases.view_image", user_with_perm, im)
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
     civ = ComponentInterfaceValueFactory(interface=ci, image=im)
 
     field = InterfaceFormFieldFactory(
@@ -247,7 +247,7 @@ def test_dicom_upload_widget_prepopulated_value(mocker):
         dicom_image_set=DICOMImageSetFactory(dicom_image_set_upload=upload),
     )
     assign_perm("cases.view_image", user_with_perm, im)
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.IMAGE)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
     civ = ComponentInterfaceValueFactory(interface=ci, image=im)
 
     # fake DICOM ci for now

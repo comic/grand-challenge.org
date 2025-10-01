@@ -13,7 +13,7 @@ from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import (
-    INTERFACE_TYPE_JSON_EXAMPLES,
+    INTERFACE_KIND_JSON_EXAMPLES,
     CIVData,
     ComponentInterface,
     ComponentInterfaceExampleValue,
@@ -83,10 +83,10 @@ from tests.utils import create_raw_upload_image_session
         (InterfaceKindChoices.MULTIPLE_ELLIPSES, False, False),
         (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, False, False),
         # Image types
-        (InterfaceKindChoices.IMAGE, True, True),
-        (InterfaceKindChoices.HEAT_MAP, True, True),
-        (InterfaceKindChoices.SEGMENTATION, True, True),
-        (InterfaceKindChoices.DISPLACEMENT_FIELD, True, True),
+        (InterfaceKindChoices.PANIMG_IMAGE, True, True),
+        (InterfaceKindChoices.PANIMG_HEAT_MAP, True, True),
+        (InterfaceKindChoices.PANIMG_SEGMENTATION, True, True),
+        (InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD, True, True),
         # File types
         (InterfaceKindChoices.CSV, True, False),
         (InterfaceKindChoices.ZIP, True, False),
@@ -151,9 +151,9 @@ def test_saved_in_object_store(kind, object_store_required, is_image):
         (InterfaceKindChoices.MULTIPLE_ELLIPSES, True),
         (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, False),
         # Image types
-        (InterfaceKindChoices.IMAGE, True),
-        (InterfaceKindChoices.HEAT_MAP, True),
-        (InterfaceKindChoices.SEGMENTATION, True),
+        (InterfaceKindChoices.PANIMG_IMAGE, True),
+        (InterfaceKindChoices.PANIMG_HEAT_MAP, True),
+        (InterfaceKindChoices.PANIMG_SEGMENTATION, True),
         # File types
         (InterfaceKindChoices.CSV, True),
         (InterfaceKindChoices.ZIP, True),
@@ -182,15 +182,15 @@ def test_clean_store_in_db(kind, object_store_required):
 
 
 def test_all_interfaces_in_schema():
-    for i in InterfaceKind.interface_type_json():
+    for i in InterfaceKind.interface_kind_json():
         assert str(i) in INTERFACE_VALUE_SCHEMA["definitions"]
 
 
 def test_all_interfaces_covered():
     assert {str(i) for i in InterfaceKindChoices} == {
-        *InterfaceKind.interface_type_image(),
-        *InterfaceKind.interface_type_file(),
-        *InterfaceKind.interface_type_json(),
+        *InterfaceKind.interface_kind_image(),
+        *InterfaceKind.interface_kind_file(),
+        *InterfaceKind.interface_kind_json(),
     }
 
 
@@ -199,14 +199,14 @@ def test_all_interfaces_covered():
     (
         *(
             (k, nullcontext())
-            for k in sorted(InterfaceKind.interface_type_file())
+            for k in sorted(InterfaceKind.interface_kind_file())
         ),
         *(
             (k, nullcontext())
-            for k in sorted(InterfaceKind.interface_type_json())
+            for k in sorted(InterfaceKind.interface_kind_json())
         ),
         (
-            InterfaceKind.InterfaceKindChoices.IMAGE,
+            InterfaceKindChoices.PANIMG_IMAGE,
             pytest.raises(RuntimeError),
         ),
     ),
@@ -238,17 +238,17 @@ def test_no_uuid_validation():
 @pytest.mark.parametrize(
     "kind, good_suffix",
     (
-        (InterfaceKind.InterfaceKindChoices.CSV, "csv"),
-        (InterfaceKind.InterfaceKindChoices.ZIP, "zip"),
-        (InterfaceKind.InterfaceKindChoices.PDF, "pdf"),
-        (InterfaceKind.InterfaceKindChoices.SQREG, "sqreg"),
-        (InterfaceKind.InterfaceKindChoices.THUMBNAIL_JPG, "jpeg"),
-        (InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG, "png"),
-        (InterfaceKind.InterfaceKindChoices.OBJ, "obj"),
-        (InterfaceKind.InterfaceKindChoices.MP4, "mp4"),
-        (InterfaceKind.InterfaceKindChoices.NEWICK, "newick"),
-        (InterfaceKind.InterfaceKindChoices.BIOM, "biom"),
-        *((k, "json") for k in InterfaceKind.interface_type_json()),
+        (InterfaceKindChoices.CSV, "csv"),
+        (InterfaceKindChoices.ZIP, "zip"),
+        (InterfaceKindChoices.PDF, "pdf"),
+        (InterfaceKindChoices.SQREG, "sqreg"),
+        (InterfaceKindChoices.THUMBNAIL_JPG, "jpeg"),
+        (InterfaceKindChoices.THUMBNAIL_PNG, "png"),
+        (InterfaceKindChoices.OBJ, "obj"),
+        (InterfaceKindChoices.MP4, "mp4"),
+        (InterfaceKindChoices.NEWICK, "newick"),
+        (InterfaceKindChoices.BIOM, "biom"),
+        *((k, "json") for k in InterfaceKind.interface_kind_json()),
     ),
 )
 def test_relative_path_file_ending(kind, good_suffix):
@@ -268,9 +268,9 @@ def test_relative_path_file_ending(kind, good_suffix):
 @pytest.mark.parametrize(
     "kind,image,file,value",
     (
-        (InterfaceKindChoices.IMAGE, True, True, None),
-        (InterfaceKindChoices.IMAGE, True, None, True),
-        (InterfaceKindChoices.IMAGE, True, True, True),
+        (InterfaceKindChoices.PANIMG_IMAGE, True, True, None),
+        (InterfaceKindChoices.PANIMG_IMAGE, True, None, True),
+        (InterfaceKindChoices.PANIMG_IMAGE, True, True, True),
         (InterfaceKindChoices.CSV, True, True, None),
         (InterfaceKindChoices.CSV, None, True, True),
         (InterfaceKindChoices.CSV, True, True, True),
@@ -299,7 +299,7 @@ def test_multi_value_fails(kind, image, file, value):
 @pytest.mark.parametrize(
     "kind",
     (
-        InterfaceKindChoices.IMAGE,
+        InterfaceKindChoices.PANIMG_IMAGE,
         InterfaceKindChoices.CSV,
         InterfaceKindChoices.BOOL,
         InterfaceKindChoices.STRING,
@@ -313,7 +313,7 @@ def test_civ_updating(kind):
     civ = ComponentInterfaceValueFactory(interface=ci)
 
     # updating from None or default value to a file, image, value works
-    if kind == InterfaceKindChoices.IMAGE:
+    if kind == InterfaceKindChoices.PANIMG_IMAGE:
         image = ImageFactory()
         civ.image = image
         civ.full_clean()
@@ -336,7 +336,7 @@ def test_civ_updating(kind):
 
     # updating existing values does not work
 
-    if kind == InterfaceKindChoices.IMAGE:
+    if kind == InterfaceKindChoices.PANIMG_IMAGE:
         image = ImageFactory()
         civ.image = image
     elif kind == InterfaceKindChoices.CSV:
@@ -1032,7 +1032,7 @@ def test_runtime_metrics_chart():
 @pytest.mark.django_db
 def test_clean_overlay_segments_with_values():
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.SEGMENTATION,
+        kind=InterfaceKindChoices.PANIMG_SEGMENTATION,
         overlay_segments=[{"name": "s1", "visible": True, "voxel_value": 1}],
     )
     ci._clean_overlay_segments()
@@ -1058,7 +1058,7 @@ def test_clean_overlay_segments_with_questions(reader_study_with_gt):
     assert question.interface is None
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.SEGMENTATION,
+        kind=InterfaceKindChoices.PANIMG_SEGMENTATION,
         relative_path="images/test",
         overlay_segments=[{"name": "s1", "visible": True, "voxel_value": 1}],
     )
@@ -1088,7 +1088,7 @@ def test_clean_overlay_segments():
         == "Overlay segments should only be set for segmentations"
     )
 
-    ci = ComponentInterface(kind=InterfaceKindChoices.SEGMENTATION)
+    ci = ComponentInterface(kind=InterfaceKindChoices.PANIMG_SEGMENTATION)
     with pytest.raises(ValidationError) as e:
         ci._clean_overlay_segments()
     assert e.value.message == "Overlay segments must be set for this interface"
@@ -1138,7 +1138,7 @@ def test_clean_overlay_segments():
 @pytest.mark.django_db
 def test_overlay_segments_can_be_extended(updated_segments, expectation):
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.SEGMENTATION,
+        kind=InterfaceKindChoices.PANIMG_SEGMENTATION,
         overlay_segments=[
             {"name": "s1", "visible": True, "voxel_value": 1},
             {"name": "s2", "visible": True, "voxel_value": 2},
@@ -1154,7 +1154,9 @@ def test_overlay_segments_can_be_extended(updated_segments, expectation):
 
 @pytest.mark.django_db
 def test_validate_voxel_values():
-    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.SEGMENTATION)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.PANIMG_SEGMENTATION
+    )
     im = ImageFactory(segments=None)
     assert ci._validate_voxel_values(im) is None
 
@@ -1585,7 +1587,7 @@ def test_displacement_field_validation(
     image = Image.objects.filter(origin=session).get()
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.DISPLACEMENT_FIELD
+        kind=InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD
     )
     civ = ComponentInterfaceValueFactory(interface=ci, image=image)
 
@@ -1640,7 +1642,7 @@ def test_ci_example_value(example_value, context):
 @pytest.mark.django_db
 def test_ci_example_value_non_json_kind_fail():
     v = ComponentInterfaceExampleValueFactory(
-        interface__kind=InterfaceKindChoices.IMAGE,
+        interface__kind=InterfaceKindChoices.PANIMG_IMAGE,
     )
 
     with pytest.raises(
@@ -1676,11 +1678,11 @@ def test_schema_must_be_valid_for_example_value():
             kind,
             example,
         )
-        for kind, example in INTERFACE_TYPE_JSON_EXAMPLES.items()
+        for kind, example in INTERFACE_KIND_JSON_EXAMPLES.items()
     ],
 )
 @pytest.mark.django_db
-def test_interface_kind_json_type_examples(kind, example):
+def test_interface_kind_json_kind_examples(kind, example):
     interface = ComponentInterfaceFactory(
         kind=kind, store_in_database=False, relative_path="test.json"
     )
@@ -1695,8 +1697,8 @@ def test_interface_kind_json_type_examples(kind, example):
 
 
 def test_all_examples_present():
-    assert set(INTERFACE_TYPE_JSON_EXAMPLES.keys()) == set(
-        InterfaceKind.interface_type_json()
+    assert set(INTERFACE_KIND_JSON_EXAMPLES.keys()) == set(
+        InterfaceKind.interface_kind_json()
     )
 
 
@@ -1844,7 +1846,7 @@ def test_inputs_json_reserved():
 @pytest.mark.django_db
 def test_no_default_value_allowed_when_file_required():
     i = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        kind=InterfaceKindChoices.ANY,
         relative_path="foo/bar.json",
         store_in_database=True,
         default_value="foobar",

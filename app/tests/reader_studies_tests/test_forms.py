@@ -16,7 +16,6 @@ from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.forms import SingleCIVForm
 from grandchallenge.components.models import (
     ComponentInterface,
-    InterfaceKind,
     InterfaceKindChoices,
 )
 from grandchallenge.components.widgets import FlexibleFileWidget
@@ -335,7 +334,7 @@ def test_question_update(client):
     assert question.interface is None
 
     ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.SEGMENTATION,
+        kind=InterfaceKindChoices.PANIMG_SEGMENTATION,
         overlay_segments=[
             {"name": "s1", "visible": True, "voxel_value": 0},
             {"name": "s2", "visible": True, "voxel_value": 1},
@@ -473,7 +472,7 @@ def test_question_update(client):
         (AnswerType.MULTIPLE_ANGLES, InterfaceKindChoices.MULTIPLE_ANGLES),
         (AnswerType.CHOICE, InterfaceKindChoices.CHOICE),
         (AnswerType.MULTIPLE_CHOICE, InterfaceKindChoices.MULTIPLE_CHOICE),
-        (AnswerType.MASK, InterfaceKindChoices.SEGMENTATION),
+        (AnswerType.MASK, InterfaceKindChoices.PANIMG_SEGMENTATION),
         (AnswerType.ELLIPSE, InterfaceKindChoices.ELLIPSE),
         (AnswerType.MULTIPLE_ELLIPSES, InterfaceKindChoices.MULTIPLE_ELLIPSES),
     ),
@@ -481,7 +480,7 @@ def test_question_update(client):
 def test_question_form_interface_field(answer_type, interface_kind):
     ci = ComponentInterfaceFactory(kind=interface_kind)
     ci_img = ComponentInterface.objects.filter(
-        kind=InterfaceKindChoices.IMAGE
+        kind=InterfaceKindChoices.PANIMG_IMAGE
     ).first()
     assert ci_img is not None
     form = QuestionForm(
@@ -1554,7 +1553,8 @@ def test_display_set_update_form_image_field_queryset_filters():
     user = UserFactory()
     rs.add_editor(user)
     ci_img = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE, title="image"
+        kind=InterfaceKindChoices.PANIMG_IMAGE,
+        title="image",
     )
     im1, im2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", user, im1)

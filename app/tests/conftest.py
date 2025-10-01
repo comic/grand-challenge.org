@@ -22,7 +22,10 @@ from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
     FileWidgetChoices,
 )
-from grandchallenge.components.models import ComponentInterface, InterfaceKind
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKindChoices,
+)
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
 from tests.algorithms_tests.factories import (
@@ -523,20 +526,16 @@ def algorithm_with_multiple_inputs():
     algorithm.add_editor(user=user)
 
     # create interfaces of different kinds
-    ci_str = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.STRING
-    )
-    ci_bool = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     ci_img_upload = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+        kind=InterfaceKindChoices.PANIMG_IMAGE
     )
     ci_existing_img = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.IMAGE
+        kind=InterfaceKindChoices.PANIMG_IMAGE
     )
     ci_json_in_db_with_schema = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        kind=InterfaceKindChoices.ANY,
         store_in_database=True,
         schema={
             "$schema": "http://json-schema.org/draft-07/schema",
@@ -544,7 +543,7 @@ def algorithm_with_multiple_inputs():
         },
     )
     ci_json_file = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.ANY,
+        kind=InterfaceKindChoices.ANY,
         store_in_database=False,
         schema={
             "$schema": "http://json-schema.org/draft-07/schema",

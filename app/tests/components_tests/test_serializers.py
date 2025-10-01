@@ -4,6 +4,7 @@ from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKind,
+    InterfaceKindChoices,
 )
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
@@ -268,26 +269,26 @@ def test_civ_post_objects_do_not_exist(civ, error_message):
 @pytest.mark.parametrize(
     "kind,",
     (
-        InterfaceKind.InterfaceKindChoices.STRING,
-        InterfaceKind.InterfaceKindChoices.INTEGER,
-        InterfaceKind.InterfaceKindChoices.FLOAT,
-        InterfaceKind.InterfaceKindChoices.BOOL,
-        InterfaceKind.InterfaceKindChoices.TWO_D_BOUNDING_BOX,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-        InterfaceKind.InterfaceKindChoices.DISTANCE_MEASUREMENT,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-        InterfaceKind.InterfaceKindChoices.POINT,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
-        InterfaceKind.InterfaceKindChoices.POLYGON,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
-        InterfaceKind.InterfaceKindChoices.LINE,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_LINES,
-        InterfaceKind.InterfaceKindChoices.ANGLE,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
-        InterfaceKind.InterfaceKindChoices.ELLIPSE,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
-        InterfaceKind.InterfaceKindChoices.THREE_POINT_ANGLE,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+        InterfaceKindChoices.STRING,
+        InterfaceKindChoices.INTEGER,
+        InterfaceKindChoices.FLOAT,
+        InterfaceKindChoices.BOOL,
+        InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+        InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+        InterfaceKindChoices.DISTANCE_MEASUREMENT,
+        InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+        InterfaceKindChoices.POINT,
+        InterfaceKindChoices.MULTIPLE_POINTS,
+        InterfaceKindChoices.POLYGON,
+        InterfaceKindChoices.MULTIPLE_POLYGONS,
+        InterfaceKindChoices.LINE,
+        InterfaceKindChoices.MULTIPLE_LINES,
+        InterfaceKindChoices.ANGLE,
+        InterfaceKindChoices.MULTIPLE_ANGLES,
+        InterfaceKindChoices.ELLIPSE,
+        InterfaceKindChoices.MULTIPLE_ELLIPSES,
+        InterfaceKindChoices.THREE_POINT_ANGLE,
+        InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
     ),
 )
 def test_civ_post_value_validation(kind):
@@ -322,27 +323,27 @@ def test_civ_post_value_validation(kind):
 @pytest.mark.parametrize(
     "kind",
     (
-        InterfaceKind.InterfaceKindChoices.TWO_D_BOUNDING_BOX,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-        InterfaceKind.InterfaceKindChoices.DISTANCE_MEASUREMENT,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-        InterfaceKind.InterfaceKindChoices.POINT,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_POINTS,
-        InterfaceKind.InterfaceKindChoices.POLYGON,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_POLYGONS,
-        InterfaceKind.InterfaceKindChoices.STRING,
-        InterfaceKind.InterfaceKindChoices.INTEGER,
-        InterfaceKind.InterfaceKindChoices.FLOAT,
-        InterfaceKind.InterfaceKindChoices.BOOL,
-        InterfaceKind.InterfaceKindChoices.CHOICE,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_CHOICE,
-        InterfaceKind.InterfaceKindChoices.ANGLE,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_ANGLES,
-        InterfaceKind.InterfaceKindChoices.ELLIPSE,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_ELLIPSES,
-        InterfaceKind.InterfaceKindChoices.THREE_POINT_ANGLE,
-        InterfaceKind.InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
-        InterfaceKind.InterfaceKindChoices.ANY,
+        InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+        InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+        InterfaceKindChoices.DISTANCE_MEASUREMENT,
+        InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+        InterfaceKindChoices.POINT,
+        InterfaceKindChoices.MULTIPLE_POINTS,
+        InterfaceKindChoices.POLYGON,
+        InterfaceKindChoices.MULTIPLE_POLYGONS,
+        InterfaceKindChoices.STRING,
+        InterfaceKindChoices.INTEGER,
+        InterfaceKindChoices.FLOAT,
+        InterfaceKindChoices.BOOL,
+        InterfaceKindChoices.CHOICE,
+        InterfaceKindChoices.MULTIPLE_CHOICE,
+        InterfaceKindChoices.ANGLE,
+        InterfaceKindChoices.MULTIPLE_ANGLES,
+        InterfaceKindChoices.ELLIPSE,
+        InterfaceKindChoices.MULTIPLE_ELLIPSES,
+        InterfaceKindChoices.THREE_POINT_ANGLE,
+        InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+        InterfaceKindChoices.ANY,
     ),
 )
 @pytest.mark.parametrize(
@@ -375,7 +376,7 @@ def test_civ_post_value_or_user_upload_required_validation(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", (InterfaceKind.interface_type_image()))
+@pytest.mark.parametrize("kind,", (InterfaceKind.interface_kind_image()))
 def test_civ_post_image_or_upload_required_validation(kind):
     # setup
     interface = ComponentInterfaceFactory(kind=kind)
@@ -394,7 +395,7 @@ def test_civ_post_image_or_upload_required_validation(kind):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", (InterfaceKind.interface_type_image()))
+@pytest.mark.parametrize("kind,", (InterfaceKind.interface_kind_image()))
 def test_civ_post_image_permission_validation(kind, rf):
     # setup
     user = UserFactory()
@@ -419,7 +420,7 @@ def test_civ_post_image_permission_validation(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", (InterfaceKind.interface_type_image()))
+@pytest.mark.parametrize("kind,", (InterfaceKind.interface_kind_image()))
 def test_civ_post_upload_permission_validation(kind, rf):
     # setup
     user = UserFactory()
@@ -444,7 +445,7 @@ def test_civ_post_upload_permission_validation(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", (InterfaceKind.interface_type_image()))
+@pytest.mark.parametrize("kind,", (InterfaceKind.interface_kind_image()))
 def test_civ_post_image_not_ready_validation(kind, rf):
     # setup
     user = UserFactory()
@@ -471,7 +472,7 @@ def test_civ_post_image_not_ready_validation(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", (InterfaceKind.interface_type_image()))
+@pytest.mark.parametrize("kind,", (InterfaceKind.interface_kind_image()))
 def test_civ_post_image_valid(kind, rf):
     # setup
     user = UserFactory()
@@ -499,39 +500,39 @@ def test_civ_serializer_list_ordering():
     civs = [
         ComponentInterfaceValueFactory(
             interface=ComponentInterfaceFactory(
-                kind=InterfaceKind.InterfaceKindChoices.IMAGE,
+                kind=InterfaceKindChoices.PANIMG_IMAGE,
                 title="B Image Interface",
                 store_in_database=False,
             )
         ),
         ComponentInterfaceValueFactory(
             interface=ComponentInterfaceFactory(
-                kind=InterfaceKind.InterfaceKindChoices.IMAGE,
+                kind=InterfaceKindChoices.PANIMG_IMAGE,
                 title="A Image Interface",
                 store_in_database=False,
             )
         ),
         ComponentInterfaceValueFactory(
             interface=ComponentInterfaceFactory(
-                kind=InterfaceKind.InterfaceKindChoices.THUMBNAIL_PNG,
+                kind=InterfaceKindChoices.THUMBNAIL_PNG,
                 store_in_database=False,
             )
         ),
         ComponentInterfaceValueFactory(
             interface=ComponentInterfaceFactory(
-                kind=InterfaceKind.InterfaceKindChoices.ZIP,
+                kind=InterfaceKindChoices.ZIP,
                 store_in_database=False,
             )
         ),
         ComponentInterfaceValueFactory(
             interface=ComponentInterfaceFactory(
-                kind=InterfaceKind.InterfaceKindChoices.STRING
+                kind=InterfaceKindChoices.STRING
             ),
             value="bar",
         ),
         ComponentInterfaceValueFactory(
             interface=ComponentInterfaceFactory(
-                kind=InterfaceKind.InterfaceKindChoices.CHART
+                kind=InterfaceKindChoices.CHART
             ),
             value="foo",
         ),

@@ -19,7 +19,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     ComponentJob,
     ImportStatusChoices,
-    InterfaceKind,
+    InterfaceKindChoices,
 )
 from grandchallenge.components.tasks import (
     _get_image_config_and_sha256,
@@ -734,11 +734,11 @@ def test_add_file_to_object_updates_job_on_validation_fail(
     "kind,mock_validator_path",
     (
         (
-            InterfaceKind.InterfaceKindChoices.NEWICK,
+            InterfaceKindChoices.NEWICK,
             "grandchallenge.components.models.validate_newick_tree_format",
         ),
         (
-            InterfaceKind.InterfaceKindChoices.BIOM,
+            InterfaceKindChoices.BIOM,
             "grandchallenge.components.models.validate_biom_format",
         ),
     ),

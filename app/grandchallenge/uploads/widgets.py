@@ -17,6 +17,7 @@ class UserUploadWidgetMixin:
             "id": f"{widget_id}AllowedFileTypes",
             "value": self.allowed_file_types,
         }
+        context["widget"]["attrs"]["max_number_files"] = 100
         return context
 
     class Media:
@@ -44,3 +45,8 @@ class DICOMUserUploadMultipleWidget(UserUploadMultipleWidget):
             "vendored/dcmjs/build/dcmjs.min.js",
             "js/file_preprocessors.js",
         )
+
+    def get_context(self, *args, **kwargs):
+        context = super().get_context(*args, **kwargs)
+        context["widget"]["attrs"]["max_number_files"] = 2000
+        return context

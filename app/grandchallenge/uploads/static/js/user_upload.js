@@ -8,6 +8,7 @@
             }
         }
     }
+
     document.addEventListener("DOMContentLoaded", () => {
         initializeWidgets();
     });
@@ -22,11 +23,15 @@
         const allowedFileTypes = JSON.parse(
             document.getElementById(`${inputId}AllowedFileTypes`).textContent,
         );
+        const maxNumberOfFiles = widget.getAttribute("data-max-number-files");
 
         const uppy = new Uppy.Core({
             id: `${window.location.pathname}-${inputId}`,
             autoProceed: true,
-            restrictions: { maxNumberOfFiles: 100, allowedFileTypes },
+            restrictions: {
+                maxNumberOfFiles: maxNumberOfFiles,
+                allowedFileTypes,
+            },
         });
 
         uppy.on("restriction-failed", (file, error) => {

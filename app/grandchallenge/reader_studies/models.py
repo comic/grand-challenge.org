@@ -1160,7 +1160,7 @@ ANSWER_TYPE_TO_INTERFACE_KIND_MAP = {
     AnswerType.CHOICE: [InterfaceKindChoices.CHOICE],
     AnswerType.MULTIPLE_CHOICE: [InterfaceKindChoices.MULTIPLE_CHOICE],
     AnswerType.MASK: [
-        InterfaceKindChoices.SEGMENTATION,
+        InterfaceKindChoices.PANIMG_SEGMENTATION,
     ],
     AnswerType.ANGLE: [InterfaceKindChoices.ANGLE],
     AnswerType.MULTIPLE_ANGLES: [InterfaceKindChoices.MULTIPLE_ANGLES],
@@ -1666,7 +1666,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             if (
                 ComponentInterface.objects.filter(
                     slug__in=viewport_content,
-                    kind__in=InterfaceKind.interface_type_image(),
+                    kind__in=InterfaceKind.interface_kind_image(),
                 ).count()
                 < 1
             ):

@@ -56,10 +56,10 @@ dependencies = [
     "pyjwt",
     "beautifulsoup4",
     "pymdown-extensions",
-    "grand-challenge-forge>=0.7.1",
+    "grand-challenge-forge",
     "biopython",
     "cachetools",
-    "grand-challenge-dicom-de-identifier>=0.1.1",
+    "grand-challenge-dicom-de-identifier",
     "pydantic",
 ]
 name = "grand-challenge.org"
