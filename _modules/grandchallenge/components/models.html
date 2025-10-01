@@ -175,6 +175,7 @@
     <span class="n">PANIMG_SEGMENTATION</span> <span class="o">=</span> <span class="s2">&quot;SEG&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Segmentation&quot;</span><span class="p">)</span>
     <span class="n">PANIMG_HEAT_MAP</span> <span class="o">=</span> <span class="s2">&quot;HMAP&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Heat Map&quot;</span><span class="p">)</span>
     <span class="n">PANIMG_DISPLACEMENT_FIELD</span> <span class="o">=</span> <span class="s2">&quot;DSPF&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;Displacement field&quot;</span><span class="p">)</span>
+    <span class="n">DICOM_IMAGE_SET</span> <span class="o">=</span> <span class="s2">&quot;DCMIS&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;DICOM Image Set&quot;</span><span class="p">)</span>
 
     <span class="c1"># File types</span>
     <span class="n">PDF</span> <span class="o">=</span> <span class="s2">&quot;PDF&quot;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s2">&quot;PDF file&quot;</span><span class="p">)</span>
@@ -291,12 +292,14 @@
 <span class="sd">        * Heat Map</span>
 <span class="sd">        * Segmentation</span>
 <span class="sd">        * Displacement Field</span>
+<span class="sd">        * DICOM Image Set</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span>
             <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_IMAGE</span><span class="p">,</span>
             <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_HEAT_MAP</span><span class="p">,</span>
             <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_SEGMENTATION</span><span class="p">,</span>
             <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_DISPLACEMENT_FIELD</span><span class="p">,</span>
+            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">DICOM_IMAGE_SET</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="nd">@staticmethod</span>
@@ -515,6 +518,10 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_image_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_image</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_dicom_image_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">DICOM_IMAGE_SET</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_json_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -2394,6 +2401,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">file_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_civ</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">image_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_name</span>
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">interface_slug</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span> <span class="o">=</span> <span class="n">interface_slug</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span> <span class="o">=</span> <span class="n">value</span>
@@ -2403,11 +2414,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_queryset</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_file_civ</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_image_name</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="n">ci</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="n">interface_slug</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_value</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_init_json_civ_data</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_dicom_image_kind</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_dicom_civ_data</span><span class="p">()</span>
         <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_init_image_civ_data</span><span class="p">()</span>
         <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
@@ -2421,6 +2435,17 @@
             <span class="p">(</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span> <span class="o">|</span> <span class="kc">None</span><span class="p">),</span>
         <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_json_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unknown data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">)</span><span class="si">}</span><span class="s2"> for interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_dicom_civ_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.cases.widgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DICOMUploadWithName</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">,</span> <span class="n">DICOMUploadWithName</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_queryset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="o">.</span><span class="n">user_uploads</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_image_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="o">.</span><span class="n">name</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Unknown data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">)</span><span class="si">}</span><span class="s2"> for interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span><span class="si">}</span><span class="s2">&quot;</span>
