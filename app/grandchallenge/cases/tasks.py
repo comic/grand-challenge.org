@@ -1,3 +1,4 @@
+import re
 import zipfile
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
@@ -5,7 +6,10 @@ from pathlib import Path
 from shutil import rmtree
 from tempfile import TemporaryDirectory
 
+import boto3
+import botocore.exceptions
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from botocore.exceptions import ClientError
 from celery import signature
 from celery.utils.log import get_task_logger
 from django.apps import apps
@@ -16,17 +20,23 @@ from django.db import transaction
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
 from django.utils.module_loading import import_string
+from grand_challenge_dicom_de_identifier.exceptions import (
+    RejectedDICOMFileError,
+)
 from panimg import convert, post_process
 from panimg.models import PanImgFile, PanImgResult
 
 from grandchallenge.cases.models import (
+    DICOMImageSetUpload,
+    DICOMImageSetUploadStatusChoices,
     Image,
     ImageFile,
     PostProcessImageTask,
     PostProcessImageTaskStatusChoices,
     RawImageUploadSession,
 )
-from grandchallenge.components.backends.utils import safe_extract
+from grandchallenge.components.backends.exceptions import RetryStep
+from grandchallenge.components.backends.utils import UUID4_REGEX, safe_extract
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
@@ -521,3 +531,109 @@ def _check_post_processor_result(*, post_processor_result, image):
 
     if created_ids not in [{str(image.pk)}, set()]:
         raise RuntimeError("Created image IDs do not match")
+
+
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException, RetryStep))
+@transaction.atomic
+def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk):
+    with check_lock_acquired():
+        upload = DICOMImageSetUpload.objects.select_for_update(
+            nowait=True
+        ).get(pk=dicom_imageset_upload_pk)
+
+    health_imaging_client = boto3.client(
+        "medical-imaging",
+        region_name=settings.AWS_DEFAULT_REGION,
+    )
+
+    if not upload.status == DICOMImageSetUploadStatusChoices.INITIALIZED:
+        raise RuntimeError(
+            "Upload is not ready for de-identification and importing into Health Imaging."
+        )
+
+    try:
+        upload.deidentify_user_uploads()
+        upload.start_dicom_import_job()
+    except (
+        botocore.exceptions.EndpointConnectionError,
+        health_imaging_client.exceptions.ThrottlingException,
+        health_imaging_client.exceptions.ServiceQuotaExceededException,
+    ) as e:
+        raise RetryStep from e
+    except RejectedDICOMFileError as e:
+        upload.mark_failed(error_message=e.justification)
+        upload.user_uploads.all().delete()
+        upload.delete_input_files()
+    except Exception as e:
+        upload.mark_failed(error_message="An unexpected error occurred", exc=e)
+        upload.user_uploads.all().delete()
+        upload.delete_input_files()
+    else:
+        upload.status = DICOMImageSetUploadStatusChoices.STARTED
+        upload.save()
+
+
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
+def handle_health_imaging_import_job_event(*, event):
+    job_name = event["jobName"]
+    prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
+    pattern = rf"^{prefix_regex}\-(?P<pk>{UUID4_REGEX})$"
+    result = re.match(pattern, job_name)
+    pk = result.group("pk")
+
+    with check_lock_acquired():
+        upload = DICOMImageSetUpload.objects.select_for_update(
+            nowait=True
+        ).get(pk=pk)
+
+    if upload.status != DICOMImageSetUploadStatusChoices.STARTED:
+        return
+
+    upload.handle_event(event=event)
+
+
+@acks_late_micro_short_task(retry_on=(RetryStep,))
+@transaction.atomic
+def delete_health_imaging_image_set(*, image_set_id):
+    health_imaging_client = boto3.client(
+        "medical-imaging",
+        region_name=settings.AWS_DEFAULT_REGION,
+    )
+
+    try:
+        health_imaging_client.delete_image_set(
+            imageSetId=image_set_id,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+        )
+    except health_imaging_client.exceptions.ResourceNotFoundException:
+        pass  # image set already deleted
+    except health_imaging_client.exceptions.ThrottlingException as e:
+        raise RetryStep("Request throttled") from e
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def revert_image_set_to_initial_version(*, image_set_id, version_id):
+    health_imaging_client = boto3.client(
+        "medical-imaging",
+        region_name=settings.AWS_DEFAULT_REGION,
+    )
+
+    try:
+        health_imaging_client.update_image_set_metadata(
+            imageSetId=image_set_id,
+            datastoreId=settings.AWS_HEALTH_IMAGING_DATASTORE_ID,
+            latestVersionId=str(version_id),
+            updateImageSetMetadataUpdates={"revertToVersionId": "1"},
+            force=False,
+        )
+    except ClientError as error:
+        if (
+            error.response["Error"]["Code"] == "ResourceNotFoundException"
+            and error.response["Error"]["Message"]
+            == "Requested version(s) of ImageSet(s) is not the latest."
+        ):
+            pass  # already updated
+        else:
+            raise

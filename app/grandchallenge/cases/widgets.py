@@ -1,15 +1,17 @@
+from typing import NamedTuple
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
-from django.db.models import TextChoices
+from django.db.models import QuerySet, TextChoices
 from django.forms import (
+    CharField,
     HiddenInput,
     ModelChoiceField,
     ModelMultipleChoiceField,
     MultiValueField,
     MultiWidget,
 )
-from django.forms.widgets import ChoiceWidget
+from django.forms.widgets import ChoiceWidget, TextInput
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterfaceValue
@@ -18,7 +20,10 @@ from grandchallenge.core.guardian import (
     get_object_if_allowed,
 )
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadMultipleWidget
+from grandchallenge.uploads.widgets import (
+    DICOMUserUploadMultipleWidget,
+    UserUploadMultipleWidget,
+)
 
 
 class ImageWidgetChoices(TextChoices):
@@ -200,3 +205,98 @@ class FlexibleImageField(MultiValueField):
             if len(non_empty_values) != 1:
                 raise ValidationError("Too many values returned.")
             return non_empty_values[0]
+
+
+DICOMUploadWidgetSuffixes = ["dicom-image-name", "dicom-user-uploads"]
+
+
+class DICOMUploadWithName(NamedTuple):
+    name: str
+    user_uploads: list[
+        str
+    ]  # UserUpload pks, as expected by DICOMUserUploadMultipleWidget
+
+
+class DICOMImageSetNameInput(TextInput):
+    template_name = "cases/dicom_image_set_name_input.html"
+
+
+class DICOMUploadWidget(MultiWidget):
+    template_name = "cases/dicom_upload_widget.html"
+
+    def __init__(self, attrs=None):
+        widgets = {
+            DICOMUploadWidgetSuffixes[0]: DICOMImageSetNameInput(),
+            DICOMUploadWidgetSuffixes[1]: DICOMUserUploadMultipleWidget(),
+        }
+        super().__init__(widgets, attrs)
+
+    def decompress(self, value: DICOMUploadWithName):
+        if value:
+            return [
+                value.name,
+                value.user_uploads,
+            ]
+        return ["", []]
+
+
+class DICOMUploadField(MultiValueField):
+    widget = DICOMUploadWidget
+
+    def __init__(self, *args, user, initial=None, **kwargs):
+        upload_qs = filter_by_permission(
+            queryset=UserUpload.objects.all(),
+            user=user,
+            codename="change_userupload",
+        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+
+        fields = [
+            CharField(),
+            ModelMultipleChoiceField(queryset=upload_qs),
+        ]
+
+        self.current_value = None
+        if initial:
+            # Initial data can only be an image CIV.
+            # We don't want to show the widgets in this case, and instead
+            # display the current image name, so pass the image as
+            # current_value to the widget template
+            if isinstance(initial, ComponentInterfaceValue):
+                if image := get_object_if_allowed(
+                    model=Image,
+                    pk=initial.image.pk,
+                    user=user,
+                    codename="view_image",
+                ):
+                    self.current_value = image
+                    # turn initial to the internal data type that this widget expects
+                    initial = self.compress(
+                        values=[
+                            image.name,
+                            image.dicom_image_set.dicom_image_set_upload.user_uploads.all(),
+                        ]
+                    )
+                else:
+                    initial = None
+            else:
+                raise RuntimeError(
+                    f"Unexpected initial value of type {type(initial)}"
+                )
+
+        super().__init__(
+            *args,
+            fields=fields,
+            initial=initial,
+            **kwargs,
+        )
+
+    def compress(self, values: list[str, QuerySet[UserUpload]]):
+        return DICOMUploadWithName(
+            name=values[0] if values else "",
+            user_uploads=[str(v.pk) for v in values[1]] if values else [],
+        )
+
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        attrs["current_value"] = self.current_value
+        return attrs

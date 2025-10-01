@@ -1,6 +1,9 @@
+import json
+import re
 from pathlib import Path
 
 import pytest
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.models import (
@@ -8,6 +11,7 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
 )
 from grandchallenge.components.models import ComponentInterface
+from grandchallenge.serving.models import Download
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
@@ -15,6 +19,7 @@ from tests.algorithms_tests.factories import (
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import (
+    DICOMImageSetFactory,
     PostProcessImageTaskFactory,
     RawImageUploadSessionFactory,
 )
@@ -612,3 +617,158 @@ def test_upload_with_too_many_preprocessing(client, settings):
 
     respose = do_request()
     assert respose.status_code == 201
+
+
+@pytest.mark.django_db
+def test_dicom_404_without_permission(client):
+    image = ImageFactory()
+    user = UserFactory()
+
+    response = get_view_for_user(
+        viewname="api:image-dicom",
+        reverse_kwargs={"pk": image.pk},
+        user=user,
+        client=client,
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "No Image matches the given query."}
+
+
+@pytest.mark.django_db
+def test_dicom_404_if_no_image_set(client):
+    image = ImageFactory()
+    user = UserFactory()
+    assign_perm("view_image", user, image)
+
+    response = get_view_for_user(
+        viewname="api:image-dicom",
+        reverse_kwargs={"pk": image.pk},
+        user=user,
+        client=client,
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": "This image does not have a DICOM Image Set."
+    }
+    assert not Download.objects.filter(creator=user, image=image).exists()
+
+
+@pytest.mark.django_db
+def test_dicom_signed_urls(client, settings, monkeypatch):
+    settings.AWS_HEALTH_IMAGING_DATASTORE_ID = "test-datastore-id"
+    settings.AWS_DEFAULT_REGION = "test-region"
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "test-access-key")
+
+    image = ImageFactory(
+        dicom_image_set=DICOMImageSetFactory(
+            image_set_id="test-image-set-id",
+            image_frame_ids=["test-1", "test-2"],
+        )
+    )
+    user = UserFactory()
+    assign_perm("view_image", user, image)
+
+    response = get_view_for_user(
+        viewname="api:image-dicom",
+        reverse_kwargs={"pk": image.pk},
+        user=user,
+        client=client,
+    )
+
+    assert response.status_code == 200
+
+    signed_urls = response.json()
+
+    def verify_aws_headers(headers):
+        x_amz_date_pattern = r"^\d{8}T\d{6}Z$"
+        auth_pattern = r"^AWS4-HMAC-SHA256 Credential=test-access-key/\d{8}/test-region/medical-imaging/aws4_request, SignedHeaders=host;x-amz-date, Signature=.+$"
+
+        assert headers.keys() == {"Authorization", "X-Amz-Date"}
+        assert re.match(x_amz_date_pattern, headers["X-Amz-Date"])
+        assert re.match(auth_pattern, headers["Authorization"])
+
+    assert signed_urls.keys() == {"get_image_set_metadata", "get_image_frames"}
+    assert signed_urls["get_image_frames"].keys() == {"test-1", "test-2"}
+
+    for frame_id, frame_request in signed_urls["get_image_frames"].items():
+        assert frame_request.keys() == {"data", "headers", "method", "url"}
+        verify_aws_headers(frame_request["headers"])
+        assert frame_request["data"] == json.dumps({"imageFrameId": frame_id})
+        assert frame_request["method"] == "POST"
+        assert (
+            frame_request["url"]
+            == "https://runtime-medical-imaging.test-region.amazonaws.com/datastore/test-datastore-id/imageSet/test-image-set-id/getImageFrame"
+        )
+
+    metadata_request = signed_urls["get_image_set_metadata"]
+    assert metadata_request.keys() == {"data", "headers", "method", "url"}
+    verify_aws_headers(metadata_request["headers"])
+    assert metadata_request["data"] == '{"versionId": "1"}'
+    assert metadata_request["method"] == "POST"
+    assert (
+        metadata_request["url"]
+        == "https://runtime-medical-imaging.test-region.amazonaws.com/datastore/test-datastore-id/imageSet/test-image-set-id/getImageSetMetadata"
+    )
+
+
+@pytest.mark.django_db
+def test_dicom_signed_urls_creates_download_object(client):
+    image = ImageFactory(
+        dicom_image_set=DICOMImageSetFactory(
+            image_set_id="test-image-set-id",
+            image_frame_ids=["test-1", "test-2"],
+        )
+    )
+    user = UserFactory()
+    assign_perm("view_image", user, image)
+
+    response = get_view_for_user(
+        viewname="api:image-dicom",
+        reverse_kwargs={"pk": image.pk},
+        user=user,
+        client=client,
+    )
+
+    assert response.status_code == 200
+    assert Download.objects.filter(creator=user, image=image).exists()
+
+
+@pytest.mark.django_db
+def test_dicom_image_set_serialized(client):
+    image = ImageFactory(
+        dicom_image_set=DICOMImageSetFactory(
+            image_set_id="test-image-set-id",
+            image_frame_ids=["test-1", "test-2"],
+        )
+    )
+    user = UserFactory()
+    assign_perm("view_image", user, image)
+
+    response = get_view_for_user(
+        viewname="api:image-detail",
+        reverse_kwargs={"pk": image.pk},
+        user=user,
+        client=client,
+    )
+
+    assert response.json()["dicom_image_set"] == {
+        "image_set_id": "test-image-set-id"
+    }
+
+
+@pytest.mark.django_db
+def test_no_dicom_image_set_serialized(client):
+    image = ImageFactory()
+    user = UserFactory()
+    assign_perm("view_image", user, image)
+
+    response = get_view_for_user(
+        viewname="api:image-detail",
+        reverse_kwargs={"pk": image.pk},
+        user=user,
+        client=client,
+    )
+
+    assert response.json()["dicom_image_set"] is None

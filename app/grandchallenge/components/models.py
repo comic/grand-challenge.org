@@ -134,6 +134,7 @@ class InterfaceKindChoices(models.TextChoices):
     PANIMG_SEGMENTATION = "SEG", _("Segmentation")
     PANIMG_HEAT_MAP = "HMAP", _("Heat Map")
     PANIMG_DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
+    DICOM_IMAGE_SET = "DCMIS", _("DICOM Image Set")
 
     # File types
     PDF = "PDF", _("PDF file")
@@ -246,12 +247,14 @@ class InterfaceKind:
         * Heat Map
         * Segmentation
         * Displacement Field
+        * DICOM Image Set
         """
         return {
             InterfaceKindChoices.PANIMG_IMAGE,
             InterfaceKindChoices.PANIMG_HEAT_MAP,
             InterfaceKindChoices.PANIMG_SEGMENTATION,
             InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD,
+            InterfaceKindChoices.DICOM_IMAGE_SET,
         }
 
     @staticmethod
@@ -462,6 +465,10 @@ class ComponentInterface(OverlaySegmentsMixin):
     @property
     def is_image_kind(self):
         return self.kind in InterfaceKind.interface_kind_image()
+
+    @property
+    def is_dicom_image_kind(self):
+        return self.kind == InterfaceKindChoices.DICOM_IMAGE_SET
 
     @property
     def is_json_kind(self):
@@ -2261,6 +2268,10 @@ class CIVData:
     def file_civ(self):
         return self._file_civ
 
+    @property
+    def image_name(self):
+        return self._image_name
+
     def __init__(self, *, interface_slug, value):
         self._interface_slug = interface_slug
         self._initial_value = value
@@ -2270,10 +2281,13 @@ class CIVData:
         self._user_upload = None
         self._user_upload_queryset = None
         self._file_civ = None
+        self._image_name = None
 
         ci = ComponentInterface.objects.get(slug=interface_slug)
 
-        if ci.super_kind == ci.SuperKind.VALUE:
+        if ci.is_dicom_image_kind:
+            self._init_dicom_civ_data()
+        elif ci.super_kind == ci.SuperKind.VALUE:
             self._init_json_civ_data()
         elif ci.super_kind == ci.SuperKind.IMAGE:
             self._init_image_civ_data()
@@ -2294,6 +2308,17 @@ class CIVData:
             self._json_value = self._initial_value
         else:
             raise ValidationError(
+                f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
+            )
+
+    def _init_dicom_civ_data(self):
+        from grandchallenge.cases.widgets import DICOMUploadWithName
+
+        if isinstance(self._initial_value, DICOMUploadWithName):
+            self._user_upload_queryset = self._initial_value.user_uploads
+            self._image_name = self._initial_value.name
+        else:
+            ValidationError(
                 f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
             )
 

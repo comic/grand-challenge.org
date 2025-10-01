@@ -1134,6 +1134,28 @@ wheels = [
 ]
 
 [[package]]
+name = "grand-challenge-dicom-de-id-procedure"
+version = "2025.9.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ce/e1/6f974b14cbca189945b3029e2555726d716d29d8ed5e51d3f5c764a4b02e/grand_challenge_dicom_de_id_procedure-2025.9.0.tar.gz", hash = "sha256:f1ea8adc6e37a0ded058ebbce5850b403ac0135e2b5fd322111eba7eedf96ccf", size = 18041, upload-time = "2025-09-09T11:40:05.325Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6b/4a/3328dc2653686e4dbe14cd26b40a30a0c929dbdec5ee85457c2b9d72cf86/grand_challenge_dicom_de_id_procedure-2025.9.0-py3-none-any.whl", hash = "sha256:6b14df4517bd9aad42ae378b1465872a6a4b266f3a8b1f40c8827004f4b088ed", size = 16451, upload-time = "2025-09-09T11:40:03.877Z" },
+]
+
+[[package]]
+name = "grand-challenge-dicom-de-identifier"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "grand-challenge-dicom-de-id-procedure" },
+    { name = "pydicom" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/18/36/9f989f4ab812d47b7bc69c60af00b55dcf593645f2d1b1abade6a68281e3/grand_challenge_dicom_de_identifier-0.1.1.tar.gz", hash = "sha256:fa2969a3e82727416b7d4aded37c5475b97756c018c36782e395a41b4e6a7171", size = 14061, upload-time = "2025-09-12T09:17:43.52Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9b/7c/a0749d268c9a2f4fac420ce3c1cbd39065e01ab98463d78f597e1d3ff2f7/grand_challenge_dicom_de_identifier-0.1.1-py3-none-any.whl", hash = "sha256:905e553beaa09848bc62e60df05399b956c671ce8b88eb2e6c2bd5a484859fce", size = 11556, upload-time = "2025-09-12T09:17:42.318Z" },
+]
+
+[[package]]
 name = "grand-challenge-forge"
 version = "0.7.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1190,6 +1212,7 @@ dependencies = [
     { name = "djangorestframework" },
     { name = "djangorestframework-csv" },
     { name = "drf-spectacular" },
+    { name = "grand-challenge-dicom-de-identifier" },
     { name = "grand-challenge-forge" },
     { name = "gunicorn" },
     { name = "humanize" },
@@ -1198,6 +1221,7 @@ dependencies = [
     { name = "panimg" },
     { name = "pillow" },
     { name = "psycopg", extra = ["c"] },
+    { name = "pydantic" },
     { name = "pygments" },
     { name = "pyjwt" },
     { name = "pymdown-extensions" },
@@ -1271,7 +1295,8 @@ requires-dist = [
     { name = "djangorestframework" },
     { name = "djangorestframework-csv" },
     { name = "drf-spectacular" },
-    { name = "grand-challenge-forge", specifier = ">=0.7.1" },
+    { name = "grand-challenge-dicom-de-identifier" },
+    { name = "grand-challenge-forge" },
     { name = "gunicorn" },
     { name = "humanize" },
     { name = "jsonschema" },
@@ -1279,6 +1304,7 @@ requires-dist = [
     { name = "panimg", specifier = ">=0.12.0,!=0.15.1" },
     { name = "pillow" },
     { name = "psycopg", extras = ["c"], specifier = ">3.1.8" },
+    { name = "pydantic" },
     { name = "pygments" },
     { name = "pyjwt" },
     { name = "pymdown-extensions" },
