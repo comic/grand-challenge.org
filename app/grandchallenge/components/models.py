@@ -135,6 +135,7 @@ class InterfaceKindChoices(models.TextChoices):
     PANIMG_SEGMENTATION = "SEG", _("Segmentation")
     PANIMG_HEAT_MAP = "HMAP", _("Heat Map")
     PANIMG_DISPLACEMENT_FIELD = "DSPF", _("Displacement field")
+    DICOM_IMAGE_SET = "DCMIS", _("DICOM Image Set")
 
     # File types
     PDF = "PDF", _("PDF file")
@@ -247,12 +248,14 @@ class InterfaceKind:
         * Heat Map
         * Segmentation
         * Displacement Field
+        * DICOM Image Set
         """
         return {
             InterfaceKindChoices.PANIMG_IMAGE,
             InterfaceKindChoices.PANIMG_HEAT_MAP,
             InterfaceKindChoices.PANIMG_SEGMENTATION,
             InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD,
+            InterfaceKindChoices.DICOM_IMAGE_SET,
         }
 
     @staticmethod
@@ -466,8 +469,7 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def is_dicom_image_kind(self):
-        # implementation up to Thomas
-        return False
+        return self.kind == InterfaceKindChoices.DICOM_IMAGE_SET
 
     @property
     def is_json_kind(self):

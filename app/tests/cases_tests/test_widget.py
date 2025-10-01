@@ -238,7 +238,7 @@ def test_dicom_upload_field_validation():
 
 
 @pytest.mark.django_db
-def test_dicom_upload_widget_prepopulated_value(mocker):
+def test_dicom_upload_widget_prepopulated_value():
     user_with_perm, user_without_perm = UserFactory.create_batch(2)
     upload = DICOMImageSetUploadFactory()
     upload.user_uploads.set([UserUploadFactory(creator=user_with_perm)])
@@ -247,15 +247,10 @@ def test_dicom_upload_widget_prepopulated_value(mocker):
         dicom_image_set=DICOMImageSetFactory(dicom_image_set_upload=upload),
     )
     assign_perm("cases.view_image", user_with_perm, im)
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
-    civ = ComponentInterfaceValueFactory(interface=ci, image=im)
-
-    # fake DICOM ci for now
-    # TODO: create a proper DICOM super kind ci above
-    mocker.patch(
-        "grandchallenge.components.models.ComponentInterface.is_dicom_image_kind",
-        return_value=True,
+    ci = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.DICOM_IMAGE_SET
     )
+    civ = ComponentInterfaceValueFactory(interface=ci, image=im)
 
     field = InterfaceFormFieldFactory(
         interface=ci, user=user_with_perm, initial=civ
