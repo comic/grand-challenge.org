@@ -663,12 +663,12 @@ class JobProgressDetail(
                     "api:algorithms-job-detail", kwargs={"pk": self.object.pk}
                 ),
                 "num_image_inputs": self.object.algorithm_interface.inputs.filter(
-                    kind__in=InterfaceKind.interface_type_image()
+                    kind__in=InterfaceKind.interface_kind_image()
                 ).count(),
                 "num_file_inputs": self.object.algorithm_interface.inputs.filter(
-                    Q(kind__in=InterfaceKind.interface_type_file())
+                    Q(kind__in=InterfaceKind.interface_kind_file())
                     | Q(
-                        kind__in=InterfaceKind.interface_type_json(),
+                        kind__in=InterfaceKind.interface_kind_json(),
                         store_in_database=False,
                     )
                 ).count(),

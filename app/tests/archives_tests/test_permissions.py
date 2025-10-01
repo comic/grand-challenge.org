@@ -4,7 +4,7 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import get_perms, get_users_with_perms
 
 from grandchallenge.archives.models import Archive
-from grandchallenge.components.models import InterfaceKind
+from grandchallenge.components.models import InterfaceKindChoices
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.test_permissions import get_groups_with_set_perms
@@ -86,9 +86,7 @@ def test_api_archive_item_update_permissions(
     if add_to_group:
         add_to_group(archive, user)
 
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKind.InterfaceKindChoices.BOOL
-    )
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
 
     with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(

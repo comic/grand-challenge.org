@@ -3,7 +3,7 @@ import pytest
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKind,
+    InterfaceKindChoices,
 )
 from grandchallenge.evaluation.models import Evaluation
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
@@ -105,5 +105,5 @@ def test_default_interfaces_created():
     p = PhaseFactory()
 
     assert {o.kind for o in p.evaluation_outputs.all()} == {
-        InterfaceKind.InterfaceKindChoices.ANY
+        InterfaceKindChoices.ANY
     }
