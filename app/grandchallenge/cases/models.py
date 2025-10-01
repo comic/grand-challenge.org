@@ -40,10 +40,6 @@ from pydantic.alias_generators import to_camel
 from pydantic.dataclasses import dataclass
 from storages.utils import clean_name
 
-from grandchallenge.cases.exceptions import (
-    DICOMImportJobFailedError,
-    DICOMImportJobValidationError,
-)
 from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
 )
@@ -1257,7 +1253,7 @@ class DICOMImageSetUpload(UUIDModel):
             self.handle_failed_job(job_summary=job_summary)
         elif job_summary.number_of_generated_image_sets > 1:
             self.delete_image_sets(job_summary=job_summary)
-            raise DICOMImportJobValidationError(
+            raise RuntimeError(
                 "Multiple image sets created. Expected only one."
             )
 
@@ -1265,7 +1261,7 @@ class DICOMImageSetUpload(UUIDModel):
 
         if not image_set_summary.is_primary:
             self.delete_image_sets(job_summary=job_summary)
-            raise DICOMImportJobValidationError(
+            raise RuntimeError(
                 "New instance is not primary: "
                 "metadata conflicts with already existing instance."
             )
@@ -1274,7 +1270,7 @@ class DICOMImageSetUpload(UUIDModel):
             self.revert_image_set_to_initial_version(
                 image_set_summary=image_set_summary
             )
-            raise DICOMImportJobValidationError(
+            raise RuntimeError(
                 "Instance already exists. This should never happen!"
             )
 
@@ -1283,9 +1279,8 @@ class DICOMImageSetUpload(UUIDModel):
             job_summary=job_summary
         )
         self.delete_image_sets(job_summary=job_summary)
-        job_id = job_summary.job_id
-        raise DICOMImportJobFailedError(
-            f"Import job {job_id} failed for DICOMImageSetUpload {self.pk}"
+        raise RuntimeError(
+            f"Import job {job_summary.job_id} failed for DICOMImageSetUpload {self.pk}"
         )
 
     @staticmethod
