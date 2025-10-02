@@ -75,18 +75,19 @@ class InterfaceFormFieldFactory:
             "label": interface.title.title(),
         }
 
-        if interface.is_dicom_image_kind:
-            return DICOMUploadField(
-                user=user,
-                initial=initial,
-                **kwargs,
-            )
-        elif interface.super_kind == interface.SuperKind.IMAGE:
-            return FlexibleImageField(
-                user=user,
-                initial=initial,
-                **kwargs,
-            )
+        if interface.super_kind == interface.SuperKind.IMAGE:
+            if interface.is_dicom_image_kind:
+                return DICOMUploadField(
+                    user=user,
+                    initial=initial,
+                    **kwargs,
+                )
+            else:
+                return FlexibleImageField(
+                    user=user,
+                    initial=initial,
+                    **kwargs,
+                )
         elif interface.super_kind == interface.SuperKind.FILE:
             return FlexibleFileField(
                 user=user,

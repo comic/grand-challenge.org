@@ -2285,12 +2285,13 @@ class CIVData:
 
         ci = ComponentInterface.objects.get(slug=interface_slug)
 
-        if ci.is_dicom_image_kind:
-            self._init_dicom_civ_data()
-        elif ci.super_kind == ci.SuperKind.VALUE:
+        if ci.super_kind == ci.SuperKind.VALUE:
             self._init_json_civ_data()
         elif ci.super_kind == ci.SuperKind.IMAGE:
-            self._init_image_civ_data()
+            if ci.is_dicom_image_kind:
+                self._init_dicom_civ_data()
+            else:
+                self._init_image_civ_data()
         elif ci.super_kind == ci.SuperKind.FILE:
             self._init_file_civ_data()
         else:
