@@ -64,6 +64,9 @@
                    aria-controls="v-pills-models"
                    aria-selected="false">
                     <i class="fas fa-project-diagram fa-fw"></i>&nbsp;Models
+                    {% if not object.active_model %}
+                        &nbsp; <i class="fas fa-exclamation-triangle text-danger"></i>
+                    {% endif %}
                 </a>
                 <a class="nav-link" id="v-pills-editors-tab" data-toggle="pill"
                    href="#editors" role="tab" aria-controls="v-pills-editors"
