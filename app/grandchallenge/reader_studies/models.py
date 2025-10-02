@@ -30,8 +30,8 @@ from grandchallenge.components.models import (
     CIVSetStringRepresentationMixin,
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKind,
     InterfaceKindChoices,
+    InterfaceKinds,
     OverlaySegmentsMixin,
     ValuesForInterfacesMixin,
 )
@@ -1666,7 +1666,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
             if (
                 ComponentInterface.objects.filter(
                     slug__in=viewport_content,
-                    kind__in=InterfaceKind.interface_kind_image(),
+                    kind__in=InterfaceKinds.image,
                 ).count()
                 < 1
             ):

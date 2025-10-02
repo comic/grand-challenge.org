@@ -6,8 +6,8 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.components.models import (
     ComponentInterface,
-    InterfaceKind,
     InterfaceKindChoices,
+    InterfaceKinds,
 )
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
@@ -387,7 +387,7 @@ class HangingProtocolMixin(models.Model):
             mandatory_isolation_interfaces = [
                 i
                 for i in viewport_interfaces
-                if i.kind in InterfaceKind.interface_kind_mandatory_isolation()
+                if i.kind in InterfaceKinds.mandatory_isolation
             ]
 
             if len(mandatory_isolation_interfaces) > 1 or (
@@ -403,7 +403,7 @@ class HangingProtocolMixin(models.Model):
             undisplayable_interfaces = [
                 i
                 for i in viewport_interfaces
-                if i.kind in InterfaceKind.interface_kind_undisplayable()
+                if i.kind in InterfaceKinds.undisplayable
             ]
 
             if len(undisplayable_interfaces) > 0:

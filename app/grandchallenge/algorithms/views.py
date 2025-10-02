@@ -82,7 +82,10 @@ from grandchallenge.algorithms.serializers import (
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
-from grandchallenge.components.models import ImportStatusChoices, InterfaceKind
+from grandchallenge.components.models import (
+    ImportStatusChoices,
+    InterfaceKinds,
+)
 from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
@@ -663,12 +666,12 @@ class JobProgressDetail(
                     "api:algorithms-job-detail", kwargs={"pk": self.object.pk}
                 ),
                 "num_image_inputs": self.object.algorithm_interface.inputs.filter(
-                    kind__in=InterfaceKind.interface_kind_image()
+                    kind__in=InterfaceKinds.image
                 ).count(),
                 "num_file_inputs": self.object.algorithm_interface.inputs.filter(
-                    Q(kind__in=InterfaceKind.interface_kind_file())
+                    Q(kind__in=InterfaceKinds.file)
                     | Q(
-                        kind__in=InterfaceKind.interface_kind_json(),
+                        kind__in=InterfaceKinds.json,
                         store_in_database=False,
                     )
                 ).count(),

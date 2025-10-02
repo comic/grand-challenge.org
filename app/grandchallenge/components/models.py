@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from enum import Enum
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -157,155 +158,112 @@ class InterfaceSuperKindChoices(models.TextChoices):
     VALUE = "V", "Value"
 
 
-class InterfaceKind:
+class InterfaceKinds(set, Enum):
+    """Interface kind sets.
 
-    @staticmethod
-    def interface_kind_json():
-        """Interface kinds that are json serializable:
+    .. exec_code::
+        :hide_code:
 
-        * String
-        * Integer
-        * Float
-        * Bool
-        * Anything that is JSON serializable (any object)
-        * Chart
-        * 2D bounding box
-        * Multiple 2D bounding boxes
-        * Distance measurement
-        * Multiple distance measurements
-        * Point
-        * Multiple points
-        * Polygon
-        * Multiple polygons
-        * Lines
-        * Multiple lines
-        * Angle
-        * Multiple angles
-        * Ellipse
-        * Multiple ellipses
-        * Affine transform registration
-        * Choice (string)
-        * Multiple choice (array of strings)
+        import json
+        import os
 
-        .. exec_code::
-            :hide_code:
+        import django
 
-            import json
-            import os
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+        django.setup()
 
-            import django
+        from grandchallenge.components.models import InterfaceKinds
+        from grandchallenge.components.models import INTERFACE_KIND_JSON_EXAMPLES
 
-            os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
-            django.setup()
+        print("Interface kinds that are images:")
+        for member in InterfaceKinds.image:
+            print("*", member.label)
 
-            from grandchallenge.components.models import INTERFACE_KIND_JSON_EXAMPLES
+        print("Interface kinds that are files:")
+        for member in InterfaceKinds.file:
+            print("*", member.label)
 
-            for key, example in INTERFACE_KIND_JSON_EXAMPLES.items():
-                title = f"Example JSON file contents for {key.label}"
+        print("Interface kinds that are json serializable:")
+        for member in InterfaceKinds.json:
+            print("*", member.label)
 
-                if example.extra_info:
-                    title += f" ({example.extra_info})"
+        for key, example in INTERFACE_KIND_JSON_EXAMPLES.items():
+            title = f"Example JSON file contents for {key.label}"
 
-                print(f"{title}:")
-                print(json.dumps(example.value, indent=2))
-                print("")
+            if example.extra_info:
+                title += f" ({example.extra_info})"
 
-        """
-        return {
-            InterfaceKindChoices.STRING,
-            InterfaceKindChoices.INTEGER,
-            InterfaceKindChoices.FLOAT,
-            InterfaceKindChoices.BOOL,
-            InterfaceKindChoices.TWO_D_BOUNDING_BOX,
-            InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-            InterfaceKindChoices.DISTANCE_MEASUREMENT,
-            InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-            InterfaceKindChoices.POINT,
-            InterfaceKindChoices.MULTIPLE_POINTS,
-            InterfaceKindChoices.POLYGON,
-            InterfaceKindChoices.MULTIPLE_POLYGONS,
-            InterfaceKindChoices.CHOICE,
-            InterfaceKindChoices.MULTIPLE_CHOICE,
-            InterfaceKindChoices.ANY,
-            InterfaceKindChoices.CHART,
-            InterfaceKindChoices.LINE,
-            InterfaceKindChoices.MULTIPLE_LINES,
-            InterfaceKindChoices.ANGLE,
-            InterfaceKindChoices.MULTIPLE_ANGLES,
-            InterfaceKindChoices.ELLIPSE,
-            InterfaceKindChoices.MULTIPLE_ELLIPSES,
-            InterfaceKindChoices.THREE_POINT_ANGLE,
-            InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
-            InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
-        }
+            print(f"{title}:")
+            print(json.dumps(example.value, indent=2))
+            print("")
+    """
 
-    @staticmethod
-    def interface_kind_image():
-        """Interface kinds that are images:
+    json = {
+        InterfaceKindChoices.STRING,
+        InterfaceKindChoices.INTEGER,
+        InterfaceKindChoices.FLOAT,
+        InterfaceKindChoices.BOOL,
+        InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+        InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+        InterfaceKindChoices.DISTANCE_MEASUREMENT,
+        InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+        InterfaceKindChoices.POINT,
+        InterfaceKindChoices.MULTIPLE_POINTS,
+        InterfaceKindChoices.POLYGON,
+        InterfaceKindChoices.MULTIPLE_POLYGONS,
+        InterfaceKindChoices.CHOICE,
+        InterfaceKindChoices.MULTIPLE_CHOICE,
+        InterfaceKindChoices.ANY,
+        InterfaceKindChoices.CHART,
+        InterfaceKindChoices.LINE,
+        InterfaceKindChoices.MULTIPLE_LINES,
+        InterfaceKindChoices.ANGLE,
+        InterfaceKindChoices.MULTIPLE_ANGLES,
+        InterfaceKindChoices.ELLIPSE,
+        InterfaceKindChoices.MULTIPLE_ELLIPSES,
+        InterfaceKindChoices.THREE_POINT_ANGLE,
+        InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+        InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
+    }
 
-        * Image
-        * Heat Map
-        * Segmentation
-        * Displacement Field
-        * DICOM Image Set
-        """
-        return {
-            InterfaceKindChoices.PANIMG_IMAGE,
-            InterfaceKindChoices.PANIMG_HEAT_MAP,
-            InterfaceKindChoices.PANIMG_SEGMENTATION,
-            InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD,
-            InterfaceKindChoices.DICOM_IMAGE_SET,
-        }
+    image = {
+        InterfaceKindChoices.PANIMG_IMAGE,
+        InterfaceKindChoices.PANIMG_HEAT_MAP,
+        InterfaceKindChoices.PANIMG_SEGMENTATION,
+        InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD,
+        InterfaceKindChoices.DICOM_IMAGE_SET,
+    }
 
-    @staticmethod
-    def interface_kind_file():
-        """Interface kinds that are files:
+    file = {
+        InterfaceKindChoices.CSV,
+        InterfaceKindChoices.ZIP,
+        InterfaceKindChoices.PDF,
+        InterfaceKindChoices.SQREG,
+        InterfaceKindChoices.THUMBNAIL_JPG,
+        InterfaceKindChoices.THUMBNAIL_PNG,
+        InterfaceKindChoices.OBJ,
+        InterfaceKindChoices.MP4,
+        InterfaceKindChoices.NEWICK,
+        InterfaceKindChoices.BIOM,
+    }
 
-        * CSV file
-        * ZIP file
-        * PDF file
-        * SQREG file
-        * Thumbnail JPG
-        * Thumbnail PNG
-        * OBJ file
-        * MP4 file
-        * Newick file
-        * BIOM file
-        """
-        return {
-            InterfaceKindChoices.CSV,
-            InterfaceKindChoices.ZIP,
-            InterfaceKindChoices.PDF,
-            InterfaceKindChoices.SQREG,
-            InterfaceKindChoices.THUMBNAIL_JPG,
-            InterfaceKindChoices.THUMBNAIL_PNG,
-            InterfaceKindChoices.OBJ,
-            InterfaceKindChoices.MP4,
-            InterfaceKindChoices.NEWICK,
-            InterfaceKindChoices.BIOM,
-        }
+    # Interfaces that can only be displayed in isolation.
+    mandatory_isolation = {
+        InterfaceKindChoices.CHART,
+        InterfaceKindChoices.PDF,
+        InterfaceKindChoices.THUMBNAIL_JPG,
+        InterfaceKindChoices.THUMBNAIL_PNG,
+        InterfaceKindChoices.MP4,
+    }
 
-    @staticmethod
-    def interface_kind_mandatory_isolation():
-        """Interfaces that can only be displayed in isolation."""
-        return {
-            InterfaceKindChoices.CHART,
-            InterfaceKindChoices.PDF,
-            InterfaceKindChoices.THUMBNAIL_JPG,
-            InterfaceKindChoices.THUMBNAIL_PNG,
-            InterfaceKindChoices.MP4,
-        }
-
-    @staticmethod
-    def interface_kind_undisplayable():
-        """Interfaces that cannot be displayed."""
-        return {
-            InterfaceKindChoices.CSV,
-            InterfaceKindChoices.ZIP,
-            InterfaceKindChoices.OBJ,
-            InterfaceKindChoices.NEWICK,
-            InterfaceKindChoices.BIOM,
-        }
+    # Interfaces that cannot be displayed.
+    undisplayable = {
+        InterfaceKindChoices.CSV,
+        InterfaceKindChoices.ZIP,
+        InterfaceKindChoices.OBJ,
+        InterfaceKindChoices.NEWICK,
+        InterfaceKindChoices.BIOM,
+    }
 
 
 class OverlaySegmentsMixin(models.Model):
@@ -464,7 +422,7 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def is_image_kind(self):
-        return self.kind in InterfaceKind.interface_kind_image()
+        return self.kind in InterfaceKinds.image
 
     @property
     def is_dicom_image_kind(self):
@@ -472,11 +430,11 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def is_json_kind(self):
-        return self.kind in InterfaceKind.interface_kind_json()
+        return self.kind in InterfaceKinds.json
 
     @property
     def is_file_kind(self):
-        return self.kind in InterfaceKind.interface_kind_file()
+        return self.kind in InterfaceKinds.file
 
     @property
     def is_thumbnail_kind(self):
@@ -647,7 +605,7 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     def _clean_store_in_database(self):
         allow_store_in_database = self.kind in (
-            InterfaceKind.interface_kind_json().difference(
+            InterfaceKinds.json.difference(
                 {
                     # These values can be large, so for any new interfaces
                     # of this type do not allow storing in the database.
@@ -1211,7 +1169,7 @@ INTERFACE_KIND_TO_ALLOWED_FILE_TYPES = {
             "text/plain",
             "application/json",
         )
-        for kind in InterfaceKind.interface_kind_json()
+        for kind in InterfaceKinds.json
     },
 }
 
@@ -1227,7 +1185,7 @@ INTERFACE_KIND_TO_FILE_EXTENSION = {
     InterfaceKindChoices.MP4: ".mp4",
     InterfaceKindChoices.NEWICK: ".newick",
     InterfaceKindChoices.BIOM: ".biom",
-    **{kind: ".json" for kind in InterfaceKind.interface_kind_json()},
+    **{kind: ".json" for kind in InterfaceKinds.json},
 }
 
 INTERFACE_KIND_TO_CUSTOM_QUEUE = {

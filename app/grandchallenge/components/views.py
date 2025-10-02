@@ -37,7 +37,7 @@ from grandchallenge.components.forms import CIVSetDeleteForm, SingleCIVForm
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceKind,
+    InterfaceKinds,
 )
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.components.widgets import FileSearchWidget
@@ -132,7 +132,7 @@ class ComponentInterfaceAutocomplete(
 
         if image_only:
             qs = ComponentInterface.objects.filter(
-                kind__in=InterfaceKind.interface_kind_image(),
+                kind__in=InterfaceKinds.image,
                 **extra_filter_kwargs,
             )
         else:

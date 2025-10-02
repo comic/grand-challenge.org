@@ -8,8 +8,8 @@ from grandchallenge.components.form_fields import (
     InterfaceFormFieldFactory,
 )
 from grandchallenge.components.models import (
-    InterfaceKind,
     InterfaceKindChoices,
+    InterfaceKinds,
 )
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory
@@ -29,9 +29,7 @@ from tests.uploads_tests.factories import UserUploadFactory
 @pytest.mark.django_db
 def test_flexible_file_field_validation_empty_data_and_missing_values():
     user = UserFactory()
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKind.interface_kind_file())
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     field = FlexibleFileField(
         user=user,
         interface=ci,
@@ -52,9 +50,7 @@ def test_flexible_file_field_validation_empty_data_and_missing_values():
 @pytest.mark.django_db
 def test_flexible_file_field_validation_user_uploads():
     user = UserFactory()
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKind.interface_kind_file())
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     field = FlexibleFileField(
         user=user,
         interface=ci,
@@ -99,9 +95,7 @@ def test_flexible_file_field_validation_user_uploads():
 @pytest.mark.django_db
 def test_flexible_file_field_validation_with_algorithm_job_inputs():
     user = UserFactory()
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKind.interface_kind_file())
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2, interface=ci)
     job_with_perm = AlgorithmJobFactory(creator=user, time_limit=60)
     job_without_perm = AlgorithmJobFactory(time_limit=60)
@@ -148,9 +142,7 @@ def test_flexible_file_field_validation_with_algorithm_job_inputs():
 @pytest.mark.django_db
 def test_flexible_file_field_validation_with_algorithm_job_outputs():
     user = UserFactory()
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKind.interface_kind_file())
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2, interface=ci)
     job_with_perm = AlgorithmJobFactory(creator=user, time_limit=60)
     job_without_perm = AlgorithmJobFactory(time_limit=60)
@@ -194,9 +186,7 @@ def test_flexible_file_field_validation_with_algorithm_job_outputs():
 @pytest.mark.django_db
 def test_flexible_file_field_validation_with_display_sets():
     user = UserFactory()
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKind.interface_kind_file())
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2, interface=ci)
     rs1, rs2 = ReaderStudyFactory.create_batch(2)
     rs1.add_editor(user)
@@ -245,9 +235,7 @@ def test_flexible_file_field_validation_with_display_sets():
 @pytest.mark.django_db
 def test_flexible_file_field_validation_with_archive_items():
     user = UserFactory()
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKind.interface_kind_file())
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2, interface=ci)
     a1, a2 = ArchiveFactory.create_batch(2)
     a1.add_editor(user)
@@ -297,7 +285,7 @@ def test_flexible_file_field_validation_with_archive_items():
 @pytest.mark.parametrize(
     "ci_kind, initial_pk",
     [
-        (FuzzyChoice(InterfaceKind.interface_kind_file()), "abc"),
+        (FuzzyChoice(InterfaceKinds.file), "abc"),
         (InterfaceKindChoices.PANIMG_IMAGE, "999"),
     ],
 )
@@ -313,9 +301,7 @@ def test_interface_form_field_factory_wrong_pk_type(ci_kind, initial_pk):
 @pytest.mark.django_db
 def test_flexible_file_widget_prepopulated_value_algorithm_job():
     creator, user = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKind.interface_kind_file())
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     civ = ComponentInterfaceValueFactory(
         interface=ci, file=factory.django.FileField()
     )
@@ -344,9 +330,7 @@ def test_flexible_file_widget_prepopulated_value_algorithm_job():
 @pytest.mark.django_db
 def test_flexible_file_widget_prepopulated_value_display_set():
     editor, user = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKind.interface_kind_file())
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     civ = ComponentInterfaceValueFactory(
         interface=ci, file=factory.django.FileField()
     )
@@ -376,9 +360,7 @@ def test_flexible_file_widget_prepopulated_value_display_set():
 @pytest.mark.django_db
 def test_flexible_file_widget_prepopulated_value_archive_item():
     editor, user = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKind.interface_kind_file())
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     civ = ComponentInterfaceValueFactory(
         interface=ci, file=factory.django.FileField()
     )
@@ -408,9 +390,7 @@ def test_flexible_file_widget_prepopulated_value_archive_item():
 @pytest.mark.django_db
 def test_flexible_file_widget_prepopulated_value_user_upload():
     creator, user = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKind.interface_kind_file())
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     upload = UserUploadFactory(creator=creator)
     initial = str(upload.pk)
 

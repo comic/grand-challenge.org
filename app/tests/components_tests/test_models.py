@@ -19,8 +19,8 @@ from grandchallenge.components.models import (
     ComponentInterfaceExampleValue,
     ComponentInterfaceValue,
     ImportStatusChoices,
-    InterfaceKind,
     InterfaceKindChoices,
+    InterfaceKinds,
 )
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
@@ -119,11 +119,11 @@ INTERFACE_KIND_CHOICES_ALLOW_STORE_IN_DB = sorted(
     ]
     + [
         (choice, pytest.raises(ValidationError))
-        for choice in InterfaceKind.interface_kind_image()
+        for choice in InterfaceKinds.image
     ]
     + [
         (choice, pytest.raises(ValidationError))
-        for choice in InterfaceKind.interface_kind_file()
+        for choice in InterfaceKinds.file
     ]
 )
 
@@ -146,29 +146,23 @@ def test_clean_store_in_db_true(kind, expectation):
 
 
 def test_all_interfaces_in_schema():
-    for i in InterfaceKind.interface_kind_json():
+    for i in InterfaceKinds.json:
         assert str(i) in INTERFACE_VALUE_SCHEMA["definitions"]
 
 
 def test_all_interfaces_covered():
     assert {str(i) for i in InterfaceKindChoices} == {
-        *InterfaceKind.interface_kind_image(),
-        *InterfaceKind.interface_kind_file(),
-        *InterfaceKind.interface_kind_json(),
+        *InterfaceKinds.image,
+        *InterfaceKinds.file,
+        *InterfaceKinds.json,
     }
 
 
 @pytest.mark.parametrize(
     "kind,context",
     (
-        *(
-            (k, nullcontext())
-            for k in sorted(InterfaceKind.interface_kind_file())
-        ),
-        *(
-            (k, nullcontext())
-            for k in sorted(InterfaceKind.interface_kind_json())
-        ),
+        *((k, nullcontext()) for k in sorted(InterfaceKinds.file)),
+        *((k, nullcontext()) for k in sorted(InterfaceKinds.json)),
         (
             InterfaceKindChoices.PANIMG_IMAGE,
             pytest.raises(RuntimeError),
@@ -212,7 +206,7 @@ def test_no_uuid_validation():
         (InterfaceKindChoices.MP4, "mp4"),
         (InterfaceKindChoices.NEWICK, "newick"),
         (InterfaceKindChoices.BIOM, "biom"),
-        *((k, "json") for k in InterfaceKind.interface_kind_json()),
+        *((k, "json") for k in InterfaceKinds.json),
     ),
 )
 def test_relative_path_file_ending(kind, good_suffix):
@@ -1661,9 +1655,7 @@ def test_interface_kind_json_kind_examples(kind, example):
 
 
 def test_all_examples_present():
-    assert set(INTERFACE_KIND_JSON_EXAMPLES.keys()) == set(
-        InterfaceKind.interface_kind_json()
-    )
+    assert set(INTERFACE_KIND_JSON_EXAMPLES.keys()) == set(InterfaceKinds.json)
 
 
 @pytest.mark.django_db
