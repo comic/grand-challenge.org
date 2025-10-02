@@ -254,7 +254,7 @@ class Invoice(models.Model, FieldChangeMixin):
                 + self.storage_costs_euros
             )
         except TypeError:
-            return
+            return None
 
     @property
     def _current_state(self):
@@ -264,11 +264,7 @@ class Invoice(models.Model, FieldChangeMixin):
 
     def clean(self):
         if not self._state.adding:
-            # Assert total amount unchanged
-            if (
-                self._current_state["total_amount_euros"]
-                != self._initial_state["total_amount_euros"]
-            ):
+            if self.has_changed("total_amount_euros"):
                 raise ValidationError(
                     "The total amount may not change. (You may only redistribute costs.)"
                 )

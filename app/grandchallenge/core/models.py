@@ -3,6 +3,7 @@ import uuid
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.forms import model_to_dict
 from django.utils.timezone import localtime
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import (
@@ -111,15 +112,7 @@ class FieldChangeMixin:
 
     @property
     def _current_state(self):
-        state = self.__dict__.copy()
-
-        if "_state" in state:
-            del state["_state"]
-
-        if "_initial_state" in state:
-            del state["_initial_state"]
-
-        return state
+        return model_to_dict(self)
 
     def _get_field_name(self, field_name):
         internal_type = self._meta.get_field(field_name).get_internal_type()
