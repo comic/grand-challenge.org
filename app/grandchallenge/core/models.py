@@ -114,18 +114,11 @@ class FieldChangeMixin:
     def _current_state(self):
         return model_to_dict(self)
 
-    def _get_field_name(self, field_name):
-        internal_type = self._meta.get_field(field_name).get_internal_type()
-        if internal_type in {"ForeignKey", "OneToOneField"}:
-            return f"{field_name}_id"
-        else:
-            return field_name
-
     def _current_value(self, field_name):
-        return self._current_state[self._get_field_name(field_name)]
+        return self._current_state[field_name]
 
     def initial_value(self, field_name):
-        return self._initial_state[self._get_field_name(field_name)]
+        return self._initial_state[field_name]
 
     def has_changed(self, field_name):
         return self._current_value(field_name) != self.initial_value(
