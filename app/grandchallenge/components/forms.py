@@ -26,7 +26,7 @@ from grandchallenge.components.form_fields import (
     InterfaceFormFieldFactory,
 )
 from grandchallenge.components.models import CIVData, ComponentInterface
-from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.forms import SaveFormInitMixin, UserMixin
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.evaluation.models import Method
 from grandchallenge.subdomains.utils import reverse_lazy
@@ -110,13 +110,10 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
         fields = ("user_upload", "creator", "comment")
 
 
-class AdditionalInputsMixin:
+class AdditionalInputsMixin(UserMixin):
 
-    def __init__(self, *args, **kwargs):
-        if not hasattr(self, "_user"):
-            self._user = kwargs.pop("user", None)
-        if not hasattr(self, "_additional_inputs"):
-            self._additional_inputs = kwargs.pop("additional_inputs", None)
+    def __init__(self, *args, additional_inputs, **kwargs):
+        self._additional_inputs = additional_inputs
 
         super().__init__(*args, **kwargs)
 

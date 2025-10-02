@@ -51,6 +51,7 @@ from grandchallenge.core.forms import (
     SaveFormInitMixin,
     UniqueTitleCreateFormMixin,
     UniqueTitleUpdateFormMixin,
+    UserMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.layout import Formset
@@ -310,10 +311,8 @@ class ReaderStudyCopyForm(Form):
         self.helper.layout.append(Submit("save", "Copy"))
 
 
-class QuestionForm(SaveFormInitMixin, DynamicFormMixin, ModelForm):
-    def __init__(self, *args, user, reader_study, **kwargs):
-        self._user = user
-
+class QuestionForm(SaveFormInitMixin, UserMixin, DynamicFormMixin, ModelForm):
+    def __init__(self, *args, reader_study, **kwargs):
         super().__init__(*args, **kwargs)
 
         for field_name in self.instance.read_only_fields:
@@ -830,16 +829,15 @@ class AnswersFromGroundTruthForm(SaveFormInitMixin, Form):
         )
 
 
-class GroundTruthCSVForm(SaveFormInitMixin, Form):
+class GroundTruthCSVForm(SaveFormInitMixin, UserMixin, Form):
     ground_truth = FileField(
         required=True,
         help_text="A CSV file representing the ground truth.",
     )
 
-    def __init__(self, *args, user, reader_study, **kwargs):
+    def __init__(self, *args, reader_study, **kwargs):
         super().__init__(*args, **kwargs)
         self._reader_study = reader_study
-        self._user = user
         self._answers = []
 
     def clean_ground_truth(self):
