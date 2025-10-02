@@ -112,10 +112,15 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 
 class AdditionalInputsMixin:
 
-    def __init__(self, *args, user, additional_inputs, **kwargs):
+    def __init__(self, *args, **kwargs):
+        if not hasattr(self, "_user"):
+            self._user = kwargs.pop("user", None)
+        if not hasattr(self, "_additional_inputs"):
+            self._additional_inputs = kwargs.pop("additional_inputs", None)
+
         super().__init__(*args, **kwargs)
 
-        for input in additional_inputs:
+        for input in self._additional_inputs:
             prefixed_interface_slug = (
                 f"{INTERFACE_FORM_FIELD_PREFIX}{input.slug}"
             )
@@ -132,7 +137,7 @@ class AdditionalInputsMixin:
 
             self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
                 interface=input,
-                user=user,
+                user=self._user,
                 required=input.value_required,
                 initial=initial if initial else input.default_value,
             )

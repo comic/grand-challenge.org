@@ -317,11 +317,12 @@ class SubmissionForm(
     )
 
     def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
+        kwargs["additional_inputs"] = phase.additional_evaluation_inputs.all()
+
         super().__init__(
             *args,
             user=user,
             phase=phase,
-            additional_inputs=phase.additional_evaluation_inputs.all(),
             **kwargs,
         )
 
@@ -690,10 +691,12 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
     )
 
     def __init__(self, submission, user, *args, **kwargs):
+        kwargs["user"] = user
+        kwargs["additional_inputs"] = (
+            submission.phase.additional_evaluation_inputs.all()
+        )
         super().__init__(
             *args,
-            user=user,
-            additional_inputs=submission.phase.additional_evaluation_inputs.all(),
             **kwargs,
         )
 

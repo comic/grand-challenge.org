@@ -124,10 +124,11 @@ class JobCreateForm(SaveFormInitMixin, AdditionalInputsMixin, Form):
     )
 
     def __init__(self, *args, algorithm, user, interface, **kwargs):
+        kwargs["user"] = user
+        kwargs["additional_inputs"] = interface.inputs.all()
+
         super().__init__(
             *args,
-            user=user,
-            additional_inputs=interface.inputs.all(),
             **kwargs,
         )
 
@@ -441,7 +442,7 @@ class AlgorithmForm(
 class UserAlgorithmsForPhaseMixin:
 
     def __init__(self, *args, user, phase, **kwargs):
-        super().__init__(*args, user=user, **kwargs)
+        super().__init__(*args, **kwargs)
         self._user = user
         self._phase = phase
 
