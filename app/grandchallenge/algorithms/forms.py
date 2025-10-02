@@ -79,6 +79,7 @@ from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
+    UserMixin,
     WorkstationUserFilterMixin,
 )
 from grandchallenge.core.guardian import filter_by_permission
@@ -123,17 +124,14 @@ class JobCreateForm(SaveFormInitMixin, AdditionalInputsMixin, Form):
         widget=HiddenInput,
     )
 
-    def __init__(self, *args, algorithm, user, interface, **kwargs):
-        kwargs["user"] = user
-        kwargs["additional_inputs"] = interface.inputs.all()
+    def __init__(self, *args, algorithm, interface, **kwargs):
+        self._algorithm = algorithm
 
         super().__init__(
             *args,
+            additional_inputs=interface.inputs.all(),
             **kwargs,
         )
-
-        self._algorithm = algorithm
-        self._user = user
 
         self.fields["creator"].queryset = get_user_model().objects.filter(
             pk=self._user.pk
@@ -439,11 +437,10 @@ class AlgorithmForm(
         return value
 
 
-class UserAlgorithmsForPhaseMixin:
-
-    def __init__(self, *args, user, phase, **kwargs):
-        self._user = user
+class UserAlgorithmsForPhaseMixin(UserMixin):
+    def __init__(self, *args, phase, **kwargs):
         self._phase = phase
+
         super().__init__(*args, **kwargs)
 
     @cached_property

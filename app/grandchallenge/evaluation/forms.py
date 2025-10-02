@@ -316,26 +316,25 @@ class SubmissionForm(
         "by who and with what data they will be used.",
     )
 
-    def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
-        kwargs["additional_inputs"] = phase.additional_evaluation_inputs.all()
-
+    def __init__(self, *args, **kwargs):  # noqa: C901
         super().__init__(
             *args,
-            user=user,
-            phase=phase,
+            additional_inputs=kwargs[
+                "phase"
+            ].additional_evaluation_inputs.all(),
             **kwargs,
         )
 
         self.fields["creator"].queryset = get_user_model().objects.filter(
-            pk=user.pk
+            pk=self._user.pk
         )
-        self.fields["creator"].initial = user
+        self.fields["creator"].initial = self._user
 
         # Note that the validation of creator and algorithm require
         # access to the phase properties, so those validations
         # would need to be updated if phase selections are allowed.
-        self.fields["phase"].queryset = Phase.objects.filter(pk=phase.pk)
-        self.fields["phase"].initial = phase
+        self.fields["phase"].queryset = Phase.objects.filter(pk=self._phase.pk)
+        self.fields["phase"].initial = self._phase
 
         if not self._phase.external_evaluation:
             del self.fields["confirm_submission"]
@@ -445,7 +444,7 @@ class SubmissionForm(
                 queryset=UserUpload.objects.filter(
                     status=UserUpload.StatusChoices.COMPLETED
                 ),
-                user=user,
+                user=self._user,
                 codename="change_userupload",
             )
 
@@ -690,19 +689,16 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
         queryset=None, disabled=True, widget=HiddenInput()
     )
 
-    def __init__(self, submission, user, *args, **kwargs):
-        kwargs["user"] = user
-        kwargs["additional_inputs"] = (
-            submission.phase.additional_evaluation_inputs.all()
-        )
+    def __init__(self, *args, submission, **kwargs):
         super().__init__(
             *args,
+            additional_inputs=submission.phase.additional_evaluation_inputs.all(),
             **kwargs,
         )
 
         self.fields["submission"].queryset = filter_by_permission(
             queryset=Submission.objects.filter(pk=submission.pk),
-            user=user,
+            user=self._user,
             codename="view_submission",
         )
         self.fields["submission"].initial = submission

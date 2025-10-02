@@ -120,3 +120,10 @@ class UniqueTitleUpdateFormMixin(UniqueTitleCreateFormMixin):
             .unique_title_query(*args, **kwargs)
             .exclude(id=self.instance.pk)
         )
+
+
+class UserMixin:
+    def __init__(self, *args, user, **kwargs):
+        self._user = user
+
+        super().__init__(*args, **kwargs)
