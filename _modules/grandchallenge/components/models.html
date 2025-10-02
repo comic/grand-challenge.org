@@ -64,7 +64,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegerChoices</span><span class="p">,</span> <span class="n">QuerySet</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.db.transaction</span><span class="w"> </span><span class="kn">import</span> <span class="n">on_commit</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelChoiceField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.forms.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">model_to_dict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.template.defaultfilters</span><span class="w"> </span><span class="kn">import</span> <span class="n">truncatewords</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.module_loading</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_string</span>
@@ -556,40 +555,19 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">super_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">saved_in_object_store</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">IMAGE</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">FILE</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">IMAGE</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_json_kind</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">VALUE</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">saved_in_object_store</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># files and images should always be saved to S3, others are optional</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span>
-            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_file_kind</span>
-            <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span>
-        <span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">requires_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">is_file_kind</span>
-            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_json_kind</span>
-            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span>
-        <span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">requires_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_json_kind</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">FILE</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">default_field</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">ModelChoiceField</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">super_kind</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">FILE</span><span class="p">,</span>
+            <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="k">return</span> <span class="n">ModelChoiceField</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span>
             <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">,</span>
@@ -629,7 +607,7 @@
         <span class="k">elif</span> <span class="n">fileobj</span><span class="p">:</span>
             <span class="n">container</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="n">fileobj</span><span class="p">)</span>
             <span class="n">civ</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">container</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">saved_in_object_store</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span><span class="p">:</span>
             <span class="n">civ</span><span class="o">.</span><span class="n">file</span> <span class="o">=</span> <span class="n">ContentFile</span><span class="p">(</span>
                 <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">),</span>
                 <span class="n">name</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
@@ -715,7 +693,6 @@
                     <span class="s2">&quot;Relative path should start with images/&quot;</span>
                 <span class="p">)</span>
             <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span><span class="p">:</span>
-                <span class="c1"># Maybe not in the future</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Images should be a directory&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;images/&quot;</span><span class="p">):</span>
@@ -724,22 +701,24 @@
                 <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_store_in_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">object_store_required</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">{</span>
-            <span class="o">*</span><span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_image</span><span class="p">(),</span>
-            <span class="o">*</span><span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_file</span><span class="p">(),</span>
-            <span class="c1"># These values can be large, so for any new interfaces of this</span>
-            <span class="c1"># type always add them to the object store</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_TWO_D_BOUNDING_BOXES</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_THREE_POINT_ANGLES</span><span class="p">,</span>
-        <span class="p">}</span>
+        <span class="n">allow_store_in_database</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_json</span><span class="p">()</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="c1"># These values can be large, so for any new interfaces</span>
+                    <span class="c1"># of this type do not allow storing in the database.</span>
+                    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_TWO_D_BOUNDING_BOXES</span><span class="p">,</span>
+                    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">,</span>
+                    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">,</span>
+                    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">,</span>
+                    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
+                    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">,</span>
+                    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">,</span>
+                    <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_THREE_POINT_ANGLES</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">object_store_required</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">store_in_database</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">allow_store_in_database</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2"> objects cannot be stored in the database&quot;</span>
             <span class="p">)</span>
@@ -755,7 +734,10 @@
             <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_default_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_file</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_value</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">FILE</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_value</span>
+        <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;A socket that requires a file should not have a default value&quot;</span>
             <span class="p">)</span>
@@ -775,7 +757,7 @@
         <span class="n">value_required</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BOOL</span><span class="p">:</span>
             <span class="n">value_required</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_image_kind</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">VALUE</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">validate_against_schema</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
                 <span class="n">value_required</span> <span class="o">=</span> <span class="kc">False</span>
@@ -1342,7 +1324,7 @@
 
 <div class="viewcode-block" id="ComponentInterfaceValue">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">ComponentInterfaceValue</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComponentInterfaceValue</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">FieldChangeMixin</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Encapsulates the value of an interface at a certain point in the graph.&quot;&quot;&quot;</span>
 
     <span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BigAutoField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -1472,42 +1454,25 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Component Interface Value </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="si">}</span><span class="s2">&quot;</span>
 
-<div class="viewcode-block" id="ComponentInterfaceValue.__init__">
-<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.__init__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_value_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="s2">&quot;image&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_file_orig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span></div>
-
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">model_to_dict</span><span class="p">(</span>
-            <span class="bp">self</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">fields</span><span class="p">]</span>
-        <span class="p">)</span>
-
 <div class="viewcode-block" id="ComponentInterfaceValue.save">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentInterfaceValue.save">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_value_orig</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">default_value</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span>
+                <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">default_value</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value_orig</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span>
             <span class="p">)</span>
-            <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_orig</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
-            <span class="ow">or</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_file_orig</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_orig</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span>
-            <span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">))</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">initial_value</span><span class="p">(</span><span class="s2">&quot;file&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;file&quot;</span><span class="p">))</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;You cannot change the value, file or image of an existing CIV. &quot;</span>
                 <span class="s2">&quot;Please create a new CIV instead.&quot;</span>
             <span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_orig</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="s2">&quot;file&quot;</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update_size_in_storage</span><span class="p">()</span>
 
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
@@ -1570,7 +1535,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_validated</span><span class="p">:</span>
             <span class="k">return</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">saved_in_object_store</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">store_in_database</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_value_only</span><span class="p">()</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_file_only</span><span class="p">()</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
@@ -1584,9 +1552,6 @@
                         <span class="s2">&quot;The file was too large to process, &quot;</span>
                         <span class="s2">&quot;please try again with a smaller file&quot;</span>
                     <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_value_only</span><span class="p">()</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">validate_against_schema</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
 
@@ -2418,14 +2383,19 @@
 
         <span class="n">ci</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="n">interface_slug</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_value</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">VALUE</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_init_json_civ_data</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_dicom_image_kind</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_init_dicom_civ_data</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_init_image_civ_data</span><span class="p">()</span>
-        <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_dicom_image_kind</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_init_dicom_civ_data</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_init_image_civ_data</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">FILE</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_init_file_civ_data</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unknown interface super kind: </span><span class="si">{</span><span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
 
@@ -2436,7 +2406,7 @@
         <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_json_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">ValidationError</span><span class="p">(</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Unknown data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">)</span><span class="si">}</span><span class="s2"> for interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
@@ -2473,7 +2443,7 @@
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_file_civ</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">ValidationError</span><span class="p">(</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Unknown data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">)</span><span class="si">}</span><span class="s2"> for interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
@@ -2588,7 +2558,7 @@
             <span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span>
         <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_value</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">VALUE</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_value</span><span class="p">(</span>
                 <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
                 <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span>
@@ -2596,7 +2566,7 @@
                 <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
                 <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_image</span><span class="p">(</span>
                 <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
                 <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span>
@@ -2606,7 +2576,7 @@
                 <span class="n">user_upload_queryset</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">user_upload_queryset</span><span class="p">,</span>
                 <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">requires_file</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">FILE</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_file</span><span class="p">(</span>
                 <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
                 <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span>
@@ -2615,7 +2585,9 @@
                 <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CIV creation for </span><span class="si">{</span><span class="n">ci</span><span class="si">}</span><span class="s2"> not handled.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unknown interface super kind: </span><span class="si">{</span><span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_civ_for_value</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
@@ -2804,7 +2776,7 @@
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="n">ArchiveItem</span><span class="p">,</span> <span class="n">DisplaySet</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">linked_object</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">FallbackCIVValidationErrorHandler</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No appropriate error handler found.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No appropriate error handler found.&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="InterfacesAndValues">
