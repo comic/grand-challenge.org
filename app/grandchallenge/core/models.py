@@ -111,18 +111,22 @@ class FieldChangeMixin:
 
         self._tracked_attrs = {
             f.name: f.attname
-            for f in
-            # Note, not many_to_many fields otherwise we would need to fetch all values
-            chain(self._meta.concrete_fields, self._meta.private_fields)
+            for f in chain(
+                self._meta.concrete_fields, self._meta.private_fields
+            )
         }
 
-        for tracked_property in tracked_properties:
-            if not isinstance(getattr(type(self), tracked_property), property):
-                raise ValueError(f"{tracked_property} cannot be tracked")
-            if tracked_property in self._tracked_attrs:
-                raise ValueError(f"{tracked_property} is already tracked")
+        many_to_many_field_names = {f.name for f in self._meta.many_to_many}
+
+        for attname in tracked_properties:
+            is_already_tracked = attname in self._tracked_attrs
+            is_many_to_many_field = attname in many_to_many_field_names
+            is_property = isinstance(getattr(type(self), attname), property)
+
+            if is_already_tracked or is_many_to_many_field or not is_property:
+                raise ValueError(f"{attname} cannot be tracked")
             else:
-                self._tracked_attrs[tracked_property] = tracked_property
+                self._tracked_attrs[attname] = attname
 
         self._initial_state = self._current_state
 
