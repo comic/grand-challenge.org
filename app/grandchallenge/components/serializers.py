@@ -131,7 +131,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
 
         interface = attrs["interface"]
 
-        if interface.is_image_kind:
+        if interface.super_kind == interface.SuperKind.IMAGE:
             if not any(
                 [
                     attrs.get("image"),
@@ -142,7 +142,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                     f"upload_session or image are required for interface "
                     f"kind {interface.kind}"
                 )
-        elif interface.requires_value:
+        elif interface.super_kind == interface.SuperKind.VALUE:
             if (
                 attrs.get("value") is None
             ):  # Note: can also be False so check for None instead
@@ -150,7 +150,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                     f"value is required for interface "
                     f"kind {interface.kind}"
                 )
-        elif interface.requires_file:
+        elif interface.super_kind == interface.SuperKind.FILE:
             if not any(
                 [
                     attrs.get("file"),
@@ -162,7 +162,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                     f"kind {interface.kind}"
                 )
         else:
-            NotImplementedError(f"Unsupported interface {interface}")
+            raise NotImplementedError(f"Unsupported interface {interface}")
 
         if not attrs.get("upload_session") and not attrs.get("user_upload"):
             # Instances without an image or a file are never valid, this will be checked

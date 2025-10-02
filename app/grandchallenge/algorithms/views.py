@@ -1204,11 +1204,11 @@ class AlgorithmInterfaceCreateBase(CreateView):
     success_message = "Algorithm interface successfully added"
 
     def get_success_url(self):
-        return NotImplementedError
+        raise NotImplementedError
 
     @property
     def base_obj(self):
-        return NotImplementedError
+        raise NotImplementedError
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)

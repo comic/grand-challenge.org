@@ -609,7 +609,7 @@ def get_interface_form_data(
         }
     else:
         form_data = {f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": data}
-    if ci.is_image_kind:
+    if ci.super_kind == ci.SuperKind.IMAGE:
         if existing_data:
             form_data[
                 f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
@@ -618,7 +618,7 @@ def get_interface_form_data(
             form_data[
                 f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
             ] = ImageWidgetChoices.IMAGE_UPLOAD.name
-    elif ci.requires_file:
+    elif ci.super_kind == ci.SuperKind.FILE:
         if existing_data:
             form_data[
                 f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"

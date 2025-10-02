@@ -26,7 +26,6 @@ from django.db import models, transaction
 from django.db.models import IntegerChoices, QuerySet
 from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
-from django.forms.models import model_to_dict
 from django.template.defaultfilters import truncatewords
 from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
@@ -504,40 +503,19 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def super_kind(self):
-        if self.saved_in_object_store:
-            if self.is_image_kind:
-                return InterfaceSuperKindChoices.IMAGE
-            else:
-                return InterfaceSuperKindChoices.FILE
-        else:
+        if self.is_image_kind:
+            return InterfaceSuperKindChoices.IMAGE
+        elif self.is_json_kind and self.store_in_database:
             return InterfaceSuperKindChoices.VALUE
-
-    @property
-    def saved_in_object_store(self):
-        # files and images should always be saved to S3, others are optional
-        return (
-            self.is_image_kind
-            or self.is_file_kind
-            or not self.store_in_database
-        )
-
-    @property
-    def requires_file(self):
-        return (
-            self.is_file_kind
-            or self.is_json_kind
-            and not self.store_in_database
-        )
-
-    @property
-    def requires_value(self):
-        return self.is_json_kind and self.store_in_database
+        else:
+            return InterfaceSuperKindChoices.FILE
 
     @property
     def default_field(self):
-        if self.requires_file:
-            return ModelChoiceField
-        elif self.is_image_kind:
+        if self.super_kind in (
+            InterfaceSuperKindChoices.FILE,
+            InterfaceSuperKindChoices.IMAGE,
+        ):
             return ModelChoiceField
         elif self.kind in {
             InterfaceKindChoices.STRING,
@@ -577,7 +555,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         elif fileobj:
             container = File(fileobj)
             civ.file.save(Path(self.relative_path).name, container)
-        elif self.saved_in_object_store:
+        elif not self.store_in_database:
             civ.file = ContentFile(
                 json.dumps(value).encode("utf-8"),
                 name=Path(self.relative_path).name,
@@ -660,7 +638,6 @@ class ComponentInterface(OverlaySegmentsMixin):
                     "Relative path should start with images/"
                 )
             if Path(self.relative_path).name != Path(self.relative_path).stem:
-                # Maybe not in the future
                 raise ValidationError("Images should be a directory")
         else:
             if self.relative_path.startswith("images/"):
@@ -669,22 +646,24 @@ class ComponentInterface(OverlaySegmentsMixin):
                 )
 
     def _clean_store_in_database(self):
-        object_store_required = self.kind in {
-            *InterfaceKind.interface_kind_image(),
-            *InterfaceKind.interface_kind_file(),
-            # These values can be large, so for any new interfaces of this
-            # type always add them to the object store
-            InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-            InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-            InterfaceKindChoices.MULTIPLE_POINTS,
-            InterfaceKindChoices.MULTIPLE_POLYGONS,
-            InterfaceKindChoices.MULTIPLE_LINES,
-            InterfaceKindChoices.MULTIPLE_ANGLES,
-            InterfaceKindChoices.MULTIPLE_ELLIPSES,
-            InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
-        }
+        allow_store_in_database = self.kind in (
+            InterfaceKind.interface_kind_json().difference(
+                {
+                    # These values can be large, so for any new interfaces
+                    # of this type do not allow storing in the database.
+                    InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+                    InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+                    InterfaceKindChoices.MULTIPLE_POINTS,
+                    InterfaceKindChoices.MULTIPLE_POLYGONS,
+                    InterfaceKindChoices.MULTIPLE_LINES,
+                    InterfaceKindChoices.MULTIPLE_ANGLES,
+                    InterfaceKindChoices.MULTIPLE_ELLIPSES,
+                    InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+                }
+            )
+        )
 
-        if object_store_required and self.store_in_database:
+        if self.store_in_database and not allow_store_in_database:
             raise ValidationError(
                 f"Interface {self.kind} objects cannot be stored in the database"
             )
@@ -700,7 +679,10 @@ class ComponentInterface(OverlaySegmentsMixin):
             )
 
     def _clean_default_value(self):
-        if self.requires_file and self.default_value:
+        if (
+            self.super_kind == InterfaceSuperKindChoices.FILE
+            and self.default_value
+        ):
             raise ValidationError(
                 "A socket that requires a file should not have a default value"
             )
@@ -717,7 +699,7 @@ class ComponentInterface(OverlaySegmentsMixin):
         value_required = True
         if self.kind == InterfaceKindChoices.BOOL:
             value_required = False
-        elif not self.is_image_kind and not self.requires_file:
+        elif self.super_kind == InterfaceSuperKindChoices.VALUE:
             try:
                 self.validate_against_schema(value=None)
                 value_required = False
@@ -1275,7 +1257,7 @@ class ComponentInterfaceValueManager(models.Manager):
             return self.filter(**kwargs).first(), False
 
 
-class ComponentInterfaceValue(models.Model):
+class ComponentInterfaceValue(models.Model, FieldChangeMixin):
     """Encapsulates the value of an interface at a certain point in the graph."""
 
     id = models.BigAutoField(primary_key=True)
@@ -1405,37 +1387,23 @@ class ComponentInterfaceValue(models.Model):
         else:
             return f"Component Interface Value {self.pk} for {self.interface}"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._value_orig = self.value
-        self._image_orig = self._dict["image"]
-        self._file_orig = self.file
-
-    @property
-    def _dict(self):
-        return model_to_dict(
-            self, fields=[field.name for field in self._meta.fields]
-        )
-
     def save(self, *args, **kwargs):
         if (
             (
-                self._value_orig not in (None, self.interface.default_value)
+                self.initial_value("value")
+                not in (None, self.interface.default_value)
                 and self.value is not None
-                and self._value_orig != self.value
+                and self.has_changed("value")
             )
-            or (self._image_orig and self._image_orig != self.image.pk)
-            or (
-                self._file_orig.name not in (None, "")
-                and self._file_orig != self.file
-            )
+            or (self.initial_value("image") and self.has_changed("image"))
+            or (self.initial_value("file") and self.has_changed("file"))
         ):
             raise ValidationError(
                 "You cannot change the value, file or image of an existing CIV. "
                 "Please create a new CIV instead."
             )
 
-        if self._file_orig != self.file:
+        if self.has_changed("file"):
             self.update_size_in_storage()
 
         super().save(*args, **kwargs)
@@ -1494,7 +1462,10 @@ class ComponentInterfaceValue(models.Model):
     def _validate_value(self):
         if self._user_upload_validated:
             return
-        if self.interface.saved_in_object_store:
+        if self.interface.store_in_database:
+            self._validate_value_only()
+            value = self.value
+        else:
             self._validate_file_only()
             with self.file.open("r") as f:
                 try:
@@ -1508,9 +1479,6 @@ class ComponentInterfaceValue(models.Model):
                         "The file was too large to process, "
                         "please try again with a smaller file"
                     ) from error
-        else:
-            self._validate_value_only()
-            value = self.value
 
         self.interface.validate_against_schema(value=value)
 
@@ -2317,14 +2285,19 @@ class CIVData:
 
         ci = ComponentInterface.objects.get(slug=interface_slug)
 
-        if ci.requires_value:
+        if ci.super_kind == ci.SuperKind.VALUE:
             self._init_json_civ_data()
-        elif ci.is_dicom_image_kind:
-            self._init_dicom_civ_data()
-        elif ci.is_image_kind:
-            self._init_image_civ_data()
-        elif ci.requires_file:
+        elif ci.super_kind == ci.SuperKind.IMAGE:
+            if ci.is_dicom_image_kind:
+                self._init_dicom_civ_data()
+            else:
+                self._init_image_civ_data()
+        elif ci.super_kind == ci.SuperKind.FILE:
             self._init_file_civ_data()
+        else:
+            raise NotImplementedError(
+                f"Unknown interface super kind: {ci.super_kind}"
+            )
 
         self.validate()
 
@@ -2335,7 +2308,7 @@ class CIVData:
         ):
             self._json_value = self._initial_value
         else:
-            ValidationError(
+            raise ValidationError(
                 f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
             )
 
@@ -2372,7 +2345,7 @@ class CIVData:
         elif self._initial_value is None:
             self._file_civ = None
         else:
-            return ValidationError(
+            raise ValidationError(
                 f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
             )
 
@@ -2487,7 +2460,7 @@ class CIVForObjectMixin:
             interface=ci, user=user
         )
 
-        if ci.requires_value:
+        if ci.super_kind == ci.SuperKind.VALUE:
             return self.create_civ_for_value(
                 ci=ci,
                 current_civ=current_civ,
@@ -2495,7 +2468,7 @@ class CIVForObjectMixin:
                 user=user,
                 linked_task=linked_task,
             )
-        elif ci.is_image_kind:
+        elif ci.super_kind == ci.SuperKind.IMAGE:
             return self.create_civ_for_image(
                 ci=ci,
                 current_civ=current_civ,
@@ -2505,7 +2478,7 @@ class CIVForObjectMixin:
                 user_upload_queryset=civ_data.user_upload_queryset,
                 linked_task=linked_task,
             )
-        elif ci.requires_file:
+        elif ci.super_kind == ci.SuperKind.FILE:
             return self.create_civ_for_file(
                 ci=ci,
                 current_civ=current_civ,
@@ -2514,7 +2487,9 @@ class CIVForObjectMixin:
                 linked_task=linked_task,
             )
         else:
-            NotImplementedError(f"CIV creation for {ci} not handled.")
+            raise NotImplementedError(
+                f"Unknown interface super kind: {ci.super_kind}"
+            )
 
     def create_civ_for_value(
         self, *, ci, current_civ, new_value, user, linked_task=None
@@ -2703,7 +2678,7 @@ class CIVForObjectMixin:
         elif isinstance(self, (ArchiveItem, DisplaySet)) and not linked_object:
             return FallbackCIVValidationErrorHandler()
         else:
-            return RuntimeError("No appropriate error handler found.")
+            raise RuntimeError("No appropriate error handler found.")
 
 
 class InterfacesAndValues(NamedTuple):

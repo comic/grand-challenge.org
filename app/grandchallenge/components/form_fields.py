@@ -75,33 +75,36 @@ class InterfaceFormFieldFactory:
             "label": interface.title.title(),
         }
 
-        if interface.requires_value:
-            return cls.get_json_field(
-                interface=interface,
-                initial=initial,
-                **kwargs,
-            )
-        elif interface.is_dicom_image_kind:
-            return DICOMUploadField(
-                user=user,
-                initial=initial,
-                **kwargs,
-            )
-        elif interface.is_image_kind:
-            return FlexibleImageField(
-                user=user,
-                initial=initial,
-                **kwargs,
-            )
-        elif interface.requires_file:
+        if interface.super_kind == interface.SuperKind.IMAGE:
+            if interface.is_dicom_image_kind:
+                return DICOMUploadField(
+                    user=user,
+                    initial=initial,
+                    **kwargs,
+                )
+            else:
+                return FlexibleImageField(
+                    user=user,
+                    initial=initial,
+                    **kwargs,
+                )
+        elif interface.super_kind == interface.SuperKind.FILE:
             return FlexibleFileField(
                 user=user,
                 interface=interface,
                 initial=initial,
                 **kwargs,
             )
+        elif interface.super_kind == interface.SuperKind.VALUE:
+            return cls.get_json_field(
+                interface=interface,
+                initial=initial,
+                **kwargs,
+            )
         else:
-            raise RuntimeError(f"Unknown interface kind: {interface}")
+            raise NotImplementedError(
+                f"Unknown interface super kind: {interface.super_kind}"
+            )
 
     @staticmethod
     def get_json_field(interface, initial, **kwargs):

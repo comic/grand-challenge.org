@@ -21,7 +21,6 @@ from grandchallenge.components.models import (
     ImportStatusChoices,
     InterfaceKind,
     InterfaceKindChoices,
-    InterfaceSuperKindChoices,
 )
 from grandchallenge.components.schemas import INTERFACE_VALUE_SCHEMA
 from grandchallenge.components.tasks import (
@@ -55,130 +54,95 @@ from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import create_raw_upload_image_session
 
 
-@pytest.mark.parametrize(
-    "kind,object_store_required,is_image",
-    (
-        # JSON types
-        (InterfaceKindChoices.STRING, False, False),
-        (InterfaceKindChoices.INTEGER, False, False),
-        (InterfaceKindChoices.FLOAT, False, False),
-        (InterfaceKindChoices.BOOL, False, False),
-        (InterfaceKindChoices.TWO_D_BOUNDING_BOX, False, False),
-        (InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES, False, False),
-        (InterfaceKindChoices.DISTANCE_MEASUREMENT, False, False),
-        (InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS, False, False),
-        (InterfaceKindChoices.POINT, False, False),
-        (InterfaceKindChoices.MULTIPLE_POINTS, False, False),
-        (InterfaceKindChoices.POLYGON, False, False),
-        (InterfaceKindChoices.MULTIPLE_POLYGONS, False, False),
-        (InterfaceKindChoices.CHOICE, False, False),
-        (InterfaceKindChoices.MULTIPLE_CHOICE, False, False),
-        (InterfaceKindChoices.ANY, False, False),
-        (InterfaceKindChoices.CHART, False, False),
-        (InterfaceKindChoices.LINE, False, False),
-        (InterfaceKindChoices.MULTIPLE_LINES, False, False),
-        (InterfaceKindChoices.ANGLE, False, False),
-        (InterfaceKindChoices.MULTIPLE_ANGLES, False, False),
-        (InterfaceKindChoices.ELLIPSE, False, False),
-        (InterfaceKindChoices.MULTIPLE_ELLIPSES, False, False),
-        (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, False, False),
-        # Image types
-        (InterfaceKindChoices.PANIMG_IMAGE, True, True),
-        (InterfaceKindChoices.PANIMG_HEAT_MAP, True, True),
-        (InterfaceKindChoices.PANIMG_SEGMENTATION, True, True),
-        (InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD, True, True),
-        # File types
-        (InterfaceKindChoices.CSV, True, False),
-        (InterfaceKindChoices.ZIP, True, False),
-        (InterfaceKindChoices.PDF, True, False),
-        (InterfaceKindChoices.SQREG, True, False),
-        (InterfaceKindChoices.THUMBNAIL_JPG, True, False),
-        (InterfaceKindChoices.THUMBNAIL_PNG, True, False),
-        (InterfaceKindChoices.OBJ, True, False),
-        (InterfaceKindChoices.MP4, True, False),
-        (InterfaceKindChoices.NEWICK, True, False),
-        (InterfaceKindChoices.BIOM, True, False),
-    ),
+@pytest.mark.parametrize("kind", InterfaceKindChoices)
+def test_clean_store_in_db_false(kind):
+    ci = ComponentInterface(kind=kind, store_in_database=False)
+
+    ci._clean_store_in_database()
+    assert True  # no exception raised
+
+
+INTERFACE_KIND_CHOICES_ALLOW_STORE_IN_DB = sorted(
+    [
+        (InterfaceKindChoices.STRING, nullcontext()),
+        (InterfaceKindChoices.INTEGER, nullcontext()),
+        (InterfaceKindChoices.FLOAT, nullcontext()),
+        (InterfaceKindChoices.BOOL, nullcontext()),
+        (InterfaceKindChoices.TWO_D_BOUNDING_BOX, nullcontext()),
+        (InterfaceKindChoices.DISTANCE_MEASUREMENT, nullcontext()),
+        (InterfaceKindChoices.POINT, nullcontext()),
+        (InterfaceKindChoices.POLYGON, nullcontext()),
+        (InterfaceKindChoices.CHOICE, nullcontext()),
+        (InterfaceKindChoices.MULTIPLE_CHOICE, nullcontext()),
+        (InterfaceKindChoices.ANY, nullcontext()),
+        (InterfaceKindChoices.CHART, nullcontext()),
+        (InterfaceKindChoices.LINE, nullcontext()),
+        (InterfaceKindChoices.ANGLE, nullcontext()),
+        (InterfaceKindChoices.ELLIPSE, nullcontext()),
+        (InterfaceKindChoices.THREE_POINT_ANGLE, nullcontext()),
+        (
+            InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
+            nullcontext(),
+        ),
+        (
+            InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+            pytest.raises(ValidationError),
+        ),
+        (
+            InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+            pytest.raises(ValidationError),
+        ),
+        (
+            InterfaceKindChoices.MULTIPLE_POINTS,
+            pytest.raises(ValidationError),
+        ),
+        (
+            InterfaceKindChoices.MULTIPLE_POLYGONS,
+            pytest.raises(ValidationError),
+        ),
+        (
+            InterfaceKindChoices.MULTIPLE_LINES,
+            pytest.raises(ValidationError),
+        ),
+        (
+            InterfaceKindChoices.MULTIPLE_ANGLES,
+            pytest.raises(ValidationError),
+        ),
+        (
+            InterfaceKindChoices.MULTIPLE_ELLIPSES,
+            pytest.raises(ValidationError),
+        ),
+        (
+            InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
+            pytest.raises(ValidationError),
+        ),
+    ]
+    + [
+        (choice, pytest.raises(ValidationError))
+        for choice in InterfaceKind.interface_kind_image()
+    ]
+    + [
+        (choice, pytest.raises(ValidationError))
+        for choice in InterfaceKind.interface_kind_file()
+    ]
 )
-def test_saved_in_object_store(kind, object_store_required, is_image):
+
+
+def test_all_interface_kind_choices_covered_for_allow_store_in_db():
+    assert {
+        choice for choice, _ in INTERFACE_KIND_CHOICES_ALLOW_STORE_IN_DB
+    } == set(InterfaceKindChoices)
+
+
+@pytest.mark.parametrize(
+    "kind, expectation",
+    INTERFACE_KIND_CHOICES_ALLOW_STORE_IN_DB,
+)
+def test_clean_store_in_db_true(kind, expectation):
     ci = ComponentInterface(kind=kind, store_in_database=True)
 
-    if object_store_required:
-        assert ci.saved_in_object_store is True
-        if is_image:
-            assert ci.super_kind == InterfaceSuperKindChoices.IMAGE
-        else:
-            assert ci.super_kind == InterfaceSuperKindChoices.FILE
-        ci.store_in_database = False
-    else:
-        assert ci.saved_in_object_store is False
-        assert is_image is False  # Shouldn't happen!
-        assert ci.super_kind == InterfaceSuperKindChoices.VALUE
-        ci.store_in_database = False
-
-    assert ci.saved_in_object_store is True
-    if is_image:
-        assert ci.super_kind == InterfaceSuperKindChoices.IMAGE
-    else:
-        assert ci.super_kind == InterfaceSuperKindChoices.FILE
-
-
-@pytest.mark.parametrize(
-    "kind,object_store_required",
-    (
-        # JSON types
-        (InterfaceKindChoices.STRING, False),
-        (InterfaceKindChoices.INTEGER, False),
-        (InterfaceKindChoices.FLOAT, False),
-        (InterfaceKindChoices.BOOL, False),
-        (InterfaceKindChoices.TWO_D_BOUNDING_BOX, False),
-        (InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES, True),
-        (InterfaceKindChoices.DISTANCE_MEASUREMENT, False),
-        (InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS, True),
-        (InterfaceKindChoices.POINT, False),
-        (InterfaceKindChoices.MULTIPLE_POINTS, True),
-        (InterfaceKindChoices.POLYGON, False),
-        (InterfaceKindChoices.MULTIPLE_POLYGONS, True),
-        (InterfaceKindChoices.CHOICE, False),
-        (InterfaceKindChoices.MULTIPLE_CHOICE, False),
-        (InterfaceKindChoices.ANY, False),
-        (InterfaceKindChoices.CHART, False),
-        (InterfaceKindChoices.LINE, False),
-        (InterfaceKindChoices.MULTIPLE_LINES, True),
-        (InterfaceKindChoices.ANGLE, False),
-        (InterfaceKindChoices.MULTIPLE_ANGLES, True),
-        (InterfaceKindChoices.ELLIPSE, False),
-        (InterfaceKindChoices.MULTIPLE_ELLIPSES, True),
-        (InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION, False),
-        # Image types
-        (InterfaceKindChoices.PANIMG_IMAGE, True),
-        (InterfaceKindChoices.PANIMG_HEAT_MAP, True),
-        (InterfaceKindChoices.PANIMG_SEGMENTATION, True),
-        # File types
-        (InterfaceKindChoices.CSV, True),
-        (InterfaceKindChoices.ZIP, True),
-        (InterfaceKindChoices.PDF, True),
-        (InterfaceKindChoices.SQREG, True),
-        (InterfaceKindChoices.THUMBNAIL_JPG, True),
-        (InterfaceKindChoices.THUMBNAIL_PNG, True),
-        (InterfaceKindChoices.MP4, True),
-        (InterfaceKindChoices.NEWICK, True),
-        (InterfaceKindChoices.BIOM, True),
-    ),
-)
-def test_clean_store_in_db(kind, object_store_required):
-    ci = ComponentInterface(kind=kind, store_in_database=False)
-    ci._clean_store_in_database()
-    assert ci.saved_in_object_store is True
-
-    ci.store_in_database = True
-
-    if object_store_required:
-        with pytest.raises(ValidationError):
-            ci._clean_store_in_database()
-    else:
+    with expectation:
         ci._clean_store_in_database()
-        assert ci.saved_in_object_store is False
 
 
 def test_all_interfaces_in_schema():
