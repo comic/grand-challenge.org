@@ -247,6 +247,7 @@ class InterfaceKinds(set, Enum):
         InterfaceKindChoices.BIOM,
     }
 
+    # Interfaces that can only be displayed in isolation.
     mandatory_isolation = {
         InterfaceKindChoices.CHART,
         InterfaceKindChoices.PDF,
@@ -255,6 +256,7 @@ class InterfaceKinds(set, Enum):
         InterfaceKindChoices.MP4,
     }
 
+    # Interfaces that cannot be displayed.
     undisplayable = {
         InterfaceKindChoices.CSV,
         InterfaceKindChoices.ZIP,
