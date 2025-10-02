@@ -68,8 +68,8 @@
     <span class="n">CIVSetStringRepresentationMixin</span><span class="p">,</span>
     <span class="n">ComponentInterface</span><span class="p">,</span>
     <span class="n">ComponentInterfaceValue</span><span class="p">,</span>
-    <span class="n">InterfaceKind</span><span class="p">,</span>
     <span class="n">InterfaceKindChoices</span><span class="p">,</span>
+    <span class="n">InterfaceKinds</span><span class="p">,</span>
     <span class="n">OverlaySegmentsMixin</span><span class="p">,</span>
     <span class="n">ValuesForInterfacesMixin</span><span class="p">,</span>
 <span class="p">)</span>
@@ -1784,7 +1784,7 @@
             <span class="k">if</span> <span class="p">(</span>
                 <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
                     <span class="n">slug__in</span><span class="o">=</span><span class="n">viewport_content</span><span class="p">,</span>
-                    <span class="n">kind__in</span><span class="o">=</span><span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_image</span><span class="p">(),</span>
+                    <span class="n">kind__in</span><span class="o">=</span><span class="n">InterfaceKinds</span><span class="o">.</span><span class="n">image</span><span class="p">,</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
                 <span class="o">&lt;</span> <span class="mi">1</span>
             <span class="p">):</span>

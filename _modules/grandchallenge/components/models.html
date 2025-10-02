@@ -39,6 +39,7 @@
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONDecodeError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
@@ -201,155 +202,115 @@
 
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">InterfaceKind</span><span class="p">:</span>
+<div class="viewcode-block" id="InterfaceKinds">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKinds">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InterfaceKinds</span><span class="p">(</span><span class="nb">set</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interface kind sets.</span>
 
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">interface_kind_json</span><span class="p">():</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are json serializable:</span>
+<span class="sd">    .. exec_code::</span>
+<span class="sd">        :hide_code:</span>
 
-<span class="sd">        * String</span>
-<span class="sd">        * Integer</span>
-<span class="sd">        * Float</span>
-<span class="sd">        * Bool</span>
-<span class="sd">        * Anything that is JSON serializable (any object)</span>
-<span class="sd">        * Chart</span>
-<span class="sd">        * 2D bounding box</span>
-<span class="sd">        * Multiple 2D bounding boxes</span>
-<span class="sd">        * Distance measurement</span>
-<span class="sd">        * Multiple distance measurements</span>
-<span class="sd">        * Point</span>
-<span class="sd">        * Multiple points</span>
-<span class="sd">        * Polygon</span>
-<span class="sd">        * Multiple polygons</span>
-<span class="sd">        * Lines</span>
-<span class="sd">        * Multiple lines</span>
-<span class="sd">        * Angle</span>
-<span class="sd">        * Multiple angles</span>
-<span class="sd">        * Ellipse</span>
-<span class="sd">        * Multiple ellipses</span>
-<span class="sd">        * Affine transform registration</span>
-<span class="sd">        * Choice (string)</span>
-<span class="sd">        * Multiple choice (array of strings)</span>
+<span class="sd">        import json</span>
+<span class="sd">        import os</span>
 
-<span class="sd">        .. exec_code::</span>
-<span class="sd">            :hide_code:</span>
+<span class="sd">        import django</span>
 
-<span class="sd">            import json</span>
-<span class="sd">            import os</span>
+<span class="sd">        os.environ.setdefault(&#39;DJANGO_SETTINGS_MODULE&#39;, &#39;config.settings&#39;)</span>
+<span class="sd">        django.setup()</span>
 
-<span class="sd">            import django</span>
+<span class="sd">        from grandchallenge.components.models import InterfaceKinds</span>
+<span class="sd">        from grandchallenge.components.models import INTERFACE_KIND_JSON_EXAMPLES</span>
 
-<span class="sd">            os.environ.setdefault(&#39;DJANGO_SETTINGS_MODULE&#39;, &#39;config.settings&#39;)</span>
-<span class="sd">            django.setup()</span>
+<span class="sd">        print(&quot;Interface kinds that are images:&quot;)</span>
+<span class="sd">        for member in InterfaceKinds.image:</span>
+<span class="sd">            print(&quot;*&quot;, member.label)</span>
 
-<span class="sd">            from grandchallenge.components.models import INTERFACE_KIND_JSON_EXAMPLES</span>
+<span class="sd">        print(&quot;Interface kinds that are files:&quot;)</span>
+<span class="sd">        for member in InterfaceKinds.file:</span>
+<span class="sd">            print(&quot;*&quot;, member.label)</span>
 
-<span class="sd">            for key, example in INTERFACE_KIND_JSON_EXAMPLES.items():</span>
-<span class="sd">                title = f&quot;Example JSON file contents for {key.label}&quot;</span>
+<span class="sd">        print(&quot;Interface kinds that are json serializable:&quot;)</span>
+<span class="sd">        for member in InterfaceKinds.json:</span>
+<span class="sd">            print(&quot;*&quot;, member.label)</span>
 
-<span class="sd">                if example.extra_info:</span>
-<span class="sd">                    title += f&quot; ({example.extra_info})&quot;</span>
+<span class="sd">        for key, example in INTERFACE_KIND_JSON_EXAMPLES.items():</span>
+<span class="sd">            title = f&quot;Example JSON file contents for {key.label}&quot;</span>
 
-<span class="sd">                print(f&quot;{title}:&quot;)</span>
-<span class="sd">                print(json.dumps(example.value, indent=2))</span>
-<span class="sd">                print(&quot;&quot;)</span>
+<span class="sd">            if example.extra_info:</span>
+<span class="sd">                title += f&quot; ({example.extra_info})&quot;</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BOOL</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">TWO_D_BOUNDING_BOX</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_TWO_D_BOUNDING_BOXES</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">DISTANCE_MEASUREMENT</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">POINT</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ANY</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHART</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">LINE</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ANGLE</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ELLIPSE</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THREE_POINT_ANGLE</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_THREE_POINT_ANGLES</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">AFFINE_TRANSFORM_REGISTRATION</span><span class="p">,</span>
-        <span class="p">}</span>
+<span class="sd">            print(f&quot;{title}:&quot;)</span>
+<span class="sd">            print(json.dumps(example.value, indent=2))</span>
+<span class="sd">            print(&quot;&quot;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">interface_kind_image</span><span class="p">():</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are images:</span>
+    <span class="n">json</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">STRING</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">FLOAT</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BOOL</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">TWO_D_BOUNDING_BOX</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_TWO_D_BOUNDING_BOXES</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">DISTANCE_MEASUREMENT</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_DISTANCE_MEASUREMENTS</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">POINT</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POINTS</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">POLYGON</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHOICE</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_CHOICE</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ANY</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHART</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">LINE</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ANGLE</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ELLIPSE</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_ELLIPSES</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THREE_POINT_ANGLE</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MULTIPLE_THREE_POINT_ANGLES</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">AFFINE_TRANSFORM_REGISTRATION</span><span class="p">,</span>
+    <span class="p">}</span>
 
-<span class="sd">        * Image</span>
-<span class="sd">        * Heat Map</span>
-<span class="sd">        * Segmentation</span>
-<span class="sd">        * Displacement Field</span>
-<span class="sd">        * DICOM Image Set</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_IMAGE</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_HEAT_MAP</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_SEGMENTATION</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_DISPLACEMENT_FIELD</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">DICOM_IMAGE_SET</span><span class="p">,</span>
-        <span class="p">}</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_IMAGE</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_HEAT_MAP</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_SEGMENTATION</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_DISPLACEMENT_FIELD</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">DICOM_IMAGE_SET</span><span class="p">,</span>
+    <span class="p">}</span>
 
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">interface_kind_file</span><span class="p">():</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Interface kinds that are files:</span>
+    <span class="n">file</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ZIP</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SQREG</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_JPG</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_PNG</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">OBJ</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MP4</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">NEWICK</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BIOM</span><span class="p">,</span>
+    <span class="p">}</span>
 
-<span class="sd">        * CSV file</span>
-<span class="sd">        * ZIP file</span>
-<span class="sd">        * PDF file</span>
-<span class="sd">        * SQREG file</span>
-<span class="sd">        * Thumbnail JPG</span>
-<span class="sd">        * Thumbnail PNG</span>
-<span class="sd">        * OBJ file</span>
-<span class="sd">        * MP4 file</span>
-<span class="sd">        * Newick file</span>
-<span class="sd">        * BIOM file</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ZIP</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">SQREG</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_JPG</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_PNG</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">OBJ</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MP4</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">NEWICK</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BIOM</span><span class="p">,</span>
-        <span class="p">}</span>
+    <span class="c1"># Interfaces that can only be displayed in isolation.</span>
+    <span class="n">mandatory_isolation</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHART</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_JPG</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_PNG</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MP4</span><span class="p">,</span>
+    <span class="p">}</span>
 
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">interface_kind_mandatory_isolation</span><span class="p">():</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Interfaces that can only be displayed in isolation.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CHART</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PDF</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_JPG</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">THUMBNAIL_PNG</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MP4</span><span class="p">,</span>
-        <span class="p">}</span>
+    <span class="c1"># Interfaces that cannot be displayed.</span>
+    <span class="n">undisplayable</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ZIP</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">OBJ</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">NEWICK</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BIOM</span><span class="p">,</span>
+    <span class="p">}</span></div>
 
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">interface_kind_undisplayable</span><span class="p">():</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Interfaces that cannot be displayed.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">CSV</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">ZIP</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">OBJ</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">NEWICK</span><span class="p">,</span>
-            <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BIOM</span><span class="p">,</span>
-        <span class="p">}</span>
 
 
 <div class="viewcode-block" id="OverlaySegmentsMixin">
@@ -516,7 +477,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_image_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_image</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKinds</span><span class="o">.</span><span class="n">image</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_dicom_image_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -524,11 +485,11 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_json_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_json</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKinds</span><span class="o">.</span><span class="n">json</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_file_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_file</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKinds</span><span class="o">.</span><span class="n">file</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_thumbnail_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -702,7 +663,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_store_in_database</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">allow_store_in_database</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span>
-            <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_json</span><span class="p">()</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span>
+            <span class="n">InterfaceKinds</span><span class="o">.</span><span class="n">json</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span>
                 <span class="p">{</span>
                     <span class="c1"># These values can be large, so for any new interfaces</span>
                     <span class="c1"># of this type do not allow storing in the database.</span>
@@ -1276,7 +1237,7 @@
             <span class="s2">&quot;text/plain&quot;</span><span class="p">,</span>
             <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_json</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKinds</span><span class="o">.</span><span class="n">json</span>
     <span class="p">},</span>
 <span class="p">}</span>
 
@@ -1292,7 +1253,7 @@
     <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">MP4</span><span class="p">:</span> <span class="s2">&quot;.mp4&quot;</span><span class="p">,</span>
     <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">NEWICK</span><span class="p">:</span> <span class="s2">&quot;.newick&quot;</span><span class="p">,</span>
     <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BIOM</span><span class="p">:</span> <span class="s2">&quot;.biom&quot;</span><span class="p">,</span>
-    <span class="o">**</span><span class="p">{</span><span class="n">kind</span><span class="p">:</span> <span class="s2">&quot;.json&quot;</span> <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKind</span><span class="o">.</span><span class="n">interface_kind_json</span><span class="p">()},</span>
+    <span class="o">**</span><span class="p">{</span><span class="n">kind</span><span class="p">:</span> <span class="s2">&quot;.json&quot;</span> <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKinds</span><span class="o">.</span><span class="n">json</span><span class="p">},</span>
 <span class="p">}</span>
 
 <span class="n">INTERFACE_KIND_TO_CUSTOM_QUEUE</span> <span class="o">=</span> <span class="p">{</span>
