@@ -79,7 +79,7 @@ class InvoiceQuerySet(models.QuerySet):
         )
 
 
-class Invoice(models.Model, FieldChangeMixin):
+class Invoice(FieldChangeMixin, models.Model):
     objects = InvoiceQuerySet.as_manager()
 
     created = models.DateTimeField(auto_now_add=True)
@@ -168,6 +168,11 @@ class Invoice(models.Model, FieldChangeMixin):
         default=PaymentStatusChoices.INITIALIZED,
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            *args, tracked_properties=("total_amount_euros",), **kwargs
+        )
+
     class Meta:
         constraints = [
             models.CheckConstraint(
@@ -255,12 +260,6 @@ class Invoice(models.Model, FieldChangeMixin):
             )
         except TypeError:
             return None
-
-    @property
-    def _current_state(self):
-        state = super()._current_state
-        state["total_amount_euros"] = self.total_amount_euros
-        return state
 
     def clean(self):
         if not self._state.adding:

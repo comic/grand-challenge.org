@@ -1,9 +1,9 @@
 import uuid
+from itertools import chain
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.forms import model_to_dict
 from django.utils.timezone import localtime
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import (
@@ -106,13 +106,32 @@ class RequestBase(models.Model):
 
 
 class FieldChangeMixin:
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, tracked_properties=(), **kwargs):
         super().__init__(*args, **kwargs)
+
+        self._tracked_attrs = {
+            f.name: f.attname
+            for f in
+            # Note, not many_to_many fields otherwise we would need to fetch all values
+            chain(self._meta.concrete_fields, self._meta.private_fields)
+        }
+
+        for tracked_property in tracked_properties:
+            if not isinstance(getattr(type(self), tracked_property), property):
+                raise ValueError(f"{tracked_property} cannot be tracked")
+            if tracked_property in self._tracked_attrs:
+                raise ValueError(f"{tracked_property} is already tracked")
+            else:
+                self._tracked_attrs[tracked_property] = tracked_property
+
         self._initial_state = self._current_state
 
     @property
     def _current_state(self):
-        return model_to_dict(self)
+        return {
+            name: getattr(self, attname)
+            for name, attname in self._tracked_attrs.items()
+        }
 
     def _current_value(self, field_name):
         return self._current_state[field_name]
