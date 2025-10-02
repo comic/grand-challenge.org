@@ -10,7 +10,7 @@ from django.utils.text import format_lazy
 
 from grandchallenge.components.models import (
     InterfaceKindChoices,
-    InterfaceKindSets,
+    InterfaceKinds,
 )
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -195,15 +195,15 @@ class ViewContentExampleMixin:
         mandatory_isolation_interfaces = [
             interface.slug
             for interface in sorted_interfaces
-            if interface.kind in InterfaceKindSets.mandatory_isolation_kinds
+            if interface.kind in InterfaceKinds.mandatory_isolation
         ]
         overlays = [
             interface.slug
             for interface in sorted_interfaces
             if interface.kind
             not in (
-                *InterfaceKindSets.undisplayable_kinds,
-                *InterfaceKindSets.mandatory_isolation_kinds,
+                *InterfaceKinds.undisplayable,
+                *InterfaceKinds.mandatory_isolation,
                 InterfaceKindChoices.PANIMG_IMAGE,
             )
         ]

@@ -158,7 +158,7 @@ class InterfaceSuperKindChoices(models.TextChoices):
     VALUE = "V", "Value"
 
 
-class InterfaceKindSets(set, Enum):
+class InterfaceKinds(set, Enum):
     """Interface kind sets.
 
     .. exec_code::
@@ -172,19 +172,19 @@ class InterfaceKindSets(set, Enum):
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
         django.setup()
 
-        from grandchallenge.components.models import InterfaceKindSets
+        from grandchallenge.components.models import InterfaceKinds
         from grandchallenge.components.models import INTERFACE_KIND_JSON_EXAMPLES
 
         print("Interface kinds that are images:")
-        for member in InterfaceKindSets.image_kinds:
+        for member in InterfaceKinds.image:
             print("*", member.label)
 
         print("Interface kinds that are files:")
-        for member in InterfaceKindSets.file_kinds:
+        for member in InterfaceKinds.file:
             print("*", member.label)
 
         print("Interface kinds that are json serializable:")
-        for member in InterfaceKindSets.json_kinds:
+        for member in InterfaceKinds.json:
             print("*", member.label)
 
         for key, example in INTERFACE_KIND_JSON_EXAMPLES.items():
@@ -198,7 +198,7 @@ class InterfaceKindSets(set, Enum):
             print("")
     """
 
-    json_kinds = {
+    json = {
         InterfaceKindChoices.STRING,
         InterfaceKindChoices.INTEGER,
         InterfaceKindChoices.FLOAT,
@@ -226,7 +226,7 @@ class InterfaceKindSets(set, Enum):
         InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION,
     }
 
-    image_kinds = {
+    image = {
         InterfaceKindChoices.PANIMG_IMAGE,
         InterfaceKindChoices.PANIMG_HEAT_MAP,
         InterfaceKindChoices.PANIMG_SEGMENTATION,
@@ -234,7 +234,7 @@ class InterfaceKindSets(set, Enum):
         InterfaceKindChoices.DICOM_IMAGE_SET,
     }
 
-    file_kinds = {
+    file = {
         InterfaceKindChoices.CSV,
         InterfaceKindChoices.ZIP,
         InterfaceKindChoices.PDF,
@@ -247,7 +247,7 @@ class InterfaceKindSets(set, Enum):
         InterfaceKindChoices.BIOM,
     }
 
-    mandatory_isolation_kinds = {
+    mandatory_isolation = {
         InterfaceKindChoices.CHART,
         InterfaceKindChoices.PDF,
         InterfaceKindChoices.THUMBNAIL_JPG,
@@ -255,7 +255,7 @@ class InterfaceKindSets(set, Enum):
         InterfaceKindChoices.MP4,
     }
 
-    undisplayable_kinds = {
+    undisplayable = {
         InterfaceKindChoices.CSV,
         InterfaceKindChoices.ZIP,
         InterfaceKindChoices.OBJ,
@@ -420,7 +420,7 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def is_image_kind(self):
-        return self.kind in InterfaceKindSets.image_kinds
+        return self.kind in InterfaceKinds.image
 
     @property
     def is_dicom_image_kind(self):
@@ -428,11 +428,11 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def is_json_kind(self):
-        return self.kind in InterfaceKindSets.json_kinds
+        return self.kind in InterfaceKinds.json
 
     @property
     def is_file_kind(self):
-        return self.kind in InterfaceKindSets.file_kinds
+        return self.kind in InterfaceKinds.file
 
     @property
     def is_thumbnail_kind(self):
@@ -603,7 +603,7 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     def _clean_store_in_database(self):
         allow_store_in_database = self.kind in (
-            InterfaceKindSets.json_kinds.difference(
+            InterfaceKinds.json.difference(
                 {
                     # These values can be large, so for any new interfaces
                     # of this type do not allow storing in the database.
@@ -1167,7 +1167,7 @@ INTERFACE_KIND_TO_ALLOWED_FILE_TYPES = {
             "text/plain",
             "application/json",
         )
-        for kind in InterfaceKindSets.json_kinds
+        for kind in InterfaceKinds.json
     },
 }
 
@@ -1183,7 +1183,7 @@ INTERFACE_KIND_TO_FILE_EXTENSION = {
     InterfaceKindChoices.MP4: ".mp4",
     InterfaceKindChoices.NEWICK: ".newick",
     InterfaceKindChoices.BIOM: ".biom",
-    **{kind: ".json" for kind in InterfaceKindSets.json_kinds},
+    **{kind: ".json" for kind in InterfaceKinds.json},
 }
 
 INTERFACE_KIND_TO_CUSTOM_QUEUE = {

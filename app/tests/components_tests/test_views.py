@@ -13,7 +13,7 @@ from grandchallenge.components.form_fields import (
 )
 from grandchallenge.components.models import (
     InterfaceKindChoices,
-    InterfaceKindSets,
+    InterfaceKinds,
 )
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from grandchallenge.subdomains.utils import reverse
@@ -558,9 +558,7 @@ def test_interfaces_list_link_in_new_interface_form(
 @pytest.mark.django_db
 def test_file_widget_select_view_file_selected_object_permission(client):
     user, creator = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKindSets.file_kinds)
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
     civ = ComponentInterfaceValueFactory(interface=ci)
     job = AlgorithmJobFactory(creator=creator, time_limit=60)
@@ -600,9 +598,7 @@ def test_file_widget_select_view_file_selected_object_permission_user_upload(
     client,
 ):
     user, creator = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKindSets.file_kinds)
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
     user_upload = UserUploadFactory(creator=creator)
 
@@ -638,9 +634,7 @@ def test_file_widget_select_view_file_selected_object_permission_user_upload(
 @pytest.mark.django_db
 def test_file_widget_select_view(client):
     user, editor = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKindSets.file_kinds)
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
     response = get_view_for_user(
         viewname="components:select-file-widget",
@@ -703,9 +697,7 @@ def test_file_widget_select_view(client):
 @pytest.mark.django_db
 def test_file_search_result_view_no_file_access(client):
     user = UserFactory()
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKindSets.file_kinds)
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
     response = get_view_for_user(
         viewname="components:file-search",
@@ -724,9 +716,7 @@ def test_file_search_result_view_no_files(client):
     user = UserFactory()
     algorithm = AlgorithmFactory()
     algorithm.add_editor(user)
-    ci = ComponentInterfaceFactory(
-        kind=FuzzyChoice(InterfaceKindSets.file_kinds)
-    )
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
     prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
     response = get_view_for_user(
         viewname="components:file-search",
