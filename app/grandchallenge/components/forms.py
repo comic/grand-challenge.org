@@ -27,7 +27,7 @@ from grandchallenge.components.form_fields import (
     InterfaceFormFieldFactory,
 )
 from grandchallenge.components.models import CIVData, ComponentInterface
-from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.forms import SaveFormInitMixin, UserMixin
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.evaluation.models import Method
 from grandchallenge.subdomains.utils import reverse_lazy
@@ -111,9 +111,14 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
         fields = ("user_upload", "creator", "comment")
 
 
-class AdditionalInputsMixin:
-    def init_additional_inputs(self, *, inputs):
-        for input in inputs:
+class AdditionalInputsMixin(UserMixin):
+
+    def __init__(self, *args, additional_inputs, **kwargs):
+        self._additional_inputs = additional_inputs
+
+        super().__init__(*args, **kwargs)
+
+        for input in self._additional_inputs:
             prefixed_interface_slug = (
                 f"{INTERFACE_FORM_FIELD_PREFIX}{input.slug}"
             )
@@ -135,11 +140,13 @@ class AdditionalInputsMixin:
                 initial=initial if initial else input.default_value,
             )
 
-    def clean_additional_inputs(self):
+    def clean(self):
+        cleaned_data = super().clean()
+
         keys_to_remove = []
         inputs = []
 
-        for key, value in self.cleaned_data.items():
+        for key, value in cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
                 keys_to_remove.append(key)
                 inputs.append(
@@ -150,9 +157,11 @@ class AdditionalInputsMixin:
                 )
 
         for key in keys_to_remove:
-            self.cleaned_data.pop(key)
+            cleaned_data.pop(key)
 
-        return inputs
+        cleaned_data["additional_inputs"] = inputs
+
+        return cleaned_data
 
 
 class MultipleCIVForm(Form):

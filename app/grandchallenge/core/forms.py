@@ -10,11 +10,28 @@ from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstations.models import Workstation
 
 
+class UserMixin:
+    def __init__(self, *args, user, **kwargs):
+        self._user = user
+
+        super().__init__(*args, **kwargs)
+
+
+class PhaseMixin:
+    def __init__(self, *args, phase, **kwargs):
+        self._phase = phase
+
+        super().__init__(*args, **kwargs)
+
+
 class SaveFormInitMixin:
     """
     Mixin that adds some save features to a form via init:
       - a 'Save' button
       - disabling fieldsets after the form is submitted
+
+    When used in a form with dynamically created fields,
+    this mixin needs to be placed before any other mixins.
     """
 
     def __init__(self, *args, **kwargs):
@@ -41,12 +58,13 @@ class SaveFormInitMixin:
         js = ["js/disable_after_submit.mjs"]
 
 
-class WorkstationUserFilterMixin:
-    def __init__(self, *args, user, **kwargs):
+class WorkstationUserFilterMixin(UserMixin):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.fields["workstation"].queryset = filter_by_permission(
             queryset=Workstation.objects.order_by("title"),
-            user=user,
+            user=self._user,
             codename="view_workstation",
         )
         self.fields["workstation"].initial = Workstation.objects.get(

@@ -605,7 +605,7 @@ class JobCreate(
         return context
 
     def form_valid(self, form):
-        inputs = form.cleaned_data.pop("inputs")
+        inputs = form.cleaned_data.pop("additional_inputs")
 
         algorithm = form.cleaned_data["algorithm_image"].algorithm
 

@@ -32,6 +32,7 @@ from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
+    PhaseMixin,
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
@@ -281,9 +282,9 @@ class AlgorithmChoiceField(ModelChoiceField):
 
 
 class SubmissionForm(
+    SaveFormInitMixin,
     UserAlgorithmsForPhaseMixin,
     AdditionalInputsMixin,
-    SaveFormInitMixin,
     forms.ModelForm,
 ):
     user_upload = ModelChoiceField(
@@ -316,18 +317,24 @@ class SubmissionForm(
         "by who and with what data they will be used.",
     )
 
-    def __init__(self, *args, user, phase: Phase, **kwargs):  # noqa: C901
-        super().__init__(*args, user=user, phase=phase, **kwargs)
-        self.fields["creator"].queryset = get_user_model().objects.filter(
-            pk=user.pk
+    def __init__(self, *args, phase, **kwargs):  # noqa: C901
+        super().__init__(
+            *args,
+            phase=phase,
+            additional_inputs=phase.additional_evaluation_inputs.all(),
+            **kwargs,
         )
-        self.fields["creator"].initial = user
+
+        self.fields["creator"].queryset = get_user_model().objects.filter(
+            pk=self._user.pk
+        )
+        self.fields["creator"].initial = self._user
 
         # Note that the validation of creator and algorithm require
         # access to the phase properties, so those validations
         # would need to be updated if phase selections are allowed.
-        self.fields["phase"].queryset = Phase.objects.filter(pk=phase.pk)
-        self.fields["phase"].initial = phase
+        self.fields["phase"].queryset = Phase.objects.filter(pk=self._phase.pk)
+        self.fields["phase"].initial = self._phase
 
         if not self._phase.external_evaluation:
             del self.fields["confirm_submission"]
@@ -437,18 +444,12 @@ class SubmissionForm(
                 queryset=UserUpload.objects.filter(
                     status=UserUpload.StatusChoices.COMPLETED
                 ),
-                user=user,
+                user=self._user,
                 codename="change_userupload",
             )
 
             if not self._phase.active_image:
                 self.fields["user_upload"].disabled = True
-
-        self.init_additional_inputs(
-            inputs=self._phase.additional_evaluation_inputs.all()
-        )
-
-        self.init_form_helper()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -466,8 +467,6 @@ class SubmissionForm(
             raise ValidationError(
                 "You must confirm that you want to submit to this phase."
             )
-
-        cleaned_data["additional_inputs"] = self.clean_additional_inputs()
 
         return cleaned_data
 
@@ -685,28 +684,24 @@ class CombinedLeaderboardForm(SaveFormInitMixin, forms.ModelForm):
         widgets = {"phases": forms.CheckboxSelectMultiple}
 
 
-class EvaluationForm(AdditionalInputsMixin, SaveFormInitMixin, forms.Form):
+class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
     submission = ModelChoiceField(
         queryset=None, disabled=True, widget=HiddenInput()
     )
 
-    def __init__(self, submission, user, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._user = user
+    def __init__(self, *args, submission, **kwargs):
+        super().__init__(
+            *args,
+            additional_inputs=submission.phase.additional_evaluation_inputs.all(),
+            **kwargs,
+        )
 
         self.fields["submission"].queryset = filter_by_permission(
             queryset=Submission.objects.filter(pk=submission.pk),
-            user=user,
+            user=self._user,
             codename="view_submission",
         )
         self.fields["submission"].initial = submission
-
-        self.init_additional_inputs(
-            inputs=submission.phase.additional_evaluation_inputs.all()
-        )
-
-        self.init_form_helper()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -728,21 +723,21 @@ class EvaluationForm(AdditionalInputsMixin, SaveFormInitMixin, forms.Form):
                     "defined for the phase."
                 )
 
-        if (
-            Evaluation.objects.active()
-            .filter(
-                submission__algorithm_image__image_sha256=cleaned_data[
-                    "submission"
-                ].algorithm_image.image_sha256,
-            )
-            .exists()
-        ):
-            # This causes problems in `set_evaluation_inputs` if two
-            # evaluations are running for the same image at the same time
-            raise ValidationError(
-                "An evaluation for this algorithm is already in progress. "
-                "Please wait for the other evaluation to complete."
-            )
+            if (
+                Evaluation.objects.active()
+                .filter(
+                    submission__algorithm_image__image_sha256=cleaned_data[
+                        "submission"
+                    ].algorithm_image.image_sha256,
+                )
+                .exists()
+            ):
+                # This causes problems in `set_evaluation_inputs` if two
+                # evaluations are running for the same image at the same time
+                raise ValidationError(
+                    "An evaluation for this algorithm is already in progress. "
+                    "Please wait for the other evaluation to complete."
+                )
 
         # Fetch from the db to get the cost annotations
         # Maybe this is solved with GeneratedField (Django 5)?
@@ -756,8 +751,6 @@ class EvaluationForm(AdditionalInputsMixin, SaveFormInitMixin, forms.Form):
 
         if challenge.available_compute_euro_millicents <= 0:
             raise ValidationError("This challenge has exceeded its budget")
-
-        cleaned_data["additional_inputs"] = self.clean_additional_inputs()
 
         if Evaluation.objects.get_evaluations_with_same_inputs(
             inputs=cleaned_data["additional_inputs"],
@@ -988,21 +981,20 @@ class EvaluationGroundTruthVersionManagementForm(Form):
         return ground_truth
 
 
-class AlgorithmInterfaceForPhaseCopyForm(Form):
+class AlgorithmInterfaceForPhaseCopyForm(PhaseMixin, Form):
     phases = ModelMultipleChoiceField(
         queryset=Phase.objects.none(),
         label="Select the phases to copy the interfaces to",
         widget=CheckboxSelectMultiple,
     )
 
-    def __init__(self, *args, phase, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._phase = phase
 
         self.fields["phases"].queryset = Phase.objects.filter(
-            challenge=phase.challenge,
-            submission_kind=phase.submission_kind,
-        ).exclude(pk=phase.pk)
+            challenge=self._phase.challenge,
+            submission_kind=self._phase.submission_kind,
+        ).exclude(pk=self._phase.pk)
 
     def clean_phases(self):
         phases = self.cleaned_data["phases"]
