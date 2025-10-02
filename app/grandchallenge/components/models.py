@@ -2723,7 +2723,7 @@ class Tarball(UUIDModel):
 
     class Meta:
         abstract = True
-        ordering = ("created", "creator")
+        ordering = ("created",)
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

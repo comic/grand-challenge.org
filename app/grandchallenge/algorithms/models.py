@@ -758,7 +758,7 @@ class AlgorithmImage(UUIDModel, ComponentImage):
     )
 
     class Meta(UUIDModel.Meta, ComponentImage.Meta):
-        ordering = ("created", "creator")
+        ordering = ("created",)
         permissions = [
             ("download_algorithmimage", "Can download algorithm image")
         ]
