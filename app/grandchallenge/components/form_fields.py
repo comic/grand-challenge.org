@@ -102,7 +102,9 @@ class InterfaceFormFieldFactory:
                 **kwargs,
             )
         else:
-            raise NotImplementedError(f"Unknown interface kind: {interface}")
+            raise NotImplementedError(
+                f"Unknown interface super kind: {interface.super_kind}"
+            )
 
     @staticmethod
     def get_json_field(interface, initial, **kwargs):

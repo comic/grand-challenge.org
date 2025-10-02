@@ -2296,7 +2296,7 @@ class CIVData:
             self._init_file_civ_data()
         else:
             raise NotImplementedError(
-                f"CIV data initialization for {ci} not handled."
+                f"Unknown interface super kind: {ci.super_kind}"
             )
 
         self.validate()
@@ -2487,7 +2487,9 @@ class CIVForObjectMixin:
                 linked_task=linked_task,
             )
         else:
-            raise NotImplementedError(f"CIV creation for {ci} not handled.")
+            raise NotImplementedError(
+                f"Unknown interface super kind: {ci.super_kind}"
+            )
 
     def create_civ_for_value(
         self, *, ci, current_civ, new_value, user, linked_task=None
