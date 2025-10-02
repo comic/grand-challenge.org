@@ -32,6 +32,7 @@ from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
+    PhaseMixin,
     SaveFormInitMixin,
     WorkstationUserFilterMixin,
 )
@@ -281,8 +282,8 @@ class AlgorithmChoiceField(ModelChoiceField):
 
 
 class SubmissionForm(
-    UserAlgorithmsForPhaseMixin,
     SaveFormInitMixin,
+    UserAlgorithmsForPhaseMixin,
     AdditionalInputsMixin,
     forms.ModelForm,
 ):
@@ -316,12 +317,11 @@ class SubmissionForm(
         "by who and with what data they will be used.",
     )
 
-    def __init__(self, *args, **kwargs):  # noqa: C901
+    def __init__(self, *args, phase, **kwargs):  # noqa: C901
         super().__init__(
             *args,
-            additional_inputs=kwargs[
-                "phase"
-            ].additional_evaluation_inputs.all(),
+            phase=phase,
+            additional_inputs=phase.additional_evaluation_inputs.all(),
             **kwargs,
         )
 
@@ -981,21 +981,20 @@ class EvaluationGroundTruthVersionManagementForm(Form):
         return ground_truth
 
 
-class AlgorithmInterfaceForPhaseCopyForm(Form):
+class AlgorithmInterfaceForPhaseCopyForm(PhaseMixin, Form):
     phases = ModelMultipleChoiceField(
         queryset=Phase.objects.none(),
         label="Select the phases to copy the interfaces to",
         widget=CheckboxSelectMultiple,
     )
 
-    def __init__(self, *args, phase, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._phase = phase
 
         self.fields["phases"].queryset = Phase.objects.filter(
-            challenge=phase.challenge,
-            submission_kind=phase.submission_kind,
-        ).exclude(pk=phase.pk)
+            challenge=self._phase.challenge,
+            submission_kind=self._phase.submission_kind,
+        ).exclude(pk=self._phase.pk)
 
     def clean_phases(self):
         phases = self.cleaned_data["phases"]

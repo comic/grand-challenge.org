@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.forms import CharField, HiddenInput, ModelChoiceField, ModelForm
 
-from grandchallenge.core.forms import SaveFormInitMixin
+from grandchallenge.core.forms import SaveFormInitMixin, UserMixin
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.widgets import MarkdownEditorInlineWidget
 from grandchallenge.discussion_forums.models import (
@@ -67,7 +67,7 @@ class ForumTopicForm(SaveFormInitMixin, ModelForm):
         return topic
 
 
-class ForumPostForm(SaveFormInitMixin, ModelForm):
+class ForumPostForm(SaveFormInitMixin, UserMixin, ModelForm):
     creator = ModelChoiceField(
         widget=HiddenInput(),
         queryset=(
@@ -88,23 +88,22 @@ class ForumPostForm(SaveFormInitMixin, ModelForm):
         model = ForumPost
         fields = ("topic", "creator", "content")
 
-    def __init__(self, *args, topic, user, is_update=False, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._user = user
+    def __init__(self, *args, topic, is_update=False, **kwargs):
         self._topic = topic
+
+        super().__init__(*args, **kwargs)
 
         self.fields["topic"].queryset = filter_by_permission(
             queryset=ForumTopic.objects.filter(pk=topic.pk),
-            user=user,
+            user=self._user,
             codename="view_forumtopic",
         )
         self.fields["topic"].initial = topic
 
         self.fields["creator"].queryset = get_user_model().objects.filter(
-            pk=user.pk
+            pk=self._user.pk
         )
-        self.fields["creator"].initial = user
+        self.fields["creator"].initial = self._user
 
         if is_update:
             hx_post_url = reverse(

@@ -78,6 +78,7 @@ from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.components.tasks import assign_tarball_from_upload
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
+    PhaseMixin,
     SaveFormInitMixin,
     UserMixin,
     WorkstationUserFilterMixin,
@@ -209,7 +210,7 @@ RESERVED_SOCKET_SLUGS = [
 ]
 
 
-class PhaseSelectForm(Form):
+class PhaseSelectForm(UserMixin, Form):
     phase = ModelChoiceField(
         label="Please select the phase for which you are creating an algorithm",
         queryset=Phase.objects.none(),
@@ -217,10 +218,8 @@ class PhaseSelectForm(Form):
         widget=Select2Widget,
     )
 
-    def __init__(self, *args, user, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self._user = user
 
         self.fields["phase"].queryset = filter_by_permission(
             queryset=Phase.objects.filter(
@@ -253,8 +252,8 @@ class PhaseSelectForm(Form):
 
 
 class AlgorithmForm(
-    WorkstationUserFilterMixin,
     SaveFormInitMixin,
+    WorkstationUserFilterMixin,
     ViewContentExampleMixin,
     ModelForm,
 ):
@@ -343,9 +342,8 @@ class AlgorithmForm(
             "workstation_config": "Viewer Configuration",
         }
 
-    def __init__(self, *args, user, **kwargs):
-        super().__init__(*args, user=user, **kwargs)
-        self._user = user
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.fields["contact_email"].required = True
         self.fields["display_editors"].required = True
@@ -437,11 +435,7 @@ class AlgorithmForm(
         return value
 
 
-class UserAlgorithmsForPhaseMixin(UserMixin):
-    def __init__(self, *args, phase, **kwargs):
-        self._phase = phase
-
-        super().__init__(*args, **kwargs)
+class UserAlgorithmsForPhaseMixin(UserMixin, PhaseMixin):
 
     @cached_property
     def user_algorithms_for_phase(self):

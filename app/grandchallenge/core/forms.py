@@ -10,6 +10,20 @@ from grandchallenge.workstation_configs.models import WorkstationConfig
 from grandchallenge.workstations.models import Workstation
 
 
+class UserMixin:
+    def __init__(self, *args, user, **kwargs):
+        self._user = user
+
+        super().__init__(*args, **kwargs)
+
+
+class PhaseMixin:
+    def __init__(self, *args, phase, **kwargs):
+        self._phase = phase
+
+        super().__init__(*args, **kwargs)
+
+
 class SaveFormInitMixin:
     """
     Mixin that adds some save features to a form via init:
@@ -44,12 +58,13 @@ class SaveFormInitMixin:
         js = ["js/disable_after_submit.mjs"]
 
 
-class WorkstationUserFilterMixin:
-    def __init__(self, *args, user, **kwargs):
+class WorkstationUserFilterMixin(UserMixin):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.fields["workstation"].queryset = filter_by_permission(
             queryset=Workstation.objects.order_by("title"),
-            user=user,
+            user=self._user,
             codename="view_workstation",
         )
         self.fields["workstation"].initial = Workstation.objects.get(
@@ -120,10 +135,3 @@ class UniqueTitleUpdateFormMixin(UniqueTitleCreateFormMixin):
             .unique_title_query(*args, **kwargs)
             .exclude(id=self.instance.pk)
         )
-
-
-class UserMixin:
-    def __init__(self, *args, user, **kwargs):
-        self._user = user
-
-        super().__init__(*args, **kwargs)
