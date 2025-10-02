@@ -442,9 +442,9 @@ class AlgorithmForm(
 class UserAlgorithmsForPhaseMixin:
 
     def __init__(self, *args, user, phase, **kwargs):
-        super().__init__(*args, **kwargs)
         self._user = user
         self._phase = phase
+        super().__init__(*args, **kwargs)
 
     @cached_property
     def user_algorithms_for_phase(self):
