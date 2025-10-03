@@ -31,8 +31,8 @@ function getJobStatus(jobUrl) {
 
 function handleJobStatus(job) {
     const jobStatus = job.status.toLowerCase();
-    const imageInputs = job.inputs.filter(i =>
-        ["Image", "Heat Map", "Segmentation"].includes(i.interface.kind),
+    const imageInputs = job.inputs.filter(
+        i => i.interface.super_kind === "Image",
     );
     const fileInputs = job.inputs.filter(
         i => i.interface.super_kind === "File",
