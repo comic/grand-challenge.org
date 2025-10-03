@@ -6,7 +6,6 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import mail_managers
 from django.forms import CheckboxInput
 from django.utils.html import format_html
-from pyswot.pyswot import _domain_parts, _is_stoplisted
 
 from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.profiles.tasks import deactivate_user
@@ -50,16 +49,6 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
     def clean_email(self):
         email = self.cleaned_data["email"]
         email = get_user_model().objects.normalize_email(email)
-
-        if _is_stoplisted(_domain_parts(email)):
-            raise ValidationError(
-                "Email hosted by this domain cannot be used for verification "
-                "due to abuse. Please send an email to support@grand-challenge.org "
-                "with your user name, institutional email address and a link to your "
-                "Google Scholar account, lab page, research gate profile "
-                "or similar so your email address can be verified."
-            )
-
         return email
 
     def clean(self):
@@ -76,6 +65,7 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
                     ),
                 )
             )
+
         try:
             if self.user.verification:
                 raise ValidationError(
