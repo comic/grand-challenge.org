@@ -1,10 +1,10 @@
 import logging
 
 from django.conf import settings
-from django.utils.safestring import mark_safe
 from guardian.shortcuts import get_perms
 from guardian.utils import get_anonymous_user
 
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.hanging_protocols.models import ViewportNames
 from grandchallenge.participants.models import RegistrationRequest
@@ -50,7 +50,7 @@ def challenge(request):
 def django_settings(*_, **__):
     return {
         "COMMIT_ID": settings.COMMIT_ID,
-        "SUPPORT_EMAIL": mark_safe(random_encode(settings.SUPPORT_EMAIL)),
+        "SUPPORT_EMAIL": clean(random_encode(settings.SUPPORT_EMAIL)),
         "DEBUG": settings.DEBUG,
         "ACTSTREAM_ENABLE": settings.ACTSTREAM_ENABLE,
     }

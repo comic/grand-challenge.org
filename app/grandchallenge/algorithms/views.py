@@ -20,7 +20,6 @@ from django.http import FileResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -95,6 +94,7 @@ from grandchallenge.core.guardian import (
     ViewObjectPermissionsFilter,
     filter_by_permission,
 )
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.utils.grand_challenge_forge import (
     get_forge_algorithm_template_context,
@@ -182,9 +182,7 @@ class AlgorithmList(FilterMixin, ViewObjectPermissionListMixin, ListView):
                         "Please <a target='_blank' href='mailto:{support_email}'>contact support</a> if you "
                         "would like to make your own algorithm available here."
                     ),
-                    support_email=mark_safe(
-                        random_encode(settings.SUPPORT_EMAIL)
-                    ),
+                    support_email=clean(random_encode(settings.SUPPORT_EMAIL)),
                 ),
                 "challenges_for_algorithms": cache.get(
                     "challenges_for_algorithms"

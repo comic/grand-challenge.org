@@ -25,7 +25,6 @@ from django.http import (
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
@@ -73,6 +72,7 @@ from grandchallenge.core.guardian import (
     ViewObjectPermissionsFilter,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.utils import strtobool
 from grandchallenge.core.utils.query import set_seed
@@ -143,9 +143,7 @@ class ReaderStudyList(FilterMixin, ViewObjectPermissionListMixin, ListView):
                         "Please <a target='_blank' href='mailto:{support_email}'>contact us</a> if "
                         "you would like to set up your own reader study."
                     ),
-                    support_email=mark_safe(
-                        random_encode(settings.SUPPORT_EMAIL)
-                    ),
+                    support_email=clean(random_encode(settings.SUPPORT_EMAIL)),
                 ),
             }
         )

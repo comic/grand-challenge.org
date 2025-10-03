@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.views.generic import DetailView, ListView, UpdateView
 from guardian.mixins import LoginRequiredMixin
 
@@ -12,6 +11,7 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     filter_by_permission,
 )
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.groups.forms import EditorsForm, MembersForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
@@ -38,9 +38,7 @@ class OrganizationList(ListView):
                         "href='mailto:{support_email}'>contact us</a> if you would like to add your "
                         "organization."
                     ),
-                    support_email=mark_safe(
-                        random_encode(settings.SUPPORT_EMAIL)
-                    ),
+                    support_email=clean(random_encode(settings.SUPPORT_EMAIL)),
                 ),
             }
         )
