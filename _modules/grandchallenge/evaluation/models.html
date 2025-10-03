@@ -842,9 +842,14 @@
                 <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">archive</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="p">)</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                    <span class="s2">&quot;To change the submission limit to above 0, you need to first link an archive containing the secret &quot;</span>
-                    <span class="s2">&quot;test data to this phase and define the interfaces (input-output combinations) that the submitted algorithms need to &quot;</span>
-                    <span class="s2">&quot;read/write. To configure these settings, please get in touch with support@grand-challenge.org.&quot;</span>
+                    <span class="n">format_html</span><span class="p">(</span>
+                        <span class="p">(</span>
+                            <span class="s2">&quot;To change the submission limit to above 0, you need to first link an archive containing the secret &quot;</span>
+                            <span class="s2">&quot;test data to this phase and define the interfaces (input-output combinations) that the submitted algorithms need to &quot;</span>
+                            <span class="s2">&quot;read/write. To configure these settings, please get in touch with </span><span class="si">{support_email}</span><span class="s2">.&quot;</span>
+                        <span class="p">),</span>
+                        <span class="n">support_email</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">SUPPORT_EMAIL</span><span class="p">,</span>
+                    <span class="p">)</span>
                 <span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">give_algorithm_editors_job_view_permissions</span>
