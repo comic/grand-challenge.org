@@ -1,6 +1,7 @@
 import csv
 import logging
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth import get_user_model
@@ -24,7 +25,6 @@ from django.http import (
 from django.shortcuts import get_object_or_404
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.views.generic import (
     CreateView,
@@ -72,6 +72,7 @@ from grandchallenge.core.guardian import (
     ViewObjectPermissionsFilter,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.utils import strtobool
 from grandchallenge.core.utils.query import set_seed
@@ -139,12 +140,10 @@ class ReaderStudyList(FilterMixin, ViewObjectPermissionListMixin, ListView):
                     (
                         "A reader study can be used to collect annotations or "
                         "score algorithm results for a set of medical images. "
-                        "Please <a target='_blank' href='{}'>contact us</a> if "
+                        "Please <a target='_blank' href='mailto:{support_email}'>contact us</a> if "
                         "you would like to set up your own reader study."
                     ),
-                    mark_safe(
-                        random_encode("mailto:support@grand-challenge.org")
-                    ),
+                    support_email=clean(random_encode(settings.SUPPORT_EMAIL)),
                 ),
             }
         )

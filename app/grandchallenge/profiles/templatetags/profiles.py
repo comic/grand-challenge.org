@@ -4,8 +4,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 
+from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.subdomains.utils import reverse
 
 register = template.Library()
@@ -38,7 +38,7 @@ def user_profile_link(user: AbstractUser | None) -> str:
     else:
         username = "Unknown"
         profile_url = "#"
-        mugshot = mark_safe('<i class="fas fa-user fa-lg"></i>')
+        mugshot = clean('<i class="fas fa-user fa-lg"></i>')
 
     return format_html(
         '<span class="text-nowrap"><a href="{0}">{1}</a>&nbsp;<a href="{0}">{2}</a>&nbsp;{3}</span>',

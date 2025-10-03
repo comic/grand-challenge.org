@@ -657,8 +657,10 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         OnboardingTask.objects.create(
             challenge=self,
             title="Define Inputs and Outputs",
-            description="E-mail support@grand-challenge.org and communicate the required input "
-            "and output data formats for participant's algorithms.",
+            description=format_html(
+                "E-mail {support_email} and communicate the required input and output data formats for participant's algorithms.",
+                support_email=settings.SUPPORT_EMAIL,
+            ),
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
             deadline=self.created + timedelta(weeks=2),
         )
@@ -686,8 +688,10 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         OnboardingTask.objects.create(
             challenge=self,
             title="Upload Data to Archives",
-            description="Add data to the relevant archives. Archives must be created by support. Please "
-            "e-mail support@grand-challenge.org if that is delayed.",
+            description=format_html(
+                "Add data to the relevant archives. Archives must be created by support. Please e-mail {support_email} if that is delayed.",
+                support_email=settings.SUPPORT_EMAIL,
+            ),
             responsible_party=OnboardingTask.ResponsiblePartyChoices.CHALLENGE_ORGANIZERS,
             deadline=self.created + timedelta(weeks=5),
         )

@@ -55,9 +55,7 @@
         {% elif form.jobs_limit < 1 %}
             <p>
                 You have run out of credits to try this algorithm.
-                You can request more credits by sending an e-mail to
-                <a target="_blank" href="{{ 'mailto:support@grand-challenge.org'|random_encode|safe }}" class="text-radboud">
-                    support@grand-challenge.org</a>.
+                If you would like to request more credits, please <a target="_blank" href="mailto:{{ SUPPORT_EMAIL }}">contact support</a>.
             </p>
         {% else %}
             <p>

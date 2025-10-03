@@ -98,6 +98,7 @@ DATABASES = {
 }
 
 EMAIL_BACKEND = "grandchallenge.emails.backends.CelerySESBackend"
+SUPPORT_EMAIL = os.environ.get("SUPPORT_EMAIL", "grandchallenge@localhost")
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL", "grandchallenge@localhost"
 )
@@ -437,8 +438,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.messages.context_processors.messages",
                 "grandchallenge.core.context_processors.challenge",
-                "grandchallenge.core.context_processors.deployment_info",
-                "grandchallenge.core.context_processors.debug",
+                "grandchallenge.core.context_processors.django_settings",
                 "grandchallenge.core.context_processors.sentry_dsn",
                 "grandchallenge.core.context_processors.footer_links",
                 "grandchallenge.core.context_processors.about_page",

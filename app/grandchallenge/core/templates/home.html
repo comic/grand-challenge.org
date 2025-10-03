@@ -59,7 +59,7 @@
 
         {% if highlighted_challenges %}
             <div class="row mb-3 mt-5 pt-3 px-3">
-                <div class="col-12 col-lg-6 col-md-5 col-sm-4 d-inline text-radboud text-primary mb-3">
+                <div class="col-12 col-lg-6 col-md-5 col-sm-4 d-inline text-primary mb-3">
                     <i class="fa fa-trophy fa-2x align-middle"></i>
                     <span class="align-middle">&nbsp;&nbsp;FEATURED CHALLENGES</span>
                 </div>
@@ -78,7 +78,7 @@
 
         {% if highlighted_algorithms %}
             <div class="row mb-3 mt-5 px-3">
-                <div class="col-12 col-lg-6 col-md-5 col-sm-4 d-inline text-radboud text-primary mb-3">
+                <div class="col-12 col-lg-6 col-md-5 col-sm-4 d-inline text-primary mb-3">
                     <i class="fa fa-code fa-2x align-middle"></i>
                     <span class="align-middle">&nbsp;&nbsp;FEATURED ALGORITHMS</span>
                 </div>
@@ -103,7 +103,7 @@
                         <div class="col-lg-6">
                             <div class="row {% if not forloop.counter0|divisibleby:2 %} flex-sm-row-reverse {% endif %} align-items-center">
                                 <div class="col-md-6 my-3">
-                                    <a class="text-radboud" href="{{ highlight.url }}"><h4>{{ highlight.title }}</h4></a>
+                                    <a href="{{ highlight.url }}"><h4>{{ highlight.title }}</h4></a>
                                     <ul class="pl-3">
                                         {% for point in highlight.bullet_points %}
                                             <li class="my-1">{{ point }}</li>

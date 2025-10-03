@@ -4,6 +4,8 @@ from django.conf import settings
 from guardian.shortcuts import get_perms
 from guardian.utils import get_anonymous_user
 
+from grandchallenge.core.templatetags.bleach import clean
+from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.hanging_protocols.models import ViewportNames
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.policies.models import Policy
@@ -45,14 +47,10 @@ def challenge(request):
     }
 
 
-def deployment_info(*_, **__):
+def django_settings(*_, **__):
     return {
         "COMMIT_ID": settings.COMMIT_ID,
-    }
-
-
-def debug(*_, **__):
-    return {
+        "SUPPORT_EMAIL": clean(random_encode(settings.SUPPORT_EMAIL)),
         "DEBUG": settings.DEBUG,
         "ACTSTREAM_ENABLE": settings.ACTSTREAM_ENABLE,
     }

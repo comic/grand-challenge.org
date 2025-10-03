@@ -31,7 +31,7 @@ Uploading your data or running your algorithm on Grand Challenge can be done thr
 
 #### <i class="fas fa-question-circle  mr-2"></i> Still got questions?
 
-If you cannot find the answer to your question here or in the [forum](https://grand-challenge.org/forums/forum/general-548/), feel free to contact us at [support@grand-challenge.org](mailto:support@grand-challenge.org).
+Please feel free to contact support.
 
 
 
