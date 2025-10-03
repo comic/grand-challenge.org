@@ -179,11 +179,11 @@ class AlgorithmList(FilterMixin, ViewObjectPermissionListMixin, ListView):
                         "We have made several machine learning algorithms "
                         "available that you can try out by uploading your "
                         "own anonymised medical imaging data. "
-                        "Please <a target='_blank' href='{}'>contact us</a> if you "
+                        "Please <a target='_blank' href='mailto:{support_email}'>contact support</a> if you "
                         "would like to make your own algorithm available here."
                     ),
-                    mark_safe(
-                        random_encode("mailto:support@grand-challenge.org")
+                    support_email=mark_safe(
+                        random_encode(settings.SUPPORT_EMAIL)
                     ),
                 ),
                 "challenges_for_algorithms": cache.get(
@@ -191,6 +191,7 @@ class AlgorithmList(FilterMixin, ViewObjectPermissionListMixin, ListView):
                 ),
             }
         )
+
         return context
 
 

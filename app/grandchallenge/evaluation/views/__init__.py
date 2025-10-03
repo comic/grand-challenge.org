@@ -161,7 +161,15 @@ class UserCanSubmitAlgorithmToPhaseMixin(VerificationRequiredMixin):
                 "This phase is not configured for algorithm submission. "
             )
             if self.phase.challenge.is_admin(request.user):
-                error_message += "You need to link an archive containing the secret test data to this phase and define the inputs and outputs that algorithms need to read/write. Please get in touch with support@grand-challenge.org to configure these settings."
+                error_message += format_html(
+                    (
+                        "You need to link an archive containing the secret test data to "
+                        "this phase and define the inputs and outputs that algorithms "
+                        "need to read/write. "
+                        "Please get in touch with {support_email} to configure these settings."
+                    ),
+                    support_email=settings.SUPPORT_EMAIL,
+                )
             else:
                 error_message += "Please come back later."
 

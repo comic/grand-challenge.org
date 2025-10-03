@@ -507,6 +507,7 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
 
     def clean_status(self):
         status = self.cleaned_data.get("status")
+
         if (
             status == self.instance.ChallengeRequestStatusChoices.ACCEPTED
             and Challenge.objects.filter(
@@ -514,10 +515,10 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
             ).exists()
         ):
             raise ValidationError(
-                f"There already is a challenge with short "
-                f"name: {self.instance.short_name}. Contact "
-                f"support@grand-challenge.org to accept this request.",
+                "There already is a challenge with short name. "
+                "Please contact support to accept this request.",
             )
+
         return status
 
 

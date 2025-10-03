@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -34,11 +35,11 @@ class OrganizationList(ListView):
                         "An organization is a group or institution who have "
                         "created an archive, reader study, challenge or "
                         "algorithm on this site. Please <a target='_blank' "
-                        "href='{}'>contact us</a> if you would like to add your "
+                        "href='mailto:{support_email}'>contact us</a> if you would like to add your "
                         "organization."
                     ),
-                    mark_safe(
-                        random_encode("mailto:support@grand-challenge.org")
+                    support_email=mark_safe(
+                        random_encode(settings.SUPPORT_EMAIL)
                     ),
                 ),
             }

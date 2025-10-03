@@ -1,6 +1,7 @@
 import csv
 import logging
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.utils import NestedObjects
 from django.contrib.auth import get_user_model
@@ -139,11 +140,11 @@ class ReaderStudyList(FilterMixin, ViewObjectPermissionListMixin, ListView):
                     (
                         "A reader study can be used to collect annotations or "
                         "score algorithm results for a set of medical images. "
-                        "Please <a target='_blank' href='{}'>contact us</a> if "
+                        "Please <a target='_blank' href='mailto:{support_email}'>contact us</a> if "
                         "you would like to set up your own reader study."
                     ),
-                    mark_safe(
-                        random_encode("mailto:support@grand-challenge.org")
+                    support_email=mark_safe(
+                        random_encode(settings.SUPPORT_EMAIL)
                     ),
                 ),
             }

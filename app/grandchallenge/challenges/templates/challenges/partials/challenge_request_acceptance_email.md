@@ -14,6 +14,6 @@ Next steps:
 2. Add information about your challenge, your submission procedure, the challenge timeline etc. to your challenge page by editing and adding custom subpages to your challenge. For more information, see the tab 'Add custom pages' in our documentation.
 3. Our support team will be in touch with you shortly to help you set up the technical aspects of your challenge.
 
-4. Feel free to contact support@grand-challenge.org if you have any questions or require assistance in setting up your challenge.
+4. Feel free to contact us by replying to this email if you have any questions or require assistance in setting up your challenge.
 
 Thank you for choosing Grand Challenge. We are looking forward to hosting your challenge.

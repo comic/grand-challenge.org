@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -92,11 +93,11 @@ class ArchiveList(FilterMixin, ViewObjectPermissionListMixin, ListView):
                         "An archive can be used to collect set of medical "
                         "images, which can later be used in a reader study, "
                         "challenge or algorithm. Please <a target='_blank' "
-                        "href='{}'>contact us</a> if you would like to set up "
+                        "href='mailto:{support_email}'>contact support</a> if you would like to set up "
                         "your own archive."
                     ),
-                    mark_safe(
-                        random_encode("mailto:support@grand-challenge.org")
+                    support_email=mark_safe(
+                        random_encode(settings.SUPPORT_EMAIL)
                     ),
                 ),
             }

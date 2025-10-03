@@ -796,9 +796,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
                 and (not self.archive or not self.algorithm_interfaces)
             ):
                 raise ValidationError(
-                    "To change the submission limit to above 0, you need to first link an archive containing the secret "
-                    "test data to this phase and define the interfaces (input-output combinations) that the submitted algorithms need to "
-                    "read/write. To configure these settings, please get in touch with support@grand-challenge.org."
+                    format_html(
+                        (
+                            "To change the submission limit to above 0, you need to first link an archive containing the secret "
+                            "test data to this phase and define the interfaces (input-output combinations) that the submitted algorithms need to "
+                            "read/write. To configure these settings, please get in touch with {support_email}."
+                        ),
+                        support_email=settings.SUPPORT_EMAIL,
+                    )
                 )
         if (
             self.give_algorithm_editors_job_view_permissions
