@@ -190,7 +190,11 @@ class ViewContentExampleMixin:
         images = [
             interface.slug
             for interface in sorted_interfaces
-            if interface.kind == InterfaceKindChoices.PANIMG_IMAGE
+            if interface.kind
+            in [
+                InterfaceKindChoices.PANIMG_IMAGE,
+                InterfaceKindChoices.DICOM_IMAGE_SET,
+            ]
         ]
         mandatory_isolation_interfaces = [
             interface.slug
