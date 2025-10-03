@@ -175,20 +175,25 @@ class InterfaceKinds(set, Enum):
         from grandchallenge.components.models import InterfaceKinds
         from grandchallenge.components.models import INTERFACE_KIND_JSON_EXAMPLES
 
-        print("Interface kinds that are images:\n")
+        print("Interface kinds that are images:")
+        print("")
         for member in InterfaceKinds.image:
             print("  -", member.label)
-        print("\n")
+        print("")
+        print("")
 
-        print("Interface kinds that are files:\n")
+        print("Interface kinds that are files:")
         for member in InterfaceKinds.file:
             print("  -", member.label)
-        print("\n")
+        print("")
+        print("")
 
-        print("Interface kinds that are json serializable:\n")
+        print("Interface kinds that are json serializable:")
+        print("")
         for member in InterfaceKinds.json:
             print("  -", member.label)
-        print("\n")
+        print("")
+        print("")
 
         for key, example in INTERFACE_KIND_JSON_EXAMPLES.items():
             title = f"Example JSON file contents for {key.label}"
