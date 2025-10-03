@@ -515,7 +515,7 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
             ).exists()
         ):
             raise ValidationError(
-                "There already is a challenge with short name. "
+                "There already is a challenge with this name. "
                 "Please contact support to accept this request.",
             )
 

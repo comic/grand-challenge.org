@@ -85,10 +85,7 @@ def test_accept_challenge_request(client, challenge_reviewer):
         instance=challenge_request,
     )
     assert not form.is_valid()
-    assert (
-        f"There already is a challenge with short name: {challenge_request.short_name}"
-        in str(form.errors)
-    )
+    assert "There already is a challenge with this name." in str(form.errors)
 
 
 @pytest.mark.django_db
