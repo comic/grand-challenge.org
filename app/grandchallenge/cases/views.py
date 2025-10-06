@@ -130,18 +130,23 @@ class ImageViewSet(ReadOnlyModelViewSet):
 
         image_set_url = f"https://runtime-medical-imaging.{settings.AWS_DEFAULT_REGION}.amazonaws.com/datastore/{settings.AWS_HEALTH_IMAGING_DATASTORE_ID}/imageSet/{image.dicom_image_set.image_set_id}"
 
-        image_frame_requests = {}
+        image_frames = []
 
-        for frame_id in image.dicom_image_set.image_frame_ids:
-            frame_request = AWSRequest(
+        for image_frame_id in image.dicom_image_set.image_frame_ids:
+            image_frame_request = AWSRequest(
                 method="POST",
                 url=f"{image_set_url}/getImageFrame",
-                data=json.dumps({"imageFrameId": frame_id}),
+                data=json.dumps({"imageFrameId": image_frame_id}),
             )
-            medical_imaging_auth.add_auth(frame_request)
+            medical_imaging_auth.add_auth(image_frame_request)
 
-            image_frame_requests[frame_id] = self.serialize_aws_request(
-                frame_request
+            image_frames.append(
+                {
+                    "image_frame_id": image_frame_id,
+                    "get_image_frame": self.serialize_aws_request(
+                        image_frame_request
+                    ),
+                }
             )
 
         metadata_request = AWSRequest(
@@ -153,10 +158,11 @@ class ImageViewSet(ReadOnlyModelViewSet):
 
         return JsonResponse(
             {
+                "image_set_id": image.dicom_image_set.image_set_id,
                 "get_image_set_metadata": self.serialize_aws_request(
                     metadata_request
                 ),
-                "get_image_frames": image_frame_requests,
+                "image_frames": image_frames,
             }
         )
 

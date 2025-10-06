@@ -689,13 +689,25 @@ def test_dicom_signed_urls(client, settings, monkeypatch):
         assert re.match(x_amz_date_pattern, headers["X-Amz-Date"])
         assert re.match(auth_pattern, headers["Authorization"])
 
-    assert signed_urls.keys() == {"get_image_set_metadata", "get_image_frames"}
-    assert signed_urls["get_image_frames"].keys() == {"test-1", "test-2"}
+    assert signed_urls.keys() == {
+        "get_image_set_metadata",
+        "image_set_id",
+        "image_frames",
+    }
+    assert signed_urls["image_set_id"] == "test-image-set-id"
+    assert len(signed_urls["image_frames"]) == 2
 
-    for frame_id, frame_request in signed_urls["get_image_frames"].items():
+    for idx, frame_info in enumerate(signed_urls["image_frames"]):
+        assert frame_info.keys() == {"image_frame_id", "get_image_frame"}
+        assert frame_info["image_frame_id"] == f"test-{idx + 1}"
+
+        frame_request = frame_info["get_image_frame"]
+
         assert frame_request.keys() == {"data", "headers", "method", "url"}
         verify_aws_headers(frame_request["headers"])
-        assert frame_request["data"] == json.dumps({"imageFrameId": frame_id})
+        assert frame_request["data"] == json.dumps(
+            {"imageFrameId": f"test-{idx + 1}"}
+        )
         assert frame_request["method"] == "POST"
         assert (
             frame_request["url"]
