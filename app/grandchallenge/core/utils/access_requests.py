@@ -3,7 +3,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.notifications.models import (
+    Notification,
+    NotificationTypeChoices,
+)
 
 
 class AccessRequestHandlingOptions(models.TextChoices):
@@ -52,7 +55,7 @@ def process_access_request(request_object):
         send_action=False,
     )
     Notification.send(
-        kind=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
+        kind=NotificationTypeChoices.ACCESS_REQUEST,
         message="requested access to",
         actor=request_object.user,
         target=request_object.base_object,
