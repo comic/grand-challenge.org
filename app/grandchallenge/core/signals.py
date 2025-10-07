@@ -18,7 +18,10 @@ from guardian.utils import get_anonymous_user
 from grandchallenge.algorithms.models import AlgorithmPermissionRequest
 from grandchallenge.archives.models import ArchivePermissionRequest
 from grandchallenge.core.utils import disable_for_loaddata
-from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.notifications.models import (
+    Notification,
+    NotificationTypeChoices,
+)
 from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.reader_studies.models import ReaderStudyPermissionRequest
 
@@ -64,14 +67,14 @@ def process_permission_request_update(sender, instance, *_, **__):
         if instance.status == instance.ACCEPTED:
             instance.add_method(instance.user)
             Notification.send(
-                kind=NotificationType.NotificationTypeChoices.REQUEST_UPDATE,
+                kind=NotificationTypeChoices.REQUEST_UPDATE,
                 message="was accepted",
                 target=instance,
             )
         elif instance.status == instance.REJECTED:
             instance.remove_method(instance.user)
             Notification.send(
-                kind=NotificationType.NotificationTypeChoices.REQUEST_UPDATE,
+                kind=NotificationTypeChoices.REQUEST_UPDATE,
                 message="was rejected",
                 target=instance,
             )
@@ -95,7 +98,7 @@ def remove_permission_request_notifications(sender, *, instance, created, **_):
         ).get()
 
         Notification.objects.filter(
-            type=NotificationType.NotificationTypeChoices.ACCESS_REQUEST,
+            type=NotificationTypeChoices.ACCESS_REQUEST,
             target_object_id=target.pk,
             target_content_type=ct_target,
             actor_object_id=actor.pk,
@@ -147,7 +150,7 @@ def update_editor_follows(  # noqa: C901
                 # only new admins of a challenge get notified
                 if obj._meta.model_name == "challenge":
                     Notification.send(
-                        kind=NotificationType.NotificationTypeChoices.NEW_ADMIN,
+                        kind=NotificationTypeChoices.NEW_ADMIN,
                         message="added as admin for",
                         action_object=user,
                         target=obj,

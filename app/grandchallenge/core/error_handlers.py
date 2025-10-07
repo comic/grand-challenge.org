@@ -2,7 +2,10 @@ import copy
 import logging
 from abc import ABC, abstractmethod
 
-from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.notifications.models import (
+    Notification,
+    NotificationTypeChoices,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +146,7 @@ class UserUploadCIVErrorHandler(ErrorHandler):
 
     def handle_error(self, *, error_message, user, interface):
         Notification.send(
-            kind=NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
+            kind=NotificationTypeChoices.FILE_COPY_STATUS,
             message=f"Validation for socket {interface.title} failed.",
             description=f"Validation for socket {interface.title} failed: {error_message}",
             actor=user,
@@ -161,14 +164,14 @@ class FallbackCIVValidationErrorHandler(ErrorHandler):
     def handle_error(self, *, error_message, user, interface=None):
         if interface:
             Notification.send(
-                kind=NotificationType.NotificationTypeChoices.CIV_VALIDATION,
+                kind=NotificationTypeChoices.CIV_VALIDATION,
                 message=f"Validation for socket {interface.title} failed.",
                 description=f"Validation for socket {interface.title} failed: {error_message}",
                 actor=user,
             )
         else:
             Notification.send(
-                kind=NotificationType.NotificationTypeChoices.CIV_VALIDATION,
+                kind=NotificationTypeChoices.CIV_VALIDATION,
                 message=error_message,
                 description=error_message,
                 actor=user,

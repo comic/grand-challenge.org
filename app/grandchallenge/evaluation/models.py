@@ -80,7 +80,10 @@ from grandchallenge.evaluation.utils import (
     SubmissionKindChoices,
 )
 from grandchallenge.hanging_protocols.models import HangingProtocolMixin
-from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.notifications.models import (
+    Notification,
+    NotificationTypeChoices,
+)
 from grandchallenge.profiles.models import EmailSubscriptionTypes
 from grandchallenge.profiles.tasks import deactivate_user
 from grandchallenge.subdomains.utils import reverse
@@ -1637,7 +1640,7 @@ class Submission(FieldChangeMixin, UUIDModel):
             if not method:
                 logger.error("No method ready for this submission")
                 Notification.send(
-                    kind=NotificationType.NotificationTypeChoices.MISSING_METHOD,
+                    kind=NotificationTypeChoices.MISSING_METHOD,
                     message="missing method",
                     actor=self.creator,
                     action_object=self,
@@ -2163,7 +2166,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
             else:
                 message = self.get_status_display().lower()
             Notification.send(
-                kind=NotificationType.NotificationTypeChoices.EVALUATION_STATUS,
+                kind=NotificationTypeChoices.EVALUATION_STATUS,
                 actor=self.submission.creator,
                 message=message,
                 action_object=self,

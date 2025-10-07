@@ -48,7 +48,10 @@ from grandchallenge.core.storage import protected_s3_storage
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.modalities.models import ImagingModality
-from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.notifications.models import (
+    Notification,
+    NotificationTypeChoices,
+)
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 
@@ -205,7 +208,7 @@ class RawImageUploadSession(UUIDModel):
 
         if self.error_message and self.creator:
             Notification.send(
-                kind=NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+                kind=NotificationTypeChoices.IMAGE_IMPORT_STATUS,
                 message=error_message,
                 description=self.error_message,
                 action_object=self,
