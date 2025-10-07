@@ -265,6 +265,13 @@ class InterfaceKinds(set, Enum):
         InterfaceKindChoices.BIOM,
     }
 
+    panimg = {
+        InterfaceKindChoices.PANIMG_IMAGE,
+        InterfaceKindChoices.PANIMG_HEAT_MAP,
+        InterfaceKindChoices.PANIMG_SEGMENTATION,
+        InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD,
+    }
+
 
 class OverlaySegmentsMixin(models.Model):
     overlay_segments = models.JSONField(
@@ -423,6 +430,10 @@ class ComponentInterface(OverlaySegmentsMixin):
     @property
     def is_image_kind(self):
         return self.kind in InterfaceKinds.image
+
+    @property
+    def is_panimg_kind(self):
+        return self.kind in InterfaceKinds.panimg
 
     @property
     def is_dicom_image_kind(self):

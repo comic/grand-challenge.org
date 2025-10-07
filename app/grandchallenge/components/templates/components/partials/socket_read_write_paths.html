@@ -1,6 +1,8 @@
-{% if socket.is_image_kind %}
+{% if socket.is_panimg_kind %}
     <code>/{{ input|yesno:"input,output" }}{% if socket.relative_path %}/{{ socket.relative_path }}{% endif %}/&lt;uuid&gt;.mha</code> or
     <code>/{{ input|yesno:"input,output" }}{% if socket.relative_path %}/{{ socket.relative_path }}{% endif %}/&lt;uuid&gt;.tif</code>
+{% elif socket.is_dicom_image_kind %}
+    <code>/{{ input|yesno:"input,output" }}/{{ socket.relative_path }}/*.dcm/</code>
 {% else %}
     <code>/{{ input|yesno:"input,output" }}/{{ socket.relative_path }}</code>
 {% endif %}
