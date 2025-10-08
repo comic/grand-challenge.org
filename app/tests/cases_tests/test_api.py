@@ -699,13 +699,8 @@ def test_dicom_signed_urls(client, settings, monkeypatch):
 
     signed_urls = response.json()
 
-    def verify_aws_headers(headers):
-        x_amz_date_pattern = r"^\d{8}T\d{6}Z$"
-        auth_pattern = r"^AWS4-HMAC-SHA256 Credential=test-access-key/\d{8}/test-region/medical-imaging/aws4_request, SignedHeaders=host;x-amz-date, Signature=.+$"
-
-        assert headers.keys() == {"Authorization", "X-Amz-Date"}
-        assert re.match(x_amz_date_pattern, headers["X-Amz-Date"])
-        assert re.match(auth_pattern, headers["Authorization"])
+    x_amz_date_pattern = r"^\d{8}T\d{6}Z$"
+    auth_pattern = r"^AWS4-HMAC-SHA256 Credential=test-access-key/\d{8}/test-region/medical-imaging/aws4_request, SignedHeaders=accept;(accept-encoding;)?host;x-amz-date, Signature=.+$"
 
     assert signed_urls.keys() == {
         "get_image_set_metadata",
@@ -722,7 +717,18 @@ def test_dicom_signed_urls(client, settings, monkeypatch):
         frame_request = frame_info["get_image_frame"]
 
         assert frame_request.keys() == {"data", "headers", "method", "url"}
-        verify_aws_headers(frame_request["headers"])
+        assert frame_request["headers"].keys() == {
+            "Accept",
+            "Authorization",
+            "X-Amz-Date",
+        }
+        assert frame_request["headers"]["Accept"] == "image/jph"
+        assert re.match(
+            x_amz_date_pattern, frame_request["headers"]["X-Amz-Date"]
+        )
+        assert re.match(
+            auth_pattern, frame_request["headers"]["Authorization"]
+        )
         assert frame_request["data"] == json.dumps(
             {"imageFrameId": f"test-{idx + 1}"}
         )
@@ -734,7 +740,18 @@ def test_dicom_signed_urls(client, settings, monkeypatch):
 
     metadata_request = signed_urls["get_image_set_metadata"]
     assert metadata_request.keys() == {"data", "headers", "method", "url"}
-    verify_aws_headers(metadata_request["headers"])
+    assert metadata_request["headers"].keys() == {
+        "Accept-Encoding",
+        "Accept",
+        "Authorization",
+        "X-Amz-Date",
+    }
+    assert metadata_request["headers"]["Accept-Encoding"] == "gzip"
+    assert metadata_request["headers"]["Accept"] == "application/json"
+    assert re.match(
+        x_amz_date_pattern, metadata_request["headers"]["X-Amz-Date"]
+    )
+    assert re.match(auth_pattern, metadata_request["headers"]["Authorization"])
     assert metadata_request["data"] == '{"versionId": "1"}'
     assert metadata_request["method"] == "POST"
     assert (
