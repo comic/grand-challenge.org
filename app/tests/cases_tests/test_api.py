@@ -22,6 +22,7 @@ from tests.cases_tests.factories import (
     DICOMImageSetFactory,
     PostProcessImageTaskFactory,
     RawImageUploadSessionFactory,
+    fake_dicom_instance_uid,
 )
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -664,7 +665,24 @@ def test_dicom_signed_urls(client, settings, monkeypatch):
     image = ImageFactory(
         dicom_image_set=DICOMImageSetFactory(
             image_set_id="test-image-set-id",
-            image_frame_ids=["test-1", "test-2"],
+            image_frame_metadata=[
+                {
+                    "image_frame_id": "test-1",
+                    "frame_size_in_bytes": 1337,
+                    "study_instance_uid": fake_dicom_instance_uid(),
+                    "series_instance_uid": fake_dicom_instance_uid(),
+                    "sop_instance_uid": fake_dicom_instance_uid(),
+                    "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+                },
+                {
+                    "image_frame_id": "test-2",
+                    "frame_size_in_bytes": 1337,
+                    "study_instance_uid": fake_dicom_instance_uid(),
+                    "series_instance_uid": fake_dicom_instance_uid(),
+                    "sop_instance_uid": fake_dicom_instance_uid(),
+                    "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+                },
+            ],
         )
     )
     user = UserFactory()
@@ -730,7 +748,24 @@ def test_dicom_signed_urls_creates_download_object(client):
     image = ImageFactory(
         dicom_image_set=DICOMImageSetFactory(
             image_set_id="test-image-set-id",
-            image_frame_ids=["test-1", "test-2"],
+            image_frame_metadata=[
+                {
+                    "image_frame_id": "test-1",
+                    "frame_size_in_bytes": 1337,
+                    "study_instance_uid": fake_dicom_instance_uid(),
+                    "series_instance_uid": fake_dicom_instance_uid(),
+                    "sop_instance_uid": fake_dicom_instance_uid(),
+                    "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+                },
+                {
+                    "image_frame_id": "test-2",
+                    "frame_size_in_bytes": 1337,
+                    "study_instance_uid": fake_dicom_instance_uid(),
+                    "series_instance_uid": fake_dicom_instance_uid(),
+                    "sop_instance_uid": fake_dicom_instance_uid(),
+                    "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+                },
+            ],
         )
     )
     user = UserFactory()
@@ -752,7 +787,24 @@ def test_dicom_image_set_serialized(client):
     image = ImageFactory(
         dicom_image_set=DICOMImageSetFactory(
             image_set_id="test-image-set-id",
-            image_frame_ids=["test-1", "test-2"],
+            image_frame_metadata=[
+                {
+                    "image_frame_id": "test-1",
+                    "frame_size_in_bytes": 1337,
+                    "study_instance_uid": fake_dicom_instance_uid(),
+                    "series_instance_uid": fake_dicom_instance_uid(),
+                    "sop_instance_uid": fake_dicom_instance_uid(),
+                    "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+                },
+                {
+                    "image_frame_id": "test-2",
+                    "frame_size_in_bytes": 1337,
+                    "study_instance_uid": fake_dicom_instance_uid(),
+                    "series_instance_uid": fake_dicom_instance_uid(),
+                    "sop_instance_uid": fake_dicom_instance_uid(),
+                    "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+                },
+            ],
         )
     )
     user = UserFactory()

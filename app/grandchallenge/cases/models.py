@@ -334,19 +334,61 @@ class DICOMImageSet(UUIDModel):
         help_text="The ID of the image set in AWS Health Imaging",
         editable=False,
     )
-    image_frame_ids = models.JSONField(
+    image_frame_metadata = models.JSONField(
         editable=False,
-        help_text="The IDs of the image frames in AWS Health Imaging",
+        help_text="The metadata of the image frames in AWS Health Imaging",
         validators=[
             JSONValidator(
                 schema={
                     "$schema": "http://json-schema.org/draft-07/schema#",
                     "type": "array",
                     "items": {
-                        "type": "string",
-                        "pattern": "^[0-9a-f]{32}$",
-                        "minLength": 32,
-                        "maxLength": 32,
+                        "type": "object",
+                        "required": [
+                            "image_frame_id",
+                            "frame_size_in_bytes",
+                            "study_instance_uid",
+                            "series_instance_uid",
+                            "sop_instance_uid",
+                            "stored_transfer_syntax_uid",
+                        ],
+                        "additionalProperties": False,
+                        "properties": {
+                            "image_frame_id": {
+                                "type": "string",
+                                "pattern": "^[0-9a-f]{32}$",
+                                "minLength": 32,
+                                "maxLength": 32,
+                            },
+                            "frame_size_in_bytes": {
+                                "type": "integer",
+                                "min_value": 0,
+                            },
+                            "study_instance_uid": {
+                                "type": "string",
+                                "pattern": "^[0-9.]*$",
+                                "minLength": 60,
+                                "maxLength": 64,
+                            },
+                            "series_instance_uid": {
+                                "type": "string",
+                                "pattern": "^[0-9.]*$",
+                                "minLength": 60,
+                                "maxLength": 64,
+                            },
+                            "sop_instance_uid": {
+                                "type": "string",
+                                "pattern": "^[0-9.]*$",
+                                "minLength": 60,
+                                "maxLength": 64,
+                            },
+                            "stored_transfer_syntax_uid": {
+                                "type": "string",
+                                "pattern": "^1.2.840.10008.1.2[0-9.]*$",
+                                "minLength": 17,
+                                "maxLength": 32,
+                            },
+                        },
                     },
                     "minItems": 1,
                 }
@@ -1113,10 +1155,22 @@ class DICOMImageSetUpload(UUIDModel):
 
         return metadata
 
-    def _get_image_frame_ids(self, *, image_set_id):
+    def _get_image_frame_metadata(self, *, image_set_id):
         metadata = self._get_image_set_metadata(image_set_id=image_set_id)
+
         return [
-            frame["ID"]
+            {
+                "study_instance_uid": metadata["Study"]["DICOM"][
+                    "StudyInstanceUID"
+                ],
+                "series_instance_uid": series["DICOM"]["SeriesInstanceUID"],
+                "sop_instance_uid": instance["DICOM"]["SOPInstanceUID"],
+                "stored_transfer_syntax_uid": instance[
+                    "StoredTransferSyntaxUID"
+                ],
+                "image_frame_id": frame["ID"],
+                "frame_size_in_bytes": frame["FrameSizeInBytes"],
+            }
             for series in metadata["Study"]["Series"].values()
             for instance in series["Instances"].values()
             for frame in instance["ImageFrames"]
@@ -1306,7 +1360,7 @@ class DICOMImageSetUpload(UUIDModel):
     def convert_image_set_to_internal(self, *, image_set_id):
         dicom_image_set = DICOMImageSet(
             image_set_id=image_set_id,
-            image_frame_ids=self._get_image_frame_ids(
+            image_frame_metadata=self._get_image_frame_metadata(
                 image_set_id=image_set_id
             ),
             dicom_image_set_upload=self,

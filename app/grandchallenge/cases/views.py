@@ -132,7 +132,9 @@ class ImageViewSet(ReadOnlyModelViewSet):
 
         image_frames = []
 
-        for image_frame_id in image.dicom_image_set.image_frame_ids:
+        for image_frame in image.dicom_image_set.image_frame_metadata:
+            image_frame_id = image_frame["image_frame_id"]
+
             image_frame_request = AWSRequest(
                 method="POST",
                 url=f"{image_set_url}/getImageFrame",

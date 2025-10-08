@@ -26,6 +26,7 @@ from tests.cases_tests.factories import (
     ImageFactoryWithImageFile4D,
     ImageFileFactoryWithMHDFile,
     ImageFileFactoryWithRAWFile,
+    fake_dicom_instance_uid,
     fake_image_frame_id,
 )
 from tests.factories import ImageFileFactory
@@ -630,7 +631,44 @@ def test_convert_image_set_to_internal(settings):
 
     dicom_image_set_upload = DICOMImageSetUploadFactory(name="foo")
     image_set_id = "e616d1f717da6f80fed6271ad184b7f0"
-    image_frame_ids = [fake_image_frame_id() for _ in range(4)]
+    study_instance_uid = fake_dicom_instance_uid()
+    series_instance_uids = [fake_dicom_instance_uid() for _ in range(2)]
+    sop_instance_uids = [fake_dicom_instance_uid() for _ in range(3)]
+
+    image_frame_metadata = [
+        {
+            "image_frame_id": fake_image_frame_id(),
+            "frame_size_in_bytes": 1337,
+            "study_instance_uid": study_instance_uid,
+            "series_instance_uid": series_instance_uids[0],
+            "sop_instance_uid": sop_instance_uids[0],
+            "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+        },
+        {
+            "image_frame_id": fake_image_frame_id(),
+            "frame_size_in_bytes": 1337,
+            "study_instance_uid": study_instance_uid,
+            "series_instance_uid": series_instance_uids[0],
+            "sop_instance_uid": sop_instance_uids[0],
+            "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+        },
+        {
+            "image_frame_id": fake_image_frame_id(),
+            "frame_size_in_bytes": 1337,
+            "study_instance_uid": study_instance_uid,
+            "series_instance_uid": series_instance_uids[0],
+            "sop_instance_uid": sop_instance_uids[1],
+            "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+        },
+        {
+            "image_frame_id": fake_image_frame_id(),
+            "frame_size_in_bytes": 1337,
+            "study_instance_uid": study_instance_uid,
+            "series_instance_uid": series_instance_uids[1],
+            "sop_instance_uid": sop_instance_uids[2],
+            "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+        },
+    ]
 
     assert Image.objects.count() == 0
     assert DICOMImageSet.objects.count() == 0
@@ -642,30 +680,71 @@ def test_convert_image_set_to_internal(settings):
         content = json.dumps(
             {
                 "Study": {
+                    "DICOM": {"StudyInstanceUID": study_instance_uid},
                     "Series": {
                         "foo": {
+                            "DICOM": {
+                                "SeriesInstanceUID": series_instance_uids[0]
+                            },
                             "Instances": {
                                 "bar": {
+                                    "DICOM": {
+                                        "SOPInstanceUID": sop_instance_uids[0]
+                                    },
+                                    "StoredTransferSyntaxUID": "1.2.840.10008.1.2.4.202",
                                     "ImageFrames": [
-                                        {"ID": image_frame_ids[0]},
-                                        {"ID": image_frame_ids[1]},
-                                    ]
+                                        {
+                                            "ID": image_frame_metadata[0][
+                                                "image_frame_id"
+                                            ],
+                                            "FrameSizeInBytes": 1337,
+                                        },
+                                        {
+                                            "ID": image_frame_metadata[1][
+                                                "image_frame_id"
+                                            ],
+                                            "FrameSizeInBytes": 1337,
+                                        },
+                                    ],
                                 },
                                 "baz": {
-                                    "ImageFrames": [{"ID": image_frame_ids[2]}]
+                                    "DICOM": {
+                                        "SOPInstanceUID": sop_instance_uids[1]
+                                    },
+                                    "StoredTransferSyntaxUID": "1.2.840.10008.1.2.4.202",
+                                    "ImageFrames": [
+                                        {
+                                            "ID": image_frame_metadata[2][
+                                                "image_frame_id"
+                                            ],
+                                            "FrameSizeInBytes": 1337,
+                                        }
+                                    ],
                                 },
-                            }
+                            },
                         },
                         "foobar": {
+                            "DICOM": {
+                                "SeriesInstanceUID": series_instance_uids[1]
+                            },
                             "Instances": {
                                 "bar": {
+                                    "DICOM": {
+                                        "SOPInstanceUID": sop_instance_uids[2]
+                                    },
+                                    "StoredTransferSyntaxUID": "1.2.840.10008.1.2.4.202",
                                     "ImageFrames": [
-                                        {"ID": image_frame_ids[3]},
-                                    ]
+                                        {
+                                            "ID": image_frame_metadata[3][
+                                                "image_frame_id"
+                                            ],
+                                            "FrameSizeInBytes": 1337,
+                                        },
+                                    ],
                                 },
-                            }
+                            },
                         },
-                    }
+                    },
                 }
             }
         ).encode("utf-8")
@@ -692,7 +771,7 @@ def test_convert_image_set_to_internal(settings):
     dicom_image_set = DICOMImageSet.objects.first()
 
     assert dicom_image_set.image_set_id == image_set_id
-    assert dicom_image_set.image_frame_ids == image_frame_ids
+    assert dicom_image_set.image_frame_metadata == image_frame_metadata
 
     image = Image.objects.first()
 
