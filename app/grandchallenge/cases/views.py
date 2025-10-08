@@ -158,7 +158,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
 
         image_set_url = f"https://runtime-medical-imaging.{settings.AWS_DEFAULT_REGION}.amazonaws.com/datastore/{settings.AWS_HEALTH_IMAGING_DATASTORE_ID}/imageSet/{image.dicom_image_set.image_set_id}"
 
-        image_frames = []
+        serialized_image_frames = []
 
         for image_frame in image.dicom_image_set.image_frame_metadata:
             image_frame_id = image_frame["image_frame_id"]
@@ -175,7 +175,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
             )
             medical_imaging_auth.add_auth(image_frame_request)
 
-            image_frames.append(
+            serialized_image_frames.append(
                 {
                     "image_frame_id": image_frame_id,
                     "get_image_frame": self.serialize_aws_request(
@@ -201,7 +201,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
                 "get_image_set_metadata": self.serialize_aws_request(
                     metadata_request
                 ),
-                "image_frames": image_frames,
+                "image_frames": serialized_image_frames,
             }
         )
 
