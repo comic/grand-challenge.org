@@ -80,7 +80,7 @@ def test_component_interface_autocomplete(client):
                 {
                     "object_slug": rs.slug,
                     "model_name": ReaderStudy._meta.model_name,
-                    "image_only": True,
+                    "batch_upload_only": True,
                 }
             )
         },
@@ -101,7 +101,7 @@ def test_component_interface_autocomplete(client):
                 {
                     "object_slug": rs.slug,
                     "model_name": ReaderStudy._meta.model_name,
-                    "image_only": True,
+                    "batch_upload_only": True,
                 }
             ),
         },
@@ -217,7 +217,7 @@ def test_ci_autocomplete_for_archives(client):
                 {
                     "object_slug": archive.slug,
                     "model_name": Archive._meta.model_name,
-                    "image_only": True,
+                    "batch_upload_only": True,
                 }
             )
         },

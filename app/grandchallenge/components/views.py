@@ -114,7 +114,7 @@ class ComponentInterfaceAutocomplete(
     def get_queryset(self):
         object_slug = self.forwarded.pop("object_slug")
         model_name = self.forwarded.pop("model_name")
-        image_only = self.forwarded.pop("image_only", False)
+        batch_upload_only = self.forwarded.pop("batch_upload_only", False)
 
         if model_name == ReaderStudy._meta.model_name:
             obj = ReaderStudy.objects.get(slug=object_slug)
@@ -130,9 +130,9 @@ class ComponentInterfaceAutocomplete(
         except AttributeError:
             extra_filter_kwargs = {}
 
-        if image_only:
+        if batch_upload_only:
             qs = ComponentInterface.objects.filter(
-                kind__in=InterfaceKinds.image,
+                kind__in=InterfaceKinds.panimg,
                 **extra_filter_kwargs,
             )
         else:

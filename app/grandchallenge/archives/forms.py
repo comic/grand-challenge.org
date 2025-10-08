@@ -198,7 +198,7 @@ class AddCasesForm(UploadRawImagesForm):
             forward=[
                 "model_name",
                 "object_slug",
-                forward.Const(True, "image_only"),
+                forward.Const(True, "batch_upload_only"),
             ],
             attrs={
                 "data-placeholder": "Search for a socket ...",
@@ -223,7 +223,7 @@ class AddCasesForm(UploadRawImagesForm):
         qs = (
             ComponentInterface.objects.all()
             .filter(
-                kind__in=InterfaceKinds.image,
+                kind__in=InterfaceKinds.panimg,
                 **socket_filter_kwargs,
             )
             .order_by("title")
