@@ -992,7 +992,7 @@ class DICOMImageSetUpload(UUIDModel):
         on_delete=models.SET_NULL,
     )
     user_uploads = models.ManyToManyField(
-        UserUpload, blank=True, related_name="dicom_import_jobs"
+        UserUpload, blank=True, related_name="dicom_image_set_uploads"
     )
     status = models.CharField(
         max_length=11,
