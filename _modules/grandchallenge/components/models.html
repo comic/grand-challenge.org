@@ -309,6 +309,13 @@
         <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">OBJ</span><span class="p">,</span>
         <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">NEWICK</span><span class="p">,</span>
         <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">BIOM</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">panimg</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_IMAGE</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_HEAT_MAP</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_SEGMENTATION</span><span class="p">,</span>
+        <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_DISPLACEMENT_FIELD</span><span class="p">,</span>
     <span class="p">}</span></div>
 
 
@@ -478,6 +485,10 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_image_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKinds</span><span class="o">.</span><span class="n">image</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_panimg_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="n">InterfaceKinds</span><span class="o">.</span><span class="n">panimg</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">is_dicom_image_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

@@ -434,48 +434,48 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">InterfaceKinds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#InterfaceKinds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.InterfaceKinds" title="Link to this definition">¶</a></dt>
 <dd><p>Interface kind sets.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Interface kinds that are images:
-* DICOM Image Set
 * Displacement field
-* Segmentation
 * Heat Map
+* DICOM Image Set
 * Image
+* Segmentation
 Interface kinds that are files:
-* CSV file
-* ZIP file
-* PDF file
 * Newick tree-format file
-* SQREG file
 * OBJ file
-* MP4 file
-* BIOM format
 * Thumbnail jpg
 * Thumbnail png
+* ZIP file
+* PDF file
+* SQREG file
+* CSV file
+* BIOM format
+* MP4 file
 Interface kinds that are json serializable:
-* Multiple three-point angles
-* Line
+* Polygon
+* Multiple angles
+* Anything
+* Point
+* Choice
+* Float
+* 2D bounding box
 * Multiple lines
 * Integer
-* Multiple points
-* Multiple distance measurements
+* Multiple three-point angles
 * Multiple polygons
-* Multiple angles
-* Angle
-* Point
-* Polygon
-* Choice
-* Multiple 2D bounding boxes
-* Chart
-* Ellipse
-* Three-point angle
 * Affine transform registration
-* Bool
-* 2D bounding box
-* Multiple choice
-* Distance measurement
-* Anything
-* String
+* Multiple distance measurements
+* Line
 * Multiple ellipses
-* Float
+* Angle
+* Three-point angle
+* Multiple points
+* String
+* Bool
+* Ellipse
+* Multiple choice
+* Chart
+* Distance measurement
+* Multiple 2D bounding boxes
 Example JSON file contents for String:
 &quot;Example String&quot;
 
@@ -1475,12 +1475,12 @@ Example JSON file contents for Multiple choice:
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">InterfacesAndValues</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interfaces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#InterfacesAndValues"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.InterfacesAndValues" title="Link to this definition">¶</a></dt>
 <dd><dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.components.models.InterfacesAndValues.interfaces">
-<span class="sig-name descname"><span class="pre">interfaces</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">set</span></code></a></em><a class="headerlink" href="#grandchallenge.components.models.InterfacesAndValues.interfaces" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">interfaces</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">set</span></code></a></em><a class="headerlink" href="#grandchallenge.components.models.InterfacesAndValues.interfaces" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="grandchallenge.components.models.InterfacesAndValues.values">
-<span class="sig-name descname"><span class="pre">values</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></em><a class="headerlink" href="#grandchallenge.components.models.InterfacesAndValues.values" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">values</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></em><a class="headerlink" href="#grandchallenge.components.models.InterfacesAndValues.values" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
