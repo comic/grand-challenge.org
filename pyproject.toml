@@ -61,7 +61,7 @@ dependencies = [
     "cachetools",
     "grand-challenge-dicom-de-identifier",
     "pydantic",
-    "aioboto3>=15.2.0",
+    "aioboto3",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"
