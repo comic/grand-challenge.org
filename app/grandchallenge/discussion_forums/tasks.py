@@ -5,7 +5,10 @@ from django.db import transaction
 
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
-from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.notifications.models import (
+    Notification,
+    NotificationTypeChoices,
+)
 
 logger = get_task_logger(__name__)
 
@@ -38,14 +41,14 @@ def create_forum_notifications(*, object_pk, app_label, model_name):
 
     if isinstance(obj, ForumPost):
         Notification.send(
-            kind=NotificationType.NotificationTypeChoices.FORUM_POST_REPLY,
+            kind=NotificationTypeChoices.FORUM_POST_REPLY,
             actor=obj.creator,
             message="replied to",
             target=obj.topic,
         )
     elif obj.kind == ForumTopicKindChoices.ANNOUNCE:
         Notification.send(
-            kind=NotificationType.NotificationTypeChoices.FORUM_POST,
+            kind=NotificationTypeChoices.FORUM_POST,
             actor=obj.creator,
             message="announced",
             action_object=obj,
@@ -54,7 +57,7 @@ def create_forum_notifications(*, object_pk, app_label, model_name):
         )
     else:
         Notification.send(
-            kind=NotificationType.NotificationTypeChoices.FORUM_POST,
+            kind=NotificationTypeChoices.FORUM_POST,
             actor=obj.creator,
             message="posted",
             action_object=obj,

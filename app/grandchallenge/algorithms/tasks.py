@@ -25,7 +25,10 @@ from grandchallenge.core.celery import (
 )
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
-from grandchallenge.notifications.models import Notification, NotificationType
+from grandchallenge.notifications.models import (
+    Notification,
+    NotificationTypeChoices,
+)
 from grandchallenge.subdomains.utils import reverse
 
 logger = get_task_logger(__name__)
@@ -252,7 +255,7 @@ def send_failed_job_notification(*, job_pk):
         algorithm = job.algorithm_image.algorithm
         url = reverse("algorithms:job-list", kwargs={"slug": algorithm.slug})
         Notification.send(
-            kind=NotificationType.NotificationTypeChoices.JOB_STATUS,
+            kind=NotificationTypeChoices.JOB_STATUS,
             actor=job.creator,
             message=f"Unfortunately one of the jobs for algorithm {algorithm.title} "
             f"failed with an error",

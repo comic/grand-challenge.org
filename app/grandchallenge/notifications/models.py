@@ -57,14 +57,8 @@ class NotificationTypeChoices(models.TextChoices):
     )
 
 
-class NotificationType:
-    """Notification type."""
-
-    NotificationTypeChoices = NotificationTypeChoices
-
-
 class Notification(UUIDModel):
-    Type = NotificationType.NotificationTypeChoices
+    Type = NotificationTypeChoices
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -194,12 +188,11 @@ class Notification(UUIDModel):
     @staticmethod
     def get_receivers(*, kind, actor, action_object, target):  # noqa: C901
         if (
-            kind == NotificationType.NotificationTypeChoices.FORUM_POST
-            or kind
-            == NotificationType.NotificationTypeChoices.FORUM_POST_REPLY
-            or kind == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
+            kind == NotificationTypeChoices.FORUM_POST
+            or kind == NotificationTypeChoices.FORUM_POST_REPLY
+            or kind == NotificationTypeChoices.ACCESS_REQUEST
             and target._meta.model_name != "algorithm"
-            or kind == NotificationType.NotificationTypeChoices.REQUEST_UPDATE
+            or kind == NotificationTypeChoices.REQUEST_UPDATE
         ):
             if actor:
                 return {
@@ -210,7 +203,7 @@ class Notification(UUIDModel):
             else:
                 return followers(target)
         elif (
-            kind == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
+            kind == NotificationTypeChoices.ACCESS_REQUEST
             and target._meta.model_name == "algorithm"
         ):
             return {
@@ -218,11 +211,9 @@ class Notification(UUIDModel):
                 for follower in followers(target, flag="access_request")
                 if follower != actor
             }
-        elif kind == NotificationType.NotificationTypeChoices.NEW_ADMIN:
+        elif kind == NotificationTypeChoices.NEW_ADMIN:
             return {action_object}
-        elif (
-            kind == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
-        ):
+        elif kind == NotificationTypeChoices.EVALUATION_STATUS:
             receivers = {
                 admin
                 for admin in target.challenge.get_admins()
@@ -231,32 +222,29 @@ class Notification(UUIDModel):
             if actor and is_following(actor, target):
                 receivers.add(actor)
             return receivers
-        elif kind == NotificationType.NotificationTypeChoices.MISSING_METHOD:
+        elif kind == NotificationTypeChoices.MISSING_METHOD:
             return {
                 admin
                 for admin in target.challenge.get_admins()
                 if is_following(admin, target)
             }
-        elif kind == NotificationType.NotificationTypeChoices.JOB_STATUS:
+        elif kind == NotificationTypeChoices.JOB_STATUS:
             if actor and is_following(actor, target, flag="job-active"):
                 return {actor}
             else:
                 return set()
-        elif (
-            kind
-            == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
-        ):
+        elif kind == NotificationTypeChoices.IMAGE_IMPORT_STATUS:
             return followers(action_object)
         elif kind in [
-            NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            NotificationType.NotificationTypeChoices.CIV_VALIDATION,
+            NotificationTypeChoices.FILE_COPY_STATUS,
+            NotificationTypeChoices.CIV_VALIDATION,
         ]:
             return {actor}
         else:
             raise RuntimeError(f"Unhandled notification type {kind!r}")
 
     def print_notification(self, user):  # noqa: C901
-        if self.type == NotificationType.NotificationTypeChoices.FORUM_POST:
+        if self.type == NotificationTypeChoices.FORUM_POST:
             return format_html(
                 "{profile_link} {message} {action_object} in {target} {time}.",
                 profile_link=user_profile_link(self.actor),
@@ -273,10 +261,7 @@ class Notification(UUIDModel):
                 ),
                 time=naturaltime(self.created),
             )
-        elif (
-            self.type
-            == NotificationType.NotificationTypeChoices.FORUM_POST_REPLY
-        ):
+        elif self.type == NotificationTypeChoices.FORUM_POST_REPLY:
             return format_html(
                 "{profile_link} {message} {target} {time}.",
                 profile_link=user_profile_link(self.actor),
@@ -288,10 +273,7 @@ class Notification(UUIDModel):
                 ),
                 time=naturaltime(self.created),
             )
-        elif (
-            self.type
-            == NotificationType.NotificationTypeChoices.ACCESS_REQUEST
-        ):
+        elif self.type == NotificationTypeChoices.ACCESS_REQUEST:
             if self.target_content_type.model == "challenge":
                 notification_addition = format_html(
                     '<span class="text-truncate font-italic text-muted align-middle '
@@ -317,10 +299,7 @@ class Notification(UUIDModel):
                 time=naturaltime(self.created),
                 addition=notification_addition,
             )
-        elif (
-            self.type
-            == NotificationType.NotificationTypeChoices.REQUEST_UPDATE
-        ):
+        elif self.type == NotificationTypeChoices.REQUEST_UPDATE:
             if self.target._meta.model_name == "registrationrequest":
                 target_url = self.target.challenge.get_absolute_url()
                 target_name = self.target.challenge.short_name
@@ -337,7 +316,7 @@ class Notification(UUIDModel):
                 message=self.message,
                 time=naturaltime(self.created),
             )
-        elif self.type == NotificationType.NotificationTypeChoices.NEW_ADMIN:
+        elif self.type == NotificationTypeChoices.NEW_ADMIN:
             return format_html(
                 "You were {message} {target} {time}.",
                 message=self.message,
@@ -349,8 +328,7 @@ class Notification(UUIDModel):
                 time=naturaltime(self.created),
             )
         elif (
-            self.type
-            == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
+            self.type == NotificationTypeChoices.EVALUATION_STATUS
             and self.actor == user
         ):
             if self.action_object.error_message:
@@ -379,8 +357,7 @@ class Notification(UUIDModel):
                 error=error_message,
             )
         elif (
-            self.type
-            == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
+            self.type == NotificationTypeChoices.EVALUATION_STATUS
             and self.actor != user
             and self.message != "succeeded"
         ):
@@ -412,8 +389,7 @@ class Notification(UUIDModel):
                 error=error_message,
             )
         elif (
-            self.type
-            == NotificationType.NotificationTypeChoices.EVALUATION_STATUS
+            self.type == NotificationTypeChoices.EVALUATION_STATUS
             and self.actor != user
             and self.message == "succeeded"
         ):
@@ -432,10 +408,7 @@ class Notification(UUIDModel):
                 user_profile=user_profile_link(self.actor),
                 time=naturaltime(self.created),
             )
-        elif (
-            self.type
-            == NotificationType.NotificationTypeChoices.MISSING_METHOD
-        ):
+        elif self.type == NotificationTypeChoices.MISSING_METHOD:
             return format_html(
                 "The {action_object} from {user_profile} {time} could not be evaluated because "
                 "there is no valid evaluation method for {target}.",
@@ -452,7 +425,7 @@ class Notification(UUIDModel):
                     self.target,
                 ),
             )
-        elif self.type == NotificationType.NotificationTypeChoices.JOB_STATUS:
+        elif self.type == NotificationTypeChoices.JOB_STATUS:
             if self.actor and self.actor != user:
                 addition = format_html(" | {}", user_profile_link(self.actor))
             else:
@@ -469,10 +442,7 @@ class Notification(UUIDModel):
                     self.description,
                 ),
             )
-        elif (
-            self.type
-            == NotificationType.NotificationTypeChoices.IMAGE_IMPORT_STATUS
-        ):
+        elif self.type == NotificationTypeChoices.IMAGE_IMPORT_STATUS:
             return format_html(
                 "Your {action_object} from {time} failed "
                 "with the following error: {message}.",
@@ -485,8 +455,8 @@ class Notification(UUIDModel):
                 message=self.description,
             )
         elif self.type in [
-            NotificationType.NotificationTypeChoices.FILE_COPY_STATUS,
-            NotificationType.NotificationTypeChoices.CIV_VALIDATION,
+            NotificationTypeChoices.FILE_COPY_STATUS,
+            NotificationTypeChoices.CIV_VALIDATION,
         ]:
             return self.description
 

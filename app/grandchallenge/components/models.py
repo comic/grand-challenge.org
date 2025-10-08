@@ -159,7 +159,7 @@ class InterfaceSuperKindChoices(models.TextChoices):
 
 
 class InterfaceKinds(set, Enum):
-    """Interface kind sets.
+    r"""Interface kind sets.
 
     .. exec_code::
         :hide_code:
@@ -175,17 +175,20 @@ class InterfaceKinds(set, Enum):
         from grandchallenge.components.models import InterfaceKinds
         from grandchallenge.components.models import INTERFACE_KIND_JSON_EXAMPLES
 
-        print("Interface kinds that are images:")
+        print("Interface kinds that are images:\n")
         for member in InterfaceKinds.image:
-            print("*", member.label)
+            print("  -", member.label)
+        print("\n")
 
-        print("Interface kinds that are files:")
+        print("Interface kinds that are files:\n")
         for member in InterfaceKinds.file:
-            print("*", member.label)
+            print("  -", member.label)
+        print("\n")
 
-        print("Interface kinds that are json serializable:")
+        print("Interface kinds that are json serializable:\n")
         for member in InterfaceKinds.json:
-            print("*", member.label)
+            print("  -", member.label)
+        print("\n")
 
         for key, example in INTERFACE_KIND_JSON_EXAMPLES.items():
             title = f"Example JSON file contents for {key.label}"
@@ -263,6 +266,13 @@ class InterfaceKinds(set, Enum):
         InterfaceKindChoices.OBJ,
         InterfaceKindChoices.NEWICK,
         InterfaceKindChoices.BIOM,
+    }
+
+    panimg = {
+        InterfaceKindChoices.PANIMG_IMAGE,
+        InterfaceKindChoices.PANIMG_HEAT_MAP,
+        InterfaceKindChoices.PANIMG_SEGMENTATION,
+        InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD,
     }
 
 
@@ -423,6 +433,10 @@ class ComponentInterface(OverlaySegmentsMixin):
     @property
     def is_image_kind(self):
         return self.kind in InterfaceKinds.image
+
+    @property
+    def is_panimg_kind(self):
+        return self.kind in InterfaceKinds.panimg
 
     @property
     def is_dicom_image_kind(self):
