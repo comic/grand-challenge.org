@@ -209,6 +209,7 @@ class ViewContentExampleMixin:
                 *InterfaceKinds.undisplayable,
                 *InterfaceKinds.mandatory_isolation,
                 InterfaceKindChoices.PANIMG_IMAGE,
+                InterfaceKindChoices.DICOM_IMAGE_SET,
             )
         ]
         return InterfaceLists(
