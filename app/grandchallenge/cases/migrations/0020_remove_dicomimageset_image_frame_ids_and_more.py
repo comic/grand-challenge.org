@@ -53,8 +53,8 @@ class Migration(migrations.Migration):
                                         "type": "string",
                                     },
                                     "stored_transfer_syntax_uid": {
-                                        "maxLength": 32,
-                                        "minLength": 17,
+                                        "maxLength": 25,
+                                        "minLength": 19,
                                         "pattern": "^1.2.840.10008.1.2[0-9.]*$",
                                         "type": "string",
                                     },

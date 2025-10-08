@@ -388,8 +388,8 @@ class DICOMImageSet(UUIDModel):
                             "stored_transfer_syntax_uid": {
                                 "type": "string",
                                 "pattern": "^1.2.840.10008.1.2[0-9.]*$",
-                                "minLength": 17,
-                                "maxLength": 32,
+                                "minLength": 19,
+                                "maxLength": 25,
                             },
                         },
                     },
