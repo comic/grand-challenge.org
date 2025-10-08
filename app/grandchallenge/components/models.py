@@ -274,13 +274,6 @@ class InterfaceKinds(set, Enum):
         InterfaceKindChoices.PANIMG_SEGMENTATION,
         InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD,
     }
-    # Interfaces that can be used in batch uploading
-    batch_upload = {
-        InterfaceKindChoices.PANIMG_IMAGE,
-        InterfaceKindChoices.PANIMG_HEAT_MAP,
-        InterfaceKindChoices.PANIMG_SEGMENTATION,
-        InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD,
-    }
 
 
 class OverlaySegmentsMixin(models.Model):

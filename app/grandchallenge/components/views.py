@@ -132,7 +132,7 @@ class ComponentInterfaceAutocomplete(
 
         if batch_upload_only:
             qs = ComponentInterface.objects.filter(
-                kind__in=InterfaceKinds.batch_upload,
+                kind__in=InterfaceKinds.panimg,
                 **extra_filter_kwargs,
             )
         else:

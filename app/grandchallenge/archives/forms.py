@@ -223,7 +223,7 @@ class AddCasesForm(UploadRawImagesForm):
         qs = (
             ComponentInterface.objects.all()
             .filter(
-                kind__in=InterfaceKinds.batch_upload,
+                kind__in=InterfaceKinds.panimg,
                 **socket_filter_kwargs,
             )
             .order_by("title")
