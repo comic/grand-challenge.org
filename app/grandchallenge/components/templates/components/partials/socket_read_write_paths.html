@@ -1,6 +1,12 @@
-{% if socket.is_image_kind %}
+{% if socket.is_panimg_kind %}
     <code>/{{ input|yesno:"input,output" }}{% if socket.relative_path %}/{{ socket.relative_path }}{% endif %}/&lt;uuid&gt;.mha</code> or
     <code>/{{ input|yesno:"input,output" }}{% if socket.relative_path %}/{{ socket.relative_path }}{% endif %}/&lt;uuid&gt;.tif</code>
+{% elif socket.is_dicom_image_kind %}
+    {% if input %}
+        <code>/input/{{ socket.relative_path }}/&lcub;&lt;sop_instance_uid_1&gt;.dcm, ..., &lt;sop_instance_uid_n.dcm&gt;&rcub;</code>
+    {% else %}
+        DICOM image output is not supported.
+    {% endif %}
 {% else %}
     <code>/{{ input|yesno:"input,output" }}/{{ socket.relative_path }}</code>
 {% endif %}
