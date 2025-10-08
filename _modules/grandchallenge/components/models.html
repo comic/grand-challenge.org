@@ -205,7 +205,7 @@
 <div class="viewcode-block" id="InterfaceKinds">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKinds">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InterfaceKinds</span><span class="p">(</span><span class="nb">set</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Interface kind sets.</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Interface kind sets.</span>
 
 <span class="sd">    .. exec_code::</span>
 <span class="sd">        :hide_code:</span>
@@ -221,17 +221,20 @@
 <span class="sd">        from grandchallenge.components.models import InterfaceKinds</span>
 <span class="sd">        from grandchallenge.components.models import INTERFACE_KIND_JSON_EXAMPLES</span>
 
-<span class="sd">        print(&quot;Interface kinds that are images:&quot;)</span>
+<span class="sd">        print(&quot;Interface kinds that are images:\n&quot;)</span>
 <span class="sd">        for member in InterfaceKinds.image:</span>
-<span class="sd">            print(&quot;*&quot;, member.label)</span>
+<span class="sd">            print(&quot;  -&quot;, member.label)</span>
+<span class="sd">        print(&quot;\n&quot;)</span>
 
-<span class="sd">        print(&quot;Interface kinds that are files:&quot;)</span>
+<span class="sd">        print(&quot;Interface kinds that are files:\n&quot;)</span>
 <span class="sd">        for member in InterfaceKinds.file:</span>
-<span class="sd">            print(&quot;*&quot;, member.label)</span>
+<span class="sd">            print(&quot;  -&quot;, member.label)</span>
+<span class="sd">        print(&quot;\n&quot;)</span>
 
-<span class="sd">        print(&quot;Interface kinds that are json serializable:&quot;)</span>
+<span class="sd">        print(&quot;Interface kinds that are json serializable:\n&quot;)</span>
 <span class="sd">        for member in InterfaceKinds.json:</span>
-<span class="sd">            print(&quot;*&quot;, member.label)</span>
+<span class="sd">            print(&quot;  -&quot;, member.label)</span>
+<span class="sd">        print(&quot;\n&quot;)</span>
 
 <span class="sd">        for key, example in INTERFACE_KIND_JSON_EXAMPLES.items():</span>
 <span class="sd">            title = f&quot;Example JSON file contents for {key.label}&quot;</span>
