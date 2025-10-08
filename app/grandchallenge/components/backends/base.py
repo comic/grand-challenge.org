@@ -14,6 +14,7 @@ from uuid import UUID
 import aioboto3
 import boto3
 import botocore
+from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.db import transaction
@@ -192,16 +193,14 @@ class Executor(ABC):
     def provision(self, *, input_civs, input_prefixes):
         # We cannot run everything async as it requires database access.
         # So first we gather the definitions of the async tasks that
-        # need to be run, then execute them in a new asyncio loop.
+        # need to be run, then execute them in the event loop for
+        # the current thread using @async_to_sync.
         provisioning_task_definitions = (
             self._get_provisioning_task_definitions(
                 input_civs=input_civs, input_prefixes=input_prefixes
             )
         )
-
-        asyncio.run(
-            self._provision(task_definitions=provisioning_task_definitions)
-        )
+        self._provision(task_definitions=provisioning_task_definitions)
 
     @abstractmethod
     def execute(self): ...
@@ -410,24 +409,20 @@ class Executor(ABC):
 
         return key, relative_path
 
+    @async_to_sync
     async def _provision(self, *, task_definitions):
         semaphore = asyncio.Semaphore(CONCURRENCY)
         session = aioboto3.Session()
 
-        provisioning_tasks = set()
-
-        for task_definition in task_definitions:
-            aio_task = asyncio.create_task(
-                task_definition.method(
-                    **task_definition.kwargs,
-                    semaphore=semaphore,
-                    session=session,
+        async with asyncio.TaskGroup() as task_group:
+            for task_definition in task_definitions:
+                task_group.create_task(
+                    task_definition.method(
+                        **task_definition.kwargs,
+                        semaphore=semaphore,
+                        session=session,
+                    )
                 )
-            )
-            provisioning_tasks.add(aio_task)
-            aio_task.add_done_callback(provisioning_tasks.discard)
-
-        await asyncio.gather(*provisioning_tasks)
 
     def _get_provisioning_task_definitions(
         self, *, input_civs, input_prefixes
