@@ -370,19 +370,7 @@ class Executor(ABC):
                 civ=civ, input_prefixes=input_prefixes
             )
 
-            if civ.image:
-                self._copy_input_file(src=civ.image_file, dest_key=key)
-            elif civ.file:
-                self._copy_input_file(src=civ.file, dest_key=key)
-            else:
-                with io.BytesIO() as f:
-                    f.write(json.dumps(civ.value).encode("utf-8"))
-                    f.seek(0)
-                    self._s3_client.upload_fileobj(
-                        Fileobj=f,
-                        Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
-                        Key=key,
-                    )
+            self._get_provisioning_tasks(civ, key)
 
             invocation_inputs.append(
                 {
@@ -394,6 +382,25 @@ class Executor(ABC):
             )
 
         self._create_invocation_json(inputs=invocation_inputs)
+
+    def _get_provisioning_tasks(self, civ, key):
+        if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
+            self._copy_input_file(src=civ.image_file, dest_key=key)
+        elif civ.interface.super_kind == civ.interface.SuperKind.FILE:
+            self._copy_input_file(src=civ.file, dest_key=key)
+        elif civ.interface.super_kind == civ.interface.SuperKind.VALUE:
+            with io.BytesIO() as f:
+                f.write(json.dumps(civ.value).encode("utf-8"))
+                f.seek(0)
+                self._s3_client.upload_fileobj(
+                    Fileobj=f,
+                    Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                    Key=key,
+                )
+        else:
+            raise NotImplementedError(
+                f"Unknown interface super kind: {civ.interface.super_kind}"
+            )
 
     def _with_inputs_json(self, *, input_civs):
         """
