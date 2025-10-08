@@ -472,7 +472,7 @@ class Executor(ABC):
             )
 
         tasks.append(
-            self._get_create_inputs_json_task_definition(
+            self._get_create_invocation_json_task_definition(
                 invocation_inputs=invocation_inputs
             )
         )
@@ -498,7 +498,9 @@ class Executor(ABC):
                 f"Unknown interface super kind: {civ.interface.super_kind}"
             )
 
-    def _get_create_inputs_json_task_definition(self, *, invocation_inputs):
+    def _get_create_invocation_json_task_definition(
+        self, *, invocation_inputs
+    ):
         return self._get_upload_input_content_task_definition(
             content=json.dumps(
                 [
