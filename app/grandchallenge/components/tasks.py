@@ -772,8 +772,10 @@ def provision_job(
             error_message=str(e),
             detailed_error_message=e.message_details,
         )
-    except Exception as e:
-        job.update_status(status=job.FAILURE, error_message=str(e))
+    except Exception:
+        job.update_status(
+            status=job.FAILURE, error_message="An unexpected error occurred"
+        )
         logger.error("Could not provision job", exc_info=True)
     else:
         job.update_status(status=job.PROVISIONED)
