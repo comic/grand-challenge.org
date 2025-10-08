@@ -91,7 +91,6 @@ dev = [
     "amass",
     "watchfiles",
     "playwright",
-    "pytest-playwright",
     "pytest-rerunfailures",
     "sphinx-exec-code",
 ]
