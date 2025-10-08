@@ -159,7 +159,7 @@ class InterfaceSuperKindChoices(models.TextChoices):
 
 
 class InterfaceKinds(set, Enum):
-    """Interface kind sets.
+    r"""Interface kind sets.
 
     .. exec_code::
         :hide_code:
