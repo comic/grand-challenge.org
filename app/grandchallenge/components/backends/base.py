@@ -1,4 +1,5 @@
 import asyncio
+import functools
 import io
 import json
 import logging
@@ -15,6 +16,7 @@ import aioboto3
 import boto3
 import botocore
 from asgiref.sync import async_to_sync
+from botocore.config import Config
 from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.db import transaction
@@ -44,7 +46,9 @@ from grandchallenge.core.utils.error_messages import (
 logger = logging.getLogger(__name__)
 
 MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
-CONCURRENCY = 128
+
+CONCURRENCY = 50
+BOTO_CONFIG = Config(max_pool_connections=120)
 
 
 class JobParams(NamedTuple):
@@ -124,41 +128,34 @@ def list_and_delete_objects_from_prefix(*, s3_client, bucket, prefix):
         )
 
 
-class AsyncTaskDefinition(NamedTuple):
-    # semaphore and session (aioboto3) will get added to
-    # the kwargs by the caller
-    method: callable
-    kwargs: dict
-
-
 async def s3_copy(
-    *, source_bucket, source_key, target_bucket, target_key, semaphore, session
+    *,
+    source_bucket,
+    source_key,
+    target_bucket,
+    target_key,
+    semaphore,
+    s3_client,
 ):
     async with semaphore:
-        async with session.client(
-            "s3", endpoint_url=settings.AWS_S3_ENDPOINT_URL
-        ) as s3_client:
-            await s3_client.copy(
-                CopySource={"Bucket": source_bucket, "Key": source_key},
-                Bucket=target_bucket,
-                Key=target_key,
-            )
+        await s3_client.copy(
+            CopySource={"Bucket": source_bucket, "Key": source_key},
+            Bucket=target_bucket,
+            Key=target_key,
+        )
 
 
-async def s3_upload_content(*, content, bucket, key, semaphore, session):
+async def s3_upload_content(*, content, bucket, key, semaphore, s3_client):
     async with semaphore:
-        async with session.client(
-            "s3", endpoint_url=settings.AWS_S3_ENDPOINT_URL
-        ) as s3_client:
-            with io.BytesIO() as f:
-                f.write(content)
-                f.seek(0)
+        with io.BytesIO() as f:
+            f.write(content)
+            f.seek(0)
 
-                await s3_client.upload_fileobj(
-                    Fileobj=f,
-                    Bucket=bucket,
-                    Key=key,
-                )
+            await s3_client.upload_fileobj(
+                Fileobj=f,
+                Bucket=bucket,
+                Key=key,
+            )
 
 
 class Executor(ABC):
@@ -192,15 +189,13 @@ class Executor(ABC):
 
     def provision(self, *, input_civs, input_prefixes):
         # We cannot run everything async as it requires database access.
-        # So first we gather the definitions of the async tasks that
-        # need to be run, then execute them in the event loop for
-        # the current thread using @async_to_sync.
-        provisioning_task_definitions = (
-            self._get_provisioning_task_definitions(
-                input_civs=input_civs, input_prefixes=input_prefixes
-            )
+        # So first we gather the async tasks that need to be run,
+        # then execute them in the event loop for the current thread
+        # using a method wrapped in @async_to_sync.
+        provisioning_tasks = self._get_provisioning_tasks(
+            input_civs=input_civs, input_prefixes=input_prefixes
         )
-        self._provision(task_definitions=provisioning_task_definitions)
+        self._provision(tasks=provisioning_tasks)
 
     @abstractmethod
     def execute(self): ...
@@ -410,40 +405,32 @@ class Executor(ABC):
         return key, relative_path
 
     @async_to_sync
-    async def _provision(self, *, task_definitions):
+    async def _provision(self, *, tasks):
         semaphore = asyncio.Semaphore(CONCURRENCY)
         session = aioboto3.Session()
 
-        async with asyncio.TaskGroup() as task_group:
-            for task_definition in task_definitions:
-                task_group.create_task(
-                    task_definition.method(
-                        **task_definition.kwargs,
-                        semaphore=semaphore,
-                        session=session,
+        async with session.client(
+            "s3", endpoint_url=settings.AWS_S3_ENDPOINT_URL, config=BOTO_CONFIG
+        ) as s3_client:
+            async with asyncio.TaskGroup() as task_group:
+                for task in tasks:
+                    task_group.create_task(
+                        task(
+                            semaphore=semaphore,
+                            s3_client=s3_client,
+                        )
                     )
-                )
 
-    def _get_provisioning_task_definitions(
-        self, *, input_civs, input_prefixes
-    ):
-        input_provisioning_task_definitions = (
-            self._get_input_provisioning_task_definitions(
-                input_civs=input_civs, input_prefixes=input_prefixes
-            )
-        )
-        auxiliary_data_provisioning_task_definitions = (
-            self._get_auxiliary_data_provisioning_task_definitions()
+    def _get_provisioning_tasks(self, *, input_civs, input_prefixes):
+        input_provisioning_tasks = self._get_input_provisioning_tasks(
+            input_civs=input_civs, input_prefixes=input_prefixes
         )
 
         return (
-            input_provisioning_task_definitions
-            + auxiliary_data_provisioning_task_definitions
+            input_provisioning_tasks + self._auxiliary_data_provisioning_tasks
         )
 
-    def _get_input_provisioning_task_definitions(
-        self, *, input_civs, input_prefixes
-    ):
+    def _get_input_provisioning_tasks(self, *, input_civs, input_prefixes):
         invocation_inputs = []
 
         tasks = []
@@ -453,9 +440,7 @@ class Executor(ABC):
                 civ=civ, input_prefixes=input_prefixes
             )
 
-            tasks.append(
-                self._get_civ_input_provisioning_task_definition(civ, key)
-            )
+            tasks.append(self._get_civ_input_provisioning_task(civ, key))
 
             invocation_inputs.append(
                 {
@@ -467,24 +452,24 @@ class Executor(ABC):
             )
 
         tasks.append(
-            self._get_create_invocation_json_task_definition(
+            self._get_create_invocation_json_task(
                 invocation_inputs=invocation_inputs
             )
         )
 
         return tasks
 
-    def _get_civ_input_provisioning_task_definition(self, civ, key):
+    def _get_civ_input_provisioning_task(self, civ, key):
         if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
-            return self._get_copy_input_object_task_definition(
+            return self._get_copy_input_object_task(
                 src=civ.image_file, target_key=key
             )
         elif civ.interface.super_kind == civ.interface.SuperKind.FILE:
-            return self._get_copy_input_object_task_definition(
+            return self._get_copy_input_object_task(
                 src=civ.file, target_key=key
             )
         elif civ.interface.super_kind == civ.interface.SuperKind.VALUE:
-            return self._get_upload_input_content_task_definition(
+            return self._get_upload_input_content_task(
                 content=json.dumps(civ.value).encode("utf-8"),
                 key=key,
             )
@@ -493,10 +478,8 @@ class Executor(ABC):
                 f"Unknown interface super kind: {civ.interface.super_kind}"
             )
 
-    def _get_create_invocation_json_task_definition(
-        self, *, invocation_inputs
-    ):
-        return self._get_upload_input_content_task_definition(
+    def _get_create_invocation_json_task(self, *, invocation_inputs):
+        return self._get_upload_input_content_task(
             content=json.dumps(
                 [
                     {
@@ -510,12 +493,13 @@ class Executor(ABC):
             key=self._invocation_key,
         )
 
-    def _get_auxiliary_data_provisioning_task_definitions(self):
+    @property
+    def _auxiliary_data_provisioning_tasks(self):
         tasks = []
 
         if self._algorithm_model:
             tasks.append(
-                self._get_copy_input_object_task_definition(
+                self._get_copy_input_object_task(
                     src=self._algorithm_model,
                     target_key=self._algorithm_model_key,
                 )
@@ -523,7 +507,7 @@ class Executor(ABC):
 
         if self._ground_truth:
             tasks.append(
-                self._get_copy_input_object_task_definition(
+                self._get_copy_input_object_task(
                     src=self._ground_truth, target_key=self._ground_truth_key
                 )
             )
@@ -547,26 +531,22 @@ class Executor(ABC):
         )
 
     @staticmethod
-    def _get_copy_input_object_task_definition(*, src, target_key):
-        return AsyncTaskDefinition(
-            method=s3_copy,
-            kwargs={
-                "source_bucket": src.storage.bucket.name,
-                "source_key": src.name,
-                "target_bucket": settings.COMPONENTS_INPUT_BUCKET_NAME,
-                "target_key": target_key,
-            },
+    def _get_copy_input_object_task(*, src, target_key):
+        return functools.partial(
+            s3_copy,
+            source_bucket=src.storage.bucket.name,
+            source_key=src.name,
+            target_bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            target_key=target_key,
         )
 
     @staticmethod
-    def _get_upload_input_content_task_definition(*, content, key):
-        return AsyncTaskDefinition(
-            method=s3_upload_content,
-            kwargs={
-                "content": content,
-                "bucket": settings.COMPONENTS_INPUT_BUCKET_NAME,
-                "key": key,
-            },
+    def _get_upload_input_content_task(*, content, key):
+        return functools.partial(
+            s3_upload_content,
+            content=content,
+            bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            key=key,
         )
 
     def _get_task_return_code(self):
