@@ -11,6 +11,7 @@ from grandchallenge.components.backends.utils import (
     _filter_members,
     user_error,
 )
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.components.schemas import GPUTypeChoices
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.components_tests.resources.backends import IOCopyExecutor
@@ -128,7 +129,9 @@ def test_inputs_json(settings):
         use_warm_pool=False,
     )
 
-    civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2)
+    civ1, civ2 = ComponentInterfaceValueFactory.create_batch(
+        2, interface__kind=InterfaceKindChoices.ANY
+    )
 
     executor.provision(input_civs=[civ1, civ2], input_prefixes={})
 

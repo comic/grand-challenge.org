@@ -61,6 +61,7 @@ dependencies = [
     "cachetools",
     "grand-challenge-dicom-de-identifier",
     "pydantic",
+    "aioboto3",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"
@@ -90,7 +91,6 @@ dev = [
     "amass",
     "watchfiles",
     "playwright",
-    "pytest-playwright",
     "pytest-rerunfailures",
     "sphinx-exec-code",
 ]
