@@ -1119,6 +1119,12 @@ class DICOMImageSetUpload(UUIDModel):
         self.save()
         if exc:
             logger.error(exc, exc_info=True)
+        Notification.send(
+            kind=NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+            message="DICOM import failed.",
+            description=error_message,
+            actor=self.creator,
+        )
 
     def start_dicom_import_job(self):
         return self._health_imaging_client.start_dicom_import_job(
