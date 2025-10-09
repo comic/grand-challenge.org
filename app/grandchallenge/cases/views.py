@@ -110,6 +110,34 @@ class ImageViewSet(ReadOnlyModelViewSet):
             "headers": dict(request.headers.items()),
         }
 
+    @staticmethod
+    def get_frame_encoding(stored_transfer_syntax_uid):
+        # From https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/medical-imaging/client/get_image_frame.html
+        transfer_syntax_to_encoding = {
+            "1.2.840.10008.1.2.1": "application/octet-stream",
+            "1.2.840.10008.1.2.4.50": "image/jpeg",
+            "1.2.840.10008.1.2.4.91": "image/j2c",
+            "1.2.840.10008.1.2.4.100": "video/mpeg",
+            "1.2.840.10008.1.2.4.100.1": "video/mpeg",
+            "1.2.840.10008.1.2.4.101": "video/mpeg",
+            "1.2.840.10008.1.2.4.101.1": "video/mpeg",
+            "1.2.840.10008.1.2.4.102": "video/mp4",
+            "1.2.840.10008.1.2.4.102.1": "video/mp4",
+            "1.2.840.10008.1.2.4.103": "video/mp4",
+            "1.2.840.10008.1.2.4.103.1": "video/mp4",
+            "1.2.840.10008.1.2.4.104": "video/mp4",
+            "1.2.840.10008.1.2.4.104.1": "video/mp4",
+            "1.2.840.10008.1.2.4.105": "video/mp4",
+            "1.2.840.10008.1.2.4.105.1": "video/mp4",
+            "1.2.840.10008.1.2.4.106": "video/mp4",
+            "1.2.840.10008.1.2.4.106.1": "video/mp4",
+            "1.2.840.10008.1.2.4.107": "video/H256",
+            "1.2.840.10008.1.2.4.108": "video/H256",
+            "1.2.840.10008.1.2.4.202": "image/jph",
+            "1.2.840.10008.1.2.4.203": "image/jphc",
+        }
+        return transfer_syntax_to_encoding[stored_transfer_syntax_uid]
+
     @action(detail=True, url_path="dicom")
     def dicom(self, request, pk=None):
         image = self.get_object()
@@ -130,33 +158,50 @@ class ImageViewSet(ReadOnlyModelViewSet):
 
         image_set_url = f"https://runtime-medical-imaging.{settings.AWS_DEFAULT_REGION}.amazonaws.com/datastore/{settings.AWS_HEALTH_IMAGING_DATASTORE_ID}/imageSet/{image.dicom_image_set.image_set_id}"
 
-        image_frame_requests = {}
+        serialized_image_frames = []
 
-        for frame_id in image.dicom_image_set.image_frame_ids:
-            frame_request = AWSRequest(
+        for image_frame in image.dicom_image_set.image_frame_metadata:
+            image_frame_id = image_frame["image_frame_id"]
+
+            image_frame_request = AWSRequest(
                 method="POST",
                 url=f"{image_set_url}/getImageFrame",
-                data=json.dumps({"imageFrameId": frame_id}),
+                data=json.dumps({"imageFrameId": image_frame_id}),
+                headers={
+                    "Accept": self.get_frame_encoding(
+                        image_frame["stored_transfer_syntax_uid"]
+                    ),
+                },
             )
-            medical_imaging_auth.add_auth(frame_request)
+            medical_imaging_auth.add_auth(image_frame_request)
 
-            image_frame_requests[frame_id] = self.serialize_aws_request(
-                frame_request
+            serialized_image_frames.append(
+                {
+                    "image_frame_id": image_frame_id,
+                    "get_image_frame": self.serialize_aws_request(
+                        image_frame_request
+                    ),
+                }
             )
 
         metadata_request = AWSRequest(
             method="POST",
             url=f"{image_set_url}/getImageSetMetadata",
             data=json.dumps({"versionId": "1"}),
+            headers={
+                "Accept-Encoding": "gzip",
+                "Accept": "application/json",
+            },
         )
         medical_imaging_auth.add_auth(metadata_request)
 
         return JsonResponse(
             {
+                "image_set_id": image.dicom_image_set.image_set_id,
                 "get_image_set_metadata": self.serialize_aws_request(
                     metadata_request
                 ),
-                "get_image_frames": image_frame_requests,
+                "image_frames": serialized_image_frames,
             }
         )
 

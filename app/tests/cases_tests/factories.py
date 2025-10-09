@@ -161,9 +161,24 @@ def fake_image_frame_id():
     return "".join(random.choices(characters, k=32))
 
 
+def fake_dicom_instance_uid():
+    characters = ".0123456789"
+    return "".join(random.choices(characters, k=64))
+
+
 class DICOMImageSetFactory(factory.django.DjangoModelFactory):
-    image_frame_ids = factory.LazyAttribute(
-        lambda _: [fake_image_frame_id() for _ in range(5)]
+    image_frame_metadata = factory.LazyAttribute(
+        lambda _: [
+            {
+                "image_frame_id": fake_image_frame_id(),
+                "frame_size_in_bytes": 1337,
+                "study_instance_uid": fake_dicom_instance_uid(),
+                "series_instance_uid": fake_dicom_instance_uid(),
+                "sop_instance_uid": fake_dicom_instance_uid(),
+                "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+            }
+            for _ in range(5)
+        ]
     )
     dicom_image_set_upload = factory.SubFactory(DICOMImageSetUploadFactory)
 
