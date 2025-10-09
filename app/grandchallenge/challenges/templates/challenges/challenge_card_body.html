@@ -25,13 +25,6 @@
         </a>
     {% endif %}
 
-    {% if challenge.educational %}
-        <span class="badge badge-dark above-stretched-link p-1 mt-1"
-              title="This is an educational challenge">
-                                            <i class="fas fa-university fa-fw"></i>
-                                            </span>
-    {% endif %}
-
     {% if challenge.cached_num_participants %}
         <span class="badge badge-dark above-stretched-link p-1 mt-1"
               title="{{ challenge.cached_num_participants }} participant{{ challenge.cached_num_participants|pluralize }}">

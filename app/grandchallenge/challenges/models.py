@@ -286,8 +286,10 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     is_active_until = models.DateField(
         help_text="The date at which the challenge becomes inactive",
     )
-    educational = models.BooleanField(
-        default=False, help_text="It is an educational challenge"
+    educational = deprecate_field(
+        models.BooleanField(
+            default=False, help_text="It is an educational challenge"
+        )
     )
     workshop_date = models.DateField(
         null=True,
