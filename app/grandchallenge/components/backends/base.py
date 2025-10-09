@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
 
 CONCURRENCY = 50
-BOTO_CONFIG = Config(max_pool_connections=120)
+ASYNC_BOTO_CONFIG = Config(max_pool_connections=120)
 
 
 class JobParams(NamedTuple):
@@ -410,7 +410,9 @@ class Executor(ABC):
         session = aioboto3.Session()
 
         async with session.client(
-            "s3", endpoint_url=settings.AWS_S3_ENDPOINT_URL, config=BOTO_CONFIG
+            "s3",
+            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+            config=ASYNC_BOTO_CONFIG,
         ) as s3_client:
             async with asyncio.TaskGroup() as task_group:
                 for task in tasks:

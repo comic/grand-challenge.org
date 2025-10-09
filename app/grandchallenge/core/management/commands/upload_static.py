@@ -2,10 +2,15 @@ import asyncio
 import logging
 from pathlib import Path
 
-import boto3
-from botocore.exceptions import BotoCoreError, ClientError
+import aioboto3
+from asgiref.sync import async_to_sync
 from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
+
+from grandchallenge.components.backends.base import (
+    ASYNC_BOTO_CONFIG,
+    CONCURRENCY,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +37,22 @@ CONTENT_TYPES = {
 }
 
 
+async def s3_upload_file(
+    *, filename, bucket, key, content_type, cache_control, semaphore, s3_client
+):
+    async with semaphore:
+        await s3_client.upload_file(
+            Filename=filename,
+            Bucket=bucket,
+            Key=key,
+            ExtraArgs={
+                "ContentType": content_type,
+                "CacheControl": cache_control,
+            },
+        )
+        logger.info(f"Uploaded s3://{bucket}/{key}")
+
+
 class Command(BaseCommand):
     help = "Uploads static files to an S3 bucket"
 
@@ -39,50 +60,29 @@ class Command(BaseCommand):
         parser.add_argument(
             "--bucket", type=str, required=True, help="S3 bucket name"
         )
-        parser.add_argument(
-            "--concurrency",
-            type=int,
-            default=10,
-            help="Number of concurrent uploads",
-        )
 
     def handle(self, *args, **options):
         bucket_name = options["bucket"]
-        concurrency = options["concurrency"]
 
-        try:
-            s3_client = boto3.client("s3")
+        files_to_upload = self._get_files_to_upload()
 
-            files_to_upload = self._get_files_to_upload()
+        if not files_to_upload:
+            raise RuntimeError("No files found to upload")
 
-            if not files_to_upload:
-                raise RuntimeError("No files found to upload")
+        self.stdout.write(
+            f"Found {len(files_to_upload)} files to upload to {bucket_name}"
+        )
 
-            self.stdout.write(
-                f"Found {len(files_to_upload)} files to upload to {bucket_name}"
+        self._upload_files(
+            bucket_name=bucket_name,
+            files=files_to_upload,
+        )
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Successfully uploaded {len(files_to_upload)} files to {bucket_name}"
             )
-
-            asyncio.run(
-                self._upload_files(
-                    s3_client=s3_client,
-                    bucket_name=bucket_name,
-                    files=files_to_upload,
-                    concurrency=concurrency,
-                )
-            )
-
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"Successfully uploaded {len(files_to_upload)} files to {bucket_name}"
-                )
-            )
-
-        except (BotoCoreError, ClientError) as e:
-            self.stderr.write(self.style.ERROR(f"AWS Error: {str(e)}"))
-            raise CommandError(f"Failed to upload files: {str(e)}")
-        except Exception as e:
-            self.stderr.write(self.style.ERROR(f"Unexpected error: {str(e)}"))
-            raise CommandError(f"Failed to upload files: {str(e)}")
+        )
 
     def _get_files_to_upload(self) -> list[Path]:
         files = []
@@ -94,52 +94,35 @@ class Command(BaseCommand):
 
         return files
 
+    @async_to_sync
     async def _upload_files(
         self,
         *,
-        s3_client,
         bucket_name: str,
         files: list[Path],
-        concurrency: int,
     ) -> None:
-        semaphore = asyncio.Semaphore(concurrency)
-        errors: set[str] = set()
+        semaphore = asyncio.Semaphore(CONCURRENCY)
+        session = aioboto3.Session()
 
-        async def upload_file(file_path: Path) -> None:
-            async with semaphore:
-                relative_path = file_path.relative_to(
-                    Path(settings.STATIC_ROOT).parent
-                )
-                s3_key = str(relative_path)
-
-                try:
-                    loop = asyncio.get_event_loop()
-                    await loop.run_in_executor(
-                        None,
-                        lambda: s3_client.upload_file(
-                            Filename=str(file_path),
-                            Bucket=bucket_name,
-                            Key=s3_key,
-                            ExtraArgs={
-                                "ContentType": CONTENT_TYPES[
-                                    file_path.suffix.lower()
-                                ],
-                                "CacheControl": settings.PUBLIC_FILE_CACHE_CONTROL,
-                            },
-                        ),
+        async with session.client(
+            "s3",
+            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+            config=ASYNC_BOTO_CONFIG,
+        ) as s3_client:
+            async with asyncio.TaskGroup() as task_group:
+                for file in files:
+                    relative_path = file.relative_to(
+                        Path(settings.STATIC_ROOT).parent
                     )
-                    self.stdout.write(f"Uploaded: {s3_key}")
-                except Exception as e:
-                    error_msg = f"Failed to upload {s3_key}: {str(e)}"
-                    errors.add(error_msg)
-                    self.stderr.write(self.style.ERROR(error_msg))
 
-        tasks = [upload_file(file_path) for file_path in files]
-
-        await asyncio.gather(*tasks)
-
-        if errors:
-            error_count = len(errors)
-            raise CommandError(
-                f"Failed to upload {error_count} files. First error: {next(iter(errors))}"
-            )
+                    task_group.create_task(
+                        s3_upload_file(
+                            filename=str(file),
+                            bucket=bucket_name,
+                            key=str(relative_path),
+                            content_type=CONTENT_TYPES[file.suffix.lower()],
+                            cache_control=settings.PUBLIC_FILE_CACHE_CONTROL,
+                            semaphore=semaphore,
+                            s3_client=s3_client,
+                        )
+                    )
