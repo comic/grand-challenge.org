@@ -31,7 +31,13 @@ from django.utils.module_loading import import_string
 from django.utils.timezone import now
 from panimg.models import SimpleITKImage
 
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import (
+    DICOMImageSet,
+    DICOMImageSetUpload,
+    Image,
+    ImageFile,
+    RawImageUploadSession,
+)
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
     ComponentException,
@@ -1319,6 +1325,110 @@ def add_image_to_object(  # noqa: C901
                 interface=interface,
                 error_message="An unexpected error occurred",
                 user=upload_session.creator,
+            )
+            logger.error(e, exc_info=True)
+            return
+
+    if linked_task is not None:
+        logger.info("Scheduling linked task")
+        on_commit(signature(linked_task).apply_async)
+    else:
+        logger.info("No linked task, task complete")
+
+
+@acks_late_micro_short_task(
+    retry_on=(LockNotAcquiredException,), delayed_retry=False
+)
+@transaction.atomic
+def add_dicom_image_set_to_object(  # noqa: C901
+    *,
+    app_label,
+    model_name,
+    object_pk,
+    interface_pk,
+    dicom_image_set_upload_pk,
+    linked_task=None,
+):
+    from grandchallenge.algorithms.models import Job
+    from grandchallenge.archives.models import ArchiveItem
+    from grandchallenge.components.models import (
+        ComponentInterface,
+        ComponentInterfaceValue,
+    )
+    from grandchallenge.reader_studies.models import DisplaySet
+
+    model = apps.get_model(
+        app_label=app_label,
+        model_name=model_name,
+    )
+
+    try:
+        with check_lock_acquired():
+            obj = model.objects.select_for_update(nowait=True).get(
+                pk=object_pk
+            )
+    except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
+        logger.info(f"Nothing to do: {model_name} no longer exists.")
+        return
+
+    interface = ComponentInterface.objects.get(pk=interface_pk)
+    upload = DICOMImageSetUpload.objects.get(pk=dicom_image_set_upload_pk)
+    error_handler = obj.get_error_handler()
+
+    try:
+        dicom_image_set = DICOMImageSet.objects.get(
+            dicom_image_set_upload_pk=dicom_image_set_upload_pk
+        )
+        image = Image.objects.get(dicom_image_set_pk=dicom_image_set.pk)
+    except (DICOMImageSet.DoesNotExist, Image.DoesNotExist):
+        error_handler.handle_error(
+            interface=interface,
+            error_message="Image does not exist",
+            user=upload.creator,
+        )
+        logger.info("Image for dicom image set does not exist")
+        return
+
+    current_value = obj.get_current_value_for_interface(
+        interface=interface, user=upload.creator
+    )
+
+    civ, created = ComponentInterfaceValue.objects.get_first_or_create(
+        interface=interface, image=image
+    )
+
+    if created:
+        try:
+            civ.full_clean()
+        except ValidationError as e:
+            error_handler.handle_error(
+                interface=interface,
+                error_message=format_validation_error_message(error=e),
+                user=upload.creator,
+            )
+            logger.info(f"Validation failed: {e}")
+            return
+        except Exception as e:
+            error_handler.handle_error(
+                interface=interface,
+                error_message="An unexpected error occurred",
+                user=upload.creator,
+            )
+            logger.error(e, exc_info=True)
+            return
+
+    try:
+        obj.remove_civ(civ=current_value)
+        obj.add_civ(civ=civ)
+    except CIVNotEditableException as e:
+        if isinstance(obj, Job) and obj.status == Job.CANCELLED:
+            logger.info("Job has been cancelled, exiting")
+            return
+        else:
+            error_handler.handle_error(
+                interface=interface,
+                error_message="An unexpected error occurred",
+                user=upload.creator,
             )
             logger.error(e, exc_info=True)
             return
