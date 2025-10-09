@@ -1066,13 +1066,25 @@ class DICOMImageSetUpload(UUIDModel):
         self.__s3_client = None
 
     def save(self, *args, **kwargs):
+        adding = self._state.adding
+
         self.study_instance_uid = generate_dicom_id_suffix(
             pk=self.pk, suffix_type="study"
         )
         self.series_instance_uid = generate_dicom_id_suffix(
             pk=self.pk, suffix_type="series"
         )
+
         super().save(*args, **kwargs)
+
+        if adding:
+            if self.creator:
+                follow(
+                    user=self.creator,
+                    obj=self,
+                    send_action=False,
+                    actor_only=False,
+                )
 
     @property
     def _s3_client(self):
@@ -1123,7 +1135,7 @@ class DICOMImageSetUpload(UUIDModel):
             kind=NotificationTypeChoices.IMAGE_IMPORT_STATUS,
             message="DICOM import failed.",
             description=error_message,
-            actor=self.creator,
+            action_object=self,
         )
 
     def start_dicom_import_job(self):
