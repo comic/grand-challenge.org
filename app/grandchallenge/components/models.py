@@ -2318,6 +2318,7 @@ class CIVData:
             self.user_upload,
             self.upload_session,
             self.user_upload_queryset,
+            self.dicom_upload_with_name,
             self.file_civ,
         ]
 
