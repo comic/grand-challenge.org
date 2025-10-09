@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import boto3
 from actstream.actions import follow
 from botocore.exceptions import ClientError
+from celery import signature
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
 from django.db import models
@@ -1047,6 +1048,12 @@ class DICOMImageSetUpload(UUIDModel):
     name = models.CharField(
         max_length=255, help_text="The name for the resulting Image instance"
     )
+    task_on_success = models.JSONField(
+        default=None,
+        null=True,
+        editable=False,
+        help_text="Serialized task that is run on job success",
+    )
 
     class Meta:
         verbose_name = "DICOM image set upload"
@@ -1289,6 +1296,7 @@ class DICOMImageSetUpload(UUIDModel):
         else:
             self.status = self.DICOMImageSetUploadStatusChoices.COMPLETED
             self.save()
+            self.execute_task_on_success()
         finally:
             self.delete_input_files()
 
@@ -1376,3 +1384,7 @@ class DICOMImageSetUpload(UUIDModel):
         image = Image(dicom_image_set=dicom_image_set, name=self.name)
         image.full_clean()
         image.save()
+
+    def execute_task_on_success(self):
+        if self.task_on_success:
+            on_commit(signature(self.task_on_success).apply_async)
