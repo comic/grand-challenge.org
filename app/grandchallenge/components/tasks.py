@@ -32,7 +32,6 @@ from django.utils.timezone import now
 from panimg.models import SimpleITKImage
 
 from grandchallenge.cases.models import (
-    DICOMImageSet,
     DICOMImageSetUpload,
     DICOMImageSetUploadStatusChoices,
     Image,
@@ -1382,11 +1381,10 @@ def add_dicom_image_set_to_object(  # noqa: C901
     error_handler = obj.get_error_handler()
 
     try:
-        dicom_image_set = DICOMImageSet.objects.get(
-            dicom_image_set_upload_id=dicom_image_set_upload_pk
+        image = Image.objects.get(
+            dicom_image_set__dicom_image_set_upload_id=dicom_image_set_upload_pk
         )
-        image = Image.objects.get(dicom_image_set_id=dicom_image_set.pk)
-    except (DICOMImageSet.DoesNotExist, Image.DoesNotExist):
+    except Image.DoesNotExist:
         error_handler.handle_error(
             interface=interface,
             error_message="Image does not exist",
