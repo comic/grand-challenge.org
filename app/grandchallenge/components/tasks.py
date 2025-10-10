@@ -34,6 +34,7 @@ from panimg.models import SimpleITKImage
 from grandchallenge.cases.models import (
     DICOMImageSet,
     DICOMImageSetUpload,
+    DICOMImageSetUploadStatusChoices,
     Image,
     ImageFile,
     RawImageUploadSession,
@@ -1373,6 +1374,11 @@ def add_dicom_image_set_to_object(  # noqa: C901
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
     upload = DICOMImageSetUpload.objects.get(pk=dicom_image_set_upload_pk)
+
+    if upload.status != DICOMImageSetUploadStatusChoices.COMPLETED:
+        logger.info("Nothing to do: upload session was not successful.")
+        return
+
     error_handler = obj.get_error_handler()
 
     try:
