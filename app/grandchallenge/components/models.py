@@ -2546,9 +2546,9 @@ class CIVForObjectMixin:
                         f"You need to provide a user along with the user upload "
                         f"queryset for interface {ci}"
                     )
-                upload_session = RawImageUploadSession(creator=user)
-                upload_session.full_clean()
-                upload_session.save()
+                upload_session = RawImageUploadSession.objects.create(
+                    creator=user
+                )
                 upload_session.user_uploads.set(user_upload_queryset)
 
             upload_session.process_images(
