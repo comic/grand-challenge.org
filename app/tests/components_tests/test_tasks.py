@@ -588,6 +588,51 @@ def test_add_dicom_image_set_to_object_marks_job_as_failed_on_validation_fail(
 
 
 @pytest.mark.parametrize(
+    "object_type",
+    [
+        DisplaySetFactory,
+        ArchiveItemFactory,
+    ],
+)
+@pytest.mark.django_db
+def test_add_dicom_image_set_to_object_sends_notification_on_validation_fail(
+    settings,
+    django_capture_on_commit_callbacks,
+    object_type,
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    obj = object_type()
+    # create upload without resulting dicom image set and image.
+    upload = DICOMImageSetUploadFactory(
+        status=DICOMImageSetUploadStatusChoices.COMPLETED
+    )
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.DICOM_IMAGE_SET)
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
+    )
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        add_dicom_image_set_to_object(
+            app_label=obj._meta.app_label,
+            model_name=obj._meta.model_name,
+            object_pk=obj.pk,
+            interface_pk=ci.pk,
+            dicom_image_set_upload_pk=upload.pk,
+            linked_task=linked_task,
+        )
+
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
+    assert Notification.objects.count() == 1
+    assert (
+        f"Validation for socket {ci.title} failed."
+        in Notification.objects.first().message
+    )
+    assert "some_async_task" not in str(callbacks)
+
+
+@pytest.mark.parametrize(
     "task, task_extra_kwargs",
     (
         (add_image_to_object, {"upload_session_pk": None}),
