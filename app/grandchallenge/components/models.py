@@ -1354,10 +1354,10 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
         )
 
     def __str__(self):
-        if self.value is None:
-            return self.title
-        else:
+        if self.interface.is_json_kind:
             return f"Component Interface Value {self.pk} for {self.interface}"
+        else:
+            return self.title
 
     def save(self, *args, **kwargs):
         if (
