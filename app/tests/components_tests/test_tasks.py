@@ -13,7 +13,10 @@ from django.utils.timezone import now
 from requests import put
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.models import (
+    DICOMImageSetUploadStatusChoices,
+    RawImageUploadSession,
+)
 from grandchallenge.components.exceptions import InstanceInUse
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
@@ -24,6 +27,7 @@ from grandchallenge.components.models import (
 from grandchallenge.components.tasks import (
     _get_image_config_and_sha256,
     _repo_login_and_run,
+    add_dicom_image_set_to_object,
     add_file_to_object,
     add_image_to_object,
     assign_tarball_from_upload,
@@ -52,7 +56,11 @@ from tests.algorithms_tests.factories import (
     AlgorithmModelFactory,
 )
 from tests.archives_tests.factories import ArchiveItemFactory
-from tests.cases_tests.factories import RawImageUploadSessionFactory
+from tests.cases_tests.factories import (
+    DICOMImageSetFactory,
+    DICOMImageSetUploadFactory,
+    RawImageUploadSessionFactory,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -497,9 +505,93 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
 
 
 @pytest.mark.parametrize(
+    "object_type, extra_object_kwargs",
+    [
+        (DisplaySetFactory, {}),
+        (ArchiveItemFactory, {}),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 10, "status": Job.VALIDATING_INPUTS},
+        ),
+    ],
+)
+@pytest.mark.django_db
+def test_add_dicom_image_set_to_object(
+    settings,
+    django_capture_on_commit_callbacks,
+    object_type,
+    extra_object_kwargs,
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    obj = object_type(**extra_object_kwargs)
+    upload = DICOMImageSetUploadFactory(
+        status=DICOMImageSetUploadStatusChoices.COMPLETED
+    )
+    dicom_image_set = DICOMImageSetFactory(dicom_image_set_upload=upload)
+    ImageFactory(dicom_image_set=dicom_image_set)
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.DICOM_IMAGE_SET)
+
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
+    )
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        add_dicom_image_set_to_object(
+            app_label=obj._meta.app_label,
+            model_name=obj._meta.model_name,
+            object_pk=obj.pk,
+            interface_pk=ci.pk,
+            dicom_image_set_upload_pk=upload.pk,
+            linked_task=linked_task,
+        )
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 1
+    assert "some_async_task" in str(callbacks)
+
+
+@pytest.mark.django_db
+def test_add_dicom_image_set_to_object_marks_job_as_failed_on_validation_fail(
+    settings,
+    django_capture_on_commit_callbacks,
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    obj = AlgorithmJobFactory(time_limit=10)
+    # create upload without resulting dicom image set and image.
+    upload = DICOMImageSetUploadFactory(
+        status=DICOMImageSetUploadStatusChoices.COMPLETED
+    )
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.DICOM_IMAGE_SET)
+
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
+    )
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        add_dicom_image_set_to_object(
+            app_label=obj._meta.app_label,
+            model_name=obj._meta.model_name,
+            object_pk=obj.pk,
+            interface_pk=ci.pk,
+            dicom_image_set_upload_pk=upload.pk,
+            linked_task=linked_task,
+        )
+
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
+    obj.refresh_from_db()
+    assert obj.status == obj.CANCELLED
+    assert obj.error_message == "One or more of the inputs failed validation."
+    assert "Image does not exist" in str(obj.detailed_error_message)
+    assert "some_async_task" not in str(callbacks)
+
+
+@pytest.mark.parametrize(
     "task, task_extra_kwargs",
     (
         (add_image_to_object, {"upload_session_pk": None}),
+        (add_dicom_image_set_to_object, {"dicom_image_set_upload_pk": None}),
         (add_file_to_object, {"user_upload_pk": None}),
     ),
 )
