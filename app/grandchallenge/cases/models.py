@@ -224,7 +224,7 @@ class RawImageUploadSession(UUIDModel):
         ----------
         linked_task
             A celery task that will be executed on success of the build_images
-            task, with 1 keyword argument: upload_session_pk=self.pk
+            task
         """
 
         # Local import to avoid circular dependency
@@ -236,9 +236,6 @@ class RawImageUploadSession(UUIDModel):
         RawImageUploadSession.objects.filter(pk=self.pk).update(
             status=RawImageUploadSession.REQUEUED
         )
-
-        if linked_task is not None:
-            linked_task.kwargs.update({"upload_session_pk": self.pk})
 
         on_commit(
             build_images.signature(

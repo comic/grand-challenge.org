@@ -2557,6 +2557,7 @@ class CIVForObjectMixin:
                         "model_name": self._meta.model_name,
                         "object_pk": self.pk,
                         "interface_pk": str(ci.pk),
+                        "upload_session_pk": upload_session.pk,
                         "linked_task": linked_task,
                     },
                     immutable=True,

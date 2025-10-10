@@ -283,13 +283,18 @@ def process_images(*, instance, targets, interface):
         raise ValidationError("Session is not pending")
 
     instance.process_images(
-        linked_task=_get_linked_task(targets=targets, interface=interface)
+        linked_task=_get_linked_task(
+            instance=instance, targets=targets, interface=interface
+        )
     )
 
 
-def _get_linked_task(*, targets, interface):
+def _get_linked_task(*, instance, targets, interface):
     if "archive" in targets:
-        kwargs = {"archive_pk": targets["archive"].pk}
+        kwargs = {
+            "archive_pk": targets["archive"].pk,
+            "upload_session_pk": instance.pk,
+        }
         if interface:
             kwargs["interface_pk"] = interface.pk
         return add_images_to_archive.signature(kwargs=kwargs, immutable=True)
@@ -299,6 +304,7 @@ def _get_linked_task(*, targets, interface):
                 "app_label": targets["archive_item"]._meta.app_label,
                 "model_name": targets["archive_item"]._meta.model_name,
                 "object_pk": targets["archive_item"].pk,
+                "upload_session_pk": instance.pk,
                 "interface_pk": interface.pk,
             },
             immutable=True,
@@ -309,13 +315,18 @@ def _get_linked_task(*, targets, interface):
                 "app_label": targets["display_set"]._meta.app_label,
                 "model_name": targets["display_set"]._meta.model_name,
                 "object_pk": targets["display_set"].pk,
+                "upload_session_pk": instance.pk,
                 "interface_pk": interface.pk,
             },
             immutable=True,
         )
     elif "answer" in targets:
         return add_image_to_answer.signature(
-            kwargs={"answer_pk": targets["answer"].pk}, immutable=True
+            kwargs={
+                "answer_pk": targets["answer"].pk,
+                "upload_session_pk": instance.pk,
+            },
+            immutable=True,
         )
     else:
         raise RuntimeError(f"Unknown target {targets=}")
