@@ -1307,13 +1307,22 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
 
     @property
     def title(self):
-        if self.value is not None:
+        if self.interface.super_kind == self.interface.SuperKind.VALUE:
             return str(self.value)
-        if self.file:
-            return Path(self.file.name).name
-        if self.image:
-            return self.image.name
-        return ""
+        elif self.interface.super_kind == self.interface.SuperKind.IMAGE:
+            try:
+                return self.image.name
+            except AttributeError:
+                return ""
+        elif self.interface.super_kind == self.interface.SuperKind.FILE:
+            try:
+                return Path(self.file.name).name
+            except AttributeError:
+                return ""
+        else:
+            raise NotImplementedError(
+                f"Unknown interface super kind: {self.interface.super_kind}"
+            )
 
     @property
     def has_value(self):
