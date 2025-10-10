@@ -1383,9 +1383,9 @@ def add_dicom_image_set_to_object(  # noqa: C901
 
     try:
         dicom_image_set = DICOMImageSet.objects.get(
-            dicom_image_set_upload_pk=dicom_image_set_upload_pk
+            dicom_image_set_upload_id=dicom_image_set_upload_pk
         )
-        image = Image.objects.get(dicom_image_set_pk=dicom_image_set.pk)
+        image = Image.objects.get(dicom_image_set_id=dicom_image_set.pk)
     except (DICOMImageSet.DoesNotExist, Image.DoesNotExist):
         error_handler.handle_error(
             interface=interface,
