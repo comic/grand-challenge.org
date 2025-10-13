@@ -30,7 +30,6 @@ class ChallengeFilter(TitleDescriptionModalityStructureFilter):
             *TitleDescriptionModalityStructureFilter.Meta.fields,
             "series",
             "task_types",
-            "educational",
         )
         search_fields = (
             *TitleDescriptionModalityStructureFilter.Meta.search_fields,

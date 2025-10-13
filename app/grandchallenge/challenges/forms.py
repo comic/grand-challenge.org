@@ -31,7 +31,6 @@ information_items = (
     "series",
     "publications",
     "hidden",
-    "educational",
     "display_forum_link",
     "disclaimer",
     "contact_email",
