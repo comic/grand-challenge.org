@@ -12,7 +12,10 @@ from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
     FlexibleFileField,
 )
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.models import (
+    ComponentInterfaceValue,
+    InterfaceKindChoices,
+)
 from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.reader_studies.interactive_algorithms import (
@@ -439,16 +442,16 @@ def test_display_set_update(
     rs.add_editor(user)
     # 3 interfaces of different types
     ci_json = ComponentInterfaceFactory(
-        kind="JSON",
+        kind=InterfaceKindChoices.ANY,
         schema={
             "$schema": "http://json-schema.org/draft-07/schema",
             "type": "object",
         },
     )
     ci_json_file = ComponentInterfaceFactory(
-        kind="JSON", store_in_database=False
+        kind=InterfaceKindChoices.ANY, store_in_database=False
     )
-    ci_img = ComponentInterfaceFactory(kind="IMG")
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
     # create CIVs for those interfaces
     im1, im2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", user, im2)
@@ -624,12 +627,16 @@ def test_add_display_set_to_reader_study(
     rs = ReaderStudyFactory()
     ds1 = DisplaySetFactory(reader_study=rs)
     rs.add_editor(u1)
-    ci_str = ComponentInterfaceFactory(kind="STR")
-    ci_img = ComponentInterfaceFactory(kind="IMG")
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
 
-    ci_img_new = ComponentInterfaceFactory(kind="IMG")
-    ci_str_new = ComponentInterfaceFactory(kind="STR")
-    ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
+    ci_img_new = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.PANIMG_IMAGE
+    )
+    ci_str_new = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_json = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=False
+    )
 
     im1, im2 = ImageFactory.create_batch(2)
     civ_str = ComponentInterfaceValueFactory(
@@ -721,7 +728,7 @@ def test_add_display_set_update_when_disabled(client):
     rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
     rs.add_editor(editor)
-    ci_str = ComponentInterfaceFactory(kind="STR")
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
 
     # add an answer for the ds
     AnswerFactory(question__reader_study=rs, display_set=ds, answer="true")
@@ -749,9 +756,9 @@ def test_add_display_set_update_when_disabled(client):
 @pytest.mark.parametrize(
     "interface_kind, store_in_database, field_type",
     (
-        ("JSON", False, FlexibleFileField),
-        ("JSON", True, JSONField),
-        ("IMG", False, FlexibleImageField),
+        (InterfaceKindChoices.ANY, False, FlexibleFileField),
+        (InterfaceKindChoices.ANY, True, JSONField),
+        (InterfaceKindChoices.PANIMG_IMAGE, False, FlexibleImageField),
     ),
 )
 @pytest.mark.django_db
@@ -893,7 +900,7 @@ def test_display_set_upload_corrupt_image(
     editor = UserFactory()
     rs = ReaderStudyFactory()
     rs.add_editor(editor)
-    ci_img = ComponentInterfaceFactory(kind="IMG")
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
 
     im_upload = create_upload_from_file(
         file_path=RESOURCE_PATH / "corrupt.png",

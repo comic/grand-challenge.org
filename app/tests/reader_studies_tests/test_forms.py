@@ -1423,7 +1423,9 @@ def test_display_set_update_form(form_class):
 
     for slug, store_in_db in [("slug-1", False), ("slug-2", True)]:
         ci = ComponentInterfaceFactory(
-            title=slug, kind="JSON", store_in_database=store_in_db
+            title=slug,
+            kind=InterfaceKindChoices.ANY,
+            store_in_database=store_in_db,
         )
         civ = ComponentInterfaceValueFactory(interface=ci)
         ds.values.add(civ)
@@ -1445,7 +1447,9 @@ def test_display_set_update_form(form_class):
         JSONEditorWidget,
     )
 
-    ci = ComponentInterfaceFactory(kind="STR", title="slug-3")
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.STRING, title="slug-3"
+    )
     QuestionFactory(reader_study=rs, answer_type=AnswerType.TEXT, interface=ci)
     del rs.interfaces_and_values
     del rs.values_for_interfaces
@@ -1532,9 +1536,11 @@ def test_display_set_form_interface_fields_not_required(form_class):
     rs = ReaderStudyFactory()
     user = UserFactory()
     rs.add_editor(user)
-    ci_img = ComponentInterfaceFactory(kind="IMG")
-    ci_file = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-    ci_str = ComponentInterfaceFactory(kind="STR")
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    ci_file = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=False
+    )
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     for ci in [ci_img, ci_file, ci_str]:
         civ = ComponentInterfaceValueFactory(interface=ci)
         ds = DisplaySetFactory(reader_study=rs)
@@ -1599,9 +1605,15 @@ def test_display_set_add_interface_form():
     user = UserFactory()
     rs.add_editor(user)
 
-    ci_file = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
-    ci_value = ComponentInterfaceFactory(kind="JSON", store_in_database=True)
-    ci_image = ComponentInterfaceFactory(kind="IMG", store_in_database=False)
+    ci_file = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=False
+    )
+    ci_value = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=True
+    )
+    ci_image = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.PANIMG_IMAGE, store_in_database=False
+    )
 
     form = SingleCIVForm(
         pk=ds.pk,

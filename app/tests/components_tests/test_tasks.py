@@ -394,7 +394,7 @@ def test_add_image_to_object(
 
     obj = object_type(**extra_object_kwargs)
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
-    ci = ComponentInterfaceFactory(kind="IMG")
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
     ImageFactory(origin=us)
 
     linked_task = some_async_task.signature(
@@ -430,7 +430,7 @@ def test_add_image_to_object_updates_upload_session_on_validation_fail(
 
     obj = object_type()
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
-    ci = ComponentInterfaceFactory(kind="IMG")
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
 
     error_message = f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image. "
 
@@ -465,7 +465,7 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
 
     obj = AlgorithmJobFactory(time_limit=10)
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
-    ci = ComponentInterfaceFactory(kind="IMG")
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
 
     error_message = f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image. "
 
@@ -543,7 +543,7 @@ def test_task_handles_deleted_object(
         kwargs={"foo": "bar"}, immutable=True
     )
 
-    ci = ComponentInterfaceFactory(kind="IMG")
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
 
     task_kwargs = {
         "app_label": obj._meta.app_label,
@@ -597,7 +597,7 @@ def test_add_file_to_object(
     )
     us.save()
     ci = ComponentInterfaceFactory(
-        kind="JSON",
+        kind=InterfaceKindChoices.ANY,
         store_in_database=False,
         schema={
             "$schema": "http://json-schema.org/draft-07/schema",
@@ -650,7 +650,7 @@ def test_add_file_to_object_sends_notification_on_validation_fail(
     )
     us.save()
     ci = ComponentInterfaceFactory(
-        kind="JSON",
+        kind=InterfaceKindChoices.ANY,
         store_in_database=False,
         schema={
             "$schema": "http://json-schema.org/draft-07/schema",
@@ -700,7 +700,7 @@ def test_add_file_to_object_updates_job_on_validation_fail(
     )
     us.save()
     ci = ComponentInterfaceFactory(
-        kind="JSON",
+        kind=InterfaceKindChoices.ANY,
         store_in_database=False,
         schema={
             "$schema": "http://json-schema.org/draft-07/schema",

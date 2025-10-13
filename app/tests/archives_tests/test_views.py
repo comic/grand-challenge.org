@@ -1382,7 +1382,7 @@ def test_archive_item_upload_corrupt_image(
     editor = UserFactory()
     archive = ArchiveFactory()
     archive.add_editor(editor)
-    ci_img = ComponentInterfaceFactory(kind="IMG")
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
 
     im_upload = create_upload_from_file(
         file_path=RESOURCE_PATH / "corrupt.png",

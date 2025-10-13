@@ -65,9 +65,15 @@ class TestComponentInterfaceListView:
 
 @pytest.mark.django_db
 def test_component_interface_autocomplete(client):
-    ci_json = ComponentInterfaceFactory(title="test-json", kind="JSON")
-    ci_img = ComponentInterfaceFactory(title="test-img", kind="IMG")
-    ci_img_2 = ComponentInterfaceFactory(title="foo-img", kind="IMG")
+    ci_json = ComponentInterfaceFactory(
+        title="test-json", kind=InterfaceKindChoices.ANY
+    )
+    ci_img = ComponentInterfaceFactory(
+        title="test-img", kind=InterfaceKindChoices.PANIMG_IMAGE
+    )
+    ci_img_2 = ComponentInterfaceFactory(
+        title="foo-img", kind=InterfaceKindChoices.PANIMG_IMAGE
+    )
     user = UserFactory()
     rs = ReaderStudyFactory()
 
@@ -178,9 +184,15 @@ def test_component_interface_autocomplete(client):
 
 @pytest.mark.django_db
 def test_ci_autocomplete_for_archives(client):
-    ci_json = ComponentInterfaceFactory(title="test-json", kind="JSON")
-    ci_img = ComponentInterfaceFactory(title="test-img", kind="IMG")
-    ci_img_2 = ComponentInterfaceFactory(title="foo-img", kind="IMG")
+    ci_json = ComponentInterfaceFactory(
+        title="test-json", kind=InterfaceKindChoices.ANY
+    )
+    ci_img = ComponentInterfaceFactory(
+        title="test-img", kind=InterfaceKindChoices.PANIMG_IMAGE
+    )
+    ci_img_2 = ComponentInterfaceFactory(
+        title="foo-img", kind=InterfaceKindChoices.PANIMG_IMAGE
+    )
 
     user = UserFactory()
     archive = ArchiveFactory()
@@ -476,7 +488,9 @@ def test_file_upload_form_field_view(client, factory):
     u, editor = UserFactory.create_batch(2)
     instance.add_editor(editor)
 
-    ci_json = ComponentInterfaceFactory(kind="JSON", store_in_database=False)
+    ci_json = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=False
+    )
 
     response = get_view_for_user(
         viewname="components:file-upload",
