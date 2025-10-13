@@ -2324,11 +2324,11 @@ class CIVData:
 
         # Ensure at most one of these properties is set
         # None can be an acceptable value, so 0 is ok
-        if sum(bool(property) for property in unique_properties) > 1:
+        if sum(bool(prop) for prop in unique_properties) > 1:
             raise ValidationError(
                 "Only one of value, image, user_upload, upload_session, "
-                "user_upload_queryset or file_civ can be provided for a "
-                "single CIVData object."
+                "user_upload_queryset, dicom_upload_with_name or file_civ "
+                "can be provided for a single CIVData object."
             )
 
 
