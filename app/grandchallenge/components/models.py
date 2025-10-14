@@ -2628,6 +2628,7 @@ class CIVForObjectMixin:
                     "dicom_image_set_upload_pk": upload.pk,
                     "linked_task": linked_task,
                 },
+                immutable=True,
             )
             upload.full_clean()
             upload.save()
