@@ -1386,6 +1386,7 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
 
         if self.interface.is_image_kind:
             self._validate_image_only()
+            self._validate_image_kind()
             if self.interface.kind == InterfaceKindChoices.PANIMG_SEGMENTATION:
                 self.interface._validate_voxel_values(self.image)
             if (
@@ -1405,6 +1406,13 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
             raise ValidationError(
                 f"File ({self.file}) or value should not be set for images"
             )
+
+    def _validate_image_kind(self):
+        if self.interface.is_dicom_image_kind:
+            if self.image.dicom_image_set is None:
+                raise ValidationError("Image must be DICOM")
+        elif self.image.dicom_image_set:
+            raise ValidationError("Image may not be DICOM")
 
     def _validate_file_only(self):
         if not self._user_upload_validated and not self.file:
