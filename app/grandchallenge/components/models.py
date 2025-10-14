@@ -2563,9 +2563,7 @@ class CIVForObjectMixin:
             from grandchallenge.cases.tasks import (
                 import_dicom_to_health_imaging,
             )
-            from grandchallenge.components.tasks import (
-                add_dicom_image_set_to_object,
-            )
+            from grandchallenge.components.tasks import add_image_to_object
 
             if not user:
                 raise RuntimeError(
@@ -2575,7 +2573,7 @@ class CIVForObjectMixin:
             upload = DICOMImageSetUpload(
                 creator=user, name=dicom_upload_with_name.name
             )
-            upload.task_on_success = add_dicom_image_set_to_object.signature(
+            upload.task_on_success = add_image_to_object.signature(
                 kwargs={
                     "app_label": self._meta.app_label,
                     "model_name": self._meta.model_name,
