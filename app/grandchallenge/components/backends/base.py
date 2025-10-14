@@ -441,10 +441,12 @@ class Executor(ABC):
         provisioning_tasks.append(
             self._get_create_invocation_json_task(
                 invocation_inputs=invocation_inputs
-            )
+            ).task
         )
 
-        provisioning_tasks.extend(self._auxiliary_data_provisioning_tasks)
+        provisioning_tasks.extend(
+            t.task for t in self._auxiliary_data_provisioning_tasks
+        )
 
         return provisioning_tasks
 
@@ -495,16 +497,13 @@ class Executor(ABC):
                         filename=f"{sop_instance_uid}.dcm",
                     )
 
-                    yield CIVProvisioningTask(
-                        task=self._get_copy_sop_instance_task(
-                            image_set_id=image_set_id,
-                            study_instance_uid=study_instance_uid,
-                            series_instance_uid=series_instance_uid,
-                            sop_instance_uid=sop_instance_uid,
-                            stored_transfer_syntax_uid=stored_transfer_syntax_uid,
-                            target_key=key,
-                        ),
-                        key=key,
+                    yield self._get_copy_sop_instance_task(
+                        image_set_id=image_set_id,
+                        study_instance_uid=study_instance_uid,
+                        series_instance_uid=series_instance_uid,
+                        sop_instance_uid=sop_instance_uid,
+                        stored_transfer_syntax_uid=stored_transfer_syntax_uid,
+                        target_key=key,
                     )
             elif civ.interface.is_panimg_kind:
                 image_file = civ.image_file
@@ -517,34 +516,24 @@ class Executor(ABC):
                     filename=Path(image_file.name).name,
                 )
 
-                yield CIVProvisioningTask(
-                    task=self._get_copy_input_object_task(
-                        src=image_file, target_key=key
-                    ),
-                    key=key,
+                yield self._get_copy_input_object_task(
+                    src=image_file, target_key=key
                 )
         elif civ.interface.super_kind == civ.interface.SuperKind.FILE:
             key = self._get_key_for_target_relative_path(
                 civ=civ, input_prefixes=input_prefixes
             )
 
-            yield CIVProvisioningTask(
-                task=self._get_copy_input_object_task(
-                    src=civ.file, target_key=key
-                ),
-                key=key,
+            yield self._get_copy_input_object_task(
+                src=civ.file, target_key=key
             )
         elif civ.interface.super_kind == civ.interface.SuperKind.VALUE:
             key = self._get_key_for_target_relative_path(
                 civ=civ, input_prefixes=input_prefixes
             )
 
-            yield CIVProvisioningTask(
-                task=self._get_upload_input_content_task(
-                    content=json.dumps(civ.value).encode("utf-8"),
-                    key=key,
-                ),
-                key=key,
+            yield self._get_upload_input_content_task(
+                content=json.dumps(civ.value).encode("utf-8"), key=key
             )
         else:
             raise NotImplementedError(
@@ -617,20 +606,26 @@ class Executor(ABC):
 
     @staticmethod
     def _get_copy_input_object_task(*, src, target_key):
-        return functools.partial(
-            s3_copy,
-            source_bucket=src.storage.bucket.name,
-            source_key=src.name,
-            target_bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
-            target_key=target_key,
+        return CIVProvisioningTask(
+            task=functools.partial(
+                s3_copy,
+                source_bucket=src.storage.bucket.name,
+                source_key=src.name,
+                target_bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                target_key=target_key,
+            ),
+            key=target_key,
         )
 
     @staticmethod
     def _get_upload_input_content_task(*, content, key):
-        return functools.partial(
-            s3_upload_content,
-            content=content,
-            bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+        return CIVProvisioningTask(
+            task=functools.partial(
+                s3_upload_content,
+                content=content,
+                bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                key=key,
+            ),
             key=key,
         )
 
