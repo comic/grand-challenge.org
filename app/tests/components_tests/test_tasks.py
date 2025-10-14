@@ -549,6 +549,55 @@ def test_add_dicom_image_set_to_object(
     assert "some_async_task" in str(callbacks)
 
 
+@pytest.mark.parametrize(
+    "object_type, extra_object_kwargs",
+    [
+        (DisplaySetFactory, {}),
+        (ArchiveItemFactory, {}),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 10, "status": Job.VALIDATING_INPUTS},
+        ),
+    ],
+)
+@pytest.mark.django_db
+def test_add_dicom_image_set_to_object_updates_upload_on_validation_fail(
+    settings,
+    django_capture_on_commit_callbacks,
+    object_type,
+    extra_object_kwargs,
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    obj = object_type(**extra_object_kwargs)
+    # create upload without resulting dicom image set and image.
+    upload = DICOMImageSetUploadFactory(
+        status=DICOMImageSetUploadStatusChoices.COMPLETED
+    )
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.DICOM_IMAGE_SET)
+
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
+    )
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        add_image_to_object(
+            app_label=obj._meta.app_label,
+            model_name=obj._meta.model_name,
+            object_pk=obj.pk,
+            interface_pk=ci.pk,
+            dicom_image_set_upload_pk=upload.pk,
+            linked_task=linked_task,
+        )
+
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
+    assert "some_async_task" not in str(callbacks)
+    upload.refresh_from_db()
+    assert upload.status == DICOMImageSetUploadStatusChoices.FAILED
+    # assert upload.error_message == error_message
+
+
 @pytest.mark.django_db
 def test_add_dicom_image_set_to_object_marks_job_as_failed_on_validation_fail(
     settings,
@@ -632,12 +681,62 @@ def test_add_dicom_image_set_to_object_sends_notification_on_validation_fail(
 
 
 @pytest.mark.parametrize(
-    "task, task_extra_kwargs",
+    "object_factory, factory_kwargs, context",
     (
-        (add_image_to_object, {"upload_session_pk": None}),
-        (add_file_to_object, {"user_upload_pk": None}),
+        (
+            DisplaySetFactory,
+            {},
+            nullcontext(),
+        ),
+        (
+            ArchiveItemFactory,
+            {},
+            nullcontext(),
+        ),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 10, "status": Job.VALIDATING_INPUTS},  # Required
+            pytest.raises(ObjectDoesNotExist),
+        ),
     ),
 )
+@pytest.mark.django_db
+def test_task_add_image_to_object_handles_deleted_object(
+    settings,
+    django_capture_on_commit_callbacks,
+    object_factory,
+    factory_kwargs,
+    context,
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    obj = object_factory(**factory_kwargs)
+    obj.delete()
+
+    linked_task = some_async_task.signature(
+        kwargs={"foo": "bar"}, immutable=True
+    )
+    us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
+    ci = ComponentInterfaceFactory(kind="IMG")
+
+    task_kwargs = {
+        "app_label": obj._meta.app_label,
+        "model_name": obj._meta.model_name,
+        "object_pk": obj.pk,
+        "linked_task": linked_task,
+        "interface_pk": ci.pk,
+        "upload_session_pk": us.pk,
+    }
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        with context:
+            add_image_to_object(**task_kwargs)
+
+    assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
+    assert "some_async_task" not in str(callbacks)
+
+
 @pytest.mark.parametrize(
     "object_factory, factory_kwargs, context",
     (
@@ -659,13 +758,11 @@ def test_add_dicom_image_set_to_object_sends_notification_on_validation_fail(
     ),
 )
 @pytest.mark.django_db
-def test_task_handles_deleted_object(
+def test_task_add_file_to_object_handles_deleted_object(
     settings,
     django_capture_on_commit_callbacks,
-    task,
     object_factory,
     factory_kwargs,
-    task_extra_kwargs,
     context,
 ):
     settings.task_eager_propagates = (True,)
@@ -677,7 +774,6 @@ def test_task_handles_deleted_object(
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
     )
-
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
 
     task_kwargs = {
@@ -686,12 +782,12 @@ def test_task_handles_deleted_object(
         "object_pk": obj.pk,
         "linked_task": linked_task,
         "interface_pk": ci.pk,
-        **task_extra_kwargs,
+        "user_upload_pk": None,
     }
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         with context:
-            task(**task_kwargs)
+            add_file_to_object(**task_kwargs)
 
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     assert "some_async_task" not in str(callbacks)
