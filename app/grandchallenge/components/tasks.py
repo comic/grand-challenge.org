@@ -1296,7 +1296,7 @@ def add_image_to_object(  # noqa: C901
             )
             logger.info("Upload session should only have one image")
             return
-    else:
+    elif dicom_image_set_upload_pk is not None:
         upload = DICOMImageSetUpload.objects.get(pk=dicom_image_set_upload_pk)
 
         if upload.status != DICOMImageSetUploadStatusChoices.COMPLETED:
@@ -1317,6 +1317,10 @@ def add_image_to_object(  # noqa: C901
             )
             logger.info("Image for dicom image set does not exist")
             return
+    else:
+        raise ValueError(
+            "Either upload_session_pk or dicom_image_set_upload_pk must be set."
+        )
 
     current_value = obj.get_current_value_for_interface(
         interface=interface, user=upload.creator
