@@ -1387,6 +1387,7 @@ DISALLOWED_EMAIL_DOMAINS = {
     "zl.edu.kg",
     "lw.edu.kg",
     "edumail.edu.pl",
+    "zorrag.com",
     *blocklist,
 }
 
