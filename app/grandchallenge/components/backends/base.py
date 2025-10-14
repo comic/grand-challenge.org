@@ -448,45 +448,33 @@ class Executor(ABC):
 
         return provisioning_tasks
 
-    @staticmethod
-    def _get_civ_target_relative_path(*, civ):
-        """
-        Where should the file be located?
-        """
+    def _get_key_for_target_relative_path(
+        self,
+        *,
+        civ,
+        input_prefixes,
+        filename=None,
+    ):
         relative_path = Path(civ.interface.relative_path)
 
-        if (
-            civ.interface.super_kind == civ.interface.SuperKind.IMAGE
-            and civ.interface.is_panimg_kind
-        ):
-            # As these are potentially mhd/(z)raw files their names are fixed
-            # Note that this is the name of the file and not the user provided image name
-            relative_path /= Path(civ.image_file.name).name
+        if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
+            if filename:
+                relative_path /= filename
+            else:
+                raise ValueError("filename must be set for images")
+        elif filename:
+            raise ValueError("filename must only be set for images")
 
-        return relative_path
-
-    def _get_key_for_target_relative_path(
-        self, *, civ, input_prefixes, target_relative_path
-    ):
         if str(civ.pk) in input_prefixes:
             key = safe_join(
-                self._io_prefix,
-                input_prefixes[str(civ.pk)],
-                target_relative_path,
+                self._io_prefix, input_prefixes[str(civ.pk)], relative_path
             )
         else:
-            key = safe_join(self._io_prefix, target_relative_path)
+            key = safe_join(self._io_prefix, relative_path)
 
         return key
 
     def _get_civ_provisioning_tasks(self, *, civ, input_prefixes):
-        relative_path = self._get_civ_target_relative_path(civ=civ)
-        key = self._get_key_for_target_relative_path(
-            civ=civ,
-            input_prefixes=input_prefixes,
-            target_relative_path=relative_path,
-        )
-
         if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
             if civ.interface.is_dicom_image_kind:
                 image_set_id = civ.image.dicom_image_set.image_set_id
@@ -504,9 +492,7 @@ class Executor(ABC):
                     key = self._get_key_for_target_relative_path(
                         civ=civ,
                         input_prefixes=input_prefixes,
-                        target_relative_path=(
-                            relative_path / f"{sop_instance_uid}.dcm"
-                        ),
+                        filename=f"{sop_instance_uid}.dcm",
                     )
 
                     yield CIVProvisioningTask(
@@ -520,14 +506,28 @@ class Executor(ABC):
                         ),
                         key=key,
                     )
-            else:
+            elif civ.interface.is_panimg_kind:
+                image_file = civ.image_file
+
+                # Set the name of the file, note that this is not set by the user.
+                # The filenames are sensitive as they are relative for some panimg files.
+                key = self._get_key_for_target_relative_path(
+                    civ=civ,
+                    input_prefixes=input_prefixes,
+                    filename=Path(image_file.name).name,
+                )
+
                 yield CIVProvisioningTask(
                     task=self._get_copy_input_object_task(
-                        src=civ.image_file, target_key=key
+                        src=image_file, target_key=key
                     ),
                     key=key,
                 )
         elif civ.interface.super_kind == civ.interface.SuperKind.FILE:
+            key = self._get_key_for_target_relative_path(
+                civ=civ, input_prefixes=input_prefixes
+            )
+
             yield CIVProvisioningTask(
                 task=self._get_copy_input_object_task(
                     src=civ.file, target_key=key
@@ -535,6 +535,10 @@ class Executor(ABC):
                 key=key,
             )
         elif civ.interface.super_kind == civ.interface.SuperKind.VALUE:
+            key = self._get_key_for_target_relative_path(
+                civ=civ, input_prefixes=input_prefixes
+            )
+
             yield CIVProvisioningTask(
                 task=self._get_upload_input_content_task(
                     content=json.dumps(civ.value).encode("utf-8"),
