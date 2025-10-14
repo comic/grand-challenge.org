@@ -1246,7 +1246,11 @@ def add_image_to_object(  # noqa: C901
 ):
     if upload_session_pk is None and dicom_image_set_upload_pk is None:
         raise ValueError(
-            "Neither upload_session_pk nor dicom_image_set_upload_pk"
+            "Either upload_session_pk or dicom_image_set_upload_pk must be set."
+        )
+    if upload_session_pk is not None and dicom_image_set_upload_pk is not None:
+        raise ValueError(
+            "Only one of upload_session_pk and dicom_image_set_upload_pk should be set."
         )
 
     from grandchallenge.algorithms.models import Job
