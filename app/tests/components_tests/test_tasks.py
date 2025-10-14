@@ -27,7 +27,6 @@ from grandchallenge.components.models import (
 from grandchallenge.components.tasks import (
     _get_image_config_and_sha256,
     _repo_login_and_run,
-    add_dicom_image_set_to_object,
     add_file_to_object,
     add_image_to_object,
     assign_tarball_from_upload,
@@ -538,7 +537,7 @@ def test_add_dicom_image_set_to_object(
     )
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
-        add_dicom_image_set_to_object(
+        add_image_to_object(
             app_label=obj._meta.app_label,
             model_name=obj._meta.model_name,
             object_pk=obj.pk,
@@ -570,7 +569,7 @@ def test_add_dicom_image_set_to_object_marks_job_as_failed_on_validation_fail(
     )
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
-        add_dicom_image_set_to_object(
+        add_image_to_object(
             app_label=obj._meta.app_label,
             model_name=obj._meta.model_name,
             object_pk=obj.pk,
@@ -614,7 +613,7 @@ def test_add_dicom_image_set_to_object_sends_notification_on_validation_fail(
     )
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
-        add_dicom_image_set_to_object(
+        add_image_to_object(
             app_label=obj._meta.app_label,
             model_name=obj._meta.model_name,
             object_pk=obj.pk,
@@ -636,7 +635,6 @@ def test_add_dicom_image_set_to_object_sends_notification_on_validation_fail(
     "task, task_extra_kwargs",
     (
         (add_image_to_object, {"upload_session_pk": None}),
-        (add_dicom_image_set_to_object, {"dicom_image_set_upload_pk": None}),
         (add_file_to_object, {"user_upload_pk": None}),
     ),
 )
