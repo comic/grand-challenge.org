@@ -434,25 +434,25 @@ class Executor(ABC):
                     )
 
     def _get_provisioning_tasks(self, *, input_civs, input_prefixes):
-        input_provisioning_tasks = []
+        provisioning_tasks = []
         input_metadata = []
 
         for civ in self._with_inputs_json(input_civs=input_civs):
             civ_provisioning_task = self._get_civ_provisioning_task(
                 civ=civ, input_prefixes=input_prefixes
             )
-            input_provisioning_tasks.extend(civ_provisioning_task.tasks)
+            provisioning_tasks.extend(civ_provisioning_task.tasks)
             input_metadata.extend(civ_provisioning_task.metadata)
 
-        input_provisioning_tasks.append(
-            self._get_create_invocation_json_task(
+        provisioning_tasks.extend(
+            self._get_create_invocation_json_tasks(
                 input_metadata=input_metadata
             )
         )
 
-        return (
-            input_provisioning_tasks + self._auxiliary_data_provisioning_tasks
-        )
+        provisioning_tasks.extend(self._auxiliary_data_provisioning_tasks)
+
+        return provisioning_tasks
 
     def _get_civ_provisioning_task(self, *, civ, input_prefixes):
         civ_input_mapping = self._get_civ_input_mapping(
@@ -488,7 +488,7 @@ class Executor(ABC):
 
         return CIVProvisioningTask(tasks=tasks, metadata=metadata)
 
-    def _get_create_invocation_json_task(self, *, input_metadata):
+    def _get_create_invocation_json_tasks(self, *, input_metadata):
         return self._get_upload_input_content_tasks(
             content=json.dumps(
                 [
