@@ -504,8 +504,9 @@ class Executor(ABC):
                     key = self._get_key_for_target_relative_path(
                         civ=civ,
                         input_prefixes=input_prefixes,
-                        target_relative_path=relative_path
-                        / f"{sop_instance_uid}.dcm",
+                        target_relative_path=(
+                            relative_path / f"{sop_instance_uid}.dcm"
+                        ),
                     )
 
                     yield CIVProvisioningTask(
