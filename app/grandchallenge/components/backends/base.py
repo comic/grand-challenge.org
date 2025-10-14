@@ -58,6 +58,16 @@ class JobParams(NamedTuple):
     attempt: int
 
 
+class CIVInputMapping(NamedTuple):
+    key: str
+    relative_path: str
+
+
+class CIVProvisioningTask(NamedTuple):
+    metadata: list
+    tasks: list
+
+
 def duration_to_millicents(*, duration, usd_cents_per_hour):
     return ceil(
         (duration.total_seconds() / 3600)
@@ -392,7 +402,7 @@ class Executor(ABC):
 
         return total_size
 
-    def _get_key_and_relative_path(self, *, civ, input_prefixes):
+    def _get_civ_input_mapping(self, *, civ, input_prefixes):
         if str(civ.pk) in input_prefixes:
             key = safe_join(
                 self._io_prefix, input_prefixes[str(civ.pk)], civ.relative_path
@@ -402,7 +412,7 @@ class Executor(ABC):
 
         relative_path = str(os.path.relpath(key, self._io_prefix))
 
-        return key, relative_path
+        return CIVInputMapping(key=key, relative_path=relative_path)
 
     @async_to_sync
     async def _provision(self, *, tasks):
@@ -424,69 +434,67 @@ class Executor(ABC):
                     )
 
     def _get_provisioning_tasks(self, *, input_civs, input_prefixes):
-        input_provisioning_tasks = self._get_input_provisioning_tasks(
-            input_civs=input_civs, input_prefixes=input_prefixes
+        input_provisioning_tasks = []
+        input_metadata = []
+
+        for civ in self._with_inputs_json(input_civs=input_civs):
+            civ_provisioning_task = self._get_civ_provisioning_task(
+                civ=civ, input_prefixes=input_prefixes
+            )
+            input_provisioning_tasks.extend(civ_provisioning_task.tasks)
+            input_metadata.extend(civ_provisioning_task.metadata)
+
+        input_provisioning_tasks.append(
+            self._get_create_invocation_json_task(
+                input_metadata=input_metadata
+            )
         )
 
         return (
             input_provisioning_tasks + self._auxiliary_data_provisioning_tasks
         )
 
-    def _get_input_provisioning_tasks(self, *, input_civs, input_prefixes):
-        invocation_inputs = []
-
-        tasks = []
-
-        for civ in self._with_inputs_json(input_civs=input_civs):
-            key, relative_path = self._get_key_and_relative_path(
-                civ=civ, input_prefixes=input_prefixes
-            )
-
-            tasks.append(self._get_civ_input_provisioning_task(civ, key))
-
-            invocation_inputs.append(
-                {
-                    "relative_path": relative_path,
-                    "bucket_name": settings.COMPONENTS_INPUT_BUCKET_NAME,
-                    "bucket_key": key,
-                    "decompress": civ.decompress,
-                }
-            )
-
-        tasks.append(
-            self._get_create_invocation_json_task(
-                invocation_inputs=invocation_inputs
-            )
+    def _get_civ_provisioning_task(self, *, civ, input_prefixes):
+        civ_input_mapping = self._get_civ_input_mapping(
+            civ=civ, input_prefixes=input_prefixes
         )
 
-        return tasks
+        metadata = [
+            {
+                "relative_path": civ_input_mapping.relative_path,
+                "bucket_name": settings.COMPONENTS_INPUT_BUCKET_NAME,
+                "bucket_key": civ_input_mapping.key,
+                "decompress": civ.decompress,
+            }
+        ]
 
-    def _get_civ_input_provisioning_task(self, civ, key):
         if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
-            return self._get_copy_input_object_task(
-                src=civ.image_file, target_key=key
+            tasks = self._get_copy_input_object_tasks(
+                src=civ.image_file, target_key=civ_input_mapping.key
             )
         elif civ.interface.super_kind == civ.interface.SuperKind.FILE:
-            return self._get_copy_input_object_task(
-                src=civ.file, target_key=key
+            tasks = self._get_copy_input_object_tasks(
+                src=civ.file, target_key=civ_input_mapping.key
             )
         elif civ.interface.super_kind == civ.interface.SuperKind.VALUE:
-            return self._get_upload_input_content_task(
+            tasks = self._get_upload_input_content_tasks(
                 content=json.dumps(civ.value).encode("utf-8"),
-                key=key,
+                key=civ_input_mapping.key,
             )
         else:
             raise NotImplementedError(
                 f"Unknown interface super kind: {civ.interface.super_kind}"
             )
 
-    def _get_create_invocation_json_task(self, *, invocation_inputs):
-        return self._get_upload_input_content_task(
+        return CIVProvisioningTask(tasks=tasks, metadata=metadata)
+
+    def _get_create_invocation_json_task(self, *, input_metadata):
+        return self._get_upload_input_content_tasks(
             content=json.dumps(
                 [
                     {
                         "pk": self._job_id,
-                        "inputs": invocation_inputs,
+                        "inputs": input_metadata,
                         "output_bucket_name": settings.COMPONENTS_OUTPUT_BUCKET_NAME,
                         "output_prefix": self._io_prefix,
                     }
@@ -500,16 +508,16 @@ class Executor(ABC):
         tasks = []
 
         if self._algorithm_model:
-            tasks.append(
-                self._get_copy_input_object_task(
+            tasks.extend(
+                self._get_copy_input_object_tasks(
                     src=self._algorithm_model,
                     target_key=self._algorithm_model_key,
                 )
             )
 
         if self._ground_truth:
-            tasks.append(
-                self._get_copy_input_object_task(
+            tasks.extend(
+                self._get_copy_input_object_tasks(
                     src=self._ground_truth, target_key=self._ground_truth_key
                 )
             )
@@ -533,23 +541,27 @@ class Executor(ABC):
         )
 
     @staticmethod
-    def _get_copy_input_object_task(*, src, target_key):
-        return functools.partial(
-            s3_copy,
-            source_bucket=src.storage.bucket.name,
-            source_key=src.name,
-            target_bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
-            target_key=target_key,
-        )
+    def _get_copy_input_object_tasks(*, src, target_key):
+        return [
+            functools.partial(
+                s3_copy,
+                source_bucket=src.storage.bucket.name,
+                source_key=src.name,
+                target_bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                target_key=target_key,
+            )
+        ]
 
     @staticmethod
-    def _get_upload_input_content_task(*, content, key):
-        return functools.partial(
-            s3_upload_content,
-            content=content,
-            bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
-            key=key,
-        )
+    def _get_upload_input_content_tasks(*, content, key):
+        return [
+            functools.partial(
+                s3_upload_content,
+                content=content,
+                bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                key=key,
+            )
+        ]
 
     def _get_task_return_code(self):
         with io.BytesIO() as fileobj:
