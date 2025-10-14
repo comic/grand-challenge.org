@@ -1240,9 +1240,15 @@ def add_image_to_object(  # noqa: C901
     model_name,
     object_pk,
     interface_pk,
-    upload_session_pk,
+    upload_session_pk=None,
+    dicom_image_set_upload_pk=None,
     linked_task=None,
 ):
+    if upload_session_pk is None and dicom_image_set_upload_pk is None:
+        raise ValueError(
+            "Neither upload_session_pk nor dicom_image_set_upload_pk"
+        )
+
     from grandchallenge.algorithms.models import Job
     from grandchallenge.archives.models import ArchiveItem
     from grandchallenge.components.models import (
@@ -1266,132 +1272,47 @@ def add_image_to_object(  # noqa: C901
         return
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
-    upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
 
-    if upload_session.status != upload_session.SUCCESS:
-        logger.info("Nothing to do: upload session was not successful.")
-        return
+    if upload_session_pk is not None:
+        upload = RawImageUploadSession.objects.get(pk=upload_session_pk)
 
-    error_handler = obj.get_error_handler(linked_object=upload_session)
+        if upload.status != upload.SUCCESS:
+            logger.info("Nothing to do: upload session was not successful.")
+            return
 
-    try:
-        image = Image.objects.get(origin_id=upload_session_pk)
-    except (Image.DoesNotExist, Image.MultipleObjectsReturned):
-        error_handler.handle_error(
-            interface=interface,
-            error_message="Image imports should result in a single image",
-            user=upload_session.creator,
-        )
-        logger.info("Upload session should only have one image")
-        return
+        error_handler = obj.get_error_handler(linked_object=upload)
 
-    current_value = obj.get_current_value_for_interface(
-        interface=interface, user=upload_session.creator
-    )
-
-    civ, created = ComponentInterfaceValue.objects.get_first_or_create(
-        interface=interface, image=image
-    )
-
-    if created:
         try:
-            civ.full_clean()
-        except ValidationError as e:
+            image = Image.objects.get(origin_id=upload_session_pk)
+        except (Image.DoesNotExist, Image.MultipleObjectsReturned):
             error_handler.handle_error(
                 interface=interface,
-                error_message=format_validation_error_message(error=e),
-                user=upload_session.creator,
+                error_message="Image imports should result in a single image",
+                user=upload.creator,
             )
-            logger.info(f"Validation failed: {e}")
+            logger.info("Upload session should only have one image")
             return
-        except Exception as e:
-            error_handler.handle_error(
-                interface=interface,
-                error_message="An unexpected error occurred",
-                user=upload_session.creator,
-            )
-            logger.error(e, exc_info=True)
-            return
-
-    try:
-        obj.remove_civ(civ=current_value)
-        obj.add_civ(civ=civ)
-    except CIVNotEditableException as e:
-        if isinstance(obj, Job) and obj.status == Job.CANCELLED:
-            logger.info("Job has been cancelled, exiting")
-            return
-        else:
-            error_handler.handle_error(
-                interface=interface,
-                error_message="An unexpected error occurred",
-                user=upload_session.creator,
-            )
-            logger.error(e, exc_info=True)
-            return
-
-    if linked_task is not None:
-        logger.info("Scheduling linked task")
-        on_commit(signature(linked_task).apply_async)
     else:
-        logger.info("No linked task, task complete")
+        upload = DICOMImageSetUpload.objects.get(pk=dicom_image_set_upload_pk)
 
+        if upload.status != DICOMImageSetUploadStatusChoices.COMPLETED:
+            logger.info("Nothing to do: DICOM upload was not successful.")
+            return
 
-@acks_late_micro_short_task(
-    retry_on=(LockNotAcquiredException,), delayed_retry=False
-)
-@transaction.atomic
-def add_dicom_image_set_to_object(  # noqa: C901
-    *,
-    app_label,
-    model_name,
-    object_pk,
-    interface_pk,
-    dicom_image_set_upload_pk,
-    linked_task=None,
-):
-    from grandchallenge.algorithms.models import Job
-    from grandchallenge.archives.models import ArchiveItem
-    from grandchallenge.components.models import (
-        ComponentInterface,
-        ComponentInterfaceValue,
-    )
-    from grandchallenge.reader_studies.models import DisplaySet
+        error_handler = obj.get_error_handler()
 
-    model = apps.get_model(
-        app_label=app_label,
-        model_name=model_name,
-    )
-
-    try:
-        with check_lock_acquired():
-            obj = model.objects.select_for_update(nowait=True).get(
-                pk=object_pk
+        try:
+            image = Image.objects.get(
+                dicom_image_set__dicom_image_set_upload_id=dicom_image_set_upload_pk
             )
-    except (ArchiveItem.DoesNotExist, DisplaySet.DoesNotExist):
-        logger.info(f"Nothing to do: {model_name} no longer exists.")
-        return
-
-    interface = ComponentInterface.objects.get(pk=interface_pk)
-    upload = DICOMImageSetUpload.objects.get(pk=dicom_image_set_upload_pk)
-
-    if upload.status != DICOMImageSetUploadStatusChoices.COMPLETED:
-        logger.info("Nothing to do: upload session was not successful.")
-        return
-
-    error_handler = obj.get_error_handler()
-
-    try:
-        image = Image.objects.get(
-            dicom_image_set__dicom_image_set_upload_id=dicom_image_set_upload_pk
-        )
-    except Image.DoesNotExist:
-        error_handler.handle_error(
-            interface=interface,
-            error_message="Image does not exist",
-            user=upload.creator,
-        )
-        logger.info("Image for dicom image set does not exist")
-        return
+        except Image.DoesNotExist:
+            error_handler.handle_error(
+                interface=interface,
+                error_message="Image does not exist",
+                user=upload.creator,
+            )
+            logger.info("Image for dicom image set does not exist")
+            return
 
     current_value = obj.get_current_value_for_interface(
         interface=interface, user=upload.creator

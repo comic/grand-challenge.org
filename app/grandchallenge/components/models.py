@@ -2259,10 +2259,7 @@ class CIVData:
         if ci.super_kind == ci.SuperKind.VALUE:
             self._init_json_civ_data()
         elif ci.super_kind == ci.SuperKind.IMAGE:
-            if ci.is_dicom_image_kind:
-                self._init_dicom_civ_data()
-            else:
-                self._init_image_civ_data()
+            self._init_image_civ_data()
         elif ci.super_kind == ci.SuperKind.FILE:
             self._init_file_civ_data()
         else:
@@ -2283,18 +2280,12 @@ class CIVData:
                 f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
             )
 
-    def _init_dicom_civ_data(self):
+    def _init_image_civ_data(self):
         from grandchallenge.cases.widgets import DICOMUploadWithName
 
         if isinstance(self._initial_value, DICOMUploadWithName):
             self._dicom_upload_with_name = self._initial_value
-        else:
-            ValidationError(
-                f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
-            )
-
-    def _init_image_civ_data(self):
-        if isinstance(self._initial_value, QuerySet):
+        elif isinstance(self._initial_value, QuerySet):
             self._user_upload_queryset = self._initial_value
         elif isinstance(self._initial_value, RawImageUploadSession):
             self._upload_session = self._initial_value
@@ -2440,25 +2431,16 @@ class CIVForObjectMixin:
                 linked_task=linked_task,
             )
         elif ci.super_kind == ci.SuperKind.IMAGE:
-            if ci.is_dicom_image_kind:
-                return self.create_civ_for_dicom_image(
-                    ci=ci,
-                    current_civ=current_civ,
-                    user=user,
-                    image=civ_data.image,
-                    dicom_upload_with_name=civ_data.dicom_upload_with_name,
-                    linked_task=linked_task,
-                )
-            else:
-                return self.create_civ_for_image(
-                    ci=ci,
-                    current_civ=current_civ,
-                    user=user,
-                    image=civ_data.image,
-                    upload_session=civ_data.upload_session,
-                    user_upload_queryset=civ_data.user_upload_queryset,
-                    linked_task=linked_task,
-                )
+            return self.create_civ_for_image(
+                ci=ci,
+                current_civ=current_civ,
+                user=user,
+                image=civ_data.image,
+                upload_session=civ_data.upload_session,
+                user_upload_queryset=civ_data.user_upload_queryset,
+                dicom_upload_with_name=civ_data.dicom_upload_with_name,
+                linked_task=linked_task,
+            )
         elif ci.super_kind == ci.SuperKind.FILE:
             return self.create_civ_for_file(
                 ci=ci,
@@ -2517,9 +2499,11 @@ class CIVForObjectMixin:
         image=None,
         upload_session=None,
         user_upload_queryset=None,
+        dicom_upload_with_name=None,
         linked_task=None,
     ):
         current_image = current_civ.image if current_civ else None
+
         if image and current_image != image:
             civ, created = ComponentInterfaceValue.objects.get_first_or_create(
                 interface=ci, image=image
@@ -2575,42 +2559,6 @@ class CIVForObjectMixin:
                     immutable=True,
                 ),
             )
-
-    def create_civ_for_dicom_image(
-        self,
-        ci,
-        current_civ,
-        user=None,
-        image=None,
-        dicom_upload_with_name=None,
-        linked_task=None,
-    ):
-        current_image = current_civ.image if current_civ else None
-
-        if image and current_image != image:
-            civ, created = ComponentInterfaceValue.objects.get_first_or_create(
-                interface=ci, image=image
-            )
-
-            if created:
-                try:
-                    civ.full_clean()
-                except ValidationError as e:
-                    civ.delete()
-                    error_handler = self.get_error_handler()
-                    error_handler.handle_error(
-                        interface=ci,
-                        error_message=format_validation_error_message(error=e),
-                        user=user,
-                    )
-                    return
-
-            self.remove_civ(civ=current_civ)
-            self.add_civ(civ=civ)
-
-            if linked_task is not None:
-                on_commit(signature(linked_task).apply_async)
-
         elif dicom_upload_with_name:
             from grandchallenge.cases.tasks import (
                 import_dicom_to_health_imaging,
