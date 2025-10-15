@@ -93,12 +93,23 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
     Use this error handler instead of the JobCIVErrorHandler whenever there is an upload_session object.
     """
 
-    def __init__(self, *args, upload_session, linked_object, **kwargs):
+    def __init__(self, *args, upload_session, linked_object=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if not upload_session:
+        from grandchallenge.algorithms.models import Job
+        from grandchallenge.cases.models import RawImageUploadSession
+        from grandchallenge.evaluation.models import Evaluation
+
+        if not upload_session or not isinstance(
+            upload_session, RawImageUploadSession
+        ):
             raise RuntimeError(
                 "You need to provide a RawImageUploadSession instance to this error handler."
+            )
+
+        if not isinstance(linked_object, (type(None), Job, Evaluation)):
+            raise RuntimeError(
+                "The linked object must be a Job or Evaluation instance."
             )
 
         self._upload_session = upload_session
@@ -122,6 +133,56 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
             self._upload_session.update_status(
                 status=self._upload_session.FAILURE,
                 error_message=error_message,
+            )
+
+
+class DICOMImageSetUploadErrorHandler(ErrorHandler):
+    """
+    Error handler for DICOM image imports and image validation.
+    Handle_error() updates a dicom image set upload as well as the linked algorithm job, if provided.
+    Use this error handler instead of the JobCIVErrorHandler whenever there is an upload_session object.
+    """
+
+    def __init__(self, *args, dicom_image_set_upload, linked_object, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        from grandchallenge.algorithms.models import Job
+        from grandchallenge.cases.models import DICOMImageSetUpload
+        from grandchallenge.evaluation.models import Evaluation
+
+        if not dicom_image_set_upload or not isinstance(
+            dicom_image_set_upload, DICOMImageSetUpload
+        ):
+            raise RuntimeError(
+                "You need to provide a DICOMImageSetUpload instance to this error handler."
+            )
+
+        if not isinstance(linked_object, (type(None), Job, Evaluation)):
+            raise RuntimeError(
+                "The linked object must be a Job or Evaluation instance."
+            )
+
+        self._dicom_image_set_upload = dicom_image_set_upload
+        self._linked_object = linked_object
+
+    def handle_error(self, *, error_message, interface=None, user=None):
+        if interface:
+            detailed_error_message = {interface.title: error_message}
+            self._dicom_image_set_upload.mark_failed(
+                error_message="One or more of the inputs failed validation.",
+                detailed_error_message=detailed_error_message,
+            )
+        else:
+            self._dicom_image_set_upload.mark_failed(
+                error_message=error_message,
+            )
+
+        if self._linked_object:
+            linked_error_handler = self._linked_object.get_error_handler()
+            linked_error_handler.handle_error(
+                error_message=error_message,
+                interface=interface,
+                user=user,
             )
 
 

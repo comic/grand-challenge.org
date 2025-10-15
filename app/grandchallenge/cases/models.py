@@ -1132,9 +1132,22 @@ class DICOMImageSetUpload(UUIDModel):
     def _marker_file_key(self):
         return f"{self._input_prefix}/deidentification.done"
 
-    def mark_failed(self, *, error_message, exc=None):
+    def mark_failed(
+        self, *, error_message, detailed_error_message=None, exc=None
+    ):
         self.status = DICOMImageSetUploadStatusChoices.FAILED
-        self.error_message = error_message
+
+        if detailed_error_message:
+            notification_description = oxford_comma(
+                [
+                    f"Image validation for socket {key} failed with error: {val}. "
+                    for key, val in detailed_error_message.items()
+                ]
+            )
+        else:
+            notification_description = error_message
+
+        self.error_message = notification_description
         self.save()
         if exc:
             logger.error(exc, exc_info=True)

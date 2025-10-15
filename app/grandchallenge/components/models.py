@@ -67,6 +67,7 @@ from grandchallenge.components.validators import (
 )
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_handlers import (
+    DICOMImageSetUploadErrorHandler,
     EvaluationCIVErrorHandler,
     FallbackCIVValidationErrorHandler,
     JobCIVErrorHandler,
@@ -2664,6 +2665,11 @@ class CIVForObjectMixin:
         if linked_object and isinstance(linked_object, RawImageUploadSession):
             return RawImageUploadSessionErrorHandler(
                 upload_session=linked_object,
+                linked_object=self,
+            )
+        elif linked_object and isinstance(linked_object, DICOMImageSetUpload):
+            return DICOMImageSetUploadErrorHandler(
+                dicom_image_set_upload=linked_object,
                 linked_object=self,
             )
         elif isinstance(self, Job):
