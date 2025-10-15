@@ -1339,20 +1339,6 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
             .file
         )
 
-    @property
-    def relative_path(self):
-        """
-        Where should the file be located?
-
-        Images need special handling as their names are fixed.
-        """
-        path = Path(self.interface.relative_path)
-
-        if self.image:
-            path /= Path(self.image_file.name).name
-
-        return path
-
     def __str__(self):
         if self.value is None:
             return self.title

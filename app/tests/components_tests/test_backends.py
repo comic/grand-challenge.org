@@ -1,6 +1,7 @@
 import io
 import json
 import os
+from uuid import uuid4
 from zipfile import ZipInfo
 
 import pytest
@@ -13,8 +14,12 @@ from grandchallenge.components.backends.utils import (
 )
 from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.components.schemas import GPUTypeChoices
-from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.components_tests.resources.backends import IOCopyExecutor
+from tests.factories import ImageFileFactory
 
 
 @pytest.mark.parametrize(
@@ -120,8 +125,10 @@ def test_filter_members_single_file_nested():
 
 @pytest.mark.django_db
 def test_inputs_json(settings):
+    job_pk = uuid4()
+
     executor = IOCopyExecutor(
-        job_id="test-test-test",
+        job_id=f"test-test-{job_pk}",
         exec_image_repo_tag="test",
         memory_limit=4,
         time_limit=100,
@@ -139,7 +146,7 @@ def test_inputs_json(settings):
         executor._s3_client.download_fileobj(
             Fileobj=fileobj,
             Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
-            Key="/io/test/test/test/inputs.json",
+            Key=f"io/test/test/{job_pk}/inputs.json",
         )
         fileobj.seek(0)
         result = json.loads(fileobj.read().decode("utf-8"))
@@ -185,3 +192,133 @@ def test_inputs_json(settings):
 
     for e in expected:
         assert e in result
+
+
+@pytest.mark.django_db
+def test_invocation_json(settings):
+    job_pk = uuid4()
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+    )
+
+    image_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.PANIMG_IMAGE,
+        relative_path="images/test",
+    )
+    file_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY,
+        relative_path="file.json",
+        store_in_database=False,
+    )
+    value_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY,
+        relative_path="value.json",
+        store_in_database=True,
+    )
+
+    image_civ = image_interface.create_instance(image=ImageFileFactory().image)
+    file_civ = file_interface.create_instance(value=1337)
+    value_civ = value_interface.create_instance(value="foo")
+    prefixed_image_civ = image_interface.create_instance(
+        image=ImageFileFactory().image
+    )
+    prefixed_file_civ = file_interface.create_instance(value=1337)
+    prefixed_value_civ = value_interface.create_instance(value="foo")
+
+    executor.provision(
+        input_civs=[
+            image_civ,
+            file_civ,
+            value_civ,
+            prefixed_image_civ,
+            prefixed_file_civ,
+            prefixed_value_civ,
+        ],
+        input_prefixes={
+            str(prefixed_image_civ.pk): "prefix/1",
+            str(prefixed_file_civ.pk): "prefix/2",
+            str(prefixed_value_civ.pk): "prefix/3",
+        },
+    )
+
+    response = executor._s3_client.list_objects_v2(
+        Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+        Prefix=f"io/test/test/{job_pk}",
+    )
+
+    assert {content["Key"] for content in response["Contents"]} == {
+        f"io/test/test/{job_pk}/file.json",
+        f"io/test/test/{job_pk}/images/test/example.dat",
+        f"io/test/test/{job_pk}/inputs.json",
+        f"io/test/test/{job_pk}/prefix/1/images/test/example.dat",
+        f"io/test/test/{job_pk}/prefix/2/file.json",
+        f"io/test/test/{job_pk}/prefix/3/value.json",
+        f"io/test/test/{job_pk}/value.json",
+    }
+
+    with io.BytesIO() as fileobj:
+        executor._s3_client.download_fileobj(
+            Fileobj=fileobj,
+            Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            Key=f"invocations/test/test/{job_pk}/invocation.json",
+        )
+        fileobj.seek(0)
+        invocation = json.loads(fileobj.read().decode("utf-8"))
+
+    assert invocation == [
+        {
+            "inputs": [
+                {
+                    "bucket_key": f"/io/test/test/{job_pk}/images/test/example.dat",
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": "images/test/example.dat",
+                },
+                {
+                    "bucket_key": f"/io/test/test/{job_pk}/file.json",
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": "file.json",
+                },
+                {
+                    "bucket_key": f"/io/test/test/{job_pk}/value.json",
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": "value.json",
+                },
+                {
+                    "bucket_key": f"/io/test/test/{job_pk}/prefix/1/images/test/example.dat",
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": "prefix/1/images/test/example.dat",
+                },
+                {
+                    "bucket_key": f"/io/test/test/{job_pk}/prefix/2/file.json",
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": "prefix/2/file.json",
+                },
+                {
+                    "bucket_key": f"/io/test/test/{job_pk}/prefix/3/value.json",
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": "prefix/3/value.json",
+                },
+                {
+                    "bucket_key": f"/io/test/test/{job_pk}/inputs.json",
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": "inputs.json",
+                },
+            ],
+            "output_bucket_name": "grand-challenge-components-outputs",
+            "output_prefix": f"/io/test/test/{job_pk}",
+            "pk": f"test-test-{job_pk}",
+        },
+    ]

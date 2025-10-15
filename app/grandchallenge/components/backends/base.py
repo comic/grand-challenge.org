@@ -58,6 +58,11 @@ class JobParams(NamedTuple):
     attempt: int
 
 
+class CIVProvisioningTask(NamedTuple):
+    key: str
+    task: functools.partial
+
+
 def duration_to_millicents(*, duration, usd_cents_per_hour):
     return ceil(
         (duration.total_seconds() / 3600)
@@ -392,18 +397,6 @@ class Executor(ABC):
 
         return total_size
 
-    def _get_key_and_relative_path(self, *, civ, input_prefixes):
-        if str(civ.pk) in input_prefixes:
-            key = safe_join(
-                self._io_prefix, input_prefixes[str(civ.pk)], civ.relative_path
-            )
-        else:
-            key = safe_join(self._io_prefix, civ.relative_path)
-
-        relative_path = str(os.path.relpath(key, self._io_prefix))
-
-        return key, relative_path
-
     @async_to_sync
     async def _provision(self, *, tasks):
         semaphore = asyncio.Semaphore(CONCURRENCY)
@@ -424,56 +417,123 @@ class Executor(ABC):
                     )
 
     def _get_provisioning_tasks(self, *, input_civs, input_prefixes):
-        input_provisioning_tasks = self._get_input_provisioning_tasks(
-            input_civs=input_civs, input_prefixes=input_prefixes
-        )
-
-        return (
-            input_provisioning_tasks + self._auxiliary_data_provisioning_tasks
-        )
-
-    def _get_input_provisioning_tasks(self, *, input_civs, input_prefixes):
+        provisioning_tasks = []
         invocation_inputs = []
 
-        tasks = []
-
         for civ in self._with_inputs_json(input_civs=input_civs):
-            key, relative_path = self._get_key_and_relative_path(
+            for civ_provisioning_task in self._get_civ_provisioning_tasks(
+                civ=civ, input_prefixes=input_prefixes
+            ):
+                provisioning_tasks.append(civ_provisioning_task.task)
+                invocation_inputs.append(
+                    {
+                        "relative_path": str(
+                            os.path.relpath(
+                                civ_provisioning_task.key, self._io_prefix
+                            )
+                        ),
+                        "bucket_name": settings.COMPONENTS_INPUT_BUCKET_NAME,
+                        "bucket_key": civ_provisioning_task.key,
+                        "decompress": civ.decompress,
+                    }
+                )
+
+        provisioning_tasks.append(
+            self._get_create_invocation_json_task(
+                invocation_inputs=invocation_inputs
+            ).task
+        )
+
+        provisioning_tasks.extend(
+            t.task for t in self._auxiliary_data_provisioning_tasks
+        )
+
+        return provisioning_tasks
+
+    def _get_key_for_target_relative_path(
+        self,
+        *,
+        civ,
+        input_prefixes,
+        filename=None,
+    ):
+        relative_path = Path(civ.interface.relative_path)
+
+        if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
+            if filename:
+                relative_path /= filename
+            else:
+                raise ValueError("filename must be set for images")
+        elif filename:
+            raise ValueError("filename must only be set for images")
+
+        if str(civ.pk) in input_prefixes:
+            key = safe_join(
+                self._io_prefix, input_prefixes[str(civ.pk)], relative_path
+            )
+        else:
+            key = safe_join(self._io_prefix, relative_path)
+
+        return key
+
+    def _get_civ_provisioning_tasks(self, *, civ, input_prefixes):
+        if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
+            if civ.interface.is_dicom_image_kind:
+                image_set_id = civ.image.dicom_image_set.image_set_id
+
+                for (
+                    image_frame
+                ) in civ.image.dicom_image_set.image_frame_metadata:
+                    study_instance_uid = image_frame["study_instance_uid"]
+                    series_instance_uid = image_frame["series_instance_uid"]
+                    sop_instance_uid = image_frame["sop_instance_uid"]
+                    stored_transfer_syntax_uid = image_frame[
+                        "stored_transfer_syntax_uid"
+                    ]
+
+                    key = self._get_key_for_target_relative_path(
+                        civ=civ,
+                        input_prefixes=input_prefixes,
+                        filename=f"{sop_instance_uid}.dcm",
+                    )
+
+                    yield self._get_copy_sop_instance_task(
+                        image_set_id=image_set_id,
+                        study_instance_uid=study_instance_uid,
+                        series_instance_uid=series_instance_uid,
+                        sop_instance_uid=sop_instance_uid,
+                        stored_transfer_syntax_uid=stored_transfer_syntax_uid,
+                        target_key=key,
+                    )
+            elif civ.interface.is_panimg_kind:
+                image_file = civ.image_file
+
+                # Set the name of the file, note that this is not set by the user.
+                # The filenames are sensitive as they are relative for some panimg files.
+                key = self._get_key_for_target_relative_path(
+                    civ=civ,
+                    input_prefixes=input_prefixes,
+                    filename=Path(image_file.name).name,
+                )
+
+                yield self._get_copy_input_object_task(
+                    src=image_file, target_key=key
+                )
+        elif civ.interface.super_kind == civ.interface.SuperKind.FILE:
+            key = self._get_key_for_target_relative_path(
                 civ=civ, input_prefixes=input_prefixes
             )
 
-            tasks.append(self._get_civ_input_provisioning_task(civ, key))
-
-            invocation_inputs.append(
-                {
-                    "relative_path": relative_path,
-                    "bucket_name": settings.COMPONENTS_INPUT_BUCKET_NAME,
-                    "bucket_key": key,
-                    "decompress": civ.decompress,
-                }
-            )
-
-        tasks.append(
-            self._get_create_invocation_json_task(
-                invocation_inputs=invocation_inputs
-            )
-        )
-
-        return tasks
-
-    def _get_civ_input_provisioning_task(self, civ, key):
-        if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
-            return self._get_copy_input_object_task(
-                src=civ.image_file, target_key=key
-            )
-        elif civ.interface.super_kind == civ.interface.SuperKind.FILE:
-            return self._get_copy_input_object_task(
+            yield self._get_copy_input_object_task(
                 src=civ.file, target_key=key
             )
         elif civ.interface.super_kind == civ.interface.SuperKind.VALUE:
-            return self._get_upload_input_content_task(
-                content=json.dumps(civ.value).encode("utf-8"),
-                key=key,
+            key = self._get_key_for_target_relative_path(
+                civ=civ, input_prefixes=input_prefixes
+            )
+
+            yield self._get_upload_input_content_task(
+                content=json.dumps(civ.value).encode("utf-8"), key=key
             )
         else:
             raise NotImplementedError(
@@ -533,21 +593,39 @@ class Executor(ABC):
         )
 
     @staticmethod
+    def _get_copy_sop_instance_task(
+        *,
+        image_set_id,
+        study_instance_uid,
+        series_instance_uid,
+        sop_instance_uid,
+        stored_transfer_syntax_uid,
+        target_key,
+    ):
+        raise NotImplementedError
+
+    @staticmethod
     def _get_copy_input_object_task(*, src, target_key):
-        return functools.partial(
-            s3_copy,
-            source_bucket=src.storage.bucket.name,
-            source_key=src.name,
-            target_bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
-            target_key=target_key,
+        return CIVProvisioningTask(
+            task=functools.partial(
+                s3_copy,
+                source_bucket=src.storage.bucket.name,
+                source_key=src.name,
+                target_bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                target_key=target_key,
+            ),
+            key=target_key,
         )
 
     @staticmethod
     def _get_upload_input_content_task(*, content, key):
-        return functools.partial(
-            s3_upload_content,
-            content=content,
-            bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+        return CIVProvisioningTask(
+            task=functools.partial(
+                s3_upload_content,
+                content=content,
+                bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                key=key,
+            ),
             key=key,
         )
 
