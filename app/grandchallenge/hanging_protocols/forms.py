@@ -151,10 +151,12 @@ class ViewContentExampleMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance:
-            interface_slugs = [
-                interface.slug
-                for interface in self.instance.linked_component_interfaces
-            ]
+            interface_slugs = sorted(
+                [
+                    interface.slug
+                    for interface in self.instance.linked_component_interfaces
+                ]
+            )
 
             if len(interface_slugs) > 0:
                 self.fields[

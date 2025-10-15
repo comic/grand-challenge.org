@@ -471,7 +471,7 @@ def make_ci_list(
             1,
             1,
             (
-                "The following sockets are used in your {}: test-ci-isolated-0, test-ci-image-0, test-ci-overlay-0, and test-ci-undisplayable-0. "
+                "The following sockets are used in your {}: test-ci-image-0, test-ci-isolated-0, test-ci-overlay-0, and test-ci-undisplayable-0. "
                 'Example usage: {{"main": ["test-ci-isolated-0"], "secondary": ["test-ci-image-0", "test-ci-overlay-0"]}}. '
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
