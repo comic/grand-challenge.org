@@ -23,12 +23,13 @@ from grandchallenge.components.backends.utils import (
 )
 from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.components.schemas import GPUTypeChoices
+from tests.cases_tests.factories import DICOMImageSetFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
 from tests.components_tests.resources.backends import IOCopyExecutor
-from tests.factories import ImageFileFactory
+from tests.factories import ImageFactory, ImageFileFactory
 
 
 @pytest.mark.parametrize(
@@ -437,3 +438,269 @@ async def test_s3_stream_response_aborts_on_stream_error(settings):
             "HTTPStatusCode"
         ]
         assert status_code == 404
+
+
+def mask_headers(headers):
+    if not headers:
+        return None
+
+    headers = dict(headers)
+
+    if "Authorization" in headers:
+        headers["Authorization"] = "<AUTH_MASKED>"
+
+    return headers
+
+
+def normalize_partial(p):
+    """
+    Turn functools.partial into a deterministic small dict suitable for assertions.
+    """
+    func_name = getattr(p, "func", None).__name__
+    kwargs = dict(getattr(p, "keywords", {}))
+
+    out = {"func": func_name}
+
+    # common s3 operations
+    if "bucket" in kwargs or "target_bucket" in kwargs:
+        # s3 copy / upload style
+        out.update(
+            {
+                "bucket": kwargs.get("bucket") or kwargs.get("target_bucket"),
+                "key": kwargs.get("key") or kwargs.get("target_key"),
+            }
+        )
+
+    # s3_stream_response has request_kwargs
+    if "request_kwargs" in kwargs:
+        request_kwargs = kwargs["request_kwargs"]
+        out.update(
+            {
+                "method": request_kwargs.get("method"),
+                "url": request_kwargs.get("url"),
+                "headers": mask_headers(request_kwargs.get("headers")),
+            }
+        )
+
+    # s3_copy source/target specifics
+    if "source_bucket" in kwargs or "source_key" in kwargs:
+        out["source_key"] = kwargs.get("source_key")
+
+    if "content" in kwargs:
+        out["content"] = json.loads(kwargs["content"].decode("utf-8"))
+
+    return out
+
+
+@pytest.mark.django_db
+def test_dicom_get_provisioning_tasks():
+    job_pk = uuid4()
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+    )
+
+    panimage_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.PANIMG_IMAGE,
+        relative_path="images/test",
+    )
+    dicom_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET,
+        relative_path="images/dicom",
+    )
+
+    panimage_civ = panimage_interface.create_instance(
+        image=ImageFileFactory().image
+    )
+    dicom_civ = dicom_interface.create_instance(
+        image=ImageFactory(dicom_image_set=DICOMImageSetFactory())
+    )
+    prefixed_panimage_civ = panimage_interface.create_instance(
+        image=ImageFileFactory().image
+    )
+    prefixed_dicom_civ = dicom_interface.create_instance(
+        image=ImageFactory(dicom_image_set=DICOMImageSetFactory())
+    )
+
+    tasks = executor._get_provisioning_tasks(
+        input_civs=[
+            panimage_civ,
+            dicom_civ,
+            prefixed_panimage_civ,
+            prefixed_dicom_civ,
+        ],
+        input_prefixes={
+            str(prefixed_panimage_civ.pk): "prefix/1",
+            str(prefixed_dicom_civ.pk): "prefix/2",
+        },
+    )
+
+    normalized_tasks = [normalize_partial(t) for t in tasks]
+
+    assert len(normalized_tasks) == 14
+
+    assert normalized_tasks[0]["func"] == "s3_copy"
+    assert normalized_tasks[0]["source_key"] == panimage_civ.image_file
+    assert (
+        normalized_tasks[0]["key"]
+        == f"/io/test/test/{job_pk}/images/test/example.dat"
+    )
+
+    for ii in range(5):
+        task = normalized_tasks[ii + 1]
+        image_set_id = dicom_civ.image.dicom_image_set.image_set_id
+        image_frame = dicom_civ.image.dicom_image_set.image_frame_metadata[ii]
+
+        study_instance_uid = image_frame["study_instance_uid"]
+        series_instance_uid = image_frame["series_instance_uid"]
+        sop_instance_uid = image_frame["sop_instance_uid"]
+        stored_transfer_syntax_uid = image_frame["stored_transfer_syntax_uid"]
+
+        assert task["func"] == "s3_stream_response"
+        assert (
+            task["url"]
+            == f"https://dicom-medical-imaging.eu-central-1.amazonaws.com/datastore/None/studies/{study_instance_uid}/series/{series_instance_uid}/instances/{sop_instance_uid}?imageSetId={image_set_id}"
+        )
+        assert (
+            task["headers"]["Accept"]
+            == f"application/dicom; transfer-syntax={stored_transfer_syntax_uid}"
+        )
+        assert task["headers"]["Authorization"] == "<AUTH_MASKED>"
+        assert (
+            task["key"]
+            == f"/io/test/test/{job_pk}/images/dicom/{sop_instance_uid}.dcm"
+        )
+
+    assert normalized_tasks[6]["func"] == "s3_copy"
+    assert (
+        normalized_tasks[6]["source_key"] == prefixed_panimage_civ.image_file
+    )
+    assert (
+        normalized_tasks[6]["key"]
+        == f"/io/test/test/{job_pk}/prefix/1/images/test/example.dat"
+    )
+
+    for ii in range(5):
+        task = normalized_tasks[ii + 7]
+        image_set_id = prefixed_dicom_civ.image.dicom_image_set.image_set_id
+        image_frame = (
+            prefixed_dicom_civ.image.dicom_image_set.image_frame_metadata[ii]
+        )
+
+        study_instance_uid = image_frame["study_instance_uid"]
+        series_instance_uid = image_frame["series_instance_uid"]
+        sop_instance_uid = image_frame["sop_instance_uid"]
+        stored_transfer_syntax_uid = image_frame["stored_transfer_syntax_uid"]
+
+        assert task["func"] == "s3_stream_response"
+        assert (
+            task["url"]
+            == f"https://dicom-medical-imaging.eu-central-1.amazonaws.com/datastore/None/studies/{study_instance_uid}/series/{series_instance_uid}/instances/{sop_instance_uid}?imageSetId={image_set_id}"
+        )
+        assert (
+            task["headers"]["Accept"]
+            == f"application/dicom; transfer-syntax={stored_transfer_syntax_uid}"
+        )
+        assert task["headers"]["Authorization"] == "<AUTH_MASKED>"
+        assert (
+            task["key"]
+            == f"/io/test/test/{job_pk}/prefix/2/images/dicom/{sop_instance_uid}.dcm"
+        )
+
+    assert normalized_tasks[13]["func"] == "s3_upload_content"
+    assert (
+        normalized_tasks[13]["key"]
+        == f"/invocations/test/test/{job_pk}/invocation.json"
+    )
+    assert normalized_tasks[13]["content"] == [
+        {
+            "inputs": [
+                {
+                    "bucket_key": f"/io/test/test/{job_pk}/images/test/example.dat",
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": "images/test/example.dat",
+                },
+                {
+                    "bucket_key": f'/io/test/test/{job_pk}/images/dicom/{dicom_civ.image.dicom_image_set.image_frame_metadata[0]["sop_instance_uid"]}.dcm',
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": f'images/dicom/{dicom_civ.image.dicom_image_set.image_frame_metadata[0]["sop_instance_uid"]}.dcm',
+                },
+                {
+                    "bucket_key": f'/io/test/test/{job_pk}/images/dicom/{dicom_civ.image.dicom_image_set.image_frame_metadata[1]["sop_instance_uid"]}.dcm',
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": f'images/dicom/{dicom_civ.image.dicom_image_set.image_frame_metadata[1]["sop_instance_uid"]}.dcm',
+                },
+                {
+                    "bucket_key": f'/io/test/test/{job_pk}/images/dicom/{dicom_civ.image.dicom_image_set.image_frame_metadata[2]["sop_instance_uid"]}.dcm',
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": f'images/dicom/{dicom_civ.image.dicom_image_set.image_frame_metadata[2]["sop_instance_uid"]}.dcm',
+                },
+                {
+                    "bucket_key": f'/io/test/test/{job_pk}/images/dicom/{dicom_civ.image.dicom_image_set.image_frame_metadata[3]["sop_instance_uid"]}.dcm',
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": f'images/dicom/{dicom_civ.image.dicom_image_set.image_frame_metadata[3]["sop_instance_uid"]}.dcm',
+                },
+                {
+                    "bucket_key": f'/io/test/test/{job_pk}/images/dicom/{dicom_civ.image.dicom_image_set.image_frame_metadata[4]["sop_instance_uid"]}.dcm',
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": f'images/dicom/{dicom_civ.image.dicom_image_set.image_frame_metadata[4]["sop_instance_uid"]}.dcm',
+                },
+                {
+                    "bucket_key": f"/io/test/test/{job_pk}/prefix/1/images/test/example.dat",
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": "prefix/1/images/test/example.dat",
+                },
+                {
+                    "bucket_key": f'/io/test/test/{job_pk}/prefix/2/images/dicom/{prefixed_dicom_civ.image.dicom_image_set.image_frame_metadata[0]["sop_instance_uid"]}.dcm',
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": f'prefix/2/images/dicom/{prefixed_dicom_civ.image.dicom_image_set.image_frame_metadata[0]["sop_instance_uid"]}.dcm',
+                },
+                {
+                    "bucket_key": f'/io/test/test/{job_pk}/prefix/2/images/dicom/{prefixed_dicom_civ.image.dicom_image_set.image_frame_metadata[1]["sop_instance_uid"]}.dcm',
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": f'prefix/2/images/dicom/{prefixed_dicom_civ.image.dicom_image_set.image_frame_metadata[1]["sop_instance_uid"]}.dcm',
+                },
+                {
+                    "bucket_key": f'/io/test/test/{job_pk}/prefix/2/images/dicom/{prefixed_dicom_civ.image.dicom_image_set.image_frame_metadata[2]["sop_instance_uid"]}.dcm',
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": f'prefix/2/images/dicom/{prefixed_dicom_civ.image.dicom_image_set.image_frame_metadata[2]["sop_instance_uid"]}.dcm',
+                },
+                {
+                    "bucket_key": f'/io/test/test/{job_pk}/prefix/2/images/dicom/{prefixed_dicom_civ.image.dicom_image_set.image_frame_metadata[3]["sop_instance_uid"]}.dcm',
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": f'prefix/2/images/dicom/{prefixed_dicom_civ.image.dicom_image_set.image_frame_metadata[3]["sop_instance_uid"]}.dcm',
+                },
+                {
+                    "bucket_key": f'/io/test/test/{job_pk}/prefix/2/images/dicom/{prefixed_dicom_civ.image.dicom_image_set.image_frame_metadata[4]["sop_instance_uid"]}.dcm',
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": f'prefix/2/images/dicom/{prefixed_dicom_civ.image.dicom_image_set.image_frame_metadata[4]["sop_instance_uid"]}.dcm',
+                },
+                {
+                    "bucket_key": f"/io/test/test/{job_pk}/inputs.json",
+                    "bucket_name": "grand-challenge-components-inputs",
+                    "decompress": False,
+                    "relative_path": "inputs.json",
+                },
+            ],
+            "output_bucket_name": "grand-challenge-components-outputs",
+            "output_prefix": f"/io/test/test/{job_pk}",
+            "pk": f"test-test-{job_pk}",
+        },
+    ]
