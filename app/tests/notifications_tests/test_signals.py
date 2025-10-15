@@ -441,6 +441,17 @@ MODELS_FOR_NOTIFICATIONS_CLEANUP = [
         },
     ),
     (
+        DICOMImageSetUpload,
+        "action_object",
+        Notification.Type.IMAGE_IMPORT_STATUS,
+        {
+            "action_object": {
+                "factory": DICOMImageSetUploadFactory,
+                "kwargs": {},
+            },
+        },
+    ),
+    (
         User,
         "actor",
         Notification.Type.CIV_VALIDATION,
