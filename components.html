@@ -313,13 +313,6 @@ else as it clobbers the input directory.</p>
 <span class="sig-name descname"><span class="pre">image_file</span></span><a class="headerlink" href="#grandchallenge.components.models.ComponentInterfaceValue.image_file" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="py property">
-<dt class="sig sig-object py" id="grandchallenge.components.models.ComponentInterfaceValue.relative_path">
-<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">relative_path</span></span><a class="headerlink" href="#grandchallenge.components.models.ComponentInterfaceValue.relative_path" title="Link to this definition">¶</a></dt>
-<dd><p>Where should the file be located?</p>
-<p>Images need special handling as their names are fixed.</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.components.models.ComponentInterfaceValue.save">
 <span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentInterfaceValue.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentInterfaceValue.save" title="Link to this definition">¶</a></dt>
@@ -435,54 +428,54 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dd><p>Interface kind sets.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Interface kinds that are images:
 
-  - Displacement field
   - DICOM Image Set
-  - Segmentation
   - Image
+  - Segmentation
+  - Displacement field
   - Heat Map
 
 
 Interface kinds that are files:
 
-  - ZIP file
-  - OBJ file
-  - Newick tree-format file
-  - CSV file
-  - PDF file
-  - Thumbnail png
   - SQREG file
+  - Newick tree-format file
   - MP4 file
+  - OBJ file
+  - Thumbnail png
   - BIOM format
+  - CSV file
+  - ZIP file
+  - PDF file
   - Thumbnail jpg
 
 
 Interface kinds that are json serializable:
 
-  - Ellipse
-  - Angle
-  - Multiple polygons
-  - Three-point angle
-  - Point
-  - Multiple three-point angles
-  - Integer
-  - Choice
-  - Anything
-  - Multiple angles
-  - Float
-  - Multiple 2D bounding boxes
-  - Distance measurement
   - Polygon
-  - Multiple distance measurements
-  - 2D bounding box
-  - Multiple points
   - Line
-  - Bool
-  - Affine transform registration
-  - Multiple lines
-  - Chart
-  - Multiple ellipses
-  - Multiple choice
+  - Distance measurement
+  - 2D bounding box
   - String
+  - Integer
+  - Affine transform registration
+  - Ellipse
+  - Multiple polygons
+  - Multiple choice
+  - Multiple angles
+  - Bool
+  - Multiple three-point angles
+  - Multiple points
+  - Point
+  - Anything
+  - Multiple ellipses
+  - Float
+  - Multiple lines
+  - Three-point angle
+  - Multiple 2D bounding boxes
+  - Chart
+  - Angle
+  - Choice
+  - Multiple distance measurements
 
 
 Example JSON file contents for String:
