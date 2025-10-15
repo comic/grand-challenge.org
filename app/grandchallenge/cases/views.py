@@ -33,6 +33,7 @@ from grandchallenge.cases.serializers import (
     RawImageUploadSessionSerializer,
 )
 from grandchallenge.cases.widgets import ImageSearchWidget, ImageWidgetChoices
+from grandchallenge.components.backends.base import serialize_aws_request
 from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.guardian import (
@@ -102,15 +103,6 @@ class ImageViewSet(ReadOnlyModelViewSet):
     )
 
     @staticmethod
-    def serialize_aws_request(request):
-        return {
-            "url": request.url,
-            "method": request.method,
-            "data": request.data,
-            "headers": dict(request.headers.items()),
-        }
-
-    @staticmethod
     def get_frame_encoding(stored_transfer_syntax_uid):
         # From https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/medical-imaging/client/get_image_frame.html
         transfer_syntax_to_encoding = {
@@ -178,7 +170,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
             serialized_image_frames.append(
                 {
                     "image_frame_id": image_frame_id,
-                    "get_image_frame": self.serialize_aws_request(
+                    "get_image_frame": serialize_aws_request(
                         image_frame_request
                     ),
                 }
@@ -198,7 +190,7 @@ class ImageViewSet(ReadOnlyModelViewSet):
         return JsonResponse(
             {
                 "image_set_id": image.dicom_image_set.image_set_id,
-                "get_image_set_metadata": self.serialize_aws_request(
+                "get_image_set_metadata": serialize_aws_request(
                     metadata_request
                 ),
                 "image_frames": serialized_image_frames,

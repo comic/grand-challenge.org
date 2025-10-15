@@ -167,6 +167,7 @@ def fake_dicom_instance_uid():
 
 
 class DICOMImageSetFactory(factory.django.DjangoModelFactory):
+    image_set_id = factory.LazyAttribute(lambda _: fake_image_frame_id())
     image_frame_metadata = factory.LazyAttribute(
         lambda _: [
             {

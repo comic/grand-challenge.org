@@ -15,7 +15,10 @@ from uuid import UUID
 import aioboto3
 import boto3
 import botocore
+import httpx
 from asgiref.sync import async_to_sync
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
 from botocore.config import Config
 from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
@@ -45,9 +48,15 @@ from grandchallenge.core.utils.error_messages import (
 
 logger = logging.getLogger(__name__)
 
-MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
+MAX_SPOOL_SIZE = settings.GIGABYTE
 
-CONCURRENCY = 50
+# For multipart uploads the minimum chunk size is 5 MB
+# There is a maximum of 10_000 chunks
+# Using a chunk size of 5 MB results in a maximum file size of 50 GB
+# The maximum memory used will be ASYNC_CONCURRENCY * S3_CHUNK_SIZE
+S3_CHUNK_SIZE = 5 * settings.MEGABYTE
+
+ASYNC_CONCURRENCY = 50
 ASYNC_BOTO_CONFIG = Config(max_pool_connections=120)
 
 
@@ -70,6 +79,21 @@ def duration_to_millicents(*, duration, usd_cents_per_hour):
         * 1000
         * settings.COMPONENTS_USD_TO_EUR
     )
+
+
+def serialize_aws_request(request):
+    """
+    The kwargs that will be passed to httpx.stream or httpx.request
+    to generate a response from an AWSRequest instance.
+
+    External clients use this so the kwargs should not be changed.
+    """
+    return {
+        "url": request.url,
+        "method": request.method,
+        "data": request.data,
+        "headers": dict(request.headers.items()),
+    }
 
 
 def list_and_delete_objects_from_prefix(*, s3_client, bucket, prefix):
@@ -141,6 +165,7 @@ async def s3_copy(
     target_key,
     semaphore,
     s3_client,
+    httpx_client,  # Unused, but must be present to match signature
 ):
     async with semaphore:
         await s3_client.copy(
@@ -150,7 +175,15 @@ async def s3_copy(
         )
 
 
-async def s3_upload_content(*, content, bucket, key, semaphore, s3_client):
+async def s3_upload_content(
+    *,
+    content,
+    bucket,
+    key,
+    semaphore,
+    s3_client,
+    httpx_client,  # Unused, but must be present to match signature
+):
     async with semaphore:
         with io.BytesIO() as f:
             f.write(content)
@@ -161,6 +194,72 @@ async def s3_upload_content(*, content, bucket, key, semaphore, s3_client):
                 Bucket=bucket,
                 Key=key,
             )
+
+
+async def s3_sign_request_then_stream(*, request, signer, **kwargs):
+    """
+    Signed requests have a TTL of 5 minutes, so sign just before making the request
+    """
+    signer.add_auth(request)
+    await s3_stream_response(
+        request_kwargs=serialize_aws_request(request), **kwargs
+    )
+
+
+async def s3_stream_response(
+    *,
+    request_kwargs,
+    bucket,
+    key,
+    semaphore,
+    s3_client,
+    httpx_client,
+):
+    async with semaphore:
+        async with httpx_client.stream(**request_kwargs) as resp:
+            resp.raise_for_status()
+
+            multipart_upload = await s3_client.create_multipart_upload(
+                Bucket=bucket, Key=key
+            )
+
+            upload_id = multipart_upload["UploadId"]
+            parts = []
+            part_number = 1
+
+            try:
+                async for chunk in resp.aiter_bytes(chunk_size=S3_CHUNK_SIZE):
+                    if not chunk:
+                        continue
+
+                    part_response = await s3_client.upload_part(
+                        Bucket=bucket,
+                        Key=key,
+                        PartNumber=part_number,
+                        UploadId=upload_id,
+                        Body=chunk,
+                    )
+
+                    parts.append(
+                        {
+                            "ETag": part_response["ETag"],
+                            "PartNumber": part_number,
+                        }
+                    )
+                    part_number += 1
+
+                await s3_client.complete_multipart_upload(
+                    Bucket=bucket,
+                    Key=key,
+                    UploadId=upload_id,
+                    MultipartUpload={"Parts": parts},
+                )
+
+            except Exception:
+                await s3_client.abort_multipart_upload(
+                    Bucket=bucket, Key=key, UploadId=upload_id
+                )
+                raise
 
 
 class Executor(ABC):
@@ -399,22 +498,25 @@ class Executor(ABC):
 
     @async_to_sync
     async def _provision(self, *, tasks):
-        semaphore = asyncio.Semaphore(CONCURRENCY)
+        semaphore = asyncio.Semaphore(ASYNC_CONCURRENCY)
         session = aioboto3.Session()
+        timeout = httpx.Timeout(60.0)
 
         async with session.client(
             "s3",
             endpoint_url=settings.AWS_S3_ENDPOINT_URL,
             config=ASYNC_BOTO_CONFIG,
         ) as s3_client:
-            async with asyncio.TaskGroup() as task_group:
-                for task in tasks:
-                    task_group.create_task(
-                        task(
-                            semaphore=semaphore,
-                            s3_client=s3_client,
+            async with httpx.AsyncClient(timeout=timeout) as httpx_client:
+                async with asyncio.TaskGroup() as task_group:
+                    for task in tasks:
+                        task_group.create_task(
+                            task(
+                                semaphore=semaphore,
+                                s3_client=s3_client,
+                                httpx_client=httpx_client,
+                            )
                         )
-                    )
 
     def _get_provisioning_tasks(self, *, input_civs, input_prefixes):
         provisioning_tasks = []
@@ -457,15 +559,7 @@ class Executor(ABC):
         input_prefixes,
         filename=None,
     ):
-        relative_path = Path(civ.interface.relative_path)
-
-        if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
-            if filename:
-                relative_path /= filename
-            else:
-                raise ValueError("filename must be set for images")
-        elif filename:
-            raise ValueError("filename must only be set for images")
+        relative_path = civ.interface.relative_path
 
         if str(civ.pk) in input_prefixes:
             key = safe_join(
@@ -474,11 +568,28 @@ class Executor(ABC):
         else:
             key = safe_join(self._io_prefix, relative_path)
 
+        if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
+            if filename:
+                key = safe_join(key, filename)
+            else:
+                raise ValueError("filename must be set for images")
+        elif filename:
+            raise ValueError("filename must only be set for images")
+
         return key
 
     def _get_civ_provisioning_tasks(self, *, civ, input_prefixes):
         if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
             if civ.interface.is_dicom_image_kind:
+                session = boto3.Session(
+                    region_name=settings.AWS_DEFAULT_REGION,
+                )
+                medical_imaging_auth = SigV4Auth(
+                    credentials=session.get_credentials(),
+                    service_name="medical-imaging",
+                    region_name=settings.AWS_DEFAULT_REGION,
+                )
+
                 image_set_id = civ.image.dicom_image_set.image_set_id
 
                 for (
@@ -498,6 +609,7 @@ class Executor(ABC):
                     )
 
                     yield self._get_copy_sop_instance_task(
+                        medical_imaging_auth=medical_imaging_auth,
                         image_set_id=image_set_id,
                         study_instance_uid=study_instance_uid,
                         series_instance_uid=series_instance_uid,
@@ -595,6 +707,7 @@ class Executor(ABC):
     @staticmethod
     def _get_copy_sop_instance_task(
         *,
+        medical_imaging_auth,
         image_set_id,
         study_instance_uid,
         series_instance_uid,
@@ -602,7 +715,34 @@ class Executor(ABC):
         stored_transfer_syntax_uid,
         target_key,
     ):
-        raise NotImplementedError
+        # See https://docs.aws.amazon.com/healthimaging/latest/devguide/dicomweb-retrieve-instance.html
+        dicom_file_url = (
+            f"https://dicom-medical-imaging.{settings.AWS_DEFAULT_REGION}.amazonaws.com"
+            f"/datastore/{settings.AWS_HEALTH_IMAGING_DATASTORE_ID}"
+            f"/studies/{study_instance_uid}"
+            f"/series/{series_instance_uid}"
+            f"/instances/{sop_instance_uid}"
+            f"?imageSetId={image_set_id}"
+        )
+
+        request = AWSRequest(
+            method="GET",
+            url=dicom_file_url,
+            headers={
+                "Accept": f"application/dicom; transfer-syntax={stored_transfer_syntax_uid}"
+            },
+        )
+
+        return CIVProvisioningTask(
+            task=functools.partial(
+                s3_sign_request_then_stream,
+                request=request,
+                signer=medical_imaging_auth,
+                bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                key=target_key,
+            ),
+            key=target_key,
+        )
 
     @staticmethod
     def _get_copy_input_object_task(*, src, target_key):

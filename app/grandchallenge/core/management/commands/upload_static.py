@@ -9,7 +9,7 @@ from django.core.management.base import BaseCommand
 
 from grandchallenge.components.backends.base import (
     ASYNC_BOTO_CONFIG,
-    CONCURRENCY,
+    ASYNC_CONCURRENCY,
 )
 
 logger = logging.getLogger(__name__)
@@ -101,7 +101,7 @@ class Command(BaseCommand):
         bucket_name: str,
         files: list[Path],
     ) -> None:
-        semaphore = asyncio.Semaphore(CONCURRENCY)
+        semaphore = asyncio.Semaphore(ASYNC_CONCURRENCY)
         session = aioboto3.Session()
 
         async with session.client(
