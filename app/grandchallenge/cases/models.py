@@ -192,21 +192,18 @@ class RawImageUploadSession(UUIDModel):
                     for key, val in detailed_error_message.items()
                 ]
             )
-        else:
+        elif error_message:
             notification_description = error_message
+        else:
+            notification_description = self.default_error_message
 
-        self.error_message = (
-            notification_description
-            if notification_description
-            else self.default_error_message
-        )
+        self.error_message = notification_description
         self.save()
 
         if self.error_message and self.creator:
             Notification.send(
                 kind=NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                message=error_message,
-                description=self.error_message,
+                description=notification_description,
                 action_object=self,
             )
 
