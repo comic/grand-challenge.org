@@ -478,10 +478,6 @@ MODELS_FOR_NOTIFICATIONS_CLEANUP = [
 def test_all_registered_models_have_coverage_for_notifications_cleanup():
     """Ensure all models registered with actstream have corresponding factories for the below test."""
     registered_models = set(registry.registry.keys())
-    # Exclude Challenge and Forum models since we have separate tests for those
-    registered_models.discard(Challenge)
-    registered_models.discard(Forum)
-
     covered_models = {
         model for model, _, _, _ in MODELS_FOR_NOTIFICATIONS_CLEANUP
     }
