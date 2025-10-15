@@ -3,7 +3,7 @@
 [![Build Status](https://github.com/comic/grand-challenge.org/workflows/CI/badge.svg)](https://github.com/comic/grand-challenge.org/actions?query=workflow%3ACI+branch%3Amain)
 [![Documentation](https://img.shields.io/badge/docs-published-success)](https://comic.github.io/grand-challenge.org/)
 [![Black Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
-[![Cite Us with Zenodo](https://zenodo.org/badge/4557968.svg)](https://zenodo.org/badge/latestdoi/4557968)
+[![Cite Us with Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.3356819.svg)](https://doi.org/10.5281/zenodo.3356819)
 
 In the era of Deep Learning, developing robust machine learning solutions to problems in biomedical imaging requires access to large amounts of annotated training data, fair comparisons of state of the art machine learning solutions, and clinical validation using real world data. Grand Challenge can assist Researchers, Data Scientists, and Clinicians in collaborating to develop these solutions by providing:
 
