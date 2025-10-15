@@ -796,5 +796,4 @@ def test_failed_dicom_image_set_upload_sends_notification():
     assert Notification.objects.count() == 1
     notification = Notification.objects.first()
     assert notification.user == upload.creator
-    assert notification.message == "DICOM import failed."
     assert notification.description == "Some error message"

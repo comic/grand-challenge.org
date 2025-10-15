@@ -1153,7 +1153,6 @@ class DICOMImageSetUpload(UUIDModel):
             logger.error(exc, exc_info=True)
         Notification.send(
             kind=NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-            message=error_message,
             description=notification_description,
             action_object=self,
         )
