@@ -3,12 +3,10 @@ import logging
 import math
 
 from actstream.actions import follow, unfollow
-from actstream.models import Follow
 from dateutil.relativedelta import relativedelta
 from dateutil.utils import today
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import (
     MaxValueValidator,
@@ -27,7 +25,7 @@ from django.db.models import (
     Value,
     When,
 )
-from django.db.models.signals import post_delete, pre_delete
+from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.template.loader import render_to_string
@@ -940,14 +938,6 @@ def delete_challenge_groups_hook(*_, instance: Challenge, using, **__):
         instance.external_evaluators_group.delete(using=using)
     except ObjectDoesNotExist:
         pass
-
-
-@receiver(pre_delete, sender=Challenge)
-def delete_challenge_follows(*_, instance: Challenge, **__):
-    ct = ContentType.objects.filter(
-        app_label=instance._meta.app_label, model=instance._meta.model_name
-    ).get()
-    Follow.objects.filter(object_id=instance.pk, content_type=ct).delete()
 
 
 def submission_pdf_path(instance, filename):

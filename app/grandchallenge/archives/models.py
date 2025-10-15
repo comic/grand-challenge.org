@@ -1,7 +1,5 @@
-from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Q
 from django.utils.functional import cached_property
@@ -150,13 +148,6 @@ class Archive(
         super().save(*args, **kwargs)
 
         self.assign_permissions()
-
-    def delete(self, *args, **kwargs):
-        ct = ContentType.objects.filter(
-            app_label=self._meta.app_label, model=self._meta.model_name
-        ).get()
-        Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
-        super().delete(*args, **kwargs)
 
     def create_groups(self):
         self.editors_group = Group.objects.create(
@@ -455,13 +446,6 @@ class ArchivePermissionRequest(RequestBase):
         super().save(*args, **kwargs)
         if adding:
             process_access_request(request_object=self)
-
-    def delete(self, *args, **kwargs):
-        ct = ContentType.objects.filter(
-            app_label=self._meta.app_label, model=self._meta.model_name
-        ).get()
-        Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
-        super().delete(*args, **kwargs)
 
     class Meta(RequestBase.Meta):
         unique_together = (("archive", "user"),)

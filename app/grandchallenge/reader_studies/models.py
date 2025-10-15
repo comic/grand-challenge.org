@@ -1,10 +1,8 @@
 from math import ceil
 
-from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import (
     MaxLengthValidator,
@@ -525,13 +523,6 @@ class ReaderStudy(
             groups=(self.readers_group, self.editors_group),
             workstation=self.workstation,
         )
-
-    def delete(self, *args, **kwargs):
-        ct = ContentType.objects.filter(
-            app_label=self._meta.app_label, model=self._meta.model_name
-        ).get()
-        Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
-        super().delete(*args, **kwargs)
 
     def is_editor(self, user):
         """Checks if ``user`` is an editor for this ``ReaderStudy``."""
@@ -2115,13 +2106,6 @@ class ReaderStudyPermissionRequest(RequestBase):
         super().save(*args, **kwargs)
         if adding:
             process_access_request(request_object=self)
-
-    def delete(self, *args, **kwargs):
-        ct = ContentType.objects.filter(
-            app_label=self._meta.app_label, model=self._meta.model_name
-        ).get()
-        Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
-        super().delete(*args, **kwargs)
 
     class Meta(RequestBase.Meta):
         unique_together = (("reader_study", "user"),)
