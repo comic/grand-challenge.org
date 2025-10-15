@@ -1303,7 +1303,7 @@ def add_image_to_object(  # noqa: C901
             logger.info("Nothing to do: DICOM upload was not successful.")
             return
 
-        error_handler = obj.get_error_handler()
+        error_handler = obj.get_error_handler(linked_object=upload)
 
         try:
             image = Image.objects.get(
