@@ -504,7 +504,7 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
 
 
 @pytest.mark.parametrize(
-    "object_type, extra_object_kwargs",
+    "object_factory, factory_kwargs",
     [
         (DisplaySetFactory, {}),
         (ArchiveItemFactory, {}),
@@ -518,13 +518,13 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
 def test_add_dicom_image_set_to_object(
     settings,
     django_capture_on_commit_callbacks,
-    object_type,
-    extra_object_kwargs,
+    object_factory,
+    factory_kwargs,
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    obj = object_type(**extra_object_kwargs)
+    obj = object_factory(**factory_kwargs)
     upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.COMPLETED
     )
@@ -550,7 +550,7 @@ def test_add_dicom_image_set_to_object(
 
 
 @pytest.mark.parametrize(
-    "object_type, extra_object_kwargs",
+    "object_factory, factory_kwargs",
     [
         (DisplaySetFactory, {}),
         (ArchiveItemFactory, {}),
@@ -564,13 +564,13 @@ def test_add_dicom_image_set_to_object(
 def test_add_dicom_image_set_to_object_updates_upload_on_validation_fail(
     settings,
     django_capture_on_commit_callbacks,
-    object_type,
-    extra_object_kwargs,
+    object_factory,
+    factory_kwargs,
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    obj = object_type(**extra_object_kwargs)
+    obj = object_factory(**factory_kwargs)
     # create upload without resulting dicom image set and image.
     upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.COMPLETED
@@ -639,22 +639,27 @@ def test_add_dicom_image_set_to_object_marks_job_as_failed_on_validation_fail(
 
 
 @pytest.mark.parametrize(
-    "object_type",
+    "object_factory, factory_kwargs",
     [
-        DisplaySetFactory,
-        ArchiveItemFactory,
+        (DisplaySetFactory, {}),
+        (ArchiveItemFactory, {}),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 10, "status": Job.VALIDATING_INPUTS},
+        ),
     ],
 )
 @pytest.mark.django_db
 def test_add_dicom_image_set_to_object_sends_notification_on_validation_fail(
     settings,
     django_capture_on_commit_callbacks,
-    object_type,
+    object_factory,
+    factory_kwargs,
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    obj = object_type()
+    obj = object_factory(**factory_kwargs)
     # create upload without resulting dicom image set and image.
     upload = DICOMImageSetUploadFactory(
         status=DICOMImageSetUploadStatusChoices.COMPLETED
