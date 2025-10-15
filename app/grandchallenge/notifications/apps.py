@@ -44,7 +44,10 @@ class NotificationsConfig(AppConfig):
             Archive,
             ArchivePermissionRequest,
         )
-        from grandchallenge.cases.models import RawImageUploadSession
+        from grandchallenge.cases.models import (
+            DICOMImageSetUpload,
+            RawImageUploadSession,
+        )
         from grandchallenge.challenges.models import Challenge
         from grandchallenge.discussion_forums.models import (
             Forum,
@@ -75,6 +78,7 @@ class NotificationsConfig(AppConfig):
         registry.register(Evaluation)
         registry.register(Phase)
         registry.register(RawImageUploadSession)
+        registry.register(DICOMImageSetUpload)
         registry.register(Forum)
         registry.register(ForumTopic)
         registry.register(ForumPost)

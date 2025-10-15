@@ -13,7 +13,10 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
 )
 from grandchallenge.archives.models import Archive, ArchivePermissionRequest
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.models import (
+    DICOMImageSetUpload,
+    RawImageUploadSession,
+)
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.discussion_forums.models import (
     Forum,
@@ -38,7 +41,10 @@ from tests.archives_tests.factories import (
     ArchiveFactory,
     ArchivePermissionRequestFactory,
 )
-from tests.cases_tests.factories import RawImageUploadSessionFactory
+from tests.cases_tests.factories import (
+    DICOMImageSetUploadFactory,
+    RawImageUploadSessionFactory,
+)
 from tests.discussion_forums_tests.factories import (
     ForumFactory,
     ForumPostFactory,
@@ -217,6 +223,7 @@ MODEL_TO_FACTORY = {
     Phase: (PhaseFactory, {}),
     Submission: (SubmissionFactory, {}),
     RawImageUploadSession: (RawImageUploadSessionFactory, {}),
+    DICOMImageSetUpload: (DICOMImageSetUploadFactory, {}),
     User: (UserFactory, {}),
 }
 
@@ -429,6 +436,17 @@ MODELS_FOR_NOTIFICATIONS_CLEANUP = [
         {
             "action_object": {
                 "factory": RawImageUploadSessionFactory,
+                "kwargs": {},
+            },
+        },
+    ),
+    (
+        DICOMImageSetUpload,
+        "action_object",
+        Notification.Type.IMAGE_IMPORT_STATUS,
+        {
+            "action_object": {
+                "factory": DICOMImageSetUploadFactory,
                 "kwargs": {},
             },
         },

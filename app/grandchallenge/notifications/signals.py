@@ -13,7 +13,10 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
 )
 from grandchallenge.archives.models import Archive, ArchivePermissionRequest
-from grandchallenge.cases.models import RawImageUploadSession
+from grandchallenge.cases.models import (
+    DICOMImageSetUpload,
+    RawImageUploadSession,
+)
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.discussion_forums.models import (
     Forum,
@@ -63,6 +66,7 @@ def add_permissions(*, instance, created, **_):
 @receiver(pre_delete, sender=Phase)
 @receiver(pre_delete, sender=Submission)
 @receiver(pre_delete, sender=RawImageUploadSession)
+@receiver(pre_delete, sender=DICOMImageSetUpload)
 def clean_up_notifications(instance, **_):
     ct = ContentType.objects.filter(
         app_label=instance._meta.app_label, model=instance._meta.model_name

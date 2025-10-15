@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import factory
 import pytest
+from actstream.actions import is_following
 from botocore.stub import Stubber
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned
@@ -18,6 +19,7 @@ from grandchallenge.cases.models import (
     JobSummary,
     generate_dicom_id_suffix,
 )
+from grandchallenge.notifications.models import Notification
 from tests.cases_tests.factories import (
     DICOMImageSetFactory,
     DICOMImageSetUploadFactory,
@@ -777,3 +779,22 @@ def test_convert_image_set_to_internal(settings):
 
     assert image.dicom_image_set == dicom_image_set
     assert image.name == "foo"
+
+
+@pytest.mark.django_db
+def test_failed_dicom_image_set_upload_sends_notification():
+    assert Notification.objects.count() == 0
+
+    upload = DICOMImageSetUploadFactory()
+
+    upload.mark_failed(error_message="Some error message")
+
+    assert is_following(
+        user=upload.creator,
+        obj=upload,
+    )
+    assert Notification.objects.count() == 1
+    notification = Notification.objects.first()
+    assert notification.user == upload.creator
+    assert notification.message == "DICOM import failed."
+    assert notification.description == "Some error message"
