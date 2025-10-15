@@ -595,7 +595,10 @@ def test_add_dicom_image_set_to_object_updates_upload_on_validation_fail(
     assert "some_async_task" not in str(callbacks)
     upload.refresh_from_db()
     assert upload.status == DICOMImageSetUploadStatusChoices.FAILED
-    # assert upload.error_message == error_message
+    assert (
+        upload.error_message
+        == f"Image validation for socket {ci.title} failed with error: Image does not exist. "
+    )
 
 
 @pytest.mark.django_db
