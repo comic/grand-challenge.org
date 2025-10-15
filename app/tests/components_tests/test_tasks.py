@@ -372,7 +372,7 @@ def some_async_task(foo):
 
 
 @pytest.mark.parametrize(
-    "object_type, extra_object_kwargs",
+    "object_factory, factory_kwargs",
     [
         (DisplaySetFactory, {}),
         (ArchiveItemFactory, {}),
@@ -386,13 +386,13 @@ def some_async_task(foo):
 def test_add_image_to_object(
     settings,
     django_capture_on_commit_callbacks,
-    object_type,
-    extra_object_kwargs,
+    object_factory,
+    factory_kwargs,
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    obj = object_type(**extra_object_kwargs)
+    obj = object_factory(**factory_kwargs)
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
     ImageFactory(origin=us)
@@ -415,24 +415,31 @@ def test_add_image_to_object(
 
 
 @pytest.mark.parametrize(
-    "object_type",
+    "object_factory, factory_kwargs",
     [
-        DisplaySetFactory,
-        ArchiveItemFactory,
+        (DisplaySetFactory, {}),
+        (ArchiveItemFactory, {}),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 10, "status": Job.VALIDATING_INPUTS},
+        ),
     ],
 )
 @pytest.mark.django_db
 def test_add_image_to_object_updates_upload_session_on_validation_fail(
-    settings, django_capture_on_commit_callbacks, object_type
+    settings,
+    django_capture_on_commit_callbacks,
+    object_factory,
+    factory_kwargs,
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    obj = object_type()
+    obj = object_factory(**factory_kwargs)
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
 
-    error_message = f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image. "
+    error_message = f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image."
 
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
@@ -463,11 +470,9 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    obj = AlgorithmJobFactory(time_limit=10)
+    job = AlgorithmJobFactory(time_limit=10)
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
-
-    error_message = f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image. "
 
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
@@ -475,23 +480,20 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         add_image_to_object(
-            app_label=obj._meta.app_label,
-            model_name=obj._meta.model_name,
+            app_label=job._meta.app_label,
+            model_name=job._meta.model_name,
             upload_session_pk=us.pk,
-            object_pk=obj.pk,
+            object_pk=job.pk,
             interface_pk=ci.pk,
             linked_task=linked_task,
         )
 
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
-    us.refresh_from_db()
-    assert us.status == RawImageUploadSession.FAILURE
-    assert us.error_message == error_message
-    obj.refresh_from_db()
-    assert obj.status == obj.CANCELLED
-    assert obj.error_message == "One or more of the inputs failed validation."
+    job.refresh_from_db()
+    assert job.status == job.CANCELLED
+    assert job.error_message == "One or more of the inputs failed validation."
     assert "Image imports should result in a single image" in str(
-        obj.detailed_error_message
+        job.detailed_error_message
     )
     assert "some_async_task" not in str(callbacks)
 
@@ -563,7 +565,7 @@ def test_task_handles_deleted_object(
 
 
 @pytest.mark.parametrize(
-    "object_type, extra_object_kwargs",
+    "object_factory, factory_kwargs",
     [
         (DisplaySetFactory, {}),
         (ArchiveItemFactory, {}),
@@ -577,14 +579,14 @@ def test_task_handles_deleted_object(
 def test_add_file_to_object(
     settings,
     django_capture_on_commit_callbacks,
-    object_type,
-    extra_object_kwargs,
+    object_factory,
+    factory_kwargs,
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     creator = UserFactory()
-    obj = object_type(**extra_object_kwargs)
+    obj = object_factory(**factory_kwargs)
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
     )
@@ -621,7 +623,7 @@ def test_add_file_to_object(
 
 
 @pytest.mark.parametrize(
-    "object_type",
+    "object_factory",
     [
         DisplaySetFactory,
         ArchiveItemFactory,
@@ -631,13 +633,13 @@ def test_add_file_to_object(
 def test_add_file_to_object_sends_notification_on_validation_fail(
     settings,
     django_capture_on_commit_callbacks,
-    object_type,
+    object_factory,
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
     creator = UserFactory()
-    obj = object_type()
+    obj = object_factory()
     linked_task = some_async_task.signature(
         kwargs={"foo": "bar"}, immutable=True
     )
@@ -669,7 +671,6 @@ def test_add_file_to_object_sends_notification_on_validation_fail(
         )
 
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
-    us.refresh_from_db()
     assert Notification.objects.count() == 1
     assert (
         f"Validation for socket {ci.title} failed."
