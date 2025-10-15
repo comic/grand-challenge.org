@@ -208,8 +208,10 @@ MODEL_TO_FACTORY = {
     Archive: (ArchiveFactory, {}),
     Algorithm: (AlgorithmFactory, {}),
     ReaderStudy: (ReaderStudyFactory, {}),
+    Forum: (ForumFactory, {}),
     ForumTopic: (ForumTopicFactory, {}),
     ForumPost: (ForumPostFactory, {}),
+    Challenge: (ChallengeFactory, {}),
     RegistrationRequest: (RegistrationRequestFactory, {}),
     Evaluation: (EvaluationFactory, {"time_limit": 10}),
     Phase: (PhaseFactory, {}),
@@ -222,9 +224,6 @@ MODEL_TO_FACTORY = {
 def test_all_registered_models_have_factory_coverage():
     """Ensure all models registered with actstream have corresponding factories for the below test."""
     registered_models = set(registry.registry.keys())
-    # Exclude Challenge and Forum models since we have separate tests for those
-    registered_models.discard(Challenge)
-    registered_models.discard(Forum)
 
     factory_covered_models = set(MODEL_TO_FACTORY.keys())
 
@@ -253,44 +252,14 @@ def test_follow_clean_up_after_object_removal(factory, extra_factory_kwargs):
 
     assert is_following(u, o1)
 
+    if isinstance(o1, Challenge):
+        Page.objects.all().delete()
+    elif isinstance(o1, Forum):
+        Page.objects.all().delete()
+        o1.linked_challenge.delete()
     o1.delete()
 
     assert not is_following(u, o1)
-
-
-@pytest.mark.django_db
-def test_follow_clean_up_after_forum_removal():
-    # test separately because test logic differs slightly
-    u = UserFactory()
-    f1 = ForumFactory()
-    f2 = ForumFactory()
-    follow(u, f1, send_action=False)
-    follow(u, f2, send_action=False)
-
-    assert is_following(u, f1)
-
-    Page.objects.all().delete()
-    f1.linked_challenge.delete()
-    f1.delete()
-
-    assert not is_following(u, f1)
-
-
-@pytest.mark.django_db
-def test_follow_clean_up_after_challenge_removal():
-    # test separately because test logic differs slightly
-    u = UserFactory()
-    c1 = ChallengeFactory()
-    c2 = ChallengeFactory()
-    follow(u, c1, send_action=False)
-    follow(u, c2, send_action=False)
-
-    assert is_following(u, c1)
-
-    Page.objects.all().delete()
-    c1.delete()
-
-    assert not is_following(u, c1)
 
 
 @pytest.mark.django_db
