@@ -597,7 +597,7 @@ def test_add_dicom_image_set_to_object_updates_upload_on_validation_fail(
     assert upload.status == DICOMImageSetUploadStatusChoices.FAILED
     assert (
         upload.error_message
-        == f"Image validation for socket {ci.title} failed with error: Image does not exist. "
+        == f"Image validation for socket {ci.title} failed with error: Image does not exist"
     )
 
 
