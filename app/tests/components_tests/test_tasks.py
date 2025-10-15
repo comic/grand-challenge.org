@@ -677,8 +677,8 @@ def test_add_dicom_image_set_to_object_sends_notification_on_validation_fail(
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     assert Notification.objects.count() == 1
     assert (
-        f"Validation for socket {ci.title} failed."
-        in Notification.objects.first().message
+        f"Image validation for socket {ci.title} failed with error: Image does not exist"
+        in Notification.objects.first().description
     )
     assert "some_async_task" not in str(callbacks)
 
