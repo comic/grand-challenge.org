@@ -246,9 +246,6 @@ def test_all_registered_models_have_factory_coverage():
     ids=[model._meta.label for model in MODEL_TO_FACTORY.keys()],
 )
 def test_follow_clean_up_after_object_removal(factory, extra_factory_kwargs):
-    # IMPORTANT:
-    # if a new model needs to be added to clean_up_follows to satisfy this test,
-    # this model should also be added to clean_up_notifications !
     u = UserFactory()
     o1, o2 = factory.create_batch(2, **extra_factory_kwargs)
     follow(u, o1, send_action=False)
