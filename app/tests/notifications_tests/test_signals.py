@@ -374,6 +374,16 @@ MODELS_FOR_NOTIFICATIONS_CLEANUP = [
         },
     ),
     (
+        Forum,
+        "target",
+        Notification.Type.FORUM_POST,
+        {
+            "actor": {"factory": UserFactory, "kwargs": {}},
+            "target": {"factory": ForumFactory, "kwargs": {}},
+            "action_object": {"factory": ForumTopicFactory, "kwargs": {}},
+        },
+    ),
+    (
         ForumTopic,
         "action_object",
         Notification.Type.FORUM_POST,
@@ -390,6 +400,24 @@ MODELS_FOR_NOTIFICATIONS_CLEANUP = [
         {
             "actor": {"factory": UserFactory, "kwargs": {}},
             "target": {"factory": ForumTopicFactory, "kwargs": {}},
+        },
+    ),
+    (
+        Challenge,
+        "target",
+        Notification.Type.NEW_ADMIN,
+        {
+            "target": {"factory": ChallengeFactory, "kwargs": {}},
+            "action_object": {"factory": UserFactory, "kwargs": {}},
+        },
+    ),
+    (
+        RegistrationRequest,
+        "target",
+        Notification.Type.ACCESS_REQUEST,
+        {
+            "actor": {"factory": UserFactory, "kwargs": {}},
+            "target": {"factory": ChallengeFactory, "kwargs": {}},
         },
     ),
     (
@@ -499,32 +527,17 @@ def test_notification_clean_up_after_object_removal(
     notification_kwargs.update(object_kwargs)
     notification = NotificationFactory(**notification_kwargs)
 
-    getattr(notification, object_reference).delete()
+    object_to_delete = getattr(notification, object_reference)
+    if isinstance(object_to_delete, Challenge):
+        Page.objects.all().delete()
+    elif isinstance(object_to_delete, Forum):
+        Page.objects.all().delete()
+        object_to_delete.linked_challenge.delete()
+    object_to_delete.delete()
 
     assert not Notification.objects.filter(
         pk=notification.pk
     ).exists(), f"These registered models should be added to notifications.signals.clean_up_notifications: {model}. "
-
-
-@pytest.mark.django_db
-def test_forum_post_notification_clean_up_after_forum_removal():
-    u = UserFactory()
-    forum = ForumFactory()
-
-    notification = NotificationFactory(
-        user=u,
-        type=Notification.Type.FORUM_POST,
-        actor=UserFactory(),
-        target=forum,
-        message="foo",
-        action_object=ForumTopicFactory(),
-    )
-
-    Page.objects.all().delete()
-    forum.linked_challenge.delete()
-    forum.delete()
-
-    assert not Notification.objects.filter(pk=notification.pk).exists()
 
 
 @pytest.mark.django_db
