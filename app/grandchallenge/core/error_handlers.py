@@ -96,20 +96,9 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
     def __init__(self, *args, upload_session, linked_object=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        from grandchallenge.algorithms.models import Job
-        from grandchallenge.cases.models import RawImageUploadSession
-        from grandchallenge.evaluation.models import Evaluation
-
-        if not upload_session or not isinstance(
-            upload_session, RawImageUploadSession
-        ):
+        if not upload_session:
             raise RuntimeError(
                 "You need to provide a RawImageUploadSession instance to this error handler."
-            )
-
-        if not isinstance(linked_object, (type(None), Job, Evaluation)):
-            raise RuntimeError(
-                "The linked object must be a Job or Evaluation instance."
             )
 
         self._upload_session = upload_session
@@ -146,9 +135,8 @@ class DICOMImageSetUploadErrorHandler(ErrorHandler):
     def __init__(self, *args, dicom_image_set_upload, linked_object, **kwargs):
         super().__init__(*args, **kwargs)
 
-        from grandchallenge.algorithms.models import Job
         from grandchallenge.cases.models import DICOMImageSetUpload
-        from grandchallenge.evaluation.models import Evaluation
+        from grandchallenge.components.models import ComponentJob
 
         if not dicom_image_set_upload or not isinstance(
             dicom_image_set_upload, DICOMImageSetUpload
@@ -157,13 +145,12 @@ class DICOMImageSetUploadErrorHandler(ErrorHandler):
                 "You need to provide a DICOMImageSetUpload instance to this error handler."
             )
 
-        if not isinstance(linked_object, (type(None), Job, Evaluation)):
-            raise RuntimeError(
-                "The linked object must be a Job or Evaluation instance."
-            )
-
         self._dicom_image_set_upload = dicom_image_set_upload
-        self._linked_object = linked_object
+
+        if isinstance(linked_object, ComponentJob):
+            self._linked_object = linked_object
+        else:
+            self._linked_object = None
 
     def handle_error(self, *, error_message, interface=None, user=None):
         if interface:

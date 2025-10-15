@@ -2662,12 +2662,12 @@ class CIVForObjectMixin:
         from grandchallenge.evaluation.models import Evaluation
         from grandchallenge.reader_studies.models import DisplaySet
 
-        if linked_object and isinstance(linked_object, RawImageUploadSession):
+        if isinstance(linked_object, RawImageUploadSession):
             return RawImageUploadSessionErrorHandler(
                 upload_session=linked_object,
                 linked_object=self,
             )
-        elif linked_object and isinstance(linked_object, DICOMImageSetUpload):
+        elif isinstance(linked_object, DICOMImageSetUpload):
             return DICOMImageSetUploadErrorHandler(
                 dicom_image_set_upload=linked_object,
                 linked_object=self,
