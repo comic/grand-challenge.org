@@ -13,7 +13,7 @@ from grandchallenge.components.models import (
     CIVSetObjectPermissionsMixin,
     CIVSetStringRepresentationMixin,
     ComponentInterfaceValue,
-    ValuesForInterfacesMixin,
+    LinkedComponentInterfacesMixin,
 )
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
@@ -40,7 +40,7 @@ class Archive(
     UUIDModel,
     TitleSlugDescriptionModel,
     HangingProtocolMixin,
-    ValuesForInterfacesMixin,
+    LinkedComponentInterfacesMixin,
 ):
     """Model for archive. Contains a collection of images."""
 

@@ -139,7 +139,7 @@ class ComponentInterfaceAutocomplete(
             qs = (
                 ComponentInterface.objects.all()
                 .filter(**extra_filter_kwargs)
-                .exclude(slug__in=obj.values_for_interfaces.keys())
+                .exclude(slug__in=obj.interfaces)
                 .exclude(pk__in=self.forwarded.values())
             )
 
