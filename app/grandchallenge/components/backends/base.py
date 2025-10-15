@@ -703,6 +703,7 @@ class Executor(ABC):
         stored_transfer_syntax_uid,
         target_key,
     ):
+        # See https://docs.aws.amazon.com/healthimaging/latest/devguide/dicomweb-retrieve-instance.html
         dicom_file_url = (
             f"https://dicom-medical-imaging.{settings.AWS_DEFAULT_REGION}.amazonaws.com"
             f"/datastore/{settings.AWS_HEALTH_IMAGING_DATASTORE_ID}"
