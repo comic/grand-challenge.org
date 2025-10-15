@@ -10,6 +10,7 @@ import aioboto3
 import botocore
 import pytest
 from botocore.auth import SigV4Auth
+from django.core.exceptions import SuspiciousFileOperation
 from django.template.defaultfilters import title
 
 from grandchallenge.components.backends.base import (
@@ -662,3 +663,49 @@ def test_dicom_get_provisioning_tasks():
             "pk": f"test-test-{job_pk}",
         },
     ]
+
+
+@pytest.mark.django_db
+def test_dodgy_sop_instance_uid():
+    job_pk = uuid4()
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+    )
+
+    dicom_interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET,
+        relative_path="images/dicom",
+    )
+
+    dicom_civ = dicom_interface.create_instance(
+        image=ImageFactory(
+            dicom_image_set=DICOMImageSetFactory(
+                image_frame_metadata=[
+                    {
+                        "image_frame_id": "123",
+                        "frame_size_in_bytes": 1337,
+                        "study_instance_uid": "123",
+                        "series_instance_uid": "123",
+                        "sop_instance_uid": "../fds",
+                        "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+                    }
+                ]
+            )
+        )
+    )
+
+    with pytest.raises(SuspiciousFileOperation) as exec_info:
+        executor._get_provisioning_tasks(
+            input_civs=[dicom_civ], input_prefixes={}
+        )
+
+    assert (
+        "images/fds.dcm) is located outside of the base path component"
+        in str(exec_info.value)
+    )

@@ -559,15 +559,7 @@ class Executor(ABC):
         input_prefixes,
         filename=None,
     ):
-        relative_path = Path(civ.interface.relative_path)
-
-        if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
-            if filename:
-                relative_path /= filename
-            else:
-                raise ValueError("filename must be set for images")
-        elif filename:
-            raise ValueError("filename must only be set for images")
+        relative_path = civ.interface.relative_path
 
         if str(civ.pk) in input_prefixes:
             key = safe_join(
@@ -575,6 +567,14 @@ class Executor(ABC):
             )
         else:
             key = safe_join(self._io_prefix, relative_path)
+
+        if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
+            if filename:
+                key = safe_join(key, filename)
+            else:
+                raise ValueError("filename must be set for images")
+        elif filename:
+            raise ValueError("filename must only be set for images")
 
         return key
 
