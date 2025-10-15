@@ -38,11 +38,9 @@
   <h1>Source code for grandchallenge.reader_studies.models</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">ceil</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">actstream.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Follow</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Group</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.contenttypes.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContentType</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ObjectDoesNotExist</span><span class="p">,</span> <span class="n">ValidationError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.core.validators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">MaxLengthValidator</span><span class="p">,</span>
@@ -571,13 +569,6 @@
             <span class="n">workstation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation</span><span class="p">,</span>
         <span class="p">)</span></div>
 
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">ct</span> <span class="o">=</span> <span class="n">ContentType</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">app_label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-        <span class="n">Follow</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="n">ct</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="ReaderStudy.is_editor">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy.is_editor">[docs]</a>
@@ -2269,13 +2260,6 @@
         <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
             <span class="n">process_access_request</span><span class="p">(</span><span class="n">request_object</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span></div>
 
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">ct</span> <span class="o">=</span> <span class="n">ContentType</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-            <span class="n">app_label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-        <span class="n">Follow</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">object_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">content_type</span><span class="o">=</span><span class="n">ct</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">RequestBase</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
         <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;reader_study&quot;</span><span class="p">,</span> <span class="s2">&quot;user&quot;</span><span class="p">),)</span></div>
