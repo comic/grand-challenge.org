@@ -45,9 +45,13 @@ from grandchallenge.core.utils.error_messages import (
 
 logger = logging.getLogger(__name__)
 
-MAX_SPOOL_SIZE = 1_000_000_000  # 1GB
+MAX_SPOOL_SIZE = settings.GIGABYTE
 
-CONCURRENCY = 50
+# For multipart uploads the minimum chunk size is 5 MB
+# There is a maximum of 10_000 chunks
+# Using a chunk size of 5 MB results in a maximum file size of 50 GB
+S3_CHUNK_SIZE = 5 * settings.MEGABYTE
+ASYNC_CONCURRENCY = 50
 ASYNC_BOTO_CONFIG = Config(max_pool_connections=120)
 
 
@@ -161,6 +165,62 @@ async def s3_upload_content(*, content, bucket, key, semaphore, s3_client):
                 Bucket=bucket,
                 Key=key,
             )
+
+
+async def s3_stream_response(
+    *,
+    request_kwargs,
+    bucket,
+    key,
+    semaphore,
+    s3_client,
+    httpx_client,
+):
+    async with semaphore:
+        async with httpx_client.stream(**request_kwargs) as resp:
+            resp.raise_for_status()
+
+            multipart_upload = await s3_client.create_multipart_upload(
+                Bucket=bucket, Key=key
+            )
+
+            upload_id = multipart_upload["UploadId"]
+            parts = []
+            part_number = 1
+
+            try:
+                async for chunk in resp.aiter_bytes(chunk_size=S3_CHUNK_SIZE):
+                    if not chunk:
+                        continue
+
+                    part_response = await s3_client.upload_part(
+                        Bucket=bucket,
+                        Key=key,
+                        PartNumber=part_number,
+                        UploadId=upload_id,
+                        Body=chunk,
+                    )
+
+                    parts.append(
+                        {
+                            "ETag": part_response["ETag"],
+                            "PartNumber": part_number,
+                        }
+                    )
+                    part_number += 1
+
+                await s3_client.complete_multipart_upload(
+                    Bucket=bucket,
+                    Key=key,
+                    UploadId=upload_id,
+                    MultipartUpload={"Parts": parts},
+                )
+
+            except Exception:
+                await s3_client.abort_multipart_upload(
+                    Bucket=bucket, Key=key, UploadId=upload_id
+                )
+                raise
 
 
 class Executor(ABC):
@@ -399,7 +459,7 @@ class Executor(ABC):
 
     @async_to_sync
     async def _provision(self, *, tasks):
-        semaphore = asyncio.Semaphore(CONCURRENCY)
+        semaphore = asyncio.Semaphore(ASYNC_CONCURRENCY)
         session = aioboto3.Session()
 
         async with session.client(

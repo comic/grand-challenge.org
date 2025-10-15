@@ -93,6 +93,7 @@ dev = [
     "playwright",
     "pytest-rerunfailures",
     "sphinx-exec-code",
+    "pytest-asyncio",
 ]
 
 [tool.uv]
