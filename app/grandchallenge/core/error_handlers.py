@@ -93,7 +93,7 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
     Use this error handler instead of the JobCIVErrorHandler whenever there is an upload_session object.
     """
 
-    def __init__(self, *args, upload_session, linked_object=None, **kwargs):
+    def __init__(self, *args, upload_session, linked_object, **kwargs):
         super().__init__(*args, **kwargs)
 
         if not upload_session:
