@@ -15,7 +15,10 @@ from uuid import UUID
 import aioboto3
 import boto3
 import botocore
+import httpx
 from asgiref.sync import async_to_sync
+from botocore.auth import SigV4Auth
+from botocore.awsrequest import AWSRequest
 from botocore.config import Config
 from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
@@ -74,6 +77,21 @@ def duration_to_millicents(*, duration, usd_cents_per_hour):
         * 1000
         * settings.COMPONENTS_USD_TO_EUR
     )
+
+
+def serialize_aws_request(request):
+    """
+    The kwargs that will be passed to httpx.stream or httpx.request
+    to generate a response from an AWSRequest instance.
+
+    External clients use this so the kwargs should not be changed.
+    """
+    return {
+        "url": request.url,
+        "method": request.method,
+        "data": request.data,
+        "headers": dict(request.headers.items()),
+    }
 
 
 def list_and_delete_objects_from_prefix(*, s3_client, bucket, prefix):
@@ -145,6 +163,7 @@ async def s3_copy(
     target_key,
     semaphore,
     s3_client,
+    httpx_client,  # Unused, but must be present to match signature
 ):
     async with semaphore:
         await s3_client.copy(
@@ -154,7 +173,15 @@ async def s3_copy(
         )
 
 
-async def s3_upload_content(*, content, bucket, key, semaphore, s3_client):
+async def s3_upload_content(
+    *,
+    content,
+    bucket,
+    key,
+    semaphore,
+    s3_client,
+    httpx_client,  # Unused, but must be present to match signature
+):
     async with semaphore:
         with io.BytesIO() as f:
             f.write(content)
@@ -461,20 +488,23 @@ class Executor(ABC):
     async def _provision(self, *, tasks):
         semaphore = asyncio.Semaphore(ASYNC_CONCURRENCY)
         session = aioboto3.Session()
+        timeout = httpx.Timeout(60.0)
 
         async with session.client(
             "s3",
             endpoint_url=settings.AWS_S3_ENDPOINT_URL,
             config=ASYNC_BOTO_CONFIG,
         ) as s3_client:
-            async with asyncio.TaskGroup() as task_group:
-                for task in tasks:
-                    task_group.create_task(
-                        task(
-                            semaphore=semaphore,
-                            s3_client=s3_client,
+            async with httpx.AsyncClient(timeout=timeout) as httpx_client:
+                async with asyncio.TaskGroup() as task_group:
+                    for task in tasks:
+                        task_group.create_task(
+                            task(
+                                semaphore=semaphore,
+                                s3_client=s3_client,
+                                httpx_client=httpx_client,
+                            )
                         )
-                    )
 
     def _get_provisioning_tasks(self, *, input_civs, input_prefixes):
         provisioning_tasks = []
@@ -539,6 +569,15 @@ class Executor(ABC):
     def _get_civ_provisioning_tasks(self, *, civ, input_prefixes):
         if civ.interface.super_kind == civ.interface.SuperKind.IMAGE:
             if civ.interface.is_dicom_image_kind:
+                session = boto3.Session(
+                    region_name=settings.AWS_DEFAULT_REGION,
+                )
+                medical_imaging_auth = SigV4Auth(
+                    credentials=session.get_credentials(),
+                    service_name="medical-imaging",
+                    region_name=settings.AWS_DEFAULT_REGION,
+                )
+
                 image_set_id = civ.image.dicom_image_set.image_set_id
 
                 for (
@@ -558,6 +597,7 @@ class Executor(ABC):
                     )
 
                     yield self._get_copy_sop_instance_task(
+                        medical_imaging_auth=medical_imaging_auth,
                         image_set_id=image_set_id,
                         study_instance_uid=study_instance_uid,
                         series_instance_uid=series_instance_uid,
@@ -655,6 +695,7 @@ class Executor(ABC):
     @staticmethod
     def _get_copy_sop_instance_task(
         *,
+        medical_imaging_auth,
         image_set_id,
         study_instance_uid,
         series_instance_uid,
@@ -662,7 +703,33 @@ class Executor(ABC):
         stored_transfer_syntax_uid,
         target_key,
     ):
-        raise NotImplementedError
+        dicom_file_url = (
+            f"https://dicom-medical-imaging.{settings.AWS_DEFAULT_REGION}.amazonaws.com"
+            f"/datastore/{settings.AWS_HEALTH_IMAGING_DATASTORE_ID}"
+            f"/studies/{study_instance_uid}"
+            f"/series/{series_instance_uid}"
+            f"/instances/{sop_instance_uid}"
+            f"?imageSetId={image_set_id}"
+        )
+
+        request = AWSRequest(
+            method="GET",
+            url=dicom_file_url,
+            headers={
+                "Accept": f"application/dicom; transfer-syntax={stored_transfer_syntax_uid}"
+            },
+        )
+        medical_imaging_auth.add_auth(request)
+
+        return CIVProvisioningTask(
+            task=functools.partial(
+                s3_stream_response,
+                request_kwargs=serialize_aws_request(request),
+                bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                key=target_key,
+            ),
+            key=target_key,
+        )
 
     @staticmethod
     def _get_copy_input_object_task(*, src, target_key):

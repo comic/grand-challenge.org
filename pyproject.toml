@@ -62,6 +62,7 @@ dependencies = [
     "grand-challenge-dicom-de-identifier",
     "pydantic",
     "aioboto3",
+    "httpx",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"
