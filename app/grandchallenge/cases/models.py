@@ -1,4 +1,3 @@
-import copy
 import gzip
 import hashlib
 import json
@@ -183,7 +182,6 @@ class RawImageUploadSession(UUIDModel):
         status,
         error_message=None,
         detailed_error_message=None,
-        linked_object=None,
     ):
         self.status = status
 
@@ -210,24 +208,6 @@ class RawImageUploadSession(UUIDModel):
                 message=error_message,
                 description=self.error_message,
                 action_object=self,
-            )
-        from grandchallenge.components.models import ComponentJob
-
-        if (
-            self.error_message
-            and linked_object
-            and isinstance(linked_object, ComponentJob)
-        ):
-            detailed_error_message_dict = copy.deepcopy(
-                linked_object.detailed_error_message
-            )
-            for key, val in detailed_error_message.items():
-                detailed_error_message_dict[key] = val
-
-            linked_object.update_status(
-                status=linked_object.CANCELLED,
-                error_message=error_message,
-                detailed_error_message=detailed_error_message_dict,
             )
 
     def process_images(
