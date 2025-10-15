@@ -1,12 +1,21 @@
+import asyncio
 import io
 import json
 import os
+from unittest.mock import Mock
 from uuid import uuid4
 from zipfile import ZipInfo
 
+import aioboto3
+import botocore
 import pytest
 from django.template.defaultfilters import title
 
+from grandchallenge.components.backends.base import (
+    ASYNC_BOTO_CONFIG,
+    ASYNC_CONCURRENCY,
+    s3_stream_response,
+)
 from grandchallenge.components.backends.docker_client import _get_cpuset_cpus
 from grandchallenge.components.backends.utils import (
     _filter_members,
@@ -322,3 +331,109 @@ def test_invocation_json(settings):
             "pk": f"test-test-{job_pk}",
         },
     ]
+
+
+class _DummyStreamCM:
+    """Async context manager to mimic httpx_client.stream(...)."""
+
+    def __init__(self, resp):
+        self.resp = resp
+
+    async def __aenter__(self):
+        return self.resp
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+
+def _make_resp(chunks):
+    """
+    Create a fake httpx response object:
+    - raise_for_status is a sync mock
+    - aiter_bytes returns an async generator that yields items in `chunks`
+      (items can be bytes or Exception instances to raise).
+    """
+    resp = Mock()
+    resp.raise_for_status = Mock()
+
+    async def _aiter(chunk_size=None):
+        for c in chunks:
+            if isinstance(c, Exception):
+                raise c
+            yield c
+
+    resp.aiter_bytes = lambda chunk_size=None: _aiter(chunk_size)
+    return resp
+
+
+@pytest.mark.asyncio
+async def test_s3_stream_response_writes_object_to_s3_endpoint(settings):
+    document = [
+        b"h" * 5 * settings.MEGABYTE,
+        b"",
+        b"w" * 5 * settings.MEGABYTE,
+        b"!" * 5 * settings.MEGABYTE,
+    ]
+    resp = _make_resp(document)
+    httpx_client = Mock()
+    httpx_client.stream = Mock(return_value=_DummyStreamCM(resp))
+
+    semaphore = asyncio.Semaphore(ASYNC_CONCURRENCY)
+    session = aioboto3.Session()
+
+    key = f"test-{uuid4()}"
+    bucket = settings.COMPONENTS_INPUT_BUCKET_NAME
+
+    async with session.client(
+        "s3",
+        endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+        config=ASYNC_BOTO_CONFIG,
+    ) as s3_client:
+        await s3_stream_response(
+            request_kwargs={"url": "http://example.local/resource"},
+            bucket=bucket,
+            key=key,
+            httpx_client=httpx_client,
+            s3_client=s3_client,
+            semaphore=semaphore,
+        )
+
+        obj = await s3_client.get_object(Bucket=bucket, Key=key)
+        body = await obj["Body"].read()
+        assert body == b"".join(document)
+
+
+@pytest.mark.asyncio
+async def test_s3_stream_response_aborts_on_stream_error(settings):
+    resp = _make_resp([b"part1", RuntimeError("stream-failure")])
+    httpx_client = Mock()
+    httpx_client.stream = Mock(return_value=_DummyStreamCM(resp))
+
+    semaphore = asyncio.Semaphore(ASYNC_CONCURRENCY)
+    session = aioboto3.Session()
+
+    key = f"test-{uuid4()}"
+    bucket = settings.COMPONENTS_INPUT_BUCKET_NAME
+
+    async with session.client(
+        "s3",
+        endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+        config=ASYNC_BOTO_CONFIG,
+    ) as s3_client:
+        with pytest.raises(RuntimeError, match="stream-failure"):
+            await s3_stream_response(
+                request_kwargs={"url": "http://example.local/resource"},
+                bucket=bucket,
+                key=key,
+                httpx_client=httpx_client,
+                s3_client=s3_client,
+                semaphore=semaphore,
+            )
+
+        with pytest.raises(botocore.exceptions.ClientError) as excinfo:
+            await s3_client.head_object(Bucket=bucket, Key=key)
+
+        status_code = excinfo.value.response["ResponseMetadata"][
+            "HTTPStatusCode"
+        ]
+        assert status_code == 404
