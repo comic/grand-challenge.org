@@ -9,6 +9,7 @@ from zipfile import ZipInfo
 import aioboto3
 import botocore
 import pytest
+from botocore.auth import SigV4Auth
 from django.template.defaultfilters import title
 
 from grandchallenge.components.backends.base import (
@@ -443,13 +444,6 @@ async def test_s3_stream_response_aborts_on_stream_error(settings):
 def normalize_partial(partial):
     keywords = dict(partial.keywords)
 
-    if "Authorization" in keywords.get("request_kwargs", {}).get(
-        "headers", {}
-    ):
-        keywords["request_kwargs"]["headers"][
-            "Authorization"
-        ] = "<AUTH_MASKED>"
-
     if "content" in keywords:
         keywords["content"] = json.loads(keywords["content"].decode("utf-8"))
 
@@ -525,19 +519,16 @@ def test_dicom_get_provisioning_tasks():
         sop_instance_uid = image_frame["sop_instance_uid"]
         stored_transfer_syntax_uid = image_frame["stored_transfer_syntax_uid"]
 
-        assert task["func"] == "s3_stream_response"
+        assert task["func"] == "s3_sign_request_then_stream"
         assert (
-            task["request_kwargs"]["url"]
+            task["request"].url
             == f"https://dicom-medical-imaging.eu-central-1.amazonaws.com/datastore/None/studies/{study_instance_uid}/series/{series_instance_uid}/instances/{sop_instance_uid}?imageSetId={image_set_id}"
         )
         assert (
-            task["request_kwargs"]["headers"]["Accept"]
+            task["request"].headers["Accept"]
             == f"application/dicom; transfer-syntax={stored_transfer_syntax_uid}"
         )
-        assert (
-            task["request_kwargs"]["headers"]["Authorization"]
-            == "<AUTH_MASKED>"
-        )
+        assert isinstance(task["signer"], SigV4Auth)
         assert (
             task["key"]
             == f"/io/test/test/{job_pk}/images/dicom/{sop_instance_uid}.dcm"
@@ -564,19 +555,16 @@ def test_dicom_get_provisioning_tasks():
         sop_instance_uid = image_frame["sop_instance_uid"]
         stored_transfer_syntax_uid = image_frame["stored_transfer_syntax_uid"]
 
-        assert task["func"] == "s3_stream_response"
+        assert task["func"] == "s3_sign_request_then_stream"
         assert (
-            task["request_kwargs"]["url"]
+            task["request"].url
             == f"https://dicom-medical-imaging.eu-central-1.amazonaws.com/datastore/None/studies/{study_instance_uid}/series/{series_instance_uid}/instances/{sop_instance_uid}?imageSetId={image_set_id}"
         )
         assert (
-            task["request_kwargs"]["headers"]["Accept"]
+            task["request"].headers["Accept"]
             == f"application/dicom; transfer-syntax={stored_transfer_syntax_uid}"
         )
-        assert (
-            task["request_kwargs"]["headers"]["Authorization"]
-            == "<AUTH_MASKED>"
-        )
+        assert isinstance(task["signer"], SigV4Auth)
         assert (
             task["key"]
             == f"/io/test/test/{job_pk}/prefix/2/images/dicom/{sop_instance_uid}.dcm"

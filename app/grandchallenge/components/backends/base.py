@@ -53,7 +53,9 @@ MAX_SPOOL_SIZE = settings.GIGABYTE
 # For multipart uploads the minimum chunk size is 5 MB
 # There is a maximum of 10_000 chunks
 # Using a chunk size of 5 MB results in a maximum file size of 50 GB
+# The maximum memory used will be ASYNC_CONCURRENCY * S3_CHUNK_SIZE
 S3_CHUNK_SIZE = 5 * settings.MEGABYTE
+
 ASYNC_CONCURRENCY = 50
 ASYNC_BOTO_CONFIG = Config(max_pool_connections=120)
 
@@ -192,6 +194,16 @@ async def s3_upload_content(
                 Bucket=bucket,
                 Key=key,
             )
+
+
+async def s3_sign_request_then_stream(*, request, signer, **kwargs):
+    """
+    Signed requests have a TTL of 5 minutes, so sign just before making the request
+    """
+    signer.add_auth(request)
+    await s3_stream_response(
+        request_kwargs=serialize_aws_request(request), **kwargs
+    )
 
 
 async def s3_stream_response(
@@ -720,12 +732,12 @@ class Executor(ABC):
                 "Accept": f"application/dicom; transfer-syntax={stored_transfer_syntax_uid}"
             },
         )
-        medical_imaging_auth.add_auth(request)
 
         return CIVProvisioningTask(
             task=functools.partial(
-                s3_stream_response,
-                request_kwargs=serialize_aws_request(request),
+                s3_sign_request_then_stream,
+                request=request,
+                signer=medical_imaging_auth,
                 bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
                 key=target_key,
             ),
