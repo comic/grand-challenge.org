@@ -2,12 +2,10 @@ import logging
 from datetime import datetime
 
 from actstream.actions import follow, is_following
-from actstream.models import Follow
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -383,13 +381,6 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
             groups=(self.users_group, self.editors_group),
             workstation=self.workstation,
         )
-
-    def delete(self, *args, **kwargs):
-        ct = ContentType.objects.filter(
-            app_label=self._meta.app_label, model=self._meta.model_name
-        ).get()
-        Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
-        super().delete(*args, **kwargs)
 
     def create_groups(self):
         self.editors_group = Group.objects.create(
@@ -1418,13 +1409,6 @@ class AlgorithmPermissionRequest(RequestBase):
         super().save(*args, **kwargs)
         if adding:
             process_access_request(request_object=self)
-
-    def delete(self, *args, **kwargs):
-        ct = ContentType.objects.filter(
-            app_label=self._meta.app_label, model=self._meta.model_name
-        ).get()
-        Follow.objects.filter(object_id=self.pk, content_type=ct).delete()
-        super().delete(*args, **kwargs)
 
     class Meta(RequestBase.Meta):
         unique_together = (("algorithm", "user"),)

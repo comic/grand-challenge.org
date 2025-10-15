@@ -208,8 +208,10 @@ MODEL_TO_FACTORY = {
     Archive: (ArchiveFactory, {}),
     Algorithm: (AlgorithmFactory, {}),
     ReaderStudy: (ReaderStudyFactory, {}),
+    Forum: (ForumFactory, {}),
     ForumTopic: (ForumTopicFactory, {}),
     ForumPost: (ForumPostFactory, {}),
+    Challenge: (ChallengeFactory, {}),
     RegistrationRequest: (RegistrationRequestFactory, {}),
     Evaluation: (EvaluationFactory, {"time_limit": 10}),
     Phase: (PhaseFactory, {}),
@@ -222,9 +224,6 @@ MODEL_TO_FACTORY = {
 def test_all_registered_models_have_factory_coverage():
     """Ensure all models registered with actstream have corresponding factories for the below test."""
     registered_models = set(registry.registry.keys())
-    # Exclude Challenge and Forum models since we have seperate tests for those
-    registered_models.discard(Challenge)
-    registered_models.discard(Forum)
 
     factory_covered_models = set(MODEL_TO_FACTORY.keys())
 
@@ -246,48 +245,21 @@ def test_all_registered_models_have_factory_coverage():
     ids=[model._meta.label for model in MODEL_TO_FACTORY.keys()],
 )
 def test_follow_clean_up_after_object_removal(factory, extra_factory_kwargs):
-    # IMPORTANT:
-    # if a new model needs to be added to clean_up_follows to satisfy this test,
-    # this model should also be added to clean_up_notifications !
     u = UserFactory()
     o1, o2 = factory.create_batch(2, **extra_factory_kwargs)
     follow(u, o1, send_action=False)
     follow(u, o2, send_action=False)
 
+    assert is_following(u, o1)
+
+    if isinstance(o1, Challenge):
+        Page.objects.all().delete()
+    elif isinstance(o1, Forum):
+        Page.objects.all().delete()
+        o1.linked_challenge.delete()
     o1.delete()
 
     assert not is_following(u, o1)
-
-
-@pytest.mark.django_db
-def test_follow_clean_up_after_forum_removal():
-    # test seperately because test logic differs slightly
-    u = UserFactory()
-    f1 = ForumFactory()
-    f2 = ForumFactory()
-    follow(u, f1, send_action=False)
-    follow(u, f2, send_action=False)
-
-    Page.objects.all().delete()
-    f1.linked_challenge.delete()
-    f1.delete()
-
-    assert not is_following(u, f1)
-
-
-@pytest.mark.django_db
-def test_follow_clean_up_after_challenge_removal():
-    # test seperately because test logic differs slightly
-    u = UserFactory()
-    c1 = ChallengeFactory()
-    c2 = ChallengeFactory()
-    follow(u, c1, send_action=False)
-    follow(u, c2, send_action=False)
-
-    Page.objects.all().delete()
-    c1.delete()
-
-    assert not is_following(u, c1)
 
 
 @pytest.mark.django_db
@@ -307,163 +279,227 @@ def test_notification_for_new_admin_only():
     assert Notification.objects.get().user != admin
 
 
+MODELS_FOR_NOTIFICATIONS_CLEANUP = [
+    (
+        AlgorithmPermissionRequest,
+        "target",
+        Notification.Type.REQUEST_UPDATE,
+        {
+            "target": {
+                "factory": AlgorithmPermissionRequestFactory,
+                "kwargs": {},
+            },
+        },
+    ),
+    (
+        ReaderStudyPermissionRequest,
+        "target",
+        Notification.Type.REQUEST_UPDATE,
+        {
+            "target": {
+                "factory": ReaderStudyPermissionRequestFactory,
+                "kwargs": {},
+            },
+        },
+    ),
+    (
+        ArchivePermissionRequest,
+        "target",
+        Notification.Type.REQUEST_UPDATE,
+        {
+            "target": {
+                "factory": ArchivePermissionRequestFactory,
+                "kwargs": {},
+            },
+        },
+    ),
+    (
+        Archive,
+        "target",
+        Notification.Type.ACCESS_REQUEST,
+        {
+            "actor": {"factory": UserFactory, "kwargs": {}},
+            "target": {"factory": ArchiveFactory, "kwargs": {}},
+        },
+    ),
+    (
+        Algorithm,
+        "target",
+        Notification.Type.ACCESS_REQUEST,
+        {
+            "target": {"factory": AlgorithmFactory, "kwargs": {}},
+        },
+    ),
+    (
+        ReaderStudy,
+        "target",
+        Notification.Type.ACCESS_REQUEST,
+        {
+            "actor": {"factory": UserFactory, "kwargs": {}},
+            "target": {"factory": ReaderStudyFactory, "kwargs": {}},
+        },
+    ),
+    (
+        Forum,
+        "target",
+        Notification.Type.FORUM_POST,
+        {
+            "actor": {"factory": UserFactory, "kwargs": {}},
+            "target": {"factory": ForumFactory, "kwargs": {}},
+            "action_object": {"factory": ForumTopicFactory, "kwargs": {}},
+        },
+    ),
+    (
+        ForumTopic,
+        "action_object",
+        Notification.Type.FORUM_POST,
+        {
+            "actor": {"factory": UserFactory, "kwargs": {}},
+            "target": {"factory": ForumFactory, "kwargs": {}},
+            "action_object": {"factory": ForumTopicFactory, "kwargs": {}},
+        },
+    ),
+    (
+        ForumPost,
+        "target",
+        Notification.Type.FORUM_POST_REPLY,
+        {
+            "actor": {"factory": UserFactory, "kwargs": {}},
+            "target": {"factory": ForumTopicFactory, "kwargs": {}},
+        },
+    ),
+    (
+        Challenge,
+        "target",
+        Notification.Type.NEW_ADMIN,
+        {
+            "target": {"factory": ChallengeFactory, "kwargs": {}},
+            "action_object": {"factory": UserFactory, "kwargs": {}},
+        },
+    ),
+    (
+        RegistrationRequest,
+        "target",
+        Notification.Type.ACCESS_REQUEST,
+        {
+            "actor": {"factory": UserFactory, "kwargs": {}},
+            "target": {"factory": ChallengeFactory, "kwargs": {}},
+        },
+    ),
+    (
+        Evaluation,
+        "action_object",
+        Notification.Type.EVALUATION_STATUS,
+        {
+            "actor": {"factory": UserFactory, "kwargs": {}},
+            "target": {"factory": PhaseFactory, "kwargs": {}},
+            "action_object": {
+                "factory": EvaluationFactory,
+                "kwargs": {"time_limit": 10},
+            },
+        },
+    ),
+    (
+        Phase,
+        "target",
+        Notification.Type.EVALUATION_STATUS,
+        {
+            "actor": {"factory": UserFactory, "kwargs": {}},
+            "target": {"factory": PhaseFactory, "kwargs": {}},
+            "action_object": {
+                "factory": EvaluationFactory,
+                "kwargs": {"time_limit": 10},
+            },
+        },
+    ),
+    (
+        Submission,
+        "action_object",
+        Notification.Type.MISSING_METHOD,
+        {
+            "actor": {"factory": UserFactory, "kwargs": {}},
+            "target": {"factory": PhaseFactory, "kwargs": {}},
+            "action_object": {"factory": SubmissionFactory, "kwargs": {}},
+        },
+    ),
+    (
+        RawImageUploadSession,
+        "action_object",
+        Notification.Type.IMAGE_IMPORT_STATUS,
+        {
+            "action_object": {
+                "factory": RawImageUploadSessionFactory,
+                "kwargs": {},
+            },
+        },
+    ),
+    (
+        User,
+        "actor",
+        Notification.Type.CIV_VALIDATION,
+        {
+            "actor": {"factory": UserFactory, "kwargs": {}},
+        },
+    ),
+]
+
+
+def test_all_registered_models_have_coverage_for_notifications_cleanup():
+    """Ensure all models registered with actstream have corresponding factories for the below test."""
+    registered_models = set(registry.registry.keys())
+    covered_models = {
+        model for model, _, _, _ in MODELS_FOR_NOTIFICATIONS_CLEANUP
+    }
+
+    missing_models = registered_models - covered_models
+    extra_models = covered_models - registered_models
+
+    assert (
+        not missing_models
+    ), f"These registered models are missing coverage: {missing_models}"
+    assert (
+        not extra_models
+    ), f"These covered models are not in registry: {extra_models}"
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "object_reference, kind, actor, target, action_object, action_object_extra_kwargs",
-    [
-        [
-            "target",
-            Notification.Type.REQUEST_UPDATE,
-            None,
-            AlgorithmPermissionRequestFactory,
-            None,
-            {},
-        ],
-        [
-            "target",
-            Notification.Type.REQUEST_UPDATE,
-            None,
-            ReaderStudyPermissionRequestFactory,
-            None,
-            {},
-        ],
-        [
-            "target",
-            Notification.Type.REQUEST_UPDATE,
-            None,
-            ArchivePermissionRequestFactory,
-            None,
-            {},
-        ],
-        [
-            "target",
-            Notification.Type.ACCESS_REQUEST,
-            UserFactory,
-            ArchiveFactory,
-            None,
-            {},
-        ],
-        [
-            "target",
-            Notification.Type.ACCESS_REQUEST,
-            UserFactory,
-            AlgorithmFactory,
-            None,
-            {},
-        ],
-        [
-            "target",
-            Notification.Type.ACCESS_REQUEST,
-            UserFactory,
-            ReaderStudyFactory,
-            None,
-            {},
-        ],
-        [
-            "target",
-            Notification.Type.FORUM_POST_REPLY,
-            UserFactory,
-            ForumTopicFactory,
-            None,
-            {},
-        ],
-        [
-            "action_object",
-            Notification.Type.FORUM_POST,
-            UserFactory,
-            ForumFactory,
-            ForumTopicFactory,
-            {},
-        ],
-        [
-            "action_object",
-            Notification.Type.EVALUATION_STATUS,
-            UserFactory,
-            PhaseFactory,
-            EvaluationFactory,
-            {"time_limit": 10},
-        ],
-        [
-            "action_object",
-            Notification.Type.MISSING_METHOD,
-            UserFactory,
-            PhaseFactory,
-            SubmissionFactory,
-            {},
-        ],
-        [
-            "target",
-            Notification.Type.EVALUATION_STATUS,
-            UserFactory,
-            PhaseFactory,
-            EvaluationFactory,
-            {"time_limit": 10},
-        ],
-        [
-            "action_object",
-            Notification.Type.IMAGE_IMPORT_STATUS,
-            None,
-            None,
-            RawImageUploadSessionFactory,
-            {},
-        ],
-        [
-            "actor",
-            Notification.Type.CIV_VALIDATION,
-            UserFactory,
-            None,
-            None,
-            {},
-        ],
-    ],
+    "model, object_reference, kind, factories",
+    MODELS_FOR_NOTIFICATIONS_CLEANUP,
 )
 def test_notification_clean_up_after_object_removal(
+    model,
     object_reference,
     kind,
-    actor,
-    target,
-    action_object,
-    action_object_extra_kwargs,
+    factories,
 ):
     u = UserFactory()
 
-    notification = NotificationFactory(
-        user=u,
-        type=kind,
-        actor=actor() if actor else None,
-        target=target() if target else None,
-        message="foo",
-        action_object=(
-            action_object(**action_object_extra_kwargs)
-            if action_object
-            else None
-        ),
-    )
+    notification_kwargs = {
+        "user": u,
+        "type": kind,
+        "message": "foo",
+        "actor": None,
+        "target": None,
+        "action_object": None,
+    }
+    object_kwargs = {
+        k: v["factory"](**v["kwargs"]) for k, v in factories.items()
+    }
+    notification_kwargs.update(object_kwargs)
+    notification = NotificationFactory(**notification_kwargs)
 
-    getattr(notification, object_reference).delete()
+    object_to_delete = getattr(notification, object_reference)
+    if isinstance(object_to_delete, Challenge):
+        Page.objects.all().delete()
+    elif isinstance(object_to_delete, Forum):
+        Page.objects.all().delete()
+        object_to_delete.linked_challenge.delete()
+    object_to_delete.delete()
 
-    assert not Notification.objects.filter(pk=notification.pk).exists()
-
-
-@pytest.mark.django_db
-def test_forum_post_notification_clean_up_after_forum_removal():
-    u = UserFactory()
-    forum = ForumFactory()
-
-    notification = NotificationFactory(
-        user=u,
-        type=Notification.Type.FORUM_POST,
-        actor=UserFactory(),
-        target=forum,
-        message="foo",
-        action_object=ForumTopicFactory(),
-    )
-
-    Page.objects.all().delete()
-    forum.linked_challenge.delete()
-    forum.delete()
-
-    assert not Notification.objects.filter(pk=notification.pk).exists()
+    assert not Notification.objects.filter(
+        pk=notification.pk
+    ).exists(), f"These registered models should be added to notifications.signals.clean_up_notifications: {model}. "
 
 
 @pytest.mark.django_db

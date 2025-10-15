@@ -1,5 +1,4 @@
 from actstream.actions import follow, unfollow
-from actstream.models import Follow
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -168,13 +167,10 @@ def update_editor_follows(  # noqa: C901
 
 
 @receiver(pre_delete, sender=get_user_model())
-def clean_up_user_follows(instance, **_):
+def clean_up_user_notifications(instance, **_):
     ct = ContentType.objects.filter(
         app_label=instance._meta.app_label, model=instance._meta.model_name
     ).get()
-    Follow.objects.filter(
-        Q(object_id=instance.pk) | Q(user=instance.pk), content_type=ct
-    ).delete()
     Notification.objects.filter(
         Q(actor_object_id=instance.pk) & Q(actor_content_type=ct)
         | Q(action_object_object_id=instance.pk)
