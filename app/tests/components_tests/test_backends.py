@@ -440,56 +440,20 @@ async def test_s3_stream_response_aborts_on_stream_error(settings):
         assert status_code == 404
 
 
-def mask_headers(headers):
-    if not headers:
-        return None
+def normalize_partial(partial):
+    keywords = dict(partial.keywords)
 
-    headers = dict(headers)
+    if "Authorization" in keywords.get("request_kwargs", {}).get(
+        "headers", {}
+    ):
+        keywords["request_kwargs"]["headers"][
+            "Authorization"
+        ] = "<AUTH_MASKED>"
 
-    if "Authorization" in headers:
-        headers["Authorization"] = "<AUTH_MASKED>"
+    if "content" in keywords:
+        keywords["content"] = json.loads(keywords["content"].decode("utf-8"))
 
-    return headers
-
-
-def normalize_partial(p):
-    """
-    Turn functools.partial into a deterministic small dict suitable for assertions.
-    """
-    func_name = getattr(p, "func", None).__name__
-    kwargs = dict(getattr(p, "keywords", {}))
-
-    out = {"func": func_name}
-
-    # common s3 operations
-    if "bucket" in kwargs or "target_bucket" in kwargs:
-        # s3 copy / upload style
-        out.update(
-            {
-                "bucket": kwargs.get("bucket") or kwargs.get("target_bucket"),
-                "key": kwargs.get("key") or kwargs.get("target_key"),
-            }
-        )
-
-    # s3_stream_response has request_kwargs
-    if "request_kwargs" in kwargs:
-        request_kwargs = kwargs["request_kwargs"]
-        out.update(
-            {
-                "method": request_kwargs.get("method"),
-                "url": request_kwargs.get("url"),
-                "headers": mask_headers(request_kwargs.get("headers")),
-            }
-        )
-
-    # s3_copy source/target specifics
-    if "source_bucket" in kwargs or "source_key" in kwargs:
-        out["source_key"] = kwargs.get("source_key")
-
-    if "content" in kwargs:
-        out["content"] = json.loads(kwargs["content"].decode("utf-8"))
-
-    return out
+    return {"func": partial.func.__name__, **keywords}
 
 
 @pytest.mark.django_db
@@ -547,7 +511,7 @@ def test_dicom_get_provisioning_tasks():
     assert normalized_tasks[0]["func"] == "s3_copy"
     assert normalized_tasks[0]["source_key"] == panimage_civ.image_file
     assert (
-        normalized_tasks[0]["key"]
+        normalized_tasks[0]["target_key"]
         == f"/io/test/test/{job_pk}/images/test/example.dat"
     )
 
@@ -563,14 +527,17 @@ def test_dicom_get_provisioning_tasks():
 
         assert task["func"] == "s3_stream_response"
         assert (
-            task["url"]
+            task["request_kwargs"]["url"]
             == f"https://dicom-medical-imaging.eu-central-1.amazonaws.com/datastore/None/studies/{study_instance_uid}/series/{series_instance_uid}/instances/{sop_instance_uid}?imageSetId={image_set_id}"
         )
         assert (
-            task["headers"]["Accept"]
+            task["request_kwargs"]["headers"]["Accept"]
             == f"application/dicom; transfer-syntax={stored_transfer_syntax_uid}"
         )
-        assert task["headers"]["Authorization"] == "<AUTH_MASKED>"
+        assert (
+            task["request_kwargs"]["headers"]["Authorization"]
+            == "<AUTH_MASKED>"
+        )
         assert (
             task["key"]
             == f"/io/test/test/{job_pk}/images/dicom/{sop_instance_uid}.dcm"
@@ -581,7 +548,7 @@ def test_dicom_get_provisioning_tasks():
         normalized_tasks[6]["source_key"] == prefixed_panimage_civ.image_file
     )
     assert (
-        normalized_tasks[6]["key"]
+        normalized_tasks[6]["target_key"]
         == f"/io/test/test/{job_pk}/prefix/1/images/test/example.dat"
     )
 
@@ -599,14 +566,17 @@ def test_dicom_get_provisioning_tasks():
 
         assert task["func"] == "s3_stream_response"
         assert (
-            task["url"]
+            task["request_kwargs"]["url"]
             == f"https://dicom-medical-imaging.eu-central-1.amazonaws.com/datastore/None/studies/{study_instance_uid}/series/{series_instance_uid}/instances/{sop_instance_uid}?imageSetId={image_set_id}"
         )
         assert (
-            task["headers"]["Accept"]
+            task["request_kwargs"]["headers"]["Accept"]
             == f"application/dicom; transfer-syntax={stored_transfer_syntax_uid}"
         )
-        assert task["headers"]["Authorization"] == "<AUTH_MASKED>"
+        assert (
+            task["request_kwargs"]["headers"]["Authorization"]
+            == "<AUTH_MASKED>"
+        )
         assert (
             task["key"]
             == f"/io/test/test/{job_pk}/prefix/2/images/dicom/{sop_instance_uid}.dcm"
