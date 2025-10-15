@@ -341,7 +341,9 @@ class SingleCIVForm(Form):
         qs = (
             ComponentInterface.objects.all()
             .filter(**socket_filter_kwargs)
-            .difference(base_obj.linked_component_interfaces)
+            .exclude(
+                slug__in=base_obj.linked_component_interfaces.values("slug")
+            )
         )
 
         if interface:
