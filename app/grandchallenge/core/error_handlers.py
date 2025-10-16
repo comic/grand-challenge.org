@@ -97,7 +97,6 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
         super().__init__(*args, **kwargs)
 
         from grandchallenge.cases.models import RawImageUploadSession
-        from grandchallenge.components.models import ComponentJob
 
         if not upload_session or not isinstance(
             upload_session, RawImageUploadSession
@@ -107,13 +106,12 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
             )
 
         self._upload_session = upload_session
-
-        if isinstance(linked_object, ComponentJob):
-            self._linked_object = linked_object
-        else:
-            self._linked_object = None
+        self._linked_object = linked_object
 
     def handle_error(self, *, error_message, interface=None, user=None):
+        from grandchallenge.algorithms.models import Job
+        from grandchallenge.evaluation.models import Evaluation
+
         if interface:
             detailed_error_message = {interface.title: error_message}
             self._upload_session.update_status(
@@ -127,7 +125,9 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
                 error_message=error_message,
             )
 
-        if self._linked_object:
+        # Avoid handling error for linked objects that are archive items or
+        # display sets, that error handler sends another notification.
+        if isinstance(self._linked_object, (Evaluation, Job)):
             linked_error_handler = self._linked_object.get_error_handler()
             linked_error_handler.handle_error(
                 error_message=error_message,
