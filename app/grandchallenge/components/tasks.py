@@ -1279,48 +1279,37 @@ def add_image_to_object(  # noqa: C901
 
     if upload_session_pk is not None:
         upload = RawImageUploadSession.objects.get(pk=upload_session_pk)
-
-        if upload.status != upload.SUCCESS:
-            logger.info("Nothing to do: upload session was not successful.")
-            return
-
-        error_handler = obj.get_error_handler(linked_object=upload)
-
-        try:
-            image = Image.objects.get(origin_id=upload_session_pk)
-        except (Image.DoesNotExist, Image.MultipleObjectsReturned):
-            error_handler.handle_error(
-                interface=interface,
-                error_message="Image imports should result in a single image",
-                user=upload.creator,
-            )
-            logger.info("Upload session should only have one image")
-            return
+        expected_status = upload.SUCCESS
+        image_lookup_kwargs = {"origin_id": upload_session_pk}
     elif dicom_image_set_upload_pk is not None:
         upload = DICOMImageSetUpload.objects.get(pk=dicom_image_set_upload_pk)
-
-        if upload.status != DICOMImageSetUploadStatusChoices.COMPLETED:
-            logger.info("Nothing to do: DICOM upload was not successful.")
-            return
-
-        error_handler = obj.get_error_handler(linked_object=upload)
-
-        try:
-            image = Image.objects.get(
-                dicom_image_set__dicom_image_set_upload_id=dicom_image_set_upload_pk
-            )
-        except Image.DoesNotExist:
-            error_handler.handle_error(
-                interface=interface,
-                error_message="Image does not exist",
-                user=upload.creator,
-            )
-            logger.info("Image for dicom image set does not exist")
-            return
+        expected_status = DICOMImageSetUploadStatusChoices.COMPLETED
+        image_lookup_kwargs = {
+            "dicom_image_set__dicom_image_set_upload_id": dicom_image_set_upload_pk
+        }
     else:
         raise ValueError(
-            "Either upload_session_pk or dicom_image_set_upload_pk must be set."
+            "Either upload_session_pk or dicom_image_set_upload_pk must be set"
         )
+
+    if upload.status != expected_status:
+        logger.info(
+            "Nothing to do: upload session was not in the expected state"
+        )
+        return
+
+    error_handler = obj.get_error_handler(linked_object=upload)
+
+    try:
+        image = Image.objects.get(**image_lookup_kwargs)
+    except (Image.DoesNotExist, Image.MultipleObjectsReturned):
+        error_handler.handle_error(
+            interface=interface,
+            error_message="Image imports should result in a single image",
+            user=upload.creator,
+        )
+        logger.info("Upload should result in a single image")
+        return
 
     current_value = obj.get_current_value_for_interface(
         interface=interface, user=upload.creator
