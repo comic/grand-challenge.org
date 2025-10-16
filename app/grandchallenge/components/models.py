@@ -2424,7 +2424,7 @@ class CIVForObjectMixin:
         )
 
         if ci.super_kind == ci.SuperKind.VALUE:
-            return self.create_civ_for_value(
+            return self._create_civ_for_value(
                 ci=ci,
                 current_civ=current_civ,
                 new_value=civ_data.value,
@@ -2432,7 +2432,7 @@ class CIVForObjectMixin:
                 linked_task=linked_task,
             )
         elif ci.super_kind == ci.SuperKind.IMAGE:
-            return self.create_civ_for_image(
+            return self._create_civ_for_image(
                 ci=ci,
                 current_civ=current_civ,
                 user=user,
@@ -2443,7 +2443,7 @@ class CIVForObjectMixin:
                 linked_task=linked_task,
             )
         elif ci.super_kind == ci.SuperKind.FILE:
-            return self.create_civ_for_file(
+            return self._create_civ_for_file(
                 ci=ci,
                 current_civ=current_civ,
                 file_civ=civ_data.file_civ,
@@ -2455,7 +2455,7 @@ class CIVForObjectMixin:
                 f"Unknown interface super kind: {ci.super_kind}"
             )
 
-    def create_civ_for_value(
+    def _create_civ_for_value(
         self, *, ci, current_civ, new_value, user, linked_task=None
     ):
         current_value = current_civ.value if current_civ else None
@@ -2491,7 +2491,7 @@ class CIVForObjectMixin:
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
 
-    def create_civ_for_image(  # noqa: C901
+    def _create_civ_for_image(  # noqa: C901
         self,
         *,
         ci,
@@ -2600,7 +2600,7 @@ class CIVForObjectMixin:
         else:
             raise NotImplementedError
 
-    def create_civ_for_file(
+    def _create_civ_for_file(
         self,
         *,
         ci,
