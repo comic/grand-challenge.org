@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 import boto3
 from actstream.actions import follow
 from botocore.exceptions import ClientError
+from celery import signature
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
 from django.db import models
@@ -1024,6 +1025,12 @@ class DICOMImageSetUpload(UUIDModel):
     name = models.CharField(
         max_length=255, help_text="The name for the resulting Image instance"
     )
+    task_on_success = models.JSONField(
+        default=None,
+        null=True,
+        editable=False,
+        help_text="Serialized task that is run on job success",
+    )
 
     class Meta:
         verbose_name = "DICOM image set upload"
@@ -1102,16 +1109,28 @@ class DICOMImageSetUpload(UUIDModel):
     def _marker_file_key(self):
         return f"{self._input_prefix}/deidentification.done"
 
-    def mark_failed(self, *, error_message, exc=None):
+    def mark_failed(
+        self, *, error_message, detailed_error_message=None, exc=None
+    ):
         self.status = DICOMImageSetUploadStatusChoices.FAILED
-        self.error_message = error_message
+
+        if detailed_error_message:
+            notification_description = oxford_comma(
+                [
+                    f"Image validation for socket {key} failed with error: {val}"
+                    for key, val in detailed_error_message.items()
+                ]
+            )
+        else:
+            notification_description = error_message
+
+        self.error_message = notification_description
         self.save()
         if exc:
             logger.error(exc, exc_info=True)
         Notification.send(
             kind=NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-            message="DICOM import failed.",
-            description=error_message,
+            description=notification_description,
             action_object=self,
         )
 
@@ -1266,6 +1285,7 @@ class DICOMImageSetUpload(UUIDModel):
         else:
             self.status = self.DICOMImageSetUploadStatusChoices.COMPLETED
             self.save()
+            self.execute_task_on_success()
         finally:
             self.delete_input_files()
 
@@ -1353,3 +1373,7 @@ class DICOMImageSetUpload(UUIDModel):
         image = Image(dicom_image_set=dicom_image_set, name=self.name)
         image.full_clean()
         image.save()
+
+    def execute_task_on_success(self):
+        if self.task_on_success:
+            on_commit(signature(self.task_on_success).apply_async)

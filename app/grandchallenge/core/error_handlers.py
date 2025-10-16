@@ -136,6 +136,54 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
             )
 
 
+class DICOMImageSetUploadErrorHandler(ErrorHandler):
+    """
+    Error handler for DICOM image imports and image validation.
+    Handle_error() updates a dicom image set upload as well as the linked algorithm job, if provided.
+    Use this error handler instead of the JobCIVErrorHandler whenever there is an upload_session object.
+    """
+
+    def __init__(self, *args, dicom_image_set_upload, linked_object, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        from grandchallenge.cases.models import DICOMImageSetUpload
+
+        if not dicom_image_set_upload or not isinstance(
+            dicom_image_set_upload, DICOMImageSetUpload
+        ):
+            raise RuntimeError(
+                "You need to provide a DICOMImageSetUpload instance to this error handler."
+            )
+
+        self._dicom_image_set_upload = dicom_image_set_upload
+        self._linked_object = linked_object
+
+    def handle_error(self, *, error_message, interface=None, user=None):
+        from grandchallenge.algorithms.models import Job
+        from grandchallenge.evaluation.models import Evaluation
+
+        if interface:
+            detailed_error_message = {interface.title: error_message}
+            self._dicom_image_set_upload.mark_failed(
+                error_message="One or more of the inputs failed validation.",
+                detailed_error_message=detailed_error_message,
+            )
+        else:
+            self._dicom_image_set_upload.mark_failed(
+                error_message=error_message,
+            )
+
+        # Avoid handling error for linked objects that are archive items or
+        # display sets, that error handler sends another notification.
+        if isinstance(self._linked_object, (Job, Evaluation)):
+            linked_error_handler = self._linked_object.get_error_handler()
+            linked_error_handler.handle_error(
+                error_message=error_message,
+                interface=interface,
+                user=user,
+            )
+
+
 class UserUploadCIVErrorHandler(ErrorHandler):
     """
     Error handler for file imports and file content validation

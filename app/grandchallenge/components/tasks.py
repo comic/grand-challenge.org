@@ -31,7 +31,13 @@ from django.utils.module_loading import import_string
 from django.utils.timezone import now
 from panimg.models import SimpleITKImage
 
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import (
+    DICOMImageSetUpload,
+    DICOMImageSetUploadStatusChoices,
+    Image,
+    ImageFile,
+    RawImageUploadSession,
+)
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
     ComponentException,
@@ -1234,9 +1240,19 @@ def add_image_to_object(  # noqa: C901
     model_name,
     object_pk,
     interface_pk,
-    upload_session_pk,
+    upload_session_pk=None,
+    dicom_image_set_upload_pk=None,
     linked_task=None,
 ):
+    if upload_session_pk is None and dicom_image_set_upload_pk is None:
+        raise ValueError(
+            "Either upload_session_pk or dicom_image_set_upload_pk must be set."
+        )
+    if upload_session_pk is not None and dicom_image_set_upload_pk is not None:
+        raise ValueError(
+            "Only one of upload_session_pk and dicom_image_set_upload_pk should be set."
+        )
+
     from grandchallenge.algorithms.models import Job
     from grandchallenge.archives.models import ArchiveItem
     from grandchallenge.components.models import (
@@ -1260,27 +1276,43 @@ def add_image_to_object(  # noqa: C901
         return
 
     interface = ComponentInterface.objects.get(pk=interface_pk)
-    upload_session = RawImageUploadSession.objects.get(pk=upload_session_pk)
 
-    if upload_session.status != upload_session.SUCCESS:
-        logger.info("Nothing to do: upload session was not successful.")
+    if upload_session_pk is not None:
+        upload = RawImageUploadSession.objects.get(pk=upload_session_pk)
+        expected_status = upload.SUCCESS
+        image_lookup_kwargs = {"origin_id": upload_session_pk}
+    elif dicom_image_set_upload_pk is not None:
+        upload = DICOMImageSetUpload.objects.get(pk=dicom_image_set_upload_pk)
+        expected_status = DICOMImageSetUploadStatusChoices.COMPLETED
+        image_lookup_kwargs = {
+            "dicom_image_set__dicom_image_set_upload_id": dicom_image_set_upload_pk
+        }
+    else:
+        raise ValueError(
+            "Either upload_session_pk or dicom_image_set_upload_pk must be set"
+        )
+
+    if upload.status != expected_status:
+        logger.info(
+            "Nothing to do: upload session was not in the expected state"
+        )
         return
 
-    error_handler = obj.get_error_handler(linked_object=upload_session)
+    error_handler = obj.get_error_handler(linked_object=upload)
 
     try:
-        image = Image.objects.get(origin_id=upload_session_pk)
+        image = Image.objects.get(**image_lookup_kwargs)
     except (Image.DoesNotExist, Image.MultipleObjectsReturned):
         error_handler.handle_error(
             interface=interface,
             error_message="Image imports should result in a single image",
-            user=upload_session.creator,
+            user=upload.creator,
         )
-        logger.info("Upload session should only have one image")
+        logger.info("Upload should result in a single image")
         return
 
     current_value = obj.get_current_value_for_interface(
-        interface=interface, user=upload_session.creator
+        interface=interface, user=upload.creator
     )
 
     civ, created = ComponentInterfaceValue.objects.get_first_or_create(
@@ -1294,7 +1326,7 @@ def add_image_to_object(  # noqa: C901
             error_handler.handle_error(
                 interface=interface,
                 error_message=format_validation_error_message(error=e),
-                user=upload_session.creator,
+                user=upload.creator,
             )
             logger.info(f"Validation failed: {e}")
             return
@@ -1302,7 +1334,7 @@ def add_image_to_object(  # noqa: C901
             error_handler.handle_error(
                 interface=interface,
                 error_message="An unexpected error occurred",
-                user=upload_session.creator,
+                user=upload.creator,
             )
             logger.error(e, exc_info=True)
             return
@@ -1318,7 +1350,7 @@ def add_image_to_object(  # noqa: C901
             error_handler.handle_error(
                 interface=interface,
                 error_message="An unexpected error occurred",
-                user=upload_session.creator,
+                user=upload.creator,
             )
             logger.error(e, exc_info=True)
             return

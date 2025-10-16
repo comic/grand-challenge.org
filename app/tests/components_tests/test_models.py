@@ -37,7 +37,10 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
-from tests.cases_tests.factories import ImageFactoryWithImageFileTiff
+from tests.cases_tests.factories import (
+    DICOMImageSetFactory,
+    ImageFactoryWithImageFileTiff,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceExampleValueFactory,
     ComponentInterfaceFactory,
@@ -1180,6 +1183,62 @@ def test_validate_voxel_values():
     )
     im = ImageFactoryWithImageFileTiff(segments=[1, 2])
     assert ci._validate_voxel_values(im) is None
+
+
+INTERFACE_KIND_CHOICES_DICOM_KIND = sorted(
+    [
+        (
+            InterfaceKindChoices.DICOM_IMAGE_SET,
+            True,
+        )
+    ]
+    + [(choice, False) for choice in InterfaceKinds.panimg]
+)
+
+
+def test_all_image_kind_choices_covered_for_validate_image_kind():
+    assert {
+        choice for choice, _ in INTERFACE_KIND_CHOICES_DICOM_KIND
+    } == InterfaceKinds.image
+
+
+@pytest.mark.parametrize(
+    "interface_kind, is_dicom_kind", INTERFACE_KIND_CHOICES_DICOM_KIND
+)
+@pytest.mark.django_db
+def test_validate_image_kind_with_dicom_image(interface_kind, is_dicom_kind):
+    dicom_image_set = DICOMImageSetFactory()
+    dicom_image = ImageFactory(dicom_image_set=dicom_image_set)
+    civ = ComponentInterfaceValueFactory(
+        interface__kind=interface_kind, image=dicom_image
+    )
+
+    if is_dicom_kind:
+        context = nullcontext()
+    else:
+        context = pytest.raises(ValidationError)
+
+    with context:
+        civ._validate_image_kind()
+
+
+@pytest.mark.parametrize(
+    "interface_kind, is_dicom_kind", INTERFACE_KIND_CHOICES_DICOM_KIND
+)
+@pytest.mark.django_db
+def test_validate_image_kind_with_panimg_image(interface_kind, is_dicom_kind):
+    panimg_image = ImageFactory()
+    civ = ComponentInterfaceValueFactory(
+        interface__kind=interface_kind, image=panimg_image
+    )
+
+    if is_dicom_kind:
+        context = pytest.raises(ValidationError)
+    else:
+        context = nullcontext()
+
+    with context:
+        civ._validate_image_kind()
 
 
 @pytest.mark.django_db

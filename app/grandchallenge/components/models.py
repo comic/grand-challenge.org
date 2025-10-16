@@ -36,7 +36,12 @@ from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
-from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
+from grandchallenge.cases.models import (
+    DICOMImageSetUpload,
+    Image,
+    ImageFile,
+    RawImageUploadSession,
+)
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
     CINotAllowedException,
@@ -62,6 +67,7 @@ from grandchallenge.components.validators import (
 )
 from grandchallenge.core.celery import acks_late_2xlarge_task
 from grandchallenge.core.error_handlers import (
+    DICOMImageSetUploadErrorHandler,
     EvaluationCIVErrorHandler,
     FallbackCIVValidationErrorHandler,
     JobCIVErrorHandler,
@@ -1381,6 +1387,7 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
 
         if self.interface.is_image_kind:
             self._validate_image_only()
+            self._validate_image_kind()
             if self.interface.kind == InterfaceKindChoices.PANIMG_SEGMENTATION:
                 self.interface._validate_voxel_values(self.image)
             if (
@@ -1400,6 +1407,13 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
             raise ValidationError(
                 f"File ({self.file}) or value should not be set for images"
             )
+
+    def _validate_image_kind(self):
+        if self.interface.is_dicom_image_kind:
+            if self.image.dicom_image_set is None:
+                raise ValidationError("Image must be DICOM")
+        elif self.image.dicom_image_set:
+            raise ValidationError("Image may not be DICOM")
 
     def _validate_file_only(self):
         if not self._user_upload_validated and not self.file:
@@ -2227,8 +2241,8 @@ class CIVData:
         return self._file_civ
 
     @property
-    def image_name(self):
-        return self._image_name
+    def dicom_upload_with_name(self):
+        return self._dicom_upload_with_name
 
     def __init__(self, *, interface_slug, value):
         self._interface_slug = interface_slug
@@ -2239,17 +2253,14 @@ class CIVData:
         self._user_upload = None
         self._user_upload_queryset = None
         self._file_civ = None
-        self._image_name = None
+        self._dicom_upload_with_name = None
 
         ci = ComponentInterface.objects.get(slug=interface_slug)
 
         if ci.super_kind == ci.SuperKind.VALUE:
             self._init_json_civ_data()
         elif ci.super_kind == ci.SuperKind.IMAGE:
-            if ci.is_dicom_image_kind:
-                self._init_dicom_civ_data()
-            else:
-                self._init_image_civ_data()
+            self._init_image_civ_data()
         elif ci.super_kind == ci.SuperKind.FILE:
             self._init_file_civ_data()
         else:
@@ -2270,19 +2281,12 @@ class CIVData:
                 f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
             )
 
-    def _init_dicom_civ_data(self):
+    def _init_image_civ_data(self):
         from grandchallenge.cases.widgets import DICOMUploadWithName
 
         if isinstance(self._initial_value, DICOMUploadWithName):
-            self._user_upload_queryset = self._initial_value.user_uploads
-            self._image_name = self._initial_value.name
-        else:
-            ValidationError(
-                f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
-            )
-
-    def _init_image_civ_data(self):
-        if isinstance(self._initial_value, QuerySet):
+            self._dicom_upload_with_name = self._initial_value
+        elif isinstance(self._initial_value, QuerySet):
             self._user_upload_queryset = self._initial_value
         elif isinstance(self._initial_value, RawImageUploadSession):
             self._upload_session = self._initial_value
@@ -2314,16 +2318,17 @@ class CIVData:
             self.user_upload,
             self.upload_session,
             self.user_upload_queryset,
+            self.dicom_upload_with_name,
             self.file_civ,
         ]
 
         # Ensure at most one of these properties is set
         # None can be an acceptable value, so 0 is ok
-        if sum(bool(property) for property in unique_properties) > 1:
+        if sum(bool(prop) for prop in unique_properties) > 1:
             raise ValidationError(
                 "Only one of value, image, user_upload, upload_session, "
-                "user_upload_queryset or file_civ can be provided for a "
-                "single CIVData object."
+                "user_upload_queryset, dicom_upload_with_name or file_civ "
+                "can be provided for a single CIVData object."
             )
 
 
@@ -2419,7 +2424,7 @@ class CIVForObjectMixin:
         )
 
         if ci.super_kind == ci.SuperKind.VALUE:
-            return self.create_civ_for_value(
+            return self._create_civ_for_value(
                 ci=ci,
                 current_civ=current_civ,
                 new_value=civ_data.value,
@@ -2427,17 +2432,18 @@ class CIVForObjectMixin:
                 linked_task=linked_task,
             )
         elif ci.super_kind == ci.SuperKind.IMAGE:
-            return self.create_civ_for_image(
+            return self._create_civ_for_image(
                 ci=ci,
                 current_civ=current_civ,
                 user=user,
                 image=civ_data.image,
                 upload_session=civ_data.upload_session,
                 user_upload_queryset=civ_data.user_upload_queryset,
+                dicom_upload_with_name=civ_data.dicom_upload_with_name,
                 linked_task=linked_task,
             )
         elif ci.super_kind == ci.SuperKind.FILE:
-            return self.create_civ_for_file(
+            return self._create_civ_for_file(
                 ci=ci,
                 current_civ=current_civ,
                 file_civ=civ_data.file_civ,
@@ -2449,7 +2455,7 @@ class CIVForObjectMixin:
                 f"Unknown interface super kind: {ci.super_kind}"
             )
 
-    def create_civ_for_value(
+    def _create_civ_for_value(
         self, *, ci, current_civ, new_value, user, linked_task=None
     ):
         current_value = current_civ.value if current_civ else None
@@ -2485,7 +2491,7 @@ class CIVForObjectMixin:
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
 
-    def create_civ_for_image(  # noqa: C901
+    def _create_civ_for_image(  # noqa: C901
         self,
         *,
         ci,
@@ -2494,10 +2500,15 @@ class CIVForObjectMixin:
         image=None,
         upload_session=None,
         user_upload_queryset=None,
+        dicom_upload_with_name=None,
         linked_task=None,
     ):
         current_image = current_civ.image if current_civ else None
-        if image and current_image != image:
+
+        if image:
+            if current_image == image:
+                # Nothing to do.
+                return
             civ, created = ComponentInterfaceValue.objects.get_first_or_create(
                 interface=ci, image=image
             )
@@ -2552,8 +2563,44 @@ class CIVForObjectMixin:
                     immutable=True,
                 ),
             )
+        elif dicom_upload_with_name:
+            from grandchallenge.cases.tasks import (
+                import_dicom_to_health_imaging,
+            )
+            from grandchallenge.components.tasks import add_image_to_object
 
-    def create_civ_for_file(
+            if not user:
+                raise RuntimeError(
+                    f"You need to provide a user along with the user upload "
+                    f"queryset for interface {ci}"
+                )
+            upload = DICOMImageSetUpload(
+                creator=user, name=dicom_upload_with_name.name
+            )
+            upload.task_on_success = add_image_to_object.signature(
+                kwargs={
+                    "app_label": self._meta.app_label,
+                    "model_name": self._meta.model_name,
+                    "object_pk": self.pk,
+                    "interface_pk": str(ci.pk),
+                    "dicom_image_set_upload_pk": upload.pk,
+                    "linked_task": linked_task,
+                },
+                immutable=True,
+            )
+            upload.full_clean()
+            upload.save()
+            upload.user_uploads.set(dicom_upload_with_name.user_uploads)
+
+            on_commit(
+                import_dicom_to_health_imaging.signature(
+                    kwargs={"dicom_imageset_upload_pk": upload.pk}
+                ).apply_async
+            )
+        else:
+            raise NotImplementedError
+
+    def _create_civ_for_file(
         self,
         *,
         ci,
@@ -2620,9 +2667,14 @@ class CIVForObjectMixin:
         from grandchallenge.evaluation.models import Evaluation
         from grandchallenge.reader_studies.models import DisplaySet
 
-        if linked_object and isinstance(linked_object, RawImageUploadSession):
+        if isinstance(linked_object, RawImageUploadSession):
             return RawImageUploadSessionErrorHandler(
                 upload_session=linked_object,
+                linked_object=self,
+            )
+        elif isinstance(linked_object, DICOMImageSetUpload):
+            return DICOMImageSetUploadErrorHandler(
+                dicom_image_set_upload=linked_object,
                 linked_object=self,
             )
         elif isinstance(self, Job):
