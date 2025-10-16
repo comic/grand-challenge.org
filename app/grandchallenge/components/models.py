@@ -2505,7 +2505,10 @@ class CIVForObjectMixin:
     ):
         current_image = current_civ.image if current_civ else None
 
-        if image and current_image != image:
+        if image:
+            if current_image == image:
+                # Nothing to do.
+                return
             civ, created = ComponentInterfaceValue.objects.get_first_or_create(
                 interface=ci, image=image
             )
