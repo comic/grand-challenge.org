@@ -185,9 +185,8 @@ class ViewContentExampleMixin:
         )
 
     def _get_interface_lists(self):
-        sorted_interfaces = sorted(
-            list(self.instance.linked_component_interfaces),
-            key=lambda x: x.slug,
+        sorted_interfaces = list(
+            self.instance.linked_component_interfaces.order_by("slug")
         )
         images = [
             interface.slug

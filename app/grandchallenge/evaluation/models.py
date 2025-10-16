@@ -965,14 +965,14 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
     @cached_property
     def linked_component_interfaces(self):
-        return {
-            ci
-            for interface in self.algorithm_interfaces.all()
-            for ci in (
-                interface.inputs.order_by("pk")
-                | interface.outputs.order_by("pk")
+        return (
+            ComponentInterface.objects.filter(
+                Q(inputs__in=self.algorithm_interfaces.all())
+                | Q(outputs__in=self.algorithm_interfaces.all())
             )
-        }
+            .distinct()
+            .order_by("pk")
+        )
 
     def assign_permissions(self):
         assign_perm("view_phase", self.challenge.admins_group, self)
