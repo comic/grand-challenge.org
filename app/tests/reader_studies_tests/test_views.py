@@ -593,8 +593,8 @@ def test_display_set_update(
             client=client,
             reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
             data={
-                ci_img.slug: str(im2.pk),
-                f"widget-choice-{ci_img.slug}": ImageWidgetChoices.IMAGE_SEARCH.name,
+                f"{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}": str(im2.pk),
+                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
                 "order": 12,
                 "title": "foobar_foobar",
             },
