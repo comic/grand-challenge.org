@@ -597,7 +597,7 @@ def test_add_dicom_image_set_to_object_updates_upload_on_validation_fail(
     assert upload.status == DICOMImageSetUploadStatusChoices.FAILED
     assert (
         upload.error_message
-        == f"Image validation for socket {ci.title} failed with error: Image does not exist"
+        == f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image"
     )
 
 
@@ -634,7 +634,9 @@ def test_add_dicom_image_set_to_object_marks_job_as_failed_on_validation_fail(
     obj.refresh_from_db()
     assert obj.status == obj.CANCELLED
     assert obj.error_message == "One or more of the inputs failed validation."
-    assert "Image does not exist" in str(obj.detailed_error_message)
+    assert "Image imports should result in a single image" in str(
+        obj.detailed_error_message
+    )
     assert "some_async_task" not in str(callbacks)
 
 
@@ -682,7 +684,7 @@ def test_add_dicom_image_set_to_object_sends_notification_on_validation_fail(
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     assert Notification.objects.count() == 1
     assert (
-        f"Image validation for socket {ci.title} failed with error: Image does not exist"
+        f"Image validation for socket {ci.title} failed with error: Image imports should result in a single image"
         in Notification.objects.first().description
     )
     assert "some_async_task" not in str(callbacks)
