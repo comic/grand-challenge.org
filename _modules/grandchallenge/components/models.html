@@ -74,7 +74,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoSlugField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">panimg.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MAXIMUM_SEGMENTS_LENGTH</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.cases.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageFile</span><span class="p">,</span> <span class="n">RawImageUploadSession</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.cases.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DICOMImageSetUpload</span><span class="p">,</span>
+    <span class="n">Image</span><span class="p">,</span>
+    <span class="n">ImageFile</span><span class="p">,</span>
+    <span class="n">RawImageUploadSession</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.charts.specs</span><span class="w"> </span><span class="kn">import</span> <span class="n">components_line</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.backends.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">CINotAllowedException</span><span class="p">,</span>
@@ -100,6 +105,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.celery</span><span class="w"> </span><span class="kn">import</span> <span class="n">acks_late_2xlarge_task</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.error_handlers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DICOMImageSetUploadErrorHandler</span><span class="p">,</span>
     <span class="n">EvaluationCIVErrorHandler</span><span class="p">,</span>
     <span class="n">FallbackCIVValidationErrorHandler</span><span class="p">,</span>
     <span class="n">JobCIVErrorHandler</span><span class="p">,</span>
@@ -1456,6 +1462,7 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">is_image_kind</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate_image_only</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_image_kind</span><span class="p">()</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">InterfaceKindChoices</span><span class="o">.</span><span class="n">PANIMG_SEGMENTATION</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">_validate_voxel_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">)</span>
             <span class="k">if</span> <span class="p">(</span>
@@ -1476,6 +1483,13 @@
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;File (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="si">}</span><span class="s2">) or value should not be set for images&quot;</span>
             <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_image_kind</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">is_dicom_image_kind</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">dicom_image_set</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Image must be DICOM&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">dicom_image_set</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Image may not be DICOM&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate_file_only</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_validated</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">file</span><span class="p">:</span>
@@ -2328,8 +2342,8 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_civ</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">image_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_name</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">dicom_upload_with_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dicom_upload_with_name</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">interface_slug</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span> <span class="o">=</span> <span class="n">interface_slug</span>
@@ -2340,17 +2354,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_queryset</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_file_civ</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_image_name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dicom_upload_with_name</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="n">ci</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="n">interface_slug</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">VALUE</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_init_json_civ_data</span><span class="p">()</span>
         <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">is_dicom_image_kind</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_init_dicom_civ_data</span><span class="p">()</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_init_image_civ_data</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_image_civ_data</span><span class="p">()</span>
         <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">FILE</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_init_file_civ_data</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
@@ -2371,19 +2382,12 @@
                 <span class="sa">f</span><span class="s2">&quot;Unknown data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">)</span><span class="si">}</span><span class="s2"> for interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_init_dicom_civ_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_init_image_civ_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.cases.widgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">DICOMUploadWithName</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">,</span> <span class="n">DICOMUploadWithName</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_queryset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="o">.</span><span class="n">user_uploads</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_image_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="o">.</span><span class="n">name</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">ValidationError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Unknown data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">)</span><span class="si">}</span><span class="s2"> for interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_init_image_civ_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">,</span> <span class="n">QuerySet</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dicom_upload_with_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">,</span> <span class="n">QuerySet</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload_queryset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">,</span> <span class="n">RawImageUploadSession</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_upload_session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span>
@@ -2415,16 +2419,17 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">user_upload</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">upload_session</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">user_upload_queryset</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dicom_upload_with_name</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">file_civ</span><span class="p">,</span>
         <span class="p">]</span>
 
         <span class="c1"># Ensure at most one of these properties is set</span>
         <span class="c1"># None can be an acceptable value, so 0 is ok</span>
-        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="nb">property</span><span class="p">)</span> <span class="k">for</span> <span class="nb">property</span> <span class="ow">in</span> <span class="n">unique_properties</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">prop</span><span class="p">)</span> <span class="k">for</span> <span class="n">prop</span> <span class="ow">in</span> <span class="n">unique_properties</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;Only one of value, image, user_upload, upload_session, &quot;</span>
-                <span class="s2">&quot;user_upload_queryset or file_civ can be provided for a &quot;</span>
-                <span class="s2">&quot;single CIVData object.&quot;</span>
+                <span class="s2">&quot;user_upload_queryset, dicom_upload_with_name or file_civ &quot;</span>
+                <span class="s2">&quot;can be provided for a single CIVData object.&quot;</span>
             <span class="p">)</span>
 
 
@@ -2520,7 +2525,7 @@
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">VALUE</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_value</span><span class="p">(</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_civ_for_value</span><span class="p">(</span>
                 <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
                 <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span>
                 <span class="n">new_value</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -2528,17 +2533,18 @@
                 <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_image</span><span class="p">(</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_civ_for_image</span><span class="p">(</span>
                 <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
                 <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span>
                 <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
                 <span class="n">image</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">image</span><span class="p">,</span>
                 <span class="n">upload_session</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">upload_session</span><span class="p">,</span>
                 <span class="n">user_upload_queryset</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">user_upload_queryset</span><span class="p">,</span>
+                <span class="n">dicom_upload_with_name</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">dicom_upload_with_name</span><span class="p">,</span>
                 <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">FILE</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_civ_for_file</span><span class="p">(</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_civ_for_file</span><span class="p">(</span>
                 <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
                 <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span>
                 <span class="n">file_civ</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">file_civ</span><span class="p">,</span>
@@ -2550,7 +2556,7 @@
                 <span class="sa">f</span><span class="s2">&quot;Unknown interface super kind: </span><span class="si">{</span><span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_civ_for_value</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_civ_for_value</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
         <span class="n">current_value</span> <span class="o">=</span> <span class="n">current_civ</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">current_civ</span> <span class="k">else</span> <span class="kc">None</span>
@@ -2586,7 +2592,7 @@
             <span class="k">if</span> <span class="n">linked_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">on_commit</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="n">linked_task</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_civ_for_image</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_civ_for_image</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">ci</span><span class="p">,</span>
@@ -2595,10 +2601,15 @@
         <span class="n">image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">upload_session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">user_upload_queryset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">dicom_upload_with_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="n">current_image</span> <span class="o">=</span> <span class="n">current_civ</span><span class="o">.</span><span class="n">image</span> <span class="k">if</span> <span class="n">current_civ</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="n">image</span> <span class="ow">and</span> <span class="n">current_image</span> <span class="o">!=</span> <span class="n">image</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">image</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">current_image</span> <span class="o">==</span> <span class="n">image</span><span class="p">:</span>
+                <span class="c1"># Nothing to do.</span>
+                <span class="k">return</span>
             <span class="n">civ</span><span class="p">,</span> <span class="n">created</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_first_or_create</span><span class="p">(</span>
                 <span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="n">image</span>
             <span class="p">)</span>
@@ -2653,8 +2664,44 @@
                     <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                 <span class="p">),</span>
             <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">dicom_upload_with_name</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.cases.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+                <span class="n">import_dicom_to_health_imaging</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.tasks</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_image_to_object</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_civ_for_file</span><span class="p">(</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">user</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;You need to provide a user along with the user upload &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;queryset for interface </span><span class="si">{</span><span class="n">ci</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="n">upload</span> <span class="o">=</span> <span class="n">DICOMImageSetUpload</span><span class="p">(</span>
+                <span class="n">creator</span><span class="o">=</span><span class="n">user</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">dicom_upload_with_name</span><span class="o">.</span><span class="n">name</span>
+            <span class="p">)</span>
+            <span class="n">upload</span><span class="o">.</span><span class="n">task_on_success</span> <span class="o">=</span> <span class="n">add_image_to_object</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+                <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;app_label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
+                    <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
+                    <span class="s2">&quot;object_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                    <span class="s2">&quot;interface_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ci</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
+                    <span class="s2">&quot;dicom_image_set_upload_pk&quot;</span><span class="p">:</span> <span class="n">upload</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                    <span class="s2">&quot;linked_task&quot;</span><span class="p">:</span> <span class="n">linked_task</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">upload</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
+            <span class="n">upload</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="n">upload</span><span class="o">.</span><span class="n">user_uploads</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">dicom_upload_with_name</span><span class="o">.</span><span class="n">user_uploads</span><span class="p">)</span>
+
+            <span class="n">on_commit</span><span class="p">(</span>
+                <span class="n">import_dicom_to_health_imaging</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
+                    <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dicom_imageset_upload_pk&quot;</span><span class="p">:</span> <span class="n">upload</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_civ_for_file</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">ci</span><span class="p">,</span>
@@ -2721,9 +2768,14 @@
         <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Evaluation</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.reader_studies.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">DisplaySet</span>
 
-        <span class="k">if</span> <span class="n">linked_object</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">linked_object</span><span class="p">,</span> <span class="n">RawImageUploadSession</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">linked_object</span><span class="p">,</span> <span class="n">RawImageUploadSession</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">RawImageUploadSessionErrorHandler</span><span class="p">(</span>
                 <span class="n">upload_session</span><span class="o">=</span><span class="n">linked_object</span><span class="p">,</span>
+                <span class="n">linked_object</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">linked_object</span><span class="p">,</span> <span class="n">DICOMImageSetUpload</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">DICOMImageSetUploadErrorHandler</span><span class="p">(</span>
+                <span class="n">dicom_image_set_upload</span><span class="o">=</span><span class="n">linked_object</span><span class="p">,</span>
                 <span class="n">linked_object</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Job</span><span class="p">):</span>
