@@ -15,6 +15,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.factories import ImageFactory, UploadSessionFactory, UserFactory
+from tests.uploads_tests.factories import UserUploadFactory
 
 TEST_DATA = {
     "STR": "test",
@@ -329,6 +330,57 @@ def test_civ_post_value_or_user_upload_required_validation(
         expected_error.format(kind=kind)
         in serializer.errors["non_field_errors"]
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind", InterfaceKinds.json)
+def test_civ_post_user_upload_permission_validation(kind, rf):
+    user = UserFactory()
+    interface = ComponentInterfaceFactory(
+        kind=kind,
+        store_in_database=False,
+    )
+    upload = UserUploadFactory()
+    payload = {
+        "interface": interface.slug,
+        "user_upload": upload.api_url,
+    }
+    request = rf.get("/foo")
+    request.user = user
+
+    serializer = ComponentInterfaceValuePostSerializer(
+        data=payload, context={"request": request}
+    )
+
+    assert not serializer.is_valid()
+    assert (
+        "Invalid hyperlink - Object does not exist"
+        in serializer.errors["user_upload"][0]
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind", InterfaceKinds.json)
+def test_civ_post_user_upload_valid(kind, rf):
+    user = UserFactory()
+    interface = ComponentInterfaceFactory(
+        kind=kind,
+        store_in_database=False,
+    )
+    upload = UserUploadFactory(creator=user)
+    payload = {
+        "interface": interface.slug,
+        "user_upload": upload.api_url,
+    }
+    request = rf.get("/foo")
+    request.user = user
+
+    serializer = ComponentInterfaceValuePostSerializer(
+        data=payload, context={"request": request}
+    )
+
+    # verify
+    assert serializer.is_valid()
 
 
 @pytest.mark.django_db
