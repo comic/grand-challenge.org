@@ -828,7 +828,7 @@ class ReaderStudy(
     def linked_component_interfaces(self):
         return super().linked_component_interfaces.union(
             ComponentInterface.objects.filter(
-                question__in=self.questions
+                question__in=self.questions.all()
             ).distinct()
         )
 
