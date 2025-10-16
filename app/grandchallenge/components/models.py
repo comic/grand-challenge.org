@@ -2594,6 +2594,8 @@ class CIVForObjectMixin:
                     kwargs={"dicom_imageset_upload_pk": upload.pk}
                 ).apply_async
             )
+        else:
+            raise NotImplementedError
 
     def create_civ_for_file(
         self,
