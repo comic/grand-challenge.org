@@ -93,10 +93,14 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
     Use this error handler instead of the JobCIVErrorHandler whenever there is an upload_session object.
     """
 
-    def __init__(self, *args, upload_session, linked_object, **kwargs):
+    def __init__(self, *args, upload_session, linked_object=None, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if not upload_session:
+        from grandchallenge.cases.models import RawImageUploadSession
+
+        if not upload_session or not isinstance(
+            upload_session, RawImageUploadSession
+        ):
             raise RuntimeError(
                 "You need to provide a RawImageUploadSession instance to this error handler."
             )
@@ -104,24 +108,31 @@ class RawImageUploadSessionErrorHandler(ErrorHandler):
         self._upload_session = upload_session
         self._linked_object = linked_object
 
-    def handle_error(self, *, error_message, interface, user=None):
+    def handle_error(self, *, error_message, interface=None, user=None):
+        from grandchallenge.algorithms.models import Job
         from grandchallenge.evaluation.models import Evaluation
 
-        if self._linked_object:
-            if isinstance(self._linked_object, Evaluation):
-                logger.error(error_message, exc_info=True)
-                error_message = "Input validation failed"
-
+        if interface:
+            detailed_error_message = {interface.title: error_message}
             self._upload_session.update_status(
                 status=self._upload_session.FAILURE,
-                error_message=("One or more of the inputs failed validation."),
-                detailed_error_message=({interface.title: error_message}),
-                linked_object=self._linked_object,
+                error_message="One or more of the inputs failed validation.",
+                detailed_error_message=detailed_error_message,
             )
         else:
             self._upload_session.update_status(
                 status=self._upload_session.FAILURE,
                 error_message=error_message,
+            )
+
+        # Avoid handling error for linked objects that are archive items or
+        # display sets, that error handler sends another notification.
+        if isinstance(self._linked_object, (Evaluation, Job)):
+            linked_error_handler = self._linked_object.get_error_handler()
+            linked_error_handler.handle_error(
+                error_message=error_message,
+                interface=interface,
+                user=user,
             )
 
 

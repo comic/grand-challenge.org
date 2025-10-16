@@ -1,4 +1,3 @@
-import copy
 import gzip
 import hashlib
 import json
@@ -183,51 +182,29 @@ class RawImageUploadSession(UUIDModel):
         status,
         error_message=None,
         detailed_error_message=None,
-        linked_object=None,
     ):
         self.status = status
 
         if detailed_error_message:
             notification_description = oxford_comma(
                 [
-                    f"Image validation for socket {key} failed with error: {val}. "
+                    f"Image validation for socket {key} failed with error: {val}."
                     for key, val in detailed_error_message.items()
                 ]
             )
-        else:
+        elif error_message:
             notification_description = error_message
+        else:
+            notification_description = self.default_error_message
 
-        self.error_message = (
-            notification_description
-            if notification_description
-            else self.default_error_message
-        )
+        self.error_message = notification_description
         self.save()
 
         if self.error_message and self.creator:
             Notification.send(
                 kind=NotificationTypeChoices.IMAGE_IMPORT_STATUS,
-                message=error_message,
-                description=self.error_message,
+                description=notification_description,
                 action_object=self,
-            )
-        from grandchallenge.components.models import ComponentJob
-
-        if (
-            self.error_message
-            and linked_object
-            and isinstance(linked_object, ComponentJob)
-        ):
-            detailed_error_message_dict = copy.deepcopy(
-                linked_object.detailed_error_message
-            )
-            for key, val in detailed_error_message.items():
-                detailed_error_message_dict[key] = val
-
-            linked_object.update_status(
-                status=linked_object.CANCELLED,
-                error_message=error_message,
-                detailed_error_message=detailed_error_message_dict,
             )
 
     def process_images(
