@@ -828,10 +828,8 @@ class ReaderStudy(
     def linked_component_interfaces(self):
         return super().linked_component_interfaces.union(
             ComponentInterface.objects.filter(
-                pk__in=self.questions.filter(
-                    interface__isnull=False
-                ).values_list("interface__pk", flat=True)
-            )
+                question__in=self.questions
+            ).distinct()
         )
 
     @property
