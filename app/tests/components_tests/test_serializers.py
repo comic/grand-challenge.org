@@ -266,31 +266,7 @@ def test_civ_post_objects_do_not_exist(civ, error_message):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "kind,",
-    (
-        InterfaceKindChoices.STRING,
-        InterfaceKindChoices.INTEGER,
-        InterfaceKindChoices.FLOAT,
-        InterfaceKindChoices.BOOL,
-        InterfaceKindChoices.TWO_D_BOUNDING_BOX,
-        InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-        InterfaceKindChoices.DISTANCE_MEASUREMENT,
-        InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-        InterfaceKindChoices.POINT,
-        InterfaceKindChoices.MULTIPLE_POINTS,
-        InterfaceKindChoices.POLYGON,
-        InterfaceKindChoices.MULTIPLE_POLYGONS,
-        InterfaceKindChoices.LINE,
-        InterfaceKindChoices.MULTIPLE_LINES,
-        InterfaceKindChoices.ANGLE,
-        InterfaceKindChoices.MULTIPLE_ANGLES,
-        InterfaceKindChoices.ELLIPSE,
-        InterfaceKindChoices.MULTIPLE_ELLIPSES,
-        InterfaceKindChoices.THREE_POINT_ANGLE,
-        InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
-    ),
-)
+@pytest.mark.parametrize("kind,", InterfaceKinds.json)
 def test_civ_post_value_validation(kind):
     # setup
     interface = ComponentInterfaceFactory(kind=kind)
@@ -312,6 +288,16 @@ def test_civ_post_value_validation(kind):
                 kind == "FLT"
                 and test == "INT"
             )
+            or (
+                # Strings are valid for multiple choice types
+                kind == "CHOI"
+                and test == "STR"
+            )
+            or (
+                # All test data are valid for json type
+                kind
+                == "JSON"
+            )
         )
         if not serializer.is_valid():
             assert "JSON does not fulfill schema: " in str(
@@ -320,32 +306,7 @@ def test_civ_post_value_validation(kind):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "kind",
-    (
-        InterfaceKindChoices.TWO_D_BOUNDING_BOX,
-        InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
-        InterfaceKindChoices.DISTANCE_MEASUREMENT,
-        InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
-        InterfaceKindChoices.POINT,
-        InterfaceKindChoices.MULTIPLE_POINTS,
-        InterfaceKindChoices.POLYGON,
-        InterfaceKindChoices.MULTIPLE_POLYGONS,
-        InterfaceKindChoices.STRING,
-        InterfaceKindChoices.INTEGER,
-        InterfaceKindChoices.FLOAT,
-        InterfaceKindChoices.BOOL,
-        InterfaceKindChoices.CHOICE,
-        InterfaceKindChoices.MULTIPLE_CHOICE,
-        InterfaceKindChoices.ANGLE,
-        InterfaceKindChoices.MULTIPLE_ANGLES,
-        InterfaceKindChoices.ELLIPSE,
-        InterfaceKindChoices.MULTIPLE_ELLIPSES,
-        InterfaceKindChoices.THREE_POINT_ANGLE,
-        InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES,
-        InterfaceKindChoices.ANY,
-    ),
-)
+@pytest.mark.parametrize("kind", InterfaceKinds.json)
 @pytest.mark.parametrize(
     "store_in_database, expected_error",
     (
