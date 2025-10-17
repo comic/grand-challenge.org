@@ -1595,7 +1595,7 @@ def test_displacement_field_validation(
     session.refresh_from_db()
 
     assert session.status == session.SUCCESS
-    assert session.error_message is None
+    assert not session.error_message
 
     image = Image.objects.filter(origin=session).get()
 

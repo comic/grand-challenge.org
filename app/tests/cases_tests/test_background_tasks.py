@@ -91,7 +91,7 @@ def test_staged_mhd_upload_with_additional_headers(
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
-    assert session.error_message is None
+    assert not session.error_message
 
     images = Image.objects.filter(origin=session).all()
     assert len(images) == 1
@@ -189,7 +189,7 @@ def test_mhd_file_annotation_creation(
 
     session.refresh_from_db()
     assert session.status == session.SUCCESS
-    assert session.error_message is None
+    assert not session.error_message
 
     images = Image.objects.filter(origin=session).all()
     assert len(images) == 1
