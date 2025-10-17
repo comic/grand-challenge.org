@@ -102,12 +102,11 @@ RUN mkdir -p /opt/virtualenvs \
 WORKDIR /opt/grand-challenge
 
 # Install base python packages
-COPY --chown=django:django pyproject.toml /opt/grand-challenge
-COPY --chown=django:django uv.lock /opt/grand-challenge
-
-RUN python -m pip install -U pip \
-    && python -m pip install -U uv \
-    && uv sync --no-progress --no-dev
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project --no-dev
 
 ##################
 # TEST CONTAINER #
@@ -133,5 +132,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 USER django:django
 
-RUN uv sync --no-progress
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project
 RUN playwright install
