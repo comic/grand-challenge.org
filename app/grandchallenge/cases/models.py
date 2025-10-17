@@ -131,7 +131,7 @@ class RawImageUploadSession(UUIDModel):
         blank=True, null=True, default=None, editable=False
     )
 
-    error_message = models.TextField(blank=False, null=True, default=None)
+    error_message = models.TextField(blank=True, null=True, default=None)
 
     def __str__(self):
         return (
