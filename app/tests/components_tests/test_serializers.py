@@ -385,7 +385,7 @@ def test_civ_post_user_upload_valid(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.image)
+@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
 def test_civ_post_image_or_upload_required_validation(kind):
     # setup
     interface = ComponentInterfaceFactory(kind=kind)
@@ -429,7 +429,7 @@ def test_civ_post_image_permission_validation(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.image)
+@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
 def test_civ_post_upload_permission_validation(kind, rf):
     # setup
     user = UserFactory()
@@ -454,7 +454,7 @@ def test_civ_post_upload_permission_validation(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.image)
+@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
 def test_civ_post_image_not_ready_validation(kind, rf):
     # setup
     user = UserFactory()
@@ -501,8 +501,8 @@ def test_civ_post_panimg_image_valid(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.image)
-def test_civ_post_image_valid(kind, rf):
+@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
+def test_civ_post_image_upload_session_valid(kind, rf):
     # setup
     user = UserFactory()
     upload = UploadSessionFactory(
