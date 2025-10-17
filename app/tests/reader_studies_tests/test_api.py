@@ -1270,7 +1270,7 @@ def test_ground_truth(client):
 @pytest.mark.parametrize(
     "overlay_segments,error",
     (
-        ([], None),
+        ([], ""),
         (
             [{"name": "s1", "visible": True, "voxel_value": 0}],
             (
@@ -1283,7 +1283,7 @@ def test_ground_truth(client):
                 {"name": "s1", "visible": True, "voxel_value": 0},
                 {"name": "s2", "visible": True, "voxel_value": 1},
             ],
-            None,
+            "",
         ),
     ),
 )

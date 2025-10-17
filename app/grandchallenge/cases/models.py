@@ -131,13 +131,13 @@ class RawImageUploadSession(UUIDModel):
         blank=True, null=True, default=None, editable=False
     )
 
-    error_message = models.TextField(blank=True, null=True, default=None)
+    error_message = models.TextField(blank=True)
 
     def __str__(self):
         return (
             f"Upload Session <{str(self.pk).split('-')[0]}>, "
             f"({self.get_status_display()}) "
-            f"{self.error_message or ''}"
+            f"{self.error_message}"
         )
 
     def save(self, *args, **kwargs):
@@ -170,6 +170,8 @@ class RawImageUploadSession(UUIDModel):
             return (
                 f"{n_errors} file{pluralize(n_errors)} could not be imported"
             )
+        else:
+            return ""
 
     def get_error_handler(self, *, linked_object=None):
         return RawImageUploadSessionErrorHandler(
