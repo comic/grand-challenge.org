@@ -245,20 +245,15 @@ TEST_DATA = {
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "civ, error_message",
-    (
-        (
-            (
-                {"interface": "interface-does-not-exist", "value": "dummy"},
-                "Object with slug=interface-does-not-exist does not exist.",
-            ),
-        )
-    ),
-)
-def test_civ_post_objects_do_not_exist(civ, error_message):
+def test_civ_post_objects_do_not_exist():
+    payload = {
+        "interface": "interface-does-not-exist",
+        "value": "dummy",
+    }
+    error_message = "Object with slug=interface-does-not-exist does not exist."
+
     # test
-    serializer = ComponentInterfaceValuePostSerializer(data=civ)
+    serializer = ComponentInterfaceValuePostSerializer(data=payload)
 
     # verify
     assert not serializer.is_valid()
@@ -272,13 +267,13 @@ def test_civ_post_value_validation(kind):
     interface = ComponentInterfaceFactory(kind=kind)
 
     for test in TEST_DATA:
-        civ = {
+        payload = {
             "interface": interface.slug,
             "value": TEST_DATA[test],
         }
 
         # test
-        serializer = ComponentInterfaceValuePostSerializer(data=civ)
+        serializer = ComponentInterfaceValuePostSerializer(data=payload)
 
         # verify
         assert serializer.is_valid() == (
@@ -323,10 +318,10 @@ def test_civ_post_value_or_user_upload_required_validation(
         store_in_database=store_in_database,
     )
 
-    civ = {"interface": interface.slug}
+    payload = {"interface": interface.slug}
 
     # test
-    serializer = ComponentInterfaceValuePostSerializer(data=civ)
+    serializer = ComponentInterfaceValuePostSerializer(data=payload)
 
     # verify
     assert not serializer.is_valid()
@@ -342,10 +337,10 @@ def test_civ_post_image_or_upload_required_validation(kind):
     # setup
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface": interface.slug}
+    payload = {"interface": interface.slug}
 
     # test
-    serializer = ComponentInterfaceValuePostSerializer(data=civ)
+    serializer = ComponentInterfaceValuePostSerializer(data=payload)
 
     # verify
     assert not serializer.is_valid()
@@ -363,13 +358,13 @@ def test_civ_post_image_permission_validation(kind, rf):
     image = ImageFactory()
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface": interface.slug, "image": image.api_url}
+    payload = {"interface": interface.slug, "image": image.api_url}
 
     # test
     request = rf.get("/foo")
     request.user = user
     serializer = ComponentInterfaceValuePostSerializer(
-        data=civ, context={"request": request}
+        data=payload, context={"request": request}
     )
 
     # verify
@@ -388,13 +383,13 @@ def test_civ_post_upload_permission_validation(kind, rf):
     upload = UploadSessionFactory()
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface": interface.slug, "upload_session": upload.api_url}
+    payload = {"interface": interface.slug, "upload_session": upload.api_url}
 
     # test
     request = rf.get("/foo")
     request.user = user
     serializer = ComponentInterfaceValuePostSerializer(
-        data=civ, context={"request": request}
+        data=payload, context={"request": request}
     )
 
     # verify
@@ -415,13 +410,13 @@ def test_civ_post_image_not_ready_validation(kind, rf):
     )
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface": interface.slug, "upload_session": upload.api_url}
+    payload = {"interface": interface.slug, "upload_session": upload.api_url}
 
     # test
     request = rf.get("/foo")
     request.user = user
     serializer = ComponentInterfaceValuePostSerializer(
-        data=civ, context={"request": request}
+        data=payload, context={"request": request}
     )
 
     # verify
@@ -442,13 +437,13 @@ def test_civ_post_image_valid(kind, rf):
     )
     interface = ComponentInterfaceFactory(kind=kind)
 
-    civ = {"interface": interface.slug, "upload_session": upload.api_url}
+    payload = {"interface": interface.slug, "upload_session": upload.api_url}
 
     # test
     request = rf.get("/foo")
     request.user = user
     serializer = ComponentInterfaceValuePostSerializer(
-        data=civ, context={"request": request}
+        data=payload, context={"request": request}
     )
 
     # verify
