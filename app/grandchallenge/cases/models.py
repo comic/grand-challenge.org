@@ -936,8 +936,20 @@ class PostProcessImageTask(UUIDModel):
 
 def generate_dicom_id_suffix(*, pk, suffix_type):
     """
-    Generates a unique numerical suffix for a DICOM UID based on the primary key
-    and a string to differentiate the type (e.g., 'study' or 'series').
+    This value will be appended to the ROOT UID of the de-identifier,
+    which is: "1.2.826.0.1.3680043.10.1666."
+
+    The max length of a DICOM UID is 64 chars, and it can only contain
+    numerical values and ".".
+
+    That leaves a window of 36 chars for numerical values.
+    An integer UUID is 39 characters, so cannot be used directly.
+
+    Instead, we concatenate the pk with a suffix to differentiate
+    the type (e.g., 'study' or 'series'). We then take the hash
+    and convert it to an integer. Using the first 14 bytes
+    of the hash will result in an integer with max length
+    34 chars, fitting in to the available 36.
     """
     seed = f"{pk}-{suffix_type}"
 
