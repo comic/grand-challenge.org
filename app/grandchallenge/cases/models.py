@@ -201,7 +201,7 @@ class RawImageUploadSession(UUIDModel):
         self.error_message = notification_description
         self.save()
 
-        if self.error_message and self.creator:
+        if notification_description and self.creator:
             Notification.send(
                 kind=NotificationTypeChoices.IMAGE_IMPORT_STATUS,
                 description=notification_description,
