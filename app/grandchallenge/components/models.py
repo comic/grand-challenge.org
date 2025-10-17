@@ -1690,7 +1690,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         if adding:
             self.create_utilization()
 
-    def update_status(  # noqa: C901
+    def update_status(
         self,
         *,
         status: STATUS_CHOICES,

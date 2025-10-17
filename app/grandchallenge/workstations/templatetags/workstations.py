@@ -15,7 +15,7 @@ class PathAndQueryString(NamedTuple):
     query_string: str
 
 
-def get_workstation_path_and_query_string(  # noqa: C901
+def get_workstation_path_and_query_string(
     image=None,
     reader_study=None,
     algorithm_job=None,

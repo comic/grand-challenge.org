@@ -96,7 +96,7 @@ def test_read_only_fields():
 
 
 @pytest.mark.django_db
-def test_progress_for_user(settings):  # noqa: C901
+def test_progress_for_user(settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 

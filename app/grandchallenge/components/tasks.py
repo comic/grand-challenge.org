@@ -789,7 +789,7 @@ def provision_job(
 
 
 @acks_late_micro_short_task(retry_on=(RetryStep,))
-def execute_job(  # noqa: C901
+def execute_job(
     *,
     job_pk: uuid.UUID,
     job_app_label: str,
@@ -867,7 +867,7 @@ def get_update_status_kwargs(*, executor=None):
 
 @acks_late_micro_short_task(retry_on=(RetryStep, LockNotAcquiredException))
 @transaction.atomic
-def handle_event(*, event, backend):  # noqa: C901
+def handle_event(*, event, backend):
     """
     Receives events when tasks have stops and determines what to do next.
     In the case of transient failure the job could be scheduled again

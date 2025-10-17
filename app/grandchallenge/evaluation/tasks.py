@@ -104,7 +104,7 @@ def check_prerequisites_for_evaluation_execution(*, evaluation_pk):
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
-def prepare_and_execute_evaluation(*, evaluation_pk):  # noqa: C901
+def prepare_and_execute_evaluation(*, evaluation_pk):
     """
     Prepares an evaluation object for execution
 
