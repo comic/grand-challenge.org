@@ -175,7 +175,9 @@ class MultipleCIVForm(Form):
 
         # add fields for all interfaces that already exist on
         # other display sets / archive items
-        for interface in base_obj.linked_component_interfaces:
+        for interface in base_obj.linked_component_interfaces.order_by(
+            "title"
+        ):
             current_value = None
 
             prefixed_interface_slug = (
