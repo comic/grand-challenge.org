@@ -43,7 +43,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONDecodeError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">billiard.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">SoftTimeLimitExceeded</span><span class="p">,</span> <span class="n">TimeLimitExceeded</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">celery</span><span class="w"> </span><span class="kn">import</span> <span class="n">signature</span>
@@ -2792,49 +2791,11 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No appropriate error handler found.&quot;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="InterfacesAndValues">
-<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfacesAndValues">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">InterfacesAndValues</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-    <span class="n">interfaces</span><span class="p">:</span> <span class="nb">set</span>
-    <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span></div>
-
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">ValuesForInterfacesMixin</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LinkedComponentInterfacesMixin</span><span class="p">:</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">civ_sets_related_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-
-    <span class="nd">@cached_property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">interfaces_and_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">vals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">civ_sets_related_manager</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span>
-                <span class="s2">&quot;values&quot;</span><span class="p">,</span> <span class="s2">&quot;values__interface&quot;</span><span class="p">,</span> <span class="s2">&quot;values__image&quot;</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">values__interface__slug__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">values</span><span class="p">(</span>
-                <span class="s2">&quot;values__interface__slug&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;values__id&quot;</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;values__id&quot;</span><span class="p">)</span>
-            <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
-        <span class="p">)</span>
-        <span class="n">interfaces</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;values__interface__slug&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">InterfacesAndValues</span><span class="p">(</span><span class="n">interfaces</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">interfaces</span><span class="p">),</span> <span class="n">values</span><span class="o">=</span><span class="n">vals</span><span class="p">)</span>
-
-    <span class="nd">@cached_property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">values_for_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">interfaces_and_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interfaces_and_values</span>
-        <span class="n">values_for_interfaces</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">interface</span><span class="p">:</span> <span class="p">[</span>
-                <span class="n">x</span><span class="p">[</span><span class="s2">&quot;values__id&quot;</span><span class="p">]</span>
-                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">interfaces_and_values</span><span class="o">.</span><span class="n">values</span>
-                <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;values__interface__slug&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">interface</span>
-            <span class="p">]</span>
-            <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="n">interfaces_and_values</span><span class="o">.</span><span class="n">interfaces</span>
-        <span class="p">}</span>
-        <span class="k">return</span> <span class="n">values_for_interfaces</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">linked_component_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

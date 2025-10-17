@@ -1011,14 +1011,14 @@
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">linked_component_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">{</span>
-            <span class="n">ci</span>
-            <span class="k">for</span> <span class="n">interface</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">ci</span> <span class="ow">in</span> <span class="p">(</span>
-                <span class="n">interface</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">)</span>
-                <span class="o">|</span> <span class="n">interface</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">Q</span><span class="p">(</span><span class="n">inputs__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
+                <span class="o">|</span> <span class="n">Q</span><span class="p">(</span><span class="n">outputs__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm_interfaces</span><span class="o">.</span><span class="n">all</span><span class="p">())</span>
             <span class="p">)</span>
-        <span class="p">}</span>
+            <span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">&quot;pk&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_phase&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>

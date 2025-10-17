@@ -68,8 +68,8 @@
     <span class="n">ComponentInterfaceValue</span><span class="p">,</span>
     <span class="n">InterfaceKindChoices</span><span class="p">,</span>
     <span class="n">InterfaceKinds</span><span class="p">,</span>
+    <span class="n">LinkedComponentInterfacesMixin</span><span class="p">,</span>
     <span class="n">OverlaySegmentsMixin</span><span class="p">,</span>
-    <span class="n">ValuesForInterfacesMixin</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="n">ANSWER_TYPE_SCHEMA</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.core.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">HexColorField</span><span class="p">,</span> <span class="n">RegexField</span>
@@ -222,7 +222,7 @@
     <span class="n">UUIDModel</span><span class="p">,</span>
     <span class="n">TitleSlugDescriptionModel</span><span class="p">,</span>
     <span class="n">HangingProtocolMixin</span><span class="p">,</span>
-    <span class="n">ValuesForInterfacesMixin</span><span class="p">,</span>
+    <span class="n">LinkedComponentInterfacesMixin</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reader Study model.</span>
@@ -895,16 +895,12 @@
         <span class="p">)</span>
 
     <span class="nd">@cached_property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">interfaces_and_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">interfaces_and_values</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">interfaces_and_values</span>
-        <span class="n">interfaces_and_values</span><span class="o">.</span><span class="n">interfaces</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
-            <span class="nb">set</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">interface__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span>
-                    <span class="s2">&quot;interface__slug&quot;</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">linked_component_interfaces</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">linked_component_interfaces</span><span class="o">.</span><span class="n">union</span><span class="p">(</span>
+            <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">question__in</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">questions</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">interfaces_and_values</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">credits_consumed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
