@@ -529,11 +529,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
     @cached_property
     def linked_component_interfaces(self):
-        return {
-            ci
-            for interface in self.interfaces.all()
-            for ci in (interface.inputs.all() | interface.outputs.all())
-        }
+        return (
+            ComponentInterface.objects.filter(
+                Q(inputs__in=self.interfaces.all())
+                | Q(outputs__in=self.interfaces.all())
+            )
+            .distinct()
+            .order_by("pk")
+        )
 
     @cached_property
     def user_statistics(self):

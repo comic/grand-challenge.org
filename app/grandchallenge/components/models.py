@@ -5,7 +5,6 @@ from enum import Enum
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import NamedTuple
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import signature
@@ -2691,46 +2690,11 @@ class CIVForObjectMixin:
             raise RuntimeError("No appropriate error handler found.")
 
 
-class InterfacesAndValues(NamedTuple):
-    interfaces: set
-    values: dict
-
-
-class ValuesForInterfacesMixin:
+class LinkedComponentInterfacesMixin:
 
     @property
     def civ_sets_related_manager(self):
         raise NotImplementedError
-
-    @cached_property
-    def interfaces_and_values(self):
-        vals = list(
-            self.civ_sets_related_manager.select_related(
-                "values", "values__interface", "values__image"
-            )
-            .filter(values__interface__slug__isnull=False)
-            .values(
-                "values__interface__slug",
-                "values__id",
-            )
-            .order_by("values__id")
-            .distinct()
-        )
-        interfaces = [x["values__interface__slug"] for x in vals]
-        return InterfacesAndValues(interfaces=set(interfaces), values=vals)
-
-    @cached_property
-    def values_for_interfaces(self):
-        interfaces_and_values = self.interfaces_and_values
-        values_for_interfaces = {
-            interface: [
-                x["values__id"]
-                for x in interfaces_and_values.values
-                if x["values__interface__slug"] == interface
-            ]
-            for interface in interfaces_and_values.interfaces
-        }
-        return values_for_interfaces
 
     @cached_property
     def linked_component_interfaces(self):

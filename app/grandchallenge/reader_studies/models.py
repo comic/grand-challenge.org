@@ -30,8 +30,8 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
     InterfaceKinds,
+    LinkedComponentInterfacesMixin,
     OverlaySegmentsMixin,
-    ValuesForInterfacesMixin,
 )
 from grandchallenge.components.schemas import ANSWER_TYPE_SCHEMA
 from grandchallenge.core.fields import HexColorField, RegexField
@@ -182,7 +182,7 @@ class ReaderStudy(
     UUIDModel,
     TitleSlugDescriptionModel,
     HangingProtocolMixin,
-    ValuesForInterfacesMixin,
+    LinkedComponentInterfacesMixin,
 ):
     """
     Reader Study model.
@@ -825,16 +825,12 @@ class ReaderStudy(
         )
 
     @cached_property
-    def interfaces_and_values(self):
-        interfaces_and_values = super().interfaces_and_values
-        interfaces_and_values.interfaces.update(
-            set(
-                self.questions.filter(interface__isnull=False).values_list(
-                    "interface__slug", flat=True
-                )
-            )
+    def linked_component_interfaces(self):
+        return super().linked_component_interfaces.union(
+            ComponentInterface.objects.filter(
+                question__in=self.questions.all()
+            ).distinct()
         )
-        return interfaces_and_values
 
     @property
     def credits_consumed(self):

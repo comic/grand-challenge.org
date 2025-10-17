@@ -1451,8 +1451,7 @@ def test_display_set_update_form(form_class):
         kind=InterfaceKindChoices.STRING, title="slug-3"
     )
     QuestionFactory(reader_study=rs, answer_type=AnswerType.TEXT, interface=ci)
-    del rs.interfaces_and_values
-    del rs.values_for_interfaces
+    del rs.linked_component_interfaces
     form = form_class(user=user, instance=instance, base_obj=rs)
     assert sorted(form.fields.keys()) == [
         f"{INTERFACE_FORM_FIELD_PREFIX}slug-1",

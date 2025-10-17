@@ -175,11 +175,14 @@ class MultipleCIVForm(Form):
 
         # add fields for all interfaces that already exist on
         # other display sets / archive items
-        for slug in base_obj.values_for_interfaces.keys():
+        for interface in base_obj.linked_component_interfaces.order_by(
+            "title"
+        ):
             current_value = None
 
-            interface = ComponentInterface.objects.filter(slug=slug).get()
-            prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{slug}"
+            prefixed_interface_slug = (
+                f"{INTERFACE_FORM_FIELD_PREFIX}{interface.slug}"
+            )
 
             # For interfaces that use the FlexibleImageWidget or FlexibleFileWidget
             # we need to pass in the initial value explicitly, for all other
@@ -200,7 +203,7 @@ class MultipleCIVForm(Form):
 
             if not current_value and instance:
                 current_value = instance.values.filter(
-                    interface__slug=slug
+                    interface__slug=interface.slug
                 ).first()
 
             self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
@@ -340,7 +343,9 @@ class SingleCIVForm(Form):
         qs = (
             ComponentInterface.objects.all()
             .filter(**socket_filter_kwargs)
-            .exclude(slug__in=base_obj.values_for_interfaces.keys())
+            .exclude(
+                slug__in=base_obj.linked_component_interfaces.values("slug")
+            )
         )
 
         if interface:

@@ -1524,7 +1524,7 @@ def test_mark_desired_version():
     ),
 )
 @pytest.mark.django_db
-def test_values_for_interfaces(
+def test_linked_component_interfaces(
     base_object_factory, related_item_factory, base_object_lookup
 ):
     base_obj = base_object_factory()
@@ -1541,11 +1541,7 @@ def test_values_for_interfaces(
     ob1.values.add(civ1a, civ2a)
     ob2.values.add(civ1a, civ2b, civ3)
 
-    assert base_obj.values_for_interfaces == {
-        ci1.slug: [civ1a.pk],
-        ci2.slug: [civ2a.pk, civ2b.pk],
-        ci3.slug: [civ3.pk],
-    }
+    assert set(base_obj.linked_component_interfaces) == {ci1, ci2, ci3}
 
 
 @pytest.mark.django_db

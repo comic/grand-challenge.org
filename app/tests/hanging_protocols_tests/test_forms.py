@@ -471,7 +471,7 @@ def make_ci_list(
             1,
             1,
             (
-                "The following sockets are used in your {}: test-ci-isolated-0, test-ci-image-0, test-ci-overlay-0, and test-ci-undisplayable-0. "
+                "The following sockets are used in your {}: test-ci-image-0, test-ci-isolated-0, test-ci-overlay-0, and test-ci-undisplayable-0. "
                 'Example usage: {{"main": ["test-ci-isolated-0"], "secondary": ["test-ci-image-0", "test-ci-overlay-0"]}}. '
                 'Refer to the <a href="https://testserver/documentation/viewer-content/">documentation</a> for more information'
             ),
@@ -571,9 +571,7 @@ def test_algorithm_form_view_content_help_text(
 
     form = AlgorithmForm(user=UserFactory(), instance=algorithm)
 
-    assert sorted(
-        [interface.pk for interface in algorithm.linked_component_interfaces]
-    ) == [interface.pk for interface in ci_list]
+    assert set(algorithm.linked_component_interfaces) == set(ci_list)
     assert expected_help_text in form.fields["view_content"].help_text
 
 
@@ -637,9 +635,7 @@ def test_phase_update_form_view_content_help_text(
         user=UserFactory(), instance=phase, **{"challenge": phase.challenge}
     )
 
-    assert sorted(
-        [interface.pk for interface in phase.linked_component_interfaces]
-    ) == [interface.pk for interface in ci_list]
+    assert set(phase.linked_component_interfaces) == set(ci_list)
     assert expected_help_text in form.fields["view_content"].help_text
 
 

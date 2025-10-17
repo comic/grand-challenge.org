@@ -151,10 +151,12 @@ class ViewContentExampleMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance:
-            interface_slugs = [
-                interface.slug
-                for interface in self.instance.linked_component_interfaces
-            ]
+            interface_slugs = sorted(
+                [
+                    interface.slug
+                    for interface in self.instance.linked_component_interfaces
+                ]
+            )
 
             if len(interface_slugs) > 0:
                 self.fields[
@@ -183,9 +185,8 @@ class ViewContentExampleMixin:
         )
 
     def _get_interface_lists(self):
-        sorted_interfaces = sorted(
-            list(self.instance.linked_component_interfaces),
-            key=lambda x: x.slug,
+        sorted_interfaces = list(
+            self.instance.linked_component_interfaces.order_by("slug")
         )
         images = [
             interface.slug
