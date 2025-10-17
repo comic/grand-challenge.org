@@ -237,6 +237,8 @@ class RawImageUploadSession(UUIDModel):
             status=RawImageUploadSession.REQUEUED
         )
 
+        # The linked task is updated here so we can define it on forms
+        # before the upload session instance exists.
         if linked_task is not None:
             linked_task.kwargs.update({"upload_session_pk": self.pk})
 
