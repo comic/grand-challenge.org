@@ -1320,9 +1320,10 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
             except AttributeError:
                 return ""
         else:
-            raise NotImplementedError(
-                f"Unknown interface super kind: {self.interface.super_kind}"
+            logger.error(
+                f"Title not implemented for interface super kind: {self.interface.super_kind}"
             )
+            return ""
 
     @property
     def has_value(self):
