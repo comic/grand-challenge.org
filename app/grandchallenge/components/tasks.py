@@ -1194,8 +1194,8 @@ def civ_value_to_file(*, civ_pk):
 
     civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
 
-    if civ.value is None:
-        raise RuntimeError("CIV value is None")
+    if civ.file:
+        raise RuntimeError("CIV file is not None")
 
     civ.file = ContentFile(
         json.dumps(civ.value).encode("utf-8"),

@@ -1328,19 +1328,30 @@ class TestJobCreateView:
             ]
         ) == sorted([civ.interface.pk for civ in job.inputs.all()])
 
-        value_inputs = [civ.value for civ in job.inputs.all() if civ.value]
+        value_inputs = [
+            civ.value
+            for civ in job.inputs.all()
+            if civ.interface.super_kind == civ.interface.SuperKind.VALUE
+        ]
         assert "Foo" in value_inputs
         assert True in value_inputs
         assert ["Foo", "bar"] in value_inputs
 
         image_inputs = [
-            civ.image.name for civ in job.inputs.all() if civ.image
+            civ.image.name
+            for civ in job.inputs.all()
+            if civ.interface.super_kind == civ.interface.SuperKind.IMAGE
         ]
         assert algorithm_with_multiple_inputs.image_1.name in image_inputs
         assert "image10x10x10.mha" in image_inputs
+        file_inputs = [
+            civ.file
+            for civ in job.inputs.all()
+            if civ.interface.super_kind == civ.interface.SuperKind.FILE
+        ]
         assert (
             algorithm_with_multiple_inputs.file_upload.filename.split(".")[0]
-            in [civ.file for civ in job.inputs.all() if civ.file][0].name
+            in file_inputs[0].name
         )
 
     @override_settings(task_eager_propagates=True, task_always_eager=True)

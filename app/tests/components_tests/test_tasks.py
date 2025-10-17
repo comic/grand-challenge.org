@@ -141,9 +141,10 @@ def test_retry_too_many():
         )
 
 
+@pytest.mark.parametrize("value", [{"foo": 1, "bar": None}, "", None])
 @pytest.mark.django_db
-def test_civ_value_to_file():
-    civ = ComponentInterfaceValueFactory(value={"foo": 1, "bar": None})
+def test_civ_value_to_file(value):
+    civ = ComponentInterfaceValueFactory(value=value)
 
     civ_value_to_file(civ_pk=civ.pk)
 
@@ -152,7 +153,7 @@ def test_civ_value_to_file():
     with civ.file.open("r") as f:
         v = json.loads(f.read())
 
-    assert v == {"foo": 1, "bar": None}
+    assert v == value
     assert civ.value is None
 
     # Check idempotency

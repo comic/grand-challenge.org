@@ -22,7 +22,7 @@ def sort_civs(civs):
     residual = []
 
     for v in sorted(list(iterable), key=lambda civ: civ.interface.slug):
-        if v.value is not None:
+        if v.interface.is_json_kind:
             if v.interface.kind == InterfaceKindChoices.CHART:
                 charts.append(v)
             else:
