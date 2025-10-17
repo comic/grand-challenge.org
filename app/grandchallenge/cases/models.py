@@ -959,7 +959,7 @@ class PostProcessImageTask(UUIDModel):
 def generate_dicom_id_suffix(*, pk, suffix_type):
     """
     This value will be appended to the ROOT UID of the de-identifier,
-    which is ROOT UID is: "1.2.826.0.1.3680043.10.1666."
+    which is: "1.2.826.0.1.3680043.10.1666."
 
     The max length of a DICOM UID is 64 chars, and it can only contain
     numerical values and ".".
