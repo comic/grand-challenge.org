@@ -21,8 +21,10 @@
     {% elif interface.super_kind == interface.SuperKind.IMAGE %}
         {% if not civ.image %}
             {% include "components/partials/civ/fallback.html" %}
+        {% elif civ.interface.is_dicom_image_kind %}
+            {% include "components/partials/civ/dicom_image.html" %}
         {% else %}
-            {% include "components/partials/civ/image.html" %}
+            {% include "components/partials/civ/panimg_image.html" %}
         {% endif %}
     {% endif %}
 
