@@ -1315,10 +1315,7 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
             except AttributeError:
                 return ""
         elif self.interface.super_kind == self.interface.SuperKind.FILE:
-            try:
-                return Path(self.file.name).name
-            except AttributeError:
-                return ""
+            return Path(self.file.name).name
         else:
             logger.error(
                 f"Title not implemented for interface super kind: {self.interface.super_kind}"
