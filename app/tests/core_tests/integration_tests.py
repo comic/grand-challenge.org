@@ -1,12 +1,12 @@
 import datetime
 import re
-from random import choice
 
 from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase
 from django.utils.crypto import get_random_string
+from faker import Faker
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.pages.models import Page
@@ -38,6 +38,7 @@ def create_page(
 
 class GrandChallengeFrameworkTestCase(TestCase):
     def setUp(self):
+        self.faker = Faker()
         self._create_root_superuser()
         [
             self.testchallenge,
@@ -189,9 +190,7 @@ class GrandChallengeFrameworkTestCase(TestCase):
         assert get_user_model().objects.get(username=data["username"])
 
     def _create_random_user(self, startname=""):
-        username = startname + "".join(
-            [choice("AEOUY") + choice("QWRTPSDFGHHKLMNB") for x in range(3)]
-        )
+        username = startname + self.faker.user_name()
         data = {
             "username": username,
             "email": username + "@test.com",
