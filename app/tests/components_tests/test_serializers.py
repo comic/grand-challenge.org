@@ -1,4 +1,5 @@
 import pytest
+from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import (
@@ -477,6 +478,26 @@ def test_civ_post_image_not_ready_validation(kind, rf):
         "Invalid hyperlink - Object does not exist"
         in serializer.errors["upload_session"][0]
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
+def test_civ_post_panimg_image_valid(kind, rf):
+    user = UserFactory()
+    image = ImageFactory(
+        name="foobar", color_space="GRAY", depth=1, timepoints=3
+    )
+    assign_perm("view_image", user, image)
+    interface = ComponentInterfaceFactory(kind=kind)
+    payload = {"interface": interface.slug, "image": image.api_url}
+    request = rf.get("/foo")
+    request.user = user
+
+    serializer = ComponentInterfaceValuePostSerializer(
+        data=payload, context={"request": request}
+    )
+
+    assert serializer.is_valid(), f"{serializer.errors}"
 
 
 @pytest.mark.django_db
