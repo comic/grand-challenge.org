@@ -1307,13 +1307,20 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
 
     @property
     def title(self):
-        if self.value is not None:
+        if self.interface.super_kind == self.interface.SuperKind.VALUE:
             return str(self.value)
-        if self.file:
+        elif self.interface.super_kind == self.interface.SuperKind.IMAGE:
+            try:
+                return self.image.name
+            except AttributeError:
+                return ""
+        elif self.interface.super_kind == self.interface.SuperKind.FILE:
             return Path(self.file.name).name
-        if self.image:
-            return self.image.name
-        return ""
+        else:
+            logger.error(
+                f"Title not implemented for interface super kind: {self.interface.super_kind}"
+            )
+            return ""
 
     @property
     def has_value(self):
@@ -1345,10 +1352,10 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
         )
 
     def __str__(self):
-        if self.value is None:
-            return self.title
-        else:
+        if self.interface.is_json_kind:
             return f"Component Interface Value {self.pk} for {self.interface}"
+        else:
+            return self.title
 
     def save(self, *args, **kwargs):
         if (
