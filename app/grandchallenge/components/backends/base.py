@@ -800,12 +800,12 @@ class Executor(ABC):
         signature_hmac_sha256 = response["Metadata"].get(
             "signature_hmac_sha256"
         )
-        calc = hmac.new(
+        body_signature_hmac_sha256 = hmac.new(
             key=self._signing_key, msg=body, digestmod=hashlib.sha256
         ).hexdigest()
 
         if signature_hmac_sha256 and not secrets.compare_digest(
-            calc, signature_hmac_sha256
+            body_signature_hmac_sha256, signature_hmac_sha256
         ):
             # TODO The signature should always be present when all images use sagemaker shim >= 0.5.0
             logger.error("The invocation results file has been tampered with")

@@ -2,6 +2,7 @@ import asyncio
 import io
 import json
 import os
+import secrets
 from unittest.mock import Mock
 from uuid import uuid4
 from zipfile import ZipInfo
@@ -146,6 +147,7 @@ def test_inputs_json(settings):
         time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
+        signing_key=secrets.token_bytes(),
     )
 
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(
@@ -217,6 +219,7 @@ def test_invocation_json(settings):
         time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
+        signing_key=secrets.token_bytes(),
     )
 
     image_interface = ComponentInterfaceFactory(
@@ -462,6 +465,7 @@ def test_dicom_get_provisioning_tasks():
         time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
+        signing_key=secrets.token_bytes(),
     )
 
     panimage_interface = ComponentInterfaceFactory(
@@ -676,6 +680,7 @@ def test_dodgy_sop_instance_uid():
         time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
+        signing_key=secrets.token_bytes(),
     )
 
     dicom_interface = ComponentInterfaceFactory(

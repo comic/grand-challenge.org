@@ -1631,8 +1631,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     )
     signing_key = models.BinaryField(
         max_length=32,
+        default=secrets.token_bytes,
         editable=False,
-        help_text=("The key used to sign the inference result file"),
+        help_text="The key used to sign the inference result file",
     )
     task_on_success = models.JSONField(
         default=None,
@@ -1689,10 +1690,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
-        if adding:
-            self.signing_key = secrets.token_bytes()
-            secrets.token_hex()
-        else:
+        if not adding:
             for field in (
                 "requires_gpu_type",
                 "requires_memory_gb",
