@@ -781,7 +781,7 @@ class Executor(ABC):
             key=key,
         )
 
-    def _get_task_return_code(self):  # noqa: C901
+    def _get_task_return_code(self):
         try:
             response = self._s3_client.get_object(
                 Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
@@ -797,18 +797,21 @@ class Executor(ABC):
 
         body = response["Body"].read()
 
-        if signature_hmac_sha256 := response["Metadata"].get(
+        signature_hmac_sha256 = response["Metadata"].get(
             "signature_hmac_sha256"
+        )
+        calc = hmac.new(
+            key=self._signing_key, msg=body, digestmod=hashlib.sha256
+        ).hexdigest()
+
+        if signature_hmac_sha256 and not secrets.compare_digest(
+            calc, signature_hmac_sha256
         ):
             # TODO The signature should always be present when all images use sagemaker shim >= 0.5.0
-            calc = hmac.new(
-                key=self._signing_key, msg=body, digestmod=hashlib.sha256
-            ).hexdigest()
-
-            if not secrets.compare_digest(calc, signature_hmac_sha256):
-                raise RuntimeError(
-                    "The invocation results file has been tampered with"
-                )
+            logger.error("The invocation results file has been tampered with")
+            raise ComponentException(
+                "The invocation response object is not valid"
+            )
 
         try:
             result = json.loads(body.decode("utf-8"))
