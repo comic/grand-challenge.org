@@ -84,9 +84,13 @@ class IOCopyExecutor(Executor):
             result_json = json.dumps(
                 {"pk": self._job_id, "return_code": 0}
             ).encode("utf-8")
+
             signature = hmac.new(
-                key=b"wrong-key", msg=result_json, digestmod=hashlib.sha256
+                key=self._signing_key,
+                msg=result_json,
+                digestmod=hashlib.sha256,
             ).hexdigest()
+
             self._s3_client.upload_fileobj(
                 Fileobj=io.BytesIO(result_json),
                 Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
