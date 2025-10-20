@@ -1,6 +1,5 @@
 import io
 import json
-import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -49,7 +48,7 @@ def test_instance_type(memory_limit, expected_type, requires_gpu_type):
         time_limit=60,
         requires_gpu_type=requires_gpu_type,
         use_warm_pool=False,
-        signing_key=secrets.token_bytes(),
+        signing_key=b"",
     )
 
     assert executor._instance_type.name == expected_type
@@ -74,7 +73,7 @@ def test_instance_type_incompatible(memory_limit, requires_gpu_type):
         time_limit=60,
         requires_gpu_type=requires_gpu_type,
         use_warm_pool=False,
-        signing_key=secrets.token_bytes(),
+        signing_key=b"",
     )
 
     with pytest.raises(ValueError):
@@ -112,7 +111,7 @@ def test_invocation_prefix():
         time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
-        signing_key=secrets.token_bytes(),
+        signing_key=b"",
     )
 
     # The id of the job must be in the prefixes
@@ -170,7 +169,7 @@ def test_invocation_json(settings):
         time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
-        signing_key=secrets.token_bytes(),
+        signing_key=b"",
     )
 
     with Stubber(executor._sagemaker_client) as s:
@@ -252,7 +251,7 @@ def test_set_duration():
         time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
-        signing_key=secrets.token_bytes(),
+        signing_key=b"",
     )
 
     assert executor.duration is None
@@ -279,7 +278,7 @@ def test_get_log_stream_name(settings):
         time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
-        signing_key=secrets.token_bytes(),
+        signing_key=b"",
     )
 
     with Stubber(executor._logs_client) as s:
@@ -311,7 +310,7 @@ def test_set_task_logs(settings):
         time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
-        signing_key=secrets.token_bytes(),
+        signing_key=b"",
     )
 
     assert executor.stdout == ""
@@ -458,7 +457,7 @@ def test_set_runtime_metrics(settings):
         time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
-        signing_key=secrets.token_bytes(),
+        signing_key=b"",
     )
 
     assert executor.runtime_metrics == {}
@@ -554,7 +553,7 @@ def test_handle_completed_job():
         time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
-        signing_key=secrets.token_bytes(),
+        signing_key=b"",
     )
 
     return_code = 0
@@ -586,7 +585,7 @@ def test_handle_time_limit_exceded(settings):
         time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
-        signing_key=secrets.token_bytes(),
+        signing_key=b"",
     )
 
     with pytest.raises(ComponentException) as error:
@@ -611,7 +610,7 @@ def test_handle_stopped_event(settings):
         time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
-        signing_key=secrets.token_bytes(),
+        signing_key=b"",
     )
 
     with (
@@ -719,7 +718,7 @@ def test_deprovision(settings):
         time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
-        signing_key=secrets.token_bytes(),
+        signing_key=b"",
     )
 
     created_files = (
