@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import secrets
 from enum import Enum
 from json import JSONDecodeError
 from pathlib import Path
@@ -1628,6 +1629,11 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "/input/foo/bar/<relative_path>"
         ),
     )
+    signing_key = models.BinaryField(
+        max_length=32,
+        editable=False,
+        help_text=("The key used to sign the inference result file"),
+    )
     task_on_success = models.JSONField(
         default=None,
         null=True,
@@ -1683,11 +1689,15 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
-        if not adding:
+        if adding:
+            self.signing_key = secrets.token_bytes()
+            secrets.token_hex()
+        else:
             for field in (
                 "requires_gpu_type",
                 "requires_memory_gb",
                 "time_limit",
+                "signing_key",
             ):
                 if self.has_changed(field):
                     raise ValueError(f"{field} cannot be changed")
@@ -1757,6 +1767,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             "requires_gpu_type": self.requires_gpu_type,
             "memory_limit": self.requires_memory_gb,
             "use_warm_pool": self.use_warm_pool,
+            "signing_key": self.signing_key,
         }
 
     def get_executor(self, *, backend):

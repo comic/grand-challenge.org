@@ -1,9 +1,13 @@
 import asyncio
+import binascii
 import functools
+import hashlib
+import hmac
 import io
 import json
 import logging
 import os
+import secrets
 from abc import ABC, abstractmethod
 from json import JSONDecodeError
 from math import ceil
@@ -272,6 +276,7 @@ class Executor(ABC):
         time_limit: int,
         requires_gpu_type: GPUTypeChoices,
         use_warm_pool: bool,
+        signing_key: bytes,
         algorithm_model=None,
         ground_truth=None,
         **kwargs,
@@ -285,6 +290,7 @@ class Executor(ABC):
         self._use_warm_pool = (
             use_warm_pool and settings.COMPONENTS_USE_WARM_POOL
         )
+        self._signing_key = signing_key
         self._stdout = []
         self._stderr = []
         self.__s3_client = None
@@ -388,15 +394,21 @@ class Executor(ABC):
             "GRAND_CHALLENGE_COMPONENT_MAX_MEMORY_MB": str(
                 self._max_memory_mb
             ),
+            "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX": binascii.hexlify(
+                self._signing_key
+            ).decode("ascii"),
         }
+
         if self._algorithm_model:
             env["GRAND_CHALLENGE_COMPONENT_MODEL"] = (
                 f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._algorithm_model_key}"
             )
+
         if self._ground_truth:
             env["GRAND_CHALLENGE_COMPONENT_GROUND_TRUTH"] = (
                 f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._ground_truth_key}"
             )
+
         return env
 
     @property
@@ -769,44 +781,53 @@ class Executor(ABC):
             key=key,
         )
 
-    def _get_task_return_code(self):
-        with io.BytesIO() as fileobj:
-            try:
-                self._s3_client.download_fileobj(
-                    Fileobj=fileobj,
-                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                    Key=self._result_key,
+    def _get_task_return_code(self):  # noqa: C901
+        try:
+            response = self._s3_client.get_object(
+                Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                Key=self._result_key,
+            )
+        except botocore.exceptions.ClientError as error:
+            if error.response["Error"]["Code"] == "404":
+                raise UncleanExit(
+                    "The invocation request did not return a result"
+                ) from error
+            else:
+                raise
+
+        body = response["Body"].read()
+
+        if signature_hmac_sha256 := response["Metadata"].get(
+            "signature_hmac_sha256"
+        ):
+            # TODO The signature should always be present when all images use sagemaker shim >= 0.5.0
+            calc = hmac.new(
+                key=self._signing_key, msg=body, digestmod=hashlib.sha256
+            ).hexdigest()
+
+            if not secrets.compare_digest(calc, signature_hmac_sha256):
+                raise RuntimeError(
+                    "The invocation results file has been tampered with"
                 )
-            except botocore.exceptions.ClientError as error:
-                if error.response["Error"]["Code"] == "404":
-                    raise UncleanExit(
-                        "The invocation request did not return a result"
-                    ) from error
-                else:
-                    raise
 
-            fileobj.seek(0)
+        try:
+            result = json.loads(body.decode("utf-8"))
+        except JSONDecodeError:
+            raise ComponentException(
+                "The invocation request did not return valid json"
+            )
 
-            try:
-                result = json.loads(
-                    fileobj.read().decode("utf-8"),
-                )
-            except JSONDecodeError:
-                raise ComponentException(
-                    "The invocation request did not return valid json"
-                )
+        logger.info(f"{result=}")
 
-            logger.info(f"{result=}")
+        if result["pk"] != self._job_id:
+            raise RuntimeError("Wrong result key for this job")
 
-            if result["pk"] != self._job_id:
-                raise RuntimeError("Wrong result key for this job")
-
-            try:
-                return int(result["return_code"])
-            except (KeyError, ValueError):
-                raise ComponentException(
-                    "The invocation response object is not valid"
-                )
+        try:
+            return int(result["return_code"])
+        except (KeyError, ValueError):
+            raise ComponentException(
+                "The invocation response object is not valid"
+            )
 
     def _handle_completed_job(self):
         users_process_exit_code = self._get_task_return_code()
