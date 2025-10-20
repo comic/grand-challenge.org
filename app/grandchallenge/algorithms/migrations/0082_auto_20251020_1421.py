@@ -13,11 +13,13 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             sql="CREATE EXTENSION IF NOT EXISTS pgcrypto;",
             reverse_sql="",
+            elidable=True,
         ),
         migrations.RunSQL(
             sql=(
                 "UPDATE algorithms_job SET signing_key = gen_random_bytes(32) WHERE signing_key IS NULL;"
             ),
             reverse_sql="UPDATE algorithms_job SET signing_key = NULL;",
+            elidable=True,
         ),
     ]
