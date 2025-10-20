@@ -752,7 +752,9 @@ def test_invocation_results_signature_unverified(settings):
         signing_key=b"correct-key",
     )
 
-    content = json.dumps({}).encode("utf-8")
+    content = json.dumps(
+        {"pk": f"test-test-{job_pk}", "return_code": 0}
+    ).encode("utf-8")
     signature = hmac.new(
         key=b"wrong-key", msg=content, digestmod=hashlib.sha256
     ).hexdigest()
