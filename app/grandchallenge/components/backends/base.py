@@ -808,9 +808,11 @@ class Executor(ABC):
             body_signature_hmac_sha256, signature_hmac_sha256
         ):
             # TODO The signature should always be present when all images use sagemaker shim >= 0.5.0
-            logger.error("The invocation results file has been tampered with")
+            logger.error(
+                "The invocation response object has been tampered with"
+            )
             raise ComponentException(
-                "The invocation response object is not valid"
+                "The invocation response object has been tampered with"
             )
 
         try:
