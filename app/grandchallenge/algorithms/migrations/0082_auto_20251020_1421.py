@@ -16,8 +16,8 @@ class Migration(migrations.Migration):
         ),
         migrations.RunSQL(
             sql=(
-                "UPDATE evaluation_evaluation SET signing_key = gen_random_bytes(32) WHERE signing_key IS NULL;"
+                "UPDATE algorithms_job SET signing_key = gen_random_bytes(32) WHERE signing_key IS NULL;"
             ),
-            reverse_sql="UPDATE evaluation_evaluation SET signing_key = NULL;",
+            reverse_sql="UPDATE algorithms_job SET signing_key = NULL;",
         ),
     ]
