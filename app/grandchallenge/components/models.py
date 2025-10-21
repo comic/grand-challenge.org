@@ -1521,13 +1521,13 @@ class ComponentJobManager(models.QuerySet):
         )
 
     @staticmethod
-    def retrieve_existing_civs(*, values):
+    def retrieve_existing_civs(*, civ_data_objects):
         """
-        Checks if there are existing CIVs for the provided data and returns those.
+        Check if there are existing CIVs for the provided data and returns those.
 
         Parameters
         ----------
-        values
+        civ_data_objects
             A list of CIVData objects.
 
         Returns
@@ -1536,7 +1536,7 @@ class ComponentJobManager(models.QuerySet):
 
         """
         existing_civs = []
-        for civ_data in values:
+        for civ_data in civ_data_objects:
             if (
                 civ_data.user_upload
                 or civ_data.upload_session

@@ -1845,7 +1845,7 @@ class EvaluationManager(ComponentJobManager):
         requires_gpu_type,
         requires_memory_gb,
     ):
-        existing_civs = self.retrieve_existing_civs(values=inputs)
+        existing_civs = self.retrieve_existing_civs(civ_data_objects=inputs)
         unique_kwargs = {
             "submission": submission,
             "method": method,
