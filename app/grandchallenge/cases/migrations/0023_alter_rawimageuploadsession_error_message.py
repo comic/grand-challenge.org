@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("cases", "0021_dicomimagesetupload_task_on_success"),
+        ("cases", "0022_auto_20251021_1014"),
     ]
 
     operations = [
