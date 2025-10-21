@@ -1613,13 +1613,13 @@
 <div class="viewcode-block" id="ComponentJobManager.retrieve_existing_civs">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.ComponentJobManager.retrieve_existing_civs">[docs]</a>
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_existing_civs</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">civ_data</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve_existing_civs</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">civ_data_objects</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Checks if there are existing CIVs for the provided data and returns those.</span>
+<span class="sd">        Check if there are existing CIVs for the provided data and returns those.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        civ_data</span>
+<span class="sd">        civ_data_objects</span>
 <span class="sd">            A list of CIVData objects.</span>
 
 <span class="sd">        Returns</span>
@@ -1628,29 +1628,31 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">existing_civs</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">civ</span> <span class="ow">in</span> <span class="n">civ_data</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">civ_data</span> <span class="ow">in</span> <span class="n">civ_data_objects</span><span class="p">:</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="n">civ</span><span class="o">.</span><span class="n">user_upload</span>
-                <span class="ow">or</span> <span class="n">civ</span><span class="o">.</span><span class="n">upload_session</span>
-                <span class="ow">or</span> <span class="n">civ</span><span class="o">.</span><span class="n">user_upload_queryset</span>
+                <span class="n">civ_data</span><span class="o">.</span><span class="n">user_upload</span>
+                <span class="ow">or</span> <span class="n">civ_data</span><span class="o">.</span><span class="n">upload_session</span>
+                <span class="ow">or</span> <span class="n">civ_data</span><span class="o">.</span><span class="n">user_upload_queryset</span>
             <span class="p">):</span>
                 <span class="c1"># uploads will create new CIVs, so ignore these</span>
                 <span class="k">continue</span>
-            <span class="k">elif</span> <span class="n">civ</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
+            <span class="k">elif</span> <span class="n">civ_data</span><span class="o">.</span><span class="n">image</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">civs</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                        <span class="n">interface__slug</span><span class="o">=</span><span class="n">civ</span><span class="o">.</span><span class="n">interface_slug</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="n">civ</span><span class="o">.</span><span class="n">image</span>
+                        <span class="n">interface__slug</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">interface_slug</span><span class="p">,</span>
+                        <span class="n">image</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">image</span><span class="p">,</span>
                     <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
                     <span class="n">existing_civs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">civs</span><span class="p">)</span>
                 <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
                     <span class="k">continue</span>
-            <span class="k">elif</span> <span class="n">civ</span><span class="o">.</span><span class="n">file_civ</span><span class="p">:</span>
-                <span class="n">existing_civs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">civ</span><span class="o">.</span><span class="n">file_civ</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">civ_data</span><span class="o">.</span><span class="n">file_civ</span><span class="p">:</span>
+                <span class="n">existing_civs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">civ_data</span><span class="o">.</span><span class="n">file_civ</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># values can be of different types, including None and False</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">civs</span> <span class="o">=</span> <span class="n">ComponentInterfaceValue</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
-                        <span class="n">interface__slug</span><span class="o">=</span><span class="n">civ</span><span class="o">.</span><span class="n">interface_slug</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">civ</span><span class="o">.</span><span class="n">value</span>
+                        <span class="n">interface__slug</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">interface_slug</span><span class="p">,</span>
+                        <span class="n">value</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                     <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
                     <span class="n">existing_civs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">civs</span><span class="p">)</span>
                 <span class="k">except</span> <span class="n">ObjectDoesNotExist</span><span class="p">:</span>
@@ -2507,10 +2509,10 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_editable</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">CIVNotEditableException</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> is not editable.&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">validate_values_and_execute_linked_task</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_civ_data_objects_and_execute_linked_task</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ_data_objects</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
-        <span class="k">for</span> <span class="n">civ_data</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">civ_data</span> <span class="ow">in</span> <span class="n">civ_data_objects</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">create_civ</span><span class="p">(</span>
                 <span class="n">civ_data</span><span class="o">=</span><span class="n">civ_data</span><span class="p">,</span>
                 <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>

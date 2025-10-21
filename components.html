@@ -398,11 +398,11 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="grandchallenge.components.models.ComponentJobManager.retrieve_existing_civs">
-<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">retrieve_existing_civs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">civ_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentJobManager.retrieve_existing_civs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentJobManager.retrieve_existing_civs" title="Link to this definition">¶</a></dt>
-<dd><p>Checks if there are existing CIVs for the provided data and returns those.</p>
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">retrieve_existing_civs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">civ_data_objects</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentJobManager.retrieve_existing_civs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentJobManager.retrieve_existing_civs" title="Link to this definition">¶</a></dt>
+<dd><p>Check if there are existing CIVs for the provided data and returns those.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>civ_data</strong> – A list of CIVData objects.</p>
+<dd class="field-odd"><p><strong>civ_data_objects</strong> – A list of CIVData objects.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><em>A list of ComponentInterfaceValues</em></p>
@@ -430,53 +430,53 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Interface kinds that are images:
 
   - Heat Map
-  - Segmentation
-  - Image
   - Displacement field
+  - Image
   - DICOM Image Set
+  - Segmentation
 
 
 Interface kinds that are files:
 
-  - Thumbnail jpg
-  - Newick tree-format file
-  - OBJ file
-  - BIOM format
-  - Thumbnail png
-  - SQREG file
-  - CSV file
-  - PDF file
   - MP4 file
+  - Newick tree-format file
+  - SQREG file
   - ZIP file
+  - BIOM format
+  - Thumbnail jpg
+  - OBJ file
+  - Thumbnail png
+  - PDF file
+  - CSV file
 
 
 Interface kinds that are json serializable:
 
-  - Multiple choice
-  - Anything
-  - Multiple ellipses
-  - 2D bounding box
   - Float
   - Multiple points
-  - Multiple three-point angles
-  - Multiple distance measurements
-  - Bool
-  - Polygon
-  - Line
-  - Distance measurement
-  - Ellipse
-  - Integer
-  - Multiple 2D bounding boxes
   - Affine transform registration
-  - Multiple lines
-  - String
-  - Point
+  - Polygon
+  - Ellipse
+  - Multiple distance measurements
+  - Multiple choice
+  - Multiple ellipses
   - Three-point angle
-  - Chart
   - Choice
-  - Angle
-  - Multiple angles
   - Multiple polygons
+  - Angle
+  - Anything
+  - Point
+  - Multiple lines
+  - Multiple 2D bounding boxes
+  - Integer
+  - String
+  - Multiple angles
+  - Line
+  - 2D bounding box
+  - Chart
+  - Bool
+  - Multiple three-point angles
+  - Distance measurement
 
 
 Example JSON file contents for String:
