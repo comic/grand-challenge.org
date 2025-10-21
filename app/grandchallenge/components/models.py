@@ -2542,7 +2542,16 @@ class CIVForObjectMixin:
                         f"queryset for interface {ci}"
                     )
                 upload_session = RawImageUploadSession(creator=user)
-                upload_session.full_clean()
+                try:
+                    upload_session.full_clean()
+                except ValidationError as e:
+                    error_handler = self.get_error_handler()
+                    error_handler.handle_error(
+                        interface=ci,
+                        error_message=format_validation_error_message(error=e),
+                        user=user,
+                    )
+                    return
                 upload_session.save()
                 upload_session.user_uploads.set(user_upload_queryset)
 
@@ -2587,7 +2596,16 @@ class CIVForObjectMixin:
                 },
                 immutable=True,
             )
-            upload.full_clean()
+            try:
+                upload.full_clean()
+            except ValidationError as e:
+                error_handler = self.get_error_handler()
+                error_handler.handle_error(
+                    interface=ci,
+                    error_message=format_validation_error_message(error=e),
+                    user=user,
+                )
+                return
             upload.save()
             upload.user_uploads.set(dicom_upload_with_name.user_uploads)
 
