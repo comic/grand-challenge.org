@@ -2392,9 +2392,9 @@ class CIVForObjectMixin:
             raise CIVNotEditableException(f"{self} is not editable.")
 
     def validate_values_and_execute_linked_task(
-        self, *, values, user, linked_task=None
+        self, *, civ_data_objects, user, linked_task=None
     ):
-        for civ_data in values:
+        for civ_data in civ_data_objects:
             self.create_civ(
                 civ_data=civ_data,
                 user=user,

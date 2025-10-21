@@ -262,10 +262,10 @@ class MultipleCIVForm(Form):
         return interface_slug
 
     def process_object_data(self):
-        civs = []
+        civ_data_objects = []
         for key, value in self.cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
-                civs.append(
+                civ_data_objects.append(
                     CIVData(
                         interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
                         value=value,
@@ -274,8 +274,7 @@ class MultipleCIVForm(Form):
 
         try:
             self.instance.validate_values_and_execute_linked_task(
-                values=civs,
-                user=self.user,
+                civ_data_objects=civ_data_objects, user=self.user
             )
         except CIVNotEditableException as e:
             error_handler = self.instance.get_error_handler()

@@ -622,7 +622,7 @@ class JobCreate(
 
         try:
             self.object.validate_values_and_execute_linked_task(
-                values=inputs, user=self.object.creator
+                civ_data_objects=inputs, user=self.object.creator
             )
         except CIVNotEditableException as e:
             if self.object.status == self.object.CANCELLED:

@@ -1256,7 +1256,7 @@ class Job(CIVForObjectMixin, ComponentJob):
         return self.inputs.get(interface=interface)
 
     def validate_values_and_execute_linked_task(
-        self, *, values, user, linked_task=None
+        self, *, civ_data_objects, user, linked_task=None
     ):
         from grandchallenge.algorithms.tasks import (
             execute_algorithm_job_for_inputs,
@@ -1267,7 +1267,9 @@ class Job(CIVForObjectMixin, ComponentJob):
         )
 
         return super().validate_values_and_execute_linked_task(
-            values=values, user=user, linked_task=linked_task
+            civ_data_objects=civ_data_objects,
+            user=user,
+            linked_task=linked_task,
         )
 
     @property
