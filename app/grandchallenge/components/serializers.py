@@ -253,7 +253,7 @@ class CIVSetPostSerializerMixin:
                 )
             )
         try:
-            instance.validate_values_and_execute_linked_task(
+            instance.validate_civ_data_objects_and_execute_linked_task(
                 civ_data_objects=civ_data_objects, user=request.user
             )
         except CIVNotEditableException as e:

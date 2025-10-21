@@ -267,7 +267,7 @@ class JobPostSerializer(JobSerializer):
         )
 
         try:
-            job.validate_values_and_execute_linked_task(
+            job.validate_civ_data_objects_and_execute_linked_task(
                 civ_data_objects=self.inputs, user=validated_data["creator"]
             )
         except CIVNotEditableException as e:

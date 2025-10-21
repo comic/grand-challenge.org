@@ -1826,7 +1826,7 @@ def test_component_interface_custom_queue(kind, expected_kwargs, mocker):
     mock_task = mocker.patch(
         "grandchallenge.components.tasks.add_file_to_object"
     )
-    ai.validate_values_and_execute_linked_task(
+    ai.validate_civ_data_objects_and_execute_linked_task(
         civ_data_objects=[
             CIVData(
                 interface_slug=ci.slug,
