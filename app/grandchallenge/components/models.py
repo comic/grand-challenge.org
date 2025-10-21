@@ -1633,7 +1633,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         max_length=32,
         default=secrets.token_bytes,
         unique=True,
-        blank=False,
         editable=False,
         help_text="The key used to sign the inference result file",
     )
