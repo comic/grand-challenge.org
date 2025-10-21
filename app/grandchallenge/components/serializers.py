@@ -238,7 +238,7 @@ class CIVSetPostSerializerMixin:
 
         request = self.context["request"]
 
-        civs = []
+        civ_data_objects = []
 
         for value in values:
             interface = value["interface"]
@@ -246,16 +246,15 @@ class CIVSetPostSerializerMixin:
             user_upload = value.get("user_upload", None)
             image = value.get("image", None)
             value = value.get("value", None)
-            civs.append(
+            civ_data_objects.append(
                 CIVData(
                     interface_slug=interface.slug,
                     value=upload_session or user_upload or image or value,
                 )
             )
         try:
-            instance.validate_values_and_execute_linked_task(
-                values=civs,
-                user=request.user,
+            instance.validate_civ_data_objects_and_execute_linked_task(
+                civ_data_objects=civ_data_objects, user=request.user
             )
         except CIVNotEditableException as e:
             error_handler = instance.get_error_handler()

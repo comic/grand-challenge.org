@@ -926,7 +926,7 @@ class JobManager(ComponentJobManager):
     def get_jobs_with_same_inputs(
         self, *, inputs, algorithm_image, algorithm_model
     ):
-        existing_civs = self.retrieve_existing_civs(civ_data=inputs)
+        existing_civs = self.retrieve_existing_civs(civ_data_objects=inputs)
         unique_kwargs = {
             "algorithm_image": algorithm_image,
         }
@@ -1255,8 +1255,8 @@ class Job(CIVForObjectMixin, ComponentJob):
     def get_civ_for_interface(self, interface):
         return self.inputs.get(interface=interface)
 
-    def validate_values_and_execute_linked_task(
-        self, *, values, user, linked_task=None
+    def validate_civ_data_objects_and_execute_linked_task(
+        self, *, civ_data_objects, user, linked_task=None
     ):
         from grandchallenge.algorithms.tasks import (
             execute_algorithm_job_for_inputs,
@@ -1266,8 +1266,10 @@ class Job(CIVForObjectMixin, ComponentJob):
             kwargs={"job_pk": self.pk}, immutable=True
         )
 
-        return super().validate_values_and_execute_linked_task(
-            values=values, user=user, linked_task=linked_task
+        return super().validate_civ_data_objects_and_execute_linked_task(
+            civ_data_objects=civ_data_objects,
+            user=user,
+            linked_task=linked_task,
         )
 
     @property

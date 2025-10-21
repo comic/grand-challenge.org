@@ -585,7 +585,7 @@ def test_retrieve_existing_civs(
         ),
     }
 
-    civs = Job.objects.retrieve_existing_civs(civ_data=data)
+    civs = Job.objects.retrieve_existing_civs(civ_data_objects=data)
 
     assert civs == [
         item
