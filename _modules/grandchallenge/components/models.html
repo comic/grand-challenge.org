@@ -39,6 +39,7 @@
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONDecodeError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -1716,6 +1717,13 @@
             <span class="s2">&quot;/input/foo/bar/&lt;relative_path&gt;&quot;</span>
         <span class="p">),</span>
     <span class="p">)</span>
+    <span class="n">signing_key</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BinaryField</span><span class="p">(</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">secrets</span><span class="o">.</span><span class="n">token_bytes</span><span class="p">,</span>
+        <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The key used to sign the inference result file&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">task_on_success</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -1778,6 +1786,7 @@
                 <span class="s2">&quot;requires_gpu_type&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;requires_memory_gb&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;time_limit&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;signing_key&quot;</span><span class="p">,</span>
             <span class="p">):</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_changed</span><span class="p">(</span><span class="n">field</span><span class="p">):</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> cannot be changed&quot;</span><span class="p">)</span>
@@ -1848,6 +1857,7 @@
             <span class="s2">&quot;requires_gpu_type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_gpu_type</span><span class="p">,</span>
             <span class="s2">&quot;memory_limit&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_memory_gb</span><span class="p">,</span>
             <span class="s2">&quot;use_warm_pool&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_warm_pool</span><span class="p">,</span>
+            <span class="s2">&quot;signing_key&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">signing_key</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_executor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">backend</span><span class="p">):</span>

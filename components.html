@@ -342,6 +342,7 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <li><p><strong>error_message</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v5.2)"><em>CharField</em></a>) – Error message</p></li>
 <li><p><strong>detailed_error_message</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.2)"><em>JSONField</em></a>) – Detailed error message</p></li>
 <li><p><strong>input_prefixes</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.2)"><em>JSONField</em></a>) – Input prefixes. Map of the ComponentInterfaceValue id to the path prefix to use for this input, e.g. {‘1’: ‘foo/bar/’} will place CIV 1 at /input/foo/bar/&lt;relative_path&gt;</p></li>
+<li><p><strong>signing_key</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.BinaryField" title="(in Django v5.2)"><em>BinaryField</em></a>) – Signing key. The key used to sign the inference result file</p></li>
 <li><p><strong>task_on_success</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.2)"><em>JSONField</em></a>) – Task on success. Serialized task that is run on job success</p></li>
 <li><p><strong>task_on_failure</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.2)"><em>JSONField</em></a>) – Task on failure. Serialized task that is run on job failure</p></li>
 <li><p><strong>time_limit</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveIntegerField" title="(in Django v5.2)"><em>PositiveIntegerField</em></a>) – Time limit. Time limit for the job in seconds</p></li>
@@ -429,53 +430,53 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Interface kinds that are images:
 
   - Heat Map
-  - Image
-  - DICOM Image Set
-  - Displacement field
   - Segmentation
+  - Image
+  - Displacement field
+  - DICOM Image Set
 
 
 Interface kinds that are files:
 
+  - Thumbnail jpg
+  - Newick tree-format file
+  - OBJ file
+  - BIOM format
+  - Thumbnail png
+  - SQREG file
+  - CSV file
   - PDF file
   - MP4 file
-  - Newick tree-format file
-  - CSV file
   - ZIP file
-  - BIOM format
-  - SQREG file
-  - Thumbnail png
-  - OBJ file
-  - Thumbnail jpg
 
 
 Interface kinds that are json serializable:
 
-  - Angle
-  - Multiple distance measurements
-  - Chart
-  - Affine transform registration
-  - Three-point angle
-  - String
-  - Line
+  - Multiple choice
   - Anything
-  - Multiple angles
-  - Integer
-  - Bool
+  - Multiple ellipses
+  - 2D bounding box
   - Float
-  - Choice
-  - Multiple 2D bounding boxes
+  - Multiple points
+  - Multiple three-point angles
+  - Multiple distance measurements
+  - Bool
+  - Polygon
+  - Line
   - Distance measurement
   - Ellipse
-  - Multiple three-point angles
-  - Multiple choice
-  - Multiple ellipses
-  - Multiple polygons
+  - Integer
+  - Multiple 2D bounding boxes
+  - Affine transform registration
   - Multiple lines
-  - 2D bounding box
+  - String
   - Point
-  - Polygon
-  - Multiple points
+  - Three-point angle
+  - Chart
+  - Choice
+  - Angle
+  - Multiple angles
+  - Multiple polygons
 
 
 Example JSON file contents for String:
