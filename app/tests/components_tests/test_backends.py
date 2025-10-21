@@ -1,4 +1,6 @@
 import asyncio
+import hashlib
+import hmac
 import io
 import json
 import os
@@ -19,6 +21,7 @@ from grandchallenge.components.backends.base import (
     s3_stream_response,
 )
 from grandchallenge.components.backends.docker_client import _get_cpuset_cpus
+from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.backends.utils import (
     _filter_members,
     user_error,
@@ -146,6 +149,7 @@ def test_inputs_json(settings):
         time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
+        signing_key=b"",
     )
 
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(
@@ -217,6 +221,7 @@ def test_invocation_json(settings):
         time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
+        signing_key=b"",
     )
 
     image_interface = ComponentInterfaceFactory(
@@ -462,6 +467,7 @@ def test_dicom_get_provisioning_tasks():
         time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
+        signing_key=b"",
     )
 
     panimage_interface = ComponentInterfaceFactory(
@@ -676,6 +682,7 @@ def test_dodgy_sop_instance_uid():
         time_limit=100,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
+        signing_key=b"",
     )
 
     dicom_interface = ComponentInterfaceFactory(
@@ -709,3 +716,94 @@ def test_dodgy_sop_instance_uid():
         "images/fds.dcm) is located outside of the base path component"
         in str(exec_info.value)
     )
+
+
+def test_signing_key_env_set():
+    job_pk = uuid4()
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"1337",
+    )
+
+    assert (
+        executor.invocation_environment[
+            "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX"
+        ]
+        == "31333337"
+    )
+
+
+def test_invocation_results_signature_unverified(settings):
+    job_pk = uuid4()
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"correct-key",
+    )
+
+    content = json.dumps(
+        {"pk": f"test-test-{job_pk}", "return_code": 0}
+    ).encode("utf-8")
+    signature = hmac.new(
+        key=b"wrong-key", msg=content, digestmod=hashlib.sha256
+    ).hexdigest()
+
+    executor._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(content),
+        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        Key=executor._result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
+
+    with pytest.raises(ComponentException) as error:
+        executor._get_task_return_code()
+
+    assert (
+        str(error.value)
+        == "The invocation response object has been tampered with"
+    )
+
+
+def test_invocation_results_signature_verified(settings):
+    job_pk = uuid4()
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"correct-key",
+    )
+
+    content = json.dumps(
+        {"pk": f"test-test-{job_pk}", "return_code": 0}
+    ).encode("utf-8")
+    signature = hmac.new(
+        key=b"correct-key", msg=content, digestmod=hashlib.sha256
+    ).hexdigest()
+
+    executor._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(content),
+        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        Key=executor._result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
+
+    assert executor._get_task_return_code() == 0

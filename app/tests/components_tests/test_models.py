@@ -1868,3 +1868,11 @@ def test_no_default_value_allowed_when_file_required():
 
     with pytest.raises(ValidationError):
         i.full_clean()
+
+
+def test_signing_key_properties():
+    job = Job()
+
+    assert len(job.signing_key) == 32
+    assert isinstance(job.signing_key, bytes)
+    assert job.signing_key != Job().signing_key

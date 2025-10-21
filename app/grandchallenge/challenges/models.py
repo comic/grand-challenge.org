@@ -1292,6 +1292,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 time_limit=self.inference_time_limit_in_minutes,
                 requires_gpu_type=gpu_type,
                 use_warm_pool=False,
+                signing_key=b"",
             )
             for gpu_type in self.algorithm_selectable_gpu_type_choices
         ]

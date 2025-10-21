@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import io
 import json
 import logging
@@ -58,46 +60,45 @@ class IOCopyExecutor(Executor):
 
                 # Create results and metrics json files
                 for output_filename in ["results", "metrics"]:
-                    with io.BytesIO() as f:
-                        f.write(
-                            json.dumps(
-                                {
-                                    "score": 1,
-                                    "acc": 0.5,
-                                    "invocation_json": invocation_json,
-                                }
-                            ).encode("utf-8")
-                        )
-                        f.seek(0)
-                        self._s3_client.upload_fileobj(
-                            Fileobj=f,
-                            Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                            Key=f'{task["output_prefix"]}/{output_filename}.json',
-                        )
+                    content = json.dumps(
+                        {
+                            "score": 1,
+                            "acc": 0.5,
+                            "invocation_json": invocation_json,
+                        }
+                    ).encode("utf-8")
+                    self._s3_client.upload_fileobj(
+                        Fileobj=io.BytesIO(content),
+                        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                        Key=f'{task["output_prefix"]}/{output_filename}.json',
+                    )
 
                 # write arbitrary text file; should not be processed
-                with io.BytesIO() as f:
-                    f.write(b"Some arbitrary text")
-                    f.seek(0)
-                    self._s3_client.upload_fileobj(
-                        Fileobj=f,
-                        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                        Key=f'{task["output_prefix"]}/some_text.txt',
-                    )
+                self._s3_client.upload_fileobj(
+                    Fileobj=io.BytesIO(b"Some arbitrary text"),
+                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                    Key=f'{task["output_prefix"]}/some_text.txt',
+                )
 
             # Create a task return code
-            with io.BytesIO() as f:
-                f.write(
-                    json.dumps({"pk": self._job_id, "return_code": 0}).encode(
-                        "utf-8"
-                    )
-                )
-                f.seek(0)
-                self._s3_client.upload_fileobj(
-                    Fileobj=f,
-                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                    Key=self._result_key,
-                )
+            result_json = json.dumps(
+                {"pk": self._job_id, "return_code": 0}
+            ).encode("utf-8")
+
+            signature = hmac.new(
+                key=self._signing_key,
+                msg=result_json,
+                digestmod=hashlib.sha256,
+            ).hexdigest()
+
+            self._s3_client.upload_fileobj(
+                Fileobj=io.BytesIO(result_json),
+                Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                Key=self._result_key,
+                ExtraArgs={
+                    "Metadata": {"signature_hmac_sha256": signature},
+                },
+            )
         finally:
             self._set_task_logs()
 
