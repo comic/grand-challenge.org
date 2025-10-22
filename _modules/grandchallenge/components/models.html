@@ -2661,9 +2661,18 @@
                         <span class="sa">f</span><span class="s2">&quot;You need to provide a user along with the user upload &quot;</span>
                         <span class="sa">f</span><span class="s2">&quot;queryset for interface </span><span class="si">{</span><span class="n">ci</span><span class="si">}</span><span class="s2">&quot;</span>
                     <span class="p">)</span>
-                <span class="n">upload_session</span> <span class="o">=</span> <span class="n">RawImageUploadSession</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-                    <span class="n">creator</span><span class="o">=</span><span class="n">user</span>
-                <span class="p">)</span>
+                <span class="n">upload_session</span> <span class="o">=</span> <span class="n">RawImageUploadSession</span><span class="p">(</span><span class="n">creator</span><span class="o">=</span><span class="n">user</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">upload_session</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
+                <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">error_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_error_handler</span><span class="p">()</span>
+                    <span class="n">error_handler</span><span class="o">.</span><span class="n">handle_error</span><span class="p">(</span>
+                        <span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
+                        <span class="n">error_message</span><span class="o">=</span><span class="n">format_validation_error_message</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="n">e</span><span class="p">),</span>
+                        <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">return</span>
+                <span class="n">upload_session</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
                 <span class="n">upload_session</span><span class="o">.</span><span class="n">user_uploads</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">user_upload_queryset</span><span class="p">)</span>
 
             <span class="n">upload_session</span><span class="o">.</span><span class="n">process_images</span><span class="p">(</span>
@@ -2707,7 +2716,16 @@
                 <span class="p">},</span>
                 <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">upload</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">upload</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
+            <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">error_handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_error_handler</span><span class="p">()</span>
+                <span class="n">error_handler</span><span class="o">.</span><span class="n">handle_error</span><span class="p">(</span>
+                    <span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
+                    <span class="n">error_message</span><span class="o">=</span><span class="n">format_validation_error_message</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="n">e</span><span class="p">),</span>
+                    <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">return</span>
             <span class="n">upload</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
             <span class="n">upload</span><span class="o">.</span><span class="n">user_uploads</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">dicom_upload_with_name</span><span class="o">.</span><span class="n">user_uploads</span><span class="p">)</span>
 
