@@ -32,7 +32,7 @@ from django.utils._os import safe_join
 from django.utils.functional import cached_property
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
 from pydantic import BaseModel, ConfigDict
-from pydantic_core import to_jsonable_python
+from pydantic_core import to_json
 
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import (
@@ -688,19 +688,17 @@ class Executor(ABC):
 
     def _get_create_invocation_json_task(self, *, invocation_inputs):
         return self._get_upload_input_content_task(
-            content=json.dumps(
-                to_jsonable_python(
-                    [
-                        InferenceTask(
-                            pk=self._job_id,
-                            inputs=invocation_inputs,
-                            output_bucket_name=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                            output_prefix=self._io_prefix,
-                            timeout=self._time_limit,
-                        )
-                    ]
-                )
-            ).encode("utf-8"),
+            content=to_json(
+                [
+                    InferenceTask(
+                        pk=self._job_id,
+                        inputs=invocation_inputs,
+                        output_bucket_name=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                        output_prefix=self._io_prefix,
+                        timeout=self._time_limit,
+                    )
+                ]
+            ),
             key=self._invocation_key,
         )
 
