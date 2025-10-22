@@ -3,6 +3,7 @@ from django.core.files.base import ContentFile
 from django.template.loader import render_to_string
 
 from grandchallenge.components.models import InterfaceKindChoices
+from tests.cases_tests.factories import DICOMImageSetFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -77,6 +78,14 @@ from tests.factories import ImageFactory, ImageFileFactory
             dict(),
             "<a ",
         ),
+        (  # DICOM_IMAGE_SET
+            dict(
+                kind=InterfaceKindChoices.DICOM_IMAGE_SET,
+                store_in_database=False,
+            ),
+            dict(),
+            "<div ",
+        ),
         (  # Broken / fallback
             dict(
                 kind=InterfaceKindChoices.PANIMG_SEGMENTATION,
@@ -108,9 +117,12 @@ def test_civ(
             ContentFile(b"<bh:ff><bh:d8><bh:ff><bh:e0><bh:00><bh:10>JFIF"),
         )
 
-    if ci.kind == InterfaceKindChoices.PANIMG_IMAGE:
+    if ci.kind in InterfaceKindChoices.PANIMG_IMAGE:
         civ.image = ImageFactory()
         ImageFileFactory(image=civ.image)
+    elif ci.kind == InterfaceKindChoices.DICOM_IMAGE_SET:
+        civ.image = ImageFactory()
+        DICOMImageSetFactory(image=civ.image)
 
     # Actually create the CIV
     if (
