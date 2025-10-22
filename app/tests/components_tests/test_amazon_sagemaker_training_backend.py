@@ -133,7 +133,7 @@ def test_invocation_prefix():
     ),
 )
 def test_transform_job_name(model, container, container_model, key):
-    j = model(pk=uuid4())
+    j = model(pk=uuid4(), time_limit=60)
     setattr(j, container, container_model(pk=uuid4()))
     executor = AmazonSageMakerTrainingExecutor(**j.executor_kwargs)
 
@@ -239,6 +239,7 @@ def test_invocation_json(settings):
             "output_bucket_name": "grand-challenge-components-outputs",
             "output_prefix": f"/io/algorithms/job/{pk}",
             "pk": f"algorithms-job-{pk}",
+            "timeout": "PT1M",
         }
     ]
 
