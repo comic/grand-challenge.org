@@ -338,6 +338,8 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <li><p><strong>attempt</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v5.2)"><em>PositiveSmallIntegerField</em></a>) – Attempt</p></li>
 <li><p><strong>stdout</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v5.2)"><em>TextField</em></a>) – Stdout</p></li>
 <li><p><strong>stderr</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v5.2)"><em>TextField</em></a>) – Stderr</p></li>
+<li><p><strong>exec_duration</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DurationField" title="(in Django v5.2)"><em>DurationField</em></a>) – Exec duration. The duration of the execution, if measured. Excludes data validation, container pulling, model downloading, data downloading and data uploading times. Includes model loading time, input data loading time, processing time, output data writing time and any delays from shared hardware issues.</p></li>
+<li><p><strong>invoke_duration</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DurationField" title="(in Django v5.2)"><em>DurationField</em></a>) – Invoke duration. The duration of the invocation, if measured. Excludes data validation, container pulling, model downloading, data downloading and data uploading times. Potentially excludes model loading time, depending on the users implementation. Includes input data loading time, processing time, output data writing time and any delays from shared hardware issues.</p></li>
 <li><p><strong>runtime_metrics</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.2)"><em>JSONField</em></a>) – Runtime metrics</p></li>
 <li><p><strong>error_message</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v5.2)"><em>CharField</em></a>) – Error message</p></li>
 <li><p><strong>detailed_error_message</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.JSONField" title="(in Django v5.2)"><em>JSONField</em></a>) – Detailed error message</p></li>
@@ -429,54 +431,54 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dd><p>Interface kind sets.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Interface kinds that are images:
 
-  - Image
-  - Displacement field
-  - Segmentation
   - Heat Map
+  - Displacement field
+  - Image
   - DICOM Image Set
+  - Segmentation
 
 
 Interface kinds that are files:
 
+  - PDF file
+  - OBJ file
+  - ZIP file
+  - Thumbnail jpg
+  - Newick tree-format file
+  - SQREG file
+  - CSV file
   - BIOM format
   - MP4 file
-  - SQREG file
   - Thumbnail png
-  - Newick tree-format file
-  - Thumbnail jpg
-  - PDF file
-  - ZIP file
-  - OBJ file
-  - CSV file
 
 
 Interface kinds that are json serializable:
 
-  - Ellipse
-  - Integer
-  - Multiple distance measurements
-  - Chart
-  - Line
-  - Point
-  - Multiple angles
   - Anything
-  - Float
+  - Multiple distance measurements
+  - Multiple lines
+  - String
+  - Multiple three-point angles
   - Multiple 2D bounding boxes
+  - Distance measurement
+  - Affine transform registration
+  - Multiple choice
+  - Choice
+  - 2D bounding box
+  - Multiple points
+  - Multiple angles
+  - Float
+  - Line
+  - Bool
+  - Angle
+  - Three-point angle
+  - Integer
+  - Point
+  - Chart
+  - Ellipse
+  - Multiple ellipses
   - Polygon
   - Multiple polygons
-  - Angle
-  - Multiple lines
-  - 2D bounding box
-  - String
-  - Bool
-  - Multiple choice
-  - Affine transform registration
-  - Multiple three-point angles
-  - Choice
-  - Three-point angle
-  - Multiple ellipses
-  - Multiple points
-  - Distance measurement
 
 
 Example JSON file contents for String:

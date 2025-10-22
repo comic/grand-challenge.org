@@ -1707,6 +1707,34 @@
     <span class="n">attempt</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">stdout</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">()</span>
     <span class="n">stderr</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">exec_duration</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DurationField</span><span class="p">(</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The duration of the execution, if measured. &quot;</span>
+            <span class="s2">&quot;Excludes data validation, container pulling, model downloading, &quot;</span>
+            <span class="s2">&quot;data downloading and data uploading times. &quot;</span>
+            <span class="s2">&quot;Includes model loading time, input data loading time, &quot;</span>
+            <span class="s2">&quot;processing time, output data writing time and &quot;</span>
+            <span class="s2">&quot;any delays from shared hardware issues.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">invoke_duration</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DurationField</span><span class="p">(</span>
+        <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help_text</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;The duration of the invocation, if measured. &quot;</span>
+            <span class="s2">&quot;Excludes data validation, container pulling, model downloading, &quot;</span>
+            <span class="s2">&quot;data downloading and data uploading times. &quot;</span>
+            <span class="s2">&quot;Potentially excludes model loading time, depending on the &quot;</span>
+            <span class="s2">&quot;users implementation. &quot;</span>
+            <span class="s2">&quot;Includes input data loading time, &quot;</span>
+            <span class="s2">&quot;processing time, output data writing time and &quot;</span>
+            <span class="s2">&quot;any delays from shared hardware issues.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
     <span class="n">runtime_metrics</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span> <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">error_message</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
     <span class="n">detailed_error_message</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
