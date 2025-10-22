@@ -1619,6 +1619,34 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     attempt = models.PositiveSmallIntegerField(editable=False, default=0)
     stdout = models.TextField()
     stderr = models.TextField(default="")
+    exec_duration = models.DurationField(
+        null=True,
+        default=None,
+        editable=False,
+        help_text=(
+            "The duration of the execution, if measured. "
+            "Excludes data validation, container pulling, model downloading, "
+            "data downloading and data uploading times. "
+            "Includes model loading time, input data loading time, "
+            "processing time, output data writing time and "
+            "any delays from shared hardware issues."
+        ),
+    )
+    invoke_duration = models.DurationField(
+        null=True,
+        default=None,
+        editable=False,
+        help_text=(
+            "The duration of the invocation, if measured. "
+            "Excludes data validation, container pulling, model downloading, "
+            "data downloading and data uploading times. "
+            "Potentially excludes model loading time, depending on the "
+            "users implementation. "
+            "Includes input data loading time, "
+            "processing time, output data writing time and "
+            "any delays from shared hardware issues."
+        ),
+    )
     runtime_metrics = models.JSONField(default=dict, editable=False)
     error_message = models.CharField(max_length=1024, default="")
     detailed_error_message = models.JSONField(blank=True, default=dict)
