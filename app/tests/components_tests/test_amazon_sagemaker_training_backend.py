@@ -169,7 +169,7 @@ def test_invocation_json(settings):
         time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
-        signing_key=b"",
+        signing_key=b"totallysecret",
     )
 
     with Stubber(executor._sagemaker_client) as s:
@@ -205,6 +205,7 @@ def test_invocation_json(settings):
                     "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth:/opt/ml/checkpoints:/tmp",
                     "GRAND_CHALLENGE_COMPONENT_POST_CLEAN_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth",
                     "GRAND_CHALLENGE_COMPONENT_MAX_MEMORY_MB": "7168",
+                    "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX": "746f74616c6c79736563726574",
                 },
                 "VpcConfig": {
                     "SecurityGroupIds": [
@@ -216,6 +217,7 @@ def test_invocation_json(settings):
             },
         )
         executor.provision(input_civs=[], input_prefixes={})
+        executor.execute()  # Required to validate expected_params in the stubber
 
     with io.BytesIO() as fileobj:
         executor._s3_client.download_fileobj(
