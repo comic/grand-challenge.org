@@ -2363,6 +2363,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">dicom_upload_with_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dicom_upload_with_name</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;CIVData(interface_slug=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span><span class="si">!r}</span><span class="s2">, value=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="si">!r}</span><span class="s2">)&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;CIVData: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="si">}</span><span class="s2">&quot;</span>
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">interface_slug</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span> <span class="o">=</span> <span class="n">interface_slug</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span> <span class="o">=</span> <span class="n">value</span>
@@ -2513,13 +2519,13 @@
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ_data_objects</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
         <span class="k">for</span> <span class="n">civ_data</span> <span class="ow">in</span> <span class="n">civ_data_objects</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">create_civ</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_civ</span><span class="p">(</span>
                 <span class="n">civ_data</span><span class="o">=</span><span class="n">civ_data</span><span class="p">,</span>
                 <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
                 <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span><span class="p">,</span>
             <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">create_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ_data</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_civ</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">civ_data</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_editable</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">CIVNotEditableException</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> is not editable. CIVs cannot be added or removed from it.&quot;</span><span class="p">,</span>
@@ -2543,7 +2549,7 @@
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">VALUE</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_civ_for_value</span><span class="p">(</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_civ_for_value</span><span class="p">(</span>
                 <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
                 <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span>
                 <span class="n">new_value</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -2551,7 +2557,7 @@
                 <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">IMAGE</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_civ_for_image</span><span class="p">(</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_civ_for_image</span><span class="p">(</span>
                 <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
                 <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span>
                 <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span>
@@ -2562,7 +2568,7 @@
                 <span class="n">linked_task</span><span class="o">=</span><span class="n">linked_task</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">elif</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">FILE</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_civ_for_file</span><span class="p">(</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_civ_for_file</span><span class="p">(</span>
                 <span class="n">ci</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span>
                 <span class="n">current_civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">,</span>
                 <span class="n">file_civ</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">file_civ</span><span class="p">,</span>
@@ -2574,7 +2580,7 @@
                 <span class="sa">f</span><span class="s2">&quot;Unknown interface super kind: </span><span class="si">{</span><span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_create_civ_for_value</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_civ_for_value</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="n">current_civ</span><span class="p">,</span> <span class="n">new_value</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span>
     <span class="p">):</span>
         <span class="n">current_value</span> <span class="o">=</span> <span class="n">current_civ</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">current_civ</span> <span class="k">else</span> <span class="kc">None</span>
@@ -2610,7 +2616,7 @@
             <span class="k">if</span> <span class="n">linked_task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">on_commit</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="n">linked_task</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_create_civ_for_image</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_civ_for_image</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">ci</span><span class="p">,</span>
@@ -2734,10 +2740,13 @@
                     <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;dicom_imageset_upload_pk&quot;</span><span class="p">:</span> <span class="n">upload</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
             <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">current_civ</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Nothing to do</span>
+            <span class="k">pass</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_create_civ_for_file</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_update_civ_for_file</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
         <span class="n">ci</span><span class="p">,</span>
