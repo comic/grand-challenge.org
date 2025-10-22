@@ -1,6 +1,7 @@
 import io
 
 import pytest
+from django.core.exceptions import ObjectDoesNotExist
 from django.forms import JSONField
 from django.test import override_settings
 from guardian.shortcuts import assign_perm
@@ -720,6 +721,50 @@ def test_add_display_set_to_reader_study(
     assert ds.values.get(interface=ci_img_new) == civ_new_img
     assert ds.values.get(interface=ci_str_new).value == "new"
     assert ds.values.get(interface=ci_json).file.read() == b'{"foo": "bar"}'
+
+
+@pytest.mark.django_db
+def test_add_display_set_to_reader_study_with_empty_value(
+    client, settings, django_capture_on_commit_callbacks
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    editor = UserFactory()
+    reader_study = ReaderStudyFactory()
+    existing_display_set = DisplaySetFactory(reader_study=reader_study)
+    reader_study.add_editor(editor)
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    civ_str = ci_str.create_instance(value="foo")
+    civ_img = ci_img.create_instance(image=ImageFactory())
+    existing_display_set.values.set([civ_str, civ_img])
+
+    assert DisplaySet.objects.count() == 1
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-create",
+            client=client,
+            reverse_kwargs={"slug": reader_study.slug},
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci_str.slug, data="bar"
+                ),
+                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}": ImageWidgetChoices.UNDEFINED.name,
+                "order": 11,
+            },
+            user=editor,
+            method=client.post,
+        )
+
+    assert response.status_code == 302
+    assert DisplaySet.objects.count() == 2
+    new_display_set = DisplaySet.objects.order_by("created").last()
+    assert new_display_set.values.count() == 1
+    assert new_display_set.values.get(interface=ci_str).value == "bar"
+    with pytest.raises(ObjectDoesNotExist):
+        new_display_set.values.get(interface=ci_img)
 
 
 @pytest.mark.django_db
