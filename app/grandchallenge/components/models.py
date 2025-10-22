@@ -2618,6 +2618,9 @@ class CIVForObjectMixin:
                     kwargs={"dicom_imageset_upload_pk": upload.pk}
                 ).apply_async
             )
+        elif current_civ is None:
+            # Nothing to do
+            pass
         else:
             raise NotImplementedError
 
