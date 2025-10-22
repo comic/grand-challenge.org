@@ -2415,13 +2415,13 @@ class CIVForObjectMixin:
         self, *, civ_data_objects, user, linked_task=None
     ):
         for civ_data in civ_data_objects:
-            self.create_civ(
+            self._update_civ(
                 civ_data=civ_data,
                 user=user,
                 linked_task=linked_task,
             )
 
-    def create_civ(self, *, civ_data, user=None, linked_task=None):
+    def _update_civ(self, *, civ_data, user=None, linked_task=None):
         if not self.is_editable:
             raise CIVNotEditableException(
                 f"{self} is not editable. CIVs cannot be added or removed from it.",
@@ -2445,7 +2445,7 @@ class CIVForObjectMixin:
         )
 
         if ci.super_kind == ci.SuperKind.VALUE:
-            return self._create_civ_for_value(
+            return self._update_civ_for_value(
                 ci=ci,
                 current_civ=current_civ,
                 new_value=civ_data.value,
@@ -2453,7 +2453,7 @@ class CIVForObjectMixin:
                 linked_task=linked_task,
             )
         elif ci.super_kind == ci.SuperKind.IMAGE:
-            return self._create_civ_for_image(
+            return self._update_civ_for_image(
                 ci=ci,
                 current_civ=current_civ,
                 user=user,
@@ -2464,7 +2464,7 @@ class CIVForObjectMixin:
                 linked_task=linked_task,
             )
         elif ci.super_kind == ci.SuperKind.FILE:
-            return self._create_civ_for_file(
+            return self._update_civ_for_file(
                 ci=ci,
                 current_civ=current_civ,
                 file_civ=civ_data.file_civ,
@@ -2476,7 +2476,7 @@ class CIVForObjectMixin:
                 f"Unknown interface super kind: {ci.super_kind}"
             )
 
-    def _create_civ_for_value(
+    def _update_civ_for_value(
         self, *, ci, current_civ, new_value, user, linked_task=None
     ):
         current_value = current_civ.value if current_civ else None
@@ -2512,7 +2512,7 @@ class CIVForObjectMixin:
             if linked_task is not None:
                 on_commit(signature(linked_task).apply_async)
 
-    def _create_civ_for_image(  # noqa: C901
+    def _update_civ_for_image(  # noqa: C901
         self,
         *,
         ci,
@@ -2624,7 +2624,7 @@ class CIVForObjectMixin:
         else:
             raise NotImplementedError
 
-    def _create_civ_for_file(
+    def _update_civ_for_file(
         self,
         *,
         ci,
