@@ -2263,6 +2263,9 @@ class CIVData:
         return self._dicom_upload_with_name
 
     def __repr__(self):
+        return f"CIVData(interface_slug={self._interface_slug!r}, value={self._initial_value!r})"
+
+    def __str__(self):
         return f"CIVData: {self.__dict__}"
 
     def __init__(self, *, interface_slug, value):
