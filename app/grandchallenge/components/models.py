@@ -2560,9 +2560,18 @@ class CIVForObjectMixin:
                         f"You need to provide a user along with the user upload "
                         f"queryset for interface {ci}"
                     )
-                upload_session = RawImageUploadSession.objects.create(
-                    creator=user
-                )
+                upload_session = RawImageUploadSession(creator=user)
+                try:
+                    upload_session.full_clean()
+                except ValidationError as e:
+                    error_handler = self.get_error_handler()
+                    error_handler.handle_error(
+                        interface=ci,
+                        error_message=format_validation_error_message(error=e),
+                        user=user,
+                    )
+                    return
+                upload_session.save()
                 upload_session.user_uploads.set(user_upload_queryset)
 
             upload_session.process_images(
@@ -2606,7 +2615,16 @@ class CIVForObjectMixin:
                 },
                 immutable=True,
             )
-            upload.full_clean()
+            try:
+                upload.full_clean()
+            except ValidationError as e:
+                error_handler = self.get_error_handler()
+                error_handler.handle_error(
+                    interface=ci,
+                    error_message=format_validation_error_message(error=e),
+                    user=user,
+                )
+                return
             upload.save()
             upload.user_uploads.set(dicom_upload_with_name.user_uploads)
 
