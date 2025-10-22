@@ -9,6 +9,7 @@ import logging
 import os
 import secrets
 from abc import ABC, abstractmethod
+from datetime import timedelta
 from json import JSONDecodeError
 from math import ceil
 from pathlib import Path
@@ -30,6 +31,8 @@ from django.db import transaction
 from django.utils._os import safe_join
 from django.utils.functional import cached_property
 from panimg.image_builders import image_builder_mhd, image_builder_tiff
+from pydantic import BaseModel, ConfigDict
+from pydantic_core import to_json
 
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import (
@@ -266,6 +269,25 @@ async def s3_stream_response(
                 raise
 
 
+class InferenceIO(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    relative_path: str
+    bucket_name: str
+    bucket_key: str
+    decompress: bool
+
+
+class InferenceTask(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    pk: str
+    inputs: list[InferenceIO]
+    output_bucket_name: str
+    output_prefix: str
+    timeout: timedelta
+
+
 class Executor(ABC):
     def __init__(
         self,
@@ -285,7 +307,7 @@ class Executor(ABC):
         self._job_id = job_id
         self._exec_image_repo_tag = exec_image_repo_tag
         self._memory_limit = memory_limit
-        self._time_limit = time_limit
+        self._time_limit = timedelta(seconds=time_limit)
         self._requires_gpu_type = requires_gpu_type
         self._use_warm_pool = (
             use_warm_pool and settings.COMPONENTS_USE_WARM_POOL
@@ -540,16 +562,16 @@ class Executor(ABC):
             ):
                 provisioning_tasks.append(civ_provisioning_task.task)
                 invocation_inputs.append(
-                    {
-                        "relative_path": str(
+                    InferenceIO(
+                        relative_path=str(
                             os.path.relpath(
                                 civ_provisioning_task.key, self._io_prefix
                             )
                         ),
-                        "bucket_name": settings.COMPONENTS_INPUT_BUCKET_NAME,
-                        "bucket_key": civ_provisioning_task.key,
-                        "decompress": civ.decompress,
-                    }
+                        bucket_name=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                        bucket_key=civ_provisioning_task.key,
+                        decompress=civ.decompress,
+                    )
                 )
 
         provisioning_tasks.append(
@@ -666,16 +688,17 @@ class Executor(ABC):
 
     def _get_create_invocation_json_task(self, *, invocation_inputs):
         return self._get_upload_input_content_task(
-            content=json.dumps(
+            content=to_json(
                 [
-                    {
-                        "pk": self._job_id,
-                        "inputs": invocation_inputs,
-                        "output_bucket_name": settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                        "output_prefix": self._io_prefix,
-                    }
+                    InferenceTask(
+                        pk=self._job_id,
+                        inputs=invocation_inputs,
+                        output_bucket_name=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                        output_prefix=self._io_prefix,
+                        timeout=self._time_limit,
+                    )
                 ]
-            ).encode("utf-8"),
+            ),
             key=self._invocation_key,
         )
 

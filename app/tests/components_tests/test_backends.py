@@ -337,6 +337,7 @@ def test_invocation_json(settings):
             "output_bucket_name": "grand-challenge-components-outputs",
             "output_prefix": f"/io/test/test/{job_pk}",
             "pk": f"test-test-{job_pk}",
+            "timeout": "PT1M40S",
         },
     ]
 
@@ -667,6 +668,7 @@ def test_dicom_get_provisioning_tasks():
             "output_bucket_name": "grand-challenge-components-outputs",
             "output_prefix": f"/io/test/test/{job_pk}",
             "pk": f"test-test-{job_pk}",
+            "timeout": "PT1M40S",
         },
     ]
 
