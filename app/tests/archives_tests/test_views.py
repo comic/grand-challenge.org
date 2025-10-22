@@ -4,12 +4,14 @@ from pathlib import Path
 
 import pytest
 from django.contrib.auth.models import Group
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.archives.views import ArchiveItemsList
+from grandchallenge.cases.widgets import ImageWidgetChoices
 from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -1249,6 +1251,49 @@ def test_archive_item_create_view(
     assert ai2.values.get(interface=ci_json).file.read() == b'{"foo": "bar"}'
     assert ai2.values.get(interface=ci_json2).value == {"some": "content"}
     assert not UserUpload.objects.filter(pk=upload.pk).exists()
+
+
+@pytest.mark.django_db
+def test_archive_item_create_view_with_empty_value(
+    client, settings, django_capture_on_commit_callbacks
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+    existing_archive_item = ArchiveItemFactory(archive=archive)
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    civ_str = ci_str.create_instance(value="foo")
+    civ_img = ci_img.create_instance(image=ImageFactory())
+    existing_archive_item.values.set([civ_str, civ_img])
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="archives:item-create",
+            client=client,
+            reverse_kwargs={"slug": archive.slug},
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci_str.slug, data="bar"
+                ),
+                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}": ImageWidgetChoices.UNDEFINED.name,
+                "title": "archive-item title",
+            },
+            user=editor,
+            method=client.post,
+        )
+
+    assert response.status_code == 302
+    assert ArchiveItem.objects.count() == 2
+    new_archive_item = ArchiveItem.objects.order_by("created").last()
+    assert new_archive_item.title == "archive-item title"
+    assert new_archive_item.values.count() == 1
+    assert new_archive_item.values.get(interface=ci_str).value == "bar"
+    with pytest.raises(ObjectDoesNotExist):
+        new_archive_item.values.get(interface=ci_img)
 
 
 @pytest.mark.django_db
