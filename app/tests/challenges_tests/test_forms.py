@@ -62,7 +62,7 @@ def test_challenge_request_budget_fields_required():
         "algorithm_inputs": "foo",
         "algorithm_outputs": "foo",
         "average_size_of_test_image_in_mb": 1,
-        "inference_time_limit_in_minutes": 11,
+        "inference_time_average_minutes": 11,
         "algorithm_selectable_gpu_type_choices": ["", "A10G", "T4"],
         "algorithm_maximum_settable_memory_gb": 32,
         "phase_1_number_of_submissions_per_team": 1,
@@ -72,6 +72,86 @@ def test_challenge_request_budget_fields_required():
     }
     form2 = ChallengeRequestForm(data=data2, creator=user)
     assert form2.is_valid()
+
+
+@pytest.mark.django_db
+def test_challenge_request_new_fields_filled_from_old_fields():
+    user = UserFactory()
+    data = {
+        "creator": user,
+        "title": "Test request",
+        "short_name": "example1234",
+        "start_date": datetime.date.today(),
+        "end_date": datetime.date.today() + datetime.timedelta(days=1),
+        "abstract": "test",
+        "contact_email": "test@test.com",
+        "organizers": "test",
+        "challenge_setup": "test",
+        "data_set": "test",
+        "submission_assessment": "test",
+        "challenge_publication": "test",
+        "code_availability": "test",
+        "expected_number_of_teams": 10,
+        "number_of_tasks": 2,
+        "challenge_fee_agreement": True,
+        "algorithm_inputs": "foo",
+        "algorithm_outputs": "foo",
+        "average_size_of_test_image_in_mb": 1,
+        "inference_time_average_minutes": 11,
+        "algorithm_selectable_gpu_type_choices": ["", "A10G", "T4"],
+        "algorithm_maximum_settable_memory_gb": 32,
+        "phase_1_number_of_submissions_per_team": 10,
+        "phase_2_number_of_submissions_per_team": 1,
+        "phase_1_number_of_test_images": 3,
+        "phase_2_number_of_test_images": 300,
+    }
+    form = ChallengeRequestForm(data=data, creator=user)
+
+    assert form.is_valid(), form.errors
+
+    challenge_request = form.save()
+
+    # deprecated fields are not filled
+    assert challenge_request.expected_number_of_teams is None
+    assert challenge_request.number_of_tasks is None
+    assert challenge_request.average_size_of_test_image_in_mb is None
+    assert challenge_request.inference_time_limit_in_minutes is None
+    assert challenge_request.algorithm_selectable_gpu_type_choices is None
+    assert challenge_request.algorithm_maximum_settable_memory_gb is None
+    assert challenge_request.phase_1_number_of_submissions_per_team is None
+    assert challenge_request.phase_2_number_of_submissions_per_team is None
+    assert challenge_request.phase_1_number_of_test_images is None
+    assert challenge_request.phase_2_number_of_test_images is None
+
+    # new fields are filled
+    assert (
+        challenge_request.algorithm_selectable_gpu_type_choices_for_tasks
+        == [["", "A10G", "T4"], ["", "A10G", "T4"]]
+    )
+    assert (
+        challenge_request.algorithm_maximum_settable_memory_gb_for_tasks
+        == [32, 32]
+    )
+    assert challenge_request.average_size_test_image_mb_for_tasks == [1, 1]
+    assert challenge_request.inference_time_average_minutes_for_tasks == [
+        11,
+        11,
+    ]
+    assert challenge_request.task_ids == [1, 2]
+    assert challenge_request.task_id_for_phases == [1, 1, 2, 2]
+    assert challenge_request.number_of_teams_for_phases == [10, 10, 10, 10]
+    assert challenge_request.number_of_submissions_per_team_for_phases == [
+        10,
+        1,
+        10,
+        1,
+    ]
+    assert challenge_request.number_of_test_images_for_phases == [
+        3,
+        300,
+        3,
+        300,
+    ]
 
 
 @pytest.mark.django_db
