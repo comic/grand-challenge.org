@@ -118,14 +118,18 @@ class ChallengeRequestFactory(factory.django.DjangoModelFactory):
     end_date = fuzzy.FuzzyDate(
         datetime.date(1971, 1, 1), end_date=datetime.date.today()
     )
-    expected_number_of_teams = 10
-    inference_time_limit_in_minutes = 10
-    average_size_of_test_image_in_mb = 10
-    phase_1_number_of_submissions_per_team = 10
-    phase_2_number_of_submissions_per_team = 0
-    phase_1_number_of_test_images = 100
-    phase_2_number_of_test_images = 0
-    number_of_tasks = 1
+    task_ids = [1, 2]
+    algorithm_maximum_settable_memory_gb_for_tasks = [32, 32]
+    algorithm_selectable_gpu_type_choices_for_tasks = [
+        ["", "T4"],
+        ["", "A10G", "T4"],
+    ]
+    average_size_test_image_mb_for_tasks = [10, 100]
+    inference_time_average_minutes_for_tasks = [5, 10]
+    task_id_for_phases = [1, 1, 2, 2]
+    number_of_submissions_per_team_for_phases = [10, 1, 10, 1]
+    number_of_teams_for_phases = [10, 10, 10, 10]
+    number_of_test_images_for_phases = [3, 100, 3, 100]
     structured_challenge_submission_doi = "10.5281/zenodo.6362337"
 
 
