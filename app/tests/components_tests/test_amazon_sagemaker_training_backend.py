@@ -202,8 +202,6 @@ def test_invocation_json(settings):
                     "LOG_LEVEL": "INFO",
                     "PYTHONUNBUFFERED": "1",
                     "no_proxy": "amazonaws.com",
-                    "GRAND_CHALLENGE_COMPONENT_WRITABLE_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth:/opt/ml/checkpoints:/tmp",
-                    "GRAND_CHALLENGE_COMPONENT_POST_CLEAN_DIRECTORIES": "/opt/ml/output/data:/opt/ml/model:/opt/ml/input/data/ground_truth",
                     "GRAND_CHALLENGE_COMPONENT_MAX_MEMORY_MB": "7168",
                     "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX": "746f74616c6c79736563726574",
                 },
