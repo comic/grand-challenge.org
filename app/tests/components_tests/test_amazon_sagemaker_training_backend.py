@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import io
 import json
 from datetime import datetime, timedelta, timezone
@@ -554,23 +556,23 @@ def test_handle_completed_job():
         time_limit=60,
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
-        signing_key=b"",
+        signing_key=b"itsasecret",
     )
 
-    return_code = 0
-
-    with io.BytesIO() as f:
-        f.write(
-            json.dumps(
-                {"return_code": return_code, "pk": f"algorithms-job-{pk}"}
-            ).encode("utf-8")
-        )
-        f.seek(0)
-        executor._s3_client.upload_fileobj(
-            Fileobj=f,
-            Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            Key=executor._result_key,
-        )
+    content = json.dumps(
+        {"return_code": 0, "pk": f"algorithms-job-{pk}"}
+    ).encode("utf-8")
+    signature = hmac.new(
+        key=b"itsasecret", msg=content, digestmod=hashlib.sha256
+    ).hexdigest()
+    executor._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(content),
+        Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        Key=executor._result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
 
     assert executor._handle_completed_job() is None
 
