@@ -1,6 +1,5 @@
 import logging
 import re
-import time
 from abc import ABC, abstractmethod
 from datetime import timedelta
 from json import JSONDecodeError
@@ -719,8 +718,6 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             "Out of Memory. Please use a larger instance",
         ):
             try:
-                # Allow time for the log file to be written
-                time.sleep(10)
                 users_process_exit_code = self._get_task_return_code()
             except UncleanExit:
                 users_process_exit_code = None
