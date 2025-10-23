@@ -14,39 +14,45 @@ from tests.factories import (
 )
 
 
+@pytest.mark.parametrize(
+    "required_field",
+    [
+        "title",
+        "short_name",
+        "start_date",
+        "end_date",
+        "abstract",
+        "contact_email",
+        "organizers",
+        "challenge_setup",
+        "data_set",
+        "submission_assessment",
+        "challenge_publication",
+        "code_availability",
+        "expected_number_of_teams",
+        "number_of_tasks",
+        "challenge_fee_agreement",
+        "algorithm_inputs",
+        "algorithm_outputs",
+        "average_size_of_test_image_in_mb",
+        "inference_time_average_minutes",
+        "algorithm_selectable_gpu_type_choices",
+        "algorithm_maximum_settable_memory_gb",
+        "phase_1_number_of_submissions_per_team",
+        "phase_2_number_of_submissions_per_team",
+        "phase_1_number_of_test_images",
+        "phase_2_number_of_test_images",
+    ],
+)
 @pytest.mark.django_db
-def test_challenge_request_budget_fields_required():
-    user = UserFactory.build()
-    # fill all fields except for budget and input / output fields
+def test_challenge_request_budget_fields_required(required_field):
+    user = UserFactory()
     data = {
         "creator": user,
         "title": "Test request",
         "short_name": "example1234",
         "start_date": datetime.date.today(),
         "end_date": datetime.date.today() + datetime.timedelta(days=1),
-        "expected_number_of_participants": 10,
-        "abstract": "test",
-        "contact_email": "test@test.com",
-        "organizers": "test",
-        "challenge_setup": "test",
-        "data_set": "test",
-        "submission_assessment": "test",
-        "challenge_publication": "test",
-        "code_availability": "test",
-        "expected_number_of_teams": 10,
-        "number_of_tasks": 1,
-        "challenge_fee_agreement": True,
-    }
-    form = ChallengeRequestForm(data=data, creator=user)
-    assert not form.is_valid()
-
-    data2 = {
-        "creator": user,
-        "title": "Test request",
-        "short_name": "example1234",
-        "start_date": datetime.date.today(),
-        "end_date": datetime.date.today() + datetime.timedelta(days=1),
-        "expected_number_of_participants": 10,
         "abstract": "test",
         "contact_email": "test@test.com",
         "organizers": "test",
@@ -69,8 +75,15 @@ def test_challenge_request_budget_fields_required():
         "phase_1_number_of_test_images": 1,
         "phase_2_number_of_test_images": 1,
     }
-    form2 = ChallengeRequestForm(data=data2, creator=user)
-    assert form2.is_valid()
+    form = ChallengeRequestForm(data=data, creator=user)
+    assert form.is_valid(), form.errors
+
+    data.pop(required_field)
+
+    form = ChallengeRequestForm(data=data, creator=user)
+    assert not form.is_valid()
+    assert required_field in form.errors
+    assert form.errors[required_field] == ["This field is required."]
 
 
 @pytest.mark.django_db

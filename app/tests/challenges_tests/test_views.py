@@ -433,6 +433,9 @@ def test_challenge_request_date_check(client):
             "algorithm_outputs": "foo",
             "average_size_of_test_image_in_mb": 1,
             "inference_time_average_minutes": 11,
+            "algorithm_maximum_settable_memory_gb": 32,
+            "algorithm_selectable_gpu_type_choices": ["", "T4"],
+            "number_of_tasks": 1,
             "phase_1_number_of_submissions_per_team": 1,
             "phase_2_number_of_submissions_per_team": 1,
             "phase_1_number_of_test_images": 1,
@@ -442,10 +445,7 @@ def test_challenge_request_date_check(client):
     )
     assert response.status_code == 200
     assert response.context["form"].errors == {
-        "algorithm_maximum_settable_memory_gb": ["This field is required."],
-        "algorithm_selectable_gpu_type_choices": ["This field is required."],
         "end_date": ["This field is required."],
-        "number_of_tasks": ["This field is required."],
         "start_date": ["This field is required."],
     }
 
@@ -472,6 +472,9 @@ def test_challenge_request_date_check(client):
             "algorithm_outputs": "foo",
             "average_size_of_test_image_in_mb": 1,
             "inference_time_average_minutes": 11,
+            "algorithm_maximum_settable_memory_gb": 32,
+            "algorithm_selectable_gpu_type_choices": ["", "T4"],
+            "number_of_tasks": 1,
             "phase_1_number_of_submissions_per_team": 1,
             "phase_2_number_of_submissions_per_team": 1,
             "phase_1_number_of_test_images": 1,
@@ -482,9 +485,6 @@ def test_challenge_request_date_check(client):
     assert response.status_code == 200
     assert response.context["form"].errors == {
         "__all__": ["The start date needs to be before the end date."],
-        "algorithm_maximum_settable_memory_gb": ["This field is required."],
-        "algorithm_selectable_gpu_type_choices": ["This field is required."],
-        "number_of_tasks": ["This field is required."],
     }
 
 
