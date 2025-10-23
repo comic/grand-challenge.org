@@ -598,56 +598,22 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
 
 
 class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
-    algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
-        choices=[
-            (HTMX_BLANK_CHOICE_KEY, GPUTypeChoices.NO_GPU.label),
-            (GPUTypeChoices.T4, GPUTypeChoices.T4.label),
-            (GPUTypeChoices.A10G, GPUTypeChoices.A10G.label),
-        ],
-        widget=forms.CheckboxSelectMultiple,
-        label="Selectable GPU types for algorithm jobs",
-        help_text="The GPU type choices that participants will be able to select for "
-        "their algorithm inference jobs.",
-    )
-
     class Meta:
         model = ChallengeRequest
         fields = (
-            "expected_number_of_teams",
-            "number_of_tasks",
-            "inference_time_limit_in_minutes",
-            "algorithm_selectable_gpu_type_choices",
-            "algorithm_maximum_settable_memory_gb",
-            "average_size_of_test_image_in_mb",
-            "phase_1_number_of_submissions_per_team",
-            "phase_1_number_of_test_images",
-            "phase_2_number_of_submissions_per_team",
-            "phase_2_number_of_test_images",
+            "algorithm_selectable_gpu_type_choices_for_tasks",
+            "algorithm_maximum_settable_memory_gb_for_tasks",
+            "average_size_test_image_mb_for_tasks",
+            "inference_time_average_minutes_for_tasks",
+            "task_ids",
+            "task_id_for_phases",
+            "number_of_teams_for_phases",
+            "number_of_submissions_per_team_for_phases",
+            "number_of_test_images_for_phases",
         )
-        labels = {
-            "phase_1_number_of_submissions_per_team": "Expected number of submissions per team to Phase 1",
-            "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
-            "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
-            "algorithm_maximum_settable_memory_gb": "Maximum memory for algorithm jobs in GB",
-        }
-        help_texts = {
-            "inference_time_limit_in_minutes": (
-                "The average time that you expect an algorithm job to take in minutes. "
-                "This time estimate should account for everything that needs to happen "
-                "for an algorithm container to process <u>one single image, including "
-                "model loading, i/o, preprocessing and inference.</u>"
-            ),
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if "" in (
-            initial := self.instance.algorithm_selectable_gpu_type_choices
-        ):
-            initial[initial.index("")] = HTMX_BLANK_CHOICE_KEY
-            self.fields["algorithm_selectable_gpu_type_choices"].initial = (
-                initial
-            )
         self.helper = FormHelper(self)
         self.helper.form_id = "budget"
         self.helper.attrs.update(
@@ -662,10 +628,92 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         )
         self.helper.layout.append(Submit("save", "Save"))
 
-    def clean_algorithm_selectable_gpu_type_choices(self):
-        data = self.cleaned_data.get(
-            "algorithm_selectable_gpu_type_choices", []
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if not self._clean_all_fields_nonempty_cleaned_data(cleaned_data):
+            raise ValidationError("Please fix the errors below.")
+
+        task_ids = cleaned_data.get("task_ids")
+        task_id_for_phases = cleaned_data.get("task_id_for_phases")
+
+        self._clean_task_lists_equal_length(cleaned_data)
+
+        self._clean_task_id_for_phases(task_ids, task_id_for_phases)
+
+        if not self._clean_phases_lists_equal_length(
+            task_id_for_phases, cleaned_data
+        ):
+            raise ValidationError(
+                "All fields defining phases must be of equal length."
+            )
+        self._clean_later_phases_not_more_teams_or_submissions(
+            task_id_for_phases, cleaned_data
         )
-        if HTMX_BLANK_CHOICE_KEY in data:
-            data[data.index(HTMX_BLANK_CHOICE_KEY)] = ""
-        return data
+
+        return cleaned_data
+
+    def _clean_all_fields_nonempty_cleaned_data(self, cleaned_data):
+        return all(
+            [cleaned_data.get(field_name) for field_name in self._meta.fields]
+        )
+
+    def _clean_task_lists_equal_length(self, cleaned_data):
+        task_ids = cleaned_data.get("task_ids")
+
+        for field_name in (
+            "algorithm_selectable_gpu_type_choices_for_tasks",
+            "algorithm_maximum_settable_memory_gb_for_tasks",
+            "average_size_test_image_mb_for_tasks",
+            "inference_time_average_minutes_for_tasks",
+        ):
+            field_value = cleaned_data.get(field_name)
+            if len(task_ids) != len(field_value):
+                self.add_error(
+                    field_name, "Must be of equal length as number of tasks."
+                )
+
+    def _clean_task_id_for_phases(self, task_ids, task_id_for_phases):
+        if not set(task_id_for_phases).issubset(task_ids):
+            self.add_error(
+                "task_id_for_phases", "Ids must be defined in task ids."
+            )
+        elif set(task_id_for_phases) != set(task_ids):
+            self.add_error("task_id_for_phases", "Not all task ids are used.")
+
+    def _clean_phases_lists_equal_length(
+        self, task_id_for_phases, cleaned_data
+    ):
+        all_phases_list_equal_length = True
+
+        for field_name in (
+            "number_of_teams_for_phases",
+            "number_of_submissions_per_team_for_phases",
+            "number_of_test_images_for_phases",
+        ):
+            field_value = cleaned_data.get(field_name)
+            if len(task_id_for_phases) != len(field_value):
+                self.add_error(
+                    field_name, "Must be of equal length as number of phases."
+                )
+                all_phases_list_equal_length = False
+
+        return all_phases_list_equal_length
+
+    def _clean_later_phases_not_more_teams_or_submissions(
+        self, task_id_for_phases, cleaned_data
+    ):
+        for field_name in (
+            "number_of_teams_for_phases",
+            "number_of_submissions_per_team_for_phases",
+        ):
+            field_value = cleaned_data.get(field_name)
+            for idx in range(1, len(task_id_for_phases)):
+                if (
+                    task_id_for_phases[idx] == task_id_for_phases[idx - 1]
+                    and field_value[idx] > field_value[idx - 1]
+                ):
+                    self.add_error(
+                        field_name,
+                        "Later phases in a task may not have more than earlier phases.",
+                    )

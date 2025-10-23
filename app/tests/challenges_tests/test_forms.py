@@ -3,7 +3,6 @@ import datetime
 import pytest
 
 from grandchallenge.challenges.forms import (
-    HTMX_BLANK_CHOICE_KEY,
     ChallengeRequestBudgetUpdateForm,
     ChallengeRequestForm,
     ChallengeRequestStatusUpdateForm,
@@ -173,37 +172,98 @@ def test_budget_update_form():
     challenge_request = ChallengeRequestFactory()
     # all budget fields need to be filled
     data = {
-        "expected_number_of_teams": 100,
-        "average_size_of_test_image_in_mb": 10,
-        "phase_1_number_of_submissions_per_team": 10,
-        "phase_2_number_of_submissions_per_team": 1,
-        "phase_1_number_of_test_images": 100,
-        "phase_2_number_of_test_images": 500,
-        "number_of_tasks": 1,
+        "task_ids": "[1, 2]",
+        "algorithm_maximum_settable_memory_gb_for_tasks": "[32, 32]",
+        "algorithm_selectable_gpu_type_choices_for_tasks": '[["", "T4"],["", "A10G", "T4"]]',
+        "average_size_test_image_mb_for_tasks": "[10, 100]",
+        # "inference_time_average_minutes_for_tasks": "[5, 10]",
+        "task_id_for_phases": "[1, 1, 2, 2]",
+        "number_of_teams_for_phases": "[500, 500, 500, 500]",
+        "number_of_submissions_per_team_for_phases": "[10, 1, 10, 1]",
+        "number_of_test_images_for_phases": "[3, 100, 3, 100]",
     }
     form = ChallengeRequestBudgetUpdateForm(
         data=data, instance=challenge_request
     )
     assert not form.is_valid()
-    assert "inference_time_limit_in_minutes" in form.errors.keys()
+    assert "inference_time_average_minutes_for_tasks" in form.errors.keys()
 
     data2 = {
-        "expected_number_of_teams": 100,
-        "inference_time_limit_in_minutes": 10,
-        "algorithm_selectable_gpu_type_choices": [
-            HTMX_BLANK_CHOICE_KEY,
-            "A10G",
-            "T4",
-        ],
-        "algorithm_maximum_settable_memory_gb": 32,
-        "average_size_of_test_image_in_mb": 10,
-        "phase_1_number_of_submissions_per_team": 10,
-        "phase_2_number_of_submissions_per_team": 1,
-        "phase_1_number_of_test_images": 100,
-        "phase_2_number_of_test_images": 500,
-        "number_of_tasks": 1,
+        "task_ids": "[1, 2]",
+        "algorithm_maximum_settable_memory_gb_for_tasks": "[32, 32]",
+        "algorithm_selectable_gpu_type_choices_for_tasks": '[["", "T4"],["", "A10G", "T4"]]',
+        "average_size_test_image_mb_for_tasks": "[10, 100]",
+        "inference_time_average_minutes_for_tasks": "[5, 10]",
+        "task_id_for_phases": "[1, 1, 2, 2]",
+        "number_of_teams_for_phases": "[500, 500, 500, 500]",
+        "number_of_submissions_per_team_for_phases": "[10, 1, 10, 1]",
+        "number_of_test_images_for_phases": "[3, 100, 3, 100]",
     }
     form2 = ChallengeRequestBudgetUpdateForm(
         data=data2, instance=challenge_request
     )
     assert form2.is_valid()
+
+
+@pytest.mark.parametrize(
+    "invalid_data",
+    [
+        {"task_ids": "[1]"},  # not all task ids defined
+        {"task_ids": "[1, 1]"},  # task ids are not unique
+        {
+            "algorithm_maximum_settable_memory_gb_for_tasks": "[32]"
+        },  # not all tasks defined
+        {
+            "algorithm_selectable_gpu_type_choices_for_tasks": '["", "T4"]'
+        },  # not all tasks defined
+        {
+            "average_size_test_image_mb_for_tasks": "[10]"
+        },  # not all tasks defined
+        {
+            "inference_time_average_minutes_for_tasks": "[10]"
+        },  # not all tasks defined
+        {"task_id_for_phases": "[1, 1]"},  # not all task ids used
+        {"task_id_for_phases": "[1, 1, 2, 3]"},  # using undefined task id
+        {
+            "number_of_teams_for_phases": "[10, 10, 10]"
+        },  # not all phases defined
+        {
+            "number_of_submissions_per_team_for_phases": "[10, 1, 10]"
+        },  # not all phases defined
+        {
+            "number_of_test_images_for_phases": "[3, 100, 3]"
+        },  # not all phases defined
+        {
+            "number_of_teams_for_phases": "[1, 10, 10, 10]"
+        },  # later phase has more teams
+        {
+            "number_of_submissions_per_team_for_phases": "[1, 10, 10, 10]"
+        },  # later phase has more submissions
+    ],
+)
+@pytest.mark.django_db
+def test_budget_update_form_invalid(invalid_data):
+    challenge_request = ChallengeRequestFactory()
+    data = {
+        "task_ids": "[1, 2]",
+        "algorithm_maximum_settable_memory_gb_for_tasks": "[32, 32]",
+        "algorithm_selectable_gpu_type_choices_for_tasks": '[["", "T4"],["", "A10G", "T4"]]',
+        "average_size_test_image_mb_for_tasks": "[10, 100]",
+        "inference_time_average_minutes_for_tasks": "[5, 10]",
+        "task_id_for_phases": "[1, 1, 2, 2]",
+        "number_of_teams_for_phases": "[10, 10, 10, 10]",
+        "number_of_submissions_per_team_for_phases": "[10, 1, 10, 1]",
+        "number_of_test_images_for_phases": "[3, 100, 3, 100]",
+    }
+    form = ChallengeRequestBudgetUpdateForm(
+        data=data, instance=challenge_request
+    )
+
+    assert form.is_valid()
+
+    data.update(invalid_data)
+    form = ChallengeRequestBudgetUpdateForm(
+        data=data, instance=challenge_request
+    )
+
+    assert not form.is_valid()
