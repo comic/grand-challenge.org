@@ -1010,67 +1010,234 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     code_availability = models.TextField(
         help_text="Will the participants’ code be accessible after the challenge?"
     )
-    expected_number_of_teams = models.PositiveIntegerField(
-        help_text="How many teams do you expect to participate in your challenge?",
-        validators=[MinValueValidator(limit_value=1)],
+    expected_number_of_teams = deprecate_field(
+        models.PositiveIntegerField(
+            help_text="How many teams do you expect to participate in your challenge?",
+            validators=[MinValueValidator(limit_value=1)],
+        )
+    )
+    number_of_teams_for_phases = models.JSONField(
+        help_text="Number of teams for each phase",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 1,
+                    },
+                }
+            )
+        ],
     )
     average_algorithm_container_size_in_gb = models.PositiveIntegerField(
         default=6,
         help_text="Average algorithm container size in GB.",
         validators=[MinValueValidator(limit_value=1)],
     )
-    average_number_of_containers_per_team = models.PositiveIntegerField(
-        default=5,
-        help_text="Average number of algorithm containers per team.",
-        validators=[MinValueValidator(limit_value=1)],
+    average_number_of_containers_per_team = deprecate_field(
+        models.PositiveIntegerField(
+            default=5,
+            help_text="Average number of algorithm containers per team.",
+            validators=[MinValueValidator(limit_value=1)],
+        )
     )
-    inference_time_limit_in_minutes = models.PositiveIntegerField(
-        help_text="Average run time per algorithm job in minutes.",
+    inference_time_limit_in_minutes = deprecate_field(
+        models.PositiveIntegerField(
+            help_text="Average run time per algorithm job in minutes.",
+            validators=[
+                MinValueValidator(limit_value=5),
+                MaxValueValidator(limit_value=60),
+            ],
+        )
+    )
+    inference_time_average_minutes_for_tasks = models.JSONField(
+        help_text="Average run time per algorithm job in minutes, for each task.",
+        default=list,
         validators=[
-            MinValueValidator(limit_value=5),
-            MaxValueValidator(limit_value=60),
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 5,
+                        "maximum": 60,
+                    },
+                }
+            )
         ],
     )
-    algorithm_selectable_gpu_type_choices = models.JSONField(
-        default=get_default_gpu_type_choices,
+    algorithm_selectable_gpu_type_choices = deprecate_field(
+        models.JSONField(
+            default=get_default_gpu_type_choices,
+            help_text=(
+                "The GPU type choices that participants will be able to select for their "
+                "algorithm inference jobs. Options are "
+                f"{GPUTypeChoices.values}.".replace("'", '"')
+            ),
+            validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
+        )
+    )
+    algorithm_selectable_gpu_type_choices_for_tasks = models.JSONField(
+        default=list,
         help_text=(
             "The GPU type choices that participants will be able to select for their "
-            "algorithm inference jobs. Options are "
+            "algorithm inference jobs, for each task. Options are "
             f"{GPUTypeChoices.values}.".replace("'", '"')
         ),
-        validators=[JSONValidator(schema=SELECTABLE_GPU_TYPES_SCHEMA)],
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "title": "The Selectable GPU Types Schema",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "enum": GPUTypeChoices.values,
+                            "type": "string",
+                        },
+                        "uniqueItems": True,
+                    },
+                }
+            )
+        ],
     )
-    algorithm_maximum_settable_memory_gb = models.PositiveSmallIntegerField(
-        default=settings.ALGORITHMS_MAX_MEMORY_GB,
+    algorithm_maximum_settable_memory_gb = deprecate_field(
+        models.PositiveSmallIntegerField(
+            default=settings.ALGORITHMS_MAX_MEMORY_GB,
+            help_text=(
+                "Maximum amount of main memory (DRAM) that participants will be allowed to "
+                "assign to algorithm inference jobs for submission."
+            ),
+        )
+    )
+    algorithm_maximum_settable_memory_gb_for_tasks = models.JSONField(
+        default=list,
         help_text=(
             "Maximum amount of main memory (DRAM) that participants will be allowed to "
             "assign to algorithm inference jobs for submission."
         ),
     )
-    average_size_of_test_image_in_mb = models.PositiveIntegerField(
-        help_text="Average size of a test image in MB.",
+    average_size_of_test_image_in_mb = deprecate_field(
+        models.PositiveIntegerField(
+            help_text="Average size of a test image in MB.",
+            validators=[
+                MinValueValidator(limit_value=1),
+                MaxValueValidator(limit_value=10000),
+            ],
+        )
+    )
+    average_size_test_image_mb_for_tasks = models.JSONField(
+        help_text="Average size of a test image in MB, for each task.",
+        default=list,
         validators=[
-            MinValueValidator(limit_value=1),
-            MaxValueValidator(limit_value=10000),
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000,
+                    },
+                }
+            )
         ],
     )
-    phase_1_number_of_submissions_per_team = models.PositiveIntegerField(
-        help_text="How many submissions do you expect per team in this phase?",
+    phase_1_number_of_submissions_per_team = deprecate_field(
+        models.PositiveIntegerField(
+            help_text="How many submissions do you expect per team in this phase?",
+        )
     )
-    phase_2_number_of_submissions_per_team = models.PositiveIntegerField(
-        help_text="How many submissions do you expect per team in this phase?",
+    phase_2_number_of_submissions_per_team = deprecate_field(
+        models.PositiveIntegerField(
+            help_text="How many submissions do you expect per team in this phase?",
+        )
     )
-    phase_1_number_of_test_images = models.PositiveIntegerField(
-        help_text="Number of test images for this phase.",
+    number_of_submissions_per_team_for_phases = models.JSONField(
+        help_text="Number of submissions per team for each phase",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 1,
+                    },
+                }
+            )
+        ],
     )
-    phase_2_number_of_test_images = models.PositiveIntegerField(
-        help_text="Number of test images for this phase.",
+    phase_1_number_of_test_images = deprecate_field(
+        models.PositiveIntegerField(
+            help_text="Number of test images for this phase.",
+        )
     )
-    number_of_tasks = models.PositiveIntegerField(
-        default=1,
-        help_text="If your challenge has multiple tasks, we multiply the "
-        "phase 1 and 2 cost estimates by the number of tasks.",
-        validators=[MinValueValidator(limit_value=1)],
+    phase_2_number_of_test_images = deprecate_field(
+        models.PositiveIntegerField(
+            help_text="Number of test images for this phase.",
+        )
+    )
+    number_of_test_images_for_phases = models.JSONField(
+        help_text="Number of test images for each phase.",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "minimum": 1,
+                    },
+                }
+            )
+        ],
+    )
+    number_of_tasks = deprecate_field(
+        models.PositiveIntegerField(
+            default=1,
+            help_text="If your challenge has multiple tasks, we multiply the "
+            "phase 1 and 2 cost estimates by the number of tasks.",
+            validators=[MinValueValidator(limit_value=1)],
+        )
+    )
+    task_ids = models.JSONField(
+        help_text="List the task id's, e.g. [1, 2, 3].",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                    },
+                    "uniqueItems": True,
+                }
+            )
+        ],
+    )
+    task_id_for_phases = models.JSONField(
+        help_text="Indicate which phase belongs to which task, e.g. [1, 1, 2, 2] means the first two phases below to task 1, the last two phases below to task 2.",
+        default=list,
+        validators=[
+            JSONValidator(
+                schema={
+                    "$schema": "http://json-schema.org/draft-07/schema",
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                    },
+                }
+            )
+        ],
     )
     data_license = models.BooleanField(
         default=False,
