@@ -32,7 +32,6 @@ from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
-from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
@@ -1287,15 +1286,6 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
         to=Image, null=True, blank=True, on_delete=models.PROTECT
     )
 
-    storage_cost_per_year_usd_millicents = deprecate_field(
-        models.PositiveIntegerField(
-            # We store usd here as the exchange rate regularly changes
-            editable=False,
-            null=True,
-            default=None,
-            help_text="The storage cost per year for this image in USD Cents, excluding Tax",
-        )
-    )
     size_in_storage = models.PositiveBigIntegerField(
         editable=False,
         default=0,
@@ -2038,16 +2028,6 @@ class ComponentImage(FieldChangeMixin, models.Model):
         ),
     )
     status = models.TextField(editable=False)
-
-    storage_cost_per_year_usd_millicents = deprecate_field(
-        models.PositiveIntegerField(
-            # We store usd here as the exchange rate regularly changes
-            editable=False,
-            null=True,
-            default=None,
-            help_text="The storage cost per year for this image in USD Cents, excluding Tax",
-        )
-    )
 
     size_in_storage = models.PositiveBigIntegerField(
         editable=False,
