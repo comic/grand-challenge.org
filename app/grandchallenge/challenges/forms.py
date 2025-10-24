@@ -11,6 +11,7 @@ from crispy_forms.layout import (
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.forms import TextInput
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.text import format_lazy
@@ -612,6 +613,8 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget = TextInput()
         self.helper = FormHelper(self)
         self.helper.form_id = "budget"
         self.helper.attrs.update(
@@ -728,3 +731,19 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
                         field_name,
                         "Later phases in a task may not have more submissions than earlier phases.",
                     )
+
+
+class ChallengeRequestBudgetCalculatorForm(ChallengeRequestBudgetUpdateForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper(self)
+        self.helper.form_id = "budget-form"
+        self.helper.attrs.update(
+            {
+                "hx-post": reverse("challenges:requests-budget-calculator"),
+                "hx-trigger": "load, input from:#budget-form delay:300ms",
+                "hx-target": "#budget",
+                "hx-swap": "innerHTML",
+            }
+        )

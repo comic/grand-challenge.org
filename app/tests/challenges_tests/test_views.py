@@ -687,3 +687,27 @@ def test_onboarding_task_list_completion(client):
     assert (
         response.status_code == 403
     ), "admin is not allowed to complete support task"
+
+
+@pytest.mark.django_db
+def test_budget_calculator_is_staff_only(client):
+    user = UserFactory(is_staff=True)
+
+    response = get_view_for_user(
+        viewname="challenges:requests-budget-calculator",
+        user=user,
+        client=client,
+    )
+
+    assert response.status_code == 200
+
+    user.is_staff = False
+    user.save()
+
+    response = get_view_for_user(
+        viewname="challenges:requests-budget-calculator",
+        user=user,
+        client=client,
+    )
+
+    assert response.status_code == 404

@@ -1,11 +1,22 @@
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import (
+    AccessMixin,
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import F, Prefetch, Q
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
+from django.shortcuts import render
 from django.utils.html import format_html
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    FormView,
+    ListView,
+    UpdateView,
+)
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
@@ -13,6 +24,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from grandchallenge.challenges.emails import send_challenge_status_update_email
 from grandchallenge.challenges.filters import ChallengeFilter
 from grandchallenge.challenges.forms import (
+    ChallengeRequestBudgetCalculatorForm,
     ChallengeRequestBudgetUpdateForm,
     ChallengeRequestForm,
     ChallengeRequestStatusUpdateForm,
@@ -256,6 +268,51 @@ class ChallengeRequestBudgetUpdate(
         response = HttpResponse()
         response["HX-Refresh"] = "true"
         return response
+
+
+class ChallengeRequestBudgetCalculator(
+    LoginRequiredMixin,
+    UserPassesTestMixin,
+    FormView,
+):
+    form_class = ChallengeRequestBudgetCalculatorForm
+    login_url = reverse_lazy("account_login")
+    template_name = "challenges/challengerequest_budget_calculator.html"
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def handle_no_permission(self):
+        raise Http404()
+
+    def get_initial(self):
+        return {
+            "algorithm_selectable_gpu_type_choices_for_tasks": [
+                ["", "T4"],
+                ["", "T4", "A10G"],
+            ],
+            "algorithm_maximum_settable_memory_gb_for_tasks": [32, 32],
+            "average_size_test_case_mb_for_tasks": [10, 40],
+            "inference_time_average_minutes_for_tasks": [5, 10],
+            "task_ids": [1, 2],
+            "task_id_for_phases": [1, 1, 2, 2],
+            "number_of_teams_for_phases": [10, 10, 20, 20],
+            "number_of_submissions_per_team_for_phases": [10, 1, 10, 1],
+            "number_of_test_cases_for_phases": [3, 300, 3, 300],
+        }
+
+    def form_valid(self, form):
+        challenge_request = ChallengeRequest(
+            **form.cleaned_data
+        )  # unsaved instance
+        return render(
+            self.request,
+            "challenges/partials/budget_table.html",
+            {"object": challenge_request},
+        )
+
+    def form_invalid(self, form):
+        return HttpResponse(str(form.errors))
 
 
 class ChallengeCostOverview(

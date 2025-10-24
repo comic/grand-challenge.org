@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+
+{% block navbar %}{% endblock %}
+{% block messages %}{% endblock %}
+
+{% block container %}container-fluid{% endblock %}
+
+{% block outer_content %}
+
+    <h2 class="mb-4">Update budget fields</h2>
+
+    <div class="row">
+        <div class="col-md-5">
+
+            <div class="sticky-top">
+                {% crispy form %}
+            </div>
+
+        </div>
+        <div class="col-md-7">
+
+            <div id="budget"></div>
+
+        </div>
+    </div>
+
+{% endblock %}
