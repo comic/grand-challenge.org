@@ -70,6 +70,8 @@ class FlexibleImageWidget(MultiWidget):
         if isinstance(value, (list, tuple)):
             if len(value) == 1:
                 item = value[0]
+                if not item:
+                    return [None, None]
                 if item in ImageWidgetChoices.names:
                     return [None, None]
                 if Image.objects.filter(pk=item).exists():
