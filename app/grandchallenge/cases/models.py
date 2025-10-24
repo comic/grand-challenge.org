@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 
 import boto3
 from actstream.actions import follow
+from billiard.exceptions import SoftTimeLimitExceeded
 from botocore.exceptions import ClientError
 from celery import signature
 from django.conf import settings
@@ -668,7 +669,9 @@ class Image(UUIDModel):
 
         return sitk_image
 
-    def update_viewer_groups_permissions(self, *, exclude_jobs=None):
+    def update_viewer_groups_permissions(  # noqa: C901
+        self, *, exclude_jobs=None
+    ):
         """
         Update the permissions for the algorithm jobs viewers groups to
         view this image.
@@ -685,20 +688,26 @@ class Image(UUIDModel):
         from grandchallenge.archives.models import Archive
         from grandchallenge.reader_studies.models import ReaderStudy
 
-        if exclude_jobs is None:
-            exclude_jobs = set()
-        else:
-            exclude_jobs = {j.pk for j in exclude_jobs}
-
         expected_groups = set()
 
         for key in ["inputs__image", "outputs__image"]:
-            for job in (
-                Job.objects.exclude(pk__in=exclude_jobs)
-                .filter(**{key: self})
+            job_queryset = (
+                Job.objects.filter(**{key: self})
                 .prefetch_related("viewer_groups")
-            ):
-                expected_groups.update(job.viewer_groups.all())
+                .only("viewer_groups")
+            )
+
+            if exclude_jobs is not None:
+                job_queryset = job_queryset.exclude(
+                    pk__in={j.pk for j in exclude_jobs}
+                )
+
+            try:
+                for job in job_queryset:
+                    expected_groups.update(job.viewer_groups.all())
+            except SoftTimeLimitExceeded as error:
+                logger.error(error, exc_info=True)
+                raise
 
         for archive in Archive.objects.filter(
             items__values__image=self

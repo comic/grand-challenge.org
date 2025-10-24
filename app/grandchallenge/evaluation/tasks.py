@@ -1,6 +1,7 @@
 import uuid
 from datetime import timedelta
 
+from billiard.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -201,7 +202,12 @@ def prepare_and_execute_evaluation(*, evaluation_pk):
 
 
 @acks_late_micro_short_task(
-    retry_on=(TooManyJobsScheduled, LockNotAcquiredException)
+    retry_on=(
+        TooManyJobsScheduled,
+        LockNotAcquiredException,
+        # TODO remove SoftTimeLimitExceeded, temporary workaround for https://github.com/DIAGNijmegen/rse-grand-challenge-admin/issues/663
+        SoftTimeLimitExceeded,
+    )
 )
 @transaction.atomic
 def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
