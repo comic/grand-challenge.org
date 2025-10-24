@@ -57,6 +57,25 @@ def test_flexible_image_field_validation():
         == decompressed_value_for_missing_value
         == [None, None]
     )
+    with pytest.raises(ValidationError):
+        field.clean(parsed_value_for_empty_data)
+
+    parsed_value_no_selected_data = field.widget.value_from_datadict(
+        data=QueryDict(urlencode({prefixed_interface_slug: ""})),
+        name=prefixed_interface_slug,
+        files={},
+    )
+    decompressed_value_for_no_selected_data = field.widget.decompress(
+        value=[""]
+    )
+
+    assert (
+        parsed_value_no_selected_data
+        == decompressed_value_for_no_selected_data
+        == [None, None]
+    )
+    with pytest.raises(ValidationError):
+        field.clean(parsed_value_no_selected_data)
 
     parsed_value_for_image_with_permission = field.widget.value_from_datadict(
         data=QueryDict(urlencode({prefixed_interface_slug: im1.pk})),

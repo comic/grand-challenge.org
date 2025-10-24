@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 from actstream.actions import is_following
+from bs4 import BeautifulSoup
 from django.core.validators import MaxValueValidator, MinValueValidator
 from factory.django import ImageField
 
@@ -22,7 +23,11 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.cases.widgets import ImageWidgetChoices
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FileWidgetChoices,
+)
 from grandchallenge.components.models import (
     ComponentJob,
     ImportStatusChoices,
@@ -408,6 +413,136 @@ def test_create_job_input_field_required_validation(client, socket_kwargs):
         f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}": [
             "This field is required."
         ],
+    }
+
+
+def extract_form_data_from_response(response):
+    html = response.content.decode()
+    soup = BeautifulSoup(html, "html.parser")
+
+    data = {}
+    for tag in soup.find_all(["input", "select", "textarea"]):
+        name = tag.get("name")
+        if not name:
+            continue
+
+        if tag.name == "input":
+            if tag.get("type") in ["checkbox", "radio"]:
+                if tag.has_attr("checked"):
+                    data[name] = tag.get("value", "on")
+            else:
+                data[name] = tag.get("value", "")
+        elif tag.name == "select":
+            selected = tag.find("option", selected=True)
+            if selected:
+                data[name] = selected.get("value")
+            else:
+                first = tag.find("option")
+                if first:
+                    data[name] = first.get("value")
+        elif tag.name == "textarea":
+            data[name] = tag.text
+
+    return data
+
+
+@pytest.mark.parametrize(
+    "widget_choice",
+    [
+        ImageWidgetChoices.UNDEFINED,
+        ImageWidgetChoices.IMAGE_SEARCH,
+        ImageWidgetChoices.IMAGE_UPLOAD,
+    ],
+)
+@pytest.mark.django_db
+def test_create_job_image_kind_no_input_after_widget_choice_field_validation(
+    client, widget_choice
+):
+    alg, creator, input_socket = create_algorithm_with_input(
+        kind=InterfaceKindChoices.PANIMG_IMAGE
+    )
+    prefixed_interface_slug = (
+        f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
+    )
+
+    response = get_view_for_user(
+        viewname="cases:select-image-widget",
+        client=client,
+        user=creator,
+        data={
+            f"widget-choice-{prefixed_interface_slug}": widget_choice.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
+        },
+    )
+    data = extract_form_data_from_response(response)
+    data[f"widget-choice-{prefixed_interface_slug}"] = widget_choice.name
+
+    response = get_view_for_user(
+        viewname="algorithms:job-create",
+        client=client,
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": alg.interfaces.first().pk,
+        },
+        method=client.post,
+        data=data,
+        follow=True,
+        user=creator,
+    )
+
+    assert response.status_code == 200
+    assert response.context["form"].errors == {
+        f"{prefixed_interface_slug}": ["This field is required."],
+    }
+
+
+@pytest.mark.parametrize(
+    "widget_choice",
+    [
+        FileWidgetChoices.UNDEFINED,
+        FileWidgetChoices.FILE_SEARCH,
+        FileWidgetChoices.FILE_UPLOAD,
+    ],
+)
+@pytest.mark.django_db
+def test_create_job_file_kind_no_input_after_widget_choice_field_validation(
+    client, widget_choice
+):
+    alg, creator, input_socket = create_algorithm_with_input(
+        kind=InterfaceKindChoices.PDF
+    )
+    prefixed_interface_slug = (
+        f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
+    )
+
+    response = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=creator,
+        data={
+            f"widget-choice-{prefixed_interface_slug}": widget_choice.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
+        },
+    )
+    data = extract_form_data_from_response(response)
+    data[f"widget-choice-{prefixed_interface_slug}"] = widget_choice.name
+
+    response = get_view_for_user(
+        viewname="algorithms:job-create",
+        client=client,
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": alg.interfaces.first().pk,
+        },
+        method=client.post,
+        data=data,
+        follow=True,
+        user=creator,
+    )
+
+    assert response.status_code == 200
+    assert response.context["form"].errors == {
+        f"{prefixed_interface_slug}": ["This field is required."],
     }
 
 
