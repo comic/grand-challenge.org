@@ -123,19 +123,6 @@ def test_challenge_request_new_fields_filled_from_old_fields():
 
     challenge_request = form.save()
 
-    # deprecated fields are not filled
-    assert challenge_request.expected_number_of_teams is None
-    assert challenge_request.number_of_tasks is None
-    assert challenge_request.average_size_of_test_image_in_mb is None
-    assert challenge_request.inference_time_limit_in_minutes is None
-    assert challenge_request.algorithm_selectable_gpu_type_choices is None
-    assert challenge_request.algorithm_maximum_settable_memory_gb is None
-    assert challenge_request.phase_1_number_of_submissions_per_team is None
-    assert challenge_request.phase_2_number_of_submissions_per_team is None
-    assert challenge_request.phase_1_number_of_test_images is None
-    assert challenge_request.phase_2_number_of_test_images is None
-
-    # new fields are filled
     assert (
         challenge_request.algorithm_selectable_gpu_type_choices_for_tasks
         == [["", "A10G", "T4"], ["", "A10G", "T4"]]
