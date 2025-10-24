@@ -263,7 +263,10 @@ class Invoice(models.Model, FieldChangeMixin):
         return state
 
     def clean(self):
-        if not self._state.adding:
+        if (
+            not self._state.adding
+            and self.payment_status != PaymentStatusChoices.INITIALIZED
+        ):
             # Assert total amount unchanged
             if (
                 self._current_state["total_amount_euros"]
