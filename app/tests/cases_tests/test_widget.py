@@ -44,16 +44,24 @@ def test_flexible_image_field_validation():
     im1, im2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", user, im1)
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
+    prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
     field = FlexibleImageField(user=user)
+
     parsed_value_for_empty_data = field.widget.value_from_datadict(
-        data=QueryDict(""), name=ci.slug, files={}
+        data=QueryDict(""), name=prefixed_interface_slug, files={}
     )
     decompressed_value_for_missing_value = field.widget.decompress(value=None)
-    assert parsed_value_for_empty_data == [None, None]
-    assert decompressed_value_for_missing_value == [None, None]
+
+    assert (
+        parsed_value_for_empty_data
+        == decompressed_value_for_missing_value
+        == [None, None]
+    )
 
     parsed_value_for_image_with_permission = field.widget.value_from_datadict(
-        data=QueryDict(urlencode({ci.slug: im1.pk})), name=ci.slug, files={}
+        data=QueryDict(urlencode({prefixed_interface_slug: im1.pk})),
+        name=prefixed_interface_slug,
+        files={},
     )
     decompressed_value_for_image_with_permission = field.widget.decompress(
         [im1.pk]
@@ -62,23 +70,21 @@ def test_flexible_image_field_validation():
     assert (
         parsed_value_for_image_with_permission
         == decompressed_value_for_image_with_permission
-        == [
-            str(im1.pk),
-            None,
-        ]
+        == [str(im1.pk), None]
     )
     assert field.clean(parsed_value_for_image_with_permission) == im1
 
     parsed_value_for_image_without_permission = (
         field.widget.value_from_datadict(
-            data=QueryDict(urlencode({ci.slug: im2.pk})),
-            name=ci.slug,
+            data=QueryDict(urlencode({prefixed_interface_slug: im2.pk})),
+            name=prefixed_interface_slug,
             files={},
         )
     )
     decompressed_value_for_image_without_permission = field.widget.decompress(
         [im2.pk]
     )
+
     assert (
         parsed_value_for_image_without_permission
         == decompressed_value_for_image_without_permission
@@ -89,15 +95,16 @@ def test_flexible_image_field_validation():
 
     datadict = QueryDict(mutable=True)
     for id in [upload1.pk, upload2.pk]:
-        datadict.appendlist(ci.slug, str(id))
+        datadict.appendlist(prefixed_interface_slug, str(id))
     parsed_value_for_upload_from_user = field.widget.value_from_datadict(
         data=datadict,
-        name=ci.slug,
+        name=prefixed_interface_slug,
         files={},
     )
     decompressed_value_for_upload_from_user = field.widget.decompress(
         [str(upload1.pk), str(upload2.pk)]
     )
+
     assert (
         parsed_value_for_upload_from_user
         == decompressed_value_for_upload_from_user
@@ -109,14 +116,15 @@ def test_flexible_image_field_validation():
 
     parsed_value_from_upload_from_other_user = (
         field.widget.value_from_datadict(
-            data=QueryDict(urlencode({ci.slug: upload3.pk})),
-            name=ci.slug,
+            data=QueryDict(urlencode({prefixed_interface_slug: upload3.pk})),
+            name=prefixed_interface_slug,
             files={},
         )
     )
     decompressed_value_for_upload_from_other_user = field.widget.decompress(
         [str(upload3.pk)]
     )
+
     assert (
         parsed_value_from_upload_from_other_user
         == decompressed_value_for_upload_from_other_user
@@ -126,13 +134,14 @@ def test_flexible_image_field_validation():
         field.clean(parsed_value_from_upload_from_other_user)
 
     parsed_value_for_missing_value = field.widget.value_from_datadict(
-        data=QueryDict(urlencode({ci.slug: "IMAGE_UPLOAD"})),
-        name=ci.slug,
+        data=QueryDict(urlencode({prefixed_interface_slug: "IMAGE_UPLOAD"})),
+        name=prefixed_interface_slug,
         files={},
     )
     decompressed_value_for_missing_value = field.widget.decompress(
         ["IMAGE_UPLOAD"]
     )
+
     assert (
         parsed_value_for_missing_value
         == decompressed_value_for_missing_value
@@ -179,6 +188,7 @@ def test_flexible_image_widget_prepopulated_value():
 def test_dicom_upload_field_validation():
     user = UserFactory()
     ci = ComponentInterfaceFactory()
+    prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
     field = DICOMUploadField(user=user)
     upload1 = UserUploadFactory(creator=user)
     upload1.status = UserUpload.StatusChoices.COMPLETED
@@ -193,12 +203,12 @@ def test_dicom_upload_field_validation():
     )
     parsed_value_for_upload_from_user = field.widget.value_from_datadict(
         data={
-            f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}_{DICOMUploadWidgetSuffixes[1]}": [
+            f"{prefixed_interface_slug}_{DICOMUploadWidgetSuffixes[1]}": [
                 str(upload1.pk)
             ],
-            f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}_{DICOMUploadWidgetSuffixes[0]}": "test_image",
+            f"{prefixed_interface_slug}_{DICOMUploadWidgetSuffixes[0]}": "test_image",
         },
-        name=f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}",
+        name=f"{prefixed_interface_slug}",
         files={},
     )
     decompressed_value_for_upload_from_user = field.widget.decompress(
@@ -217,12 +227,12 @@ def test_dicom_upload_field_validation():
     )
     parsed_value_from_upload_from_other_user = field.widget.value_from_datadict(
         data={
-            f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}_{DICOMUploadWidgetSuffixes[1]}": [
+            f"{prefixed_interface_slug}_{DICOMUploadWidgetSuffixes[1]}": [
                 str(upload2.pk)
             ],
-            f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}_{DICOMUploadWidgetSuffixes[0]}": "test_image_2",
+            f"{prefixed_interface_slug}_{DICOMUploadWidgetSuffixes[0]}": "test_image_2",
         },
-        name=f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}",
+        name=f"{prefixed_interface_slug}",
         files={},
     )
     decompressed_value_for_upload_from_other_user = field.widget.decompress(
