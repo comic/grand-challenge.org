@@ -172,7 +172,7 @@ class RepositoriesList(
         Currently, there is no way to filter the repositories, see
         https://docs.github.com/en/rest/apps/installations?apiVersion=2022-11-28#list-repositories-accessible-to-the-user-access-token
         """
-        per_page = 100
+        per_page = 80
 
         def get_page(*, page):
             return requests.get(
