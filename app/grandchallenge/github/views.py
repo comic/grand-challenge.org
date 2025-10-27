@@ -120,20 +120,18 @@ class GitHubInstallationRequiredMixin:
         return f"{settings.GITHUB_APP_INSTALL_URL}?state={self.github_state}"
 
     @cached_property
-    def github_request_kwargs(self):
+    def github_request_headers(self):
         return {
-            "headers": {
-                "Accept": "application/vnd.github+json",
-                "Authorization": f"token {self.github_user_token.access_token}",
-            },
-            "timeout": 10,
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"token {self.github_user_token.access_token}",
         }
 
     @cached_property
     def installations(self):
-        response = requests.get(
+        response = httpx.get(
             "https://api.github.com/user/installations",
-            **self.github_request_kwargs,
+            headers=self.github_request_headers,
+            timeout=10,
         )
         response.raise_for_status()
         return response.json()["installations"]
@@ -176,11 +174,11 @@ class RepositoriesList(
             response = await httpx_client.get(
                 f"https://api.github.com/user/installations/{installation_id}/repositories",
                 params={"per_page": per_page, "page": page},
-                **self.github_request_kwargs,
+                headers=self.github_request_headers,
             )
             response.raise_for_status()
 
-            return await response.json()
+            return response.json()
 
     async def _get_installation_github_repos(
         self, *, installation_id, semaphore, httpx_client
@@ -226,10 +224,12 @@ class RepositoriesList(
             response = task.result()
             repos += [repo["full_name"] for repo in response["repositories"]]
 
+        return repos
+
     @async_to_sync
     async def _get_all_github_repos(self):
         semaphore = asyncio.Semaphore(ASYNC_CONCURRENCY)
-        timeout = httpx.Timeout(self.github_request_kwargs["timeout"])
+        timeout = httpx.Timeout(10)
 
         tasks = []
 
