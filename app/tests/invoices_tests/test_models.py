@@ -1,3 +1,5 @@
+from contextlib import nullcontext
+
 import pytest
 from django.core.exceptions import ValidationError
 
@@ -392,9 +394,14 @@ def test_payment_type_non_complimentary_requires_details(
     assert expected_error_message == e.value.messages[0]
 
 
+@pytest.mark.parametrize(
+    "payment_status",
+    set(PaymentStatusChoices).difference([PaymentStatusChoices.INITIALIZED]),
+)
 @pytest.mark.django_db
-def test_total_amount_cannot_change():
+def test_total_amount_cannot_change(payment_status):
     invoice = InvoiceFactory(
+        payment_status=payment_status,
         support_costs_euros=0,
         compute_costs_euros=1,
         storage_costs_euros=2,
@@ -402,7 +409,21 @@ def test_total_amount_cannot_change():
     invoice.support_costs_euros = 1
     with pytest.raises(ValidationError) as e:
         invoice.clean()
-    assert ("The total amount may not change") in e.value.message
+    assert "The total amount may not change" in e.value.message
 
     invoice.storage_costs_euros = 1
-    invoice.clean()
+    with nullcontext():
+        invoice.clean()
+
+
+@pytest.mark.django_db
+def test_total_amount_can_change_for_initialized_payment_status():
+    invoice = InvoiceFactory(
+        payment_status=PaymentStatusChoices.INITIALIZED,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=2,
+    )
+    invoice.support_costs_euros = 1
+    with nullcontext():
+        invoice.clean()
