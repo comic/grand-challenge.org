@@ -126,7 +126,7 @@ class GitHubInstallationRequiredMixin:
                 "Accept": "application/vnd.github+json",
                 "Authorization": f"token {self.github_user_token.access_token}",
             },
-            "timeout": 5,
+            "timeout": 10,
         }
 
     @cached_property
@@ -229,7 +229,7 @@ class RepositoriesList(
     @async_to_sync
     async def _get_all_github_repos(self):
         semaphore = asyncio.Semaphore(ASYNC_CONCURRENCY)
-        timeout = httpx.Timeout(10.0)
+        timeout = httpx.Timeout(self.github_request_kwargs["timeout"])
 
         tasks = []
 
