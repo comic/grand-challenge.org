@@ -1,9 +1,12 @@
+import asyncio
 import hashlib
 import hmac
 import json
 from secrets import compare_digest
 
+import httpx
 import requests
+from asgiref.sync import async_to_sync
 from dal_select2.views import Select2ListView
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -17,6 +20,7 @@ from django.views.decorators.http import require_POST
 from guardian.mixins import LoginRequiredMixin
 from requests import HTTPError
 
+from grandchallenge.components.backends.base import ASYNC_CONCURRENCY
 from grandchallenge.github.exceptions import GitHubBadRefreshTokenException
 from grandchallenge.github.models import GitHubUserToken, GitHubWebhookMessage
 from grandchallenge.github.utils import (
@@ -165,7 +169,22 @@ class RepositoriesList(
 ):
     raise_exception = True
 
-    def get_repos(self, *, installation_id):
+    async def _get_page_github_repos(
+        self, *, installation_id, page, per_page, semaphore, httpx_client
+    ):
+        async with semaphore:
+            response = await httpx_client.get(
+                f"https://api.github.com/user/installations/{installation_id}/repositories",
+                params={"per_page": per_page, "page": page},
+                **self.github_request_kwargs,
+            )
+            response.raise_for_status()
+
+            return await response.json()
+
+    async def _get_installation_github_repos(
+        self, *, installation_id, semaphore, httpx_client
+    ):
         """
         Get the repositories for this users installation
 
@@ -174,30 +193,65 @@ class RepositoriesList(
         """
         per_page = 100
 
-        def get_page(*, page):
-            return requests.get(
-                f"https://api.github.com/user/installations/{installation_id}/repositories",
-                params={"per_page": per_page, "page": page},
-                **self.github_request_kwargs,
-            ).json()
+        response = await self._get_page_github_repos(
+            installation_id=installation_id,
+            page=1,
+            per_page=per_page,
+            semaphore=semaphore,
+            httpx_client=httpx_client,
+        )
 
-        response = get_page(page=1)
         repos = [repo["full_name"] for repo in response["repositories"]]
 
         remaining_pages = (response["total_count"] - 1) // per_page
 
-        for ii in range(remaining_pages):
-            repos += [
-                repo["full_name"]
-                for repo in get_page(page=ii + 2)["repositories"]
-            ]
+        tasks = []
+
+        async with asyncio.TaskGroup() as task_group:
+            for ii in range(remaining_pages):
+                page = ii + 2
+                tasks.append(
+                    task_group.create_task(
+                        self._get_page_github_repos(
+                            installation_id=installation_id,
+                            page=page,
+                            per_page=per_page,
+                            semaphore=semaphore,
+                            httpx_client=httpx_client,
+                        )
+                    )
+                )
+
+        for task in tasks:
+            response = task.result()
+            repos += [repo["full_name"] for repo in response["repositories"]]
+
+    @async_to_sync
+    async def _get_all_github_repos(self):
+        semaphore = asyncio.Semaphore(ASYNC_CONCURRENCY)
+        timeout = httpx.Timeout(10.0)
+
+        tasks = []
+
+        async with httpx.AsyncClient(timeout=timeout) as httpx_client:
+            async with asyncio.TaskGroup() as task_group:
+                for installation in self.installations:
+                    tasks.append(
+                        task_group.create_task(
+                            self._get_installation_github_repos(
+                                installation_id=installation["id"],
+                                semaphore=semaphore,
+                                httpx_client=httpx_client,
+                            )
+                        )
+                    )
+
+        repos = []
+
+        for task in tasks:
+            repos += task.result()
 
         return repos
 
     def get_list(self):
-        repos = []
-
-        for installation in self.installations:
-            repos += self.get_repos(installation_id=installation["id"])
-
-        return repos
+        return self._get_all_github_repos()
