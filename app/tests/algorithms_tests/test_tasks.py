@@ -338,25 +338,26 @@ def test_algorithm(client, settings, django_capture_on_commit_callbacks):
         django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
     )
 
-    jobs = Job.objects.filter(algorithm_image=ai).all()
-
     # There should be a single, successful job
-    assert len(jobs) == 1
+    job = Job.objects.filter(algorithm_image=ai).get()
 
-    assert jobs[0].stdout.endswith("Greetings from stdout")
-    assert jobs[0].stderr.endswith('("Hello from stderr")')
-    assert "UserWarning: Could not google: [Errno " in jobs[0].stderr
-    assert jobs[0].error_message == ""
-    assert jobs[0].status == jobs[0].SUCCESS
+    assert job.stdout.endswith("Greetings from stdout")
+    assert job.stderr.endswith('("Hello from stderr")')
+    assert "UserWarning: Could not google: [Errno " in job.stderr
+    assert job.error_message == ""
+    assert job.status == job.SUCCESS
+    assert job.exec_duration == timedelta(seconds=1337)
+    assert job.invoke_duration == timedelta(seconds=1874)
+    assert job.utilization.duration.total_seconds() > 0
 
     # The job should have two ComponentInterfaceValues,
     # one for the results.json and one for output.tif
-    assert len(jobs[0].outputs.all()) == 2
+    assert len(job.outputs.all()) == 2
 
-    json_result_civ = jobs[0].outputs.get(interface=json_result_interface)
+    json_result_civ = job.outputs.get(interface=json_result_interface)
     assert json_result_civ.value
 
-    heatmap_civ = jobs[0].outputs.get(interface=heatmap_interface)
+    heatmap_civ = job.outputs.get(interface=heatmap_interface)
     assert heatmap_civ.image.name == "input_file.tif"
 
     # We add another ComponentInterface with file value and run the algorithm again

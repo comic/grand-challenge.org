@@ -90,7 +90,7 @@ class IOCopyExecutor(Executor):
                 pk=self._job_id,
                 return_code=0,
                 exec_duration=timedelta(seconds=1337),
-                invoke_duration=None,
+                invoke_duration=timedelta(seconds=1874),
                 outputs=[],
                 sagemaker_shim_version="0.5.0",
             )
@@ -124,6 +124,8 @@ class IOCopyExecutor(Executor):
                         "_job_id": self._job_id,
                         "_stdout": self._stdout,
                         "_stderr": self._stderr,
+                        "_exec_duration_seconds": self._exec_duration.total_seconds(),
+                        "_invoke_duration_seconds": self._invoke_duration.total_seconds(),
                         "__start_time": self.__start_time,
                     },
                     "backend": f"{self.__class__.__module__}.{self.__class__.__qualname__}",
@@ -134,6 +136,12 @@ class IOCopyExecutor(Executor):
     def handle_event(self, *, event):
         self._stdout = event["_stdout"]
         self._stderr = event["_stderr"]
+        self._exec_duration = timedelta(
+            seconds=event["_exec_duration_seconds"]
+        )
+        self._invoke_duration = timedelta(
+            seconds=event["_invoke_duration_seconds"]
+        )
         self.__start_time = event["__start_time"]
 
     @staticmethod

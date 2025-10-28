@@ -325,11 +325,15 @@ class Executor(ABC):
             use_warm_pool and settings.COMPONENTS_USE_WARM_POOL
         )
         self._signing_key = signing_key
-        self._stdout = []
-        self._stderr = []
-        self.__s3_client = None
         self._algorithm_model = algorithm_model
         self._ground_truth = ground_truth
+
+        self._exec_duration = None
+        self._invoke_duration = None
+        self._stdout = []
+        self._stderr = []
+
+        self.__s3_client = None
 
     def provision(self, *, input_civs, input_prefixes):
         # We cannot run everything async as it requires database access.
@@ -400,6 +404,14 @@ class Executor(ABC):
     @property
     @abstractmethod
     def utilization_duration(self): ...
+
+    @property
+    def exec_duration(self):
+        return self._exec_duration
+
+    @property
+    def invoke_duration(self):
+        return self._invoke_duration
 
     @property
     @abstractmethod
@@ -865,6 +877,9 @@ class Executor(ABC):
 
     def _handle_completed_job(self):
         inference_result = self._get_inference_result()
+
+        self._exec_duration = inference_result.exec_duration
+        self._invoke_duration = inference_result.invoke_duration
 
         users_process_exit_code = inference_result.return_code
 

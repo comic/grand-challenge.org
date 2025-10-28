@@ -858,6 +858,8 @@ def get_update_status_kwargs(*, executor=None):
             "stdout": executor.stdout,
             "stderr": executor.stderr,
             "utilization_duration": executor.utilization_duration,
+            "exec_duration": executor.exec_duration,
+            "invoke_duration": executor.invoke_duration,
             "compute_cost_euro_millicents": executor.compute_cost_euro_millicents,
             "runtime_metrics": executor.runtime_metrics,
         }

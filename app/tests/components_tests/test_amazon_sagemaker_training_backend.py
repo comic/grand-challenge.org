@@ -563,8 +563,8 @@ def test_handle_completed_job():
     inference_result = InferenceResult(
         pk=f"algorithms-job-{pk}",
         return_code=0,
-        exec_duration=timedelta(seconds=1337),
-        invoke_duration=None,
+        exec_duration=timedelta(seconds=51432),
+        invoke_duration=timedelta(seconds=1543),
         outputs=[],
         sagemaker_shim_version="0.5.0",
     )
@@ -586,6 +586,10 @@ def test_handle_completed_job():
     )
 
     assert executor._handle_completed_job() is None
+
+    # The durations should be set from the result object
+    assert executor.exec_duration == timedelta(seconds=51432)
+    assert executor.invoke_duration == timedelta(seconds=1543)
 
 
 def test_handle_time_limit_exceded(settings):
