@@ -180,6 +180,7 @@ class EvaluationAdmin(admin.ModelAdmin):
         "created",
         "submission",
         "time_limit",
+        "exec_duration",
         "requires_gpu_type",
         "requires_memory_gb",
         "use_warm_pool",
@@ -221,6 +222,8 @@ class EvaluationAdmin(admin.ModelAdmin):
         "runtime_metrics",
         "claimed_by",
         "ground_truth",
+        "exec_duration",
+        "invoke_duration",
         "evaluation_utilization",
     )
     actions = (requeue_jobs, cancel_jobs, deprovision_jobs)
