@@ -107,7 +107,7 @@ class IOCopyExecutor(Executor):
             self._s3_client.upload_fileobj(
                 Fileobj=io.BytesIO(inference_result_content),
                 Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                Key=self._result_key,
+                Key=self._inference_result_key,
                 ExtraArgs={
                     "Metadata": {"signature_hmac_sha256": signature},
                 },
@@ -163,7 +163,7 @@ class IOCopyExecutor(Executor):
             )
 
     @property
-    def duration(self):
+    def utilization_duration(self):
         return now() - self.__start_time
 
     @property

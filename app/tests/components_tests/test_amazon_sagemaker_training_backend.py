@@ -258,7 +258,7 @@ def test_set_duration():
         signing_key=b"",
     )
 
-    assert executor.duration is None
+    assert executor.utilization_duration is None
 
     executor._set_duration(
         event={
@@ -268,7 +268,7 @@ def test_set_duration():
         }
     )
 
-    assert executor.duration == timedelta(seconds=21)
+    assert executor.utilization_duration == timedelta(seconds=21)
 
 
 def test_get_log_stream_name(settings):
@@ -579,7 +579,7 @@ def test_handle_completed_job():
     executor._s3_client.upload_fileobj(
         Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-        Key=executor._result_key,
+        Key=executor._inference_result_key,
         ExtraArgs={
             "Metadata": {"signature_hmac_sha256": signature},
         },

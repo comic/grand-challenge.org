@@ -281,7 +281,7 @@ class ExternalEvaluationUpdateSerializer(ModelSerializer):
             ]
             and instance.evaluation_utilization.duration is None
         ):
-            extra_kwargs.update(duration=now() - instance.claimed_at)
+            extra_kwargs["utilization_duration"] = now() - instance.claimed_at
 
         # calling update_status takes care of sending the notifications
         instance.update_status(

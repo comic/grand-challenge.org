@@ -399,7 +399,7 @@ class Executor(ABC):
 
     @property
     @abstractmethod
-    def duration(self): ...
+    def utilization_duration(self): ...
 
     @property
     @abstractmethod
@@ -449,12 +449,13 @@ class Executor(ABC):
 
     @property
     def compute_cost_euro_millicents(self):
-        duration = self.duration
-        if duration is None:
+        utilization_duration = self.utilization_duration
+        if utilization_duration is None:
             return None
         else:
             return duration_to_millicents(
-                duration=duration, usd_cents_per_hour=self.usd_cents_per_hour
+                duration=utilization_duration,
+                usd_cents_per_hour=self.usd_cents_per_hour,
             )
 
     @property
@@ -479,7 +480,7 @@ class Executor(ABC):
         return safe_join(self._invocation_prefix, "invocation.json")
 
     @property
-    def _result_key(self):
+    def _inference_result_key(self):
         return safe_join(
             self._io_prefix, ".sagemaker_shim", "inference_result.json"
         )
@@ -818,7 +819,7 @@ class Executor(ABC):
         try:
             response = self._s3_client.get_object(
                 Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                Key=self._result_key,
+                Key=self._inference_result_key,
             )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] == "404":
@@ -855,10 +856,10 @@ class Executor(ABC):
                 "The invocation request did not return valid json"
             )
 
+        logger.info(f"{inference_result=}")
+
         if inference_result.pk != self._job_id:
             raise RuntimeError("Wrong result key for this job")
-
-        logger.info(f"{inference_result=}")
 
         return inference_result
 

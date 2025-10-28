@@ -1744,7 +1744,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         stderr: str = "",
         error_message="",
         detailed_error_message=None,
-        duration=None,
+        utilization_duration=None,
         compute_cost_euro_millicents=None,
         runtime_metrics=None,
     ):
@@ -1765,8 +1765,8 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                 for key, value in detailed_error_message.items()
             }
 
-        if duration is not None:
-            self.utilization.duration = duration
+        if utilization_duration is not None:
+            self.utilization.duration = utilization_duration
             self.utilization.save(update_fields=["duration"])
 
         if compute_cost_euro_millicents is not None:
