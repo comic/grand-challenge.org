@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import re
+from datetime import timedelta
 
 from django.conf import settings
 from django.db.transaction import on_commit
@@ -12,7 +13,11 @@ from django.utils.timezone import now
 from grandchallenge.components.backends.amazon_sagemaker_base import (
     ModelChoices,
 )
-from grandchallenge.components.backends.base import Executor, JobParams
+from grandchallenge.components.backends.base import (
+    Executor,
+    InferenceResult,
+    JobParams,
+)
 from grandchallenge.components.backends.utils import UUID4_REGEX
 from grandchallenge.components.tasks import handle_event
 
@@ -81,18 +86,26 @@ class IOCopyExecutor(Executor):
                 )
 
             # Create a task return code
-            result_json = json.dumps(
-                {"pk": self._job_id, "return_code": 0}
-            ).encode("utf-8")
+            inference_result = InferenceResult(
+                pk=self._job_id,
+                return_code=0,
+                exec_duration=timedelta(seconds=1337),
+                invoke_duration=None,
+                outputs=[],
+                sagemaker_shim_version="0.5.0",
+            )
+            inference_result_content = (
+                inference_result.model_dump_json().encode("utf-8")
+            )
 
             signature = hmac.new(
                 key=self._signing_key,
-                msg=result_json,
+                msg=inference_result_content,
                 digestmod=hashlib.sha256,
             ).hexdigest()
 
             self._s3_client.upload_fileobj(
-                Fileobj=io.BytesIO(result_json),
+                Fileobj=io.BytesIO(inference_result_content),
                 Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
                 Key=self._result_key,
                 ExtraArgs={

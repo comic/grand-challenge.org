@@ -4,6 +4,7 @@ import hmac
 import io
 import json
 import os
+from datetime import timedelta
 from unittest.mock import Mock
 from uuid import uuid4
 from zipfile import ZipInfo
@@ -18,6 +19,7 @@ from django.template.defaultfilters import title
 from grandchallenge.components.backends.base import (
     ASYNC_BOTO_CONFIG,
     ASYNC_CONCURRENCY,
+    InferenceResult,
     s3_stream_response,
 )
 from grandchallenge.components.backends.docker_client import _get_cpuset_cpus
@@ -754,15 +756,25 @@ def test_invocation_results_signature_unverified(settings):
         signing_key=b"correct-key",
     )
 
-    content = json.dumps(
-        {"pk": f"test-test-{job_pk}", "return_code": 0}
-    ).encode("utf-8")
+    inference_result = InferenceResult(
+        pk=f"test-test-{job_pk}",
+        return_code=0,
+        exec_duration=timedelta(seconds=1337),
+        invoke_duration=None,
+        outputs=[],
+        sagemaker_shim_version="0.5.0",
+    )
+    inference_result_content = inference_result.model_dump_json().encode(
+        "utf-8"
+    )
     signature = hmac.new(
-        key=b"wrong-key", msg=content, digestmod=hashlib.sha256
+        key=b"wrong-key",
+        msg=inference_result_content,
+        digestmod=hashlib.sha256,
     ).hexdigest()
 
     executor._s3_client.upload_fileobj(
-        Fileobj=io.BytesIO(content),
+        Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
         Key=executor._result_key,
         ExtraArgs={
@@ -771,7 +783,7 @@ def test_invocation_results_signature_unverified(settings):
     )
 
     with pytest.raises(ComponentException) as error:
-        executor._get_task_return_code()
+        executor._get_inference_result()
 
     assert (
         str(error.value)
@@ -792,15 +804,25 @@ def test_invocation_results_signature_verified(settings):
         signing_key=b"correct-key",
     )
 
-    content = json.dumps(
-        {"pk": f"test-test-{job_pk}", "return_code": 0}
-    ).encode("utf-8")
+    inference_result = InferenceResult(
+        pk=f"test-test-{job_pk}",
+        return_code=0,
+        exec_duration=timedelta(seconds=1337),
+        invoke_duration=None,
+        outputs=[],
+        sagemaker_shim_version="0.5.0",
+    )
+    inference_result_content = inference_result.model_dump_json().encode(
+        "utf-8"
+    )
     signature = hmac.new(
-        key=b"correct-key", msg=content, digestmod=hashlib.sha256
+        key=b"correct-key",
+        msg=inference_result_content,
+        digestmod=hashlib.sha256,
     ).hexdigest()
 
     executor._s3_client.upload_fileobj(
-        Fileobj=io.BytesIO(content),
+        Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
         Key=executor._result_key,
         ExtraArgs={
@@ -808,4 +830,4 @@ def test_invocation_results_signature_verified(settings):
         },
     )
 
-    assert executor._get_task_return_code() == 0
+    assert executor._get_inference_result() == inference_result

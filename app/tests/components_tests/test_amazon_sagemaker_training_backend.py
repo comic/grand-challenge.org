@@ -15,6 +15,7 @@ from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.components.backends.amazon_sagemaker_training import (
     AmazonSageMakerTrainingExecutor,
 )
+from grandchallenge.components.backends.base import InferenceResult
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     TaskCancelled,
@@ -559,14 +560,24 @@ def test_handle_completed_job():
         signing_key=b"itsasecret",
     )
 
-    content = json.dumps(
-        {"return_code": 0, "pk": f"algorithms-job-{pk}"}
-    ).encode("utf-8")
+    inference_result = InferenceResult(
+        pk=f"algorithms-job-{pk}",
+        return_code=0,
+        exec_duration=timedelta(seconds=1337),
+        invoke_duration=None,
+        outputs=[],
+        sagemaker_shim_version="0.5.0",
+    )
+    inference_result_content = inference_result.model_dump_json().encode(
+        "utf-8"
+    )
     signature = hmac.new(
-        key=b"itsasecret", msg=content, digestmod=hashlib.sha256
+        key=b"itsasecret",
+        msg=inference_result_content,
+        digestmod=hashlib.sha256,
     ).hexdigest()
     executor._s3_client.upload_fileobj(
-        Fileobj=io.BytesIO(content),
+        Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
         Key=executor._result_key,
         ExtraArgs={

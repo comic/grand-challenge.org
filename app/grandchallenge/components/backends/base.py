@@ -21,6 +21,7 @@ import aioboto3
 import boto3
 import botocore
 import httpx
+import pydantic
 from asgiref.sync import async_to_sync
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
@@ -286,6 +287,17 @@ class InferenceTask(BaseModel):
     output_bucket_name: str
     output_prefix: str
     timeout: timedelta
+
+
+class InferenceResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    pk: str
+    return_code: int
+    exec_duration: timedelta | None
+    invoke_duration: timedelta | None
+    outputs: list[InferenceIO]
+    sagemaker_shim_version: str
 
 
 class Executor(ABC):
@@ -802,7 +814,7 @@ class Executor(ABC):
             key=key,
         )
 
-    def _get_task_return_code(self):
+    def _get_inference_result(self):
         try:
             response = self._s3_client.get_object(
                 Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
@@ -834,26 +846,26 @@ class Executor(ABC):
             )
 
         try:
-            result = json.loads(body.decode("utf-8"))
-        except JSONDecodeError:
+            inference_result = InferenceResult.model_validate_json(
+                json_data=body
+            )
+        except pydantic.ValidationError as error:
+            logger.error(error, exc_info=True)
             raise ComponentException(
                 "The invocation request did not return valid json"
             )
 
-        logger.info(f"{result=}")
-
-        if result["pk"] != self._job_id:
+        if inference_result.pk != self._job_id:
             raise RuntimeError("Wrong result key for this job")
 
-        try:
-            return int(result["return_code"])
-        except (KeyError, ValueError):
-            raise ComponentException(
-                "The invocation response object is not valid"
-            )
+        logger.info(f"{inference_result=}")
+
+        return inference_result
 
     def _handle_completed_job(self):
-        users_process_exit_code = self._get_task_return_code()
+        inference_result = self._get_inference_result()
+
+        users_process_exit_code = inference_result.return_code
 
         if users_process_exit_code == 0:
             # Job's a good un

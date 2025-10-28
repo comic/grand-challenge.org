@@ -718,7 +718,9 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             "Out of Memory. Please use a larger instance",
         ):
             try:
-                users_process_exit_code = self._get_task_return_code()
+                users_process_exit_code = (
+                    self._get_inference_result().return_code
+                )
             except UncleanExit:
                 users_process_exit_code = None
 
