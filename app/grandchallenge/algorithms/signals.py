@@ -1,4 +1,4 @@
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import m2m_changed, pre_delete
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
 
@@ -59,6 +59,17 @@ def update_input_image_permissions(
     )
 
 
+def _get_image_civs(*, jobs):
+    queryset = ComponentInterfaceValue.objects.filter(
+        image__isnull=False
+    ).select_related("image")
+
+    input_civs = queryset.filter(algorithms_jobs_as_input__in=jobs)
+    output_civs = queryset.filter(algorithms_jobs_as_output__in=jobs)
+
+    return {*input_civs, *output_civs}
+
+
 def _update_image_permissions(
     *, jobs, component_interface_values, exclude_jobs: bool
 ):
@@ -96,17 +107,23 @@ def update_group_permissions(
         for group in groups:
             operation("view_job", group, job)
 
-    queryset = ComponentInterfaceValue.objects.filter(
-        image__isnull=False
-    ).select_related("image")
-
-    input_civs = queryset.filter(algorithms_jobs_as_input__in=jobs)
-    output_civs = queryset.filter(algorithms_jobs_as_output__in=jobs)
-
-    component_interface_values = {*input_civs, *output_civs}
+    component_interface_values = _get_image_civs(jobs=jobs)
 
     _update_image_permissions(
         jobs=jobs,
         component_interface_values=component_interface_values,
         exclude_jobs=action == "pre_clear",
+    )
+
+
+@receiver(pre_delete, sender=Job)
+def update_permissions_on_job_deletion(*_, instance: Job, signal, **__):
+    jobs = [instance]
+
+    component_interface_values = _get_image_civs(jobs=jobs)
+
+    _update_image_permissions(
+        jobs=jobs,
+        component_interface_values=component_interface_values,
+        exclude_jobs=signal == pre_delete,
     )

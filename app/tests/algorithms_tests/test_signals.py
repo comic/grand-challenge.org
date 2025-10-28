@@ -1,9 +1,11 @@
 import pytest
+from django.contrib.auth.models import Group
 from guardian.shortcuts import get_perms
 
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.components_tests.factories import ComponentInterfaceValueFactory
+from tests.evaluation_tests.test_permissions import get_groups_with_set_perms
 from tests.factories import GroupFactory, ImageFactory, UserFactory
 from tests.utils import get_view_for_user
 
@@ -287,3 +289,24 @@ class TestAlgorithmJobViewersGroup:
             assert "view_job" not in get_perms(group, job)
             assert "view_image" not in get_perms(group, civ_in.image)
             assert "view_image" not in get_perms(group, civ_out.image)
+
+
+@pytest.mark.django_db
+def test_permissions_removed_on_job_deletion(settings):
+    job = AlgorithmJobFactory(time_limit=60, public=True)
+    image = ImageFactory()
+
+    job.inputs.add(ComponentInterfaceValueFactory(image=image))
+
+    reg_and_anon = Group.objects.get(
+        name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
+    )
+
+    assert get_groups_with_set_perms(image) == {
+        reg_and_anon: {"view_image"},
+        job.viewers: {"view_image"},
+    }
+
+    job.delete()
+
+    assert get_groups_with_set_perms(image) == {}
