@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
@@ -65,6 +66,24 @@ def test_inputs_are_serialized(client):
     assert response.json()["inputs"][0]["image"] == str(
         j.inputs.first().image.api_url.replace("https://", "http://")
     )
+
+
+@pytest.mark.django_db
+def test_durations_are_serialized(client):
+    user = UserFactory()
+    job = AlgorithmJobFactory(
+        creator=user,
+        time_limit=60,
+        exec_duration=timedelta(seconds=1337),
+        invoke_duration=timedelta(seconds=1874),
+    )
+
+    response = get_view_for_user(
+        client=client, url=job.api_url, user=user
+    ).json()
+
+    assert response["exec_duration"] == "P0DT00H22M17S"
+    assert response["invoke_duration"] == "P0DT00H31M14S"
 
 
 @pytest.mark.django_db
