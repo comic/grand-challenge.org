@@ -63,13 +63,17 @@ class FlexibleImageWidget(MultiWidget):
         )
         super().__init__(widgets, attrs)
 
-    def decompress(self, value):
+    def decompress(self, value):  # noqa: C901
         if not value:
             return [None, None]
 
         if isinstance(value, (list, tuple)):
             if len(value) == 1:
                 item = value[0]
+                if item == "":
+                    return [None, None]
+                if not item:
+                    raise RuntimeError("Unexpected value")
                 if item in ImageWidgetChoices.names:
                     return [None, None]
                 if Image.objects.filter(pk=item).exists():

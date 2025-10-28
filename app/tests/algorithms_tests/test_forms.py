@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pytest
 from actstream.actions import is_following
+from bs4 import BeautifulSoup
 from django.core.validators import MaxValueValidator, MinValueValidator
 from factory.django import ImageField
 
@@ -22,9 +23,12 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.cases.widgets import ImageWidgetChoices
+from grandchallenge.components.form_fields import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FileWidgetChoices,
+)
 from grandchallenge.components.models import (
-    ComponentInterface,
     ComponentJob,
     ImportStatusChoices,
     InterfaceKindChoices,
@@ -203,45 +207,63 @@ def test_algorithm_create(client, uploaded_image):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "slug, content_parts",
+    "socket_kwargs, content_parts",
     (
         (
-            "generic-overlay",
+            {
+                "kind": InterfaceKindChoices.PANIMG_HEAT_MAP,
+                "title": "some-overlay",
+            },
             [
                 '<select class="custom-select"',
-                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}generic-overlay"',
+                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}some-overlay"',
             ],
         ),
         (
-            "generic-medical-image",
+            {
+                "kind": InterfaceKindChoices.PANIMG_IMAGE,
+                "title": "some-medical-image",
+            },
             [
                 '<select class="custom-select"',
-                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}generic-medical-image"',
+                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
             ],
         ),
         (
-            "boolean",
+            {
+                "kind": InterfaceKindChoices.BOOL,
+                "title": "boolean",
+            },
             [
                 '<input type="checkbox"',
                 f'name="{INTERFACE_FORM_FIELD_PREFIX}boolean"',
             ],
         ),
         (
-            "string",
+            {
+                "kind": InterfaceKindChoices.STRING,
+                "title": "string",
+            },
             [
                 '<input type="text"',
                 f'name="{INTERFACE_FORM_FIELD_PREFIX}string"',
             ],
         ),
         (
-            "integer",
+            {
+                "kind": InterfaceKindChoices.INTEGER,
+                "title": "integer",
+            },
             [
                 '<input type="number"',
                 f'name="{INTERFACE_FORM_FIELD_PREFIX}integer"',
             ],
         ),
         (
-            "float",
+            {
+                "kind": InterfaceKindChoices.FLOAT,
+                "title": "float",
+            },
             [
                 '<input type="number"',
                 f'name="{INTERFACE_FORM_FIELD_PREFIX}float"',
@@ -249,63 +271,91 @@ def test_algorithm_create(client, uploaded_image):
             ],
         ),
         (
-            "2d-bounding-box",
+            {
+                "kind": InterfaceKindChoices.TWO_D_BOUNDING_BOX,
+                "title": "2d-bounding-box",
+            },
             [
                 'class="jsoneditorwidget ',
                 f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}2d-bounding-box"',
             ],
         ),
         (
-            "multiple-2d-bounding-boxes",
+            {
+                "kind": InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES,
+                "title": "multiple-2d-bounding-boxes",
+            },
             [
                 'class="jsoneditorwidget ',
                 f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}multiple-2d-bounding-boxes"',
             ],
         ),
         (
-            "distance-measurement",
+            {
+                "kind": InterfaceKindChoices.DISTANCE_MEASUREMENT,
+                "title": "distance-measurement",
+            },
             [
                 'class="jsoneditorwidget ',
                 f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}distance-measurement"',
             ],
         ),
         (
-            "multiple-distance-measurements",
+            {
+                "kind": InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
+                "title": "multiple-distance-measurements",
+            },
             [
                 'class="jsoneditorwidget ',
                 f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}multiple-distance-measurements"',
             ],
         ),
         (
-            "point",
+            {
+                "kind": InterfaceKindChoices.POINT,
+                "title": "point",
+            },
             [
                 'class="jsoneditorwidget ',
                 f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}point"',
             ],
         ),
         (
-            "multiple-points",
+            {
+                "kind": InterfaceKindChoices.MULTIPLE_POINTS,
+                "title": "multiple-points",
+            },
             [
                 'class="jsoneditorwidget ',
                 f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}multiple-points"',
             ],
         ),
         (
-            "polygon",
+            {
+                "kind": InterfaceKindChoices.POLYGON,
+                "title": "polygon",
+            },
             [
                 'class="jsoneditorwidget ',
                 f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}polygon"',
             ],
         ),
         (
-            "multiple-polygons",
+            {
+                "kind": InterfaceKindChoices.MULTIPLE_POLYGONS,
+                "title": "multiple-polygons",
+            },
             [
                 'class="jsoneditorwidget ',
                 f'<div id="jsoneditor_id_{INTERFACE_FORM_FIELD_PREFIX}multiple-polygons"',
             ],
         ),
         (
-            "anything",
+            {
+                "kind": InterfaceKindChoices.ANY,
+                "title": "anything",
+                "store_in_database": False,
+            },
             [
                 '<select class="custom-select"',
                 f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}anything"',
@@ -313,10 +363,8 @@ def test_algorithm_create(client, uploaded_image):
         ),
     ),
 )
-def test_create_job_input_fields(
-    client, component_interfaces, slug, content_parts
-):
-    alg, creator = create_algorithm_with_input(slug)
+def test_create_job_input_fields(client, socket_kwargs, content_parts):
+    alg, creator, _ = create_algorithm_with_input(**socket_kwargs)
 
     response = get_view_for_user(
         viewname="algorithms:job-create",
@@ -336,22 +384,17 @@ def test_create_job_input_fields(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "slug",
+    "socket_kwargs",
     [
-        "2d-bounding-box",
-        "multiple-2d-bounding-boxes",
-        "distance-measurement",
-        "multiple-distance-measurements",
-        "point",
-        "multiple-points",
-        "polygon",
-        "multiple-polygons",
-    ],
+        {"kind": choice}
+        for choice in set(InterfaceKindChoices).difference(
+            {InterfaceKindChoices.BOOL, InterfaceKindChoices.ANY}
+        )
+    ]
+    + [{"kind": InterfaceKindChoices.ANY, "store_in_database": False}],
 )
-def test_create_job_json_input_field_validation(
-    client, component_interfaces, slug
-):
-    alg, creator = create_algorithm_with_input(slug)
+def test_create_job_input_field_required_validation(client, socket_kwargs):
+    alg, creator, input_socket = create_algorithm_with_input(**socket_kwargs)
 
     response = get_view_for_user(
         viewname="algorithms:job-create",
@@ -364,28 +407,75 @@ def test_create_job_json_input_field_validation(
         follow=True,
         user=creator,
     )
+
+    assert response.status_code == 200
     assert response.context["form"].errors == {
-        f"{INTERFACE_FORM_FIELD_PREFIX}{slug}": ["This field is required."],
+        f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}": [
+            "This field is required."
+        ],
     }
 
 
-@pytest.mark.django_db
+def extract_form_data_from_response(response):
+    html = response.content.decode()
+    soup = BeautifulSoup(html, "html.parser")
+
+    data = {}
+    for tag in soup.find_all(["input", "select", "textarea"]):
+        name = tag.get("name")
+        if not name:
+            continue
+
+        if tag.name == "input":
+            if tag.get("type") in ["checkbox", "radio"]:
+                if tag.has_attr("checked"):
+                    data[name] = tag.get("value", "on")
+            else:
+                data[name] = tag.get("value", "")
+        elif tag.name == "select":
+            selected = tag.find("option", selected=True)
+            if selected:
+                data[name] = selected.get("value")
+            else:
+                first = tag.find("option")
+                if first:
+                    data[name] = first.get("value")
+        elif tag.name == "textarea":
+            data[name] = tag.text
+
+    return data
+
+
 @pytest.mark.parametrize(
-    "slug, content_parts",
-    (
-        (
-            "generic-overlay",
-            ['class="invalid-feedback"', "This field is required."],
-        ),
-        ("string", ['class="invalid-feedback"', "This field is required."]),
-        ("integer", ['class="invalid-feedback"', "This field is required."]),
-        ("float", ['class="invalid-feedback"', "This field is required."]),
-    ),
+    "widget_choice",
+    [
+        ImageWidgetChoices.UNDEFINED,
+        ImageWidgetChoices.IMAGE_SEARCH,
+        ImageWidgetChoices.IMAGE_UPLOAD,
+    ],
 )
-def test_create_job_simple_input_field_validation(
-    client, component_interfaces, slug, content_parts
+@pytest.mark.django_db
+def test_create_job_image_kind_no_input_after_widget_choice_field_validation(
+    client, widget_choice
 ):
-    alg, creator = create_algorithm_with_input(slug)
+    alg, creator, input_socket = create_algorithm_with_input(
+        kind=InterfaceKindChoices.PANIMG_IMAGE
+    )
+    prefixed_interface_slug = (
+        f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
+    )
+
+    response = get_view_for_user(
+        viewname="cases:select-image-widget",
+        client=client,
+        user=creator,
+        data={
+            f"widget-choice-{prefixed_interface_slug}": widget_choice.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
+        },
+    )
+    data = extract_form_data_from_response(response)
+    data[f"widget-choice-{prefixed_interface_slug}"] = widget_choice.name
 
     response = get_view_for_user(
         viewname="algorithms:job-create",
@@ -395,22 +485,75 @@ def test_create_job_simple_input_field_validation(
             "interface_pk": alg.interfaces.first().pk,
         },
         method=client.post,
+        data=data,
         follow=True,
         user=creator,
     )
 
     assert response.status_code == 200
-    for c in content_parts:
-        assert c in response.rendered_content
+    assert response.context["form"].errors == {
+        f"{prefixed_interface_slug}": ["This field is required."],
+    }
 
 
-def create_algorithm_with_input(slug):
+@pytest.mark.parametrize(
+    "widget_choice",
+    [
+        FileWidgetChoices.UNDEFINED,
+        FileWidgetChoices.FILE_SEARCH,
+        FileWidgetChoices.FILE_UPLOAD,
+    ],
+)
+@pytest.mark.django_db
+def test_create_job_file_kind_no_input_after_widget_choice_field_validation(
+    client, widget_choice
+):
+    alg, creator, input_socket = create_algorithm_with_input(
+        kind=InterfaceKindChoices.PDF
+    )
+    prefixed_interface_slug = (
+        f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
+    )
+
+    response = get_view_for_user(
+        viewname="components:select-file-widget",
+        client=client,
+        user=creator,
+        data={
+            f"widget-choice-{prefixed_interface_slug}": widget_choice.name,
+            "prefixed-interface-slug": prefixed_interface_slug,
+        },
+    )
+    data = extract_form_data_from_response(response)
+    data[f"widget-choice-{prefixed_interface_slug}"] = widget_choice.name
+
+    response = get_view_for_user(
+        viewname="algorithms:job-create",
+        client=client,
+        reverse_kwargs={
+            "slug": alg.slug,
+            "interface_pk": alg.interfaces.first().pk,
+        },
+        method=client.post,
+        data=data,
+        follow=True,
+        user=creator,
+    )
+
+    assert response.status_code == 200
+    assert response.context["form"].errors == {
+        f"{prefixed_interface_slug}": ["This field is required."],
+    }
+
+
+def create_algorithm_with_input(**kwargs):
     creator = get_algorithm_creator()
     VerificationFactory(user=creator, is_verified=True)
     alg = AlgorithmFactory()
     alg.add_editor(user=creator)
+    input_socket = ComponentInterfaceFactory(**kwargs)
     interface = AlgorithmInterfaceFactory(
-        inputs=[ComponentInterface.objects.get(slug=slug)],
+        inputs=[input_socket],
         outputs=[ComponentInterfaceFactory()],
     )
     alg.interfaces.add(interface)
@@ -420,7 +563,7 @@ def create_algorithm_with_input(slug):
         is_in_registry=True,
         is_desired_version=True,
     )
-    return alg, creator
+    return alg, creator, input_socket
 
 
 @pytest.mark.django_db
@@ -515,7 +658,7 @@ def test_only_publish_successful_jobs():
 class TestJobCreateLimits:
 
     def create_form(self, algorithm, user, algorithm_image=None):
-        ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
+        ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
         interface = AlgorithmInterfaceFactory(inputs=[ci])
         algorithm.interfaces.add(interface)
 
