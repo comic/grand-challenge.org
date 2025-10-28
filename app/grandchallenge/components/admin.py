@@ -113,13 +113,18 @@ def requeue_jobs(modeladmin, request, queryset):
     jobs = []
 
     for job in queryset:
+        # If adding fields here remember to add them to the bulk_update fields below
         job.status = ComponentJob.RETRY
         job.attempt += 1
-        job.utilization.duration = None
-        job.utilization.save()
+        job.exec_duration = None
+        job.invoke_duration = None
         job.use_warm_pool = False
         job.error_message = ""
         job.detailed_error_message = {}
+
+        job.utilization.duration = None
+        job.utilization.save()
+
         jobs.append(job)
 
         on_commit(job.execute)
@@ -129,6 +134,9 @@ def requeue_jobs(modeladmin, request, queryset):
         fields=[
             "status",
             "attempt",
+            "exec_duration",
+            "invoke_duration",
+            "use_warm_pool",
             "error_message",
             "detailed_error_message",
         ],
