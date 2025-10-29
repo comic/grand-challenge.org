@@ -29,10 +29,9 @@ def update_view_image_permissions_on_archive_item_values_change(
         if pk_set is None:
             # When using a _clear action, pk_set is None
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
-            images = [
-                civ.image
-                for civ in instance.values.filter(image__isnull=False)
-            ]
+            images = Image.objects.filter(
+                componentinterfacevalue__archive_items=instance
+            )
         else:
             images = Image.objects.filter(
                 componentinterfacevalue__pk__in=pk_set
