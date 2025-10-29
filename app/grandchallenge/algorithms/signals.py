@@ -8,7 +8,7 @@ from grandchallenge.cases.models import Image
 
 @receiver(m2m_changed, sender=Job.inputs.through)
 @receiver(m2m_changed, sender=Job.outputs.through)
-def update_input_image_permissions(  # noqa:C901
+def update_view_image_permissions_on_job_io_change(  # noqa:C901
     sender, instance, action, reverse, model, pk_set, **_
 ):
     """
@@ -77,7 +77,7 @@ def _get_images_for_jobs(*, jobs):
 
 
 @receiver(m2m_changed, sender=Job.viewer_groups.through)
-def update_group_permissions(  # noqa:C901
+def update_view_image_permissions_on_viewer_groups_change(  # noqa:C901
     *_, instance, action, reverse, model, pk_set, **__
 ):
     if action not in ["post_add", "post_remove", "pre_clear"]:
@@ -119,7 +119,7 @@ def update_group_permissions(  # noqa:C901
 
 
 @receiver(pre_delete, sender=Job)
-def update_permissions_on_job_deletion(*_, instance: Job, **__):
+def update_view_image_permissions_on_job_deletion(*_, instance: Job, **__):
     jobs = [instance]
 
     for image in _get_images_for_jobs(jobs=jobs):
