@@ -49,9 +49,7 @@ def test_assert_modification_allowed():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("reverse", [True, False])
-def test_display_set_permissions_signal(
-    client, reverse, django_capture_on_commit_callbacks
-):
+def test_display_set_permissions_signal(reverse):
     ds1, ds2 = DisplaySetFactory.create_batch(2)
     im1, im2, im3, im4 = ImageFactory.create_batch(4)
 
@@ -62,19 +60,18 @@ def test_display_set_permissions_signal(
         ComponentInterfaceValueFactory(image=im4),
     )
 
-    with django_capture_on_commit_callbacks(execute=True):
-        if reverse:
-            for civ in [civ1, civ2, civ3, civ4]:
-                civ.display_sets.add(ds1, ds2)
-            for civ in [civ3, civ4]:
-                civ.display_sets.remove(ds1, ds2)
-            for civ in [civ1, civ2]:
-                civ.display_sets.remove(ds2)
-        else:
-            # Test that adding images works
-            ds1.values.add(civ1, civ2, civ3, civ4)
-            # Test that removing images works
-            ds1.values.remove(civ3, civ4)
+    if reverse:
+        for civ in [civ1, civ2, civ3, civ4]:
+            civ.display_sets.add(ds1, ds2)
+        for civ in [civ3, civ4]:
+            civ.display_sets.remove(ds1, ds2)
+        for civ in [civ1, civ2]:
+            civ.display_sets.remove(ds2)
+    else:
+        # Test that adding images works
+        ds1.values.add(civ1, civ2, civ3, civ4)
+        # Test that removing images works
+        ds1.values.remove(civ3, civ4)
 
     assert get_groups_with_set_perms(im1) == {
         ds1.reader_study.editors_group: {"view_image"},
@@ -88,28 +85,24 @@ def test_display_set_permissions_signal(
     assert get_groups_with_set_perms(im4) == {}
 
     # Test clearing
-    with django_capture_on_commit_callbacks(execute=True):
-        if reverse:
-            civ1.display_sets.clear()
-            civ2.display_sets.clear()
-        else:
-            ds1.values.clear()
+    if reverse:
+        civ1.display_sets.clear()
+        civ2.display_sets.clear()
+    else:
+        ds1.values.clear()
 
     assert get_groups_with_set_perms(im1) == {}
     assert get_groups_with_set_perms(im2) == {}
 
 
 @pytest.mark.django_db
-def test_deleting_display_set_removes_permissions(
-    django_capture_on_commit_callbacks,
-):
+def test_deleting_display_set_removes_permissions():
     ds1, ds2 = DisplaySetFactory.create_batch(2)
     im = ImageFactory()
     civ = ComponentInterfaceValueFactory(image=im)
 
-    with django_capture_on_commit_callbacks(execute=True):
-        ds1.values.set([civ])
-        ds2.values.set([civ])
+    ds1.values.set([civ])
+    ds2.values.set([civ])
 
     assert get_groups_with_set_perms(im) == {
         ds1.reader_study.editors_group: {"view_image"},
@@ -118,8 +111,7 @@ def test_deleting_display_set_removes_permissions(
         ds2.reader_study.readers_group: {"view_image"},
     }
 
-    with django_capture_on_commit_callbacks(execute=True):
-        ds1.delete()
+    ds1.delete()
 
     assert get_groups_with_set_perms(im) == {
         ds2.reader_study.editors_group: {"view_image"},
@@ -128,15 +120,12 @@ def test_deleting_display_set_removes_permissions(
 
 
 @pytest.mark.django_db
-def test_changing_reader_study_updates_permissions(
-    django_capture_on_commit_callbacks,
-):
+def test_changing_reader_study_updates_permissions():
     ds = DisplaySetFactory()
     im = ImageFactory()
     civ = ComponentInterfaceValueFactory(image=im)
 
-    with django_capture_on_commit_callbacks(execute=True):
-        ds.values.set([civ])
+    ds.values.set([civ])
 
     assert get_groups_with_set_perms(im) == {
         ds.reader_study.editors_group: {"view_image"},
@@ -147,8 +136,7 @@ def test_changing_reader_study_updates_permissions(
 
     ds.reader_study = rs
 
-    with django_capture_on_commit_callbacks(execute=True):
-        ds.save()
+    ds.save()
 
     assert get_groups_with_set_perms(im) == {
         rs.editors_group: {"view_image"},
