@@ -53,9 +53,9 @@ def handle_completed_build_event(*, build_arn, build_status):
 
     if build.status == build.BuildStatusChoices.SUCCEEDED:
         on_commit(
-            lambda: add_image_to_algorithm.apply_async(
+            add_image_to_algorithm.signature(
                 kwargs={"build_pk": str(build.pk)}
-            )
+            ).apply_async
         )
 
 

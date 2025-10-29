@@ -111,7 +111,7 @@ def save_zipfile(ghwm, tmpdirname):
 
 def build_repo(ghwm_pk):
     on_commit(
-        lambda: create_codebuild_build.apply_async(kwargs={"pk": ghwm_pk})
+        create_codebuild_build.signature(kwargs={"pk": ghwm_pk}).apply_async
     )
 
 
