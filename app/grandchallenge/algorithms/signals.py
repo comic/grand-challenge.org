@@ -51,6 +51,8 @@ def update_view_image_permissions_on_job_io_change(  # noqa:C901
                 componentinterfacevalue__pk__in=pk_set
             )
 
+    images = images.distinct()
+
     if action == "post_add":
         for job in jobs:
             for group in job.viewer_groups.all():
