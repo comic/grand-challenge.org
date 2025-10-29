@@ -59,23 +59,25 @@ def update_view_image_permissions_on_job_io_change(  # noqa:C901
                 assign_perm("view_image", group, images)
 
     elif action in {"post_remove", "pre_clear"}:
+        exclude_jobs = jobs if action == "pre_clear" else None
+
         for image in images:
             # We cannot remove image permissions directly as the groups
             # may have permissions through another object
-            image.update_viewer_groups_permissions(exclude_jobs=jobs)
+            image.update_viewer_groups_permissions(exclude_jobs=exclude_jobs)
 
     else:
         raise NotImplementedError
 
 
 def _get_images_for_jobs(*, jobs):
-    input_civs = Image.objects.filter(
+    input_images = Image.objects.filter(
         componentinterfacevalue__algorithms_jobs_as_input__in=jobs
     )
-    output_civs = Image.objects.filter(
+    output_images = Image.objects.filter(
         componentinterfacevalue__algorithms_jobs_as_output__in=jobs
     )
-    return input_civs.union(output_civs)
+    return input_images.union(output_images)
 
 
 @receiver(m2m_changed, sender=Job.viewer_groups.through)
@@ -111,10 +113,12 @@ def update_view_image_permissions_on_viewer_groups_change(  # noqa:C901
             for job in jobs:
                 remove_perm("view_job", group, job)
 
+        exclude_jobs = jobs if action == "pre_clear" else None
+
         for image in images:
             # We cannot remove image permissions directly as the groups
             # may have permissions through another object
-            image.update_viewer_groups_permissions(exclude_jobs=jobs)
+            image.update_viewer_groups_permissions(exclude_jobs=exclude_jobs)
 
     else:
         raise NotImplementedError
