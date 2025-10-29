@@ -32,17 +32,14 @@ def update_input_image_permissions(  # noqa:C901
         if pk_set is None:
             # When using a _clear action, pk_set is None
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
-            jobs = (
-                getattr(instance, reverse_lookup)
-                .prefetch_related("viewer_groups")
-                .all()
-            )
+            jobs = getattr(instance, reverse_lookup).all()
         else:
-            jobs = model.objects.filter(pk__in=pk_set).prefetch_related(
-                "viewer_groups"
-            )
+            jobs = model.objects.filter(pk__in=pk_set)
+
+        jobs = jobs.prefetch_related("viewer_groups").only("viewer_groups")
     else:
         jobs = [instance]
+
         if pk_set is None:
             # When using a _clear action, pk_set is None
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
