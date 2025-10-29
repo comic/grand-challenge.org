@@ -5,7 +5,6 @@ from django.db.models.signals import (
     pre_delete,
     pre_save,
 )
-from django.db.transaction import on_commit
 from django.dispatch import receiver
 
 from grandchallenge.cases.models import Image
@@ -14,7 +13,7 @@ from grandchallenge.reader_studies.models import DisplaySet
 
 @receiver(m2m_changed, sender=DisplaySet.values.through)
 def update_permissions_on_display_set_changed(
-    instance, action, reverse, pk_set, **_
+    *, instance, action, reverse, model, pk_set, **_
 ):
     if action not in ["post_add", "post_remove", "pre_clear"]:
         # nothing to do for the other actions
@@ -22,7 +21,17 @@ def update_permissions_on_display_set_changed(
 
     if reverse:
         images = Image.objects.filter(componentinterfacevalue__pk=instance.pk)
+
+        if pk_set is None:
+            # When using a _clear action, pk_set is None
+            # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
+            display_sets = instance.display_sets.all()
+        else:
+            display_sets = model.objects.filter(pk__in=pk_set)
+
     else:
+        display_sets = [instance]
+
         if pk_set is None:
             # When using a _clear action, pk_set is None
             # https://docs.djangoproject.com/en/2.2/ref/signals/#m2m-changed
@@ -35,23 +44,26 @@ def update_permissions_on_display_set_changed(
                 componentinterfacevalue__pk__in=pk_set
             )
 
-    def update_permissions():
-        for image in images:
-            image.update_viewer_groups_permissions()
+    exclude_display_sets = display_sets if action == "pre_clear" else None
 
-    on_commit(update_permissions)
+    for image in images:
+        image.update_viewer_groups_permissions(
+            exclude_display_sets=exclude_display_sets
+        )
 
 
 @receiver(pre_delete, sender=DisplaySet)
 @receiver(post_save, sender=DisplaySet)
-def update_view_image_permissions(*_, instance: DisplaySet, **__):
-    images = [civ.image for civ in instance.values.filter(image__isnull=False)]
+def update_view_image_permissions(*, instance: DisplaySet, signal, **__):
+    images = Image.objects.filter(
+        componentinterfacevalue__display_sets=instance
+    ).distinct()
+    exclude_display_sets = [instance] if signal is pre_delete else None
 
-    def update_permissions():
-        for image in images:
-            image.update_viewer_groups_permissions()
-
-    on_commit(update_permissions)
+    for image in images:
+        image.update_viewer_groups_permissions(
+            exclude_display_sets=exclude_display_sets
+        )
 
 
 @receiver(m2m_changed, sender=DisplaySet.values.through)

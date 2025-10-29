@@ -674,6 +674,7 @@ class Image(UUIDModel):
         *,
         exclude_jobs=None,
         exclude_archive_items=None,
+        exclude_display_sets=None,
     ):
         """
         Update the permissions for the algorithm jobs viewers groups to
@@ -689,7 +690,7 @@ class Image(UUIDModel):
         """
         from grandchallenge.algorithms.models import Job
         from grandchallenge.archives.models import ArchiveItem
-        from grandchallenge.reader_studies.models import ReaderStudy
+        from grandchallenge.reader_studies.models import DisplaySet
 
         expected_groups = set()
 
@@ -740,13 +741,28 @@ class Image(UUIDModel):
                 ]
             )
 
-        for rs in ReaderStudy.objects.filter(
-            display_sets__values__image=self
-        ).select_related("editors_group", "readers_group"):
+        display_set_queryset = (
+            DisplaySet.objects.filter(values__image=self)
+            .select_related(
+                "reader_study__editors_group",
+                "reader_study__readers_group",
+            )
+            .only(
+                "reader_study__editors_group",
+                "reader_study__readers_group",
+            )
+        )
+
+        if exclude_display_sets is not None:
+            display_set_queryset = display_set_queryset.exclude(
+                pk__in={ds.pk for ds in exclude_display_sets}
+            )
+
+        for display_set in display_set_queryset:
             expected_groups.update(
                 [
-                    rs.editors_group,
-                    rs.readers_group,
+                    display_set.reader_study.editors_group,
+                    display_set.reader_study.readers_group,
                 ]
             )
 

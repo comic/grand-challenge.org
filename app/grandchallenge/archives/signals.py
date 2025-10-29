@@ -1,6 +1,5 @@
 from django.db.models.signals import m2m_changed, post_save, pre_delete
 from django.dispatch import receiver
-from guardian.shortcuts import assign_perm
 
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.cases.models import Image
@@ -24,15 +23,6 @@ def update_permissions_on_archive_item_changed(
         else:
             archive_items = model.objects.filter(pk__in=pk_set)
 
-        archive_items = archive_items.select_related(
-            "archive__editors_group",
-            "archive__uploaders_group",
-            "archive__users_group",
-        ).only(
-            "archive__editors_group",
-            "archive__uploaders_group",
-            "archive__users_group",
-        )
     else:
         archive_items = [instance]
 
@@ -48,29 +38,18 @@ def update_permissions_on_archive_item_changed(
                 componentinterfacevalue__pk__in=pk_set
             )
 
-    if action == "post_add":
-        for archive_item in archive_items:
-            for image in images:
-                groups = [
-                    archive_item.archive.editors_group,
-                    archive_item.archive.uploaders_group,
-                    archive_item.archive.users_group,
-                ]
-                assign_perm("view_image", groups, image)
+    exclude_archive_items = archive_items if action == "pre_clear" else None
 
-    elif action in {"post_remove", "pre_clear"}:
-        for image in images:
-            image.update_viewer_groups_permissions(
-                exclude_archive_items=archive_items
-            )
-    else:
-        raise NotImplementedError
+    for image in images:
+        image.update_viewer_groups_permissions(
+            exclude_archive_items=exclude_archive_items
+        )
 
 
 @receiver(pre_delete, sender=ArchiveItem)
 @receiver(post_save, sender=ArchiveItem)
 def update_permissions_on_archive_item_change(
-    *_, instance: ArchiveItem, signal, **__
+    *, instance: ArchiveItem, signal, **__
 ):
     images = Image.objects.filter(
         componentinterfacevalue__archive_items=instance
