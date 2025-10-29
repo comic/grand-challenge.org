@@ -676,21 +676,6 @@ class Image(UUIDModel):
         exclude_archive_items=None,
         exclude_display_sets=None,
     ):
-        """
-        Update the view permissions for this image
-
-        Parameters
-        ----------
-        exclude_jobs
-            Exclude these results from being considered. This is useful
-            when a many to many relationship is being cleared to remove this
-            image from the results image set, and is used when the pre_clear
-            signal is sent.
-        exclude_archive_items
-            As above but for Archive Items
-        exclude_display_sets
-            As above but for Display Sets
-        """
         expected_groups = set()
 
         expected_groups.update(
