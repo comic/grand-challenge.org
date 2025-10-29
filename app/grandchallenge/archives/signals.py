@@ -1,5 +1,4 @@
 from django.db.models.signals import m2m_changed, post_save, pre_delete
-from django.db.transaction import on_commit
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm
 
@@ -70,11 +69,15 @@ def update_permissions_on_archive_item_changed(
 
 @receiver(pre_delete, sender=ArchiveItem)
 @receiver(post_save, sender=ArchiveItem)
-def update_view_image_permissions(*_, instance: ArchiveItem, **__):
-    images = [civ.image for civ in instance.values.filter(image__isnull=False)]
+def update_permissions_on_archive_item_change(
+    *_, instance: ArchiveItem, signal, **__
+):
+    images = Image.objects.filter(
+        componentinterfacevalue__archive_items=instance
+    ).distinct()
+    exclude_archive_items = [instance] if signal is pre_delete else None
 
-    def update_permissions():
-        for image in images:
-            image.update_viewer_groups_permissions()
-
-    on_commit(update_permissions)
+    for image in images:
+        image.update_viewer_groups_permissions(
+            exclude_archive_items=exclude_archive_items
+        )
