@@ -670,7 +670,10 @@ class Image(UUIDModel):
         return sitk_image
 
     def update_viewer_groups_permissions(  # noqa: C901
-        self, *, exclude_jobs=None
+        self,
+        *,
+        exclude_jobs=None,
+        exclude_archive_items=None,
     ):
         """
         Update the permissions for the algorithm jobs viewers groups to
@@ -685,7 +688,7 @@ class Image(UUIDModel):
             signal is sent.
         """
         from grandchallenge.algorithms.models import Job
-        from grandchallenge.archives.models import Archive
+        from grandchallenge.archives.models import ArchiveItem
         from grandchallenge.reader_studies.models import ReaderStudy
 
         expected_groups = set()
@@ -709,14 +712,31 @@ class Image(UUIDModel):
                 logger.error(error, exc_info=True)
                 raise
 
-        for archive in Archive.objects.filter(
-            items__values__image=self
-        ).select_related("editors_group", "uploaders_group", "users_group"):
+        archive_items_queryset = (
+            ArchiveItem.objects.filter(values__image=self)
+            .select_related(
+                "archive__editors_group",
+                "archive__uploaders_group",
+                "archive__users_group",
+            )
+            .only(
+                "archive__editors_group",
+                "archive__uploaders_group",
+                "archive__users_group",
+            )
+        )
+
+        if exclude_archive_items is not None:
+            archive_items_queryset = archive_items_queryset.exclude(
+                pk__in={ai.pk for ai in exclude_archive_items}
+            )
+
+        for archive_item in archive_items_queryset:
             expected_groups.update(
                 [
-                    archive.editors_group,
-                    archive.uploaders_group,
-                    archive.users_group,
+                    archive_item.archive.editors_group,
+                    archive_item.archive.uploaders_group,
+                    archive_item.archive.users_group,
                 ]
             )
 
