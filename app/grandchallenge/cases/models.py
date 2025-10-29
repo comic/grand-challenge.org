@@ -669,24 +669,51 @@ class Image(UUIDModel):
 
         return sitk_image
 
-    def update_viewer_groups_permissions(  # noqa: C901
-        self, *, exclude_jobs=None
+    def update_viewer_groups_permissions(
+        self,
+        *,
+        exclude_jobs=None,
+        exclude_archive_items=None,
+        exclude_display_sets=None,
     ):
-        """
-        Update the permissions for the algorithm jobs viewers groups to
-        view this image.
+        expected_groups = set()
 
-        Parameters
-        ----------
-        exclude_jobs
-            Exclude these results from being considered. This is useful
-            when a many to many relationship is being cleared to remove this
-            image from the results image set, and is used when the pre_clear
-            signal is sent.
-        """
+        expected_groups.update(
+            self._get_expected_job_viewer_groups(exclude_jobs=exclude_jobs)
+        )
+
+        expected_groups.update(
+            self._get_expected_archive_item_viewer_groups(
+                exclude_archive_items=exclude_archive_items
+            )
+        )
+
+        expected_groups.update(
+            self._get_expected_display_set_viewer_groups(
+                exclude_display_sets=exclude_display_sets
+            )
+        )
+
+        expected_groups.update(self._get_expected_reader_study_answer_groups())
+
+        current_groups = get_groups_with_perms(self, attach_perms=True)
+        current_groups = {
+            group
+            for group, perms in current_groups.items()
+            if "view_image" in perms
+        }
+
+        groups_missing_perms = expected_groups - current_groups
+        groups_with_extra_perms = current_groups - expected_groups
+
+        for g in groups_missing_perms:
+            assign_perm("view_image", g, self)
+
+        for g in groups_with_extra_perms:
+            remove_perm("view_image", g, self)
+
+    def _get_expected_job_viewer_groups(self, exclude_jobs):
         from grandchallenge.algorithms.models import Job
-        from grandchallenge.archives.models import Archive
-        from grandchallenge.reader_studies.models import ReaderStudy
 
         expected_groups = set()
 
@@ -709,49 +736,89 @@ class Image(UUIDModel):
                 logger.error(error, exc_info=True)
                 raise
 
-        for archive in Archive.objects.filter(
-            items__values__image=self
-        ).select_related("editors_group", "uploaders_group", "users_group"):
+        return expected_groups
+
+    def _get_expected_archive_item_viewer_groups(
+        self, *, exclude_archive_items
+    ):
+        from grandchallenge.archives.models import ArchiveItem
+
+        expected_groups = set()
+
+        archive_items_queryset = (
+            ArchiveItem.objects.filter(values__image=self)
+            .select_related(
+                "archive__editors_group",
+                "archive__uploaders_group",
+                "archive__users_group",
+            )
+            .only(
+                "archive__editors_group",
+                "archive__uploaders_group",
+                "archive__users_group",
+            )
+        )
+
+        if exclude_archive_items is not None:
+            archive_items_queryset = archive_items_queryset.exclude(
+                pk__in={ai.pk for ai in exclude_archive_items}
+            )
+
+        for archive_item in archive_items_queryset:
             expected_groups.update(
                 [
-                    archive.editors_group,
-                    archive.uploaders_group,
-                    archive.users_group,
+                    archive_item.archive.editors_group,
+                    archive_item.archive.uploaders_group,
+                    archive_item.archive.users_group,
                 ]
             )
 
-        for rs in ReaderStudy.objects.filter(
-            display_sets__values__image=self
-        ).select_related("editors_group", "readers_group"):
+        return expected_groups
+
+    def _get_expected_display_set_viewer_groups(self, *, exclude_display_sets):
+        from grandchallenge.reader_studies.models import DisplaySet
+
+        expected_groups = set()
+
+        display_set_queryset = (
+            DisplaySet.objects.filter(values__image=self)
+            .select_related(
+                "reader_study__editors_group",
+                "reader_study__readers_group",
+            )
+            .only(
+                "reader_study__editors_group",
+                "reader_study__readers_group",
+            )
+        )
+
+        if exclude_display_sets is not None:
+            display_set_queryset = display_set_queryset.exclude(
+                pk__in={ds.pk for ds in exclude_display_sets}
+            )
+
+        for display_set in display_set_queryset:
             expected_groups.update(
                 [
-                    rs.editors_group,
-                    rs.readers_group,
+                    display_set.reader_study.editors_group,
+                    display_set.reader_study.readers_group,
                 ]
             )
 
+        return expected_groups
+
+    def _get_expected_reader_study_answer_groups(self):
         # Reader study editors for reader studies that have answers that
         # include this image.
+
+        expected_groups = set()
+
         for answer in self.answer_set.select_related(
             "question__reader_study__editors_group"
         ).all():
             expected_groups.add(answer.question.reader_study.editors_group)
 
-        current_groups = get_groups_with_perms(self, attach_perms=True)
-        current_groups = {
-            group
-            for group, perms in current_groups.items()
-            if "view_image" in perms
-        }
-
-        groups_missing_perms = expected_groups - current_groups
-        groups_with_extra_perms = current_groups - expected_groups
-
-        for g in groups_missing_perms:
-            assign_perm("view_image", g, self)
-
-        for g in groups_with_extra_perms:
-            remove_perm("view_image", g, self)
+        return expected_groups
 
     def assign_view_perm_to_creator(self):
         for answer in self.answer_set.all():
