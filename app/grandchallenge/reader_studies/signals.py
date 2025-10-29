@@ -12,7 +12,7 @@ from grandchallenge.reader_studies.models import DisplaySet
 
 
 @receiver(m2m_changed, sender=DisplaySet.values.through)
-def update_permissions_on_display_set_changed(
+def update_view_image_permissions_on_display_set_values_change(
     *, instance, action, reverse, model, pk_set, **_
 ):
     if action not in ["post_add", "post_remove", "pre_clear"]:
@@ -54,7 +54,9 @@ def update_permissions_on_display_set_changed(
 
 @receiver(pre_delete, sender=DisplaySet)
 @receiver(post_save, sender=DisplaySet)
-def update_view_image_permissions(*, instance: DisplaySet, signal, **__):
+def update_view_image_permissions_on_display_set_change(
+    *, instance: DisplaySet, signal, **__
+):
     images = Image.objects.filter(
         componentinterfacevalue__display_sets=instance
     ).distinct()

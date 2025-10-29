@@ -6,7 +6,7 @@ from grandchallenge.cases.models import Image
 
 
 @receiver(m2m_changed, sender=ArchiveItem.values.through)
-def update_permissions_on_archive_item_changed(
+def update_view_image_permissions_on_archive_item_values_change(
     *, instance, action, reverse, model, pk_set, **_
 ):
     if action not in ["post_add", "post_remove", "pre_clear"]:
@@ -48,7 +48,7 @@ def update_permissions_on_archive_item_changed(
 
 @receiver(pre_delete, sender=ArchiveItem)
 @receiver(post_save, sender=ArchiveItem)
-def update_permissions_on_archive_item_change(
+def update_view_image_permissions_on_archive_item_change(
     *, instance: ArchiveItem, signal, **__
 ):
     images = Image.objects.filter(
