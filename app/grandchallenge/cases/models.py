@@ -669,7 +669,7 @@ class Image(UUIDModel):
 
         return sitk_image
 
-    def update_viewer_groups_permissions(  # noqa: C901
+    def update_viewer_groups_permissions(
         self,
         *,
         exclude_jobs=None,
@@ -677,8 +677,7 @@ class Image(UUIDModel):
         exclude_display_sets=None,
     ):
         """
-        Update the permissions for the algorithm jobs viewers groups to
-        view this image.
+        Update the view permissions for this image
 
         Parameters
         ----------
@@ -687,10 +686,49 @@ class Image(UUIDModel):
             when a many to many relationship is being cleared to remove this
             image from the results image set, and is used when the pre_clear
             signal is sent.
+        exclude_archive_items
+            As above but for Archive Items
+        exclude_display_sets
+            As above but for Display Sets
         """
+        expected_groups = set()
+
+        expected_groups.update(
+            self._get_expected_job_viewer_groups(exclude_jobs=exclude_jobs)
+        )
+
+        expected_groups.update(
+            self._get_expected_archive_item_viewer_groups(
+                exclude_archive_items=exclude_archive_items
+            )
+        )
+
+        expected_groups.update(
+            self._get_expected_display_set_viewer_groups(
+                exclude_display_sets=exclude_display_sets
+            )
+        )
+
+        expected_groups.update(self._get_expected_reader_study_answer_groups())
+
+        current_groups = get_groups_with_perms(self, attach_perms=True)
+        current_groups = {
+            group
+            for group, perms in current_groups.items()
+            if "view_image" in perms
+        }
+
+        groups_missing_perms = expected_groups - current_groups
+        groups_with_extra_perms = current_groups - expected_groups
+
+        for g in groups_missing_perms:
+            assign_perm("view_image", g, self)
+
+        for g in groups_with_extra_perms:
+            remove_perm("view_image", g, self)
+
+    def _get_expected_job_viewer_groups(self, exclude_jobs):
         from grandchallenge.algorithms.models import Job
-        from grandchallenge.archives.models import ArchiveItem
-        from grandchallenge.reader_studies.models import DisplaySet
 
         expected_groups = set()
 
@@ -712,6 +750,15 @@ class Image(UUIDModel):
             except SoftTimeLimitExceeded as error:
                 logger.error(error, exc_info=True)
                 raise
+
+        return expected_groups
+
+    def _get_expected_archive_item_viewer_groups(
+        self, *, exclude_archive_items
+    ):
+        from grandchallenge.archives.models import ArchiveItem
+
+        expected_groups = set()
 
         archive_items_queryset = (
             ArchiveItem.objects.filter(values__image=self)
@@ -741,6 +788,13 @@ class Image(UUIDModel):
                 ]
             )
 
+        return expected_groups
+
+    def _get_expected_display_set_viewer_groups(self, *, exclude_display_sets):
+        from grandchallenge.reader_studies.models import DisplaySet
+
+        expected_groups = set()
+
         display_set_queryset = (
             DisplaySet.objects.filter(values__image=self)
             .select_related(
@@ -766,28 +820,20 @@ class Image(UUIDModel):
                 ]
             )
 
+        return expected_groups
+
+    def _get_expected_reader_study_answer_groups(self):
         # Reader study editors for reader studies that have answers that
         # include this image.
+
+        expected_groups = set()
+
         for answer in self.answer_set.select_related(
             "question__reader_study__editors_group"
         ).all():
             expected_groups.add(answer.question.reader_study.editors_group)
 
-        current_groups = get_groups_with_perms(self, attach_perms=True)
-        current_groups = {
-            group
-            for group, perms in current_groups.items()
-            if "view_image" in perms
-        }
-
-        groups_missing_perms = expected_groups - current_groups
-        groups_with_extra_perms = current_groups - expected_groups
-
-        for g in groups_missing_perms:
-            assign_perm("view_image", g, self)
-
-        for g in groups_with_extra_perms:
-            remove_perm("view_image", g, self)
+        return expected_groups
 
     def assign_view_perm_to_creator(self):
         for answer in self.answer_set.all():
