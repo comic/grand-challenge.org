@@ -558,7 +558,7 @@ def test_execute_algorithm_job_sets_on_failed_jobs(
 
     # Sanity: task should run till execution
     assert len(callbacks) == 1
-    assert "ComponentJob.execute" in str(callbacks[0])
+    assert "grandchallenge.components.tasks.provision_job" in str(callbacks[0])
 
     job.refresh_from_db()
     assert job.status == Job.PENDING

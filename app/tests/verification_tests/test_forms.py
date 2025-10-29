@@ -7,6 +7,7 @@ from grandchallenge.verifications.forms import (
     VerificationForm,
 )
 from tests.factories import UserFactory
+from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
 
 
@@ -172,7 +173,9 @@ class TestConfirmEmailForm:
 
         assert form.is_valid()
 
-    def test_user_can_not_verify_other_token(self, settings):
+    def test_user_can_not_verify_other_token(
+        self, settings, client, django_capture_on_commit_callbacks
+    ):
         settings.task_eager_propagates = (True,)
         settings.task_always_eager = (True,)
 
@@ -181,12 +184,17 @@ class TestConfirmEmailForm:
 
         u2 = UserFactory()
 
-        form = ConfirmEmailForm(
-            user=u2, token=v1.token, data={"token": v1.token}
-        )
+        with django_capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                client=client,
+                method=client.post,
+                viewname="verifications:confirm",
+                reverse_kwargs={"token": v1.token},
+                user=u2,
+            )
 
-        assert not form.is_valid()
-        assert ["Token is invalid"] == form.errors["token"]
+        assert response.status_code == 200
+        assert ["Token is invalid"] == response.context["form"].errors["token"]
 
         u1.refresh_from_db()
         u2.refresh_from_db()

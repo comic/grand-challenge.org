@@ -1684,7 +1684,11 @@ class TestJobCreateView:
 
 @pytest.mark.django_db
 def test_algorithm_image_activate(
-    settings, client, algorithm_io_image, mocker
+    settings,
+    client,
+    algorithm_io_image,
+    mocker,
+    django_capture_on_commit_callbacks,
 ):
     mocker.patch.object(
         AlgorithmImage, "calculate_size_in_registry", lambda x: 100
@@ -1711,26 +1715,29 @@ def test_algorithm_image_activate(
     editor, user = UserFactory.create_batch(2)
     alg.add_editor(editor)
 
-    response = get_view_for_user(
-        viewname="algorithms:image-activate",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": alg.slug},
-        data={"algorithm_image": i1.pk},
-        user=user,
-        follow=True,
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="algorithms:image-activate",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": alg.slug},
+            data={"algorithm_image": i1.pk},
+            user=user,
+            follow=True,
+        )
+
     assert response.status_code == 403
 
-    response2 = get_view_for_user(
-        viewname="algorithms:image-activate",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": alg.slug},
-        data={"algorithm_image": i1.pk},
-        user=editor,
-        follow=True,
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        response2 = get_view_for_user(
+            viewname="algorithms:image-activate",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": alg.slug},
+            data={"algorithm_image": i1.pk},
+            user=editor,
+            follow=True,
+        )
 
     assert response2.status_code == 200
     i1.refresh_from_db()
@@ -1743,15 +1750,17 @@ def test_algorithm_image_activate(
     i2.is_in_registry = False
     i2.save()
 
-    response4 = get_view_for_user(
-        viewname="algorithms:image-activate",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": alg.slug},
-        data={"algorithm_image": i2.pk},
-        user=editor,
-        follow=True,
-    )
+    with django_capture_on_commit_callbacks(execute=True):
+        response4 = get_view_for_user(
+            viewname="algorithms:image-activate",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": alg.slug},
+            data={"algorithm_image": i2.pk},
+            user=editor,
+            follow=True,
+        )
+
     assert response4.status_code == 200
     assert "Image validation and upload to registry in progress." in str(
         response4.content
@@ -1760,15 +1769,18 @@ def test_algorithm_image_activate(
     i2.import_status = ImportStatusChoices.INITIALIZED
     i2.is_desired_version = False
     i2.save()
-    response6 = get_view_for_user(
-        viewname="algorithms:image-activate",
-        client=client,
-        method=client.post,
-        reverse_kwargs={"slug": alg.slug},
-        data={"algorithm_image": i2.pk},
-        user=editor,
-        follow=True,
-    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response6 = get_view_for_user(
+            viewname="algorithms:image-activate",
+            client=client,
+            method=client.post,
+            reverse_kwargs={"slug": alg.slug},
+            data={"algorithm_image": i2.pk},
+            user=editor,
+            follow=True,
+        )
+
     assert response6.status_code == 200
     i1.refresh_from_db()
     i2.refresh_from_db()

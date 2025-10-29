@@ -403,7 +403,13 @@ class TestUpdateExternalEvaluation:
             claimed_eval.submission.creator,
         }
 
-    def test_timeout(self, client, settings, claimed_external_evaluation):
+    def test_timeout(
+        self,
+        client,
+        settings,
+        claimed_external_evaluation,
+        django_capture_on_commit_callbacks,
+    ):
         settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = 0
         settings.task_eager_propagates = (True,)
         settings.task_always_eager = (True,)
@@ -414,15 +420,17 @@ class TestUpdateExternalEvaluation:
 
         claimed_eval = claimed_external_evaluation.evaluation
 
-        response = get_view_for_user(
-            viewname="api:evaluation-update-external-evaluation",
-            client=client,
-            method=client.patch,
-            user=claimed_external_evaluation.external_evaluator,
-            reverse_kwargs={"pk": claimed_eval.pk},
-            data={"metrics": "foo-bar", "status": "Succeeded"},
-            content_type="application/json",
-        )
+        with django_capture_on_commit_callbacks(execute=True):
+            response = get_view_for_user(
+                viewname="api:evaluation-update-external-evaluation",
+                client=client,
+                method=client.patch,
+                user=claimed_external_evaluation.external_evaluator,
+                reverse_kwargs={"pk": claimed_eval.pk},
+                data={"metrics": "foo-bar", "status": "Succeeded"},
+                content_type="application/json",
+            )
+
         assert response.status_code == 400
         assert response.json() == {
             "status": "The evaluation was not updated in time."
