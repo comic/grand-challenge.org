@@ -2,6 +2,7 @@ from allauth.mfa.utils import is_mfa_enabled
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
+from django.db.transaction import on_commit
 
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
@@ -28,7 +29,9 @@ class UserProfileInline(admin.StackedInline):
 )
 def deactivate_users(modeladmin, request, queryset):
     for user in queryset.filter(is_active=True):
-        deactivate_user.signature(kwargs={"user_pk": user.pk}).apply_async()
+        on_commit(
+            deactivate_user.signature(kwargs={"user_pk": user.pk}).apply_async
+        )
 
 
 class UserProfileAdmin(UserAdmin):

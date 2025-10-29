@@ -67,7 +67,7 @@ def execute_algorithm_job_for_inputs(*, job_pk):
     job.status = job.PENDING
     job.save()
 
-    on_commit(job.execute)
+    job.execute()
 
 
 def create_algorithm_jobs(
@@ -175,7 +175,7 @@ def create_algorithm_jobs(
             job.utilization.challenge = job_utilization_challenge
             job.utilization.save()
 
-            on_commit(job.execute)
+            job.execute()
 
             jobs.append(job)
 

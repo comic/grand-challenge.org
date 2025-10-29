@@ -192,7 +192,8 @@ def prepare_and_execute_evaluation(*, evaluation_pk):
         evaluation.inputs.add(civ)
         evaluation.status = Evaluation.PENDING
         evaluation.save()
-        on_commit(evaluation.execute)
+
+        evaluation.execute()
     else:
         evaluation.update_status(
             status=Evaluation.FAILURE,
@@ -469,7 +470,7 @@ def set_evaluation_inputs(*, evaluation_pk):
         evaluation.status = evaluation.PENDING
         evaluation.save()
 
-        on_commit(evaluation.execute)
+        evaluation.execute()
 
 
 def filter_by_creators_most_recent(*, evaluations):
