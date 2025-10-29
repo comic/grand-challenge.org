@@ -46,7 +46,7 @@ def update_view_image_permissions_on_display_set_values_change(
 
     exclude_display_sets = display_sets if action == "pre_clear" else None
 
-    for image in images:
+    for image in images.distinct():
         image.update_viewer_groups_permissions(
             exclude_display_sets=exclude_display_sets
         )
@@ -59,10 +59,10 @@ def update_view_image_permissions_on_display_set_change(
 ):
     images = Image.objects.filter(
         componentinterfacevalue__display_sets=instance
-    ).distinct()
+    )
     exclude_display_sets = [instance] if signal is pre_delete else None
 
-    for image in images:
+    for image in images.distinct():
         image.update_viewer_groups_permissions(
             exclude_display_sets=exclude_display_sets
         )

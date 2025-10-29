@@ -40,7 +40,7 @@ def update_view_image_permissions_on_archive_item_values_change(
 
     exclude_archive_items = archive_items if action == "pre_clear" else None
 
-    for image in images:
+    for image in images.distinct():
         image.update_viewer_groups_permissions(
             exclude_archive_items=exclude_archive_items
         )
@@ -53,10 +53,10 @@ def update_view_image_permissions_on_archive_item_change(
 ):
     images = Image.objects.filter(
         componentinterfacevalue__archive_items=instance
-    ).distinct()
+    )
     exclude_archive_items = [instance] if signal is pre_delete else None
 
-    for image in images:
+    for image in images.distinct():
         image.update_viewer_groups_permissions(
             exclude_archive_items=exclude_archive_items
         )
