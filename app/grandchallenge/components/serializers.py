@@ -283,9 +283,9 @@ class CIVSetPostSerializerMixin:
             upload_session = value.get("upload_session")
             user_upload = value.get("user_upload")
             image = value.get("image")
-            value = value.get("value")
             user_uploads = value.get("user_uploads")
             image_name = value.get("image_name")
+            value = value.get("value")
             dicom_upload_with_name = (
                 DICOMUploadWithName(name=image_name, user_uploads=user_uploads)
                 if user_uploads and image_name
