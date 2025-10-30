@@ -1882,9 +1882,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">:</span>
-            <span class="n">on_commit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">execute_task_on_success</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">execute_task_on_success</span><span class="p">()</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">FAILURE</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">CANCELLED</span><span class="p">]:</span>
-            <span class="n">on_commit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">execute_task_on_failure</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">execute_task_on_failure</span><span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">executor_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1933,17 +1933,21 @@
         <span class="p">}</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">provision_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">signature_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
+        <span class="n">on_commit</span><span class="p">(</span><span class="n">provision_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">signature_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">execute_task_on_success</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">deprovision_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">signature_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
+        <span class="n">on_commit</span><span class="p">(</span>
+            <span class="n">deprovision_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">signature_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_on_success</span><span class="p">:</span>
-            <span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_on_success</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
+            <span class="n">on_commit</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_on_success</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">execute_task_on_failure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">deprovision_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">signature_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
+        <span class="n">on_commit</span><span class="p">(</span>
+            <span class="n">deprovision_job</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">signature_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task_on_failure</span><span class="p">:</span>
-            <span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_on_failure</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">()</span>
+            <span class="n">on_commit</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_on_failure</span><span class="p">)</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">animate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

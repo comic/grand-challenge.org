@@ -812,9 +812,9 @@
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">skip_calculate_ranks</span><span class="p">:</span>
             <span class="n">on_commit</span><span class="p">(</span>
-                <span class="k">lambda</span><span class="p">:</span> <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span>
+                <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
                     <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
-                <span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
             <span class="p">)</span></div>
 
 
@@ -2005,9 +2005,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">assign_permissions</span><span class="p">()</span>
 
         <span class="n">on_commit</span><span class="p">(</span>
-            <span class="k">lambda</span><span class="p">:</span> <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">apply_async</span><span class="p">(</span>
+            <span class="n">calculate_ranks</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
                 <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;phase_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">pk</span><span class="p">}</span>
-            <span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
