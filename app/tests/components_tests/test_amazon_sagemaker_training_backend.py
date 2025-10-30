@@ -15,6 +15,7 @@ from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.components.backends.amazon_sagemaker_training import (
     AmazonSageMakerTrainingExecutor,
 )
+from grandchallenge.components.backends.base import InferenceResult
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     TaskCancelled,
@@ -257,7 +258,7 @@ def test_set_duration():
         signing_key=b"",
     )
 
-    assert executor.duration is None
+    assert executor.utilization_duration is None
 
     executor._set_duration(
         event={
@@ -267,7 +268,7 @@ def test_set_duration():
         }
     )
 
-    assert executor.duration == timedelta(seconds=21)
+    assert executor.utilization_duration == timedelta(seconds=21)
 
 
 def test_get_log_stream_name(settings):
@@ -559,22 +560,36 @@ def test_handle_completed_job():
         signing_key=b"itsasecret",
     )
 
-    content = json.dumps(
-        {"return_code": 0, "pk": f"algorithms-job-{pk}"}
-    ).encode("utf-8")
+    inference_result = InferenceResult(
+        pk=f"algorithms-job-{pk}",
+        return_code=0,
+        exec_duration=timedelta(seconds=51432),
+        invoke_duration=timedelta(seconds=1543),
+        outputs=[],
+        sagemaker_shim_version="0.5.0",
+    )
+    inference_result_content = inference_result.model_dump_json().encode(
+        "utf-8"
+    )
     signature = hmac.new(
-        key=b"itsasecret", msg=content, digestmod=hashlib.sha256
+        key=b"itsasecret",
+        msg=inference_result_content,
+        digestmod=hashlib.sha256,
     ).hexdigest()
     executor._s3_client.upload_fileobj(
-        Fileobj=io.BytesIO(content),
+        Fileobj=io.BytesIO(inference_result_content),
         Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-        Key=executor._result_key,
+        Key=executor._inference_result_key,
         ExtraArgs={
             "Metadata": {"signature_hmac_sha256": signature},
         },
     )
 
     assert executor._handle_completed_job() is None
+
+    # The durations should be set from the result object
+    assert executor.exec_duration == timedelta(seconds=51432)
+    assert executor.invoke_duration == timedelta(seconds=1543)
 
 
 def test_handle_time_limit_exceded(settings):

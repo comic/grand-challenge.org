@@ -24,7 +24,7 @@ class TestUtilizationExecutor(Executor):
         return 12.1
 
     @property
-    def duration(self):
+    def utilization_duration(self):
         raise NotImplementedError
 
     def execute(self):

@@ -1964,6 +1964,10 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     def title(self):
         return f"#{self.rank} {self.submission.creator.username}"
 
+    @property
+    def api_url(self) -> str:
+        return reverse("api:evaluation-detail", kwargs={"pk": self.pk})
+
     def assign_permissions(self):
         admins_group = self.submission.phase.challenge.admins_group
         assign_perm("view_evaluation", admins_group, self)

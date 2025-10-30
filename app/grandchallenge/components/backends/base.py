@@ -21,6 +21,7 @@ import aioboto3
 import boto3
 import botocore
 import httpx
+import pydantic
 from asgiref.sync import async_to_sync
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
@@ -288,6 +289,17 @@ class InferenceTask(BaseModel):
     timeout: timedelta
 
 
+class InferenceResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    pk: str
+    return_code: int
+    exec_duration: timedelta | None
+    invoke_duration: timedelta | None
+    outputs: list[InferenceIO]
+    sagemaker_shim_version: str
+
+
 class Executor(ABC):
     def __init__(
         self,
@@ -313,11 +325,15 @@ class Executor(ABC):
             use_warm_pool and settings.COMPONENTS_USE_WARM_POOL
         )
         self._signing_key = signing_key
-        self._stdout = []
-        self._stderr = []
-        self.__s3_client = None
         self._algorithm_model = algorithm_model
         self._ground_truth = ground_truth
+
+        self._exec_duration = None
+        self._invoke_duration = None
+        self._stdout = []
+        self._stderr = []
+
+        self.__s3_client = None
 
     def provision(self, *, input_civs, input_prefixes):
         # We cannot run everything async as it requires database access.
@@ -387,7 +403,15 @@ class Executor(ABC):
 
     @property
     @abstractmethod
-    def duration(self): ...
+    def utilization_duration(self): ...
+
+    @property
+    def exec_duration(self):
+        return self._exec_duration
+
+    @property
+    def invoke_duration(self):
+        return self._invoke_duration
 
     @property
     @abstractmethod
@@ -437,12 +461,13 @@ class Executor(ABC):
 
     @property
     def compute_cost_euro_millicents(self):
-        duration = self.duration
-        if duration is None:
+        utilization_duration = self.utilization_duration
+        if utilization_duration is None:
             return None
         else:
             return duration_to_millicents(
-                duration=duration, usd_cents_per_hour=self.usd_cents_per_hour
+                duration=utilization_duration,
+                usd_cents_per_hour=self.usd_cents_per_hour,
             )
 
     @property
@@ -467,7 +492,7 @@ class Executor(ABC):
         return safe_join(self._invocation_prefix, "invocation.json")
 
     @property
-    def _result_key(self):
+    def _inference_result_key(self):
         return safe_join(
             self._io_prefix, ".sagemaker_shim", "inference_result.json"
         )
@@ -802,11 +827,11 @@ class Executor(ABC):
             key=key,
         )
 
-    def _get_task_return_code(self):
+    def _get_inference_result(self):
         try:
             response = self._s3_client.get_object(
                 Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                Key=self._result_key,
+                Key=self._inference_result_key,
             )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] == "404":
@@ -834,26 +859,29 @@ class Executor(ABC):
             )
 
         try:
-            result = json.loads(body.decode("utf-8"))
-        except JSONDecodeError:
+            inference_result = InferenceResult.model_validate_json(
+                json_data=body
+            )
+        except pydantic.ValidationError as error:
+            logger.error(error, exc_info=True)
             raise ComponentException(
                 "The invocation request did not return valid json"
             )
 
-        logger.info(f"{result=}")
+        logger.info(f"{inference_result=}")
 
-        if result["pk"] != self._job_id:
+        if inference_result.pk != self._job_id:
             raise RuntimeError("Wrong result key for this job")
 
-        try:
-            return int(result["return_code"])
-        except (KeyError, ValueError):
-            raise ComponentException(
-                "The invocation response object is not valid"
-            )
+        return inference_result
 
     def _handle_completed_job(self):
-        users_process_exit_code = self._get_task_return_code()
+        inference_result = self._get_inference_result()
+
+        self._exec_duration = inference_result.exec_duration
+        self._invoke_duration = inference_result.invoke_duration
+
+        users_process_exit_code = inference_result.return_code
 
         if users_process_exit_code == 0:
             # Job's a good un

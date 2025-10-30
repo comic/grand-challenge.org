@@ -130,6 +130,9 @@ def test_submission_evaluation(
         ]
         == 0.5
     )
+    assert evaluation.exec_duration == timedelta(seconds=1337)
+    assert evaluation.invoke_duration == timedelta(seconds=1874)
+    assert evaluation.utilization.duration.total_seconds() > 0
 
     # Try with a csv file
     user_upload = create_upload_from_file(

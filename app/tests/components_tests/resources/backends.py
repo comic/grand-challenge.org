@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import re
+from datetime import timedelta
 
 from django.conf import settings
 from django.db.transaction import on_commit
@@ -12,7 +13,11 @@ from django.utils.timezone import now
 from grandchallenge.components.backends.amazon_sagemaker_base import (
     ModelChoices,
 )
-from grandchallenge.components.backends.base import Executor, JobParams
+from grandchallenge.components.backends.base import (
+    Executor,
+    InferenceResult,
+    JobParams,
+)
 from grandchallenge.components.backends.utils import UUID4_REGEX
 from grandchallenge.components.tasks import handle_event
 
@@ -81,20 +86,28 @@ class IOCopyExecutor(Executor):
                 )
 
             # Create a task return code
-            result_json = json.dumps(
-                {"pk": self._job_id, "return_code": 0}
-            ).encode("utf-8")
+            inference_result = InferenceResult(
+                pk=self._job_id,
+                return_code=0,
+                exec_duration=timedelta(seconds=1337),
+                invoke_duration=timedelta(seconds=1874),
+                outputs=[],
+                sagemaker_shim_version="0.5.0",
+            )
+            inference_result_content = (
+                inference_result.model_dump_json().encode("utf-8")
+            )
 
             signature = hmac.new(
                 key=self._signing_key,
-                msg=result_json,
+                msg=inference_result_content,
                 digestmod=hashlib.sha256,
             ).hexdigest()
 
             self._s3_client.upload_fileobj(
-                Fileobj=io.BytesIO(result_json),
+                Fileobj=io.BytesIO(inference_result_content),
                 Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-                Key=self._result_key,
+                Key=self._inference_result_key,
                 ExtraArgs={
                     "Metadata": {"signature_hmac_sha256": signature},
                 },
@@ -111,6 +124,8 @@ class IOCopyExecutor(Executor):
                         "_job_id": self._job_id,
                         "_stdout": self._stdout,
                         "_stderr": self._stderr,
+                        "_exec_duration_seconds": self._exec_duration.total_seconds(),
+                        "_invoke_duration_seconds": self._invoke_duration.total_seconds(),
                         "__start_time": self.__start_time,
                     },
                     "backend": f"{self.__class__.__module__}.{self.__class__.__qualname__}",
@@ -121,6 +136,12 @@ class IOCopyExecutor(Executor):
     def handle_event(self, *, event):
         self._stdout = event["_stdout"]
         self._stderr = event["_stderr"]
+        self._exec_duration = timedelta(
+            seconds=event["_exec_duration_seconds"]
+        )
+        self._invoke_duration = timedelta(
+            seconds=event["_invoke_duration_seconds"]
+        )
         self.__start_time = event["__start_time"]
 
     @staticmethod
@@ -150,7 +171,7 @@ class IOCopyExecutor(Executor):
             )
 
     @property
-    def duration(self):
+    def utilization_duration(self):
         return now() - self.__start_time
 
     @property

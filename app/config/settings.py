@@ -896,6 +896,7 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 100,
     "UNAUTHENTICATED_USER": "guardian.utils.get_anonymous_user",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DURATION_FORMAT": "iso-8601",
 }
 
 SPECTACULAR_SETTINGS = {

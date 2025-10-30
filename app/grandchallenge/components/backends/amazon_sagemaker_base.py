@@ -357,7 +357,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.__duration = None
+        self.__utilization_duration = None
         self.__runtime_metrics = {}
 
         self.__sagemaker_client = None
@@ -413,8 +413,8 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         return self.__cloudwatch_client
 
     @property
-    def duration(self):
-        return self.__duration
+    def utilization_duration(self):
+        return self.__utilization_duration
 
     @property
     def runtime_metrics(self):
@@ -536,10 +536,10 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                 self._get_start_time(event=event)
             )
             stopped = ms_timestamp_to_datetime(self._get_end_time(event=event))
-            self.__duration = stopped - started
+            self.__utilization_duration = stopped - started
         except TypeError:
             logger.warning("Invalid start or end time, duration undetermined")
-            self.__duration = None
+            self.__utilization_duration = None
 
     def _get_log_stream_name(self, *, data_log=False):
         response = self._logs_client.describe_log_streams(
@@ -718,7 +718,9 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             "Out of Memory. Please use a larger instance",
         ):
             try:
-                users_process_exit_code = self._get_task_return_code()
+                users_process_exit_code = (
+                    self._get_inference_result().return_code
+                )
             except UncleanExit:
                 users_process_exit_code = None
 

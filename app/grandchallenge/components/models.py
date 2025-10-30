@@ -1736,7 +1736,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         if adding:
             self.create_utilization()
 
-    def update_status(
+    def update_status(  # noqa:C901
         self,
         *,
         status: STATUS_CHOICES,
@@ -1744,7 +1744,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         stderr: str = "",
         error_message="",
         detailed_error_message=None,
-        duration=None,
+        utilization_duration=None,
+        exec_duration=None,
+        invoke_duration=None,
         compute_cost_euro_millicents=None,
         runtime_metrics=None,
     ):
@@ -1765,9 +1767,15 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                 for key, value in detailed_error_message.items()
             }
 
-        if duration is not None:
-            self.utilization.duration = duration
+        if utilization_duration is not None:
+            self.utilization.duration = utilization_duration
             self.utilization.save(update_fields=["duration"])
+
+        if exec_duration is not None:
+            self.exec_duration = exec_duration
+
+        if invoke_duration is not None:
+            self.invoke_duration = invoke_duration
 
         if compute_cost_euro_millicents is not None:
             self.utilization.compute_cost_euro_millicents = (

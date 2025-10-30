@@ -1,4 +1,5 @@
 import time
+from datetime import timedelta
 from typing import NamedTuple
 
 import pytest
@@ -618,3 +619,21 @@ def test_evaluation_metrics_filtering(client):
 
     assert response.status_code == 200
     assert response.json()["outputs"][0]["value"] == full_value
+
+
+@pytest.mark.django_db
+def test_durations_are_serialized(client):
+    user = UserFactory()
+    evaluation = EvaluationFactory(
+        time_limit=60,
+        exec_duration=timedelta(seconds=1337),
+        invoke_duration=timedelta(seconds=1874),
+    )
+    evaluation.submission.phase.challenge.add_admin(user=user)
+
+    response = get_view_for_user(
+        client=client, url=evaluation.api_url, user=user
+    ).json()
+
+    assert response["exec_duration"] == "P0DT00H22M17S"
+    assert response["invoke_duration"] == "P0DT00H31M14S"
