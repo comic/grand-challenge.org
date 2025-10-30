@@ -22,16 +22,15 @@ from grandchallenge.algorithms.models import (
     Job,
     annotate_input_output_counts,
 )
-from grandchallenge.cases.widgets import DICOMUploadWithName
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
-from grandchallenge.components.models import CIVData
 from grandchallenge.components.serializers import (
     ComponentInterfaceSerializer,
     ComponentInterfaceValuePostSerializer,
     ComponentInterfaceValueSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
+    reformat_serialized_civ_data,
 )
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -241,7 +240,7 @@ class JobPostSerializer(JobSerializer):
         data["algorithm_interface"] = (
             self.validate_inputs_and_return_matching_interface(inputs=inputs)
         )
-        self.inputs = self.reformat_inputs(serialized_civs=inputs)
+        self.inputs = reformat_serialized_civ_data(serialized_civ_data=inputs)
 
         if Job.objects.get_jobs_with_same_inputs(
             inputs=self.inputs,
@@ -307,39 +306,3 @@ class JobPostSerializer(JobSerializer):
                 f"following input combinations: "
                 f"{oxford_comma([f'Interface {n}: {oxford_comma(interface.inputs.all())}' for n, interface in enumerate(self._algorithm.interfaces.all(), start=1)])}"
             )
-
-    @staticmethod
-    def reformat_inputs(*, serialized_civs):
-        """Takes serialized CIV data and returns list of CIVData objects."""
-
-        data = []
-        for civ in serialized_civs:
-            interface = civ["interface"]
-            upload_session = civ.get("upload_session")
-            user_upload = civ.get("user_upload")
-            image = civ.get("image")
-            file = civ.get("file")
-            value = civ.get("value")
-            user_uploads = civ.get("user_uploads")
-            image_name = civ.get("image_name")
-            dicom_upload_with_name = (
-                DICOMUploadWithName(name=image_name, user_uploads=user_uploads)
-                if user_uploads and image_name
-                else None
-            )
-            try:
-                data.append(
-                    CIVData(
-                        interface_slug=interface.slug,
-                        value=upload_session
-                        or user_upload
-                        or image
-                        or file
-                        or dicom_upload_with_name
-                        or value,
-                    )
-                )
-            except ValidationError as e:
-                raise serializers.ValidationError(e)
-
-        return data

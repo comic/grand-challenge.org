@@ -1,5 +1,6 @@
 import logging
 
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import CharField, SerializerMethodField
@@ -24,6 +25,50 @@ from grandchallenge.workstation_configs.serializers import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def reformat_serialized_civ_data(*, serialized_civ_data):
+    """Takes serialized CIV data and returns list of CIVData objects."""
+
+    possible_keys = [
+        "image",
+        "value",
+        "file",
+        "user_upload",
+        "upload_session",
+        ("image_name", "user_uploads"),
+    ]
+
+    civ_data_objects = []
+    for civ in serialized_civ_data:
+        interface = civ["interface"]
+
+        keys = set(civ.keys()) - {"interface"}
+
+        if not keys:
+            raise serializers.ValidationError(
+                f"You must provide at least one of {possible_keys}"
+            )
+        elif keys == {"image_name", "user_uploads"}:
+            value = DICOMUploadWithName(
+                name=civ["image_name"],
+                user_uploads=civ["user_uploads"],
+            )
+        elif len(keys) > 1:
+            raise serializers.ValidationError(
+                f"You can only provide one of {possible_keys} for each interface."
+            )
+        else:
+            value = civ[list(keys)[0]]
+
+        try:
+            civ_data_objects.append(
+                CIVData(interface_slug=interface.slug, value=value)
+            )
+        except ValidationError as e:
+            raise serializers.ValidationError(e)
+
+    return civ_data_objects
 
 
 class ComponentInterfaceSerializer(serializers.ModelSerializer):
@@ -276,31 +321,10 @@ class CIVSetPostSerializerMixin:
 
         request = self.context["request"]
 
-        civ_data_objects = []
+        civ_data_objects = reformat_serialized_civ_data(
+            serialized_civ_data=values
+        )
 
-        for value in values:
-            interface = value["interface"]
-            upload_session = value.get("upload_session")
-            user_upload = value.get("user_upload")
-            image = value.get("image")
-            user_uploads = value.get("user_uploads")
-            image_name = value.get("image_name")
-            value = value.get("value")
-            dicom_upload_with_name = (
-                DICOMUploadWithName(name=image_name, user_uploads=user_uploads)
-                if user_uploads and image_name
-                else None
-            )
-            civ_data_objects.append(
-                CIVData(
-                    interface_slug=interface.slug,
-                    value=upload_session
-                    or user_upload
-                    or image
-                    or dicom_upload_with_name
-                    or value,
-                )
-            )
         try:
             instance.validate_civ_data_objects_and_execute_linked_task(
                 civ_data_objects=civ_data_objects, user=request.user
