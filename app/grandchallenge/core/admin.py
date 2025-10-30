@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.contrib.flatpages.admin import FlatPageAdmin
 from django.contrib.flatpages.forms import FlatpageForm
 from django.contrib.flatpages.models import FlatPage
+from django_celery_results.admin import TaskResultAdmin
+from django_celery_results.models import TaskResult
 
 from grandchallenge.core.widgets import MarkdownEditorAdminWidget
 
@@ -29,3 +31,23 @@ class GroupObjectPermissionAdmin(admin.ModelAdmin):
 
 admin.site.unregister(FlatPage)
 admin.site.register(FlatPage, MarkdownFlatPageAdmin)
+
+
+class TaskResultAdminWithDuration(TaskResultAdmin):
+    list_display = (
+        "task_id",
+        "periodic_task_name",
+        "task_name",
+        "date_done",
+        "get_duration",
+        "status",
+        "worker",
+    )
+
+    @admin.display(description="Duration")
+    def get_duration(self, obj):
+        return obj.date_done - obj.date_started
+
+
+admin.site.unregister(TaskResult)
+admin.site.register(TaskResult, TaskResultAdminWithDuration)
