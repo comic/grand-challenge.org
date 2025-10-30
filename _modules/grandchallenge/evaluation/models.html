@@ -2014,6 +2014,10 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">title</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;#</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rank</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">creator</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="s2">&quot;</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">api_url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;api:evaluation-detail&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">assign_permissions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">admins_group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">submission</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">challenge</span><span class="o">.</span><span class="n">admins_group</span>
         <span class="n">assign_perm</span><span class="p">(</span><span class="s2">&quot;view_evaluation&quot;</span><span class="p">,</span> <span class="n">admins_group</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
