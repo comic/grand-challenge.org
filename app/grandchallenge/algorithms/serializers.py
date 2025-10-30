@@ -333,8 +333,8 @@ class JobPostSerializer(JobSerializer):
                         value=upload_session
                         or user_upload
                         or image
-                        or value
-                        or dicom_upload_with_name,
+                        or dicom_upload_with_name
+                        or value,
                     )
                 )
             except ValidationError as e:
