@@ -1547,14 +1547,12 @@ def test_configure_algorithm_phases_permissions(client):
 
 
 @pytest.mark.django_db
-def test_configure_algorithm_phases_view(client):
+def test_configure_algorithm_phases_view_without_challenge_request(client):
     user = UserFactory()
     ch = ChallengeFactory()
     phase = PhaseFactory(
         challenge=ch, submission_kind=SubmissionKindChoices.CSV
     )
-    ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
-    challenge_request = ChallengeRequestFactory(short_name=ch.short_name)
     assign_perm("evaluation.configure_algorithm_phase", user)
     response = get_view_for_user(
         viewname="evaluation:configure-algorithm-phases",
@@ -1565,7 +1563,7 @@ def test_configure_algorithm_phases_view(client):
             "challenge_short_name": ch.short_name,
         },
         data={
-            "phases": [phase.pk],
+            f"phase_{phase.pk}": True,
         },
     )
     assert response.status_code == 302
@@ -1575,18 +1573,131 @@ def test_configure_algorithm_phases_view(client):
         phase.archive.title
         == f"{phase.challenge.short_name} {phase.title} dataset"
     )
+
+
+@pytest.mark.django_db
+def test_configure_algorithm_phases_view_challenge_request_one_task(client):
+    user = UserFactory()
+    ch = ChallengeFactory()
+    phase = PhaseFactory(
+        challenge=ch, submission_kind=SubmissionKindChoices.CSV
+    )
+    challenge_request = ChallengeRequestFactory(
+        short_name=ch.short_name,
+        task_ids=[1],
+        algorithm_maximum_settable_memory_gb_for_tasks=[32, 32],
+        algorithm_selectable_gpu_type_choices_for_tasks=[["", "T4"]],
+        average_size_test_image_mb_for_tasks=[592],
+        inference_time_average_minutes_for_tasks=[33],
+        task_id_for_phases=[1, 1],
+        number_of_submissions_per_team_for_phases=[7, 1],
+        number_of_teams_for_phases=[15, 15],
+        number_of_test_images_for_phases=[3, 50],
+    )
+    assign_perm("evaluation.configure_algorithm_phase", user)
+    response = get_view_for_user(
+        viewname="evaluation:configure-algorithm-phases",
+        client=client,
+        method=client.post,
+        user=user,
+        reverse_kwargs={
+            "challenge_short_name": ch.short_name,
+        },
+        data={
+            f"phase_{phase.pk}": True,
+        },
+    )
+    assert response.status_code == 302, response.context["form"].errors
+    phase.refresh_from_db()
+    assert phase.submission_kind == SubmissionKindChoices.ALGORITHM
+    assert (
+        phase.archive.title
+        == f"{phase.challenge.short_name} {phase.title} dataset"
+    )
     assert (
         phase.algorithm_time_limit
-        == challenge_request.inference_time_limit_in_minutes * 60
+        == challenge_request.inference_time_average_minutes_for_tasks[0] * 60
     )
     assert (
         phase.algorithm_selectable_gpu_type_choices
-        == challenge_request.algorithm_selectable_gpu_type_choices
+        == challenge_request.algorithm_selectable_gpu_type_choices_for_tasks[0]
     )
     assert (
         phase.algorithm_maximum_settable_memory_gb
-        == challenge_request.algorithm_maximum_settable_memory_gb
+        == challenge_request.algorithm_maximum_settable_memory_gb_for_tasks[0]
     )
+
+
+@pytest.mark.django_db
+def test_configure_algorithm_phases_view_challenge_request_multiple_tasks(
+    client,
+):
+    user = UserFactory()
+    ch = ChallengeFactory()
+    phases = PhaseFactory.create_batch(
+        2, challenge=ch, submission_kind=SubmissionKindChoices.CSV
+    )
+    challenge_request = ChallengeRequestFactory(
+        short_name=ch.short_name,
+        task_ids=[1, 2],
+        algorithm_maximum_settable_memory_gb_for_tasks=[32, 32],
+        algorithm_selectable_gpu_type_choices_for_tasks=[
+            ["", "T4"],
+            ["", "T4", "A10G"],
+        ],
+        average_size_test_image_mb_for_tasks=[592, 323],
+        inference_time_average_minutes_for_tasks=[33, 12],
+        task_id_for_phases=[1, 1, 2, 2],
+        number_of_submissions_per_team_for_phases=[7, 1, 7, 1],
+        number_of_teams_for_phases=[15, 15, 20, 20],
+        number_of_test_images_for_phases=[3, 50, 3, 250],
+    )
+    assign_perm("evaluation.configure_algorithm_phase", user)
+
+    response = get_view_for_user(
+        viewname="evaluation:configure-algorithm-phases",
+        client=client,
+        method=client.post,
+        user=user,
+        reverse_kwargs={
+            "challenge_short_name": ch.short_name,
+        },
+        data={
+            f"phase_{phases[0].pk}": True,
+            f"task_{phases[0].pk}": 1,
+            f"phase_{phases[1].pk}": True,
+            f"task_{phases[1].pk}": 2,
+        },
+    )
+
+    assert response.status_code == 302
+
+    for phase, task_idx in zip(phases, [0, 1], strict=True):
+        phase.refresh_from_db()
+        assert phase.submission_kind == SubmissionKindChoices.ALGORITHM
+        assert (
+            phase.archive.title
+            == f"{phase.challenge.short_name} {phase.title} dataset"
+        )
+        assert (
+            phase.algorithm_time_limit
+            == challenge_request.inference_time_average_minutes_for_tasks[
+                task_idx
+            ]
+            * 60
+        )
+        assert (
+            phase.algorithm_selectable_gpu_type_choices
+            == challenge_request.algorithm_selectable_gpu_type_choices_for_tasks[
+                task_idx
+            ]
+        )
+        assert (
+            phase.algorithm_maximum_settable_memory_gb
+            == challenge_request.algorithm_maximum_settable_memory_gb_for_tasks[
+                task_idx
+            ]
+        )
 
 
 @pytest.mark.django_db

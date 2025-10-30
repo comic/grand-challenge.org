@@ -23,13 +23,47 @@ def run():
         submission_assessment=fake.text(),
         challenge_publication=fake.text(),
         code_availability=fake.text(),
-        expected_number_of_teams=fake.random_int(10, 50, 5),
-        inference_time_limit_in_minutes=fake.random_int(5, 60),
-        average_size_of_test_image_in_mb=fake.random_int(1, 1024),
-        phase_1_number_of_submissions_per_team=fake.random_int(1, 10),
-        phase_2_number_of_submissions_per_team=fake.random_int(1, 5),
-        phase_1_number_of_test_images=fake.random_int(1, 5),
-        phase_2_number_of_test_images=fake.random_int(50, 1000, 50),
+        task_ids=[1, 2],
+        algorithm_maximum_settable_memory_gb_for_tasks=[32, 32],
+        algorithm_selectable_gpu_type_choices_for_tasks=[
+            ["", "T4"],
+            ["", "T4", "A10G"],
+        ],
+        average_size_test_image_mb_for_tasks=[
+            fake.random_int(1, 1000),
+            fake.random_int(1, 1000),
+        ],
+        inference_time_average_minutes_for_tasks=[
+            fake.random_int(5, 60),
+            fake.random_int(5, 60),
+        ],
+        task_id_for_phases=[1, 1, 1, 2, 2, 2],
+        number_of_teams_for_phases=(
+            [
+                fake.random_int(10, 50, 5),
+            ]
+            * 2
+            + [fake.random_int(3, 10)]
+            + [
+                fake.random_int(10, 50, 5),
+            ]
+            * 2
+            + [fake.random_int(3, 10)]
+        ),
+        number_of_submissions_per_team_for_phases=2
+        * [
+            fake.random_int(5, 10),
+            fake.random_int(2, 3),
+            1,
+        ],
+        number_of_test_images_for_phases=[
+            fake.random_int(1, 5),
+            fake.random_int(10, 30, 5),
+            fake.random_int(50, 500, 50),
+            fake.random_int(1, 5),
+            fake.random_int(10, 30, 5),
+            fake.random_int(50, 500, 50),
+        ],
         data_license=True,
         algorithm_inputs=fake.text(),
         algorithm_outputs=fake.text(),

@@ -21,8 +21,33 @@
 {% block content %}
     <h3>Configure algorithm submission phases</h3>
     <p>Select the phases you would like to turn into algorithm submission phases.</p>
-    <p>This will create an archive for each selected phase, and populate the inference time limit, gpu type choices and memory requirements based on the corresponding challenge request.</p>
+
+    <p>
+        This will create an archive for each selected phase, and populate the inference time limit, gpu type choices and memory requirements based on the corresponding challenge request:
+        {% if challenge_request %}
+                <a href="{% url 'challenges:requests-detail' pk=challenge_request.pk %}">
+                    [{{ challenge_request.short_name }}] {{ challenge_request.title }}
+                </a>
+        {% else %}
+            No corresponding challenge request.
+        {% endif %}
+    </p>
+
+    {% if challenge_request %}
+        <ul>
+            {% for field, value in challenge_request.budget_fields.items %}
+                <li><span class="font-weight-bold">{{ field|capfirst }}</span>: {{ value }}</li>
+            {% endfor %}
+        </ul>
+        {% if challenge_request.task_ids|length > 1 %}
+            <p>
+                This challenge request defines multiple tasks. Please provide the corresponding task id for each selected phase.
+            </p>
+        {% endif %}
+    {% endif %}
+
     <p>To configure algorithm interfaces for each phase, please visit the phase settings after this step.</p>
+
     {% crispy form %}
 {% endblock %}
 

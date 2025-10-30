@@ -61,6 +61,7 @@ from tests.evaluation_tests.factories import (
 )
 from tests.factories import (
     ChallengeFactory,
+    ChallengeRequestFactory,
     UserFactory,
     WorkstationConfigFactory,
     WorkstationFactory,
@@ -1121,15 +1122,84 @@ def test_configure_algorithm_phases_form():
     PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
 
     form = ConfigureAlgorithmPhasesForm(challenge=ch)
-    assert list(form.fields["phases"].queryset) == [p3]
+
+    phases_on_form = {
+        name.split("_")[1]
+        for name in form.fields.keys()
+        if name.startswith("phase_")
+    }
+
+    assert phases_on_form == {str(p3.pk)}
 
     form3 = ConfigureAlgorithmPhasesForm(
         challenge=ch,
         data={
-            "phases": [p3],
+            f"phase_{p3.pk}": True,
         },
     )
     assert form3.is_valid()
+
+
+@pytest.mark.django_db
+def test_configure_algorithm_phases_form_challenge_request_multiple_tasks():
+    ch = ChallengeFactory()
+    phases = PhaseFactory.create_batch(
+        2, challenge=ch, submission_kind=SubmissionKindChoices.CSV
+    )
+    challenge_request = ChallengeRequestFactory(
+        short_name=ch.short_name,
+        task_ids=[1, 2],
+        algorithm_maximum_settable_memory_gb_for_tasks=[32, 32],
+        algorithm_selectable_gpu_type_choices_for_tasks=[
+            ["", "T4"],
+            ["", "T4", "A10G"],
+        ],
+        average_size_test_image_mb_for_tasks=[592, 323],
+        inference_time_average_minutes_for_tasks=[33, 12],
+        task_id_for_phases=[1, 1, 2, 2],
+        number_of_submissions_per_team_for_phases=[7, 1, 7, 1],
+        number_of_teams_for_phases=[15, 15, 20, 20],
+        number_of_test_images_for_phases=[3, 50, 3, 250],
+    )
+
+    form_no_task_id = ConfigureAlgorithmPhasesForm(
+        challenge=ch,
+        challenge_request=challenge_request,
+        data={
+            f"phase_{phases[0].pk}": True,
+        },
+    )
+
+    assert not form_no_task_id.is_valid()
+    assert form_no_task_id.errors[f"task_{phases[0].pk}"] == [
+        "The task ID must be provided."
+    ]
+    assert f"task_{phases[1].pk}" not in form_no_task_id.errors
+
+    form_invalid_task_id = ConfigureAlgorithmPhasesForm(
+        challenge=ch,
+        challenge_request=challenge_request,
+        data={
+            f"phase_{phases[0].pk}": True,
+            f"task_{phases[0].pk}": 3,
+        },
+    )
+
+    assert not form_invalid_task_id.is_valid()
+    assert form_invalid_task_id.errors[f"task_{phases[0].pk}"] == [
+        "Select a valid choice. 3 is not one of the available choices."
+    ]
+
+    form_valid = ConfigureAlgorithmPhasesForm(
+        challenge=ch,
+        challenge_request=challenge_request,
+        data={
+            f"phase_{phases[0].pk}": True,
+            f"task_{phases[0].pk}": 1,
+        },
+    )
+
+    assert form_valid.is_valid(), f"{form_valid.errors}"
 
 
 @pytest.mark.django_db

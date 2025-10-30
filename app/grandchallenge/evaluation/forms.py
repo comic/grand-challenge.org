@@ -1,3 +1,5 @@
+from typing import NamedTuple
+
 from bleach import clean
 from crispy_forms.bootstrap import Tab, TabHolder
 from crispy_forms.helper import FormHelper
@@ -13,7 +15,6 @@ from django.forms import (
     CheckboxSelectMultiple,
     Form,
     HiddenInput,
-    IntegerField,
     ModelChoiceField,
     ModelForm,
     ModelMultipleChoiceField,
@@ -23,7 +24,7 @@ from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.algorithms.models import Job
-from grandchallenge.challenges.models import Challenge, ChallengeRequest
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.forms import (
     AdditionalInputsMixin,
     ContainerImageForm,
@@ -773,27 +774,16 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
         return cleaned_data
 
 
-class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
-    phases = ModelMultipleChoiceField(
-        queryset=None,
-        widget=CheckboxSelectMultiple,
-    )
-    algorithm_time_limit = IntegerField(
-        widget=forms.HiddenInput(),
-        disabled=True,
-    )
-    algorithm_selectable_gpu_type_choices = forms.JSONField(
-        widget=forms.HiddenInput(),
-        disabled=True,
-    )
-    algorithm_maximum_settable_memory_gb = forms.IntegerField(
-        widget=forms.HiddenInput(),
-        disabled=True,
-    )
+class PhaseWithTask(NamedTuple):
+    phase_pk: str
+    task_id: int | None
 
-    def __init__(self, *args, challenge, **kwargs):
+
+class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
+    def __init__(self, *args, challenge, challenge_request=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["phases"].queryset = (
+
+        phases = (
             Phase.objects.select_related("challenge")
             .filter(
                 challenge=challenge,
@@ -804,36 +794,51 @@ class ConfigureAlgorithmPhasesForm(SaveFormInitMixin, Form):
             .all()
         )
 
-        try:
-            challenge_request = ChallengeRequest.objects.get(
-                short_name=challenge.short_name
+        for phase in phases:
+            self.fields[f"phase_{phase.pk}"] = forms.BooleanField(
+                label=str(phase),
+                required=False,
             )
-        except ObjectDoesNotExist:
-            challenge_request = None
-        if challenge_request:
-            self.fields["algorithm_selectable_gpu_type_choices"].initial = (
-                challenge_request.algorithm_selectable_gpu_type_choices
-            )
-            self.fields["algorithm_maximum_settable_memory_gb"].initial = (
-                challenge_request.algorithm_maximum_settable_memory_gb
-            )
-            self.fields["algorithm_time_limit"].initial = (
-                challenge_request.inference_time_limit_in_minutes * 60
-            )
-        else:
-            self.fields["algorithm_selectable_gpu_type_choices"].initial = (
-                Phase._meta.get_field(
-                    "algorithm_selectable_gpu_type_choices"
-                ).get_default()
-            )
-            self.fields["algorithm_maximum_settable_memory_gb"].initial = (
-                Phase._meta.get_field(
-                    "algorithm_maximum_settable_memory_gb"
-                ).get_default()
-            )
-            self.fields["algorithm_time_limit"].initial = (
-                Phase._meta.get_field("algorithm_time_limit").get_default()
-            )
+
+            if challenge_request and len(challenge_request.task_ids) > 1:
+                self.fields[f"task_{phase.pk}"] = forms.TypedChoiceField(
+                    label=f"Task ID for {phase}",
+                    choices=[(i, i) for i in challenge_request.task_ids],
+                    coerce=int,
+                    empty_value=None,
+                    required=False,
+                )
+
+        self.init_form_helper()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        selected_phases = [
+            name
+            for name, value in cleaned_data.items()
+            if name.startswith("phase_") and value
+        ]
+        cleaned_selected_phases = []
+
+        for name in selected_phases:
+            phase_pk = name.split("_")[1]
+            task_id = cleaned_data.get(f"task_{phase_pk}")
+
+            if task_id is None and f"task_{phase_pk}" in cleaned_data:
+                self.add_error(
+                    field=f"task_{phase_pk}",
+                    error="The task ID must be provided.",
+                )
+            else:
+                cleaned_selected_phases.append(
+                    PhaseWithTask(
+                        phase_pk=phase_pk,
+                        task_id=task_id,
+                    )
+                )
+
+        cleaned_data["selected_phases"] = cleaned_selected_phases
+        return cleaned_data
 
 
 class EvaluationGroundTruthForm(SaveFormInitMixin, ModelForm):
