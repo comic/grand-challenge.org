@@ -6,6 +6,7 @@ from rest_framework.fields import CharField, SerializerMethodField
 from rest_framework.relations import SlugRelatedField
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.widgets import DICOMUploadWithName
 from grandchallenge.components.backends.exceptions import (
     CINotAllowedException,
     CIVNotEditableException,
@@ -279,14 +280,25 @@ class CIVSetPostSerializerMixin:
 
         for value in values:
             interface = value["interface"]
-            upload_session = value.get("upload_session", None)
-            user_upload = value.get("user_upload", None)
-            image = value.get("image", None)
-            value = value.get("value", None)
+            upload_session = value.get("upload_session")
+            user_upload = value.get("user_upload")
+            image = value.get("image")
+            value = value.get("value")
+            user_uploads = value.get("user_uploads")
+            image_name = value.get("image_name")
+            dicom_upload_with_name = (
+                DICOMUploadWithName(name=image_name, user_uploads=user_uploads)
+                if user_uploads and image_name
+                else None
+            )
             civ_data_objects.append(
                 CIVData(
                     interface_slug=interface.slug,
-                    value=upload_session or user_upload or image or value,
+                    value=upload_session
+                    or user_upload
+                    or image
+                    or value
+                    or dicom_upload_with_name,
                 )
             )
         try:

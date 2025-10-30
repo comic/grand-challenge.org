@@ -22,6 +22,7 @@ from grandchallenge.algorithms.models import (
     Job,
     annotate_input_output_counts,
 )
+from grandchallenge.cases.widgets import DICOMUploadWithName
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
@@ -310,35 +311,30 @@ class JobPostSerializer(JobSerializer):
     @staticmethod
     def reformat_inputs(*, serialized_civs):
         """Takes serialized CIV data and returns list of CIVData objects."""
-        possible_keys = [
-            "image",
-            "value",
-            "file",
-            "user_upload",
-            "upload_session",
-        ]
 
         data = []
         for civ in serialized_civs:
-            found_keys = [
-                key for key in possible_keys if civ.get(key) is not None
-            ]
-
-            if not found_keys:
-                raise serializers.ValidationError(
-                    f"You must provide at least one of {possible_keys}"
-                )
-
-            if len(found_keys) > 1:
-                raise serializers.ValidationError(
-                    f"You can only provide one of {possible_keys} for each interface."
-                )
-
+            interface = civ["interface"]
+            upload_session = civ.get("upload_session")
+            user_upload = civ.get("user_upload")
+            image = civ.get("image")
+            value = civ.get("value")
+            user_uploads = civ.get("user_uploads")
+            image_name = civ.get("image_name")
+            dicom_upload_with_name = (
+                DICOMUploadWithName(name=image_name, user_uploads=user_uploads)
+                if user_uploads and image_name
+                else None
+            )
             try:
                 data.append(
                     CIVData(
-                        interface_slug=civ["interface"].slug,
-                        value=civ[found_keys[0]],
+                        interface_slug=interface.slug,
+                        value=upload_session
+                        or user_upload
+                        or image
+                        or value
+                        or dicom_upload_with_name,
                     )
                 )
             except ValidationError as e:
