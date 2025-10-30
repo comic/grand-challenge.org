@@ -318,6 +318,7 @@ class JobPostSerializer(JobSerializer):
             upload_session = civ.get("upload_session")
             user_upload = civ.get("user_upload")
             image = civ.get("image")
+            file = civ.get("file")
             value = civ.get("value")
             user_uploads = civ.get("user_uploads")
             image_name = civ.get("image_name")
@@ -333,6 +334,7 @@ class JobPostSerializer(JobSerializer):
                         value=upload_session
                         or user_upload
                         or image
+                        or file
                         or dicom_upload_with_name
                         or value,
                     )
