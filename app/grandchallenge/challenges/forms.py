@@ -9,6 +9,7 @@ from crispy_forms.layout import (
     Submit,
 )
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils.html import format_html
@@ -165,6 +166,86 @@ class ChallengeRequestForm(forms.ModelForm):
         help_text="The GPU type choices that participants will be able to select for "
         "their algorithm inference jobs.",
     )
+    expected_number_of_teams = forms.IntegerField(
+        min_value=1,
+        help_text="How many teams do you expect to participate in your challenge?",
+    )
+    number_of_tasks = forms.IntegerField(
+        min_value=1,
+        help_text=(
+            "If your challenge has multiple tasks, we multiply "
+            "the phase 1 and 2 cost estimates by the number of tasks. "
+            "For that to work, please provide the average number of "
+            "test images and the average number of submissions across "
+            "tasks for the two phases below. For examples check "
+            "<a href='https://grand-challenge.org/documentation/"
+            "create-your-own-challenge/'>here</a>."
+        ),
+    )
+    average_size_of_test_image_in_mb = forms.IntegerField(
+        min_value=1,
+        max_value=10000,
+        help_text=(
+            "Average size of test image in MB. If you're <a href="
+            "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
+            "bundling images</a>, provide the size of the batch (not the size of a single image)."
+        ),
+    )
+    inference_time_average_minutes = forms.IntegerField(
+        min_value=5,
+        max_value=60,
+        label="Average algorithm job run time in minutes",
+        help_text=(
+            "The average time that you expect an algorithm job to take in minutes. "
+            "This time estimate should account for everything that needs to happen "
+            "for an algorithm container to process <u>one single image, including "
+            "model loading, i/o, preprocessing and inference.</u>"
+        ),
+    )
+    algorithm_maximum_settable_memory_gb = forms.IntegerField(
+        min_value=1,
+        initial=settings.ALGORITHMS_MAX_MEMORY_GB,
+        label="Maximum memory for algorithm jobs in GB",
+        help_text=(
+            "Maximum amount of main memory (DRAM) that participants will be allowed to "
+            "assign to algorithm inference jobs for submission."
+        ),
+    )
+    phase_1_number_of_submissions_per_team = forms.IntegerField(
+        min_value=1,
+        label="Expected number of submissions per team to Phase 1",
+        help_text=(
+            "How many submissions do you expect per team to this phase? "
+            "You can enforce a submission limit in the settings for each phase "
+            "to control this."
+        ),
+    )
+    phase_1_number_of_test_images = forms.IntegerField(
+        min_value=1,
+        help_text=(
+            "Number of test images for this phase. If you're <a href="
+            "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
+            "bundling images</a>, enter the number of batches (not the number of single images)."
+        ),
+    )
+    phase_2_number_of_submissions_per_team = forms.IntegerField(
+        min_value=1,
+        label="Expected number of submissions per team to Phase 2",
+        help_text=(
+            "How many submissions do you expect per team to this phase? "
+            "You can enforce a submission limit in the settings for each phase "
+            "to control this. Enter 0 here if you only have one phase."
+        ),
+    )
+    phase_2_number_of_test_images = forms.IntegerField(
+        min_value=1,
+        help_text=(
+            "Number of test images for this phase. If you're <a href="
+            "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
+            "bundling images</a>, enter the number of batches (not the number of single images). "
+            "Enter 0 here if you only have one phase."
+        ),
+    )
 
     class Meta:
         model = ChallengeRequest
@@ -173,16 +254,8 @@ class ChallengeRequestForm(forms.ModelForm):
             "structured_challenge_submission_form",
             "structured_challenge_submission_doi",
             *general_information_items_2,
-            "expected_number_of_teams",
-            "number_of_tasks",
-            "average_size_of_test_image_in_mb",
-            "inference_time_limit_in_minutes",
-            "algorithm_selectable_gpu_type_choices",
-            "algorithm_maximum_settable_memory_gb",
             "algorithm_inputs",
             "algorithm_outputs",
-            *phase_1_items,
-            *phase_2_items,
             "challenge_fee_agreement",
             "comments",
         )
@@ -193,10 +266,6 @@ class ChallengeRequestForm(forms.ModelForm):
         labels = {
             "short_name": "Acronym",
             "data_license": "We agree to publish the data set for this challenge under a CC-BY license.",
-            "phase_1_number_of_submissions_per_team": "Expected number of submissions per team to Phase 1",
-            "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
-            "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
-            "algorithm_maximum_settable_memory_gb": "Maximum memory for algorithm jobs in GB",
             "structured_challenge_submission_doi": "DOI",
             "structured_challenge_submission_form": "PDF",
             "challenge_fee_agreement": format_html(
@@ -249,26 +318,11 @@ class ChallengeRequestForm(forms.ModelForm):
                 f"uploaded to Grand Challenge (read more about that <a href='https://grand-challenge.org/documentation/"
                 f"data-storage/' target='_blank'>here</a>)."
             ),
-            "number_of_tasks": (
-                "If your challenge has multiple tasks, we multiply "
-                "the phase 1 and 2 cost estimates by the number of tasks. "
-                "For that to work, please provide the average number of "
-                "test images and the average number of submissions across "
-                "tasks for the two phases below. For examples check "
-                "<a href='https://grand-challenge.org/documentation/"
-                "create-your-own-challenge/'>here</a>."
-            ),
             "challenge_setup": (
                 "Describe the challenge set-up. How many tasks "
                 "and <a href='https://www.grand-challenge.org/documentation/"
                 "multiple-phases-multiple-leaderboards/' target='_blank'>phases</a>"
                 " does the challenge have?"
-            ),
-            "inference_time_limit_in_minutes": (
-                "The average time that you expect an algorithm job to take in minutes. "
-                "This time estimate should account for everything that needs to happen "
-                "for an algorithm container to process <u>one single image, including "
-                "model loading, i/o, preprocessing and inference.</u>"
             ),
             "data_license": (
                 "In the spirit of open science, we ask that the <b>public training "
@@ -277,32 +331,6 @@ class ChallengeRequestForm(forms.ModelForm):
                 "CC-BY license</a>. Note that this does not apply to the secret test "
                 "data used to evaluate algorithm submissions. Read more about this <a href='"
                 "https://grand-challenge.org/documentation/data-storage/'>here</a>."
-            ),
-            "phase_1_number_of_test_images": (
-                "Number of test images for this phase. If you're <a href="
-                "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-                "bundling images</a>, enter the number of batches (not the number of single images)."
-            ),
-            "phase_2_number_of_test_images": (
-                "Number of test images for this phase. If you're <a href="
-                "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-                "bundling images</a>, enter the number of batches (not the number of single images). "
-                "Enter 0 here if you only have one phase."
-            ),
-            "average_size_of_test_image_in_mb": (
-                "Average size of test image in MB. If you're <a href="
-                "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-                "bundling images</a>, provide the size of the batch (not the size of a single image)."
-            ),
-            "phase_1_number_of_submissions_per_team": (
-                "How many submissions do you expect per team to this phase? "
-                "You can enforce a submission limit in the settings for each phase "
-                "to control this."
-            ),
-            "phase_2_number_of_submissions_per_team": (
-                "How many submissions do you expect per team to this phase? "
-                "You can enforce a submission limit in the settings for each phase "
-                "to control this. Enter 0 here if you only have one phase."
             ),
             "submission_assessment": (
                 f"{structured_challenge_submission_help_text} Otherwise, "
@@ -404,7 +432,7 @@ class ChallengeRequestForm(forms.ModelForm):
                     "expected_number_of_teams",
                     "number_of_tasks",
                     "average_size_of_test_image_in_mb",
-                    "inference_time_limit_in_minutes",
+                    "inference_time_average_minutes",
                     "algorithm_selectable_gpu_type_choices",
                     "algorithm_maximum_settable_memory_gb",
                     HTML(
@@ -458,6 +486,54 @@ class ChallengeRequestForm(forms.ModelForm):
                 "Please describe what inputs and outputs the algorithms submitted to your challenge take and produce."
             )
         return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        number_of_tasks = self.cleaned_data["number_of_tasks"]
+
+        instance.algorithm_selectable_gpu_type_choices_for_tasks = [
+            self.cleaned_data["algorithm_selectable_gpu_type_choices"]
+        ] * number_of_tasks
+
+        instance.algorithm_maximum_settable_memory_gb_for_tasks = [
+            self.cleaned_data["algorithm_maximum_settable_memory_gb"]
+        ] * number_of_tasks
+
+        instance.average_size_test_image_mb_for_tasks = [
+            self.cleaned_data["average_size_of_test_image_in_mb"]
+        ] * number_of_tasks
+
+        instance.inference_time_average_minutes_for_tasks = [
+            self.cleaned_data["inference_time_average_minutes"]
+        ] * number_of_tasks
+
+        instance.task_ids = list(range(1, number_of_tasks + 1))
+
+        instance.task_id_for_phases = [
+            task_id for task_id in instance.task_ids for _ in range(2)
+        ]
+
+        instance.number_of_teams_for_phases = (
+            [self.cleaned_data["expected_number_of_teams"]]
+            * 2
+            * number_of_tasks
+        )
+
+        instance.number_of_submissions_per_team_for_phases = [
+            self.cleaned_data["phase_1_number_of_submissions_per_team"],
+            self.cleaned_data["phase_2_number_of_submissions_per_team"],
+        ] * number_of_tasks
+
+        instance.number_of_test_images_for_phases = [
+            self.cleaned_data["phase_1_number_of_test_images"],
+            self.cleaned_data["phase_2_number_of_test_images"],
+        ] * number_of_tasks
+
+        if commit:
+            instance.save()
+
+        return instance
 
 
 class ChallengeRequestStatusUpdateForm(forms.ModelForm):
@@ -522,56 +598,22 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
 
 
 class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
-    algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
-        choices=[
-            (HTMX_BLANK_CHOICE_KEY, GPUTypeChoices.NO_GPU.label),
-            (GPUTypeChoices.T4, GPUTypeChoices.T4.label),
-            (GPUTypeChoices.A10G, GPUTypeChoices.A10G.label),
-        ],
-        widget=forms.CheckboxSelectMultiple,
-        label="Selectable GPU types for algorithm jobs",
-        help_text="The GPU type choices that participants will be able to select for "
-        "their algorithm inference jobs.",
-    )
-
     class Meta:
         model = ChallengeRequest
         fields = (
-            "expected_number_of_teams",
-            "number_of_tasks",
-            "inference_time_limit_in_minutes",
-            "algorithm_selectable_gpu_type_choices",
-            "algorithm_maximum_settable_memory_gb",
-            "average_size_of_test_image_in_mb",
-            "phase_1_number_of_submissions_per_team",
-            "phase_1_number_of_test_images",
-            "phase_2_number_of_submissions_per_team",
-            "phase_2_number_of_test_images",
+            "algorithm_selectable_gpu_type_choices_for_tasks",
+            "algorithm_maximum_settable_memory_gb_for_tasks",
+            "average_size_test_image_mb_for_tasks",
+            "inference_time_average_minutes_for_tasks",
+            "task_ids",
+            "task_id_for_phases",
+            "number_of_teams_for_phases",
+            "number_of_submissions_per_team_for_phases",
+            "number_of_test_images_for_phases",
         )
-        labels = {
-            "phase_1_number_of_submissions_per_team": "Expected number of submissions per team to Phase 1",
-            "phase_2_number_of_submissions_per_team": "Expected number of submissions per team to Phase 2",
-            "inference_time_limit_in_minutes": "Average algorithm job run time in minutes",
-            "algorithm_maximum_settable_memory_gb": "Maximum memory for algorithm jobs in GB",
-        }
-        help_texts = {
-            "inference_time_limit_in_minutes": (
-                "The average time that you expect an algorithm job to take in minutes. "
-                "This time estimate should account for everything that needs to happen "
-                "for an algorithm container to process <u>one single image, including "
-                "model loading, i/o, preprocessing and inference.</u>"
-            ),
-        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if "" in (
-            initial := self.instance.algorithm_selectable_gpu_type_choices
-        ):
-            initial[initial.index("")] = HTMX_BLANK_CHOICE_KEY
-            self.fields["algorithm_selectable_gpu_type_choices"].initial = (
-                initial
-            )
         self.helper = FormHelper(self)
         self.helper.form_id = "budget"
         self.helper.attrs.update(
@@ -586,10 +628,92 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         )
         self.helper.layout.append(Submit("save", "Save"))
 
-    def clean_algorithm_selectable_gpu_type_choices(self):
-        data = self.cleaned_data.get(
-            "algorithm_selectable_gpu_type_choices", []
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if not self._clean_all_fields_nonempty_cleaned_data(cleaned_data):
+            raise ValidationError("Please fix the errors below.")
+
+        task_ids = cleaned_data.get("task_ids")
+        task_id_for_phases = cleaned_data.get("task_id_for_phases")
+
+        self._clean_task_lists_equal_length(cleaned_data)
+
+        self._clean_task_id_for_phases(task_ids, task_id_for_phases)
+
+        if not self._clean_phases_lists_equal_length(
+            task_id_for_phases, cleaned_data
+        ):
+            raise ValidationError(
+                "All fields defining phases must be of equal length."
+            )
+        self._clean_later_phases_not_more_teams_or_submissions(
+            task_id_for_phases, cleaned_data
         )
-        if HTMX_BLANK_CHOICE_KEY in data:
-            data[data.index(HTMX_BLANK_CHOICE_KEY)] = ""
-        return data
+
+        return cleaned_data
+
+    def _clean_all_fields_nonempty_cleaned_data(self, cleaned_data):
+        return all(
+            [cleaned_data.get(field_name) for field_name in self._meta.fields]
+        )
+
+    def _clean_task_lists_equal_length(self, cleaned_data):
+        task_ids = cleaned_data.get("task_ids")
+
+        for field_name in (
+            "algorithm_selectable_gpu_type_choices_for_tasks",
+            "algorithm_maximum_settable_memory_gb_for_tasks",
+            "average_size_test_image_mb_for_tasks",
+            "inference_time_average_minutes_for_tasks",
+        ):
+            field_value = cleaned_data.get(field_name)
+            if len(task_ids) != len(field_value):
+                self.add_error(
+                    field_name, "Must be of equal length as number of tasks."
+                )
+
+    def _clean_task_id_for_phases(self, task_ids, task_id_for_phases):
+        if not set(task_id_for_phases).issubset(task_ids):
+            self.add_error(
+                "task_id_for_phases", "Ids must be defined in task ids."
+            )
+        elif set(task_id_for_phases) != set(task_ids):
+            self.add_error("task_id_for_phases", "Not all task ids are used.")
+
+    def _clean_phases_lists_equal_length(
+        self, task_id_for_phases, cleaned_data
+    ):
+        all_phases_list_equal_length = True
+
+        for field_name in (
+            "number_of_teams_for_phases",
+            "number_of_submissions_per_team_for_phases",
+            "number_of_test_images_for_phases",
+        ):
+            field_value = cleaned_data.get(field_name)
+            if len(task_id_for_phases) != len(field_value):
+                self.add_error(
+                    field_name, "Must be of equal length as number of phases."
+                )
+                all_phases_list_equal_length = False
+
+        return all_phases_list_equal_length
+
+    def _clean_later_phases_not_more_teams_or_submissions(
+        self, task_id_for_phases, cleaned_data
+    ):
+        for field_name in (
+            "number_of_teams_for_phases",
+            "number_of_submissions_per_team_for_phases",
+        ):
+            field_value = cleaned_data.get(field_name)
+            for idx in range(1, len(task_id_for_phases)):
+                if (
+                    task_id_for_phases[idx] == task_id_for_phases[idx - 1]
+                    and field_value[idx] > field_value[idx - 1]
+                ):
+                    self.add_error(
+                        field_name,
+                        "Later phases in a task may not have more than earlier phases.",
+                    )

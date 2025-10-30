@@ -9,10 +9,7 @@ Based on the following information provided by the challenge requester:
 
 <ul>
     {% for field, value in object.budget_fields.items %}
-        <li><span class="font-weight-bold">{% if field == "inference time limit in minutes" %}Average algorithm job run
-            time in minutes{% elif field == "algorithm selectable gpu type choices" %}Selectable GPU types for algorithm
-            jobs{% elif field == "algorithm maximum settable memory gb" %}Maximum memory for algorithm jobs in GB
-            {% else %}{{ field|capfirst }}{% endif %}</span>: {{ value }}</li>
+        <li><span class="font-weight-bold">{{ field|capfirst }}</span>: {{ value }}</li>
     {% endfor %}
 </ul>
 
@@ -21,10 +18,10 @@ Based on the following information provided by the challenge requester:
         <tr>
             <td class="col-9 font-italic">Total number of submissions to the challenge</td>
             <td class="col-3 text-right">
-                {% if object.total_num_submissions > 500 %}
+                {% if object.total_number_of_submissions > 500 %}
                     <i class="fa fa-exclamation-triangle text-warning"></i>
                 {% endif %}
-                {{ object.total_num_submissions }}
+                {{ object.total_number_of_submissions }}
             </td>
         </tr>
         <tr>
@@ -38,7 +35,7 @@ Based on the following information provided by the challenge requester:
     </table>
 </div>
 
-{% if object.total_num_submissions > 500 %}
+{% if object.total_number_of_submissions > 500 %}
     <div class="alert alert-warning">
         <i class="fa fa-exclamation-triangle"></i>
         This is an unusually high number of total submissions (more than 500). Reconsider the number of submissions for each phase.
@@ -51,6 +48,7 @@ Based on the following information provided by the challenge requester:
     </div>
 {% endif %}
 
+<br>
 <h4>To be invoiced</h4>
 
 <div class="table-responsive">
@@ -94,13 +92,97 @@ Based on the following information provided by the challenge requester:
                 <td></td>
                 <td></td>
                 <td></td>
-                <td class="text-right font-weight-bold">{{ object.total_challenge_cost|euro_no_cents }}</td>
+                <td class="text-right font-weight-bold">{{ object.total_challenge_price|euro_no_cents }}</td>
             </tr>
         </tbody>
     </table>
 </div>
 
+<br>
 <h4>Capacity reservation estimate</h4>
+
+{% for task in object.costs_for_tasks %}
+
+        <br>
+        <h5>Task {{ task.id }}</h5>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-sm">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Item</th>
+                        <th class="col-5">Description</th>
+                        <th class="text-right">Price per unit</th>
+                        <th>Number</th>
+                        <th>Unit</th>
+                        <th class="text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for phase in task.costs_for_phases_in_task %}
+                        <tr>
+                            <td>Compute phase {{ forloop.counter }}</td>
+                            <td>{{ phase.number_of_submissions_per_team }} submission{{ phase.number_of_submissions_per_team|pluralize }}
+                                times {{ phase.number_of_teams }} teams
+                                times {{ phase.number_of_test_images }} image{{ phase.number_of_test_images|pluralize }}
+                                times {{ task.inference_time_average_minutes }} minutes average job time per image</td>
+                            <td class="text-right">{{ task.compute_costs_euros_per_hour|euro }}</td>
+                            <td>{{ phase.compute_time|total_hours|floatformat }}</td>
+                            <td>Hours</td>
+                            <td class="text-right">{{ phase.compute_costs_euros|euro }}</td>
+                        </tr>
+                        <tr>
+                            <td>Data storage phase {{ forloop.counter }}</td>
+                            <td>{{ phase.number_of_test_images }} image{{ phase.number_of_test_images|pluralize }}, average size {{ task.average_size_test_image_mb }} MB, for 5 years</td>
+                            <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
+                            <td>{{ phase.data_storage_size_gb|floatformat }}</td>
+                            <td>GB</td>
+                            <td class="text-right">{{ phase.data_storage_costs_euros|euro }}</td>
+                        </tr>
+                        <tr class="table-light">
+                            <td>Total phase {{ forloop.counter }}</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">{{ phase.compute_and_storage_costs_euros|euro }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="6">&nbsp;</td>
+                        </tr>
+                    {% endfor %}
+
+                    <tr class="table-light">
+                        <td>Container storage task {{ task_id }}</td>
+                        <td>{{ task.number_of_docker_images_per_team }} unique submission{{ task.number_of_docker_images_per_team|pluralize }}
+                            times {{ task.number_of_teams }} teams
+                            times {{ object.average_algorithm_container_size_in_gb }} GB per container, for 5 years</td>
+                        <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
+                        <td>{{ task.docker_storage_size_gb|floatformat }}</td>
+                        <td>GB</td>
+                        <td class="text-right">{{ task.docker_storage_costs_euros|euro }}</td>
+                    </tr>
+
+                    <tr>
+                        <td class="font-weight-bold" colspan="5">Compute task {{ task_id }}</td>
+                        <td class="text-right font-weight-bold">{{ task.compute_costs_euros|euro }}</td>
+                    </tr>
+                    <tr>
+                        <td class="font-weight-bold" colspan="5">Storage task {{ task_id }}</td>
+                        <td class="text-right font-weight-bold">{{ task.storage_costs_euros|euro }}</td>
+                    </tr>
+                    <tr class="table-info">
+                        <td class="font-weight-bold border-top border-dark" colspan="5">Total task {{ task_id }}</td>
+                        <td class="text-right font-weight-bold border-top border-dark">{{ task.compute_and_storage_costs_euros|euro }}</td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+{% endfor %}
+
+<br>
 
 <div class="table-responsive">
     <table class="table table-hover table-sm">
@@ -115,43 +197,8 @@ Based on the following information provided by the challenge requester:
             </tr>
         </thead>
         <tbody>
-            {% for phase in object.costs_for_phases %}
-                <tr>
-                    <td>Compute {{ phase.name }}</td>
-                    <td>{{ phase.number_of_submissions_per_team }} submissions times {{ object.expected_number_of_teams }} teams times {{ phase.number_of_test_images }} images times {{ object.inference_time_limit_in_minutes }} minutes average job time per image</td>
-                    <td class="text-right">{{ object.compute_costs_euros_per_hour|euro }}</td>
-                    <td>{{ phase.compute_time|total_hours|floatformat }}</td>
-                    <td>Hours</td>
-                    <td class="text-right">{{ phase.compute_costs_euros|euro }}</td>
-                </tr>
-                <tr>
-                    <td>Data storage {{ phase.name }}</td>
-                    <td>{{ phase.number_of_test_images }} images, average size {{ object.average_size_of_test_image_in_mb }} MB, for 5 years</td>
-                    <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
-                    <td>{{ phase.data_storage_size_gb|floatformat }}</td>
-                    <td>GB</td>
-                    <td class="text-right">{{ phase.data_storage_costs_euros|euro }}</td>
-                </tr>
-                <tr class="table-light">
-                    <td>Total {{ phase.name }}</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td class="text-right">{{ phase.total_euros|euro }}</td>
-                </tr>
-                <tr>
-                    <td colspan="6">&nbsp;</td>
-                </tr>
-            {% endfor %}
-            <tr>
-                <td>Container storage</td>
-                <td>{{ object.num_unique_docker_images_per_team }} unique submissions times {{ object.expected_number_of_teams }} teams times {{ object.average_algorithm_container_size_in_gb }} GB per container, for 5 years</td>
-                <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
-                <td>{{ object.docker_storage_size_gb|floatformat }}</td>
-                <td>GB</td>
-                <td class="text-right">{{ object.docker_storage_costs_euros|euro }}</td>
-            </tr>
+
+
             <tr>
                 <td class="font-weight-bold" colspan="5">Total compute</td>
                 <td class="text-right font-weight-bold">{{ object.total_compute_costs_euros|euro }}</td>
@@ -176,6 +223,7 @@ Based on the following information provided by the challenge requester:
     </table>
 </div>
 
+<br>
 <h4>Compute/storage split for budget</h4>
 
 <div class="table-responsive">
