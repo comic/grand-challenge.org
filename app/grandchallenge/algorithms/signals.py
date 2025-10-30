@@ -81,7 +81,7 @@ def _get_images_for_jobs(*, jobs):
 
 
 @receiver(m2m_changed, sender=Job.viewer_groups.through)
-def update_view_image_permissions_on_viewer_groups_change(  # noqa:C901
+def update_permissions_on_viewer_groups_change(  # noqa:C901
     *_, instance, action, reverse, model, pk_set, **__
 ):
     if action not in ["post_add", "post_remove", "pre_clear"]:
