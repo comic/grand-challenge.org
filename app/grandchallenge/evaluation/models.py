@@ -770,9 +770,9 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
 
         if not skip_calculate_ranks:
             on_commit(
-                lambda: calculate_ranks.apply_async(
+                calculate_ranks.signature(
                     kwargs={"phase_pk": self.pk}
-                )
+                ).apply_async
             )
 
     def clean(self):
@@ -1955,9 +1955,9 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         self.assign_permissions()
 
         on_commit(
-            lambda: calculate_ranks.apply_async(
+            calculate_ranks.signature(
                 kwargs={"phase_pk": self.submission.phase.pk}
-            )
+            ).apply_async
         )
 
     @property

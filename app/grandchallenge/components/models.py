@@ -1791,9 +1791,9 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         self.save()
 
         if self.status == self.SUCCESS:
-            on_commit(self.execute_task_on_success)
+            self.execute_task_on_success()
         elif self.status in [self.FAILURE, self.CANCELLED]:
-            on_commit(self.execute_task_on_failure)
+            self.execute_task_on_failure()
 
     @property
     def executor_kwargs(self):
@@ -1842,17 +1842,21 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         }
 
     def execute(self):
-        return provision_job.signature(**self.signature_kwargs).apply_async()
+        on_commit(provision_job.signature(**self.signature_kwargs).apply_async)
 
     def execute_task_on_success(self):
-        deprovision_job.signature(**self.signature_kwargs).apply_async()
+        on_commit(
+            deprovision_job.signature(**self.signature_kwargs).apply_async
+        )
         if self.task_on_success:
-            signature(self.task_on_success).apply_async()
+            on_commit(signature(self.task_on_success).apply_async)
 
     def execute_task_on_failure(self):
-        deprovision_job.signature(**self.signature_kwargs).apply_async()
+        on_commit(
+            deprovision_job.signature(**self.signature_kwargs).apply_async
+        )
         if self.task_on_failure:
-            signature(self.task_on_failure).apply_async()
+            on_commit(signature(self.task_on_failure).apply_async)
 
     @property
     def animate(self):

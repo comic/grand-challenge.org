@@ -1,9 +1,13 @@
 import pytest
+from django.db.transaction import on_commit
 
 from grandchallenge.core.celery import acks_late_micro_short_task
 
 
-def test_task_errors_raised_when_invoked(settings):
+@pytest.mark.django_db
+def test_task_errors_raised_when_invoked(
+    settings, django_capture_on_commit_callbacks
+):
     settings.CELERY_TASK_ALWAYS_EAGER = True
     settings.CELERY_TASK_EAGER_PROPAGATES = True
 
@@ -20,7 +24,10 @@ def test_task_errors_raised_when_invoked(settings):
 
     assert counter == 1
 
-    result = test_task.apply_async()
+    with django_capture_on_commit_callbacks() as callbacks:
+        on_commit(test_task.apply_async)
+
+    result = callbacks[0]()
 
     assert result.status == "SUCCESS"
     assert counter == 2

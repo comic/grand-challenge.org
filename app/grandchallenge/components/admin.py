@@ -127,7 +127,7 @@ def requeue_jobs(modeladmin, request, queryset):
 
         jobs.append(job)
 
-        on_commit(job.execute)
+        job.execute()
 
     queryset.model.objects.bulk_update(
         jobs,
@@ -170,4 +170,6 @@ def cancel_jobs(modeladmin, request, queryset):
 )
 def deprovision_jobs(modeladmin, request, queryset):
     for job in queryset:
-        deprovision_job.signature(**job.signature_kwargs).apply_async()
+        on_commit(
+            deprovision_job.signature(**job.signature_kwargs).apply_async
+        )

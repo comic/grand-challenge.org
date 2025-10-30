@@ -149,12 +149,12 @@ def prepare_and_execute_evaluation(*, evaluation_pk):
         evaluation.status = Evaluation.PENDING
         evaluation.save()
         on_commit(
-            lambda: create_algorithm_jobs_for_evaluation.apply_async(
+            create_algorithm_jobs_for_evaluation.signature(
                 kwargs={
                     "evaluation_pk": evaluation_pk,
                     "first_run": True,
                 }
-            )
+            ).apply_async
         )
     elif evaluation.submission.predictions_file:
         mimetype = get_file_mimetype(evaluation.submission.predictions_file)
@@ -191,7 +191,8 @@ def prepare_and_execute_evaluation(*, evaluation_pk):
         evaluation.inputs.add(civ)
         evaluation.status = Evaluation.PENDING
         evaluation.save()
-        on_commit(evaluation.execute)
+
+        evaluation.execute()
     else:
         evaluation.update_status(
             status=Evaluation.FAILURE,
@@ -463,7 +464,7 @@ def set_evaluation_inputs(*, evaluation_pk):
         evaluation.status = evaluation.PENDING
         evaluation.save()
 
-        on_commit(evaluation.execute)
+        evaluation.execute()
 
 
 def filter_by_creators_most_recent(*, evaluations):

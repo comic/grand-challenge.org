@@ -3,6 +3,7 @@ from tempfile import NamedTemporaryFile
 from zipfile import ZipFile
 
 from django.core.files import File
+from django.db.transaction import on_commit
 
 from grandchallenge.codebuild.tasks import create_codebuild_build
 from grandchallenge.github.models import GitHubWebhookMessage
@@ -11,7 +12,9 @@ from grandchallenge.github.models import GitHubWebhookMessage
 def run():
     ghwm = _create_github_webhook_message()
 
-    create_codebuild_build.apply_async(kwargs={"pk": ghwm.pk})
+    on_commit(
+        create_codebuild_build.signature(kwargs={"pk": ghwm.pk}).apply_async
+    )
 
 
 def _create_github_webhook_message():

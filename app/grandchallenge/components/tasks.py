@@ -813,7 +813,9 @@ def execute_job(
     if job.status == job.PROVISIONED:
         job.update_status(status=job.EXECUTING)
     else:
-        deprovision_job.signature(**job.signature_kwargs).apply_async()
+        on_commit(
+            deprovision_job.signature(**job.signature_kwargs).apply_async
+        )
         raise PriorStepFailed("Job is not set to be executed")
 
     if not job.container.can_execute:

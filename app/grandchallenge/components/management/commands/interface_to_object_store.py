@@ -1,4 +1,5 @@
 from django.core.management import BaseCommand
+from django.db.transaction import on_commit
 
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -31,6 +32,10 @@ class Command(BaseCommand):
             interface.save()
 
             for pk in pks:
-                civ_value_to_file.apply_async(kwargs={"civ_pk": pk})
+                on_commit(
+                    civ_value_to_file.signature(
+                        kwargs={"civ_pk": pk}
+                    ).apply_async
+                )
 
         self.stdout.write("Conversion tasks scheduled")

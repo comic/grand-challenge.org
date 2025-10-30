@@ -11,8 +11,8 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import transaction
 from django.db.models import Count, Q
+from django.db.transaction import on_commit
 from django.forms import Form
 from django.forms.utils import ErrorList
 from django.http import (
@@ -653,13 +653,13 @@ class ReaderStudyCopy(
         rs.save()
         self.reader_study = rs
         if form.cleaned_data["copy_display_sets"]:
-            transaction.on_commit(
-                lambda: copy_reader_study_display_sets.apply_async(
+            on_commit(
+                copy_reader_study_display_sets.signature(
                     kwargs={
                         "orig_pk": str(reader_study.pk),
                         "new_pk": str(rs.pk),
                     }
-                )
+                ).apply_async
             )
             messages.add_message(
                 self.request,

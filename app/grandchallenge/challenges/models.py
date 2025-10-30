@@ -532,13 +532,13 @@ class Challenge(ChallengeBase, FieldChangeMixin):
 
         if adding or self.hidden != self._hidden_orig:
             on_commit(
-                lambda: assign_evaluation_permissions.apply_async(
+                assign_evaluation_permissions.signature(
                     kwargs={
                         "phase_pks": list(
                             self.phase_set.values_list("id", flat=True)
                         )
                     }
-                )
+                ).apply_async
             )
 
         if self.has_changed("compute_cost_euro_millicents"):

@@ -313,7 +313,12 @@ def test_one_click_unsubscribe_functionality_for_newsletter(
 )
 @pytest.mark.django_db
 def test_one_click_unsubscribe_user_mismatch(
-    client, settings, viewname, subscription_attr, new_subscription_preference
+    client,
+    settings,
+    viewname,
+    subscription_attr,
+    new_subscription_preference,
+    django_capture_on_commit_callbacks,
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -329,20 +334,25 @@ def test_one_click_unsubscribe_user_mismatch(
     token = user.user_profile.unsubscribe_token
 
     other_user = UserFactory()
-    response = get_view_for_user(
-        client=client,
-        method=client.post,
-        viewname=viewname,
-        reverse_kwargs={"token": token},
-        user=other_user,
-    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            viewname=viewname,
+            reverse_kwargs={"token": token},
+            user=other_user,
+        )
+
     assert response.status_code == 302
     user.user_profile.refresh_from_db()
+
     # token owner is unsubscribed
     assert (
         getattr(user.user_profile, subscription_attr)
         == new_subscription_preference
     )
+
     # token owner and requesting user are added to a verification user set
     user_set = VerificationUserSet.objects.get()
     assert user in user_set.users.all()
