@@ -21,7 +21,6 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.factories import ImageFactory, UserFactory
-from tests.uploads_tests.factories import UserUploadFactory
 
 
 @pytest.mark.django_db
@@ -240,22 +239,14 @@ def test_algorithm_job_post_serializer_create(
     job = {
         "algorithm": algorithm_image.algorithm.api_url,
         "inputs": [
-            {
-                "interface": ci_img1.slug,
-                "upload_session": upload.api_url,
-                # Other attributes are optionally None
-                "user_upload": None,
-                "image": None,
-                "value": None,
-                "file": None,
-            },
+            {"interface": ci_img1.slug, "upload_session": upload.api_url},
             {"interface": ci_img2.slug, "image": image2.api_url},
             {"interface": ci_string.slug, "value": "foo"},
         ],
     }
     serializer = JobPostSerializer(data=job, context={"request": request})
 
-    assert serializer.is_valid()
+    assert serializer.is_valid(), serializer.errors
 
     # fake successful upload
     upload.status = RawImageUploadSession.SUCCESS
@@ -416,46 +407,6 @@ class TestJobCreateLimits:
         )
 
         assert serializer.is_valid()
-
-
-@pytest.mark.django_db
-def test_reformat_inputs(rf):
-    ci_str = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
-    ci_img = ComponentInterfaceFactory(
-        kind=ComponentInterface.Kind.PANIMG_IMAGE
-    )
-    ci_img2 = ComponentInterfaceFactory(
-        kind=ComponentInterface.Kind.PANIMG_IMAGE
-    )
-    ci_file = ComponentInterfaceFactory(
-        kind=ComponentInterface.Kind.ANY, store_in_database=False
-    )
-
-    us = RawImageUploadSessionFactory()
-    upl = UserUploadFactory()
-    im = ImageFactory()
-
-    data = [
-        {"interface": ci_str, "value": "foo"},
-        {"interface": ci_img, "image": im},
-        {"interface": ci_img2, "upload_session": us},
-        {"interface": ci_file, "user_upload": upl},
-    ]
-    request = rf.get("/foo")
-    request.user = UserFactory()
-    serializer = JobPostSerializer(
-        data=AlgorithmJobFactory(time_limit=10), context={"request": request}
-    )
-
-    assert serializer.reformat_inputs(serialized_civs=data)[0].value == "foo"
-    assert serializer.reformat_inputs(serialized_civs=data)[1].image == im
-    assert (
-        serializer.reformat_inputs(serialized_civs=data)[2].upload_session
-        == us
-    )
-    assert (
-        serializer.reformat_inputs(serialized_civs=data)[3].user_upload == upl
-    )
 
 
 @pytest.mark.django_db
