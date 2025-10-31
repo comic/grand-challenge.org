@@ -30,7 +30,7 @@ from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     ComponentInterfaceValueSerializer,
     HyperlinkedComponentInterfaceValueSerializer,
-    reformat_serialized_civ_data,
+    convert_deserialized_civ_data,
 )
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
@@ -240,7 +240,9 @@ class JobPostSerializer(JobSerializer):
         data["algorithm_interface"] = (
             self.validate_inputs_and_return_matching_interface(inputs=inputs)
         )
-        self.inputs = reformat_serialized_civ_data(serialized_civ_data=inputs)
+        self.inputs = convert_deserialized_civ_data(
+            deserialized_civ_data=inputs
+        )
 
         if Job.objects.get_jobs_with_same_inputs(
             inputs=self.inputs,

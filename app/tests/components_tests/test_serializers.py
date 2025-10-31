@@ -10,7 +10,7 @@ from grandchallenge.components.models import (
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     ComponentInterfaceValueSerializer,
-    reformat_serialized_civ_data,
+    convert_deserialized_civ_data,
 )
 from tests.cases_tests.factories import (
     DICOMImageSetFactory,
@@ -733,7 +733,7 @@ def test_civ_serializer_list_ordering():
 
 
 @pytest.mark.django_db
-def test_reformat_serialized_civ_data():
+def test_convert_deserialized_civ_data():
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
     ci_img2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
@@ -754,7 +754,9 @@ def test_reformat_serialized_civ_data():
         {"interface": ci_file, "user_upload": uploads[0]},
     ]
 
-    civ_data_objects = reformat_serialized_civ_data(serialized_civ_data=data)
+    civ_data_objects = convert_deserialized_civ_data(
+        deserialized_civ_data=data
+    )
 
     assert civ_data_objects[0].value == "foo"
     assert civ_data_objects[1].image == im

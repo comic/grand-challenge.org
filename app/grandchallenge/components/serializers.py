@@ -27,10 +27,10 @@ from grandchallenge.workstation_configs.serializers import (
 logger = logging.getLogger(__name__)
 
 
-def reformat_serialized_civ_data(*, serialized_civ_data):
-    """Takes serialized CIV data and returns list of CIVData objects."""
+def convert_deserialized_civ_data(*, deserialized_civ_data):
+    """Takes deserialized CIV data and returns list of CIVData objects."""
     civ_data_objects = []
-    for civ in serialized_civ_data:
+    for civ in deserialized_civ_data:
         interface = civ["interface"]
 
         keys = set(civ.keys()) - {"interface"}
@@ -329,8 +329,8 @@ class CIVSetPostSerializerMixin:
 
         request = self.context["request"]
 
-        civ_data_objects = reformat_serialized_civ_data(
-            serialized_civ_data=values
+        civ_data_objects = convert_deserialized_civ_data(
+            deserialized_civ_data=values
         )
 
         try:
