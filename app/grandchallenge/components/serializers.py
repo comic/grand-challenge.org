@@ -47,7 +47,7 @@ def reformat_serialized_civ_data(*, serialized_civ_data):
 
         if not keys:
             raise serializers.ValidationError(
-                f"You must provide at least one of {possible_keys}"
+                f"You must provide at least one of {possible_keys}."
             )
         elif keys == {"image_name", "user_uploads"}:
             value = DICOMUploadWithName(
@@ -56,10 +56,14 @@ def reformat_serialized_civ_data(*, serialized_civ_data):
             )
         elif len(keys) > 1:
             raise serializers.ValidationError(
-                f"You can only provide one of {possible_keys} for each interface."
+                f"You can only provide one of {possible_keys} for each socket."
+            )
+        elif (key := keys.pop()) in ("image_name", "user_uploads"):
+            raise serializers.ValidationError(
+                "You must provide 'image_name' and 'user_uploads' together."
             )
         else:
-            value = civ[list(keys)[0]]
+            value = civ[key]
 
         try:
             civ_data_objects.append(

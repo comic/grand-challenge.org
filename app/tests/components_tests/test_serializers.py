@@ -1,5 +1,8 @@
+from contextlib import nullcontext
+
 import pytest
 from guardian.shortcuts import assign_perm
+from rest_framework import serializers
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import (
@@ -10,8 +13,12 @@ from grandchallenge.components.models import (
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     ComponentInterfaceValueSerializer,
+    reformat_serialized_civ_data,
 )
-from tests.cases_tests.factories import DICOMImageSetFactory
+from tests.cases_tests.factories import (
+    DICOMImageSetFactory,
+    RawImageUploadSessionFactory,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -694,3 +701,87 @@ def test_civ_serializer_list_ordering():
     assert [civ["interface"]["slug"] for civ in produced_order] == [
         civ.interface.slug for civ in expected_order
     ]
+
+
+@pytest.mark.django_db
+def test_reformat_serialized_civ_data():
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    ci_img2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    ci_dcm = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
+    ci_file = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=False
+    )
+    us = RawImageUploadSessionFactory()
+    uploads = UserUploadFactory.create_batch(2)
+    im = ImageFactory()
+    data = [
+        {"interface": ci_str, "value": "foo"},
+        {"interface": ci_img, "image": im},
+        {"interface": ci_img2, "upload_session": us},
+        {"interface": ci_dcm, "image_name": "a dcm", "user_uploads": uploads},
+        {"interface": ci_file, "user_upload": uploads[0]},
+    ]
+
+    civ_data_objects = reformat_serialized_civ_data(serialized_civ_data=data)
+
+    assert civ_data_objects[0].value == "foo"
+    assert civ_data_objects[1].image == im
+    assert civ_data_objects[2].upload_session == us
+    assert civ_data_objects[3].dicom_upload_with_name.name == "a dcm"
+    assert civ_data_objects[3].dicom_upload_with_name.user_uploads == uploads
+    assert civ_data_objects[4].user_upload == uploads[0]
+
+
+def test_reformat_serialized_civ_data_invalid_no_keys():
+    data = [{"interface": ""}]
+
+    with pytest.raises(serializers.ValidationError) as e:
+        reformat_serialized_civ_data(serialized_civ_data=data)
+
+    assert (
+        "You must provide at least one of ['image', 'value', 'file', "
+        "'user_upload', 'upload_session', ('image_name', 'user_uploads')]."
+    ) in str(e.value)
+
+
+@pytest.mark.django_db
+def test_reformat_serialized_civ_data_invalid_multiple_keys():
+    data = [{"interface": "some_socket_slug", "value": "foo", "image": "foo"}]
+
+    with pytest.raises(serializers.ValidationError) as e:
+        reformat_serialized_civ_data(serialized_civ_data=data)
+
+    assert (
+        "You can only provide one of ['image', 'value', 'file', "
+        "'user_upload', 'upload_session', ('image_name', 'user_uploads')] for each socket."
+    ) in str(e.value)
+
+    # Using multiple keys (image_name and user_uploads) is necessary for DICOM
+    ci_dcm = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
+    data = [
+        {"interface": ci_dcm, "image_name": "foo", "user_uploads": ["foo"]}
+    ]
+
+    with nullcontext():
+        reformat_serialized_civ_data(serialized_civ_data=data)
+
+
+@pytest.mark.django_db
+def test_reformat_serialized_civ_data_invalid_dicom_keys():
+    ci_dcm = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
+    for key in ("image_name", "user_uploads"):
+        data = [{"interface": ci_dcm, key: "foo"}]
+
+        with pytest.raises(serializers.ValidationError) as e:
+            reformat_serialized_civ_data(serialized_civ_data=data)
+
+        assert (
+            "You must provide 'image_name' and 'user_uploads' together."
+        ) in str(e.value)
