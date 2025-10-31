@@ -29,41 +29,19 @@ logger = logging.getLogger(__name__)
 
 def reformat_serialized_civ_data(*, serialized_civ_data):
     """Takes serialized CIV data and returns list of CIVData objects."""
-
-    possible_keys = [
-        "image",
-        "value",
-        "file",
-        "user_upload",
-        "upload_session",
-        ("image_name", "user_uploads"),
-    ]
-
     civ_data_objects = []
     for civ in serialized_civ_data:
         interface = civ["interface"]
 
         keys = set(civ.keys()) - {"interface"}
 
-        if not keys:
-            raise serializers.ValidationError(
-                f"You must provide at least one of {possible_keys}."
-            )
-        elif keys == {"image_name", "user_uploads"}:
+        if keys == {"image_name", "user_uploads"}:
             value = DICOMUploadWithName(
                 name=civ["image_name"],
                 user_uploads=civ["user_uploads"],
             )
-        elif len(keys) > 1:
-            raise serializers.ValidationError(
-                f"You can only provide one of {possible_keys} for each socket."
-            )
-        elif (key := keys.pop()) in ("image_name", "user_uploads"):
-            raise serializers.ValidationError(
-                "You must provide 'image_name' and 'user_uploads' together."
-            )
         else:
-            value = civ[key]
+            value = civ[keys.pop()]
 
         try:
             civ_data_objects.append(
@@ -193,16 +171,15 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             )
 
     def validate(self, attrs):
-        if "interface" not in attrs:
-            raise serializers.ValidationError("An interface must be specified")
+        self._validate_provided_fields(attrs=attrs)
 
         interface = attrs["interface"]
 
         if interface.super_kind == interface.SuperKind.IMAGE:
             if interface.is_dicom_image_kind:
-                self._validate_dicom_image(attrs, interface)
+                self._validate_dicom_image(attrs=attrs, interface=interface)
             else:
-                self._validate_panimg_image(attrs, interface)
+                self._validate_panimg_image(attrs=attrs, interface=interface)
         elif interface.super_kind == interface.SuperKind.VALUE:
             if (
                 attrs.get("value") is None
@@ -240,7 +217,33 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
 
         return attrs
 
-    def _validate_panimg_image(self, attrs, interface):
+    @staticmethod
+    def _validate_provided_fields(*, attrs):
+        if "interface" not in attrs:
+            raise serializers.ValidationError("An interface must be specified")
+
+        possible_keys = [
+            "image",
+            "value",
+            "file",
+            "user_upload",
+            "upload_session",
+            ("image_name", "user_uploads"),
+        ]
+
+        keys = set(attrs.keys()) - {"interface"}
+
+        if not keys:
+            raise serializers.ValidationError(
+                f"You must provide at least one of {possible_keys}."
+            )
+        elif len(keys) > 1 and keys != {"image_name", "user_uploads"}:
+            raise serializers.ValidationError(
+                f"You can only provide one of {possible_keys} for each socket."
+            )
+
+    @staticmethod
+    def _validate_panimg_image(*, attrs, interface):
         if not any(
             [
                 attrs.get("image"),
@@ -252,7 +255,8 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                 f"kind {interface.kind}"
             )
 
-    def _validate_dicom_image(self, attrs, interface):
+    @staticmethod
+    def _validate_dicom_image(*, attrs, interface):
         if not (
             attrs.get("image")
             or (attrs.get("user_uploads") and attrs.get("image_name"))

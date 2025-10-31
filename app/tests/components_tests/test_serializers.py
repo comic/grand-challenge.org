@@ -1,8 +1,5 @@
-from contextlib import nullcontext
-
 import pytest
 from guardian.shortcuts import assign_perm
-from rest_framework import serializers
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import (
@@ -312,33 +309,54 @@ def test_civ_post_value_validation(kind):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind", InterfaceKinds.json)
-@pytest.mark.parametrize(
-    "store_in_database, expected_error",
-    (
-        (True, "value is required for interface kind {kind}"),
-        (False, "user_upload or file is required for interface kind {kind}"),
-    ),
-)
-def test_civ_post_value_or_user_upload_required_validation(
-    kind, store_in_database, expected_error
-):
-    # setup
+def test_civ_post_value_required_validation(kind):
     interface = ComponentInterfaceFactory(
         kind=kind,
-        store_in_database=store_in_database,
+        store_in_database=True,
     )
 
-    payload = {"interface": interface.slug}
+    for kwargs in [
+        {"image": ""},
+        {"user_upload": ""},
+        {"upload_session": ""},
+        {"image_name": "foo", "user_uploads": [""]},
+    ]:
+        payload = {"interface": interface.slug, **kwargs}
 
-    # test
-    serializer = ComponentInterfaceValuePostSerializer(data=payload)
+        serializer = ComponentInterfaceValuePostSerializer(data=payload)
 
-    # verify
-    assert not serializer.is_valid()
-    assert (
-        expected_error.format(kind=kind)
-        in serializer.errors["non_field_errors"]
+        assert not serializer.is_valid()
+        assert (
+            f"value is required for interface kind {kind}"
+            in serializer.errors["non_field_errors"]
+        )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind", InterfaceKinds.json)
+def test_civ_post_file_or_user_upload_required_validation(kind):
+    interface = ComponentInterfaceFactory(
+        kind=kind,
+        store_in_database=False,
     )
+
+    for kwargs in [
+        {"image": ""},
+        {"value": "foo"},
+        {"upload_session": ""},
+        {"image_name": "foo", "user_uploads": [""]},
+    ]:
+        payload = {"interface": interface.slug, **kwargs}
+
+        # test
+        serializer = ComponentInterfaceValuePostSerializer(data=payload)
+
+        # verify
+        assert not serializer.is_valid()
+        assert (
+            f"user_upload or file is required for interface kind {kind}"
+            in serializer.errors["non_field_errors"]
+        )
 
 
 @pytest.mark.django_db
@@ -398,32 +416,43 @@ def test_civ_post_image_or_upload_required_validation(kind):
     # setup
     interface = ComponentInterfaceFactory(kind=kind)
 
-    payload = {"interface": interface.slug}
+    for kwargs in [
+        {"value": "foo"},
+        {"upload_session": ""},
+        {"image_name": "foo", "user_uploads": [""]},
+    ]:
+        payload = {"interface": interface.slug, **kwargs}
 
-    # test
-    serializer = ComponentInterfaceValuePostSerializer(data=payload)
+        # test
+        serializer = ComponentInterfaceValuePostSerializer(data=payload)
 
-    # verify
-    assert not serializer.is_valid()
-    assert (
-        f"upload_session or image are required for interface kind {kind}"
-        in serializer.errors["non_field_errors"]
-    )
+        # verify
+        assert not serializer.is_valid()
+        assert (
+            f"upload_session or image are required for interface kind {kind}"
+            in serializer.errors["non_field_errors"]
+        )
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind,", InterfaceKinds.dicom)
 def test_civ_post_dicom_image_or_upload_required_validation(kind, rf):
     interface = ComponentInterfaceFactory(kind=kind)
-    payload = {"interface": interface.slug}
 
-    serializer = ComponentInterfaceValuePostSerializer(data=payload)
+    for kwargs in [
+        {"value": "foo"},
+        {"user_upload": ""},
+        {"upload_session": ""},
+    ]:
+        payload = {"interface": interface.slug, **kwargs}
 
-    assert not serializer.is_valid()
-    assert (
-        f"either user_uploads with image_name, or image are required for interface kind {kind}"
-        in serializer.errors["non_field_errors"]
-    )
+        serializer = ComponentInterfaceValuePostSerializer(data=payload)
+
+        assert not serializer.is_valid()
+        assert (
+            f"either user_uploads with image_name, or image are required for interface kind {kind}"
+            in serializer.errors["non_field_errors"]
+        )
 
     payload = {"interface": interface.slug, "image_name": "foobar"}
 
@@ -733,55 +762,3 @@ def test_reformat_serialized_civ_data():
     assert civ_data_objects[3].dicom_upload_with_name.name == "a dcm"
     assert civ_data_objects[3].dicom_upload_with_name.user_uploads == uploads
     assert civ_data_objects[4].user_upload == uploads[0]
-
-
-def test_reformat_serialized_civ_data_invalid_no_keys():
-    data = [{"interface": ""}]
-
-    with pytest.raises(serializers.ValidationError) as e:
-        reformat_serialized_civ_data(serialized_civ_data=data)
-
-    assert (
-        "You must provide at least one of ['image', 'value', 'file', "
-        "'user_upload', 'upload_session', ('image_name', 'user_uploads')]."
-    ) in str(e.value)
-
-
-@pytest.mark.django_db
-def test_reformat_serialized_civ_data_invalid_multiple_keys():
-    data = [{"interface": "some_socket_slug", "value": "foo", "image": "foo"}]
-
-    with pytest.raises(serializers.ValidationError) as e:
-        reformat_serialized_civ_data(serialized_civ_data=data)
-
-    assert (
-        "You can only provide one of ['image', 'value', 'file', "
-        "'user_upload', 'upload_session', ('image_name', 'user_uploads')] for each socket."
-    ) in str(e.value)
-
-    # Using multiple keys (image_name and user_uploads) is necessary for DICOM
-    ci_dcm = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.DICOM_IMAGE_SET
-    )
-    data = [
-        {"interface": ci_dcm, "image_name": "foo", "user_uploads": ["foo"]}
-    ]
-
-    with nullcontext():
-        reformat_serialized_civ_data(serialized_civ_data=data)
-
-
-@pytest.mark.django_db
-def test_reformat_serialized_civ_data_invalid_dicom_keys():
-    ci_dcm = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.DICOM_IMAGE_SET
-    )
-    for key in ("image_name", "user_uploads"):
-        data = [{"interface": ci_dcm, key: "foo"}]
-
-        with pytest.raises(serializers.ValidationError) as e:
-            reformat_serialized_civ_data(serialized_civ_data=data)
-
-        assert (
-            "You must provide 'image_name' and 'user_uploads' together."
-        ) in str(e.value)
