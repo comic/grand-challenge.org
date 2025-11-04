@@ -35,13 +35,17 @@ def convert_deserialized_civ_data(*, deserialized_civ_data):
 
         keys = set(civ.keys()) - {"interface"}
 
-        if keys == {"image_name", "user_uploads"}:
+        keys_not_none = {key for key in keys if civ[key] is not None}
+
+        if keys_not_none == {"image_name", "user_uploads"}:
             value = DICOMUploadWithName(
                 name=civ["image_name"],
                 user_uploads=civ["user_uploads"],
             )
+        elif not keys_not_none:
+            value = None
         else:
-            value = civ[keys.pop()]
+            value = civ[keys_not_none.pop()]
 
         try:
             civ_data_objects.append(
