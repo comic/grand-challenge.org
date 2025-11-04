@@ -435,9 +435,10 @@ def test_civ_post_image_or_upload_required_validation(kind):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.dicom)
-def test_civ_post_dicom_image_or_upload_required_validation(kind, rf):
-    interface = ComponentInterfaceFactory(kind=kind)
+def test_civ_post_dicom_image_or_upload_required_validation(rf):
+    interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
 
     for kwargs in [
         {"value": "foo"},
@@ -450,7 +451,7 @@ def test_civ_post_dicom_image_or_upload_required_validation(kind, rf):
 
         assert not serializer.is_valid()
         assert (
-            f"either user_uploads with image_name, or image are required for interface kind {kind}"
+            f"either user_uploads with image_name, or image are required for interface kind {interface.kind}"
             in serializer.errors["non_field_errors"]
         )
 
@@ -460,7 +461,7 @@ def test_civ_post_dicom_image_or_upload_required_validation(kind, rf):
 
     assert not serializer.is_valid()
     assert (
-        f"either user_uploads with image_name, or image are required for interface kind {kind}"
+        f"either user_uploads with image_name, or image are required for interface kind {interface.kind}"
         in serializer.errors["non_field_errors"]
     )
 
@@ -476,7 +477,7 @@ def test_civ_post_dicom_image_or_upload_required_validation(kind, rf):
 
     assert not serializer.is_valid()
     assert (
-        f"either user_uploads with image_name, or image are required for interface kind {kind}"
+        f"either user_uploads with image_name, or image are required for interface kind {interface.kind}"
         in serializer.errors["non_field_errors"]
     )
 
@@ -532,11 +533,12 @@ def test_civ_post_upload_session_permission_validation(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.dicom)
-def test_civ_post_dicom_uploads_permission_validation(kind, rf):
+def test_civ_post_dicom_uploads_permission_validation(rf):
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2)
-    interface = ComponentInterfaceFactory(kind=kind)
+    interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
     payload = {
         "interface": interface.slug,
         "user_uploads": [upload.api_url for upload in uploads],
@@ -584,13 +586,14 @@ def test_civ_post_image_not_ready_validation(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.dicom)
-def test_civ_post_dicom_image_valid(kind, rf):
+def test_civ_post_dicom_image_valid(rf):
     user = UserFactory()
     dicom_image_set = DICOMImageSetFactory()
     image = ImageFactory(dicom_image_set=dicom_image_set)
     assign_perm("view_image", user, image)
-    interface = ComponentInterfaceFactory(kind=kind)
+    interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
     payload = {"interface": interface.slug, "image": image.api_url}
     request = rf.get("/foo")
     request.user = user
@@ -646,11 +649,12 @@ def test_civ_post_image_upload_session_valid(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.dicom)
-def test_civ_post_dicom_image_upload_valid(kind, rf):
+def test_civ_post_dicom_image_upload_valid(rf):
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2, creator=user)
-    interface = ComponentInterfaceFactory(kind=kind)
+    interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
     payload = {
         "interface": interface.slug,
         "user_uploads": [upload.api_url for upload in uploads],
