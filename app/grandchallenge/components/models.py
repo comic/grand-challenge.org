@@ -281,10 +281,6 @@ class InterfaceKinds(set, Enum):
         InterfaceKindChoices.PANIMG_DISPLACEMENT_FIELD,
     }
 
-    dicom = {
-        InterfaceKindChoices.DICOM_IMAGE_SET,
-    }
-
 
 class OverlaySegmentsMixin(models.Model):
     overlay_segments = models.JSONField(
@@ -450,7 +446,7 @@ class ComponentInterface(OverlaySegmentsMixin):
 
     @property
     def is_dicom_image_kind(self):
-        return self.kind in InterfaceKinds.dicom
+        return self.kind == InterfaceKindChoices.DICOM_IMAGE_SET
 
     @property
     def is_json_kind(self):
