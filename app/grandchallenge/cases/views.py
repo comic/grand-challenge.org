@@ -190,7 +190,10 @@ class ImageViewSet(ReadOnlyModelViewSet):
             {
                 "image_set_id": image.dicom_image_set.image_set_id,
                 "get_image_set_metadata": serialize_aws_request(
-                    metadata_request
+                    request=metadata_request,
+                    unsigned_headers={
+                        "Accept-Encoding": "gzip",  # Cannot be signed because a browser can modify this outside of our control
+                    },
                 ),
                 "image_frames": serialized_image_frames,
             }

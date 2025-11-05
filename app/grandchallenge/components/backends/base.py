@@ -89,18 +89,21 @@ def duration_to_millicents(*, duration, usd_cents_per_hour):
     )
 
 
-def serialize_aws_request(request):
+def serialize_aws_request(request, *, unsigned_headers=None):
     """
     The kwargs that will be passed to httpx.stream or httpx.request
     to generate a response from an AWSRequest instance.
 
     External clients use this so the kwargs should not be changed.
     """
+    headers = dict(request.headers.items())
+    if unsigned_headers:
+        headers.update(unsigned_headers)
     return {
         "url": request.url,
         "method": request.method,
         "data": request.data,
-        "headers": dict(request.headers.items()),
+        "headers": headers,
     }
 
 
