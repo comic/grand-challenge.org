@@ -97,7 +97,7 @@ def serialize_aws_request(request, *, unsigned_headers=None):
     External clients use this so the kwargs should not be changed.
     """
     headers = dict(request.headers.items())
-    
+
     if unsigned_headers:
         if intersection := headers.keys() & unsigned_headers.keys():
             raise ValueError(
