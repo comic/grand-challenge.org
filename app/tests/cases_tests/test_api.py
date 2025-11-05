@@ -700,7 +700,7 @@ def test_dicom_signed_urls(client, settings, monkeypatch):
     signed_urls = response.json()
 
     x_amz_date_pattern = r"^\d{8}T\d{6}Z$"
-    auth_pattern = r"^AWS4-HMAC-SHA256 Credential=test-access-key/\d{8}/test-region/medical-imaging/aws4_request, SignedHeaders=accept;(accept-encoding;)?host;x-amz-date, Signature=.+$"
+    auth_pattern = r"^AWS4-HMAC-SHA256 Credential=test-access-key/\d{8}/test-region/medical-imaging/aws4_request, SignedHeaders=accept;host;x-amz-date, Signature=.+$"
 
     assert signed_urls.keys() == {
         "get_image_set_metadata",
