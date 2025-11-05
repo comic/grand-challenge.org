@@ -95,6 +95,8 @@ dev = [
     "pytest-rerunfailures",
     "sphinx-exec-code",
     "pytest-asyncio",
+    "boto3-stubs[cloudwatch,codebuild,ecr,lambda,logs,medical-imaging,rds,s3,sagemaker,ses]",
+    "celery-types",
 ]
 
 [tool.uv]
