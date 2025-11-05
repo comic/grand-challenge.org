@@ -1,3 +1,4 @@
+from celery import states
 from django.contrib import admin
 from django.contrib.flatpages.admin import FlatPageAdmin
 from django.contrib.flatpages.forms import FlatpageForm
@@ -46,7 +47,10 @@ class TaskResultAdminWithDuration(TaskResultAdmin):
 
     @admin.display(description="Duration")
     def get_duration(self, obj):
-        return obj.date_done - obj.date_started
+        if obj.status in {states.SUCCESS, states.FAILURE}:
+            return obj.date_done - obj.date_started
+        else:
+            return None
 
 
 admin.site.unregister(TaskResult)
