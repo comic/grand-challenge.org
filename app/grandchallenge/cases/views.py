@@ -181,7 +181,6 @@ class ImageViewSet(ReadOnlyModelViewSet):
             url=f"{image_set_url}/getImageSetMetadata",
             data=json.dumps({"versionId": "1"}),
             headers={
-                "Accept-Encoding": "gzip",
                 "Accept": "application/json",
             },
         )
