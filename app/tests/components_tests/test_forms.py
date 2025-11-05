@@ -9,7 +9,10 @@ from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
     InterfaceFormFieldFactory,
 )
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKindChoices,
+)
 from grandchallenge.reader_studies.forms import (
     DisplaySetCreateForm,
     DisplaySetUpdateForm,
@@ -26,7 +29,10 @@ from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     ReaderStudyFactory,
 )
-from tests.uploads_tests.factories import UserUploadFactory
+from tests.uploads_tests.factories import (
+    UserUploadFactory,
+    create_completed_upload,
+)
 
 
 @pytest.mark.django_db
@@ -194,3 +200,45 @@ def test_image_widget_current_value_in_archive_item_and_display_set_update_forms
         .pk
         == user_upload.pk
     )
+
+
+@pytest.mark.parametrize(
+    "form_class,object_factory,extra_form_kwargs",
+    (
+        (
+            DisplaySetUpdateForm,
+            DisplaySetFactory,
+            {"order": 1},
+        ),
+        (
+            ArchiveItemUpdateForm,
+            ArchiveItemFactory,
+            {},
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_dicom_widget_in_archive_item_and_display_set_update_forms(
+    form_class, object_factory, extra_form_kwargs
+):
+    user = UserFactory()
+    upload = create_completed_upload(user=user)
+    socket = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
+    instance = object_factory()
+    form_data = get_interface_form_data(
+        interface_slug=socket.slug,
+        data=["an image name", [upload]],
+    )
+
+    form = form_class(
+        user=user,
+        instance=instance,
+        base_obj=instance.base_object,
+        data={
+            **extra_form_kwargs,
+            **form_data,
+        },
+    )
+    assert form.is_valid(), form.errors
