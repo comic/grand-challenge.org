@@ -123,7 +123,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
     )
     user_uploads = serializers.HyperlinkedRelatedField(
         queryset=UserUpload.objects.none(),
-        view_name="api:user-upload-detail",
+        view_name="api:upload-detail",
         required=False,
         write_only=True,
         many=True,
