@@ -31,39 +31,17 @@ def convert_deserialized_civ_data(*, deserialized_civ_data):
     """Takes deserialized CIV data and returns list of CIVData objects."""
     civ_data_objects = []
     for civ in deserialized_civ_data:
-        if "interface" not in civ:
-            raise serializers.ValidationError("An interface must be specified")
-
-        possible_keys = [
-            "image",
-            "value",
-            "file",
-            "user_upload",
-            "upload_session",
-            ("image_name", "user_uploads"),
-        ]
-
         interface = civ["interface"]
 
         keys = set(civ.keys()) - {"interface"}
 
-        if not keys:
-            raise serializers.ValidationError(
-                f"You must provide at least one of {possible_keys}."
-            )
-
         keys_not_none = {key for key in keys if civ[key] is not None}
 
-        if len(keys_not_none) > 1:
-            if keys_not_none == {"image_name", "user_uploads"}:
-                value = DICOMUploadWithName(
-                    name=civ["image_name"],
-                    user_uploads=civ["user_uploads"],
-                )
-            else:
-                raise serializers.ValidationError(
-                    f"You can only provide one of {possible_keys} for each socket."
-                )
+        if keys_not_none == {"image_name", "user_uploads"}:
+            value = DICOMUploadWithName(
+                name=civ["image_name"],
+                user_uploads=civ["user_uploads"],
+            )
         elif not keys_not_none:
             value = None
         else:
