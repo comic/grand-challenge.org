@@ -121,6 +121,13 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         write_only=True,
         allow_null=True,
     )
+    user_uploads = serializers.HyperlinkedRelatedField(
+        queryset=UserUpload.objects.none(),
+        view_name="api:user-upload-detail",
+        required=False,
+        write_only=True,
+        many=True,
+    )
     image_name = CharField(required=False)
 
     class Meta:
@@ -133,6 +140,7 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             "pk",
             "upload_session",
             "user_upload",
+            "user_uploads",
             "image_name",
         ]
 
@@ -161,19 +169,12 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                 codename="change_userupload",
             )
 
-            # Can't find a good way to set the dynamically generated queryset
-            # for a field that gets used on POST, so create it here
-            self.fields["user_uploads"] = serializers.HyperlinkedRelatedField(
-                queryset=filter_by_permission(
+            self.fields["user_uploads"].child_relation.queryset = (
+                filter_by_permission(
                     queryset=UserUpload.objects.all(),
                     user=user,
                     codename="change_userupload",
-                ),
-                view_name="api:upload-detail",
-                required=False,
-                write_only=True,
-                allow_null=True,
-                many=True,
+                )
             )
 
     def validate(self, attrs):
