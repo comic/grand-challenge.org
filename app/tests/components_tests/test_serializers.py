@@ -1,3 +1,5 @@
+from contextlib import nullcontext
+
 import pytest
 from guardian.shortcuts import assign_perm
 
@@ -249,6 +251,35 @@ TEST_DATA = {
         ],
     },
 }
+
+
+def test_civ_post_validate_provided_fields():
+    values = [
+        {},  # no values is also valid
+        {"file": "https://some-api-url/"},
+        {"image": "https://some-api-url/"},
+        {"upload_session": "https://some-api-url/"},
+        {"user_upload": "https://some-api-url/"},
+        {"image_name": "foobar", "user_uploads": ["https://some-api-url/"]},
+        {"value": 42},
+    ]
+    payload_empty = {
+        "interface": "my-socket",
+        "file": None,
+        "image": None,
+        "image_name": None,
+        "upload_session": None,
+        "user_upload": None,
+        "user_uploads": None,
+        "value": None,
+    }
+
+    for value in values:
+        payload = {**payload_empty, **value}
+        with nullcontext():
+            ComponentInterfaceValuePostSerializer._validate_provided_fields(
+                attrs=payload
+            )
 
 
 @pytest.mark.django_db
@@ -657,8 +688,13 @@ def test_civ_post_dicom_image_upload_valid(rf):
     )
     payload = {
         "interface": interface.slug,
+        "file": None,
+        "image": None,
+        "image_name": "foo",
+        "upload_session": None,
+        "user_upload": None,
         "user_uploads": [upload.api_url for upload in uploads],
-        "image_name": "foobar",
+        "value": None,
     }
     request = rf.get("/foo")
     request.user = user

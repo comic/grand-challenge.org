@@ -247,7 +247,10 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
 
         keys_not_none = {key for key in keys if attrs[key] is not None}
 
-        if len(keys_not_none) > 1 and keys != {"image_name", "user_uploads"}:
+        if len(keys_not_none) > 1 and keys_not_none != {
+            "image_name",
+            "user_uploads",
+        }:
             raise serializers.ValidationError(
                 f"You can only provide one of {possible_keys} for each socket."
             )
