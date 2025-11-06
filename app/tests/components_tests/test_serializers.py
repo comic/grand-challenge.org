@@ -307,6 +307,12 @@ def test_civ_post_value_validation(kind):
     for test in TEST_DATA:
         payload = {
             "interface": interface.slug,
+            "file": None,
+            "image": None,
+            "image_name": None,
+            "upload_session": None,
+            "user_upload": None,
+            "user_uploads": None,
             "value": TEST_DATA[test],
         }
 
@@ -350,7 +356,7 @@ def test_civ_post_value_required_validation(kind):
         {"image": ""},
         {"user_upload": ""},
         {"upload_session": ""},
-        {"image_name": "foo", "user_uploads": [""]},
+        {"image_name": "foo", "user_uploads": []},
     ]:
         payload = {"interface": interface.slug, **kwargs}
 
@@ -375,7 +381,7 @@ def test_civ_post_file_or_user_upload_required_validation(kind):
         {"image": ""},
         {"value": "foo"},
         {"upload_session": ""},
-        {"image_name": "foo", "user_uploads": [""]},
+        {"image_name": "foo", "user_uploads": []},
     ]:
         payload = {"interface": interface.slug, **kwargs}
 
@@ -428,7 +434,13 @@ def test_civ_post_user_upload_valid(kind, rf):
     upload = UserUploadFactory(creator=user)
     payload = {
         "interface": interface.slug,
+        "file": None,
+        "image": None,
+        "image_name": None,
+        "upload_session": None,
         "user_upload": upload.api_url,
+        "user_uploads": None,
+        "value": None,
     }
     request = rf.get("/foo")
     request.user = user
@@ -450,7 +462,7 @@ def test_civ_post_image_or_upload_required_validation(kind):
     for kwargs in [
         {"value": "foo"},
         {"upload_session": ""},
-        {"image_name": "foo", "user_uploads": [""]},
+        {"image_name": "foo", "user_uploads": []},
     ]:
         payload = {"interface": interface.slug, **kwargs}
 
@@ -590,6 +602,28 @@ def test_civ_post_dicom_uploads_permission_validation(rf):
 
 
 @pytest.mark.django_db
+def test_civ_post_dicom_uploads_empty_value_invalid():
+    interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
+
+    payload = {
+        "interface": interface.slug,
+        "image_name": "",
+        "user_uploads": [""],
+    }
+
+    serializer = ComponentInterfaceValuePostSerializer(data=payload)
+
+    assert not serializer.is_valid()
+    assert "This field may not be blank." in serializer.errors["image_name"]
+    assert (
+        "Invalid hyperlink - No URL match."
+        in serializer.errors["user_uploads"]
+    )
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("kind,", InterfaceKinds.image)
 def test_civ_post_image_not_ready_validation(kind, rf):
     # setup
@@ -625,7 +659,16 @@ def test_civ_post_dicom_image_valid(rf):
     interface = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.DICOM_IMAGE_SET
     )
-    payload = {"interface": interface.slug, "image": image.api_url}
+    payload = {
+        "interface": interface.slug,
+        "file": None,
+        "image": image.api_url,
+        "image_name": None,
+        "upload_session": None,
+        "user_upload": None,
+        "user_uploads": None,
+        "value": None,
+    }
     request = rf.get("/foo")
     request.user = user
 
@@ -645,7 +688,16 @@ def test_civ_post_panimg_image_valid(kind, rf):
     )
     assign_perm("view_image", user, image)
     interface = ComponentInterfaceFactory(kind=kind)
-    payload = {"interface": interface.slug, "image": image.api_url}
+    payload = {
+        "interface": interface.slug,
+        "file": None,
+        "image": image.api_url,
+        "image_name": None,
+        "upload_session": None,
+        "user_upload": None,
+        "user_uploads": None,
+        "value": None,
+    }
     request = rf.get("/foo")
     request.user = user
 
@@ -666,7 +718,16 @@ def test_civ_post_image_upload_session_valid(kind, rf):
     )
     interface = ComponentInterfaceFactory(kind=kind)
 
-    payload = {"interface": interface.slug, "upload_session": upload.api_url}
+    payload = {
+        "interface": interface.slug,
+        "file": None,
+        "image": None,
+        "image_name": None,
+        "upload_session": upload.api_url,
+        "user_upload": None,
+        "user_uploads": None,
+        "value": None,
+    }
 
     # test
     request = rf.get("/foo")

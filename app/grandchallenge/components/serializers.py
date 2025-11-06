@@ -127,8 +127,12 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         required=False,
         write_only=True,
         many=True,
+        allow_null=True,
     )
-    image_name = CharField(required=False)
+    image_name = CharField(
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = ComponentInterfaceValue
@@ -146,6 +150,11 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # The allow_null keyword argument is not passed to the ListSerializer,
+        # so we set it here.
+        self.fields["user_uploads"].allow_null = True
+
         if "request" in self.context:
             user = self.context["request"].user
 
