@@ -2654,9 +2654,9 @@ class CIVForObjectMixin:
                 kwargs={
                     "app_label": self._meta.app_label,
                     "model_name": self._meta.model_name,
-                    "object_pk": self.pk,
+                    "object_pk": str(self.pk),
                     "interface_pk": str(ci.pk),
-                    "dicom_image_set_upload_pk": upload.pk,
+                    "dicom_image_set_upload_pk": str(upload.pk),
                     "linked_task": linked_task,
                 },
                 immutable=True,
