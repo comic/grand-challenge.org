@@ -127,7 +127,6 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         required=False,
         write_only=True,
         many=True,
-        allow_null=True,
     )
     image_name = CharField(
         required=False,
