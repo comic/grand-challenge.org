@@ -42,10 +42,12 @@ def convert_deserialized_civ_data(*, deserialized_civ_data):
                 name=civ["image_name"],
                 user_uploads=civ["user_uploads"],
             )
-        elif not keys_not_none:
+        elif len(keys_not_none) == 1:
+            value = civ[keys_not_none.pop()]
+        elif len(keys_not_none) == 0:
             value = None
         else:
-            value = civ[keys_not_none.pop()]
+            raise ValueError("Multiple values provided")
 
         try:
             civ_data_objects.append(
