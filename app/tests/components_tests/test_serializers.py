@@ -595,6 +595,20 @@ def test_civ_post_dicom_uploads_empty_value_invalid():
         in serializer.errors["user_uploads"]
     )
 
+    payload = {
+        "interface": interface.slug,
+        "image_name": "",
+        "user_uploads": [None],
+    }
+
+    serializer = ComponentInterfaceValuePostSerializer(data=payload)
+
+    assert not serializer.is_valid()
+    assert (
+        "Incorrect type. Expected URL string, received NoneType."
+        in serializer.errors["user_uploads"]
+    )
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind,", InterfaceKinds.image)
