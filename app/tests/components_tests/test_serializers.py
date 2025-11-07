@@ -2,6 +2,7 @@ from contextlib import nullcontext
 
 import pytest
 from guardian.shortcuts import assign_perm
+from rest_framework.exceptions import ValidationError
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import (
@@ -254,15 +255,21 @@ TEST_DATA = {
 
 
 def test_civ_post_validate_provided_fields():
-    values = [
-        {},  # no values is also valid
-        {"file": "https://some-api-url/"},
-        {"image": "https://some-api-url/"},
-        {"upload_session": "https://some-api-url/"},
-        {"user_upload": "https://some-api-url/"},
-        {"image_name": "foobar", "user_uploads": ["https://some-api-url/"]},
-        {"value": 42},
-    ]
+    with pytest.raises(
+        ValidationError, match="An interface must be specified"
+    ):
+        ComponentInterfaceValuePostSerializer._validate_provided_fields(
+            attrs={}
+        )
+
+    with pytest.raises(
+        ValidationError,
+        match="You must provide at least one of",
+    ):
+        ComponentInterfaceValuePostSerializer._validate_provided_fields(
+            attrs={"interface": "my-socket"}
+        )
+
     payload_empty = {
         "interface": "my-socket",
         "file": None,
@@ -274,12 +281,40 @@ def test_civ_post_validate_provided_fields():
         "value": None,
     }
 
+    # All None values is valid
+    with nullcontext():
+        ComponentInterfaceValuePostSerializer._validate_provided_fields(
+            attrs=payload_empty
+        )
+
+    values = [
+        {"file": "https://some-api-url/"},
+        {"image": "https://some-api-url/"},
+        {"upload_session": "https://some-api-url/"},
+        {"user_upload": "https://some-api-url/"},
+        {"image_name": "foobar", "user_uploads": ["https://some-api-url/"]},
+        {"value": 42},
+    ]
+
     for value in values:
         payload = {**payload_empty, **value}
+
+        # providing one value is valid
         with nullcontext():
             ComponentInterfaceValuePostSerializer._validate_provided_fields(
                 attrs=payload
             )
+
+        # providing multiple values is invalid
+        other_values = values.copy()
+        other_values.remove(value)
+        for other_value in other_values:
+            with pytest.raises(
+                ValidationError, match="You can only provide one of"
+            ):
+                ComponentInterfaceValuePostSerializer._validate_provided_fields(
+                    attrs={**payload, **other_value}
+                )
 
 
 @pytest.mark.django_db
