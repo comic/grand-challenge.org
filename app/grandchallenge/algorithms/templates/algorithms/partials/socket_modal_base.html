@@ -29,6 +29,9 @@
             </div>
             <dd class="text-left modal-body">
                 <dl>
+                    <dt>Slug</dt>
+                    <dd><code>{{ socket.slug }}</code></dd>
+
                     <dt>Description</dt>
                     <dd>{% if socket.description %}{{ socket.description }}{% else %} - {% endif %}</dd>
 
