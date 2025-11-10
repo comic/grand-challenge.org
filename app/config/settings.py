@@ -643,6 +643,8 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 
+MFA_TOTP_TOLERANCE = 5
+
 # Use full paths as view name lookups do not work on subdomains
 LOGIN_URL = "/accounts/login/"
 LOGOUT_URL = "/accounts/logout/"
