@@ -13,7 +13,6 @@ from billiard.exceptions import SoftTimeLimitExceeded
 from botocore.awsrequest import AWSRequest
 from botocore.exceptions import ClientError
 from celery import signature
-from cffi.model import NamedPointerType
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
 from django.db import models
@@ -299,6 +298,7 @@ def image_file_path(instance, filename):
         f"{get_valid_filename(filename)}"
     )
 
+
 class DICOMInstanceRequest(NamedTuple):
     sop_instance_uid: str
     unsigned_request: AWSRequest
@@ -407,7 +407,7 @@ class DICOMImageSet(UUIDModel):
                     headers={
                         "Accept": f"application/dicom; transfer-syntax={stored_transfer_syntax_uid}"
                     },
-                )
+                ),
             )
 
 
