@@ -130,8 +130,8 @@ class ImageViewSet(ReadOnlyModelViewSet):
         }
         return transfer_syntax_to_encoding[stored_transfer_syntax_uid]
 
-    @action(detail=True, url_path="dicom")
-    def dicom(self, request, pk=None):
+    @action(detail=True, url_path="dicom/frames")
+    def dicom_frames(self, request, pk=None):
         image = self.get_object()
 
         if not image.dicom_image_set:
@@ -196,6 +196,45 @@ class ImageViewSet(ReadOnlyModelViewSet):
                     },
                 ),
                 "image_frames": serialized_image_frames,
+            }
+        )
+
+    @action(detail=True, url_path="dicom/instances")
+    def dicom_instances(self, request, pk=None):
+        image = self.get_object()
+
+        if not image.dicom_image_set:
+            raise NotFound("This image does not have a DICOM Image Set.")
+
+        Download.objects.create(creator=self.request.user, image=image)
+
+        session = boto3.Session(
+            region_name=settings.AWS_DEFAULT_REGION,
+        )
+        medical_imaging_auth = SigV4Auth(
+            credentials=session.get_credentials(),
+            service_name="medical-imaging",
+            region_name=settings.AWS_DEFAULT_REGION,
+        )
+
+        serialized_instances = []
+
+        for instance_request in image.dicom_image_set.instance_requests:
+            medical_imaging_auth.add_auth(instance_request.unsigned_request)
+
+            serialized_instances.append(
+                {
+                    "sop_instance_uid": instance_request.sop_instance_uid,
+                    "get_instance": serialize_aws_request(
+                        instance_request.unsigned_request
+                    ),
+                }
+            )
+
+        return JsonResponse(
+            {
+                "image_set_id": image.dicom_image_set.image_set_id,
+                "instances": serialized_instances,
             }
         )
 
