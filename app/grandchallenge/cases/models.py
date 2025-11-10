@@ -1190,8 +1190,12 @@ class DICOMImageSetUpload(UUIDModel):
         return f"inputs/{self.pk}"
 
     @property
+    def _input_files_location(self):
+        return f"{self._input_prefix}/files"
+
+    @property
     def _import_input_s3_uri(self):
-        return f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/{self._input_prefix}"
+        return f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/{self._input_files_location}"
 
     @property
     def _import_output_s3_uri(self):
@@ -1301,7 +1305,7 @@ class DICOMImageSetUpload(UUIDModel):
                 self._s3_client.upload_fileobj(
                     Fileobj=outfile,
                     Bucket=settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
-                    Key=f"{self._input_prefix}/{upload.pk}.dcm",
+                    Key=f"{self._input_files_location}/{upload.pk}.dcm",
                 )
 
     def deidentify_user_uploads(self):
