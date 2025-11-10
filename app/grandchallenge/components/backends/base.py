@@ -24,7 +24,6 @@ import httpx
 import pydantic
 from asgiref.sync import async_to_sync
 from botocore.auth import SigV4Auth
-from botocore.awsrequest import AWSRequest
 from botocore.config import Config
 from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
