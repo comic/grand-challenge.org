@@ -2118,7 +2118,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
 
         linked_task = check_prerequisites_for_evaluation_execution.signature(
             kwargs={
-                "evaluation_pk": self.pk,
+                "evaluation_pk": str(self.pk),
             },
             immutable=True,
         )

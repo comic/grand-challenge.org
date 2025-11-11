@@ -2,7 +2,7 @@ import json
 import uuid
 from contextlib import nullcontext
 from pathlib import Path
-from unittest.mock import call
+from unittest.mock import MagicMock, call
 
 import pytest
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
@@ -12,12 +12,14 @@ from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import Image
+from grandchallenge.cases.widgets import DICOMUploadWithName
 from grandchallenge.components.models import (
     INTERFACE_KIND_JSON_EXAMPLES,
     CIVData,
     ComponentInterface,
     ComponentInterfaceExampleValue,
     ComponentInterfaceValue,
+    ComponentJob,
     ImportStatusChoices,
     InterfaceKindChoices,
     InterfaceKinds,
@@ -32,9 +34,11 @@ from grandchallenge.core.storage import (
     protected_s3_storage,
 )
 from grandchallenge.reader_studies.models import Question
+from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
+    AlgorithmJobFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import (
@@ -46,8 +50,13 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.evaluation_tests.factories import MethodFactory
-from tests.factories import ImageFactory, UserFactory, WorkstationImageFactory
+from tests.evaluation_tests.factories import EvaluationFactory, MethodFactory
+from tests.factories import (
+    ImageFactory,
+    UploadSessionFactory,
+    UserFactory,
+    WorkstationImageFactory,
+)
 from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     QuestionFactory,
@@ -1876,3 +1885,237 @@ def test_signing_key_properties():
     assert len(job.signing_key) == 32
     assert isinstance(job.signing_key, bytes)
     assert job.signing_key != Job().signing_key
+
+
+@pytest.mark.parametrize(
+    "object_factory, kwargs, field_name",
+    [
+        (ArchiveItemFactory, {}, "values"),
+        (
+            EvaluationFactory,
+            {"time_limit": 60, "status": ComponentJob.VALIDATING_INPUTS},
+            "inputs",
+        ),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 60, "status": ComponentJob.VALIDATING_INPUTS},
+            "inputs",
+        ),
+        (DisplaySetFactory, {}, "values"),
+    ],
+)
+@pytest.mark.django_db
+def test_add_and_remove_civ(object_factory, kwargs, field_name):
+    obj = object_factory(**kwargs)
+    civ = ComponentInterfaceValueFactory()
+    n_values = getattr(obj, field_name).count()
+
+    obj.add_civ(civ=civ)
+
+    assert getattr(obj, field_name).count() == n_values + 1
+
+    obj.remove_civ(civ=civ)
+
+    assert getattr(obj, field_name).count() == n_values
+
+
+@pytest.mark.parametrize(
+    "socket_kind, value_factory",
+    [
+        (InterfaceKindChoices.PANIMG_IMAGE, ImageFactory),
+        (InterfaceKindChoices.PDF, ComponentInterfaceValueFactory),
+        (InterfaceKindChoices.ANY, lambda: ""),
+    ],
+)
+@pytest.mark.parametrize(
+    "object_factory, object_kwargs, field_name",
+    [
+        (ArchiveItemFactory, {}, "values"),
+        (
+            EvaluationFactory,
+            {"time_limit": 60, "status": ComponentJob.VALIDATING_INPUTS},
+            "inputs",
+        ),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 60, "status": ComponentJob.VALIDATING_INPUTS},
+            "inputs",
+        ),
+        (DisplaySetFactory, {}, "values"),
+    ],
+)
+@pytest.mark.django_db
+def test_add_civ_through_validate_civ_data_objects_and_execute_linked_task(
+    object_factory, object_kwargs, field_name, socket_kind, value_factory
+):
+    obj = object_factory(**object_kwargs)
+    socket = ComponentInterfaceFactory(kind=socket_kind)
+    value = value_factory()
+    civ_data_objects = [CIVData(interface_slug=socket.slug, value=value)]
+    n_values = getattr(obj, field_name).count()
+
+    obj.validate_civ_data_objects_and_execute_linked_task(
+        civ_data_objects=civ_data_objects, user=UserFactory()
+    )
+
+    assert getattr(obj, field_name).count() == n_values + 1
+
+
+@pytest.mark.parametrize(
+    "object_factory, kwargs, field_name",
+    [
+        (ArchiveItemFactory, {}, "values"),
+        (
+            EvaluationFactory,
+            {"time_limit": 60, "status": ComponentJob.VALIDATING_INPUTS},
+            "inputs",
+        ),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 60, "status": ComponentJob.VALIDATING_INPUTS},
+            "inputs",
+        ),
+        (DisplaySetFactory, {}, "values"),
+    ],
+)
+@pytest.mark.django_db
+def test_validate_civ_data_objects_and_execute_linked_task_with_image_upload_session(
+    object_factory, kwargs, field_name, mocker
+):
+    obj = object_factory(**kwargs)
+    socket = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    upload_session = UploadSessionFactory()
+    civ_data_objects = [
+        CIVData(interface_slug=socket.slug, value=upload_session)
+    ]
+    mock_process_images_method = mocker.patch(
+        "grandchallenge.cases.models.RawImageUploadSession.process_images",
+        return_value=MagicMock(),
+    )
+
+    obj.validate_civ_data_objects_and_execute_linked_task(
+        civ_data_objects=civ_data_objects, user=UserFactory()
+    )
+
+    assert mock_process_images_method.call_count == 1
+
+
+@pytest.mark.parametrize(
+    "object_factory, kwargs, field_name",
+    [
+        (ArchiveItemFactory, {}, "values"),
+        (
+            EvaluationFactory,
+            {"time_limit": 60, "status": ComponentJob.VALIDATING_INPUTS},
+            "inputs",
+        ),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 60, "status": ComponentJob.VALIDATING_INPUTS},
+            "inputs",
+        ),
+        (DisplaySetFactory, {}, "values"),
+    ],
+)
+@pytest.mark.django_db
+def test_validate_civ_data_objects_and_execute_linked_task_with_image_upload_queryset(
+    object_factory, kwargs, field_name, mocker
+):
+    obj = object_factory(**kwargs)
+    socket = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    UserUploadFactory()
+    civ_data_objects = [
+        CIVData(interface_slug=socket.slug, value=UserUpload.objects.all())
+    ]
+    mock_process_images_method = mocker.patch(
+        "grandchallenge.cases.models.RawImageUploadSession.process_images",
+        return_value=MagicMock(),
+    )
+
+    obj.validate_civ_data_objects_and_execute_linked_task(
+        civ_data_objects=civ_data_objects, user=UserFactory()
+    )
+
+    assert mock_process_images_method.call_count == 1
+
+
+@pytest.mark.parametrize(
+    "object_factory, kwargs, field_name",
+    [
+        (ArchiveItemFactory, {}, "values"),
+        (
+            EvaluationFactory,
+            {"time_limit": 60, "status": ComponentJob.VALIDATING_INPUTS},
+            "inputs",
+        ),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 60, "status": ComponentJob.VALIDATING_INPUTS},
+            "inputs",
+        ),
+        (DisplaySetFactory, {}, "values"),
+    ],
+)
+@pytest.mark.django_db
+def test_validate_civ_data_objects_and_execute_linked_task_with_dicom_upload_with_name(
+    object_factory, kwargs, field_name, mocker
+):
+    obj = object_factory(**kwargs)
+    socket = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
+    upload = UserUploadFactory()
+    dicom_upload = DICOMUploadWithName(
+        name="test_image",
+        user_uploads=[str(upload.pk)],
+    )
+    civ_data_objects = [
+        CIVData(interface_slug=socket.slug, value=dicom_upload)
+    ]
+    mock_import_dicom_task = mocker.patch(
+        "grandchallenge.cases.tasks.import_dicom_to_health_imaging.signature",
+        return_value=MagicMock(),
+    )
+
+    obj.validate_civ_data_objects_and_execute_linked_task(
+        civ_data_objects=civ_data_objects, user=upload.creator
+    )
+
+    assert mock_import_dicom_task.call_count == 1
+
+
+@pytest.mark.parametrize(
+    "object_factory, kwargs, field_name",
+    [
+        (ArchiveItemFactory, {}, "values"),
+        (
+            EvaluationFactory,
+            {"time_limit": 60, "status": ComponentJob.VALIDATING_INPUTS},
+            "inputs",
+        ),
+        (
+            AlgorithmJobFactory,
+            {"time_limit": 60, "status": ComponentJob.VALIDATING_INPUTS},
+            "inputs",
+        ),
+        (DisplaySetFactory, {}, "values"),
+    ],
+)
+@pytest.mark.django_db
+def test_validate_civ_data_objects_and_execute_linked_task_with_file_upload(
+    object_factory, kwargs, field_name, mocker
+):
+    obj = object_factory(**kwargs)
+    socket = ComponentInterfaceFactory(kind=InterfaceKindChoices.PDF)
+    upload = UserUploadFactory()
+    civ_data_objects = [CIVData(interface_slug=socket.slug, value=upload)]
+    mock_add_file_to_object_task = mocker.patch(
+        "grandchallenge.components.tasks.add_file_to_object.signature",
+        return_value=MagicMock(),
+    )
+
+    obj.validate_civ_data_objects_and_execute_linked_task(
+        civ_data_objects=civ_data_objects, user=UserFactory()
+    )
+
+    assert mock_add_file_to_object_task.call_count == 1

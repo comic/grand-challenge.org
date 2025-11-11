@@ -1263,7 +1263,7 @@ class Job(CIVForObjectMixin, ComponentJob):
         )
 
         linked_task = execute_algorithm_job_for_inputs.signature(
-            kwargs={"job_pk": self.pk}, immutable=True
+            kwargs={"job_pk": str(self.pk)}, immutable=True
         )
 
         return super().validate_civ_data_objects_and_execute_linked_task(
