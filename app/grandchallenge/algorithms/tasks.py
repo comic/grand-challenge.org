@@ -1,18 +1,13 @@
-from tempfile import TemporaryDirectory
 from typing import NamedTuple
 
-import boto3
-from botocore.exceptions import ClientError
 from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.cache import cache
-from django.core.files.base import File
 from django.db import transaction
 from django.db.models import F, Max
 from django.db.transaction import on_commit
 from django.utils import timezone
-from django.utils._os import safe_join
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -287,62 +282,6 @@ def update_associated_challenges():
         ]
 
     cache.set("challenges_for_algorithms", challenge_list, timeout=None)
-
-
-@acks_late_2xlarge_task
-def import_remote_algorithm_image(*, remote_bucket_name, algorithm_image_pk):
-    from grandchallenge.algorithms.models import AlgorithmImage
-
-    algorithm_image = AlgorithmImage.objects.get(pk=algorithm_image_pk)
-
-    if (
-        algorithm_image.import_status
-        != AlgorithmImage.ImportStatusChoices.INITIALIZED
-    ):
-        raise RuntimeError("Algorithm image is not initialized")
-
-    s3_client = boto3.client("s3")
-
-    try:
-        response = s3_client.list_objects_v2(
-            Bucket=remote_bucket_name,
-            Prefix=algorithm_image.image.field.upload_to(algorithm_image, "-")[
-                :-1
-            ],
-        )
-    except ClientError as error:
-        algorithm_image.import_status = (
-            AlgorithmImage.ImportStatusChoices.FAILED
-        )
-        algorithm_image.status = str(error)
-        algorithm_image.save()
-        raise
-
-    output_files = response.get("Contents", [])
-    if len(output_files) != 1:
-        algorithm_image.import_status = (
-            AlgorithmImage.ImportStatusChoices.FAILED
-        )
-        algorithm_image.status = "Unique algorithm image file not found"
-        algorithm_image.save()
-        raise RuntimeError(algorithm_image.status)
-
-    output_file = output_files[0]
-
-    # We cannot copy objects directly here as this is likely a cross-region
-    # request, so download it then upload
-    with TemporaryDirectory() as tmp_dir:
-        filename = output_file["Key"].split("/")[-1]
-        dest = safe_join(tmp_dir, filename)
-
-        s3_client.download_file(
-            Filename=dest,
-            Bucket=remote_bucket_name,
-            Key=output_file["Key"],
-        )
-
-        with open(dest, "rb") as f:
-            algorithm_image.image.save(filename, File(f))
 
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
