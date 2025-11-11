@@ -44,25 +44,32 @@ class PaginatedTableListView(ListView):
             for o in object_list
         ]
 
-    def get_order_by(self, form_data):
-        column_index = (
-            form_data.get("order[0][column]") or self.default_sort_column
-        )
+    def get_order_by(self, *, column_index, direction):
         try:
             order_by = self.columns[int(column_index)].sort_field
         except IndexError:
             return None
-        direction = form_data.get("order[0][dir]") or self.default_sort_order
-        return f"{'-' if direction == 'desc' else ''}{order_by}"
+
+        prefix = "-" if direction == "desc" else ""
+
+        return f"{prefix}{order_by}"
 
     def draw_response(self, *, request):
-        # TODO: I think we only have POST data now
-        form_data = request.POST or request.GET
-        start = int(form_data.get("start", 0))
-        page_size = int(form_data.get("length"))
-        search = form_data.get("search[value]")
+        start = int(request.POST.get("start", 0))
+        page_size = int(request.POST.get("length"))
+        search = request.POST.get("search[value]")
+        draw = int(request.POST.get("draw"))
+        column_index = (
+            request.POST.get("order[0][column]") or self.default_sort_column
+        )
+        direction = (
+            request.POST.get("order[0][dir]") or self.default_sort_order
+        )
+
         page = start // page_size + 1
-        order_by = self.get_order_by(form_data)
+        order_by = self.get_order_by(
+            column_index=column_index, direction=direction
+        )
         data = self.filter_queryset(self.object_list, search, order_by)
         paginator = self.get_paginator(queryset=data, per_page=page_size)
 
@@ -74,7 +81,7 @@ class PaginatedTableListView(ListView):
 
         return JsonResponse(
             {
-                "draw": int(form_data.get("draw")),
+                "draw": draw,
                 "recordsTotal": self.object_list.count(),
                 "recordsFiltered": paginator.count,
                 "data": self.render_rows(object_list=objects, request=request),
