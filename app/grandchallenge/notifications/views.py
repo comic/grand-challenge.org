@@ -34,10 +34,14 @@ class NotificationViewSet(
     mixins.DestroyModelMixin,
     viewsets.ReadOnlyModelViewSet,
 ):
-    queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = [ViewObjectPermissionsFilter]
+
+    def get_queryset(self):
+        return Notification.objects.filter(
+            user=self.request.user,
+        )
 
     def destroy(self, request, *args, **kwargs):
         response = super().destroy(request, *args, **kwargs)
@@ -59,10 +63,12 @@ class FollowViewSet(
     mixins.UpdateModelMixin,
     viewsets.ReadOnlyModelViewSet,
 ):
-    queryset = Follow.objects.all()
     serializer_class = FollowSerializer
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = [ViewObjectPermissionsFilter]
+
+    def get_queryset(self):
+        return Follow.objects.filter(user=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
         response = super().destroy(request, *args, **kwargs)
@@ -91,6 +97,7 @@ class NotificationList(
         return (
             super()
             .get_queryset()
+            .filter(user=self.request.user)
             .select_related(
                 "actor_content_type",
                 "target_content_type",
@@ -118,33 +125,38 @@ class FollowList(
     model = Follow
     filter_class = FollowFilter
     paginate_by = 50
-    queryset = (
-        Follow.objects.exclude(
-            Q(
-                content_type__app_label="archives",
-                content_type__model="archivepermissionrequest",
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .exclude(
+                Q(
+                    content_type__app_label="archives",
+                    content_type__model="archivepermissionrequest",
+                )
+                | Q(
+                    content_type__app_label="algorithms",
+                    content_type__model="algorithmpermissionrequest",
+                )
+                | Q(
+                    content_type__app_label="reader_studies",
+                    content_type__model="readerstudypermissionrequest",
+                )
+                | Q(
+                    content_type__app_label="participants",
+                    content_type__model="registrationrequest",
+                )
+                | Q(
+                    content_type__app_label="cases",
+                    content_type__model="rawimageuploadsession",
+                )
             )
-            | Q(
-                content_type__app_label="algorithms",
-                content_type__model="algorithmpermissionrequest",
-            )
-            | Q(
-                content_type__app_label="reader_studies",
-                content_type__model="readerstudypermissionrequest",
-            )
-            | Q(
-                content_type__app_label="participants",
-                content_type__model="registrationrequest",
-            )
-            | Q(
-                content_type__app_label="cases",
-                content_type__model="rawimageuploadsession",
-            )
+            .exclude(flag="job-inactive")
+            .filter(user=self.request.user)
+            .select_related("user", "content_type")
+            .order_by("content_type")
         )
-        .exclude(flag="job-inactive")
-        .select_related("user", "content_type")
-        .order_by("content_type")
-    )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -168,6 +180,9 @@ class FollowDelete(
     success_message = "Subscription successfully deleted"
     permission_required = "delete_follow"
     raise_exception = True
+
+    def get_queryset(self):
+        return super().get_queryset().filter(user=self.request.user)
 
     def get_permission_object(self):
         return self.get_object()

@@ -107,6 +107,7 @@ class ConversationList(
         return (
             super()
             .get_queryset()
+            .filter(participants=self.request.user)
             .with_most_recent_message(user=self.request.user)
             .order_by("-unread_by_user", "-most_recent_message_created")
         )
