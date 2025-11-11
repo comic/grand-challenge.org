@@ -2755,9 +2755,9 @@
                 <span class="n">kwargs</span><span class="o">=</span><span class="p">{</span>
                     <span class="s2">&quot;app_label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">app_label</span><span class="p">,</span>
                     <span class="s2">&quot;model_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
-                    <span class="s2">&quot;object_pk&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                    <span class="s2">&quot;object_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
                     <span class="s2">&quot;interface_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ci</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
-                    <span class="s2">&quot;dicom_image_set_upload_pk&quot;</span><span class="p">:</span> <span class="n">upload</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                    <span class="s2">&quot;dicom_image_set_upload_pk&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">upload</span><span class="o">.</span><span class="n">pk</span><span class="p">),</span>
                     <span class="s2">&quot;linked_task&quot;</span><span class="p">:</span> <span class="n">linked_task</span><span class="p">,</span>
                 <span class="p">},</span>
                 <span class="n">immutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
