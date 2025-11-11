@@ -34,14 +34,10 @@ class NotificationViewSet(
     mixins.DestroyModelMixin,
     viewsets.ReadOnlyModelViewSet,
 ):
+    queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = [ViewObjectPermissionsFilter]
-
-    def get_queryset(self):
-        return Notification.objects.filter(
-            user=self.request.user,
-        )
 
     def destroy(self, request, *args, **kwargs):
         response = super().destroy(request, *args, **kwargs)
@@ -63,12 +59,10 @@ class FollowViewSet(
     mixins.UpdateModelMixin,
     viewsets.ReadOnlyModelViewSet,
 ):
+    queryset = Follow.objects.all()
     serializer_class = FollowSerializer
     permission_classes = (DjangoObjectPermissions,)
     filter_backends = [ViewObjectPermissionsFilter]
-
-    def get_queryset(self):
-        return Follow.objects.filter(user=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
         response = super().destroy(request, *args, **kwargs)
@@ -180,9 +174,6 @@ class FollowDelete(
     success_message = "Subscription successfully deleted"
     permission_required = "delete_follow"
     raise_exception = True
-
-    def get_queryset(self):
-        return super().get_queryset().filter(user=self.request.user)
 
     def get_permission_object(self):
         return self.get_object()
