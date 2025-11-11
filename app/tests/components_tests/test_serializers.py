@@ -1,5 +1,8 @@
+from contextlib import nullcontext
+
 import pytest
 from guardian.shortcuts import assign_perm
+from rest_framework.exceptions import ValidationError
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.models import (
@@ -10,6 +13,11 @@ from grandchallenge.components.models import (
 from grandchallenge.components.serializers import (
     ComponentInterfaceValuePostSerializer,
     ComponentInterfaceValueSerializer,
+    convert_deserialized_civ_data,
+)
+from tests.cases_tests.factories import (
+    DICOMImageSetFactory,
+    RawImageUploadSessionFactory,
 )
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -246,6 +254,69 @@ TEST_DATA = {
 }
 
 
+def test_civ_post_validate_provided_fields():
+    with pytest.raises(
+        ValidationError, match="An interface must be specified"
+    ):
+        ComponentInterfaceValuePostSerializer._validate_provided_fields(
+            attrs={}
+        )
+
+    with pytest.raises(
+        ValidationError,
+        match="You must provide at least one of",
+    ):
+        ComponentInterfaceValuePostSerializer._validate_provided_fields(
+            attrs={"interface": "my-socket"}
+        )
+
+    payload_empty = {
+        "interface": "my-socket",
+        "file": None,
+        "image": None,
+        "image_name": None,
+        "upload_session": None,
+        "user_upload": None,
+        "user_uploads": None,
+        "value": None,
+    }
+
+    # All None values is valid
+    with nullcontext():
+        ComponentInterfaceValuePostSerializer._validate_provided_fields(
+            attrs=payload_empty
+        )
+
+    values = [
+        {"file": "https://some-api-url/"},
+        {"image": "https://some-api-url/"},
+        {"upload_session": "https://some-api-url/"},
+        {"user_upload": "https://some-api-url/"},
+        {"image_name": "foobar", "user_uploads": ["https://some-api-url/"]},
+        {"value": 42},
+    ]
+
+    for value in values:
+        payload = {**payload_empty, **value}
+
+        # providing one value is valid
+        with nullcontext():
+            ComponentInterfaceValuePostSerializer._validate_provided_fields(
+                attrs=payload
+            )
+
+        # providing multiple values is invalid
+        other_values = values.copy()
+        other_values.remove(value)
+        for other_value in other_values:
+            with pytest.raises(
+                ValidationError, match="You can only provide one of"
+            ):
+                ComponentInterfaceValuePostSerializer._validate_provided_fields(
+                    attrs={**payload, **other_value}
+                )
+
+
 @pytest.mark.django_db
 def test_civ_post_objects_do_not_exist():
     payload = {
@@ -254,10 +325,8 @@ def test_civ_post_objects_do_not_exist():
     }
     error_message = "Object with slug=interface-does-not-exist does not exist."
 
-    # test
     serializer = ComponentInterfaceValuePostSerializer(data=payload)
 
-    # verify
     assert not serializer.is_valid()
     assert error_message in str(serializer.errors)
 
@@ -265,19 +334,22 @@ def test_civ_post_objects_do_not_exist():
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind,", InterfaceKinds.json)
 def test_civ_post_value_validation(kind):
-    # setup
     interface = ComponentInterfaceFactory(kind=kind)
 
     for test in TEST_DATA:
         payload = {
             "interface": interface.slug,
+            "file": None,
+            "image": None,
+            "image_name": None,
+            "upload_session": None,
+            "user_upload": None,
+            "user_uploads": None,
             "value": TEST_DATA[test],
         }
 
-        # test
         serializer = ComponentInterfaceValuePostSerializer(data=payload)
 
-        # verify
         assert serializer.is_valid() == (
             kind == test
             or (
@@ -304,38 +376,57 @@ def test_civ_post_value_validation(kind):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind", InterfaceKinds.json)
-@pytest.mark.parametrize(
-    "store_in_database, expected_error",
-    (
-        (True, "value is required for interface kind {kind}"),
-        (False, "user_upload or file is required for interface kind {kind}"),
-    ),
-)
-def test_civ_post_value_or_user_upload_required_validation(
-    kind, store_in_database, expected_error
-):
-    # setup
+def test_civ_post_value_required_validation(kind):
     interface = ComponentInterfaceFactory(
         kind=kind,
-        store_in_database=store_in_database,
+        store_in_database=True,
     )
 
-    payload = {"interface": interface.slug}
+    for kwargs in [
+        {"image": ""},
+        {"user_upload": ""},
+        {"upload_session": ""},
+        {"image_name": "foo", "user_uploads": []},
+    ]:
+        payload = {"interface": interface.slug, **kwargs}
 
-    # test
-    serializer = ComponentInterfaceValuePostSerializer(data=payload)
+        serializer = ComponentInterfaceValuePostSerializer(data=payload)
 
-    # verify
-    assert not serializer.is_valid()
-    assert (
-        expected_error.format(kind=kind)
-        in serializer.errors["non_field_errors"]
-    )
+        assert not serializer.is_valid()
+        assert (
+            f"value is required for interface kind {kind}"
+            in serializer.errors["non_field_errors"]
+        )
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind", InterfaceKinds.json)
-def test_civ_post_user_upload_permission_validation(kind, rf):
+def test_civ_post_file_or_user_upload_required_validation(kind):
+    interface = ComponentInterfaceFactory(
+        kind=kind,
+        store_in_database=False,
+    )
+
+    for kwargs in [
+        {"image": ""},
+        {"value": "foo"},
+        {"upload_session": ""},
+        {"image_name": "foo", "user_uploads": []},
+    ]:
+        payload = {"interface": interface.slug, **kwargs}
+
+        serializer = ComponentInterfaceValuePostSerializer(data=payload)
+
+        assert not serializer.is_valid()
+        assert (
+            f"user_upload or file is required for interface kind {kind}"
+            in serializer.errors["non_field_errors"]
+        )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind", InterfaceKinds.json)
+def test_civ_post_user_upload_permission_validation(kind, request):
     user = UserFactory()
     interface = ComponentInterfaceFactory(
         kind=kind,
@@ -346,7 +437,6 @@ def test_civ_post_user_upload_permission_validation(kind, rf):
         "interface": interface.slug,
         "user_upload": upload.api_url,
     }
-    request = rf.get("/foo")
     request.user = user
 
     serializer = ComponentInterfaceValuePostSerializer(
@@ -362,65 +452,111 @@ def test_civ_post_user_upload_permission_validation(kind, rf):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind", InterfaceKinds.json)
-def test_civ_post_user_upload_valid(kind, rf):
-    user = UserFactory()
+def test_civ_post_user_upload_valid(kind, request):
     interface = ComponentInterfaceFactory(
         kind=kind,
         store_in_database=False,
     )
-    upload = UserUploadFactory(creator=user)
+    upload = UserUploadFactory()
     payload = {
         "interface": interface.slug,
+        "file": None,
+        "image": None,
+        "image_name": None,
+        "upload_session": None,
         "user_upload": upload.api_url,
+        "user_uploads": None,
+        "value": None,
     }
-    request = rf.get("/foo")
-    request.user = user
+    request.user = upload.creator
 
     serializer = ComponentInterfaceValuePostSerializer(
         data=payload, context={"request": request}
     )
 
-    # verify
     assert serializer.is_valid()
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
 def test_civ_post_image_or_upload_required_validation(kind):
-    # setup
     interface = ComponentInterfaceFactory(kind=kind)
 
-    payload = {"interface": interface.slug}
+    for kwargs in [
+        {"value": "foo"},
+        {"upload_session": ""},
+        {"image_name": "foo", "user_uploads": []},
+    ]:
+        payload = {"interface": interface.slug, **kwargs}
 
-    # test
+        serializer = ComponentInterfaceValuePostSerializer(data=payload)
+
+        assert not serializer.is_valid()
+        assert (
+            f"upload_session or image are required for interface kind {kind}"
+            in serializer.errors["non_field_errors"]
+        )
+
+
+@pytest.mark.django_db
+def test_civ_post_dicom_image_or_upload_required_validation(request):
+    interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
+
+    for kwargs in [
+        {"value": "foo"},
+        {"user_upload": ""},
+        {"upload_session": ""},
+    ]:
+        payload = {"interface": interface.slug, **kwargs}
+
+        serializer = ComponentInterfaceValuePostSerializer(data=payload)
+
+        assert not serializer.is_valid()
+        assert (
+            f"either user_uploads with image_name, or image are required for interface kind {interface.kind}"
+            in serializer.errors["non_field_errors"]
+        )
+
+    payload = {"interface": interface.slug, "image_name": "foobar"}
+
     serializer = ComponentInterfaceValuePostSerializer(data=payload)
 
-    # verify
     assert not serializer.is_valid()
     assert (
-        f"upload_session or image are required for interface kind {kind}"
+        f"either user_uploads with image_name, or image are required for interface kind {interface.kind}"
+        in serializer.errors["non_field_errors"]
+    )
+
+    upload = UserUploadFactory()
+    payload = {"interface": interface.slug, "user_uploads": [upload.api_url]}
+    request.user = upload.creator
+
+    serializer = ComponentInterfaceValuePostSerializer(
+        data=payload, context={"request": request}
+    )
+
+    assert not serializer.is_valid()
+    assert (
+        f"either user_uploads with image_name, or image are required for interface kind {interface.kind}"
         in serializer.errors["non_field_errors"]
     )
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind,", InterfaceKinds.image)
-def test_civ_post_image_permission_validation(kind, rf):
-    # setup
+def test_civ_post_image_permission_validation(kind, request):
     user = UserFactory()
     image = ImageFactory()
     interface = ComponentInterfaceFactory(kind=kind)
-
     payload = {"interface": interface.slug, "image": image.api_url}
-
-    # test
-    request = rf.get("/foo")
     request.user = user
+
     serializer = ComponentInterfaceValuePostSerializer(
         data=payload, context={"request": request}
     )
 
-    # verify
     assert not serializer.is_valid()
     assert (
         "Invalid hyperlink - Object does not exist"
@@ -430,22 +566,17 @@ def test_civ_post_image_permission_validation(kind, rf):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
-def test_civ_post_upload_permission_validation(kind, rf):
-    # setup
+def test_civ_post_upload_session_permission_validation(kind, request):
     user = UserFactory()
     upload = UploadSessionFactory()
     interface = ComponentInterfaceFactory(kind=kind)
-
     payload = {"interface": interface.slug, "upload_session": upload.api_url}
-
-    # test
-    request = rf.get("/foo")
     request.user = user
+
     serializer = ComponentInterfaceValuePostSerializer(
         data=payload, context={"request": request}
     )
 
-    # verify
     assert not serializer.is_valid()
     assert (
         "Invalid hyperlink - Object does not exist"
@@ -454,25 +585,81 @@ def test_civ_post_upload_permission_validation(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
-def test_civ_post_image_not_ready_validation(kind, rf):
-    # setup
+def test_civ_post_dicom_uploads_permission_validation(request):
+    user = UserFactory()
+    uploads = UserUploadFactory.create_batch(2)
+    interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
+    payload = {
+        "interface": interface.slug,
+        "user_uploads": [upload.api_url for upload in uploads],
+        "image_name": "foobar",
+    }
+    request.user = user
+
+    serializer = ComponentInterfaceValuePostSerializer(
+        data=payload, context={"request": request}
+    )
+
+    assert not serializer.is_valid()
+    assert (
+        "Invalid hyperlink - Object does not exist"
+        in serializer.errors["user_uploads"][0]
+    )
+
+
+@pytest.mark.django_db
+def test_civ_post_dicom_uploads_empty_value_invalid():
+    interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
+
+    payload = {
+        "interface": interface.slug,
+        "image_name": "",
+        "user_uploads": [""],
+    }
+
+    serializer = ComponentInterfaceValuePostSerializer(data=payload)
+
+    assert not serializer.is_valid()
+    assert "This field may not be blank." in serializer.errors["image_name"]
+    assert (
+        "Invalid hyperlink - No URL match."
+        in serializer.errors["user_uploads"]
+    )
+
+    payload = {
+        "interface": interface.slug,
+        "image_name": "",
+        "user_uploads": [None],
+    }
+
+    serializer = ComponentInterfaceValuePostSerializer(data=payload)
+
+    assert not serializer.is_valid()
+    assert (
+        "Incorrect type. Expected URL string, received NoneType."
+        in serializer.errors["user_uploads"]
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind,", InterfaceKinds.image)
+def test_civ_post_image_not_ready_validation(kind, request):
     user = UserFactory()
     upload = UploadSessionFactory(
         status=RawImageUploadSession.REQUEUED, creator=user
     )
     interface = ComponentInterfaceFactory(kind=kind)
-
     payload = {"interface": interface.slug, "upload_session": upload.api_url}
-
-    # test
-    request = rf.get("/foo")
     request.user = user
+
     serializer = ComponentInterfaceValuePostSerializer(
         data=payload, context={"request": request}
     )
 
-    # verify
     assert not serializer.is_valid()
     assert (
         "Invalid hyperlink - Object does not exist"
@@ -481,16 +668,52 @@ def test_civ_post_image_not_ready_validation(kind, rf):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
-def test_civ_post_panimg_image_valid(kind, rf):
+def test_civ_post_dicom_image_valid(request):
+    user = UserFactory()
+    dicom_image_set = DICOMImageSetFactory()
+    image = ImageFactory(dicom_image_set=dicom_image_set)
+    assign_perm("view_image", user, image)
+    interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
+    payload = {
+        "interface": interface.slug,
+        "file": None,
+        "image": image.api_url,
+        "image_name": None,
+        "upload_session": None,
+        "user_upload": None,
+        "user_uploads": None,
+        "value": None,
+    }
+    request.user = user
+
+    serializer = ComponentInterfaceValuePostSerializer(
+        data=payload, context={"request": request}
+    )
+
+    assert serializer.is_valid()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind", InterfaceKinds.panimg)
+def test_civ_post_panimg_image_valid(kind, request):
     user = UserFactory()
     image = ImageFactory(
         name="foobar", color_space="GRAY", depth=1, timepoints=3
     )
     assign_perm("view_image", user, image)
     interface = ComponentInterfaceFactory(kind=kind)
-    payload = {"interface": interface.slug, "image": image.api_url}
-    request = rf.get("/foo")
+    payload = {
+        "interface": interface.slug,
+        "file": None,
+        "image": image.api_url,
+        "image_name": None,
+        "upload_session": None,
+        "user_upload": None,
+        "user_uploads": None,
+        "value": None,
+    }
     request.user = user
 
     serializer = ComponentInterfaceValuePostSerializer(
@@ -502,25 +725,55 @@ def test_civ_post_panimg_image_valid(kind, rf):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("kind,", InterfaceKinds.panimg)
-def test_civ_post_image_upload_session_valid(kind, rf):
-    # setup
+def test_civ_post_image_upload_session_valid(kind, request):
     user = UserFactory()
     upload = UploadSessionFactory(
         status=RawImageUploadSession.PENDING, creator=user
     )
     interface = ComponentInterfaceFactory(kind=kind)
-
-    payload = {"interface": interface.slug, "upload_session": upload.api_url}
-
-    # test
-    request = rf.get("/foo")
+    payload = {
+        "interface": interface.slug,
+        "file": None,
+        "image": None,
+        "image_name": None,
+        "upload_session": upload.api_url,
+        "user_upload": None,
+        "user_uploads": None,
+        "value": None,
+    }
     request.user = user
+
     serializer = ComponentInterfaceValuePostSerializer(
         data=payload, context={"request": request}
     )
 
-    # verify
-    assert serializer.is_valid()
+    assert serializer.is_valid(), f"{serializer.errors}"
+
+
+@pytest.mark.django_db
+def test_civ_post_dicom_image_upload_valid(request):
+    user = UserFactory()
+    uploads = UserUploadFactory.create_batch(2, creator=user)
+    interface = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
+    payload = {
+        "interface": interface.slug,
+        "file": None,
+        "image": None,
+        "image_name": "foo",
+        "upload_session": None,
+        "user_upload": None,
+        "user_uploads": [upload.api_url for upload in uploads],
+        "value": None,
+    }
+    request.user = user
+
+    serializer = ComponentInterfaceValuePostSerializer(
+        data=payload, context={"request": request}
+    )
+
+    assert serializer.is_valid(), f"{serializer.errors}"
 
 
 @pytest.mark.django_db
@@ -587,3 +840,37 @@ def test_civ_serializer_list_ordering():
     assert [civ["interface"]["slug"] for civ in produced_order] == [
         civ.interface.slug for civ in expected_order
     ]
+
+
+@pytest.mark.django_db
+def test_convert_deserialized_civ_data():
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    ci_img2 = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    ci_dcm = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
+    ci_file = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=False
+    )
+    us = RawImageUploadSessionFactory()
+    uploads = UserUploadFactory.create_batch(2)
+    im = ImageFactory()
+    data = [
+        {"interface": ci_str, "value": "foo"},
+        {"interface": ci_img, "image": im},
+        {"interface": ci_img2, "upload_session": us},
+        {"interface": ci_dcm, "image_name": "a dcm", "user_uploads": uploads},
+        {"interface": ci_file, "user_upload": uploads[0]},
+    ]
+
+    civ_data_objects = convert_deserialized_civ_data(
+        deserialized_civ_data=data
+    )
+
+    assert civ_data_objects[0].value == "foo"
+    assert civ_data_objects[1].image == im
+    assert civ_data_objects[2].upload_session == us
+    assert civ_data_objects[3].dicom_upload_with_name.name == "a dcm"
+    assert civ_data_objects[3].dicom_upload_with_name.user_uploads == uploads
+    assert civ_data_objects[4].user_upload == uploads[0]

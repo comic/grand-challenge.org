@@ -21,7 +21,6 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.factories import ImageFactory, UserFactory
-from tests.uploads_tests.factories import UserUploadFactory
 
 
 @pytest.mark.django_db
@@ -416,46 +415,6 @@ class TestJobCreateLimits:
         )
 
         assert serializer.is_valid()
-
-
-@pytest.mark.django_db
-def test_reformat_inputs(rf):
-    ci_str = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
-    ci_img = ComponentInterfaceFactory(
-        kind=ComponentInterface.Kind.PANIMG_IMAGE
-    )
-    ci_img2 = ComponentInterfaceFactory(
-        kind=ComponentInterface.Kind.PANIMG_IMAGE
-    )
-    ci_file = ComponentInterfaceFactory(
-        kind=ComponentInterface.Kind.ANY, store_in_database=False
-    )
-
-    us = RawImageUploadSessionFactory()
-    upl = UserUploadFactory()
-    im = ImageFactory()
-
-    data = [
-        {"interface": ci_str, "value": "foo"},
-        {"interface": ci_img, "image": im},
-        {"interface": ci_img2, "upload_session": us},
-        {"interface": ci_file, "user_upload": upl},
-    ]
-    request = rf.get("/foo")
-    request.user = UserFactory()
-    serializer = JobPostSerializer(
-        data=AlgorithmJobFactory(time_limit=10), context={"request": request}
-    )
-
-    assert serializer.reformat_inputs(serialized_civs=data)[0].value == "foo"
-    assert serializer.reformat_inputs(serialized_civs=data)[1].image == im
-    assert (
-        serializer.reformat_inputs(serialized_civs=data)[2].upload_session
-        == us
-    )
-    assert (
-        serializer.reformat_inputs(serialized_civs=data)[3].user_upload == upl
-    )
 
 
 @pytest.mark.django_db

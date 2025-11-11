@@ -1,11 +1,13 @@
 import logging
 
+from django.core.exceptions import ValidationError
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
-from rest_framework.fields import SerializerMethodField
+from rest_framework.fields import CharField, SerializerMethodField
 from rest_framework.relations import SlugRelatedField
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
+from grandchallenge.cases.widgets import DICOMUploadWithName
 from grandchallenge.components.backends.exceptions import (
     CINotAllowedException,
     CIVNotEditableException,
@@ -23,6 +25,38 @@ from grandchallenge.workstation_configs.serializers import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def convert_deserialized_civ_data(*, deserialized_civ_data):
+    """Takes deserialized CIV data and returns list of CIVData objects."""
+    civ_data_objects = []
+    for civ in deserialized_civ_data:
+        interface = civ["interface"]
+
+        keys = set(civ.keys()) - {"interface"}
+
+        keys_not_none = {key for key in keys if civ[key] is not None}
+
+        if keys_not_none == {"image_name", "user_uploads"}:
+            value = DICOMUploadWithName(
+                name=civ["image_name"],
+                user_uploads=civ["user_uploads"],
+            )
+        elif len(keys_not_none) == 1:
+            value = civ[keys_not_none.pop()]
+        elif len(keys_not_none) == 0:
+            value = None
+        else:
+            raise ValueError("Multiple values provided")
+
+        try:
+            civ_data_objects.append(
+                CIVData(interface_slug=interface.slug, value=value)
+            )
+        except ValidationError as e:
+            raise serializers.ValidationError(e)
+
+    return civ_data_objects
 
 
 class ComponentInterfaceSerializer(serializers.ModelSerializer):
@@ -87,6 +121,17 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         write_only=True,
         allow_null=True,
     )
+    user_uploads = serializers.HyperlinkedRelatedField(
+        queryset=UserUpload.objects.none(),
+        view_name="api:upload-detail",
+        required=False,
+        write_only=True,
+        many=True,
+    )
+    image_name = CharField(
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = ComponentInterfaceValue
@@ -98,10 +143,17 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             "pk",
             "upload_session",
             "user_upload",
+            "user_uploads",
+            "image_name",
         ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # The allow_null keyword argument is not passed to the ListSerializer,
+        # so we set it here.
+        self.fields["user_uploads"].allow_null = True
+
         if "request" in self.context:
             user = self.context["request"].user
 
@@ -125,23 +177,24 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
                 codename="change_userupload",
             )
 
+            self.fields["user_uploads"].child_relation.queryset = (
+                filter_by_permission(
+                    queryset=UserUpload.objects.all(),
+                    user=user,
+                    codename="change_userupload",
+                )
+            )
+
     def validate(self, attrs):
-        if "interface" not in attrs:
-            raise serializers.ValidationError("An interface must be specified")
+        self._validate_provided_fields(attrs=attrs)
 
         interface = attrs["interface"]
 
         if interface.super_kind == interface.SuperKind.IMAGE:
-            if not any(
-                [
-                    attrs.get("image"),
-                    attrs.get("upload_session"),
-                ]
-            ):
-                raise serializers.ValidationError(
-                    f"upload_session or image are required for interface "
-                    f"kind {interface.kind}"
-                )
+            if interface.is_dicom_image_kind:
+                self._validate_dicom_image(attrs=attrs, interface=interface)
+            else:
+                self._validate_panimg_image(attrs=attrs, interface=interface)
         elif interface.super_kind == interface.SuperKind.VALUE:
             if (
                 attrs.get("value") is None
@@ -164,7 +217,11 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         else:
             raise NotImplementedError(f"Unsupported interface {interface}")
 
-        if not attrs.get("upload_session") and not attrs.get("user_upload"):
+        if (
+            not attrs.get("upload_session")
+            and not attrs.get("user_upload")
+            and not attrs.get("user_uploads")
+        ):
             # Instances without an image or a file are never valid, this will be checked
             # later, but for now check everything else. DRF 3.0 dropped calling
             # full_clean on instances, so we need to do it ourselves.
@@ -174,6 +231,61 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             instance.full_clean()
 
         return attrs
+
+    @staticmethod
+    def _validate_provided_fields(*, attrs):
+        if "interface" not in attrs:
+            raise serializers.ValidationError("An interface must be specified")
+
+        possible_keys = [
+            "image",
+            "value",
+            "file",
+            "user_upload",
+            "upload_session",
+            ("image_name", "user_uploads"),
+        ]
+
+        keys = set(attrs.keys()) - {"interface"}
+
+        if not keys:
+            raise serializers.ValidationError(
+                f"You must provide at least one of {possible_keys}."
+            )
+
+        keys_not_none = {key for key in keys if attrs[key] is not None}
+
+        if len(keys_not_none) > 1 and keys_not_none != {
+            "image_name",
+            "user_uploads",
+        }:
+            raise serializers.ValidationError(
+                f"You can only provide one of {possible_keys} for each socket."
+            )
+
+    @staticmethod
+    def _validate_panimg_image(*, attrs, interface):
+        if not any(
+            [
+                attrs.get("image"),
+                attrs.get("upload_session"),
+            ]
+        ):
+            raise serializers.ValidationError(
+                f"upload_session or image are required for interface "
+                f"kind {interface.kind}"
+            )
+
+    @staticmethod
+    def _validate_dicom_image(*, attrs, interface):
+        if not (
+            attrs.get("image")
+            or (attrs.get("user_uploads") and attrs.get("image_name"))
+        ):
+            raise serializers.ValidationError(
+                f"either user_uploads with image_name, or image are "
+                f"required for interface kind {interface.kind}"
+            )
 
 
 class SortedCIVSerializer(serializers.ListSerializer):
@@ -238,20 +350,10 @@ class CIVSetPostSerializerMixin:
 
         request = self.context["request"]
 
-        civ_data_objects = []
+        civ_data_objects = convert_deserialized_civ_data(
+            deserialized_civ_data=values
+        )
 
-        for value in values:
-            interface = value["interface"]
-            upload_session = value.get("upload_session", None)
-            user_upload = value.get("user_upload", None)
-            image = value.get("image", None)
-            value = value.get("value", None)
-            civ_data_objects.append(
-                CIVData(
-                    interface_slug=interface.slug,
-                    value=upload_session or user_upload or image or value,
-                )
-            )
         try:
             instance.validate_civ_data_objects_and_execute_linked_task(
                 civ_data_objects=civ_data_objects, user=request.user
