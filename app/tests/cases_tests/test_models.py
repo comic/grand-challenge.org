@@ -180,7 +180,7 @@ def test_dicomimagesetupload_import_properties():
     )
     assert (
         di_upload._import_input_s3_uri
-        == f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/inputs/files/{di_upload.pk}"
+        == f"s3://{settings.AWS_HEALTH_IMAGING_BUCKET_NAME}/inputs/{di_upload.pk}/files"
     )
     assert (
         di_upload._import_output_s3_uri
