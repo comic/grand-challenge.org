@@ -68,7 +68,7 @@ def get_scale_in_protection_url():
 @task_prerun.connect()
 def set_ecs_scale_in_protection(*_, task, **__):
     if (
-        getattr(celery_app, "is_solo_worker", False)
+        celery_app.is_solo_worker
         and settings.ECS_ENABLE_CELERY_SCALE_IN_PROTECTION
     ):
         expire_seconds = task.time_limit or settings.CELERY_TASK_TIME_LIMIT
@@ -91,7 +91,7 @@ def set_ecs_scale_in_protection(*_, task, **__):
 @task_postrun.connect()
 def remove_ecs_scale_in_protection(*_, **__):
     if (
-        getattr(celery_app, "is_solo_worker", False)
+        celery_app.is_solo_worker
         and settings.ECS_ENABLE_CELERY_SCALE_IN_PROTECTION
     ):
         logger.info("Removing ECS scale-in protection")
