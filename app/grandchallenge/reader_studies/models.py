@@ -10,6 +10,7 @@ from django.core.validators import (
     MinLengthValidator,
     MinValueValidator,
     RegexValidator,
+    StepValueValidator,
 )
 from django.db import models
 from django.db.models import Avg, Count, Q, Sum
@@ -52,7 +53,6 @@ from grandchallenge.core.utils.access_requests import (
     process_access_request,
 )
 from grandchallenge.core.validators import JSONValidator
-from grandchallenge.core.vendored.django.validators import StepValueValidator
 from grandchallenge.hanging_protocols.models import (
     HangingProtocolMixin,
     ViewportNames,
