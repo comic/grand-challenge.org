@@ -1359,7 +1359,7 @@ requires-dist = [
     { name = "httpx" },
     { name = "humanize" },
     { name = "jsonschema" },
-    { name = "kombu", specifier = "!=5.3.0,!=5.5.*" },
+    { name = "kombu", specifier = "!=5.3.0,!=5.5.*,!=5.6.*" },
     { name = "panimg", specifier = ">=0.12.0,!=0.15.1" },
     { name = "pillow" },
     { name = "psycopg", extras = ["c"], specifier = ">3.1.8" },
@@ -1596,17 +1596,16 @@ wheels = [
 
 [[package]]
 name = "kombu"
-version = "5.6.0"
+version = "5.4.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "amqp" },
-    { name = "packaging" },
     { name = "tzdata" },
     { name = "vine" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bd/af/06e15085487edfb06ea006c7cae748b33b0ae354e13508c5f6df71a01ec1/kombu-5.6.0.tar.gz", hash = "sha256:03d2d4adc5381abd200014e11c947c3ae5cb7384e676cbbaf9e7ffd8652da0c2", size = 470557, upload-time = "2025-11-01T15:29:00.976Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/4d/b93fcb353d279839cc35d0012bee805ed0cf61c07587916bfc35dbfddaf1/kombu-5.4.2.tar.gz", hash = "sha256:eef572dd2fd9fc614b37580e3caeafdd5af46c1eff31e7fba89138cdb406f2cf", size = 442858, upload-time = "2024-09-19T12:25:37.261Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c5/86/ac0230d254d010de1c3ecf88a2df41ccc59be59e87e97737782b828c2133/kombu-5.6.0-py3-none-any.whl", hash = "sha256:97280ee43e6c1b74f129ec4e5c8c52516b8104260639dec0cebe9e52c69c3246", size = 213774, upload-time = "2025-11-01T15:28:58.97Z" },
+    { url = "https://files.pythonhosted.org/packages/87/ec/7811a3cf9fdfee3ee88e54d08fcbc3fabe7c1b6e4059826c59d7b795651c/kombu-5.4.2-py3-none-any.whl", hash = "sha256:14212f5ccf022fc0a70453bb025a1dcc32782a588c49ea866884047d66e14763", size = 201349, upload-time = "2024-09-19T12:25:34.926Z" },
 ]
 
 [package.optional-dependencies]
