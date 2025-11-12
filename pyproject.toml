@@ -7,7 +7,7 @@ requires-python = "==3.11.*"
 dependencies = [
     "celery[redis,sqs]!=5.0.6,!=5.3.0,!=5.5.*",
     "kombu!=5.3.0,!=5.5.*,!=5.6.*",
-    "django<4.3",
+    "django<5.1",
     "django-countries",
     "django-crispy-forms",
     "crispy-bootstrap4",

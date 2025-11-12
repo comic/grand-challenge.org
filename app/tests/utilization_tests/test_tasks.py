@@ -10,7 +10,7 @@ from tests.evaluation_tests.factories import PhaseFactory
 from tests.factories import ChallengeFactory
 
 
-class TestUtilizationExecutor(Executor):
+class UtilizationExecutor(Executor):
     @property
     def external_admin_url(self):
         return ""
@@ -50,7 +50,7 @@ def test_create_job_warm_pool_utilizations(
     django_assert_num_queries, settings
 ):
     settings.COMPONENTS_DEFAULT_BACKEND = (
-        "tests.utilization_tests.test_tasks.TestUtilizationExecutor"
+        "tests.utilization_tests.test_tasks.UtilizationExecutor"
     )
     settings.COMPONENTS_USD_TO_EUR = 1
 

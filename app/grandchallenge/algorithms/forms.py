@@ -362,7 +362,9 @@ class AlgorithmForm(
             .aggregate(
                 max_memory=Max("algorithm_maximum_settable_memory_gb"),
                 gpu_type_choices=ArrayAgg(
-                    "algorithm_selectable_gpu_type_choices", distinct=True
+                    "algorithm_selectable_gpu_type_choices",
+                    distinct=True,
+                    default=[],
                 ),
             )
         )
@@ -374,7 +376,9 @@ class AlgorithmForm(
         ).aggregate(
             max_memory=Max("algorithm_maximum_settable_memory_gb"),
             gpu_type_choices=ArrayAgg(
-                "algorithm_selectable_gpu_type_choices", distinct=True
+                "algorithm_selectable_gpu_type_choices",
+                distinct=True,
+                default=[],
             ),
         )
 
