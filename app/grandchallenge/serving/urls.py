@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.urls import path, register_converter
+from django.urls.converters import get_converters
 
 from grandchallenge.serving.views import (
     serve_algorithm_images,
@@ -25,7 +26,8 @@ class PrefixConverter:
         return str(value)
 
 
-register_converter(PrefixConverter, "prefix")
+if "prefix" not in get_converters():
+    register_converter(PrefixConverter, "prefix")
 
 urlpatterns = [
     path(
