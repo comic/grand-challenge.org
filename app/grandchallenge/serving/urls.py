@@ -15,7 +15,7 @@ from grandchallenge.serving.views import (
 app_name = "serving"
 
 
-class HexByteConverter:
+class PrefixConverter:
     regex = r"[0-9a-fA-F]{2}"
 
     def to_python(self, value):
@@ -25,7 +25,7 @@ class HexByteConverter:
         return str(value)
 
 
-register_converter(HexByteConverter, "hexbyte")
+register_converter(PrefixConverter, "prefix")
 
 urlpatterns = [
     path(
@@ -33,7 +33,7 @@ urlpatterns = [
         serve_images,
     ),
     path(
-        f"{settings.IMAGE_FILES_SUBDIRECTORY}/<hexbyte:pa>/<hexbyte:pb>/<uuid:pk>/<path:path>",
+        f"{settings.IMAGE_FILES_SUBDIRECTORY}/<prefix:pa>/<prefix:pb>/<uuid:pk>/<path:path>",
         serve_images,
     ),
     path(
@@ -60,8 +60,8 @@ urlpatterns = [
         (
             f"{settings.COMPONENTS_FILES_SUBDIRECTORY}/"
             f"componentinterfacevalue/"
-            f"<hexbyte:pa>/"
-            f"<hexbyte:pb>/"
+            f"<prefix:pa>/"
+            f"<prefix:pb>/"
             f"<int:component_interface_value_pk>/"
             f"<path:path>"
         ),
