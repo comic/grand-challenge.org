@@ -75,7 +75,7 @@ push_http:
 
 build: build_web_test build_web_dist build_http
 
-migrate:
+migrate: garage
 	docker compose run --rm web python manage.py migrate
 
 check_migrations:
@@ -90,19 +90,15 @@ runserver: build_web_test build_http development_fixtures
 rundeps:
 	bash -c "trap 'docker compose down' EXIT; docker compose up postgres garage.localhost redis registry"
 
-garage:
-	docker compose run \
-		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
-		--rm \
-		web \
-		bash -c "python manage.py runscript garage"
+garage: rundeps
+	./dockerfiles/garage/garage_setup.sh
 
-development_fixtures:
+development_fixtures: migrate
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
 		celery_worker \
-		bash -c "python manage.py migrate && python manage.py runscript garage development_fixtures"
+		bash -c "python manage.py runscript development_fixtures"
 
 algorithm_evaluation_fixtures:
 	docker compose run \
