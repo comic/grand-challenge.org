@@ -13,6 +13,7 @@ from grandchallenge.core.guardian import (
     ViewObjectPermissionListMixin,
     ViewObjectPermissionsFilter,
 )
+from grandchallenge.core.views import GracefulPaginator
 from grandchallenge.notifications.filters import (
     FollowFilter,
     NotificationFilter,
@@ -86,6 +87,7 @@ class NotificationList(
     model = Notification
     filter_class = NotificationFilter
     paginate_by = 50
+    paginator_class = GracefulPaginator
 
     def get_queryset(self):
         return (

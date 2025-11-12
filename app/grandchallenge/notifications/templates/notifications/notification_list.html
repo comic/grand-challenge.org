@@ -44,7 +44,7 @@
                             <input class="checkbox pr-1 mr-1" name="checkbox" type="checkbox" id="{{ object.id }}"
                                    value="{{ object.id }}" data-url="{% url 'api:notification-detail' pk=object.pk %}">
                             {% if not object.read %}
-                                <span class="text-primary align-middle mr-1"><i class="fa fa-circle pl-1"></i></span>
+                                <span class="text-danger align-middle mr-1"><i class="fa fa-circle pl-1"></i></span>
                             {% endif %}
                             {% print_notification notification=object user=request.user as current_notification %}
                             {{ current_notification }}

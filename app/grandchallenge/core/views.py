@@ -4,6 +4,7 @@ from random import choice
 from django.contrib.auth import get_user_model
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.forms.utils import ErrorList
 from django.http import (
     HttpResponse,
@@ -262,3 +263,20 @@ def handler500(request):
         template_name="500.html", request=request
     )
     return HttpResponseServerError(content)
+
+
+class GracefulPaginator(Paginator):
+    def page(self, number):
+        """
+        Always return a valid page number rather than raising 404s
+
+        Could be bad for SEO, so only use on private ListViews.
+        See https://forum.djangoproject.com/t/letting-listview-gracefully-handle-out-of-range-page-numbers/23037/3
+        """
+        try:
+            number = self.validate_number(number)
+        except PageNotAnInteger:
+            number = 1
+        except EmptyPage:
+            number = self.num_pages
+        return super().page(number)

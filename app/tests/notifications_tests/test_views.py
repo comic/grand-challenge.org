@@ -114,6 +114,29 @@ def test_notification_view_permissions(client):
     assert "You have no notifications" in response.rendered_content
 
 
+@pytest.mark.django_db
+def test_notification_view_out_of_range(client):
+    user1 = UserFactory()
+
+    notification = NotificationFactory(
+        user=user1,
+        actor=UserFactory(),
+        message="requested access to",
+        target=AlgorithmFactory(),
+        type=Notification.Type.ACCESS_REQUEST,
+    )
+
+    response = get_view_for_user(
+        url=reverse(viewname="notifications:list") + "?page=1337",
+        client=client,
+        method=client.get,
+        user=user1,
+    )
+
+    assert response.status_code == 200
+    assert notification in response.context["notification_list"]
+
+
 @pytest.mark.parametrize(
     "type, data",
     [("delete", {}), ("patch", {"read": True}), ("patch", {"read": False})],
