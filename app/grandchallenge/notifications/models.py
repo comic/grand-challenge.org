@@ -51,6 +51,9 @@ class NotificationTypeChoices(models.TextChoices):
     MISSING_METHOD = "MISSING-METHOD", _("Missing method")
     JOB_STATUS = "JOB-STATUS", _("Job status update")
     IMAGE_IMPORT_STATUS = "IMAGE-IMPORT", _("Image import status update")
+    DICOM_IMAGE_IMPORT_STATUS = "DICOM-IMAGE-IMPORT", _(
+        "DICOM image import status update"
+    )
     FILE_COPY_STATUS = "FILE-COPY", _("Validation failed while copying file")
     CIV_VALIDATION = "CIV-VALIDATION", (
         "Component Interface Value validation failed"
@@ -451,6 +454,13 @@ class Notification(UUIDModel):
                     self.action_object.get_absolute_url(),
                     "upload",
                 ),
+                time=naturaltime(self.created),
+                message=self.description,
+            )
+        elif self.type == NotificationTypeChoices.DICOM_IMAGE_IMPORT_STATUS:
+            return format_html(
+                "Your dicom import from {time} failed "
+                "with the following error: {message}",
                 time=naturaltime(self.created),
                 message=self.description,
             )

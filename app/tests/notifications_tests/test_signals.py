@@ -444,7 +444,7 @@ MODELS_FOR_NOTIFICATIONS_CLEANUP = [
     (
         DICOMImageSetUpload,
         "action_object",
-        Notification.Type.IMAGE_IMPORT_STATUS,
+        Notification.Type.DICOM_IMAGE_IMPORT_STATUS,
         {
             "action_object": {
                 "factory": DICOMImageSetUploadFactory,
