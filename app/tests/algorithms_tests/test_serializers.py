@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import pytest
 from guardian.shortcuts import assign_perm
 from rest_framework.exceptions import ErrorDetail
@@ -21,6 +23,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.factories import ImageFactory, UserFactory
+from tests.uploads_tests.factories import UserUploadFactory
 
 
 @pytest.mark.django_db
@@ -267,6 +270,54 @@ def test_algorithm_job_post_serializer_create(
     assert job.creator == user
     assert len(job.inputs.all()) == 3
     assert job.algorithm_interface == interface
+
+
+@pytest.mark.django_db
+def test_algorithm_job_post_serializer_create_with_image_uploads(
+    request, settings, django_capture_on_commit_callbacks, mocker
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    user = UserFactory()
+    uploads = UserUploadFactory.create_batch(2, creator=user)
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=True, is_in_registry=True, is_desired_version=True
+    )
+    socket = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.PANIMG_IMAGE
+    )
+    interface = AlgorithmInterfaceFactory(inputs=[socket])
+    algorithm_image.algorithm.interfaces.add(interface)
+    algorithm_image.algorithm.add_editor(user)
+    payload = {
+        "algorithm": algorithm_image.algorithm.api_url,
+        "inputs": [
+            {
+                "interface": socket.slug,
+                "file": None,
+                "image": None,
+                "image_name": None,
+                "upload_session": None,
+                "user_upload": None,
+                "user_uploads": [upload.api_url for upload in uploads],
+                "value": None,
+            },
+        ],
+    }
+    request.user = user
+    mock_process_images_method = mocker.patch(
+        "grandchallenge.cases.models.RawImageUploadSession.process_images",
+        return_value=MagicMock(),
+    )
+
+    serializer = JobPostSerializer(data=payload, context={"request": request})
+
+    assert serializer.is_valid()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        serializer.create(serializer.validated_data)
+
+    assert mock_process_images_method.call_count == 1
 
 
 @pytest.mark.django_db
