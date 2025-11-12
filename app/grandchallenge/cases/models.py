@@ -1028,7 +1028,7 @@ class PostProcessImageTask(UUIDModel):
         )
         constraints = (
             models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     status__in=PostProcessImageTaskStatusChoices.values
                 ),
                 name="valid_post_process_image_task_status",
@@ -1166,7 +1166,7 @@ class DICOMImageSetUpload(UUIDModel):
         verbose_name = "DICOM image set upload"
         constraints = [
             models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     status__in=DICOMImageSetUploadStatusChoices.values
                 ),
                 name="dicomuimagesetupload_status_valid",

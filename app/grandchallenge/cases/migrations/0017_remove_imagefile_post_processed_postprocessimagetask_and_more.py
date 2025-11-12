@@ -70,7 +70,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="postprocessimagetask",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     (
                         "status__in",
                         ["INITIALIZED", "CANCELLED", "FAILED", "COMPLETED"],

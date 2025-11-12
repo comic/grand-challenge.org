@@ -91,7 +91,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="invoice",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     models.Q(("payment_status", "ISSUED"), _negated=True),
                     ("issued_on__isnull", False),
                     ("payment_type", "COMPLIMENTARY"),
@@ -104,7 +104,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="invoice",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     models.Q(("payment_status", "ISSUED"), _negated=True),
                     models.Q(("internal_invoice_number", ""), _negated=True),
                     ("payment_type", "COMPLIMENTARY"),
@@ -117,7 +117,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="invoice",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     models.Q(("payment_status", "ISSUED"), _negated=True),
                     models.Q(("internal_client_number", ""), _negated=True),
                     ("payment_type", "COMPLIMENTARY"),
@@ -130,7 +130,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="invoice",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     models.Q(("payment_status", "PAID"), _negated=True),
                     ("paid_on__isnull", False),
                     ("payment_type", "COMPLIMENTARY"),
@@ -143,7 +143,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="invoice",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     ("payment_type", "COMPLIMENTARY"),
                     ("internal_comments", ""),
                     _negated=True,
@@ -155,7 +155,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="invoice",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     ("payment_type", "COMPLIMENTARY"),
                     models.Q(("contact_name", ""), _negated=True),
                     _connector="OR",
@@ -167,7 +167,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="invoice",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     ("payment_type", "COMPLIMENTARY"),
                     models.Q(("contact_email", ""), _negated=True),
                     _connector="OR",
@@ -179,7 +179,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="invoice",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     ("payment_type", "COMPLIMENTARY"),
                     models.Q(("billing_address", ""), _negated=True),
                     _connector="OR",
@@ -191,7 +191,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="invoice",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     ("payment_type", "COMPLIMENTARY"),
                     models.Q(("vat_number", ""), _negated=True),
                     _connector="OR",

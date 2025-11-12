@@ -238,7 +238,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="dicomimagesetupload",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     (
                         "status__in",
                         ["INITIALIZED", "STARTED", "FAILED", "COMPLETED"],

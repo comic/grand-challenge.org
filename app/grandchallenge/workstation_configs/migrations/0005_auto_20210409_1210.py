@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="windowpreset",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     models.Q(
                         ("center__isnull", False),
                         ("lower_percentile__isnull", True),
@@ -73,7 +73,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="windowpreset",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     upper_percentile__gt=django.db.models.expressions.F(
                         "lower_percentile"
                     )
@@ -84,7 +84,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="windowpreset",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     ("width__gt", 0), ("width__isnull", True), _connector="OR"
                 ),
                 name="workstation_configs_windowpreset_width_gt_0",
