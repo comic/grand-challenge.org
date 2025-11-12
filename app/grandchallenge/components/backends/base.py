@@ -24,7 +24,6 @@ import httpx
 import pydantic
 from asgiref.sync import async_to_sync
 from botocore.auth import SigV4Auth
-from botocore.awsrequest import AWSRequest
 from botocore.config import Config
 from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
@@ -657,33 +656,21 @@ class Executor(ABC):
                     region_name=settings.AWS_DEFAULT_REGION,
                 )
 
-                image_set_id = civ.image.dicom_image_set.image_set_id
-
                 for (
-                    image_frame
-                ) in civ.image.dicom_image_set.image_frame_metadata:
-                    study_instance_uid = image_frame["study_instance_uid"]
-                    series_instance_uid = image_frame["series_instance_uid"]
-                    sop_instance_uid = image_frame["sop_instance_uid"]
-                    stored_transfer_syntax_uid = image_frame[
-                        "stored_transfer_syntax_uid"
-                    ]
-
+                    instance_request
+                ) in civ.image.dicom_image_set.instance_requests:
                     key = self._get_key_for_target_relative_path(
                         civ=civ,
                         input_prefixes=input_prefixes,
-                        filename=f"{sop_instance_uid}.dcm",
+                        filename=f"{instance_request.sop_instance_uid}.dcm",
                     )
 
                     yield self._get_copy_sop_instance_task(
                         medical_imaging_auth=medical_imaging_auth,
-                        image_set_id=image_set_id,
-                        study_instance_uid=study_instance_uid,
-                        series_instance_uid=series_instance_uid,
-                        sop_instance_uid=sop_instance_uid,
-                        stored_transfer_syntax_uid=stored_transfer_syntax_uid,
+                        unsigned_request=instance_request.unsigned_request,
                         target_key=key,
                     )
+
             elif civ.interface.is_panimg_kind:
                 image_file = civ.image_file
 
@@ -776,35 +763,13 @@ class Executor(ABC):
     def _get_copy_sop_instance_task(
         *,
         medical_imaging_auth,
-        image_set_id,
-        study_instance_uid,
-        series_instance_uid,
-        sop_instance_uid,
-        stored_transfer_syntax_uid,
+        unsigned_request,
         target_key,
     ):
-        # See https://docs.aws.amazon.com/healthimaging/latest/devguide/dicomweb-retrieve-instance.html
-        dicom_file_url = (
-            f"https://dicom-medical-imaging.{settings.AWS_DEFAULT_REGION}.amazonaws.com"
-            f"/datastore/{settings.AWS_HEALTH_IMAGING_DATASTORE_ID}"
-            f"/studies/{study_instance_uid}"
-            f"/series/{series_instance_uid}"
-            f"/instances/{sop_instance_uid}"
-            f"?imageSetId={image_set_id}"
-        )
-
-        request = AWSRequest(
-            method="GET",
-            url=dicom_file_url,
-            headers={
-                "Accept": f"application/dicom; transfer-syntax={stored_transfer_syntax_uid}"
-            },
-        )
-
         return CIVProvisioningTask(
             task=functools.partial(
                 s3_sign_request_then_stream,
-                request=request,
+                request=unsigned_request,
                 signer=medical_imaging_auth,
                 bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
                 key=target_key,

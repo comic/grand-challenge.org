@@ -621,12 +621,15 @@ def test_upload_with_too_many_preprocessing(client, settings):
 
 
 @pytest.mark.django_db
-def test_dicom_404_without_permission(client):
+@pytest.mark.parametrize(
+    "viewname", ("api:image-dicom-frames", "api:image-dicom-instances")
+)
+def test_dicom_404_without_permission(client, viewname):
     image = ImageFactory()
     user = UserFactory()
 
     response = get_view_for_user(
-        viewname="api:image-dicom",
+        viewname=viewname,
         reverse_kwargs={"pk": image.pk},
         user=user,
         client=client,
@@ -637,13 +640,16 @@ def test_dicom_404_without_permission(client):
 
 
 @pytest.mark.django_db
-def test_dicom_404_if_no_image_set(client):
+@pytest.mark.parametrize(
+    "viewname", ("api:image-dicom-frames", "api:image-dicom-instances")
+)
+def test_dicom_404_if_no_image_set(client, viewname):
     image = ImageFactory()
     user = UserFactory()
     assign_perm("view_image", user, image)
 
     response = get_view_for_user(
-        viewname="api:image-dicom",
+        viewname=viewname,
         reverse_kwargs={"pk": image.pk},
         user=user,
         client=client,
@@ -657,7 +663,7 @@ def test_dicom_404_if_no_image_set(client):
 
 
 @pytest.mark.django_db
-def test_dicom_signed_urls(client, settings, monkeypatch):
+def test_dicom_files_signed_urls(client, settings, monkeypatch):
     settings.AWS_HEALTH_IMAGING_DATASTORE_ID = "test-datastore-id"
     settings.AWS_DEFAULT_REGION = "test-region"
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "test-access-key")
@@ -689,7 +695,7 @@ def test_dicom_signed_urls(client, settings, monkeypatch):
     assign_perm("view_image", user, image)
 
     response = get_view_for_user(
-        viewname="api:image-dicom",
+        viewname="api:image-dicom-frames",
         reverse_kwargs={"pk": image.pk},
         user=user,
         client=client,
@@ -761,7 +767,93 @@ def test_dicom_signed_urls(client, settings, monkeypatch):
 
 
 @pytest.mark.django_db
-def test_dicom_signed_urls_creates_download_object(client):
+def test_dicom_instances_signed_urls(client, settings, monkeypatch):
+    settings.AWS_HEALTH_IMAGING_DATASTORE_ID = "test-datastore-id"
+    settings.AWS_DEFAULT_REGION = "test-region"
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "test-access-key")
+
+    image = ImageFactory(
+        dicom_image_set=DICOMImageSetFactory(
+            image_set_id="test-image-set-id",
+            image_frame_metadata=[
+                {
+                    "image_frame_id": "test-1",
+                    "frame_size_in_bytes": 1337,
+                    "study_instance_uid": "studyuid",
+                    "series_instance_uid": "seriesuid",
+                    "sop_instance_uid": "sop-1",
+                    "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+                },
+                {
+                    "image_frame_id": "test-2",
+                    "frame_size_in_bytes": 1337,
+                    "study_instance_uid": "studyuid",
+                    "series_instance_uid": "seriesuid",
+                    "sop_instance_uid": "sop-2",
+                    "stored_transfer_syntax_uid": "1.2.840.10008.1.2.4.202",
+                },
+            ],
+        )
+    )
+    user = UserFactory()
+    assign_perm("view_image", user, image)
+
+    response = get_view_for_user(
+        viewname="api:image-dicom-instances",
+        reverse_kwargs={"pk": image.pk},
+        user=user,
+        client=client,
+    )
+
+    assert response.status_code == 200
+
+    signed_urls = response.json()
+
+    x_amz_date_pattern = r"^\d{8}T\d{6}Z$"
+    auth_pattern = r"^AWS4-HMAC-SHA256 Credential=test-access-key/\d{8}/test-region/medical-imaging/aws4_request, SignedHeaders=accept;host;x-amz-date, Signature=.+$"
+
+    assert signed_urls.keys() == {
+        "image_set_id",
+        "instances",
+    }
+    assert signed_urls["image_set_id"] == "test-image-set-id"
+    assert len(signed_urls["instances"]) == 2
+
+    for idx, frame_info in enumerate(signed_urls["instances"]):
+        assert frame_info.keys() == {"sop_instance_uid", "get_instance"}
+        assert frame_info["sop_instance_uid"] == f"sop-{idx + 1}"
+
+        frame_request = frame_info["get_instance"]
+
+        assert frame_request.keys() == {"data", "headers", "method", "url"}
+        assert frame_request["headers"].keys() == {
+            "Accept",
+            "Authorization",
+            "X-Amz-Date",
+        }
+        assert (
+            frame_request["headers"]["Accept"]
+            == "application/dicom; transfer-syntax=1.2.840.10008.1.2.4.202"
+        )
+        assert re.match(
+            x_amz_date_pattern, frame_request["headers"]["X-Amz-Date"]
+        )
+        assert re.match(
+            auth_pattern, frame_request["headers"]["Authorization"]
+        )
+        assert frame_request["data"] is None
+        assert frame_request["method"] == "GET"
+        assert (
+            frame_request["url"]
+            == f"https://dicom-medical-imaging.test-region.amazonaws.com/datastore/test-datastore-id/studies/studyuid/series/seriesuid/instances/sop-{idx + 1}?imageSetId=test-image-set-id"
+        )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "viewname", ("api:image-dicom-frames", "api:image-dicom-instances")
+)
+def test_dicom_signed_urls_creates_download_object(client, viewname):
     image = ImageFactory(
         dicom_image_set=DICOMImageSetFactory(
             image_set_id="test-image-set-id",
@@ -789,7 +881,7 @@ def test_dicom_signed_urls_creates_download_object(client):
     assign_perm("view_image", user, image)
 
     response = get_view_for_user(
-        viewname="api:image-dicom",
+        viewname=viewname,
         reverse_kwargs={"pk": image.pk},
         user=user,
         client=client,

@@ -4,11 +4,13 @@ import json
 import logging
 from pathlib import Path
 from tempfile import SpooledTemporaryFile, TemporaryDirectory
+from typing import NamedTuple
 from urllib.parse import urlparse
 
 import boto3
 from actstream.actions import follow
 from billiard.exceptions import SoftTimeLimitExceeded
+from botocore.awsrequest import AWSRequest
 from botocore.exceptions import ClientError
 from celery import signature
 from django.conf import settings
@@ -297,6 +299,11 @@ def image_file_path(instance, filename):
     )
 
 
+class DICOMInstanceRequest(NamedTuple):
+    sop_instance_uid: str
+    unsigned_request: AWSRequest
+
+
 class DICOMImageSet(UUIDModel):
     image_set_id = models.CharField(
         max_length=32,
@@ -371,6 +378,37 @@ class DICOMImageSet(UUIDModel):
         on_delete=models.PROTECT,
         related_name="dicom_image_set",
     )
+
+    @property
+    def instance_requests(self):
+        for image_frame in self.image_frame_metadata:
+            study_instance_uid = image_frame["study_instance_uid"]
+            series_instance_uid = image_frame["series_instance_uid"]
+            sop_instance_uid = image_frame["sop_instance_uid"]
+            stored_transfer_syntax_uid = image_frame[
+                "stored_transfer_syntax_uid"
+            ]
+
+            # See https://docs.aws.amazon.com/healthimaging/latest/devguide/dicomweb-retrieve-instance.html
+            dicom_file_url = (
+                f"https://dicom-medical-imaging.{settings.AWS_DEFAULT_REGION}.amazonaws.com"
+                f"/datastore/{settings.AWS_HEALTH_IMAGING_DATASTORE_ID}"
+                f"/studies/{study_instance_uid}"
+                f"/series/{series_instance_uid}"
+                f"/instances/{sop_instance_uid}"
+                f"?imageSetId={self.image_set_id}"
+            )
+
+            yield DICOMInstanceRequest(
+                sop_instance_uid=sop_instance_uid,
+                unsigned_request=AWSRequest(
+                    method="GET",
+                    url=dicom_file_url,
+                    headers={
+                        "Accept": f"application/dicom; transfer-syntax={stored_transfer_syntax_uid}"
+                    },
+                ),
+            )
 
 
 @receiver(post_delete, sender=DICOMImageSet)
