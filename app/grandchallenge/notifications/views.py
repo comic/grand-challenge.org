@@ -91,6 +91,7 @@ class NotificationList(
         return (
             super()
             .get_queryset()
+            .filter(user=self.request.user)
             .select_related(
                 "actor_content_type",
                 "target_content_type",
@@ -118,33 +119,38 @@ class FollowList(
     model = Follow
     filter_class = FollowFilter
     paginate_by = 50
-    queryset = (
-        Follow.objects.exclude(
-            Q(
-                content_type__app_label="archives",
-                content_type__model="archivepermissionrequest",
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .exclude(
+                Q(
+                    content_type__app_label="archives",
+                    content_type__model="archivepermissionrequest",
+                )
+                | Q(
+                    content_type__app_label="algorithms",
+                    content_type__model="algorithmpermissionrequest",
+                )
+                | Q(
+                    content_type__app_label="reader_studies",
+                    content_type__model="readerstudypermissionrequest",
+                )
+                | Q(
+                    content_type__app_label="participants",
+                    content_type__model="registrationrequest",
+                )
+                | Q(
+                    content_type__app_label="cases",
+                    content_type__model="rawimageuploadsession",
+                )
             )
-            | Q(
-                content_type__app_label="algorithms",
-                content_type__model="algorithmpermissionrequest",
-            )
-            | Q(
-                content_type__app_label="reader_studies",
-                content_type__model="readerstudypermissionrequest",
-            )
-            | Q(
-                content_type__app_label="participants",
-                content_type__model="registrationrequest",
-            )
-            | Q(
-                content_type__app_label="cases",
-                content_type__model="rawimageuploadsession",
-            )
+            .exclude(flag="job-inactive")
+            .filter(user=self.request.user)
+            .select_related("user", "content_type")
+            .order_by("content_type")
         )
-        .exclude(flag="job-inactive")
-        .select_related("user", "content_type")
-        .order_by("content_type")
-    )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
