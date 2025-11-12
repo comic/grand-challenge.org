@@ -158,13 +158,13 @@ class Invoice(models.Model, FieldChangeMixin):
     PaymentTypeChoices = PaymentTypeChoices
     payment_type = models.CharField(
         max_length=13,
-        choices=PaymentTypeChoices.choices,
+        choices=PaymentTypeChoices,
         default=PaymentTypeChoices.PREPAID,
     )
     PaymentStatusChoices = PaymentStatusChoices
     payment_status = models.CharField(
         max_length=11,
-        choices=PaymentStatusChoices.choices,
+        choices=PaymentStatusChoices,
         default=PaymentStatusChoices.INITIALIZED,
     )
 

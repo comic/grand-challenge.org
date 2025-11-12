@@ -1014,7 +1014,7 @@ class PostProcessImageTask(UUIDModel):
     )
     status = models.CharField(
         max_length=12,
-        choices=PostProcessImageTaskStatusChoices.choices,
+        choices=PostProcessImageTaskStatusChoices,
         blank=False,
         default=PostProcessImageTaskStatusChoices.INITIALIZED,
     )
@@ -1130,7 +1130,7 @@ class DICOMImageSetUpload(UUIDModel):
     )
     status = models.CharField(
         max_length=11,
-        choices=DICOMImageSetUploadStatusChoices.choices,
+        choices=DICOMImageSetUploadStatusChoices,
         default=DICOMImageSetUploadStatusChoices.INITIALIZED,
         blank=False,
     )

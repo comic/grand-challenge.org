@@ -106,7 +106,7 @@ class GitHubWebhookMessage(models.Model):
     stdout = models.TextField(blank=True)
     stderr = models.TextField(blank=True)
     clone_status = models.CharField(
-        choices=CloneStatusChoices.choices,
+        choices=CloneStatusChoices,
         default=CloneStatusChoices.NOT_APPLICABLE,
         max_length=14,
     )

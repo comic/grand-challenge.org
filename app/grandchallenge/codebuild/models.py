@@ -35,7 +35,7 @@ class Build(UUIDModel):
     build_config = models.JSONField()
     build_id = models.CharField(max_length=1024)
     status = models.CharField(
-        choices=BuildStatusChoices.choices,
+        choices=BuildStatusChoices,
         max_length=11,
         default=BuildStatusChoices.IN_PROGRESS,
     )

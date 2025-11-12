@@ -1359,11 +1359,11 @@ class Question(UUIDModel, OverlaySegmentsMixin):
     help_text = models.TextField(blank=True)
     answer_type = models.CharField(
         max_length=4,
-        choices=AnswerType.choices,
+        choices=AnswerType,
     )
     # Set blank because the requirement is dependent on answer_type and handled in the front end
     image_port = models.CharField(
-        max_length=14, choices=ImagePort.choices, blank=True, default=""
+        max_length=14, choices=ImagePort, blank=True, default=""
     )
     default_annotation_color = HexColorField(
         blank=True,
@@ -1384,7 +1384,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         ComponentInterface, on_delete=models.PROTECT, null=True, blank=True
     )
     widget = models.CharField(
-        choices=QuestionWidgetKindChoices.choices, max_length=24, blank=True
+        choices=QuestionWidgetKindChoices, max_length=24, blank=True
     )
     interactive_algorithm = models.CharField(
         choices=InteractiveAlgorithmChoices.choices,
