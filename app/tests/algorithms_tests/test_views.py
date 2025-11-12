@@ -270,7 +270,7 @@ def test_algorithm_jobs_list_view(client):
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
-        method=client.get,
+        method=client.post,
         follow=True,
         data={
             "length": 10,
@@ -290,7 +290,7 @@ def test_algorithm_jobs_list_view(client):
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
-        method=client.get,
+        method=client.post,
         follow=True,
         data={
             "length": 50,
@@ -310,7 +310,7 @@ def test_algorithm_jobs_list_view(client):
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
-        method=client.get,
+        method=client.post,
         follow=True,
         data={
             "length": 50,
@@ -330,7 +330,7 @@ def test_algorithm_jobs_list_view(client):
         reverse_kwargs={"slug": slugify(alg.slug)},
         client=client,
         user=editor,
-        method=client.get,
+        method=client.post,
         follow=True,
         data={
             "length": 50,
@@ -1927,7 +1927,7 @@ def test_job_list_row_template_ajax_renders(client):
     response = get_view_for_user(
         viewname="algorithms:job-list",
         client=client,
-        method=client.get,
+        method=client.post,
         reverse_kwargs={
             "slug": algorithm.slug,
         },

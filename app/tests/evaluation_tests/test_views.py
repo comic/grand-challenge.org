@@ -2193,7 +2193,7 @@ def test_submission_list_row_template_ajax_renders(client):
     response = get_view_for_user(
         viewname="evaluation:submission-list",
         client=client,
-        method=client.get,
+        method=client.post,
         reverse_kwargs={
             "challenge_short_name": phase.challenge.short_name,
         },
