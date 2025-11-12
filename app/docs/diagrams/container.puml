@@ -17,10 +17,10 @@ System_Boundary(s1, "grand-challenge.org") {
 
     Container(workstation_instance, "Web Workstation", "SPA, MeVisLab, VueJS, Docker", "Provides a web based workstation for server side rendering of medical imaging data. 1 container image per active user.")
 
-    ContainerDb(postgres, "Database", "RDS/PostgreSQL", "Stores user information, medical imaging metadata, job results etc.")
+    ContainerDb(postgres, "Database", "RDS PostgreSQL", "Stores user information, medical imaging metadata, job results etc.")
 
-    Container(protected_s3, "Protected Data Store", "S3/Minio", "Stores protected medical imaging objects.")
-    Container(private_s3, "Private Data Store", "S3/Minio", "Stores private objects, container images etc.")
+    Container(protected_s3, "Protected Data Store", "S3", "Stores protected medical imaging objects.")
+    Container(private_s3, "Private Data Store", "S3", "Stores private objects, container images etc.")
 }
 
 System_Ext(oauth, "Authentication", "Authenticates users through external providers (Google, GitHub).")

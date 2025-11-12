@@ -3,10 +3,11 @@ x-postgres-env: &postgres-env
     POSTGRES_USER: grandchallenge
     POSTGRES_DB: grandchallenge
 
-x-minio-env: &minio-env
-    AWS_ACCESS_KEY_ID: minioadmin
-    AWS_SECRET_ACCESS_KEY: minioadmin
-    AWS_S3_ENDPOINT_URL: http://minio.localhost:9000
+x-garage-env: &garage-env
+    AWS_ACCESS_KEY_ID: GKf64f851b810c99aac5d4c6b6
+    AWS_SECRET_ACCESS_KEY: 3f908b5fc4b17f5d41112ff6888d99e195dd380594d810c0b3b17016bf25eba9
+    AWS_S3_ENDPOINT_URL: http://garage.localhost:3900
+    PUBLIC_S3_CUSTOM_DOMAIN: garage.localhost:3902
 
 services:
     postgres:
@@ -24,17 +25,17 @@ services:
             retries: 5
         restart: always
 
-    minio.localhost:
-        image: minio/minio
+    garage.localhost:
+        image: dxflrs/garage:v2.1.0
         ports:
-            - "127.0.0.1:9000:9000"
-        entrypoint: "/bin/sh"
-        command: >-
-            -c "
-            mkdir -p /data/grand-challenge-private/ /data/grand-challenge-protected/ /data/grand-challenge-public/ /data/grand-challenge-uploads/ /data/grand-challenge-components-inputs/ /data/grand-challenge-components-outputs/
-            && minio --compat server /data
-            "
-        restart: always
+            - "127.0.0.1:3900:3900"
+            - "127.0.0.1:3901:3901"
+            - "127.0.0.1:3902:3902"
+            - "127.0.0.1:3903:3903"
+        volumes:
+            - type: bind
+              source: ./dockerfiles/garage/garage.toml
+              target: /etc/garage.toml
         networks:
             - default
             - components
@@ -42,7 +43,7 @@ services:
     web:
         image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
         environment:
-            <<: [*postgres-env, *minio-env]
+            <<: [*postgres-env, *garage-env]
             COMPONENTS_REGISTRY_INSECURE: "true"
             COMPONENTS_DEFAULT_BACKEND: "tests.components_tests.resources.backends.IOCopyExecutor"
             COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE: "true"
@@ -58,7 +59,7 @@ services:
         depends_on:
             postgres:
                 condition: service_healthy
-            minio.localhost:
+            garage.localhost:
                 condition: service_started
             redis:
                 condition: service_started
@@ -79,8 +80,8 @@ services:
             WORKSTATION_PROXY_HOSTNAME: "workstation-proxy"
             WORKSTATION_PROXY_HTTP_PORT: "8000"
             WORKSTATION_PROXY_WEBSOCKET_PORT: "8001"
-            DATA_STORE_HOSTNAME: "minio.localhost"
-            DATA_STORE_PORT: "9000"
+            DATA_STORE_HOSTNAME: "garage.localhost"
+            DATA_STORE_PORT: "3900"
         command: >-
             bash -c "envsubst '$$APP_SERVER_HOST $$SERVER_NAME $$SENDFILE_STATUS $$DATA_STORE_HOSTNAME $$DATA_STORE_PORT $$WORKSTATION_PROXY_HOSTNAME $$WORKSTATION_PROXY_HTTP_PORT $$WORKSTATION_PROXY_WEBSOCKET_PORT' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
             && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/privkey.pem -out /etc/ssl/certs/fullchain.pem -days 365 -nodes -subj '/CN=$$SERVER_NAME'
@@ -105,7 +106,7 @@ services:
     celery_worker:
         image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
         environment:
-            <<: [*postgres-env, *minio-env]
+            <<: [*postgres-env, *garage-env]
             REMAP_SIGTERM: "SIGQUIT"
             COMPONENTS_REGISTRY_INSECURE: "true"
             COMPONENTS_DEFAULT_BACKEND: "tests.components_tests.resources.backends.IOCopyExecutor"

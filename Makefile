@@ -88,21 +88,21 @@ runserver: build_web_test build_http development_fixtures
 	bash -c "trap 'docker compose down' EXIT; docker compose up"
 
 rundeps:
-	bash -c "trap 'docker compose down' EXIT; docker compose up postgres minio.localhost redis registry"
+	bash -c "trap 'docker compose down' EXIT; docker compose up postgres garage.localhost redis registry"
 
-minio:
+garage:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
 		web \
-		bash -c "python manage.py runscript minio"
+		bash -c "python manage.py runscript garage"
 
 development_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
 		celery_worker \
-		bash -c "python manage.py migrate && python manage.py runscript minio development_fixtures"
+		bash -c "python manage.py migrate && python manage.py runscript garage development_fixtures"
 
 algorithm_evaluation_fixtures:
 	docker compose run \

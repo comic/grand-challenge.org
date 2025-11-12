@@ -11,10 +11,10 @@ Container_Boundary(s1, "Celery Worker") {
     Component(docker, "Compute Pool", "Docker", "Provides compute resources for container images.")
 }
 
-ContainerDb(postgres, "Database", "RDS/PostgreSQL", "Stores user information, medical imaging metadata, job results etc.")
-Container(protected_s3, "Protected Data Store", "S3/Minio", "Stores protected medical imaging objects.")
-Container(private_s3, "Private Data Store", "S3/Minio", "Stores private objects, container images etc.")
-Container(message_queue, "Message Queue", "SQS/Redis", "Queue of units of work Celery messages.")
+ContainerDb(postgres, "Database", "RDS PostgreSQL", "Stores user information, medical imaging metadata, job results etc.")
+Container(protected_s3, "Protected Data Store", "S3", "Stores protected medical imaging objects.")
+Container(private_s3, "Private Data Store", "S3", "Stores private objects, container images etc.")
+Container(message_queue, "Message Queue", "SQS", "Queue of units of work Celery messages.")
 
 Rel(gc_algorithm_worker, message_queue, "Fetches messages from", "SSL, SQS/Redis, Celery")
 

@@ -7,9 +7,9 @@ title Component diagram for grand-challenge.org - Workstation Worker
 
 Person(workstation_user, "Workstation User", "User who wants to view a workstation.")
 
-ContainerDb(postgres, "Database", "RDS/PostgreSQL", "Stores user information, medical imaging metadata, job results etc.")
-Container(private_s3, "Private Data Store", "S3/Minio", "Stores private objects, container images etc.")
-Container(message_queue, "Message Queue", "SQS/Redis", "Queue of units of work Celery messages.")
+ContainerDb(postgres, "Database", "RDS PostgreSQL", "Stores user information, medical imaging metadata, job results etc.")
+Container(private_s3, "Private Data Store", "S3", "Stores private objects, container images etc.")
+Container(message_queue, "Message Queue", "SQS", "Queue of units of work Celery messages.")
 Container(gc_web_app, "API", "Nginx, Django", "Provides the grand challenge functionality via HTML and a REST API.")
 
 Container_Boundary(api, "Workstation Worker") {

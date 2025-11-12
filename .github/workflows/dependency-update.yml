@@ -55,7 +55,7 @@ jobs:
               run: |
                   mkdir -p /tmp/coverage
                   chmod a+w /tmp/coverage
-                  make minio
+                  make garage
                   docker compose run --rm -v /tmp/coverage:/tmp/coverage celery_worker bash -c "COVERAGE_FILE=/tmp/coverage/.coverage pytest --cov-report term --cov=. --durations 10"
             - name: Create Pull Request
               uses: peter-evans/create-pull-request@v7

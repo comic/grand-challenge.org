@@ -238,9 +238,7 @@ PROTECTED_S3_STORAGE_CLOUDFRONT_DOMAIN = os.environ.get(
 PUBLIC_FILE_CACHE_CONTROL = "max-age=315360000, public, immutable"
 
 PUBLIC_S3_STORAGE_KWARGS = {
-    "bucket_name": os.environ.get(
-        "PUBLIC_S3_STORAGE_BUCKET_NAME", "grand-challenge-public"
-    ),
+    "bucket_name": os.environ.get("PUBLIC_S3_STORAGE_BUCKET_NAME", "garage"),
     "custom_domain": os.environ.get("PUBLIC_S3_CUSTOM_DOMAIN"),
     # Public bucket so do not use querystring_auth
     "querystring_auth": False,

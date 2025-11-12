@@ -49,7 +49,7 @@ class Service:
 
             return {
                 "gc.localhost": host_docker_internal,
-                "minio.localhost": host_docker_internal,
+                "garage.localhost": host_docker_internal,
             }
         else:
             return {}

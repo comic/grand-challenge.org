@@ -44,7 +44,7 @@ jobs:
               run: make check_migrations
             - name: Run the django tests
               run: |
-                  make minio
+                  make garage
                   docker compose run --rm celery_worker pytest --durations 10
 
     javascript-tests:

@@ -201,7 +201,7 @@ http {
       proxy_pass http://workstations_http/$2;
     }
 
-    location ~ ^/(grand-challenge-private|grand-challenge-protected|grand-challenge-public|grand-challenge-uploads) {
+    location ~ ^/(grand-challenge-private|grand-challenge-protected|garage|grand-challenge-uploads) {
       client_max_body_size 64m;
       proxy_buffering off;
 

@@ -192,8 +192,8 @@ from grandchallenge.core.templatetags.bleach import md2html
             '<p>&lt;script&gt;alert("foo")&lt;/script&gt;</p>',
         ),
         (
-            "[![](http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)",
-            '<p><a href="https://google.com"><img class="img-fluid" src="http://minio.localhost:9000/grand-challenge-public/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg"></a></p>',
+            "[![](http://garage.localhost:3900/garage/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg)](https://google.com)",
+            '<p><a href="https://google.com"><img class="img-fluid" src="http://garage.localhost:3900/garage/i/2024/08/06/77c8d999-c22b-4983-8558-8e1fa364cd2c.jpg"></a></p>',
         ),
     ),
 )
