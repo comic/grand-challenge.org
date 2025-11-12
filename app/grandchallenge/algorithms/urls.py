@@ -12,7 +12,6 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageImportStatusDetail,
     AlgorithmImageTemplate,
     AlgorithmImageUpdate,
-    AlgorithmImportView,
     AlgorithmInterfaceForAlgorithmCreate,
     AlgorithmInterfaceForAlgorithmDelete,
     AlgorithmInterfacesForAlgorithmList,
@@ -48,7 +47,6 @@ urlpatterns = [
     path("", AlgorithmList.as_view(), name="list"),
     path("create/", AlgorithmCreateRedirect.as_view(), name="create-redirect"),
     path("custom-create/", AlgorithmCreate.as_view(), name="custom-create"),
-    path("import/", AlgorithmImportView.as_view(), name="import"),
     path("<slug>/", AlgorithmDetail.as_view(), name="detail"),
     path(
         "<slug>/statistics/", AlgorithmStatistics.as_view(), name="statistics"
