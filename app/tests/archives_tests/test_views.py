@@ -1390,7 +1390,7 @@ def test_archive_item_list_database_hits(
             reverse_kwargs={"slug": archive.slug},
             client=client,
             user=editor,
-            method=client.get,
+            method=client.post,
             follow=True,
             data={
                 "length": 10,

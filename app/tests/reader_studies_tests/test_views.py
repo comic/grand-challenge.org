@@ -355,7 +355,7 @@ def test_reader_study_display_set_list(client):
         reverse_kwargs={"slug": rs.slug},
         client=client,
         user=user,
-        method=client.get,
+        method=client.post,
         follow=True,
         data={
             "length": 10,
