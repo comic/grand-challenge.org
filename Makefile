@@ -75,7 +75,7 @@ push_http:
 
 build: build_web_test build_web_dist build_http
 
-migrate: garage
+migrate:
 	docker compose run --rm web python manage.py migrate
 
 check_migrations:
@@ -90,10 +90,11 @@ runserver: build_web_test build_http development_fixtures
 rundeps:
 	bash -c "trap 'docker compose down' EXIT; docker compose up postgres garage.localhost redis registry"
 
-garage: rundeps
+garage:
+	docker compose up --wait garage.localhost
 	./dockerfiles/garage/garage_setup.sh
 
-development_fixtures: migrate
+development_fixtures:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
