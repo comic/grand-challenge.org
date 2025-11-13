@@ -273,7 +273,7 @@ def test_algorithm_job_post_serializer_create(
 
 
 @pytest.mark.django_db
-def test_algorithm_job_post_serializer_create_with_image_uploads(
+def test_algorithm_job_post_serializer_create_with_image_user_uploads(
     request, settings, django_capture_on_commit_callbacks, mocker
 ):
     settings.task_eager_propagates = (True,)
