@@ -1,8 +1,9 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 from django_extensions.db.fields import AutoSlugField
-from pictures.models import PictureField
+from stdimage import JPEGField
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
@@ -33,15 +34,11 @@ class Post(models.Model):
         to=get_user_model(), related_name="blog_authors"
     )
 
-    logo = PictureField(
+    logo = JPEGField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
-        aspect_ratios=[None],
-        width_field="logo_width",
-        height_field="logo_height",
+        variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
-    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
-    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
 
     tags = models.ManyToManyField(to=Tag, blank=True, related_name="posts")
 

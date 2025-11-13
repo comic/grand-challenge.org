@@ -1,6 +1,5 @@
 {% load url %}
 {% load static %}
-{% load pictures %}
 
 <meta property="og:type" content="website">
 <meta property="twitter:card" content="summary_large_image">
@@ -19,9 +18,9 @@
     <meta property="og:description" content="{{ meta_info.description }}">
 
     {% if meta_info.social_image %}
-        <meta property="og:image" content="{% img_url meta_info.social_image file_type="AVIF" width=1400 %}">
+        <meta property="og:image" content="{{ meta_info.social_image.x20.url }}">
     {% elif meta_info.logo %}
-        <meta property="og:image" content="{% img_url meta_info.logo file_type="AVIF" ratio=meta_info.logo.field.aspect_ratios|first width=1400 %}">
+        <meta property="og:image" content="{{ meta_info.logo.x20.url }}">
     {% endif %}
 {% else %}
     <meta name="title" content="{{ request.site.name }}">

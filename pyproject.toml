@@ -63,7 +63,6 @@ dependencies = [
     "pydantic",
     "aioboto3",
     "httpx",
-    "django-pictures",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"

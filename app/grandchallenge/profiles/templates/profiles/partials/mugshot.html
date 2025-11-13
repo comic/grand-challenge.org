@@ -1,17 +1,16 @@
-{% load pictures %}
-
 <div class="embed-responsive embed-responsive-1by1 mb-3">
-    {% if profile.mugshot %}
-         {% picture profile.mugshot img_class="card-img-top embed-responsive-item rounded-circle" img_loading="lazy" img_alt="Item Logo" ratio="1/1" %}
-    {% else %}
-         <img class="card-img-top embed-responsive-item rounded-circle"
-              src="{{ profile.get_gravatar_url }}"
-              style="display: block; margin: auto;"
-              alt="Users mugshot"
-         >
-    {% endif %}
+    <img class="card-img-top embed-responsive-item rounded-circle"
+            {% if profile.mugshot %}
+         src="{{ profile.mugshot.x20.url }}"
+         srcset="{{ profile.mugshot.x10.url }} 1x,
+             {{ profile.mugshot.x15.url }} 1.5x,
+             {{ profile.mugshot.x20.url }} 2x"
+            {% else %}
+         src="{{ profile.get_gravatar_url }}"
+            {% endif %}
+         style="display: block; margin: auto;"
+         alt="Your mugshot"/>
 </div>
-
 {% if with_userlink %}
     <div class="text-center">
         <b>

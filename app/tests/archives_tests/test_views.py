@@ -311,29 +311,6 @@ def test_api_archive_item_retrieve_permissions(client):
 
 
 @pytest.mark.django_db
-def test_api_archive_api_detail_view(client):
-    archive = ArchiveFactory()
-    editor = UserFactory()
-    archive.add_editor(editor)
-
-    response = get_view_for_user(
-        viewname="api:archive-detail",
-        reverse_kwargs={"pk": archive.pk},
-        user=editor,
-        client=client,
-    )
-    assert response.status_code == 200
-    assert response.json() == {
-        "api_url": archive.api_url,
-        "description": None,
-        "logo": archive.logo.url,
-        "pk": str(archive.pk),
-        "title": archive.title,
-        "url": archive.get_absolute_url(),
-    }
-
-
-@pytest.mark.django_db
 def test_api_archive_item_allowed_sockets(
     client, settings, django_capture_on_commit_callbacks
 ):

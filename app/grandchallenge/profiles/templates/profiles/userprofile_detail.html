@@ -6,8 +6,6 @@
 {% load evaluation_extras %}
 {% load humanize %}
 {% load profiles %}
-{% load pictures %}
-{% load static %}
 
 {% block title %}
     {{ profile.user.username }} - Users - {{ block.super }}
@@ -103,9 +101,15 @@
                             <h5>Organizations</h5>
                             <ul class="list-unstyled">
                                  {% for organization in organizations %}
-                                     <a href="{{ organization.get_absolute_url }}">
-                                        {% picture organization.logo img_loading="lazy" img_alt="Organisation Logo" ratio="1/1" container=40 img_width=40 img_height=40 %}
-                                     </a>
+                                   <a href="{{ organization.get_absolute_url }}">
+                                     <img width ="40" height ="40"
+                                                 loading="lazy"
+                                                 src="{{ organization.logo.x20.url }}"
+                                                 srcset="{{ organization.logo.x10.url }} 1x,
+                                                         {{ organization.logo.x15.url }} 1.5x,
+                                                         {{ organization.logo.x20.url }} 2x"
+                                                 title="{{organization.title}}"
+                                                 alt="{{ organization }} Logo"></a>
                                  {% endfor %}
                             </ul>
                     {% endif %}
@@ -127,20 +131,19 @@
                 <h3>Activity Overview</h3>
                 <div class="row equal-height mx-n2">
                     {% for object in object_list %}
-                        {# Keep the logo width in sync with the column breakpoints #}
                         <div class="col-12 col-sm-12 col-md-6 col-lg-4 mb-3 px-2">
                             <div class="card gc-card">
                                 <a class="stretched-link" href="{{ object.get_absolute_url }}"
                                    title="View {{ object|meta_attr:'verbose_name'|title }}"></a>
                                 <div class="embed-responsive embed-responsive-1by1">
                                     {% if object.logo %}
-                                        {% picture object.logo img_class="card-img-top embed-responsive-item" img_loading="lazy" img_alt="Item Logo" ratio="1/1" s=12 m=6 l=4 %}
-                                    {% else %}
                                         <img class="card-img-top embed-responsive-item"
                                              loading="lazy"
-                                             alt="Item Logo"
-                                             src="{% static 'images/3697E1-0.8.png' %}"
-                                        >
+                                             src="{{ object.logo.x20.url }}"
+                                             srcset="{{ object.logo.x10.url }} 1x,
+                                                     {{ object.logo.x15.url }} 1.5x,
+                                                     {{ object.logo.x20.url }} 2x"
+                                             alt="{{ object }} Logo">
                                     {% endif %}
                                 </div>
                                 <div class="card-body">

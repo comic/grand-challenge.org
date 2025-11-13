@@ -35,12 +35,14 @@ class RegistrationQuestionAnswerField(JSONField):
             quoted = value.startswith('"') and value.endswith('"')
             result = super().to_python(value)
             if quoted:
-                return f'"{result}"'
+                return f'"{result}"'  # noqa: B907
             else:
                 return result
         except ValidationError as e:
             if e.code == "invalid" and "Enter a valid JSON" in str(e):
                 # Try if a string interpretation would work
                 quote_escaped_value = value.replace('"', '\\"')
-                return super().to_python(f'"{quote_escaped_value}"')
+                return super().to_python(
+                    f'"{quote_escaped_value}"'  # noqa: B907
+                )
             raise e

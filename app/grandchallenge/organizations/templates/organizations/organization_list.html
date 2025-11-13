@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% load meta_attr %}
-{% load pictures %}
 
 {% block title %}
     {{ object_list.model|meta_attr:'verbose_name_plural'|title }} - {{ block.super }}
@@ -9,13 +8,18 @@
 {% block content %}
     <div class="row equal-height mx-n2">
         {% for object in object_list %}
-            {# Keep the logo width in sync with the column breakpoints #}
-            <div class="col-12 col-sm-6 col-md-3 mb-3 px-2">
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3 px-2">
                 <div class="card gc-card">
                     <a class="stretched-link" href="{{ object.get_absolute_url }}"
                        title="View {{ object|meta_attr:'verbose_name'|title }}"></a>
                     <div class="embed-responsive embed-responsive-1by1">
-                        {% picture object.logo img_class="card-img-top embed-responsive-item" img_loading="lazy" img_alt="Organization Logo" ratio="1/1" s=6 m=3 %}
+                        <img class="card-img-top embed-responsive-item"
+                             loading="lazy"
+                             src="{{ object.logo.x20.url }}"
+                             srcset="{{ object.logo.x10.url }} 1x,
+                                     {{ object.logo.x15.url }} 1.5x,
+                                     {{ object.logo.x20.url }} 2x"
+                             alt="{{ object }} Logo">
                     </div>
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">{{ object.title }}</h5>
