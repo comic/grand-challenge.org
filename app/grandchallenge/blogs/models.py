@@ -36,8 +36,12 @@ class Post(models.Model):
     logo = PictureField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
-        aspect_ratios=["1/1"],
+        aspect_ratios=[None],
+        width_field="logo_width",
+        height_field="logo_height",
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
 
     tags = models.ManyToManyField(to=Tag, blank=True, related_name="posts")
 

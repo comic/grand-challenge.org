@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load url %}
+{% load pictures %}
 
 {% block title %}
     {% if tag %}Tag: {{ tag }} -{% endif %} Blogs - {{ block.super }}
@@ -33,14 +34,10 @@
 
     {% for object in object_list %}
         <div class="row mb-5 {% if forloop.counter0|divisibleby:2 %}flex-lg-row-reverse{% endif %}">
+            {# Keep the logo width in sync with the column breakpoints #}
             <div class="col-lg-6 py-5">
                 <a href="{{ object.get_absolute_url }}">
-                    <img class="w-100 rounded shadow"
-                         src="{{ object.logo.x20.url }}"
-                         srcset="{{ object.logo.x10.url }} 1x,
-                                 {{ object.logo.x15.url }} 1.5x,
-                                 {{ object.logo.x20.url }} 2x"
-                         alt="Logo for blog post {{ object.title }}"/>
+                    {% picture object.logo img_class="w-100 rounded shadow" img_loading="lazy" img_alt="Blog Post Logo" img_width="100%" img_height="100%" l=6 %}
                 </a>
             </div>
             <div class="col-lg-6 align-self-center">
