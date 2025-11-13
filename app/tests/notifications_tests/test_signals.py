@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from datetime import timedelta
 
 import pytest
@@ -543,3 +544,34 @@ def test_permission_denied_when_posting(settings):
 
     ForumTopicFactory(forum=f, creator=user)
     ForumPostFactory(creator=user, topic=topic)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "model, object_reference, kind, factories",
+    MODELS_FOR_NOTIFICATIONS_CLEANUP,
+)
+def test_notification_print_notification(
+    model,
+    object_reference,
+    kind,
+    factories,
+):
+    u = UserFactory()
+
+    notification_kwargs = {
+        "user": u,
+        "type": kind,
+        "message": "foo",
+        "actor": None,
+        "target": None,
+        "action_object": None,
+    }
+    object_kwargs = {
+        k: v["factory"](**v["kwargs"]) for k, v in factories.items()
+    }
+    notification_kwargs.update(object_kwargs)
+    notification = NotificationFactory(**notification_kwargs)
+
+    with nullcontext():
+        notification.print_notification(user=u)
