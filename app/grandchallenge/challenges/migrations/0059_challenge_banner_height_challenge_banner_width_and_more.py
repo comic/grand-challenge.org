@@ -9,10 +9,14 @@ import grandchallenge.core.storage
 
 def add_image_dimensions(apps, schema_editor):
     for obj in apps.get_model("challenges.challenge").objects.all().iterator():
-        obj.banner_width = obj.banner.width
-        obj.banner_height = obj.banner.height
-        obj.social_image_width = obj.social_image.width
-        obj.social_image_height = obj.social_image.height
+        if obj.banner:
+            obj.banner_width = obj.banner.width
+            obj.banner_height = obj.banner.height
+
+        if obj.social_image:
+            obj.social_image_width = obj.social_image.width
+            obj.social_image_height = obj.social_image.height
+
         obj.save(
             update_fields=[
                 "banner_width",

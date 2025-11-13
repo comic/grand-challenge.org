@@ -9,8 +9,9 @@ import grandchallenge.core.storage
 
 def add_social_image_dimensions(apps, schema_editor):
     for obj in apps.get_model("algorithms.algorithm").objects.all().iterator():
-        obj.social_image_width = obj.social_image.width
-        obj.social_image_height = obj.social_image.height
+        if obj.social_image:
+            obj.social_image_width = obj.social_image.width
+            obj.social_image_height = obj.social_image.height
         obj.save(update_fields=["social_image_width", "social_image_height"])
 
 
