@@ -57,11 +57,11 @@ def test_image_api_fields(client):
 
     assert response.json() == {
         "api_url": image.api_url,
-        "color_space": image.color_space,
-        "depth": image.depth,
+        "color_space": "RGB",
+        "depth": None,
         "dicom_image_set": None,
-        "eye_choice": image.eye_choice,
-        "field_of_view": image.field_of_view,
+        "eye_choice": "OD",
+        "field_of_view": "F1M",
         "files": [
             {
                 "file": file.file.url,
@@ -71,8 +71,10 @@ def test_image_api_fields(client):
             }
             for file in image.files.all()
         ],
-        "height": image.height,
-        "modality": {"modality": image.modality.modality},
+        "height": 4,
+        "modality": {
+            "modality": "CF",
+        },
         "name": image.name,
         "patient_age": image.patient_age,
         "patient_birth_date": image.patient_birth_date.strftime("%Y-%m-%d"),
@@ -80,21 +82,28 @@ def test_image_api_fields(client):
         "patient_name": image.patient_name,
         "patient_sex": image.patient_sex,
         "pk": str(image.pk),
-        "segments": image.segments,
+        "segments": None,
         "series_description": image.series_description,
         "series_instance_uid": image.series_instance_uid,
-        "shape": image.shape,
-        "shape_without_color": image.shape_without_color,
+        "shape": [
+            4,
+            3,
+            3,
+        ],
+        "shape_without_color": [
+            4,
+            3,
+        ],
         "stereoscopic_choice": image.stereoscopic_choice,
         "study_date": image.study_date.strftime("%Y-%m-%d"),
         "study_description": image.study_description,
         "study_instance_uid": image.study_instance_uid,
-        "voxel_depth_mm": image.voxel_depth_mm,
-        "voxel_height_mm": image.voxel_height_mm,
-        "voxel_width_mm": image.voxel_width_mm,
-        "width": image.width,
-        "window_center": image.window_center,
-        "window_width": image.window_width,
+        "voxel_depth_mm": None,
+        "voxel_height_mm": None,
+        "voxel_width_mm": None,
+        "width": 3,
+        "window_center": None,
+        "window_width": None,
     }
 
 
