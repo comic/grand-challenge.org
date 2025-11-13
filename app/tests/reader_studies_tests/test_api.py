@@ -1881,7 +1881,7 @@ def test_display_set_add_and_edit(
 
 
 @pytest.mark.django_db
-def test_display_set_add_and_edit_with_image_user_uploads(
+def test_display_set_update_with_image_user_uploads(
     client, settings, django_capture_on_commit_callbacks, mocker
 ):
     settings.task_eager_propagates = (True,)
