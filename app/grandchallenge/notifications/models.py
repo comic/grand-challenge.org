@@ -236,7 +236,10 @@ class Notification(UUIDModel):
                 return {actor}
             else:
                 return set()
-        elif kind == NotificationTypeChoices.IMAGE_IMPORT_STATUS:
+        elif kind in (
+            NotificationTypeChoices.IMAGE_IMPORT_STATUS,
+            NotificationTypeChoices.DICOM_IMAGE_IMPORT_STATUS,
+        ):
             return followers(action_object)
         elif kind in [
             NotificationTypeChoices.FILE_COPY_STATUS,
