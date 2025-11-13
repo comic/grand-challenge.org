@@ -10,7 +10,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import ProtectedError
 from django.utils.timezone import datetime, now, timedelta
 
-from grandchallenge.challenges.models import Challenge, OnboardingTask
+from grandchallenge.challenges.models import (
+    Challenge,
+    ChallengeRequest,
+    OnboardingTask,
+)
 from grandchallenge.discussion_forums.models import ForumTopicKindChoices
 from grandchallenge.notifications.models import Notification
 from tests.discussion_forums_tests.factories import ForumTopicFactory
@@ -121,40 +125,188 @@ def test_is_active_until_set():
     assert c.is_active_until == today().date() + relativedelta(months=12)
 
 
+@pytest.mark.parametrize(
+    [
+        "budget_fields",
+        "total_compute_and_storage_costs_euros",
+        "total_challenge_price",
+    ],
+    [
+        (
+            dict(
+                task_ids=[1],
+                algorithm_maximum_settable_memory_gb_for_tasks=[32],
+                algorithm_selectable_gpu_type_choices_for_tasks=[["", "T4"]],
+                average_size_test_image_mb_for_tasks=[10],
+                inference_time_average_minutes_for_tasks=[10],
+                task_id_for_phases=[1],
+                number_of_teams_for_phases=[3],
+                number_of_submissions_per_team_for_phases=[10],
+                number_of_test_images_for_phases=[100],
+            ),
+            709.07,
+            6000,
+        ),
+        (
+            dict(
+                task_ids=[1],
+                algorithm_maximum_settable_memory_gb_for_tasks=[32],
+                algorithm_selectable_gpu_type_choices_for_tasks=[["", "T4"]],
+                average_size_test_image_mb_for_tasks=[10],
+                inference_time_average_minutes_for_tasks=[10],
+                task_id_for_phases=[1],
+                number_of_teams_for_phases=[10],
+                number_of_submissions_per_team_for_phases=[10],
+                number_of_test_images_for_phases=[100],
+            ),
+            2361.98,
+            7500,
+        ),
+        (
+            dict(
+                task_ids=[1],
+                algorithm_maximum_settable_memory_gb_for_tasks=[32],
+                algorithm_selectable_gpu_type_choices_for_tasks=[
+                    ["", "A10G", "T4"]
+                ],
+                average_size_test_image_mb_for_tasks=[10],
+                inference_time_average_minutes_for_tasks=[10],
+                task_id_for_phases=[1],
+                number_of_teams_for_phases=[10],
+                number_of_submissions_per_team_for_phases=[10],
+                number_of_test_images_for_phases=[100],
+            ),
+            3555.5,
+            9000,
+        ),
+        (
+            dict(
+                task_ids=[1, 2],
+                algorithm_maximum_settable_memory_gb_for_tasks=[32, 32],
+                algorithm_selectable_gpu_type_choices_for_tasks=[
+                    ["", "T4"],
+                    ["", "T4"],
+                ],
+                average_size_test_image_mb_for_tasks=[10, 100],
+                inference_time_average_minutes_for_tasks=[5, 10],
+                task_id_for_phases=[1, 1, 2, 2],
+                number_of_submissions_per_team_for_phases=[10, 1, 10, 1],
+                number_of_teams_for_phases=[3, 3, 3, 3],
+                number_of_test_images_for_phases=[3, 100, 3, 100],
+            ),
+            363.97,
+            6000,
+        ),
+    ],
+)
 @pytest.mark.django_db
-def test_total_challenge_cost(settings):
+def test_total_challenge_cost(
+    settings,
+    budget_fields,
+    total_compute_and_storage_costs_euros,
+    total_challenge_price,
+):
     settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
 
-    user_exempt_from_base_cost, normal_user = UserFactory.create_batch(2)
-    request1 = ChallengeRequestFactory(
-        creator=user_exempt_from_base_cost, expected_number_of_teams=3
-    )
-    request2 = ChallengeRequestFactory(
-        creator=normal_user, expected_number_of_teams=3
-    )
-    request3 = ChallengeRequestFactory(
-        creator=normal_user, expected_number_of_teams=10
-    )
-    request4 = ChallengeRequestFactory(
-        creator=normal_user,
-        expected_number_of_teams=10,
-        algorithm_selectable_gpu_type_choices=["", "A10G", "T4"],
+    request = ChallengeRequestFactory(
+        **budget_fields,
     )
 
+    assert (
+        pytest.approx(request.total_compute_and_storage_costs_euros, abs=0.01)
+        == total_compute_and_storage_costs_euros
+    )
+    assert request.total_challenge_price == total_challenge_price
+
+
+@pytest.mark.django_db
+def test_total_challenge_price_user_exempt_from_base_cost():
+    user_exempt, user_normal = UserFactory.create_batch(2)
+    request_exempt = ChallengeRequestFactory(
+        creator=user_exempt,
+    )
+    request_normal = ChallengeRequestFactory(
+        creator=user_normal,
+    )
     organisation = OrganizationFactory(exempt_from_base_costs=True)
-    organisation.members_group.user_set.add(user_exempt_from_base_cost)
+    organisation.members_group.user_set.add(user_exempt)
 
-    assert request1.total_compute_and_storage_costs_euros == 709.07
-    assert request1.total_challenge_cost == 1000
+    assert (
+        request_exempt.total_compute_and_storage_costs_euros
+        == request_normal.total_compute_and_storage_costs_euros
+    )
+    assert (
+        request_normal.total_challenge_price
+        - request_exempt.total_challenge_price
+        == 5000
+    )
 
-    assert request2.total_compute_and_storage_costs_euros == 709.07
-    assert request2.total_challenge_cost == 6000
 
-    assert request3.total_compute_and_storage_costs_euros == 2361.98
-    assert request3.total_challenge_cost == 7500
+def test_challenge_request_budget_calculation(settings):
+    settings.COMPONENTS_DEFAULT_BACKEND = "grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
+    challenge_request = ChallengeRequest(
+        task_ids=[1],
+        algorithm_maximum_settable_memory_gb_for_tasks=[32],
+        algorithm_selectable_gpu_type_choices_for_tasks=[["", "T4"]],
+        average_size_test_image_mb_for_tasks=[100],
+        inference_time_average_minutes_for_tasks=[10],
+        task_id_for_phases=[1, 1],
+        number_of_teams_for_phases=[10, 10],
+        number_of_submissions_per_team_for_phases=[100, 10],
+        number_of_test_images_for_phases=[100, 500],
+    )
 
-    assert request4.total_compute_and_storage_costs_euros == 3555.5
-    assert request4.total_challenge_cost == 9000
+    costs_for_phases = [
+        {
+            # "name": "Phase 1",
+            "compute_time": timedelta(minutes=10) * 10 * 100 * 100,
+            "compute_costs_euros": 19581.10,
+            "data_storage_size_gb": 100 * 100 / 1024,
+            "data_storage_costs_euros": 6.57,
+            "compute_and_storage_costs_euros": 19587.67,
+        },
+        {
+            # "name": "Phase 2",
+            "compute_time": timedelta(minutes=10) * 10 * 10 * 500,
+            "compute_costs_euros": 9790.55,
+            "data_storage_size_gb": 500 * 100 / 1024,
+            "data_storage_costs_euros": 32.82,
+            "compute_and_storage_costs_euros": 9823.37,
+        },
+    ]
+    for i_phase in range(2):
+        for k, v in costs_for_phases[i_phase].items():
+            assert (
+                pytest.approx(
+                    getattr(challenge_request, k + "_for_phases")[i_phase],
+                    abs=0.01,
+                )
+                == v
+            )
+    assert challenge_request.total_docker_storage_size_gb == 6 * 10 * 100
+    assert challenge_request.total_docker_storage_costs_euros == 4032.05
+    assert (
+        pytest.approx(
+            challenge_request.total_compute_and_storage_costs_euros, abs=0.01
+        )
+        == 33443.09
+    )
+
+    for i_phase in range(2):
+        assert (
+            challenge_request.compute_and_storage_costs_euros_for_phases[
+                i_phase
+            ]
+            == challenge_request.compute_costs_euros_for_phases[i_phase]
+            + challenge_request.data_storage_costs_euros_for_phases[i_phase]
+        )
+
+    assert (
+        pytest.approx(challenge_request.total_compute_and_storage_costs_euros)
+        == challenge_request.compute_and_storage_costs_euros_for_phases[0]
+        + challenge_request.compute_and_storage_costs_euros_for_phases[1]
+        + challenge_request.total_docker_storage_costs_euros
+    )
 
 
 @pytest.mark.django_db
