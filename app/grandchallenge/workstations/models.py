@@ -17,7 +17,7 @@ from django.utils.timezone import now
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from knox.models import AuthToken
-from stdimage import JPEGField
+from pictures.models import PictureField
 
 from grandchallenge.components.backends.docker import Service
 from grandchallenge.components.backends.exceptions import ComponentException
@@ -61,10 +61,10 @@ logger = logging.getLogger(__name__)
 class Workstation(UUIDModel, TitleSlugDescriptionModel):
     """Store the title and description of a workstation."""
 
-    logo = JPEGField(
+    logo = PictureField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
-        variations=settings.STDIMAGE_LOGO_VARIATIONS,
+        aspect_ratios=["1/1"],
     )
     editors_group = models.OneToOneField(
         Group,

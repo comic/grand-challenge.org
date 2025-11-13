@@ -15,7 +15,8 @@ from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
-from stdimage import JPEGField
+from pictures.models import PictureField
+from pictures.templatetags.pictures import img_url
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
@@ -52,12 +53,12 @@ class UserProfile(models.Model):
         on_delete=models.CASCADE,
     )
 
-    mugshot = JPEGField(
+    mugshot = PictureField(
         _("mugshot"),
         blank=True,
         upload_to=get_mugshot_path,
         help_text=_("A personal image displayed in your profile."),
-        variations=settings.STDIMAGE_LOGO_VARIATIONS,
+        aspect_ratios=["1/1"],
     )
 
     institution = models.CharField(max_length=100)
@@ -107,10 +108,17 @@ class UserProfile(models.Model):
 
     def get_mugshot_url(self):
         """Returns a small profile image"""
-        try:
-            return self.mugshot.x02.url
-        except AttributeError:
-            return self.get_gravatar_url(size=64)
+        size = 64
+
+        if self.mugshot:
+            return img_url(
+                field_file=self.mugshot,
+                file_type="AVIF",
+                width=size,
+                ratio="1/1",
+            )
+        else:
+            return self.get_gravatar_url(size=size)
 
     def get_gravatar_url(self, *, size=512):
         email_encoded = self.user.email.lower().encode("utf-8")
