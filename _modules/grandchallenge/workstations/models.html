@@ -55,7 +55,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">guardian.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">knox.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AuthToken</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pictures.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">PictureField</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">stdimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">JPEGField</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.backends.docker</span><span class="w"> </span><span class="kn">import</span> <span class="n">Service</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.backends.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComponentException</span>
@@ -101,10 +101,10 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">Workstation</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Store the title and description of a workstation.&quot;&quot;&quot;</span>
 
-    <span class="n">logo</span> <span class="o">=</span> <span class="n">PictureField</span><span class="p">(</span>
+    <span class="n">logo</span> <span class="o">=</span> <span class="n">JPEGField</span><span class="p">(</span>
         <span class="n">upload_to</span><span class="o">=</span><span class="n">get_logo_path</span><span class="p">,</span>
         <span class="n">storage</span><span class="o">=</span><span class="n">public_s3_storage</span><span class="p">,</span>
-        <span class="n">aspect_ratios</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;1/1&quot;</span><span class="p">],</span>
+        <span class="n">variations</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">STDIMAGE_LOGO_VARIATIONS</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">editors_group</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">OneToOneField</span><span class="p">(</span>
         <span class="n">Group</span><span class="p">,</span>
