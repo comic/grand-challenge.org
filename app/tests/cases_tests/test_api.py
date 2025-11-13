@@ -20,7 +20,6 @@ from tests.algorithms_tests.factories import (
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import (
     DICOMImageSetFactory,
-    ImageFactoryWithImageFile,
     PostProcessImageTaskFactory,
     RawImageUploadSessionFactory,
     fake_dicom_instance_uid,
@@ -39,63 +38,6 @@ from tests.uploads_tests.factories import (
     create_upload_from_file,
 )
 from tests.utils import get_view_for_user
-
-
-@pytest.mark.django_db
-def test_image_api_fields(client):
-    image = ImageFactoryWithImageFile()
-
-    user = UserFactory()
-    assign_perm("view_image", user, image)
-
-    response = get_view_for_user(
-        viewname="api:image-detail",
-        reverse_kwargs={"pk": image.pk},
-        user=user,
-        client=client,
-    )
-
-    assert response.json() == {
-        "api_url": image.api_url,
-        "color_space": image.color_space,
-        "depth": image.depth,
-        "dicom_image_set": None,
-        "eye_choice": image.eye_choice,
-        "field_of_view": image.field_of_view,
-        "files": [
-            {
-                "file": file.file.url,
-                "image": str(image.pk),
-                "image_type": "MHD",
-                "pk": str(file.pk),
-            }
-            for file in image.files.all()
-        ],
-        "height": image.height,
-        "modality": {"modality": image.modality.modality},
-        "name": image.name,
-        "patient_age": image.patient_age,
-        "patient_birth_date": image.patient_birth_date.strftime("%Y-%m-%d"),
-        "patient_id": image.patient_id,
-        "patient_name": image.patient_name,
-        "patient_sex": image.patient_sex,
-        "pk": str(image.pk),
-        "segments": image.segments,
-        "series_description": image.series_description,
-        "series_instance_uid": image.series_instance_uid,
-        "shape": image.shape,
-        "shape_without_color": image.shape_without_color,
-        "stereoscopic_choice": image.stereoscopic_choice,
-        "study_date": image.study_date.strftime("%Y-%m-%d"),
-        "study_description": image.study_description,
-        "study_instance_uid": image.study_instance_uid,
-        "voxel_depth_mm": image.voxel_depth_mm,
-        "voxel_height_mm": image.voxel_height_mm,
-        "voxel_width_mm": image.voxel_width_mm,
-        "width": image.width,
-        "window_center": image.window_center,
-        "window_width": image.window_width,
-    }
 
 
 @pytest.mark.django_db

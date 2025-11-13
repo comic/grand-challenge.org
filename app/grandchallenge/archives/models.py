@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
-from pictures.models import PictureField
+from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
@@ -45,27 +45,18 @@ class Archive(
     """Model for archive. Contains a collection of images."""
 
     detail_page_markdown = models.TextField(blank=True)
-    logo = PictureField(
+    logo = JPEGField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
-        aspect_ratios=["1/1"],
+        variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
-    social_image = PictureField(
+    social_image = JPEGField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
         blank=True,
         help_text="An image for this archive which is displayed when you post the link to this archive on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
-        aspect_ratios=[None],
-        width_field="social_image_width",
-        height_field="social_image_height",
+        variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
-    social_image_width = models.PositiveSmallIntegerField(
-        editable=False, null=True
-    )
-    social_image_height = models.PositiveSmallIntegerField(
-        editable=False, null=True
-    )
-
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.PROTECT,

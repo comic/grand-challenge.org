@@ -9,7 +9,6 @@
 {% load naturaldelta %}
 {% load static %}
 {% load string %}
-{% load pictures %}
 
 {% block title %}
     {{ object.title }} - Algorithms - {{ block.super }}
@@ -232,7 +231,7 @@
             {% endif %}
 
             {% if object.logo %}
-                {% picture object.logo img_loading="lazy" img_alt="Algorithm Logo" ratio="1/1" img_width="50%" img_height="100%" s=6 %}
+                <img style="height: 20em;" loading="lazy" src="{{ object.logo.url }}" alt="Logo for {{ object.title }}">
             {% endif %}
 
             <h3 class="my-3">About</h3>

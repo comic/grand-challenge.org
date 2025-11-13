@@ -516,7 +516,6 @@ THIRD_PARTY_APPS = [
     "markdownx",  # for editing markdown
     "compressor",  # for compressing css
     "stdimage",
-    "pictures",
     "django_filters",
     "drf_spectacular",
     "csp",
@@ -653,26 +652,33 @@ LOGIN_REDIRECT_URL = "/users/profile/"
 
 ##############################################################################
 #
-# pictures
+# stdimage
 #
 ##############################################################################
 
-PICTURES = {
-    "BREAKPOINTS": {
-        # should be identical to the ones used in your CSS library.
-        "xs": 576,
-        "s": 768,
-        "m": 992,
-        "l": 1200,
-        "xl": 1400,
-    },
-    "GRID_COLUMNS": 12,
-    "CONTAINER_WIDTH": 1200,
-    "FILE_TYPES": ["AVIF"],
-    "PIXEL_DENSITIES": [1, 2],
-    "USE_PLACEHOLDERS": False,
-    "QUEUE_NAME": "acks-late-micro-short",
-    "PROCESSOR": "pictures.tasks.process_picture",
+# Re-render the existing images if these values change
+# https://github.com/codingjoe/django-stdimage#re-rendering-variations
+STDIMAGE_LOGO_VARIATIONS = {
+    # Must be square
+    "full": (None, None, False),
+    "x20": (640, 640, True),
+    "x15": (480, 480, True),
+    "x10": (320, 320, True),
+    "x02": (64, 64, True),
+}
+STDIMAGE_SOCIAL_VARIATIONS = {
+    # Values from social sharing
+    "full": (None, None, False),
+    "x20": (1280, 640, False),
+    "x15": (960, 480, False),
+    "x10": (640, 320, False),
+}
+STDIMAGE_BANNER_VARIATIONS = {
+    # Fixed width, any height
+    "full": (None, None, False),
+    "x20": (2220, None, False),
+    "x15": (1665, None, False),
+    "x10": (1110, None, False),
 }
 
 ##############################################################################

@@ -990,19 +990,6 @@ wheels = [
 ]
 
 [[package]]
-name = "django-pictures"
-version = "1.5.4"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-    { name = "pillow" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/0f/3c/0e6d8f4c62e4d9c70fb86b13dcfe184073d05bdd331cfcd3695ab8bd48d8/django_pictures-1.5.4.tar.gz", hash = "sha256:93f7cdd9ce213e514216ba85032aa4e48fb56d61cebbf0949ee770c1716f8afc", size = 21604, upload-time = "2025-10-15T09:28:24.016Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/af/c7/00507c3e5c3f9c38935d9c1810c57ee7c4fc0391a87501e71126797da511/django_pictures-1.5.4-py3-none-any.whl", hash = "sha256:962e533c605a400b03016dce12efa31c9fa0a9d51b7e0cc3c6d769ab1887edc1", size = 21800, upload-time = "2025-10-15T09:28:22.753Z" },
-]
-
-[[package]]
 name = "django-redis"
 version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1272,7 +1259,6 @@ dependencies = [
     { name = "django-libsass" },
     { name = "django-markdownx" },
     { name = "django-permissions-policy" },
-    { name = "django-pictures" },
     { name = "django-redis" },
     { name = "django-select2" },
     { name = "django-stdimage" },
@@ -1360,7 +1346,6 @@ requires-dist = [
     { name = "django-libsass" },
     { name = "django-markdownx" },
     { name = "django-permissions-policy" },
-    { name = "django-pictures" },
     { name = "django-redis" },
     { name = "django-select2" },
     { name = "django-stdimage" },

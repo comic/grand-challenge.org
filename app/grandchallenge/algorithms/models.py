@@ -20,7 +20,7 @@ from django.utils.text import get_valid_filename
 from django.utils.timezone import now
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
-from pictures.models import PictureField
+from stdimage import JPEGField
 
 from grandchallenge.algorithms.tasks import update_algorithm_average_duration
 from grandchallenge.anatomy.models import BodyStructure
@@ -172,27 +172,18 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         editable=False,
         related_name="users_of_algorithm",
     )
-    logo = PictureField(
+    logo = JPEGField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
-        aspect_ratios=["1/1"],
+        variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
-    social_image = PictureField(
+    social_image = JPEGField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
         blank=True,
         help_text="An image for this algorithm which is displayed when you post the link for this algorithm on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
-        aspect_ratios=[None],
-        width_field="social_image_width",
-        height_field="social_image_height",
+        variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
-    social_image_width = models.PositiveSmallIntegerField(
-        editable=False, null=True
-    )
-    social_image_height = models.PositiveSmallIntegerField(
-        editable=False, null=True
-    )
-
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.PROTECT
     )
