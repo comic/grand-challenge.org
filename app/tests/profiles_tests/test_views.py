@@ -123,8 +123,8 @@ class TestProfileViewSets:
             reverse_kwargs={"username": u1.username},
         )
         assert len(response.context[-1]["organizations"]) == 1
-        assert org1.title in response.content.decode()
-        assert org2.title not in response.content.decode()
+        assert org1.get_absolute_url() in response.content.decode()
+        assert org2.get_absolute_url() not in response.content.decode()
 
         response = get_view_for_user(
             viewname="profile-detail",
@@ -144,7 +144,7 @@ class TestProfileViewSets:
             reverse_kwargs={"username": u1.username},
         )
 
-        assert org1.title not in response.content.decode()
+        assert org1.get_absolute_url() not in response.content.decode()
 
     def test_organization_update(self, client):
         u1 = UserFactory()
@@ -158,7 +158,7 @@ class TestProfileViewSets:
             reverse_kwargs={"username": u1.username},
         )
 
-        assert org1.title in response.content.decode()
+        assert org1.get_absolute_url() in response.content.decode()
 
         _ = get_view_for_user(
             viewname="profile-update",
@@ -185,7 +185,7 @@ class TestProfileViewSets:
             reverse_kwargs={"username": u1.username},
         )
 
-        assert org1.title not in response.content.decode()
+        assert org1.get_absolute_url() not in response.content.decode()
 
 
 @pytest.mark.parametrize(
