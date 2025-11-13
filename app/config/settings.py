@@ -516,6 +516,7 @@ THIRD_PARTY_APPS = [
     "markdownx",  # for editing markdown
     "compressor",  # for compressing css
     "stdimage",
+    "pictures",
     "django_filters",
     "drf_spectacular",
     "csp",
@@ -679,6 +680,30 @@ STDIMAGE_BANNER_VARIATIONS = {
     "x20": (2220, None, False),
     "x15": (1665, None, False),
     "x10": (1110, None, False),
+}
+
+##############################################################################
+#
+# pictures
+#
+##############################################################################
+
+PICTURES = {
+    "BREAKPOINTS": {
+        # should be identical to the ones used in your CSS library.
+        "xs": 576,
+        "s": 768,
+        "m": 992,
+        "l": 1200,
+        "xl": 1400,
+    },
+    "GRID_COLUMNS": 12,
+    "CONTAINER_WIDTH": 1200,
+    "FILE_TYPES": ["AVIF"],
+    "PIXEL_DENSITIES": [1, 2],
+    "USE_PLACEHOLDERS": False,
+    "QUEUE_NAME": "acks-late-micro-short",
+    "PROCESSOR": "pictures.tasks.process_picture",
 }
 
 ##############################################################################

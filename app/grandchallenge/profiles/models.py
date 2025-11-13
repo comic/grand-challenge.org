@@ -15,7 +15,7 @@ from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 from guardian.shortcuts import assign_perm
 from guardian.utils import get_anonymous_user
-from stdimage import JPEGField
+from pictures.models import PictureField
 
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
@@ -52,12 +52,12 @@ class UserProfile(models.Model):
         on_delete=models.CASCADE,
     )
 
-    mugshot = JPEGField(
+    mugshot = PictureField(
         _("mugshot"),
         blank=True,
         upload_to=get_mugshot_path,
         help_text=_("A personal image displayed in your profile."),
-        variations=settings.STDIMAGE_LOGO_VARIATIONS,
+        aspect_ratios=["1/1"],
     )
 
     institution = models.CharField(max_length=100)

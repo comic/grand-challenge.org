@@ -18,8 +18,8 @@ from django.dispatch import receiver
 from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
+from pictures.models import PictureField
 from referencing.exceptions import Unresolvable
-from stdimage import JPEGField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
@@ -242,18 +242,27 @@ class ReaderStudy(
         default=AccessRequestHandlingOptions.MANUAL_REVIEW,
         help_text=("How would you like to handle access requests?"),
     )
-    logo = JPEGField(
+    logo = PictureField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
-        variations=settings.STDIMAGE_LOGO_VARIATIONS,
+        aspect_ratios=["1/1"],
     )
-    social_image = JPEGField(
+    social_image = PictureField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
         blank=True,
         help_text="An image for this reader study which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
-        variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
+        aspect_ratios=[None],
+        width_field="social_image_width",
+        height_field="social_image_height",
     )
+    social_image_width = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
+    social_image_height = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
+
     help_text_markdown = models.TextField(blank=True)
 
     shuffle_hanging_list = models.BooleanField(default=False)
