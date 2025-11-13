@@ -30,9 +30,7 @@ CELERY_BROKER = "memory"
 CELERY_BROKER_URL = "memory://"
 
 # Disable image resizing
-STDIMAGE_LOGO_VARIATIONS = {"x20": (None,)}
-STDIMAGE_SOCIAL_VARIATIONS = {"x20": (None,)}
-STDIMAGE_BANNER_VARIATIONS = {}
+PICTURES["PROCESSOR"] = "pictures.tasks.noop"  # noqa 405
 
 # Disable debugging in tests
 DEBUG = False
