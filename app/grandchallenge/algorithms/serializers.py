@@ -58,7 +58,6 @@ class AlgorithmInterfaceSerializer(serializers.ModelSerializer):
 
 class AlgorithmSerializer(serializers.ModelSerializer):
     average_duration = SerializerMethodField()
-    logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
     interfaces = AlgorithmInterfaceSerializer(many=True, read_only=True)
 

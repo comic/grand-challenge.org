@@ -196,7 +196,6 @@ class DisplaySetPostSerializer(
 
 class ReaderStudySerializer(HyperlinkedModelSerializer):
     questions = QuestionSerializer(many=True, read_only=True)
-    logo = URLField(source="logo.x20.url", read_only=True)
     url = URLField(source="get_absolute_url", read_only=True)
     help_text_safe = SerializerMethodField()
     end_of_study_text_safe = SerializerMethodField()
