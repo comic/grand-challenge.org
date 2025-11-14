@@ -259,7 +259,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         blank=True,
         help_text="Short summary of this project, max 1024 characters.",
     )
-
     logo = PictureField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
