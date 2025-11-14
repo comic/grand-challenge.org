@@ -68,6 +68,9 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         width_field="logo_width",
         height_field="logo_height",
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
+
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.PROTECT,

@@ -28,6 +28,9 @@ class Organization(TitleSlugDescriptionModel, UUIDModel):
         width_field="logo_width",
         height_field="logo_height",
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
+
     location = CountryField()
     website = models.URLField()
 

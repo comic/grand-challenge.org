@@ -259,6 +259,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         blank=True,
         help_text="Short summary of this project, max 1024 characters.",
     )
+
     logo = PictureField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
@@ -268,6 +269,8 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         width_field="logo_width",
         height_field="logo_height",
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
     social_image = PictureField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
@@ -276,6 +279,12 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         aspect_ratios=[None],
         width_field="social_image_width",
         height_field="social_image_height",
+    )
+    social_image_width = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
+    social_image_height = models.PositiveSmallIntegerField(
+        editable=False, null=True
     )
     banner = PictureField(
         upload_to=get_banner_path,
@@ -289,6 +298,9 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         width_field="banner_width",
         height_field="banner_height",
     )
+    banner_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    banner_height = models.PositiveSmallIntegerField(editable=False, null=True)
+
     hidden = models.BooleanField(
         default=True,
         help_text="Do not display this Challenge in any public overview",

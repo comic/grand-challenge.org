@@ -62,6 +62,10 @@ class UserProfile(models.Model):
         width_field="mugshot_width",
         height_field="mugshot_height",
     )
+    mugshot_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    mugshot_height = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
 
     institution = models.CharField(max_length=100)
     department = models.CharField(max_length=100)

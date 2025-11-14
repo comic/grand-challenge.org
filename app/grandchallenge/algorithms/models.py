@@ -172,6 +172,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         editable=False,
         related_name="users_of_algorithm",
     )
+
     logo = PictureField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
@@ -179,6 +180,8 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         width_field="logo_width",
         height_field="logo_height",
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
     social_image = PictureField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
@@ -188,6 +191,13 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         width_field="social_image_width",
         height_field="social_image_height",
     )
+    social_image_width = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
+    social_image_height = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
+
     workstation = models.ForeignKey(
         "workstations.Workstation", on_delete=models.PROTECT
     )

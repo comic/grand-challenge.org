@@ -242,6 +242,7 @@ class ReaderStudy(
         default=AccessRequestHandlingOptions.MANUAL_REVIEW,
         help_text=("How would you like to handle access requests?"),
     )
+
     logo = PictureField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
@@ -249,6 +250,8 @@ class ReaderStudy(
         width_field="logo_width",
         height_field="logo_height",
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
     social_image = PictureField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
@@ -258,6 +261,13 @@ class ReaderStudy(
         width_field="social_image_width",
         height_field="social_image_height",
     )
+    social_image_width = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
+    social_image_height = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
+
     help_text_markdown = models.TextField(blank=True)
 
     shuffle_hanging_list = models.BooleanField(default=False)
@@ -375,7 +385,11 @@ class ReaderStudy(
         "workstation",
         "workstation_config",
         "logo",
+        "logo_width",
+        "logo_height",
         "social_image",
+        "social_image_width",
+        "social_image_height",
         "help_text_markdown",
         "shuffle_hanging_list",
         "is_educational",

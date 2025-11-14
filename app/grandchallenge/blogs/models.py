@@ -40,6 +40,8 @@ class Post(models.Model):
         width_field="logo_width",
         height_field="logo_height",
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
 
     tags = models.ManyToManyField(to=Tag, blank=True, related_name="posts")
 
