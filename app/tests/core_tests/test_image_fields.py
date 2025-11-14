@@ -8,54 +8,29 @@ from tests.factories import ChallengeFactory, UserFactory, WorkstationFactory
 from tests.organizations_tests.factories import OrganizationFactory
 from tests.reader_studies_tests.factories import ReaderStudyFactory
 
-INVALID_IMAGE_COMBINATIONS = {
-    ("userprofile", "logo"),
-    ("userprofile", "social_image"),
-    ("organization", "social_image"),
-    ("workstation", "social_image"),
-    ("post", "social_image"),
-    ("algorithm", "mugshot"),
-    ("archive", "mugshot"),
-    ("post", "mugshot"),
-    ("challenge", "mugshot"),
-    ("organization", "mugshot"),
-    ("readerstudy", "mugshot"),
-    ("workstation", "mugshot"),
-    ("algorithm", "banner"),
-    ("archive", "banner"),
-    ("post", "banner"),
-    ("organization", "banner"),
-    ("userprofile", "banner"),
-    ("readerstudy", "banner"),
-    ("workstation", "banner"),
+FACTORY_IMAGE_FIELD_COMBINATIONS = {
+    (AlgorithmFactory, "logo"),
+    (AlgorithmFactory, "social_image"),
+    (ArchiveFactory, "logo"),
+    (ArchiveFactory, "social_image"),
+    (PostFactory, "logo"),
+    (ChallengeFactory, "logo"),
+    (ChallengeFactory, "social_image"),
+    (ChallengeFactory, "banner"),
+    (OrganizationFactory, "logo"),
+    (lambda: UserFactory().user_profile, "mugshot"),
+    (ReaderStudyFactory, "logo"),
+    (ReaderStudyFactory, "social_image"),
+    (WorkstationFactory, "logo"),
 }
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "field_name", ("logo", "social_image", "banner", "mugshot")
+    "factory,field_name", FACTORY_IMAGE_FIELD_COMBINATIONS
 )
-@pytest.mark.parametrize(
-    "factory",
-    (
-        AlgorithmFactory,
-        ArchiveFactory,
-        PostFactory,
-        ChallengeFactory,
-        OrganizationFactory,
-        lambda: UserFactory().user_profile,
-        ReaderStudyFactory,
-        WorkstationFactory,
-    ),
-)
-def test_height_width_set_on_creation(
-    uploaded_image, field_name, factory, request
-):
+def test_height_width_set_on_creation(field_name, factory, settings):
     instance = factory()
-
-    if (instance._meta.model_name, field_name) in INVALID_IMAGE_COMBINATIONS:
-        request.applymarker(pytest.mark.xfail(run=False))
-
     instance.refresh_from_db()
 
     file_field = getattr(instance, field_name)
@@ -67,7 +42,7 @@ def test_height_width_set_on_creation(
     instance.refresh_from_db()
 
     assert getattr(instance, field_name).url.startswith(
-        "http://localhost:9000/grand-challenge-public/"
+        f"{settings.AWS_S3_ENDPOINT_URL}/grand-challenge-public/"
     )
     assert getattr(instance, f"{field_name}_width") == 10
     assert getattr(instance, f"{field_name}_height") == 20
@@ -75,28 +50,10 @@ def test_height_width_set_on_creation(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "field_name", ("logo", "social_image", "banner", "mugshot")
+    "factory,field_name", FACTORY_IMAGE_FIELD_COMBINATIONS
 )
-@pytest.mark.parametrize(
-    "factory",
-    (
-        AlgorithmFactory,
-        ArchiveFactory,
-        PostFactory,
-        ChallengeFactory,
-        OrganizationFactory,
-        lambda: UserFactory().user_profile,
-        ReaderStudyFactory,
-        WorkstationFactory,
-    ),
-)
-def test_height_width_removed_on_deletion(
-    uploaded_image, field_name, factory, request
-):
+def test_height_width_removed_on_deletion(field_name, factory):
     instance = factory()
-
-    if (instance._meta.model_name, field_name) in INVALID_IMAGE_COMBINATIONS:
-        request.applymarker(pytest.mark.xfail(run=False))
 
     file_field = getattr(instance, field_name)
 
