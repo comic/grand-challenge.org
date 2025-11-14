@@ -138,18 +138,3 @@ class FieldChangeMixin:
         return self._current_value(field_name) != self.initial_value(
             field_name
         )
-
-
-class ImageDimensionsMixin:
-    def save(self, *args, **kwargs):
-        for field_name in {"logo", "social_image", "banner", "mugshot"}:
-            if hasattr(self, field_name) and self.has_changed(field_name):
-                if image := getattr(self, field_name):
-                    dimensions = image._get_image_dimensions()
-                    setattr(self, f"{field_name}_width", dimensions[0])
-                    setattr(self, f"{field_name}_height", dimensions[1])
-                else:
-                    setattr(self, f"{field_name}_width", None)
-                    setattr(self, f"{field_name}_height", None)
-
-        super().save(*args, **kwargs)
