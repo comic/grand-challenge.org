@@ -202,13 +202,9 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
             else:
                 self._validate_panimg_image(attrs=attrs, interface=interface)
         elif interface.super_kind == interface.SuperKind.VALUE:
-            if (
-                attrs.get("value") is None
-            ):  # Note: can also be False so check for None instead
-                raise serializers.ValidationError(
-                    f"value is required for interface "
-                    f"kind {interface.kind}"
-                )
+            # Value can be anything, including None.
+            # The value will be validated in the model.
+            pass
         elif interface.super_kind == interface.SuperKind.FILE:
             if not any(
                 [

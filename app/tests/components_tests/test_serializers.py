@@ -375,28 +375,36 @@ def test_civ_post_value_validation(kind):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("kind", InterfaceKinds.json)
-def test_civ_post_value_required_validation(kind):
-    interface = ComponentInterfaceFactory(
-        kind=kind,
-        store_in_database=True,
+@pytest.mark.parametrize(
+    "kind,", InterfaceKinds.json.difference([InterfaceKindChoices.ANY])
+)
+def test_civ_post_value_validation_none_invalid(kind):
+    interface = ComponentInterfaceFactory(kind=kind)
+    payload = {
+        "interface": interface.slug,
+        "value": None,
+    }
+
+    serializer = ComponentInterfaceValuePostSerializer(data=payload)
+
+    assert not serializer.is_valid()
+    assert "JSON does not fulfill schema: " in str(
+        serializer.errors["__all__"][0]
     )
 
-    for kwargs in [
-        {"image": ""},
-        {"user_upload": ""},
-        {"upload_session": ""},
-        {"image_name": "foo", "user_uploads": []},
-    ]:
-        payload = {"interface": interface.slug, **kwargs}
 
-        serializer = ComponentInterfaceValuePostSerializer(data=payload)
+@pytest.mark.django_db
+@pytest.mark.parametrize("kind,", [InterfaceKindChoices.ANY])
+def test_civ_post_value_validation_none_valid(kind):
+    interface = ComponentInterfaceFactory(kind=kind)
+    payload = {
+        "interface": interface.slug,
+        "value": None,
+    }
 
-        assert not serializer.is_valid()
-        assert (
-            f"value is required for interface kind {kind}"
-            in serializer.errors["non_field_errors"]
-        )
+    serializer = ComponentInterfaceValuePostSerializer(data=payload)
+
+    assert serializer.is_valid(), serializer.errors
 
 
 @pytest.mark.django_db
