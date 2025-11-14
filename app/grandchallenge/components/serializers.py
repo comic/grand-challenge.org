@@ -43,7 +43,13 @@ def convert_deserialized_civ_data(*, deserialized_civ_data):
                 user_uploads=civ["user_uploads"],
             )
         elif len(keys_not_none) == 1:
-            value = civ[keys_not_none.pop()]
+            key = keys_not_none.pop()
+            value = civ[key]
+            if key == "user_uploads":
+                # Convert to queryset for type switch in CIVData
+                value = UserUpload.objects.filter(
+                    pk__in=[upload.pk for upload in value]
+                )
         elif len(keys_not_none) == 0:
             value = None
         else:
@@ -268,11 +274,12 @@ class ComponentInterfaceValuePostSerializer(serializers.ModelSerializer):
         if not any(
             [
                 attrs.get("image"),
+                attrs.get("user_uploads"),
                 attrs.get("upload_session"),
             ]
         ):
             raise serializers.ValidationError(
-                f"upload_session or image are required for interface "
+                f"upload_session, user_uploads or image are required for interface "
                 f"kind {interface.kind}"
             )
 

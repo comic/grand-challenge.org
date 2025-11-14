@@ -1,6 +1,7 @@
 import json
 import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 from django.contrib.auth.models import Group
@@ -835,6 +836,50 @@ def test_api_archive_item_create(client, settings):
     )
     assert response.status_code == 201
     assert archive.items.count() == 1
+
+
+@pytest.mark.django_db
+def test_api_archive_item_update_with_image_user_uploads(
+    client, settings, django_capture_on_commit_callbacks, mocker
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    user = UserFactory()
+    uploads = UserUploadFactory.create_batch(2, creator=user)
+    archive = ArchiveFactory()
+    archive.add_editor(user)
+    archive_item = ArchiveItemFactory(archive=archive)
+    socket = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    mock_process_images_method = mocker.patch(
+        "grandchallenge.cases.models.RawImageUploadSession.process_images",
+        return_value=MagicMock(),
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        get_view_for_user(
+            viewname="api:archives-item-detail",
+            reverse_kwargs={"pk": archive_item.pk},
+            user=user,
+            client=client,
+            method=client.put,
+            content_type="application/json",
+            data={
+                "values": [
+                    {
+                        "interface": socket.slug,
+                        "file": None,
+                        "image": None,
+                        "image_name": None,
+                        "upload_session": None,
+                        "user_upload": None,
+                        "user_uploads": [upload.api_url for upload in uploads],
+                        "value": None,
+                    },
+                ]
+            },
+        )
+
+    assert mock_process_images_method.call_count == 1
 
 
 @pytest.mark.django_db

@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 from django.urls import reverse
@@ -29,6 +30,7 @@ from tests.reader_studies_tests.factories import (
 )
 from tests.reader_studies_tests.utils import TwoReaderStudies
 from tests.uploads_tests.factories import (
+    UserUploadFactory,
     create_completed_upload,
     create_upload_from_file,
 )
@@ -1879,6 +1881,50 @@ def test_display_set_add_and_edit(
 
 
 @pytest.mark.django_db
+def test_display_set_update_with_image_user_uploads(
+    client, settings, django_capture_on_commit_callbacks, mocker
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+    user = UserFactory()
+    uploads = UserUploadFactory.create_batch(2, creator=user)
+    reader_study = ReaderStudyFactory()
+    reader_study.add_editor(user)
+    display_set = DisplaySetFactory(reader_study=reader_study)
+    socket = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    mock_process_images_method = mocker.patch(
+        "grandchallenge.cases.models.RawImageUploadSession.process_images",
+        return_value=MagicMock(),
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        get_view_for_user(
+            viewname="api:reader-studies-display-set-detail",
+            reverse_kwargs={"pk": display_set.pk},
+            user=user,
+            client=client,
+            method=client.put,
+            content_type="application/json",
+            data={
+                "values": [
+                    {
+                        "interface": socket.slug,
+                        "file": None,
+                        "image": None,
+                        "image_name": None,
+                        "upload_session": None,
+                        "user_upload": None,
+                        "user_uploads": [upload.api_url for upload in uploads],
+                        "value": None,
+                    },
+                ]
+            },
+        )
+
+    assert mock_process_images_method.call_count == 1
+
+
+@pytest.mark.django_db
 def test_display_set_partial_update_errors_returned(client):
     ds = DisplaySetFactory()
     user = UserFactory()
@@ -2213,7 +2259,7 @@ def test_total_edit_duration(client):
     assert response.json()["total_edit_duration"] is None
 
 
-def test_display_set_filterset_fields_is_only_reader_sudy():
+def test_display_set_filterset_fields_is_only_reader_study():
     ds_viewset = DisplaySetViewSet()
     assert ds_viewset.filterset_fields == ["reader_study"], (
         "Please check DisplaySetViewSet's filter_queryset method and "
