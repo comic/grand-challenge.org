@@ -9,6 +9,7 @@ from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
+from grandchallenge.core.models import FieldChangeMixin
 from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.subdomains.utils import reverse
 
@@ -21,7 +22,7 @@ class Tag(models.Model):
         return self.name
 
 
-class Post(models.Model):
+class Post(FieldChangeMixin, models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
@@ -39,6 +40,8 @@ class Post(models.Model):
         storage=public_s3_storage,
         variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
 
     tags = models.ManyToManyField(to=Tag, blank=True, related_name="posts")
 

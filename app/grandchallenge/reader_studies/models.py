@@ -39,7 +39,7 @@ from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
-from grandchallenge.core.models import RequestBase, UUIDModel
+from grandchallenge.core.models import FieldChangeMixin, RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
     get_social_image_path,
@@ -179,6 +179,7 @@ CASE_TEXT_SCHEMA = {
 
 
 class ReaderStudy(
+    FieldChangeMixin,
     UUIDModel,
     TitleSlugDescriptionModel,
     HangingProtocolMixin,
@@ -242,11 +243,14 @@ class ReaderStudy(
         default=AccessRequestHandlingOptions.MANUAL_REVIEW,
         help_text=("How would you like to handle access requests?"),
     )
+
     logo = JPEGField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
         variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
     social_image = JPEGField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
@@ -254,6 +258,13 @@ class ReaderStudy(
         help_text="An image for this reader study which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
         variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
+    social_image_width = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
+    social_image_height = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
+
     help_text_markdown = models.TextField(blank=True)
 
     shuffle_hanging_list = models.BooleanField(default=False)

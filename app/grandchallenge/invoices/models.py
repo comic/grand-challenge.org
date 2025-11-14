@@ -79,7 +79,7 @@ class InvoiceQuerySet(models.QuerySet):
         )
 
 
-class Invoice(models.Model, FieldChangeMixin):
+class Invoice(FieldChangeMixin, models.Model):
     objects = InvoiceQuerySet.as_manager()
 
     created = models.DateTimeField(auto_now_add=True)

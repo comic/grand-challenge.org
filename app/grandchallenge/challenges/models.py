@@ -250,7 +250,7 @@ def get_default_percent_budget_consumed_warning_thresholds():
     return [70, 90, 100]
 
 
-class Challenge(ChallengeBase, FieldChangeMixin):
+class Challenge(FieldChangeMixin, ChallengeBase):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     description = models.CharField(
@@ -259,6 +259,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         blank=True,
         help_text="Short summary of this project, max 1024 characters.",
     )
+
     logo = JPEGField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
@@ -266,6 +267,8 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         help_text="A logo for this challenge. Should be square with a resolution of 640x640 px or higher.",
         variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
     social_image = JPEGField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
@@ -273,6 +276,25 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         help_text="An image for this challenge which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
         variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
+    social_image_width = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
+    social_image_height = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
+    banner = JPEGField(
+        upload_to=get_banner_path,
+        storage=public_s3_storage,
+        blank=True,
+        help_text=(
+            "Image that gets displayed at the top of each page. "
+            "Recommended resolution 2200x440 px."
+        ),
+        variations=settings.STDIMAGE_BANNER_VARIATIONS,
+    )
+    banner_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    banner_height = models.PositiveSmallIntegerField(editable=False, null=True)
+
     hidden = models.BooleanField(
         default=True,
         help_text="Do not display this Challenge in any public overview",
@@ -333,16 +355,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     highlight = models.BooleanField(
         default=False,
         help_text="Should this challenge be advertised on the home page?",
-    )
-    banner = JPEGField(
-        upload_to=get_banner_path,
-        storage=public_s3_storage,
-        blank=True,
-        help_text=(
-            "Image that gets displayed at the top of each page. "
-            "Recommended resolution 2200x440 px."
-        ),
-        variations=settings.STDIMAGE_BANNER_VARIATIONS,
     )
     disclaimer = models.CharField(
         max_length=2048,

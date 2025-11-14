@@ -14,18 +14,25 @@ from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
-from grandchallenge.core.models import TitleSlugDescriptionModel, UUIDModel
+from grandchallenge.core.models import (
+    FieldChangeMixin,
+    TitleSlugDescriptionModel,
+    UUIDModel,
+)
 from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse
 
 
-class Organization(TitleSlugDescriptionModel, UUIDModel):
+class Organization(FieldChangeMixin, TitleSlugDescriptionModel, UUIDModel):
     logo = JPEGField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
         variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
+
     location = CountryField()
     website = models.URLField()
 

@@ -1235,7 +1235,7 @@ class ComponentInterfaceValueManager(models.Manager):
             return self.filter(**kwargs).first(), False
 
 
-class ComponentInterfaceValue(models.Model, FieldChangeMixin):
+class ComponentInterfaceValue(FieldChangeMixin, models.Model):
     """Encapsulates the value of an interface at a certain point in the graph."""
 
     id = models.BigAutoField(primary_key=True)
