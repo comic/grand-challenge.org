@@ -2,34 +2,23 @@ from datetime import timedelta
 
 import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
-from django.apps import apps
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db import transaction
 from django.db.models import Count
-from django.db.transaction import on_commit
 from django.utils import timezone
 from django.utils.timezone import now
 from django_celery_results.models import TaskResult
 from redis.exceptions import LockError
 
-from grandchallenge.algorithms.models import Algorithm, AlgorithmImage, Job
-from grandchallenge.archives.models import Archive
-from grandchallenge.blogs.models import Post
+from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import (
     PostProcessImageTask,
     RawImageUploadSession,
 )
-from grandchallenge.challenges.models import Challenge
-from grandchallenge.core.celery import (
-    acks_late_2xlarge_task,
-    acks_late_micro_short_task,
-)
+from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.evaluation.models import Evaluation, Method
-from grandchallenge.organizations.models import Organization
-from grandchallenge.profiles.models import UserProfile
-from grandchallenge.reader_studies.models import ReaderStudy
-from grandchallenge.workstations.models import Session, Workstation
+from grandchallenge.workstations.models import Session
 
 
 @acks_late_micro_short_task
@@ -154,57 +143,3 @@ def _get_metrics():
     )
 
     return metric_data
-
-
-@acks_late_2xlarge_task
-def update_image_dimensions(*, app_label, model_name, pk, field_name):
-    model = apps.get_model(app_label=app_label, model_name=model_name)
-    instance = model.objects.get(pk=pk)
-
-    update_kwargs = {}
-
-    if image := getattr(instance, field_name):
-        dimensions = image._get_image_dimensions()
-        update_kwargs[f"{field_name}_width"] = dimensions[0]
-        update_kwargs[f"{field_name}_height"] = dimensions[1]
-    else:
-        update_kwargs[f"{field_name}_width"] = None
-        update_kwargs[f"{field_name}_height"] = None
-
-    model.objects.filter(pk=pk).update(**update_kwargs)
-
-
-@acks_late_2xlarge_task
-def schedule_image_update_tasks():
-    model_image_fields = {
-        (Algorithm, "logo"),
-        (Algorithm, "social_image"),
-        (Archive, "logo"),
-        (Archive, "social_image"),
-        (Post, "logo"),
-        (Challenge, "logo"),
-        (Challenge, "social_image"),
-        (Challenge, "banner"),
-        (Organization, "logo"),
-        (UserProfile, "mugshot"),
-        (ReaderStudy, "logo"),
-        (ReaderStudy, "social_image"),
-        (Workstation, "logo"),
-    }
-
-    for model, field_name in model_image_fields:
-        for pk in (
-            model.objects.filter(**{f"{field_name}_width__isnull": True})
-            .exclude(**{field_name: ""})
-            .values_list("pk", flat=True)
-        ):
-            on_commit(
-                update_image_dimensions.signature(
-                    kwargs={
-                        "app_label": model._meta.app_label,
-                        "model_name": model._meta.model_name,
-                        "pk": pk,
-                        "field_name": field_name,
-                    }
-                ).apply_async
-            )

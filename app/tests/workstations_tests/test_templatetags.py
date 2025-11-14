@@ -252,7 +252,7 @@ def test_workstation_session_control_data():
     )
     assert (
         data
-        == f' data-session-control data-create-session-url="{url}" data-workstation-path="" data-workstation-query="" data-workstation-window-identifier="workstation-{obj._meta.app_label}"'  # noqa B907
+        == f' data-session-control data-create-session-url="{url}" data-workstation-path="" data-workstation-query="" data-workstation-window-identifier="workstation-{obj._meta.app_label}"'
     )
     assert "timeout" not in data
 
@@ -261,7 +261,7 @@ def test_workstation_session_control_data():
     )
     assert (
         data2
-        == f' data-session-control data-create-session-url="{url}" data-workstation-path="reader-study/{obj.pk}" data-workstation-query="" data-workstation-window-identifier="workstation-{obj._meta.app_label}" data-timeout="200"'  # noqa B907
+        == f' data-session-control data-create-session-url="{url}" data-workstation-path="reader-study/{obj.pk}" data-workstation-query="" data-workstation-window-identifier="workstation-{obj._meta.app_label}" data-timeout="200"'
     )
 
 

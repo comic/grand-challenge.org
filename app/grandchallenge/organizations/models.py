@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group
 from django.db import models
 from django_countries.fields import CountryField
 from guardian.shortcuts import assign_perm
-from stdimage import JPEGField
+from pictures.models import PictureField
 
 from grandchallenge.components.schemas import (
     SELECTABLE_GPU_TYPES_SCHEMA,
@@ -21,10 +21,12 @@ from grandchallenge.subdomains.utils import reverse
 
 
 class Organization(TitleSlugDescriptionModel, UUIDModel):
-    logo = JPEGField(
+    logo = PictureField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
-        variations=settings.STDIMAGE_LOGO_VARIATIONS,
+        aspect_ratios=["1/1"],
+        width_field="logo_width",
+        height_field="logo_height",
     )
     logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
     logo_height = models.PositiveSmallIntegerField(editable=False, null=True)

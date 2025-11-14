@@ -38,7 +38,7 @@ from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
-from stdimage import JPEGField
+from pictures.models import PictureField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.challenges.emails import (
@@ -260,21 +260,25 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         help_text="Short summary of this project, max 1024 characters.",
     )
 
-    logo = JPEGField(
+    logo = PictureField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
         blank=True,
         help_text="A logo for this challenge. Should be square with a resolution of 640x640 px or higher.",
-        variations=settings.STDIMAGE_LOGO_VARIATIONS,
+        aspect_ratios=["1/1"],
+        width_field="logo_width",
+        height_field="logo_height",
     )
     logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
     logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
-    social_image = JPEGField(
+    social_image = PictureField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
         blank=True,
         help_text="An image for this challenge which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
-        variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
+        aspect_ratios=[None],
+        width_field="social_image_width",
+        height_field="social_image_height",
     )
     social_image_width = models.PositiveSmallIntegerField(
         editable=False, null=True
@@ -282,7 +286,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     social_image_height = models.PositiveSmallIntegerField(
         editable=False, null=True
     )
-    banner = JPEGField(
+    banner = PictureField(
         upload_to=get_banner_path,
         storage=public_s3_storage,
         blank=True,
@@ -290,7 +294,9 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             "Image that gets displayed at the top of each page. "
             "Recommended resolution 2200x440 px."
         ),
-        variations=settings.STDIMAGE_BANNER_VARIATIONS,
+        aspect_ratios=[None],
+        width_field="banner_width",
+        height_field="banner_height",
     )
     banner_width = models.PositiveSmallIntegerField(editable=False, null=True)
     banner_height = models.PositiveSmallIntegerField(editable=False, null=True)
