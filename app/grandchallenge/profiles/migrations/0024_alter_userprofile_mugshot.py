@@ -7,6 +7,25 @@ from pictures.migrations import AlterPictureField
 import grandchallenge.core.storage
 
 
+class FilteredAlterPictureField(AlterPictureField):
+    def to_picture_field(self, from_model, to_model):
+        from_field = from_model._meta.get_field(self.name)
+
+        if hasattr(from_field.attr_class, "delete_variations"):
+            # remove obsolete django-stdimage variations
+            for obj in from_model._default_manager.exclude(
+                **{self.name: ""}
+            ).iterator():
+                field_file = getattr(obj, self.name)
+                field_file.delete_variations()
+
+        for obj in to_model._default_manager.exclude(
+            **{self.name: ""}
+        ).iterator():
+            field_file = getattr(obj, self.name)
+            field_file.save_all()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -17,7 +36,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        AlterPictureField(
+        FilteredAlterPictureField(
             model_name="userprofile",
             name="mugshot",
             field=pictures.models.PictureField(
