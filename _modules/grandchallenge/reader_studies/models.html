@@ -56,8 +56,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.functional</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">guardian.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pictures.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">PictureField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">referencing.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Unresolvable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">stdimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">JPEGField</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.anatomy.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">BodyStructure</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -283,19 +283,23 @@
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;How would you like to handle access requests?&quot;</span><span class="p">),</span>
     <span class="p">)</span>
 
-    <span class="n">logo</span> <span class="o">=</span> <span class="n">JPEGField</span><span class="p">(</span>
+    <span class="n">logo</span> <span class="o">=</span> <span class="n">PictureField</span><span class="p">(</span>
         <span class="n">upload_to</span><span class="o">=</span><span class="n">get_logo_path</span><span class="p">,</span>
         <span class="n">storage</span><span class="o">=</span><span class="n">public_s3_storage</span><span class="p">,</span>
-        <span class="n">variations</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">STDIMAGE_LOGO_VARIATIONS</span><span class="p">,</span>
+        <span class="n">aspect_ratios</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;1/1&quot;</span><span class="p">],</span>
+        <span class="n">width_field</span><span class="o">=</span><span class="s2">&quot;logo_width&quot;</span><span class="p">,</span>
+        <span class="n">height_field</span><span class="o">=</span><span class="s2">&quot;logo_height&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">logo_width</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">logo_height</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">social_image</span> <span class="o">=</span> <span class="n">JPEGField</span><span class="p">(</span>
+    <span class="n">social_image</span> <span class="o">=</span> <span class="n">PictureField</span><span class="p">(</span>
         <span class="n">upload_to</span><span class="o">=</span><span class="n">get_social_image_path</span><span class="p">,</span>
         <span class="n">storage</span><span class="o">=</span><span class="n">public_s3_storage</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;An image for this reader study which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).&quot;</span><span class="p">,</span>
-        <span class="n">variations</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">STDIMAGE_SOCIAL_VARIATIONS</span><span class="p">,</span>
+        <span class="n">aspect_ratios</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">],</span>
+        <span class="n">width_field</span><span class="o">=</span><span class="s2">&quot;social_image_width&quot;</span><span class="p">,</span>
+        <span class="n">height_field</span><span class="o">=</span><span class="s2">&quot;social_image_height&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">social_image_width</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
         <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span>
