@@ -515,7 +515,6 @@ THIRD_PARTY_APPS = [
     "corsheaders",  # to allow api communication from subdomains
     "markdownx",  # for editing markdown
     "compressor",  # for compressing css
-    "stdimage",
     "pictures",
     "django_filters",
     "drf_spectacular",

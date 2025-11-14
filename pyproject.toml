@@ -42,7 +42,6 @@ dependencies = [
     "Pillow",
     "panimg!=0.15.1,>=0.12.0",
     "django-activity-stream",
-    "django-stdimage",
     "django-permissions-policy",
     "aws-xray-sdk",
     "django-deprecate-fields",
