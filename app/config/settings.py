@@ -671,7 +671,7 @@ PICTURES = {
     "FILE_TYPES": ["AVIF"],
     "PIXEL_DENSITIES": [1, 2],
     "USE_PLACEHOLDERS": False,
-    "QUEUE_NAME": "acks-late-micro-short",
+    "QUEUE_NAME": "acks-late-2xlarge",
     "PROCESSOR": "pictures.tasks.process_picture",
 }
 
