@@ -38,6 +38,7 @@ from grandchallenge.algorithms.forms import AlgorithmForPhaseForm
 from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.algorithms.views import AlgorithmInterfaceCreateBase
 from grandchallenge.archives.models import Archive
+from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.challenges.views import ActiveChallengeRequiredMixin
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
@@ -1122,23 +1123,37 @@ class ConfigureAlgorithmPhasesView(
     template_name = "evaluation/configure_algorithm_phases_form.html"
     raise_exception = True
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(
+            {
+                "challenge_request": self.challenge_request,
+            }
+        )
+        return context
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs.update({"challenge": self.request.challenge})
+        kwargs.update(
+            {
+                "challenge": self.request.challenge,
+                "challenge_request": self.challenge_request,
+            }
+        )
         return kwargs
 
-    def form_valid(self, form):
-        for phase in form.cleaned_data["phases"]:
-            self.turn_phase_into_algorithm_phase(
-                phase=phase,
-                algorithm_time_limit=form.cleaned_data["algorithm_time_limit"],
-                algorithm_selectable_gpu_type_choices=form.cleaned_data[
-                    "algorithm_selectable_gpu_type_choices"
-                ],
-                algorithm_maximum_settable_memory_gb=form.cleaned_data[
-                    "algorithm_maximum_settable_memory_gb"
-                ],
+    @cached_property
+    def challenge_request(self):
+        try:
+            return ChallengeRequest.objects.get(
+                short_name=self.request.challenge.short_name
             )
+        except ObjectDoesNotExist:
+            return None
+
+    def form_valid(self, form):
+        for phase in form.cleaned_data["selected_phases"]:
+            self.turn_phase_into_algorithm_phase(phase_with_task=phase)
         messages.success(self.request, "Phases were successfully updated")
         return super().form_valid(form)
 
@@ -1147,14 +1162,8 @@ class ConfigureAlgorithmPhasesView(
             "challenges:requests-list",
         )
 
-    def turn_phase_into_algorithm_phase(
-        self,
-        *,
-        phase,
-        algorithm_time_limit,
-        algorithm_selectable_gpu_type_choices,
-        algorithm_maximum_settable_memory_gb,
-    ):
+    def turn_phase_into_algorithm_phase(self, *, phase_with_task):
+        phase = Phase.objects.get(pk=phase_with_task.phase_pk)
         archive = Archive.objects.create(
             title=format_html(
                 "{challenge_name} {phase_title} dataset",
@@ -1176,13 +1185,30 @@ class ConfigureAlgorithmPhasesView(
         for user in phase.challenge.admins_group.user_set.all():
             archive.add_editor(user)
 
-        phase.algorithm_time_limit = algorithm_time_limit
-        phase.algorithm_selectable_gpu_type_choices = (
-            algorithm_selectable_gpu_type_choices
-        )
-        phase.algorithm_maximum_settable_memory_gb = (
-            algorithm_maximum_settable_memory_gb
-        )
+        if self.challenge_request:
+            if len(self.challenge_request.task_ids) == 1:
+                task_idx = 0
+            elif phase_with_task.task_id is not None:
+                task_idx = self.challenge_request.task_ids.index(
+                    phase_with_task.task_id
+                )
+            else:
+                task_idx = None
+
+            if task_idx is not None:
+                phase.algorithm_selectable_gpu_type_choices = self.challenge_request.algorithm_selectable_gpu_type_choices_for_tasks[
+                    task_idx
+                ]
+                phase.algorithm_maximum_settable_memory_gb = self.challenge_request.algorithm_maximum_settable_memory_gb_for_tasks[
+                    task_idx
+                ]
+                phase.algorithm_time_limit = (
+                    self.challenge_request.inference_time_average_minutes_for_tasks[
+                        task_idx
+                    ]
+                    * 60
+                )
+
         phase.archive = archive
         phase.submission_kind = phase.SubmissionKindChoices.ALGORITHM
         phase.save()

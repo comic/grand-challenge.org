@@ -6,7 +6,6 @@ from django.core import mail
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.challenges.forms import HTMX_BLANK_CHOICE_KEY
 from grandchallenge.challenges.models import (
     Challenge,
     ChallengeRequest,
@@ -380,8 +379,10 @@ def test_challenge_request_workflow(
 
 @pytest.mark.django_db
 def test_budget_field_update(client, challenge_reviewer):
-    challenge_request = ChallengeRequestFactory()
-    assert challenge_request.expected_number_of_teams == 10
+    challenge_request = ChallengeRequestFactory(
+        number_of_teams_for_phases=[10, 10, 10, 10],
+    )
+    assert challenge_request.number_of_teams_for_phases == [10, 10, 10, 10]
     response = get_view_for_user(
         client=client,
         method=client.post,
@@ -389,25 +390,20 @@ def test_budget_field_update(client, challenge_reviewer):
         reverse_kwargs={"pk": challenge_request.pk},
         user=challenge_reviewer,
         data={
-            "expected_number_of_teams": 500,
-            "inference_time_limit_in_minutes": 10,
-            "algorithm_selectable_gpu_type_choices": [
-                HTMX_BLANK_CHOICE_KEY,
-                "A10G",
-                "T4",
-            ],
-            "algorithm_maximum_settable_memory_gb": 32,
-            "average_size_of_test_image_in_mb": 10,
-            "phase_1_number_of_submissions_per_team": 10,
-            "phase_2_number_of_submissions_per_team": 1,
-            "phase_1_number_of_test_images": 100,
-            "phase_2_number_of_test_images": 500,
-            "number_of_tasks": 1,
+            "task_ids": "[1, 2]",
+            "algorithm_maximum_settable_memory_gb_for_tasks": "[32, 32]",
+            "algorithm_selectable_gpu_type_choices_for_tasks": '[["", "T4"],["", "A10G", "T4"]]',
+            "average_size_test_image_mb_for_tasks": "[10, 100]",
+            "inference_time_average_minutes_for_tasks": "[5, 10]",
+            "task_id_for_phases": "[1, 1, 2, 2]",
+            "number_of_teams_for_phases": "[500, 500, 500, 500]",
+            "number_of_submissions_per_team_for_phases": "[10, 1, 10, 1]",
+            "number_of_test_images_for_phases": "[3, 100, 3, 100]",
         },
     )
     assert response.status_code == 200
     challenge_request.refresh_from_db()
-    assert challenge_request.expected_number_of_teams == 500
+    assert challenge_request.number_of_teams_for_phases == [500, 500, 500, 500]
 
 
 @pytest.mark.django_db
@@ -436,7 +432,10 @@ def test_challenge_request_date_check(client):
             "algorithm_inputs": "foo",
             "algorithm_outputs": "foo",
             "average_size_of_test_image_in_mb": 1,
-            "inference_time_limit_in_minutes": 11,
+            "inference_time_average_minutes": 11,
+            "algorithm_maximum_settable_memory_gb": 32,
+            "algorithm_selectable_gpu_type_choices": ["", "T4"],
+            "number_of_tasks": 1,
             "phase_1_number_of_submissions_per_team": 1,
             "phase_2_number_of_submissions_per_team": 1,
             "phase_1_number_of_test_images": 1,
@@ -446,10 +445,7 @@ def test_challenge_request_date_check(client):
     )
     assert response.status_code == 200
     assert response.context["form"].errors == {
-        "algorithm_maximum_settable_memory_gb": ["This field is required."],
-        "algorithm_selectable_gpu_type_choices": ["This field is required."],
         "end_date": ["This field is required."],
-        "number_of_tasks": ["This field is required."],
         "start_date": ["This field is required."],
     }
 
@@ -475,7 +471,10 @@ def test_challenge_request_date_check(client):
             "algorithm_inputs": "foo",
             "algorithm_outputs": "foo",
             "average_size_of_test_image_in_mb": 1,
-            "inference_time_limit_in_minutes": 11,
+            "inference_time_average_minutes": 11,
+            "algorithm_maximum_settable_memory_gb": 32,
+            "algorithm_selectable_gpu_type_choices": ["", "T4"],
+            "number_of_tasks": 1,
             "phase_1_number_of_submissions_per_team": 1,
             "phase_2_number_of_submissions_per_team": 1,
             "phase_1_number_of_test_images": 1,
@@ -486,9 +485,6 @@ def test_challenge_request_date_check(client):
     assert response.status_code == 200
     assert response.context["form"].errors == {
         "__all__": ["The start date needs to be before the end date."],
-        "algorithm_maximum_settable_memory_gb": ["This field is required."],
-        "algorithm_selectable_gpu_type_choices": ["This field is required."],
-        "number_of_tasks": ["This field is required."],
     }
 
 
