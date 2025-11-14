@@ -26,6 +26,9 @@ class Organization(TitleSlugDescriptionModel, UUIDModel):
         storage=public_s3_storage,
         variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
+
     location = CountryField()
     website = models.URLField()
 

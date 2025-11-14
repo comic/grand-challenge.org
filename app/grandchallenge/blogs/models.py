@@ -39,6 +39,8 @@ class Post(models.Model):
         storage=public_s3_storage,
         variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
 
     tags = models.ManyToManyField(to=Tag, blank=True, related_name="posts")
 

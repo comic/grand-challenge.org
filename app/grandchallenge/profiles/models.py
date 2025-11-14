@@ -59,6 +59,10 @@ class UserProfile(models.Model):
         help_text=_("A personal image displayed in your profile."),
         variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
+    mugshot_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    mugshot_height = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
 
     institution = models.CharField(max_length=100)
     department = models.CharField(max_length=100)

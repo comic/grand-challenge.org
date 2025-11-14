@@ -66,6 +66,9 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         storage=public_s3_storage,
         variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
+
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.PROTECT,

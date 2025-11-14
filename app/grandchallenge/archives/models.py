@@ -45,11 +45,14 @@ class Archive(
     """Model for archive. Contains a collection of images."""
 
     detail_page_markdown = models.TextField(blank=True)
+
     logo = JPEGField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
         variations=settings.STDIMAGE_LOGO_VARIATIONS,
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
     social_image = JPEGField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
@@ -57,6 +60,13 @@ class Archive(
         help_text="An image for this archive which is displayed when you post the link to this archive on social media. Should have a resolution of 640x320 px (1280x640 px for best display).",
         variations=settings.STDIMAGE_SOCIAL_VARIATIONS,
     )
+    social_image_width = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
+    social_image_height = models.PositiveSmallIntegerField(
+        editable=False, null=True
+    )
+
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.PROTECT,

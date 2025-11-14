@@ -14,15 +14,26 @@ from django.db.models.signals import (
 from django.dispatch import receiver
 from guardian.utils import get_anonymous_user
 
-from grandchallenge.algorithms.models import AlgorithmPermissionRequest
-from grandchallenge.archives.models import ArchivePermissionRequest
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmPermissionRequest,
+)
+from grandchallenge.archives.models import Archive, ArchivePermissionRequest
+from grandchallenge.blogs.models import Post
+from grandchallenge.challenges.models import Challenge
 from grandchallenge.core.utils import disable_for_loaddata
 from grandchallenge.notifications.models import (
     Notification,
     NotificationTypeChoices,
 )
+from grandchallenge.organizations.models import Organization
 from grandchallenge.participants.models import RegistrationRequest
-from grandchallenge.reader_studies.models import ReaderStudyPermissionRequest
+from grandchallenge.profiles.models import UserProfile
+from grandchallenge.reader_studies.models import (
+    ReaderStudy,
+    ReaderStudyPermissionRequest,
+)
+from grandchallenge.workstations.models import Workstation
 
 
 @receiver(post_save, sender=get_user_model())
@@ -178,3 +189,33 @@ def clean_up_user_notifications(instance, **_):
         | Q(target_object_id=instance.pk) & Q(target_content_type=ct)
         | Q(user_id=instance.pk)
     ).delete()
+
+
+@receiver(pre_save, sender=Algorithm)
+@receiver(pre_save, sender=Archive)
+@receiver(pre_save, sender=Post)
+@receiver(pre_save, sender=Challenge)
+@receiver(pre_save, sender=Organization)
+@receiver(pre_save, sender=UserProfile)
+@receiver(pre_save, sender=ReaderStudy)
+@receiver(pre_save, sender=Workstation)
+def set_image_dimensions(sender, instance, **_):
+    try:
+        old_instance = sender.objects.get(pk=instance.pk)
+        object_is_new = False
+    except sender.DoesNotExist:
+        object_is_new = True
+
+    for field_name in {"logo", "social_image", "banner", "mugshot"}:
+        if hasattr(instance, field_name) and (
+            object_is_new
+            or getattr(instance, field_name)
+            != getattr(old_instance, field_name)
+        ):
+            if image := getattr(instance, field_name):
+                dimensions = image._get_image_dimensions()
+                setattr(instance, f"{field_name}_width", dimensions[0])
+                setattr(instance, f"{field_name}_height", dimensions[1])
+            else:
+                setattr(instance, f"{field_name}_width", None)
+                setattr(instance, f"{field_name}_height", None)
