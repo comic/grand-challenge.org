@@ -376,8 +376,6 @@ class ReaderStudy(
         "workstation_config",
         "logo",
         "social_image",
-        "social_image_width",
-        "social_image_height",
         "help_text_markdown",
         "shuffle_hanging_list",
         "is_educational",
