@@ -266,6 +266,8 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         blank=True,
         help_text="A logo for this challenge. Should be square with a resolution of 640x640 px or higher.",
         aspect_ratios=["1/1"],
+        width_field="logo_width",
+        height_field="logo_height",
     )
     social_image = PictureField(
         upload_to=get_social_image_path,
@@ -275,12 +277,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         aspect_ratios=[None],
         width_field="social_image_width",
         height_field="social_image_height",
-    )
-    social_image_width = models.PositiveSmallIntegerField(
-        editable=False, null=True
-    )
-    social_image_height = models.PositiveSmallIntegerField(
-        editable=False, null=True
     )
     banner = PictureField(
         upload_to=get_banner_path,
@@ -294,9 +290,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         width_field="banner_width",
         height_field="banner_height",
     )
-    banner_width = models.PositiveSmallIntegerField(editable=False, null=True)
-    banner_height = models.PositiveSmallIntegerField(editable=False, null=True)
-
     hidden = models.BooleanField(
         default=True,
         help_text="Do not display this Challenge in any public overview",

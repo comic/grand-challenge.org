@@ -59,6 +59,8 @@ class UserProfile(models.Model):
         upload_to=get_mugshot_path,
         help_text=_("A personal image displayed in your profile."),
         aspect_ratios=["1/1"],
+        width_field="mugshot_width",
+        height_field="mugshot_height",
     )
 
     institution = models.CharField(max_length=100)

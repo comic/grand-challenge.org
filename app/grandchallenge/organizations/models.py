@@ -25,6 +25,8 @@ class Organization(TitleSlugDescriptionModel, UUIDModel):
         upload_to=get_logo_path,
         storage=public_s3_storage,
         aspect_ratios=["1/1"],
+        width_field="logo_width",
+        height_field="logo_height",
     )
     location = CountryField()
     website = models.URLField()

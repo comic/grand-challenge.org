@@ -246,6 +246,8 @@ class ReaderStudy(
         upload_to=get_logo_path,
         storage=public_s3_storage,
         aspect_ratios=["1/1"],
+        width_field="logo_width",
+        height_field="logo_height",
     )
     social_image = PictureField(
         upload_to=get_social_image_path,
@@ -256,13 +258,6 @@ class ReaderStudy(
         width_field="social_image_width",
         height_field="social_image_height",
     )
-    social_image_width = models.PositiveSmallIntegerField(
-        editable=False, null=True
-    )
-    social_image_height = models.PositiveSmallIntegerField(
-        editable=False, null=True
-    )
-
     help_text_markdown = models.TextField(blank=True)
 
     shuffle_hanging_list = models.BooleanField(default=False)
