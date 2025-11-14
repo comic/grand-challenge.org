@@ -19,12 +19,7 @@ from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
-from grandchallenge.core.models import (
-    FieldChangeMixin,
-    ImageDimensionsMixin,
-    RequestBase,
-    UUIDModel,
-)
+from grandchallenge.core.models import RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
     get_social_image_path,
@@ -42,8 +37,6 @@ from grandchallenge.subdomains.utils import reverse
 
 
 class Archive(
-    FieldChangeMixin,
-    ImageDimensionsMixin,
     UUIDModel,
     TitleSlugDescriptionModel,
     HangingProtocolMixin,

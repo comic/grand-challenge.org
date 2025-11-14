@@ -31,11 +31,7 @@ from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
-from grandchallenge.core.models import (
-    FieldChangeMixin,
-    ImageDimensionsMixin,
-    UUIDModel,
-)
+from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
     protected_s3_storage,
@@ -62,12 +58,7 @@ The user is able to stop the container, otherwise it will be terminated after ``
 logger = logging.getLogger(__name__)
 
 
-class Workstation(
-    FieldChangeMixin,
-    ImageDimensionsMixin,
-    UUIDModel,
-    TitleSlugDescriptionModel,
-):
+class Workstation(UUIDModel, TitleSlugDescriptionModel):
     """Store the title and description of a workstation."""
 
     logo = JPEGField(

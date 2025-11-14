@@ -57,11 +57,7 @@ from grandchallenge.core.guardian import (
     UserObjectPermissionBase,
     filter_by_permission,
 )
-from grandchallenge.core.models import (
-    FieldChangeMixin,
-    ImageDimensionsMixin,
-    UUIDModel,
-)
+from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     get_banner_path,
     get_logo_path,
@@ -254,7 +250,7 @@ def get_default_percent_budget_consumed_warning_thresholds():
     return [70, 90, 100]
 
 
-class Challenge(FieldChangeMixin, ImageDimensionsMixin, ChallengeBase):
+class Challenge(ChallengeBase, FieldChangeMixin):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     description = models.CharField(
