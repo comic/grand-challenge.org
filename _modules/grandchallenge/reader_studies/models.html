@@ -282,11 +282,14 @@
         <span class="n">default</span><span class="o">=</span><span class="n">AccessRequestHandlingOptions</span><span class="o">.</span><span class="n">MANUAL_REVIEW</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;How would you like to handle access requests?&quot;</span><span class="p">),</span>
     <span class="p">)</span>
+
     <span class="n">logo</span> <span class="o">=</span> <span class="n">JPEGField</span><span class="p">(</span>
         <span class="n">upload_to</span><span class="o">=</span><span class="n">get_logo_path</span><span class="p">,</span>
         <span class="n">storage</span><span class="o">=</span><span class="n">public_s3_storage</span><span class="p">,</span>
         <span class="n">variations</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">STDIMAGE_LOGO_VARIATIONS</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">logo_width</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">logo_height</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">social_image</span> <span class="o">=</span> <span class="n">JPEGField</span><span class="p">(</span>
         <span class="n">upload_to</span><span class="o">=</span><span class="n">get_social_image_path</span><span class="p">,</span>
         <span class="n">storage</span><span class="o">=</span><span class="n">public_s3_storage</span><span class="p">,</span>
@@ -294,6 +297,13 @@
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;An image for this reader study which is displayed when you post the link on social media. Should have a resolution of 640x320 px (1280x640 px for best display).&quot;</span><span class="p">,</span>
         <span class="n">variations</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">STDIMAGE_SOCIAL_VARIATIONS</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">social_image_width</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+    <span class="n">social_image_height</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveSmallIntegerField</span><span class="p">(</span>
+        <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
     <span class="n">help_text_markdown</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">shuffle_hanging_list</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -411,7 +421,11 @@
         <span class="s2">&quot;workstation&quot;</span><span class="p">,</span>
         <span class="s2">&quot;workstation_config&quot;</span><span class="p">,</span>
         <span class="s2">&quot;logo&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;logo_width&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;logo_height&quot;</span><span class="p">,</span>
         <span class="s2">&quot;social_image&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;social_image_width&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;social_image_height&quot;</span><span class="p">,</span>
         <span class="s2">&quot;help_text_markdown&quot;</span><span class="p">,</span>
         <span class="s2">&quot;shuffle_hanging_list&quot;</span><span class="p">,</span>
         <span class="s2">&quot;is_educational&quot;</span><span class="p">,</span>
