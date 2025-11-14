@@ -21,7 +21,11 @@ from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
-from grandchallenge.core.models import FieldChangeMixin, UUIDModel
+from grandchallenge.core.models import (
+    FieldChangeMixin,
+    ImageDimensionsMixin,
+    UUIDModel,
+)
 from grandchallenge.core.storage import get_mugshot_path
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils import disable_for_loaddata
@@ -43,7 +47,7 @@ class NotificationEmailOptions(TextChoices):
     INSTANT = "INSTANT", _("Send me an email immediately")
 
 
-class UserProfile(FieldChangeMixin, models.Model):
+class UserProfile(FieldChangeMixin, ImageDimensionsMixin, models.Model):
     user = models.OneToOneField(
         get_user_model(),
         unique=True,

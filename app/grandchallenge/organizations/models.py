@@ -16,6 +16,7 @@ from grandchallenge.core.guardian import (
 )
 from grandchallenge.core.models import (
     FieldChangeMixin,
+    ImageDimensionsMixin,
     TitleSlugDescriptionModel,
     UUIDModel,
 )
@@ -24,7 +25,12 @@ from grandchallenge.core.validators import JSONValidator
 from grandchallenge.subdomains.utils import reverse
 
 
-class Organization(FieldChangeMixin, TitleSlugDescriptionModel, UUIDModel):
+class Organization(
+    FieldChangeMixin,
+    ImageDimensionsMixin,
+    TitleSlugDescriptionModel,
+    UUIDModel,
+):
     logo = JPEGField(
         upload_to=get_logo_path,
         storage=public_s3_storage,

@@ -9,7 +9,7 @@ from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
-from grandchallenge.core.models import FieldChangeMixin
+from grandchallenge.core.models import FieldChangeMixin, ImageDimensionsMixin
 from grandchallenge.core.storage import get_logo_path, public_s3_storage
 from grandchallenge.subdomains.utils import reverse
 
@@ -22,7 +22,7 @@ class Tag(models.Model):
         return self.name
 
 
-class Post(FieldChangeMixin, models.Model):
+class Post(FieldChangeMixin, ImageDimensionsMixin, models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 

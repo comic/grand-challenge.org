@@ -39,7 +39,12 @@ from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
-from grandchallenge.core.models import FieldChangeMixin, RequestBase, UUIDModel
+from grandchallenge.core.models import (
+    FieldChangeMixin,
+    ImageDimensionsMixin,
+    RequestBase,
+    UUIDModel,
+)
 from grandchallenge.core.storage import (
     get_logo_path,
     get_social_image_path,
@@ -180,6 +185,7 @@ CASE_TEXT_SCHEMA = {
 
 class ReaderStudy(
     FieldChangeMixin,
+    ImageDimensionsMixin,
     UUIDModel,
     TitleSlugDescriptionModel,
     HangingProtocolMixin,
