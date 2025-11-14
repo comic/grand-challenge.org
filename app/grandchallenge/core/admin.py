@@ -48,7 +48,10 @@ class TaskResultAdminWithDuration(TaskResultAdmin):
     @admin.display(description="Duration")
     def get_duration(self, obj):
         if obj.status in {states.SUCCESS, states.FAILURE}:
-            return obj.date_done - obj.date_started
+            try:
+                return obj.date_done - obj.date_started
+            except TypeError:
+                return None
         else:
             return None
 
