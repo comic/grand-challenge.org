@@ -65,7 +65,12 @@ class Workstation(UUIDModel, TitleSlugDescriptionModel):
         upload_to=get_logo_path,
         storage=public_s3_storage,
         aspect_ratios=["1/1"],
+        width_field="logo_width",
+        height_field="logo_height",
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
+
     editors_group = models.OneToOneField(
         Group,
         on_delete=models.PROTECT,

@@ -45,11 +45,16 @@ class Archive(
     """Model for archive. Contains a collection of images."""
 
     detail_page_markdown = models.TextField(blank=True)
+
     logo = PictureField(
         upload_to=get_logo_path,
         storage=public_s3_storage,
         aspect_ratios=["1/1"],
+        width_field="logo_width",
+        height_field="logo_height",
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
     social_image = PictureField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,

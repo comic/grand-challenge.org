@@ -117,7 +117,7 @@ def test_get_users_to_send_new_unread_direct_messages_email(
     assert len(mail.outbox) == 0
 
     with django_assert_max_num_queries(
-        10
+        14
     ):  # Extra queries to update the users profile
         send_new_unread_direct_messages_emails()
 

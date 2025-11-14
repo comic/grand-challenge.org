@@ -6,37 +6,30 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("challenges", "0058_alter_challenge_educational"),
+        (
+            "archives",
+            "0022_archiveitemuserobjectpermission_archives_ar_user_id_13fbd3_idx_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="challenge",
-            name="banner_height",
-            field=models.PositiveSmallIntegerField(editable=False, null=True),
-        ),
-        migrations.AddField(
-            model_name="challenge",
-            name="banner_width",
-            field=models.PositiveSmallIntegerField(editable=False, null=True),
-        ),
-        migrations.AddField(
-            model_name="challenge",
+            model_name="archive",
             name="logo_height",
             field=models.PositiveSmallIntegerField(editable=False, null=True),
         ),
         migrations.AddField(
-            model_name="challenge",
+            model_name="archive",
             name="logo_width",
             field=models.PositiveSmallIntegerField(editable=False, null=True),
         ),
         migrations.AddField(
-            model_name="challenge",
+            model_name="archive",
             name="social_image_height",
             field=models.PositiveSmallIntegerField(editable=False, null=True),
         ),
         migrations.AddField(
-            model_name="challenge",
+            model_name="archive",
             name="social_image_width",
             field=models.PositiveSmallIntegerField(editable=False, null=True),
         ),

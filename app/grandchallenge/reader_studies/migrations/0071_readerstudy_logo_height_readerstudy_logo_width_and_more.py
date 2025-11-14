@@ -6,37 +6,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("challenges", "0058_alter_challenge_educational"),
+        ("reader_studies", "0070_readerstudy_end_of_study_text_markdown"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="challenge",
-            name="banner_height",
-            field=models.PositiveSmallIntegerField(editable=False, null=True),
-        ),
-        migrations.AddField(
-            model_name="challenge",
-            name="banner_width",
-            field=models.PositiveSmallIntegerField(editable=False, null=True),
-        ),
-        migrations.AddField(
-            model_name="challenge",
+            model_name="readerstudy",
             name="logo_height",
             field=models.PositiveSmallIntegerField(editable=False, null=True),
         ),
         migrations.AddField(
-            model_name="challenge",
+            model_name="readerstudy",
             name="logo_width",
             field=models.PositiveSmallIntegerField(editable=False, null=True),
         ),
         migrations.AddField(
-            model_name="challenge",
+            model_name="readerstudy",
             name="social_image_height",
             field=models.PositiveSmallIntegerField(editable=False, null=True),
         ),
         migrations.AddField(
-            model_name="challenge",
+            model_name="readerstudy",
             name="social_image_width",
             field=models.PositiveSmallIntegerField(editable=False, null=True),
         ),

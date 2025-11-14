@@ -266,7 +266,11 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         blank=True,
         help_text="A logo for this challenge. Should be square with a resolution of 640x640 px or higher.",
         aspect_ratios=["1/1"],
+        width_field="logo_width",
+        height_field="logo_height",
     )
+    logo_width = models.PositiveSmallIntegerField(editable=False, null=True)
+    logo_height = models.PositiveSmallIntegerField(editable=False, null=True)
     social_image = PictureField(
         upload_to=get_social_image_path,
         storage=public_s3_storage,
