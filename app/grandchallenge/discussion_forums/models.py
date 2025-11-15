@@ -107,7 +107,7 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
         unique_together = ("slug", "forum")
         constraints = [
             models.CheckConstraint(
-                check=models.Q(kind__in=ForumTopicKindChoices.values),
+                condition=models.Q(kind__in=ForumTopicKindChoices.values),
                 name="valid_topic_kind",
             )
         ]

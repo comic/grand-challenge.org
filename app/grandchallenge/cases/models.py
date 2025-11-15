@@ -1014,7 +1014,7 @@ class PostProcessImageTask(UUIDModel):
     )
     status = models.CharField(
         max_length=12,
-        choices=PostProcessImageTaskStatusChoices.choices,
+        choices=PostProcessImageTaskStatusChoices,
         blank=False,
         default=PostProcessImageTaskStatusChoices.INITIALIZED,
     )
@@ -1028,7 +1028,7 @@ class PostProcessImageTask(UUIDModel):
         )
         constraints = (
             models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     status__in=PostProcessImageTaskStatusChoices.values
                 ),
                 name="valid_post_process_image_task_status",
@@ -1130,7 +1130,7 @@ class DICOMImageSetUpload(UUIDModel):
     )
     status = models.CharField(
         max_length=11,
-        choices=DICOMImageSetUploadStatusChoices.choices,
+        choices=DICOMImageSetUploadStatusChoices,
         default=DICOMImageSetUploadStatusChoices.INITIALIZED,
         blank=False,
     )
@@ -1166,7 +1166,7 @@ class DICOMImageSetUpload(UUIDModel):
         verbose_name = "DICOM image set upload"
         constraints = [
             models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     status__in=DICOMImageSetUploadStatusChoices.values
                 ),
                 name="dicomuimagesetupload_status_valid",

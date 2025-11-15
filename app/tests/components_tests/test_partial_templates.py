@@ -121,8 +121,7 @@ def test_civ(
         civ.image = ImageFactory()
         ImageFileFactory(image=civ.image)
     elif ci.kind == InterfaceKindChoices.DICOM_IMAGE_SET:
-        civ.image = ImageFactory()
-        DICOMImageSetFactory(image=civ.image)
+        civ.image = ImageFactory(dicom_image_set=DICOMImageSetFactory())
 
     # Actually create the CIV
     if (

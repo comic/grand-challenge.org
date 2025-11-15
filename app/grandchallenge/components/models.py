@@ -2026,7 +2026,7 @@ class ComponentImage(FieldChangeMixin, models.Model):
     )
 
     import_status = models.PositiveSmallIntegerField(
-        choices=ImportStatusChoices.choices,
+        choices=ImportStatusChoices,
         default=ImportStatusChoices.INITIALIZED,
         db_index=True,
     )
@@ -2798,7 +2798,7 @@ class Tarball(UUIDModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     import_status = models.PositiveSmallIntegerField(
-        choices=ImportStatusChoices.choices,
+        choices=ImportStatusChoices,
         default=ImportStatusChoices.INITIALIZED,
         db_index=True,
     )

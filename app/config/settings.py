@@ -1449,6 +1449,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = int(
     os.environ.get("DATA_UPLOAD_MAX_NUMBER_FIELDS", "2048")
 )
 
+FORMS_URLFIELD_ASSUME_HTTPS = True
+
 
 ##########################
 # JSON SCHEMA

@@ -516,7 +516,7 @@ class WindowPreset(TitleSlugDescriptionModel):
         constraints = [
             models.CheckConstraint(
                 name="%(app_label)s_%(class)s_either_fixed_or_percentile",
-                check=(
+                condition=(
                     models.Q(
                         center__isnull=False,
                         width__isnull=False,
@@ -533,13 +533,13 @@ class WindowPreset(TitleSlugDescriptionModel):
             ),
             models.CheckConstraint(
                 name="%(app_label)s_%(class)s_upper_gt_lower_percentile",
-                check=models.Q(
+                condition=models.Q(
                     upper_percentile__gt=models.F("lower_percentile")
                 ),
             ),
             models.CheckConstraint(
                 name="%(app_label)s_%(class)s_width_gt_0",
-                check=models.Q(width__gt=0) | models.Q(width__isnull=True),
+                condition=models.Q(width__gt=0) | models.Q(width__isnull=True),
             ),
         ]
 

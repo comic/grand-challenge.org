@@ -450,7 +450,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="forumtopic",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     ("kind__in", ["DEFAULT", "STICKY", "ANNOUNCE"])
                 ),
                 name="valid_topic_kind",

@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="invoice",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     (
                         "payment_type__in",
                         ["COMPLIMENTARY", "PREPAID", "POSTPAID"],
@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="invoice",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     (
                         "payment_status__in",
                         ["INITIALIZED", "REQUESTED", "ISSUED", "PAID"],

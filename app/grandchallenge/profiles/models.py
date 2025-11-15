@@ -88,7 +88,7 @@ class UserProfile(models.Model):
     )
     notification_email_choice = models.CharField(
         max_length=13,
-        choices=NotificationEmailOptions.choices,
+        choices=NotificationEmailOptions,
         default=NotificationEmailOptions.DAILY_SUMMARY,
         help_text=(
             "Whether to receive emails about unread notifications and direct messages, and how often (immediately vs. once a day if necessary)."

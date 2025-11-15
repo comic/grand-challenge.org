@@ -158,29 +158,29 @@ class Invoice(models.Model, FieldChangeMixin):
     PaymentTypeChoices = PaymentTypeChoices
     payment_type = models.CharField(
         max_length=13,
-        choices=PaymentTypeChoices.choices,
+        choices=PaymentTypeChoices,
         default=PaymentTypeChoices.PREPAID,
     )
     PaymentStatusChoices = PaymentStatusChoices
     payment_status = models.CharField(
         max_length=11,
-        choices=PaymentStatusChoices.choices,
+        choices=PaymentStatusChoices,
         default=PaymentStatusChoices.INITIALIZED,
     )
 
     class Meta:
         constraints = [
             models.CheckConstraint(
-                check=Q(payment_type__in=PaymentTypeChoices.values),
+                condition=Q(payment_type__in=PaymentTypeChoices.values),
                 name="payment_type_in_choices",
             ),
             models.CheckConstraint(
-                check=Q(payment_status__in=PaymentStatusChoices.values),
+                condition=Q(payment_status__in=PaymentStatusChoices.values),
                 name="payment_status_in_choices",
             ),
             models.CheckConstraint(
                 name="issued_on_date_required_for_issued_payment_status",
-                check=~Q(payment_status=PaymentStatusChoices.ISSUED)
+                condition=~Q(payment_status=PaymentStatusChoices.ISSUED)
                 | Q(issued_on__isnull=False)
                 | Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
                 violation_error_message="When setting the payment status to 'Issued',"
@@ -188,7 +188,7 @@ class Invoice(models.Model, FieldChangeMixin):
             ),
             models.CheckConstraint(
                 name="internal_invoice_number_required_for_issued_payment_status",
-                check=~Q(payment_status=PaymentStatusChoices.ISSUED)
+                condition=~Q(payment_status=PaymentStatusChoices.ISSUED)
                 | ~Q(internal_invoice_number="")
                 | Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
                 violation_error_message="When setting the payment status to 'Issued',"
@@ -196,7 +196,7 @@ class Invoice(models.Model, FieldChangeMixin):
             ),
             models.CheckConstraint(
                 name="internal_client_number_required_for_issued_payment_status",
-                check=~Q(payment_status=PaymentStatusChoices.ISSUED)
+                condition=~Q(payment_status=PaymentStatusChoices.ISSUED)
                 | ~Q(internal_client_number="")
                 | Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
                 violation_error_message="When setting the payment status to 'Issued',"
@@ -204,7 +204,7 @@ class Invoice(models.Model, FieldChangeMixin):
             ),
             models.CheckConstraint(
                 name="paid_on_date_required_for_paid_payment_status",
-                check=~Q(payment_status=PaymentStatusChoices.PAID)
+                condition=~Q(payment_status=PaymentStatusChoices.PAID)
                 | Q(paid_on__isnull=False)
                 | Q(payment_type=PaymentTypeChoices.COMPLIMENTARY),
                 violation_error_message="When setting the payment status to 'Paid',"
@@ -212,7 +212,7 @@ class Invoice(models.Model, FieldChangeMixin):
             ),
             models.CheckConstraint(
                 name="comments_required_for_complimentary_payment_type",
-                check=~(
+                condition=~(
                     Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
                     & Q(internal_comments="")
                 ),
@@ -221,25 +221,25 @@ class Invoice(models.Model, FieldChangeMixin):
             ),
             models.CheckConstraint(
                 name="contact_name_required_for_non_complimentary_payment_type",
-                check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                condition=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
                 | ~Q(contact_name=""),
                 violation_error_message="Contact name is required for non-complimentary invoices.",
             ),
             models.CheckConstraint(
                 name="contact_email_required_for_non_complimentary_payment_type",
-                check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                condition=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
                 | ~Q(contact_email=""),
                 violation_error_message="Contact email is required for non-complimentary invoices.",
             ),
             models.CheckConstraint(
                 name="billing_address_required_for_non_complimentary_payment_type",
-                check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                condition=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
                 | ~Q(billing_address=""),
                 violation_error_message="Billing address is required for non-complimentary invoices.",
             ),
             models.CheckConstraint(
                 name="vat_number_required_for_non_complimentary_payment_type",
-                check=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                condition=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
                 | ~Q(vat_number=""),
                 violation_error_message="VAT number is required for non-complimentary invoices.",
             ),
