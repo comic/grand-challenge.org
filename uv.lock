@@ -1029,19 +1029,6 @@ wheels = [
 ]
 
 [[package]]
-name = "django-stdimage"
-version = "6.0.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-    { name = "pillow" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f9/65/dcc72a467addf3f78923eb7510cf8dc36e6c41f03422217641f39c5578de/django-stdimage-6.0.2.tar.gz", hash = "sha256:880ab14828be56b53f711c3afae83c219ddd5d9af00850626736feb48382bf7f", size = 14961, upload-time = "2023-11-06T17:26:46.737Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/15/e4/f90e895cb97bd625c9d162dc7919addd6321d34023439623abb6e4c99f30/django_stdimage-6.0.2-py2.py3-none-any.whl", hash = "sha256:9a73f7da48c48074580e2b032d5bdb7164935dbe4b9dc4fb88a7e112f3d521c8", size = 19265, upload-time = "2023-11-06T17:26:44.908Z" },
-]
-
-[[package]]
 name = "django-storages"
 version = "1.14.6"
 source = { registry = "https://pypi.org/simple" }
@@ -1275,7 +1262,6 @@ dependencies = [
     { name = "django-pictures" },
     { name = "django-redis" },
     { name = "django-select2" },
-    { name = "django-stdimage" },
     { name = "django-storages", extra = ["s3"] },
     { name = "djangorestframework" },
     { name = "djangorestframework-csv" },
@@ -1363,7 +1349,6 @@ requires-dist = [
     { name = "django-pictures" },
     { name = "django-redis" },
     { name = "django-select2" },
-    { name = "django-stdimage" },
     { name = "django-storages", extras = ["s3"], specifier = ">=1.14.2" },
     { name = "djangorestframework" },
     { name = "djangorestframework-csv" },
