@@ -231,6 +231,16 @@ def test_algorithm_create(client, uploaded_image):
         ),
         (
             {
+                "kind": InterfaceKindChoices.DICOM_IMAGE_SET,
+                "title": "some-medical-image",
+            },
+            [
+                '<select class="custom-select"',
+                f'name="flexible_widget_choice{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
+            ],
+        ),
+        (
+            {
                 "kind": InterfaceKindChoices.BOOL,
                 "title": "boolean",
             },
@@ -409,11 +419,9 @@ def test_create_job_input_field_required_validation(client, socket_kwargs):
     )
 
     assert response.status_code == 200
-    assert response.context["form"].errors == {
-        f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}": [
-            "This field is required."
-        ],
-    }
+    assert response.context["form"].errors[
+        f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
+    ] == ["This field is required."]
 
 
 def extract_form_data_from_response(response):

@@ -9,6 +9,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.forms import (
     CheckboxSelectMultiple,
+    Field,
     Form,
     HiddenInput,
     ModelChoiceField,
@@ -19,12 +20,15 @@ from django.utils.functional import empty
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
+
+from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
     DICOM_UPLOAD_WIDGET_SUFFIXES,
     DICOMUploadField,
     FlexibleImageField,
     FlexibleImageWidget,
     ImageSearchWidget,
+    ImageSourceChoiceField,
 )
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
@@ -132,6 +136,11 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 
 
 INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
+FLEXIBLE_WIDGET_PREFIXES = [
+    "flexible_widget_choice",
+    "flexible_upload",
+    "flexible_search",
+]
 
 
 class InterfaceFormFieldsMixin:
@@ -153,6 +162,7 @@ class InterfaceFormFieldsMixin:
         user=None,
         required=True,
         initial=None,
+        current_socket_value=None,
         disabled=False,
     ):
         if (
@@ -173,13 +183,35 @@ class InterfaceFormFieldsMixin:
         }
 
         if interface.super_kind == interface.SuperKind.IMAGE:
+            image_search_queryset = filter_by_permission(
+                queryset=Image.objects.filter(
+                    dicom_image_set__isnull=not interface.is_dicom_image_kind
+                ),
+                user=user,
+                codename="view_image",
+            )
             if interface.is_dicom_image_kind:
                 return {
-                    prefixed_interface_slug: DICOMUploadField(
-                        user=user,
-                        initial=initial,
+                    f"flexible_widget_choice{prefixed_interface_slug}": ImageSourceChoiceField(
+                        current_socket_value=current_socket_value,
                         **kwargs,
-                    )
+                    ),
+                    f"flexible_upload{prefixed_interface_slug}": DICOMUploadField(
+                        user=user,
+                        label="",
+                        required=False,
+                    ),
+                    f"flexible_search{prefixed_interface_slug}": ModelChoiceField(
+                        queryset=image_search_queryset,
+                        label="",
+                        required=False,
+                        widget=ImageSearchWidget(
+                            prefixed_interface_slug=prefixed_interface_slug
+                        ),
+                    ),
+                    f"{prefixed_interface_slug}": Field(
+                        required=required, widget=HiddenInput()
+                    ),
                 }
 
             else:
@@ -300,6 +332,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
             "title"
         ):
             current_value = None
+            current_socket_value = None
 
             prefixed_interface_slug = (
                 f"{INTERFACE_FORM_FIELD_PREFIX}{interface.slug}"
@@ -322,10 +355,13 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
                 except AttributeError:
                     current_value = self.data.get(prefixed_interface_slug)
 
-            if not current_value and instance:
-                current_value = instance.values.filter(
+            if instance:
+                current_socket_value = instance.values.filter(
                     interface__slug=interface.slug
                 ).first()
+
+                if not current_value:
+                    current_value = current_socket_value
 
             self.fields.update(
                 self.get_fields_for_interface(
@@ -333,6 +369,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
                     user=self.user,
                     required=False,
                     initial=current_value,
+                    current_socket_value=current_socket_value,
                 )
             )
 
