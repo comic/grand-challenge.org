@@ -10,6 +10,8 @@ from grandchallenge.cases.widgets import (
     DICOMUploadField,
     DICOMUploadWithName,
     FlexibleImageField,
+    ImageSourceChoiceField,
+    ImageWidgetChoices,
 )
 from grandchallenge.components.form_fields import (
     INTERFACE_FORM_FIELD_PREFIX,
@@ -320,3 +322,38 @@ def test_dicom_upload_widget_prepopulated_value():
     )
     assert field.widget.attrs["current_value"] is None
     assert field.initial is None
+
+
+@pytest.mark.django_db
+def test_image_source_choice_widget_prepopulated_value():
+    im = ImageFactory(
+        name="test_image",
+        dicom_image_set=DICOMImageSetFactory(),
+    )
+    ci = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.DICOM_IMAGE_SET
+    )
+    civ = ComponentInterfaceValueFactory(interface=ci, image=im)
+
+    field = ImageSourceChoiceField(current_socket_value=civ)
+
+    assert field.current_socket_value == civ
+    assert field.choices == [
+        ("IMAGE_SELECTED", "test_image"),
+        ("IMAGE_SEARCH", "Select an existing image"),
+        ("IMAGE_UPLOAD", "Upload a new image"),
+    ]
+    assert field.clean(ImageWidgetChoices.IMAGE_SELECTED.value) == im
+
+    field = ImageSourceChoiceField()
+
+    assert field.choices == [
+        ("", "Choose data source..."),
+        ("IMAGE_SEARCH", "Select an existing image"),
+        ("IMAGE_UPLOAD", "Upload a new image"),
+    ]
+    assert field.current_socket_value is None
+    with pytest.raises(ValidationError, match="Select a valid choice."):
+        field.clean(ImageWidgetChoices.IMAGE_SELECTED.value)
+    with pytest.raises(ValidationError, match="This field is required."):
+        field.clean(ImageWidgetChoices.UNDEFINED.value)

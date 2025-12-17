@@ -5,13 +5,16 @@ from django.core.exceptions import ValidationError
 from django.db.models import QuerySet, TextChoices
 from django.forms import (
     CharField,
+    ChoiceField,
     HiddenInput,
     ModelChoiceField,
     ModelMultipleChoiceField,
     MultiValueField,
     MultiWidget,
+    Select,
+    TextInput,
 )
-from django.forms.widgets import ChoiceWidget, TextInput
+from django.forms.widgets import ChoiceWidget
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterfaceValue
@@ -27,10 +30,56 @@ from grandchallenge.uploads.widgets import (
 
 
 class ImageWidgetChoices(TextChoices):
-    IMAGE_SEARCH = "IMAGE_SEARCH"
-    IMAGE_UPLOAD = "IMAGE_UPLOAD"
-    IMAGE_SELECTED = "IMAGE_SELECTED"
-    UNDEFINED = "UNDEFINED"
+    UNDEFINED = "", "Choose data source..."
+    IMAGE_SELECTED = "IMAGE_SELECTED", ""
+    IMAGE_SEARCH = "IMAGE_SEARCH", "Select an existing image"
+    IMAGE_UPLOAD = "IMAGE_UPLOAD", "Upload a new image"
+
+
+class ImageSourceChoiceField(ChoiceField):
+    widget = Select(attrs={"class": "custom-select"})
+
+    def __init__(
+        self,
+        *args,
+        current_socket_value=None,
+        required=True,
+        **kwargs,
+    ):
+        self.current_socket_value = current_socket_value
+
+        choices = kwargs.pop("choices", [])
+
+        if current_socket_value is None:
+            choice = ImageWidgetChoices.UNDEFINED
+            choices.append((choice.value, choice.label))
+        else:
+            choices.append(
+                (
+                    ImageWidgetChoices.IMAGE_SELECTED.value,
+                    current_socket_value.title,
+                )
+            )
+
+        for choice in [
+            ImageWidgetChoices.IMAGE_SEARCH,
+            ImageWidgetChoices.IMAGE_UPLOAD,
+        ]:
+            choices.append((choice.value, choice.label))
+
+        super().__init__(
+            *args,
+            required=required,
+            choices=choices,
+            **kwargs,
+        )
+
+    def clean(self, value):
+        value = super().clean(value)
+        if value == ImageWidgetChoices.IMAGE_SELECTED:
+            return self.current_socket_value.image
+        else:
+            return value
 
 
 class ImageSearchWidget(ChoiceWidget, HiddenInput):
