@@ -263,6 +263,83 @@ class InterfaceFormFieldsMixin:
 
         return field_type(**kwargs)
 
+    def full_clean(self):
+        # Mark selected widgets as required for validation
+        fields_required = {}
+        for name in self.fields:
+            if name.startswith(
+                "flexible_widget_choice" + INTERFACE_FORM_FIELD_PREFIX
+            ):
+                base_name = name[len("flexible_widget_choice") :]
+                bound_field = self[name]
+                for choice, field_name in {
+                    "IMAGE_SEARCH": f"flexible_search{base_name}",
+                    "IMAGE_UPLOAD": f"flexible_upload{base_name}",
+                }.items():
+                    if bound_field.data == choice:
+                        fields_required[field_name] = self[
+                            field_name
+                        ].field.required
+                        self[field_name].field.required = True
+
+        super().full_clean()
+
+        # Reset `required` to avoid javascript validation.
+        # Items may otherwise get a "Please fill out this field" tooltip
+        # blocking submission. This will lead to issues if this field is no
+        # longer the selected choice. (The widget is then not focusable.)
+        for field_name, required in fields_required.items():
+            self[field_name].field.required = required
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        keys_to_remove = []
+        data_to_add = {}
+
+        for key in cleaned_data.keys():
+            if any(
+                [
+                    key.startswith(flex_prefix + INTERFACE_FORM_FIELD_PREFIX)
+                    for flex_prefix in FLEXIBLE_WIDGET_PREFIXES
+                ]
+            ):
+                keys_to_remove.append(key)
+
+            if key.startswith(
+                "flexible_widget_choice" + INTERFACE_FORM_FIELD_PREFIX
+            ):
+                # Get the choice from the data because if it is "IMAGE_SELECTED"
+                # the cleaned data becomes the current socket value
+                choice = self[key].data
+                base_key = key[len("flexible_widget_choice") :]
+                widget_fields = {
+                    "IMAGE_SELECTED": key,
+                    "IMAGE_SEARCH": f"flexible_search{base_key}",
+                    "IMAGE_UPLOAD": f"flexible_upload{base_key}",
+                }
+
+                for widget_type, widget_key in widget_fields.items():
+                    if choice == widget_type:
+                        try:
+                            data_to_add[base_key] = cleaned_data[widget_key]
+                        except KeyError:
+                            pass
+                    else:
+                        if (
+                            widget_type in ["IMAGE_SEARCH", "IMAGE_UPLOAD"]
+                            and widget_key in self.errors
+                        ):
+                            # Ignore errors if it is not the selected choice.
+                            del self._errors[widget_key]
+
+        cleaned_data.update(data_to_add)
+
+        for key in keys_to_remove:
+            del cleaned_data[key]
+
+        return cleaned_data
+
 
 class AdditionalInputsMixin(UserMixin, InterfaceFormFieldsMixin):
 
