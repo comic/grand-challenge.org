@@ -21,7 +21,7 @@
                 id="selected-image-{{ widget.name }}">
             <option value="">No image selected</option>
         </select>
-        <input type="hidden" name="prefixed-interface-slug" value="{{ widget.name }}">
+        <input type="hidden" name="prefixed-interface-slug" value="{% if prefixed_interface_slug %}{{ prefixed_interface_slug }}{% else %}{{ widget.name }}{% endif %}">
     </div>
 
     <small class="form-text text-muted">

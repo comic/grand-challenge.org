@@ -87,15 +87,19 @@ class ImageSearchWidget(ChoiceWidget, HiddenInput):
     input_type = None
     name = None
 
-    def __init__(self, *args, name=None, **kwargs):
+    def __init__(
+        self, *args, name=None, prefixed_interface_slug=None, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         if name:
             self.name = name
+        self.prefixed_interface_slug = prefixed_interface_slug
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         if self.name:
             context["widget"]["name"] = self.name
+        context["prefixed_interface_slug"] = self.prefixed_interface_slug
         return context
 
 
