@@ -7,10 +7,8 @@ from django.utils.html import format_html
 from factory.fuzzy import FuzzyChoice
 
 from grandchallenge.archives.models import Archive, ArchiveItem
-from grandchallenge.components.form_fields import (
-    INTERFACE_FORM_FIELD_PREFIX,
-    FileWidgetChoices,
-)
+from grandchallenge.components.form_fields import FileWidgetChoices
+from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import (
     InterfaceKindChoices,
     InterfaceKinds,

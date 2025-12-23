@@ -3,7 +3,7 @@ from django.utils.html import format_html
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.cases.widgets import ImageWidgetChoices
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface
 from tests.cases_tests.factories import (
     DICOMImageSetFactory,

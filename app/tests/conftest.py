@@ -17,10 +17,8 @@ from grandchallenge.cases.widgets import (
     ImageWidgetChoices,
 )
 from grandchallenge.components.backends import docker_client
-from grandchallenge.components.form_fields import (
-    INTERFACE_FORM_FIELD_PREFIX,
-    FileWidgetChoices,
-)
+from grandchallenge.components.form_fields import FileWidgetChoices
+from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,

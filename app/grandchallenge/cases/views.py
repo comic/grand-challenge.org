@@ -38,7 +38,7 @@ from grandchallenge.cases.serializers import (
 )
 from grandchallenge.cases.widgets import ImageSearchWidget, ImageWidgetChoices
 from grandchallenge.components.backends.base import serialize_aws_request
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,

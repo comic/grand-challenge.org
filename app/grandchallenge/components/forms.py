@@ -4,6 +4,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from dal import autocomplete
 from dal.widgets import Select
+from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.forms import (
@@ -18,25 +19,41 @@ from django.utils.functional import empty
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.cases.widgets import DICOM_UPLOAD_WIDGET_SUFFIXES
+from grandchallenge.cases.widgets import (
+    DICOM_UPLOAD_WIDGET_SUFFIXES,
+    DICOMUploadField,
+    FlexibleImageField,
+    FlexibleImageWidget,
+    ImageSearchWidget,
+)
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
-from grandchallenge.components.form_fields import (
-    INTERFACE_FORM_FIELD_PREFIX,
-    InterfaceFormFieldFactory,
-)
+from grandchallenge.components.form_fields import FlexibleFileField
 from grandchallenge.components.models import (
     RESERVED_SOCKET_SLUGS,
     CIVData,
     ComponentInterface,
+    ComponentInterfaceValue,
+)
+from grandchallenge.components.schemas import generate_component_json_schema
+from grandchallenge.components.widgets import (
+    FileSearchWidget,
+    FlexibleFileWidget,
 )
 from grandchallenge.core.forms import SaveFormInitMixin, UserMixin
 from grandchallenge.core.guardian import filter_by_permission
+from grandchallenge.core.templatetags.bleach import clean
+from grandchallenge.core.validators import JSONValidator
+from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import Method
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadSingleWidget
+from grandchallenge.uploads.widgets import (
+    DICOMUserUploadMultipleWidget,
+    UserUploadMultipleWidget,
+    UserUploadSingleWidget,
+)
 from grandchallenge.workstations.models import WorkstationImage
 
 logger = logging.getLogger(__name__)
@@ -115,7 +132,108 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
         fields = ("user_upload", "creator", "comment")
 
 
-class AdditionalInputsMixin(UserMixin):
+INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
+
+
+class InterfaceFormFieldsMixin:
+    possible_widgets = {
+        UserUploadMultipleWidget,
+        UserUploadSingleWidget,
+        DICOMUserUploadMultipleWidget,
+        JSONEditorWidget,
+        FlexibleImageWidget,
+        ImageSearchWidget,
+        FlexibleFileWidget,
+        FileSearchWidget,
+    }
+
+    def get_fields_for_interface(
+        self,
+        *,
+        interface,
+        user=None,
+        required=True,
+        initial=None,
+        disabled=False,
+    ):
+        if (
+            isinstance(initial, ComponentInterfaceValue)
+            and not initial.has_value
+        ):
+            initial = None
+
+        prefixed_interface_slug = (
+            f"{INTERFACE_FORM_FIELD_PREFIX}{interface.slug}"
+        )
+
+        kwargs = {
+            "required": required,
+            "help_text": clean(interface.description),
+            "disabled": disabled,
+            "label": interface.title.title(),
+        }
+
+        if interface.super_kind == interface.SuperKind.IMAGE:
+            if interface.is_dicom_image_kind:
+                return {
+                    prefixed_interface_slug: DICOMUploadField(
+                        user=user,
+                        initial=initial,
+                        **kwargs,
+                    )
+                }
+
+            else:
+                return {
+                    prefixed_interface_slug: FlexibleImageField(
+                        user=user,
+                        interface=interface,
+                        initial=initial,
+                        **kwargs,
+                    )
+                }
+        elif interface.super_kind == interface.SuperKind.FILE:
+            return {
+                prefixed_interface_slug: FlexibleFileField(
+                    user=user,
+                    interface=interface,
+                    initial=initial,
+                    **kwargs,
+                )
+            }
+        elif interface.super_kind == interface.SuperKind.VALUE:
+            return {
+                prefixed_interface_slug: self.get_json_field(
+                    interface=interface,
+                    initial=initial,
+                    **kwargs,
+                )
+            }
+        else:
+            raise NotImplementedError(
+                f"Unknown interface super kind: {interface.super_kind}"
+            )
+
+    @staticmethod
+    def get_json_field(interface, initial, **kwargs):
+        if isinstance(initial, ComponentInterfaceValue):
+            initial = initial.value
+        kwargs["initial"] = initial
+        field_type = interface.default_field
+
+        schema = generate_component_json_schema(
+            component_interface=interface,
+            required=kwargs["required"],
+        )
+
+        if field_type == forms.JSONField:
+            kwargs["widget"] = JSONEditorWidget(schema=schema)
+        kwargs["validators"] = [JSONValidator(schema=schema)]
+
+        return field_type(**kwargs)
+
+
+class AdditionalInputsMixin(UserMixin, InterfaceFormFieldsMixin):
 
     def __init__(self, *args, additional_inputs, **kwargs):
         self._additional_inputs = additional_inputs
@@ -137,11 +255,13 @@ class AdditionalInputsMixin(UserMixin):
             else:
                 initial = None
 
-            self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
-                interface=input,
-                user=self._user,
-                required=input.value_required,
-                initial=initial if initial else input.default_value,
+            self.fields.update(
+                self.get_fields_for_interface(
+                    interface=input,
+                    user=self._user,
+                    required=input.value_required,
+                    initial=initial if initial else input.default_value,
+                )
             )
 
     def clean(self):
@@ -168,9 +288,7 @@ class AdditionalInputsMixin(UserMixin):
         return cleaned_data
 
 
-class MultipleCIVForm(Form):
-    possible_widgets = InterfaceFormFieldFactory.possible_widgets
-
+class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
     def __init__(self, *args, instance, base_obj, user, **kwargs):  # noqa C901
         super().__init__(*args, **kwargs)
         self.instance = instance
@@ -210,11 +328,13 @@ class MultipleCIVForm(Form):
                     interface__slug=interface.slug
                 ).first()
 
-            self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
-                interface=interface,
-                user=self.user,
-                required=False,
-                initial=current_value,
+            self.fields.update(
+                self.get_fields_for_interface(
+                    interface=interface,
+                    user=self.user,
+                    required=False,
+                    initial=current_value,
+                )
             )
 
         # Add fields for dynamically added new interfaces
@@ -253,13 +373,13 @@ class MultipleCIVForm(Form):
                     except AttributeError:
                         current_value = self.data.get(slug)
 
-                self.fields[
-                    f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
-                ] = InterfaceFormFieldFactory(
-                    interface=interface,
-                    user=self.user,
-                    required=False,
-                    initial=current_value,
+                self.fields.update(
+                    self.get_fields_for_interface(
+                        interface=interface,
+                        user=self.user,
+                        required=False,
+                        initial=current_value,
+                    )
                 )
 
     @staticmethod
@@ -347,9 +467,9 @@ class CIVSetUpdateFormMixin:
         super().process_object_data()
 
 
-class SingleCIVForm(Form):
+class SingleCIVForm(InterfaceFormFieldsMixin, Form):
     possible_widgets = {
-        *InterfaceFormFieldFactory.possible_widgets,
+        *InterfaceFormFieldsMixin.possible_widgets,
         autocomplete.ModelSelect2,
         Select,
     }
@@ -442,12 +562,12 @@ class SingleCIVForm(Form):
         )
 
         if selected_interface is not None:
-            self.fields[
-                f"{INTERFACE_FORM_FIELD_PREFIX}{selected_interface.slug}"
-            ] = InterfaceFormFieldFactory(
-                interface=selected_interface,
-                user=user,
-                required=selected_interface.value_required,
+            self.fields.update(
+                self.get_fields_for_interface(
+                    interface=selected_interface,
+                    user=user,
+                    required=selected_interface.value_required,
+                )
             )
 
 

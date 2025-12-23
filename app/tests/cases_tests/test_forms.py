@@ -3,8 +3,10 @@ from django.test import Client
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.cases.widgets import DICOM_UPLOAD_WIDGET_SUFFIXES
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
-from grandchallenge.components.forms import MultipleCIVForm
+from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    MultipleCIVForm,
+)
 from grandchallenge.components.models import ComponentInterface
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UserFactory

@@ -9,10 +9,8 @@ from pytest_django.asserts import assertContains, assertNotContains
 from requests import put
 
 from grandchallenge.cases.widgets import FlexibleImageField, ImageWidgetChoices
-from grandchallenge.components.form_fields import (
-    INTERFACE_FORM_FIELD_PREFIX,
-    FlexibleFileField,
-)
+from grandchallenge.components.form_fields import FlexibleFileField
+from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,

@@ -28,11 +28,14 @@ from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.archives.models import Archive
 from grandchallenge.components.form_fields import (
-    INTERFACE_FORM_FIELD_PREFIX,
     FileWidgetChoices,
     file_upload_text,
 )
-from grandchallenge.components.forms import CIVSetDeleteForm, SingleCIVForm
+from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    CIVSetDeleteForm,
+    SingleCIVForm,
+)
 from grandchallenge.components.models import (
     RESERVED_SOCKET_SLUGS,
     ComponentInterface,

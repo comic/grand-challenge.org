@@ -14,7 +14,7 @@ from requests import put
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.archives.views import ArchiveItemsList
 from grandchallenge.cases.widgets import ImageWidgetChoices
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,
