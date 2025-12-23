@@ -266,30 +266,36 @@ class InterfaceFormFieldsMixin:
     def full_clean(self):
         # Mark selected widgets as required for validation
         fields_required = {}
-        for name in self.fields:
-            if name.startswith(
-                "flexible_widget_choice" + INTERFACE_FORM_FIELD_PREFIX
-            ):
-                base_name = name[len("flexible_widget_choice") :]
-                bound_field = self[name]
-                for choice, field_name in {
-                    "IMAGE_SEARCH": f"flexible_search{base_name}",
-                    "IMAGE_UPLOAD": f"flexible_upload{base_name}",
-                }.items():
-                    if bound_field.data == choice:
-                        fields_required[field_name] = self[
-                            field_name
-                        ].field.required
-                        self[field_name].field.required = True
 
-        super().full_clean()
+        try:
+            for name in self.fields:
+                if name.startswith(
+                    "flexible_widget_choice" + INTERFACE_FORM_FIELD_PREFIX
+                ):
+                    base_name = name[len("flexible_widget_choice") :]
+                    bound_field = self[name]
 
-        # Reset `required` to avoid javascript validation.
-        # Items may otherwise get a "Please fill out this field" tooltip
-        # blocking submission. This will lead to issues if this field is no
-        # longer the selected choice. (The widget is then not focusable.)
-        for field_name, required in fields_required.items():
-            self[field_name].field.required = required
+                    widget_fields = {
+                        "IMAGE_SEARCH": f"flexible_search{base_name}",
+                        "IMAGE_UPLOAD": f"flexible_upload{base_name}",
+                    }
+
+                    for choice, field_name in widget_fields.items():
+                        if bound_field.data == choice:
+                            # Store original required state and temporarily set to required
+                            fields_required[field_name] = self[
+                                field_name
+                            ].field.required
+                            self[field_name].field.required = True
+
+            super().full_clean()
+        finally:
+            # Reset `required` to avoid javascript validation.
+            # Items may otherwise get a "Please fill out this field" tooltip
+            # blocking submission. This will lead to issues if this field is no
+            # longer the selected choice. (The widget is then not focusable.)
+            for field_name, required in fields_required.items():
+                self[field_name].field.required = required
 
     def clean(self):
         cleaned_data = super().clean()
