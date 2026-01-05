@@ -446,3 +446,86 @@ def test_policies_must_be_accepted(client):
     )
 
     assert response.status_code == 302
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "first_name,last_name,email,expected_errors",
+    [
+        (
+            "John",
+            "Doe",
+            "john.doe@example.test",
+            {},
+        ),
+        (
+            "john.doe@example.test",
+            "Doe",
+            "john.doe@example.test",
+            {"first_name": {"First Name cannot contain your email address."}},
+        ),
+        (
+            "John",
+            "john.doe@example.test",
+            "john.doe@example.test",
+            {"last_name": {"Last Name cannot contain your email address."}},
+        ),
+        (
+            "john.doe@example.test",
+            "john.doe@example.test",
+            "john.doe@example.test",
+            {
+                "first_name": {
+                    "First Name cannot contain your email address.",
+                },
+                "last_name": {
+                    "Last Name cannot contain your email address.",
+                },
+            },
+        ),
+        (
+            "123john.doe@example.test",
+            "john.doe@example.test123",
+            "john.doe@example.test",
+            {
+                "first_name": {
+                    "First Name cannot contain your email address.",
+                },
+                "last_name": {
+                    "Last Name cannot contain your email address.",
+                },
+            },
+        ),
+    ],
+)
+def test_signup_form_validation(
+    first_name, last_name, email, expected_errors, client
+):
+    response = get_view_for_user(
+        url="/accounts/signup/",
+        client=client,
+        method=client.post,
+        data={
+            "email": email,
+            "email2": email,
+            "username": "user123",
+            "first_name": first_name,
+            "last_name": last_name,
+            "institution": "Institution",
+            "department": "Department",
+            "country": "NL",
+            "receive_newsletter": False,
+            "only_account": True,
+            "password1": "ENwfuftURoZgFdq",
+            "password2": "ENwfuftURoZgFdq   ",
+            "notification_email_choice": NotificationEmailOptions.DISABLED,
+        },
+    )
+
+    if not expected_errors:
+        assert response.status_code == 302, "Redirect expected on success"
+    else:
+        form_errors = response.context["form"].errors
+        for field, errors in expected_errors.items():
+            assert field in form_errors
+            assert set(form_errors[field]) == errors
