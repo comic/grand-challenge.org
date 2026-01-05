@@ -77,6 +77,20 @@ class UserProfileForm(forms.ModelForm):
             # accounts with names fooAB barAB etc.
             raise ValidationError("Account details invalid")
 
+        email = self.instance.user.email
+        if email:
+            if email.casefold() in first_name.casefold():
+                self.add_error(
+                    "first_name",
+                    "First Name cannot contain your email address",
+                )
+
+            if email and email.casefold() in last_name.casefold():
+                self.add_error(
+                    "last_name",
+                    "Last Name cannot contain your email address",
+                )
+
         return cleaned_data
 
 
