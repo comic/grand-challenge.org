@@ -77,20 +77,6 @@ class UserProfileForm(forms.ModelForm):
             # accounts with names fooAB barAB etc.
             raise ValidationError("Account details invalid")
 
-        email = self.instance.user.email
-        if email:
-            if email.casefold() in first_name.casefold():
-                self.add_error(
-                    "first_name",
-                    "First Name cannot contain your email address",
-                )
-
-            if email and email.casefold() in last_name.casefold():
-                self.add_error(
-                    "last_name",
-                    "Last Name cannot contain your email address",
-                )
-
         return cleaned_data
 
 
@@ -115,6 +101,27 @@ class SignupForm(UserProfileForm):
                     title=policy.title,
                 ),
             )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        email = self.cleaned_data.get("email")
+
+        if email:
+            first_name = self.cleaned_data.get("first_name", "")
+            last_name = self.cleaned_data.get("last_name", "")
+            if email.casefold() in first_name.casefold():
+                self.add_error(
+                    "first_name",
+                    "First Name cannot contain your email address.",
+                )
+            if email.casefold() in last_name.casefold():
+                self.add_error(
+                    "last_name",
+                    "Last Name cannot contain your email address.",
+                )
+
+        return cleaned_data
 
     def signup(self, request, user):
         user.first_name = self.cleaned_data["first_name"]
