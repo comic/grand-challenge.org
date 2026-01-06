@@ -284,7 +284,7 @@ class AlgorithmModelAdmin(admin.ModelAdmin):
         "model",
     )
 
-    def gb_in_storage(self, obj):
+    def naturalsize_in_storage(self, obj):
         return humanize.naturalsize(obj.size_in_storage)
 
 
