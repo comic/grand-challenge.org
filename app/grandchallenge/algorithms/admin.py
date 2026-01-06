@@ -264,7 +264,13 @@ class AlgorithmPermissionRequestAdmin(admin.ModelAdmin):
 @admin.register(AlgorithmModel)
 class AlgorithmModelAdmin(admin.ModelAdmin):
     ordering = ("-created",)
-    list_display = ("algorithm", "created", "is_desired_version", "comment")
+    list_display = (
+        "algorithm",
+        "created",
+        "is_desired_version",
+        "comment",
+        "gb_in_storage",
+    )
     list_filter = ("is_desired_version",)
     search_fields = ("algorithm__title", "comment")
     readonly_fields = (
@@ -276,6 +282,9 @@ class AlgorithmModelAdmin(admin.ModelAdmin):
         "import_status",
         "model",
     )
+
+    def gb_in_storage(self, obj):
+        return obj.size_in_storage / 2**30
 
 
 @admin.register(AlgorithmInterface)

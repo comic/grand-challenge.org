@@ -49,6 +49,8 @@ class ComponentImageAdmin(admin.ModelAdmin):
         "latest_shimmed_version",
         "is_desired_version",
         "is_removed",
+        "gb_in_storage",
+        "gb_in_registry",
     )
     list_filter = (
         "is_manifest_valid",
@@ -59,6 +61,12 @@ class ComponentImageAdmin(admin.ModelAdmin):
     )
     search_fields = ("pk", "creator__username", "image_sha256")
     actions = (cancel_image_imports,)
+
+    def gb_in_storage(self, obj):
+        return obj.size_in_storage / 2**30
+
+    def gb_in_registry(self, obj):
+        return obj.size_in_registry / 2**30
 
 
 @admin.register(ComponentInterface)
