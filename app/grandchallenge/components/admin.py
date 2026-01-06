@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.db.transaction import on_commit
 
@@ -63,10 +64,10 @@ class ComponentImageAdmin(admin.ModelAdmin):
     actions = (cancel_image_imports,)
 
     def gb_in_storage(self, obj):
-        return obj.size_in_storage / 2**30
+        return obj.size_in_storage / settings.GIGABYTE
 
     def gb_in_registry(self, obj):
-        return obj.size_in_registry / 2**30
+        return obj.size_in_registry / settings.GIGABYTE
 
 
 @admin.register(ComponentInterface)
