@@ -1,3 +1,4 @@
+import humanize
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
@@ -269,7 +270,7 @@ class AlgorithmModelAdmin(admin.ModelAdmin):
         "created",
         "is_desired_version",
         "comment",
-        "gb_in_storage",
+        "naturalsize_in_storage",
     )
     list_filter = ("is_desired_version",)
     search_fields = ("algorithm__title", "comment")
@@ -284,7 +285,7 @@ class AlgorithmModelAdmin(admin.ModelAdmin):
     )
 
     def gb_in_storage(self, obj):
-        return obj.size_in_storage / 2**30
+        return humanize.naturalsize(obj.size_in_storage)
 
 
 @admin.register(AlgorithmInterface)

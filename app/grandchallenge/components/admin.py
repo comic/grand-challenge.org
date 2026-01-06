@@ -1,4 +1,4 @@
-from django.conf import settings
+import humanize
 from django.contrib import admin
 from django.db.transaction import on_commit
 
@@ -50,8 +50,8 @@ class ComponentImageAdmin(admin.ModelAdmin):
         "latest_shimmed_version",
         "is_desired_version",
         "is_removed",
-        "gb_in_storage",
-        "gb_in_registry",
+        "naturalsize_in_storage",
+        "naturalsize_in_registry",
     )
     list_filter = (
         "is_manifest_valid",
@@ -63,11 +63,11 @@ class ComponentImageAdmin(admin.ModelAdmin):
     search_fields = ("pk", "creator__username", "image_sha256")
     actions = (cancel_image_imports,)
 
-    def gb_in_storage(self, obj):
-        return obj.size_in_storage / settings.GIGABYTE
+    def naturalsize_in_storage(self, obj):
+        return humanize.naturalsize(obj.size_in_storage)
 
-    def gb_in_registry(self, obj):
-        return obj.size_in_registry / settings.GIGABYTE
+    def naturalsize_in_registry(self, obj):
+        return humanize.naturalsize(obj.size_in_registry)
 
 
 @admin.register(ComponentInterface)
