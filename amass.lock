@@ -1,6 +1,6 @@
 {
   "lock_version": "1.0",
-  "content_hash": "sha256:9955a7540d7e172efab80693cd58589448a0d81b8375b280ac853263a5b95650",
+  "content_hash": "sha256:73c5b1e8d431b7256fcff291527e49657a54ff44db0224b1626027b5e4c2c952",
   "dependencies": [
     {
       "name": "@diagnijmegen/rse-grand-challenge-dicom-de-id-procedure",
@@ -448,32 +448,32 @@
     },
     {
       "name": "datatables.net",
-      "version": "2.1.8",
+      "version": "2.3.6",
       "provider": "unpkg",
       "assets": [
         {
           "name": "js/dataTables.js",
-          "sri": "sha256-PSmeeEFHx/Xs2Jb23S6XwbhgCh7n1HGv8NnLtZhSiDA="
+          "sri": "sha256-Lybf83/9K1rLTSlIdf95G5a3/oK14+KLDRYZFdET1Pw="
         },
         {
           "name": "js/dataTables.min.js",
-          "sri": "sha256-aTBve1VKWozmjo9Nb2E73RvP4t8xOWLn/IPPX2vl4IU="
+          "sri": "sha256-3q2wXt5tk+a35AYXmIWyxc4RxSwvoYOqTzdZ6nPsT48="
         }
       ],
       "maps": []
     },
     {
       "name": "datatables.net-bs4",
-      "version": "2.1.8",
+      "version": "2.3.6",
       "provider": "unpkg",
       "assets": [
         {
           "name": "css/dataTables.bootstrap4.css",
-          "sri": "sha256-WL3wyIwiPlsyjDTx705wDcXEWXXQA487JtAQV4u/yK4="
+          "sri": "sha256-wNATsIqEWygcJ+I6XKqZvMb6xWIH7X+Xu3RBaw3bVho="
         },
         {
           "name": "css/dataTables.bootstrap4.min.css",
-          "sri": "sha256-1fF64w9kQ74cJNCxY1iWKWkfnmjsmY5hx8vWYVAxJdE="
+          "sri": "sha256-u8fpIxZd1znGEggKpyhd+7KNhG526VsoTk73b9rUjYg="
         },
         {
           "name": "js/dataTables.bootstrap4.js",
@@ -481,47 +481,47 @@
         },
         {
           "name": "js/dataTables.bootstrap4.min.js",
-          "sri": "sha256-uw2OU14ICaJ99/YlgWlWar5JBAKjqW3vzs8Ucn2n0KE="
+          "sri": "sha256-91AsoX6hTPqUvcN6AoO2RZ4iWzJv/DxDe9iY6KsWHhk="
         }
       ],
       "maps": []
     },
     {
       "name": "datatables.net-buttons",
-      "version": "3.2.0",
+      "version": "3.2.6",
       "provider": "unpkg",
       "assets": [
         {
           "name": "js/buttons.colVis.js",
-          "sri": "sha256-tmNXXCxhkRLADHCa/8lT+lHB5jWEHyferqE5A0BSprM="
+          "sri": "sha256-bVk4N4uoQ1WxjjR1o/dr6ks3RqRPGw8XKFezoW3Tes4="
         },
         {
           "name": "js/buttons.colVis.min.js",
-          "sri": "sha256-27nWU0jKZ2f2srxDJPc8lLzE6HpKRdxCzg1mkrzBFes="
+          "sri": "sha256-5rb5WhXSapG1k4t4T5fr+tlYaEz0sznGyN/xZDkIBlk="
         },
         {
           "name": "js/dataTables.buttons.js",
-          "sri": "sha256-6wfRo4WuA8oI8MsvLvqEzn2GUClEsr1+2d6tzdqrIUg="
+          "sri": "sha256-CUOk3JZNNwWcZgzAaKL9XcOSIhwZFWoH/nj3u4b1pCk="
         },
         {
           "name": "js/dataTables.buttons.min.js",
-          "sri": "sha256-2SmX/IhbmVdeg5paUsa6SExqBi0iF2LF+Dh7tG/Uv7s="
+          "sri": "sha256-JD+FIW+b7WsQSS7W9O5gtqRR/dxIUNgY61okDkokGzI="
         }
       ],
       "maps": []
     },
     {
       "name": "datatables.net-buttons-bs4",
-      "version": "3.2.0",
+      "version": "3.2.6",
       "provider": "unpkg",
       "assets": [
         {
           "name": "css/buttons.bootstrap4.css",
-          "sri": "sha256-3CX3Al/3b0PcKlL2qXTZFA//WsSU4ImEXyTLGtbElkQ="
+          "sri": "sha256-fn7CTNDSh/MdYyx5joumVtwfoUN79zHpia+8ZbaMG6M="
         },
         {
           "name": "css/buttons.bootstrap4.min.css",
-          "sri": "sha256-v8mVTG9uLsUOyss4ACpa9JD/LD85IBUrK/oXBrlGRrw="
+          "sri": "sha256-91+1bsPR1B8miE0VUsHU7XSuPGtSLSWAApE3P7nw4Ec="
         },
         {
           "name": "js/buttons.bootstrap4.js",
@@ -529,7 +529,7 @@
         },
         {
           "name": "js/buttons.bootstrap4.min.js",
-          "sri": "sha256-+0hWUGyz5myqHMYbeot8a5Hm87wLJHCjQcSYQ8k37oM="
+          "sri": "sha256-BpYGF+rn12Mg1Cpgwgo669fhnpMhTdG9MSvORhglwr8="
         }
       ],
       "maps": []

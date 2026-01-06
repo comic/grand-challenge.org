@@ -1,4 +1,4 @@
-/*! Buttons for DataTables 3.2.0
+/*! Buttons for DataTables 3.2.6
  * © SpryMedia Ltd - datatables.net/license
  */
 
@@ -224,7 +224,7 @@ $.extend(Buttons.prototype, {
 			idx = split[split.length - 1] * 1;
 		}
 
-		this._expandButton(
+		let node = this._expandButton(
 			buttons,
 			config,
 			config !== undefined ? config.split : undefined,
@@ -240,7 +240,7 @@ $.extend(Buttons.prototype, {
 			this._draw();
 		}
 
-		return this;
+		return node;
 	},
 
 	/**
@@ -494,6 +494,10 @@ $.extend(Buttons.prototype, {
 
 		$(button.node).remove();
 
+		if (button.inserter) {
+			$(button.inserter).remove();
+		}
+
 		var idx = $.inArray(button, host);
 		host.splice(idx, 1);
 
@@ -642,6 +646,7 @@ $.extend(Buttons.prototype, {
 		var isSplit = false;
 		var domCollection = this.c.dom.collection;
 		var buttons = !Array.isArray(button) ? [button] : button;
+		var lastButton;
 
 		if (button === undefined) {
 			buttons = !Array.isArray(split) ? [split] : split;
@@ -761,7 +766,11 @@ $.extend(Buttons.prototype, {
 			if (conf.init) {
 				conf.init.call(dt.button(built.node), dt, $(built.node), conf);
 			}
+
+			lastButton = built.node;
 		}
+
+		return lastButton;
 	},
 
 	/**
@@ -776,6 +785,7 @@ $.extend(Buttons.prototype, {
 		var configDom = this.c.dom;
 		var textNode;
 		var dt = this.s.dt;
+		var setLinerTab = false;
 		var text = function (opt) {
 			return typeof opt === 'function' ? opt(dt, button, config) : opt;
 		};
@@ -809,6 +819,7 @@ $.extend(Buttons.prototype, {
 			return {
 				conf: config,
 				node: spacer,
+				nodeChild: null,
 				inserter: spacer,
 				buttons: [],
 				inCollection: inCollection,
@@ -855,7 +866,7 @@ $.extend(Buttons.prototype, {
 				else {
 					run(e, dt, button, config, function () {});
 				}
-			}
+			};
 
 			var tag = config.tag || dom.tag;
 			var clickBlurs =
@@ -863,7 +874,6 @@ $.extend(Buttons.prototype, {
 
 			button = $('<' + tag + '/>')
 				.addClass(dom.className)
-				.attr('tabindex', this.s.dt.settings()[0].iTabIndex)
 				.attr('aria-controls', this.s.dt.table().node().id)
 				.on('click.dtb', function (e) {
 					e.preventDefault();
@@ -897,12 +907,18 @@ $.extend(Buttons.prototype, {
 			}
 
 			if (dom.liner.tag) {
-				var liner = $('<' + dom.liner.tag + '/>')
+				var lc = dom.liner.tag.toLowerCase();
+				var liner = $('<' + lc + '/>')
 					.html(text(config.text))
 					.addClass(dom.liner.className);
 
-				if (dom.liner.tag.toLowerCase() === 'a') {
+				if (lc === 'a') {
 					liner.attr('href', '#');
+				}
+
+				if (lc === 'a' || lc === 'button') {
+					liner.attr('tabindex', this.s.dt.settings()[0].iTabIndex);
+					setLinerTab = true;
 				}
 
 				button.append(liner);
@@ -911,6 +927,10 @@ $.extend(Buttons.prototype, {
 			else {
 				button.html(text(config.text));
 				textNode = button;
+			}
+
+			if (! setLinerTab) {
+				button.attr('tabindex', this.s.dt.settings()[0].iTabIndex)
 			}
 
 			if (config.enabled === false) {
@@ -1041,9 +1061,12 @@ $.extend(Buttons.prototype, {
 			splitDiv.append(dropButton).attr(dropButtonConfig.attr);
 		}
 
+		var node = isSplit ? splitDiv.get(0) : button.get(0);
+
 		return {
 			conf: config,
-			node: isSplit ? splitDiv.get(0) : button.get(0),
+			node: node,
+			nodeChild: node && node.children && node.children.length ? node.children[0] : null,
 			inserter: isSplit ? splitDiv : inserter,
 			buttons: [],
 			inCollection: inCollection,
@@ -1118,7 +1141,7 @@ $.extend(Buttons.prototype, {
 		}
 
 		for (var i = 0, ien = buttons.length; i < ien; i++) {
-			if (buttons[i].node === node || $(buttons[i].node).children().eq(0).get(0) === node) {
+			if (buttons[i].node === node || buttons[i].nodeChild === node) {
 				return buttons[i];
 			}
 
@@ -1414,7 +1437,7 @@ $.extend(Buttons.prototype, {
 			$(window).off('resize.resize.dtb-collection');
 			$('body').off('.dtb-collection');
 			dt.off('buttons-action.b-internal');
-			dt.off('destroy');
+			dt.off('destroy.dtb-popover');
 
 			$('body').trigger('buttons-popover-hide.dt');
 		};
@@ -1489,7 +1512,7 @@ $.extend(Buttons.prototype, {
 		hostButtonNode.attr('aria-expanded', 'true');
 
 		if (hostNode.parents('body')[0] !== document.body) {
-			hostNode = document.body.lastChild;
+			hostNode = $(document.body).children('div, section, p').last();
 		}
 
 		if (options.popoverTitle) {
@@ -1680,7 +1703,7 @@ $.extend(Buttons.prototype, {
 
 		$(display).trigger('buttons-popover.dt');
 
-		dt.on('destroy', close);
+		dt.on('destroy.dtb-popover', close);
 
 		setTimeout(function () {
 			closed = false;
@@ -1986,6 +2009,11 @@ Buttons.buttonSelector = function (insts, selector) {
  * @param {*} str Data to strip
  */
 Buttons.stripData = function (str, config) {
+	// If the input is an HTML element, we can use the HTML from it (HTML might be stripped below).
+	if (str !== null && typeof str === 'object' && str.nodeName && str.nodeType) {
+		str = str.innerHTML;
+	}
+
 	if (typeof str !== 'string') {
 		return str;
 	}
@@ -2020,8 +2048,7 @@ Buttons.stripData = function (str, config) {
 
 	// Prevent Excel from running a formula
 	if (!config || config.escapeExcelFormula) {
-		if (str.match(/^[=+\-@\t\r]/)) {
-			console.log('matching and updateing');
+		if (str.match(/^[=@\t\r]/)) {
 			str = "'" + str;
 		}
 	}
@@ -2144,7 +2171,7 @@ Buttons.defaults = {
  * @type {string}
  * @static
  */
-Buttons.version = '3.2.0';
+Buttons.version = '3.2.6';
 
 $.extend(_dtButtons, {
 	collection: {
@@ -2528,6 +2555,7 @@ DataTable.Api.register('buttons().container()', function () {
 // Add a new button
 DataTable.Api.register('button().add()', function (idx, conf, draw) {
 	var ctx = this.context;
+	var node;
 
 	// Don't use `this` as it could be empty - select the instances directly
 	if (ctx.length) {
@@ -2537,11 +2565,13 @@ DataTable.Api.register('button().add()', function (idx, conf, draw) {
 		);
 
 		if (inst.length) {
-			inst[0].add(conf, idx, draw);
+			node = inst[0].add(conf, idx, draw);
 		}
 	}
 
-	return this.button(this._groupSelector, idx);
+	return node
+		? this.button(this._groupSelector, node)
+		: this;
 });
 
 // Destroy the button sets selected
