@@ -63,26 +63,38 @@ class TestVerificationForm:
 
     def test_can_make_validation_with_own_email(self):
         u = UserFactory(
-            email="test@google.com", first_name="Jane", last_name="Doe"
+            email="own@example.test", first_name="Jane", last_name="Doe"
         )
         u.user_profile.institution = "Foo"
         u.user_profile.department = "Bar"
         u.user_profile.country = "US"
         u.user_profile.save()
-        form = VerificationForm(
-            user=u, data={"email": u.email, "user": u.pk, "only_account": True}
-        )
-        assert form.is_valid()
 
+        # with own email
         form = VerificationForm(
             user=u,
             data={
-                "email": u.email.upper(),
+                "email": "own@example.test",
+                "confirm_email": "own@example.test",
                 "user": u.pk,
                 "only_account": True,
+                "suspension_warning": True,
             },
         )
-        assert form.is_valid()
+        assert form.is_valid(), form.errors
+
+        # And with other email
+        form = VerificationForm(
+            user=u,
+            data={
+                "email": "other@example.test",
+                "confirm_email": "other@example.test",
+                "user": u.pk,
+                "only_account": True,
+                "suspension_warning": True,
+            },
+        )
+        assert form.is_valid(), form.errors
 
     def test_cannot_make_validation_with_someone_elses_email(self):
         u1 = UserFactory(email="test@google.com")
@@ -104,6 +116,7 @@ class TestVerificationForm:
                 "email": u1.email.upper(),
                 "user": u2.pk,
                 "only_account": True,
+                "suspension_warning": True,
             },
         )
         assert "This email is already in use." in form.errors["__all__"]
@@ -158,6 +171,39 @@ class TestVerificationForm:
         assert [
             f"Your profile information is incomplete. You can complete your profile <a href={profile_link!r}>here</a>."
         ] == form.errors["__all__"]
+
+    def test_email_confirmation_mismatch(self):
+        u = UserFactory()
+        u.user_profile.institution = "Foo"
+        u.user_profile.department = "Bar"
+        u.user_profile.country = "US"
+        u.user_profile.save()
+
+        form = VerificationForm(
+            user=u,
+            data={
+                "email": "test@example.com",
+                "confirm_email": "other@example.com",
+                "user": u.pk,
+                "only_account": True,
+                "suspension_warning": True,
+            },
+        )
+        assert "Email addresses do not match." in form.errors["confirm_email"]
+        assert not form.is_valid()
+
+        form = VerificationForm(
+            user=u,
+            data={
+                "email": "test@example.com",
+                "confirm_email": "test@example.com",
+                "user": u.pk,
+                "only_account": True,
+                "suspension_warning": True,
+            },
+        )
+        assert "confirm_email" not in form.errors
+        assert form.is_valid()
 
 
 @pytest.mark.django_db

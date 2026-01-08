@@ -17,24 +17,40 @@
     <h2>Request Verification</h2>
 
     <p>
-        Please use this form for verification of your account.
-        The email address that you provide here will be only be used once to verify your identity,
+        Please use this form to request verification of your account.
+    </p>
+
+    <p>
+        The email address that you provide, if different from your current, will only be used once to verify your identity,
         and will not be used for any further communications.
     </p>
-    <p>
-        Before submitting this form, make sure that your profile information is complete and valid. You must provide
-        your full name and the affiliation you indicate should match the email you use for verification below.
+
+    <p class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle mr-1"></i> Before submitting this form, make sure that your profile information is complete and valid.
     </p>
+
+    <fieldset class="border rounded p-3 mb-3">
+        <legend class="w-auto px-2 mb-0 h5">Your current profile information</legend>
+
+        <dl class="inline mb-0">
+            <dt>Username</dt>
+            <dd>{{ request.user.username }}</dd>
+            <dt>Name</dt>
+            <dd>{% if request.user.first_name and request.user.last_name %}{{ request.user.first_name }} {{ request.user.last_name }}{% else %}<span class="text-danger">None</span>{% endif %}</dd>
+            <dt>Institution</dt>
+            <dd>{% if request.user.user_profile.institution %}{{ request.user.user_profile.institution }}{% else %}<span class="text-danger">None</span>{% endif %}</dd>
+            <dt>Department</dt>
+            <dd>{% if request.user.user_profile.department %}{{ request.user.user_profile.department }}{% else %}<span class="text-danger">None</span>{% endif %}</dd>
+            <dt>Country</dt>
+            <dd>{% if request.user.user_profile.country.name %}{{ request.user.user_profile.country.name }}{% else %}<span class="text-danger">None</span>{% endif %}</dd>
+        </dl>
+    </fieldset>
+
     <p>
-        Your current profile information:
-        <li>Username: {{ request.user.username }}</li>
-        <li>Name: {% if request.user.first_name and request.user.last_name %}{{ request.user.first_name }} {{ request.user.last_name }}{% else %}<span class="text-danger">None</span>{% endif %}</li>
-        <li>Institution: {% if request.user.user_profile.institution %} {{ request.user.user_profile.institution }} {% else %} <span class="text-danger">None</span> {% endif %}</li>
-        <li>Department: {% if request.user.user_profile.department %} {{ request.user.user_profile.department }} {% else %} <span class="text-danger">None</span> {% endif %}</li>
-        <li>Country: {% if request.user.user_profile.country.name %} {{ request.user.user_profile.country.name }} {% else %} <span class="text-danger">None</span> {% endif %}</li>
-    </p>
-    <p>
-        If you would like to update this information, please <a href="{% url 'profile-update' %}">edit your profile</a> before making a verification request.
+        You must provide your full name. If you would like to update this information, please <a href="{% url 'profile-update' %}">edit your profile</a>
+        before making a verification request. The affiliation you indicate should match the email you use for verification below.
+        If you instead would like to change your email address, you can <a href="{% url 'account_email' %}">edit your current email address</a>
+        before making a verification request.
     </p>
 
     {% crispy form %}
