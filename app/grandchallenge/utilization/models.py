@@ -75,9 +75,11 @@ class SessionUtilization(UUIDModel):
     @property
     def credits_per_hour(self):
         if self.interactive_algorithms:
-            return 1000
+            return (
+                settings.WORKSTATIONS_SESSION_INTERACTIVE_ALGORITHMS_CREDITS_PER_HOUR
+            )
         else:
-            return 500
+            return settings.WORKSTATIONS_SESSION_CREDITS_PER_HOUR
 
     @property
     def credits_consumed(self):

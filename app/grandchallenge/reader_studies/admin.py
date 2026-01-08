@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 
 from grandchallenge.core.admin import (
@@ -45,6 +46,17 @@ class ReaderStudyAdmin(admin.ModelAdmin):
     )
     search_fields = ("title", "slug", "pk")
     readonly_fields = ("credits_consumed",)
+
+    def get_form(self, *args, **kwargs):
+        help_texts = {
+            "max_credits": f"The maximum number of credits that may be consumed for "
+            f"this reader study. Leave blank to allow unlimited usage. "
+            f"The hourly rate is dependent on the use of interactive algorithms: "
+            f"without interactive algorithms it's {settings.WORKSTATIONS_SESSION_CREDITS_PER_HOUR} credits per hour; "
+            f"with interactive algorithms it's {settings.WORKSTATIONS_SESSION_INTERACTIVE_ALGORITHMS_CREDITS_PER_HOUR} credits per hour."
+        }
+        kwargs.update({"help_texts": help_texts})
+        return super().get_form(*args, **kwargs)
 
 
 @admin.register(Answer)
