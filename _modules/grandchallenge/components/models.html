@@ -137,6 +137,15 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
+<span class="n">RESERVED_SOCKET_SLUGS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;predictions-csv-file&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;predictions-json-file&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;predictions-zip-file&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;metrics-json-file&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;results-json-file&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
 <div class="viewcode-block" id="InterfaceKindChoices">
 <a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.InterfaceKindChoices">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">InterfaceKindChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
@@ -2448,6 +2457,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_dicom_upload_with_name</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="n">ci</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="n">interface_slug</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">interface</span> <span class="o">=</span> <span class="n">ci</span>
 
         <span class="k">if</span> <span class="n">ci</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">ci</span><span class="o">.</span><span class="n">SuperKind</span><span class="o">.</span><span class="n">VALUE</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_init_json_civ_data</span><span class="p">()</span>
@@ -2513,6 +2523,11 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">dicom_upload_with_name</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">file_civ</span><span class="p">,</span>
         <span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface_slug</span> <span class="ow">in</span> <span class="n">RESERVED_SOCKET_SLUGS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Socket </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">title</span><span class="si">!r}</span><span class="s2"> is reserved and cannot be used.&quot;</span>
+            <span class="p">)</span>
 
         <span class="c1"># Ensure at most one of these properties is set</span>
         <span class="c1"># None can be an acceptable value, so 0 is ok</span>
@@ -2610,7 +2625,8 @@
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
             <span class="k">pass</span>
 
-        <span class="n">ci</span> <span class="o">=</span> <span class="n">ComponentInterface</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">slug</span><span class="o">=</span><span class="n">civ_data</span><span class="o">.</span><span class="n">interface_slug</span><span class="p">)</span>
+        <span class="n">ci</span> <span class="o">=</span> <span class="n">civ_data</span><span class="o">.</span><span class="n">interface</span>
+
         <span class="n">current_civ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_current_value_for_interface</span><span class="p">(</span>
             <span class="n">interface</span><span class="o">=</span><span class="n">ci</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span>
         <span class="p">)</span>
