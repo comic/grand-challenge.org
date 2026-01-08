@@ -7,6 +7,7 @@ import pytest
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
+from django.test import override_settings
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
@@ -228,13 +229,10 @@ def test_api_archive_api_detail_view(client):
 
 
 @pytest.mark.django_db
+@override_settings(task_eager_propagates=True, task_always_eager=True)
 def test_api_archive_item_allowed_sockets(
-    client, settings, django_capture_on_commit_callbacks
+    client, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
     archive = ArchiveFactory()
     editor = UserFactory()
     archive.add_editor(editor)
@@ -242,7 +240,7 @@ def test_api_archive_item_allowed_sockets(
     ci_bool = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     phase = PhaseFactory(archive=archive)
 
-    with django_capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:archives-item-detail",
             reverse_kwargs={"pk": item.pk},
@@ -257,10 +255,6 @@ def test_api_archive_item_allowed_sockets(
             content_type="application/json",
             HTTP_X_FORWARDED_PROTO="https",
         )
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
 
     # User does not have access to the archive
     assert response.status_code == 400
@@ -276,7 +270,7 @@ def test_api_archive_item_allowed_sockets(
     )
     phase.algorithm_interfaces.add(interface)
 
-    with django_capture_on_commit_callbacks() as callbacks:
+    with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="api:archives-item-detail",
             reverse_kwargs={"pk": item.pk},
@@ -291,14 +285,47 @@ def test_api_archive_item_allowed_sockets(
             content_type="application/json",
             HTTP_X_FORWARDED_PROTO="https",
         )
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
 
     assert response.status_code == 200, response.content
     assert response.json()["pk"] == str(item.pk)
     assert item.values.count() == 1
+
+
+@pytest.mark.django_db
+@override_settings(task_eager_propagates=True, task_always_eager=True)
+def test_api_archive_item_reserved_sockets(
+    client, django_capture_on_commit_callbacks
+):
+    archive = ArchiveFactory()
+    editor = UserFactory()
+    archive.add_editor(editor)
+    item = ArchiveItemFactory(archive=archive)
+
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:archives-item-detail",
+            reverse_kwargs={"pk": item.pk},
+            data={
+                "values": [
+                    {
+                        "interface": "metrics-json-file",
+                        "value": {},
+                    },
+                ]
+            },
+            user=editor,
+            client=client,
+            method=client.patch,
+            content_type="application/json",
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+    assert response.status_code == 400
+    assert (
+        "Socket 'Metrics JSON File' is reserved and cannot be used."
+        in response.json()[0]
+    )
+    assert item.values.count() == 0
 
 
 @pytest.mark.django_db

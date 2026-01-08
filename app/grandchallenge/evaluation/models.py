@@ -1387,7 +1387,7 @@ class PhaseAdditionalEvaluationInput(
     def clean(self):
         super().clean()
 
-        from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
+        from grandchallenge.components.models import RESERVED_SOCKET_SLUGS
 
         if self.socket.slug in RESERVED_SOCKET_SLUGS:
             raise ValidationError(

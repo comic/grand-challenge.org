@@ -47,6 +47,7 @@ from grandchallenge.components.forms import (
     ContainerImageForm,
 )
 from grandchallenge.components.models import (
+    RESERVED_SOCKET_SLUGS,
     ComponentInterface,
     ComponentJob,
     ImportStatusChoices,
@@ -178,16 +179,6 @@ class JobCreateForm(SaveFormInitMixin, AdditionalInputsMixin, Form):
             )
 
         return cleaned_data
-
-
-# Exclude sockets that are not aimed at algorithms or evaluations from user selection
-RESERVED_SOCKET_SLUGS = [
-    "predictions-csv-file",
-    "predictions-json-file",
-    "predictions-zip-file",
-    "metrics-json-file",
-    "results-json-file",
-]
 
 
 class PhaseSelectForm(UserMixin, Form):
