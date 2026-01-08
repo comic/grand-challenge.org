@@ -28,7 +28,6 @@ class SessionUtilizationAdmin(admin.ModelAdmin):
         "reader_studies__pk",
     )
     readonly_fields = (
-        "pk",
         "created",
         "session",
         "creator",
