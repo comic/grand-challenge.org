@@ -1,4 +1,5 @@
 import logging
+from enum import Enum
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
@@ -28,6 +29,7 @@ from grandchallenge.cases.widgets import (
     FlexibleImageWidget,
     ImageSearchWidget,
     ImageSourceChoiceField,
+    ImageWidgetChoices,
 )
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
@@ -135,11 +137,12 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 
 
 INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
-FLEXIBLE_WIDGET_PREFIXES = [
-    "flexible_widget_choice",
-    "flexible_upload",
-    "flexible_search",
-]
+
+
+class FlexibleWidgetPrefixes(Enum):
+    CHOICE = f"flexible_widget_choice{INTERFACE_FORM_FIELD_PREFIX}"
+    UPLOAD = f"flexible_upload{INTERFACE_FORM_FIELD_PREFIX}"
+    SEARCH = f"flexible_search{INTERFACE_FORM_FIELD_PREFIX}"
 
 
 class InterfaceFormFieldsMixin:
@@ -191,16 +194,16 @@ class InterfaceFormFieldsMixin:
             )
             if interface.is_dicom_image_kind:
                 return {
-                    f"flexible_widget_choice{prefixed_interface_slug}": ImageSourceChoiceField(
+                    f"{FlexibleWidgetPrefixes.CHOICE.value}{interface.slug}": ImageSourceChoiceField(
                         current_socket_value=current_socket_value,
                         **kwargs,
                     ),
-                    f"flexible_upload{prefixed_interface_slug}": DICOMUploadField(
+                    f"{FlexibleWidgetPrefixes.UPLOAD.value}{interface.slug}": DICOMUploadField(
                         user=user,
                         label="",
                         required=False,
                     ),
-                    f"flexible_search{prefixed_interface_slug}": ModelChoiceField(
+                    f"{FlexibleWidgetPrefixes.SEARCH.value}{interface.slug}": ModelChoiceField(
                         queryset=image_search_queryset,
                         label="",
                         required=False,
@@ -268,19 +271,19 @@ class InterfaceFormFieldsMixin:
 
         try:
             for name in self.fields:
-                if name.startswith(
-                    "flexible_widget_choice" + INTERFACE_FORM_FIELD_PREFIX
-                ):
-                    base_name = name[len("flexible_widget_choice") :]
-                    bound_field = self[name]
+                if name.startswith(FlexibleWidgetPrefixes.CHOICE.value):
+                    interface_slug = name[
+                        len(FlexibleWidgetPrefixes.CHOICE.value) :
+                    ]
+                    choice = self[name].data
 
                     widget_fields = {
-                        "IMAGE_SEARCH": f"flexible_search{base_name}",
-                        "IMAGE_UPLOAD": f"flexible_upload{base_name}",
+                        ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH.value}{interface_slug}",
+                        ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD.value}{interface_slug}",
                     }
 
-                    for choice, field_name in widget_fields.items():
-                        if bound_field.data == choice:
+                    for widget_type, field_name in widget_fields.items():
+                        if choice == widget_type:
                             # Store original required state and temporarily set to required
                             fields_required[field_name] = self[
                                 field_name
@@ -305,38 +308,43 @@ class InterfaceFormFieldsMixin:
         for key in cleaned_data.keys():
             if any(
                 [
-                    key.startswith(flex_prefix + INTERFACE_FORM_FIELD_PREFIX)
-                    for flex_prefix in FLEXIBLE_WIDGET_PREFIXES
+                    key.startswith(prefix.value)
+                    for prefix in FlexibleWidgetPrefixes
                 ]
             ):
                 keys_to_remove.append(key)
 
-            if key.startswith(
-                "flexible_widget_choice" + INTERFACE_FORM_FIELD_PREFIX
-            ):
-                # Get the choice from the data because if it is "IMAGE_SELECTED"
+            if key.startswith(FlexibleWidgetPrefixes.CHOICE.value):
+                # Get the choice from the field data because if it is "IMAGE_SELECTED"
                 # the cleaned data becomes the current socket value
                 choice = self[key].data
-                base_key = key[len("flexible_widget_choice") :]
+                interface_slug = key[
+                    len(FlexibleWidgetPrefixes.CHOICE.value) :
+                ]
+                prefixed_interface_slug = (
+                    f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+                )
                 widget_fields = {
-                    "IMAGE_SELECTED": key,
-                    "IMAGE_SEARCH": f"flexible_search{base_key}",
-                    "IMAGE_UPLOAD": f"flexible_upload{base_key}",
+                    ImageWidgetChoices.IMAGE_SELECTED: key,
+                    ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH.value}{interface_slug}",
+                    ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD.value}{interface_slug}",
                 }
 
-                for widget_type, widget_key in widget_fields.items():
+                for widget_type, field_name in widget_fields.items():
                     if choice == widget_type:
                         try:
-                            data_to_add[base_key] = cleaned_data[widget_key]
+                            data_to_add[prefixed_interface_slug] = (
+                                cleaned_data[field_name]
+                            )
                         except KeyError:
                             pass
                     else:
                         if (
                             widget_type in ["IMAGE_SEARCH", "IMAGE_UPLOAD"]
-                            and widget_key in self.errors
+                            and field_name in self.errors
                         ):
                             # Ignore errors if it is not the selected choice.
-                            del self._errors[widget_key]
+                            del self._errors[field_name]
 
         cleaned_data.update(data_to_add)
 
