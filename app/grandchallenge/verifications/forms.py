@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class VerificationForm(SaveFormInitMixin, forms.ModelForm):
     confirm_email = forms.EmailField(
-        label="Confirm email",
+        label="Email (again)",
         required=True,
         help_text="Please confirm your email address.",
     )
