@@ -20,7 +20,6 @@ from django.utils.functional import empty
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
-
 from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
     DICOM_UPLOAD_WIDGET_SUFFIXES,
