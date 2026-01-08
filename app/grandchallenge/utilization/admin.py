@@ -27,7 +27,15 @@ class SessionUtilizationAdmin(admin.ModelAdmin):
         "reader_studies__slug",
         "reader_studies__pk",
     )
-    readonly_fields = ("reader_studies", "credits_consumed")
+    readonly_fields = (
+        "created",
+        "session",
+        "creator",
+        "duration",
+        "interactive_algorithms",
+        "reader_studies",
+        "credits_consumed",
+    )
 
     def accessed_reader_studies(self, obj):
         return oxford_comma(obj.reader_studies.all())
