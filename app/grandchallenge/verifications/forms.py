@@ -40,7 +40,7 @@ class VerificationForm(SaveFormInitMixin, forms.ModelForm):
         widget=CheckboxInput(attrs={"class": "is-invalid"}),
         label="I understand that if I have multiple accounts, I will be permanently suspended",
         help_text=(
-            "Having multiple accounts, even under different email addresses, is a violation of the Grand Challenge terms of service."
+            "Having multiple accounts is in violation with the Grand Challenge terms of service."
         ),
     )
 
