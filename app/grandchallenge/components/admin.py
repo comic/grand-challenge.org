@@ -63,9 +63,11 @@ class ComponentImageAdmin(admin.ModelAdmin):
     search_fields = ("pk", "creator__username", "image_sha256")
     actions = (cancel_image_imports,)
 
+    @admin.display(ordering="size_in_storage")
     def naturalsize_in_storage(self, obj):
         return humanize.naturalsize(obj.size_in_storage)
 
+    @admin.display(ordering="size_in_registry")
     def naturalsize_in_registry(self, obj):
         return humanize.naturalsize(obj.size_in_registry)
 

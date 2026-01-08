@@ -284,9 +284,10 @@ class AlgorithmModelAdmin(admin.ModelAdmin):
         "model",
     )
 
+    @admin.display(ordering="size_in_storage")
     def naturalsize_in_storage(self, obj):
         return humanize.naturalsize(obj.size_in_storage)
-naturalsize_in_storage.admin_order_field = "size_in_storage"
+
 
 @admin.register(AlgorithmInterface)
 class AlgorithmInterfaceAdmin(admin.ModelAdmin):
