@@ -1,3 +1,4 @@
+import humanize
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
@@ -264,7 +265,13 @@ class AlgorithmPermissionRequestAdmin(admin.ModelAdmin):
 @admin.register(AlgorithmModel)
 class AlgorithmModelAdmin(admin.ModelAdmin):
     ordering = ("-created",)
-    list_display = ("algorithm", "created", "is_desired_version", "comment")
+    list_display = (
+        "algorithm",
+        "created",
+        "is_desired_version",
+        "comment",
+        "naturalsize_in_storage",
+    )
     list_filter = ("is_desired_version",)
     search_fields = ("algorithm__title", "comment")
     readonly_fields = (
@@ -276,6 +283,10 @@ class AlgorithmModelAdmin(admin.ModelAdmin):
         "import_status",
         "model",
     )
+
+    @admin.display(ordering="size_in_storage")
+    def naturalsize_in_storage(self, obj):
+        return humanize.naturalsize(obj.size_in_storage)
 
 
 @admin.register(AlgorithmInterface)
