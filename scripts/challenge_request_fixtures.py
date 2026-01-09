@@ -29,7 +29,7 @@ def run():
             ["", "T4"],
             ["", "T4", "A10G"],
         ],
-        average_size_test_image_mb_for_tasks=[
+        average_size_test_case_mb_for_tasks=[
             fake.random_int(1, 1000),
             fake.random_int(1, 1000),
         ],
@@ -56,7 +56,7 @@ def run():
             fake.random_int(2, 3),
             1,
         ],
-        number_of_test_images_for_phases=[
+        number_of_test_cases_for_phases=[
             fake.random_int(1, 5),
             fake.random_int(10, 30, 5),
             fake.random_int(50, 500, 50),

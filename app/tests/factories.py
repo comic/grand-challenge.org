@@ -124,12 +124,12 @@ class ChallengeRequestFactory(factory.django.DjangoModelFactory):
         ["", "T4"],
         ["", "A10G", "T4"],
     ]
-    average_size_test_image_mb_for_tasks = [10, 100]
+    average_size_test_case_mb_for_tasks = [10, 100]
     inference_time_average_minutes_for_tasks = [5, 10]
     task_id_for_phases = [1, 1, 2, 2]
     number_of_submissions_per_team_for_phases = [10, 1, 10, 1]
     number_of_teams_for_phases = [10, 10, 10, 10]
-    number_of_test_images_for_phases = [3, 100, 3, 100]
+    number_of_test_cases_for_phases = [3, 100, 3, 100]
     structured_challenge_submission_doi = "10.5281/zenodo.6362337"
 
 

@@ -57,7 +57,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="challengerequest",
-            name="average_size_test_image_mb_for_tasks",
+            name="average_size_test_case_mb_for_tasks",
             field=models.JSONField(
                 default=list,
                 help_text="Average size of a test image in MB, for each task.",
@@ -133,7 +133,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="challengerequest",
-            name="number_of_test_images_for_phases",
+            name="number_of_test_cases_for_phases",
             field=models.JSONField(
                 default=list,
                 help_text="Number of test images for each phase.",

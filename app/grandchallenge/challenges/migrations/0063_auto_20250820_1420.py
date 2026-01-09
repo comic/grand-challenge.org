@@ -17,8 +17,8 @@ def copy_data_to_new_budget_fields(apps, schema_editor):  # noqa: C901
             cr.algorithm_maximum_settable_memory_gb_for_tasks = [
                 cr.algorithm_maximum_settable_memory_gb
             ] * cr.number_of_tasks
-        if not cr.average_size_test_image_mb_for_tasks:
-            cr.average_size_test_image_mb_for_tasks = [
+        if not cr.average_size_test_case_mb_for_tasks:
+            cr.average_size_test_case_mb_for_tasks = [
                 cr.average_size_of_test_image_in_mb
             ] * cr.number_of_tasks
         if not cr.inference_time_average_minutes_for_tasks:
@@ -40,8 +40,8 @@ def copy_data_to_new_budget_fields(apps, schema_editor):  # noqa: C901
                 cr.phase_1_number_of_submissions_per_team,
                 cr.phase_2_number_of_submissions_per_team,
             ] * cr.number_of_tasks
-        if not cr.number_of_test_images_for_phases:
-            cr.number_of_test_images_for_phases = [
+        if not cr.number_of_test_cases_for_phases:
+            cr.number_of_test_cases_for_phases = [
                 cr.phase_1_number_of_test_images,
                 cr.phase_2_number_of_test_images,
             ] * cr.number_of_tasks

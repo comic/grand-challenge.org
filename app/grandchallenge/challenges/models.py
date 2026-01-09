@@ -1161,7 +1161,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             ],
         )
     )
-    average_size_test_image_mb_for_tasks = models.JSONField(
+    average_size_test_case_mb_for_tasks = models.JSONField(
         help_text="Average size of a test image in MB, for each task.",
         default=list,
         validators=[
@@ -1214,7 +1214,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             help_text="Number of test images for this phase.",
         )
     )
-    number_of_test_images_for_phases = models.JSONField(
+    number_of_test_cases_for_phases = models.JSONField(
         help_text="Number of test images for each phase.",
         default=list,
         validators=[
