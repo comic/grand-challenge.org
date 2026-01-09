@@ -176,7 +176,7 @@ class ChallengeRequestForm(forms.ModelForm):
             "If your challenge has multiple tasks, we multiply "
             "the phase 1 and 2 cost estimates by the number of tasks. "
             "For that to work, please provide the average number of "
-            "test images and the average number of submissions across "
+            "test cases and the average number of submissions across "
             "tasks for the two phases below. For examples check "
             "<a href='https://grand-challenge.org/documentation/"
             "create-your-own-challenge/'>here</a>."
@@ -186,9 +186,9 @@ class ChallengeRequestForm(forms.ModelForm):
         min_value=1,
         max_value=10000,
         help_text=(
-            "Average size of test image in MB. If you're <a href="
+            "Average size of a test case in MB. If you're <a href="
             "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-            "bundling images</a>, provide the size of the batch (not the size of a single image)."
+            "bundling cases</a>, provide the size of the batch (not the size of a single case)."
         ),
     )
     inference_time_average_minutes = forms.IntegerField(
@@ -198,7 +198,7 @@ class ChallengeRequestForm(forms.ModelForm):
         help_text=(
             "The average time that you expect an algorithm job to take in minutes. "
             "This time estimate should account for everything that needs to happen "
-            "for an algorithm container to process <u>one single image, including "
+            "for an algorithm container to process <u>one single case, including "
             "model loading, i/o, preprocessing and inference.</u>"
         ),
     )
@@ -223,9 +223,9 @@ class ChallengeRequestForm(forms.ModelForm):
     phase_1_number_of_test_images = forms.IntegerField(
         min_value=1,
         help_text=(
-            "Number of test images for this phase. If you're <a href="
+            "Number of test cases for this phase. If you're <a href="
             "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-            "bundling images</a>, enter the number of batches (not the number of single images)."
+            "bundling cases</a>, enter the number of batches (not the number of single cases)."
         ),
     )
     phase_2_number_of_submissions_per_team = forms.IntegerField(
@@ -240,9 +240,9 @@ class ChallengeRequestForm(forms.ModelForm):
     phase_2_number_of_test_images = forms.IntegerField(
         min_value=1,
         help_text=(
-            "Number of test images for this phase. If you're <a href="
+            "Number of test cases for this phase. If you're <a href="
             "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-            "bundling images</a>, enter the number of batches (not the number of single images). "
+            "bundling cases</a>, enter the number of batches (not the number of single cases). "
             "Enter 0 here if you only have one phase."
         ),
     )
@@ -441,7 +441,7 @@ class ChallengeRequestForm(forms.ModelForm):
                                 "<br><p>Challenges usually consist of 2 phases: "
                                 "a <b>preliminary debug phase</b>, and "
                                 "a <b>final test phase</b>. "
-                                "The number of test images used for these "
+                                "The number of test cases used for these "
                                 "phases and often the amount of times that "
                                 "users can submit to them differs, which is "
                                 "why we ask for separate estimates for the two "
