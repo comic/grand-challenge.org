@@ -1386,7 +1386,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
 
     @cached_property
-    def average_size_test_image_mb_for_phases(self):
+    def average_size_test_case_mb_for_phases(self):
         return [
             self.average_size_test_case_mb_for_tasks[task_index]
             for task_index in self.task_index_for_phases
@@ -1439,7 +1439,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             n_images * image_mb * settings.MEGABYTE / settings.GIGABYTE
             for n_images, image_mb in zip(
                 self.number_of_test_cases_for_phases,
-                self.average_size_test_image_mb_for_phases,
+                self.average_size_test_case_mb_for_phases,
                 strict=True,
             )
         ]
@@ -1726,7 +1726,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 "compute_costs_euros_per_hour": self.compute_costs_euros_per_hour_for_tasks[
                     task_index
                 ],
-                "average_size_test_image_mb": self.average_size_test_case_mb_for_tasks[
+                "average_size_test_case_mb": self.average_size_test_case_mb_for_tasks[
                     task_index
                 ],
                 "compute_costs_euros": self.compute_costs_euros_for_tasks[
@@ -1756,7 +1756,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 "number_of_teams": self.number_of_teams_for_phases[
                     phase_index
                 ],
-                "number_of_test_images": self.number_of_test_cases_for_phases[
+                "number_of_test_cases": self.number_of_test_cases_for_phases[
                     phase_index
                 ],
                 "compute_time": self.compute_time_for_phases[phase_index],

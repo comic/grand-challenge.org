@@ -124,8 +124,8 @@ Based on the following information provided by the challenge requester:
                             <td>Compute phase {{ forloop.counter }}</td>
                             <td>{{ phase.number_of_submissions_per_team }} submission{{ phase.number_of_submissions_per_team|pluralize }}
                                 times {{ phase.number_of_teams }} team{{ phase.number_of_teams|pluralize }}
-                                times {{ phase.number_of_test_images }} image{{ phase.number_of_test_images|pluralize }}
-                                times {{ task.inference_time_average_minutes }} minutes average job time per image</td>
+                                times {{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }}
+                                times {{ task.inference_time_average_minutes }} minutes average job time per case</td>
                             <td class="text-right">{{ task.compute_costs_euros_per_hour|euro }}</td>
                             <td>{{ phase.compute_time|total_hours|floatformat }}</td>
                             <td>Hours</td>
@@ -133,7 +133,7 @@ Based on the following information provided by the challenge requester:
                         </tr>
                         <tr>
                             <td>Data storage phase {{ forloop.counter }}</td>
-                            <td>{{ phase.number_of_test_images }} image{{ phase.number_of_test_images|pluralize }}, average size {{ task.average_size_test_image_mb }} MB, for 5 years</td>
+                            <td>{{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }}, average size {{ task.average_size_test_case_mb }} MB, for 5 years</td>
                             <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
                             <td>{{ phase.data_storage_size_gb|floatformat }}</td>
                             <td>GB</td>
