@@ -450,64 +450,47 @@ def test_policies_must_be_accepted(client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "first_name,last_name,email,expected_errors",
+    "first_name,last_name,expected_errors",
     [
         (
             "John",
             "Doe",
-            "john.doe@example.test",
             {},
         ),
         (
             "john.doe@example.test",
             "Doe",
-            "john.doe@example.test",
-            {"first_name": {"First Name cannot contain your email address."}},
+            {"first_name": {"First Name cannot be an email address."}},
         ),
         (
             "John",
             "john.doe@example.test",
-            "john.doe@example.test",
-            {"last_name": {"Last Name cannot contain your email address."}},
+            {"last_name": {"Last Name cannot be an email address."}},
         ),
         (
             "john.doe@example.test",
             "john.doe@example.test",
-            "john.doe@example.test",
             {
                 "first_name": {
-                    "First Name cannot contain your email address.",
+                    "First Name cannot be an email address.",
                 },
                 "last_name": {
-                    "Last Name cannot contain your email address.",
-                },
-            },
-        ),
-        (
-            "123john.doe@example.test",
-            "john.doe@example.test123",
-            "john.doe@example.test",
-            {
-                "first_name": {
-                    "First Name cannot contain your email address.",
-                },
-                "last_name": {
-                    "Last Name cannot contain your email address.",
+                    "Last Name cannot be an email address.",
                 },
             },
         ),
     ],
 )
 def test_signup_form_validation(
-    first_name, last_name, email, expected_errors, client
+    first_name, last_name, expected_errors, client
 ):
     response = get_view_for_user(
         url="/accounts/signup/",
         client=client,
         method=client.post,
         data={
-            "email": email,
-            "email2": email,
+            "email": "john.doe@example.test",
+            "email2": "john.doe@example.test",
             "username": "user123",
             "first_name": first_name,
             "last_name": last_name,

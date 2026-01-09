@@ -2,6 +2,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
 from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
 from django.forms import CheckboxInput, Select
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -105,21 +106,29 @@ class SignupForm(UserProfileForm):
     def clean(self):
         cleaned_data = super().clean()
 
-        email = self.cleaned_data.get("email")
+        first_name = self.cleaned_data.get("first_name", "")
+        try:
+            EmailValidator()(first_name)
+        except ValidationError:
+            # Name is not an email address
+            pass
+        else:
+            self.add_error(
+                "first_name",
+                "First Name cannot be an email address.",
+            )
 
-        if email:
-            first_name = self.cleaned_data.get("first_name", "")
-            last_name = self.cleaned_data.get("last_name", "")
-            if email.casefold() in first_name.casefold():
-                self.add_error(
-                    "first_name",
-                    "First Name cannot contain your email address.",
-                )
-            if email.casefold() in last_name.casefold():
-                self.add_error(
-                    "last_name",
-                    "Last Name cannot contain your email address.",
-                )
+        last_name = self.cleaned_data.get("last_name", "")
+        try:
+            EmailValidator()(last_name)
+        except ValidationError:
+            # Name is not an email address
+            pass
+        else:
+            self.add_error(
+                "last_name",
+                "Last Name cannot be an email address.",
+            )
 
         return cleaned_data
 
