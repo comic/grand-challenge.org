@@ -1404,6 +1404,15 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
 
     @property
+    def consider_batching(self):
+        return any(
+            [
+                n_test_cases > 1000
+                for n_test_cases in self.number_of_test_cases_for_phases
+            ]
+        )
+
+    @property
     def total_number_of_submissions(self):
         return sum(self.number_of_submissions_for_phases)
 
