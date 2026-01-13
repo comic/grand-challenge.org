@@ -14,9 +14,12 @@ const initChoiceWidgets = () => {
             continue;
         }
 
+        // Run this every time, regardless of whether the event listener was added.
+        // This ensures only the selected widget is displayed when the form is re-rendered after validation errors.
         searchWidget.classList.toggle("d-none", el.value !== "IMAGE_SEARCH");
         uploadWidget.classList.toggle("d-none", el.value !== "IMAGE_UPLOAD");
 
+        // Add the event listener only once, otherwise we'll respond to the event multiple times.
         if (!el.dataset.eventListenerAdded) {
             el.addEventListener("change", function () {
                 searchWidget.classList.toggle(
