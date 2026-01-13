@@ -1,4 +1,5 @@
 import logging
+from enum import Enum
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
@@ -9,6 +10,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.forms import (
     CheckboxSelectMultiple,
+    Field,
     Form,
     HiddenInput,
     ModelChoiceField,
@@ -19,12 +21,15 @@ from django.utils.functional import empty
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
     DICOM_UPLOAD_WIDGET_SUFFIXES,
     DICOMUploadField,
     FlexibleImageField,
     FlexibleImageWidget,
     ImageSearchWidget,
+    ImageSourceChoiceField,
+    ImageWidgetChoices,
 )
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
@@ -134,6 +139,12 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
 
 
+class FlexibleWidgetPrefixes(Enum):
+    CHOICE = f"flexible_widget_choice{INTERFACE_FORM_FIELD_PREFIX}"
+    UPLOAD = f"flexible_upload{INTERFACE_FORM_FIELD_PREFIX}"
+    SEARCH = f"flexible_search{INTERFACE_FORM_FIELD_PREFIX}"
+
+
 class InterfaceFormFieldsMixin:
     possible_widgets = {
         UserUploadMultipleWidget,
@@ -153,6 +164,7 @@ class InterfaceFormFieldsMixin:
         user=None,
         required=True,
         initial=None,
+        current_socket_value=None,
         disabled=False,
     ):
         if (
@@ -173,13 +185,35 @@ class InterfaceFormFieldsMixin:
         }
 
         if interface.super_kind == interface.SuperKind.IMAGE:
+            image_search_queryset = filter_by_permission(
+                queryset=Image.objects.filter(
+                    dicom_image_set__isnull=not interface.is_dicom_image_kind
+                ),
+                user=user,
+                codename="view_image",
+            )
             if interface.is_dicom_image_kind:
                 return {
-                    prefixed_interface_slug: DICOMUploadField(
-                        user=user,
-                        initial=initial,
+                    f"{FlexibleWidgetPrefixes.CHOICE.value}{interface.slug}": ImageSourceChoiceField(
+                        current_socket_value=current_socket_value,
                         **kwargs,
-                    )
+                    ),
+                    f"{FlexibleWidgetPrefixes.UPLOAD.value}{interface.slug}": DICOMUploadField(
+                        user=user,
+                        label="",
+                        required=False,
+                    ),
+                    f"{FlexibleWidgetPrefixes.SEARCH.value}{interface.slug}": ModelChoiceField(
+                        queryset=image_search_queryset,
+                        label="",
+                        required=False,
+                        widget=ImageSearchWidget(
+                            prefixed_interface_slug=prefixed_interface_slug
+                        ),
+                    ),
+                    f"{prefixed_interface_slug}": Field(
+                        required=required, widget=HiddenInput()
+                    ),
                 }
 
             else:
@@ -230,6 +264,94 @@ class InterfaceFormFieldsMixin:
         kwargs["validators"] = [JSONValidator(schema=schema)]
 
         return field_type(**kwargs)
+
+    def full_clean(self):
+        # Mark selected widgets as required for validation
+        fields_required = {}
+
+        try:
+            for name in self.fields:
+                if name.startswith(FlexibleWidgetPrefixes.CHOICE.value):
+                    interface_slug = name[
+                        len(FlexibleWidgetPrefixes.CHOICE.value) :
+                    ]
+                    choice = self[name].data
+
+                    widget_fields = {
+                        ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH.value}{interface_slug}",
+                        ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD.value}{interface_slug}",
+                    }
+
+                    for widget_type, field_name in widget_fields.items():
+                        if choice == widget_type:
+                            # Store original required state and temporarily set to required
+                            fields_required[field_name] = self[
+                                field_name
+                            ].field.required
+                            self[field_name].field.required = True
+
+            super().full_clean()
+        finally:
+            # Reset `required` to avoid javascript validation.
+            # Items may otherwise get a "Please fill out this field" tooltip
+            # blocking submission. This will lead to issues if this field is no
+            # longer the selected choice. (The widget is then not focusable.)
+            for field_name, required in fields_required.items():
+                self[field_name].field.required = required
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        keys_to_remove = []
+        data_to_add = {}
+
+        for key in cleaned_data.keys():
+            if any(
+                [
+                    key.startswith(prefix.value)
+                    for prefix in FlexibleWidgetPrefixes
+                ]
+            ):
+                keys_to_remove.append(key)
+
+            if key.startswith(FlexibleWidgetPrefixes.CHOICE.value):
+                # Get the choice from the field data because if it is "IMAGE_SELECTED"
+                # the cleaned data becomes the current socket value
+                choice = self[key].data
+                interface_slug = key[
+                    len(FlexibleWidgetPrefixes.CHOICE.value) :
+                ]
+                prefixed_interface_slug = (
+                    f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+                )
+                widget_fields = {
+                    ImageWidgetChoices.IMAGE_SELECTED: key,
+                    ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH.value}{interface_slug}",
+                    ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD.value}{interface_slug}",
+                }
+
+                for widget_type, field_name in widget_fields.items():
+                    if choice == widget_type:
+                        try:
+                            data_to_add[prefixed_interface_slug] = (
+                                cleaned_data[field_name]
+                            )
+                        except KeyError:
+                            pass
+                    else:
+                        if (
+                            widget_type in ["IMAGE_SEARCH", "IMAGE_UPLOAD"]
+                            and field_name in self.errors
+                        ):
+                            # Ignore errors if it is not the selected choice.
+                            del self._errors[field_name]
+
+        cleaned_data.update(data_to_add)
+
+        for key in keys_to_remove:
+            del cleaned_data[key]
+
+        return cleaned_data
 
 
 class AdditionalInputsMixin(UserMixin, InterfaceFormFieldsMixin):
@@ -300,6 +422,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
             "title"
         ):
             current_value = None
+            current_socket_value = None
 
             prefixed_interface_slug = (
                 f"{INTERFACE_FORM_FIELD_PREFIX}{interface.slug}"
@@ -322,10 +445,13 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
                 except AttributeError:
                     current_value = self.data.get(prefixed_interface_slug)
 
-            if not current_value and instance:
-                current_value = instance.values.filter(
+            if instance:
+                current_socket_value = instance.values.filter(
                     interface__slug=interface.slug
                 ).first()
+
+                if not current_value:
+                    current_value = current_socket_value
 
             self.fields.update(
                 self.get_fields_for_interface(
@@ -333,6 +459,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
                     user=self.user,
                     required=False,
                     initial=current_value,
+                    current_socket_value=current_socket_value,
                 )
             )
 

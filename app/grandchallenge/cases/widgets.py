@@ -87,15 +87,19 @@ class ImageSearchWidget(ChoiceWidget, HiddenInput):
     input_type = None
     name = None
 
-    def __init__(self, *args, name=None, **kwargs):
+    def __init__(
+        self, *args, name=None, prefixed_interface_slug=None, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         if name:
             self.name = name
+        self.prefixed_interface_slug = prefixed_interface_slug
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         if self.name:
             context["widget"]["name"] = self.name
+        context["prefixed_interface_slug"] = self.prefixed_interface_slug
         return context
 
 
@@ -278,8 +282,6 @@ class DICOMImageSetNameInput(TextInput):
 
 
 class DICOMUploadWidget(MultiWidget):
-    template_name = "cases/dicom_upload_widget.html"
-
     def __init__(self, attrs=None):
         widgets = {
             DICOM_UPLOAD_WIDGET_SUFFIXES[0]: DICOMImageSetNameInput(),
@@ -299,7 +301,7 @@ class DICOMUploadWidget(MultiWidget):
 class DICOMUploadField(MultiValueField):
     widget = DICOMUploadWidget
 
-    def __init__(self, *args, user, initial=None, **kwargs):
+    def __init__(self, *args, user, **kwargs):
         upload_qs = filter_by_permission(
             queryset=UserUpload.objects.all(),
             user=user,
@@ -311,38 +313,9 @@ class DICOMUploadField(MultiValueField):
             ModelMultipleChoiceField(queryset=upload_qs),
         ]
 
-        self.current_value = None
-        if initial:
-            # Initial data can only be an image CIV.
-            # We don't want to show the widgets in this case, and instead
-            # display the current image name, so pass the image as
-            # current_value to the widget template
-            if isinstance(initial, ComponentInterfaceValue):
-                if image := get_object_if_allowed(
-                    model=Image,
-                    pk=initial.image.pk,
-                    user=user,
-                    codename="view_image",
-                ):
-                    self.current_value = image
-                    # turn initial to the internal data type that this widget expects
-                    initial = self.compress(
-                        values=[
-                            image.name,
-                            image.dicom_image_set.dicom_image_set_upload.user_uploads.all(),
-                        ]
-                    )
-                else:
-                    initial = None
-            else:
-                raise RuntimeError(
-                    f"Unexpected initial value of type {type(initial)}"
-                )
-
         super().__init__(
             *args,
             fields=fields,
-            initial=initial,
             **kwargs,
         )
 
@@ -351,8 +324,3 @@ class DICOMUploadField(MultiValueField):
             name=values[0] if values else "",
             user_uploads=[str(v.pk) for v in values[1]] if values else [],
         )
-
-    def widget_attrs(self, widget):
-        attrs = super().widget_attrs(widget)
-        attrs["current_value"] = self.current_value
-        return attrs
