@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
-from django.forms import ModelChoiceField, MultiValueField
+from django.forms import BoundField, ModelChoiceField, MultiValueField
 
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.widgets import FlexibleFileWidget
@@ -106,3 +106,8 @@ class FlexibleFileField(MultiValueField):
             if len(non_empty_values) != 1:
                 raise ValidationError("Too many values returned.")
             return non_empty_values[0]
+
+
+class BoundFieldWithDNoneClass(BoundField):
+    def css_classes(self, extra_classes=None):
+        return f"d-none {super().css_classes(extra_classes)}"
