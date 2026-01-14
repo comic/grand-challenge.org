@@ -36,8 +36,6 @@ const initChoiceWidgets = () => {
     }
 };
 
-// Run on DOM changes (needed for re-rendered forms)
-new MutationObserver(initChoiceWidgets).observe(document.body, {
-    childList: true,
-    subtree: true,
-});
+document.addEventListener("htmx:load", initChoiceWidgets);
+
+initChoiceWidgets();
