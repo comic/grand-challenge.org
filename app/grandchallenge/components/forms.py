@@ -24,7 +24,6 @@ from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.cases.form_fields import ImageSourceChoiceField
 from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
-    DICOM_UPLOAD_WIDGET_SUFFIXES,
     DICOMUploadField,
     FlexibleImageField,
     FlexibleImageWidget,
@@ -521,11 +520,6 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
             return None
 
         interface_slug = slug[len(INTERFACE_FORM_FIELD_PREFIX) :]
-
-        for known_suffix in DICOM_UPLOAD_WIDGET_SUFFIXES:
-            if interface_slug.endswith(f"_{known_suffix}"):
-                base_slug = interface_slug[: -len(f"_{known_suffix}")]
-                return base_slug
 
         return interface_slug
 
