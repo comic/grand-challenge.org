@@ -261,7 +261,7 @@ class DICOMUploadField(MultiValueField):
     widget = DICOMUploadWidget
 
     def __init__(self, *args, user, **kwargs):
-        upload_qs = filter_by_permission(
+        upload_queryset = filter_by_permission(
             queryset=UserUpload.objects.all(),
             user=user,
             codename="change_userupload",
@@ -269,7 +269,7 @@ class DICOMUploadField(MultiValueField):
 
         fields = [
             CharField(),
-            ModelMultipleChoiceField(queryset=upload_qs),
+            ModelMultipleChoiceField(queryset=upload_queryset),
         ]
 
         super().__init__(
