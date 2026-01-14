@@ -217,7 +217,9 @@ class InterfaceFormFieldsMixin:
                         required=False,
                         bound_field_class=BoundFieldWithDNoneClass,
                     ),
-                    f"{prefixed_interface_slug}": Field(
+                    # Add hidden input field for parsing when rendering
+                    # dynamically added fields.
+                    prefixed_interface_slug: Field(
                         required=required, widget=HiddenInput()
                     ),
                 }
