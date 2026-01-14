@@ -11,6 +11,7 @@ from django.forms import (
     ModelMultipleChoiceField,
     MultiValueField,
     MultiWidget,
+    Script,
     Select,
     TextInput,
 )
@@ -36,8 +37,13 @@ class ImageWidgetChoices(TextChoices):
     IMAGE_UPLOAD = "IMAGE_UPLOAD", "Upload a new image"
 
 
+class ImageSourceChoiceWidget(Select):
+    class Media:
+        js = (Script("cases/js/source_choice_widget.mjs", type="module"),)
+
+
 class ImageSourceChoiceField(ChoiceField):
-    widget = Select(attrs={"class": "custom-select"})
+    widget = ImageSourceChoiceWidget(attrs={"class": "custom-select"})
 
     def __init__(
         self,
