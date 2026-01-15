@@ -35,7 +35,10 @@ from grandchallenge.cases.widgets import (
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
-from grandchallenge.components.form_fields import FlexibleFileField
+from grandchallenge.components.form_fields import (
+    BoundFieldWithDNoneClass,
+    FlexibleFileField,
+)
 from grandchallenge.components.models import (
     RESERVED_SOCKET_SLUGS,
     CIVData,
@@ -205,11 +208,13 @@ class InterfaceFormFieldsMixin:
                         user=user,
                         label="",
                         required=False,
+                        bound_field_class=BoundFieldWithDNoneClass,
                     ),
                     f"{FlexibleWidgetPrefixes.SEARCH.value}{interface.slug}": ModelChoiceField(
                         queryset=image_search_queryset,
                         label="",
                         required=False,
+                        bound_field_class=BoundFieldWithDNoneClass,
                         widget=ImageSearchWidget(
                             prefixed_interface_slug=prefixed_interface_slug
                         ),
