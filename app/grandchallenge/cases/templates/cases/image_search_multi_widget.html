@@ -12,7 +12,11 @@
 >
     <div class="input-group" id="image-input-group-{{ widget.name }}">
         <div class="input-group-prepend"><span class="input-group-text">Select an image</span></div>
-        {% include "django/forms/widgets/multiwidget.html" %}
+        <input class="form-control" type="search" name="{{ search_widget.name }}"
+               {% if search_widget.value != None %} value="{{ search_widget.value|stringformat:'s' }}"{% endif %}
+            {% include "django/forms/widgets/attrs.html" with widget=search_widget %}
+        >
+        {% include choice_widget.template_name with widget=choice_widget %}
         <input type="hidden" name="prefixed-interface-slug" value="{{ prefixed_interface_slug }}">
     </div>
 
