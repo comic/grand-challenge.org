@@ -366,8 +366,6 @@ class ImageSearchMultiWidget(MultiWidget):
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
-        context["search_widget"] = context["widget"]["subwidgets"][0]
-        context["choice_widget"] = context["widget"]["subwidgets"][1]
         context["prefixed_interface_slug"] = self.prefixed_interface_slug
         return context
 
