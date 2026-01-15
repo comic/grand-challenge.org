@@ -335,6 +335,17 @@ class DICOMUploadField(MultiValueField):
 IMAGE_SEARCH_WIDGET_SUFFIXES = ["search-term", "object-list"]
 
 
+class ImageSearchInputWidget(TextInput):
+    def get_context(self, name, value, attrs):
+        attrs["placeholder"] = "Search by pk or image name"
+        context = super().get_context(name, value, attrs)
+        css_class = context["widget"]["attrs"].get("class", "")
+        context["widget"]["attrs"]["class"] = css_class.replace(
+            "is-invalid", ""
+        )
+        return context
+
+
 class ImageSearchChoiceWidget(ChoiceWidget):
     template_name = "cases/image_search_choice_widget.html"
 
@@ -354,9 +365,7 @@ class ImageSearchMultiWidget(MultiWidget):
 
     def __init__(self, attrs=None, prefixed_interface_slug=None):
         widgets = {
-            IMAGE_SEARCH_WIDGET_SUFFIXES[0]: TextInput(
-                attrs={"placeholder": "Search by pk or image name"}
-            ),
+            IMAGE_SEARCH_WIDGET_SUFFIXES[0]: ImageSearchInputWidget(),
             IMAGE_SEARCH_WIDGET_SUFFIXES[1]: ImageSearchChoiceWidget(
                 attrs={"class": "custom-select"}
             ),
