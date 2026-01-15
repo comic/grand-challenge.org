@@ -340,6 +340,11 @@ class ImageSearchChoiceWidget(ChoiceWidget):
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
+        css_class = context["widget"]["attrs"].get("class", "")
+        # Fix invalid icon overlapping with custom select controls
+        context["widget"]["attrs"]["class"] = css_class.replace(
+            "form-control", ""
+        )
         context["widget"]["selected_object_pk"] = value
         return context
 
