@@ -2397,7 +2397,7 @@ class CIVData:
             self._upload_session = self._initial_value
         elif isinstance(self._initial_value, Image):
             self._image = self._initial_value
-        elif self._initial_value is None:
+        elif not self._initial_value:
             self._image = None
         else:
             raise ValidationError(
