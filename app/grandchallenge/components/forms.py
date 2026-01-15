@@ -27,6 +27,7 @@ from grandchallenge.cases.widgets import (
     DICOMUploadField,
     FlexibleImageField,
     FlexibleImageWidget,
+    ImageSearchMultiField,
     ImageSearchWidget,
     ImageSourceChoiceField,
     ImageSourceChoiceWidget,
@@ -209,14 +210,12 @@ class InterfaceFormFieldsMixin:
                         required=False,
                         bound_field_class=BoundFieldWithDNoneClass,
                     ),
-                    f"{FlexibleWidgetPrefixes.SEARCH.value}{interface.slug}": ModelChoiceField(
+                    f"{FlexibleWidgetPrefixes.SEARCH.value}{interface.slug}": ImageSearchMultiField(
                         queryset=image_search_queryset,
+                        prefixed_interface_slug=prefixed_interface_slug,
                         label="",
                         required=False,
                         bound_field_class=BoundFieldWithDNoneClass,
-                        widget=ImageSearchWidget(
-                            prefixed_interface_slug=prefixed_interface_slug
-                        ),
                     ),
                     f"{prefixed_interface_slug}": Field(
                         required=required, widget=HiddenInput()

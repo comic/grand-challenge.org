@@ -330,3 +330,66 @@ class DICOMUploadField(MultiValueField):
             name=values[0] if values else "",
             user_uploads=[str(v.pk) for v in values[1]] if values else [],
         )
+
+
+IMAGE_SEARCH_WIDGET_SUFFIXES = ["search-term", "object-list"]
+
+
+class ImageSearchChoiceWidget(ChoiceWidget):
+    template_name = "cases/image_search_choice_widget.html"
+
+
+class ImageSearchMultiWidget(MultiWidget):
+    template_name = "cases/image_search_multi_widget.html"
+
+    def __init__(self, attrs=None, prefixed_interface_slug=None):
+        widgets = {
+            IMAGE_SEARCH_WIDGET_SUFFIXES[0]: TextInput(
+                attrs={"placeholder": "Search by pk or image name"}
+            ),
+            IMAGE_SEARCH_WIDGET_SUFFIXES[1]: ImageSearchChoiceWidget(
+                attrs={"class": "custom-select"}
+            ),
+        }
+        super().__init__(widgets, attrs)
+        self.prefixed_interface_slug = prefixed_interface_slug
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context["prefixed_interface_slug"] = self.prefixed_interface_slug
+        return context
+
+    def decompress(self, value):
+        if value:
+            return value
+        return ["", ""]
+
+
+class ImageSearchMultiField(MultiValueField):
+    def __init__(self, *args, queryset, prefixed_interface_slug, **kwargs):
+        fields = [
+            CharField(),
+            ModelChoiceField(queryset=queryset),
+        ]
+        widget = ImageSearchMultiWidget(
+            prefixed_interface_slug=prefixed_interface_slug
+        )
+        super().__init__(
+            *args,
+            fields=fields,
+            widget=widget,
+            **kwargs,
+        )
+
+    def clean(self, value):
+        try:
+            value = value[1]
+        except IndexError:
+            value = None
+
+        self.fields[1].required = self.required
+
+        return self.fields[1].clean(value)
+
+    def compress(self, values):
+        return values
