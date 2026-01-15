@@ -235,8 +235,12 @@ def test_algorithm_create(client, uploaded_image):
                 "title": "some-medical-image",
             },
             [
-                '<select class="custom-select"',
                 f'name="flexible_widget_choice{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
+                f'name="flexible_upload{INTERFACE_FORM_FIELD_PREFIX}some-medical-image_dicom-image-name"',
+                f'name="flexible_upload{INTERFACE_FORM_FIELD_PREFIX}some-medical-image_dicom-user-uploads"',
+                f'name="flexible_search{INTERFACE_FORM_FIELD_PREFIX}some-medical-image_search-term"',
+                f'name="flexible_search{INTERFACE_FORM_FIELD_PREFIX}some-medical-image_object-list"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
             ],
         ),
         (
