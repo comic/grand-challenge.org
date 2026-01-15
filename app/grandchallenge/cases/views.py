@@ -368,6 +368,8 @@ class ImageSearchResultView(
             )
             qs = qs.filter(q).order_by("name")
         self.object_list = qs
+        selected_object_pk = request.GET.get("selected-object-pk")
+        kwargs.update({"selected_object_pk": selected_object_pk})
         return self.render_to_response(self.get_context_data(**kwargs))
 
 

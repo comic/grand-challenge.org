@@ -338,6 +338,11 @@ IMAGE_SEARCH_WIDGET_SUFFIXES = ["search-term", "object-list"]
 class ImageSearchChoiceWidget(ChoiceWidget):
     template_name = "cases/image_search_choice_widget.html"
 
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context["widget"]["selected_object_pk"] = value
+        return context
+
 
 class ImageSearchMultiWidget(MultiWidget):
     template_name = "cases/image_search_multi_widget.html"
