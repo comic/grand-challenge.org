@@ -5,10 +5,12 @@ from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.cases.form_fields import ImageSourceChoiceField
+from grandchallenge.cases.form_fields import (
+    DICOMUploadField,
+    ImageSourceChoiceField,
+)
 from grandchallenge.cases.widgets import (
     DICOM_UPLOAD_WIDGET_SUFFIXES,
-    DICOMUploadField,
     DICOMUploadWithName,
     FlexibleImageField,
     ImageWidgetChoices,

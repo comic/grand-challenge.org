@@ -2,9 +2,8 @@ from typing import NamedTuple
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet, TextChoices
+from django.db.models import TextChoices
 from django.forms import (
-    CharField,
     HiddenInput,
     ModelChoiceField,
     ModelMultipleChoiceField,
@@ -257,34 +256,6 @@ class DICOMUploadWidget(MultiWidget):
         return ["", []]
 
 
-class DICOMUploadField(MultiValueField):
-    widget = DICOMUploadWidget
-
-    def __init__(self, *args, user, **kwargs):
-        upload_queryset = filter_by_permission(
-            queryset=UserUpload.objects.all(),
-            user=user,
-            codename="change_userupload",
-        ).filter(status=UserUpload.StatusChoices.COMPLETED)
-
-        fields = [
-            CharField(),
-            ModelMultipleChoiceField(queryset=upload_queryset),
-        ]
-
-        super().__init__(
-            *args,
-            fields=fields,
-            **kwargs,
-        )
-
-    def compress(self, values: list[str, QuerySet[UserUpload]]):
-        return DICOMUploadWithName(
-            name=values[0] if values else "",
-            user_uploads=[str(v.pk) for v in values[1]] if values else [],
-        )
-
-
 IMAGE_SEARCH_WIDGET_SUFFIXES = ["search-term", "object-list"]
 
 
@@ -338,33 +309,3 @@ class ImageSearchMultiWidget(MultiWidget):
         if value:
             return value
         return ["", ""]
-
-
-class ImageSearchMultiField(MultiValueField):
-    def __init__(self, *args, queryset, prefixed_interface_slug, **kwargs):
-        fields = [
-            CharField(),
-            ModelChoiceField(queryset=queryset),
-        ]
-        widget = ImageSearchMultiWidget(
-            prefixed_interface_slug=prefixed_interface_slug
-        )
-        super().__init__(
-            *args,
-            fields=fields,
-            widget=widget,
-            **kwargs,
-        )
-
-    def clean(self, value):
-        try:
-            value = value[1]
-        except IndexError:
-            value = None
-
-        self.fields[1].required = self.required
-
-        return self.fields[1].clean(value)
-
-    def compress(self, values):
-        return values

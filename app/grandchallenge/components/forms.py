@@ -21,13 +21,15 @@ from django.utils.functional import empty
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.cases.form_fields import ImageSourceChoiceField
+from grandchallenge.cases.form_fields import (
+    DICOMUploadField,
+    ImageSearchMultiField,
+    ImageSourceChoiceField,
+)
 from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
-    DICOMUploadField,
     FlexibleImageField,
     FlexibleImageWidget,
-    ImageSearchMultiField,
     ImageSearchWidget,
     ImageSourceChoiceWidget,
     ImageWidgetChoices,
