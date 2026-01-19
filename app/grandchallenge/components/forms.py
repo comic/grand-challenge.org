@@ -222,7 +222,7 @@ class InterfaceFormFieldsMixin:
                     # Add hidden input field for parsing when rendering
                     # dynamically added fields.
                     prefixed_interface_slug: Field(
-                        required=required, widget=HiddenInput()
+                        required=False, widget=HiddenInput()
                     ),
                 }
 
