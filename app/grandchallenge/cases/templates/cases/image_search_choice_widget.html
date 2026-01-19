@@ -1,0 +1,5 @@
+<select name="{{ widget.name }}"
+        {% include "django/forms/widgets/attrs.html" %}>
+    <option value="">No image selected</option>
+</select>
+<input type="hidden" name="selected-object-pk" value="{{ widget.selected_object_pk }}">

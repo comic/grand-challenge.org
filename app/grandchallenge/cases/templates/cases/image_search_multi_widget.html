@@ -1,0 +1,25 @@
+{% load url %}
+{% load static %}
+
+<div class="form-group mb-1"
+     id="search-image-{{ widget.name }}"
+     hx-get="{% url 'cases:image-search' %}"
+     hx-trigger="load once, input delay:500ms from:#id_{{ widget.name }}_0"
+     hx-target="#id_{{ widget.name }}_1"
+     hx-swap="innerHTML"
+     hx-request='{"credentials":"include"}'
+     hx-include="[id='image-input-group-{{ widget.name }}']"
+>
+    <div class="input-group" id="image-input-group-{{ widget.name }}">
+        <div class="input-group-prepend"><span class="input-group-text">Select an image</span></div>
+        {% include "django/forms/widgets/multiwidget.html" %}
+        <input type="hidden" name="prefixed-interface-slug" value="{{ prefixed_interface_slug }}">
+    </div>
+
+    <small class="form-text text-muted">
+        Select an existing image that you have access to.
+        This could be from data that you have previously uploaded,
+        archives that you have permission to use,
+        or public algorithm results that you have access to.
+    </small>
+</div>

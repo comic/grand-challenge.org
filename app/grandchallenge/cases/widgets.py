@@ -5,7 +5,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import QuerySet, TextChoices
 from django.forms import (
     CharField,
-    ChoiceField,
     HiddenInput,
     ModelChoiceField,
     ModelMultipleChoiceField,
@@ -40,52 +39,6 @@ class ImageWidgetChoices(TextChoices):
 class ImageSourceChoiceWidget(Select):
     class Media:
         js = (Script("cases/js/source_choice_widget.mjs", type="module"),)
-
-
-class ImageSourceChoiceField(ChoiceField):
-    widget = ImageSourceChoiceWidget(attrs={"class": "custom-select"})
-
-    def __init__(
-        self,
-        *args,
-        current_socket_value=None,
-        required=True,
-        **kwargs,
-    ):
-        self.current_socket_value = current_socket_value
-
-        choices = kwargs.pop("choices", [])
-
-        if current_socket_value is None:
-            choice = ImageWidgetChoices.UNDEFINED
-            choices.append((choice.value, choice.label))
-        else:
-            choices.append(
-                (
-                    ImageWidgetChoices.IMAGE_SELECTED.value,
-                    current_socket_value.title,
-                )
-            )
-
-        for choice in [
-            ImageWidgetChoices.IMAGE_SEARCH,
-            ImageWidgetChoices.IMAGE_UPLOAD,
-        ]:
-            choices.append((choice.value, choice.label))
-
-        super().__init__(
-            *args,
-            required=required,
-            choices=choices,
-            **kwargs,
-        )
-
-    def clean(self, value):
-        value = super().clean(value)
-        if value == ImageWidgetChoices.IMAGE_SELECTED:
-            return self.current_socket_value.image
-        else:
-            return value
 
 
 class ImageSearchWidget(ChoiceWidget, HiddenInput):
@@ -330,3 +283,88 @@ class DICOMUploadField(MultiValueField):
             name=values[0] if values else "",
             user_uploads=[str(v.pk) for v in values[1]] if values else [],
         )
+
+
+IMAGE_SEARCH_WIDGET_SUFFIXES = ["search-term", "object-list"]
+
+
+class ImageSearchInputWidget(TextInput):
+    def get_context(self, name, value, attrs):
+        attrs["placeholder"] = "Search by pk or image name"
+        context = super().get_context(name, value, attrs)
+        css_class = context["widget"]["attrs"].get("class", "")
+        # When the MultiField marks the data invalid, the is-invalid class is
+        # added to all subwidgets; however, the search input is never "invalid"
+        # because that data will not be processed.
+        context["widget"]["attrs"]["class"] = css_class.replace(
+            "is-invalid", ""
+        )
+        return context
+
+
+class ImageSearchChoiceWidget(ChoiceWidget):
+    template_name = "cases/image_search_choice_widget.html"
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        css_class = context["widget"]["attrs"].get("class", "")
+        # Fix invalid icon overlapping with custom select controls
+        context["widget"]["attrs"]["class"] = css_class.replace(
+            "form-control", ""
+        )
+        context["widget"]["selected_object_pk"] = value
+        return context
+
+
+class ImageSearchMultiWidget(MultiWidget):
+    template_name = "cases/image_search_multi_widget.html"
+
+    def __init__(self, attrs=None, prefixed_interface_slug=None):
+        widgets = {
+            IMAGE_SEARCH_WIDGET_SUFFIXES[0]: ImageSearchInputWidget(),
+            IMAGE_SEARCH_WIDGET_SUFFIXES[1]: ImageSearchChoiceWidget(
+                attrs={"class": "custom-select"}
+            ),
+        }
+        super().__init__(widgets, attrs)
+        self.prefixed_interface_slug = prefixed_interface_slug
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context["prefixed_interface_slug"] = self.prefixed_interface_slug
+        return context
+
+    def decompress(self, value):
+        if value:
+            return value
+        return ["", ""]
+
+
+class ImageSearchMultiField(MultiValueField):
+    def __init__(self, *args, queryset, prefixed_interface_slug, **kwargs):
+        fields = [
+            CharField(),
+            ModelChoiceField(queryset=queryset),
+        ]
+        widget = ImageSearchMultiWidget(
+            prefixed_interface_slug=prefixed_interface_slug
+        )
+        super().__init__(
+            *args,
+            fields=fields,
+            widget=widget,
+            **kwargs,
+        )
+
+    def clean(self, value):
+        try:
+            value = value[1]
+        except IndexError:
+            value = None
+
+        self.fields[1].required = self.required
+
+        return self.fields[1].clean(value)
+
+    def compress(self, values):
+        return values

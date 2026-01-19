@@ -21,14 +21,15 @@ from django.utils.functional import empty
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
+from grandchallenge.cases.form_fields import ImageSourceChoiceField
 from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
     DICOM_UPLOAD_WIDGET_SUFFIXES,
     DICOMUploadField,
     FlexibleImageField,
     FlexibleImageWidget,
+    ImageSearchMultiField,
     ImageSearchWidget,
-    ImageSourceChoiceField,
     ImageSourceChoiceWidget,
     ImageWidgetChoices,
 )
@@ -210,14 +211,12 @@ class InterfaceFormFieldsMixin:
                         required=False,
                         bound_field_class=BoundFieldWithDNoneClass,
                     ),
-                    f"{FlexibleWidgetPrefixes.SEARCH.value}{interface.slug}": ModelChoiceField(
+                    f"{FlexibleWidgetPrefixes.SEARCH.value}{interface.slug}": ImageSearchMultiField(
                         queryset=image_search_queryset,
+                        prefixed_interface_slug=prefixed_interface_slug,
                         label="",
                         required=False,
                         bound_field_class=BoundFieldWithDNoneClass,
-                        widget=ImageSearchWidget(
-                            prefixed_interface_slug=prefixed_interface_slug
-                        ),
                     ),
                     f"{prefixed_interface_slug}": Field(
                         required=required, widget=HiddenInput()
