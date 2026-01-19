@@ -13,7 +13,7 @@ from requests import put
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.widgets import (
-    DICOM_UPLOAD_WIDGET_SUFFIXES,
+    DICOMUploadWidgetSuffixes,
     ImageWidgetChoices,
 )
 from grandchallenge.components.backends import docker_client
@@ -514,10 +514,10 @@ def get_interface_form_data(
     ci = ComponentInterface.objects.get(slug=interface_slug)
     if ci.is_dicom_image_kind:
         form_data = {
-            f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}_{DICOM_UPLOAD_WIDGET_SUFFIXES[0]}": data[
+            f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}_{DICOMUploadWidgetSuffixes.NAME.value}": data[
                 0
             ],
-            f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}_{DICOM_UPLOAD_WIDGET_SUFFIXES[1]}": data[
+            f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}_{DICOMUploadWidgetSuffixes.UPLOADS.value}": data[
                 1
             ],
         }

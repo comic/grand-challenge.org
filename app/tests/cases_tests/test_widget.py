@@ -10,7 +10,7 @@ from grandchallenge.cases.form_fields import (
     ImageSourceChoiceField,
 )
 from grandchallenge.cases.widgets import (
-    DICOM_UPLOAD_WIDGET_SUFFIXES,
+    DICOMUploadWidgetSuffixes,
     DICOMUploadWithName,
     FlexibleImageField,
     ImageWidgetChoices,
@@ -242,10 +242,10 @@ def test_dicom_upload_field_validation():
     )
     parsed_value_for_upload_from_user = field.widget.value_from_datadict(
         data={
-            f"{prefixed_interface_slug}_{DICOM_UPLOAD_WIDGET_SUFFIXES[1]}": [
+            f"{prefixed_interface_slug}_{DICOMUploadWidgetSuffixes.UPLOADS.value}": [
                 str(upload1.pk)
             ],
-            f"{prefixed_interface_slug}_{DICOM_UPLOAD_WIDGET_SUFFIXES[0]}": "test_image",
+            f"{prefixed_interface_slug}_{DICOMUploadWidgetSuffixes.NAME.value}": "test_image",
         },
         name=f"{prefixed_interface_slug}",
         files={},
@@ -266,10 +266,10 @@ def test_dicom_upload_field_validation():
     )
     parsed_value_from_upload_from_other_user = field.widget.value_from_datadict(
         data={
-            f"{prefixed_interface_slug}_{DICOM_UPLOAD_WIDGET_SUFFIXES[1]}": [
+            f"{prefixed_interface_slug}_{DICOMUploadWidgetSuffixes.UPLOADS.value}": [
                 str(upload2.pk)
             ],
-            f"{prefixed_interface_slug}_{DICOM_UPLOAD_WIDGET_SUFFIXES[0]}": "test_image_2",
+            f"{prefixed_interface_slug}_{DICOMUploadWidgetSuffixes.NAME.value}": "test_image_2",
         },
         name=f"{prefixed_interface_slug}",
         files={},

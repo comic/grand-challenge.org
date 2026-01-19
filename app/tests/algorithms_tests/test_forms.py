@@ -25,7 +25,11 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
-from grandchallenge.cases.widgets import ImageWidgetChoices
+from grandchallenge.cases.widgets import (
+    DICOMUploadWidgetSuffixes,
+    ImageSearchWidgetSuffixes,
+    ImageWidgetChoices,
+)
 from grandchallenge.components.form_fields import FileWidgetChoices
 from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
 from grandchallenge.components.models import (
@@ -236,10 +240,10 @@ def test_algorithm_create(client, uploaded_image):
             },
             [
                 f'name="flexible_widget_choice{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
-                f'name="flexible_upload{INTERFACE_FORM_FIELD_PREFIX}some-medical-image_dicom-image-name"',
-                f'name="flexible_upload{INTERFACE_FORM_FIELD_PREFIX}some-medical-image_dicom-user-uploads"',
-                f'name="flexible_search{INTERFACE_FORM_FIELD_PREFIX}some-medical-image_search-term"',
-                f'name="flexible_search{INTERFACE_FORM_FIELD_PREFIX}some-medical-image_object-list"',
+                f'name="flexible_upload{INTERFACE_FORM_FIELD_PREFIX}some-medical-image_{DICOMUploadWidgetSuffixes.NAME.value}"',
+                f'name="flexible_upload{INTERFACE_FORM_FIELD_PREFIX}some-medical-image_{DICOMUploadWidgetSuffixes.UPLOADS.value}"',
+                f'name="flexible_search{INTERFACE_FORM_FIELD_PREFIX}some-medical-image_{ImageSearchWidgetSuffixes.INPUT.value}"',
+                f'name="flexible_search{INTERFACE_FORM_FIELD_PREFIX}some-medical-image_{ImageSearchWidgetSuffixes.CHOICE.value}"',
                 f'name="{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
             ],
         ),

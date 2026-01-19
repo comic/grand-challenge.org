@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import NamedTuple
 from uuid import UUID
 
@@ -225,7 +226,9 @@ class FlexibleImageField(MultiValueField):
             return non_empty_values[0]
 
 
-DICOM_UPLOAD_WIDGET_SUFFIXES = ["dicom-image-name", "dicom-user-uploads"]
+class DICOMUploadWidgetSuffixes(Enum):
+    NAME = "dicom-image-name"
+    UPLOADS = "dicom-user-uploads"
 
 
 class DICOMUploadWithName(NamedTuple):
@@ -242,8 +245,8 @@ class DICOMImageSetNameInput(TextInput):
 class DICOMUploadWidget(MultiWidget):
     def __init__(self, attrs=None):
         widgets = {
-            DICOM_UPLOAD_WIDGET_SUFFIXES[0]: DICOMImageSetNameInput(),
-            DICOM_UPLOAD_WIDGET_SUFFIXES[1]: DICOMUserUploadMultipleWidget(),
+            DICOMUploadWidgetSuffixes.NAME.value: DICOMImageSetNameInput(),
+            DICOMUploadWidgetSuffixes.UPLOADS.value: DICOMUserUploadMultipleWidget(),
         }
         super().__init__(widgets, attrs)
 
@@ -256,7 +259,9 @@ class DICOMUploadWidget(MultiWidget):
         return ["", []]
 
 
-IMAGE_SEARCH_WIDGET_SUFFIXES = ["search-term", "object-list"]
+class ImageSearchWidgetSuffixes(Enum):
+    INPUT = "search-term"
+    CHOICE = "selected-image"
 
 
 class ImageSearchInputWidget(TextInput):
@@ -292,8 +297,8 @@ class ImageSearchMultiWidget(MultiWidget):
 
     def __init__(self, attrs=None, prefixed_interface_slug=None):
         widgets = {
-            IMAGE_SEARCH_WIDGET_SUFFIXES[0]: ImageSearchInputWidget(),
-            IMAGE_SEARCH_WIDGET_SUFFIXES[1]: ImageSearchChoiceWidget(
+            ImageSearchWidgetSuffixes.INPUT.value: ImageSearchInputWidget(),
+            ImageSearchWidgetSuffixes.CHOICE.value: ImageSearchChoiceWidget(
                 attrs={"class": "custom-select"}
             ),
         }
