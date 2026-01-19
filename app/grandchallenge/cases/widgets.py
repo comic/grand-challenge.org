@@ -293,6 +293,9 @@ class ImageSearchInputWidget(TextInput):
         attrs["placeholder"] = "Search by pk or image name"
         context = super().get_context(name, value, attrs)
         css_class = context["widget"]["attrs"].get("class", "")
+        # When the MultiField marks the data invalid, the is-invalid class is
+        # added to all subwidgets; however, the search input is never "invalid"
+        # because that data will not be processed.
         context["widget"]["attrs"]["class"] = css_class.replace(
             "is-invalid", ""
         )
