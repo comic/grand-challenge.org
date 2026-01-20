@@ -31,7 +31,10 @@ from grandchallenge.cases.widgets import (
     ImageWidgetChoices,
 )
 from grandchallenge.components.form_fields import FileWidgetChoices
-from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FlexibleWidgetPrefixes,
+)
 from grandchallenge.components.models import (
     ComponentJob,
     ImportStatusChoices,
@@ -427,9 +430,15 @@ def test_create_job_input_field_required_validation(client, socket_kwargs):
     )
 
     assert response.status_code == 200
-    assert response.context["form"].errors[
-        f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
-    ] == ["This field is required."]
+
+    if input_socket.is_dicom_image_kind:
+        field_key = f"{FlexibleWidgetPrefixes.CHOICE.value}{input_socket.slug}"
+    else:
+        field_key = f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
+
+    assert response.context["form"].errors[field_key] == [
+        "This field is required."
+    ]
 
 
 def extract_form_data_from_response(response):
