@@ -1994,6 +1994,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
     class Meta:
         abstract = True
         indexes = [
+            models.Index(fields=["created"]),
             models.Index(fields=["status", "created"]),
         ]
 
