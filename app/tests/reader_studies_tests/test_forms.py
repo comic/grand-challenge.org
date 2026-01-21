@@ -7,13 +7,30 @@ from actstream import action
 from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 from django.db.models import BLANK_CHOICE_DASH
-from django.forms import HiddenInput, Select
+from django.forms import (
+    Field,
+    HiddenInput,
+    JSONField,
+    ModelMultipleChoiceField,
+    Select,
+)
 from django.test import override_settings
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.cases.widgets import FlexibleImageWidget
+from grandchallenge.cases.form_fields import (
+    DICOMUploadField,
+    ImageSearchMultiField,
+    ImageSourceChoiceField,
+)
+from grandchallenge.cases.widgets import (
+    DICOMUploadWidget,
+    ImageSearchMultiWidget,
+    ImageSourceSelect,
+)
+from grandchallenge.components.form_fields import FlexibleFileField
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
+    FlexibleWidgetPrefixes,
     SingleCIVForm,
 )
 from grandchallenge.components.models import (
@@ -46,6 +63,7 @@ from grandchallenge.reader_studies.models import (
     ReaderStudyUserObjectPermission,
 )
 from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 from grandchallenge.workstation_configs.models import LookUpTable
 from tests.anatomy_tests.factories import BodyStructureFactory
 from tests.components_tests.factories import (
@@ -1615,6 +1633,9 @@ def test_display_set_add_interface_form():
     ci_image = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.PANIMG_IMAGE, store_in_database=False
     )
+    ci_dicom = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET, store_in_database=False
+    )
 
     form = SingleCIVForm(
         pk=ds.pk,
@@ -1624,7 +1645,8 @@ def test_display_set_add_interface_form():
         htmx_url="foo",
         form_id="1",
     )
-    assert sorted(form.fields.keys()) == ["interface-1"]
+
+    assert form.fields.keys() == {"interface-1"}
 
     form = SingleCIVForm(
         pk=ds.pk,
@@ -1634,14 +1656,16 @@ def test_display_set_add_interface_form():
         htmx_url="foo",
         form_id="1",
     )
-    assert sorted(form.fields.keys()) == [
+
+    assert form.fields.keys() == {
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}",
         "interface",
-    ]
-    assert isinstance(
-        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}"].widget,
-        FlexibleFileWidget,
-    )
+    }
+
+    field = form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}"]
+
+    assert isinstance(field, FlexibleFileField)
+    assert isinstance(field.widget, FlexibleFileWidget)
 
     form = SingleCIVForm(
         pk=ds.pk,
@@ -1651,14 +1675,16 @@ def test_display_set_add_interface_form():
         htmx_url="foo",
         form_id="1",
     )
-    assert sorted(form.fields.keys()) == [
+
+    assert form.fields.keys() == {
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_value.slug}",
         "interface",
-    ]
-    assert isinstance(
-        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_value.slug}"].widget,
-        JSONEditorWidget,
-    )
+    }
+
+    field = form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_value.slug}"]
+
+    assert isinstance(field, JSONField)
+    assert isinstance(field.widget, JSONEditorWidget)
 
     form = SingleCIVForm(
         pk=ds.pk,
@@ -1668,14 +1694,59 @@ def test_display_set_add_interface_form():
         htmx_url="foo",
         form_id="1",
     )
-    assert sorted(form.fields.keys()) == [
-        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_image.slug}",
-        "interface",
-    ]
-    assert isinstance(
-        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_image.slug}"].widget,
-        FlexibleImageWidget,
+    expected_fields = {
+        f"{FlexibleWidgetPrefixes.CHOICE}{ci_image.slug}": (
+            ImageSourceChoiceField,
+            ImageSourceSelect,
+        ),
+        f"{FlexibleWidgetPrefixes.UPLOAD}{ci_image.slug}": (
+            ModelMultipleChoiceField,
+            UserUploadMultipleWidget,
+        ),
+        f"{FlexibleWidgetPrefixes.SEARCH}{ci_image.slug}": (
+            ImageSearchMultiField,
+            ImageSearchMultiWidget,
+        ),
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_image.slug}": (Field, HiddenInput),
+    }
+
+    assert form.fields.keys() == set(expected_fields).union({"interface"})
+
+    for field_key, (field_type, widget_type) in expected_fields.items():
+        field = form.fields[field_key]
+        assert isinstance(field, field_type)
+        assert isinstance(field.widget, widget_type)
+
+    form = SingleCIVForm(
+        pk=ds.pk,
+        base_obj=rs,
+        interface=ci_dicom.pk,
+        user=user,
+        htmx_url="foo",
+        form_id="1",
     )
+    expected_fields = {
+        f"{FlexibleWidgetPrefixes.CHOICE}{ci_dicom.slug}": (
+            ImageSourceChoiceField,
+            ImageSourceSelect,
+        ),
+        f"{FlexibleWidgetPrefixes.UPLOAD}{ci_dicom.slug}": (
+            DICOMUploadField,
+            DICOMUploadWidget,
+        ),
+        f"{FlexibleWidgetPrefixes.SEARCH}{ci_dicom.slug}": (
+            ImageSearchMultiField,
+            ImageSearchMultiWidget,
+        ),
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_dicom.slug}": (Field, HiddenInput),
+    }
+
+    assert form.fields.keys() == set(expected_fields).union({"interface"})
+
+    for field_key, (field_type, widget_type) in expected_fields.items():
+        field = form.fields[field_key]
+        assert isinstance(field, field_type)
+        assert isinstance(field.widget, widget_type)
 
 
 @pytest.mark.django_db
