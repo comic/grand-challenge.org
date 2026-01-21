@@ -29,6 +29,8 @@ from grandchallenge.cases.form_fields import (
 from grandchallenge.cases.widgets import (
     FlexibleImageField,
     FlexibleImageWidget,
+    ImageSearchInputWidget,
+    ImageSearchSelect,
     ImageSearchWidget,
     ImageSourceSelect,
     ImageWidgetChoices,
@@ -161,6 +163,8 @@ class InterfaceFormFieldsMixin:
         ImageSearchWidget,
         FlexibleFileWidget,
         FileSearchWidget,
+        ImageSearchInputWidget,
+        ImageSearchSelect,
         ImageSourceSelect,
     }
 
