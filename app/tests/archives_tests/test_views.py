@@ -1179,7 +1179,7 @@ def test_archive_item_create_view(
         client=client,
         user=editor,
     )
-    assert len(response.context["form"].fields) == 3
+    assert len(response.context["form"].fields) == 6
     assert response.context["form"].fields[
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_str.slug}"
     ]
