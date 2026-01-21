@@ -306,8 +306,8 @@ def test_image_source_choice_widget_prepopulated_value():
         ("IMAGE_UPLOAD", "Upload a new image"),
     ]
     assert field.clean(ImageWidgetChoices.IMAGE_SELECTED.value) == im
-    with pytest.raises(ValidationError, match="Select a valid choice."):
-        field.clean("UNDEFINED")
+    with pytest.raises(ValidationError, match="This field is required."):
+        field.clean(ImageWidgetChoices.UNDEFINED.value)
 
     field = ImageSourceChoiceField()
 
