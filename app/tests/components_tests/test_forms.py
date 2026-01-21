@@ -265,7 +265,7 @@ def test_interface_form_field_image_search_validates_image_dicom_kind():
         interface=ci, user=user
     )
     assert len(fields) == 4
-    field = fields[f"{FlexibleWidgetPrefixes.SEARCH.value}{ci.slug}"]
+    field = fields[f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}"]
 
     assert field.clean(["", str(dicom_image.pk)]) == dicom_image
     with pytest.raises(ValidationError):
@@ -285,7 +285,7 @@ def test_interface_form_field_image_search_validates_permission():
         interface=ci, user=user
     )
     assert len(fields) == 4
-    field = fields[f"{FlexibleWidgetPrefixes.SEARCH.value}{ci.slug}"]
+    field = fields[f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}"]
 
     assert field.clean(["", str(dicom_image.pk)]) == dicom_image
     with pytest.raises(ValidationError):

@@ -1,5 +1,5 @@
 import logging
-from enum import Enum
+from enum import StrEnum
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
@@ -21,16 +21,16 @@ from django.utils.functional import empty
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.cases.form_fields import ImageSourceChoiceField
-from grandchallenge.cases.models import Image
-from grandchallenge.cases.widgets import (
-    DICOM_UPLOAD_WIDGET_SUFFIXES,
+from grandchallenge.cases.form_fields import (
     DICOMUploadField,
+    ImageSearchMultiField,
+    ImageSourceChoiceField,
+)
+from grandchallenge.cases.widgets import (
     FlexibleImageField,
     FlexibleImageWidget,
-    ImageSearchMultiField,
     ImageSearchWidget,
-    ImageSourceChoiceWidget,
+    ImageSourceSelect,
     ImageWidgetChoices,
 )
 from grandchallenge.components.backends.exceptions import (
@@ -145,7 +145,7 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
 
 
-class FlexibleWidgetPrefixes(Enum):
+class FlexibleWidgetPrefixes(StrEnum):
     CHOICE = f"flexible_widget_choice{INTERFACE_FORM_FIELD_PREFIX}"
     UPLOAD = f"flexible_upload{INTERFACE_FORM_FIELD_PREFIX}"
     SEARCH = f"flexible_search{INTERFACE_FORM_FIELD_PREFIX}"
@@ -161,7 +161,7 @@ class InterfaceFormFieldsMixin:
         ImageSearchWidget,
         FlexibleFileWidget,
         FileSearchWidget,
-        ImageSourceChoiceWidget,
+        ImageSourceSelect,
     }
 
     def get_fields_for_interface(
@@ -192,34 +192,30 @@ class InterfaceFormFieldsMixin:
         }
 
         if interface.super_kind == interface.SuperKind.IMAGE:
-            image_search_queryset = filter_by_permission(
-                queryset=Image.objects.filter(
-                    dicom_image_set__isnull=not interface.is_dicom_image_kind
-                ),
-                user=user,
-                codename="view_image",
-            )
             if interface.is_dicom_image_kind:
                 return {
-                    f"{FlexibleWidgetPrefixes.CHOICE.value}{interface.slug}": ImageSourceChoiceField(
+                    f"{FlexibleWidgetPrefixes.CHOICE}{interface.slug}": ImageSourceChoiceField(
                         current_socket_value=current_socket_value,
                         **kwargs,
                     ),
-                    f"{FlexibleWidgetPrefixes.UPLOAD.value}{interface.slug}": DICOMUploadField(
+                    f"{FlexibleWidgetPrefixes.UPLOAD}{interface.slug}": DICOMUploadField(
                         user=user,
                         label="",
                         required=False,
                         bound_field_class=BoundFieldWithDNoneClass,
                     ),
-                    f"{FlexibleWidgetPrefixes.SEARCH.value}{interface.slug}": ImageSearchMultiField(
-                        queryset=image_search_queryset,
+                    f"{FlexibleWidgetPrefixes.SEARCH}{interface.slug}": ImageSearchMultiField(
+                        user=user,
+                        interface=interface,
                         prefixed_interface_slug=prefixed_interface_slug,
                         label="",
                         required=False,
                         bound_field_class=BoundFieldWithDNoneClass,
                     ),
-                    f"{prefixed_interface_slug}": Field(
-                        required=required, widget=HiddenInput()
+                    # Add hidden input field for parsing when rendering
+                    # dynamically added fields.
+                    prefixed_interface_slug: Field(
+                        required=False, widget=HiddenInput()
                     ),
                 }
 
@@ -278,15 +274,13 @@ class InterfaceFormFieldsMixin:
 
         try:
             for name in self.fields:
-                if name.startswith(FlexibleWidgetPrefixes.CHOICE.value):
-                    interface_slug = name[
-                        len(FlexibleWidgetPrefixes.CHOICE.value) :
-                    ]
+                if name.startswith(FlexibleWidgetPrefixes.CHOICE):
+                    interface_slug = name[len(FlexibleWidgetPrefixes.CHOICE) :]
                     choice = self[name].data
 
                     widget_fields = {
-                        ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH.value}{interface_slug}",
-                        ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD.value}{interface_slug}",
+                        ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}",
+                        ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}",
                     }
 
                     for widget_type, field_name in widget_fields.items():
@@ -321,20 +315,18 @@ class InterfaceFormFieldsMixin:
             ):
                 keys_to_remove.append(key)
 
-            if key.startswith(FlexibleWidgetPrefixes.CHOICE.value):
+            if key.startswith(FlexibleWidgetPrefixes.CHOICE):
                 # Get the choice from the field data because if it is "IMAGE_SELECTED"
                 # the cleaned data becomes the current socket value
                 choice = self[key].data
-                interface_slug = key[
-                    len(FlexibleWidgetPrefixes.CHOICE.value) :
-                ]
+                interface_slug = key[len(FlexibleWidgetPrefixes.CHOICE) :]
                 prefixed_interface_slug = (
                     f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
                 )
                 widget_fields = {
                     ImageWidgetChoices.IMAGE_SELECTED: key,
-                    ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH.value}{interface_slug}",
-                    ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD.value}{interface_slug}",
+                    ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}",
+                    ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}",
                 }
 
                 for widget_type, field_name in widget_fields.items():
@@ -347,7 +339,11 @@ class InterfaceFormFieldsMixin:
                             pass
                     else:
                         if (
-                            widget_type in ["IMAGE_SEARCH", "IMAGE_UPLOAD"]
+                            widget_type
+                            in [
+                                ImageWidgetChoices.IMAGE_SEARCH,
+                                ImageWidgetChoices.IMAGE_UPLOAD,
+                            ]
                             and field_name in self.errors
                         ):
                             # Ignore errors if it is not the selected choice.
@@ -521,11 +517,6 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
             return None
 
         interface_slug = slug[len(INTERFACE_FORM_FIELD_PREFIX) :]
-
-        for known_suffix in DICOM_UPLOAD_WIDGET_SUFFIXES:
-            if interface_slug.endswith(f"_{known_suffix}"):
-                base_slug = interface_slug[: -len(f"_{known_suffix}")]
-                return base_slug
 
         return interface_slug
 

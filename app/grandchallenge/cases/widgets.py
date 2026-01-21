@@ -1,10 +1,10 @@
+from enum import StrEnum
 from typing import NamedTuple
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet, TextChoices
+from django.db.models import TextChoices
 from django.forms import (
-    CharField,
     HiddenInput,
     ModelChoiceField,
     ModelMultipleChoiceField,
@@ -36,9 +36,9 @@ class ImageWidgetChoices(TextChoices):
     IMAGE_UPLOAD = "IMAGE_UPLOAD", "Upload a new image"
 
 
-class ImageSourceChoiceWidget(Select):
+class ImageSourceSelect(Select):
     class Media:
-        js = (Script("cases/js/source_choice_widget.mjs", type="module"),)
+        js = (Script("cases/js/source_select.mjs", type="module"),)
 
 
 class ImageSearchWidget(ChoiceWidget, HiddenInput):
@@ -46,19 +46,15 @@ class ImageSearchWidget(ChoiceWidget, HiddenInput):
     input_type = None
     name = None
 
-    def __init__(
-        self, *args, name=None, prefixed_interface_slug=None, **kwargs
-    ):
+    def __init__(self, *args, name=None, **kwargs):
         super().__init__(*args, **kwargs)
         if name:
             self.name = name
-        self.prefixed_interface_slug = prefixed_interface_slug
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
         if self.name:
             context["widget"]["name"] = self.name
-        context["prefixed_interface_slug"] = self.prefixed_interface_slug
         return context
 
 
@@ -226,7 +222,9 @@ class FlexibleImageField(MultiValueField):
             return non_empty_values[0]
 
 
-DICOM_UPLOAD_WIDGET_SUFFIXES = ["dicom-image-name", "dicom-user-uploads"]
+class DICOMUploadWidgetSuffixes(StrEnum):
+    NAME = "dicom-image-name"
+    UPLOADS = "dicom-user-uploads"
 
 
 class DICOMUploadWithName(NamedTuple):
@@ -243,8 +241,8 @@ class DICOMImageSetNameInput(TextInput):
 class DICOMUploadWidget(MultiWidget):
     def __init__(self, attrs=None):
         widgets = {
-            DICOM_UPLOAD_WIDGET_SUFFIXES[0]: DICOMImageSetNameInput(),
-            DICOM_UPLOAD_WIDGET_SUFFIXES[1]: DICOMUserUploadMultipleWidget(),
+            DICOMUploadWidgetSuffixes.NAME.value: DICOMImageSetNameInput(),
+            DICOMUploadWidgetSuffixes.UPLOADS.value: DICOMUserUploadMultipleWidget(),
         }
         super().__init__(widgets, attrs)
 
@@ -257,35 +255,9 @@ class DICOMUploadWidget(MultiWidget):
         return ["", []]
 
 
-class DICOMUploadField(MultiValueField):
-    widget = DICOMUploadWidget
-
-    def __init__(self, *args, user, **kwargs):
-        upload_qs = filter_by_permission(
-            queryset=UserUpload.objects.all(),
-            user=user,
-            codename="change_userupload",
-        ).filter(status=UserUpload.StatusChoices.COMPLETED)
-
-        fields = [
-            CharField(),
-            ModelMultipleChoiceField(queryset=upload_qs),
-        ]
-
-        super().__init__(
-            *args,
-            fields=fields,
-            **kwargs,
-        )
-
-    def compress(self, values: list[str, QuerySet[UserUpload]]):
-        return DICOMUploadWithName(
-            name=values[0] if values else "",
-            user_uploads=[str(v.pk) for v in values[1]] if values else [],
-        )
-
-
-IMAGE_SEARCH_WIDGET_SUFFIXES = ["search-term", "object-list"]
+class ImageSearchWidgetSuffixes(StrEnum):
+    INPUT = "search-term"
+    CHOICE = "selected-image"
 
 
 class ImageSearchInputWidget(TextInput):
@@ -302,8 +274,8 @@ class ImageSearchInputWidget(TextInput):
         return context
 
 
-class ImageSearchChoiceWidget(ChoiceWidget):
-    template_name = "cases/image_search_choice_widget.html"
+class ImageSearchSelect(Select):
+    template_name = "cases/image_search_select.html"
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
@@ -321,8 +293,8 @@ class ImageSearchMultiWidget(MultiWidget):
 
     def __init__(self, attrs=None, prefixed_interface_slug=None):
         widgets = {
-            IMAGE_SEARCH_WIDGET_SUFFIXES[0]: ImageSearchInputWidget(),
-            IMAGE_SEARCH_WIDGET_SUFFIXES[1]: ImageSearchChoiceWidget(
+            ImageSearchWidgetSuffixes.INPUT.value: ImageSearchInputWidget(),
+            ImageSearchWidgetSuffixes.CHOICE.value: ImageSearchSelect(
                 attrs={"class": "custom-select"}
             ),
         }
@@ -338,33 +310,3 @@ class ImageSearchMultiWidget(MultiWidget):
         if value:
             return value
         return ["", ""]
-
-
-class ImageSearchMultiField(MultiValueField):
-    def __init__(self, *args, queryset, prefixed_interface_slug, **kwargs):
-        fields = [
-            CharField(),
-            ModelChoiceField(queryset=queryset),
-        ]
-        widget = ImageSearchMultiWidget(
-            prefixed_interface_slug=prefixed_interface_slug
-        )
-        super().__init__(
-            *args,
-            fields=fields,
-            widget=widget,
-            **kwargs,
-        )
-
-    def clean(self, value):
-        try:
-            value = value[1]
-        except IndexError:
-            value = None
-
-        self.fields[1].required = self.required
-
-        return self.fields[1].clean(value)
-
-    def compress(self, values):
-        return values

@@ -5,10 +5,12 @@ from django.core.exceptions import ValidationError
 from django.http import QueryDict
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.cases.form_fields import ImageSourceChoiceField
-from grandchallenge.cases.widgets import (
-    DICOM_UPLOAD_WIDGET_SUFFIXES,
+from grandchallenge.cases.form_fields import (
     DICOMUploadField,
+    ImageSourceChoiceField,
+)
+from grandchallenge.cases.widgets import (
+    DICOMUploadWidgetSuffixes,
     DICOMUploadWithName,
     FlexibleImageField,
     ImageWidgetChoices,
@@ -240,10 +242,10 @@ def test_dicom_upload_field_validation():
     )
     parsed_value_for_upload_from_user = field.widget.value_from_datadict(
         data={
-            f"{prefixed_interface_slug}_{DICOM_UPLOAD_WIDGET_SUFFIXES[1]}": [
+            f"{prefixed_interface_slug}_{DICOMUploadWidgetSuffixes.UPLOADS}": [
                 str(upload1.pk)
             ],
-            f"{prefixed_interface_slug}_{DICOM_UPLOAD_WIDGET_SUFFIXES[0]}": "test_image",
+            f"{prefixed_interface_slug}_{DICOMUploadWidgetSuffixes.NAME}": "test_image",
         },
         name=f"{prefixed_interface_slug}",
         files={},
@@ -264,10 +266,10 @@ def test_dicom_upload_field_validation():
     )
     parsed_value_from_upload_from_other_user = field.widget.value_from_datadict(
         data={
-            f"{prefixed_interface_slug}_{DICOM_UPLOAD_WIDGET_SUFFIXES[1]}": [
+            f"{prefixed_interface_slug}_{DICOMUploadWidgetSuffixes.UPLOADS}": [
                 str(upload2.pk)
             ],
-            f"{prefixed_interface_slug}_{DICOM_UPLOAD_WIDGET_SUFFIXES[0]}": "test_image_2",
+            f"{prefixed_interface_slug}_{DICOMUploadWidgetSuffixes.NAME}": "test_image_2",
         },
         name=f"{prefixed_interface_slug}",
         files={},
@@ -285,7 +287,7 @@ def test_dicom_upload_field_validation():
 
 
 @pytest.mark.django_db
-def test_image_source_choice_widget_prepopulated_value():
+def test_image_source_select_prepopulated_value():
     im = ImageFactory(
         name="test_image",
         dicom_image_set=DICOMImageSetFactory(),
@@ -304,8 +306,8 @@ def test_image_source_choice_widget_prepopulated_value():
         ("IMAGE_UPLOAD", "Upload a new image"),
     ]
     assert field.clean(ImageWidgetChoices.IMAGE_SELECTED.value) == im
-    with pytest.raises(ValidationError, match="Select a valid choice."):
-        field.clean("UNDEFINED")
+    with pytest.raises(ValidationError, match="This field is required."):
+        field.clean(ImageWidgetChoices.UNDEFINED.value)
 
     field = ImageSourceChoiceField()
 

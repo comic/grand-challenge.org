@@ -2,7 +2,6 @@ import pytest
 from django.test import Client
 
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.cases.widgets import DICOM_UPLOAD_WIDGET_SUFFIXES
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
     MultipleCIVForm,
@@ -80,14 +79,10 @@ def test_upload_some_images(
     assert response.status_code == 403
 
 
-@pytest.mark.parametrize(
-    "slug",
-    [
-        f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar",
-        f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar_{DICOM_UPLOAD_WIDGET_SUFFIXES[0]}",
-        f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar_{DICOM_UPLOAD_WIDGET_SUFFIXES[1]}",
-    ],
-)
-@pytest.mark.django_db
-def test_parse_slug(slug):
-    assert MultipleCIVForm.parse_slug(slug=slug) == "foo-bar"
+def test_parse_slug():
+    assert (
+        MultipleCIVForm.parse_slug(
+            slug=f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar"
+        )
+        == "foo-bar"
+    )
