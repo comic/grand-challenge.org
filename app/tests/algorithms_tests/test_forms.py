@@ -471,37 +471,13 @@ def extract_form_data_from_response(response):
     return data
 
 
-@pytest.mark.parametrize(
-    "widget_choice",
-    [
-        ImageWidgetChoices.UNDEFINED,
-        ImageWidgetChoices.IMAGE_SEARCH,
-        ImageWidgetChoices.IMAGE_UPLOAD,
-    ],
-)
 @pytest.mark.django_db
 def test_create_job_image_kind_no_input_after_widget_choice_field_validation(
-    client, widget_choice
+    client,
 ):
     alg, creator, input_socket = create_algorithm_with_input(
         kind=InterfaceKindChoices.PANIMG_IMAGE
     )
-    prefixed_interface_slug = (
-        f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
-    )
-
-    response = get_view_for_user(
-        viewname="cases:select-image-widget",
-        client=client,
-        user=creator,
-        data={
-            f"widget-choice-{prefixed_interface_slug}": widget_choice.name,
-            "prefixed-interface-slug": prefixed_interface_slug,
-        },
-    )
-    data = extract_form_data_from_response(response)
-    data[f"widget-choice-{prefixed_interface_slug}"] = widget_choice.name
-
     response = get_view_for_user(
         viewname="algorithms:job-create",
         client=client,
@@ -509,16 +485,37 @@ def test_create_job_image_kind_no_input_after_widget_choice_field_validation(
             "slug": alg.slug,
             "interface_pk": alg.interfaces.first().pk,
         },
-        method=client.post,
-        data=data,
-        follow=True,
+        method=client.get,
         user=creator,
     )
+    data = extract_form_data_from_response(response)
 
-    assert response.status_code == 200
-    assert response.context["form"].errors == {
-        f"{prefixed_interface_slug}": ["This field is required."],
-    }
+    for widget_choice, required_widget_prefix in [
+        (ImageWidgetChoices.UNDEFINED, FlexibleWidgetPrefixes.CHOICE),
+        (ImageWidgetChoices.IMAGE_SEARCH, FlexibleWidgetPrefixes.SEARCH),
+        (ImageWidgetChoices.IMAGE_UPLOAD, FlexibleWidgetPrefixes.UPLOAD),
+    ]:
+        data[f"{FlexibleWidgetPrefixes.CHOICE}{input_socket.slug}"] = (
+            widget_choice.value
+        )
+
+        response = get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            reverse_kwargs={
+                "slug": alg.slug,
+                "interface_pk": alg.interfaces.first().pk,
+            },
+            method=client.post,
+            data=data,
+            follow=True,
+            user=creator,
+        )
+
+        assert response.status_code == 200
+        assert response.context["form"].errors[
+            f"{required_widget_prefix.value}{input_socket.slug}"
+        ] == ["This field is required."]
 
 
 @pytest.mark.parametrize(
