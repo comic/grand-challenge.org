@@ -12,7 +12,7 @@ from grandchallenge.cases.widgets import (
     DICOMUploadWidget,
     DICOMUploadWithName,
     ImageSearchMultiWidget,
-    ImageSourceChoiceWidget,
+    ImageSourceSelect,
     ImageWidgetChoices,
 )
 from grandchallenge.core.guardian import filter_by_permission
@@ -20,7 +20,7 @@ from grandchallenge.uploads.models import UserUpload
 
 
 class ImageSourceChoiceField(ChoiceField):
-    widget = ImageSourceChoiceWidget(attrs={"class": "custom-select"})
+    widget = ImageSourceSelect(attrs={"class": "custom-select"})
 
     def __init__(
         self,

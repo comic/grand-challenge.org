@@ -36,9 +36,9 @@ class ImageWidgetChoices(TextChoices):
     IMAGE_UPLOAD = "IMAGE_UPLOAD", "Upload a new image"
 
 
-class ImageSourceChoiceWidget(Select):
+class ImageSourceSelect(Select):
     class Media:
-        js = (Script("cases/js/source_choice_widget.mjs", type="module"),)
+        js = (Script("cases/js/source_select.mjs", type="module"),)
 
 
 class ImageSearchWidget(ChoiceWidget, HiddenInput):
@@ -274,8 +274,8 @@ class ImageSearchInputWidget(TextInput):
         return context
 
 
-class ImageSearchChoiceWidget(ChoiceWidget):
-    template_name = "cases/image_search_choice_widget.html"
+class ImageSearchSelect(Select):
+    template_name = "cases/image_search_select.html"
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
@@ -294,7 +294,7 @@ class ImageSearchMultiWidget(MultiWidget):
     def __init__(self, attrs=None, prefixed_interface_slug=None):
         widgets = {
             ImageSearchWidgetSuffixes.INPUT.value: ImageSearchInputWidget(),
-            ImageSearchWidgetSuffixes.CHOICE.value: ImageSearchChoiceWidget(
+            ImageSearchWidgetSuffixes.CHOICE.value: ImageSearchSelect(
                 attrs={"class": "custom-select"}
             ),
         }

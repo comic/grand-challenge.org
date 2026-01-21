@@ -287,7 +287,7 @@ def test_dicom_upload_field_validation():
 
 
 @pytest.mark.django_db
-def test_image_source_choice_widget_prepopulated_value():
+def test_image_source_select_prepopulated_value():
     im = ImageFactory(
         name="test_image",
         dicom_image_set=DICOMImageSetFactory(),

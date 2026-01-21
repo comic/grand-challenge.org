@@ -30,7 +30,7 @@ from grandchallenge.cases.widgets import (
     FlexibleImageField,
     FlexibleImageWidget,
     ImageSearchWidget,
-    ImageSourceChoiceWidget,
+    ImageSourceSelect,
     ImageWidgetChoices,
 )
 from grandchallenge.components.backends.exceptions import (
@@ -161,7 +161,7 @@ class InterfaceFormFieldsMixin:
         ImageSearchWidget,
         FlexibleFileWidget,
         FileSearchWidget,
-        ImageSourceChoiceWidget,
+        ImageSourceSelect,
     }
 
     def get_fields_for_interface(
