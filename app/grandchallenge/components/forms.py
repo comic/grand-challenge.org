@@ -350,7 +350,11 @@ class InterfaceFormFieldsMixin:
                             pass
                     else:
                         if (
-                            widget_type in ["IMAGE_SEARCH", "IMAGE_UPLOAD"]
+                            widget_type
+                            in [
+                                ImageWidgetChoices.IMAGE_SEARCH,
+                                ImageWidgetChoices.IMAGE_UPLOAD,
+                            ]
                             and field_name in self.errors
                         ):
                             # Ignore errors if it is not the selected choice.
