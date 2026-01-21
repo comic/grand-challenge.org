@@ -2,8 +2,14 @@ import pytest
 from django.utils.html import format_html
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.cases.widgets import ImageWidgetChoices
-from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.cases.widgets import (
+    ImageSearchWidgetSuffixes,
+    ImageWidgetChoices,
+)
+from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FlexibleWidgetPrefixes,
+)
 from grandchallenge.components.models import ComponentInterface
 from tests.cases_tests.factories import (
     DICOMImageSetFactory,
@@ -131,7 +137,7 @@ def test_image_search_view(client):
         user=user,
         data={
             "prefixed-interface-slug": ci_panimg.slug,
-            f"query-{ci_panimg.slug}": "test",
+            f"{FlexibleWidgetPrefixes.SEARCH}{ci_panimg.slug}_{ImageSearchWidgetSuffixes.INPUT}": "test",
         },
     )
     assert response.status_code == 200
@@ -143,7 +149,7 @@ def test_image_search_view(client):
         user=user,
         data={
             "prefixed-interface-slug": ci_panimg.slug,
-            f"query-{ci_panimg.slug}": "",
+            f"{FlexibleWidgetPrefixes.SEARCH}{ci_panimg.slug}_{ImageSearchWidgetSuffixes.INPUT}": "",
         },
     )
     assert response.status_code == 200
@@ -160,7 +166,7 @@ def test_image_search_view(client):
         user=user,
         data={
             "prefixed-interface-slug": ci_dicom.slug,
-            f"query-{ci_dicom.slug}": "test",
+            f"{FlexibleWidgetPrefixes.SEARCH}{ci_dicom.slug}_{ImageSearchWidgetSuffixes.INPUT}": "test",
         },
     )
     assert response.status_code == 200
@@ -172,7 +178,7 @@ def test_image_search_view(client):
         user=user,
         data={
             "prefixed-interface-slug": ci_dicom.slug,
-            f"query-{ci_dicom.slug}": "",
+            f"{FlexibleWidgetPrefixes.SEARCH}{ci_dicom.slug}_{ImageSearchWidgetSuffixes.INPUT}": "",
         },
     )
     assert response.status_code == 200
