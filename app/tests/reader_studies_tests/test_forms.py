@@ -1577,10 +1577,7 @@ def test_display_set_update_form_image_field_queryset_filters():
     rs = ReaderStudyFactory()
     user = UserFactory()
     rs.add_editor(user)
-    ci_img = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.PANIMG_IMAGE,
-        title="image",
-    )
+    ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
     im1, im2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", user, im1)
     upload1 = UserUploadFactory(creator=user)
@@ -1591,30 +1588,18 @@ def test_display_set_update_form_image_field_queryset_filters():
     ds = DisplaySetFactory(reader_study=rs)
     ds.values.add(civ_img)
     form = DisplaySetUpdateForm(user=user, instance=ds, base_obj=rs)
-    assert (
-        im1
-        in form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}image"]
-        .fields[0]
-        .queryset.all()
-    )
-    assert (
-        im2
-        not in form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}image"]
-        .fields[0]
-        .queryset.all()
-    )
-    assert (
-        upload1
-        in form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}image"]
-        .fields[1]
-        .queryset.all()
-    )
-    assert (
-        upload2
-        not in form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}image"]
-        .fields[1]
-        .queryset.all()
-    )
+
+    image_field = form.fields[
+        f"{FlexibleWidgetPrefixes.SEARCH.value}{ci_img.slug}"
+    ]
+    upload_field = form.fields[
+        f"{FlexibleWidgetPrefixes.UPLOAD.value}{ci_img.slug}"
+    ]
+
+    assert im1 in image_field.fields[1].queryset.all()
+    assert im2 not in image_field.fields[1].queryset.all()
+    assert upload1 in upload_field.queryset.all()
+    assert upload2 not in upload_field.queryset.all()
 
 
 @pytest.mark.django_db
