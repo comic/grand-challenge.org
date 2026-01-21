@@ -4,7 +4,6 @@ from guardian.shortcuts import assign_perm
 
 from grandchallenge.archives.forms import ArchiveItemUpdateForm
 from grandchallenge.components.forms import (
-    INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
     InterfaceFormFieldsMixin,
 )
@@ -42,12 +41,13 @@ def test_interface_form_field_image_queryset_filter():
     fields = InterfaceFormFieldsMixin().get_fields_for_interface(
         interface=ci, user=user
     )
-    assert len(fields) == 1
-    field = fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"]
-    assert im1 in field.fields[0].queryset.all()
-    assert im2 not in field.fields[0].queryset.all()
-    assert upload1 in field.fields[1].queryset.all()
-    assert upload2 not in field.fields[1].queryset.all()
+    image_field = fields[f"{FlexibleWidgetPrefixes.SEARCH.value}{ci.slug}"]
+    upload_field = fields[f"{FlexibleWidgetPrefixes.UPLOAD.value}{ci.slug}"]
+
+    assert im1 in image_field.fields[1].queryset.all()
+    assert im2 not in image_field.fields[1].queryset.all()
+    assert upload1 in upload_field.queryset.all()
+    assert upload2 not in upload_field.queryset.all()
 
 
 @pytest.mark.parametrize(
