@@ -7,6 +7,7 @@ from django.forms import (
     MultiValueField,
 )
 
+from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
     DICOMUploadWidget,
     DICOMUploadWithName,
@@ -93,7 +94,16 @@ class DICOMUploadField(MultiValueField):
 
 
 class ImageSearchMultiField(MultiValueField):
-    def __init__(self, *args, queryset, prefixed_interface_slug, **kwargs):
+    def __init__(
+        self, *args, user, interface, prefixed_interface_slug, **kwargs
+    ):
+        queryset = filter_by_permission(
+            queryset=Image.objects.filter(
+                dicom_image_set__isnull=not interface.is_dicom_image_kind
+            ),
+            user=user,
+            codename="view_image",
+        )
         fields = [
             CharField(),
             ModelChoiceField(queryset=queryset),

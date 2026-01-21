@@ -26,7 +26,6 @@ from grandchallenge.cases.form_fields import (
     ImageSearchMultiField,
     ImageSourceChoiceField,
 )
-from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import (
     FlexibleImageField,
     FlexibleImageWidget,
@@ -193,13 +192,6 @@ class InterfaceFormFieldsMixin:
         }
 
         if interface.super_kind == interface.SuperKind.IMAGE:
-            image_search_queryset = filter_by_permission(
-                queryset=Image.objects.filter(
-                    dicom_image_set__isnull=not interface.is_dicom_image_kind
-                ),
-                user=user,
-                codename="view_image",
-            )
             if interface.is_dicom_image_kind:
                 return {
                     f"{FlexibleWidgetPrefixes.CHOICE}{interface.slug}": ImageSourceChoiceField(
@@ -213,7 +205,8 @@ class InterfaceFormFieldsMixin:
                         bound_field_class=BoundFieldWithDNoneClass,
                     ),
                     f"{FlexibleWidgetPrefixes.SEARCH}{interface.slug}": ImageSearchMultiField(
-                        queryset=image_search_queryset,
+                        user=user,
+                        interface=interface,
                         prefixed_interface_slug=prefixed_interface_slug,
                         label="",
                         required=False,
