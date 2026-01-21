@@ -15,7 +15,11 @@ from grandchallenge.cases.widgets import (
     FlexibleImageField,
     ImageWidgetChoices,
 )
-from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FlexibleWidgetPrefixes,
+    InterfaceFormFieldsMixin,
+)
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.uploads.models import UserUpload
 from tests.cases_tests.factories import DICOMImageSetFactory
@@ -221,6 +225,40 @@ def test_flexible_image_widget_prepopulated_value():
     )
     assert field.widget.attrs["current_value"] is None
     assert field.initial is None
+
+
+@pytest.mark.django_db
+def test_image_upload_field_validation():
+    user = UserFactory()
+    upload1 = UserUploadFactory(creator=user)
+    upload1.status = UserUpload.StatusChoices.COMPLETED
+    upload1.save()
+    upload2 = UserUploadFactory(creator=user)
+    upload2.status = UserUpload.StatusChoices.COMPLETED
+    upload2.save()
+    upload3 = UserUploadFactory()
+    upload3.status = UserUpload.StatusChoices.COMPLETED
+    upload3.save()
+    upload4 = UserUploadFactory(creator=user)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
+    field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, user=user
+    )[f"{FlexibleWidgetPrefixes.UPLOAD.value}{ci.slug}"]
+    data = [str(upload1.pk), str(upload2.pk)]
+    data_from_other_user = [str(upload3.pk)]
+    data_from_pending_upload = [str(upload4.pk)]
+
+    cleaned_data = field.clean(data)
+
+    assert cleaned_data.count() == 2
+    assert upload1 in cleaned_data.all()
+    assert upload2 in cleaned_data.all()
+
+    with pytest.raises(ValidationError):
+        field.clean(data_from_other_user)
+
+    with pytest.raises(ValidationError):
+        field.clean(data_from_pending_upload)
 
 
 @pytest.mark.django_db
