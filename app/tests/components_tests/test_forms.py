@@ -142,18 +142,25 @@ def test_interface_form_field_image_search_validates_image_dicom_kind():
     assign_perm("cases.view_image", user, dicom_image)
     panimg_image = ImageFactory()
     assign_perm("cases.view_image", user, panimg_image)
-    ci = ComponentInterfaceFactory(
+    ci_dicom = ComponentInterfaceFactory(
         kind=ComponentInterface.Kind.DICOM_IMAGE_SET
     )
-    fields = InterfaceFormFieldsMixin().get_fields_for_interface(
-        interface=ci, user=user
+    ci_panimg = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.PANIMG_IMAGE
     )
-    assert len(fields) == 4
-    field = fields[f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}"]
+    dicom_field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci_dicom, user=user
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci_dicom.slug}"]
+    panimg_field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci_panimg, user=user
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci_panimg.slug}"]
 
-    assert field.clean(["", str(dicom_image.pk)]) == dicom_image
+    assert dicom_field.clean(["", str(dicom_image.pk)]) == dicom_image
     with pytest.raises(ValidationError):
-        field.clean(["", str(panimg_image.pk)])
+        dicom_field.clean(["", str(panimg_image.pk)])
+    assert panimg_field.clean(["", str(panimg_image.pk)]) == panimg_image
+    with pytest.raises(ValidationError):
+        panimg_field.clean(["", str(dicom_image.pk)])
 
 
 @pytest.mark.django_db
@@ -162,15 +169,25 @@ def test_interface_form_field_image_search_validates_permission():
     dicom_image = ImageFactory(dicom_image_set=DICOMImageSetFactory())
     assign_perm("cases.view_image", user, dicom_image)
     dicom_image_no_perm = ImageFactory(dicom_image_set=DICOMImageSetFactory())
-    ci = ComponentInterfaceFactory(
+    panimg_image = ImageFactory()
+    assign_perm("cases.view_image", user, panimg_image)
+    panimg_image_no_perm = ImageFactory()
+    ci_dicom = ComponentInterfaceFactory(
         kind=ComponentInterface.Kind.DICOM_IMAGE_SET
     )
-    fields = InterfaceFormFieldsMixin().get_fields_for_interface(
-        interface=ci, user=user
+    ci_panimg = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.PANIMG_IMAGE
     )
-    assert len(fields) == 4
-    field = fields[f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}"]
+    dicom_field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci_dicom, user=user
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci_dicom.slug}"]
+    panimg_field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci_panimg, user=user
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci_panimg.slug}"]
 
-    assert field.clean(["", str(dicom_image.pk)]) == dicom_image
+    assert dicom_field.clean(["", str(dicom_image.pk)]) == dicom_image
     with pytest.raises(ValidationError):
-        field.clean(["", str(dicom_image_no_perm.pk)])
+        dicom_field.clean(["", str(dicom_image_no_perm.pk)])
+    assert panimg_field.clean(["", str(panimg_image.pk)]) == panimg_image
+    with pytest.raises(ValidationError):
+        panimg_field.clean(["", str(panimg_image_no_perm.pk)])
