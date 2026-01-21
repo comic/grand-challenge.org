@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import NamedTuple
 from uuid import UUID
 
@@ -222,7 +222,7 @@ class FlexibleImageField(MultiValueField):
             return non_empty_values[0]
 
 
-class DICOMUploadWidgetSuffixes(Enum):
+class DICOMUploadWidgetSuffixes(StrEnum):
     NAME = "dicom-image-name"
     UPLOADS = "dicom-user-uploads"
 
@@ -255,7 +255,7 @@ class DICOMUploadWidget(MultiWidget):
         return ["", []]
 
 
-class ImageSearchWidgetSuffixes(Enum):
+class ImageSearchWidgetSuffixes(StrEnum):
     INPUT = "search-term"
     CHOICE = "selected-image"
 

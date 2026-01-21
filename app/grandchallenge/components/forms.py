@@ -1,5 +1,5 @@
 import logging
-from enum import Enum
+from enum import StrEnum
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
@@ -146,7 +146,7 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
 INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
 
 
-class FlexibleWidgetPrefixes(Enum):
+class FlexibleWidgetPrefixes(StrEnum):
     CHOICE = f"flexible_widget_choice{INTERFACE_FORM_FIELD_PREFIX}"
     UPLOAD = f"flexible_upload{INTERFACE_FORM_FIELD_PREFIX}"
     SEARCH = f"flexible_search{INTERFACE_FORM_FIELD_PREFIX}"
@@ -202,17 +202,17 @@ class InterfaceFormFieldsMixin:
             )
             if interface.is_dicom_image_kind:
                 return {
-                    f"{FlexibleWidgetPrefixes.CHOICE.value}{interface.slug}": ImageSourceChoiceField(
+                    f"{FlexibleWidgetPrefixes.CHOICE}{interface.slug}": ImageSourceChoiceField(
                         current_socket_value=current_socket_value,
                         **kwargs,
                     ),
-                    f"{FlexibleWidgetPrefixes.UPLOAD.value}{interface.slug}": DICOMUploadField(
+                    f"{FlexibleWidgetPrefixes.UPLOAD}{interface.slug}": DICOMUploadField(
                         user=user,
                         label="",
                         required=False,
                         bound_field_class=BoundFieldWithDNoneClass,
                     ),
-                    f"{FlexibleWidgetPrefixes.SEARCH.value}{interface.slug}": ImageSearchMultiField(
+                    f"{FlexibleWidgetPrefixes.SEARCH}{interface.slug}": ImageSearchMultiField(
                         queryset=image_search_queryset,
                         prefixed_interface_slug=prefixed_interface_slug,
                         label="",
@@ -281,15 +281,13 @@ class InterfaceFormFieldsMixin:
 
         try:
             for name in self.fields:
-                if name.startswith(FlexibleWidgetPrefixes.CHOICE.value):
-                    interface_slug = name[
-                        len(FlexibleWidgetPrefixes.CHOICE.value) :
-                    ]
+                if name.startswith(FlexibleWidgetPrefixes.CHOICE):
+                    interface_slug = name[len(FlexibleWidgetPrefixes.CHOICE) :]
                     choice = self[name].data
 
                     widget_fields = {
-                        ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH.value}{interface_slug}",
-                        ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD.value}{interface_slug}",
+                        ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}",
+                        ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}",
                     }
 
                     for widget_type, field_name in widget_fields.items():
@@ -324,20 +322,18 @@ class InterfaceFormFieldsMixin:
             ):
                 keys_to_remove.append(key)
 
-            if key.startswith(FlexibleWidgetPrefixes.CHOICE.value):
+            if key.startswith(FlexibleWidgetPrefixes.CHOICE):
                 # Get the choice from the field data because if it is "IMAGE_SELECTED"
                 # the cleaned data becomes the current socket value
                 choice = self[key].data
-                interface_slug = key[
-                    len(FlexibleWidgetPrefixes.CHOICE.value) :
-                ]
+                interface_slug = key[len(FlexibleWidgetPrefixes.CHOICE) :]
                 prefixed_interface_slug = (
                     f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
                 )
                 widget_fields = {
                     ImageWidgetChoices.IMAGE_SELECTED: key,
-                    ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH.value}{interface_slug}",
-                    ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD.value}{interface_slug}",
+                    ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}",
+                    ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}",
                 }
 
                 for widget_type, field_name in widget_fields.items():

@@ -514,10 +514,10 @@ def get_interface_form_data(
     ci = ComponentInterface.objects.get(slug=interface_slug)
     if ci.is_dicom_image_kind:
         form_data = {
-            f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}_{DICOMUploadWidgetSuffixes.NAME.value}": data[
+            f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}_{DICOMUploadWidgetSuffixes.NAME}": data[
                 0
             ],
-            f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}_{DICOMUploadWidgetSuffixes.UPLOADS.value}": data[
+            f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}_{DICOMUploadWidgetSuffixes.UPLOADS}": data[
                 1
             ],
         }
