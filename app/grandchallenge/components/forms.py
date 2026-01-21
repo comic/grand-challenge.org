@@ -486,7 +486,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
 
                 current_value = None
 
-                # For interfaces that use the FlexibleImageWidget we need
+                # For interfaces that use the FlexibleFileWidget we need
                 # to pass in the initial value explicitly, for all other
                 # fields the value in self.data is picked up automatically
                 if interface.super_kind == InterfaceSuperKindChoices.FILE:
