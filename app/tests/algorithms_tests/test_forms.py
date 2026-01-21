@@ -431,7 +431,7 @@ def test_create_job_input_field_required_validation(client, socket_kwargs):
 
     assert response.status_code == 200
 
-    if input_socket.is_dicom_image_kind:
+    if input_socket.is_image_kind:
         field_key = f"{FlexibleWidgetPrefixes.CHOICE}{input_socket.slug}"
     else:
         field_key = f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
@@ -1052,13 +1052,22 @@ def test_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
 
     for name, field in form.fields.items():
         # boolean and json inputs that allow None should not be required,
+        # the hidden input for image kind inputs should not be required,
         # all other inputs should be
-        if name not in [
-            "algorithm_model",
-            "creator",
-            f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_with_multiple_inputs.ci_bool.slug}",
-            f"{INTERFACE_FORM_FIELD_PREFIX}{ci_json_in_db_without_schema.slug}",
-        ]:
+        if (
+            name
+            in [
+                "algorithm_model",
+                "creator",
+                f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_with_multiple_inputs.ci_bool.slug}",
+                f"{INTERFACE_FORM_FIELD_PREFIX}{ci_json_in_db_without_schema.slug}",
+                f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_with_multiple_inputs.ci_existing_img.slug}",
+            ]
+            or name.startswith(FlexibleWidgetPrefixes.UPLOAD)
+            or name.startswith(FlexibleWidgetPrefixes.SEARCH)
+        ):
+            assert not field.required
+        else:
             assert field.required
 
 
