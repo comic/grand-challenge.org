@@ -325,10 +325,12 @@ def test_algorithm(client, settings, django_capture_on_commit_callbacks):
                 **get_interface_form_data(
                     interface_slug=input_interface.slug,
                     data=image_file.image.pk,
+                    existing_data=True,
                 ),
                 **get_interface_form_data(
                     interface_slug=heatmap_interface.slug,
                     data=image_file.image.pk,
+                    existing_data=True,
                 ),
             },
         )
@@ -391,10 +393,12 @@ def test_algorithm(client, settings, django_capture_on_commit_callbacks):
                 **get_interface_form_data(
                     interface_slug=input_interface.slug,
                     data=image_file.image.pk,
+                    existing_data=True,
                 ),
                 **get_interface_form_data(
                     interface_slug=heatmap_interface.slug,
                     data=image_file.image.pk,
+                    existing_data=True,
                 ),
             },
         )
@@ -472,6 +476,7 @@ def test_algorithm_with_invalid_output(
                 **get_interface_form_data(
                     interface_slug=input_interface.slug,
                     data=image_file.image.pk,
+                    existing_data=True,
                 ),
             },
         )

@@ -8,10 +8,7 @@ from pytest_django.asserts import assertContains, assertNotContains
 from requests import put
 
 from grandchallenge.cases.widgets import ImageWidgetChoices
-from grandchallenge.components.forms import (
-    INTERFACE_FORM_FIELD_PREFIX,
-    FlexibleWidgetPrefixes,
-)
+from grandchallenge.components.forms import FlexibleWidgetPrefixes
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
@@ -593,8 +590,11 @@ def test_display_set_update(
             client=client,
             reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
             data={
-                f"{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}": str(im2.pk),
-                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
+                **get_interface_form_data(
+                    interface_slug=ci_img.slug,
+                    data=str(im2.pk),
+                    existing_data=True,
+                ),
                 "order": 12,
                 "title": "foobar_foobar",
             },
