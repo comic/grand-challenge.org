@@ -26,12 +26,10 @@ from grandchallenge.cases.form_fields import (
     ImageSearchMultiField,
     ImageSourceChoiceField,
 )
+from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
 from grandchallenge.cases.widgets import (
-    FlexibleImageField,
-    FlexibleImageWidget,
     ImageSearchInputWidget,
     ImageSearchSelect,
-    ImageSearchWidget,
     ImageSourceSelect,
     ImageWidgetChoices,
 )
@@ -47,6 +45,7 @@ from grandchallenge.components.models import (
     CIVData,
     ComponentInterface,
     ComponentInterfaceValue,
+    InterfaceSuperKindChoices,
 )
 from grandchallenge.components.schemas import generate_component_json_schema
 from grandchallenge.components.widgets import (
@@ -159,8 +158,6 @@ class InterfaceFormFieldsMixin:
         UserUploadSingleWidget,
         DICOMUserUploadMultipleWidget,
         JSONEditorWidget,
-        FlexibleImageWidget,
-        ImageSearchWidget,
         FlexibleFileWidget,
         FileSearchWidget,
         ImageSearchInputWidget,
@@ -195,43 +192,49 @@ class InterfaceFormFieldsMixin:
             "label": interface.title.title(),
         }
 
+        upload_queryset = filter_by_permission(
+            queryset=UserUpload.objects.all(),
+            user=user,
+            codename="change_userupload",
+        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+
         if interface.super_kind == interface.SuperKind.IMAGE:
             if interface.is_dicom_image_kind:
-                return {
-                    f"{FlexibleWidgetPrefixes.CHOICE}{interface.slug}": ImageSourceChoiceField(
-                        current_socket_value=current_socket_value,
-                        **kwargs,
-                    ),
-                    f"{FlexibleWidgetPrefixes.UPLOAD}{interface.slug}": DICOMUploadField(
-                        user=user,
-                        label="",
-                        required=False,
-                        bound_field_class=BoundFieldWithDNoneClass,
-                    ),
-                    f"{FlexibleWidgetPrefixes.SEARCH}{interface.slug}": ImageSearchMultiField(
-                        user=user,
-                        interface=interface,
-                        prefixed_interface_slug=prefixed_interface_slug,
-                        label="",
-                        required=False,
-                        bound_field_class=BoundFieldWithDNoneClass,
-                    ),
-                    # Add hidden input field for parsing when rendering
-                    # dynamically added fields.
-                    prefixed_interface_slug: Field(
-                        required=False, widget=HiddenInput()
-                    ),
-                }
-
+                upload_field = DICOMUploadField(
+                    user=user,
+                    label="",
+                    required=False,
+                    bound_field_class=BoundFieldWithDNoneClass,
+                )
             else:
-                return {
-                    prefixed_interface_slug: FlexibleImageField(
-                        user=user,
-                        interface=interface,
-                        initial=initial,
-                        **kwargs,
-                    )
-                }
+                upload_field = ModelMultipleChoiceField(
+                    queryset=upload_queryset,
+                    widget=UserUploadMultipleWidget,
+                    label="",
+                    help_text=IMAGE_UPLOAD_HELP_TEXT,
+                    required=False,
+                    bound_field_class=BoundFieldWithDNoneClass,
+                )
+            return {
+                f"{FlexibleWidgetPrefixes.CHOICE}{interface.slug}": ImageSourceChoiceField(
+                    current_socket_value=current_socket_value,
+                    **kwargs,
+                ),
+                f"{FlexibleWidgetPrefixes.UPLOAD}{interface.slug}": upload_field,
+                f"{FlexibleWidgetPrefixes.SEARCH}{interface.slug}": ImageSearchMultiField(
+                    user=user,
+                    interface=interface,
+                    prefixed_interface_slug=prefixed_interface_slug,
+                    label="",
+                    required=False,
+                    bound_field_class=BoundFieldWithDNoneClass,
+                ),
+                # Add hidden input field for parsing when rendering
+                # dynamically added fields.
+                prefixed_interface_slug: Field(
+                    required=False, widget=HiddenInput()
+                ),
+            }
         elif interface.super_kind == interface.SuperKind.FILE:
             return {
                 prefixed_interface_slug: FlexibleFileField(
@@ -435,15 +438,11 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
                 f"{INTERFACE_FORM_FIELD_PREFIX}{interface.slug}"
             )
 
-            # For interfaces that use the FlexibleImageWidget or FlexibleFileWidget
-            # we need to pass in the initial value explicitly, for all other
+            # For interfaces that use the FlexibleFileWidget we need
+            # to pass in the initial value explicitly, for all other
             # fields the value in self.data is picked up automatically
             if prefixed_interface_slug in self.data and (
-                interface.super_kind
-                in (
-                    interface.SuperKind.FILE,
-                    interface.SuperKind.IMAGE,
-                )
+                interface.super_kind == InterfaceSuperKindChoices.FILE
             ):
                 try:
                     current_value = self.data.getlist(prefixed_interface_slug)
@@ -487,18 +486,10 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
 
                 current_value = None
 
-                # For interfaces that use the FlexibleImageWidget or
-                # FlexibleFileWidget we need
+                # For interfaces that use the FlexibleImageWidget we need
                 # to pass in the initial value explicitly, for all other
                 # fields the value in self.data is picked up automatically
-                if (
-                    interface.super_kind
-                    in (
-                        interface.SuperKind.FILE,
-                        interface.SuperKind.IMAGE,
-                    )
-                    and not interface.is_dicom_image_kind
-                ):
+                if interface.super_kind == InterfaceSuperKindChoices.FILE:
                     try:
                         current_value = self.data.getlist(slug)
                         if len(current_value) == 1:
