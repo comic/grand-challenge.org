@@ -8,7 +8,10 @@ from pytest_django.asserts import assertContains, assertNotContains
 from requests import put
 
 from grandchallenge.cases.widgets import ImageWidgetChoices
-from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FlexibleWidgetPrefixes,
+)
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
@@ -747,7 +750,7 @@ def test_add_display_set_to_reader_study_with_empty_value(
                 **get_interface_form_data(
                     interface_slug=ci_str.slug, data="bar"
                 ),
-                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}": ImageWidgetChoices.UNDEFINED.name,
+                f"{FlexibleWidgetPrefixes.CHOICE.value}{ci_img.slug}": ImageWidgetChoices.UNDEFINED.value,
                 "order": 11,
             },
             user=editor,
