@@ -222,8 +222,11 @@ def test_algorithm_create(client, uploaded_image):
                 "title": "some-overlay",
             },
             [
-                '<select class="custom-select"',
-                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}some-overlay"',
+                f'name="{FlexibleWidgetPrefixes.CHOICE}some-overlay"',
+                f'name="{FlexibleWidgetPrefixes.UPLOAD}some-overlay"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-overlay_{ImageSearchWidgetSuffixes.INPUT}"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-overlay_{ImageSearchWidgetSuffixes.CHOICE}"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}some-overlay"',
             ],
         ),
         (
@@ -232,8 +235,11 @@ def test_algorithm_create(client, uploaded_image):
                 "title": "some-medical-image",
             },
             [
-                '<select class="custom-select"',
-                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
+                f'name="{FlexibleWidgetPrefixes.CHOICE}some-medical-image"',
+                f'name="{FlexibleWidgetPrefixes.UPLOAD}some-medical-image"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{ImageSearchWidgetSuffixes.INPUT}"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{ImageSearchWidgetSuffixes.CHOICE}"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
             ],
         ),
         (
