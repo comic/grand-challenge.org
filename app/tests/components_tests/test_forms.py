@@ -120,7 +120,7 @@ def test_dicom_widget_in_archive_item_and_display_set_update_forms(
     instance = object_factory()
     form_data = get_interface_form_data(
         interface_slug=socket.slug,
-        data=["an image name", [upload]],
+        data=["an image name", [upload.pk]],
     )
 
     form = form_class(
