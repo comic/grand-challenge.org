@@ -66,7 +66,7 @@ def test_interface_form_field_image_queryset_filter():
     ),
 )
 @pytest.mark.django_db
-def test_image_widget_current_value_in_archive_item_and_display_set_update_forms(
+def test_image_widget_current_socket_value_in_archive_item_and_display_set_update_forms(
     form_class, object_factory, extra_form_kwargs
 ):
     user = UserFactory()
@@ -74,59 +74,22 @@ def test_image_widget_current_value_in_archive_item_and_display_set_update_forms
         kind=ComponentInterface.Kind.PANIMG_IMAGE
     )
 
-    image1 = ImageFactory()
-    assign_perm("cases.view_image", user, image1)
-    image_civ = ComponentInterfaceValueFactory(
-        interface=image_ci, image=image1
-    )
+    image = ImageFactory()
+    assign_perm("cases.view_image", user, image)
+    image_civ = ComponentInterfaceValueFactory(interface=image_ci, image=image)
     instance = object_factory()
     instance.values.set([image_civ])
-
-    image2 = ImageFactory()
-    assign_perm("cases.view_image", user, image2)
-
-    user_upload = UserUploadFactory(creator=user)
-    user_upload.status = UserUpload.StatusChoices.COMPLETED
-    user_upload.save()
 
     form1 = form_class(
         user=user,
         instance=instance,
         base_obj=instance.base_object,
-        data={
-            **extra_form_kwargs,
-            **get_interface_form_data(
-                interface_slug=image_ci.slug,
-                data=image2.pk,
-                existing_data=True,
-            ),
-        },
     )
-    assert form1.is_valid()
     assert (
-        form1.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{image_ci.slug}"]
-        .widget.attrs["current_value"][0]
-        .pk
-        == image2.pk
-    )
-
-    form2 = form_class(
-        user=user,
-        instance=instance,
-        base_obj=instance.base_object,
-        data={
-            **extra_form_kwargs,
-            **get_interface_form_data(
-                interface_slug=image_ci.slug, data=user_upload.pk
-            ),
-        },
-    )
-    assert form2.is_valid()
-    assert (
-        form2.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{image_ci.slug}"]
-        .widget.attrs["current_value"][0]
-        .pk
-        == user_upload.pk
+        form1.fields[
+            f"{FlexibleWidgetPrefixes.CHOICE.value}{image_ci.slug}"
+        ].current_socket_value
+        == image_civ
     )
 
 
