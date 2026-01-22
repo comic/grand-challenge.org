@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db.models import QuerySet
 from django.forms import (
     CharField,
@@ -17,6 +18,12 @@ from grandchallenge.cases.widgets import (
 )
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.uploads.models import UserUpload
+
+DICOM_IMAGE_UPLOAD_HELP_TEXT = f"""
+The total size of all files uploaded in a single session cannot exceed 10 GB.
+A maximum of {settings.CASES_MAX_NUM_USER_UPLOADS} files can be uploaded per session.
+Please only upload one series instance per session.
+"""
 
 
 class ImageSourceChoiceField(ChoiceField):
@@ -83,6 +90,7 @@ class DICOMUploadField(MultiValueField):
         super().__init__(
             *args,
             fields=fields,
+            help_text=DICOM_IMAGE_UPLOAD_HELP_TEXT,
             **kwargs,
         )
 
