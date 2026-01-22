@@ -34,6 +34,7 @@ from grandchallenge.components.form_fields import (
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
     CIVSetDeleteForm,
+    FlexibleWidgetPrefixes,
     SingleCIVForm,
 )
 from grandchallenge.components.models import (
@@ -43,7 +44,10 @@ from grandchallenge.components.models import (
     InterfaceKinds,
 )
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
-from grandchallenge.components.widgets import FileSearchWidget
+from grandchallenge.components.widgets import (
+    FileSearchWidget,
+    FileSearchWidgetSuffixes,
+)
 from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
@@ -610,15 +614,18 @@ class FileSearchResultView(
 
     def get(self, request, *args, **kwargs):
         prefixed_interface_slug = request.GET.get("prefixed-interface-slug")
+        interface_slug = prefixed_interface_slug.replace(
+            INTERFACE_FORM_FIELD_PREFIX, ""
+        )
         self.interface = get_object_or_404(
-            ComponentInterface,
-            slug=prefixed_interface_slug.replace(
-                INTERFACE_FORM_FIELD_PREFIX, ""
-            ),
+            ComponentInterface, slug=interface_slug
         )
 
         qs = self.get_queryset()
-        query = request.GET.get("query-" + prefixed_interface_slug)
+        query = request.GET.get(
+            f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{FileSearchWidgetSuffixes.INPUT}",
+            request.GET.get("query-" + prefixed_interface_slug),
+        )
         if query:
             q = reduce(
                 or_,
@@ -627,4 +634,6 @@ class FileSearchResultView(
             )
             qs = qs.filter(q).order_by("file")
         self.object_list = qs
+        selected_object_pk = request.GET.get("selected-object-pk")
+        kwargs.update({"selected_object_pk": selected_object_pk})
         return self.render_to_response(self.get_context_data(**kwargs))

@@ -1,9 +1,19 @@
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
-from django.forms import BoundField, ModelChoiceField, MultiValueField
+from django.forms import (
+    BoundField,
+    CharField,
+    ChoiceField,
+    ModelChoiceField,
+    MultiValueField,
+)
 
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.components.widgets import FlexibleFileWidget
+from grandchallenge.components.widgets import (
+    FileSearchMultiWidget,
+    FileSourceSelect,
+    FlexibleFileWidget,
+)
 from grandchallenge.core.guardian import (
     filter_by_permission,
     get_object_if_allowed,
@@ -20,11 +30,12 @@ file_upload_text = (
 )
 
 
+# TODO: harmonize values here with ImageWidgetChoices to avoid complicating the validation in InterfaceFormFieldsMixin further.
 class FileWidgetChoices(TextChoices):
-    FILE_SEARCH = "FILE_SEARCH"
-    FILE_UPLOAD = "FILE_UPLOAD"
-    FILE_SELECTED = "FILE_SELECTED"
-    UNDEFINED = "UNDEFINED"
+    UNDEFINED = "", "Choose data source..."
+    FILE_SELECTED = "FILE_SELECTED", ""
+    FILE_SEARCH = "FILE_SEARCH", "Select an existing file"
+    FILE_UPLOAD = "FILE_UPLOAD", "Upload a new file"
 
 
 class FlexibleFileField(MultiValueField):
@@ -111,3 +122,85 @@ class FlexibleFileField(MultiValueField):
 class BoundFieldWithDNoneClass(BoundField):
     def css_classes(self, extra_classes=None):
         return f"d-none {super().css_classes(extra_classes)}"
+
+
+class FileSourceChoiceField(ChoiceField):
+    widget = FileSourceSelect(attrs={"class": "custom-select"})
+
+    def __init__(
+        self,
+        *args,
+        current_socket_value=None,
+        required=True,
+        **kwargs,
+    ):
+        self.current_socket_value = current_socket_value
+
+        choices = kwargs.pop("choices", [])
+
+        if current_socket_value is None:
+            choice = FileWidgetChoices.UNDEFINED
+            choices.append((choice.value, choice.label))
+        else:
+            choices.append(
+                (
+                    FileWidgetChoices.FILE_SELECTED.value,
+                    current_socket_value.title,
+                )
+            )
+
+        for choice in [
+            FileWidgetChoices.FILE_SEARCH,
+            FileWidgetChoices.FILE_UPLOAD,
+        ]:
+            choices.append((choice.value, choice.label))
+
+        super().__init__(
+            *args,
+            required=required,
+            choices=choices,
+            **kwargs,
+        )
+
+    def clean(self, value):
+        value = super().clean(value)
+        if value == FileWidgetChoices.FILE_SELECTED:
+            return self.current_socket_value
+        else:
+            return value
+
+
+class FileSearchMultiField(MultiValueField):
+    def __init__(
+        self, *args, user, interface, prefixed_interface_slug, **kwargs
+    ):
+        queryset = get_component_interface_values_for_user(
+            user=user,
+            interface=interface,
+        )
+        fields = [
+            CharField(),
+            ModelChoiceField(queryset=queryset),
+        ]
+        widget = FileSearchMultiWidget(
+            prefixed_interface_slug=prefixed_interface_slug
+        )
+        super().__init__(
+            *args,
+            fields=fields,
+            widget=widget,
+            **kwargs,
+        )
+
+    def clean(self, value):
+        try:
+            value = value[1]
+        except IndexError:
+            value = None
+
+        self.fields[1].required = self.required
+
+        return self.fields[1].clean(value)
+
+    def compress(self, values):
+        return values
