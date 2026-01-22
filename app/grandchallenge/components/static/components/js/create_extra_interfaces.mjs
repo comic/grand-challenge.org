@@ -17,8 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // force client side field validation for extra interface form fields
 // htmx post won't get sent otherwise
-const objForm = document.getElementById("obj-form");
-objForm.addEventListener("htmx:validation:validate", event => {
+document.addEventListener("htmx:validation:validate", event => {
     const extraInterfaceForms = document.getElementsByClassName(
         "extra-interface-form",
     );
