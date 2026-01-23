@@ -622,7 +622,6 @@ class FileSearchResultView(
         qs = self.get_queryset()
         query = request.GET.get(
             f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{SearchWidgetSuffixes.INPUT}",
-            request.GET.get("query-" + prefixed_interface_slug),
         )
         if query:
             q = reduce(
