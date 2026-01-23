@@ -4,7 +4,6 @@ from django.core.exceptions import ValidationError
 from factory.fuzzy import FuzzyChoice
 
 from grandchallenge.components.form_fields import FlexibleFileField
-from grandchallenge.components.forms import InterfaceFormFieldsMixin
 from grandchallenge.components.models import InterfaceKinds
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory
@@ -288,9 +287,7 @@ def test_interface_form_field_factory_wrong_pk_type(ci_kind, initial_pk):
     ci = ComponentInterfaceFactory(kind=ci_kind)
 
     with pytest.raises(ValidationError) as e:
-        InterfaceFormFieldsMixin().get_fields_for_interface(
-            interface=ci, user=user, initial=initial_pk
-        )
+        FlexibleFileField(interface=ci, user=user, initial=initial_pk)
     assert str(e.value) == f"['“{initial_pk}” is not a valid UUID.']"
 
 
