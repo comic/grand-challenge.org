@@ -25,12 +25,6 @@ from grandchallenge.serving.models import (
 )
 from grandchallenge.uploads.models import UserUpload
 
-file_upload_text = (
-    "The total size of all files uploaded in a single session "
-    "cannot exceed 10 GB.<br>"
-    "The following file formats are supported: "
-)
-
 
 class SourceChoices(StrEnum):
     UNDEFINED = ""

@@ -27,11 +27,9 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.archives.models import Archive
-from grandchallenge.components.form_fields import (
-    FileWidgetChoices,
-    file_upload_text,
-)
+from grandchallenge.components.form_fields import FileWidgetChoices
 from grandchallenge.components.forms import (
+    FILE_UPLOAD_HELP_TEXT,
     INTERFACE_FORM_FIELD_PREFIX,
     CIVSetDeleteForm,
     FlexibleWidgetPrefixes,
@@ -556,7 +554,7 @@ class FileWidgetSelectView(LoginRequiredMixin, View):
                     value=None,
                     attrs={
                         "id": prefixed_interface_slug,
-                        "help_text": f"{file_upload_text} {interface.file_extension}",
+                        "help_text": f"{FILE_UPLOAD_HELP_TEXT} {interface.file_extension}",
                     },
                 )
             )

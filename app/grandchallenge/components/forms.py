@@ -33,7 +33,8 @@ from grandchallenge.components.backends.exceptions import (
 )
 from grandchallenge.components.form_fields import (
     BoundFieldWithDNoneClass,
-    FlexibleFileField,
+    FileSearchMultiField,
+    FileSourceChoiceField,
     SourceChoices,
 )
 from grandchallenge.components.models import (
@@ -41,12 +42,10 @@ from grandchallenge.components.models import (
     CIVData,
     ComponentInterface,
     ComponentInterfaceValue,
-    InterfaceSuperKindChoices,
 )
 from grandchallenge.components.schemas import generate_component_json_schema
 from grandchallenge.components.widgets import (
-    FileSearchWidget,
-    FlexibleFileWidget,
+    FileSearchInputWidget,
     SearchSelect,
     SourceSelect,
 )
@@ -66,6 +65,13 @@ from grandchallenge.uploads.widgets import (
 from grandchallenge.workstations.models import WorkstationImage
 
 logger = logging.getLogger(__name__)
+
+
+FILE_UPLOAD_HELP_TEXT = (
+    "The total size of all files uploaded in a single session "
+    "cannot exceed 10 GB.<br>"
+    "The following file formats are supported: "
+)
 
 
 class ContainerImageForm(SaveFormInitMixin, ModelForm):
@@ -156,8 +162,7 @@ class InterfaceFormFieldsMixin:
         UserUploadSingleWidget,
         DICOMUserUploadMultipleWidget,
         JSONEditorWidget,
-        FlexibleFileWidget,
-        FileSearchWidget,
+        FileSearchInputWidget,
         ImageSearchInputWidget,
         SearchSelect,
         SourceSelect,
@@ -235,12 +240,31 @@ class InterfaceFormFieldsMixin:
             }
         elif interface.super_kind == interface.SuperKind.FILE:
             return {
-                prefixed_interface_slug: FlexibleFileField(
+                f"{FlexibleWidgetPrefixes.CHOICE}{interface.slug}": FileSourceChoiceField(
+                    current_socket_value=current_socket_value,
+                    **kwargs,
+                ),
+                f"{FlexibleWidgetPrefixes.UPLOAD}{interface.slug}": ModelChoiceField(
+                    queryset=upload_queryset,
+                    widget=UserUploadSingleWidget,
+                    label="",
+                    help_text=FILE_UPLOAD_HELP_TEXT,
+                    required=False,
+                    bound_field_class=BoundFieldWithDNoneClass,
+                ),
+                f"{FlexibleWidgetPrefixes.SEARCH}{interface.slug}": FileSearchMultiField(
                     user=user,
                     interface=interface,
-                    initial=initial,
-                    **kwargs,
-                )
+                    prefixed_interface_slug=prefixed_interface_slug,
+                    label="",
+                    required=False,
+                    bound_field_class=BoundFieldWithDNoneClass,
+                ),
+                # Add hidden input field for parsing when rendering
+                # dynamically added fields.
+                prefixed_interface_slug: Field(
+                    required=False, widget=HiddenInput()
+                ),
             }
         elif interface.super_kind == interface.SuperKind.VALUE:
             return {
@@ -426,40 +450,18 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
         for interface in base_obj.linked_component_interfaces.order_by(
             "title"
         ):
-            current_value = None
-            current_socket_value = None
-
-            prefixed_interface_slug = (
-                f"{INTERFACE_FORM_FIELD_PREFIX}{interface.slug}"
-            )
-
-            # For interfaces that use the FlexibleFileWidget we need
-            # to pass in the initial value explicitly, for all other
-            # fields the value in self.data is picked up automatically
-            if prefixed_interface_slug in self.data and (
-                interface.super_kind == InterfaceSuperKindChoices.FILE
-            ):
-                try:
-                    current_value = self.data.getlist(prefixed_interface_slug)
-                    if len(current_value) == 1:
-                        current_value = current_value[0]
-                except AttributeError:
-                    current_value = self.data.get(prefixed_interface_slug)
-
             if instance:
                 current_socket_value = instance.values.filter(
                     interface__slug=interface.slug
                 ).first()
-
-                if not current_value:
-                    current_value = current_socket_value
+            else:
+                current_socket_value = None
 
             self.fields.update(
                 self.get_fields_for_interface(
                     interface=interface,
                     user=self.user,
                     required=False,
-                    initial=current_value,
                     current_socket_value=current_socket_value,
                 )
             )
@@ -479,25 +481,11 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
                     slug=interface_slug
                 ).get()
 
-                current_value = None
-
-                # For interfaces that use the FlexibleFileWidget we need
-                # to pass in the initial value explicitly, for all other
-                # fields the value in self.data is picked up automatically
-                if interface.super_kind == InterfaceSuperKindChoices.FILE:
-                    try:
-                        current_value = self.data.getlist(slug)
-                        if len(current_value) == 1:
-                            current_value = current_value[0]
-                    except AttributeError:
-                        current_value = self.data.get(slug)
-
                 self.fields.update(
                     self.get_fields_for_interface(
                         interface=interface,
                         user=self.user,
                         required=False,
-                        initial=current_value,
                     )
                 )
 
