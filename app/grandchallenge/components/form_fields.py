@@ -13,8 +13,8 @@ from django.forms import (
 from grandchallenge.components.models import ComponentInterfaceValue
 from grandchallenge.components.widgets import (
     FileSearchMultiWidget,
-    FileSourceSelect,
     FlexibleFileWidget,
+    SourceSelect,
 )
 from grandchallenge.core.guardian import (
     filter_by_permission,
@@ -140,7 +140,7 @@ class BoundFieldWithDNoneClass(BoundField):
 
 
 class FileSourceChoiceField(ChoiceField):
-    widget = FileSourceSelect(attrs={"class": "custom-select"})
+    widget = SourceSelect(attrs={"class": "custom-select"})
 
     def __init__(
         self,

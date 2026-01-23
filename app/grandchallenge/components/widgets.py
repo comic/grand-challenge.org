@@ -56,14 +56,14 @@ class FlexibleFileWidget(MultiWidget):
         return self.decompress(value)
 
 
-class FileSourceSelect(Select):
+class SourceSelect(Select):
     class Media:
         js = (Script("components/js/source_select.mjs", type="module"),)
 
 
-class FileSearchWidgetSuffixes(StrEnum):
+class SearchWidgetSuffixes(StrEnum):
     INPUT = "search-term"
-    CHOICE = "selected-file"
+    CHOICE = "selected-choice"
 
 
 class FileSearchInputWidget(TextInput):
@@ -80,8 +80,8 @@ class FileSearchInputWidget(TextInput):
         return context
 
 
-class FileSearchSelect(Select):
-    template_name = "components/file_search_select.html"
+class SearchSelect(Select):
+    template_name = "components/search_select.html"
 
     def get_context(self, name, value, attrs):
         context = super().get_context(name, value, attrs)
@@ -99,8 +99,8 @@ class FileSearchMultiWidget(MultiWidget):
 
     def __init__(self, attrs=None, prefixed_interface_slug=None):
         widgets = {
-            FileSearchWidgetSuffixes.INPUT.value: FileSearchInputWidget(),
-            FileSearchWidgetSuffixes.CHOICE.value: FileSearchSelect(
+            SearchWidgetSuffixes.INPUT.value: FileSearchInputWidget(),
+            SearchWidgetSuffixes.CHOICE.value: SearchSelect(
                 attrs={"class": "custom-select"}
             ),
         }

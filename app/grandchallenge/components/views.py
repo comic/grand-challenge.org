@@ -46,7 +46,7 @@ from grandchallenge.components.models import (
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
 from grandchallenge.components.widgets import (
     FileSearchWidget,
-    FileSearchWidgetSuffixes,
+    SearchWidgetSuffixes,
 )
 from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
@@ -623,7 +623,7 @@ class FileSearchResultView(
 
         qs = self.get_queryset()
         query = request.GET.get(
-            f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{FileSearchWidgetSuffixes.INPUT}",
+            f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{SearchWidgetSuffixes.INPUT}",
             request.GET.get("query-" + prefixed_interface_slug),
         )
         if query:
