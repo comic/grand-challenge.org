@@ -25,9 +25,8 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
-from grandchallenge.cases.form_fields import ImageSourceChoices
 from grandchallenge.cases.widgets import DICOMUploadWidgetSuffixes
-from grandchallenge.components.form_fields import FileWidgetChoices
+from grandchallenge.components.form_fields import SourceChoices
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
@@ -476,13 +475,18 @@ def extract_form_data_from_response(response):
     return data
 
 
+@pytest.mark.parametrize(
+    "socket_kind",
+    [
+        InterfaceKindChoices.PANIMG_IMAGE,
+        InterfaceKindChoices.PDF,
+    ],
+)
 @pytest.mark.django_db
-def test_create_job_image_kind_no_input_after_widget_choice_field_validation(
-    client,
+def test_create_job_field_validation_no_input_after_widget_choice(
+    client, socket_kind
 ):
-    alg, creator, input_socket = create_algorithm_with_input(
-        kind=InterfaceKindChoices.PANIMG_IMAGE
-    )
+    alg, creator, input_socket = create_algorithm_with_input(kind=socket_kind)
     response = get_view_for_user(
         viewname="algorithms:job-create",
         client=client,
@@ -496,9 +500,9 @@ def test_create_job_image_kind_no_input_after_widget_choice_field_validation(
     data = extract_form_data_from_response(response)
 
     for widget_choice, required_widget_prefix in [
-        (ImageSourceChoices.UNDEFINED, FlexibleWidgetPrefixes.CHOICE),
-        (ImageSourceChoices.SEARCH, FlexibleWidgetPrefixes.SEARCH),
-        (ImageSourceChoices.UPLOAD, FlexibleWidgetPrefixes.UPLOAD),
+        (SourceChoices.UNDEFINED, FlexibleWidgetPrefixes.CHOICE),
+        (SourceChoices.SEARCH, FlexibleWidgetPrefixes.SEARCH),
+        (SourceChoices.UPLOAD, FlexibleWidgetPrefixes.UPLOAD),
     ]:
         data[f"{FlexibleWidgetPrefixes.CHOICE}{input_socket.slug}"] = (
             widget_choice.value
@@ -521,56 +525,6 @@ def test_create_job_image_kind_no_input_after_widget_choice_field_validation(
         assert response.context["form"].errors[
             f"{required_widget_prefix.value}{input_socket.slug}"
         ] == ["This field is required."]
-
-
-@pytest.mark.parametrize(
-    "widget_choice",
-    [
-        FileWidgetChoices.UNDEFINED,
-        FileWidgetChoices.FILE_SEARCH,
-        FileWidgetChoices.FILE_UPLOAD,
-    ],
-)
-@pytest.mark.django_db
-def test_create_job_file_kind_no_input_after_widget_choice_field_validation(
-    client, widget_choice
-):
-    alg, creator, input_socket = create_algorithm_with_input(
-        kind=InterfaceKindChoices.PDF
-    )
-    prefixed_interface_slug = (
-        f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
-    )
-
-    response = get_view_for_user(
-        viewname="components:select-file-widget",
-        client=client,
-        user=creator,
-        data={
-            f"widget-choice-{prefixed_interface_slug}": widget_choice.name,
-            "prefixed-interface-slug": prefixed_interface_slug,
-        },
-    )
-    data = extract_form_data_from_response(response)
-    data[f"widget-choice-{prefixed_interface_slug}"] = widget_choice.name
-
-    response = get_view_for_user(
-        viewname="algorithms:job-create",
-        client=client,
-        reverse_kwargs={
-            "slug": alg.slug,
-            "interface_pk": alg.interfaces.first().pk,
-        },
-        method=client.post,
-        data=data,
-        follow=True,
-        user=creator,
-    )
-
-    assert response.status_code == 200
-    assert response.context["form"].errors == {
-        f"{prefixed_interface_slug}": ["This field is required."],
-    }
 
 
 def create_algorithm_with_input(**kwargs):
