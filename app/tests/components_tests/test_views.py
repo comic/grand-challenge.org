@@ -3,11 +3,9 @@ import json
 import factory.django
 import pytest
 from django.conf import settings
-from django.utils.html import format_html
 from factory.fuzzy import FuzzyChoice
 
 from grandchallenge.archives.models import Archive, ArchiveItem
-from grandchallenge.components.form_fields import FileWidgetChoices
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
@@ -36,7 +34,6 @@ from tests.reader_studies_tests.factories import (
     DisplaySetFactory,
     ReaderStudyFactory,
 )
-from tests.uploads_tests.factories import UserUploadFactory
 from tests.utils import get_view_for_user
 
 
@@ -569,145 +566,6 @@ def test_interfaces_list_link_in_new_interface_form(
         user=u,
     )
     assert reverse(interface_list_viewname) in response.rendered_content
-
-
-@pytest.mark.django_db
-def test_file_widget_select_view_file_selected_object_permission(client):
-    user, creator = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
-    prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
-    civ = ComponentInterfaceValueFactory(interface=ci)
-    job = AlgorithmJobFactory(creator=creator, time_limit=60)
-    job.inputs.set([civ])
-
-    response_creator = get_view_for_user(
-        viewname="components:select-file-widget",
-        client=client,
-        user=creator,
-        data={
-            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SELECTED.name,
-            "prefixed-interface-slug": prefixed_interface_slug,
-            "current-value-pk": civ.pk,
-        },
-    )
-    assert format_html(
-        '<input type="hidden" name="{}" value="{}">',
-        prefixed_interface_slug,
-        civ.pk,
-    ) in str(response_creator.content)
-
-    response_user = get_view_for_user(
-        viewname="components:select-file-widget",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SELECTED.name,
-            "prefixed-interface-slug": prefixed_interface_slug,
-            "current-value-pk": civ.pk,
-        },
-    )
-    assert response_user.status_code == 404
-
-
-@pytest.mark.django_db
-def test_file_widget_select_view_file_selected_object_permission_user_upload(
-    client,
-):
-    user, creator = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
-    prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
-    user_upload = UserUploadFactory(creator=creator)
-
-    response_creator = get_view_for_user(
-        viewname="components:select-file-widget",
-        client=client,
-        user=creator,
-        data={
-            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SELECTED.name,
-            "prefixed-interface-slug": prefixed_interface_slug,
-            "current-value-pk": user_upload.pk,
-        },
-    )
-    assert format_html(
-        '<input type="hidden" name="{}" value="{}">',
-        prefixed_interface_slug,
-        user_upload.pk,
-    ) in str(response_creator.content)
-
-    response_user = get_view_for_user(
-        viewname="components:select-file-widget",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SELECTED.name,
-            "prefixed-interface-slug": prefixed_interface_slug,
-            "current-value-pk": user_upload.pk,
-        },
-    )
-    assert response_user.status_code == 404
-
-
-@pytest.mark.django_db
-def test_file_widget_select_view(client):
-    user, editor = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
-    prefixed_interface_slug = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
-    response = get_view_for_user(
-        viewname="components:select-file-widget",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SEARCH.name,
-            "prefixed-interface-slug": prefixed_interface_slug,
-        },
-    )
-    assert '<input class="form-control" type="search"' in str(response.content)
-
-    response2 = get_view_for_user(
-        viewname="components:select-file-widget",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_UPLOAD.name,
-            "prefixed-interface-slug": prefixed_interface_slug,
-        },
-    )
-    assert 'class="user-upload"' in str(response2.content)
-
-    response3 = get_view_for_user(
-        viewname="components:select-file-widget",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.UNDEFINED.name,
-            "prefixed-interface-slug": prefixed_interface_slug,
-        },
-    )
-    assert response3.content == b""
-
-    response4 = get_view_for_user(
-        viewname="components:select-file-widget",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SEARCH.name
-            + "foobar",
-            "prefixed-interface-slug": prefixed_interface_slug,
-        },
-    )
-    assert response4.status_code == 404
-
-    ci.delete()
-    response5 = get_view_for_user(
-        viewname="components:select-file-widget",
-        client=client,
-        user=user,
-        data={
-            f"widget-choice-{prefixed_interface_slug}": FileWidgetChoices.FILE_SEARCH.name,
-            "prefixed-interface-slug": prefixed_interface_slug,
-        },
-    )
-    assert response5.status_code == 404
 
 
 @pytest.mark.django_db
