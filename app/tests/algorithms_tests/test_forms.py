@@ -36,6 +36,7 @@ from grandchallenge.components.models import (
     ComponentJob,
     ImportStatusChoices,
     InterfaceKindChoices,
+    InterfaceSuperKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.widgets import SearchWidgetSuffixes
@@ -435,10 +436,10 @@ def test_create_job_input_field_required_validation(client, socket_kwargs):
 
     assert response.status_code == 200
 
-    if input_socket.is_image_kind:
-        field_key = f"{FlexibleWidgetPrefixes.CHOICE}{input_socket.slug}"
-    else:
+    if input_socket.super_kind == InterfaceSuperKindChoices.VALUE:
         field_key = f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
+    else:
+        field_key = f"{FlexibleWidgetPrefixes.CHOICE}{input_socket.slug}"
 
     assert response.context["form"].errors[field_key] == [
         "This field is required."
