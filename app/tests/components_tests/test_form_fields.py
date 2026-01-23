@@ -3,7 +3,16 @@ import pytest
 from django.core.exceptions import ValidationError
 from factory.fuzzy import FuzzyChoice
 
-from grandchallenge.components.form_fields import FlexibleFileField
+from grandchallenge.components.form_fields import (
+    FileSourceChoiceField,
+    FileSourceChoices,
+    FlexibleFileField,
+    SourceChoices,
+)
+from grandchallenge.components.forms import (
+    FlexibleWidgetPrefixes,
+    InterfaceFormFieldsMixin,
+)
 from grandchallenge.components.models import InterfaceKinds
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory
@@ -388,3 +397,189 @@ def test_flexible_file_widget_prepopulated_value_user_upload():
     field = FlexibleFileField(user=user, interface=ci, initial=initial)
     assert field.widget.attrs["current_value"] is None
     assert field.initial is None
+
+
+@pytest.mark.django_db
+def test_file_search_field_validation_with_algorithm_job_inputs():
+    user = UserFactory()
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
+    civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2, interface=ci)
+    job_with_perm = AlgorithmJobFactory(creator=user, time_limit=60)
+    job_without_perm = AlgorithmJobFactory(time_limit=60)
+    job_with_perm.inputs.set([civ1])
+    job_without_perm.inputs.set([civ2])
+    field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, user=user
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}"]
+
+    assert field.clean(["", f"{civ1.pk}"]) == civ1
+    with pytest.raises(ValidationError):
+        field.clean(["", f"{civ2.pk}"])
+
+
+@pytest.mark.django_db
+def test_file_search_field_validation_with_algorithm_job_outputs():
+    user = UserFactory()
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
+    civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2, interface=ci)
+    job_with_perm = AlgorithmJobFactory(creator=user, time_limit=60)
+    job_without_perm = AlgorithmJobFactory(time_limit=60)
+    job_with_perm.outputs.set([civ1])
+    job_without_perm.outputs.set([civ2])
+    field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, user=user
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}"]
+
+    assert field.clean(["", f"{civ1.pk}"]) == civ1
+    with pytest.raises(ValidationError):
+        field.clean(["", f"{civ2.pk}"])
+
+
+@pytest.mark.django_db
+def test_file_search_field_validation_with_display_sets():
+    user = UserFactory()
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
+    civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2, interface=ci)
+    rs1, rs2 = ReaderStudyFactory.create_batch(2)
+    rs1.add_editor(user)
+    display_set_with_perm = DisplaySetFactory(reader_study=rs1)
+    display_set_without_perm = DisplaySetFactory(reader_study=rs2)
+    display_set_with_perm.values.add(civ1)
+    display_set_without_perm.values.add(civ2)
+    field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, user=user
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}"]
+
+    assert field.clean(["", f"{civ1.pk}"]) == civ1
+    with pytest.raises(ValidationError):
+        field.clean(["", f"{civ2.pk}"])
+
+
+@pytest.mark.django_db
+def test_file_search_field_validation_with_archive_items():
+    user = UserFactory()
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
+    civ1, civ2 = ComponentInterfaceValueFactory.create_batch(2, interface=ci)
+    a1, a2 = ArchiveFactory.create_batch(2)
+    a1.add_editor(user)
+    archive_item_with_perm = ArchiveItemFactory(archive=a1)
+    archive_item_without_perm = ArchiveItemFactory(archive=a2)
+    archive_item_with_perm.values.set([civ1])
+    archive_item_without_perm.values.set([civ2])
+    field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, user=user
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}"]
+
+    assert field.clean(["", f"{civ1.pk}"]) == civ1
+    with pytest.raises(ValidationError):
+        field.clean(["", f"{civ2.pk}"])
+
+
+@pytest.mark.django_db
+def test_file_source_select_prepopulated_value_algorithm_job():
+    creator, user = UserFactory.create_batch(2)
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, file=factory.django.FileField()
+    )
+    job = AlgorithmJobFactory(creator=creator, time_limit=60)
+    job.inputs.set([civ])
+
+    field = FileSourceChoiceField(current_socket_value=civ)
+
+    assert field.current_socket_value == civ
+    assert field.choices == [
+        ("CURRENT", civ.title),
+        ("SEARCH", "Select an existing file"),
+        ("UPLOAD", "Upload a new file"),
+    ]
+    assert field.clean(SourceChoices.CURRENT.value) == civ
+    with pytest.raises(ValidationError, match="This field is required."):
+        field.clean(FileSourceChoices.UNDEFINED.value)
+
+    field = FileSourceChoiceField()
+
+    assert field.choices == [
+        ("", "Choose data source..."),
+        ("SEARCH", "Select an existing file"),
+        ("UPLOAD", "Upload a new file"),
+    ]
+    assert field.current_socket_value is None
+    with pytest.raises(ValidationError, match="Select a valid choice."):
+        field.clean(SourceChoices.CURRENT.value)
+    with pytest.raises(ValidationError, match="This field is required."):
+        field.clean(FileSourceChoices.UNDEFINED.value)
+
+
+@pytest.mark.django_db
+def test_file_source_select_prepopulated_value_display_set():
+    editor, user = UserFactory.create_batch(2)
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, file=factory.django.FileField()
+    )
+    display_set = DisplaySetFactory()
+    display_set.reader_study.add_editor(editor)
+    display_set.values.set([civ])
+
+    field = FileSourceChoiceField(current_socket_value=civ)
+
+    assert field.current_socket_value == civ
+    assert field.choices == [
+        ("CURRENT", civ.title),
+        ("SEARCH", "Select an existing file"),
+        ("UPLOAD", "Upload a new file"),
+    ]
+    assert field.clean(SourceChoices.CURRENT.value) == civ
+    with pytest.raises(ValidationError, match="This field is required."):
+        field.clean(FileSourceChoices.UNDEFINED.value)
+
+    field = FileSourceChoiceField()
+
+    assert field.choices == [
+        ("", "Choose data source..."),
+        ("SEARCH", "Select an existing file"),
+        ("UPLOAD", "Upload a new file"),
+    ]
+    assert field.current_socket_value is None
+    with pytest.raises(ValidationError, match="Select a valid choice."):
+        field.clean(SourceChoices.CURRENT.value)
+    with pytest.raises(ValidationError, match="This field is required."):
+        field.clean(FileSourceChoices.UNDEFINED.value)
+
+
+@pytest.mark.django_db
+def test_file_source_select_prepopulated_value_archive_item():
+    editor, user = UserFactory.create_batch(2)
+    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, file=factory.django.FileField()
+    )
+    archive_item = ArchiveItemFactory()
+    archive_item.archive.add_editor(editor)
+    archive_item.values.set([civ])
+
+    field = FileSourceChoiceField(current_socket_value=civ)
+
+    assert field.current_socket_value == civ
+    assert field.choices == [
+        ("CURRENT", civ.title),
+        ("SEARCH", "Select an existing file"),
+        ("UPLOAD", "Upload a new file"),
+    ]
+    assert field.clean(SourceChoices.CURRENT.value) == civ
+    with pytest.raises(ValidationError, match="This field is required."):
+        field.clean(FileSourceChoices.UNDEFINED.value)
+
+    field = FileSourceChoiceField()
+
+    assert field.choices == [
+        ("", "Choose data source..."),
+        ("SEARCH", "Select an existing file"),
+        ("UPLOAD", "Upload a new file"),
+    ]
+    assert field.current_socket_value is None
+    with pytest.raises(ValidationError, match="Select a valid choice."):
+        field.clean(SourceChoices.CURRENT.value)
+    with pytest.raises(ValidationError, match="This field is required."):
+        field.clean(FileSourceChoices.UNDEFINED.value)

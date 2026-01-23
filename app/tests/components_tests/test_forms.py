@@ -117,6 +117,33 @@ def test_image_widget_current_socket_value_in_archive_item_and_display_set_updat
     )
 
 
+@pytest.mark.django_db
+def test_interface_form_field_file_upload_validation():
+    user = UserFactory()
+    upload = UserUploadFactory(creator=user)
+    upload.status = UserUpload.StatusChoices.COMPLETED
+    upload.save()
+    upload_from_other_user = UserUploadFactory()
+    upload_from_other_user.status = UserUpload.StatusChoices.COMPLETED
+    upload_from_other_user.save()
+    pending_upload = UserUploadFactory(creator=user)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=False
+    )
+    field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, user=user
+    )[f"{FlexibleWidgetPrefixes.UPLOAD}{ci.slug}"]
+
+    assert upload in field.queryset.all()
+    assert upload_from_other_user not in field.queryset.all()
+    assert pending_upload not in field.queryset.all()
+    assert field.clean(str(upload.pk)) == upload
+    with pytest.raises(ValidationError):
+        field.clean(str(upload_from_other_user.pk))
+    with pytest.raises(ValidationError):
+        field.clean(str(pending_upload.pk))
+
+
 @pytest.mark.parametrize(
     "form_class,object_factory,extra_form_kwargs",
     (
