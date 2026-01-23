@@ -248,7 +248,7 @@ class InterfaceFormFieldsMixin:
                     queryset=upload_queryset,
                     widget=UserUploadSingleWidget,
                     label="",
-                    help_text=FILE_UPLOAD_HELP_TEXT,
+                    help_text=f"{FILE_UPLOAD_HELP_TEXT} {interface.file_extension}",
                     required=False,
                     bound_field_class=BoundFieldWithDNoneClass,
                 ),
