@@ -27,16 +27,14 @@ from grandchallenge.cases.form_fields import (
     ImageSourceChoiceField,
 )
 from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
-from grandchallenge.cases.widgets import (
-    ImageSearchInputWidget,
-    ImageWidgetChoices,
-)
+from grandchallenge.cases.widgets import ImageSearchInputWidget
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
 from grandchallenge.components.form_fields import (
     BoundFieldWithDNoneClass,
     FlexibleFileField,
+    SourceChoices,
 )
 from grandchallenge.components.models import (
     RESERVED_SOCKET_SLUGS,
@@ -286,8 +284,8 @@ class InterfaceFormFieldsMixin:
                     choice = self[name].data
 
                     widget_fields = {
-                        ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}",
-                        ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}",
+                        SourceChoices.SEARCH: f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}",
+                        SourceChoices.UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}",
                     }
 
                     for widget_type, field_name in widget_fields.items():
@@ -323,17 +321,17 @@ class InterfaceFormFieldsMixin:
                 keys_to_remove.append(key)
 
             if key.startswith(FlexibleWidgetPrefixes.CHOICE):
-                # Get the choice from the field data because if it is "IMAGE_SELECTED"
-                # the cleaned data becomes the current socket value
+                # Get the choice from the field data because if it is "CURRENT"
+                # the cleaned data becomes the current socket value (image)
                 choice = self[key].data
                 interface_slug = key[len(FlexibleWidgetPrefixes.CHOICE) :]
                 prefixed_interface_slug = (
                     f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
                 )
                 widget_fields = {
-                    ImageWidgetChoices.IMAGE_SELECTED: key,
-                    ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}",
-                    ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}",
+                    SourceChoices.CURRENT: key,
+                    SourceChoices.SEARCH: f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}",
+                    SourceChoices.UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}",
                 }
 
                 for widget_type, field_name in widget_fields.items():
@@ -347,10 +345,7 @@ class InterfaceFormFieldsMixin:
                     else:
                         if (
                             widget_type
-                            in [
-                                ImageWidgetChoices.IMAGE_SEARCH,
-                                ImageWidgetChoices.IMAGE_UPLOAD,
-                            ]
+                            in [SourceChoices.SEARCH, SourceChoices.UPLOAD]
                             and field_name in self.errors
                         ):
                             # Ignore errors if it is not the selected choice.

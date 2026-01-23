@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.db.models import QuerySet
+from django.db.models import QuerySet, TextChoices
 from django.forms import (
     CharField,
     ChoiceField,
@@ -13,8 +13,8 @@ from grandchallenge.cases.widgets import (
     DICOMUploadWidget,
     DICOMUploadWithName,
     ImageSearchMultiWidget,
-    ImageWidgetChoices,
 )
+from grandchallenge.components.form_fields import SourceChoices
 from grandchallenge.components.widgets import SourceSelect
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.uploads.models import UserUpload
@@ -24,6 +24,12 @@ The total size of all files uploaded in a single session cannot exceed 10 GB.
 A maximum of {settings.CASES_MAX_NUM_USER_UPLOADS} files can be uploaded per session.
 Please only upload one series instance per session.
 """
+
+
+class ImageSourceChoices(TextChoices):
+    UNDEFINED = SourceChoices.UNDEFINED, "Choose data source..."
+    SEARCH = SourceChoices.SEARCH, "Select an existing image"
+    UPLOAD = SourceChoices.UPLOAD, "Upload a new image"
 
 
 class ImageSourceChoiceField(ChoiceField):
@@ -39,23 +45,22 @@ class ImageSourceChoiceField(ChoiceField):
         self.current_socket_value = current_socket_value
 
         choices = kwargs.pop("choices", [])
+        choices.extend(ImageSourceChoices.choices)
 
-        if current_socket_value is None:
-            choice = ImageWidgetChoices.UNDEFINED
-            choices.append((choice.value, choice.label))
-        else:
-            choices.append(
+        if current_socket_value:
+            choices.remove(
                 (
-                    ImageWidgetChoices.IMAGE_SELECTED.value,
-                    current_socket_value.title,
+                    ImageSourceChoices.UNDEFINED.value,
+                    ImageSourceChoices.UNDEFINED.label,
                 )
             )
-
-        for choice in [
-            ImageWidgetChoices.IMAGE_SEARCH,
-            ImageWidgetChoices.IMAGE_UPLOAD,
-        ]:
-            choices.append((choice.value, choice.label))
+            choices.insert(
+                0,
+                (
+                    SourceChoices.CURRENT.value,
+                    current_socket_value.title,
+                ),
+            )
 
         super().__init__(
             *args,
@@ -66,7 +71,7 @@ class ImageSourceChoiceField(ChoiceField):
 
     def clean(self, value):
         value = super().clean(value)
-        if value == ImageWidgetChoices.IMAGE_SELECTED:
+        if value == SourceChoices.CURRENT:
             return self.current_socket_value.image
         else:
             return value

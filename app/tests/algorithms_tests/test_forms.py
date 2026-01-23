@@ -25,10 +25,8 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
-from grandchallenge.cases.widgets import (
-    DICOMUploadWidgetSuffixes,
-    ImageWidgetChoices,
-)
+from grandchallenge.cases.form_fields import ImageSourceChoices
+from grandchallenge.cases.widgets import DICOMUploadWidgetSuffixes
 from grandchallenge.components.form_fields import FileWidgetChoices
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
@@ -497,9 +495,9 @@ def test_create_job_image_kind_no_input_after_widget_choice_field_validation(
     data = extract_form_data_from_response(response)
 
     for widget_choice, required_widget_prefix in [
-        (ImageWidgetChoices.UNDEFINED, FlexibleWidgetPrefixes.CHOICE),
-        (ImageWidgetChoices.IMAGE_SEARCH, FlexibleWidgetPrefixes.SEARCH),
-        (ImageWidgetChoices.IMAGE_UPLOAD, FlexibleWidgetPrefixes.UPLOAD),
+        (ImageSourceChoices.UNDEFINED, FlexibleWidgetPrefixes.CHOICE),
+        (ImageSourceChoices.SEARCH, FlexibleWidgetPrefixes.SEARCH),
+        (ImageSourceChoices.UPLOAD, FlexibleWidgetPrefixes.UPLOAD),
     ]:
         data[f"{FlexibleWidgetPrefixes.CHOICE}{input_socket.slug}"] = (
             widget_choice.value

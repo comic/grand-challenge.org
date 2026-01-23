@@ -32,7 +32,6 @@ file_upload_text = (
 )
 
 
-# TODO: harmonize values here with ImageWidgetChoices to avoid complicating the validation in InterfaceFormFieldsMixin further.
 class SourceChoices(StrEnum):
     UNDEFINED = ""
     CURRENT = "CURRENT"

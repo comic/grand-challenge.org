@@ -111,7 +111,7 @@ def test_image_widget_current_socket_value_in_archive_item_and_display_set_updat
     )
     assert (
         form1.fields[
-            f"{FlexibleWidgetPrefixes.CHOICE.value}{image_ci.slug}"
+            f"{FlexibleWidgetPrefixes.CHOICE}{image_ci.slug}"
         ].current_socket_value
         == image_civ
     )

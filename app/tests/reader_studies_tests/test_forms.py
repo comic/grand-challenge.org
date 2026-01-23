@@ -1588,12 +1588,8 @@ def test_display_set_update_form_image_field_queryset_filters():
     ds.values.add(civ_img)
     form = DisplaySetUpdateForm(user=user, instance=ds, base_obj=rs)
 
-    image_field = form.fields[
-        f"{FlexibleWidgetPrefixes.SEARCH.value}{ci_img.slug}"
-    ]
-    upload_field = form.fields[
-        f"{FlexibleWidgetPrefixes.UPLOAD.value}{ci_img.slug}"
-    ]
+    image_field = form.fields[f"{FlexibleWidgetPrefixes.SEARCH}{ci_img.slug}"]
+    upload_field = form.fields[f"{FlexibleWidgetPrefixes.UPLOAD}{ci_img.slug}"]
 
     assert im1 in image_field.fields[1].queryset.all()
     assert im2 not in image_field.fields[1].queryset.all()
