@@ -1,3 +1,5 @@
+from enum import StrEnum
+
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
 from django.forms import (
@@ -31,6 +33,19 @@ file_upload_text = (
 
 
 # TODO: harmonize values here with ImageWidgetChoices to avoid complicating the validation in InterfaceFormFieldsMixin further.
+class SourceChoices(StrEnum):
+    UNDEFINED = ""
+    CURRENT = "CURRENT"
+    SEARCH = "SEARCH"
+    UPLOAD = "UPLOAD"
+
+
+class FileSourceChoices(TextChoices):
+    UNDEFINED = SourceChoices.UNDEFINED, "Choose data source..."
+    SEARCH = SourceChoices.SEARCH, "Select an existing file"
+    UPLOAD = SourceChoices.UPLOAD, "Upload a new file"
+
+
 class FileWidgetChoices(TextChoices):
     UNDEFINED = "", "Choose data source..."
     FILE_SELECTED = "FILE_SELECTED", ""
@@ -137,23 +152,22 @@ class FileSourceChoiceField(ChoiceField):
         self.current_socket_value = current_socket_value
 
         choices = kwargs.pop("choices", [])
+        choices.extend(FileSourceChoices.choices)
 
-        if current_socket_value is None:
-            choice = FileWidgetChoices.UNDEFINED
-            choices.append((choice.value, choice.label))
-        else:
-            choices.append(
+        if current_socket_value:
+            choices.remove(
                 (
-                    FileWidgetChoices.FILE_SELECTED.value,
-                    current_socket_value.title,
+                    FileSourceChoices.UNDEFINED.value,
+                    FileSourceChoices.UNDEFINED.label,
                 )
             )
-
-        for choice in [
-            FileWidgetChoices.FILE_SEARCH,
-            FileWidgetChoices.FILE_UPLOAD,
-        ]:
-            choices.append((choice.value, choice.label))
+            choices.insert(
+                0,
+                (
+                    SourceChoices.CURRENT.value,
+                    current_socket_value.title,
+                ),
+            )
 
         super().__init__(
             *args,
@@ -164,7 +178,7 @@ class FileSourceChoiceField(ChoiceField):
 
     def clean(self, value):
         value = super().clean(value)
-        if value == FileWidgetChoices.FILE_SELECTED:
+        if value == SourceChoices.CURRENT:
             return self.current_socket_value
         else:
             return value
