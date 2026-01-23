@@ -382,8 +382,11 @@ def test_algorithm_create(client, uploaded_image):
                 "store_in_database": False,
             },
             [
-                '<select class="custom-select"',
-                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}anything"',
+                f'name="{FlexibleWidgetPrefixes.CHOICE}anything"',
+                f'name="{FlexibleWidgetPrefixes.UPLOAD}anything"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}anything_{SearchWidgetSuffixes.INPUT}"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}anything_{SearchWidgetSuffixes.CHOICE}"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}anything"',
             ],
         ),
     ),
