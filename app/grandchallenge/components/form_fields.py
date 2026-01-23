@@ -46,10 +46,10 @@ class FileSourceChoices(TextChoices):
 
 
 class FileWidgetChoices(TextChoices):
-    UNDEFINED = "", "Choose data source..."
-    FILE_SELECTED = "FILE_SELECTED", ""
-    FILE_SEARCH = "FILE_SEARCH", "Select an existing file"
-    FILE_UPLOAD = "FILE_UPLOAD", "Upload a new file"
+    FILE_SEARCH = "FILE_SEARCH"
+    FILE_UPLOAD = "FILE_UPLOAD"
+    FILE_SELECTED = "FILE_SELECTED"
+    UNDEFINED = "UNDEFINED"
 
 
 class FlexibleFileField(MultiValueField):
