@@ -12,10 +12,9 @@ from guardian.shortcuts import assign_perm
 from requests import put
 
 from grandchallenge.algorithms.models import Job
-from grandchallenge.cases.form_fields import ImageSourceChoices
 from grandchallenge.cases.widgets import DICOMUploadWidgetSuffixes
 from grandchallenge.components.backends import docker_client
-from grandchallenge.components.form_fields import FileWidgetChoices
+from grandchallenge.components.form_fields import SourceChoices
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
@@ -514,18 +513,17 @@ def get_interface_form_data(
     existing_data=False,
 ):
     ci = ComponentInterface.objects.get(slug=interface_slug)
-    form_data = {f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": data}
     if ci.super_kind == ci.SuperKind.IMAGE:
         if existing_data:
             form_data = {
-                f"{FlexibleWidgetPrefixes.CHOICE}{interface_slug}": ImageSourceChoices.SEARCH.value,
+                f"{FlexibleWidgetPrefixes.CHOICE}{interface_slug}": SourceChoices.SEARCH.value,
                 f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{SearchWidgetSuffixes.CHOICE}": data,
                 f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": "",
             }
         else:
             if ci.is_dicom_image_kind:
                 form_data = {
-                    f"{FlexibleWidgetPrefixes.CHOICE}{interface_slug}": ImageSourceChoices.UPLOAD.value,
+                    f"{FlexibleWidgetPrefixes.CHOICE}{interface_slug}": SourceChoices.UPLOAD.value,
                     f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}_{DICOMUploadWidgetSuffixes.NAME}": data[
                         0
                     ],
@@ -536,19 +534,25 @@ def get_interface_form_data(
                 }
             else:
                 form_data = {
-                    f"{FlexibleWidgetPrefixes.CHOICE}{interface_slug}": ImageSourceChoices.UPLOAD.value,
+                    f"{FlexibleWidgetPrefixes.CHOICE}{interface_slug}": SourceChoices.UPLOAD.value,
                     f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}": data,
                     f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": "",
                 }
     elif ci.super_kind == ci.SuperKind.FILE:
         if existing_data:
-            form_data[
-                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
-            ] = FileWidgetChoices.FILE_SEARCH.name
+            form_data = {
+                f"{FlexibleWidgetPrefixes.CHOICE}{interface_slug}": SourceChoices.SEARCH.value,
+                f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{SearchWidgetSuffixes.CHOICE}": data,
+                f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": "",
+            }
         else:
-            form_data[
-                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
-            ] = FileWidgetChoices.FILE_UPLOAD.name
+            form_data = {
+                f"{FlexibleWidgetPrefixes.CHOICE}{interface_slug}": SourceChoices.UPLOAD.value,
+                f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}": data,
+                f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": "",
+            }
+    else:
+        form_data = {f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": data}
 
     return form_data
 
