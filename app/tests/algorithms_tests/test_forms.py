@@ -1011,7 +1011,7 @@ def test_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
 
     for name, field in form.fields.items():
         # boolean and json inputs that allow None should not be required,
-        # the hidden input for image kind inputs should not be required,
+        # the hidden input for image or file kind inputs should not be required,
         # all other inputs should be
         if (
             name
@@ -1021,6 +1021,7 @@ def test_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
                 f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_with_multiple_inputs.ci_bool.slug}",
                 f"{INTERFACE_FORM_FIELD_PREFIX}{ci_json_in_db_without_schema.slug}",
                 f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_with_multiple_inputs.ci_existing_img.slug}",
+                f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_with_multiple_inputs.ci_json_file.slug}",
             ]
             or name.startswith(FlexibleWidgetPrefixes.UPLOAD)
             or name.startswith(FlexibleWidgetPrefixes.SEARCH)
