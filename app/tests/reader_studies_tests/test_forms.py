@@ -12,8 +12,10 @@ from django.test import override_settings
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.cases.widgets import FlexibleImageWidget
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
-from grandchallenge.components.forms import SingleCIVForm
+from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    SingleCIVForm,
+)
 from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,

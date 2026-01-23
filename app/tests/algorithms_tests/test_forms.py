@@ -25,10 +25,15 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     Job,
 )
-from grandchallenge.cases.widgets import ImageWidgetChoices
-from grandchallenge.components.form_fields import (
+from grandchallenge.cases.widgets import (
+    DICOMUploadWidgetSuffixes,
+    ImageSearchWidgetSuffixes,
+    ImageWidgetChoices,
+)
+from grandchallenge.components.form_fields import FileWidgetChoices
+from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
-    FileWidgetChoices,
+    FlexibleWidgetPrefixes,
 )
 from grandchallenge.components.models import (
     ComponentJob,
@@ -233,6 +238,20 @@ def test_algorithm_create(client, uploaded_image):
         ),
         (
             {
+                "kind": InterfaceKindChoices.DICOM_IMAGE_SET,
+                "title": "some-medical-image",
+            },
+            [
+                f'name="{FlexibleWidgetPrefixes.CHOICE}some-medical-image"',
+                f'name="{FlexibleWidgetPrefixes.UPLOAD}some-medical-image_{DICOMUploadWidgetSuffixes.NAME}"',
+                f'name="{FlexibleWidgetPrefixes.UPLOAD}some-medical-image_{DICOMUploadWidgetSuffixes.UPLOADS}"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{ImageSearchWidgetSuffixes.INPUT}"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{ImageSearchWidgetSuffixes.CHOICE}"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
+            ],
+        ),
+        (
+            {
                 "kind": InterfaceKindChoices.BOOL,
                 "title": "boolean",
             },
@@ -411,11 +430,15 @@ def test_create_job_input_field_required_validation(client, socket_kwargs):
     )
 
     assert response.status_code == 200
-    assert response.context["form"].errors == {
-        f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}": [
-            "This field is required."
-        ],
-    }
+
+    if input_socket.is_dicom_image_kind:
+        field_key = f"{FlexibleWidgetPrefixes.CHOICE}{input_socket.slug}"
+    else:
+        field_key = f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
+
+    assert response.context["form"].errors[field_key] == [
+        "This field is required."
+    ]
 
 
 def extract_form_data_from_response(response):

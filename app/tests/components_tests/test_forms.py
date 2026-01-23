@@ -1,13 +1,15 @@
 import pytest
+from django.core.exceptions import ValidationError
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.archives.forms import (
     ArchiveItemCreateForm,
     ArchiveItemUpdateForm,
 )
-from grandchallenge.components.form_fields import (
+from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
-    InterfaceFormFieldFactory,
+    FlexibleWidgetPrefixes,
+    InterfaceFormFieldsMixin,
 )
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -19,6 +21,7 @@ from grandchallenge.reader_studies.forms import (
 )
 from grandchallenge.uploads.models import UserUpload
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
+from tests.cases_tests.factories import DICOMImageSetFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -45,7 +48,11 @@ def test_interface_form_field_image_queryset_filter():
     upload1.status = UserUpload.StatusChoices.COMPLETED
     upload1.save()
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
-    field = InterfaceFormFieldFactory(interface=ci, user=user)
+    fields = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, user=user
+    )
+    assert len(fields) == 1
+    field = fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"]
     assert im1 in field.fields[0].queryset.all()
     assert im2 not in field.fields[0].queryset.all()
     assert upload1 in field.fields[1].queryset.all()
@@ -242,3 +249,44 @@ def test_dicom_widget_in_archive_item_and_display_set_update_forms(
         },
     )
     assert form.is_valid(), form.errors
+
+
+@pytest.mark.django_db
+def test_interface_form_field_image_search_validates_image_dicom_kind():
+    user = UserFactory()
+    dicom_image = ImageFactory(dicom_image_set=DICOMImageSetFactory())
+    assign_perm("cases.view_image", user, dicom_image)
+    panimg_image = ImageFactory()
+    assign_perm("cases.view_image", user, panimg_image)
+    ci = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.DICOM_IMAGE_SET
+    )
+    fields = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, user=user
+    )
+    assert len(fields) == 4
+    field = fields[f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}"]
+
+    assert field.clean(["", str(dicom_image.pk)]) == dicom_image
+    with pytest.raises(ValidationError):
+        field.clean(["", str(panimg_image.pk)])
+
+
+@pytest.mark.django_db
+def test_interface_form_field_image_search_validates_permission():
+    user = UserFactory()
+    dicom_image = ImageFactory(dicom_image_set=DICOMImageSetFactory())
+    assign_perm("cases.view_image", user, dicom_image)
+    dicom_image_no_perm = ImageFactory(dicom_image_set=DICOMImageSetFactory())
+    ci = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.DICOM_IMAGE_SET
+    )
+    fields = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, user=user
+    )
+    assert len(fields) == 4
+    field = fields[f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}"]
+
+    assert field.clean(["", str(dicom_image.pk)]) == dicom_image
+    with pytest.raises(ValidationError):
+        field.clean(["", str(dicom_image_no_perm.pk)])

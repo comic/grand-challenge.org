@@ -92,7 +92,7 @@ def validate_user_uploads_for_case_import(*, user, user_uploads):
 
     if len(user_uploads) > settings.CASES_MAX_NUM_USER_UPLOADS:
         raise ValidationError(
-            "Too many files uploaded. A maximum of 100 files may be uploaded per session."
+            f"Too many files uploaded. A maximum of {settings.CASES_MAX_NUM_USER_UPLOADS} files may be uploaded per session."
         )
 
     if len({f.filename for f in user_uploads}) != len(user_uploads):
