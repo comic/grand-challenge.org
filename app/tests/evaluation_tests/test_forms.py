@@ -5,6 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.forms import (
     CharField,
     HiddenInput,
+    ModelChoiceField,
     ModelMultipleChoiceField,
     TextInput,
 )
@@ -25,7 +26,10 @@ from grandchallenge.cases.widgets import (
     DICOMUploadWidget,
     ImageSearchMultiWidget,
 )
-from grandchallenge.components.form_fields import FlexibleFileField
+from grandchallenge.components.form_fields import (
+    FileSearchMultiField,
+    FileSourceChoiceField,
+)
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
@@ -35,7 +39,10 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
-from grandchallenge.components.widgets import FlexibleFileWidget, SourceSelect
+from grandchallenge.components.widgets import (
+    FileSearchMultiWidget,
+    SourceSelect,
+)
 from grandchallenge.evaluation.forms import (
     AlgorithmInterfaceForPhaseCopyForm,
     ConfigureAlgorithmPhasesForm,
@@ -58,7 +65,10 @@ from grandchallenge.invoices.models import (
     PaymentTypeChoices,
 )
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadMultipleWidget
+from grandchallenge.uploads.widgets import (
+    UserUploadMultipleWidget,
+    UserUploadSingleWidget,
+)
 from grandchallenge.verifications.models import (
     Verification,
     VerificationUserSet,
@@ -1355,10 +1365,19 @@ def test_additional_inputs_on_submission_form():
         ),
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_dicom.slug}": (Field, HiddenInput),
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_str.slug}": (CharField, TextInput),
-        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}": (
-            FlexibleFileField,
-            FlexibleFileWidget,
+        f"{FlexibleWidgetPrefixes.CHOICE}{ci_file.slug}": (
+            FileSourceChoiceField,
+            SourceSelect,
         ),
+        f"{FlexibleWidgetPrefixes.UPLOAD}{ci_file.slug}": (
+            ModelChoiceField,
+            UserUploadSingleWidget,
+        ),
+        f"{FlexibleWidgetPrefixes.SEARCH}{ci_file.slug}": (
+            FileSearchMultiField,
+            FileSearchMultiWidget,
+        ),
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}": (Field, HiddenInput),
     }
 
     form = SubmissionForm(

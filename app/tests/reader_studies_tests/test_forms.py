@@ -8,11 +8,14 @@ from actstream.actions import is_following
 from django.contrib.auth.models import Permission
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import (
+    CharField,
     Field,
     HiddenInput,
     JSONField,
+    ModelChoiceField,
     ModelMultipleChoiceField,
     Select,
+    TextInput,
 )
 from django.test import override_settings
 from guardian.shortcuts import assign_perm
@@ -26,7 +29,10 @@ from grandchallenge.cases.widgets import (
     DICOMUploadWidget,
     ImageSearchMultiWidget,
 )
-from grandchallenge.components.form_fields import FlexibleFileField
+from grandchallenge.components.form_fields import (
+    FileSearchMultiField,
+    FileSourceChoiceField,
+)
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
@@ -36,7 +42,10 @@ from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,
 )
-from grandchallenge.components.widgets import FlexibleFileWidget, SourceSelect
+from grandchallenge.components.widgets import (
+    FileSearchMultiWidget,
+    SourceSelect,
+)
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
@@ -62,7 +71,10 @@ from grandchallenge.reader_studies.models import (
     ReaderStudyUserObjectPermission,
 )
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadMultipleWidget
+from grandchallenge.uploads.widgets import (
+    UserUploadMultipleWidget,
+    UserUploadSingleWidget,
+)
 from grandchallenge.workstation_configs.models import LookUpTable
 from tests.anatomy_tests.factories import BodyStructureFactory
 from tests.components_tests.factories import (
@@ -1439,46 +1451,65 @@ def test_display_set_update_form(form_class):
     user = UserFactory()
     rs.add_editor(user)
     ds = DisplaySetFactory(reader_study=rs)
-
-    for slug, store_in_db in [("slug-1", False), ("slug-2", True)]:
-        ci = ComponentInterfaceFactory(
-            title=slug,
-            kind=InterfaceKindChoices.ANY,
-            store_in_database=store_in_db,
-        )
+    ci_file = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=False
+    )
+    ci_value = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=True
+    )
+    for ci in [ci_file, ci_value]:
         civ = ComponentInterfaceValueFactory(interface=ci)
         ds.values.add(civ)
-
     instance = None if form_class == DisplaySetCreateForm else ds
+    expected_fields = {
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_value.slug}": (
+            JSONField,
+            JSONEditorWidget,
+        ),
+        f"{FlexibleWidgetPrefixes.CHOICE}{ci_file.slug}": (
+            FileSourceChoiceField,
+            SourceSelect,
+        ),
+        f"{FlexibleWidgetPrefixes.UPLOAD}{ci_file.slug}": (
+            ModelChoiceField,
+            UserUploadSingleWidget,
+        ),
+        f"{FlexibleWidgetPrefixes.SEARCH}{ci_file.slug}": (
+            FileSearchMultiField,
+            FileSearchMultiWidget,
+        ),
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}": (Field, HiddenInput),
+    }
+
     form = form_class(user=user, instance=instance, base_obj=rs)
-    assert sorted(form.fields.keys()) == [
-        f"{INTERFACE_FORM_FIELD_PREFIX}slug-1",
-        f"{INTERFACE_FORM_FIELD_PREFIX}slug-2",
-        "order",
-        "title",
-    ]
-    assert isinstance(
-        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}slug-1"].widget,
-        FlexibleFileWidget,
+
+    assert form.fields.keys() == set(expected_fields.keys()).union(
+        {"order", "title"}
     )
-    assert isinstance(
-        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}slug-2"].widget,
-        JSONEditorWidget,
+    for field_key, (field_type, widget_type) in expected_fields.items():
+        field = form.fields[field_key]
+        assert isinstance(field, field_type)
+        assert isinstance(field.widget, widget_type)
+
+    ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    QuestionFactory(
+        reader_study=rs, answer_type=AnswerType.TEXT, interface=ci_str
+    )
+    del rs.linked_component_interfaces
+    expected_fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_str.slug}"] = (
+        CharField,
+        TextInput,
     )
 
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.STRING, title="slug-3"
-    )
-    QuestionFactory(reader_study=rs, answer_type=AnswerType.TEXT, interface=ci)
-    del rs.linked_component_interfaces
     form = form_class(user=user, instance=instance, base_obj=rs)
-    assert sorted(form.fields.keys()) == [
-        f"{INTERFACE_FORM_FIELD_PREFIX}slug-1",
-        f"{INTERFACE_FORM_FIELD_PREFIX}slug-2",
-        f"{INTERFACE_FORM_FIELD_PREFIX}slug-3",
-        "order",
-        "title",
-    ]
+
+    assert form.fields.keys() == set(expected_fields.keys()).union(
+        {"order", "title"}
+    )
+    for field_key, (field_type, widget_type) in expected_fields.items():
+        field = form.fields[field_key]
+        assert isinstance(field, field_type)
+        assert isinstance(field.widget, widget_type)
 
 
 @pytest.mark.django_db
@@ -1636,16 +1667,27 @@ def test_display_set_add_interface_form():
         htmx_url="foo",
         form_id="1",
     )
-
-    assert form.fields.keys() == {
-        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}",
-        "interface",
+    expected_fields = {
+        f"{FlexibleWidgetPrefixes.CHOICE}{ci_file.slug}": (
+            FileSourceChoiceField,
+            SourceSelect,
+        ),
+        f"{FlexibleWidgetPrefixes.UPLOAD}{ci_file.slug}": (
+            ModelChoiceField,
+            UserUploadSingleWidget,
+        ),
+        f"{FlexibleWidgetPrefixes.SEARCH}{ci_file.slug}": (
+            FileSearchMultiField,
+            FileSearchMultiWidget,
+        ),
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}": (Field, HiddenInput),
     }
 
-    field = form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}"]
-
-    assert isinstance(field, FlexibleFileField)
-    assert isinstance(field.widget, FlexibleFileWidget)
+    assert form.fields.keys() == set(expected_fields).union({"interface"})
+    for field_key, (field_type, widget_type) in expected_fields.items():
+        field = form.fields[field_key]
+        assert isinstance(field, field_type)
+        assert isinstance(field.widget, widget_type)
 
     form = SingleCIVForm(
         pk=ds.pk,
@@ -1691,7 +1733,6 @@ def test_display_set_add_interface_form():
     }
 
     assert form.fields.keys() == set(expected_fields).union({"interface"})
-
     for field_key, (field_type, widget_type) in expected_fields.items():
         field = form.fields[field_key]
         assert isinstance(field, field_type)
@@ -1722,7 +1763,6 @@ def test_display_set_add_interface_form():
     }
 
     assert form.fields.keys() == set(expected_fields).union({"interface"})
-
     for field_key, (field_type, widget_type) in expected_fields.items():
         field = form.fields[field_key]
         assert isinstance(field, field_type)
