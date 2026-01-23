@@ -33,21 +33,45 @@ def test_interface_form_field_image_queryset_filter():
     user = UserFactory()
     im1, im2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", user, im1)
-    upload1 = UserUploadFactory(creator=user)
-    upload2 = UserUploadFactory()
-    upload1.status = UserUpload.StatusChoices.COMPLETED
-    upload1.save()
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
-    fields = InterfaceFormFieldsMixin().get_fields_for_interface(
+    field = InterfaceFormFieldsMixin().get_fields_for_interface(
         interface=ci, user=user
-    )
-    image_field = fields[f"{FlexibleWidgetPrefixes.SEARCH.value}{ci.slug}"]
-    upload_field = fields[f"{FlexibleWidgetPrefixes.UPLOAD.value}{ci.slug}"]
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}"]
 
-    assert im1 in image_field.fields[1].queryset.all()
-    assert im2 not in image_field.fields[1].queryset.all()
-    assert upload1 in upload_field.queryset.all()
-    assert upload2 not in upload_field.queryset.all()
+    assert im1 in field.fields[1].queryset.all()
+    assert im2 not in field.fields[1].queryset.all()
+    assert field.clean(["", str(im1.pk)]) == im1
+    with pytest.raises(ValidationError):
+        field.clean(["", str(im2.pk)])
+
+
+@pytest.mark.django_db
+def test_interface_form_field_image_upload_validation():
+    user = UserFactory()
+    upload = UserUploadFactory(creator=user)
+    upload.status = UserUpload.StatusChoices.COMPLETED
+    upload.save()
+    upload_from_other_user = UserUploadFactory()
+    upload_from_other_user.status = UserUpload.StatusChoices.COMPLETED
+    upload_from_other_user.save()
+    pending_upload = UserUploadFactory(creator=user)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
+    field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, user=user
+    )[f"{FlexibleWidgetPrefixes.UPLOAD}{ci.slug}"]
+
+    assert upload in field.queryset.all()
+    assert upload_from_other_user not in field.queryset.all()
+    assert pending_upload not in field.queryset.all()
+
+    cleaned_data = field.clean([str(upload.pk)])
+
+    assert cleaned_data.count() == 1
+    assert cleaned_data.first() == upload
+    with pytest.raises(ValidationError):
+        field.clean([str(upload_from_other_user.pk)])
+    with pytest.raises(ValidationError):
+        field.clean([str(pending_upload.pk)])
 
 
 @pytest.mark.parametrize(
