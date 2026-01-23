@@ -25,7 +25,6 @@ from grandchallenge.cases.form_fields import (
 from grandchallenge.cases.widgets import (
     DICOMUploadWidget,
     ImageSearchMultiWidget,
-    ImageSourceSelect,
 )
 from grandchallenge.components.form_fields import FlexibleFileField
 from grandchallenge.components.forms import (
@@ -37,7 +36,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,
 )
-from grandchallenge.components.widgets import FlexibleFileWidget
+from grandchallenge.components.widgets import FlexibleFileWidget, SourceSelect
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
@@ -1682,7 +1681,7 @@ def test_display_set_add_interface_form():
     expected_fields = {
         f"{FlexibleWidgetPrefixes.CHOICE}{ci_image.slug}": (
             ImageSourceChoiceField,
-            ImageSourceSelect,
+            SourceSelect,
         ),
         f"{FlexibleWidgetPrefixes.UPLOAD}{ci_image.slug}": (
             ModelMultipleChoiceField,
@@ -1713,7 +1712,7 @@ def test_display_set_add_interface_form():
     expected_fields = {
         f"{FlexibleWidgetPrefixes.CHOICE}{ci_dicom.slug}": (
             ImageSourceChoiceField,
-            ImageSourceSelect,
+            SourceSelect,
         ),
         f"{FlexibleWidgetPrefixes.UPLOAD}{ci_dicom.slug}": (
             DICOMUploadField,

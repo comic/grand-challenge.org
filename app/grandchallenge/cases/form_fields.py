@@ -13,9 +13,9 @@ from grandchallenge.cases.widgets import (
     DICOMUploadWidget,
     DICOMUploadWithName,
     ImageSearchMultiWidget,
-    ImageSourceSelect,
     ImageWidgetChoices,
 )
+from grandchallenge.components.widgets import SourceSelect
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.uploads.models import UserUpload
 
@@ -27,7 +27,7 @@ Please only upload one series instance per session.
 
 
 class ImageSourceChoiceField(ChoiceField):
-    widget = ImageSourceSelect(attrs={"class": "custom-select"})
+    widget = SourceSelect(attrs={"class": "custom-select"})
 
     def __init__(
         self,

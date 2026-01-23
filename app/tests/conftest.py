@@ -14,7 +14,6 @@ from requests import put
 from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.widgets import (
     DICOMUploadWidgetSuffixes,
-    ImageSearchWidgetSuffixes,
     ImageWidgetChoices,
 )
 from grandchallenge.components.backends import docker_client
@@ -27,6 +26,7 @@ from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,
 )
+from grandchallenge.components.widgets import SearchWidgetSuffixes
 from grandchallenge.core.fixtures import create_uploaded_image
 from grandchallenge.reader_studies.models import Question
 from tests.algorithms_tests.factories import (
@@ -521,7 +521,7 @@ def get_interface_form_data(
         if existing_data:
             form_data = {
                 f"{FlexibleWidgetPrefixes.CHOICE}{interface_slug}": ImageWidgetChoices.IMAGE_SEARCH.value,
-                f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{ImageSearchWidgetSuffixes.CHOICE}": data,
+                f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{SearchWidgetSuffixes.CHOICE}": data,
                 f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": "",
             }
         else:

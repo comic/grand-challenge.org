@@ -29,8 +29,6 @@ from grandchallenge.cases.form_fields import (
 from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
 from grandchallenge.cases.widgets import (
     ImageSearchInputWidget,
-    ImageSearchSelect,
-    ImageSourceSelect,
     ImageWidgetChoices,
 )
 from grandchallenge.components.backends.exceptions import (
@@ -51,6 +49,8 @@ from grandchallenge.components.schemas import generate_component_json_schema
 from grandchallenge.components.widgets import (
     FileSearchWidget,
     FlexibleFileWidget,
+    SearchSelect,
+    SourceSelect,
 )
 from grandchallenge.core.forms import SaveFormInitMixin, UserMixin
 from grandchallenge.core.guardian import filter_by_permission
@@ -161,8 +161,8 @@ class InterfaceFormFieldsMixin:
         FlexibleFileWidget,
         FileSearchWidget,
         ImageSearchInputWidget,
-        ImageSearchSelect,
-        ImageSourceSelect,
+        SearchSelect,
+        SourceSelect,
     }
 
     def get_fields_for_interface(

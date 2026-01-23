@@ -27,7 +27,6 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.cases.widgets import (
     DICOMUploadWidgetSuffixes,
-    ImageSearchWidgetSuffixes,
     ImageWidgetChoices,
 )
 from grandchallenge.components.form_fields import FileWidgetChoices
@@ -41,6 +40,7 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.components.widgets import SearchWidgetSuffixes
 from grandchallenge.core.utils.access_requests import (
     AccessRequestHandlingOptions,
 )
@@ -224,8 +224,8 @@ def test_algorithm_create(client, uploaded_image):
             [
                 f'name="{FlexibleWidgetPrefixes.CHOICE}some-overlay"',
                 f'name="{FlexibleWidgetPrefixes.UPLOAD}some-overlay"',
-                f'name="{FlexibleWidgetPrefixes.SEARCH}some-overlay_{ImageSearchWidgetSuffixes.INPUT}"',
-                f'name="{FlexibleWidgetPrefixes.SEARCH}some-overlay_{ImageSearchWidgetSuffixes.CHOICE}"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-overlay_{SearchWidgetSuffixes.INPUT}"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-overlay_{SearchWidgetSuffixes.CHOICE}"',
                 f'name="{INTERFACE_FORM_FIELD_PREFIX}some-overlay"',
             ],
         ),
@@ -237,8 +237,8 @@ def test_algorithm_create(client, uploaded_image):
             [
                 f'name="{FlexibleWidgetPrefixes.CHOICE}some-medical-image"',
                 f'name="{FlexibleWidgetPrefixes.UPLOAD}some-medical-image"',
-                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{ImageSearchWidgetSuffixes.INPUT}"',
-                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{ImageSearchWidgetSuffixes.CHOICE}"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{SearchWidgetSuffixes.INPUT}"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{SearchWidgetSuffixes.CHOICE}"',
                 f'name="{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
             ],
         ),
@@ -251,8 +251,8 @@ def test_algorithm_create(client, uploaded_image):
                 f'name="{FlexibleWidgetPrefixes.CHOICE}some-medical-image"',
                 f'name="{FlexibleWidgetPrefixes.UPLOAD}some-medical-image_{DICOMUploadWidgetSuffixes.NAME}"',
                 f'name="{FlexibleWidgetPrefixes.UPLOAD}some-medical-image_{DICOMUploadWidgetSuffixes.UPLOADS}"',
-                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{ImageSearchWidgetSuffixes.INPUT}"',
-                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{ImageSearchWidgetSuffixes.CHOICE}"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{SearchWidgetSuffixes.INPUT}"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{SearchWidgetSuffixes.CHOICE}"',
                 f'name="{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
             ],
         ),

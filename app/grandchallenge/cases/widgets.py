@@ -10,14 +10,16 @@ from django.forms import (
     ModelMultipleChoiceField,
     MultiValueField,
     MultiWidget,
-    Script,
-    Select,
     TextInput,
 )
 from django.forms.widgets import ChoiceWidget
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.widgets import (
+    SearchSelect,
+    SearchWidgetSuffixes,
+)
 from grandchallenge.core.guardian import (
     filter_by_permission,
     get_object_if_allowed,
@@ -34,11 +36,6 @@ class ImageWidgetChoices(TextChoices):
     IMAGE_SELECTED = "IMAGE_SELECTED", ""
     IMAGE_SEARCH = "IMAGE_SEARCH", "Select an existing image"
     IMAGE_UPLOAD = "IMAGE_UPLOAD", "Upload a new image"
-
-
-class ImageSourceSelect(Select):
-    class Media:
-        js = (Script("cases/js/source_select.mjs", type="module"),)
 
 
 class ImageSearchWidget(ChoiceWidget, HiddenInput):
@@ -255,11 +252,6 @@ class DICOMUploadWidget(MultiWidget):
         return ["", []]
 
 
-class ImageSearchWidgetSuffixes(StrEnum):
-    INPUT = "search-term"
-    CHOICE = "selected-image"
-
-
 class ImageSearchInputWidget(TextInput):
     def get_context(self, name, value, attrs):
         attrs["placeholder"] = "Search by pk or image name"
@@ -274,27 +266,13 @@ class ImageSearchInputWidget(TextInput):
         return context
 
 
-class ImageSearchSelect(Select):
-    template_name = "cases/image_search_select.html"
-
-    def get_context(self, name, value, attrs):
-        context = super().get_context(name, value, attrs)
-        css_class = context["widget"]["attrs"].get("class", "")
-        # Fix invalid icon overlapping with custom select controls
-        context["widget"]["attrs"]["class"] = css_class.replace(
-            "form-control", ""
-        )
-        context["widget"]["selected_object_pk"] = value
-        return context
-
-
 class ImageSearchMultiWidget(MultiWidget):
     template_name = "cases/image_search_multi_widget.html"
 
     def __init__(self, attrs=None, prefixed_interface_slug=None):
         widgets = {
-            ImageSearchWidgetSuffixes.INPUT.value: ImageSearchInputWidget(),
-            ImageSearchWidgetSuffixes.CHOICE.value: ImageSearchSelect(
+            SearchWidgetSuffixes.INPUT.value: ImageSearchInputWidget(),
+            SearchWidgetSuffixes.CHOICE.value: SearchSelect(
                 attrs={"class": "custom-select"}
             ),
         }
