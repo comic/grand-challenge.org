@@ -4,7 +4,6 @@ from grandchallenge.cases.views import (
     DICOMImageSetUploadDetail,
     DICOMImageSetUploadList,
     ImageSearchResultView,
-    ImageWidgetSelectView,
     RawImageUploadSessionDetail,
     RawImageUploadSessionList,
 )
@@ -31,11 +30,6 @@ urlpatterns = [
         "dicom-uploads/<uuid:pk>/",
         DICOMImageSetUploadDetail.as_view(),
         name="dicom-image-set-upload-detail",
-    ),
-    path(
-        "select-image-widget/",
-        ImageWidgetSelectView.as_view(),
-        name="select-image-widget",
     ),
     path(
         "images/search/", ImageSearchResultView.as_view(), name="image-search"
