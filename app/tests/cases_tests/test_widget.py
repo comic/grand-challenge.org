@@ -230,35 +230,45 @@ def test_flexible_image_widget_prepopulated_value():
 @pytest.mark.django_db
 def test_image_upload_field_validation():
     user = UserFactory()
-    upload1 = UserUploadFactory(creator=user)
-    upload1.status = UserUpload.StatusChoices.COMPLETED
-    upload1.save()
-    upload2 = UserUploadFactory(creator=user)
-    upload2.status = UserUpload.StatusChoices.COMPLETED
-    upload2.save()
-    upload3 = UserUploadFactory()
-    upload3.status = UserUpload.StatusChoices.COMPLETED
-    upload3.save()
-    upload4 = UserUploadFactory(creator=user)
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
     field = InterfaceFormFieldsMixin().get_fields_for_interface(
         interface=ci, user=user
     )[f"{FlexibleWidgetPrefixes.UPLOAD.value}{ci.slug}"]
-    data = [str(upload1.pk), str(upload2.pk)]
-    data_from_other_user = [str(upload3.pk)]
-    data_from_pending_upload = [str(upload4.pk)]
 
+    # Normal case: two uploads from the user with completed status
+    upload1, upload2 = UserUploadFactory.create_batch(
+        2,
+        creator=user,
+    )
+    upload1.status = UserUpload.StatusChoices.COMPLETED
+    upload1.save()
+    upload2.status = UserUpload.StatusChoices.COMPLETED
+    upload2.save()
+    data = [str(upload1.pk), str(upload2.pk)]
     cleaned_data = field.clean(data)
 
     assert cleaned_data.count() == 2
     assert upload1 in cleaned_data.all()
     assert upload2 in cleaned_data.all()
 
+    # Upload from another user
+    other_user_upload = UserUploadFactory(
+        creator=UserFactory(),
+    )
+    other_user_upload.status = UserUpload.StatusChoices.COMPLETED
+    other_user_upload.save()
+    data_from_other_user = [str(other_user_upload.pk)]
     with pytest.raises(ValidationError):
         field.clean(data_from_other_user)
 
+    # Upload with non-completed status
+    non_completed_upload = UserUploadFactory(
+        creator=user,
+    )
+    assert non_completed_upload.status != UserUpload.StatusChoices.COMPLETED
+    data_from_non_completed_upload = [str(non_completed_upload.pk)]
     with pytest.raises(ValidationError):
-        field.clean(data_from_pending_upload)
+        field.clean(data_from_non_completed_upload)
 
 
 @pytest.mark.django_db
