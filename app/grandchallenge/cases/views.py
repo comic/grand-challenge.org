@@ -361,8 +361,7 @@ class ImageSearchResultView(
             dicom_image_set__isnull=not interface.is_dicom_image_kind
         )
         query = request.GET.get(
-            f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{ImageSearchWidgetSuffixes.INPUT}",
-            request.GET.get(f"query-{prefixed_interface_slug}"),
+            f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{ImageSearchWidgetSuffixes.INPUT}"
         )
         if query:
             q = reduce(

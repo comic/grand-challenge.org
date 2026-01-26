@@ -222,8 +222,11 @@ def test_algorithm_create(client, uploaded_image):
                 "title": "some-overlay",
             },
             [
-                '<select class="custom-select"',
-                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}some-overlay"',
+                f'name="{FlexibleWidgetPrefixes.CHOICE}some-overlay"',
+                f'name="{FlexibleWidgetPrefixes.UPLOAD}some-overlay"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-overlay_{ImageSearchWidgetSuffixes.INPUT}"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-overlay_{ImageSearchWidgetSuffixes.CHOICE}"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}some-overlay"',
             ],
         ),
         (
@@ -232,8 +235,11 @@ def test_algorithm_create(client, uploaded_image):
                 "title": "some-medical-image",
             },
             [
-                '<select class="custom-select"',
-                f'name="widget-choice-{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
+                f'name="{FlexibleWidgetPrefixes.CHOICE}some-medical-image"',
+                f'name="{FlexibleWidgetPrefixes.UPLOAD}some-medical-image"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{ImageSearchWidgetSuffixes.INPUT}"',
+                f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{ImageSearchWidgetSuffixes.CHOICE}"',
+                f'name="{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
             ],
         ),
         (
@@ -431,7 +437,7 @@ def test_create_job_input_field_required_validation(client, socket_kwargs):
 
     assert response.status_code == 200
 
-    if input_socket.is_dicom_image_kind:
+    if input_socket.is_image_kind:
         field_key = f"{FlexibleWidgetPrefixes.CHOICE}{input_socket.slug}"
     else:
         field_key = f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
@@ -471,37 +477,13 @@ def extract_form_data_from_response(response):
     return data
 
 
-@pytest.mark.parametrize(
-    "widget_choice",
-    [
-        ImageWidgetChoices.UNDEFINED,
-        ImageWidgetChoices.IMAGE_SEARCH,
-        ImageWidgetChoices.IMAGE_UPLOAD,
-    ],
-)
 @pytest.mark.django_db
 def test_create_job_image_kind_no_input_after_widget_choice_field_validation(
-    client, widget_choice
+    client,
 ):
     alg, creator, input_socket = create_algorithm_with_input(
         kind=InterfaceKindChoices.PANIMG_IMAGE
     )
-    prefixed_interface_slug = (
-        f"{INTERFACE_FORM_FIELD_PREFIX}{input_socket.slug}"
-    )
-
-    response = get_view_for_user(
-        viewname="cases:select-image-widget",
-        client=client,
-        user=creator,
-        data={
-            f"widget-choice-{prefixed_interface_slug}": widget_choice.name,
-            "prefixed-interface-slug": prefixed_interface_slug,
-        },
-    )
-    data = extract_form_data_from_response(response)
-    data[f"widget-choice-{prefixed_interface_slug}"] = widget_choice.name
-
     response = get_view_for_user(
         viewname="algorithms:job-create",
         client=client,
@@ -509,16 +491,37 @@ def test_create_job_image_kind_no_input_after_widget_choice_field_validation(
             "slug": alg.slug,
             "interface_pk": alg.interfaces.first().pk,
         },
-        method=client.post,
-        data=data,
-        follow=True,
+        method=client.get,
         user=creator,
     )
+    data = extract_form_data_from_response(response)
 
-    assert response.status_code == 200
-    assert response.context["form"].errors == {
-        f"{prefixed_interface_slug}": ["This field is required."],
-    }
+    for widget_choice, required_widget_prefix in [
+        (ImageWidgetChoices.UNDEFINED, FlexibleWidgetPrefixes.CHOICE),
+        (ImageWidgetChoices.IMAGE_SEARCH, FlexibleWidgetPrefixes.SEARCH),
+        (ImageWidgetChoices.IMAGE_UPLOAD, FlexibleWidgetPrefixes.UPLOAD),
+    ]:
+        data[f"{FlexibleWidgetPrefixes.CHOICE}{input_socket.slug}"] = (
+            widget_choice.value
+        )
+
+        response = get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            reverse_kwargs={
+                "slug": alg.slug,
+                "interface_pk": alg.interfaces.first().pk,
+            },
+            method=client.post,
+            data=data,
+            follow=True,
+            user=creator,
+        )
+
+        assert response.status_code == 200
+        assert response.context["form"].errors[
+            f"{required_widget_prefix.value}{input_socket.slug}"
+        ] == ["This field is required."]
 
 
 @pytest.mark.parametrize(
@@ -1055,13 +1058,22 @@ def test_inputs_required_on_job_creation(algorithm_with_multiple_inputs):
 
     for name, field in form.fields.items():
         # boolean and json inputs that allow None should not be required,
+        # the hidden input for image kind inputs should not be required,
         # all other inputs should be
-        if name not in [
-            "algorithm_model",
-            "creator",
-            f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_with_multiple_inputs.ci_bool.slug}",
-            f"{INTERFACE_FORM_FIELD_PREFIX}{ci_json_in_db_without_schema.slug}",
-        ]:
+        if (
+            name
+            in [
+                "algorithm_model",
+                "creator",
+                f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_with_multiple_inputs.ci_bool.slug}",
+                f"{INTERFACE_FORM_FIELD_PREFIX}{ci_json_in_db_without_schema.slug}",
+                f"{INTERFACE_FORM_FIELD_PREFIX}{algorithm_with_multiple_inputs.ci_existing_img.slug}",
+            ]
+            or name.startswith(FlexibleWidgetPrefixes.UPLOAD)
+            or name.startswith(FlexibleWidgetPrefixes.SEARCH)
+        ):
+            assert not field.required
+        else:
             assert field.required
 
 

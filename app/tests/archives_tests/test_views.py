@@ -14,7 +14,10 @@ from requests import put
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.archives.views import ArchiveItemsList
 from grandchallenge.cases.widgets import ImageWidgetChoices
-from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FlexibleWidgetPrefixes,
+)
 from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,
@@ -1179,7 +1182,7 @@ def test_archive_item_create_view(
         client=client,
         user=editor,
     )
-    assert len(response.context["form"].fields) == 3
+    assert len(response.context["form"].fields) == 6
     assert response.context["form"].fields[
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_str.slug}"
     ]
@@ -1271,7 +1274,7 @@ def test_archive_item_create_view_with_empty_value(
                 **get_interface_form_data(
                     interface_slug=ci_str.slug, data="bar"
                 ),
-                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}": ImageWidgetChoices.UNDEFINED.name,
+                f"{FlexibleWidgetPrefixes.CHOICE.value}{ci_img.slug}": ImageWidgetChoices.UNDEFINED.value,
                 "title": "archive-item title",
             },
             user=editor,

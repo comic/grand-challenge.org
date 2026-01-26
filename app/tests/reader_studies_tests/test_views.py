@@ -2,15 +2,13 @@ import io
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
-from django.forms import JSONField
 from django.test import override_settings
 from guardian.shortcuts import assign_perm
 from pytest_django.asserts import assertContains, assertNotContains
 from requests import put
 
-from grandchallenge.cases.widgets import FlexibleImageField, ImageWidgetChoices
-from grandchallenge.components.form_fields import FlexibleFileField
-from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.cases.widgets import ImageWidgetChoices
+from grandchallenge.components.forms import FlexibleWidgetPrefixes
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
@@ -592,8 +590,11 @@ def test_display_set_update(
             client=client,
             reverse_kwargs={"pk": ds1.pk, "slug": rs.slug},
             data={
-                f"{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}": str(im2.pk),
-                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}": ImageWidgetChoices.IMAGE_SELECTED.name,
+                **get_interface_form_data(
+                    interface_slug=ci_img.slug,
+                    data=str(im2.pk),
+                    existing_data=True,
+                ),
                 "order": 12,
                 "title": "foobar_foobar",
             },
@@ -749,7 +750,7 @@ def test_add_display_set_to_reader_study_with_empty_value(
                 **get_interface_form_data(
                     interface_slug=ci_str.slug, data="bar"
                 ),
-                f"widget-choice-{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}": ImageWidgetChoices.UNDEFINED.name,
+                f"{FlexibleWidgetPrefixes.CHOICE.value}{ci_img.slug}": ImageWidgetChoices.UNDEFINED.value,
                 "order": 11,
             },
             user=editor,
@@ -796,41 +797,36 @@ def test_add_display_set_update_when_disabled(client):
     assert notification.message == "An unexpected error occurred"
 
 
-@pytest.mark.parametrize(
-    "interface_kind, store_in_database, field_type",
-    (
-        (InterfaceKindChoices.ANY, False, FlexibleFileField),
-        (InterfaceKindChoices.ANY, True, JSONField),
-        (InterfaceKindChoices.PANIMG_IMAGE, False, FlexibleImageField),
-    ),
-)
 @pytest.mark.django_db
-def test_display_set_interfaces_create(
-    client, interface_kind, store_in_database, field_type
-):
+def test_display_set_interfaces_create(client):
     u1, u2 = UserFactory.create_batch(2)
     rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
     rs.add_editor(u1)
 
-    ci = ComponentInterfaceFactory(
-        kind=interface_kind, store_in_database=store_in_database
+    ci_value = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=True
+    )
+    ci_file = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=False
+    )
+    ci_image = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.PANIMG_IMAGE, store_in_database=False
+    )
+    ci_dicom = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET, store_in_database=False
     )
 
-    response = get_view_for_user(
-        viewname="reader-studies:display-set-interfaces-create",
-        client=client,
-        reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
-        data={"interface": str(ci.pk)},
-        user=u1,
-    )
-    assert not response.context["form"].is_bound
-    assert isinstance(
-        response.context["form"].fields[
-            f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
-        ],
-        field_type,
-    )
+    for ci in (ci_value, ci_file, ci_image, ci_dicom):
+        response = get_view_for_user(
+            viewname="reader-studies:display-set-interfaces-create",
+            client=client,
+            reverse_kwargs={"pk": ds.pk, "slug": rs.slug},
+            data={"interface": str(ci.pk)},
+            user=u1,
+        )
+        assert response.status_code == 200
+        assert not response.context["form"].is_bound
 
 
 @pytest.mark.django_db

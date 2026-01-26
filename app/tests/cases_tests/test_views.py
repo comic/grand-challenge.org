@@ -137,64 +137,6 @@ def test_image_search_view(client):
         user=user,
         data={
             "prefixed-interface-slug": ci_panimg.slug,
-            f"query-{ci_panimg.slug}": "test",
-        },
-    )
-    assert response.status_code == 200
-    assert response.context_data["object_list"].get() == images[1]
-
-    response = get_view_for_user(
-        viewname="cases:image-search",
-        client=client,
-        user=user,
-        data={
-            "prefixed-interface-slug": ci_panimg.slug,
-            f"query-{ci_panimg.slug}": "",
-        },
-    )
-    assert response.status_code == 200
-    assert len(response.context_data["object_list"]) == 2
-    assert images[0] in response.context_data["object_list"].all()
-    assert images[1] in response.context_data["object_list"].all()
-    assert images[2] not in response.context_data["object_list"].all()
-    for image in images_dicom:
-        assert image not in response.context_data["object_list"].all()
-
-    response = get_view_for_user(
-        viewname="cases:image-search",
-        client=client,
-        user=user,
-        data={
-            "prefixed-interface-slug": ci_dicom.slug,
-            f"query-{ci_dicom.slug}": "test",
-        },
-    )
-    assert response.status_code == 200
-    assert response.context_data["object_list"].get() == images_dicom[1]
-
-    response = get_view_for_user(
-        viewname="cases:image-search",
-        client=client,
-        user=user,
-        data={
-            "prefixed-interface-slug": ci_dicom.slug,
-            f"query-{ci_dicom.slug}": "",
-        },
-    )
-    assert response.status_code == 200
-    assert len(response.context_data["object_list"]) == 2
-    assert images_dicom[0] in response.context_data["object_list"].all()
-    assert images_dicom[1] in response.context_data["object_list"].all()
-    assert images_dicom[2] not in response.context_data["object_list"].all()
-    for image in images:
-        assert image not in response.context_data["object_list"].all()
-
-    response = get_view_for_user(
-        viewname="cases:image-search",
-        client=client,
-        user=user,
-        data={
-            "prefixed-interface-slug": ci_panimg.slug,
             f"{FlexibleWidgetPrefixes.SEARCH}{ci_panimg.slug}_{ImageSearchWidgetSuffixes.INPUT}": "test",
         },
     )

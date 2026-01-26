@@ -2,7 +2,13 @@ from pathlib import Path
 
 import pytest
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.forms import CharField
+from django.forms import (
+    CharField,
+    HiddenInput,
+    ModelMultipleChoiceField,
+    TextInput,
+)
+from django.forms.fields import Field
 from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import (
@@ -10,14 +16,27 @@ from grandchallenge.algorithms.forms import (
     AlgorithmInterfaceForm,
 )
 from grandchallenge.algorithms.models import Job
-from grandchallenge.cases.widgets import FlexibleImageField
+from grandchallenge.cases.form_fields import (
+    DICOMUploadField,
+    ImageSearchMultiField,
+    ImageSourceChoiceField,
+)
+from grandchallenge.cases.widgets import (
+    DICOMUploadWidget,
+    ImageSearchMultiWidget,
+    ImageSourceSelect,
+)
 from grandchallenge.components.form_fields import FlexibleFileField
-from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FlexibleWidgetPrefixes,
+)
 from grandchallenge.components.models import (
     ImportStatusChoices,
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.components.widgets import FlexibleFileWidget
 from grandchallenge.evaluation.forms import (
     AlgorithmInterfaceForPhaseCopyForm,
     ConfigureAlgorithmPhasesForm,
@@ -40,6 +59,7 @@ from grandchallenge.invoices.models import (
     PaymentTypeChoices,
 )
 from grandchallenge.uploads.models import UserUpload
+from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 from grandchallenge.verifications.models import (
     Verification,
     VerificationUserSet,
@@ -1300,28 +1320,57 @@ def test_phase_update_form_gpu_type_with_additional_selectable_gpu_types():
 def test_additional_inputs_on_submission_form():
     phase = PhaseFactory()
     ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    ci_dicom = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.DICOM_IMAGE_SET
+    )
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     ci_file = ComponentInterfaceFactory(
         kind=InterfaceKindChoices.ANY, store_in_database=False
     )
-    phase.additional_evaluation_inputs.set([ci_img, ci_str, ci_file])
+    phase.additional_evaluation_inputs.set([ci_img, ci_dicom, ci_str, ci_file])
+    expected_fields = {
+        f"{FlexibleWidgetPrefixes.CHOICE}{ci_img.slug}": (
+            ImageSourceChoiceField,
+            ImageSourceSelect,
+        ),
+        f"{FlexibleWidgetPrefixes.UPLOAD}{ci_img.slug}": (
+            ModelMultipleChoiceField,
+            UserUploadMultipleWidget,
+        ),
+        f"{FlexibleWidgetPrefixes.SEARCH}{ci_img.slug}": (
+            ImageSearchMultiField,
+            ImageSearchMultiWidget,
+        ),
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}": (Field, HiddenInput),
+        f"{FlexibleWidgetPrefixes.CHOICE}{ci_dicom.slug}": (
+            ImageSourceChoiceField,
+            ImageSourceSelect,
+        ),
+        f"{FlexibleWidgetPrefixes.UPLOAD}{ci_dicom.slug}": (
+            DICOMUploadField,
+            DICOMUploadWidget,
+        ),
+        f"{FlexibleWidgetPrefixes.SEARCH}{ci_dicom.slug}": (
+            ImageSearchMultiField,
+            ImageSearchMultiWidget,
+        ),
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_dicom.slug}": (Field, HiddenInput),
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_str.slug}": (CharField, TextInput),
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}": (
+            FlexibleFileField,
+            FlexibleFileWidget,
+        ),
+    }
 
     form = SubmissionForm(
         user=UserFactory(),
         phase=phase,
     )
 
-    assert isinstance(
-        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}"],
-        FlexibleImageField,
-    )
-    assert isinstance(
-        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}"],
-        FlexibleFileField,
-    )
-    assert isinstance(
-        form.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{ci_str.slug}"], CharField
-    )
+    for field_key, (field_type, widget_type) in expected_fields.items():
+        field = form.fields[field_key]
+        assert isinstance(field, field_type)
+        assert isinstance(field.widget, widget_type)
 
 
 @pytest.mark.django_db
