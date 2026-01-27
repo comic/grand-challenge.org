@@ -684,11 +684,11 @@ class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
 
     def _clean_default_value(self):
         if (
-            self.super_kind == InterfaceSuperKindChoices.FILE
-            and self.default_value
+            self.default_value
+            and self.super_kind != InterfaceSuperKindChoices.VALUE
         ):
             raise ValidationError(
-                "A socket that requires a file should not have a default value"
+                "Default values may only be defined for value super kinds (json kinds stored in the database)."
             )
 
     def validate_against_schema(self, *, value):
