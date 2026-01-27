@@ -7,13 +7,12 @@ from grandchallenge.components.form_fields import (
     FileSourceChoiceField,
     FileSourceChoices,
     FlexibleFileField,
-    SourceChoices,
 )
 from grandchallenge.components.forms import (
     FlexibleWidgetPrefixes,
     InterfaceFormFieldsMixin,
 )
-from grandchallenge.components.models import InterfaceKinds
+from grandchallenge.components.models import InterfaceKinds, SourceChoices
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory

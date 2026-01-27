@@ -2,7 +2,7 @@ import json
 import logging
 import re
 import secrets
-from enum import Enum
+from enum import Enum, StrEnum
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -106,6 +106,13 @@ RESERVED_SOCKET_SLUGS = {
     "metrics-json-file",
     "results-json-file",
 }
+
+
+class SourceChoices(StrEnum):
+    UNDEFINED = ""
+    CURRENT = "CURRENT"
+    SEARCH = "SEARCH"
+    UPLOAD = "UPLOAD"
 
 
 class InterfaceKindChoices(models.TextChoices):

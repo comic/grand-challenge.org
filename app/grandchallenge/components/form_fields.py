@@ -1,5 +1,3 @@
-from enum import StrEnum
-
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
 from django.forms import (
@@ -10,7 +8,10 @@ from django.forms import (
     MultiValueField,
 )
 
-from grandchallenge.components.models import ComponentInterfaceValue
+from grandchallenge.components.models import (
+    ComponentInterfaceValue,
+    SourceChoices,
+)
 from grandchallenge.components.widgets import (
     FileSearchMultiWidget,
     FlexibleFileWidget,
@@ -24,13 +25,6 @@ from grandchallenge.serving.models import (
     get_component_interface_values_for_user,
 )
 from grandchallenge.uploads.models import UserUpload
-
-
-class SourceChoices(StrEnum):
-    UNDEFINED = ""
-    CURRENT = "CURRENT"
-    SEARCH = "SEARCH"
-    UPLOAD = "UPLOAD"
 
 
 class FileSourceChoices(TextChoices):

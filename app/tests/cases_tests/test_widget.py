@@ -15,13 +15,12 @@ from grandchallenge.cases.widgets import (
     DICOMUploadWithName,
     FlexibleImageField,
 )
-from grandchallenge.components.form_fields import SourceChoices
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
     InterfaceFormFieldsMixin,
 )
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import ComponentInterface, SourceChoices
 from grandchallenge.uploads.models import UserUpload
 from tests.cases_tests.factories import DICOMImageSetFactory
 from tests.components_tests.factories import (
