@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import pytest
 from allauth.account.models import EmailAddress
 from django.conf import settings
@@ -44,30 +46,30 @@ def test_2fa_required_for_staff(client):
 @pytest.mark.parametrize(
     "url, url_kwargs, login_required, expected_status_code",
     [
-        ("account_login", None, False, 200),
-        ("account_signup", None, False, 200),
-        ("account_logout", None, False, 302),
-        ("account_reauthenticate", None, True, 200),
-        ("account_email", None, True, 200),
-        ("account_email_verification_sent", None, True, 200),
-        ("account_confirm_email", {"key": "abcd1234"}, True, 200),
-        ("account_change_password", None, True, 200),
-        ("account_set_password", None, True, 302),
-        ("account_inactive", None, True, 200),
-        ("account_reset_password", None, True, 200),
-        ("account_reset_password_done", None, True, 200),
+        ("account_login", None, False, HTTPStatus.OK),
+        ("account_signup", None, False, HTTPStatus.OK),
+        ("account_logout", None, False, HTTPStatus.FOUND),
+        ("account_reauthenticate", None, True, HTTPStatus.OK),
+        ("account_email", None, True, HTTPStatus.OK),
+        ("account_email_verification_sent", None, True, HTTPStatus.OK),
+        ("account_confirm_email", {"key": "abcd1234"}, True, HTTPStatus.OK),
+        ("account_change_password", None, True, HTTPStatus.OK),
+        ("account_set_password", None, True, HTTPStatus.FOUND),
+        ("account_inactive", None, True, HTTPStatus.OK),
+        ("account_reset_password", None, True, HTTPStatus.OK),
+        ("account_reset_password_done", None, True, HTTPStatus.OK),
         (
             "account_reset_password_from_key",
             {"uidb36": int_to_base36(1234), "key": "abcd1234"},
             True,
-            200,
+            HTTPStatus.OK,
         ),
-        ("account_reset_password_from_key_done", None, True, 200),
-        ("socialaccount_login_cancelled", None, True, 200),
-        ("socialaccount_login_error", None, True, 200),
-        ("socialaccount_connections", None, True, 200),
-        ("mfa_activate_totp", None, True, 302),
-        ("mfa_index", None, True, 200),
+        ("account_reset_password_from_key_done", None, True, HTTPStatus.OK),
+        ("socialaccount_login_cancelled", None, True, HTTPStatus.OK),
+        ("socialaccount_login_error", None, True, HTTPStatus.UNAUTHORIZED),
+        ("socialaccount_connections", None, True, HTTPStatus.OK),
+        ("mfa_activate_totp", None, True, HTTPStatus.FOUND),
+        ("mfa_index", None, True, HTTPStatus.OK),
     ],
 )
 @pytest.mark.django_db
@@ -86,7 +88,7 @@ def test_require_mfa_not_on_allowed_urls(
         user=staff_user if login_required else None,
     )
     assert resp.status_code == expected_status_code
-    if expected_status_code == 302:
+    if expected_status_code == HTTPStatus.FOUND:
         assert resp["location"] != reverse("mfa_activate_totp")
 
 
