@@ -40,7 +40,6 @@ from grandchallenge.components.models import (
     RESERVED_SOCKET_SLUGS,
     CIVData,
     ComponentInterface,
-    ComponentInterfaceValue,
     SourceChoices,
 )
 from grandchallenge.components.schemas import generate_component_json_schema
@@ -174,16 +173,9 @@ class InterfaceFormFieldsMixin:
         interface,
         user=None,
         required=True,
-        initial=None,
         current_socket_value=None,
         disabled=False,
     ):
-        if (
-            isinstance(initial, ComponentInterfaceValue)
-            and not initial.has_value
-        ):
-            initial = None
-
         prefixed_interface_slug = (
             f"{INTERFACE_FORM_FIELD_PREFIX}{interface.slug}"
         )
@@ -270,7 +262,7 @@ class InterfaceFormFieldsMixin:
             return {
                 prefixed_interface_slug: self.get_json_field(
                     interface=interface,
-                    initial=initial,
+                    current_socket_value=current_socket_value,
                     **kwargs,
                 )
             }
@@ -280,10 +272,12 @@ class InterfaceFormFieldsMixin:
             )
 
     @staticmethod
-    def get_json_field(interface, initial, **kwargs):
-        if isinstance(initial, ComponentInterfaceValue):
-            initial = initial.value
-        kwargs["initial"] = initial
+    def get_json_field(interface, current_socket_value, **kwargs):
+        if current_socket_value is not None:
+            kwargs["initial"] = current_socket_value.value
+        else:
+            kwargs["initial"] = interface.default_value
+
         field_type = interface.default_field
 
         schema = generate_component_json_schema(
@@ -391,27 +385,12 @@ class AdditionalInputsMixin(UserMixin, InterfaceFormFieldsMixin):
 
         super().__init__(*args, **kwargs)
 
-        for input in self._additional_inputs:
-            prefixed_interface_slug = (
-                f"{INTERFACE_FORM_FIELD_PREFIX}{input.slug}"
-            )
-
-            if prefixed_interface_slug in self.data:
-                try:
-                    initial = self.data.getlist(prefixed_interface_slug)
-                    if len(initial) == 1:
-                        initial = initial[0]
-                except AttributeError:
-                    initial = self.data.get(prefixed_interface_slug)
-            else:
-                initial = None
-
+        for interface in self._additional_inputs:
             self.fields.update(
                 self.get_fields_for_interface(
-                    interface=input,
+                    interface=interface,
                     user=self._user,
-                    required=input.value_required,
-                    initial=initial if initial else input.default_value,
+                    required=interface.value_required,
                 )
             )
 
