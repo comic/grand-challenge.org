@@ -2417,8 +2417,8 @@ class CIVData:
             self._user_upload = self._initial_value
         elif isinstance(self._initial_value, ComponentInterfaceValue):
             self._file_civ = self._initial_value
-        elif self._initial_value is None:
-            self._file_civ = None
+        elif self._initial_value == SourceChoices.REMOVE:
+            self._file_civ = self._initial_value
         else:
             raise ValidationError(
                 f"Unknown data type {type(self._initial_value)} for interface {self._interface_slug}"
@@ -2752,7 +2752,9 @@ class CIVForObjectMixin:
         user_upload=None,
         linked_task=None,
     ):
-        if file_civ:
+        if file_civ == SourceChoices.REMOVE:
+            self.remove_civ(civ=current_civ)
+        elif file_civ:
             self.remove_civ(civ=current_civ)
             self.add_civ(civ=file_civ)
 
@@ -2782,9 +2784,7 @@ class CIVForObjectMixin:
             )
 
         else:
-            # if no new value is provided (user selects '---' in dropdown)
-            # delete old CIV
-            self.remove_civ(civ=current_civ)
+            raise NotImplementedError
 
     def get_civ_for_interface(self, interface):
         raise NotImplementedError
