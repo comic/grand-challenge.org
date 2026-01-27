@@ -139,7 +139,10 @@ def test_file_source_select_options():
 
 
 def test_json_field_prepopulated_value():
-    ci = ComponentInterfaceFactory.build(kind=FuzzyChoice(InterfaceKinds.json))
+    ci = ComponentInterfaceFactory.build(
+        kind=FuzzyChoice(InterfaceKinds.json),
+        default_value="some default value",
+    )
     civ = ComponentInterfaceValueFactory.build(interface=ci, value="foobar")
 
     field = InterfaceFormFieldsMixin().get_fields_for_interface(
@@ -147,3 +150,9 @@ def test_json_field_prepopulated_value():
     )[f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"]
 
     assert field.initial == "foobar"
+
+    field = InterfaceFormFieldsMixin().get_fields_for_interface(interface=ci)[
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
+    ]
+
+    assert field.initial == "some default value"
