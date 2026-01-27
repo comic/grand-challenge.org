@@ -187,12 +187,6 @@ class InterfaceFormFieldsMixin:
             "label": interface.title.title(),
         }
 
-        upload_queryset = filter_by_permission(
-            queryset=UserUpload.objects.all(),
-            user=user,
-            codename="change_userupload",
-        ).filter(status=UserUpload.StatusChoices.COMPLETED)
-
         if interface.super_kind == interface.SuperKind.IMAGE:
             if interface.is_dicom_image_kind:
                 upload_field = DICOMUploadField(
@@ -203,7 +197,11 @@ class InterfaceFormFieldsMixin:
                 )
             else:
                 upload_field = ModelMultipleChoiceField(
-                    queryset=upload_queryset,
+                    queryset=filter_by_permission(
+                        queryset=UserUpload.objects.all(),
+                        user=user,
+                        codename="change_userupload",
+                    ).filter(status=UserUpload.StatusChoices.COMPLETED),
                     widget=UserUploadMultipleWidget,
                     label="",
                     help_text=IMAGE_UPLOAD_HELP_TEXT,
@@ -237,7 +235,11 @@ class InterfaceFormFieldsMixin:
                     **kwargs,
                 ),
                 f"{FlexibleWidgetPrefixes.UPLOAD}{interface.slug}": ModelChoiceField(
-                    queryset=upload_queryset,
+                    queryset=filter_by_permission(
+                        queryset=UserUpload.objects.all(),
+                        user=user,
+                        codename="change_userupload",
+                    ).filter(status=UserUpload.StatusChoices.COMPLETED),
                     widget=UserUploadSingleWidget,
                     label="",
                     help_text=f"{FILE_UPLOAD_HELP_TEXT} {interface.file_extension}",
