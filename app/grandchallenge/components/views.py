@@ -9,10 +9,8 @@ from django.db.models import Q, TextChoices
 from django.forms import Media
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.views import View
 from django.views.generic import (
     DeleteView,
     DetailView,
@@ -47,14 +45,12 @@ from grandchallenge.core.guardian import (
     ViewObjectPermissionListMixin,
     filter_by_permission,
 )
-from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.serving.models import (
     get_component_interface_values_for_user,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
-from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 
 
 class ComponentInterfaceViewSet(ReadOnlyModelViewSet):
@@ -477,37 +473,6 @@ class FileAccessRequiredMixin(AccessMixin):
             return super().dispatch(request, *args, **kwargs)
         else:
             return self.handle_no_permission()
-
-
-class FileUploadFormFieldView(
-    LoginRequiredMixin, FileAccessRequiredMixin, View
-):
-    @cached_property
-    def interface(self):
-        return get_object_or_404(
-            ComponentInterface, slug=self.kwargs["interface_slug"]
-        )
-
-    def get(self, request, *args, **kwargs):
-        widget_name = f"{INTERFACE_FORM_FIELD_PREFIX}{self.interface.slug}"
-        html_content = render_to_string(
-            UserUploadMultipleWidget.template_name,
-            {
-                "widget": UserUploadMultipleWidget(
-                    allowed_file_types=self.interface.allowed_file_types,
-                ).get_context(
-                    name=widget_name,
-                    value=None,
-                    attrs={
-                        "id": widget_name,
-                        "help_text": clean(self.interface.description),
-                    },
-                )[
-                    "widget"
-                ],
-            },
-        )
-        return HttpResponse(html_content)
 
 
 class FileSearchResultView(
