@@ -1,4 +1,4 @@
-const initChoiceWidgets = () => {
+const initSelects = () => {
     const elements = document.querySelectorAll(
         "select[id^='id_flexible_widget_choice__INTERFACE_FIELD__']",
     );
@@ -16,19 +16,19 @@ const initChoiceWidgets = () => {
 
         // Run this every time, regardless of whether the event listener was added.
         // This ensures only the selected widget is displayed when the form is re-rendered after validation errors.
-        searchWidget.classList.toggle("d-none", el.value !== "IMAGE_SEARCH");
-        uploadWidget.classList.toggle("d-none", el.value !== "IMAGE_UPLOAD");
+        searchWidget.classList.toggle("d-none", el.value !== "SEARCH");
+        uploadWidget.classList.toggle("d-none", el.value !== "UPLOAD");
 
         // Add the event listener only once, otherwise we'll respond to the event multiple times.
         if (!el.dataset.eventListenerAdded) {
             el.addEventListener("change", function () {
                 searchWidget.classList.toggle(
                     "d-none",
-                    this.value !== "IMAGE_SEARCH",
+                    this.value !== "SEARCH",
                 );
                 uploadWidget.classList.toggle(
                     "d-none",
-                    this.value !== "IMAGE_UPLOAD",
+                    this.value !== "UPLOAD",
                 );
             });
             el.dataset.eventListenerAdded = "1";
@@ -36,6 +36,6 @@ const initChoiceWidgets = () => {
     }
 };
 
-document.addEventListener("htmx:load", initChoiceWidgets);
+document.addEventListener("htmx:load", initSelects);
 
-initChoiceWidgets();
+initSelects();

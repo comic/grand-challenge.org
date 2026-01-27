@@ -8,11 +8,15 @@ from factory.fuzzy import FuzzyChoice
 
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.components.form_fields import FileWidgetChoices
-from grandchallenge.components.forms import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FlexibleWidgetPrefixes,
+)
 from grandchallenge.components.models import (
     InterfaceKindChoices,
     InterfaceKinds,
 )
+from grandchallenge.components.widgets import SearchWidgetSuffixes
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
 from grandchallenge.subdomains.utils import reverse
 from tests.algorithms_tests.factories import (
@@ -966,7 +970,7 @@ def test_file_search_result_view_filter_by_pk(client):
         method=client.get,
         data={
             "prefixed-interface-slug": prefixed_interface_slug,
-            f"query-{prefixed_interface_slug}": f"{civ1.pk}",
+            f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}_{SearchWidgetSuffixes.INPUT}": f"{civ1.pk}",
         },
         user=user,
     )
@@ -1021,7 +1025,7 @@ def test_file_search_result_view_filter_by_name(client):
         method=client.get,
         data={
             "prefixed-interface-slug": prefixed_interface_slug,
-            f"query-{prefixed_interface_slug}": "foobar",
+            f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}_{SearchWidgetSuffixes.INPUT}": "foobar",
         },
         user=user,
     )

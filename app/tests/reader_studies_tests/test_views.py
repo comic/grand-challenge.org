@@ -7,7 +7,7 @@ from guardian.shortcuts import assign_perm
 from pytest_django.asserts import assertContains, assertNotContains
 from requests import put
 
-from grandchallenge.cases.widgets import ImageWidgetChoices
+from grandchallenge.cases.form_fields import ImageSourceChoices
 from grandchallenge.components.forms import FlexibleWidgetPrefixes
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
@@ -750,7 +750,7 @@ def test_add_display_set_to_reader_study_with_empty_value(
                 **get_interface_form_data(
                     interface_slug=ci_str.slug, data="bar"
                 ),
-                f"{FlexibleWidgetPrefixes.CHOICE.value}{ci_img.slug}": ImageWidgetChoices.UNDEFINED.value,
+                f"{FlexibleWidgetPrefixes.CHOICE}{ci_img.slug}": ImageSourceChoices.UNDEFINED.value,
                 "order": 11,
             },
             user=editor,

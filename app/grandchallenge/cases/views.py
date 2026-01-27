@@ -36,17 +36,14 @@ from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
 )
-from grandchallenge.cases.widgets import (
-    ImageSearchWidget,
-    ImageSearchWidgetSuffixes,
-    ImageWidgetChoices,
-)
+from grandchallenge.cases.widgets import ImageSearchWidget, ImageWidgetChoices
 from grandchallenge.components.backends.base import serialize_aws_request
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
 )
 from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.widgets import SearchWidgetSuffixes
 from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     ViewObjectPermissionListMixin,
@@ -361,7 +358,7 @@ class ImageSearchResultView(
             dicom_image_set__isnull=not interface.is_dicom_image_kind
         )
         query = request.GET.get(
-            f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{ImageSearchWidgetSuffixes.INPUT}"
+            f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{SearchWidgetSuffixes.INPUT}"
         )
         if query:
             q = reduce(

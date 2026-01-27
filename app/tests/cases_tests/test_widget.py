@@ -8,13 +8,14 @@ from guardian.shortcuts import assign_perm
 from grandchallenge.cases.form_fields import (
     DICOMUploadField,
     ImageSourceChoiceField,
+    ImageSourceChoices,
 )
 from grandchallenge.cases.widgets import (
     DICOMUploadWidgetSuffixes,
     DICOMUploadWithName,
     FlexibleImageField,
-    ImageWidgetChoices,
 )
+from grandchallenge.components.form_fields import SourceChoices
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
@@ -233,7 +234,7 @@ def test_image_upload_field_validation():
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
     field = InterfaceFormFieldsMixin().get_fields_for_interface(
         interface=ci, user=user
-    )[f"{FlexibleWidgetPrefixes.UPLOAD.value}{ci.slug}"]
+    )[f"{FlexibleWidgetPrefixes.UPLOAD}{ci.slug}"]
 
     # Normal case: two uploads from the user with completed status
     upload1, upload2 = UserUploadFactory.create_batch(
@@ -349,23 +350,23 @@ def test_image_source_select_prepopulated_value():
 
     assert field.current_socket_value == civ
     assert field.choices == [
-        ("IMAGE_SELECTED", "test_image"),
-        ("IMAGE_SEARCH", "Select an existing image"),
-        ("IMAGE_UPLOAD", "Upload a new image"),
+        ("CURRENT", "test_image"),
+        ("SEARCH", "Select an existing image"),
+        ("UPLOAD", "Upload a new image"),
     ]
-    assert field.clean(ImageWidgetChoices.IMAGE_SELECTED.value) == im
+    assert field.clean(SourceChoices.CURRENT.value) == im
     with pytest.raises(ValidationError, match="This field is required."):
-        field.clean(ImageWidgetChoices.UNDEFINED.value)
+        field.clean(ImageSourceChoices.UNDEFINED.value)
 
     field = ImageSourceChoiceField()
 
     assert field.choices == [
         ("", "Choose data source..."),
-        ("IMAGE_SEARCH", "Select an existing image"),
-        ("IMAGE_UPLOAD", "Upload a new image"),
+        ("SEARCH", "Select an existing image"),
+        ("UPLOAD", "Upload a new image"),
     ]
     assert field.current_socket_value is None
     with pytest.raises(ValidationError, match="Select a valid choice."):
-        field.clean(ImageWidgetChoices.IMAGE_SELECTED.value)
+        field.clean(SourceChoices.CURRENT.value)
     with pytest.raises(ValidationError, match="This field is required."):
-        field.clean(ImageWidgetChoices.UNDEFINED.value)
+        field.clean(ImageSourceChoices.UNDEFINED.value)

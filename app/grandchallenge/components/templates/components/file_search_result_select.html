@@ -1,7 +1,7 @@
 {% if object_list %}
     <option value="">Choose file...</option>
     {% for object in object_list %}
-        <option value="{{ object.pk }}">{{ object.title }} ({{ object.pk }})</option>
+        <option value="{{ object.pk }}"{% if selected_object_pk == object.pk|stringformat:'s' %} selected{% endif %}>{{ object.title }} ({{ object.pk }})</option>
     {% endfor %}
 {% else %}
     <option value="">No files match your search criteria.</option>
