@@ -354,6 +354,7 @@ class InterfaceFormFieldsMixin:
                 )
                 widget_fields = {
                     SourceChoices.CURRENT: key,
+                    SourceChoices.REMOVE: key,
                     SourceChoices.SEARCH: f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}",
                     SourceChoices.UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}",
                 }

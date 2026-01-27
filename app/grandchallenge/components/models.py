@@ -113,6 +113,7 @@ class SourceChoices(StrEnum):
     CURRENT = "CURRENT"
     SEARCH = "SEARCH"
     UPLOAD = "UPLOAD"
+    REMOVE = "REMOVE"
 
 
 class InterfaceKindChoices(models.TextChoices):

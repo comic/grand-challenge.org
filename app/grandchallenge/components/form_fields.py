@@ -31,6 +31,7 @@ class FileSourceChoices(TextChoices):
     UNDEFINED = SourceChoices.UNDEFINED, "Choose data source..."
     SEARCH = SourceChoices.SEARCH, "Select an existing file"
     UPLOAD = SourceChoices.UPLOAD, "Upload a new file"
+    REMOVE = SourceChoices.REMOVE, "Remove this file"
 
 
 class FileWidgetChoices(TextChoices):
@@ -154,6 +155,13 @@ class FileSourceChoiceField(ChoiceField):
                     SourceChoices.CURRENT.value,
                     current_socket_value.title,
                 ),
+            )
+        else:
+            choices.remove(
+                (
+                    FileSourceChoices.REMOVE.value,
+                    FileSourceChoices.REMOVE.label,
+                )
             )
 
         super().__init__(
