@@ -476,42 +476,6 @@ def test_file_search_field_validation_with_archive_items():
 
 
 @pytest.mark.django_db
-def test_file_source_select_prepopulated_value_algorithm_job():
-    creator, user = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
-    civ = ComponentInterfaceValueFactory(
-        interface=ci, file=factory.django.FileField()
-    )
-    job = AlgorithmJobFactory(creator=creator, time_limit=60)
-    job.inputs.set([civ])
-
-    field = FileSourceChoiceField(current_socket_value=civ)
-
-    assert field.current_socket_value == civ
-    assert field.choices == [
-        ("CURRENT", civ.title),
-        ("SEARCH", "Select an existing file"),
-        ("UPLOAD", "Upload a new file"),
-    ]
-    assert field.clean(SourceChoices.CURRENT.value) == civ
-    with pytest.raises(ValidationError, match="This field is required."):
-        field.clean(FileSourceChoices.UNDEFINED.value)
-
-    field = FileSourceChoiceField()
-
-    assert field.choices == [
-        ("", "Choose data source..."),
-        ("SEARCH", "Select an existing file"),
-        ("UPLOAD", "Upload a new file"),
-    ]
-    assert field.current_socket_value is None
-    with pytest.raises(ValidationError, match="Select a valid choice."):
-        field.clean(SourceChoices.CURRENT.value)
-    with pytest.raises(ValidationError, match="This field is required."):
-        field.clean(FileSourceChoices.UNDEFINED.value)
-
-
-@pytest.mark.django_db
 def test_file_source_select_prepopulated_value_display_set():
     editor, user = UserFactory.create_batch(2)
     ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
