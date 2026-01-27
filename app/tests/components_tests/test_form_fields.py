@@ -474,16 +474,11 @@ def test_file_search_field_validation_with_archive_items():
         field.clean(["", f"{civ2.pk}"])
 
 
-@pytest.mark.django_db
-def test_file_source_select_prepopulated_value_display_set():
-    editor, user = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
-    civ = ComponentInterfaceValueFactory(
+def test_file_source_select_options():
+    ci = ComponentInterfaceFactory.build(kind=FuzzyChoice(InterfaceKinds.file))
+    civ = ComponentInterfaceValueFactory.build(
         interface=ci, file=factory.django.FileField()
     )
-    display_set = DisplaySetFactory()
-    display_set.reader_study.add_editor(editor)
-    display_set.values.set([civ])
 
     field = FileSourceChoiceField(current_socket_value=civ)
 
@@ -492,10 +487,12 @@ def test_file_source_select_prepopulated_value_display_set():
         ("CURRENT", civ.title),
         ("SEARCH", "Select an existing file"),
         ("UPLOAD", "Upload a new file"),
+        ("REMOVE", "Remove this file"),
     ]
-    assert field.clean(SourceChoices.CURRENT.value) == civ
+    assert field.clean(SourceChoices.CURRENT) == civ
+    assert field.clean(SourceChoices.REMOVE) == SourceChoices.REMOVE
     with pytest.raises(ValidationError, match="This field is required."):
-        field.clean(FileSourceChoices.UNDEFINED.value)
+        field.clean(FileSourceChoices.UNDEFINED)
 
     field = FileSourceChoiceField()
 
@@ -506,43 +503,8 @@ def test_file_source_select_prepopulated_value_display_set():
     ]
     assert field.current_socket_value is None
     with pytest.raises(ValidationError, match="Select a valid choice."):
-        field.clean(SourceChoices.CURRENT.value)
-    with pytest.raises(ValidationError, match="This field is required."):
-        field.clean(FileSourceChoices.UNDEFINED.value)
-
-
-@pytest.mark.django_db
-def test_file_source_select_prepopulated_value_archive_item():
-    editor, user = UserFactory.create_batch(2)
-    ci = ComponentInterfaceFactory(kind=FuzzyChoice(InterfaceKinds.file))
-    civ = ComponentInterfaceValueFactory(
-        interface=ci, file=factory.django.FileField()
-    )
-    archive_item = ArchiveItemFactory()
-    archive_item.archive.add_editor(editor)
-    archive_item.values.set([civ])
-
-    field = FileSourceChoiceField(current_socket_value=civ)
-
-    assert field.current_socket_value == civ
-    assert field.choices == [
-        ("CURRENT", civ.title),
-        ("SEARCH", "Select an existing file"),
-        ("UPLOAD", "Upload a new file"),
-    ]
-    assert field.clean(SourceChoices.CURRENT.value) == civ
-    with pytest.raises(ValidationError, match="This field is required."):
-        field.clean(FileSourceChoices.UNDEFINED.value)
-
-    field = FileSourceChoiceField()
-
-    assert field.choices == [
-        ("", "Choose data source..."),
-        ("SEARCH", "Select an existing file"),
-        ("UPLOAD", "Upload a new file"),
-    ]
-    assert field.current_socket_value is None
+        field.clean(SourceChoices.CURRENT)
     with pytest.raises(ValidationError, match="Select a valid choice."):
-        field.clean(SourceChoices.CURRENT.value)
+        field.clean(SourceChoices.REMOVE.value)
     with pytest.raises(ValidationError, match="This field is required."):
-        field.clean(FileSourceChoices.UNDEFINED.value)
+        field.clean(FileSourceChoices.UNDEFINED)
