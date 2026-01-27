@@ -152,11 +152,17 @@ $.extend(DataTable.ext.buttons, {
 		},
 		init: function (dt, button, conf) {
 			var that = this;
+			var column = dt.column(conf.columns);
+
 			button.attr('data-cv-idx', conf.columns);
 
-			dt.on('column-visibility.dt' + conf.namespace, function (e, settings) {
-				if (!settings.bDestroying && settings.nTable == dt.settings()[0].nTable) {
-					that.active(dt.column(conf.columns).visible());
+			dt.on('column-visibility.dt' + conf.namespace, function (e, settings, index, state) {
+				if (
+					column.index() === index &&
+					!settings.bDestroying &&
+					settings.nTable == dt.settings()[0].nTable
+				) {
+					that.active(state);
 				}
 			}).on('column-reorder.dt' + conf.namespace, function () {
 				// Button has been removed from the DOM
@@ -168,15 +174,18 @@ $.extend(DataTable.ext.buttons, {
 					return;
 				}
 
+				// Reassign the column for the updated indexes
+				column = dt.column(conf.columns);
+
 				// This button controls the same column index but the text for the column has
 				// changed
 				that.text(conf._columnText(dt, conf));
 
 				// Since its a different column, we need to check its visibility
-				that.active(dt.column(conf.columns).visible());
+				that.active(column.visible());
 			});
 
-			this.active(dt.column(conf.columns).visible());
+			this.active(column.visible());
 		},
 		destroy: function (dt, button, conf) {
 			dt.off('column-visibility.dt' + conf.namespace).off(

@@ -1387,7 +1387,7 @@ class PhaseAdditionalEvaluationInput(
     def clean(self):
         super().clean()
 
-        from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
+        from grandchallenge.components.models import RESERVED_SOCKET_SLUGS
 
         if self.socket.slug in RESERVED_SOCKET_SLUGS:
             raise ValidationError(
@@ -1937,7 +1937,7 @@ class EvaluationManager(ComponentJobManager):
 
 
 class Evaluation(CIVForObjectMixin, ComponentJob):
-    """Stores information about a evaluation for a given submission."""
+    """Stores information about an evaluation for a given submission."""
 
     submission = models.ForeignKey("Submission", on_delete=models.PROTECT)
     method = models.ForeignKey(
@@ -1974,7 +1974,6 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
         ordering = ("-created",)
         indexes = [
             *ComponentJob.Meta.indexes,
-            models.Index(fields=["created"]),
             models.Index(fields=["submission", "published", "status", "rank"]),
         ]
 

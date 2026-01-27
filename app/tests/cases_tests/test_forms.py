@@ -2,9 +2,10 @@ import pytest
 from django.test import Client
 
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.cases.widgets import DICOMUploadWidgetSuffixes
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
-from grandchallenge.components.forms import MultipleCIVForm
+from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    MultipleCIVForm,
+)
 from grandchallenge.components.models import ComponentInterface
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UserFactory
@@ -78,14 +79,10 @@ def test_upload_some_images(
     assert response.status_code == 403
 
 
-@pytest.mark.parametrize(
-    "slug",
-    [
-        f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar",
-        f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar_{DICOMUploadWidgetSuffixes[0]}",
-        f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar_{DICOMUploadWidgetSuffixes[1]}",
-    ],
-)
-@pytest.mark.django_db
-def test_parse_slug(slug):
-    assert MultipleCIVForm.parse_slug(slug=slug) == "foo-bar"
+def test_parse_slug():
+    assert (
+        MultipleCIVForm.parse_slug(
+            slug=f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar"
+        )
+        == "foo-bar"
+    )

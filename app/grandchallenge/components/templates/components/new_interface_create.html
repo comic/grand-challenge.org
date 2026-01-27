@@ -1,6 +1,7 @@
 {% load crispy_forms_tags %}
-<form class="extra-interface-form border rounded p-2 my-2" id="form-{{ form.auto_id }}">
-  {% csrf_token %}
-  {{ form|crispy }}
+
+<form class="extra-interface-form border rounded p-2 my-2" id="form-{{ form.id }}">
+    {% csrf_token %}
+    {{ form|crispy }}
     <button type="button" class="btn btn-danger remove-form">Remove</button>
 </form>

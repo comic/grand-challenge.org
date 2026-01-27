@@ -24,7 +24,11 @@ from grandchallenge.components.forms import (
     CIVSetUpdateFormMixin,
     MultipleCIVForm,
 )
-from grandchallenge.components.models import ComponentInterface, InterfaceKinds
+from grandchallenge.components.models import (
+    RESERVED_SOCKET_SLUGS,
+    ComponentInterface,
+    InterfaceKinds,
+)
 from grandchallenge.core.forms import (
     PermissionRequestUpdateForm,
     SaveFormInitMixin,
@@ -226,6 +230,7 @@ class AddCasesForm(UploadRawImagesForm):
                 kind__in=InterfaceKinds.panimg,
                 **socket_filter_kwargs,
             )
+            .exclude(slug__in=RESERVED_SOCKET_SLUGS)
             .order_by("title")
         )
         self.fields["socket"].queryset = qs

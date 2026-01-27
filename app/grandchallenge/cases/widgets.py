@@ -1,17 +1,20 @@
+from enum import StrEnum
 from typing import NamedTuple
 from uuid import UUID
 
 from django.core.exceptions import ValidationError
-from django.db.models import QuerySet, TextChoices
+from django.db.models import TextChoices
 from django.forms import (
-    CharField,
     HiddenInput,
     ModelChoiceField,
     ModelMultipleChoiceField,
     MultiValueField,
     MultiWidget,
+    Script,
+    Select,
+    TextInput,
 )
-from django.forms.widgets import ChoiceWidget, TextInput
+from django.forms.widgets import ChoiceWidget
 
 from grandchallenge.cases.models import Image
 from grandchallenge.components.models import ComponentInterfaceValue
@@ -27,10 +30,15 @@ from grandchallenge.uploads.widgets import (
 
 
 class ImageWidgetChoices(TextChoices):
-    IMAGE_SEARCH = "IMAGE_SEARCH"
-    IMAGE_UPLOAD = "IMAGE_UPLOAD"
-    IMAGE_SELECTED = "IMAGE_SELECTED"
-    UNDEFINED = "UNDEFINED"
+    UNDEFINED = "", "Choose data source..."
+    IMAGE_SELECTED = "IMAGE_SELECTED", ""
+    IMAGE_SEARCH = "IMAGE_SEARCH", "Select an existing image"
+    IMAGE_UPLOAD = "IMAGE_UPLOAD", "Upload a new image"
+
+
+class ImageSourceSelect(Select):
+    class Media:
+        js = (Script("cases/js/source_select.mjs", type="module"),)
 
 
 class ImageSearchWidget(ChoiceWidget, HiddenInput):
@@ -110,12 +118,15 @@ class FlexibleImageField(MultiValueField):
     def __init__(  # noqa C901
         self,
         *args,
+        interface,
         user=None,
         initial=None,
         **kwargs,
     ):
         image_search_queryset = filter_by_permission(
-            queryset=Image.objects.all(),
+            queryset=Image.objects.filter(
+                dicom_image_set__isnull=not interface.is_dicom_image_kind
+            ),
             user=user,
             codename="view_image",
         )
@@ -211,7 +222,9 @@ class FlexibleImageField(MultiValueField):
             return non_empty_values[0]
 
 
-DICOMUploadWidgetSuffixes = ["dicom-image-name", "dicom-user-uploads"]
+class DICOMUploadWidgetSuffixes(StrEnum):
+    NAME = "dicom-image-name"
+    UPLOADS = "dicom-user-uploads"
 
 
 class DICOMUploadWithName(NamedTuple):
@@ -226,12 +239,10 @@ class DICOMImageSetNameInput(TextInput):
 
 
 class DICOMUploadWidget(MultiWidget):
-    template_name = "cases/dicom_upload_widget.html"
-
     def __init__(self, attrs=None):
         widgets = {
-            DICOMUploadWidgetSuffixes[0]: DICOMImageSetNameInput(),
-            DICOMUploadWidgetSuffixes[1]: DICOMUserUploadMultipleWidget(),
+            DICOMUploadWidgetSuffixes.NAME.value: DICOMImageSetNameInput(),
+            DICOMUploadWidgetSuffixes.UPLOADS.value: DICOMUserUploadMultipleWidget(),
         }
         super().__init__(widgets, attrs)
 
@@ -244,63 +255,58 @@ class DICOMUploadWidget(MultiWidget):
         return ["", []]
 
 
-class DICOMUploadField(MultiValueField):
-    widget = DICOMUploadWidget
+class ImageSearchWidgetSuffixes(StrEnum):
+    INPUT = "search-term"
+    CHOICE = "selected-image"
 
-    def __init__(self, *args, user, initial=None, **kwargs):
-        upload_qs = filter_by_permission(
-            queryset=UserUpload.objects.all(),
-            user=user,
-            codename="change_userupload",
-        ).filter(status=UserUpload.StatusChoices.COMPLETED)
 
-        fields = [
-            CharField(),
-            ModelMultipleChoiceField(queryset=upload_qs),
-        ]
-
-        self.current_value = None
-        if initial:
-            # Initial data can only be an image CIV.
-            # We don't want to show the widgets in this case, and instead
-            # display the current image name, so pass the image as
-            # current_value to the widget template
-            if isinstance(initial, ComponentInterfaceValue):
-                if image := get_object_if_allowed(
-                    model=Image,
-                    pk=initial.image.pk,
-                    user=user,
-                    codename="view_image",
-                ):
-                    self.current_value = image
-                    # turn initial to the internal data type that this widget expects
-                    initial = self.compress(
-                        values=[
-                            image.name,
-                            image.dicom_image_set.dicom_image_set_upload.user_uploads.all(),
-                        ]
-                    )
-                else:
-                    initial = None
-            else:
-                raise RuntimeError(
-                    f"Unexpected initial value of type {type(initial)}"
-                )
-
-        super().__init__(
-            *args,
-            fields=fields,
-            initial=initial,
-            **kwargs,
+class ImageSearchInputWidget(TextInput):
+    def get_context(self, name, value, attrs):
+        attrs["placeholder"] = "Search by pk or image name"
+        context = super().get_context(name, value, attrs)
+        css_class = context["widget"]["attrs"].get("class", "")
+        # When the MultiField marks the data invalid, the is-invalid class is
+        # added to all subwidgets; however, the search input is never "invalid"
+        # because that data will not be processed.
+        context["widget"]["attrs"]["class"] = css_class.replace(
+            "is-invalid", ""
         )
+        return context
 
-    def compress(self, values: list[str, QuerySet[UserUpload]]):
-        return DICOMUploadWithName(
-            name=values[0] if values else "",
-            user_uploads=[str(v.pk) for v in values[1]] if values else [],
+
+class ImageSearchSelect(Select):
+    template_name = "cases/image_search_select.html"
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        css_class = context["widget"]["attrs"].get("class", "")
+        # Fix invalid icon overlapping with custom select controls
+        context["widget"]["attrs"]["class"] = css_class.replace(
+            "form-control", ""
         )
+        context["widget"]["selected_object_pk"] = value
+        return context
 
-    def widget_attrs(self, widget):
-        attrs = super().widget_attrs(widget)
-        attrs["current_value"] = self.current_value
-        return attrs
+
+class ImageSearchMultiWidget(MultiWidget):
+    template_name = "cases/image_search_multi_widget.html"
+
+    def __init__(self, attrs=None, prefixed_interface_slug=None):
+        widgets = {
+            ImageSearchWidgetSuffixes.INPUT.value: ImageSearchInputWidget(),
+            ImageSearchWidgetSuffixes.CHOICE.value: ImageSearchSelect(
+                attrs={"class": "custom-select"}
+            ),
+        }
+        super().__init__(widgets, attrs)
+        self.prefixed_interface_slug = prefixed_interface_slug
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context["prefixed_interface_slug"] = self.prefixed_interface_slug
+        return context
+
+    def decompress(self, value):
+        if value:
+            return value
+        return ["", ""]

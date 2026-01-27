@@ -122,7 +122,8 @@ def add_image_to_answer(*, upload_session_pk, answer_pk):
     question = answer.question
 
     if (
-        str(answer.answer["upload_session_pk"]).casefold()
+        answer.answer is not None
+        and str(answer.answer["upload_session_pk"]).casefold()
         == str(upload_session_pk).casefold()
     ):
         try:

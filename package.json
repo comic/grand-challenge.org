@@ -4,7 +4,7 @@
   "description": "A platform for end-to-end development of machine learning solutions in biomedical imaging",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest"
   },
   "keywords": [],
   "author": "DIAG",

@@ -884,6 +884,23 @@ def test_civ_serializer_list_ordering():
     ]
 
 
+def test_civ_serializer_interface_and_socket_key():
+    civ = ComponentInterfaceValueFactory.build(
+        interface=ComponentInterfaceFactory.build(
+            kind=InterfaceKindChoices.PANIMG_IMAGE,
+            title="B Image Interface",
+            store_in_database=False,
+        )
+    )
+    serializer = ComponentInterfaceValueSerializer(many=True)
+
+    serialized_data = serializer.to_representation(data=[civ])[0]
+
+    assert (
+        serialized_data["socket"] == serialized_data["interface"]
+    ), "The `socket` alias is required in inputs.json for new algorithms/evaluations while `interface` is still required for algorithms/evaluations based on older templates."
+
+
 @pytest.mark.django_db
 def test_convert_deserialized_civ_data():
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)

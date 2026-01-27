@@ -113,7 +113,7 @@ function getDummyValue(vr) {
     }
 }
 
-const uidMap = new Map(); // Map to store unique identifiers for UIDs
+globalThis.uidMap = globalThis.uidMap || new Map(); // Map to store unique identifiers for UIDs
 
 // Recursive de-identification for a dataset (object with DICOM tags)
 function deidentifyDataset(
@@ -228,18 +228,18 @@ function deidentifyDataset(
                 break;
             case "U":
                 if (tagValue) {
-                    if (!uidMap.has(tagValue)) {
-                        uidMap.set(
+                    if (!globalThis.uidMap.has(tagValue)) {
+                        globalThis.uidMap.set(
                             tagValue,
                             dcmjs.data.DicomMetaDictionary.uid(),
                         );
                     }
                     newDataset[tagKey] = {
                         ...dataset[tagKey],
-                        Value: [uidMap.get(tagValue)],
+                        Value: [globalThis.uidMap.get(tagValue)],
                     };
                     debugChanges[`${protocolTagKey} - ${name}`] =
-                        `CONSISTENTLY REPLACED value: "${tagValue}" with: "${uidMap.get(tagValue)}"`;
+                        `CONSISTENTLY REPLACED value: "${tagValue}" with: "${globalThis.uidMap.get(tagValue)}"`;
                 }
                 break;
             default:
@@ -332,7 +332,7 @@ async function preprocessDicomFile(file) {
     return new File([newBuffer], file.name, { type: file.type });
 }
 
-class DicomDeidentifierPlugin extends Uppy.Core.BasePlugin {
+export class DicomDeidentifierPlugin extends Uppy.Core.BasePlugin {
     constructor(uppy, opts) {
         super(uppy, opts);
 
@@ -371,13 +371,5 @@ class DicomDeidentifierPlugin extends Uppy.Core.BasePlugin {
     }
 }
 
-// Export for testing in Node.js environment
-if (typeof module !== "undefined" && module.exports) {
-    module.exports = {
-        getDummyValue,
-        preprocessDicomFile,
-        DicomDeidentifierPlugin,
-        // For testing only
-        _uidMap: uidMap,
-    };
-}
+// For testing only
+export { getDummyValue, preprocessDicomFile };

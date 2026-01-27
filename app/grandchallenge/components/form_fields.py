@@ -1,130 +1,23 @@
-from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import TextChoices
-from django.forms import ModelChoiceField, MultiValueField
+from django.forms import BoundField, ModelChoiceField, MultiValueField
 
-from grandchallenge.cases.widgets import (
-    DICOMUploadField,
-    FlexibleImageField,
-    FlexibleImageWidget,
-    ImageSearchWidget,
-)
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.components.schemas import generate_component_json_schema
-from grandchallenge.components.widgets import (
-    FileSearchWidget,
-    FlexibleFileWidget,
-)
+from grandchallenge.components.widgets import FlexibleFileWidget
 from grandchallenge.core.guardian import (
     filter_by_permission,
     get_object_if_allowed,
 )
-from grandchallenge.core.templatetags.bleach import clean
-from grandchallenge.core.validators import JSONValidator
-from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.serving.models import (
     get_component_interface_values_for_user,
 )
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import (
-    DICOMUserUploadMultipleWidget,
-    UserUploadMultipleWidget,
-    UserUploadSingleWidget,
-)
 
 file_upload_text = (
     "The total size of all files uploaded in a single session "
     "cannot exceed 10 GB.<br>"
     "The following file formats are supported: "
 )
-
-
-INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
-
-
-class InterfaceFormFieldFactory:
-    possible_widgets = {
-        UserUploadMultipleWidget,
-        UserUploadSingleWidget,
-        DICOMUserUploadMultipleWidget,
-        JSONEditorWidget,
-        FlexibleImageWidget,
-        ImageSearchWidget,
-        FlexibleFileWidget,
-        FileSearchWidget,
-    }
-
-    def __new__(
-        cls,
-        *,
-        interface=None,
-        user=None,
-        required=True,
-        initial=None,
-        help_text="",
-        disabled=False,
-    ):
-        if (
-            isinstance(initial, ComponentInterfaceValue)
-            and not initial.has_value
-        ):
-            initial = None
-
-        kwargs = {
-            "required": required,
-            "help_text": clean(interface.description),
-            "disabled": disabled,
-            "label": interface.title.title(),
-        }
-
-        if interface.super_kind == interface.SuperKind.IMAGE:
-            if interface.is_dicom_image_kind:
-                return DICOMUploadField(
-                    user=user,
-                    initial=initial,
-                    **kwargs,
-                )
-            else:
-                return FlexibleImageField(
-                    user=user,
-                    initial=initial,
-                    **kwargs,
-                )
-        elif interface.super_kind == interface.SuperKind.FILE:
-            return FlexibleFileField(
-                user=user,
-                interface=interface,
-                initial=initial,
-                **kwargs,
-            )
-        elif interface.super_kind == interface.SuperKind.VALUE:
-            return cls.get_json_field(
-                interface=interface,
-                initial=initial,
-                **kwargs,
-            )
-        else:
-            raise NotImplementedError(
-                f"Unknown interface super kind: {interface.super_kind}"
-            )
-
-    @staticmethod
-    def get_json_field(interface, initial, **kwargs):
-        if isinstance(initial, ComponentInterfaceValue):
-            initial = initial.value
-        kwargs["initial"] = initial
-        field_type = interface.default_field
-
-        schema = generate_component_json_schema(
-            component_interface=interface,
-            required=kwargs["required"],
-        )
-
-        if field_type == forms.JSONField:
-            kwargs["widget"] = JSONEditorWidget(schema=schema)
-        kwargs["validators"] = [JSONValidator(schema=schema)]
-
-        return field_type(**kwargs)
 
 
 class FileWidgetChoices(TextChoices):
@@ -213,3 +106,8 @@ class FlexibleFileField(MultiValueField):
             if len(non_empty_values) != 1:
                 raise ValidationError("Too many values returned.")
             return non_empty_values[0]
+
+
+class BoundFieldWithDNoneClass(BoundField):
+    def css_classes(self, extra_classes=None):
+        return f"d-none {super().css_classes(extra_classes)}"

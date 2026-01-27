@@ -15,6 +15,7 @@ from grandchallenge.cases.models import Image
 from grandchallenge.cases.widgets import DICOMUploadWithName
 from grandchallenge.components.models import (
     INTERFACE_KIND_JSON_EXAMPLES,
+    RESERVED_SOCKET_SLUGS,
     CIVData,
     ComponentInterface,
     ComponentInterfaceExampleValue,
@@ -2161,3 +2162,17 @@ def test_validate_civ_data_objects_and_execute_linked_task_with_file_upload(
     )
 
     assert mock_add_file_to_object_task.call_count == 1
+
+
+@pytest.mark.django_db
+def test_reserved_socket_slugs():
+    target_socket_slug = "metrics-json-file"
+    assert "metrics-json-file" in RESERVED_SOCKET_SLUGS, "Sanity check"
+
+    with pytest.raises(
+        ValidationError, match="is reserved and cannot be used."
+    ):
+        CIVData(
+            interface_slug=target_socket_slug,
+            value={},
+        )

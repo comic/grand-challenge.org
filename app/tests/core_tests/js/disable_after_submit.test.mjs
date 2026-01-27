@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 jest.useFakeTimers();
 
 const formHtml = `
@@ -9,7 +10,7 @@ const formHtml = `
 </form>`;
 
 describe("disableAfterSubmit module", () => {
-    require("../../../grandchallenge/core/static/js/disable_after_submit");
+    import("../../../grandchallenge/core/static/js/disable_after_submit");
 
     let form;
     let fieldset;

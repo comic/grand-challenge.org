@@ -1,7 +1,7 @@
 {% if object_list %}
     <option value="">Choose image...</option>
     {% for object in object_list %}
-        <option value="{{ object.pk }}" >{{ object.name }} ({{ object.pk }})</option>
+        <option value="{{ object.pk }}"{% if selected_object_pk == object.pk|stringformat:'s' %} selected{% endif %}>{{ object.name }} ({{ object.pk }})</option>
     {% endfor %}
 {% else %}
     <option value="">No images match your search criteria.</option>

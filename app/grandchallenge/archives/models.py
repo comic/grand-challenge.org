@@ -179,37 +179,30 @@ class Archive(
 
     def assign_permissions(self):
         # Allow the editors, uploaders and users groups to view this
-        assign_perm(f"view_{self._meta.model_name}", self.editors_group, self)
-        assign_perm(
-            f"view_{self._meta.model_name}", self.uploaders_group, self
-        )
-        assign_perm(f"view_{self._meta.model_name}", self.users_group, self)
+        assign_perm("view_archive", self.editors_group, self)
+        assign_perm("view_archive", self.uploaders_group, self)
+        assign_perm("view_archive", self.users_group, self)
 
         # Allow the editors, uploaders and users group to use the archive
-        assign_perm(f"use_{self._meta.model_name}", self.editors_group, self)
-        assign_perm(f"use_{self._meta.model_name}", self.uploaders_group, self)
-        assign_perm(f"use_{self._meta.model_name}", self.users_group, self)
+        assign_perm("use_archive", self.editors_group, self)
+        assign_perm("use_archive", self.uploaders_group, self)
+        assign_perm("use_archive", self.users_group, self)
 
         # Allow editors and uploaders to upload to this
-        assign_perm(
-            f"upload_{self._meta.model_name}", self.editors_group, self
-        )
-        assign_perm(
-            f"upload_{self._meta.model_name}", self.uploaders_group, self
-        )
+        assign_perm("upload_archive", self.editors_group, self)
+        assign_perm("upload_archive", self.uploaders_group, self)
+
         # Allow the editors to change this
-        assign_perm(
-            f"change_{self._meta.model_name}", self.editors_group, self
-        )
+        assign_perm("change_archive", self.editors_group, self)
 
         reg_and_anon = Group.objects.get(
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
         )
 
         if self.public:
-            assign_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
+            assign_perm("view_archive", reg_and_anon, self)
         else:
-            remove_perm(f"view_{self._meta.model_name}", reg_and_anon, self)
+            remove_perm("view_archive", reg_and_anon, self)
 
     def is_editor(self, user):
         return user.groups.filter(pk=self.editors_group.pk).exists()

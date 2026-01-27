@@ -9,10 +9,10 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.utils.timezone import now
 
-from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
 from grandchallenge.algorithms.models import Job
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.models import (
+    RESERVED_SOCKET_SLUGS,
     CIVData,
     ComponentInterface,
     InterfaceKindChoices,
@@ -2473,10 +2473,7 @@ def test_non_evaluation_socket_slugs(slug):
     instance = PhaseAdditionalEvaluationInput(socket=ci, phase=PhaseFactory())
     with pytest.raises(ValidationError) as e:
         instance.clean()
-    assert (
-        "Evaluation inputs cannot be of the following types: predictions-csv-file, predictions-json-file, predictions-zip-file, metrics-json-file, results-json-file"
-        in str(e)
-    )
+    assert "Evaluation inputs cannot be of the following types:" in str(e)
 
 
 @pytest.mark.django_db

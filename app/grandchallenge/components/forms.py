@@ -1,13 +1,16 @@
 import logging
+from enum import StrEnum
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
 from dal import autocomplete
 from dal.widgets import Select
+from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.forms import (
     CheckboxSelectMultiple,
+    Field,
     Form,
     HiddenInput,
     ModelChoiceField,
@@ -18,21 +21,50 @@ from django.utils.functional import empty
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
-from grandchallenge.cases.widgets import DICOMUploadWidgetSuffixes
+from grandchallenge.cases.form_fields import (
+    DICOMUploadField,
+    ImageSearchMultiField,
+    ImageSourceChoiceField,
+)
+from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
+from grandchallenge.cases.widgets import (
+    ImageSearchInputWidget,
+    ImageSearchSelect,
+    ImageSourceSelect,
+    ImageWidgetChoices,
+)
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
 )
 from grandchallenge.components.form_fields import (
-    INTERFACE_FORM_FIELD_PREFIX,
-    InterfaceFormFieldFactory,
+    BoundFieldWithDNoneClass,
+    FlexibleFileField,
 )
-from grandchallenge.components.models import CIVData, ComponentInterface
+from grandchallenge.components.models import (
+    RESERVED_SOCKET_SLUGS,
+    CIVData,
+    ComponentInterface,
+    ComponentInterfaceValue,
+    InterfaceSuperKindChoices,
+)
+from grandchallenge.components.schemas import generate_component_json_schema
+from grandchallenge.components.widgets import (
+    FileSearchWidget,
+    FlexibleFileWidget,
+)
 from grandchallenge.core.forms import SaveFormInitMixin, UserMixin
 from grandchallenge.core.guardian import filter_by_permission
+from grandchallenge.core.templatetags.bleach import clean
+from grandchallenge.core.validators import JSONValidator
+from grandchallenge.core.widgets import JSONEditorWidget
 from grandchallenge.evaluation.models import Method
 from grandchallenge.subdomains.utils import reverse_lazy
 from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadSingleWidget
+from grandchallenge.uploads.widgets import (
+    DICOMUserUploadMultipleWidget,
+    UserUploadMultipleWidget,
+    UserUploadSingleWidget,
+)
 from grandchallenge.workstations.models import WorkstationImage
 
 logger = logging.getLogger(__name__)
@@ -111,7 +143,228 @@ class ContainerImageForm(SaveFormInitMixin, ModelForm):
         fields = ("user_upload", "creator", "comment")
 
 
-class AdditionalInputsMixin(UserMixin):
+INTERFACE_FORM_FIELD_PREFIX = "__INTERFACE_FIELD__"
+
+
+class FlexibleWidgetPrefixes(StrEnum):
+    CHOICE = f"flexible_widget_choice{INTERFACE_FORM_FIELD_PREFIX}"
+    UPLOAD = f"flexible_upload{INTERFACE_FORM_FIELD_PREFIX}"
+    SEARCH = f"flexible_search{INTERFACE_FORM_FIELD_PREFIX}"
+
+
+class InterfaceFormFieldsMixin:
+    possible_widgets = {
+        UserUploadMultipleWidget,
+        UserUploadSingleWidget,
+        DICOMUserUploadMultipleWidget,
+        JSONEditorWidget,
+        FlexibleFileWidget,
+        FileSearchWidget,
+        ImageSearchInputWidget,
+        ImageSearchSelect,
+        ImageSourceSelect,
+    }
+
+    def get_fields_for_interface(
+        self,
+        *,
+        interface,
+        user=None,
+        required=True,
+        initial=None,
+        current_socket_value=None,
+        disabled=False,
+    ):
+        if (
+            isinstance(initial, ComponentInterfaceValue)
+            and not initial.has_value
+        ):
+            initial = None
+
+        prefixed_interface_slug = (
+            f"{INTERFACE_FORM_FIELD_PREFIX}{interface.slug}"
+        )
+
+        kwargs = {
+            "required": required,
+            "help_text": clean(interface.description),
+            "disabled": disabled,
+            "label": interface.title.title(),
+        }
+
+        upload_queryset = filter_by_permission(
+            queryset=UserUpload.objects.all(),
+            user=user,
+            codename="change_userupload",
+        ).filter(status=UserUpload.StatusChoices.COMPLETED)
+
+        if interface.super_kind == interface.SuperKind.IMAGE:
+            if interface.is_dicom_image_kind:
+                upload_field = DICOMUploadField(
+                    user=user,
+                    label="",
+                    required=False,
+                    bound_field_class=BoundFieldWithDNoneClass,
+                )
+            else:
+                upload_field = ModelMultipleChoiceField(
+                    queryset=upload_queryset,
+                    widget=UserUploadMultipleWidget,
+                    label="",
+                    help_text=IMAGE_UPLOAD_HELP_TEXT,
+                    required=False,
+                    bound_field_class=BoundFieldWithDNoneClass,
+                )
+            return {
+                f"{FlexibleWidgetPrefixes.CHOICE}{interface.slug}": ImageSourceChoiceField(
+                    current_socket_value=current_socket_value,
+                    **kwargs,
+                ),
+                f"{FlexibleWidgetPrefixes.UPLOAD}{interface.slug}": upload_field,
+                f"{FlexibleWidgetPrefixes.SEARCH}{interface.slug}": ImageSearchMultiField(
+                    user=user,
+                    interface=interface,
+                    prefixed_interface_slug=prefixed_interface_slug,
+                    label="",
+                    required=False,
+                    bound_field_class=BoundFieldWithDNoneClass,
+                ),
+                # Add hidden input field for parsing when rendering
+                # dynamically added fields.
+                prefixed_interface_slug: Field(
+                    required=False, widget=HiddenInput()
+                ),
+            }
+        elif interface.super_kind == interface.SuperKind.FILE:
+            return {
+                prefixed_interface_slug: FlexibleFileField(
+                    user=user,
+                    interface=interface,
+                    initial=initial,
+                    **kwargs,
+                )
+            }
+        elif interface.super_kind == interface.SuperKind.VALUE:
+            return {
+                prefixed_interface_slug: self.get_json_field(
+                    interface=interface,
+                    initial=initial,
+                    **kwargs,
+                )
+            }
+        else:
+            raise NotImplementedError(
+                f"Unknown interface super kind: {interface.super_kind}"
+            )
+
+    @staticmethod
+    def get_json_field(interface, initial, **kwargs):
+        if isinstance(initial, ComponentInterfaceValue):
+            initial = initial.value
+        kwargs["initial"] = initial
+        field_type = interface.default_field
+
+        schema = generate_component_json_schema(
+            component_interface=interface,
+            required=kwargs["required"],
+        )
+
+        if field_type == forms.JSONField:
+            kwargs["widget"] = JSONEditorWidget(schema=schema)
+        kwargs["validators"] = [JSONValidator(schema=schema)]
+
+        return field_type(**kwargs)
+
+    def full_clean(self):
+        # Mark selected widgets as required for validation
+        fields_required = {}
+
+        try:
+            for name in self.fields:
+                if name.startswith(FlexibleWidgetPrefixes.CHOICE):
+                    interface_slug = name[len(FlexibleWidgetPrefixes.CHOICE) :]
+                    choice = self[name].data
+
+                    widget_fields = {
+                        ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}",
+                        ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}",
+                    }
+
+                    for widget_type, field_name in widget_fields.items():
+                        if choice == widget_type:
+                            # Store original required state and temporarily set to required
+                            fields_required[field_name] = self[
+                                field_name
+                            ].field.required
+                            self[field_name].field.required = True
+
+            super().full_clean()
+        finally:
+            # Reset `required` to avoid javascript validation.
+            # Items may otherwise get a "Please fill out this field" tooltip
+            # blocking submission. This will lead to issues if this field is no
+            # longer the selected choice. (The widget is then not focusable.)
+            for field_name, required in fields_required.items():
+                self[field_name].field.required = required
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        keys_to_remove = []
+        data_to_add = {}
+
+        for key in cleaned_data.keys():
+            if any(
+                [
+                    key.startswith(prefix.value)
+                    for prefix in FlexibleWidgetPrefixes
+                ]
+            ):
+                keys_to_remove.append(key)
+
+            if key.startswith(FlexibleWidgetPrefixes.CHOICE):
+                # Get the choice from the field data because if it is "IMAGE_SELECTED"
+                # the cleaned data becomes the current socket value
+                choice = self[key].data
+                interface_slug = key[len(FlexibleWidgetPrefixes.CHOICE) :]
+                prefixed_interface_slug = (
+                    f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
+                )
+                widget_fields = {
+                    ImageWidgetChoices.IMAGE_SELECTED: key,
+                    ImageWidgetChoices.IMAGE_SEARCH: f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}",
+                    ImageWidgetChoices.IMAGE_UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}",
+                }
+
+                for widget_type, field_name in widget_fields.items():
+                    if choice == widget_type:
+                        try:
+                            data_to_add[prefixed_interface_slug] = (
+                                cleaned_data[field_name]
+                            )
+                        except KeyError:
+                            pass
+                    else:
+                        if (
+                            widget_type
+                            in [
+                                ImageWidgetChoices.IMAGE_SEARCH,
+                                ImageWidgetChoices.IMAGE_UPLOAD,
+                            ]
+                            and field_name in self.errors
+                        ):
+                            # Ignore errors if it is not the selected choice.
+                            del self._errors[field_name]
+
+        cleaned_data.update(data_to_add)
+
+        for key in keys_to_remove:
+            del cleaned_data[key]
+
+        return cleaned_data
+
+
+class AdditionalInputsMixin(UserMixin, InterfaceFormFieldsMixin):
 
     def __init__(self, *args, additional_inputs, **kwargs):
         self._additional_inputs = additional_inputs
@@ -133,11 +386,13 @@ class AdditionalInputsMixin(UserMixin):
             else:
                 initial = None
 
-            self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
-                interface=input,
-                user=self._user,
-                required=input.value_required,
-                initial=initial if initial else input.default_value,
+            self.fields.update(
+                self.get_fields_for_interface(
+                    interface=input,
+                    user=self._user,
+                    required=input.value_required,
+                    initial=initial if initial else input.default_value,
+                )
             )
 
     def clean(self):
@@ -164,9 +419,7 @@ class AdditionalInputsMixin(UserMixin):
         return cleaned_data
 
 
-class MultipleCIVForm(Form):
-    possible_widgets = InterfaceFormFieldFactory.possible_widgets
-
+class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
     def __init__(self, *args, instance, base_obj, user, **kwargs):  # noqa C901
         super().__init__(*args, **kwargs)
         self.instance = instance
@@ -179,20 +432,17 @@ class MultipleCIVForm(Form):
             "title"
         ):
             current_value = None
+            current_socket_value = None
 
             prefixed_interface_slug = (
                 f"{INTERFACE_FORM_FIELD_PREFIX}{interface.slug}"
             )
 
-            # For interfaces that use the FlexibleImageWidget or FlexibleFileWidget
-            # we need to pass in the initial value explicitly, for all other
+            # For interfaces that use the FlexibleFileWidget we need
+            # to pass in the initial value explicitly, for all other
             # fields the value in self.data is picked up automatically
             if prefixed_interface_slug in self.data and (
-                interface.super_kind
-                in (
-                    interface.SuperKind.FILE,
-                    interface.SuperKind.IMAGE,
-                )
+                interface.super_kind == InterfaceSuperKindChoices.FILE
             ):
                 try:
                     current_value = self.data.getlist(prefixed_interface_slug)
@@ -201,16 +451,22 @@ class MultipleCIVForm(Form):
                 except AttributeError:
                     current_value = self.data.get(prefixed_interface_slug)
 
-            if not current_value and instance:
-                current_value = instance.values.filter(
+            if instance:
+                current_socket_value = instance.values.filter(
                     interface__slug=interface.slug
                 ).first()
 
-            self.fields[prefixed_interface_slug] = InterfaceFormFieldFactory(
-                interface=interface,
-                user=self.user,
-                required=False,
-                initial=current_value,
+                if not current_value:
+                    current_value = current_socket_value
+
+            self.fields.update(
+                self.get_fields_for_interface(
+                    interface=interface,
+                    user=self.user,
+                    required=False,
+                    initial=current_value,
+                    current_socket_value=current_socket_value,
+                )
             )
 
         # Add fields for dynamically added new interfaces
@@ -218,8 +474,11 @@ class MultipleCIVForm(Form):
             interface_slug = self.parse_slug(slug=slug)
 
             if (
-                ComponentInterface.objects.filter(slug=interface_slug).exists()
+                interface_slug
                 and slug not in self.fields.keys()
+                and ComponentInterface.objects.filter(
+                    slug=interface_slug
+                ).exists()
             ):
                 interface = ComponentInterface.objects.filter(
                     slug=interface_slug
@@ -227,18 +486,10 @@ class MultipleCIVForm(Form):
 
                 current_value = None
 
-                # For interfaces that use the FlexibleImageWidget or
-                # FlexibleFileWidget we need
+                # For interfaces that use the FlexibleFileWidget we need
                 # to pass in the initial value explicitly, for all other
                 # fields the value in self.data is picked up automatically
-                if (
-                    interface.super_kind
-                    in (
-                        interface.SuperKind.FILE,
-                        interface.SuperKind.IMAGE,
-                    )
-                    and not interface.is_dicom_image_kind
-                ):
+                if interface.super_kind == InterfaceSuperKindChoices.FILE:
                     try:
                         current_value = self.data.getlist(slug)
                         if len(current_value) == 1:
@@ -246,35 +497,52 @@ class MultipleCIVForm(Form):
                     except AttributeError:
                         current_value = self.data.get(slug)
 
-                self.fields[
-                    f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}"
-                ] = InterfaceFormFieldFactory(
-                    interface=interface,
-                    user=self.user,
-                    required=False,
-                    initial=current_value,
+                self.fields.update(
+                    self.get_fields_for_interface(
+                        interface=interface,
+                        user=self.user,
+                        required=False,
+                        initial=current_value,
+                    )
                 )
 
     @staticmethod
     def parse_slug(*, slug):
+        if not slug.startswith(INTERFACE_FORM_FIELD_PREFIX):
+            return None
+
         interface_slug = slug[len(INTERFACE_FORM_FIELD_PREFIX) :]
-        for known_suffix in DICOMUploadWidgetSuffixes:
-            if interface_slug.endswith(f"_{known_suffix}"):
-                base_slug = interface_slug[: -len(f"_{known_suffix}")]
-                return base_slug
 
         return interface_slug
 
-    def process_object_data(self):
-        civ_data_objects = []
-        for key, value in self.cleaned_data.items():
+    def clean(self):
+        cleaned_data = super().clean()
+
+        keys_to_remove = []
+        inputs = []
+
+        for key, value in cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
-                civ_data_objects.append(
+                keys_to_remove.append(key)
+                inputs.append(
                     CIVData(
                         interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
                         value=value,
                     )
                 )
+
+        for key in keys_to_remove:
+            cleaned_data.pop(key)
+
+        # Mark as CIV data and not base-object data
+        cleaned_data[INTERFACE_FORM_FIELD_PREFIX + "civ_data_objects"] = inputs
+
+        return cleaned_data
+
+    def process_object_data(self):
+        civ_data_objects = self.cleaned_data.pop(
+            INTERFACE_FORM_FIELD_PREFIX + "civ_data_objects"
+        )
 
         try:
             self.instance.validate_civ_data_objects_and_execute_linked_task(
@@ -318,9 +586,9 @@ class CIVSetUpdateFormMixin:
         super().process_object_data()
 
 
-class SingleCIVForm(Form):
+class SingleCIVForm(InterfaceFormFieldsMixin, Form):
     possible_widgets = {
-        *InterfaceFormFieldFactory.possible_widgets,
+        *InterfaceFormFieldsMixin.possible_widgets,
         autocomplete.ModelSelect2,
         Select,
     }
@@ -332,10 +600,12 @@ class SingleCIVForm(Form):
         interface,
         base_obj,
         user,
+        form_id,
         htmx_url,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
+        self.id = form_id
         data = kwargs.get("data")
 
         try:
@@ -347,7 +617,12 @@ class SingleCIVForm(Form):
             ComponentInterface.objects.all()
             .filter(**socket_filter_kwargs)
             .exclude(
-                slug__in=base_obj.linked_component_interfaces.values("slug")
+                slug__in={
+                    *base_obj.linked_component_interfaces.values_list(
+                        "slug", flat=True
+                    ),
+                    *RESERVED_SOCKET_SLUGS,
+                }
             )
         )
 
@@ -365,7 +640,7 @@ class SingleCIVForm(Form):
             "hx-get": htmx_url,
             "hx-trigger": "interfaceSelected",
             "disabled": selected_interface is not None,
-            "hx-target": f"#form-{kwargs['auto_id']}",
+            "hx-target": f"#form-{form_id}",
             "hx-swap": "outerHTML",
             "hx-include": "this",
         }
@@ -386,7 +661,7 @@ class SingleCIVForm(Form):
             widget_kwargs["url"] = (
                 "components:component-interface-autocomplete"
             )
-            interface_field_name = f"interface-{kwargs['auto_id']}"
+            interface_field_name = f"interface-{form_id}"
             widget_kwargs["forward"] = [interface_field_name]
         widget_kwargs["attrs"] = attrs
 
@@ -406,12 +681,12 @@ class SingleCIVForm(Form):
         )
 
         if selected_interface is not None:
-            self.fields[
-                f"{INTERFACE_FORM_FIELD_PREFIX}{selected_interface.slug}"
-            ] = InterfaceFormFieldFactory(
-                interface=selected_interface,
-                user=user,
-                required=selected_interface.value_required,
+            self.fields.update(
+                self.get_fields_for_interface(
+                    interface=selected_interface,
+                    user=user,
+                    required=selected_interface.value_required,
+                )
             )
 
 

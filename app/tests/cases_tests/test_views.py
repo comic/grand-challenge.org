@@ -2,10 +2,17 @@ import pytest
 from django.utils.html import format_html
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.cases.widgets import ImageWidgetChoices
-from grandchallenge.components.form_fields import INTERFACE_FORM_FIELD_PREFIX
+from grandchallenge.cases.widgets import (
+    ImageSearchWidgetSuffixes,
+    ImageWidgetChoices,
+)
+from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    FlexibleWidgetPrefixes,
+)
 from grandchallenge.components.models import ComponentInterface
 from tests.cases_tests.factories import (
+    DICOMImageSetFactory,
     DICOMImageSetUploadFactory,
     RawImageUploadSessionFactory,
 )
@@ -105,40 +112,82 @@ class TestObjectPermissionRequiredViews:
 @pytest.mark.django_db
 def test_image_search_view(client):
     user = UserFactory()
-    im1, im2, im3 = ImageFactory.create_batch(3)
-    assign_perm("cases.view_image", user, im1)
-    assign_perm("cases.view_image", user, im2)
-    im2.name = "test.mha"
-    im2.save()
-    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
+    images = ImageFactory.create_batch(3)
+    dicom_image_sets = DICOMImageSetFactory.create_batch(3)
+    images_dicom = [
+        ImageFactory(dicom_image_set=dicom_image_set)
+        for dicom_image_set in dicom_image_sets
+    ]
+    for image in (images[0], images[1], images_dicom[0], images_dicom[1]):
+        assign_perm("cases.view_image", user, image)
+    images[1].name = "test.mha"
+    images[1].save()
+    images_dicom[1].name = "test.dcm"
+    images_dicom[1].save()
+    ci_panimg = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.PANIMG_IMAGE
+    )
+    ci_dicom = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.DICOM_IMAGE_SET
+    )
 
     response = get_view_for_user(
         viewname="cases:image-search",
         client=client,
         user=user,
         data={
-            "prefixed-interface-slug": ci.slug,
-            f"query-{ci.slug}": "test",
+            "prefixed-interface-slug": ci_panimg.slug,
+            f"{FlexibleWidgetPrefixes.SEARCH}{ci_panimg.slug}_{ImageSearchWidgetSuffixes.INPUT}": "test",
         },
     )
     assert response.status_code == 200
-    assert len(response.context_data["object_list"]) == 1
-    assert response.context_data["object_list"].get() == im2
+    assert response.context_data["object_list"].get() == images[1]
 
     response = get_view_for_user(
         viewname="cases:image-search",
         client=client,
         user=user,
         data={
-            "prefixed-interface-slug": ci.slug,
-            f"query-{ci.slug}": "",
+            "prefixed-interface-slug": ci_panimg.slug,
+            f"{FlexibleWidgetPrefixes.SEARCH}{ci_panimg.slug}_{ImageSearchWidgetSuffixes.INPUT}": "",
         },
     )
     assert response.status_code == 200
     assert len(response.context_data["object_list"]) == 2
-    assert im1 in response.context_data["object_list"].all()
-    assert im2 in response.context_data["object_list"].all()
-    assert im3 not in response.context_data["object_list"].all()
+    assert images[0] in response.context_data["object_list"].all()
+    assert images[1] in response.context_data["object_list"].all()
+    assert images[2] not in response.context_data["object_list"].all()
+    for image in images_dicom:
+        assert image not in response.context_data["object_list"].all()
+
+    response = get_view_for_user(
+        viewname="cases:image-search",
+        client=client,
+        user=user,
+        data={
+            "prefixed-interface-slug": ci_dicom.slug,
+            f"{FlexibleWidgetPrefixes.SEARCH}{ci_dicom.slug}_{ImageSearchWidgetSuffixes.INPUT}": "test",
+        },
+    )
+    assert response.status_code == 200
+    assert response.context_data["object_list"].get() == images_dicom[1]
+
+    response = get_view_for_user(
+        viewname="cases:image-search",
+        client=client,
+        user=user,
+        data={
+            "prefixed-interface-slug": ci_dicom.slug,
+            f"{FlexibleWidgetPrefixes.SEARCH}{ci_dicom.slug}_{ImageSearchWidgetSuffixes.INPUT}": "",
+        },
+    )
+    assert response.status_code == 200
+    assert len(response.context_data["object_list"]) == 2
+    assert images_dicom[0] in response.context_data["object_list"].all()
+    assert images_dicom[1] in response.context_data["object_list"].all()
+    assert images_dicom[2] not in response.context_data["object_list"].all()
+    for image in images:
+        assert image not in response.context_data["object_list"].all()
 
 
 @pytest.mark.django_db
@@ -150,7 +199,7 @@ def test_image_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SEARCH.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_SEARCH.value,
             "prefixed-interface-slug": ci.slug,
         },
     )
@@ -161,7 +210,7 @@ def test_image_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_UPLOAD.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.IMAGE_UPLOAD.value,
             "prefixed-interface-slug": ci.slug,
         },
     )
@@ -172,7 +221,7 @@ def test_image_widget_select_view(client):
         client=client,
         user=user,
         data={
-            f"widget-choice-{ci.slug}": ImageWidgetChoices.UNDEFINED.name,
+            f"widget-choice-{ci.slug}": ImageWidgetChoices.UNDEFINED.value,
             "prefixed-interface-slug": ci.slug,
         },
     )

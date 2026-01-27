@@ -1,34 +1,27 @@
 import pytest
+from django.core.exceptions import ValidationError
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.archives.forms import (
-    ArchiveItemCreateForm,
-    ArchiveItemUpdateForm,
-)
-from grandchallenge.components.form_fields import (
-    INTERFACE_FORM_FIELD_PREFIX,
-    InterfaceFormFieldFactory,
+from grandchallenge.archives.forms import ArchiveItemUpdateForm
+from grandchallenge.components.forms import (
+    FlexibleWidgetPrefixes,
+    InterfaceFormFieldsMixin,
 )
 from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,
 )
-from grandchallenge.reader_studies.forms import (
-    DisplaySetCreateForm,
-    DisplaySetUpdateForm,
-)
+from grandchallenge.reader_studies.forms import DisplaySetUpdateForm
 from grandchallenge.uploads.models import UserUpload
-from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
+from tests.archives_tests.factories import ArchiveItemFactory
+from tests.cases_tests.factories import DICOMImageSetFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
 from tests.conftest import get_interface_form_data
 from tests.factories import ImageFactory, UserFactory
-from tests.reader_studies_tests.factories import (
-    DisplaySetFactory,
-    ReaderStudyFactory,
-)
+from tests.reader_studies_tests.factories import DisplaySetFactory
 from tests.uploads_tests.factories import (
     UserUploadFactory,
     create_completed_upload,
@@ -40,86 +33,45 @@ def test_interface_form_field_image_queryset_filter():
     user = UserFactory()
     im1, im2 = ImageFactory.create_batch(2)
     assign_perm("cases.view_image", user, im1)
-    upload1 = UserUploadFactory(creator=user)
-    upload2 = UserUploadFactory()
-    upload1.status = UserUpload.StatusChoices.COMPLETED
-    upload1.save()
     ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
-    field = InterfaceFormFieldFactory(interface=ci, user=user)
-    assert im1 in field.fields[0].queryset.all()
-    assert im2 not in field.fields[0].queryset.all()
-    assert upload1 in field.fields[1].queryset.all()
-    assert upload2 not in field.fields[1].queryset.all()
+    field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, user=user
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci.slug}"]
+
+    assert im1 in field.fields[1].queryset.all()
+    assert im2 not in field.fields[1].queryset.all()
+    assert field.clean(["", str(im1.pk)]) == im1
+    with pytest.raises(ValidationError):
+        field.clean(["", str(im2.pk)])
 
 
-@pytest.mark.parametrize(
-    "form_class,base_object_factory,extra_form_kwargs",
-    (
-        (
-            DisplaySetCreateForm,
-            ReaderStudyFactory,
-            {"order": 1},
-        ),
-        (
-            ArchiveItemCreateForm,
-            ArchiveFactory,
-            {},
-        ),
-    ),
-)
 @pytest.mark.django_db
-def test_image_widget_current_value_in_archive_item_and_display_set_create_forms(
-    form_class, base_object_factory, extra_form_kwargs
-):
+def test_interface_form_field_image_upload_validation():
     user = UserFactory()
-    image_ci = ComponentInterfaceFactory(
-        kind=ComponentInterface.Kind.PANIMG_IMAGE
-    )
+    upload = UserUploadFactory(creator=user)
+    upload.status = UserUpload.StatusChoices.COMPLETED
+    upload.save()
+    upload_from_other_user = UserUploadFactory()
+    upload_from_other_user.status = UserUpload.StatusChoices.COMPLETED
+    upload_from_other_user.save()
+    pending_upload = UserUploadFactory(creator=user)
+    ci = ComponentInterfaceFactory(kind=ComponentInterface.Kind.PANIMG_IMAGE)
+    field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, user=user
+    )[f"{FlexibleWidgetPrefixes.UPLOAD}{ci.slug}"]
 
-    image = ImageFactory()
-    assign_perm("cases.view_image", user, image)
+    assert upload in field.queryset.all()
+    assert upload_from_other_user not in field.queryset.all()
+    assert pending_upload not in field.queryset.all()
 
-    user_upload = UserUploadFactory(creator=user)
-    user_upload.status = UserUpload.StatusChoices.COMPLETED
-    user_upload.save()
+    cleaned_data = field.clean([str(upload.pk)])
 
-    form1 = form_class(
-        user=user,
-        instance=None,
-        base_obj=base_object_factory(),
-        data={
-            **extra_form_kwargs,
-            **get_interface_form_data(
-                interface_slug=image_ci.slug, data=image.pk, existing_data=True
-            ),
-        },
-    )
-    assert form1.is_valid()
-    assert (
-        form1.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{image_ci.slug}"]
-        .widget.attrs["current_value"][0]
-        .pk
-        == image.pk
-    )
-
-    form2 = form_class(
-        user=user,
-        instance=None,
-        base_obj=base_object_factory(),
-        data={
-            **extra_form_kwargs,
-            **get_interface_form_data(
-                interface_slug=image_ci.slug, data=user_upload.pk
-            ),
-        },
-    )
-    assert form2.is_valid()
-    assert (
-        form2.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{image_ci.slug}"]
-        .widget.attrs["current_value"][0]
-        .pk
-        == user_upload.pk
-    )
+    assert cleaned_data.count() == 1
+    assert cleaned_data.first() == upload
+    with pytest.raises(ValidationError):
+        field.clean([str(upload_from_other_user.pk)])
+    with pytest.raises(ValidationError):
+        field.clean([str(pending_upload.pk)])
 
 
 @pytest.mark.parametrize(
@@ -138,7 +90,7 @@ def test_image_widget_current_value_in_archive_item_and_display_set_create_forms
     ),
 )
 @pytest.mark.django_db
-def test_image_widget_current_value_in_archive_item_and_display_set_update_forms(
+def test_image_widget_current_socket_value_in_archive_item_and_display_set_update_forms(
     form_class, object_factory, extra_form_kwargs
 ):
     user = UserFactory()
@@ -146,59 +98,22 @@ def test_image_widget_current_value_in_archive_item_and_display_set_update_forms
         kind=ComponentInterface.Kind.PANIMG_IMAGE
     )
 
-    image1 = ImageFactory()
-    assign_perm("cases.view_image", user, image1)
-    image_civ = ComponentInterfaceValueFactory(
-        interface=image_ci, image=image1
-    )
+    image = ImageFactory()
+    assign_perm("cases.view_image", user, image)
+    image_civ = ComponentInterfaceValueFactory(interface=image_ci, image=image)
     instance = object_factory()
     instance.values.set([image_civ])
-
-    image2 = ImageFactory()
-    assign_perm("cases.view_image", user, image2)
-
-    user_upload = UserUploadFactory(creator=user)
-    user_upload.status = UserUpload.StatusChoices.COMPLETED
-    user_upload.save()
 
     form1 = form_class(
         user=user,
         instance=instance,
         base_obj=instance.base_object,
-        data={
-            **extra_form_kwargs,
-            **get_interface_form_data(
-                interface_slug=image_ci.slug,
-                data=image2.pk,
-                existing_data=True,
-            ),
-        },
     )
-    assert form1.is_valid()
     assert (
-        form1.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{image_ci.slug}"]
-        .widget.attrs["current_value"][0]
-        .pk
-        == image2.pk
-    )
-
-    form2 = form_class(
-        user=user,
-        instance=instance,
-        base_obj=instance.base_object,
-        data={
-            **extra_form_kwargs,
-            **get_interface_form_data(
-                interface_slug=image_ci.slug, data=user_upload.pk
-            ),
-        },
-    )
-    assert form2.is_valid()
-    assert (
-        form2.fields[f"{INTERFACE_FORM_FIELD_PREFIX}{image_ci.slug}"]
-        .widget.attrs["current_value"][0]
-        .pk
-        == user_upload.pk
+        form1.fields[
+            f"{FlexibleWidgetPrefixes.CHOICE.value}{image_ci.slug}"
+        ].current_socket_value
+        == image_civ
     )
 
 
@@ -229,7 +144,7 @@ def test_dicom_widget_in_archive_item_and_display_set_update_forms(
     instance = object_factory()
     form_data = get_interface_form_data(
         interface_slug=socket.slug,
-        data=["an image name", [upload]],
+        data=["an image name", [upload.pk]],
     )
 
     form = form_class(
@@ -242,3 +157,61 @@ def test_dicom_widget_in_archive_item_and_display_set_update_forms(
         },
     )
     assert form.is_valid(), form.errors
+
+
+@pytest.mark.django_db
+def test_interface_form_field_image_search_validates_image_dicom_kind():
+    user = UserFactory()
+    dicom_image = ImageFactory(dicom_image_set=DICOMImageSetFactory())
+    assign_perm("cases.view_image", user, dicom_image)
+    panimg_image = ImageFactory()
+    assign_perm("cases.view_image", user, panimg_image)
+    ci_dicom = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.DICOM_IMAGE_SET
+    )
+    ci_panimg = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.PANIMG_IMAGE
+    )
+    dicom_field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci_dicom, user=user
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci_dicom.slug}"]
+    panimg_field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci_panimg, user=user
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci_panimg.slug}"]
+
+    assert dicom_field.clean(["", str(dicom_image.pk)]) == dicom_image
+    with pytest.raises(ValidationError):
+        dicom_field.clean(["", str(panimg_image.pk)])
+    assert panimg_field.clean(["", str(panimg_image.pk)]) == panimg_image
+    with pytest.raises(ValidationError):
+        panimg_field.clean(["", str(dicom_image.pk)])
+
+
+@pytest.mark.django_db
+def test_interface_form_field_image_search_validates_permission():
+    user = UserFactory()
+    dicom_image = ImageFactory(dicom_image_set=DICOMImageSetFactory())
+    assign_perm("cases.view_image", user, dicom_image)
+    dicom_image_no_perm = ImageFactory(dicom_image_set=DICOMImageSetFactory())
+    panimg_image = ImageFactory()
+    assign_perm("cases.view_image", user, panimg_image)
+    panimg_image_no_perm = ImageFactory()
+    ci_dicom = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.DICOM_IMAGE_SET
+    )
+    ci_panimg = ComponentInterfaceFactory(
+        kind=ComponentInterface.Kind.PANIMG_IMAGE
+    )
+    dicom_field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci_dicom, user=user
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci_dicom.slug}"]
+    panimg_field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci_panimg, user=user
+    )[f"{FlexibleWidgetPrefixes.SEARCH}{ci_panimg.slug}"]
+
+    assert dicom_field.clean(["", str(dicom_image.pk)]) == dicom_image
+    with pytest.raises(ValidationError):
+        dicom_field.clean(["", str(dicom_image_no_perm.pk)])
+    assert panimg_field.clean(["", str(panimg_image.pk)]) == panimg_image
+    with pytest.raises(ValidationError):
+        panimg_field.clean(["", str(panimg_image_no_perm.pk)])

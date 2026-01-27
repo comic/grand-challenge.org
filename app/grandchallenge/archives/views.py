@@ -198,9 +198,7 @@ class ArchiveUpdate(
 
 class ArchiveGroupUpdateMixin(UserGroupUpdateMixin):
     template_name = "archives/archive_user_groups_form.html"
-    permission_required = (
-        f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
-    )
+    permission_required = "archives.change_archive"
 
     @property
     def obj(self):
@@ -274,9 +272,7 @@ class ArchivePermissionRequestCreate(
 
 class ArchivePermissionRequestList(ObjectPermissionRequiredMixin, ListView):
     model = ArchivePermissionRequest
-    permission_required = (
-        f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
-    )
+    permission_required = "archives.change_archive"
     raise_exception = True
 
     @property
@@ -307,9 +303,7 @@ class ArchivePermissionRequestUpdate(PermissionRequestUpdate):
     base_model = Archive
     redirect_namespace = "archives"
     user_check_attrs = ["is_user", "is_uploader", "is_editor"]
-    permission_required = (
-        f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
-    )
+    permission_required = "archives.change_archive"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -326,9 +320,7 @@ class ArchiveUploadSessionCreate(
     model = RawImageUploadSession
     form_class = AddCasesForm
     template_name = "archives/archive_upload_session_create.html"
-    permission_required = (
-        f"{Archive._meta.app_label}.upload_{Archive._meta.model_name}"
-    )
+    permission_required = "archives.upload_archive"
     raise_exception = True
 
     def get_form_kwargs(self):
@@ -366,9 +358,7 @@ class ArchiveItemUpdate(
     MultipleCIVProcessingBaseView,
 ):
     form_class = ArchiveItemUpdateForm
-    permission_required = (
-        f"{ArchiveItem._meta.app_label}.change_{ArchiveItem._meta.model_name}"
-    )
+    permission_required = "archives.change_archiveitem"
     included_form_classes = (
         MultipleCIVForm,
         *MultipleCIVProcessingBaseView.included_form_classes,
@@ -431,9 +421,7 @@ class ArchiveItemsToReaderStudyUpdate(
     FormView,
 ):
     form_class = ArchiveItemsToReaderStudyForm
-    permission_required = (
-        f"{Archive._meta.app_label}.use_{Archive._meta.model_name}"
-    )
+    permission_required = "archives.use_archive"
     raise_exception = True
     template_name = "archives/archive_cases_to_reader_study_form.html"
 
@@ -505,9 +493,7 @@ class ArchiveItemViewSet(
 
 class ArchiveItemDetailView(CIVSetDetail):
     model = ArchiveItem
-    permission_required = (
-        f"{Archive._meta.app_label}.view_{ArchiveItem._meta.model_name}"
-    )
+    permission_required = "archives.view_archiveitem"
 
 
 class ArchiveItemCreateView(
@@ -515,9 +501,7 @@ class ArchiveItemCreateView(
     MultipleCIVProcessingBaseView,
 ):
     form_class = ArchiveItemCreateForm
-    permission_required = (
-        f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
-    )
+    permission_required = "archives.upload_archive"
     included_form_classes = (
         MultipleCIVForm,
         *MultipleCIVProcessingBaseView.included_form_classes,
@@ -557,13 +541,9 @@ class ArchiveItemCreateView(
 class ArchiveItemInterfaceCreate(InterfacesCreateBaseView):
     def get_required_permissions(self, request):
         if self.object:
-            return [
-                f"{Archive._meta.app_label}.change_{ArchiveItem._meta.model_name}"
-            ]
+            return ["archives.change_archiveitem"]
         else:
-            return [
-                f"{Archive._meta.app_label}.change_{Archive._meta.model_name}"
-            ]
+            return ["archives.upload_archive"]
 
     @property
     def object(self):
@@ -594,9 +574,7 @@ class ArchiveItemInterfaceCreate(InterfacesCreateBaseView):
 
 class ArchiveItemDelete(CIVSetDelete):
     model = ArchiveItem
-    permission_required = (
-        f"{Archive._meta.app_label}.delete_{ArchiveItem._meta.model_name}"
-    )
+    permission_required = "archives.delete_archiveitem"
 
 
 class ArchiveItemBulkDelete(CIVSetBulkDelete):

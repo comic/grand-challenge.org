@@ -175,7 +175,7 @@ def _collect_errors(future_to_predictions, errors):
     # Which prevents us relying solely on as_completed to catch exceptions
     def failed_futures():
         for f, p in future_to_predictions.items():
-            if f.done():
+            if f.done() and not f.cancelled():
                 exc = f.exception()
                 if exc is not None:
                     yield p, exc

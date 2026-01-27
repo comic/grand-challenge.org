@@ -147,9 +147,9 @@ bootswatch = { version = "==4.6.2", provider = "unpkg", include = ["dist/flatly/
 floating-scroll = { version = "==3.2.0", provider = "unpkg", include = ["dist/jquery.floatingscroll.min.js", "dist/jquery.floatingscroll.css"] }
 "@github/markdown-toolbar-element" = { version = "==1.2.0", provider = "unpkg", include = ["dist/index.umd.js$"] }
 # Use the builder at https://datatables.net/download/
-"datatables.net" = { version = "==2.1.8", provider = "unpkg", include = ["js/dataTables(.min)?.js"]}
-"datatables.net-bs4" = { version = "==2.1.8", provider = "unpkg", include = ["css/dataTables.bootstrap4(.min)?.css", "js/dataTables.bootstrap4(.min)?.js"]}
-"datatables.net-buttons" = { version = "==3.2.0", provider = "unpkg", include = ["js/dataTables.buttons(.min)?.js", "js/buttons.colVis(.min)?.js"]}
-"datatables.net-buttons-bs4" = { version = "==3.2.0", provider = "unpkg", include = ["css/buttons.bootstrap4(.min)?.css", "js/buttons.bootstrap4(.min)?.js"]}
+"datatables.net" = { version = "==2.3.6", provider = "unpkg", include = ["js/dataTables(.min)?.js"]}
+"datatables.net-bs4" = { version = "==2.3.6", provider = "unpkg", include = ["css/dataTables.bootstrap4(.min)?.css", "js/dataTables.bootstrap4(.min)?.js"]}
+"datatables.net-buttons" = { version = "==3.2.6", provider = "unpkg", include = ["js/dataTables.buttons(.min)?.js", "js/buttons.colVis(.min)?.js"]}
+"datatables.net-buttons-bs4" = { version = "==3.2.6", provider = "unpkg", include = ["css/buttons.bootstrap4(.min)?.css", "js/buttons.bootstrap4(.min)?.js"]}
 dcmjs = { version = "==0.43.0", provider = "unpkg", include = ["build/dcmjs(.min)?.js(.map)?"] }
 "@diagnijmegen/rse-grand-challenge-dicom-de-id-procedure" = { version = "==2025.10.1", provider = "unpkg", include = ["dist/grand-challenge-dicom-de-id-procedure.umd.min.js", "dist/grand-challenge-dicom-de-id-procedure.umd.min.js.map"] }

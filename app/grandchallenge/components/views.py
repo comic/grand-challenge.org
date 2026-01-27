@@ -24,17 +24,20 @@ from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from grandchallenge.algorithms.forms import RESERVED_SOCKET_SLUGS
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.archives.models import Archive
 from grandchallenge.components.form_fields import (
-    INTERFACE_FORM_FIELD_PREFIX,
     FileWidgetChoices,
     file_upload_text,
 )
-from grandchallenge.components.forms import CIVSetDeleteForm, SingleCIVForm
+from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
+    CIVSetDeleteForm,
+    SingleCIVForm,
+)
 from grandchallenge.components.models import (
+    RESERVED_SOCKET_SLUGS,
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKinds,
@@ -140,7 +143,12 @@ class ComponentInterfaceAutocomplete(
                 ComponentInterface.objects.all()
                 .filter(**extra_filter_kwargs)
                 .exclude(
-                    slug__in=obj.linked_component_interfaces.values("slug")
+                    slug__in={
+                        *obj.linked_component_interfaces.values_list(
+                            "slug", flat=True
+                        ),
+                        *RESERVED_SOCKET_SLUGS,
+                    }
                 )
                 .exclude(pk__in=self.forwarded.values())
             )
@@ -195,7 +203,6 @@ class MultipleCIVProcessingBaseView(
         kwargs.update(
             {
                 "user": self.request.user,
-                "auto_id": f"id-{uuid.uuid4()}",
                 "base_obj": self.base_object,
                 "instance": instance,
             }
@@ -269,7 +276,7 @@ class InterfacesCreateBaseView(ObjectPermissionRequiredMixin, TemplateView):
             "base_obj": self.base_object,
             "interface": self.request.GET.get("interface"),
             "user": self.request.user,
-            "auto_id": f"id-{uuid.uuid4()}",
+            "form_id": uuid.uuid4(),
             "htmx_url": self.get_htmx_url(),
         }
 

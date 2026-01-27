@@ -175,6 +175,18 @@ def test_inputs_json(settings):
 
     expected = [
         {
+            "socket": {
+                "title": civ1.interface.title,
+                "description": civ1.interface.description,
+                "slug": civ1.interface.slug,
+                "kind": civ1.interface.get_kind_display(),
+                "pk": civ1.interface.pk,
+                "default_value": civ1.interface.default_value,
+                "super_kind": title(civ1.interface.super_kind.name),
+                "relative_path": civ1.interface.relative_path,
+                "overlay_segments": civ1.interface.overlay_segments,
+                "look_up_table": civ1.interface.look_up_table,
+            },
             "interface": {
                 "title": civ1.interface.title,
                 "description": civ1.interface.description,
@@ -193,6 +205,18 @@ def test_inputs_json(settings):
             "pk": civ1.pk,
         },
         {
+            "socket": {
+                "title": civ2.interface.title,
+                "description": civ2.interface.description,
+                "slug": civ2.interface.slug,
+                "kind": civ2.interface.get_kind_display(),
+                "pk": civ2.interface.pk,
+                "default_value": civ2.interface.default_value,
+                "super_kind": title(civ2.interface.super_kind.name),
+                "relative_path": civ2.interface.relative_path,
+                "overlay_segments": civ2.interface.overlay_segments,
+                "look_up_table": civ2.interface.look_up_table,
+            },
             "interface": {
                 "title": civ2.interface.title,
                 "description": civ2.interface.description,
