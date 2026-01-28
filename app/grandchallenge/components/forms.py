@@ -588,7 +588,7 @@ class SingleCIVForm(InterfaceFormFieldsMixin, Form):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.id = form_id
+        self.form_id = form_id
         data = kwargs.get("data")
 
         try:
