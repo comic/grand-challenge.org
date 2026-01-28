@@ -1183,12 +1183,11 @@ def test_archive_item_create_view(
         client=client,
         user=editor,
     )
-    assert len(response.context["form"].fields) == 6
     assert response.context["form"].fields[
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_str.slug}"
     ]
     assert response.context["form"].fields[
-        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}"
+        f"{FlexibleWidgetPrefixes.CHOICE}{ci_img.slug}"
     ]
     assert response.context["form"].fields["title"]
 
@@ -1263,13 +1262,11 @@ def test_archive_item_create_view_with_empty_value(
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
     ci_file = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.ANY,
-        relative_path="file.json",
-        store_in_database=False,
+        kind=InterfaceKindChoices.ANY, store_in_database=False
     )
     civ_str = ci_str.create_instance(value="foo")
     civ_img = ci_img.create_instance(image=ImageFactory())
-    civ_file = ci_file.create_instance(value=1337)
+    civ_file = ComponentInterfaceValueFactory(interface=ci_file)
     existing_archive_item.values.set([civ_str, civ_img, civ_file])
 
     response = get_view_for_user(

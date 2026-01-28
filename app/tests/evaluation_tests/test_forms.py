@@ -4,12 +4,10 @@ import pytest
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.forms import (
     CharField,
-    HiddenInput,
     ModelChoiceField,
     ModelMultipleChoiceField,
     TextInput,
 )
-from django.forms.fields import Field
 from factory.django import ImageField
 
 from grandchallenge.algorithms.forms import (
@@ -1350,7 +1348,6 @@ def test_additional_inputs_on_submission_form():
             ImageSearchMultiField,
             ImageSearchMultiWidget,
         ),
-        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_img.slug}": (Field, HiddenInput),
         f"{FlexibleWidgetPrefixes.CHOICE}{ci_dicom.slug}": (
             ImageSourceChoiceField,
             SourceSelect,
@@ -1363,7 +1360,6 @@ def test_additional_inputs_on_submission_form():
             ImageSearchMultiField,
             ImageSearchMultiWidget,
         ),
-        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_dicom.slug}": (Field, HiddenInput),
         f"{INTERFACE_FORM_FIELD_PREFIX}{ci_str.slug}": (CharField, TextInput),
         f"{FlexibleWidgetPrefixes.CHOICE}{ci_file.slug}": (
             FileSourceChoiceField,
@@ -1377,7 +1373,6 @@ def test_additional_inputs_on_submission_form():
             FileSearchMultiField,
             FileSearchMultiWidget,
         ),
-        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}": (Field, HiddenInput),
     }
 
     form = SubmissionForm(

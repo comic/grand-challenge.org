@@ -9,7 +9,6 @@ from django.contrib.auth.models import Permission
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import (
     CharField,
-    Field,
     HiddenInput,
     JSONField,
     ModelChoiceField,
@@ -1478,7 +1477,6 @@ def test_display_set_update_form(form_class):
             FileSearchMultiField,
             FileSearchMultiWidget,
         ),
-        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}": (Field, HiddenInput),
     }
 
     form = form_class(user=user, instance=instance, base_obj=rs)
@@ -1680,7 +1678,6 @@ def test_display_set_add_interface_form():
             FileSearchMultiField,
             FileSearchMultiWidget,
         ),
-        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_file.slug}": (Field, HiddenInput),
     }
 
     assert form.fields.keys() == set(expected_fields).union({"interface"})
@@ -1729,7 +1726,6 @@ def test_display_set_add_interface_form():
             ImageSearchMultiField,
             ImageSearchMultiWidget,
         ),
-        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_image.slug}": (Field, HiddenInput),
     }
 
     assert form.fields.keys() == set(expected_fields).union({"interface"})
@@ -1759,7 +1755,6 @@ def test_display_set_add_interface_form():
             ImageSearchMultiField,
             ImageSearchMultiWidget,
         ),
-        f"{INTERFACE_FORM_FIELD_PREFIX}{ci_dicom.slug}": (Field, HiddenInput),
     }
 
     assert form.fields.keys() == set(expected_fields).union({"interface"})
