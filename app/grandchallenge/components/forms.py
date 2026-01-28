@@ -416,9 +416,6 @@ class AdditionalInputsMixin(UserMixin, InterfaceFormFieldsMixin):
             )
 
     def clean(self):
-        if not self.instance.is_editable:
-            raise ValidationError(f"{self.instance} is not editable.")
-
         cleaned_data = super().clean()
 
         keys_to_remove = []
@@ -427,18 +424,15 @@ class AdditionalInputsMixin(UserMixin, InterfaceFormFieldsMixin):
         for key, value in cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
                 keys_to_remove.append(key)
-                civ_data = CIVData(
-                    interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
-                    value=value,
-                )
                 try:
-                    cleaned_civ_data = self.instance.validate_civ_data(
-                        civ_data=civ_data
+                    civ_data = CIVData(
+                        interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
+                        value=value,
                     )
                 except ValidationError as error:
                     self.add_error(key, error)
                 else:
-                    inputs.append(cleaned_civ_data)
+                    inputs.append(civ_data)
 
         for key in keys_to_remove:
             cleaned_data.pop(key)
@@ -520,11 +514,11 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
         for key, value in cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
                 keys_to_remove.append(key)
-                civ_data = CIVData(
-                    interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
-                    value=value,
-                )
                 try:
+                    civ_data = CIVData(
+                        interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
+                        value=value,
+                    )
                     cleaned_civ_data = self.instance.validate_civ_data(
                         civ_data=civ_data
                     )
