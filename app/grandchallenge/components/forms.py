@@ -10,7 +10,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.forms import (
     CheckboxSelectMultiple,
-    Field,
     Form,
     HiddenInput,
     ModelChoiceField,
@@ -232,11 +231,6 @@ class InterfaceFormFieldsMixin:
                     required=False,
                     bound_field_class=BoundFieldWithDNoneClass,
                 ),
-                # Add hidden input field for parsing when rendering
-                # dynamically added fields.
-                prefixed_interface_slug: Field(
-                    required=False, widget=HiddenInput()
-                ),
             }
         elif interface.super_kind == interface.SuperKind.FILE:
             return {
@@ -259,11 +253,6 @@ class InterfaceFormFieldsMixin:
                     label="",
                     required=False,
                     bound_field_class=BoundFieldWithDNoneClass,
-                ),
-                # Add hidden input field for parsing when rendering
-                # dynamically added fields.
-                prefixed_interface_slug: Field(
-                    required=False, widget=HiddenInput()
                 ),
             }
         elif interface.super_kind == interface.SuperKind.VALUE:
