@@ -26,6 +26,7 @@ from grandchallenge.notifications.models import Notification
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.uploads.models import UserUpload
 from tests.algorithms_tests.factories import AlgorithmInterfaceFactory
+from tests.algorithms_tests.test_forms import extract_form_data_from_response
 from tests.archives_tests.factories import (
     ArchiveFactory,
     ArchiveItemFactory,
@@ -1261,22 +1262,39 @@ def test_archive_item_create_view_with_empty_value(
     existing_archive_item = ArchiveItemFactory(archive=archive)
     ci_str = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
     ci_img = ComponentInterfaceFactory(kind=InterfaceKindChoices.PANIMG_IMAGE)
+    ci_file = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY,
+        relative_path="file.json",
+        store_in_database=False,
+    )
     civ_str = ci_str.create_instance(value="foo")
     civ_img = ci_img.create_instance(image=ImageFactory())
-    existing_archive_item.values.set([civ_str, civ_img])
+    civ_file = ci_file.create_instance(value=1337)
+    existing_archive_item.values.set([civ_str, civ_img, civ_file])
+
+    response = get_view_for_user(
+        viewname="archives:item-create",
+        client=client,
+        reverse_kwargs={"slug": archive.slug},
+        user=editor,
+        method=client.get,
+    )
+    data = extract_form_data_from_response(response)
+    data.update(
+        {
+            **get_interface_form_data(interface_slug=ci_str.slug, data="bar"),
+            f"{FlexibleWidgetPrefixes.CHOICE}{ci_img.slug}": ImageSourceChoices.UNDEFINED.value,
+            f"{FlexibleWidgetPrefixes.CHOICE}{ci_file.slug}": ImageSourceChoices.UNDEFINED.value,
+            "title": "archive-item title",
+        }
+    )
 
     with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
             viewname="archives:item-create",
             client=client,
             reverse_kwargs={"slug": archive.slug},
-            data={
-                **get_interface_form_data(
-                    interface_slug=ci_str.slug, data="bar"
-                ),
-                f"{FlexibleWidgetPrefixes.CHOICE}{ci_img.slug}": ImageSourceChoices.UNDEFINED.value,
-                "title": "archive-item title",
-            },
+            data=data,
             user=editor,
             method=client.post,
         )
@@ -1289,6 +1307,8 @@ def test_archive_item_create_view_with_empty_value(
     assert new_archive_item.values.get(interface=ci_str).value == "bar"
     with pytest.raises(ObjectDoesNotExist):
         new_archive_item.values.get(interface=ci_img)
+    with pytest.raises(ObjectDoesNotExist):
+        new_archive_item.values.get(interface=ci_file)
 
 
 @pytest.mark.django_db
