@@ -10,7 +10,6 @@ from grandchallenge.cases.forms import validate_user_uploads_for_case_import
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.widgets import DICOMUploadWithName
 from grandchallenge.components.backends.exceptions import (
-    CINotAllowedException,
     CIVNotEditableException,
 )
 from grandchallenge.components.models import (
@@ -372,8 +371,11 @@ class CIVSetPostSerializerMixin:
         )
 
         try:
-            instance.validate_civ_data_objects_and_execute_linked_task(
-                civ_data_objects=civ_data_objects, user=request.user
+            cleaned_civ_data_objects = instance.validate_civ_data_objects(
+                civ_data_objects
+            )
+            instance.process_civ_data_objects_and_execute_linked_task(
+                civ_data_objects=cleaned_civ_data_objects, user=request.user
             )
         except CIVNotEditableException as e:
             error_handler = instance.get_error_handler()
@@ -382,7 +384,7 @@ class CIVSetPostSerializerMixin:
                 user=request.user,
             )
             logger.error(e, exc_info=True)
-        except CINotAllowedException as e:
+        except ValidationError as e:
             raise DRFValidationError(e)
 
         if not self.partial:

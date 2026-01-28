@@ -8,6 +8,7 @@ from dal.widgets import Select
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.forms import (
     CheckboxSelectMultiple,
     Field,
@@ -423,12 +424,18 @@ class AdditionalInputsMixin(UserMixin, InterfaceFormFieldsMixin):
         for key, value in cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
                 keys_to_remove.append(key)
-                inputs.append(
-                    CIVData(
-                        interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
-                        value=value,
-                    )
+                civ_data = CIVData(
+                    interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
+                    value=value,
                 )
+                try:
+                    cleaned_civ_data = self.instance.validate_civ_data(
+                        civ_data=civ_data
+                    )
+                except ValidationError as error:
+                    self.add_error(key, error)
+                else:
+                    inputs.append(cleaned_civ_data)
 
         for key in keys_to_remove:
             cleaned_data.pop(key)
@@ -507,12 +514,18 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
         for key, value in cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
                 keys_to_remove.append(key)
-                inputs.append(
-                    CIVData(
-                        interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
-                        value=value,
-                    )
+                civ_data = CIVData(
+                    interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
+                    value=value,
                 )
+                try:
+                    cleaned_civ_data = self.instance.validate_civ_data(
+                        civ_data=civ_data
+                    )
+                except ValidationError as error:
+                    self.add_error(key, error)
+                else:
+                    inputs.append(cleaned_civ_data)
 
         for key in keys_to_remove:
             cleaned_data.pop(key)
@@ -528,7 +541,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
         )
 
         try:
-            self.instance.validate_civ_data_objects_and_execute_linked_task(
+            self.instance.process_civ_data_objects_and_execute_linked_task(
                 civ_data_objects=civ_data_objects, user=self.user
             )
         except CIVNotEditableException as e:

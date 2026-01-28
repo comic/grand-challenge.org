@@ -45,7 +45,6 @@ from grandchallenge.cases.models import (
 )
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
-    CINotAllowedException,
     CIVNotEditableException,
 )
 from grandchallenge.components.schemas import (
@@ -2500,7 +2499,30 @@ class CIVForObjectMixin:
         if not self.is_editable:
             raise CIVNotEditableException(f"{self} is not editable.")
 
-    def validate_civ_data_objects_and_execute_linked_task(
+    def validate_civ_data_objects(self, civ_data_objects):
+        cleaned_civ_data_objects = []
+        for civ_data in civ_data_objects:
+            cleaned_civ_data = self.validate_civ_data(civ_data=civ_data)
+            cleaned_civ_data_objects.append(cleaned_civ_data)
+
+        return cleaned_civ_data_objects
+
+    def validate_civ_data(self, *, civ_data):
+        try:
+            if (
+                civ_data.interface_slug
+                not in self.base_object.allowed_socket_slugs
+            ):
+                raise ValidationError(
+                    f"Socket {civ_data.interface_slug!r} is not allowed "
+                    f"for this {self.base_object._meta.model_name}."
+                )
+        except AttributeError:
+            pass
+
+        return civ_data
+
+    def process_civ_data_objects_and_execute_linked_task(
         self, *, civ_data_objects, user, linked_task=None
     ):
         for civ_data in civ_data_objects:
@@ -2515,18 +2537,6 @@ class CIVForObjectMixin:
             raise CIVNotEditableException(
                 f"{self} is not editable. CIVs cannot be added or removed from it.",
             )
-
-        try:
-            if (
-                civ_data.interface_slug
-                not in self.base_object.allowed_socket_slugs
-            ):
-                raise CINotAllowedException(
-                    f"Socket {civ_data.interface_slug!r} is not allowed "
-                    f"for this {self.base_object._meta.model_name}."
-                )
-        except AttributeError:
-            pass
 
         ci = civ_data.interface
 
