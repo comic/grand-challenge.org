@@ -518,7 +518,6 @@ def get_interface_form_data(
             form_data = {
                 f"{FlexibleWidgetPrefixes.CHOICE}{interface_slug}": SourceChoices.SEARCH.value,
                 f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{SearchWidgetSuffixes.CHOICE}": data,
-                f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": "",
             }
         else:
             if ci.is_dicom_image_kind:
@@ -530,29 +529,27 @@ def get_interface_form_data(
                     f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}_{DICOMUploadWidgetSuffixes.UPLOADS}": data[
                         1
                     ],
-                    f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": "",
                 }
             else:
                 form_data = {
                     f"{FlexibleWidgetPrefixes.CHOICE}{interface_slug}": SourceChoices.UPLOAD.value,
                     f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}": data,
-                    f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": "",
                 }
     elif ci.super_kind == ci.SuperKind.FILE:
         if existing_data:
             form_data = {
                 f"{FlexibleWidgetPrefixes.CHOICE}{interface_slug}": SourceChoices.SEARCH.value,
                 f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{SearchWidgetSuffixes.CHOICE}": data,
-                f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": "",
             }
         else:
             form_data = {
                 f"{FlexibleWidgetPrefixes.CHOICE}{interface_slug}": SourceChoices.UPLOAD.value,
                 f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}": data,
-                f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": "",
             }
-    else:
+    elif ci.super_kind == ci.SuperKind.VALUE:
         form_data = {f"{INTERFACE_FORM_FIELD_PREFIX}{interface_slug}": data}
+    else:
+        raise NotImplementedError
 
     return form_data
 
