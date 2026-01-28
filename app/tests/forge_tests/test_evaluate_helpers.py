@@ -18,25 +18,22 @@ def helpers():
     Fixture that renders the helpers.py.template to a real Python module
     and makes it importable for both parent and child processes.
     """
-    # Create a temporary directory and copy the template as a real Python module
-    temp_dir = tempfile.mkdtemp()
-    template_path = Path(
-        "grandchallenge/forge/templates/forge/partials/example_evaluation_method/helpers.py.template"
-    )
-    helpers_path = Path(temp_dir) / "helpers.py"
-    shutil.copy(template_path, helpers_path)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        template_path = Path(
+            "grandchallenge/forge/templates/forge/partials/example_evaluation_method/helpers.py.template"
+        )
+        helpers_path = Path(temp_dir) / "helpers.py"
 
-    # Add temp directory to sys.path so child processes can import it
-    sys.path.insert(0, temp_dir)
+        shutil.copy(template_path, helpers_path)
 
-    # Now import it normally
-    import helpers as helpers_module
+        try:
+            sys.path.insert(0, temp_dir)
 
-    yield helpers_module
+            import helpers as helpers_module
 
-    # Cleanup: remove from sys.path and delete temp directory
-    sys.path.remove(temp_dir)
-    shutil.rmtree(temp_dir, ignore_errors=True)
+            yield helpers_module
+        finally:
+            sys.path.remove(temp_dir)
 
 
 def working_process(p):
