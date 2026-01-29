@@ -2509,18 +2509,6 @@ class CIVForObjectMixin:
         return cleaned_civ_data_objects
 
     def validate_civ_data(self, *, civ_data):
-        try:
-            if (
-                civ_data.interface_slug
-                not in self.base_object.allowed_socket_slugs
-            ):
-                raise ValidationError(
-                    f"Socket {civ_data.interface_slug!r} is not allowed "
-                    f"for this {self.base_object._meta.model_name}."
-                )
-        except AttributeError:
-            pass
-
         return civ_data
 
     def process_civ_data_objects_and_execute_linked_task(

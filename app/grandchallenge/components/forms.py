@@ -516,18 +516,30 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
         for key, value in cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
                 keys_to_remove.append(key)
+                interface_slug = key[len(INTERFACE_FORM_FIELD_PREFIX) :]
+
+                try:
+                    if (
+                        interface_slug
+                        not in self.base_object.allowed_socket_slugs
+                    ):
+                        errors[key] = ValidationError(
+                            f"Socket {interface_slug} is not allowed "
+                            f"for this {self.base_object._meta.model_name}."
+                        )
+                        continue
+                except AttributeError:
+                    pass
+
                 try:
                     civ_data = CIVData(
-                        interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
+                        interface_slug=interface_slug,
                         value=value,
-                    )
-                    cleaned_civ_data = self.instance.validate_civ_data(
-                        civ_data=civ_data
                     )
                 except ValidationError as error:
                     errors[key] = error
                 else:
-                    inputs.append(cleaned_civ_data)
+                    inputs.append(civ_data)
 
         for key in keys_to_remove:
             cleaned_data.pop(key)
