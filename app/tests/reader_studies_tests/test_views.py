@@ -767,7 +767,7 @@ def test_add_display_set_to_reader_study_with_empty_value(
 
 
 @pytest.mark.django_db
-def test_display_set_update_when_disabled(client):
+def test_add_display_set_update_when_disabled(client):
     editor = UserFactory()
     rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
@@ -789,11 +789,12 @@ def test_display_set_update_when_disabled(client):
         user=editor,
         method=client.post,
     )
+    assert response.status_code == 302
 
-    assert response.status_code == 200
-    assert [
-        "This display set cannot be changed, as answers for it already exist."
-    ] == response.context["form"].errors["__all__"]
+    assert Notification.objects.count() == 1
+    notification = Notification.objects.first()
+    assert notification.user == editor
+    assert notification.message == "An unexpected error occurred"
 
 
 @pytest.mark.django_db

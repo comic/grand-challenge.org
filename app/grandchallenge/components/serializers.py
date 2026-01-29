@@ -338,6 +338,9 @@ class HyperlinkedComponentInterfaceValueSerializer(
 
 
 class CIVSetPostSerializerMixin:
+
+    editability_error_message = "This object cannot be updated."
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -360,8 +363,9 @@ class CIVSetPostSerializerMixin:
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
+
         if not instance.is_editable:
-            raise DRFValidationError(instance.not_editable_error_message)
+            raise DRFValidationError(self.editability_error_message)
 
         civ_data_objects = validated_data.pop("civ_data_objects", [])
 

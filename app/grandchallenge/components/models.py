@@ -2490,7 +2490,6 @@ class CIVSetObjectPermissionsMixin:
 
 
 class CIVForObjectMixin:
-    not_editable_error_message = "This object cannot be updated."
 
     def add_civ(self, *, civ):
         if not self.is_editable:
