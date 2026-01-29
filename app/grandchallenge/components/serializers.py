@@ -385,7 +385,7 @@ class CIVSetPostSerializerMixin:
             )
             logger.error(e, exc_info=True)
         except ValidationError as e:
-            raise DRFValidationError(e)
+            raise DRFValidationError(e.messages) from e
 
         if not self.partial:
             instance.refresh_from_db()
