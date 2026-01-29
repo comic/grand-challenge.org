@@ -938,6 +938,10 @@ class DisplaySet(
     order = models.PositiveIntegerField(default=0)
     title = models.CharField(max_length=255, default="", blank=True)
 
+    not_editable_error_message = (
+        "This display set cannot be changed, as answers for it already exist."
+    )
+
     def assign_permissions(self):
         assign_perm(
             self.delete_perm,

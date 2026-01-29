@@ -8,6 +8,7 @@ from dal.widgets import Select
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.forms import (
     CheckboxSelectMultiple,
     Field,
@@ -553,6 +554,12 @@ class CIVSetCreateFormMixin:
 
 
 class CIVSetUpdateFormMixin:
+    def clean(self):
+        if not self.instance.is_editable:
+            raise ValidationError(self.instance.not_editable_error_message)
+
+        return super().clean()
+
     def process_object_data(self):
         instance = self.instance
 
