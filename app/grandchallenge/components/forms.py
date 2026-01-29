@@ -419,6 +419,7 @@ class AdditionalInputsMixin(UserMixin, InterfaceFormFieldsMixin):
         cleaned_data = super().clean()
 
         keys_to_remove = []
+        errors = {}
         inputs = []
 
         for key, value in cleaned_data.items():
@@ -430,12 +431,15 @@ class AdditionalInputsMixin(UserMixin, InterfaceFormFieldsMixin):
                         value=value,
                     )
                 except ValidationError as error:
-                    self.add_error(key, error)
+                    errors[key] = error
                 else:
                     inputs.append(civ_data)
 
         for key in keys_to_remove:
             cleaned_data.pop(key)
+
+        for key, error in errors.items():
+            self.add_error(key, error)
 
         cleaned_data["additional_inputs"] = inputs
 
@@ -506,6 +510,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
         cleaned_data = super().clean()
 
         keys_to_remove = []
+        errors = {}
         inputs = []
 
         for key, value in cleaned_data.items():
@@ -520,12 +525,15 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
                         civ_data=civ_data
                     )
                 except ValidationError as error:
-                    self.add_error(key, error)
+                    errors[key] = error
                 else:
                     inputs.append(cleaned_civ_data)
 
         for key in keys_to_remove:
             cleaned_data.pop(key)
+
+        for key, error in errors.items():
+            self.add_error(key, error)
 
         # Mark as CIV data and not base-object data
         cleaned_data[INTERFACE_FORM_FIELD_PREFIX + "civ_data_objects"] = inputs
