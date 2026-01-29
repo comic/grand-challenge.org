@@ -347,8 +347,15 @@ class CIVSetPostSerializerMixin:
             required=False,
         )
 
+    def validate(self, data):
+        if values := data.pop("values", None):
+            data["civ_data_objects"] = convert_deserialized_civ_data(
+                deserialized_civ_data=values
+            )
+        return super().validate(data)
+
     def create(self, validated_data):
-        if validated_data.pop("values", None):
+        if validated_data.pop("civ_data_objects", None):
             raise DRFValidationError("Values can only be added via update")
         return super().create(validated_data)
 
@@ -356,22 +363,15 @@ class CIVSetPostSerializerMixin:
         if not instance.is_editable:
             raise DRFValidationError(instance.not_editable_error_message)
 
-        values = validated_data.pop("values", [])
+        civ_data_objects = validated_data.pop("civ_data_objects", [])
 
         instance = super().update(instance, validated_data)
 
         request = self.context["request"]
 
-        civ_data_objects = convert_deserialized_civ_data(
-            deserialized_civ_data=values
-        )
-
         try:
-            cleaned_civ_data_objects = instance.validate_civ_data_objects(
-                civ_data_objects
-            )
             instance.process_civ_data_objects_and_execute_linked_task(
-                civ_data_objects=cleaned_civ_data_objects, user=request.user
+                civ_data_objects=civ_data_objects, user=request.user
             )
         except CIVNotEditableException as e:
             error_handler = instance.get_error_handler()
@@ -389,7 +389,11 @@ class CIVSetPostSerializerMixin:
                 civ.interface.slug: civ for civ in instance.values.all()
             }
             current_interfaces = set(current_civs.keys())
-            updated_interfaces = {v["interface"].slug for v in values}
+            updated_interfaces = {
+                civ_data_object.interface_slug
+                for civ_data_object in civ_data_objects
+            }
+
             for interface in current_interfaces - updated_interfaces:
                 self.instance.remove_civ(civ=current_civs[interface])
 

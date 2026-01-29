@@ -245,12 +245,12 @@ class JobPostSerializer(JobSerializer):
         data["algorithm_interface"] = (
             self.validate_inputs_and_return_matching_interface(inputs=inputs)
         )
-        self.inputs = convert_deserialized_civ_data(
+        data["civ_data_objects"] = convert_deserialized_civ_data(
             deserialized_civ_data=inputs
         )
 
         if Job.objects.get_jobs_with_same_inputs(
-            inputs=self.inputs,
+            inputs=data["civ_data_objects"],
             algorithm_image=data["algorithm_image"],
             algorithm_model=data["algorithm_model"],
         ):
@@ -263,6 +263,7 @@ class JobPostSerializer(JobSerializer):
 
     def create(self, validated_data):
         algorithm = validated_data["algorithm_image"].algorithm
+        civ_data_objects = validated_data.pop("civ_data_objects", [])
 
         job = Job.objects.create(
             **validated_data,
@@ -274,9 +275,9 @@ class JobPostSerializer(JobSerializer):
         )
 
         try:
-            cleaned_inputs = job.validate_civ_data_objects(self.inputs)
             job.process_civ_data_objects_and_execute_linked_task(
-                civ_data_objects=cleaned_inputs, user=validated_data["creator"]
+                civ_data_objects=civ_data_objects,
+                user=validated_data["creator"],
             )
         except CIVNotEditableException as e:
             if job.status == job.CANCELLED:
