@@ -83,7 +83,11 @@ class ArchiveItemPostSerializer(
             )
 
     def validate(self, data):
-        archive = data["archive"]
+        if self.instance:
+            archive = self.instance.archive
+        else:
+            archive = data["archive"]
+
         errors = []
         for civ in data["values"]:
             interface = civ["interface"]
