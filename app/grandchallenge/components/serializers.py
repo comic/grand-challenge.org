@@ -5,6 +5,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.fields import CharField, SerializerMethodField
 from rest_framework.relations import SlugRelatedField
+from rest_framework.serializers import as_serializer_error
 
 from grandchallenge.cases.forms import validate_user_uploads_for_case_import
 from grandchallenge.cases.models import Image, RawImageUploadSession
@@ -30,6 +31,7 @@ logger = logging.getLogger(__name__)
 def convert_deserialized_civ_data(*, deserialized_civ_data):
     """Takes deserialized CIV data and returns list of CIVData objects."""
     civ_data_objects = []
+    errors = []
     for civ in deserialized_civ_data:
         interface = civ["interface"]
 
@@ -59,8 +61,13 @@ def convert_deserialized_civ_data(*, deserialized_civ_data):
             civ_data_objects.append(
                 CIVData(interface_slug=interface.slug, value=value)
             )
-        except ValidationError as e:
-            raise serializers.ValidationError(e)
+        except ValidationError as error:
+            errors.append(
+                serializers.ValidationError(detail=as_serializer_error(error))
+            )
+
+    if errors:
+        raise serializers.ValidationError(errors)
 
     return civ_data_objects
 
@@ -384,8 +391,6 @@ class CIVSetPostSerializerMixin:
                 user=request.user,
             )
             logger.error(e, exc_info=True)
-        except ValidationError as e:
-            raise DRFValidationError(e.messages) from e
 
         if not self.partial:
             instance.refresh_from_db()
