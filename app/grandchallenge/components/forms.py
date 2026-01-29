@@ -503,9 +503,6 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
         return interface_slug
 
     def clean(self):
-        if not self.instance.is_editable:
-            raise ValidationError(f"{self.instance} is not editable.")
-
         cleaned_data = super().clean()
 
         keys_to_remove = []
@@ -566,6 +563,12 @@ class CIVSetCreateFormMixin:
 
 
 class CIVSetUpdateFormMixin:
+    def clean(self):
+        if not self.instance.is_editable:
+            raise ValidationError(f"{self.instance} is not editable.")
+
+        return super().clean()
+
     def process_object_data(self):
         instance = self.instance
 
