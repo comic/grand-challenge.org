@@ -565,7 +565,7 @@ class CIVSetCreateFormMixin:
 class CIVSetUpdateFormMixin:
     def clean(self):
         if not self.instance.is_editable:
-            raise ValidationError(f"{self.instance} is not editable.")
+            raise ValidationError(self.instance.not_editable_error_message)
 
         return super().clean()
 
