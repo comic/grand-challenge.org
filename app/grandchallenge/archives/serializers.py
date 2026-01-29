@@ -88,17 +88,22 @@ class ArchiveItemPostSerializer(
         else:
             archive = data["archive"]
 
-        errors = []
-        for civ in data["values"]:
-            interface = civ["interface"]
-            if interface.slug not in archive.allowed_socket_slugs:
-                errors.append(
-                    serializers.ValidationError(
-                        f"Socket {interface.slug} is not allowed for this Archive."
+        try:
+            allowed_socket_slugs = archive.allowed_socket_slugs
+        except AttributeError:
+            pass
+        else:
+            errors = []
+            for civ in data["values"]:
+                interface = civ["interface"]
+                if interface.slug not in allowed_socket_slugs:
+                    errors.append(
+                        serializers.ValidationError(
+                            f"Socket {interface.slug!r} is not allowed for this archive."
+                        )
                     )
-                )
 
-        if errors:
-            raise serializers.ValidationError(errors)
+            if errors:
+                raise serializers.ValidationError(errors)
 
         return super().validate(data)
