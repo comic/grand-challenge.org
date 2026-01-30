@@ -21,7 +21,7 @@ class FileSourceChoices(TextChoices):
     UNDEFINED = SourceChoices.UNDEFINED, "Choose data source..."
     SEARCH = SourceChoices.SEARCH, "Select an existing file"
     UPLOAD = SourceChoices.UPLOAD, "Upload a new file"
-    REMOVE = SourceChoices.REMOVE, "Remove this file"
+    REMOVE = SourceChoices.REMOVE, "⚠ Remove this file"
 
 
 class BoundFieldWithDNoneClass(BoundField):

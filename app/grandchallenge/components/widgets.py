@@ -5,6 +5,8 @@ from django.forms.widgets import Select, TextInput
 
 
 class SourceSelect(Select):
+    template_name = "components/warning_select.html"
+
     class Media:
         js = (Script("components/js/source_select.mjs", type="module"),)
 
