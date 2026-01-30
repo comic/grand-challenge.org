@@ -19,9 +19,9 @@ from grandchallenge.serving.models import (
 
 class FileSourceChoices(TextChoices):
     UNDEFINED = SourceChoices.UNDEFINED, "Choose data source..."
-    REMOVE = SourceChoices.REMOVE, "Remove this file"
     SEARCH = SourceChoices.SEARCH, "Select an existing file"
     UPLOAD = SourceChoices.UPLOAD, "Upload a new file"
+    REMOVE = SourceChoices.REMOVE, "⚠ Remove this file"
 
 
 class BoundFieldWithDNoneClass(BoundField):
