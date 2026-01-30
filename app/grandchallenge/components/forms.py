@@ -35,13 +35,13 @@ from grandchallenge.components.form_fields import (
     BoundFieldWithDNoneClass,
     FileSearchMultiField,
     FileSourceChoiceField,
-    SourceChoices,
 )
 from grandchallenge.components.models import (
     RESERVED_SOCKET_SLUGS,
     CIVData,
     ComponentInterface,
     ComponentInterfaceValue,
+    SourceChoices,
 )
 from grandchallenge.components.schemas import generate_component_json_schema
 from grandchallenge.components.widgets import (
@@ -354,6 +354,7 @@ class InterfaceFormFieldsMixin:
                 )
                 widget_fields = {
                     SourceChoices.CURRENT: key,
+                    SourceChoices.REMOVE: key,
                     SourceChoices.SEARCH: f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}",
                     SourceChoices.UPLOAD: f"{FlexibleWidgetPrefixes.UPLOAD}{interface_slug}",
                 }

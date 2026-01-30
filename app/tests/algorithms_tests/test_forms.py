@@ -26,7 +26,6 @@ from grandchallenge.algorithms.models import (
     Job,
 )
 from grandchallenge.cases.widgets import DICOMUploadWidgetSuffixes
-from grandchallenge.components.form_fields import SourceChoices
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
@@ -36,6 +35,7 @@ from grandchallenge.components.models import (
     ImportStatusChoices,
     InterfaceKindChoices,
     InterfaceSuperKindChoices,
+    SourceChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.widgets import SearchWidgetSuffixes

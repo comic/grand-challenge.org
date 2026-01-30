@@ -14,7 +14,7 @@ from grandchallenge.cases.widgets import (
     DICOMUploadWithName,
     ImageSearchMultiWidget,
 )
-from grandchallenge.components.form_fields import SourceChoices
+from grandchallenge.components.models import SourceChoices
 from grandchallenge.components.widgets import SourceSelect
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.uploads.models import UserUpload

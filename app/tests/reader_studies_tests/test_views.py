@@ -12,6 +12,7 @@ from grandchallenge.components.forms import FlexibleWidgetPrefixes
 from grandchallenge.components.models import (
     ComponentInterfaceValue,
     InterfaceKindChoices,
+    SourceChoices,
 )
 from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
@@ -581,8 +582,6 @@ def test_display_set_update(
     assert ds1.order == 12
     assert ds1.title == ""
 
-    n_civs_old = ComponentInterfaceValue.objects.count()
-
     # test removing json file and json value interface values
     with django_capture_on_commit_callbacks(execute=True):
         response = get_view_for_user(
@@ -595,6 +594,7 @@ def test_display_set_update(
                     data=str(im2.pk),
                     existing_data=True,
                 ),
+                f"{FlexibleWidgetPrefixes.CHOICE}{ci_json_file.slug}": SourceChoices.REMOVE.value,
                 "order": 12,
                 "title": "foobar_foobar",
             },

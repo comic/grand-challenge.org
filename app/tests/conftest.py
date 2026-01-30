@@ -14,7 +14,6 @@ from requests import put
 from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.widgets import DICOMUploadWidgetSuffixes
 from grandchallenge.components.backends import docker_client
-from grandchallenge.components.form_fields import SourceChoices
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
@@ -22,6 +21,7 @@ from grandchallenge.components.forms import (
 from grandchallenge.components.models import (
     ComponentInterface,
     InterfaceKindChoices,
+    SourceChoices,
 )
 from grandchallenge.components.widgets import SearchWidgetSuffixes
 from grandchallenge.core.fixtures import create_uploaded_image

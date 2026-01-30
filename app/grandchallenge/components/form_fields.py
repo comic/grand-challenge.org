@@ -1,5 +1,3 @@
-from enum import StrEnum
-
 from django.db.models import TextChoices
 from django.forms import (
     BoundField,
@@ -9,6 +7,7 @@ from django.forms import (
     MultiValueField,
 )
 
+from grandchallenge.components.models import SourceChoices
 from grandchallenge.components.widgets import (
     FileSearchMultiWidget,
     SourceSelect,
@@ -18,17 +17,11 @@ from grandchallenge.serving.models import (
 )
 
 
-class SourceChoices(StrEnum):
-    UNDEFINED = ""
-    CURRENT = "CURRENT"
-    SEARCH = "SEARCH"
-    UPLOAD = "UPLOAD"
-
-
 class FileSourceChoices(TextChoices):
     UNDEFINED = SourceChoices.UNDEFINED, "Choose data source..."
     SEARCH = SourceChoices.SEARCH, "Select an existing file"
     UPLOAD = SourceChoices.UPLOAD, "Upload a new file"
+    REMOVE = SourceChoices.REMOVE, "Remove this file"
 
 
 class BoundFieldWithDNoneClass(BoundField):
@@ -64,6 +57,13 @@ class FileSourceChoiceField(ChoiceField):
                     SourceChoices.CURRENT.value,
                     current_socket_value.title,
                 ),
+            )
+        else:
+            choices.remove(
+                (
+                    FileSourceChoices.REMOVE.value,
+                    FileSourceChoices.REMOVE.label,
+                )
             )
 
         super().__init__(
