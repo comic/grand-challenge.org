@@ -40,7 +40,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span><span class="p">,</span> <span class="n">StrEnum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">json</span><span class="w"> </span><span class="kn">import</span> <span class="n">JSONDecodeError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tempfile</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
@@ -144,6 +144,17 @@
     <span class="s2">&quot;metrics-json-file&quot;</span><span class="p">,</span>
     <span class="s2">&quot;results-json-file&quot;</span><span class="p">,</span>
 <span class="p">}</span>
+
+
+<div class="viewcode-block" id="SourceChoices">
+<a class="viewcode-back" href="../../../components.html#grandchallenge.components.models.SourceChoices">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SourceChoices</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+    <span class="n">UNDEFINED</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">CURRENT</span> <span class="o">=</span> <span class="s2">&quot;CURRENT&quot;</span>
+    <span class="n">SEARCH</span> <span class="o">=</span> <span class="s2">&quot;SEARCH&quot;</span>
+    <span class="n">UPLOAD</span> <span class="o">=</span> <span class="s2">&quot;UPLOAD&quot;</span>
+    <span class="n">REMOVE</span> <span class="o">=</span> <span class="s2">&quot;REMOVE&quot;</span></div>
+
 
 
 <div class="viewcode-block" id="InterfaceKindChoices">
@@ -2507,8 +2518,8 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_user_upload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">,</span> <span class="n">ComponentInterfaceValue</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_file_civ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_file_civ</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span> <span class="o">==</span> <span class="n">SourceChoices</span><span class="o">.</span><span class="n">REMOVE</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_file_civ</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Unknown data type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_value</span><span class="p">)</span><span class="si">}</span><span class="s2"> for interface </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_interface_slug</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -2842,7 +2853,9 @@
         <span class="n">user_upload</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">linked_task</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="k">if</span> <span class="n">file_civ</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">file_civ</span> <span class="o">==</span> <span class="n">SourceChoices</span><span class="o">.</span><span class="n">REMOVE</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">remove_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">file_civ</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">remove_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">add_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">file_civ</span><span class="p">)</span>
 
@@ -2872,9 +2885,7 @@
             <span class="p">)</span>
 
         <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># if no new value is provided (user selects &#39;---&#39; in dropdown)</span>
-            <span class="c1"># delete old CIV</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">remove_civ</span><span class="p">(</span><span class="n">civ</span><span class="o">=</span><span class="n">current_civ</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_civ_for_interface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interface</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>

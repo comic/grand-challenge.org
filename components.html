@@ -426,54 +426,54 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dd><p>Interface kind sets.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Interface kinds that are images:
 
-  - DICOM Image Set
-  - Heat Map
-  - Displacement field
-  - Image
   - Segmentation
+  - Image
+  - Displacement field
+  - Heat Map
+  - DICOM Image Set
 
 
 Interface kinds that are files:
 
-  - BIOM format
-  - OBJ file
-  - CSV file
+  - MP4 file
   - PDF file
   - Newick tree-format file
   - Thumbnail png
-  - ZIP file
   - SQREG file
-  - MP4 file
+  - CSV file
   - Thumbnail jpg
+  - OBJ file
+  - BIOM format
+  - ZIP file
 
 
 Interface kinds that are json serializable:
 
-  - Integer
-  - Three-point angle
-  - 2D bounding box
-  - Affine transform registration
-  - Chart
-  - Bool
-  - Multiple choice
+  - Multiple distance measurements
+  - Distance measurement
+  - Choice
   - Ellipse
-  - Multiple angles
-  - Angle
-  - Anything
-  - Multiple ellipses
+  - Three-point angle
+  - String
   - Line
-  - Multiple points
-  - Multiple lines
+  - Polygon
   - Multiple 2D bounding boxes
   - Float
+  - Affine transform registration
   - Multiple three-point angles
-  - Distance measurement
+  - Bool
+  - Integer
+  - Multiple choice
+  - 2D bounding box
+  - Multiple points
+  - Multiple ellipses
+  - Multiple angles
   - Point
-  - Multiple distance measurements
-  - Polygon
-  - String
-  - Choice
+  - Multiple lines
+  - Angle
+  - Chart
   - Multiple polygons
+  - Anything
 
 
 Example JSON file contents for String:
@@ -1485,6 +1485,11 @@ Example JSON file contents for Multiple choice:
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.components.models.SourceChoices">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">SourceChoices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#SourceChoices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.SourceChoices" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.components.models.Tarball">
