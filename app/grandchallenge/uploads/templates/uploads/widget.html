@@ -1,5 +1,4 @@
 {% load url %}
-{% load clean from bleach %}
 
 {% url "api:upload-list" as upload_list_view %}
 {{ upload_list_view|json_script:"uploadListView" }}
@@ -46,9 +45,5 @@
                 {% if widget.value != None %}value="{{ widget.value|stringformat:'s' }}"{% endif %}
                 {% include "django/forms/widgets/attrs.html" %}
         >
-    {% endif %}
-    {# TODO: remove help text here after flexible image and flexible file fields have been removed. help text will be rendered by the field. #}
-    {% if widget.attrs.help_text %}
-        <small id="hint_{{ widget.attrs.id }}" class="form-text text-muted">{{ widget.attrs.help_text|clean }}</small>
     {% endif %}
 </div>

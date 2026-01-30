@@ -7,10 +7,8 @@ from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from django.conf import settings
 from django.db.models import Q
-from django.forms import HiddenInput
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from django.views import View
 from django.views.generic import DetailView, ListView
 from django_filters.rest_framework import DjangoFilterBackend
 from guardian.mixins import LoginRequiredMixin
@@ -26,7 +24,6 @@ from rest_framework.settings import api_settings
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 
 from grandchallenge.cases.filters import ImageFilterSet
-from grandchallenge.cases.forms import IMAGE_UPLOAD_HELP_TEXT
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
     Image,
@@ -36,7 +33,6 @@ from grandchallenge.cases.serializers import (
     HyperlinkedImageSerializer,
     RawImageUploadSessionSerializer,
 )
-from grandchallenge.cases.widgets import ImageSearchWidget, ImageWidgetChoices
 from grandchallenge.components.backends.base import serialize_aws_request
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
@@ -48,14 +44,11 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     ViewObjectPermissionListMixin,
     ViewObjectPermissionsFilter,
-    get_object_if_allowed,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.serving.models import Download
 from grandchallenge.subdomains.utils import reverse_lazy
-from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import UserUploadMultipleWidget
 from grandchallenge.workstations.models import Workstation
 
 
@@ -254,89 +247,6 @@ class RawImageUploadSessionViewSet(
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [ViewObjectPermissionsFilter]
     serializer_class = RawImageUploadSessionSerializer
-
-
-class ImageWidgetSelectView(LoginRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        prefixed_interface_slug = self.request.GET.get(
-            "prefixed-interface-slug", ""
-        )
-        get_object_or_404(
-            ComponentInterface,
-            slug=prefixed_interface_slug.replace(
-                INTERFACE_FORM_FIELD_PREFIX, ""
-            ),
-        )
-        widget_choice_name = request.GET.get(
-            f"widget-choice-{prefixed_interface_slug}"
-        )
-        try:
-            widget_choice = ImageWidgetChoices(widget_choice_name)
-        except ValueError:
-            raise Http404(f"Widget choice {widget_choice_name} not found")
-
-        if widget_choice == ImageWidgetChoices.IMAGE_SEARCH:
-            return HttpResponse(
-                ImageSearchWidget().render(
-                    name=prefixed_interface_slug,
-                    value=None,
-                )
-            )
-        elif widget_choice == ImageWidgetChoices.IMAGE_UPLOAD:
-            return HttpResponse(
-                UserUploadMultipleWidget().render(
-                    name=prefixed_interface_slug,
-                    value=None,
-                    attrs={
-                        "id": prefixed_interface_slug,
-                        "help_text": IMAGE_UPLOAD_HELP_TEXT,
-                    },
-                )
-            )
-        elif widget_choice == ImageWidgetChoices.IMAGE_SELECTED and (
-            current_value_list := request.GET.getlist("current-value-pk")
-        ):
-            # this can happen on the display set update view or redisplay of
-            # form upon validation, where one of the options is the current
-            # image, this enables switching back from one of the above widgets
-            # to the chosen image. This makes sure the form element with the
-            # right name is available on resubmission.
-            image = get_object_if_allowed(
-                model=Image,
-                pk=current_value_list[0],
-                user=request.user,
-                codename="view_image",
-            )
-            if image:
-                return HttpResponse(
-                    HiddenInput().render(
-                        name=prefixed_interface_slug,
-                        value=image.pk,
-                    )
-                )
-            hidden_inputs_for_uploads = [
-                HiddenInput().render(
-                    name=prefixed_interface_slug,
-                    value=pk,
-                )
-                for pk in current_value_list
-                if get_object_if_allowed(
-                    model=UserUpload,
-                    pk=pk,
-                    user=request.user,
-                    codename="change_userupload",
-                )
-            ]
-            if hidden_inputs_for_uploads:
-                return HttpResponse(hidden_inputs_for_uploads)
-            raise Http404(f"Selected image {current_value_list} not found")
-        elif widget_choice == ImageWidgetChoices.UNDEFINED:
-            # this happens when switching back from one of the
-            # above widgets to the "Choose data source" option
-            return HttpResponse()
-        raise NotImplementedError(
-            f"Response for widget choice {widget_choice} not implemented"
-        )
 
 
 class ImageSearchResultView(
