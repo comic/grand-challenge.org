@@ -742,11 +742,11 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_clean_default_value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">==</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">FILE</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_value</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">default_value</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">super_kind</span> <span class="o">!=</span> <span class="n">InterfaceSuperKindChoices</span><span class="o">.</span><span class="n">VALUE</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
-                <span class="s2">&quot;A socket that requires a file should not have a default value&quot;</span>
+                <span class="s2">&quot;Default values may only be defined for value super kinds (json kinds stored in the database).&quot;</span>
             <span class="p">)</span>
 
 <div class="viewcode-block" id="ComponentInterface.validate_against_schema">
