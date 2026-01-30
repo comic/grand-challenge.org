@@ -8,6 +8,7 @@ from grandchallenge.components.form_fields import (
     FileSourceChoices,
 )
 from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
     InterfaceFormFieldsMixin,
 )
@@ -135,3 +136,23 @@ def test_file_source_select_options():
         field.clean(SourceChoices.REMOVE.value)
     with pytest.raises(ValidationError, match="This field is required."):
         field.clean(FileSourceChoices.UNDEFINED)
+
+
+def test_json_field_prepopulated_value():
+    ci = ComponentInterfaceFactory.build(
+        kind=FuzzyChoice(InterfaceKinds.json),
+        default_value="some default value",
+    )
+    civ = ComponentInterfaceValueFactory.build(interface=ci, value="foobar")
+
+    field = InterfaceFormFieldsMixin().get_fields_for_interface(
+        interface=ci, current_socket_value=civ
+    )[f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"]
+
+    assert field.initial == "foobar"
+
+    field = InterfaceFormFieldsMixin().get_fields_for_interface(interface=ci)[
+        f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
+    ]
+
+    assert field.initial == "some default value"
