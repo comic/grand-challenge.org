@@ -6,13 +6,11 @@ from dal import autocomplete
 from django.contrib.auth.mixins import AccessMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q, TextChoices
-from django.forms import HiddenInput, Media
-from django.http import Http404, HttpResponse
+from django.forms import Media
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.utils.html import format_html
-from django.views import View
 from django.views.generic import (
     DeleteView,
     DetailView,
@@ -27,9 +25,7 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.api.permissions import IsAuthenticated
 from grandchallenge.archives.models import Archive
-from grandchallenge.components.form_fields import FileWidgetChoices
 from grandchallenge.components.forms import (
-    FILE_UPLOAD_HELP_TEXT,
     INTERFACE_FORM_FIELD_PREFIX,
     CIVSetDeleteForm,
     FlexibleWidgetPrefixes,
@@ -42,29 +38,19 @@ from grandchallenge.components.models import (
     InterfaceKinds,
 )
 from grandchallenge.components.serializers import ComponentInterfaceSerializer
-from grandchallenge.components.widgets import (
-    FileSearchWidget,
-    SearchWidgetSuffixes,
-)
+from grandchallenge.components.widgets import SearchWidgetSuffixes
 from grandchallenge.core.guardian import (
     ObjectPermissionCheckerMixin,
     ObjectPermissionRequiredMixin,
     ViewObjectPermissionListMixin,
     filter_by_permission,
-    get_object_if_allowed,
 )
-from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.serving.models import (
     get_component_interface_values_for_user,
 )
 from grandchallenge.subdomains.utils import reverse, reverse_lazy
-from grandchallenge.uploads.models import UserUpload
-from grandchallenge.uploads.widgets import (
-    UserUploadMultipleWidget,
-    UserUploadSingleWidget,
-)
 
 
 class ComponentInterfaceViewSet(ReadOnlyModelViewSet):
@@ -487,109 +473,6 @@ class FileAccessRequiredMixin(AccessMixin):
             return super().dispatch(request, *args, **kwargs)
         else:
             return self.handle_no_permission()
-
-
-class FileUploadFormFieldView(
-    LoginRequiredMixin, FileAccessRequiredMixin, View
-):
-    @cached_property
-    def interface(self):
-        return get_object_or_404(
-            ComponentInterface, slug=self.kwargs["interface_slug"]
-        )
-
-    def get(self, request, *args, **kwargs):
-        widget_name = f"{INTERFACE_FORM_FIELD_PREFIX}{self.interface.slug}"
-        html_content = render_to_string(
-            UserUploadMultipleWidget.template_name,
-            {
-                "widget": UserUploadMultipleWidget(
-                    allowed_file_types=self.interface.allowed_file_types,
-                ).get_context(
-                    name=widget_name,
-                    value=None,
-                    attrs={
-                        "id": widget_name,
-                        "help_text": clean(self.interface.description),
-                    },
-                )[
-                    "widget"
-                ],
-            },
-        )
-        return HttpResponse(html_content)
-
-
-class FileWidgetSelectView(LoginRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        prefixed_interface_slug = self.request.GET.get(
-            "prefixed-interface-slug"
-        )
-        interface = get_object_or_404(
-            ComponentInterface,
-            slug=prefixed_interface_slug.replace(
-                INTERFACE_FORM_FIELD_PREFIX, ""
-            ),
-        )
-        widget_choice_name = request.GET.get(
-            f"widget-choice-{prefixed_interface_slug}"
-        )
-        try:
-            widget_choice = FileWidgetChoices(widget_choice_name)
-        except ValueError:
-            raise Http404(f"Widget choice {widget_choice_name} not found")
-        current_value_pk = request.GET.get("current-value-pk")
-
-        if widget_choice == FileWidgetChoices.FILE_SEARCH:
-            return HttpResponse(
-                FileSearchWidget().render(
-                    name=prefixed_interface_slug,
-                    value=None,
-                )
-            )
-        elif widget_choice == FileWidgetChoices.FILE_UPLOAD:
-            return HttpResponse(
-                UserUploadSingleWidget().render(
-                    name=prefixed_interface_slug,
-                    value=None,
-                    attrs={
-                        "id": prefixed_interface_slug,
-                        "help_text": f"{FILE_UPLOAD_HELP_TEXT} {interface.file_extension}",
-                    },
-                )
-            )
-        elif widget_choice == FileWidgetChoices.FILE_SELECTED:
-            if current_value_pk and (
-                get_component_interface_values_for_user(
-                    user=request.user, civ_pk=current_value_pk
-                ).exists()
-                if current_value_pk.isdigit()
-                else get_object_if_allowed(
-                    model=UserUpload,
-                    pk=current_value_pk,
-                    user=request.user,
-                    codename="change_userupload",
-                )
-            ):
-                # this can happen on the display set update view or redisplay of
-                # form upon validation, where one of the options is the current
-                # file, this enables switching back from one of the above widgets
-                # to the chosen file. This makes sure the form element with the
-                # right name is available on resubmission.
-                return HttpResponse(
-                    HiddenInput().render(
-                        name=prefixed_interface_slug,
-                        value=current_value_pk,
-                    )
-                )
-            raise Http404(f"Selected file {current_value_pk} not found")
-        elif widget_choice == FileWidgetChoices.UNDEFINED:
-            # this happens when switching back from one of the
-            # above widgets to the "Choose data source" option
-            return HttpResponse()
-        raise NotImplementedError(
-            f"Response for widget choice {widget_choice} not implemented"
-        )
 
 
 class FileSearchResultView(
