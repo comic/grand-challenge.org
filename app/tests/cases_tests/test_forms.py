@@ -85,8 +85,10 @@ def test_upload_some_images(
     (
         (f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar", "foo-bar"),
         (f"{FlexibleWidgetPrefixes.CHOICE}foo-bar", "foo-bar"),
+        # Ignore because there should be a choice field for the interface
+        (f"{FlexibleWidgetPrefixes.SEARCH}foo-bar", None),
         ("foo-bar", None),  # not an interface field
     ),
 )
-def test_is_interface_field(field_name, slug):
-    assert MultipleCIVForm.is_interface_field(field_name=field_name) == slug
+def test_get_interface_slug(field_name, slug):
+    assert MultipleCIVForm.get_interface_slug(field_name=field_name) == slug

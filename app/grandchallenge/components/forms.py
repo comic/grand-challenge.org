@@ -456,31 +456,27 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
                 )
             )
 
-        # Add fields for dynamically added new interfaces
-        for field_name in self.data.keys():
-            interface_slug = self.is_interface_field(field_name=field_name)
-
-            if (
-                interface_slug
-                and field_name not in self.fields.keys()
-                and ComponentInterface.objects.filter(
-                    slug=interface_slug
-                ).exists()
-            ):
-                interface = ComponentInterface.objects.filter(
-                    slug=interface_slug
-                ).get()
-
-                self.fields.update(
-                    self.get_fields_for_interface(
-                        interface=interface,
-                        user=self.user,
-                        required=False,
-                    )
+        for interface in self.get_dynamically_added_interfaces():
+            self.fields.update(
+                self.get_fields_for_interface(
+                    interface=interface,
+                    user=self.user,
+                    required=False,
                 )
+            )
+
+    def get_dynamically_added_interfaces(self):
+        new_interface_slugs = set()
+        for field_name in self.data.keys():
+            interface_slug = self.get_interface_slug(field_name=field_name)
+
+            if interface_slug and field_name not in self.fields.keys():
+                new_interface_slugs.add(interface_slug)
+
+        return ComponentInterface.objects.filter(slug__in=new_interface_slugs)
 
     @staticmethod
-    def is_interface_field(*, field_name):
+    def get_interface_slug(*, field_name):
         if field_name.startswith(INTERFACE_FORM_FIELD_PREFIX):
             interface_slug = field_name[len(INTERFACE_FORM_FIELD_PREFIX) :]
         elif field_name.startswith(FlexibleWidgetPrefixes.CHOICE):
