@@ -12,4 +12,4 @@ In the era of Deep Learning, developing robust machine learning solutions to pro
 * Challenges: Gather and assess machine learning solutions.
 * Algorithms: Deploy machine learning solutions for clinical validation.
 
-If you would like to start your own website, or contribute to the development of the framework, please see [the docs](https://diagnijmegen.github.io/grand-challenge/).
+If you would like to start your own website, or contribute to the development of the framework, please see [the docs](https://diagnijmegen.github.io/rse-grand-challenge/).
