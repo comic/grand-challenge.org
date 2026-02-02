@@ -46,12 +46,18 @@
   <section id="components">
 <span id="id1"></span><h1>Components<a class="headerlink" href="#components" title="Link to this heading">¶</a></h1>
 <dl class="py class" id="module-grandchallenge.components.models">
+<dt class="sig sig-object py" id="grandchallenge.components.models.APIMethodChoices">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">APIMethodChoices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#APIMethodChoices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.APIMethodChoices" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="grandchallenge.components.models.ComponentImage">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grandchallenge.components.models.</span></span><span class="sig-name descname"><span class="pre">ComponentImage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/components/models.html#ComponentImage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.components.models.ComponentImage" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>image</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.FileField" title="(in Django v6.0)"><em>FileField</em></a>) – Image. .tar.gz archive of the container image produced from the command ‘docker save IMAGE | gzip -c &gt; IMAGE.tar.gz’. See <a class="reference external" href="https://docs.docker.com/engine/reference/commandline/save/">https://docs.docker.com/engine/reference/commandline/save/</a></p></li>
+<li><p><strong>api_method</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v6.0)"><em>CharField</em></a>) – Api method</p></li>
 <li><p><strong>image_sha256</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v6.0)"><em>CharField</em></a>) – Image sha256</p></li>
 <li><p><strong>latest_shimmed_version</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v6.0)"><em>CharField</em></a>) – Latest shimmed version</p></li>
 <li><p><strong>import_status</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.PositiveSmallIntegerField" title="(in Django v6.0)"><em>PositiveSmallIntegerField</em></a>) – Import status</p></li>
@@ -426,54 +432,54 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dd><p>Interface kind sets.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Interface kinds that are images:
 
-  - Image
   - Displacement field
+  - Image
+  - Heat Map
   - Segmentation
   - DICOM Image Set
-  - Heat Map
 
 
 Interface kinds that are files:
 
-  - ZIP file
-  - PDF file
-  - CSV file
-  - Newick tree-format file
-  - Thumbnail jpg
   - MP4 file
-  - SQREG file
-  - Thumbnail png
   - BIOM format
+  - Thumbnail png
   - OBJ file
+  - PDF file
+  - ZIP file
+  - CSV file
+  - SQREG file
+  - Thumbnail jpg
+  - Newick tree-format file
 
 
 Interface kinds that are json serializable:
 
-  - Multiple angles
-  - Float
-  - Polygon
-  - Chart
-  - Choice
-  - Ellipse
-  - Multiple polygons
-  - String
-  - Integer
-  - Line
-  - Multiple distance measurements
-  - Point
   - Multiple lines
-  - Bool
-  - Three-point angle
-  - Distance measurement
-  - Multiple ellipses
-  - Affine transform registration
-  - Multiple three-point angles
-  - 2D bounding box
-  - Multiple points
-  - Multiple choice
-  - Anything
-  - Multiple 2D bounding boxes
   - Angle
+  - Integer
+  - Polygon
+  - Multiple choice
+  - Chart
+  - Three-point angle
+  - Ellipse
+  - String
+  - Float
+  - Line
+  - 2D bounding box
+  - Point
+  - Multiple distance measurements
+  - Distance measurement
+  - Affine transform registration
+  - Choice
+  - Multiple angles
+  - Multiple three-point angles
+  - Bool
+  - Multiple 2D bounding boxes
+  - Multiple points
+  - Multiple ellipses
+  - Anything
+  - Multiple polygons
 
 
 Example JSON file contents for String:
