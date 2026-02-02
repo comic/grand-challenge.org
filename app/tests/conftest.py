@@ -207,6 +207,18 @@ def algorithm_io_image(tmpdir_factory):
 
 
 @pytest.fixture(scope="session")
+def invoke_container_image(tmpdir_factory):
+    return docker_image(
+        tmpdir_factory,
+        path="",
+        label="invoke",
+        full_path=os.path.join(
+            os.path.split(__file__)[0], "resources", "invoke_container"
+        ),
+    )
+
+
+@pytest.fixture(scope="session")
 def alpine_images(tmpdir_factory):
     docker_client.pull_image(repo_tag="alpine:3.16")
     docker_client.pull_image(repo_tag="alpine:3.15")

@@ -22,6 +22,7 @@ class Migration(migrations.Migration):
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("task_categories", "0001_initial"),
         ("publications", "0003_auto_20201001_0758"),
+        ("modalities", "0001_initial"),
     ]
 
     operations = [

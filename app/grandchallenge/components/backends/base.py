@@ -41,6 +41,7 @@ from grandchallenge.components.backends.exceptions import (
 )
 from grandchallenge.components.backends.utils import user_error
 from grandchallenge.components.models import (
+    APIMethodChoices,
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKindChoices,
@@ -320,6 +321,7 @@ class Executor(ABC):
         requires_gpu_type: GPUTypeChoices,
         use_warm_pool: bool,
         signing_key: bytes,
+        api_method: APIMethodChoices,
         algorithm_model=None,
         ground_truth=None,
         **kwargs,
@@ -334,6 +336,7 @@ class Executor(ABC):
             use_warm_pool and settings.COMPONENTS_USE_WARM_POOL
         )
         self._signing_key = signing_key
+        self._api_method = api_method
         self._algorithm_model = algorithm_model
         self._ground_truth = ground_truth
 
@@ -450,6 +453,7 @@ class Executor(ABC):
             "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX": binascii.hexlify(
                 self._signing_key
             ).decode("ascii"),
+            "GRAND_CHALLENGE_COMPONENT_API_METHOD": self._api_method,
         }
 
         if self._algorithm_model:

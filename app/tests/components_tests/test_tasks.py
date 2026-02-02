@@ -7,7 +7,7 @@ from unittest.mock import call, patch
 import pytest
 from celery.exceptions import MaxRetriesExceededError
 from dateutil.relativedelta import relativedelta
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
 from django.utils.timezone import now
 from requests import put
@@ -19,12 +19,14 @@ from grandchallenge.cases.models import (
 )
 from grandchallenge.components.exceptions import InstanceInUse
 from grandchallenge.components.models import (
+    APIMethodChoices,
     ComponentInterfaceValue,
     ComponentJob,
     ImportStatusChoices,
     InterfaceKindChoices,
 )
 from grandchallenge.components.tasks import (
+    _get_image_api_method,
     _get_image_config_and_sha256,
     _repo_login_and_run,
     add_file_to_object,
@@ -288,6 +290,97 @@ def test_upload_to_registry_and_sagemaker(
     image = AlgorithmImage.objects.get(pk=image.pk)
     assert image.is_in_registry
     assert image.is_desired_version
+
+
+@pytest.mark.django_db
+def test_api_method_extraction(
+    invoke_container_image, settings, django_capture_on_commit_callbacks
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    alg = AlgorithmFactory()
+    image = AlgorithmImageFactory(
+        algorithm=alg,
+        image__from_path=invoke_container_image,
+    )
+    assert image.api_method == APIMethodChoices.EXEC
+
+    with django_capture_on_commit_callbacks(execute=True):
+        validate_docker_image(
+            pk=image.pk,
+            app_label=image._meta.app_label,
+            model_name=image._meta.model_name,
+            mark_as_desired=False,
+        )
+
+    image.refresh_from_db()
+    assert image.api_method == APIMethodChoices.INVOKE
+
+
+def test_api_method_extraction_from_config():
+    # If the setting is not found, then default to EXEC
+    assert (
+        _get_image_api_method(config={"config": {}}) == APIMethodChoices.EXEC
+    )
+    assert (
+        _get_image_api_method(config={"config": {"Labels": {}}})
+        == APIMethodChoices.EXEC
+    )
+    assert (
+        _get_image_api_method(
+            config={
+                "config": {
+                    "Labels": {"org.grand-challenge.api-method": "ExEc"}
+                }
+            }
+        )
+        == APIMethodChoices.EXEC
+    )
+    assert (
+        _get_image_api_method(
+            config={
+                "config": {
+                    "Labels": {"org.grand-challenge.api-methodddd": "'InVoKe'"}
+                }
+            }
+        )
+        == APIMethodChoices.EXEC
+    )
+    assert (
+        _get_image_api_method(
+            config={
+                "config": {
+                    "Labels": {"org.grand-challenge.api-method": "'InVoKe'"}
+                }
+            }
+        )
+        == APIMethodChoices.INVOKE
+    )
+    assert (
+        _get_image_api_method(
+            config={
+                "config": {
+                    "Labels": {"Org.grAnd-chAllEngE.ApI-mEthOd": "'InVoKe'"}
+                }
+            }
+        )
+        == APIMethodChoices.INVOKE
+    )
+
+
+def test_api_method_extraction_bad_label():
+    with pytest.raises(ValidationError) as error:
+        _get_image_api_method(
+            config={
+                "config": {"Labels": {"org.grand-challenge.api-method": "foo"}}
+            }
+        )
+
+    assert (
+        str(error.value)
+        == "[\"The label org.grand-challenge.api-method must be one of ['exec', 'invoke'], instead we found 'foo'.\"]"
+    )
 
 
 @pytest.mark.django_db

@@ -47,6 +47,7 @@ from grandchallenge.challenges.emails import (
     send_email_percent_budget_consumed_alert,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
+from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.components.schemas import (
     SELECTABLE_GPU_TYPES_SCHEMA,
     GPUTypeChoices,
@@ -1323,6 +1324,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 requires_gpu_type=gpu_type,
                 use_warm_pool=False,
                 signing_key=b"",
+                api_method=APIMethodChoices.EXEC,
             )
             for gpu_type in self.algorithm_selectable_gpu_type_choices
         ]

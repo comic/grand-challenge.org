@@ -28,7 +28,10 @@ from grandchallenge.components.backends.utils import (
     _filter_members,
     user_error,
 )
-from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.components.models import (
+    APIMethodChoices,
+    InterfaceKindChoices,
+)
 from grandchallenge.components.schemas import GPUTypeChoices
 from tests.cases_tests.factories import DICOMImageSetFactory
 from tests.components_tests.factories import (
@@ -152,6 +155,7 @@ def test_inputs_json(settings):
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     civ1, civ2 = ComponentInterfaceValueFactory.create_batch(
@@ -248,6 +252,7 @@ def test_invocation_json(settings):
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     image_interface = ComponentInterfaceFactory(
@@ -495,6 +500,7 @@ def test_dicom_get_provisioning_tasks():
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     panimage_interface = ComponentInterfaceFactory(
@@ -711,6 +717,7 @@ def test_dodgy_sop_instance_uid():
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     dicom_interface = ComponentInterfaceFactory(
@@ -757,6 +764,7 @@ def test_signing_key_env_set():
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"1337",
+        api_method=APIMethodChoices.EXEC,
     )
 
     assert (
@@ -764,6 +772,26 @@ def test_signing_key_env_set():
             "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX"
         ]
         == "31333337"
+    )
+
+
+def test_api_method_env_set():
+    job_pk = uuid4()
+
+    executor = IOCopyExecutor(
+        job_id=f"test-test-{job_pk}",
+        exec_image_repo_tag="test",
+        memory_limit=4,
+        time_limit=100,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"1337",
+        api_method=APIMethodChoices.INVOKE,
+    )
+
+    assert (
+        executor.invocation_environment["GRAND_CHALLENGE_COMPONENT_API_METHOD"]
+        == "invoke"
     )
 
 
@@ -778,6 +806,7 @@ def test_invocation_results_signature_unverified(settings):
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"correct-key",
+        api_method=APIMethodChoices.EXEC,
     )
 
     inference_result = InferenceResult(
@@ -826,6 +855,7 @@ def test_invocation_results_signature_verified(settings):
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"correct-key",
+        api_method=APIMethodChoices.EXEC,
     )
 
     inference_result = InferenceResult(

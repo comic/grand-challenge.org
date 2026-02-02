@@ -20,6 +20,7 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     TaskCancelled,
 )
+from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.models import Evaluation, Method
 
@@ -52,6 +53,7 @@ def test_instance_type(memory_limit, expected_type, requires_gpu_type):
         requires_gpu_type=requires_gpu_type,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     assert executor._instance_type.name == expected_type
@@ -77,6 +79,7 @@ def test_instance_type_incompatible(memory_limit, requires_gpu_type):
         requires_gpu_type=requires_gpu_type,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     with pytest.raises(ValueError):
@@ -115,6 +118,7 @@ def test_invocation_prefix():
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     # The id of the job must be in the prefixes
@@ -173,6 +177,7 @@ def test_invocation_json(settings):
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"totallysecret",
+        api_method=APIMethodChoices.EXEC,
     )
 
     with Stubber(executor._sagemaker_client) as s:
@@ -207,6 +212,7 @@ def test_invocation_json(settings):
                     "no_proxy": "amazonaws.com",
                     "GRAND_CHALLENGE_COMPONENT_MAX_MEMORY_MB": "7168",
                     "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX": "746f74616c6c79736563726574",
+                    "GRAND_CHALLENGE_COMPONENT_API_METHOD": "exec",
                 },
                 "VpcConfig": {
                     "SecurityGroupIds": [
@@ -256,6 +262,7 @@ def test_set_duration():
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     assert executor.utilization_duration is None
@@ -283,6 +290,7 @@ def test_get_log_stream_name(settings):
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     with Stubber(executor._logs_client) as s:
@@ -315,6 +323,7 @@ def test_set_task_logs(settings):
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     assert executor.stdout == ""
@@ -462,6 +471,7 @@ def test_set_runtime_metrics(settings):
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     assert executor.runtime_metrics == {}
@@ -558,6 +568,7 @@ def test_handle_completed_job():
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"itsasecret",
+        api_method=APIMethodChoices.EXEC,
     )
 
     inference_result = InferenceResult(
@@ -604,6 +615,7 @@ def test_handle_time_limit_exceded(settings):
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     with pytest.raises(ComponentException) as error:
@@ -629,6 +641,7 @@ def test_handle_stopped_event(settings):
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     with (
@@ -737,6 +750,7 @@ def test_deprovision(settings):
         requires_gpu_type=GPUTypeChoices.NO_GPU,
         use_warm_pool=False,
         signing_key=b"",
+        api_method=APIMethodChoices.EXEC,
     )
 
     created_files = (

@@ -1440,6 +1440,9 @@ class Method(UUIDModel, ComponentImage):
 
     phase = models.ForeignKey(Phase, on_delete=models.PROTECT, null=True)
 
+    class Meta(UUIDModel.Meta, ComponentImage.Meta):
+        pass
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
