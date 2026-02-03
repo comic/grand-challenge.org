@@ -419,8 +419,10 @@ class AdditionalInputsMixin(UserMixin, InterfaceFormFieldsMixin):
         cleaned_data = super().clean()
 
         keys_to_remove = []
-        errors = {}
         inputs = []
+        # Cannot call add_error in the for-loop because it updates cleaned_data,
+        # so safe errors to call add_error later.
+        errors = {}
 
         for key, value in cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
@@ -510,8 +512,10 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
         cleaned_data = super().clean()
 
         keys_to_remove = []
-        errors = {}
         inputs = []
+        # Cannot call add_error in the for-loop because it updates cleaned_data,
+        # so safe errors to call add_error later.
+        errors = {}
 
         for key, value in cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
