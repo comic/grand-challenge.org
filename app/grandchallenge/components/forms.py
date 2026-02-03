@@ -421,7 +421,7 @@ class AdditionalInputsMixin(UserMixin, InterfaceFormFieldsMixin):
         keys_to_remove = []
         inputs = []
         # Cannot call add_error in the for-loop because it updates cleaned_data,
-        # so safe errors to call add_error later.
+        # so save errors to call add_error later.
         errors = {}
 
         for key, value in cleaned_data.items():
@@ -514,7 +514,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
         keys_to_remove = []
         inputs = []
         # Cannot call add_error in the for-loop because it updates cleaned_data,
-        # so safe errors to call add_error later.
+        # so save errors to call add_error later.
         errors = {}
 
         for key, value in cleaned_data.items():
