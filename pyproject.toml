@@ -73,8 +73,8 @@ readme = "README.md"
 
 [project.urls]
 homepage = "https://grand-challenge.org/"
-repository = "https://github.com/DIAGNijmegen/grand-challenge/"
-documentation = "https://diagnijmegen.github.io/grand-challenge/"
+repository = "https://github.com/DIAGNijmegen/rse-grand-challenge/"
+documentation = "https://diagnijmegen.github.io/rse-grand-challenge/"
 
 [dependency-groups]
 dev = [

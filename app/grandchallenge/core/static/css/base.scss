@@ -20,7 +20,7 @@ $pagination-disabled-bg: lighten($blue, 15%) !default;
 @import "../vendored/bootswatch/dist/flatly/bootswatch";
 @import "datatables";
 
-// Fix https://github.com/DIAGNijmegen/grand-challenge/issues/1201
+// Fix https://github.com/DIAGNijmegen/rse-grand-challenge/issues/1201
 .custom-select {
     -webkit-appearance: none;
     -moz-appearance: none;

@@ -37,7 +37,7 @@ Please feel free to contact support.
 
 #### <i class="fas fa-code-branch mr-2"></i> Contributing to Grand Challenge
 
-Would you like to contribute new features to Grand Challenge or spin up your own instance? Have a look at our [developer documentation](https://diagnijmegen.github.io/grand-challenge/).""",
+Would you like to contribute new features to Grand Challenge or spin up your own instance? Have a look at our [developer documentation](https://diagnijmegen.github.io/rse-grand-challenge/).""",
     )
 
     DocPage.objects.create(

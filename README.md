@@ -1,7 +1,7 @@
 # grand-challenge.org
 
-[![Build Status](https://github.com/DIAGNijmegen/grand-challenge/workflows/CI/badge.svg)](https://github.com/DIAGNijmegen/grand-challenge/actions?query=workflow%3ACI+branch%3Amain)
-[![Documentation](https://img.shields.io/badge/docs-published-success)](https://diagnijmegen.github.io/grand-challenge/)
+[![Build Status](https://github.com/DIAGNijmegen/rse-grand-challenge/workflows/CI/badge.svg)](https://github.com/DIAGNijmegen/rse-grand-challenge/actions?query=workflow%3ACI+branch%3Amain)
+[![Documentation](https://img.shields.io/badge/docs-published-success)](https://diagnijmegen.github.io/rse-grand-challenge/)
 [![Black Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![Cite Us with Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.3356819.svg)](https://doi.org/10.5281/zenodo.3356819)
 
