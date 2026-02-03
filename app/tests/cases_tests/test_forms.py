@@ -4,6 +4,7 @@ from django.test import Client
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
+    FlexibleWidgetPrefixes,
     MultipleCIVForm,
 )
 from grandchallenge.components.models import ComponentInterface
@@ -79,10 +80,15 @@ def test_upload_some_images(
     assert response.status_code == 403
 
 
-def test_parse_slug():
-    assert (
-        MultipleCIVForm.parse_slug(
-            slug=f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar"
-        )
-        == "foo-bar"
-    )
+@pytest.mark.parametrize(
+    "field_name, slug",
+    (
+        (f"{INTERFACE_FORM_FIELD_PREFIX}foo-bar", "foo-bar"),
+        (f"{FlexibleWidgetPrefixes.CHOICE}foo-bar", "foo-bar"),
+        # Ignore because there should be a choice field for the interface
+        (f"{FlexibleWidgetPrefixes.SEARCH}foo-bar", None),
+        ("foo-bar", None),  # not an interface field
+    ),
+)
+def test_get_interface_slug(field_name, slug):
+    assert MultipleCIVForm.get_interface_slug(field_name=field_name) == slug

@@ -10,7 +10,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.forms import (
     CheckboxSelectMultiple,
-    Field,
     Form,
     HiddenInput,
     ModelChoiceField,
@@ -222,11 +221,6 @@ class InterfaceFormFieldsMixin:
                     required=False,
                     bound_field_class=BoundFieldWithDNoneClass,
                 ),
-                # Add hidden input field for parsing when rendering
-                # dynamically added fields.
-                prefixed_interface_slug: Field(
-                    required=False, widget=HiddenInput()
-                ),
             }
         elif interface.super_kind == interface.SuperKind.FILE:
             return {
@@ -253,11 +247,6 @@ class InterfaceFormFieldsMixin:
                     label="",
                     required=False,
                     bound_field_class=BoundFieldWithDNoneClass,
-                ),
-                # Add hidden input field for parsing when rendering
-                # dynamically added fields.
-                prefixed_interface_slug: Field(
-                    required=False, widget=HiddenInput()
                 ),
             }
         elif interface.super_kind == interface.SuperKind.VALUE:
@@ -448,36 +437,33 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
                 )
             )
 
-        # Add fields for dynamically added new interfaces
-        for slug in self.data.keys():
-            interface_slug = self.parse_slug(slug=slug)
-
-            if (
-                interface_slug
-                and slug not in self.fields.keys()
-                and ComponentInterface.objects.filter(
-                    slug=interface_slug
-                ).exists()
-            ):
-                interface = ComponentInterface.objects.filter(
-                    slug=interface_slug
-                ).get()
-
-                self.fields.update(
-                    self.get_fields_for_interface(
-                        interface=interface,
-                        user=self.user,
-                        required=False,
-                    )
+        for interface in self.get_dynamically_added_interfaces():
+            self.fields.update(
+                self.get_fields_for_interface(
+                    interface=interface,
+                    user=self.user,
+                    required=False,
                 )
+            )
+
+    def get_dynamically_added_interfaces(self):
+        new_interface_slugs = set()
+        for field_name in self.data.keys():
+            interface_slug = self.get_interface_slug(field_name=field_name)
+
+            if interface_slug and field_name not in self.fields.keys():
+                new_interface_slugs.add(interface_slug)
+
+        return ComponentInterface.objects.filter(slug__in=new_interface_slugs)
 
     @staticmethod
-    def parse_slug(*, slug):
-        if not slug.startswith(INTERFACE_FORM_FIELD_PREFIX):
-            return None
-
-        interface_slug = slug[len(INTERFACE_FORM_FIELD_PREFIX) :]
-
+    def get_interface_slug(*, field_name):
+        if field_name.startswith(INTERFACE_FORM_FIELD_PREFIX):
+            interface_slug = field_name[len(INTERFACE_FORM_FIELD_PREFIX) :]
+        elif field_name.startswith(FlexibleWidgetPrefixes.CHOICE):
+            interface_slug = field_name[len(FlexibleWidgetPrefixes.CHOICE) :]
+        else:
+            interface_slug = None
         return interface_slug
 
     def clean(self):

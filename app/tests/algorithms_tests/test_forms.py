@@ -224,7 +224,6 @@ def test_algorithm_create(client, uploaded_image):
                 f'name="{FlexibleWidgetPrefixes.UPLOAD}some-overlay"',
                 f'name="{FlexibleWidgetPrefixes.SEARCH}some-overlay_{SearchWidgetSuffixes.INPUT}"',
                 f'name="{FlexibleWidgetPrefixes.SEARCH}some-overlay_{SearchWidgetSuffixes.CHOICE}"',
-                f'name="{INTERFACE_FORM_FIELD_PREFIX}some-overlay"',
             ],
         ),
         (
@@ -237,7 +236,6 @@ def test_algorithm_create(client, uploaded_image):
                 f'name="{FlexibleWidgetPrefixes.UPLOAD}some-medical-image"',
                 f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{SearchWidgetSuffixes.INPUT}"',
                 f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{SearchWidgetSuffixes.CHOICE}"',
-                f'name="{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
             ],
         ),
         (
@@ -251,7 +249,6 @@ def test_algorithm_create(client, uploaded_image):
                 f'name="{FlexibleWidgetPrefixes.UPLOAD}some-medical-image_{DICOMUploadWidgetSuffixes.UPLOADS}"',
                 f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{SearchWidgetSuffixes.INPUT}"',
                 f'name="{FlexibleWidgetPrefixes.SEARCH}some-medical-image_{SearchWidgetSuffixes.CHOICE}"',
-                f'name="{INTERFACE_FORM_FIELD_PREFIX}some-medical-image"',
             ],
         ),
         (
@@ -386,7 +383,6 @@ def test_algorithm_create(client, uploaded_image):
                 f'name="{FlexibleWidgetPrefixes.UPLOAD}anything"',
                 f'name="{FlexibleWidgetPrefixes.SEARCH}anything_{SearchWidgetSuffixes.INPUT}"',
                 f'name="{FlexibleWidgetPrefixes.SEARCH}anything_{SearchWidgetSuffixes.CHOICE}"',
-                f'name="{INTERFACE_FORM_FIELD_PREFIX}anything"',
             ],
         ),
     ),
