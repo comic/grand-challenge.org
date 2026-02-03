@@ -76,7 +76,7 @@ def test_session_auth_token():
 
 @pytest.mark.django_db
 @pytest.mark.xfail(
-    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/grand-challenge/issues/4031"
+    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/rse-grand-challenge/issues/4031"
 )
 def test_session_start(
     http_image, settings, django_capture_on_commit_callbacks
@@ -136,7 +136,7 @@ def test_session_start(
 
 @pytest.mark.django_db
 @pytest.mark.xfail(
-    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/grand-challenge/issues/4031"
+    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/rse-grand-challenge/issues/4031"
 )
 def test_correct_session_stopped(
     http_image, settings, django_capture_on_commit_callbacks
@@ -184,7 +184,7 @@ def test_correct_session_stopped(
 
 @pytest.mark.django_db
 @pytest.mark.xfail(
-    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/grand-challenge/issues/4031"
+    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/rse-grand-challenge/issues/4031"
 )
 def test_session_cleanup(
     http_image, settings, django_capture_on_commit_callbacks
@@ -262,7 +262,7 @@ def test_workstation_ready(
 
 @pytest.mark.django_db
 @pytest.mark.xfail(
-    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/grand-challenge/issues/4031"
+    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/rse-grand-challenge/issues/4031"
 )
 def test_session_limit(
     http_image, settings, django_capture_on_commit_callbacks

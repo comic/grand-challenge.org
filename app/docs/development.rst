@@ -27,7 +27,7 @@ installed alongside docker. If the docker compose cycle invocation below crashes
 
 .. code-block:: console
 
-    $ git clone https://github.com/DIAGNijmegen/grand-challenge
+    $ git clone https://github.com/DIAGNijmegen/rse-grand-challenge
     $ cd grand-challenge.org
 
 3. Set your local docker group id in your ``.env`` file

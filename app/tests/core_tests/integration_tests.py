@@ -389,7 +389,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
         )  # None = not logged in
 
     def test_non_exitant_page_gives_404(self):
-        """Reproduces https://github.com/DIAGNijmegen/grand-challenge/issues/219."""
+        """Reproduces https://github.com/DIAGNijmegen/rse-grand-challenge/issues/219."""
         page_url = reverse(
             "pages:detail",
             kwargs={
@@ -407,7 +407,7 @@ class ViewsTest(GrandChallengeFrameworkTestCase):
         )
 
     def test_non_exitant_project_gives_404(self):
-        """Reproduces https://github.com/DIAGNijmegen/grand-challenge/issues/219."""
+        """Reproduces https://github.com/DIAGNijmegen/rse-grand-challenge/issues/219."""
         non_existant_url = reverse(
             "pages:home", kwargs={"challenge_short_name": "nonexistingproject"}
         )
