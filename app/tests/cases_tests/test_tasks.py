@@ -10,7 +10,6 @@ from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
 from panimg.models import ImageType, PanImgFile, PostProcessorResult
-from panimg.post_processors import DEFAULT_POST_PROCESSORS
 
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
@@ -22,7 +21,6 @@ from grandchallenge.cases.models import (
     PostProcessImageTaskStatusChoices,
 )
 from grandchallenge.cases.tasks import (
-    POST_PROCESSORS,
     _check_post_processor_result,
     execute_post_process_image_task,
     handle_health_imaging_import_job_event,
@@ -64,10 +62,6 @@ def test_linked_task_called_with_session_pk(
         session.process_images(linked_task=local_linked_task.signature())
 
     assert called == {"upload_session_pk": session.pk}
-
-
-def test_post_processors_setting():
-    assert POST_PROCESSORS == DEFAULT_POST_PROCESSORS
 
 
 def test_check_post_processor_result():

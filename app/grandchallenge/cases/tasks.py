@@ -1,4 +1,6 @@
 import re
+import shlex
+import subprocess
 import zipfile
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
@@ -19,12 +21,12 @@ from django.core.files import File
 from django.db import transaction
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
-from django.utils.module_loading import import_string
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
-from panimg import convert, post_process
-from panimg.models import PanImgFile, PanImgResult
+from panimg import convert
+from panimg.models import PanImgFile, PanImgResult, PostProcessorResult
+from pydantic import TypeAdapter
 
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
@@ -47,10 +49,6 @@ from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.uploads.models import UserUpload
 
 logger = get_task_logger(__name__)
-
-POST_PROCESSORS = [
-    import_string(p) for p in settings.CASES_POST_PROCESSORS if p
-]
 
 
 class DuplicateFilesException(ValueError):
@@ -462,14 +460,16 @@ def execute_post_process_image_task(*, post_process_image_task_pk):
 
     try:
         with TemporaryDirectory() as output_directory:
-            image_files = ImageFile.objects.filter(image=task.image)
+            # There should only be one image, something went wrong
+            # with importing or scheduling if there are more
+            image_file = ImageFile.objects.get(image=task.image)
 
-            panimg_files = _download_image_files(
-                image_files=image_files, dir=output_directory
+            panimg_file = _download_image_file(
+                image_file=image_file, output_directory=output_directory
             )
 
-            post_processor_result = post_process(
-                image_files=panimg_files, post_processors=POST_PROCESSORS
+            post_processor_result = _post_process_in_virtualenv(
+                panimg_file=panimg_file
             )
 
             _check_post_processor_result(
@@ -495,32 +495,60 @@ def execute_post_process_image_task(*, post_process_image_task_pk):
         return
 
 
-def _download_image_files(*, image_files, dir):
+def _download_image_file(*, image_file, output_directory):
     """
-    Downloads a set of image files to a directory
+    Downloads an image file to a directory
 
-    Returns a set of PanImgFiles that point to the local files
+    Returns a PanImgFiles that point to the local files
     """
-    panimg_files = set()
+    dest = safe_join(output_directory, image_file.file.name)
 
-    for im_file in image_files:
-        dest = safe_join(dir, im_file.file.name)
-        panimg_files.add(
-            PanImgFile(
-                image_id=im_file.image.pk,
-                image_type=im_file.image_type,
-                file=dest,
-            )
-        )
+    panimg_file = PanImgFile(
+        image_id=image_file.image.pk,
+        image_type=image_file.image_type,
+        file=dest,
+    )
 
-        # Safe to create directories as safe_join has been used
-        Path(dest).parent.mkdir(parents=True, exist_ok=True)
+    # Safe to create directories as safe_join has been used
+    Path(dest).parent.mkdir(parents=True, exist_ok=True)
 
-        with im_file.file.open("rb") as fs, open(dest, "wb") as fd:
-            for chunk in fs.chunks():
-                fd.write(chunk)
+    with image_file.file.open("rb") as fs, open(dest, "wb") as fd:
+        for chunk in fs.chunks():
+            fd.write(chunk)
 
-    return panimg_files
+    return panimg_file
+
+
+def _post_process_in_virtualenv(*, panimg_file):
+    panimg_command = shlex.join(
+        [
+            "panimg",
+            "post-process",
+            "--image-id",
+            str(panimg_file.image_id),
+            "--image-type",
+            panimg_file.image_type,
+            "--input-file",
+            str(panimg_file.file),
+        ]
+    )
+
+    cli_result = subprocess.run(
+        [
+            "/bin/sh",
+            "-c",
+            f"source /opt/virtualenvs/panimg/bin/activate && {panimg_command}",
+        ],
+        text=True,
+        check=True,
+        capture_output=True,
+    )
+
+    post_processor_result: PostProcessorResult = TypeAdapter(
+        PostProcessorResult
+    ).validate_json(cli_result.stdout.splitlines()[-1])
+
+    return post_processor_result
 
 
 def _check_post_processor_result(*, post_processor_result, image):

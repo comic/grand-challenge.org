@@ -1436,10 +1436,6 @@ OPEN_SOURCE_LICENSES = frozenset(
     )
 )
 
-# Set the post processors to use for the image imports
-CASES_POST_PROCESSORS = os.environ.get(
-    "CASES_POST_PROCESSORS", "panimg.post_processors.tiff_to_dzi"
-).split(",")
 CASES_MAX_NUM_USER_POST_PROCESSING_TASKS = int(
     os.environ.get("CASES_MAX_NUM_USER_POST_PROCESSING_TASKS", "16")
 )
