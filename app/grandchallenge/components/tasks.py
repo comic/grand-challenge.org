@@ -29,13 +29,11 @@ from django.db.models import Count, DateTimeField, ExpressionWrapper, F, Q
 from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
-from panimg.models import SimpleITKImage
 
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
     DICOMImageSetUploadStatusChoices,
     Image,
-    ImageFile,
     RawImageUploadSession,
 )
 from grandchallenge.components.backends.exceptions import (
@@ -1232,31 +1230,6 @@ def civ_value_to_file(*, civ_pk):
     )
     civ.value = None
     civ.save()
-
-
-@acks_late_2xlarge_task
-def validate_voxel_values(*, civ_pk):
-    from grandchallenge.components.models import ComponentInterfaceValue
-
-    civ = ComponentInterfaceValue.objects.get(pk=civ_pk)
-
-    first_file = civ.image.files.first()
-    if (
-        civ.image.segments is None
-        and first_file.image_type == ImageFile.IMAGE_TYPE_MHD
-    ):
-        sitk_image = SimpleITKImage(
-            image=civ.image.sitk_image,
-            name=civ.image.name,
-            consumed_files=set(),
-            spacing_valid=True,
-        )
-        segments = sitk_image.segments
-        if segments is not None:
-            civ.image.segments = [int(segment) for segment in segments]
-            civ.image.save()
-
-    civ.interface._validate_voxel_values(civ.image)
 
 
 @acks_late_micro_short_task(
