@@ -130,20 +130,38 @@ def test_check_post_processor_result():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "filename, expected_bytes, expected_files",
-    [("valid_tiff.tif", 246717, 2), ("no_dzi.tif", 258038, 1)],
-)
-def test_post_processing(
-    filename,
+def test_no_post_processing_mha(
     tmpdir_factory,
     settings,
     django_capture_on_commit_callbacks,
-    expected_bytes,
-    expected_files,
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
+    filename = "image10x10x10.mha"
+
+    input_directory = tmpdir_factory.mktemp("temp")
+    temp_file = Path(input_directory / filename)
+    shutil.copy(RESOURCE_PATH / filename, temp_file)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        imported_images = import_images(input_directory=input_directory)
+
+    assert len(callbacks) == 0
+    assert imported_images.consumed_files == {temp_file}
+    assert len(imported_images.new_images) == 1
+
+
+@pytest.mark.django_db
+def test_post_processing(
+    tmpdir_factory,
+    settings,
+    django_capture_on_commit_callbacks,
+):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
+    filename = "valid_tiff.tif"
 
     input_directory = tmpdir_factory.mktemp("temp")
     temp_file = Path(input_directory / filename)
@@ -170,16 +188,14 @@ def test_post_processing(
     callbacks[0]()
 
     all_image_files = ImageFile.objects.filter(image=new_image)
-    if filename == "valid_tiff.tif":
-        assert len(all_image_files) == 2
 
-        dzi = all_image_files.get(image_type=ImageType.DZI)
-        assert protected_s3_storage.exists(str(dzi.file))
-        assert protected_s3_storage.exists(
-            str(dzi.file).replace(".dzi", "_files/0/0_0.jpeg")
-        )
-    else:
-        assert len(all_image_files) == 1
+    assert len(all_image_files) == 2
+
+    dzi = all_image_files.get(image_type=ImageType.DZI)
+    assert protected_s3_storage.exists(str(dzi.file))
+    assert protected_s3_storage.exists(
+        str(dzi.file).replace(".dzi", "_files/0/0_0.jpeg")
+    )
 
     image_file.refresh_from_db()
     assert (
@@ -197,12 +213,11 @@ def test_post_processing(
 
     all_image_files = ImageFile.objects.filter(image=new_image)
 
-    assert len(all_image_files) == expected_files
-    assert ImageFile.objects.count() == expected_files
+    assert len(all_image_files) == 2
+    assert ImageFile.objects.count() == 2
 
     assert (
-        sum(file.size_in_storage for file in ImageFile.objects.all())
-        == expected_bytes
+        sum(file.size_in_storage for file in ImageFile.objects.all()) == 246717
     )
 
 

@@ -75,4 +75,4 @@ def validate_biom_format(*, file):
                     error_message or "Does not appear to be a BIOM-format file"
                 )
         else:
-            raise RuntimeError(f"An unexpected error occured: {e.stderr}")
+            raise RuntimeError(f"An unexpected error occurred: {e.stderr}")

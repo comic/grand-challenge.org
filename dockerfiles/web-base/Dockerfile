@@ -95,9 +95,12 @@ RUN mkdir -p /opt/sagemaker-shim \
     && rm "/opt/sagemaker-shim/sagemaker-shim-${COMPONENTS_SAGEMAKER_SHIM_VERSION}-Linux-x86_64.tar.gz"
 
 # Create virtual environments
+# TODO use release version of panimg
 RUN mkdir -p /opt/virtualenvs \
     && python -m venv /opt/virtualenvs/biom \
-    && /opt/virtualenvs/biom/bin/python -m pip --no-cache-dir --no-color install biom-format
+    && /opt/virtualenvs/biom/bin/python -m pip --no-cache-dir --no-color install biom-format \
+    && python -m venv /opt/virtualenvs/panimg \
+    && /opt/virtualenvs/panimg/bin/python -m pip --no-cache-dir --no-color install git+https://github.com/DIAGNijmegen/rse-panimg.git@update_cli
 
 WORKDIR /opt/grand-challenge
 
