@@ -489,7 +489,6 @@ def execute_post_process_image_task(*, post_process_image_task_pk):
             task.save()
 
     except Exception as error:
-        raise  # TODO temporary
         task.status = PostProcessImageTaskStatusChoices.FAILED
         task.save()
         logger.error(error, exc_info=True)
@@ -536,7 +535,7 @@ def _post_process_in_virtualenv(*, panimg_file):
 
     cli_result = subprocess.run(
         [
-            "/bin/sh",
+            "bash",
             "-c",
             f"source /opt/virtualenvs/panimg/bin/activate && {panimg_command}",
         ],
