@@ -489,6 +489,7 @@ def execute_post_process_image_task(*, post_process_image_task_pk):
             task.save()
 
     except Exception as error:
+        raise  # TODO temporary
         task.status = PostProcessImageTaskStatusChoices.FAILED
         task.save()
         logger.error(error, exc_info=True)
