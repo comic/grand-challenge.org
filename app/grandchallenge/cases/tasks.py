@@ -530,6 +530,8 @@ def _post_process_in_virtualenv(*, panimg_file):
             panimg_file.image_type,
             "--input-file",
             str(panimg_file.file),
+            "--post-processor",
+            "DZI",
         ]
     )
 
