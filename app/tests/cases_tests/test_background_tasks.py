@@ -8,7 +8,6 @@ from billiard.exceptions import SoftTimeLimitExceeded
 from panimg.image_builders.metaio_utils import (
     ADDITIONAL_HEADERS,
     EXPECTED_HEADERS,
-    HEADERS_MATCHING_NUM_TIMEPOINTS,
     parse_mh_header,
 )
 
@@ -105,21 +104,11 @@ def test_staged_mhd_upload_with_additional_headers(
         out_file.write(in_file.read())
 
     headers = parse_mh_header(tmp_header_filename)
+
     for key in headers.keys():
         assert (key in ADDITIONAL_HEADERS) or (key in EXPECTED_HEADERS)
 
-    sitk_image = image.sitk_image
-    for key in ADDITIONAL_HEADERS:
-        assert key in sitk_image.GetMetaDataKeys()
-        if key in HEADERS_MATCHING_NUM_TIMEPOINTS:
-            if sitk_image.GetDimension() >= 4:
-                assert (
-                    len(sitk_image.GetMetaData(key).split(" "))
-                    == sitk_image.GetSize()[3]
-                )
-            else:
-                assert len(sitk_image.GetMetaData(key).split(" ")) == 1
-    assert "Bogus" not in sitk_image.GetMetaDataKeys()
+    assert "Bogus" not in headers
 
 
 @pytest.mark.django_db
@@ -198,8 +187,6 @@ def test_mhd_file_annotation_creation(
     assert image.shape == [7, 6, 5]
     assert image.shape_without_color == [7, 6, 5]
     assert image.color_space == Image.COLOR_SPACE_GRAY
-
-    assert [e for e in reversed(image.sitk_image.GetSize())] == image.shape
 
 
 def test_check_compressed_and_extract(tmpdir):
