@@ -81,3 +81,29 @@ class ArchiveItemPostSerializer(
                 user=user,
                 codename="upload_archive",
             )
+
+    def validate(self, data):
+        if self.instance:
+            archive = self.instance.archive
+        else:
+            archive = data["archive"]
+
+        try:
+            allowed_socket_slugs = archive.allowed_socket_slugs
+        except AttributeError:
+            pass
+        else:
+            errors = []
+            for civ in data["values"]:
+                interface = civ["interface"]
+                if interface.slug not in allowed_socket_slugs:
+                    errors.append(
+                        serializers.ValidationError(
+                            f"Socket {interface.slug!r} is not allowed for this archive."
+                        )
+                    )
+
+            if errors:
+                raise serializers.ValidationError(errors)
+
+        return super().validate(data)

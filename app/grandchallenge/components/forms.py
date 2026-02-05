@@ -8,6 +8,7 @@ from dal.widgets import Select
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.forms import (
     CheckboxSelectMultiple,
     Form,
@@ -390,19 +391,28 @@ class AdditionalInputsMixin(UserMixin, InterfaceFormFieldsMixin):
 
         keys_to_remove = []
         inputs = []
+        # Cannot call add_error in the for-loop because it updates cleaned_data,
+        # so save errors to call add_error later.
+        errors = {}
 
         for key, value in cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
                 keys_to_remove.append(key)
-                inputs.append(
-                    CIVData(
+                try:
+                    civ_data = CIVData(
                         interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
                         value=value,
                     )
-                )
+                except ValidationError as error:
+                    errors[key] = error
+                else:
+                    inputs.append(civ_data)
 
         for key in keys_to_remove:
             cleaned_data.pop(key)
+
+        for key, error in errors.items():
+            self.add_error(key, error)
 
         cleaned_data["additional_inputs"] = inputs
 
@@ -471,19 +481,43 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
 
         keys_to_remove = []
         inputs = []
+        # Cannot call add_error in the for-loop because it updates cleaned_data,
+        # so save errors to call add_error later.
+        errors = {}
 
         for key, value in cleaned_data.items():
             if key.startswith(INTERFACE_FORM_FIELD_PREFIX):
                 keys_to_remove.append(key)
-                inputs.append(
-                    CIVData(
-                        interface_slug=key[len(INTERFACE_FORM_FIELD_PREFIX) :],
+                interface_slug = key[len(INTERFACE_FORM_FIELD_PREFIX) :]
+
+                try:
+                    if (
+                        interface_slug
+                        not in self.base_object.allowed_socket_slugs
+                    ):
+                        errors[key] = ValidationError(
+                            f"Socket {interface_slug} is not allowed "
+                            f"for this {self.base_object._meta.model_name}."
+                        )
+                        continue
+                except AttributeError:
+                    pass
+
+                try:
+                    civ_data = CIVData(
+                        interface_slug=interface_slug,
                         value=value,
                     )
-                )
+                except ValidationError as error:
+                    errors[key] = error
+                else:
+                    inputs.append(civ_data)
 
         for key in keys_to_remove:
             cleaned_data.pop(key)
+
+        for key, error in errors.items():
+            self.add_error(key, error)
 
         # Mark as CIV data and not base-object data
         cleaned_data[INTERFACE_FORM_FIELD_PREFIX + "civ_data_objects"] = inputs
@@ -496,7 +530,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
         )
 
         try:
-            self.instance.validate_civ_data_objects_and_execute_linked_task(
+            self.instance.process_civ_data_objects_and_execute_linked_task(
                 civ_data_objects=civ_data_objects, user=self.user
             )
         except CIVNotEditableException as e:
