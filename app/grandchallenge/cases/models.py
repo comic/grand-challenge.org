@@ -2,8 +2,7 @@ import gzip
 import hashlib
 import json
 import logging
-from pathlib import Path
-from tempfile import SpooledTemporaryFile, TemporaryDirectory
+from tempfile import SpooledTemporaryFile
 from typing import NamedTuple
 from urllib.parse import urlparse
 
@@ -16,7 +15,7 @@ from celery import signature
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist, SuspiciousFileOperation
+from django.core.exceptions import SuspiciousFileOperation
 from django.db import models
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
@@ -28,7 +27,6 @@ from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from grand_challenge_dicom_de_identifier.deidentifier import DicomDeidentifier
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
-from panimg.image_builders.metaio_utils import load_sitk_image
 from panimg.models import MAXIMUM_SEGMENTS_LENGTH, ColorSpace, ImageType
 from pydantic import ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
@@ -627,98 +625,6 @@ class Image(UUIDModel):
             if color_components > 1:
                 result.append(color_components)
         return result
-
-    @property
-    def _metaimage_files(self):
-        """
-        Return ImageFile objects for the related MHA file or MHD and RAW files.
-
-        Returns
-        -------
-            Tuple of MHA/MHD ImageFile and optionally RAW ImageFile
-
-        Raises
-        ------
-        FileNotFoundError
-            Raised when Image has no related mhd/mha ImageFile or actual file
-            cannot be found on storage
-        """
-        image_data_file = None
-        try:
-            header_file = self.files.get(
-                image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith=".mha"
-            )
-        except ObjectDoesNotExist:
-            try:
-                # Fallback to files that are still stored as mhd/(z)raw
-                header_file = self.files.get(
-                    image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith=".mhd"
-                )
-                image_data_file = self.files.get(
-                    image_type=ImageFile.IMAGE_TYPE_MHD, file__endswith="raw"
-                )
-            except ObjectDoesNotExist:
-                raise FileNotFoundError(
-                    f"No mhd or mha file found for image {self.name} (pk: {self.pk})"
-                )
-
-        if not header_file.file.storage.exists(name=header_file.file.name):
-            raise FileNotFoundError(f"No file found for {header_file.file}")
-
-        return header_file, image_data_file
-
-    @property
-    def sitk_image(self):
-        """
-        Return the image that belongs to this model instance as an SimpleITK image.
-
-        Requires that exactly one MHD/RAW file pair is associated with the model.
-        Otherwise it wil raise a MultipleObjectsReturned or ObjectDoesNotExist
-        exception.
-
-        Returns
-        -------
-            A SimpleITK image
-        """
-        files = [i for i in self._metaimage_files if i is not None]
-
-        file_size = 0
-        for file in files:
-            if not file.file.storage.exists(name=file.file.name):
-                raise FileNotFoundError(f"No file found for {file.file}")
-
-            # Add up file sizes of mhd and raw file to get total file size
-            file_size += file.file.size
-
-        # Check file size to guard for out of memory error
-        if file_size > settings.MAX_SITK_FILE_SIZE:
-            raise OSError(
-                f"File exceeds maximum file size. (Size: {file_size}, Max: {settings.MAX_SITK_FILE_SIZE})"
-            )
-
-        with TemporaryDirectory() as tempdirname:
-            for file in files:
-                with (
-                    file.file.open("rb") as infile,
-                    open(
-                        Path(tempdirname) / Path(file.file.name).name, "wb"
-                    ) as outfile,
-                ):
-                    buffer = True
-                    while buffer:
-                        buffer = infile.read(1024)
-                        outfile.write(buffer)
-
-            try:
-                hdr_path = Path(tempdirname) / Path(files[0].file.name).name
-                sitk_image = load_sitk_image(hdr_path)
-            except RuntimeError as e:
-                logging.error(
-                    f"Failed to load SimpleITK image with error: {e}"
-                )
-                raise
-
-        return sitk_image
 
     def update_viewer_groups_permissions(
         self,

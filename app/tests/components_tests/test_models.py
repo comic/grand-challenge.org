@@ -1646,10 +1646,6 @@ def test_displacement_field_validation(
         assert image.shape[0] == 3
         assert image.shape == expected_size
         assert image.color_space == Image.COLOR_SPACE_GRAY
-
-        assert [
-            e for e in reversed(image.sitk_image.GetSize())
-        ] == expected_size
     else:
         with pytest.raises(ValidationError) as error:
             civ.full_clean()
