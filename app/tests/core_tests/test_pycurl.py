@@ -1,12 +1,6 @@
-# pyvips should be imported before pycurl to reproduce error
-try:
-    import pyvips
-except (ModuleNotFoundError, OSError):
-    pyvips = None
+import pycurl
 
 
 def test_import_pycurl():
-    import pycurl
-
-    assert pyvips
+    # This is used by Kombu SQS and sometimes has import errors
     assert pycurl
