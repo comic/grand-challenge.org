@@ -1713,7 +1713,7 @@ class Submission(FieldChangeMixin, UUIDModel):
                 )
 
         if additional_inputs:
-            evaluation.validate_civ_data_objects_and_execute_linked_task(
+            evaluation.process_civ_data_objects_and_execute_linked_task(
                 civ_data_objects=additional_inputs, user=self.creator
             )
         else:
@@ -2142,7 +2142,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     def get_civ_for_interface(self, interface):
         return self.inputs.get(interface=interface)
 
-    def validate_civ_data_objects_and_execute_linked_task(
+    def process_civ_data_objects_and_execute_linked_task(
         self, *, civ_data_objects, user, linked_task=None
     ):
         from grandchallenge.evaluation.tasks import (
@@ -2155,7 +2155,7 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
             },
             immutable=True,
         )
-        return super().validate_civ_data_objects_and_execute_linked_task(
+        return super().process_civ_data_objects_and_execute_linked_task(
             civ_data_objects=civ_data_objects,
             user=user,
             linked_task=linked_task,

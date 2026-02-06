@@ -45,7 +45,6 @@ from grandchallenge.cases.models import (
 )
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
-    CINotAllowedException,
     CIVNotEditableException,
 )
 from grandchallenge.components.schemas import (
@@ -2517,6 +2516,7 @@ class CIVSetObjectPermissionsMixin:
 
 
 class CIVForObjectMixin:
+    not_editable_error_message = "This object cannot be updated."
 
     def add_civ(self, *, civ):
         if not self.is_editable:
@@ -2526,7 +2526,7 @@ class CIVForObjectMixin:
         if not self.is_editable:
             raise CIVNotEditableException(f"{self} is not editable.")
 
-    def validate_civ_data_objects_and_execute_linked_task(
+    def process_civ_data_objects_and_execute_linked_task(
         self, *, civ_data_objects, user, linked_task=None
     ):
         for civ_data in civ_data_objects:
@@ -2541,18 +2541,6 @@ class CIVForObjectMixin:
             raise CIVNotEditableException(
                 f"{self} is not editable. CIVs cannot be added or removed from it.",
             )
-
-        try:
-            if (
-                civ_data.interface_slug
-                not in self.base_object.allowed_socket_slugs
-            ):
-                raise CINotAllowedException(
-                    f"Socket {civ_data.interface_slug!r} is not allowed "
-                    f"for this {self.base_object._meta.model_name}."
-                )
-        except AttributeError:
-            pass
 
         ci = civ_data.interface
 

@@ -260,11 +260,10 @@ def test_api_archive_item_allowed_sockets(
             HTTP_X_FORWARDED_PROTO="https",
         )
 
-    # User does not have access to the archive
     assert response.status_code == 400
     assert (
         f"Socket {ci_bool.slug!r} is not allowed for this archive."
-        in response.json()
+        in response.json()["non_field_errors"][0]
     )
     assert item.values.count() == 0
 
@@ -327,7 +326,7 @@ def test_api_archive_item_reserved_sockets(
     assert response.status_code == 400
     assert (
         "Socket 'Metrics JSON File' is reserved and cannot be used."
-        in response.json()[0]
+        in response.json()["non_field_errors"][0]
     )
     assert item.values.count() == 0
 

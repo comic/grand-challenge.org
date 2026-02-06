@@ -617,7 +617,7 @@ class JobCreate(
         )
 
         try:
-            self.object.validate_civ_data_objects_and_execute_linked_task(
+            self.object.process_civ_data_objects_and_execute_linked_task(
                 civ_data_objects=inputs, user=self.object.creator
             )
         except CIVNotEditableException as e:
