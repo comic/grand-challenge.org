@@ -1,6 +1,4 @@
 import re
-import shlex
-import subprocess
 import zipfile
 from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
@@ -25,8 +23,7 @@ from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
 from panimg import convert
-from panimg.models import PanImgFile, PanImgResult, PostProcessorResult
-from pydantic import TypeAdapter
+from panimg.models import PanImgResult
 
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
@@ -37,6 +34,7 @@ from grandchallenge.cases.models import (
     PostProcessImageTaskStatusChoices,
     RawImageUploadSession,
 )
+from grandchallenge.cases.panimg import post_process
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.components.backends.utils import UUID4_REGEX, safe_extract
 from grandchallenge.components.models import ComponentInterface
@@ -464,12 +462,9 @@ def execute_post_process_image_task(*, post_process_image_task_pk):
             # with importing or scheduling if there are more
             image_file = ImageFile.objects.get(image=task.image)
 
-            panimg_file = _download_image_file(
-                image_file=image_file, output_directory=output_directory
-            )
-
-            post_processor_result = _post_process_in_virtualenv(
-                panimg_file=panimg_file
+            post_processor_result = post_process(
+                image_file=image_file,
+                output_directory=output_directory,
             )
 
             _check_post_processor_result(
@@ -493,64 +488,6 @@ def execute_post_process_image_task(*, post_process_image_task_pk):
         task.save()
         logger.error(error, exc_info=True)
         return
-
-
-def _download_image_file(*, image_file, output_directory):
-    """
-    Downloads an image file to a directory
-
-    Returns a PanImgFiles that point to the local files
-    """
-    dest = safe_join(output_directory, image_file.file.name)
-
-    panimg_file = PanImgFile(
-        image_id=image_file.image.pk,
-        image_type=image_file.image_type,
-        file=dest,
-    )
-
-    # Safe to create directories as safe_join has been used
-    Path(dest).parent.mkdir(parents=True, exist_ok=True)
-
-    with image_file.file.open("rb") as fs, open(dest, "wb") as fd:
-        for chunk in fs.chunks():
-            fd.write(chunk)
-
-    return panimg_file
-
-
-def _post_process_in_virtualenv(*, panimg_file):
-    panimg_command = shlex.join(
-        [
-            "panimg",
-            "post-process",
-            "--image-id",
-            str(panimg_file.image_id),
-            "--image-type",
-            panimg_file.image_type,
-            "--input-file",
-            str(panimg_file.file),
-            "--post-processor",
-            "DZI",
-        ]
-    )
-
-    cli_result = subprocess.run(
-        [
-            "bash",
-            "-c",
-            f"source /opt/virtualenvs/panimg/bin/activate && {panimg_command}",
-        ],
-        text=True,
-        check=True,
-        capture_output=True,
-    )
-
-    post_processor_result: PostProcessorResult = TypeAdapter(
-        PostProcessorResult
-    ).validate_json(cli_result.stdout.splitlines()[-1])
-
-    return post_processor_result
 
 
 def _check_post_processor_result(*, post_processor_result, image):
