@@ -14,11 +14,11 @@ from panimg.image_builders.tiff import (
     _load_with_tiff,
     image_builder_tiff,
 )
-from panimg.models import ColorSpace
 from panimg.panimg import _build_files
 from pytest import approx
 from tifffile import tifffile
 
+from grandchallenge.cases.panimg_models import ColorSpace
 from tests.cases_tests import RESOURCE_PATH
 
 

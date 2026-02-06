@@ -8,10 +8,10 @@ import pytest
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.files.base import ContentFile
-from panimg.models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import Image
+from grandchallenge.cases.panimg_models import MAXIMUM_SEGMENTS_LENGTH
 from grandchallenge.cases.widgets import DICOMUploadWithName
 from grandchallenge.components.models import (
     INTERFACE_KIND_JSON_EXAMPLES,

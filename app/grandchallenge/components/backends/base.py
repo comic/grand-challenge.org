@@ -899,7 +899,7 @@ class Executor(ABC):
             try:
                 importer_result = import_images(
                     input_directory=tmpdir,
-                    builders=("MHD", "TIFF"),
+                    builders=["MHD", "TIFF"],
                 )
             except CalledProcessError as error:
                 if error.returncode == 137:

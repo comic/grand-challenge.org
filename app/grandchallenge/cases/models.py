@@ -27,12 +27,16 @@ from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from grand_challenge_dicom_de_identifier.deidentifier import DicomDeidentifier
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
-from panimg.models import MAXIMUM_SEGMENTS_LENGTH, ColorSpace, ImageType
 from pydantic import ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 from pydantic.dataclasses import dataclass
 from storages.utils import clean_name
 
+from grandchallenge.cases.panimg_models import (
+    MAXIMUM_SEGMENTS_LENGTH,
+    ColorSpace,
+    ImageType,
+)
 from grandchallenge.core.error_handlers import (
     DICOMImageSetUploadErrorHandler,
     RawImageUploadSessionErrorHandler,
