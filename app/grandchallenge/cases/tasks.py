@@ -19,12 +19,11 @@ from django.core.files import File
 from django.db import transaction
 from django.db.transaction import on_commit
 from django.utils._os import safe_join
-from django.utils.module_loading import import_string
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
-from panimg import convert, post_process
-from panimg.models import PanImgFile, PanImgResult
+from panimg import convert
+from panimg.models import PanImgResult
 
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
@@ -35,6 +34,7 @@ from grandchallenge.cases.models import (
     PostProcessImageTaskStatusChoices,
     RawImageUploadSession,
 )
+from grandchallenge.cases.panimg import post_process
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.components.backends.utils import UUID4_REGEX, safe_extract
 from grandchallenge.components.models import ComponentInterface
@@ -47,10 +47,6 @@ from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.uploads.models import UserUpload
 
 logger = get_task_logger(__name__)
-
-POST_PROCESSORS = [
-    import_string(p) for p in settings.CASES_POST_PROCESSORS if p
-]
 
 
 class DuplicateFilesException(ValueError):
@@ -462,14 +458,13 @@ def execute_post_process_image_task(*, post_process_image_task_pk):
 
     try:
         with TemporaryDirectory() as output_directory:
-            image_files = ImageFile.objects.filter(image=task.image)
-
-            panimg_files = _download_image_files(
-                image_files=image_files, dir=output_directory
-            )
+            # There should only be one image, something went wrong
+            # with importing or scheduling if there are more
+            image_file = ImageFile.objects.get(image=task.image)
 
             post_processor_result = post_process(
-                image_files=panimg_files, post_processors=POST_PROCESSORS
+                image_file=image_file,
+                output_directory=output_directory,
             )
 
             _check_post_processor_result(
@@ -493,34 +488,6 @@ def execute_post_process_image_task(*, post_process_image_task_pk):
         task.save()
         logger.error(error, exc_info=True)
         return
-
-
-def _download_image_files(*, image_files, dir):
-    """
-    Downloads a set of image files to a directory
-
-    Returns a set of PanImgFiles that point to the local files
-    """
-    panimg_files = set()
-
-    for im_file in image_files:
-        dest = safe_join(dir, im_file.file.name)
-        panimg_files.add(
-            PanImgFile(
-                image_id=im_file.image.pk,
-                image_type=im_file.image_type,
-                file=dest,
-            )
-        )
-
-        # Safe to create directories as safe_join has been used
-        Path(dest).parent.mkdir(parents=True, exist_ok=True)
-
-        with im_file.file.open("rb") as fs, open(dest, "wb") as fd:
-            for chunk in fs.chunks():
-                fd.write(chunk)
-
-    return panimg_files
 
 
 def _check_post_processor_result(*, post_processor_result, image):
