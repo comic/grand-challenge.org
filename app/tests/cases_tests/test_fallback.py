@@ -5,9 +5,9 @@ from tempfile import TemporaryDirectory
 
 import pytest
 from panimg.image_builders.fallback import format_error, image_builder_fallback
-from panimg.models import ColorSpace
 from panimg.panimg import _build_files
 
+from grandchallenge.cases.panimg_models import ColorSpace
 from tests.cases_tests import RESOURCE_PATH
 
 

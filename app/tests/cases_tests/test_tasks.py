@@ -9,7 +9,6 @@ from django.db import IntegrityError
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
-from panimg.models import ImageType, PanImgFile, PostProcessorResult
 
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
@@ -19,6 +18,11 @@ from grandchallenge.cases.models import (
     JobSummary,
     PostProcessImageTask,
     PostProcessImageTaskStatusChoices,
+)
+from grandchallenge.cases.panimg_models import (
+    ImageType,
+    PanImgFile,
+    PostProcessorResult,
 )
 from grandchallenge.cases.tasks import (
     _check_post_processor_result,
