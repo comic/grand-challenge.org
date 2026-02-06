@@ -892,13 +892,17 @@ class Executor(ABC):
             )
 
         with TemporaryDirectory() as tmpdir:
+            input_directory = Path(tmpdir)
+
             self._download_output_files(
-                output_files=output_files, tmpdir=tmpdir, prefix=prefix
+                output_files=output_files,
+                target_directory=input_directory,
+                prefix=prefix,
             )
 
             try:
                 importer_result = import_images(
-                    input_directory=tmpdir,
+                    input_directory=input_directory,
                     builders=["MHD", "TIFF"],
                 )
             except CalledProcessError as error:
@@ -932,11 +936,15 @@ class Executor(ABC):
 
         return civ
 
-    def _download_output_files(self, *, output_files, tmpdir, prefix):
+    def _download_output_files(
+        self, *, output_files, target_directory, prefix
+    ):
         for file in output_files:
             try:
                 root_key = safe_join("/", file["Key"])
-                dest = safe_join(tmpdir, Path(root_key).relative_to(prefix))
+                dest = safe_join(
+                    target_directory, Path(root_key).relative_to(prefix)
+                )
             except (SuspiciousFileOperation, ValueError):
                 logger.warning(f"Skipping {file=}")
                 continue
