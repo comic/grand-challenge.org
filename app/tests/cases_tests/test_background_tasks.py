@@ -5,11 +5,6 @@ from pathlib import Path
 import pytest
 from actstream.actions import is_following
 from billiard.exceptions import SoftTimeLimitExceeded
-from panimg.image_builders.metaio_utils import (
-    ADDITIONAL_HEADERS,
-    EXPECTED_HEADERS,
-    parse_mh_header,
-)
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.tasks import check_compressed_and_extract
@@ -65,50 +60,6 @@ def test_image_file_creation(settings, django_capture_on_commit_callbacks):
         "image10x10x10.zraw",
     }
     assert {*session.import_result["file_errors"]} == {*invalid_images}
-
-
-@pytest.mark.parametrize(
-    "images",
-    (
-        ["image10x11x12x13-extra-stuff.mhd", "image10x11x12x13.zraw"],
-        ["image3x4-extra-stuff.mhd", "image3x4.zraw"],
-    ),
-)
-@pytest.mark.django_db
-def test_staged_mhd_upload_with_additional_headers(
-    settings, tmp_path, images: list[str], django_capture_on_commit_callbacks
-):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
-
-    session, uploaded_images = create_raw_upload_image_session(
-        image_paths=[RESOURCE_PATH / p for p in images],
-    )
-
-    with django_capture_on_commit_callbacks(execute=True):
-        session.process_images()
-
-    session.refresh_from_db()
-    assert session.status == session.SUCCESS
-    assert not session.error_message
-
-    images = Image.objects.filter(origin=session).all()
-    assert len(images) == 1
-
-    image: Image = images[0]
-    tmp_header_filename = tmp_path / "tmp_header.mhd"
-    with (
-        image.files.get(file__endswith=".mha").file.open("rb") as in_file,
-        open(tmp_header_filename, "wb") as out_file,
-    ):
-        out_file.write(in_file.read())
-
-    headers = parse_mh_header(tmp_header_filename)
-
-    for key in headers.keys():
-        assert (key in ADDITIONAL_HEADERS) or (key in EXPECTED_HEADERS)
-
-    assert "Bogus" not in headers
 
 
 @pytest.mark.django_db
