@@ -629,10 +629,10 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         self.helper.layout.append(Submit("save", "Save"))
 
     def clean(self):
-        cleaned_data = super().clean()
+        if self.errors:
+            return
 
-        if not self._clean_all_fields_nonempty_cleaned_data(cleaned_data):
-            raise ValidationError("Please fix the errors below.")
+        cleaned_data = super().clean()
 
         task_ids = cleaned_data.get("task_ids")
         task_id_for_phases = cleaned_data.get("task_id_for_phases")
@@ -652,11 +652,6 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         )
 
         return cleaned_data
-
-    def _clean_all_fields_nonempty_cleaned_data(self, cleaned_data):
-        return all(
-            [cleaned_data.get(field_name) for field_name in self._meta.fields]
-        )
 
     def _clean_task_lists_equal_length(self, cleaned_data):
         task_ids = cleaned_data.get("task_ids")
