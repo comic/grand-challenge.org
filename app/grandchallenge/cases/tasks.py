@@ -34,7 +34,10 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
 )
 from grandchallenge.cases.panimg import convert, post_process
-from grandchallenge.cases.panimg_models import PanImgResult
+from grandchallenge.cases.panimg_models import (
+    ImageBuilderOptions,
+    PanImgResult,
+)
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.components.backends.utils import UUID4_REGEX, safe_extract
 from grandchallenge.components.models import ComponentInterface
@@ -318,7 +321,15 @@ def import_images(
 
     """
     if builders is None:
-        builders = ["MHD", "NIFTI", "NRRD", "DICOM", "TIFF", "OCT", "FALLBACK"]
+        builders = [
+            ImageBuilderOptions.MHD,
+            ImageBuilderOptions.NIFTI,
+            ImageBuilderOptions.NRRD,
+            ImageBuilderOptions.DICOM,
+            ImageBuilderOptions.TIFF,
+            ImageBuilderOptions.OCT,
+            ImageBuilderOptions.FALLBACK,
+        ]
 
     with TemporaryDirectory() as output_directory:
         panimg_output_dir = Path(output_directory) / "output"

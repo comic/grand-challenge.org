@@ -34,6 +34,7 @@ from django.utils.functional import cached_property
 from pydantic import BaseModel, ConfigDict
 from pydantic_core import to_json
 
+from grandchallenge.cases.panimg_models import ImageBuilderOptions
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
@@ -903,7 +904,10 @@ class Executor(ABC):
             try:
                 importer_result = import_images(
                     input_directory=input_directory,
-                    builders=["MHD", "TIFF"],
+                    builders=[
+                        ImageBuilderOptions.MHD,
+                        ImageBuilderOptions.TIFF,
+                    ],
                 )
             except CalledProcessError as error:
                 if error.returncode == 137:

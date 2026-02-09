@@ -8,6 +8,21 @@ from uuid import UUID
 
 from pydantic.dataclasses import dataclass
 
+
+class ImageBuilderOptions(str, Enum):
+    MHD = "MHD"
+    NIFTI = "NIFTI"
+    NRRD = "NRRD"
+    DICOM = "DICOM"
+    TIFF = "TIFF"
+    OCT = "OCT"
+    FALLBACK = "FALLBACK"
+
+
+class PostProcessorOptions(str, Enum):
+    DZI = "DZI"
+
+
 # NOTE: Only int8 or uint8 data types are checked for segments
 # so the true maximum is 256
 MAXIMUM_SEGMENTS_LENGTH = 64

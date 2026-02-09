@@ -8,6 +8,7 @@ from pydantic import TypeAdapter
 from grandchallenge.cases.panimg_models import (
     PanImgFile,
     PanImgResult,
+    PostProcessorOptions,
     PostProcessorResult,
 )
 
@@ -64,7 +65,7 @@ def post_process(*, image_file, output_directory):
             "--input-file",
             str(panimg_file.file),
             "--post-processor",
-            "DZI",
+            PostProcessorOptions.DZI,
         ]
     )
 
