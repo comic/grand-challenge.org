@@ -3,14 +3,13 @@ import subprocess
 from pathlib import Path
 
 from django.utils._os import safe_join
-from pydantic import TypeAdapter
-
-from grandchallenge.cases.panimg_models import (
+from panimg_models import (
     PanImgFile,
     PanImgResult,
     PostProcessorOptions,
     PostProcessorResult,
 )
+from pydantic import TypeAdapter
 
 
 def convert(*, input_directory, output_directory, builders):

@@ -31,10 +31,10 @@ from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.db import transaction
 from django.utils._os import safe_join
 from django.utils.functional import cached_property
+from panimg_models import ImageBuilderOptions
 from pydantic import BaseModel, ConfigDict
 from pydantic_core import to_json
 
-from grandchallenge.cases.panimg_models import ImageBuilderOptions
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
