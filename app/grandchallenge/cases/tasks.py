@@ -1,9 +1,10 @@
 import re
 import zipfile
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from shutil import rmtree
+from subprocess import CalledProcessError
 from tempfile import TemporaryDirectory
 
 import boto3
@@ -22,8 +23,6 @@ from django.utils._os import safe_join
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
-from panimg import convert
-from panimg.models import PanImgResult
 
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
@@ -34,7 +33,11 @@ from grandchallenge.cases.models import (
     PostProcessImageTaskStatusChoices,
     RawImageUploadSession,
 )
-from grandchallenge.cases.panimg import post_process
+from grandchallenge.cases.panimg import convert, post_process
+from grandchallenge.cases.panimg_models import (
+    ImageBuilderOptions,
+    PanImgResult,
+)
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.components.backends.utils import UUID4_REGEX, safe_extract
 from grandchallenge.components.models import ComponentInterface
@@ -189,8 +192,8 @@ def build_images(  # noqa:C901
                 base_directory=tmp_dir,
                 upload_session=upload_session,
             )
-    except RuntimeError as error:
-        if "std::bad_alloc" in str(error):
+    except CalledProcessError as error:
+        if error.returncode == 137:
             _handle_error(
                 error_message=(
                     "The uploaded images were too large to process, "
@@ -297,15 +300,14 @@ def import_images(
     *,
     input_directory: Path,
     origin: RawImageUploadSession | None = None,
-    builders: Sequence[Callable] | None = None,
-    recurse_subdirectories: bool = True,
+    builders: Sequence[str] | None = None,
 ) -> ImporterResult:
     """
     Creates Image objects from a set of files.
 
     Parameters
     ----------
-    files
+    input_directory
         A Set of files that can form one or many Images
     origin
         The RawImageUploadSession (if any) that was the source of these files
@@ -318,13 +320,24 @@ def import_images(
         any file errors
 
     """
+    if builders is None:
+        builders = [
+            ImageBuilderOptions.MHD,
+            ImageBuilderOptions.NIFTI,
+            ImageBuilderOptions.NRRD,
+            ImageBuilderOptions.DICOM,
+            ImageBuilderOptions.TIFF,
+            ImageBuilderOptions.OCT,
+            ImageBuilderOptions.FALLBACK,
+        ]
+
     with TemporaryDirectory() as output_directory:
+        panimg_output_dir = Path(output_directory) / "output"
+
         panimg_result = convert(
             input_directory=input_directory,
-            output_directory=output_directory,
+            output_directory=panimg_output_dir,
             builders=builders,
-            post_processors=[],  # Do the post-processing later
-            recurse_subdirectories=recurse_subdirectories,
         )
 
         _check_all_ids(panimg_result=panimg_result)

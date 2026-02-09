@@ -3,8 +3,50 @@ import subprocess
 from pathlib import Path
 
 from django.utils._os import safe_join
-from panimg.models import PanImgFile, PostProcessorResult
 from pydantic import TypeAdapter
+
+from grandchallenge.cases.panimg_models import (
+    PanImgFile,
+    PanImgResult,
+    PostProcessorOptions,
+    PostProcessorResult,
+)
+
+
+def convert(*, input_directory, output_directory, builders):
+    builders_command = []
+    for builder in builders:
+        builders_command.extend(["--image-builder", builder])
+
+    panimg_command = shlex.join(
+        [
+            "panimg",
+            "convert",
+            "--input-dir",
+            str(input_directory.resolve()),
+            "--output-dir",
+            str(output_directory.resolve()),
+            *builders_command,
+            "--no-post-processing",
+        ]
+    )
+
+    cli_result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            f"source /opt/virtualenvs/panimg/bin/activate && {panimg_command}",
+        ],
+        text=True,
+        check=True,
+        capture_output=True,
+    )
+
+    panimg_result: PanImgResult = TypeAdapter(PanImgResult).validate_json(
+        cli_result.stdout.splitlines()[-1]
+    )
+
+    return panimg_result
 
 
 def post_process(*, image_file, output_directory):
@@ -23,7 +65,7 @@ def post_process(*, image_file, output_directory):
             "--input-file",
             str(panimg_file.file),
             "--post-processor",
-            "DZI",
+            PostProcessorOptions.DZI,
         ]
     )
 

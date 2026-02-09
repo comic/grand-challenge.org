@@ -40,7 +40,6 @@ dependencies = [
     "django-allauth[mfa,socialaccount]",
     "requests",
     "Pillow",
-    "panimg>=0.16.0",
     "django-activity-stream",
     "django-permissions-policy",
     "aws-xray-sdk",
@@ -102,9 +101,6 @@ dev = [
     "psutil",
     "pytest-timeout",
 ]
-
-[tool.uv]
-no-binary-package = ["pycurl"]
 
 [tool.isort]
 profile = "black"

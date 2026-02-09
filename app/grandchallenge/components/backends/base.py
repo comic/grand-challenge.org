@@ -13,6 +13,7 @@ from datetime import timedelta
 from json import JSONDecodeError
 from math import ceil
 from pathlib import Path
+from subprocess import CalledProcessError
 from tempfile import SpooledTemporaryFile, TemporaryDirectory
 from typing import NamedTuple
 from uuid import UUID
@@ -30,10 +31,10 @@ from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.db import transaction
 from django.utils._os import safe_join
 from django.utils.functional import cached_property
-from panimg.image_builders import image_builder_mhd, image_builder_tiff
 from pydantic import BaseModel, ConfigDict
 from pydantic_core import to_json
 
+from grandchallenge.cases.panimg_models import ImageBuilderOptions
 from grandchallenge.cases.tasks import import_images
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
@@ -892,17 +893,24 @@ class Executor(ABC):
             )
 
         with TemporaryDirectory() as tmpdir:
+            input_directory = Path(tmpdir)
+
             self._download_output_files(
-                output_files=output_files, tmpdir=tmpdir, prefix=prefix
+                output_files=output_files,
+                target_directory=input_directory,
+                prefix=prefix,
             )
 
             try:
                 importer_result = import_images(
-                    input_directory=tmpdir,
-                    builders=[image_builder_mhd, image_builder_tiff],
+                    input_directory=input_directory,
+                    builders=[
+                        ImageBuilderOptions.MHD,
+                        ImageBuilderOptions.TIFF,
+                    ],
                 )
-            except RuntimeError as error:
-                if "std::bad_alloc" in str(error):
+            except CalledProcessError as error:
+                if error.returncode == 137:
                     raise ComponentException(
                         "The output image was too large to process, "
                         "please try again with smaller images"
@@ -932,11 +940,15 @@ class Executor(ABC):
 
         return civ
 
-    def _download_output_files(self, *, output_files, tmpdir, prefix):
+    def _download_output_files(
+        self, *, output_files, target_directory, prefix
+    ):
         for file in output_files:
             try:
                 root_key = safe_join("/", file["Key"])
-                dest = safe_join(tmpdir, Path(root_key).relative_to(prefix))
+                dest = safe_join(
+                    target_directory, Path(root_key).relative_to(prefix)
+                )
             except (SuspiciousFileOperation, ValueError):
                 logger.warning(f"Skipping {file=}")
                 continue

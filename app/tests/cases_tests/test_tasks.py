@@ -9,7 +9,6 @@ from django.db import IntegrityError
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
-from panimg.models import ImageType, PanImgFile, PostProcessorResult
 
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
@@ -19,6 +18,11 @@ from grandchallenge.cases.models import (
     JobSummary,
     PostProcessImageTask,
     PostProcessImageTaskStatusChoices,
+)
+from grandchallenge.cases.panimg_models import (
+    ImageType,
+    PanImgFile,
+    PostProcessorResult,
 )
 from grandchallenge.cases.tasks import (
     _check_post_processor_result,
@@ -125,7 +129,7 @@ def test_check_post_processor_result():
 
 @pytest.mark.django_db
 def test_no_post_processing_mha(
-    tmpdir_factory,
+    tmp_path,
     settings,
     django_capture_on_commit_callbacks,
 ):
@@ -134,12 +138,11 @@ def test_no_post_processing_mha(
 
     filename = "image10x10x10.mha"
 
-    input_directory = tmpdir_factory.mktemp("temp")
-    temp_file = Path(input_directory / filename)
+    temp_file = Path(tmp_path / filename)
     shutil.copy(RESOURCE_PATH / filename, temp_file)
 
     with django_capture_on_commit_callbacks() as callbacks:
-        imported_images = import_images(input_directory=input_directory)
+        imported_images = import_images(input_directory=tmp_path)
 
     assert len(callbacks) == 0
     assert imported_images.consumed_files == {temp_file}
@@ -148,7 +151,7 @@ def test_no_post_processing_mha(
 
 @pytest.mark.django_db
 def test_post_processing(
-    tmpdir_factory,
+    tmp_path,
     settings,
     django_capture_on_commit_callbacks,
 ):
@@ -157,12 +160,11 @@ def test_post_processing(
 
     filename = "valid_tiff.tif"
 
-    input_directory = tmpdir_factory.mktemp("temp")
-    temp_file = Path(input_directory / filename)
+    temp_file = Path(tmp_path / filename)
     shutil.copy(RESOURCE_PATH / filename, temp_file)
 
     with django_capture_on_commit_callbacks() as callbacks:
-        imported_images = import_images(input_directory=input_directory)
+        imported_images = import_images(input_directory=tmp_path)
 
     assert len(callbacks) == 1
     assert imported_images.consumed_files == {temp_file}
