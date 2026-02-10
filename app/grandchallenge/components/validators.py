@@ -1,7 +1,6 @@
 import subprocess
 from pathlib import Path
 
-from Bio.Phylo import NewickIO
 from django.conf import settings
 from django.core.exceptions import SuspiciousFileOperation, ValidationError
 from django.utils._os import safe_join
@@ -36,7 +35,7 @@ def validate_relative_path_not_reserved(value):
 
 
 def _newick_parser(tree):
-    return NewickIO.Parser.from_string(tree)
+    return NewickIO.Parser.from_string(tree)  # noqa: F821
 
 
 def validate_newick_tree_format(tree):
@@ -48,7 +47,7 @@ def validate_newick_tree_format(tree):
     try:
         for _ in parser.parse():
             has_tree = True
-    except NewickIO.NewickError as e:
+    except NewickIO.NewickError as e:  # noqa: F821
         raise ValidationError(f"Invalid Newick tree format: {e}")
 
     if not has_tree:
