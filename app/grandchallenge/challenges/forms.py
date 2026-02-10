@@ -677,7 +677,7 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
             "number_of_submissions_per_team_for_phases",
             "number_of_test_cases_for_phases",
         ):
-            field_value = cleaned_data.get(field_name)
+            field_value = cleaned_data[field_name]
             if len(task_id_for_phases) != len(field_value):
                 self.add_error(
                     field_name, "Must be of equal length as number of phases."
@@ -696,7 +696,7 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
             "number_of_teams_for_phases",
             "number_of_submissions_per_team_for_phases",
         ):
-            field_value = cleaned_data.get(field_name)
+            field_value = cleaned_data[field_name]
             for idx in range(1, len(task_id_for_phases)):
                 if (
                     task_id_for_phases[idx] == task_id_for_phases[idx - 1]
