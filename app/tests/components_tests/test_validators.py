@@ -1,4 +1,5 @@
 from contextlib import nullcontext
+from tempfile import NamedTemporaryFile
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -69,8 +70,12 @@ def test_valid_paths(rel_path):
     ),
 )
 def test_validate_newick_format(tree, context):
-    with context:
-        validate_newick_tree_format(tree=tree)
+    with NamedTemporaryFile() as temp_file:
+        with open(temp_file.name, "w") as f:
+            f.write(tree)
+
+        with context:
+            validate_newick_tree_format(file=temp_file.name)
 
 
 def test_valid_biom_format():

@@ -34,24 +34,27 @@ def validate_relative_path_not_reserved(value):
         raise ValidationError("This relative path is reserved")
 
 
-def _newick_parser(tree):
-    return NewickIO.Parser.from_string(tree)  # noqa: F821
-
-
-def validate_newick_tree_format(tree):
+def validate_newick_tree_format(*, file):
     """Validates a Newick tree by passing it through a parser"""
-    parser = _newick_parser(tree)
-
-    has_tree = False
+    file = Path(file).resolve()
 
     try:
-        for _ in parser.parse():
-            has_tree = True
-    except NewickIO.NewickError as e:  # noqa: F821
-        raise ValidationError(f"Invalid Newick tree format: {e}")
-
-    if not has_tree:
-        raise ValidationError("No Newick tree found")
+        run_script_in_venv(
+            venv_location=settings.COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION,
+            python_script=VALIDATION_SCRIPT_DIR / "validate_newick.py",
+            args=[str(file)],
+        )
+    except subprocess.CalledProcessError as e:
+        error_lines = e.stderr.strip().split("\n")
+        for line in error_lines:
+            # Pass along any validation errors
+            if line.startswith("NewickValidationError"):
+                error_message = line.split(":", 1)[1].strip()
+                raise ValidationError(
+                    error_message or "Does not appear to be a newick tree"
+                )
+        else:
+            raise RuntimeError(f"An unexpected error occurred: {e.stderr}")
 
 
 def validate_biom_format(*, file):
@@ -68,7 +71,7 @@ def validate_biom_format(*, file):
         error_lines = e.stderr.strip().split("\n")
         for line in error_lines:
             # Pass along any validation errors
-            if line.startswith("ValidationScriptError"):
+            if line.startswith("BIOMValidationError"):
                 error_message = line.split(":", 1)[1].strip()
                 raise ValidationError(
                     error_message or "Does not appear to be a BIOM-format file"

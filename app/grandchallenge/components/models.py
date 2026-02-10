@@ -1517,7 +1517,9 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
                     ) from error
                 self.interface.validate_against_schema(value=value)
             elif self.interface.kind == InterfaceKindChoices.NEWICK:
-                validate_newick_tree_format(tree=user_upload.read_object())
+                with NamedTemporaryFile() as temp_file:
+                    user_upload.download_fileobj(temp_file)
+                    validate_newick_tree_format(file=temp_file.name)
             elif self.interface.kind == InterfaceKindChoices.BIOM:
                 with NamedTemporaryFile() as temp_file:
                     user_upload.download_fileobj(temp_file)
