@@ -47,8 +47,6 @@ registration_items = (
     "registration_page_markdown",
 )
 
-HTMX_BLANK_CHOICE_KEY = "__HTMX_BLANK_CHOICE_KEY__"
-
 
 class ChallengeUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
