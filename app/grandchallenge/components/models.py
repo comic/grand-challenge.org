@@ -34,6 +34,7 @@ from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
 from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
+from panimg_models import MAXIMUM_SEGMENTS_LENGTH
 from pydantic_core import MISSING
 
 from grandchallenge.cases.models import (
@@ -42,7 +43,6 @@ from grandchallenge.cases.models import (
     ImageFile,
     RawImageUploadSession,
 )
-from grandchallenge.cases.panimg_models import MAXIMUM_SEGMENTS_LENGTH
 from grandchallenge.charts.specs import components_line
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,

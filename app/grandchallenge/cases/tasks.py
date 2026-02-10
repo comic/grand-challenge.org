@@ -23,6 +23,7 @@ from django.utils._os import safe_join
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
+from panimg_models import ImageBuilderOptions, PanImgResult
 
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
@@ -34,10 +35,6 @@ from grandchallenge.cases.models import (
     RawImageUploadSession,
 )
 from grandchallenge.cases.panimg import convert, post_process
-from grandchallenge.cases.panimg_models import (
-    ImageBuilderOptions,
-    PanImgResult,
-)
 from grandchallenge.components.backends.exceptions import RetryStep
 from grandchallenge.components.backends.utils import UUID4_REGEX, safe_extract
 from grandchallenge.components.models import ComponentInterface

@@ -64,6 +64,7 @@ dependencies = [
     # Requirements for forge
     "black",
     "isort",
+    "panimg-models",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"

@@ -9,8 +9,8 @@ from django.db import models
 from django.db.models import PositiveSmallIntegerField
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm
+from panimg_models import MAXIMUM_SEGMENTS_LENGTH
 
-from grandchallenge.cases.panimg_models import MAXIMUM_SEGMENTS_LENGTH
 from grandchallenge.core.fields import HexColorField
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
