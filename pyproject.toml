@@ -54,7 +54,6 @@ dependencies = [
     "pyjwt",
     "beautifulsoup4",
     "pymdown-extensions",
-    "biopython",
     "cachetools",
     "grand-challenge-dicom-de-identifier",
     "pydantic",
