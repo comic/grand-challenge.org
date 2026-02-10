@@ -634,15 +634,10 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
             task_id_for_phases = cleaned_data.get("task_id_for_phases")
 
             self._clean_task_lists_equal_length(cleaned_data)
-
             self._clean_task_id_for_phases(task_ids, task_id_for_phases)
-
-            if not self._clean_phases_lists_equal_length(
+            self._clean_phases_lists_equal_length(
                 task_id_for_phases, cleaned_data
-            ):
-                raise ValidationError(
-                    "All fields defining phases must be of equal length."
-                )
+            )
             self._clean_later_phases_not_more_teams_or_submissions(
                 task_id_for_phases, cleaned_data
             )
@@ -689,7 +684,10 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
                 )
                 all_phases_list_equal_length = False
 
-        return all_phases_list_equal_length
+        if not all_phases_list_equal_length:
+            raise ValidationError(
+                "All fields defining phases must be of equal length."
+            )
 
     def _clean_later_phases_not_more_teams_or_submissions(
         self, task_id_for_phases, cleaned_data
