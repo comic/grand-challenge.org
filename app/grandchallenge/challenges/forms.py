@@ -627,27 +627,25 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
         self.helper.layout.append(Submit("save", "Save"))
 
     def clean(self):
-        if self.errors:
-            return
-
         cleaned_data = super().clean()
 
-        task_ids = cleaned_data.get("task_ids")
-        task_id_for_phases = cleaned_data.get("task_id_for_phases")
+        if not self.errors:
+            task_ids = cleaned_data.get("task_ids")
+            task_id_for_phases = cleaned_data.get("task_id_for_phases")
 
-        self._clean_task_lists_equal_length(cleaned_data)
+            self._clean_task_lists_equal_length(cleaned_data)
 
-        self._clean_task_id_for_phases(task_ids, task_id_for_phases)
+            self._clean_task_id_for_phases(task_ids, task_id_for_phases)
 
-        if not self._clean_phases_lists_equal_length(
-            task_id_for_phases, cleaned_data
-        ):
-            raise ValidationError(
-                "All fields defining phases must be of equal length."
+            if not self._clean_phases_lists_equal_length(
+                task_id_for_phases, cleaned_data
+            ):
+                raise ValidationError(
+                    "All fields defining phases must be of equal length."
+                )
+            self._clean_later_phases_not_more_teams_or_submissions(
+                task_id_for_phases, cleaned_data
             )
-        self._clean_later_phases_not_more_teams_or_submissions(
-            task_id_for_phases, cleaned_data
-        )
 
         return cleaned_data
 
