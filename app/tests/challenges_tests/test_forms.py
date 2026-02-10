@@ -205,43 +205,52 @@ def test_budget_update_form():
 
 
 @pytest.mark.parametrize(
-    "invalid_data",
+    "invalid_data, reason_invalid",
     [
-        {"task_ids": "[1]"},  # not all task ids defined
-        {"task_ids": "[1, 1]"},  # task ids are not unique
-        {
-            "algorithm_maximum_settable_memory_gb_for_tasks": "[32]"
-        },  # not all tasks defined
-        {
-            "algorithm_selectable_gpu_type_choices_for_tasks": '["", "T4"]'
-        },  # not all tasks defined
-        {
-            "average_size_test_case_mb_for_tasks": "[10]"
-        },  # not all tasks defined
-        {
-            "inference_time_average_minutes_for_tasks": "[10]"
-        },  # not all tasks defined
-        {"task_id_for_phases": "[1, 1]"},  # not all task ids used
-        {"task_id_for_phases": "[1, 1, 2, 3]"},  # using undefined task id
-        {
-            "number_of_teams_for_phases": "[10, 10, 10]"
-        },  # not all phases defined
-        {
-            "number_of_submissions_per_team_for_phases": "[10, 1, 10]"
-        },  # not all phases defined
-        {
-            "number_of_test_cases_for_phases": "[3, 100, 3]"
-        },  # not all phases defined
-        {
-            "number_of_teams_for_phases": "[1, 10, 10, 10]"
-        },  # later phase has more teams
-        {
-            "number_of_submissions_per_team_for_phases": "[1, 10, 10, 10]"
-        },  # later phase has more submissions
+        ({"task_ids": "[1]"}, "not all task ids defined"),
+        ({"task_ids": "[1, 1]"}, "task ids are not unique"),
+        (
+            {"algorithm_maximum_settable_memory_gb_for_tasks": "[32]"},
+            "not all tasks defined",
+        ),
+        (
+            {"algorithm_selectable_gpu_type_choices_for_tasks": '["", "T4"]'},
+            "not all tasks defined",
+        ),
+        (
+            {"average_size_test_case_mb_for_tasks": "[10]"},
+            "not all tasks defined",
+        ),
+        (
+            {"inference_time_average_minutes_for_tasks": "[10]"},
+            "not all tasks defined",
+        ),
+        ({"task_id_for_phases": "[1, 1]"}, "not all task ids used"),
+        ({"task_id_for_phases": "[1, 1, 2, 3]"}, "using undefined task id"),
+        (
+            {"number_of_teams_for_phases": "[10, 10, 10]"},
+            "not all phases defined",
+        ),
+        (
+            {"number_of_submissions_per_team_for_phases": "[10, 1, 10]"},
+            "not all phases defined",
+        ),
+        (
+            {"number_of_test_cases_for_phases": "[3, 100, 3]"},
+            "not all phases defined",
+        ),
+        (
+            {"number_of_teams_for_phases": "[1, 10, 10, 10]"},
+            "later phase has more teams",
+        ),
+        (
+            {"number_of_submissions_per_team_for_phases": "[1, 10, 10, 10]"},
+            "later phase has more submissions",
+        ),
     ],
 )
 @pytest.mark.django_db
-def test_budget_update_form_invalid(invalid_data):
+def test_budget_update_form_invalid(invalid_data, reason_invalid):
     challenge_request = ChallengeRequestFactory()
     data = {
         "task_ids": "[1, 2]",
@@ -265,4 +274,4 @@ def test_budget_update_form_invalid(invalid_data):
         data=data, instance=challenge_request
     )
 
-    assert not form.is_valid()
+    assert not form.is_valid(), reason_invalid
