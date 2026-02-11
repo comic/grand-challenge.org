@@ -32,7 +32,6 @@ from django.utils.functional import cached_property
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
-from django_deprecate_fields import deprecate_field
 from django_extensions.db.fields import AutoSlugField
 from panimg_models import MAXIMUM_SEGMENTS_LENGTH
 from pydantic_core import MISSING
@@ -1330,15 +1329,6 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
         to=Image, null=True, blank=True, on_delete=models.PROTECT
     )
 
-    storage_cost_per_year_usd_millicents = deprecate_field(
-        models.PositiveIntegerField(
-            # We store usd here as the exchange rate regularly changes
-            editable=False,
-            null=True,
-            default=None,
-            help_text="The storage cost per year for this image in USD Cents, excluding Tax",
-        )
-    )
     size_in_storage = models.PositiveBigIntegerField(
         editable=False,
         default=0,
@@ -1517,7 +1507,9 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
                     ) from error
                 self.interface.validate_against_schema(value=value)
             elif self.interface.kind == InterfaceKindChoices.NEWICK:
-                validate_newick_tree_format(tree=user_upload.read_object())
+                with NamedTemporaryFile() as temp_file:
+                    user_upload.download_fileobj(temp_file)
+                    validate_newick_tree_format(file=temp_file.name)
             elif self.interface.kind == InterfaceKindChoices.BIOM:
                 with NamedTemporaryFile() as temp_file:
                     user_upload.download_fileobj(temp_file)
@@ -2109,16 +2101,6 @@ class ComponentImage(FieldChangeMixin, models.Model):
         ),
     )
     status = models.TextField(editable=False)
-
-    storage_cost_per_year_usd_millicents = deprecate_field(
-        models.PositiveIntegerField(
-            # We store usd here as the exchange rate regularly changes
-            editable=False,
-            null=True,
-            default=None,
-            help_text="The storage cost per year for this image in USD Cents, excluding Tax",
-        )
-    )
 
     size_in_storage = models.PositiveBigIntegerField(
         editable=False,

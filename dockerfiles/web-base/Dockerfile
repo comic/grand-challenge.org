@@ -97,7 +97,7 @@ RUN mkdir -p /opt/sagemaker-shim \
 # Create virtual environments
 RUN mkdir -p /opt/virtualenvs \
     && python -m venv /opt/virtualenvs/biom \
-    && /opt/virtualenvs/biom/bin/python -m pip --no-cache-dir --no-color install biom-format \
+    && /opt/virtualenvs/biom/bin/python -m pip --no-cache-dir --no-color install biom-format biopython \
     && python -m venv /opt/virtualenvs/panimg \
     && /opt/virtualenvs/panimg/bin/python -m pip --no-cache-dir --no-color install panimg
 
