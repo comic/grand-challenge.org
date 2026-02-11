@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("workstations", "0029_delete_historicalsession"),
+        ("components", "0027_alter_componentinterfacevalue_file"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name="workstationimage",
+            model_name="componentinterfacevalue",
             name="storage_cost_per_year_usd_millicents",
         ),
     ]

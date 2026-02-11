@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "evaluation",
-            "0101_evaluation_exec_duration_evaluation_invoke_duration",
+            "0104_method_api_method_and_more",
         ),
     ]
 

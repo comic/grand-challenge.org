@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("algorithms", "0084_job_exec_duration_job_invoke_duration"),
+        ("workstations", "0034_workstationimage_api_method_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name="algorithmimage",
+            model_name="workstationimage",
             name="storage_cost_per_year_usd_millicents",
         ),
     ]

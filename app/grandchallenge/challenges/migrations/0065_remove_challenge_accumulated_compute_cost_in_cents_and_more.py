@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     dependencies = [
         (
             "challenges",
-            "0061_alter_challengerequest_algorithm_maximum_settable_memory_gb_and_more",
+            "0064_alter_challengerequest_algorithm_maximum_settable_memory_gb_and_more",
         ),
     ]
 

@@ -6,12 +6,12 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("components", "0026_alter_componentinterface_kind"),
+        ("algorithms", "0090_algorithmimage_api_method_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name="componentinterfacevalue",
+            model_name="algorithmimage",
             name="storage_cost_per_year_usd_millicents",
         ),
     ]
