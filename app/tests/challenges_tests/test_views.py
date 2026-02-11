@@ -711,7 +711,8 @@ def test_budget_calculator_is_staff_only(client):
     )
 
     assert response.status_code == 404
-    
+
+
 @pytest.mark.django_db
 def test_challenge_request_zerodivision(client, challenge_reviewer):
     challenge_request = ChallengeRequestFactory(
