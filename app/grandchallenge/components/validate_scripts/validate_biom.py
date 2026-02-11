@@ -3,7 +3,7 @@ Script that validates BIOM files by passing them through a parser.
 Provide the BIOM file as an argument to the script.
 
 If the file is valid, the script will exit cleanly (0).
-Raises a ValidationScriptError if the BIOM file is not valid.
+Raises a BIOMValidationError if the BIOM file is not valid.
 
 
 
@@ -17,11 +17,11 @@ and those of h5py would lead to imports crashing when not using an virtual envir
 import sys
 from pathlib import Path
 
-import biom
-import h5py
+import biom  # noqa: F821
+import h5py  # noqa: F821
 
 
-class ValidationScriptError(Exception):
+class BIOMValidationError(Exception):
     pass
 
 
@@ -29,7 +29,7 @@ def run(biom_file_path):
     try:
         hdf5_file = h5py.File(biom_file_path, "r")
     except OSError:
-        raise ValidationScriptError(
+        raise BIOMValidationError(
             "Only BIOM in valid HDF5 binary file format are supported"
         )
 
@@ -37,7 +37,7 @@ def run(biom_file_path):
     try:
         biom.Table.from_hdf5(hdf5_file)
     except Exception:
-        raise ValidationScriptError("Does not appear to be a BIOM-format file")
+        raise BIOMValidationError("Does not appear to be a BIOM-format file")
 
 
 def _get_file_path():
