@@ -24,7 +24,6 @@ from django.template.defaultfilters import pluralize
 from django.utils._os import safe_join
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
-from django_deprecate_fields import deprecate_field
 from grand_challenge_dicom_de_identifier.deidentifier import DicomDeidentifier
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 from panimg_models import MAXIMUM_SEGMENTS_LENGTH, ColorSpace, ImageType
@@ -515,37 +514,6 @@ class Image(UUIDModel):
     window_width = models.FloatField(null=True, blank=True)
     color_space = models.CharField(
         max_length=5, blank=True, choices=COLOR_SPACES
-    )
-    # Deprecated fields, see https://github.com/DIAGNijmegen/rse-roadmap/issues/446
-    patient_id = deprecate_field(
-        models.CharField(max_length=64, default="", blank=True)
-    )
-    patient_name = deprecate_field(
-        models.CharField(max_length=324, default="", blank=True)
-    )
-    patient_birth_date = deprecate_field(
-        models.DateField(null=True, blank=True)
-    )
-    patient_age = deprecate_field(
-        models.CharField(max_length=4, default="", blank=True)
-    )
-    patient_sex = deprecate_field(
-        models.CharField(
-            max_length=1, blank=True, choices=PATIENT_SEX_CHOICES, default=""
-        )
-    )
-    study_date = deprecate_field(models.DateField(null=True, blank=True))
-    study_instance_uid = deprecate_field(
-        models.CharField(max_length=64, default="", blank=True)
-    )
-    series_instance_uid = deprecate_field(
-        models.CharField(max_length=64, default="", blank=True)
-    )
-    study_description = deprecate_field(
-        models.CharField(max_length=64, default="", blank=True)
-    )
-    series_description = deprecate_field(
-        models.CharField(max_length=64, default="", blank=True)
     )
     segments = models.JSONField(
         null=True,
