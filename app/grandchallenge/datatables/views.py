@@ -56,9 +56,9 @@ class PaginatedTableListView(ListView):
 
     def draw_response(self, *, request):
         start = int(request.POST.get("start", 0))
-        page_size = int(request.POST.get("length"))
+        page_size = int(request.POST.get("length", 10))
         search = request.POST.get("search[value]")
-        draw = int(request.POST.get("draw"))
+        draw = int(request.POST.get("draw", 1))
         column_index = (
             request.POST.get("order[0][column]") or self.default_sort_column
         )
