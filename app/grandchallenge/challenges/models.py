@@ -1789,19 +1789,25 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @property
     def capacity_reservation_compute_euros(self):
-        return (
-            self.total_compute_costs_euros
-            / self.total_compute_and_storage_costs_euros
-            * self.capacity_reservation_euros
-        )
+        try:
+            return (
+                self.total_compute_costs_euros
+                / self.total_compute_and_storage_costs_euros
+                * self.capacity_reservation_euros
+            )
+        except ZeroDivisionError:
+            return 0
 
     @property
     def capacity_reservation_storage_euros(self):
-        return (
-            self.total_storage_costs_euros
-            / self.total_compute_and_storage_costs_euros
-            * self.capacity_reservation_euros
-        )
+        try:
+            return (
+                self.total_storage_costs_euros
+                / self.total_compute_and_storage_costs_euros
+                * self.capacity_reservation_euros
+            )
+        except ZeroDivisionError:
+            return 0
 
 
 class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
