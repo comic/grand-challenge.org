@@ -641,6 +641,14 @@ SOCIALACCOUNT_PROVIDERS = {
         },
         # Require confirmation of email due to problems with spam users
         "VERIFIED_EMAIL": False,
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+        "OAUTH_PKCE_ENABLED": True,
     }
 }
 
