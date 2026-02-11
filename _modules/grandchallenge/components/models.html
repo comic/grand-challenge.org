@@ -70,7 +70,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.module_loading</span><span class="w"> </span><span class="kn">import</span> <span class="n">import_string</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.translation</span><span class="w"> </span><span class="kn">import</span> <span class="n">gettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django_deprecate_fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecate_field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoSlugField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">panimg_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MAXIMUM_SEGMENTS_LENGTH</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_core</span><span class="w"> </span><span class="kn">import</span> <span class="n">MISSING</span>
@@ -1400,15 +1399,6 @@
         <span class="n">to</span><span class="o">=</span><span class="n">Image</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span>
     <span class="p">)</span>
 
-    <span class="n">storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
-        <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
-            <span class="c1"># We store usd here as the exchange rate regularly changes</span>
-            <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The storage cost per year for this image in USD Cents, excluding Tax&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
     <span class="n">size_in_storage</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveBigIntegerField</span><span class="p">(</span>
         <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
@@ -2211,16 +2201,6 @@
         <span class="p">),</span>
     <span class="p">)</span>
     <span class="n">status</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-
-    <span class="n">storage_cost_per_year_usd_millicents</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
-        <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
-            <span class="c1"># We store usd here as the exchange rate regularly changes</span>
-            <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-            <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The storage cost per year for this image in USD Cents, excluding Tax&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
 
     <span class="n">size_in_storage</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveBigIntegerField</span><span class="p">(</span>
         <span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
