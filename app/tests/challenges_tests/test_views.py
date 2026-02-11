@@ -687,3 +687,22 @@ def test_onboarding_task_list_completion(client):
     assert (
         response.status_code == 403
     ), "admin is not allowed to complete support task"
+
+
+@pytest.mark.django_db
+def test_challenge_request_zerodivision(client, challenge_reviewer):
+    challenge_request = ChallengeRequestFactory(
+        number_of_submissions_per_team_for_phases=[0, 0, 0, 0],
+        number_of_test_cases_for_phases=[0, 0, 0, 0],
+    )
+    assert challenge_request.total_compute_and_storage_costs_euros == 0
+
+    response = get_view_for_user(
+        viewname="challenges:requests-detail",
+        client=client,
+        reverse_kwargs={"pk": challenge_request.pk},
+        user=challenge_reviewer,
+    )
+
+    assert response.status_code == 200
+    assert "Budget estimate" in str(response.content)
