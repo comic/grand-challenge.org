@@ -1,5 +1,5 @@
 Contact: mailto:security@{{ current_site.domain }}
 Canonical: https://{{ current_site.domain }}/.well-known/security.txt
-Policy: https://{{ current_site.domain }}/policies/vulnerability-disclosure/
+Policy: https://{{ current_site.domain }}/vulnerability-disclosure/
 Preferred-Languages: en, nl
 Expires: 2027-01-18T23:59:59z
