@@ -737,7 +737,6 @@ class ChallengeRequestBudgetCalculatorForm(ChallengeRequestBudgetUpdateForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper(self)
         self.helper.form_id = "budget-form"
         self.helper.attrs.update(
             {
