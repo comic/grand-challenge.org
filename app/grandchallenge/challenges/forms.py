@@ -11,7 +11,7 @@ from crispy_forms.layout import (
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.forms import TextInput
+from django.forms import Textarea
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.text import format_lazy
@@ -614,7 +614,7 @@ class ChallengeRequestBudgetUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
-            field.widget = TextInput()
+            field.widget = Textarea(attrs={"rows": 1})
         self.helper = FormHelper(self)
         self.helper.form_id = "budget"
         self.helper.attrs.update(
