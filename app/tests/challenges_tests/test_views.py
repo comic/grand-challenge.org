@@ -690,6 +690,30 @@ def test_onboarding_task_list_completion(client):
 
 
 @pytest.mark.django_db
+def test_budget_calculator_is_staff_only(client):
+    user = UserFactory(is_staff=True)
+
+    response = get_view_for_user(
+        viewname="challenges:requests-budget-calculator",
+        user=user,
+        client=client,
+    )
+
+    assert response.status_code == 200
+
+    user.is_staff = False
+    user.save()
+
+    response = get_view_for_user(
+        viewname="challenges:requests-budget-calculator",
+        user=user,
+        client=client,
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_challenge_request_zerodivision(client, challenge_reviewer):
     challenge_request = ChallengeRequestFactory(
         number_of_submissions_per_team_for_phases=[0, 0, 0, 0],

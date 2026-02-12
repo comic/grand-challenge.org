@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+
+{% block navbar %}{% endblock %}
+{% block messages %}{% endblock %}
+
+{% block container %}container-fluid{% endblock %}
+
+{% block outer_content %}
+
+    <div class="row">
+        <div class="col-md-5">
+
+            <div class="overflow-auto vh-100">
+                {% crispy form %}
+            </div>
+
+        </div>
+        <div class="col-md-7">
+
+            <div id="budget" class="overflow-auto vh-100"></div>
+
+        </div>
+    </div>
+
+{% endblock %}

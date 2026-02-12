@@ -3,6 +3,7 @@ from django.urls import path
 from grandchallenge.challenges.views import (
     ChallengeCostOverview,
     ChallengeList,
+    ChallengeRequestBudgetCalculator,
     ChallengeRequestBudgetUpdate,
     ChallengeRequestCreate,
     ChallengeRequestDetail,
@@ -36,6 +37,11 @@ urlpatterns = [
         "requests/<pk>/update/budget/",
         ChallengeRequestBudgetUpdate.as_view(),
         name="requests-budget-update",
+    ),
+    path(
+        "budget-calculator/",
+        ChallengeRequestBudgetCalculator.as_view(),
+        name="requests-budget-calculator",
     ),
     path(
         "costs/",
