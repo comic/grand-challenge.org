@@ -3,7 +3,7 @@
 ###################
 ARG PYTHON_VERSION
 
-FROM python:${PYTHON_VERSION}-slim-bookworm AS base
+FROM python:${PYTHON_VERSION}-slim-trixie AS base
 
 # Install system dependencies
 RUN apt-get update \
