@@ -123,7 +123,7 @@ def log_memory(*_, task_id, task, **__):
         change = mem.percent - INITIAL_MEMORY_PERCENT
 
         logger.info(
-            f"Task {task.name} [{task_id}] Memory: {mem.percent}% used ({change:.1f}% change) | {mem.used / (1024 ** 3):.2f}/{mem.total / (1024 ** 3):.2f} GB"
+            f"Task {task.name} [{task_id}] Memory: {mem.percent}% used ({change:.1f}% change) | {mem.used / (1024 ** 3):.2f}/{mem.total / (1024 ** 3):.2f} GiB"
         )
 
         if change > 20:
