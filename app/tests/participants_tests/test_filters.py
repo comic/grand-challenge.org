@@ -11,6 +11,15 @@ def test_participants_list_is_filtered(client, two_challenge_sets):
         challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
         user=two_challenge_sets.admin12,
+        follow=True,
+        method=client.post,
+        data={
+            "length": 50,
+            "draw": 1,
+            "order[0][dir]": "asc",
+            "order[0][column]": 1,
+        },
+        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
     tests = [
         (False, two_challenge_sets.challenge_set_1.non_participant),
@@ -23,14 +32,16 @@ def test_participants_list_is_filtered(client, two_challenge_sets):
         (False, two_challenge_sets.challenge_set_2.participant1),
         (False, two_challenge_sets.challenge_set_2.creator),
         (False, two_challenge_sets.challenge_set_2.admin),
-        # admin12 is in the response as they're loading the page
-        (True, two_challenge_sets.admin12),
+        (False, two_challenge_sets.admin12),
         (True, two_challenge_sets.participant12),
         (False, two_challenge_sets.admin1participant2),
     ]
     for test in tests:
-        assert (test[1].username in str(response.content)) == test[0]
-    assert "Participants for " in str(response.content)
+        content = ""
+        for row in response.json()["data"]:
+            for column in row:
+                content += f" {column}"
+        assert (test[1].username in content) == test[0]
 
 
 @pytest.mark.django_db
@@ -46,6 +57,21 @@ def test_registration_list_is_filtered(client, two_challenge_sets):
         challenge=two_challenge_sets.challenge_set_1.challenge,
         client=client,
         user=two_challenge_sets.admin12,
+        follow=True,
+        method=client.post,
+        data={
+            "length": 50,
+            "draw": 1,
+            "order[0][dir]": "asc",
+            "order[0][column]": 1,
+        },
+        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
-    assert r1.user.username in str(response.content)
-    assert r2.user.username not in str(response.content)
+
+    content = ""
+    for row in response.json()["data"]:
+        for column in row:
+            content += f" {column}"
+
+    assert r1.user.username in content
+    assert r2.user.username not in content
