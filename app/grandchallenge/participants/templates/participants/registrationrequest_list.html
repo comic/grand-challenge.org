@@ -1,4 +1,4 @@
-{% extends "pages/challenge_settings_base.html" %}
+{% extends "datatables/list_challenge_settings_base.html" %}
 {% load user_profile_link from profiles %}
 {% load url %}
 {% load static %}
@@ -24,68 +24,5 @@
 
     <h2>Participation Requests for {{ challenge.short_name }}</h2>
 
-    <div class="table-responsive">
-        <table
-            data-data-table
-            data-order='[[0, "desc"]]'
-            data-page-length="10"
-            class="table table-hover table-borderless table-sm w-100"
-        >
-            <thead class="thead-light">
-            <tr>
-                <th>Created</th>
-                <th>Updated</th>
-                <th>Username</th>
-                <th>Profile Info</th>
-                {% if viewable_registration_questions %}
-                    <th>Answers to questions</th>
-                {% endif %}
-                <th>Status</th>
-                <th class="nonSortable">Accept / Reject</th>
-            </tr>
-            </thead>
-            <tbody>
-
-            {% for regrequest in object_list %}
-
-                <tr>
-                    <td data-order="{{ regrequest.created|date:"c" }}">
-                        {{ regrequest.created }}
-                    </td>
-                    <td data-order="{{ regrequest.changed|date:"c" }}">
-                        {{ regrequest.changed }}
-                    </td>
-                    <td>
-                        {{ regrequest.user|user_profile_link }}
-                    </td>
-                    <td>
-                        {{ regrequest.user.user_profile.user_info }}
-                    </td>
-
-                    {% if viewable_registration_questions %}
-                    <td>
-                        {% include "participants/partials/registration_question_modal.html" with challenge=challenge regrequest=regrequest viewable_registration_questions=viewable_registration_questions csrf_token=csrf_token only %}
-                    </td>
-                    {% endif %}
-                    <td data-order="{{ regrequest.status }}">
-                        {% if regrequest.status == regrequest.PENDING %}
-                            <i class="far fa-hourglass text-muted" title="Pending"></i>
-                        {% elif regrequest.status == regrequest.ACCEPTED %}
-                            <i class="fas fa-fw fa-check-circle text-success"
-                               title="Accepted"></i>
-                        {% elif regrequest.status == regrequest.REJECTED %}
-                            <i class="fas fa-fw fa-times-circle text-danger"
-                               title="Rejected"></i>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% include  "participants/partials/request_accept_reject.html" with challenge=challenge regrequest=regrequest csrf_token=csrf_token only %}
-                    </td>
-                </tr>
-            {% endfor %}
-
-            </tbody>
-
-        </table>
-    </div>
+    {{ block.super }}
 {% endblock %}
