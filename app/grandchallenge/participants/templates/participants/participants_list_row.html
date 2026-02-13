@@ -1,0 +1,38 @@
+{% load profiles %}
+{% load url %}
+
+{{ object|user_profile_link }}
+
+<split></split>
+
+{{ object.user_profile.user_info }}
+
+<split></split>
+
+{% if object.user_profile.website %}
+    <a href="{{ object.user_profile.website }}"
+        target="_blank"
+        title="Users Website {{ object.user_profile.website }}">
+        <i class="fas fa-link"></i>
+    </a>
+{% endif %}
+
+<split></split>
+
+{% if object != request.user %}
+    <form method="post"
+          action="{% url 'direct_messages:conversation-create' username=object.username %}">
+        {% csrf_token %}
+        <button class="btn btn btn-primary"
+                type="submit"
+                {% if not challenge.is_active %}
+                    disabled
+                    title="This action cannot be performed as the challenge is inactive. Please contact support."
+                {% endif %}
+        >
+            <i class="far fa-comment"></i>&nbsp;Message User
+        </button>
+    </form>
+{% endif %}
+
+<split></split>

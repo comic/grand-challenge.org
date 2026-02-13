@@ -25,12 +25,28 @@ from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class ParticipantsList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
 ):
     template_name = "participants/participants_list.html"
+    row_template = "participants/participants_list_row.html"
     permission_required = "change_challenge"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+
+    columns = [
+        Column(title="Username", sort_field="username"),
+        Column(title="Info", sort_field="first_name"),
+        Column(title="Website", sort_field="user_profile__website"),
+        Column(title="Message"),
+    ]
+    search_fields = [
+        "username",
+        "first_name",
+        "last_name",
+        "user_profile__institution",
+        "user_profile__website",
+    ]
+    default_sort_order = "asc"
 
     def get_permission_object(self):
         return self.request.challenge
@@ -95,15 +111,12 @@ class RegistrationRequestList(
         "user__user_profile__institution",
     ]
 
-    default_sort_column = 0
-
     @property
     def columns(self):
         columns = [
             Column(title="Created", sort_field="created"),
             Column(title="Updated", sort_field="changed"),
-            Column(title="Username", sort_field="user__username"),
-            Column(title="Profile Info", sort_field="user__first_name"),
+            Column(title="User", sort_field="user__username"),
         ]
 
         if self.registration_questions:

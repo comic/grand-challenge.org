@@ -42,7 +42,6 @@ from grandchallenge.evaluation.models import (
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.pages.models import Page
-from grandchallenge.participants.models import RegistrationRequest
 from grandchallenge.reader_studies.models import (
     Answer,
     DisplaySet,
@@ -58,8 +57,6 @@ from scripts.component_interface_value_fixtures import _create_image
 
 logger = logging.getLogger(__name__)
 
-UNREGISTERED_PARTICIPANTS = [f"participant{ii + 1}" for ii in range(20)]
-
 DEFAULT_USERS = [
     "demo",
     "demop",
@@ -70,7 +67,6 @@ DEFAULT_USERS = [
     "algorithm",
     "algorithmuser",
     "archive",
-    *UNREGISTERED_PARTICIPANTS,
 ]
 
 
@@ -224,12 +220,6 @@ def _create_demo_challenge(users, algorithm):
         title="overall", challenge=demo
     )
     combined.phases.set(demo.phase_set.all())
-
-    for participant in UNREGISTERED_PARTICIPANTS:
-        RegistrationRequest.objects.create(
-            challenge=demo,
-            user=users[participant],
-        )
 
     for phase_num, phase in enumerate(demo.phase_set.all()):
         phase.score_title = "Accuracy ± std"
