@@ -64,6 +64,7 @@ dependencies = [
     "black",
     "isort",
     "panimg-models",
+    "psutil",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"

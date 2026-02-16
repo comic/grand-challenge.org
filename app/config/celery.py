@@ -3,6 +3,7 @@ import os
 import resource
 from math import ceil
 
+import psutil
 import requests
 from celery import Celery
 from celery.exceptions import ImproperlyConfigured
@@ -101,3 +102,29 @@ def remove_ecs_scale_in_protection(*_, **__):
             json={"ProtectionEnabled": False},
         )
         response.raise_for_status()
+
+
+INITIAL_MEMORY_PERCENT = None
+
+
+@task_prerun.connect()
+def update_initial_memory(*_, **__):
+    if celery_app.is_solo_worker:
+        global INITIAL_MEMORY_PERCENT
+
+        INITIAL_MEMORY_PERCENT = psutil.virtual_memory().percent
+
+
+@task_postrun.connect()
+def log_memory(*_, task_id, task, **__):
+    if celery_app.is_solo_worker:
+        mem = psutil.virtual_memory()
+
+        change = mem.percent - INITIAL_MEMORY_PERCENT
+
+        logger.info(
+            f"Task {task.name} [{task_id}] Memory: {mem.percent}% used ({change:.1f}% change) | {mem.used / (1024 ** 3):.2f}/{mem.total / (1024 ** 3):.2f} GiB"
+        )
+
+        if change > 20:
+            logger.error(f"{task.name} leaked memory")
