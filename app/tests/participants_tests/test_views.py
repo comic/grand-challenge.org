@@ -223,6 +223,15 @@ def test_registration_request_list_view(client):
         client=client,
         challenge=ch,
         user=admin,
+        follow=True,
+        method=client.post,
+        data={
+            "length": 50,
+            "draw": 1,
+            "order[0][dir]": "asc",
+            "order[0][column]": 1,
+        },
+        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
     assert response.status_code == 200, "Registration list can be gotton OK"
 
@@ -280,10 +289,18 @@ def test_registration_request_list_view_permissions(client):
         client=client,
         challenge=ch,
         user=admin,
+        follow=True,
+        method=client.post,
+        data={
+            "length": 50,
+            "draw": 1,
+            "order[0][dir]": "asc",
+            "order[0][column]": 1,
+        },
+        **{"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"},
     )
-    data = response.context_data
 
-    assert len(data["object_list"]) == 1, "Request shows"
+    assert response.json()["recordsTotal"] == 1, "Request shows"
     assert (
         str.encode(findable_answer) in response.content
     ), "Answer is findable"
@@ -295,7 +312,6 @@ def test_registration_request_list_view_permissions(client):
         challenge=ch,
         user=admin,
     )
-    data = response.context_data
 
     assert (
         str.encode(findable_answer) not in response.content

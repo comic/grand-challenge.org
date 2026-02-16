@@ -1,12 +1,8 @@
-{% extends 'auth/user_list.html' %}
+{% extends 'datatables/list_challenge_settings_base.html' %}
 {% load url %}
 
 {% block title %}
     Participants - {% firstof challenge.title challenge.short_name %} - {{ request.site.name }}
-{% endblock %}
-
-{% block content_title %}
-    <h2>Participants for {{ challenge.short_name }}</h2>
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -21,26 +17,8 @@
     </ol>
 {% endblock %}
 
-{% block tableExtraHeaders %}
-    <th class="nonSortable">Message</th>
-{% endblock tableExtraHeaders %}
+{% block content %}
+    <h2>Participants for {{ challenge.short_name }}</h2>
 
-{% block tableExtraBody %}
-    <td>
-        {% if user != request.user %}
-            <form method="post"
-                  action="{% url 'direct_messages:conversation-create' username=user.username %}">
-                {% csrf_token %}
-                <button class="btn btn btn-primary"
-                        type="submit"
-                        {% if not challenge.is_active %}
-                            disabled
-                            title="This action cannot be performed as the challenge is inactive. Please contact support."
-                        {% endif %}
-                >
-                    <i class="far fa-comment"></i>&nbsp;Message User
-                </button>
-            </form>
-        {% endif %}
-    </td>
-{% endblock tableExtraBody %}
+    {{ block.super }}
+{% endblock %}

@@ -1,0 +1,37 @@
+{% load profiles %}
+
+{{ object.created }}
+
+<split></split>
+
+{{ object.changed }}
+
+<split></split>
+
+{{ object.user|user_profile_link }}
+<br/>
+{{ object.user.user_profile.user_info }}
+
+<split></split>
+
+{% if viewable_registration_questions %}
+    {% include "participants/partials/registration_question_modal.html" with challenge=challenge regrequest=object viewable_registration_questions=viewable_registration_questions csrf_token=csrf_token only %}
+    <split></split>
+{% endif %}
+
+
+{% if object.status == object.PENDING %}
+    <i class="far fa-hourglass text-muted" title="Pending"></i>
+{% elif object.status == object.ACCEPTED %}
+    <i class="fas fa-fw fa-check-circle text-success"
+       title="Accepted"></i>
+{% elif object.status == object.REJECTED %}
+    <i class="fas fa-fw fa-times-circle text-danger"
+       title="Rejected"></i>
+{% endif %}
+
+<split></split>
+
+{% include "participants/partials/request_accept_reject.html" with challenge=challenge regrequest=object csrf_token=csrf_token only %}
+
+<split></split>

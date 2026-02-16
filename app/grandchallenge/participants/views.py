@@ -1,3 +1,5 @@
+from functools import cached_property
+
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
@@ -9,6 +11,7 @@ from grandchallenge.core.guardian import (
     ViewObjectPermissionListMixin,
     filter_by_permission,
 )
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.participants.forms import (
     RegistrationQuestionCreateForm,
     RegistrationQuestionUpdateForm,
@@ -22,12 +25,28 @@ from grandchallenge.subdomains.utils import reverse, reverse_lazy
 
 
 class ParticipantsList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
 ):
     template_name = "participants/participants_list.html"
+    row_template = "participants/participants_list_row.html"
     permission_required = "change_challenge"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+
+    columns = [
+        Column(title="Username", sort_field="username"),
+        Column(title="Info", sort_field="first_name"),
+        Column(title="Website", sort_field="user_profile__website"),
+        Column(title="Message"),
+    ]
+    search_fields = [
+        "username",
+        "first_name",
+        "last_name",
+        "user_profile__institution",
+        "user_profile__website",
+    ]
+    default_sort_order = "asc"
 
     def get_permission_object(self):
         return self.request.challenge
@@ -77,12 +96,40 @@ class RegistrationRequestCreate(
 
 
 class RegistrationRequestList(
-    LoginRequiredMixin, ObjectPermissionRequiredMixin, ListView
+    LoginRequiredMixin, ObjectPermissionRequiredMixin, PaginatedTableListView
 ):
     model = RegistrationRequest
+    row_template = "participants/registrationrequest_list_row.html"
     permission_required = "change_challenge"
     raise_exception = True
     login_url = reverse_lazy("account_login")
+
+    search_fields = [
+        "user__username",
+        "user__first_name",
+        "user__last_name",
+        "user__user_profile__institution",
+    ]
+
+    @property
+    def columns(self):
+        columns = [
+            Column(title="Created", sort_field="created"),
+            Column(title="Updated", sort_field="changed"),
+            Column(title="User", sort_field="user__username"),
+        ]
+
+        if self.registration_questions:
+            columns.append(Column(title="Answers to questions"))
+
+        columns.extend(
+            [
+                Column(title="Status", sort_field="status"),
+                Column(title="Accept / Reject"),
+            ]
+        )
+
+        return columns
 
     def get_permission_object(self):
         return self.request.challenge
@@ -104,12 +151,13 @@ class RegistrationRequestList(
         context_data = super().get_context_data(**kwargs)
         context_data.update(
             {
-                "viewable_registration_questions": self._get_registration_questions(),
+                "viewable_registration_questions": self.registration_questions,
             }
         )
         return context_data
 
-    def _get_registration_questions(self):
+    @cached_property
+    def registration_questions(self):
         return filter_by_permission(
             queryset=self.request.challenge.registration_questions.all(),
             user=self.request.user,
