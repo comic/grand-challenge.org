@@ -467,17 +467,6 @@ class Session(FieldChangeMixin, UUIDModel):
         }
 
     @property
-    def hostname(self) -> str:
-        """
-        Returns
-        -------
-            The unique hostname for this session
-        """
-        return (
-            f"{self.pk}-{self._meta.model_name}-{self._meta.app_label}".lower()
-        )
-
-    @property
     def expires_at(self) -> datetime:
         """
         Returns
@@ -527,10 +516,6 @@ class Session(FieldChangeMixin, UUIDModel):
 
             env.update({"GRAND_CHALLENGE_AUTHORIZATION": f"Bearer {token}"})
 
-        if settings.DEBUG:
-            # Allow the container to communicate with the dev environment
-            env.update({"GRAND_CHALLENGE_UNSAFE": "true"})
-
         return env
 
     @property
@@ -541,9 +526,8 @@ class Session(FieldChangeMixin, UUIDModel):
             The service for this session, could be active or inactive.
         """
         return Service(
-            job_id=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
+            container_name=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             exec_image_repo_tag=self.workstation_image.original_repo_tag,
-            memory_limit=settings.COMPONENTS_MEMORY_LIMIT,
         )
 
     @property
@@ -586,7 +570,6 @@ class Session(FieldChangeMixin, UUIDModel):
             self.service.start(
                 http_port=self.workstation_image.http_port,
                 websocket_port=self.workstation_image.websocket_port,
-                hostname=self.hostname,
                 environment=self.environment,
             )
             self.update_status(status=self.STARTED)

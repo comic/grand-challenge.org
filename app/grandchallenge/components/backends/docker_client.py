@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import shlex
 from subprocess import CalledProcessError, run
 
@@ -133,7 +132,6 @@ def run_container(
     *,
     repo_tag,
     name,
-    labels,
     environment,
     ports,
     mem_limit,
@@ -152,8 +150,6 @@ def run_container(
         str(settings.COMPONENTS_CPU_QUOTA),
         "--cpu-shares",
         str(settings.COMPONENTS_CPU_SHARES),
-        "--cpuset-cpus",
-        _get_cpuset_cpus(),
         "--security-opt",
         "no-new-privileges",
         "--pids-limit",
@@ -170,9 +166,6 @@ def run_container(
         "--cap-drop",
         "all",
     ]
-
-    for k, v in labels.items():
-        docker_args.extend(["--label", f"{k}={v}"])
 
     for k, v in environment.items():
         docker_args.extend(["--env", f"{k}={v}"])
@@ -191,27 +184,3 @@ def run_container(
     logger.info(f"Running: {docker_args}")
 
     return _run_docker_command(*docker_args)
-
-
-def _get_cpuset_cpus():
-    """
-    The cpuset_cpus as a string.
-
-    Returns
-    -------
-        The setting COMPONENTS_CPUSET_CPUS if this is set to a
-        none-empty string. Otherwise, works out the available cpu
-        from the os.
-    """
-    if settings.COMPONENTS_CPUSET_CPUS:
-        return settings.COMPONENTS_CPUSET_CPUS
-    else:
-        # Get the cpu count, note that this is setting up the container
-        # so that it can use all of the CPUs on the system. To limit
-        # the containers execution set COMPONENTS_CPUSET_CPUS
-        # externally.
-        cpus = os.cpu_count()
-        if cpus in [None, 1]:
-            return "0"
-        else:
-            return f"0-{cpus - 1}"
