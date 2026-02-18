@@ -176,6 +176,7 @@ services:
 
 networks:
     default:
+        name: "grand-challengeorg_default"
     components:
         name: "grand-challengeorg_components"
         internal: true
