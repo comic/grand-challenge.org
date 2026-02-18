@@ -7,7 +7,7 @@ ARG GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI
 ##################
 # Test Container #
 ##################
-FROM ${GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${LOCKFILE_HASH} AS test
+FROM --platform=linux/amd64 ${GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${LOCKFILE_HASH} AS test
 
 COPY --chown=django:django setup.cfg /home/django
 
@@ -18,7 +18,7 @@ COPY --chown=django:django ./app/ /app/
 ##################
 # Dist Container #
 ##################
-FROM ${GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${LOCKFILE_HASH} AS dist
+FROM --platform=linux/amd64 ${GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI}:${PYTHON_VERSION}-${LOCKFILE_HASH} AS dist
 
 WORKDIR /app
 COPY --chown=django:django ./app/ /app/

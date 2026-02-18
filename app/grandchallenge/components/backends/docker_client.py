@@ -63,30 +63,6 @@ def save_image(*, repo_tag, output):
     return _run_docker_command("save", "--output", str(output), repo_tag)
 
 
-def load_image(*, input):
-    return _run_docker_command("load", "--input", str(input))
-
-
-def inspect_image(*, repo_tag):
-    try:
-        result = _run_docker_command(
-            "image", "inspect", "--format", "{{json .}}", repo_tag
-        )
-        return json.loads(result.stdout)
-    except CalledProcessError as error:
-        if ": No such image" in error.stderr:
-            raise ObjectDoesNotExist from error
-        else:
-            raise
-
-
-def inspect_network(*, name):
-    result = _run_docker_command(
-        "network", "inspect", "--format", "{{json .}}", name
-    )
-    return json.loads(result.stdout)
-
-
 def stop_container(*, name):
     try:
         container_id = get_container_id(name=name)
@@ -153,26 +129,19 @@ def get_logs(*, name, tail=None):
             raise error
 
 
-def run_container(  # noqa: C901
+def run_container(
     *,
     repo_tag,
     name,
     labels,
     environment,
-    network,
+    ports,
     mem_limit,
-    ports=None,
-    extra_hosts=None,
-    command=None,
-    remove=False,
-    detach=True,
 ):
     docker_args = [
         "run",
         "--name",
         name,
-        "--network",
-        network,
         "--memory",
         f"{mem_limit}g",
         "--memory-swap",
@@ -196,19 +165,11 @@ def run_container(  # noqa: C901
         "--platform",
         settings.COMPONENTS_CONTAINER_PLATFORM,
         "--init",
+        "--rm",
+        "--detach",
+        "--cap-drop",
+        "all",
     ]
-
-    if detach:
-        docker_args.append("--detach")
-
-    if remove:
-        docker_args.append("--rm")
-
-    if not settings.COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE:
-        docker_args.extend(["--cap-drop", "all"])
-
-    if settings.COMPONENTS_DOCKER_RUNTIME is not None:
-        docker_args.extend(["--runtime", settings.COMPONENTS_DOCKER_RUNTIME])
 
     for k, v in labels.items():
         docker_args.extend(["--label", f"{k}={v}"])
@@ -216,25 +177,16 @@ def run_container(  # noqa: C901
     for k, v in environment.items():
         docker_args.extend(["--env", f"{k}={v}"])
 
-    if extra_hosts is not None:
-        for k, v in extra_hosts.items():
-            docker_args.extend(["--add-host", f"{k}:{v}"])
-
-    if ports is not None:
-        for container_port, v in ports.items():
-            bind_address, host_port = v
-            host_port = "" if host_port is None else host_port
-            docker_args.extend(
-                [
-                    "--publish",
-                    f"{bind_address}:{host_port}:{container_port}",
-                ]
-            )
+    for port in ports:
+        docker_args.extend(
+            [
+                "--publish",
+                f"0.0.0.0::{port}",
+            ]
+        )
 
     # Last two args must be the repo tag and optional command
     docker_args.append(repo_tag)
-    if command is not None:
-        docker_args.extend(command)
 
     return _run_docker_command(*docker_args)
 

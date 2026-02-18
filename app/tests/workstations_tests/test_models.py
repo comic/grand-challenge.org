@@ -121,7 +121,6 @@ def test_session_start(
 
         networks = container["NetworkSettings"]["Networks"]
         assert len(networks) == 1
-        assert settings.WORKSTATIONS_NETWORK_NAME in networks
 
         with django_capture_on_commit_callbacks(execute=True):
             s.user_finished = True

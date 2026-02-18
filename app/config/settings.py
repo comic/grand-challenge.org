@@ -1056,13 +1056,6 @@ COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID = os.environ.get(
 COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY = os.environ.get(
     "COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY", "componentstask123"
 )
-COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE = strtobool(
-    os.environ.get("COMPONENTS_DOCKER_KEEP_CAPS_UNSAFE", "False")
-)
-COMPONENTS_PUBLISH_PORTS = strtobool(
-    os.environ.get("COMPONENTS_PUBLISH_PORTS", "False")
-)
-COMPONENTS_PORT_ADDRESS = os.environ.get("COMPONENTS_PORT_ADDRESS", "0.0.0.0")
 
 COMPONENTS_MEMORY_LIMIT = int(os.environ.get("COMPONENTS_MEMORY_LIMIT", "4"))
 COMPONENTS_CPU_QUOTA = int(os.environ.get("COMPONENTS_CPU_QUOTA", "100000"))
@@ -1072,7 +1065,6 @@ COMPONENTS_CPU_SHARES = int(
     os.environ.get("COMPONENTS_CPU_SHARES", "1024")  # Default weight
 )
 COMPONENTS_CPUSET_CPUS = str(os.environ.get("COMPONENTS_CPUSET_CPUS", ""))
-COMPONENTS_DOCKER_RUNTIME = os.environ.get("COMPONENTS_DOCKER_RUNTIME", None)
 COMPONENTS_NVIDIA_VISIBLE_DEVICES = os.environ.get(
     "COMPONENTS_NVIDIA_VISIBLE_DEVICES", "void"
 )
@@ -1120,10 +1112,6 @@ WORKSTATIONS_ARCHIVE_ITEM_PATH_PARAM = "archive-item"
 WORKSTATIONS_CONFIG_QUERY_PARAM = "config"
 WORKSTATIONS_USER_QUERY_PARAM = "viewAsUser"
 WORKSTATIONS_DISPLAY_SET_PATH_PARAM = "display-set"
-# The name of the network that the workstations will be attached to
-WORKSTATIONS_NETWORK_NAME = os.environ.get(
-    "WORKSTATIONS_NETWORK_NAME", "grand-challengeorg_workstations"
-)
 # The total limit on the number of sessions
 WORKSTATIONS_MAXIMUM_SESSIONS = int(
     os.environ.get("WORKSTATIONS_MAXIMUM_SESSIONS", "10")
