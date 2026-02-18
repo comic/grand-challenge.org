@@ -46,19 +46,6 @@ class Service:
 
         labels = {
             "job": f"{self._job_id}",
-            "traefik.enable": "true",
-            f"traefik.http.routers.{hostname}-http.rule": f"Host(`{hostname}`)",
-            f"traefik.http.routers.{hostname}-http.service": f"{hostname}-http",
-            f"traefik.http.routers.{hostname}-http.entrypoints": "workstation-http",
-            f"traefik.http.services.{hostname}-http.loadbalancer.server.port": str(
-                http_port
-            ),
-            f"traefik.http.routers.{hostname}-websocket.rule": f"Host(`{hostname}`)",
-            f"traefik.http.routers.{hostname}-websocket.service": f"{hostname}-websocket",
-            f"traefik.http.routers.{hostname}-websocket.entrypoints": "workstation-websocket",
-            f"traefik.http.services.{hostname}-websocket.loadbalancer.server.port": str(
-                websocket_port
-            ),
         }
 
         docker_client.run_container(

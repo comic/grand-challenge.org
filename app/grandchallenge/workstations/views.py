@@ -459,14 +459,20 @@ class SessionDetail(
 def session_proxy(request, *, pk, path, **_):
     """Return an internal redirect to the session instance if authorised."""
     session = get_object_or_404(Session, pk=pk)
-    path = safe_join(f"/workstation-proxy/{session.hostname}", path)
 
-    user = request.user
-    if session.creator != user:
+    if session.creator != request.user:
         raise PermissionDenied
 
+    # TODO get the websocket and http port
+    if "mlab4d4c4142" in path:
+        backend = f"{session.container_ip}:{session.websocket_port}"
+    else:
+        backend = f"{session.container_ip}:{session.http_port}"
+
     response = HttpResponse()
-    response["X-Accel-Redirect"] = path
+    response["X-Accel-Redirect"] = safe_join(
+        f"/workstation-proxy/{backend}", path
+    )
 
     return response
 

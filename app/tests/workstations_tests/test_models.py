@@ -105,15 +105,6 @@ def test_session_start(
 
         expected_labels = {
             "job": f"{s._meta.app_label}-{s._meta.model_name}-{s.pk}",
-            "traefik.enable": "true",
-            f"traefik.http.routers.{s.hostname}-http.entrypoints": "workstation-http",
-            f"traefik.http.routers.{s.hostname}-http.rule": f"Host(`{s.hostname}`)",
-            f"traefik.http.routers.{s.hostname}-http.service": f"{s.hostname}-http",
-            f"traefik.http.routers.{s.hostname}-websocket.entrypoints": "workstation-websocket",
-            f"traefik.http.routers.{s.hostname}-websocket.rule": f"Host(`{s.hostname}`)",
-            f"traefik.http.routers.{s.hostname}-websocket.service": f"{s.hostname}-websocket",
-            f"traefik.http.services.{s.hostname}-http.loadbalancer.server.port": "8080",
-            f"traefik.http.services.{s.hostname}-websocket.loadbalancer.server.port": "4114",
         }
 
         for k, v in expected_labels.items():
