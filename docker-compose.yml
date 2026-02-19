@@ -75,10 +75,8 @@ services:
             APP_SERVER_HOST: "web"
             SERVER_NAME: "gc.localhost"
             SENDFILE_STATUS: "off"
-            DATA_STORE_HOSTNAME: "minio.localhost"
-            DATA_STORE_PORT: "9000"
         command: >-
-            bash -c "envsubst '$$APP_SERVER_HOST $$SERVER_NAME $$SENDFILE_STATUS $$DATA_STORE_HOSTNAME $$DATA_STORE_PORT' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
+            bash -c "envsubst '$$APP_SERVER_HOST $$SERVER_NAME $$SENDFILE_STATUS' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
             && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/privkey.pem -out /etc/ssl/certs/fullchain.pem -days 365 -nodes -subj '/CN=$$SERVER_NAME'
             && nginx -g 'daemon off;'"
         restart: always
