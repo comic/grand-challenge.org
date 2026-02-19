@@ -114,7 +114,7 @@ Rel_Neighbor(monitoring, grand_challenge, &quot;Scrapes monitoring endpoints of&
 <p>The overall shape of the architecture and technology choices.
 <em>Note: a container is a separately deployable application or data store, not necessarily a Docker container.</em></p>
 <p class="plantuml">
-<img src="_images/plantuml-b3c9b95134d1f320dd66a90d6c0f8d57f73e5eb9.svg" alt="&#64;startuml
+<img src="_images/plantuml-da932a1ad2d25a2debf472f520a5a2d081d01201.svg" alt="&#64;startuml
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Container.puml
 
 LAYOUT_TOP_DOWN
@@ -129,7 +129,7 @@ Person(data_scientists, &quot;Data Scientist&quot;, &quot;User who develops mach
 System_Boundary(s1, &quot;grand-challenge.org&quot;) {
     Container(gc_web_app, &quot;API&quot;, &quot;Nginx, Django&quot;, &quot;Provides the grand challenge functionality via HTML and a REST API.&quot;)
     Container(gc_algorithm_worker, &quot;Algorithm and Evaluation Worker&quot;, &quot;Django, Docker, Celery, Redis&quot;, &quot;Executes algorithm and evaluation container images on medical imaging data.&quot;)
-    Container(gc_workstation_worker, &quot;Workstation Worker&quot;, &quot;Nginx, Django, Docker, Traefik, Celery, Redis&quot;, &quot;Instantiates and proxies workstation container images for users.&quot;)
+    Container(gc_workstation_worker, &quot;Workstation Worker&quot;, &quot;Nginx, Django, Docker, Celery, Redis&quot;, &quot;Instantiates and proxies workstation container images for users.&quot;)
 
     Container(workstation_instance, &quot;Web Workstation&quot;, &quot;SPA, MeVisLab, VueJS, Docker&quot;, &quot;Provides a web based workstation for server side rendering of medical imaging data. 1 container image per active user.&quot;)
 
@@ -225,7 +225,7 @@ Workstations are container images that allow for interaction with medical data i
 One workstation container image is instantiated per user, which provides a single page application.
 A secure web socket connection is then established between the user and their container instance.</p>
 <p class="plantuml">
-<img src="_images/plantuml-771b081c2e4af1d7f0d1fc5ae821b358d1c1950e.svg" alt="&#64;startuml
+<img src="_images/plantuml-e12f190dcae8bce7019e0674700f8ab79e8958a9.svg" alt="&#64;startuml
 !includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/release/1-0/C4_Component.puml
 
 LAYOUT_WITH_LEGEND()
@@ -242,13 +242,10 @@ Container(gc_web_app, &quot;API&quot;, &quot;Nginx, Django&quot;, &quot;Provides
 Container_Boundary(api, &quot;Workstation Worker&quot;) {
     Component(nginx, &quot;Reverse Proxy&quot;, &quot;Nginx&quot;, &quot;SSL termination and routing&quot;)
     Component(webapp, &quot;Web Application&quot;, &quot;Django, Celery&quot;, &quot;Authorization for workstation connections, manages workstation container lifecycles.&quot;)
-    Component(traefik, &quot;Workstation Reverse Proxy&quot;, &quot;Traefik&quot;, &quot;Routes users to their workstation service&quot;)
     Component(docker, &quot;Compute Pool&quot;, &quot;Docker&quot;, &quot;Provides compute resources for workstation services, 1 workstation container instance per user.&quot;)
 
     Rel(nginx, webapp, &quot;Fetches routing information from&quot;, &quot;HTTP&quot;)
-    Rel(nginx, traefik, &quot;Internally redirects to&quot;, &quot;HTTP, WS&quot;)
 
-    Rel(traefik, docker, &quot;Proxies&quot;, &quot;HTTP, WS&quot;)
     Rel(webapp, docker, &quot;Schedules workstation services on&quot;, &quot;HTTPS, JSON&quot;)
 }
 
