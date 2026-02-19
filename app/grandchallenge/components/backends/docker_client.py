@@ -181,6 +181,4 @@ def run_container(
     # Last two args must be the repo tag and optional command
     docker_args.append(repo_tag)
 
-    logger.info(f"Running: {docker_args}")
-
     return _run_docker_command(*docker_args)
