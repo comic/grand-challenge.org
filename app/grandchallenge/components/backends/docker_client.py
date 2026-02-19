@@ -128,6 +128,19 @@ def get_logs(*, name, tail=None):
             raise error
 
 
+def inspect_image(*, repo_tag):
+    try:
+        result = _run_docker_command(
+            "image", "inspect", "--format", "{{json .}}", repo_tag
+        )
+        return json.loads(result.stdout)
+    except CalledProcessError as error:
+        if ": No such image" in error.stderr:
+            raise ObjectDoesNotExist from error
+        else:
+            raise
+
+
 def run_container(
     *,
     repo_tag,
@@ -136,6 +149,11 @@ def run_container(
     ports,
     mem_limit,
 ):
+    try:
+        inspect_image(repo_tag=repo_tag)
+    except ObjectDoesNotExist:
+        pull_image(repo_tag=repo_tag, authenticate=True)
+
     docker_args = [
         "run",
         "--name",

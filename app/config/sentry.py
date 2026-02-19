@@ -24,7 +24,6 @@ def sentry_before_send(event, hint):
                 # Do not include stderr
                 pass
 
-            if "stderr" in event["extra"]:
-                logger.error(f"Subprocess stderr: {event["extra"]["stderr"]}")
+            logger.error(f"Subprocess stderr: {event["extra"].get("stderr")}")
 
     return event
