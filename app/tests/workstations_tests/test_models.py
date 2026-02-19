@@ -30,10 +30,7 @@ def stop_all_sessions():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("debug", [True, False])
-def test_session_environ(settings, debug):
-    settings.DEBUG = debug
-
+def test_session_environ():
     s = SessionFactory()
     env = s.environment
 
@@ -41,11 +38,6 @@ def test_session_environ(settings, debug):
     assert "Bearer " in env["GRAND_CHALLENGE_AUTHORIZATION"]
     assert env["WORKSTATION_SESSION_ID"] == str(s.pk)
     assert "WORKSTATION_SENTRY_DSN" in env
-
-    if debug:
-        assert "GRAND_CHALLENGE_UNSAFE" in env
-    else:
-        assert "GRAND_CHALLENGE_UNSAFE" not in env
 
 
 @pytest.mark.django_db

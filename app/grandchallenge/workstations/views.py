@@ -463,6 +463,14 @@ def session_proxy(request, *, pk, path, **_):
     if session.creator != request.user:
         raise PermissionDenied
 
+    if (
+        not all(
+            [session.host_address, session.http_port, session.websocket_port]
+        )
+        or session.status != session.STARTED
+    ):
+        raise Http404
+
     if "mlab4d4c4142" in path:
         backend = f"{session.host_address}:{session.websocket_port}"
     else:
