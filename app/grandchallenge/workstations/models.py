@@ -6,8 +6,12 @@ from urllib.parse import unquote, urljoin
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.core.exceptions import ObjectDoesNotExist
-from django.core.validators import MaxValueValidator, RegexValidator
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+    RegexValidator,
+)
 from django.db import models
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
@@ -425,11 +429,29 @@ class Session(FieldChangeMixin, UUIDModel):
         default=Region.EU_NL_1,
         help_text="Which region is this session available in?",
     )
+    host_address = models.GenericIPAddressField(
+        null=True,
+        protocol="IPv4",
+        help_text="The IP address of the host this session is running on",
+        editable=False,
+    )
+    http_port = models.PositiveIntegerField(
+        null=True,
+        validators=[MinValueValidator(32768), MaxValueValidator(65535)],
+        help_text="The mapped port for http traffic on the host",
+        editable=False,
+    )
+    websocket_port = models.PositiveIntegerField(
+        null=True,
+        validators=[MinValueValidator(32768), MaxValueValidator(65535)],
+        help_text="The mapped port for websocket traffic on the host",
+        editable=False,
+    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     auth_token = models.ForeignKey(
-        AuthToken, null=True, on_delete=models.SET_NULL
+        AuthToken, null=True, blank=True, on_delete=models.SET_NULL
     )
     workstation_image = models.ForeignKey(
         WorkstationImage, on_delete=models.PROTECT
@@ -437,7 +459,7 @@ class Session(FieldChangeMixin, UUIDModel):
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)
     logs = models.TextField(editable=False, blank=True)
-    ping_times = models.JSONField(null=True, default=None)
+    ping_times = models.JSONField(null=True, blank=True, default=None)
     extra_env_vars = models.JSONField(
         default=list,
         blank=True,
@@ -465,17 +487,6 @@ class Session(FieldChangeMixin, UUIDModel):
             "model_name": self._meta.model_name,
             "pk": self.pk,
         }
-
-    @property
-    def hostname(self) -> str:
-        """
-        Returns
-        -------
-            The unique hostname for this session
-        """
-        return (
-            f"{self.pk}-{self._meta.model_name}-{self._meta.app_label}".lower()
-        )
 
     @property
     def expires_at(self) -> datetime:
@@ -527,10 +538,6 @@ class Session(FieldChangeMixin, UUIDModel):
 
             env.update({"GRAND_CHALLENGE_AUTHORIZATION": f"Bearer {token}"})
 
-        if settings.DEBUG:
-            # Allow the container to communicate with the dev environment
-            env.update({"GRAND_CHALLENGE_UNSAFE": "true"})
-
         return env
 
     @property
@@ -541,9 +548,8 @@ class Session(FieldChangeMixin, UUIDModel):
             The service for this session, could be active or inactive.
         """
         return Service(
-            job_id=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
+            container_name=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             exec_image_repo_tag=self.workstation_image.original_repo_tag,
-            memory_limit=settings.COMPONENTS_MEMORY_LIMIT,
         )
 
     @property
@@ -586,8 +592,14 @@ class Session(FieldChangeMixin, UUIDModel):
             self.service.start(
                 http_port=self.workstation_image.http_port,
                 websocket_port=self.workstation_image.websocket_port,
-                hostname=self.hostname,
                 environment=self.environment,
+            )
+            self.host_address = self.service.host_address
+            self.http_port = self.service.get_port_mapping(
+                port=self.workstation_image.http_port
+            )
+            self.websocket_port = self.service.get_port_mapping(
+                port=self.workstation_image.websocket_port
             )
             self.update_status(status=self.STARTED)
         except Exception:
@@ -613,6 +625,7 @@ class Session(FieldChangeMixin, UUIDModel):
             The new status for this session.
         """
         self.status = status
+        self.full_clean()
         self.save()
 
     def get_absolute_url(self):
@@ -632,6 +645,31 @@ class Session(FieldChangeMixin, UUIDModel):
     def assign_permissions(self):
         assign_perm("view_session", self.creator, self)
         assign_perm("change_session", self.creator, self)
+
+    def clean(self):
+        if self.status == self.STARTED:
+            conflicts = Session.objects.filter(
+                host_address=self.host_address,
+                region=self.region,
+                status=self.STARTED,
+            ).exclude(pk=self.pk)
+
+            used_ports = set(
+                conflicts.values_list("http_port", flat=True)
+            ) | set(conflicts.values_list("websocket_port", flat=True))
+
+            if self.http_port in used_ports:
+                raise ValidationError(
+                    {"http_port": "Port already in use on this host."}
+                )
+            if self.websocket_port in used_ports:
+                raise ValidationError(
+                    {"websocket_port": "Port already in use on this host."}
+                )
+            if self.http_port == self.websocket_port:
+                raise ValidationError(
+                    "http_port and websocket_port must differ."
+                )
 
     def save(self, *args, **kwargs) -> None:
         """Save the session instance, starting or stopping the service if needed."""

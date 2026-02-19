@@ -16,6 +16,7 @@ class Migration(migrations.Migration):
             name="auth_token",
             field=models.ForeignKey(
                 null=True,
+                blank=True,
                 on_delete=django.db.models.deletion.SET_NULL,
                 to="knox.authtoken",
             ),

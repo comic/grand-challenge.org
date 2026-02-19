@@ -15,13 +15,10 @@ Container(gc_web_app, "API", "Nginx, Django", "Provides the grand challenge func
 Container_Boundary(api, "Workstation Worker") {
     Component(nginx, "Reverse Proxy", "Nginx", "SSL termination and routing")
     Component(webapp, "Web Application", "Django, Celery", "Authorization for workstation connections, manages workstation container lifecycles.")
-    Component(traefik, "Workstation Reverse Proxy", "Traefik", "Routes users to their workstation service")
     Component(docker, "Compute Pool", "Docker", "Provides compute resources for workstation services, 1 workstation container instance per user.")
 
     Rel(nginx, webapp, "Fetches routing information from", "HTTP")
-    Rel(nginx, traefik, "Internally redirects to", "HTTP, WS")
 
-    Rel(traefik, docker, "Proxies", "HTTP, WS")
     Rel(webapp, docker, "Schedules workstation services on", "HTTPS, JSON")
 }
 

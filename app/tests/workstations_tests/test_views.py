@@ -688,7 +688,13 @@ def test_session_detail(client):
 @pytest.mark.django_db
 def test_workstation_proxy(client):
     u1, u2 = UserFactory(), UserFactory()
-    session = SessionFactory(creator=u1)
+    session = SessionFactory(
+        creator=u1,
+        host_address="127.0.0.1",
+        http_port="60000",
+        websocket_port="60001",
+        status=Session.STARTED,
+    )
 
     url = reverse(
         "session-proxy",
@@ -707,14 +713,91 @@ def test_workstation_proxy(client):
 
     redirect_url = response.get("X-Accel-Redirect")
 
-    assert redirect_url.endswith("foo/baz/test")
-    assert redirect_url.startswith("/workstation-proxy/")
-    assert session.hostname in redirect_url
+    assert redirect_url == "/workstation-proxy/127.0.0.1:60000/foo/baz/test"
 
     # try as another user
     response = get_view_for_user(client=client, url=url, user=u2)
     assert not response.has_header("X-Accel-Redirect")
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_workstation_proxy_websocket(client):
+    u1, u2 = UserFactory(), UserFactory()
+    session = SessionFactory(
+        creator=u1,
+        host_address="127.0.0.1",
+        http_port="60000",
+        websocket_port="60001",
+        status=Session.STARTED,
+    )
+
+    url = reverse(
+        "session-proxy",
+        kwargs={
+            "slug": session.workstation_image.workstation.slug,
+            "pk": session.pk,
+            "path": "foo/mlab4d4c4142/bar/../baz/test",
+            "rendering_subdomain": session.region,
+        },
+    )
+
+    response = get_view_for_user(client=client, url=url, user=u1)
+
+    assert response.status_code == 200
+    assert response.has_header("X-Accel-Redirect")
+
+    redirect_url = response.get("X-Accel-Redirect")
+
+    assert (
+        redirect_url
+        == "/workstation-proxy/127.0.0.1:60001/foo/mlab4d4c4142/baz/test"
+    )
+
+    # try as another user
+    response = get_view_for_user(client=client, url=url, user=u2)
+    assert not response.has_header("X-Accel-Redirect")
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "attr, value",
+    [
+        ("host_address", None),
+        ("http_port", None),
+        ("websocket_port", None),
+        ("status", Session.QUEUED),
+    ],
+)
+def test_workstation_required_properties_set(client, attr, value):
+    u1 = UserFactory()
+    session = SessionFactory(
+        creator=u1,
+        host_address="127.0.0.1",
+        http_port="60000",
+        websocket_port="60001",
+        status=Session.STARTED,
+    )
+
+    url = reverse(
+        "session-proxy",
+        kwargs={
+            "slug": session.workstation_image.workstation.slug,
+            "pk": session.pk,
+            "path": "foo/mlab4d4c4142/bar/../baz/test",
+            "rendering_subdomain": session.region,
+        },
+    )
+
+    response = get_view_for_user(client=client, url=url, user=u1)
+    assert response.status_code == 200
+
+    setattr(session, attr, value)
+    session.save()
+
+    response = get_view_for_user(client=client, url=url, user=u1)
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db

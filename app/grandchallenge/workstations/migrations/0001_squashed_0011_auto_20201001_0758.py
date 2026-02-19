@@ -417,7 +417,10 @@ class Migration(migrations.Migration):
                         max_length=14,
                     ),
                 ),
-                ("ping_times", models.JSONField(default=None, null=True)),
+                (
+                    "ping_times",
+                    models.JSONField(default=None, null=True, blank=True),
+                ),
             ],
             options={"abstract": False, "ordering": ("created", "creator")},
         ),

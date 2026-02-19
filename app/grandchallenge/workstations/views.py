@@ -459,14 +459,27 @@ class SessionDetail(
 def session_proxy(request, *, pk, path, **_):
     """Return an internal redirect to the session instance if authorised."""
     session = get_object_or_404(Session, pk=pk)
-    path = safe_join(f"/workstation-proxy/{session.hostname}", path)
 
-    user = request.user
-    if session.creator != user:
+    if session.creator != request.user:
         raise PermissionDenied
 
+    if (
+        not all(
+            [session.host_address, session.http_port, session.websocket_port]
+        )
+        or session.status != session.STARTED
+    ):
+        raise Http404
+
+    if "mlab4d4c4142" in path:
+        backend = f"{session.host_address}:{session.websocket_port}"
+    else:
+        backend = f"{session.host_address}:{session.http_port}"
+
     response = HttpResponse()
-    response["X-Accel-Redirect"] = path
+    response["X-Accel-Redirect"] = safe_join(
+        f"/workstation-proxy/{backend}", path
+    )
 
     return response
 

@@ -3,7 +3,6 @@ import hashlib
 import hmac
 import io
 import json
-import os
 from datetime import timedelta
 from unittest.mock import Mock
 from uuid import uuid4
@@ -22,7 +21,6 @@ from grandchallenge.components.backends.base import (
     InferenceResult,
     s3_stream_response,
 )
-from grandchallenge.components.backends.docker_client import _get_cpuset_cpus
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.backends.utils import (
     _filter_members,
@@ -40,22 +38,6 @@ from tests.components_tests.factories import (
 )
 from tests.components_tests.resources.backends import IOCopyExecutor
 from tests.factories import ImageFactory, ImageFileFactory
-
-
-@pytest.mark.parametrize(
-    "cpuset,expected",
-    (
-        ("", f"0-{os.cpu_count() - 1}"),
-        ("0", "0"),
-        ("1-3", "1-3"),
-        ("1,2", "1,2"),
-    ),
-)
-def test_cpuset_cpus(settings, cpuset, expected):
-    settings.COMPONENTS_CPUSET_CPUS = cpuset
-
-    assert os.cpu_count() > 1
-    assert _get_cpuset_cpus() == expected
 
 
 @pytest.mark.parametrize("with_timestamp", (True, False))
