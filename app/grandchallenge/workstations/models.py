@@ -650,6 +650,7 @@ class Session(FieldChangeMixin, UUIDModel):
         if self.status == self.STARTED:
             conflicts = Session.objects.filter(
                 host_address=self.host_address,
+                region=self.region,
                 status=self.STARTED,
             ).exclude(pk=self.pk)
 
