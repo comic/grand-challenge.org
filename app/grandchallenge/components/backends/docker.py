@@ -1,7 +1,12 @@
+import os
+from socket import getaddrinfo
+from urllib.parse import urlparse
+
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
 from grandchallenge.components.backends import docker_client
+from grandchallenge.components.backends.docker_client import inspect_container
 from grandchallenge.components.backends.utils import LOGLINES
 
 
@@ -18,6 +23,17 @@ class Service:
     @property
     def container_name(self):
         return self._container_name
+
+    @property
+    def host_address(self):
+        docker_hostname = urlparse(os.environ["DOCKER_HOST"]).hostname
+        return getaddrinfo(docker_hostname, None)[0][4][0]
+
+    def get_port_mapping(self, port):
+        container_info = inspect_container(name=self.container_name)
+        return container_info["NetworkSettings"]["Ports"][f"{port}/tcp"][0][
+            "HostPort"
+        ]
 
     def logs(self) -> str:
         """Get the container logs for this service."""

@@ -7,7 +7,11 @@ from urllib.parse import unquote, urljoin
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.validators import MaxValueValidator, RegexValidator
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+    RegexValidator,
+)
 from django.db import models
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
@@ -425,6 +429,24 @@ class Session(FieldChangeMixin, UUIDModel):
         default=Region.EU_NL_1,
         help_text="Which region is this session available in?",
     )
+    host_address = models.GenericIPAddressField(
+        null=True,
+        protocol="IPv4",
+        help_text="The IP address of the host this session is running on",
+        editable=False,
+    )
+    http_port = models.PositiveIntegerField(
+        null=True,
+        validators=[MinValueValidator(32768), MaxValueValidator(65535)],
+        help_text="The mapped port for http traffic on the host",
+        editable=False,
+    )
+    websocket_port = models.PositiveIntegerField(
+        null=True,
+        validators=[MinValueValidator(32768), MaxValueValidator(65535)],
+        help_text="The mapped port for websocket traffic on the host",
+        editable=False,
+    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
@@ -571,6 +593,13 @@ class Session(FieldChangeMixin, UUIDModel):
                 http_port=self.workstation_image.http_port,
                 websocket_port=self.workstation_image.websocket_port,
                 environment=self.environment,
+            )
+            self.host_address = self.service.host_address
+            self.http_port = self.service.get_port_mapping(
+                port=self.workstation_image.http_port
+            )
+            self.websocket_port = self.service.get_port_mapping(
+                port=self.workstation_image.websocket_port
             )
             self.update_status(status=self.STARTED)
         except Exception:

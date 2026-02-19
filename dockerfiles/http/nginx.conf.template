@@ -174,7 +174,7 @@ http {
       set $backend $1;
       set $path $3;
 
-      proxy_pass http://$backend/mlab4d4c4142/$ws_path$is_args$args;
+      proxy_pass http://$backend/mlab4d4c4142/$path$is_args$args;
       proxy_set_header Host $backend;
       proxy_set_header X-Real-IP $remote_addr;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

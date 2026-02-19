@@ -463,11 +463,10 @@ def session_proxy(request, *, pk, path, **_):
     if session.creator != request.user:
         raise PermissionDenied
 
-    # TODO get the websocket and http port
     if "mlab4d4c4142" in path:
-        backend = f"{session.container_ip}:{session.websocket_port}"
+        backend = f"{session.host_address}:{session.websocket_port}"
     else:
-        backend = f"{session.container_ip}:{session.http_port}"
+        backend = f"{session.host_address}:{session.http_port}"
 
     response = HttpResponse()
     response["X-Accel-Redirect"] = safe_join(
