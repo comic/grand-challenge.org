@@ -6,7 +6,7 @@ from urllib.parse import unquote, urljoin
 
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import (
     MaxValueValidator,
     MinValueValidator,
@@ -451,7 +451,7 @@ class Session(FieldChangeMixin, UUIDModel):
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
     auth_token = models.ForeignKey(
-        AuthToken, null=True, on_delete=models.SET_NULL
+        AuthToken, null=True, blank=True, on_delete=models.SET_NULL
     )
     workstation_image = models.ForeignKey(
         WorkstationImage, on_delete=models.PROTECT
@@ -459,7 +459,7 @@ class Session(FieldChangeMixin, UUIDModel):
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)
     logs = models.TextField(editable=False, blank=True)
-    ping_times = models.JSONField(null=True, default=None)
+    ping_times = models.JSONField(null=True, blank=True, default=None)
     extra_env_vars = models.JSONField(
         default=list,
         blank=True,
@@ -625,6 +625,7 @@ class Session(FieldChangeMixin, UUIDModel):
             The new status for this session.
         """
         self.status = status
+        self.full_clean()
         self.save()
 
     def get_absolute_url(self):
@@ -644,6 +645,30 @@ class Session(FieldChangeMixin, UUIDModel):
     def assign_permissions(self):
         assign_perm("view_session", self.creator, self)
         assign_perm("change_session", self.creator, self)
+
+    def clean(self):
+        if self.status == self.STARTED:
+            conflicts = Session.objects.filter(
+                host_address=self.host_address,
+                status=self.STARTED,
+            ).exclude(pk=self.pk)
+
+            used_ports = set(
+                conflicts.values_list("http_port", flat=True)
+            ) | set(conflicts.values_list("websocket_port", flat=True))
+
+            if self.http_port in used_ports:
+                raise ValidationError(
+                    {"http_port": "Port already in use on this host."}
+                )
+            if self.websocket_port in used_ports:
+                raise ValidationError(
+                    {"websocket_port": "Port already in use on this host."}
+                )
+            if self.http_port == self.websocket_port:
+                raise ValidationError(
+                    "http_port and websocket_port must differ."
+                )
 
     def save(self, *args, **kwargs) -> None:
         """Save the session instance, starting or stopping the service if needed."""

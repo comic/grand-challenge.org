@@ -3,7 +3,7 @@ from datetime import timedelta
 import pytest
 from django.conf import settings
 from django.core import mail
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 from knox.models import AuthToken
 
@@ -361,3 +361,104 @@ def test_extra_env_vars():
             settings.WORKSTATIONS_MAX_CONCURRENT_API_REQUESTS
         ),
     }
+
+
+@pytest.fixture
+def started_session():
+    return SessionFactory(
+        status=Session.STARTED,
+        host_address="192.168.1.1",
+        http_port=40000,
+        websocket_port=40001,
+    )
+
+
+@pytest.mark.django_db
+def test_clean_passes_for_valid_session(started_session):
+    session = SessionFactory(
+        status=Session.STARTED,
+        host_address="192.168.1.1",
+        http_port=40002,
+        websocket_port=40003,
+    )
+    session.clean()  # should not raise
+
+
+@pytest.mark.django_db
+def test_clean_raises_if_http_port_in_use(started_session):
+    session = SessionFactory(
+        status=Session.STARTED,
+        host_address="192.168.1.1",
+        http_port=40000,  # conflicts with started_session.http_port
+        websocket_port=40003,
+    )
+    with pytest.raises(ValidationError, match="http_port"):
+        session.clean()
+
+
+@pytest.mark.django_db
+def test_clean_raises_if_websocket_port_in_use(started_session):
+    session = SessionFactory(
+        status=Session.STARTED,
+        host_address="192.168.1.1",
+        http_port=40002,
+        websocket_port=40001,  # conflicts with started_session.websocket_port
+    )
+    with pytest.raises(ValidationError, match="websocket_port"):
+        session.clean()
+
+
+@pytest.mark.django_db
+def test_clean_raises_if_http_port_matches_other_websocket_port(
+    started_session,
+):
+    session = SessionFactory(
+        status=Session.STARTED,
+        host_address="192.168.1.1",
+        http_port=40001,  # conflicts with started_session.websocket_port
+        websocket_port=40002,
+    )
+    with pytest.raises(ValidationError, match="http_port"):
+        session.clean()
+
+
+@pytest.mark.django_db
+def test_clean_raises_if_websocket_port_matches_other_http_port(
+    started_session,
+):
+    session = SessionFactory(
+        status=Session.STARTED,
+        host_address="192.168.1.1",
+        http_port=40002,
+        websocket_port=40000,  # conflicts with started_session.http_port
+    )
+    with pytest.raises(ValidationError, match="websocket_port"):
+        session.clean()
+
+
+@pytest.mark.django_db
+def test_clean_raises_if_ports_identical():
+    session = SessionFactory(
+        status=Session.STARTED,
+        host_address="192.168.1.1",
+        http_port=40000,
+        websocket_port=40000,
+    )
+    with pytest.raises(ValidationError):
+        session.clean()
+
+
+@pytest.mark.django_db
+def test_clean_skips_validation_if_not_started(started_session):
+    session = SessionFactory(
+        status=Session.QUEUED,
+        host_address="192.168.1.1",
+        http_port=40000,  # would conflict if STARTED
+        websocket_port=40001,
+    )
+    session.clean()  # should not raise
+
+
+@pytest.mark.django_db
+def test_clean_excludes_self(started_session):
+    started_session.clean()  # should not conflict with itself
