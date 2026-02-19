@@ -5,7 +5,6 @@ import socket
 from datetime import timedelta
 from itertools import product
 from pathlib import Path
-from subprocess import CalledProcessError
 
 import sentry_sdk
 from celery.schedules import crontab
@@ -21,6 +20,7 @@ from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
 
 from config.denylist import USERNAME_DENYLIST
+from config.sentry import sentry_before_send
 from grandchallenge.components.exceptions import PriorStepFailed
 from grandchallenge.core.utils import strtobool
 from grandchallenge.core.utils.markdown import BS4Extension
@@ -838,29 +838,6 @@ SENTRY_ENABLE_JS_REPORTING = strtobool(
 WORKSTATION_SENTRY_DSN = os.environ.get("WORKSTATION_SENTRY_DSN", "")
 
 if SENTRY_DSN:
-
-    def sentry_before_send(event, hint):
-        """Add stderr to the event if the exception is a CalledProcessError"""
-        if "exc_info" in hint:
-            exc_type, exc_value, tb = hint["exc_info"]
-
-            if isinstance(exc_value, CalledProcessError) and hasattr(
-                exc_value, "stderr"
-            ):
-                event["extra"] = event.get("extra", {})
-
-                if isinstance(exc_value.stderr, str):
-                    event["extra"]["stderr"] = exc_value.stderr
-                elif isinstance(exc_value.stderr, bytes):
-                    event["extra"]["stderr"] = exc_value.stderr.decode(
-                        "utf-8", "replace"
-                    )
-                else:
-                    # Do not include stderr
-                    pass
-
-        return event
-
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration(), CeleryIntegration()],
