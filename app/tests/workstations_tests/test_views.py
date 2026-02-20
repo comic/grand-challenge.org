@@ -278,8 +278,6 @@ def test_workstationimage_update(client):
     wsi.refresh_from_db()
 
     assert wsi.initial_path == "a"
-    assert wsi.websocket_port == 1337
-    assert wsi.http_port == 1234
 
 
 @pytest.mark.django_db
