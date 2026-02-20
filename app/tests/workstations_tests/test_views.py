@@ -227,8 +227,6 @@ def test_workstationimage_create(client):
     w2_images = w2.workstationimage_set.all()
     assert len(w2_images) == 1
     assert w2_images[0].creator == u2
-    assert w2_images[0].websocket_port == 1337
-    assert w2_images[0].http_port == 1234
     assert w2_images[0].user_upload == user_upload
     assert w2_images[0].initial_path == "a"
 
@@ -264,8 +262,6 @@ def test_workstationimage_update(client):
     wsi.workstation.add_editor(user=user)
 
     assert wsi.initial_path != ""
-    assert wsi.websocket_port != 1337
-    assert wsi.http_port != 1234
 
     response = get_view_for_user(
         client=client,

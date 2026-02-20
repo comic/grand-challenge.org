@@ -42,8 +42,6 @@ class WorkstationImageForm(ContainerImageForm):
         model = WorkstationImage
         fields = (
             "initial_path",
-            "http_port",
-            "websocket_port",
             "workstation",
             *ContainerImageForm.Meta.fields,
         )

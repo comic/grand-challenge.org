@@ -1043,6 +1043,11 @@ COMPONENTS_CPU_SHARES = int(
 )
 COMPONENTS_CONTAINER_PLATFORM = "linux/amd64"
 
+# Changing the ports used will change the API implemented
+# by the workstation container images
+COMPONENTS_SERVICE_CONTAINER_HTTP_PORT = 8080
+COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT = 4114
+
 COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION = os.environ.get(
     "COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION", "/opt/virtualenvs/biom"
 )

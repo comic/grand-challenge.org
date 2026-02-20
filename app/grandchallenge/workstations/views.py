@@ -231,7 +231,7 @@ class WorkstationImageUpdate(
     LoginRequiredMixin, ObjectPermissionRequiredMixin, UpdateView
 ):
     model = WorkstationImage
-    fields = ("initial_path", "http_port", "websocket_port", "comment")
+    fields = ("initial_path", "comment")
     template_name_suffix = "_update"
     permission_required = f"{WorkstationImage._meta.app_label}.change_{WorkstationImage._meta.model_name}"
     raise_exception = True

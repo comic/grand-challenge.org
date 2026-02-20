@@ -216,16 +216,17 @@ class WorkstationImage(UUIDModel, ComponentImage):
     """
     A ``WorkstationImage`` is a docker container image of a workstation.
 
+    The workstation must implement an http server on
+    COMPONENTS_SERVICE_CONTAINER_HTTP_PORT, and can implement an
+    http/websocket server on COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT.
+    Any url path that contains ``mlab4d4c4142`` will be proxied to
+    COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT.
+
     Parameters
     ----------
     workstation
         A ``Workstation`` can have multiple ``WorkstationImage``, that
         represent different versions of a workstation
-    http_port
-        This container will expose a http server on this port
-    websocket_port
-        This container will expose a websocket on this port. Any url path
-        that contains ``mlab4d4c4142`` will be proxied to this port.
     initial_path
         The initial path that users will navigate to in order to load the
         workstation
@@ -234,12 +235,6 @@ class WorkstationImage(UUIDModel, ComponentImage):
     SHIM_IMAGE = False
 
     workstation = models.ForeignKey(Workstation, on_delete=models.PROTECT)
-    http_port = models.PositiveIntegerField(
-        default=8080, validators=[MaxValueValidator(2**16 - 1)]
-    )
-    websocket_port = models.PositiveIntegerField(
-        default=4114, validators=[MaxValueValidator(2**16 - 1)]
-    )
     initial_path = models.CharField(
         max_length=256,
         default="cirrus",
@@ -590,16 +585,14 @@ class Session(FieldChangeMixin, UUIDModel):
                 raise ComponentException("Too many sessions are running")
 
             self.service.start(
-                http_port=self.workstation_image.http_port,
-                websocket_port=self.workstation_image.websocket_port,
                 environment=self.environment,
             )
             self.host_address = self.service.host_address
             self.http_port = self.service.get_port_mapping(
-                port=self.workstation_image.http_port
+                port=settings.COMPONENTS_SERVICE_CONTAINER_HTTP_PORT
             )
             self.websocket_port = self.service.get_port_mapping(
-                port=self.workstation_image.websocket_port
+                port=settings.COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT
             )
             self.update_status(status=self.STARTED)
         except Exception:
