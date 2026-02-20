@@ -114,12 +114,25 @@ class FeedbackAdmin(ModelAdmin):
         )
 
 
+@admin.register(WorkstationImage)
+class WorkstationImageAdmin(ComponentImageAdmin):
+    readonly_fields = (
+        *ComponentImageAdmin.readonly_fields,
+        "image",
+        "workstation",
+    )
+    list_display = (
+        *ComponentImageAdmin.list_display,
+        "http_port",
+        "websocket_port",
+    )
+
+
 admin.site.register(Workstation)
 admin.site.register(WorkstationUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(
     WorkstationGroupObjectPermission, GroupObjectPermissionAdmin
 )
-admin.site.register(WorkstationImage, ComponentImageAdmin)
 admin.site.register(
     WorkstationImageUserObjectPermission, UserObjectPermissionAdmin
 )

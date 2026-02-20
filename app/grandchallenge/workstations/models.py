@@ -224,8 +224,8 @@ class WorkstationImage(UUIDModel, ComponentImage):
     http_port
         This container will expose a http server on this port
     websocket_port
-        This container will expose a websocket on this port. Any relative url
-        that starts with ``/mlab4d4c4142`` will be proxied to this port.
+        This container will expose a websocket on this port. Any url path
+        that contains ``mlab4d4c4142`` will be proxied to this port.
     initial_path
         The initial path that users will navigate to in order to load the
         workstation
