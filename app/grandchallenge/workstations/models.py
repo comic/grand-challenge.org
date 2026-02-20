@@ -443,6 +443,7 @@ class Session(FieldChangeMixin, UUIDModel):
         help_text="The IP address of the host this session is running on",
         editable=False,
     )
+    task_arn = models.CharField(editable=False, default="", max_length=128)
     http_port = models.PositiveIntegerField(
         null=True,
         validators=[MinValueValidator(32768), MaxValueValidator(65535)],
@@ -466,7 +467,8 @@ class Session(FieldChangeMixin, UUIDModel):
     )
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)
-    logs = models.TextField(editable=False, blank=True)
+    # TODO link to logs
+    logs = deprecate_field(models.TextField(editable=False, blank=True))
     ping_times = models.JSONField(null=True, blank=True, default=None)
     extra_env_vars = models.JSONField(
         default=list,
@@ -597,16 +599,22 @@ class Session(FieldChangeMixin, UUIDModel):
             ):
                 raise ComponentException("Too many sessions are running")
 
-            self.service.start(
-                environment=self.environment,
+            self.task_arn = self.service.start(environment=self.environment)
+
+            self.service.wait_for_task_running(task_arn=self.task_arn)
+
+            self.host_address = self.service.get_host_address(
+                task_arn=self.task_arn
             )
-            self.host_address = self.service.host_address
             self.http_port = self.service.get_port_mapping(
-                port=settings.COMPONENTS_SERVICE_CONTAINER_HTTP_PORT
+                port=settings.COMPONENTS_SERVICE_CONTAINER_HTTP_PORT,
+                task_arn=self.task_arn,
             )
             self.websocket_port = self.service.get_port_mapping(
-                port=settings.COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT
+                port=settings.COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT,
+                task_arn=self.task_arn,
             )
+
             self.update_status(status=self.STARTED)
         except Exception:
             self.update_status(status=self.FAILED)
@@ -614,8 +622,7 @@ class Session(FieldChangeMixin, UUIDModel):
 
     def stop(self) -> None:
         """Stop the service for this session, cleaning up all of the containers."""
-        self.logs = self.service.logs()
-        self.service.stop_and_cleanup()
+        self.service.stop(task_arn=self.task_arn)
         self.update_status(status=self.STOPPED)
 
         if self.auth_token:
