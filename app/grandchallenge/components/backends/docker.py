@@ -47,15 +47,16 @@ class Service:
 
     def start(
         self,
-        http_port: int,
-        websocket_port: int,
         environment: dict,
     ):
         docker_client.run_container(
             repo_tag=self._exec_image_repo_tag,
             name=self.container_name,
             environment=environment,
-            ports=[http_port, websocket_port],
+            ports=[
+                settings.COMPONENTS_SERVICE_CONTAINER_HTTP_PORT,
+                settings.COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT,
+            ],
             mem_limit=settings.COMPONENTS_MEMORY_LIMIT,
         )
 

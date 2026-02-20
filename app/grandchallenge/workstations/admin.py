@@ -121,11 +121,6 @@ class WorkstationImageAdmin(ComponentImageAdmin):
         "image",
         "workstation",
     )
-    list_display = (
-        *ComponentImageAdmin.list_display,
-        "http_port",
-        "websocket_port",
-    )
 
 
 admin.site.register(Workstation)
