@@ -522,14 +522,16 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dt class="sig sig-object py" id="grandchallenge.workstations.models.WorkstationImage">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grandchallenge.workstations.models.</span></span><span class="sig-name descname"><span class="pre">WorkstationImage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/workstations/models.html#WorkstationImage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.workstations.models.WorkstationImage" title="Link to this definition">¶</a></dt>
 <dd><p>A <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code> is a docker container image of a workstation.</p>
+<p>The workstation must implement an http server on
+COMPONENTS_SERVICE_CONTAINER_HTTP_PORT, and can implement an
+http/websocket server on COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT.
+Any url path that contains <code class="docutils literal notranslate"><span class="pre">mlab4d4c4142</span></code> will be proxied to
+COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>workstation</strong> – A <code class="docutils literal notranslate"><span class="pre">Workstation</span></code> can have multiple <code class="docutils literal notranslate"><span class="pre">WorkstationImage</span></code>, that
 represent different versions of a workstation</p></li>
-<li><p><strong>http_port</strong> – This container will expose a http server on this port</p></li>
-<li><p><strong>websocket_port</strong> – This container will expose a websocket on this port. Any url path
-that contains <code class="docutils literal notranslate"><span class="pre">mlab4d4c4142</span></code> will be proxied to this port.</p></li>
 <li><p><strong>initial_path</strong> – The initial path that users will navigate to in order to load the
 workstation</p></li>
 <li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v6.0)"><em>UUIDField</em></a>) – Primary key: Id</p></li>

@@ -56,6 +56,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.dispatch</span><span class="w"> </span><span class="kn">import</span> <span class="n">receiver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.timezone</span><span class="w"> </span><span class="kn">import</span> <span class="n">now</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django_deprecate_fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecate_field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">guardian.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">knox.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AuthToken</span>
@@ -274,16 +275,17 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A ``WorkstationImage`` is a docker container image of a workstation.</span>
 
+<span class="sd">    The workstation must implement an http server on</span>
+<span class="sd">    COMPONENTS_SERVICE_CONTAINER_HTTP_PORT, and can implement an</span>
+<span class="sd">    http/websocket server on COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT.</span>
+<span class="sd">    Any url path that contains ``mlab4d4c4142`` will be proxied to</span>
+<span class="sd">    COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT.</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    workstation</span>
 <span class="sd">        A ``Workstation`` can have multiple ``WorkstationImage``, that</span>
 <span class="sd">        represent different versions of a workstation</span>
-<span class="sd">    http_port</span>
-<span class="sd">        This container will expose a http server on this port</span>
-<span class="sd">    websocket_port</span>
-<span class="sd">        This container will expose a websocket on this port. Any url path</span>
-<span class="sd">        that contains ``mlab4d4c4142`` will be proxied to this port.</span>
 <span class="sd">    initial_path</span>
 <span class="sd">        The initial path that users will navigate to in order to load the</span>
 <span class="sd">        workstation</span>
@@ -292,11 +294,17 @@
     <span class="n">SHIM_IMAGE</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="n">workstation</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Workstation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
-    <span class="n">http_port</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="mi">8080</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">MaxValueValidator</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">http_port</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
+            <span class="n">default</span><span class="o">=</span><span class="mi">8080</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">MaxValueValidator</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="p">),</span>
+        <span class="n">raise_on_access</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">websocket_port</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="mi">4114</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">MaxValueValidator</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+    <span class="n">websocket_port</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
+        <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
+            <span class="n">default</span><span class="o">=</span><span class="mi">4114</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">MaxValueValidator</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="p">),</span>
+        <span class="n">raise_on_access</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">initial_path</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
@@ -668,16 +676,14 @@
                 <span class="k">raise</span> <span class="n">ComponentException</span><span class="p">(</span><span class="s2">&quot;Too many sessions are running&quot;</span><span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">start</span><span class="p">(</span>
-                <span class="n">http_port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">http_port</span><span class="p">,</span>
-                <span class="n">websocket_port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">websocket_port</span><span class="p">,</span>
                 <span class="n">environment</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">host_address</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">host_address</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">http_port</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">get_port_mapping</span><span class="p">(</span>
-                <span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">http_port</span>
+                <span class="n">port</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_SERVICE_CONTAINER_HTTP_PORT</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">websocket_port</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">service</span><span class="o">.</span><span class="n">get_port_mapping</span><span class="p">(</span>
-                <span class="n">port</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">workstation_image</span><span class="o">.</span><span class="n">websocket_port</span>
+                <span class="n">port</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">update_status</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">STARTED</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
