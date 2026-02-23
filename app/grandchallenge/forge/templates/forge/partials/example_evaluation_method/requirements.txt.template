@@ -11,4 +11,5 @@ pydicom
 # Required to decompress some DICOM transfer syntaxes
 pylibjpeg
 pylibjpeg-libjpeg
+pylibjpeg-openjpeg
 {% endif %}
