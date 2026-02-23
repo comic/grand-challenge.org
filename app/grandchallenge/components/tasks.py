@@ -1052,22 +1052,22 @@ def deprovision_job(
     executor.deprovision()
 
 
-@shared_task
+@acks_late_micro_short_task
 def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     session = model.objects.get(pk=pk)
     session.start()
 
 
-@shared_task
+@acks_late_micro_short_task
 def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
     session = model.objects.get(pk=pk)
     session.stop()
 
 
-@shared_task
-def stop_expired_services(*, app_label: str, model_name: str, region: str):
+@acks_late_micro_short_task
+def stop_expired_services(*, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     services_to_stop = (
@@ -1077,7 +1077,7 @@ def stop_expired_services(*, app_label: str, model_name: str, region: str):
                 output_field=DateTimeField(),
             )
         )
-        .filter(expires__lt=now(), region=region)
+        .filter(expires__lt=now())
         .exclude(status=model.STOPPED)
     )
 

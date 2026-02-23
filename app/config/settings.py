@@ -1034,11 +1034,11 @@ COMPONENTS_SERVICE_PIDS_LIMIT = int(
 COMPONENTS_SERVICE_LOG_GROUP_NAME = os.environ.get(
     "COMPONENTS_SERVICE_LOG_GROUP_NAME"
 )
+COMPONENTS_SERVICE_CLUSTER_NAME = os.environ.get(
+    "COMPONENTS_SERVICE_CLUSTER_NAME"
+)
 COMPONENTS_SERVICE_TASK_ROLE_ARN = os.environ.get(
     "COMPONENTS_SERVICE_TASK_ROLE_ARN"
-)
-COMPONENTS_SERVICE_CLUSTER_ARN = os.environ.get(
-    "COMPONENTS_SERVICE_CLUSTER_ARN"
 )
 
 COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION = os.environ.get(
@@ -1253,18 +1253,13 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.core.tasks.put_cloudwatch_metrics",
         "schedule": timedelta(seconds=30),
     },
-    **{
-        f"stop_expired_services_{region}": {
-            "task": "grandchallenge.components.tasks.stop_expired_services",
-            "kwargs": {
-                "app_label": "workstations",
-                "model_name": "session",
-                "region": region,
-            },
-            "options": {"queue": f"workstations-{region}"},
-            "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
-        }
-        for region in WORKSTATIONS_ACTIVE_REGIONS
+    "stop_expired_services": {
+        "task": "grandchallenge.components.tasks.stop_expired_services",
+        "kwargs": {
+            "app_label": "workstations",
+            "model_name": "session",
+        },
+        "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
     },
     **{
         f"preload_interactive_algorithms_{region}": {

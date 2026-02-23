@@ -24,7 +24,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 from knox.models import AuthToken
 from pictures.models import PictureField
 
-from grandchallenge.components.backends.docker import Service
+from grandchallenge.components.backends.amazon_ecs import Service
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.models import ComponentImage
 from grandchallenge.components.tasks import (
@@ -700,14 +700,12 @@ class Session(FieldChangeMixin, UUIDModel):
             on_commit(
                 start_service.signature(
                     kwargs=self.task_kwargs,
-                    queue=f"workstations-{self.region}",
                 ).apply_async
             )
         elif self.user_finished and self.status != self.STOPPED:
             on_commit(
                 stop_service.signature(
                     kwargs=self.task_kwargs,
-                    queue=f"workstations-{self.region}",
                 ).apply_async
             )
 

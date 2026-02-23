@@ -39,10 +39,10 @@ class Service:
 
     def get_host_address(self, *, task_arn):
         task = self._ecs_client.describe_tasks(
-            cluster=settings.COMPONENTS_SERVICE_CLUSTER_ARN, tasks=[task_arn]
+            cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME, tasks=[task_arn]
         )["tasks"][0]
         container_instance = self._ecs_client.describe_container_instances(
-            cluster=settings.COMPONENTS_SERVICE_CLUSTER_ARN,
+            cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
             containerInstances=[task["containerInstanceArn"]],
         )["containerInstances"][0]
         ec2_instance = self._ec2_client.describe_instances(
@@ -52,7 +52,7 @@ class Service:
 
     def get_port_mapping(self, *, port, task_arn):
         task = self._ecs_client.describe_tasks(
-            cluster=settings.COMPONENTS_SERVICE_CLUSTER_ARN, tasks=[task_arn]
+            cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME, tasks=[task_arn]
         )["tasks"][0]
         workstation_container = [
             c
@@ -74,7 +74,7 @@ class Service:
         task_definition_arn = self._register_task_definition()
 
         response = self._ecs_client.run_task(
-            cluster=settings.COMPONENTS_SERVICE_CLUSTER_ARN,
+            cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
             count=1,
             enableExecuteCommand=False,
             enableECSManagedTags=True,
@@ -98,7 +98,7 @@ class Service:
     def wait_for_task_running(self, *, task_arn):
         waiter = self._ecs_client.get_waiter("tasks_running")
         waiter.wait(
-            cluster=settings.COMPONENTS_SERVICE_CLUSTER_ARN, tasks=[task_arn]
+            cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME, tasks=[task_arn]
         )
 
     @property
@@ -165,5 +165,5 @@ class Service:
 
     def stop(self, *, task_arn):
         self._ecs_client.stop_task(
-            cluster=settings.COMPONENTS_SERVICE_CLUSTER_ARN, task=task_arn
+            cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME, task=task_arn
         )
