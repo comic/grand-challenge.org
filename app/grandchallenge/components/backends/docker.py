@@ -7,10 +7,12 @@ class Service:
         self,
         container_name: str,
         exec_image_repo_tag: str,
+        region: str,
     ):
         super().__init__()
         self._container_name = container_name
         self._exec_image_repo_tag = exec_image_repo_tag
+        self._region = region
 
         self.__ecs_client = None
         self.__ec2_client = None
@@ -18,17 +20,13 @@ class Service:
     @property
     def _ecs_client(self):
         if self.__ecs_client is None:
-            self.__ecs_client = boto3.client(
-                "ecs", region_name=settings.COMPONENTS_SERVICE_REGION_NAME
-            )
+            self.__ecs_client = boto3.client("ecs", region_name=self._region)
         return self.__ecs_client
 
     @property
     def _ec2_client(self):
         if self.__ec2_client is None:
-            self.__ec2_client = boto3.client(
-                "ec2", region_name=settings.COMPONENTS_SERVICE_REGION_NAME
-            )
+            self.__ec2_client = boto3.client("ec2", region_name=self._region)
         return self.__ec2_client
 
     @property
@@ -132,7 +130,7 @@ class Service:
                     "logDriver": "awslogs",
                     "options": {
                         "awslogs-group": settings.COMPONENTS_SERVICE_LOG_GROUP_NAME,
-                        "awslogs-region": settings.COMPONENTS_SERVICE_REGION_NAME,
+                        "awslogs-region": self._region,
                         "awslogs-stream-prefix": "ecs",
                     },
                 },
@@ -140,14 +138,14 @@ class Service:
                 "ulimits": [
                     {
                         "name": "nproc",
-                        "hardLimit": settings.COMPONENTS_PIDS_LIMIT,
-                        "softLimit": settings.COMPONENTS_PIDS_LIMIT,
+                        "hardLimit": settings.COMPONENTS_SERVICE_PIDS_LIMIT,
+                        "softLimit": settings.COMPONENTS_SERVICE_PIDS_LIMIT,
                     },
                     {
                         "name": "data",
-                        "softLimit": settings.COMPONENTS_MEMORY_LIMIT
+                        "softLimit": settings.COMPONENTS_SERVICE_MEMORY_LIMIT
                         * settings.GIGABYTE,
-                        "hardLimit": settings.COMPONENTS_MEMORY_LIMIT
+                        "hardLimit": settings.COMPONENTS_SERVICE_MEMORY_LIMIT
                         * settings.GIGABYTE,
                     },
                 ],

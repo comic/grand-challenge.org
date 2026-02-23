@@ -560,6 +560,7 @@ class Session(FieldChangeMixin, UUIDModel):
         return Service(
             container_name=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             exec_image_repo_tag=self.workstation_image.original_repo_tag,
+            region=self.region,
         )
 
     @property
