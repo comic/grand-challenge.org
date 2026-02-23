@@ -11,7 +11,10 @@ def load_dicom_image_set_as_array(*, location):
 
     # Read all slices
     slices = [pydicom.dcmread(f, force=True) for f in dicom_files]
-    decompressed_slices = [slice.decompress() for slice in slices]
+
+    for idx, slice in enumerate(slices):  # Decompress the pixel data in-place.
+        slice.decompress()
+        print(f"Slice {idx} shape:", slice.pixel_array.shape)
 
     # Extracting pixel-data is non-trivial:
     # - Slices need to be sorted in case of a 3D volume or 4D volume
