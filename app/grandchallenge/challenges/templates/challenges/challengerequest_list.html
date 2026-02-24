@@ -17,6 +17,28 @@
 {% endblock %}
 
 {% block content %}
+    <div class="row">
+        <div class="col-md mb-3 d-flex">
+            <div class="d-flex">
+                <a class="btn btn-primary"
+                href="{% url 'challenges:requests-create' %}"
+                title="Host your own challenge">
+                    <i class="fas fa-plus mr-1"></i> Host Your Own Challenge
+                </a>
+            </div>
+            {% if request.user.is_staff %}
+            <div class="d-flex ml-auto">
+                <a class="btn btn-primary"
+                href="{% url 'challenges:requests-budget-calculator' %}"
+                title="Request budget calculator">
+                    <i class="fas fa-calculator mr-1"></i> Budget Calculator
+                </a>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+
     <h2>{% if not perms.challenges.change_challengerequest %}Your{% endif %} Challenge Requests</h2>
     <div class="table-responsive">
         <table
