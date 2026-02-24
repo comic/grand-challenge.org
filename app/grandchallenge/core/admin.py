@@ -40,21 +40,10 @@ class TaskResultAdminWithDuration(TaskResultAdmin):
         "periodic_task_name",
         "task_name",
         "date_done",
-        "get_latency",
         "get_duration",
         "status",
         "worker",
     )
-
-    @admin.display(description="Latency")
-    def get_latency(self, obj):
-        if obj.status in {states.SUCCESS, states.FAILURE}:
-            try:
-                return obj.date_started - obj.date_created
-            except TypeError:
-                return None
-        else:
-            return None
 
     @admin.display(description="Duration")
     def get_duration(self, obj):

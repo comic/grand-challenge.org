@@ -51,7 +51,6 @@ class ECSService:
         self,
         environment: dict,
     ):
-        # TODO there should be one task definition per workstation image
         task_definition_arn = self._register_task_definition()
 
         response = self._ecs_client.run_task(
@@ -160,16 +159,25 @@ class ECSService:
         }
 
     def _register_task_definition(self):
-        # TODO only one task definition should be created per workstation image
         response = self._ecs_client.register_task_definition(
             containerDefinitions=self._container_definitions,
-            family="-".join(self._exec_image_repo_tag.split("/")[1:]).replace(
-                ":", "-"
-            ),
+            family=self._task_definition_family,
             requiresCompatibilities=["EC2"],
             taskRoleArn=settings.COMPONENTS_SERVICE_TASK_ROLE_ARN,
         )
         return response["taskDefinition"]["taskDefinitionArn"]
+
+    @property
+    def _task_definition_family(self):
+        # The task family is based on the exec image repo and tag for grouping.
+        # We do not create one task definition per exec image as we may need
+        # to modify the runtime settings (CPU limits for instance).
+
+        repo_tag_without_domain = self._exec_image_repo_tag.split("/")[1:]
+        task_definition_safe_repo_tag = "-".join(repo_tag_without_domain)
+
+        # the task definition cannot contain ":"
+        return task_definition_safe_repo_tag.replace(":", "-")
 
     @property
     def _container_definitions(self):
@@ -225,6 +233,13 @@ class ECSService:
         return container_definitions
 
     def stop(self, *, task_arn):
+        # Fetch the task description before stopping so that we have
+        # the task definition info as this gets deleted after some time
+        task_description = self._get_task_description(task_arn=task_arn)
+
         self._ecs_client.stop_task(
             cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME, task=task_arn
+        )
+        self._ecs_client.deregister_task_definition(
+            taskDefinition=task_description["taskDefinitionArn"]
         )
