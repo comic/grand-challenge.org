@@ -226,7 +226,7 @@ def test_session_proxy_permissions(client, two_workstation_sets):
     s = SessionFactory(
         workstation_image=two_workstation_sets.ws1.image,
         creator=two_workstation_sets.ws1.user,
-        status=Session.STARTED,
+        status=Session.RUNNING,
         http_port=80,
         websocket_port=4113,
         host_address="192.168.0.1",

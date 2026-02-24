@@ -32,9 +32,9 @@ def get_or_create_active_session(
 
     """
     session = (
-        Session.objects.filter(
+        Session.objects.active()
+        .filter(
             creator=user,
-            status__in=[Session.QUEUED, Session.STARTED, Session.RUNNING],
             workstation_image=workstation_image,
             region=region,
         )

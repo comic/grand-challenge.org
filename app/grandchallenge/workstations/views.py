@@ -467,7 +467,7 @@ def session_proxy(request, *, pk, path, **_):
         not all(
             [session.host_address, session.http_port, session.websocket_port]
         )
-        or session.status != session.STARTED
+        or session.status != session.RUNNING
     ):
         raise Http404
 

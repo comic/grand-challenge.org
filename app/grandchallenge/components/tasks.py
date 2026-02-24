@@ -1085,10 +1085,11 @@ def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
         return
 
     if (
-        model.objects.filter(
-            status__in=[service.RUNNING, service.STARTED],
+        model.objects.active()
+        .filter(
             region=service.region,
-        ).count()
+        )
+        .count()
         >= settings.WORKSTATIONS_MAXIMUM_SESSIONS
     ):
         raise RetryStep("Too many sessions are running")
@@ -1149,14 +1150,9 @@ def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     with check_lock_acquired():
-        service = model.objects.select_for_update(nowait=True).get(pk=pk)
-
-    if service.status not in {
-        service.QUEUED,
-        service.STARTED,
-        service.RUNNING,
-    }:
-        raise RuntimeError("Service is not ready for updating")
+        service = (
+            model.objects.active().select_for_update(nowait=True).get(pk=pk)
+        )
 
     ecs_service = ECSService(**service.service_kwargs)
 
@@ -1178,14 +1174,14 @@ def stop_expired_services(*, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     services_to_stop = (
-        model.objects.annotate(
+        model.objects.active()
+        .annotate(
             expires=ExpressionWrapper(
                 F("created") + F("maximum_duration"),
                 output_field=DateTimeField(),
             )
         )
         .filter(expires__lt=now())
-        .exclude(status__in=[model.FAILED, model.STOPPED])
     )
 
     for service in services_to_stop:

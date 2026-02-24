@@ -687,7 +687,7 @@ def test_workstation_proxy(client):
         host_address="127.0.0.1",
         http_port="60000",
         websocket_port="60001",
-        status=Session.STARTED,
+        status=Session.RUNNING,
     )
 
     url = reverse(
@@ -723,7 +723,7 @@ def test_workstation_proxy_websocket(client):
         host_address="127.0.0.1",
         http_port="60000",
         websocket_port="60001",
-        status=Session.STARTED,
+        status=Session.RUNNING,
     )
 
     url = reverse(
@@ -771,7 +771,7 @@ def test_workstation_required_properties_set(client, attr, value):
         host_address="127.0.0.1",
         http_port="60000",
         websocket_port="60001",
-        status=Session.STARTED,
+        status=Session.RUNNING,
     )
 
     url = reverse(

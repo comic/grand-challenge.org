@@ -103,12 +103,15 @@ class DebugSessionForm(SaveFormInitMixin, ModelForm):
 
         cleaned_data = super().clean()
 
-        if Session.objects.filter(
-            creator=self.__user,
-            workstation_image__workstation=self.__workstation,
-            status__in=[Session.QUEUED, Session.STARTED, Session.RUNNING],
-            region=cleaned_data["region"],
-        ).exists():
+        if (
+            Session.objects.active()
+            .filter(
+                creator=self.__user,
+                workstation_image__workstation=self.__workstation,
+                region=cleaned_data["region"],
+            )
+            .exists()
+        ):
             raise ValidationError(
                 "You already have a running workstation in the selected "
                 "region, please wait for that session to finish"
