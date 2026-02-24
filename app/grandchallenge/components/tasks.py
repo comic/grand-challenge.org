@@ -1129,8 +1129,6 @@ def update_service(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     ecs_service = ECSService(**service.service_kwargs)
 
-    # TODO Error handling
-
     conn_info = ecs_service.get_connection_information(
         task_arn=service.task_arn
     )
@@ -1156,7 +1154,6 @@ def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     ecs_service = ECSService(**service.service_kwargs)
 
-    # TODO Error handling
     if service.task_arn:
         ecs_service.stop(task_arn=service.task_arn)
 

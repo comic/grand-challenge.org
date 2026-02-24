@@ -535,7 +535,10 @@ class Session(FieldChangeMixin, UUIDModel):
             }
         )
 
-        if self.creator:
+        if (
+            self.creator
+            and settings.COMPONENTS_SERVICE_INCLUDE_CREATOR_AUTH_TOKEN
+        ):
             if self.auth_token:
                 self.auth_token.delete()
 

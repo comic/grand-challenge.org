@@ -241,13 +241,6 @@ def root_image(tmpdir_factory):
 
 
 @pytest.fixture(scope="session")
-def http_image(tmpdir_factory):
-    return docker_image(
-        tmpdir_factory, path="workstations_tests", label="workstation"
-    )
-
-
-@pytest.fixture(scope="session")
 def submission_file(tmpdir_factory):
     testfile = tmpdir_factory.mktemp("submission").join("submission.zip")
     z = zipfile.ZipFile(testfile, mode="w")

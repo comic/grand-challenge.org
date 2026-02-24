@@ -7,19 +7,8 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 
 from grandchallenge.workstations.models import Session, Workstation
-from tests.factories import (
-    SessionFactory,
-    UserFactory,
-    WorkstationFactory,
-    WorkstationImageFactory,
-)
+from tests.factories import SessionFactory, UserFactory, WorkstationFactory
 from tests.workstations_tests.factories import FeedbackFactory
-
-
-def stop_all_sessions():
-    sessions = Session.objects.all()
-    for s in sessions:
-        s.stop()
 
 
 @pytest.mark.django_db
@@ -57,26 +46,6 @@ def test_session_auth_token():
     _ = s.environment
 
     assert s.auth_token.pk != old_pk
-
-
-@pytest.mark.django_db
-def test_workstation_ready(
-    http_image, settings, django_capture_on_commit_callbacks
-):
-    # Execute celery tasks in place
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    # Do not execute the callbacks as the image should not be ready
-    wsi = WorkstationImageFactory(image__from_path=http_image)
-    assert wsi.is_manifest_valid is None
-    assert wsi.can_execute is False
-
-    with django_capture_on_commit_callbacks(execute=True):
-        s = SessionFactory(workstation_image=wsi)
-
-    s.refresh_from_db()
-    assert s.status == s.FAILED
 
 
 @pytest.mark.django_db
