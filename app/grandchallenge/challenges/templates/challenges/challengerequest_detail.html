@@ -76,7 +76,9 @@
     <br>
     {% get_obj_perms request.user for object as "user_perms" %}
     {% if 'change_challengerequest' in user_perms %}
-        <div class="mt-3" id="budget">
+    <div class="card card-danger border-danger">
+        <div class="card-header bg-danger text-white">Reviewer Only</div>
+        <div class="mt-3 card-body" id="budget">
             <div class="row">
                 <div class="col-6">
                     <h2>Budget estimate</h2>
@@ -87,6 +89,7 @@
             </div>
         {% include "challenges/partials/budget_table.html" with object=object %}
         </div>
+    </div>
     {% endif %}
 {% endblock %}
 
