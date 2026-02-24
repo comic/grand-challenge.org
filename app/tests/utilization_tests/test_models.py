@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from grandchallenge.components.tasks import stop_service
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.tasks import (
     create_algorithm_jobs_for_evaluation,
@@ -37,7 +38,7 @@ def test_session_utilization_created_after_session():
 
     assert SessionUtilization.objects.count() == 0
 
-    session.stop()
+    stop_service(**session.task_kwargs)
 
     assert SessionUtilization.objects.count() == 1
 
@@ -49,7 +50,7 @@ def test_session_utilization_created_after_session():
 @pytest.mark.django_db
 def test_session_utilization_retained_when_session_deleted():
     session = SessionFactory()
-    session.stop()
+    stop_service(**session.task_kwargs)
     session_pk = session.pk
     session_utilization = session.session_utilization
     session_utilization_pk = session_utilization.pk
@@ -69,7 +70,7 @@ def test_session_utilization_retained_when_session_deleted():
 @pytest.mark.django_db
 def test_session_utilization_retained_when_creator_deleted():
     session = SessionFactory()
-    session.stop()
+    stop_service(**session.task_kwargs)
     session_utilization = session.session_utilization
     session_utilization_pk = session_utilization.pk
 
@@ -89,12 +90,14 @@ def test_session_utilization_duration(mocker):
     fixed_now = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
     session = SessionFactory()
     session.created = fixed_now - timedelta(minutes=5)
+    session.save()
+
     mocker.patch(
         "grandchallenge.workstations.models.now",
         return_value=fixed_now,
     )
 
-    session.stop()
+    stop_service(**session.task_kwargs)
 
     assert session.session_utilization.duration == timedelta(minutes=5)
 
@@ -105,7 +108,7 @@ def test_session_utilization_reader_studies():
     reader_studies = ReaderStudyFactory.create_batch(2)
     session.reader_studies.set(reader_studies)
 
-    session.stop()
+    stop_service(**session.task_kwargs)
 
     assert session.session_utilization.reader_studies.count() == 2
     assert set(reader_studies) == set(
@@ -116,7 +119,7 @@ def test_session_utilization_reader_studies():
 @pytest.mark.django_db
 def test_session_utilization_no_reader_studies():
     session = SessionFactory()
-    session.stop()
+    stop_service(**session.task_kwargs)
 
     assert session.session_utilization.reader_studies.count() == 0
 
@@ -129,7 +132,7 @@ def test_session_utilization_interactive_algorithm():
     )
     session.reader_studies.add(question.reader_study)
 
-    session.stop()
+    stop_service(**session.task_kwargs)
 
     assert session.session_utilization.interactive_algorithms == [
         InteractiveAlgorithmChoices.ULS23_BASELINE.value
@@ -146,7 +149,7 @@ def test_session_utilization_distinct_interactive_algorithms():
     session.reader_studies.add(questions[0].reader_study)
     session.reader_studies.add(questions[1].reader_study)
 
-    session.stop()
+    stop_service(**session.task_kwargs)
 
     assert session.session_utilization.interactive_algorithms == [
         InteractiveAlgorithmChoices.ULS23_BASELINE.value
@@ -158,7 +161,7 @@ def test_session_utilization_interactive_algorithms_credit_rate():
     session_without_interactive_alg = SessionFactory()
     question = QuestionFactory.create()
     session_without_interactive_alg.reader_studies.add(question.reader_study)
-    session_without_interactive_alg.stop()
+    stop_service(**session_without_interactive_alg.task_kwargs)
 
     assert (
         session_without_interactive_alg.session_utilization.credits_per_hour
@@ -170,7 +173,7 @@ def test_session_utilization_interactive_algorithms_credit_rate():
         interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
     )
     session_with_interactive_alg.reader_studies.add(question.reader_study)
-    session_with_interactive_alg.stop()
+    stop_service(**session_with_interactive_alg.task_kwargs)
 
     assert (
         session_with_interactive_alg.session_utilization.credits_per_hour
