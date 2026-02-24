@@ -293,6 +293,22 @@ def test_api_archive_item_allowed_sockets(
     assert response.json()["pk"] == str(item.pk)
     assert item.values.count() == 1
 
+    # Test creation of empty archive item with allowed sockets set
+    assert archive.items.count() == 1
+    with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="api:archives-item-list",
+            data={"archive": archive.api_url},
+            user=editor,
+            client=client,
+            method=client.post,
+            content_type="application/json",
+            HTTP_X_FORWARDED_PROTO="https",
+        )
+
+    assert response.status_code == 201, response.content
+    assert archive.items.count() == 2
+
 
 @pytest.mark.django_db
 @override_settings(task_eager_propagates=True, task_always_eager=True)

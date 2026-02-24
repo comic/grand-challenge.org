@@ -94,7 +94,9 @@ class ArchiveItemPostSerializer(
             pass
         else:
             errors = []
-            for civ in data["values"]:
+            for civ in data.get(
+                "values", []
+            ):  # "values" not required when creating an archive item
                 interface = civ["interface"]
                 if interface.slug not in allowed_socket_slugs:
                     errors.append(
