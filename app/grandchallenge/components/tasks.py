@@ -1131,7 +1131,7 @@ def update_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     # TODO Error handling
 
     conn_info = ecs_service.get_connection_information(
-        task_arn=ecs_service.task_arn
+        task_arn=service.task_arn
     )
 
     service.host_address = conn_info.host_address

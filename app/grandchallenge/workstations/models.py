@@ -465,7 +465,6 @@ class Session(FieldChangeMixin, UUIDModel):
     )
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)
-    # TODO link to logs
     logs = deprecate_field(models.TextField(editable=False, blank=True))
     ping_times = models.JSONField(null=True, blank=True, default=None)
     extra_env_vars = models.JSONField(

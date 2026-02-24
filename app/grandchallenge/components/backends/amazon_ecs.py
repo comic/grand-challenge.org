@@ -146,9 +146,12 @@ class ECSService:
         The task must be running for this to work.
         """
         workstation_container = get(
-            container
-            for container in task_description["containers"]
-            if container["name"] == self.internal_workstation_container_name
+            [
+                container
+                for container in task_description["containers"]
+                if container["name"]
+                == self.internal_workstation_container_name
+            ]
         )
 
         return {
