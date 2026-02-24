@@ -36,7 +36,7 @@ from grandchallenge.cases.models import (
     Image,
     RawImageUploadSession,
 )
-from grandchallenge.components.backends.amazon_ecs import Service
+from grandchallenge.components.backends.amazon_ecs import ECSService
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
     ComponentException,
@@ -1053,66 +1053,118 @@ def deprovision_job(
     executor.deprovision()
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(
+    retry_on=(
+        LockNotAcquiredException,
+        RetryStep,
+    )
+)
 @transaction.atomic
 def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
-    # TODO locking and error handling, add a separate task for the waiter
+    """
+    Starts the service on ECS.
+
+    Takes jobs in the service.QUEUED state, starts them on ECS,
+    then places them in the service.STARTED state.
+    """
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    service = model.objects.get(pk=pk)
 
-    ecs_service = Service(**service.service_kwargs)
+    with check_lock_acquired():
+        service = model.objects.select_for_update(nowait=True).get(pk=pk)
 
-    try:
-        if not service.workstation_image.can_execute:
-            raise ComponentException("Workstation image was not ready")
+    if service.status != service.QUEUED:
+        raise RuntimeError("Service is not ready for starting")
 
-        if (
-            model.objects.filter(
-                status__in=[model.RUNNING, model.STARTED],
-                region=service.region,
-            ).count()
-            >= settings.WORKSTATIONS_MAXIMUM_SESSIONS
-        ):
-            raise ComponentException("Too many sessions are running")
+    if not service.workstation_image.can_execute:
+        logger.error("Workstation image was not ready to be used")
 
-        service.task_arn = ecs_service.start(environment=service.environment)
-
-        ecs_service.wait_for_task_running(task_arn=service.task_arn)
-
-        service.host_address = ecs_service.get_host_address(
-            task_arn=service.task_arn
-        )
-        service.http_port = ecs_service.get_port_mapping(
-            port=settings.COMPONENTS_SERVICE_CONTAINER_HTTP_PORT,
-            task_arn=service.task_arn,
-        )
-        service.websocket_port = ecs_service.get_port_mapping(
-            port=settings.COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT,
-            task_arn=service.task_arn,
-        )
-
-        service.status = model.STARTED
+        service.status = service.FAILED
         service.full_clean()
         service.save()
-    except Exception:
-        service.status = model.FAILED
-        service.full_clean()
-        service.save()
-        raise
+
+        return
+
+    if (
+        model.objects.filter(
+            status__in=[service.RUNNING, service.STARTED],
+            region=service.region,
+        ).count()
+        >= settings.WORKSTATIONS_MAXIMUM_SESSIONS
+    ):
+        raise RetryStep("Too many sessions are running")
+
+    ecs_service = ECSService(**service.service_kwargs)
+
+    service.task_arn = ecs_service.start(environment=service.environment)
+
+    service.status = service.STARTED
+    service.full_clean()
+    service.save()
+
+    on_commit(
+        update_service.signature(
+            kwargs=service.task_kwargs,
+        ).apply_async
+    )
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
+def update_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+    """
+    Update the host and ports from ECS
+
+    Takes jobs in the service.STARTED state, waits until they
+    are assigned a host and port on ECS, updates the connection information,
+    then places them in the service.RUNNING state.
+    """
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
+    with check_lock_acquired():
+        service = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if service.status != service.STARTED:
+        raise RuntimeError("Service is not ready for updating")
+
+    ecs_service = ECSService(**service.service_kwargs)
+
+    # TODO Error handling
+
+    conn_info = ecs_service.get_connection_information(
+        task_arn=ecs_service.task_arn
+    )
+
+    service.host_address = conn_info.host_address
+    service.http_port = conn_info.http_port
+    service.websocket_port = conn_info.websocket_port
+
+    service.status = service.RUNNING
+    service.full_clean()
+    service.save()
+
+
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
-    # TODO locking and error handling
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    service = model.objects.get(pk=pk)
 
-    ecs_service = Service(**service.service_kwargs)
+    with check_lock_acquired():
+        service = model.objects.select_for_update(nowait=True).get(pk=pk)
 
-    ecs_service.stop(task_arn=service.task_arn)
+    if service.status not in {
+        service.QUEUED,
+        service.STARTED,
+        service.RUNNING,
+    }:
+        raise RuntimeError("Service is not ready for updating")
 
-    service.status = model.STOPPED
+    ecs_service = ECSService(**service.service_kwargs)
+
+    # TODO Error handling
+    if service.task_arn:
+        ecs_service.stop(task_arn=service.task_arn)
+
+    service.status = service.STOPPED
     service.full_clean()
     service.save()
 
@@ -1125,12 +1177,16 @@ def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
 def stop_expired_services(*, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
-    services_to_stop = model.objects.annotate(
-        expires=ExpressionWrapper(
-            F("created") + F("maximum_duration"),
-            output_field=DateTimeField(),
+    services_to_stop = (
+        model.objects.annotate(
+            expires=ExpressionWrapper(
+                F("created") + F("maximum_duration"),
+                output_field=DateTimeField(),
+            )
         )
-    ).filter(expires__lt=now(), status=model.STARTED)
+        .filter(expires__lt=now())
+        .exclude(status__in=[model.FAILED, model.STOPPED])
+    )
 
     for service in services_to_stop:
         on_commit(

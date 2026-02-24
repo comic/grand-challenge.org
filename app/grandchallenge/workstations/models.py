@@ -587,10 +587,15 @@ class Session(FieldChangeMixin, UUIDModel):
 
     def clean(self):
         if self.status == self.STARTED:
+            if not self.task_arn:
+                raise ValidationError(
+                    {"task_arn": "The task arn must be set if started"}
+                )
+        elif self.status == self.RUNNING:
             conflicts = Session.objects.filter(
                 host_address=self.host_address,
                 region=self.region,
-                status=self.STARTED,
+                status=self.RUNNING,
             ).exclude(pk=self.pk)
 
             used_ports = set(

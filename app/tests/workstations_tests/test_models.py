@@ -364,9 +364,9 @@ def test_extra_env_vars():
 
 
 @pytest.fixture
-def started_session():
+def running_session():
     return SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
         http_port=40000,
         websocket_port=40001,
@@ -374,9 +374,9 @@ def started_session():
 
 
 @pytest.mark.django_db
-def test_clean_passes_for_valid_session(started_session):
+def test_clean_passes_for_valid_session(running_session):
     session = SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
         http_port=40002,
         websocket_port=40003,
@@ -385,11 +385,11 @@ def test_clean_passes_for_valid_session(started_session):
 
 
 @pytest.mark.django_db
-def test_clean_raises_if_http_port_in_use(started_session):
+def test_clean_raises_if_http_port_in_use(running_session):
     session = SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
-        http_port=40000,  # conflicts with started_session.http_port
+        http_port=40000,  # conflicts with running_session.http_port
         websocket_port=40003,
     )
     with pytest.raises(ValidationError, match="http_port"):
@@ -397,12 +397,12 @@ def test_clean_raises_if_http_port_in_use(started_session):
 
 
 @pytest.mark.django_db
-def test_clean_raises_if_websocket_port_in_use(started_session):
+def test_clean_raises_if_websocket_port_in_use(running_session):
     session = SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
         http_port=40002,
-        websocket_port=40001,  # conflicts with started_session.websocket_port
+        websocket_port=40001,  # conflicts with running_session.websocket_port
     )
     with pytest.raises(ValidationError, match="websocket_port"):
         session.clean()
@@ -410,12 +410,12 @@ def test_clean_raises_if_websocket_port_in_use(started_session):
 
 @pytest.mark.django_db
 def test_clean_raises_if_http_port_matches_other_websocket_port(
-    started_session,
+    running_session,
 ):
     session = SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
-        http_port=40001,  # conflicts with started_session.websocket_port
+        http_port=40001,  # conflicts with running_session.websocket_port
         websocket_port=40002,
     )
     with pytest.raises(ValidationError, match="http_port"):
@@ -424,13 +424,13 @@ def test_clean_raises_if_http_port_matches_other_websocket_port(
 
 @pytest.mark.django_db
 def test_clean_raises_if_websocket_port_matches_other_http_port(
-    started_session,
+    running_session,
 ):
     session = SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
         http_port=40002,
-        websocket_port=40000,  # conflicts with started_session.http_port
+        websocket_port=40000,  # conflicts with running_session.http_port
     )
     with pytest.raises(ValidationError, match="websocket_port"):
         session.clean()
@@ -439,7 +439,7 @@ def test_clean_raises_if_websocket_port_matches_other_http_port(
 @pytest.mark.django_db
 def test_clean_raises_if_ports_identical():
     session = SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
         http_port=40000,
         websocket_port=40000,
@@ -449,16 +449,16 @@ def test_clean_raises_if_ports_identical():
 
 
 @pytest.mark.django_db
-def test_clean_skips_validation_if_not_started(started_session):
+def test_clean_skips_validation_if_not_started(running_session):
     session = SessionFactory(
         status=Session.QUEUED,
         host_address="192.168.1.1",
-        http_port=40000,  # would conflict if STARTED
+        http_port=40000,  # would conflict if RUNNING
         websocket_port=40001,
     )
     session.clean()  # should not raise
 
 
 @pytest.mark.django_db
-def test_clean_excludes_self(started_session):
-    started_session.clean()  # should not conflict with itself
+def test_clean_excludes_self(running_session):
+    running_session.clean()  # should not conflict with itself

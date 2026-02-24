@@ -1,8 +1,18 @@
+from typing import NamedTuple
+
 import boto3
 from django.conf import settings
 
+from grandchallenge.evaluation.utils import get
 
-class Service:
+
+class ConnectionInformation(NamedTuple):
+    host_address: str
+    http_port: int
+    websocket_port: int
+
+
+class ECSService:
     def __init__(
         self,
         container_name: str,
@@ -37,35 +47,6 @@ class Service:
     def internal_workstation_container_name(self):
         return "workstation"
 
-    def get_host_address(self, *, task_arn):
-        task = self._ecs_client.describe_tasks(
-            cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME, tasks=[task_arn]
-        )["tasks"][0]
-        container_instance = self._ecs_client.describe_container_instances(
-            cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
-            containerInstances=[task["containerInstanceArn"]],
-        )["containerInstances"][0]
-        ec2_instance = self._ec2_client.describe_instances(
-            InstanceIds=[container_instance["ec2InstanceId"]]
-        )["Reservations"][0]["Instances"][0]
-        return ec2_instance["PrivateIpAddress"]
-
-    def get_port_mapping(self, *, port, task_arn):
-        task = self._ecs_client.describe_tasks(
-            cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME, tasks=[task_arn]
-        )["tasks"][0]
-        workstation_container = [
-            c
-            for c in task["containers"]
-            if c["name"] == self.internal_workstation_container_name
-        ][0]
-        binding = [
-            b
-            for b in workstation_container["networkBindings"]
-            if b["containerPort"] == port
-        ]
-        return binding[0]["hostPort"]
-
     def start(
         self,
         environment: dict,
@@ -95,11 +76,97 @@ class Service:
 
         return response["tasks"][0]["taskArn"]
 
-    def wait_for_task_running(self, *, task_arn):
+    def get_connection_information(self, *, task_arn):
+        """Get the host and ports for this service"""
+
+        # The host and ports cannot be determined until the task is running
+        self._wait_for_task_running(task_arn=task_arn)
+
+        task_description = self._get_task_description(task_arn=task_arn)
+
+        host_address = self._get_host_private_ip_address(
+            task_description=task_description
+        )
+        port_mappings = self._get_port_mappings(
+            task_description=task_description
+        )
+
+        return ConnectionInformation(
+            host_address=host_address,
+            http_port=port_mappings[
+                settings.COMPONENTS_SERVICE_CONTAINER_HTTP_PORT
+            ],
+            websocket_port=port_mappings[
+                settings.COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT
+            ],
+        )
+
+    def _wait_for_task_running(self, *, task_arn):
         waiter = self._ecs_client.get_waiter("tasks_running")
         waiter.wait(
             cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME, tasks=[task_arn]
         )
+
+    def _get_task_description(self, *, task_arn):
+        return get(
+            self._ecs_client.describe_tasks(
+                cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
+                tasks=[task_arn],
+            )["tasks"]
+        )
+
+    def _get_host_private_ip_address(self, *, task_description):
+        """
+        Gets the private IP address of the container instance (host)
+
+        Assumes running ECS on EC2 instances. The task must be running
+        for this to work.
+        """
+        container_instance = get(
+            self._ecs_client.describe_container_instances(
+                cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
+                containerInstances=[task_description["containerInstanceArn"]],
+            )["containerInstances"]
+        )
+
+        reservation = get(
+            self._ec2_client.describe_instances(
+                InstanceIds=[container_instance["ec2InstanceId"]]
+            )["Reservations"]
+        )
+
+        ec2_instance = get(reservation["Instances"])
+
+        return ec2_instance["PrivateIpAddress"]
+
+    def _get_port_mappings(self, *, task_description):
+        """
+        Gets the container ports to host ports
+
+        The task must be running for this to work.
+        """
+        workstation_container = get(
+            container
+            for container in task_description["containers"]
+            if container["name"] == self.internal_workstation_container_name
+        )
+
+        return {
+            int(binding["containerPort"]): int(binding["hostPort"])
+            for binding in workstation_container["networkBindings"]
+        }
+
+    def _register_task_definition(self):
+        # TODO only one task definition should be created per workstation image
+        response = self._ecs_client.register_task_definition(
+            containerDefinitions=self._container_definitions,
+            family="-".join(self._exec_image_repo_tag.split("/")[1:]).replace(
+                ":", "-"
+            ),
+            requiresCompatibilities=["EC2"],
+            taskRoleArn=settings.COMPONENTS_SERVICE_TASK_ROLE_ARN,
+        )
+        return response["taskDefinition"]["taskDefinitionArn"]
 
     @property
     def _container_definitions(self):
@@ -153,18 +220,6 @@ class Service:
         ]
 
         return container_definitions
-
-    def _register_task_definition(self):
-        # TODO only one task definition should be created per workstation image
-        response = self._ecs_client.register_task_definition(
-            containerDefinitions=self._container_definitions,
-            family="-".join(self._exec_image_repo_tag.split("/")[1:]).replace(
-                ":", "-"
-            ),
-            requiresCompatibilities=["EC2"],
-            taskRoleArn=settings.COMPONENTS_SERVICE_TASK_ROLE_ARN,
-        )
-        return response["taskDefinition"]["taskDefinitionArn"]
 
     def stop(self, *, task_arn):
         self._ecs_client.stop_task(
