@@ -1,4 +1,3 @@
-import json
 import logging
 import shlex
 from subprocess import run
@@ -7,7 +6,6 @@ from django.conf import settings
 from django.utils import timezone
 
 from grandchallenge.components.registry import _get_registry_auth_config
-from grandchallenge.evaluation.utils import get
 
 logger = logging.getLogger(__name__)
 
@@ -59,18 +57,3 @@ def build_image(*, repo_tag, path):
 
 def save_image(*, repo_tag, output):
     return _run_docker_command("save", "--output", str(output), repo_tag)
-
-
-def get_container_id(*, name):
-    result = _run_docker_command(
-        "ps", "--all", "--quiet", "--filter", f"name={name}"
-    )
-    return get([line for line in result.stdout.splitlines()])
-
-
-def inspect_container(*, name):
-    container_id = get_container_id(name=name)
-    result = _run_docker_command(
-        "inspect", "--format", "{{json .}}", container_id
-    )
-    return json.loads(result.stdout)

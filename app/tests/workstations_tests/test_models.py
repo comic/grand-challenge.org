@@ -5,13 +5,7 @@ from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
-from knox.models import AuthToken
 
-from grandchallenge.components.backends.docker_client import (
-    get_container_id,
-    inspect_container,
-)
-from grandchallenge.components.tasks import stop_expired_services
 from grandchallenge.workstations.models import Session, Workstation
 from tests.factories import (
     SessionFactory,
@@ -19,7 +13,6 @@ from tests.factories import (
     WorkstationFactory,
     WorkstationImageFactory,
 )
-from tests.utils import recurse_callbacks
 from tests.workstations_tests.factories import FeedbackFactory
 
 
@@ -67,162 +60,6 @@ def test_session_auth_token():
 
 
 @pytest.mark.django_db
-@pytest.mark.xfail(
-    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/rse-grand-challenge/issues/4031"
-)
-def test_session_start(
-    http_image, settings, django_capture_on_commit_callbacks
-):
-    # Execute celery tasks in place
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        wsi = WorkstationImageFactory(image__from_path=http_image)
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    with django_capture_on_commit_callbacks(execute=True):
-        s = SessionFactory(workstation_image=wsi)
-
-    try:
-        assert get_container_id(name=s.service.container_name)
-
-        s.refresh_from_db()
-        assert s.status == s.STARTED
-
-        container = inspect_container(name=s.service.container_name)
-
-        expected_labels = {
-            "job": f"{s._meta.app_label}-{s._meta.model_name}-{s.pk}",
-        }
-
-        for k, v in expected_labels.items():
-            assert container["Config"]["Labels"][k] == v
-
-        networks = container["NetworkSettings"]["Networks"]
-        assert len(networks) == 1
-
-        with django_capture_on_commit_callbacks(execute=True):
-            s.user_finished = True
-            s.save()
-
-        with pytest.raises(ObjectDoesNotExist):
-            # noinspection PyStatementEffect
-            get_container_id(name=s.service.container_name)
-    finally:
-        stop_all_sessions()
-
-
-@pytest.mark.django_db
-@pytest.mark.xfail(
-    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/rse-grand-challenge/issues/4031"
-)
-def test_correct_session_stopped(
-    http_image, settings, django_capture_on_commit_callbacks
-):
-    # Execute celery tasks in place
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        wsi = WorkstationImageFactory(image__from_path=http_image)
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    try:
-        with django_capture_on_commit_callbacks(execute=True):
-            s1, s2 = (
-                SessionFactory(workstation_image=wsi),
-                SessionFactory(workstation_image=wsi),
-            )
-
-        assert get_container_id(name=s1.service.container_name)
-        assert get_container_id(name=s2.service.container_name)
-
-        s2.refresh_from_db()
-        auth_token_pk = s2.auth_token.pk
-
-        with django_capture_on_commit_callbacks(execute=True):
-            s2.user_finished = True
-            s2.save()
-
-        assert get_container_id(name=s1.service.container_name)
-        with pytest.raises(ObjectDoesNotExist):
-            # noinspection PyStatementEffect
-            get_container_id(name=s2.service.container_name)
-
-        with pytest.raises(ObjectDoesNotExist):
-            # auth token should be deleted when the service is stopped
-            AuthToken.objects.get(pk=auth_token_pk)
-
-    finally:
-        stop_all_sessions()
-
-
-@pytest.mark.django_db
-@pytest.mark.xfail(
-    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/rse-grand-challenge/issues/4031"
-)
-def test_session_cleanup(
-    http_image, settings, django_capture_on_commit_callbacks
-):
-    # Execute celery tasks in place
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        wsi = WorkstationImageFactory(image__from_path=http_image)
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    default_region = "eu-nl-1"
-
-    try:
-        with django_capture_on_commit_callbacks(execute=True):
-            s1, s2, s3 = (
-                SessionFactory(workstation_image=wsi, region=default_region),
-                SessionFactory(
-                    workstation_image=wsi,
-                    maximum_duration=timedelta(seconds=0),
-                    region=default_region,
-                ),
-                # An expired service in a different region
-                SessionFactory(
-                    workstation_image=wsi,
-                    maximum_duration=timedelta(seconds=0),
-                    region="us-east-1",
-                ),
-            )
-
-        assert get_container_id(name=s1.service.container_name)
-        assert get_container_id(name=s2.service.container_name)
-        assert get_container_id(name=s3.service.container_name)
-
-        # Stop expired services in the default region
-        stop_expired_services(
-            app_label="workstations",
-            model_name="session",
-            region=default_region,
-        )
-
-        assert get_container_id(name=s1.service.container_name)
-        with pytest.raises(ObjectDoesNotExist):
-            # noinspection PyStatementEffect
-            get_container_id(name=s2.service.container_name)
-        assert get_container_id(name=s3.service.container_name)
-
-    finally:
-        stop_all_sessions()
-
-
-@pytest.mark.django_db
 def test_workstation_ready(
     http_image, settings, django_capture_on_commit_callbacks
 ):
@@ -240,46 +77,6 @@ def test_workstation_ready(
 
     s.refresh_from_db()
     assert s.status == s.FAILED
-
-
-@pytest.mark.django_db
-@pytest.mark.xfail(
-    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/rse-grand-challenge/issues/4031"
-)
-def test_session_limit(
-    http_image, settings, django_capture_on_commit_callbacks
-):
-    # Execute celery tasks in place
-    settings.WORKSTATIONS_MAXIMUM_SESSIONS = 1
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        wsi = WorkstationImageFactory(image__from_path=http_image)
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    try:
-        with django_capture_on_commit_callbacks(execute=True):
-            s1 = SessionFactory(workstation_image=wsi)
-        s1.refresh_from_db()
-        assert s1.status == s1.STARTED
-
-        with django_capture_on_commit_callbacks(execute=True):
-            s2 = SessionFactory(workstation_image=wsi)
-        s2.refresh_from_db()
-        assert s2.status == s2.FAILED
-
-        s1.stop()
-
-        with django_capture_on_commit_callbacks(execute=True):
-            s3 = SessionFactory(workstation_image=wsi)
-        s3.refresh_from_db()
-        assert s3.status == s3.STARTED
-    finally:
-        stop_all_sessions()
 
 
 @pytest.mark.django_db

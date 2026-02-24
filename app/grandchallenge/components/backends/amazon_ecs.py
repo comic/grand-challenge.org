@@ -15,12 +15,11 @@ class ConnectionInformation(NamedTuple):
 class ECSService:
     def __init__(
         self,
-        container_name: str,
         exec_image_repo_tag: str,
         region: str,
     ):
         super().__init__()
-        self._container_name = container_name
+
         self._exec_image_repo_tag = exec_image_repo_tag
         self._region = region
 
@@ -40,11 +39,7 @@ class ECSService:
         return self.__ec2_client
 
     @property
-    def container_name(self):
-        return self._container_name
-
-    @property
-    def internal_workstation_container_name(self):
+    def _internal_workstation_container_name(self):
         return "workstation"
 
     def start(
@@ -63,7 +58,7 @@ class ECSService:
             overrides={
                 "containerOverrides": [
                     {
-                        "name": self.internal_workstation_container_name,
+                        "name": self._internal_workstation_container_name,
                         "environment": [
                             {"name": k, "value": v}
                             for k, v in environment.items()
@@ -149,7 +144,7 @@ class ECSService:
                 container
                 for container in task_description["containers"]
                 if container["name"]
-                == self.internal_workstation_container_name
+                == self._internal_workstation_container_name
             ]
         )
 
@@ -172,6 +167,10 @@ class ECSService:
         # The task family is based on the exec image repo and tag for grouping.
         # We do not create one task definition per exec image as we may need
         # to modify the runtime settings (CPU limits for instance).
+        #
+        # There is a limit of 1,000,000 versions per family,
+        # it is unlikely that we would have that many sessions for a single
+        # container image version.
 
         repo_tag_without_domain = self._exec_image_repo_tag.split("/")[1:]
         task_definition_safe_repo_tag = "-".join(repo_tag_without_domain)
@@ -183,7 +182,7 @@ class ECSService:
     def _container_definitions(self):
         container_definitions = [
             {
-                "name": self.internal_workstation_container_name,
+                "name": self._internal_workstation_container_name,
                 "image": self._exec_image_repo_tag,
                 "portMappings": [
                     {
@@ -197,7 +196,7 @@ class ECSService:
                         "name": "websocket",
                     },
                 ],
-                "memoryReservation": 256,
+                "memoryReservation": settings.COMPONENTS_SERVICE_MEMORY_RESERVATION_MB,
                 "dockerSecurityOptions": ["no-new-privileges"],
                 "essential": True,
                 "linuxParameters": {
@@ -221,10 +220,10 @@ class ECSService:
                     },
                     {
                         "name": "data",
-                        "softLimit": settings.COMPONENTS_SERVICE_MEMORY_LIMIT
-                        * settings.GIGABYTE,
-                        "hardLimit": settings.COMPONENTS_SERVICE_MEMORY_LIMIT
-                        * settings.GIGABYTE,
+                        "softLimit": settings.COMPONENTS_SERVICE_MEMORY_LIMIT_MB
+                        * settings.MEGABYTE,
+                        "hardLimit": settings.COMPONENTS_SERVICE_MEMORY_LIMIT_MB
+                        * settings.MEGABYTE,
                     },
                 ],
             },

@@ -362,8 +362,7 @@ class SessionManager(models.QuerySet):
 class Session(FieldChangeMixin, UUIDModel):
     """
     Tracks who has launched workstation images. The ``WorkstationImage`` will
-    be launched as a ``Service``. The ``Session`` is responsible for starting
-    and stopping the ``Service``.
+    be launched as a ``ECSService``.
 
     Parameters
     ----------
@@ -498,7 +497,6 @@ class Session(FieldChangeMixin, UUIDModel):
     @property
     def service_kwargs(self):
         return {
-            "container_name": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             "exec_image_repo_tag": self.workstation_image.original_repo_tag,
             "region": self.region,
         }
