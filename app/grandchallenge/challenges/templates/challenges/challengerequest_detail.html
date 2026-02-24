@@ -84,7 +84,7 @@
                     <h2>Budget estimate</h2>
                 </div>
                 <div class="col-6 text-right">
-                    <a class="btn btn-primary" hx-get="{% url 'challenges:requests-budget-update' pk=object.pk %}" hx-swap="innerHTML" hx-target="#budget">Edit budget fields</a>
+                    <a class="btn btn-primary" hx-get="{% url 'challenges:requests-budget-update' pk=object.pk %}" hx-swap="innerHTML" hx-target="#budget"><i class="fa fa-edit mr-1"></i>Edit Budget Estimate</a>
                 </div>
             </div>
         {% include "challenges/partials/budget_table.html" with object=object %}
