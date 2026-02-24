@@ -25,6 +25,8 @@
             <div class="badge badge-success h-50 p-2 mr-1">Accepted</div>
         {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
             <div class="badge badge-danger h-50 p-2 mr-1">Rejected</div>
+        {% elif object.status == object.ChallengeRequestStatusChoices.PENDING %}
+            <div class="badge badge-light h-50 p-2 mr-1">Pending</div>
         {% endif %}
         <h3>[{{ object.short_name }}] {{ object.title  }}</h3>
     </div>
@@ -49,7 +51,7 @@
                 <a class="btn btn-primary btn-sm mt-3"
                    href="{% url 'evaluation:configure-algorithm-phases' challenge_short_name=object.short_name %}"
                    title="Configure algorithm phases">
-                    <i class="fas fa-edit mr-1"></i> Configure algorithm phases
+                    <i class="fas fa-edit mr-1"></i>Configure Algorithm Phases
                 </a>
             {% endif %}
         </div>
