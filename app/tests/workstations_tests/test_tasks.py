@@ -106,7 +106,7 @@ def test_start_service(mocker, settings, django_capture_on_commit_callbacks):
                     {
                         "dockerSecurityOptions": ["no-new-privileges"],
                         "essential": True,
-                        "image": f"localhost:5000/localhost/workstations/workstationimage:{session.workstation_image.pk}",
+                        "image": f"{settings.COMPONENTS_REGISTRY_URL}/localhost/workstations/workstationimage:{session.workstation_image.pk}",
                         "linuxParameters": {
                             "capabilities": {"drop": ["ALL"]},
                             "initProcessEnabled": True,
