@@ -155,9 +155,12 @@ class Service:
         return container_definitions
 
     def _register_task_definition(self):
+        # TODO only one task definition should be created per workstation image
         response = self._ecs_client.register_task_definition(
             containerDefinitions=self._container_definitions,
-            family=self.container_name,  # TODO should be the workstation image id
+            family="-".join(self._exec_image_repo_tag.split("/")[1:]).replace(
+                ":", "-"
+            ),
             requiresCompatibilities=["EC2"],
             taskRoleArn=settings.COMPONENTS_SERVICE_TASK_ROLE_ARN,
         )

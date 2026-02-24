@@ -24,8 +24,6 @@ from guardian.shortcuts import assign_perm, remove_perm
 from knox.models import AuthToken
 from pictures.models import PictureField
 
-from grandchallenge.components.backends.amazon_ecs import Service
-from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.models import ComponentImage
 from grandchallenge.components.tasks import (
     preload_interactive_algorithms,
@@ -499,6 +497,14 @@ class Session(FieldChangeMixin, UUIDModel):
         }
 
     @property
+    def service_kwargs(self):
+        return {
+            "container_name": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
+            "exec_image_repo_tag": self.workstation_image.original_repo_tag,
+            "region": self.region,
+        }
+
+    @property
     def expires_at(self) -> datetime:
         """
         Returns
@@ -551,19 +557,6 @@ class Session(FieldChangeMixin, UUIDModel):
         return env
 
     @property
-    def service(self) -> Service:
-        """
-        Returns
-        -------
-            The service for this session, could be active or inactive.
-        """
-        return Service(
-            container_name=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
-            exec_image_repo_tag=self.workstation_image.original_repo_tag,
-            region=self.region,
-        )
-
-    @property
     def workstation_url(self) -> str:
         """
         Returns
@@ -573,74 +566,6 @@ class Session(FieldChangeMixin, UUIDModel):
         return urljoin(
             self.get_absolute_url(), self.workstation_image.initial_path
         )
-
-    def start(self) -> None:
-        """
-        Starts the service for this session, ensuring that the
-        ``workstation_image`` is ready to be used and that
-        ``WORKSTATIONS_MAXIMUM_SESSIONS`` has not been reached in this region.
-
-        Raises
-        ------
-        ComponentException
-            If the service cannot be started.
-        """
-        try:
-            if not self.workstation_image.can_execute:
-                raise ComponentException("Workstation image was not ready")
-
-            if (
-                Session.objects.all()
-                .filter(
-                    status__in=[Session.RUNNING, Session.STARTED],
-                    region=self.region,
-                )
-                .count()
-                >= settings.WORKSTATIONS_MAXIMUM_SESSIONS
-            ):
-                raise ComponentException("Too many sessions are running")
-
-            self.task_arn = self.service.start(environment=self.environment)
-
-            self.service.wait_for_task_running(task_arn=self.task_arn)
-
-            self.host_address = self.service.get_host_address(
-                task_arn=self.task_arn
-            )
-            self.http_port = self.service.get_port_mapping(
-                port=settings.COMPONENTS_SERVICE_CONTAINER_HTTP_PORT,
-                task_arn=self.task_arn,
-            )
-            self.websocket_port = self.service.get_port_mapping(
-                port=settings.COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT,
-                task_arn=self.task_arn,
-            )
-
-            self.update_status(status=self.STARTED)
-        except Exception:
-            self.update_status(status=self.FAILED)
-            raise
-
-    def stop(self) -> None:
-        """Stop the service for this session, cleaning up all of the containers."""
-        self.service.stop(task_arn=self.task_arn)
-        self.update_status(status=self.STOPPED)
-
-        if self.auth_token:
-            self.auth_token.delete()
-
-    def update_status(self, *, status: STATUS_CHOICES) -> None:
-        """
-        Updates the status of this session.
-
-        Parameters
-        ----------
-        status
-            The new status for this session.
-        """
-        self.status = status
-        self.full_clean()
-        self.save()
 
     def get_absolute_url(self):
         return reverse(

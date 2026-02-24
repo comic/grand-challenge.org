@@ -36,6 +36,7 @@ from grandchallenge.cases.models import (
     Image,
     RawImageUploadSession,
 )
+from grandchallenge.components.backends.amazon_ecs import Service
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
     ComponentException,
@@ -1053,38 +1054,90 @@ def deprovision_job(
 
 
 @acks_late_micro_short_task
+@transaction.atomic
 def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+    # TODO locking and error handling, add a separate task for the waiter
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    session = model.objects.get(pk=pk)
-    session.start()
+    service = model.objects.get(pk=pk)
+
+    ecs_service = Service(**service.service_kwargs)
+
+    try:
+        if not service.workstation_image.can_execute:
+            raise ComponentException("Workstation image was not ready")
+
+        if (
+            model.objects.filter(
+                status__in=[model.RUNNING, model.STARTED],
+                region=service.region,
+            ).count()
+            >= settings.WORKSTATIONS_MAXIMUM_SESSIONS
+        ):
+            raise ComponentException("Too many sessions are running")
+
+        service.task_arn = ecs_service.start(environment=service.environment)
+
+        ecs_service.wait_for_task_running(task_arn=service.task_arn)
+
+        service.host_address = ecs_service.get_host_address(
+            task_arn=service.task_arn
+        )
+        service.http_port = ecs_service.get_port_mapping(
+            port=settings.COMPONENTS_SERVICE_CONTAINER_HTTP_PORT,
+            task_arn=service.task_arn,
+        )
+        service.websocket_port = ecs_service.get_port_mapping(
+            port=settings.COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT,
+            task_arn=service.task_arn,
+        )
+
+        service.status = model.STARTED
+        service.full_clean()
+        service.save()
+    except Exception:
+        service.status = model.FAILED
+        service.full_clean()
+        service.save()
+        raise
 
 
 @acks_late_micro_short_task
+@transaction.atomic
 def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+    # TODO locking and error handling
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    session = model.objects.get(pk=pk)
-    session.stop()
+    service = model.objects.get(pk=pk)
+
+    ecs_service = Service(**service.service_kwargs)
+
+    ecs_service.stop(task_arn=service.task_arn)
+
+    service.status = model.STOPPED
+    service.full_clean()
+    service.save()
+
+    if service.auth_token:
+        service.auth_token.delete()
 
 
 @acks_late_micro_short_task
+@transaction.atomic
 def stop_expired_services(*, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
-    services_to_stop = (
-        model.objects.annotate(
-            expires=ExpressionWrapper(
-                F("created") + F("maximum_duration"),
-                output_field=DateTimeField(),
-            )
+    services_to_stop = model.objects.annotate(
+        expires=ExpressionWrapper(
+            F("created") + F("maximum_duration"),
+            output_field=DateTimeField(),
         )
-        .filter(expires__lt=now())
-        .exclude(status=model.STOPPED)
-    )
+    ).filter(expires__lt=now(), status=model.STARTED)
 
     for service in services_to_stop:
-        service.stop()
-
-    return [str(s) for s in services_to_stop]
+        on_commit(
+            stop_service.signature(
+                kwargs=service.task_kwargs,
+            ).apply_async
+        )
 
 
 class InteractiveAlgorithm:
