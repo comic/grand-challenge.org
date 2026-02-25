@@ -4,7 +4,7 @@ from datetime import timedelta
 import pytest
 from botocore.stub import Stubber
 
-from grandchallenge.components.backends.amazon_ecs import ECSService
+from grandchallenge.components.backends.amazon_ecs import ECSTaskOrchestrator
 from grandchallenge.components.tasks import (
     start_service,
     stop_expired_services,
@@ -84,14 +84,15 @@ def test_start_service(mocker, settings, django_capture_on_commit_callbacks):
         workstation_image__is_desired_version=True,
     )
 
-    service = ECSService(**session.service_kwargs)
+    orchestrator = ECSTaskOrchestrator(**session.orchestrator_kwargs)
 
     patched_service = mocker.patch(
-        "grandchallenge.components.tasks.ECSService", return_value=service
+        "grandchallenge.components.tasks.ECSTaskOrchestrator",
+        return_value=orchestrator,
     )
 
     with (
-        Stubber(service._ecs_client) as ecs_stubber,
+        Stubber(orchestrator._ecs_client) as ecs_stubber,
         django_capture_on_commit_callbacks() as callbacks,
     ):
         ecs_stubber.add_response(
@@ -205,7 +206,7 @@ def test_start_service(mocker, settings, django_capture_on_commit_callbacks):
 
         start_service(**session.task_kwargs)
 
-    patched_service.assert_called_once_with(**session.service_kwargs)
+    patched_service.assert_called_once_with(**session.orchestrator_kwargs)
 
     session.refresh_from_db()
 
@@ -235,15 +236,16 @@ def test_update_service(mocker, settings):
         status=Session.STARTED,
     )
 
-    service = ECSService(**session.service_kwargs)
+    orchestrator = ECSTaskOrchestrator(**session.orchestrator_kwargs)
 
     patched_service = mocker.patch(
-        "grandchallenge.components.tasks.ECSService", return_value=service
+        "grandchallenge.components.tasks.ECSTaskOrchestrator",
+        return_value=orchestrator,
     )
 
     with (
-        Stubber(service._ecs_client) as ecs_stubber,
-        Stubber(service._ec2_client) as ec2_stubber,
+        Stubber(orchestrator._ecs_client) as ecs_stubber,
+        Stubber(orchestrator._ec2_client) as ec2_stubber,
     ):
         ecs_stubber.add_response(
             method="describe_tasks",
@@ -306,7 +308,7 @@ def test_update_service(mocker, settings):
 
         update_service(**session.task_kwargs)
 
-    patched_service.assert_called_once_with(**session.service_kwargs)
+    patched_service.assert_called_once_with(**session.orchestrator_kwargs)
 
     session.refresh_from_db()
 
@@ -332,13 +334,14 @@ def test_stop_service(mocker, settings):
         status=Session.RUNNING,
     )
 
-    service = ECSService(**session.service_kwargs)
+    orchestrator = ECSTaskOrchestrator(**session.orchestrator_kwargs)
 
     patched_service = mocker.patch(
-        "grandchallenge.components.tasks.ECSService", return_value=service
+        "grandchallenge.components.tasks.ECSTaskOrchestrator",
+        return_value=orchestrator,
     )
 
-    with Stubber(service._ecs_client) as ecs_stubber:
+    with Stubber(orchestrator._ecs_client) as ecs_stubber:
         ecs_stubber.add_response(
             method="describe_tasks",
             expected_params={
@@ -372,7 +375,7 @@ def test_stop_service(mocker, settings):
 
         stop_service(**session.task_kwargs)
 
-    patched_service.assert_called_once_with(**session.service_kwargs)
+    patched_service.assert_called_once_with(**session.orchestrator_kwargs)
 
     session.refresh_from_db()
 

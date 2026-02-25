@@ -36,7 +36,7 @@ from grandchallenge.cases.models import (
     Image,
     RawImageUploadSession,
 )
-from grandchallenge.components.backends.amazon_ecs import ECSService
+from grandchallenge.components.backends.amazon_ecs import ECSTaskOrchestrator
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
     ComponentException,
@@ -1094,10 +1094,10 @@ def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     ):
         raise RetryStep("Too many sessions are running")
 
-    ecs_service = ECSService(**service.service_kwargs)
+    orchestrator = ECSTaskOrchestrator(**service.orchestrator_kwargs)
 
     try:
-        service.task_arn = ecs_service.start(environment=service.environment)
+        service.task_arn = orchestrator.start(environment=service.environment)
     except Exception as error:
         logger.error(error, exc_info=True)
 
@@ -1136,16 +1136,16 @@ def update_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     if service.status != service.STARTED:
         raise RuntimeError("Service is not ready for updating")
 
-    ecs_service = ECSService(**service.service_kwargs)
+    orchestrator = ECSTaskOrchestrator(**service.orchestrator_kwargs)
 
     try:
-        conn_info = ecs_service.get_connection_information(
+        conn_info = orchestrator.get_connection_information(
             task_arn=service.task_arn
         )
     except Exception as error:
         logger.error(error, exc_info=True)
 
-        ecs_service.stop(task_arn=service.task_arn)
+        orchestrator.stop(task_arn=service.task_arn)
 
         if service.auth_token:
             service.auth_token.delete()
@@ -1175,10 +1175,10 @@ def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
             model.objects.active().select_for_update(nowait=True).get(pk=pk)
         )
 
-    ecs_service = ECSService(**service.service_kwargs)
+    orchestrator = ECSTaskOrchestrator(**service.orchestrator_kwargs)
 
     if service.task_arn:
-        ecs_service.stop(task_arn=service.task_arn)
+        orchestrator.stop(task_arn=service.task_arn)
 
     service.status = service.STOPPED
     service.full_clean()

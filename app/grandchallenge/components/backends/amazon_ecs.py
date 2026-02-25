@@ -12,7 +12,7 @@ class ConnectionInformation(NamedTuple):
     websocket_port: int
 
 
-class ECSService:
+class ECSTaskOrchestrator:
     def __init__(
         self,
         exec_image_repo_tag: str,

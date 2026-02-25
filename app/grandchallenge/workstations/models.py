@@ -495,7 +495,7 @@ class Session(FieldChangeMixin, UUIDModel):
         }
 
     @property
-    def service_kwargs(self):
+    def orchestrator_kwargs(self):
         return {
             "exec_image_repo_tag": self.workstation_image.original_repo_tag,
             "region": self.region,
