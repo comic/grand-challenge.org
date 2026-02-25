@@ -14,10 +14,7 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import boto3
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
-from celery import (  # noqa: I251 TODO needs to be refactored
-    shared_task,
-    signature,
-)
+from celery import signature
 from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
 from django.apps import apps
@@ -1190,12 +1187,7 @@ def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
 
 @acks_late_micro_short_task
 @transaction.atomic
-def stop_expired_services(
-    *,
-    app_label: str,
-    model_name: str,
-    **__,  # TODO remove - this is temporary for celery task migration
-):
+def stop_expired_services(*, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     services_to_stop = (
@@ -1218,8 +1210,7 @@ def stop_expired_services(
 
 
 class InteractiveAlgorithm:
-    def __init__(self, *, region_name, arn, qualifier, should_be_active):
-        self._region_name = region_name
+    def __init__(self, *, arn, qualifier, should_be_active):
         self._arn = arn
         self._qualifier = str(qualifier)
         self._should_be_active = bool(should_be_active)
@@ -1230,7 +1221,7 @@ class InteractiveAlgorithm:
     def lambda_client(self):
         if self._lambda_client is None:
             self._lambda_client = boto3.client(
-                "lambda", region_name=self._region_name
+                "lambda", region_name=settings.AWS_DEFAULT_REGION
             )
         return self._lambda_client
 
@@ -1301,15 +1292,11 @@ class InteractiveAlgorithm:
         return deleted
 
 
-@shared_task
+@acks_late_micro_short_task
 @transaction.atomic
 def preload_interactive_algorithms():
     from grandchallenge.reader_studies.models import Question
     from grandchallenge.workstations.models import Session
-
-    region_name = settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
-        "region_name"
-    ]
 
     active_interactive_algorithms = (
         Question.objects.filter(
@@ -1318,7 +1305,6 @@ def preload_interactive_algorithms():
                 Session.STARTED,
                 Session.RUNNING,
             ],
-            reader_study__workstation_sessions__region=region_name,
         )
         .exclude(interactive_algorithm="")
         .values_list("interactive_algorithm", flat=True)
@@ -1331,7 +1317,6 @@ def preload_interactive_algorithms():
         "lambda_functions"
     ]:
         interactive_algorithm = InteractiveAlgorithm(
-            region_name=region_name,
             arn=lamba_function["arn"],
             qualifier=lamba_function["version"],
             should_be_active=lamba_function["internal_name"]
