@@ -104,7 +104,9 @@ class ECSTaskOrchestrator:
     def _wait_for_task_running(self, *, task_arn):
         waiter = self._ecs_client.get_waiter("tasks_running")
         waiter.wait(
-            cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME, tasks=[task_arn]
+            cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
+            tasks=[task_arn],
+            WaiterConfig={"Delay": 5, "MaxAttempts": 36},  # 3 minutes
         )
 
     def _get_task_description(self, *, task_arn):
