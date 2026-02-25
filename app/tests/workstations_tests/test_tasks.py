@@ -184,7 +184,7 @@ def test_start_service(mocker, settings, django_capture_on_commit_callbacks):
                                 },
                                 {
                                     "name": "AWS_DEFAULT_REGION",
-                                    "value": "eu-nl-1",
+                                    "value": "eu-central-1",
                                 },
                                 {
                                     "name": "INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS",
