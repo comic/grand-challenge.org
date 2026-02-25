@@ -1096,17 +1096,26 @@ def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     ecs_service = ECSService(**service.service_kwargs)
 
-    service.task_arn = ecs_service.start(environment=service.environment)
+    try:
+        service.task_arn = ecs_service.start(environment=service.environment)
+    except Exception as error:
+        logger.error(error, exc_info=True)
 
-    service.status = service.STARTED
-    service.full_clean()
-    service.save()
+        service.status = service.FAILED
+        service.full_clean()
+        service.save()
 
-    on_commit(
-        update_service.signature(
-            kwargs=service.task_kwargs,
-        ).apply_async
-    )
+        return
+    else:
+        service.status = service.STARTED
+        service.full_clean()
+        service.save()
+
+        on_commit(
+            update_service.signature(
+                kwargs=service.task_kwargs,
+            ).apply_async
+        )
 
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
@@ -1129,17 +1138,31 @@ def update_service(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     ecs_service = ECSService(**service.service_kwargs)
 
-    conn_info = ecs_service.get_connection_information(
-        task_arn=service.task_arn
-    )
+    try:
+        conn_info = ecs_service.get_connection_information(
+            task_arn=service.task_arn
+        )
+    except Exception as error:
+        logger.error(error, exc_info=True)
 
-    service.host_address = conn_info.host_address
-    service.http_port = conn_info.http_port
-    service.websocket_port = conn_info.websocket_port
+        ecs_service.stop(task_arn=service.task_arn)
 
-    service.status = service.RUNNING
-    service.full_clean()
-    service.save()
+        if service.auth_token:
+            service.auth_token.delete()
+
+        service.status = service.FAILED
+        service.full_clean()
+        service.save()
+
+        return
+    else:
+        service.host_address = conn_info.host_address
+        service.http_port = conn_info.http_port
+        service.websocket_port = conn_info.websocket_port
+
+        service.status = service.RUNNING
+        service.full_clean()
+        service.save()
 
 
 @acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))

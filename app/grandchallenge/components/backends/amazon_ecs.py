@@ -48,25 +48,31 @@ class ECSService:
     ):
         task_definition_arn = self._register_task_definition()
 
-        response = self._ecs_client.run_task(
-            cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
-            count=1,
-            enableExecuteCommand=False,
-            enableECSManagedTags=True,
-            propagateTags="TASK_DEFINITION",
-            taskDefinition=task_definition_arn,
-            overrides={
-                "containerOverrides": [
-                    {
-                        "name": self._internal_workstation_container_name,
-                        "environment": [
-                            {"name": k, "value": v}
-                            for k, v in environment.items()
-                        ],
-                    }
-                ]
-            },
-        )
+        try:
+            response = self._ecs_client.run_task(
+                cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
+                count=1,
+                enableExecuteCommand=False,
+                enableECSManagedTags=True,
+                propagateTags="TASK_DEFINITION",
+                taskDefinition=task_definition_arn,
+                overrides={
+                    "containerOverrides": [
+                        {
+                            "name": self._internal_workstation_container_name,
+                            "environment": [
+                                {"name": k, "value": v}
+                                for k, v in environment.items()
+                            ],
+                        }
+                    ]
+                },
+            )
+        except Exception:
+            self._ecs_client.deregister_task_definition(
+                taskDefinition=task_definition_arn
+            )
+            raise
 
         return response["tasks"][0]["taskArn"]
 
