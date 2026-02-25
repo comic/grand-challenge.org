@@ -1,5 +1,6 @@
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.template.defaultfilters import linebreaksbr
@@ -32,14 +33,15 @@ class SessionAdmin(admin.ModelAdmin):
     ordering = ("-created",)
     list_display = [
         "pk",
+        "get_logs",
         "created",
-        "maximum_duration",
+        "creator",
         "status",
+        "maximum_duration",
+        "region",
         "host_address",
         "http_port",
         "websocket_port",
-        "creator",
-        "region",
         "ping_times",
         "extra_env_vars",
         "get_reader_studies",
@@ -49,10 +51,10 @@ class SessionAdmin(admin.ModelAdmin):
         "creator",
         "workstation_image",
         "status",
+        "task_arn",
         "host_address",
         "http_port",
         "websocket_port",
-        "logs",
         "region",
         "ping_times",
         "auth_token",
@@ -71,6 +73,17 @@ class SessionAdmin(admin.ModelAdmin):
         return linebreaksbr(
             "\n".join(r.slug for r in obj.reader_studies.all())
         )
+
+    @admin.display(description="Logs")
+    def get_logs(self, obj):
+        if obj.task_arn:
+            task_id = obj.task_arn.split("/")[-1]
+            return format_html(
+                "<a target=_blank href='{url}'>🔗</a>",
+                url=f"https://{obj.region}.console.aws.amazon.com/cloudwatch/home?region={obj.region}#logsV2:log-groups/log-group/{settings.COMPONENTS_SERVICE_LOG_GROUP_NAME}/log-events/ecs$252Fworkstation$252F{task_id}",
+            )
+        else:
+            return None
 
 
 @admin.register(Feedback)

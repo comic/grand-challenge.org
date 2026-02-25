@@ -1018,35 +1018,32 @@ COMPONENTS_AMAZON_SAGEMAKER_SECURITY_GROUP_ID = os.environ.get(
 COMPONENTS_AMAZON_SAGEMAKER_SUBNETS = os.environ.get(
     "COMPONENTS_AMAZON_SAGEMAKER_SUBNETS", ""
 ).split(",")
-COMPONENTS_S3_ENDPOINT_URL = os.environ.get(
-    "COMPONENTS_S3_ENDPOINT_URL", AWS_S3_ENDPOINT_URL
-)
-COMPONENTS_DOCKER_NETWORK_NAME = os.environ.get(
-    "COMPONENTS_DOCKER_NETWORK_NAME", "grand-challengeorg_components"
-)
-COMPONENTS_DOCKER_TASK_SET_AWS_ENV = strtobool(
-    os.environ.get("COMPONENTS_DOCKER_TASK_SET_AWS_ENV", "True")
-)
-COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID = os.environ.get(
-    "COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID", "componentstask"
-)
-COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY = os.environ.get(
-    "COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY", "componentstask123"
-)
 
-COMPONENTS_MEMORY_LIMIT = int(os.environ.get("COMPONENTS_MEMORY_LIMIT", "4"))
-COMPONENTS_CPU_QUOTA = int(os.environ.get("COMPONENTS_CPU_QUOTA", "100000"))
-COMPONENTS_CPU_PERIOD = int(os.environ.get("COMPONENTS_CPU_PERIOD", "100000"))
-COMPONENTS_PIDS_LIMIT = int(os.environ.get("COMPONENTS_PIDS_LIMIT", "128"))
-COMPONENTS_CPU_SHARES = int(
-    os.environ.get("COMPONENTS_CPU_SHARES", "1024")  # Default weight
-)
 COMPONENTS_CONTAINER_PLATFORM = "linux/amd64"
 
 # Changing the ports used will change the API implemented
 # by the workstation container images
 COMPONENTS_SERVICE_CONTAINER_HTTP_PORT = 8080
 COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT = 4114
+COMPONENTS_SERVICE_INCLUDE_CREATOR_AUTH_TOKEN = True
+COMPONENTS_SERVICE_MEMORY_RESERVATION_MB = int(
+    os.environ.get("COMPONENTS_SERVICE_MEMORY_RESERVATION_MB", "512")
+)
+COMPONENTS_SERVICE_MEMORY_LIMIT_MB = int(
+    os.environ.get("COMPONENTS_SERVICE_MEMORY_LIMIT_MB", "8192")
+)
+COMPONENTS_SERVICE_PIDS_LIMIT = int(
+    os.environ.get("COMPONENTS_SERVICE_PIDS_LIMIT", "2048")
+)
+COMPONENTS_SERVICE_LOG_GROUP_NAME = os.environ.get(
+    "COMPONENTS_SERVICE_LOG_GROUP_NAME"
+)
+COMPONENTS_SERVICE_CLUSTER_NAME = os.environ.get(
+    "COMPONENTS_SERVICE_CLUSTER_NAME"
+)
+COMPONENTS_SERVICE_TASK_ROLE_ARN = os.environ.get(
+    "COMPONENTS_SERVICE_TASK_ROLE_ARN"
+)
 
 COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION = os.environ.get(
     "COMPONENTS_VIRTUAL_ENV_BIOM_LOCATION", "/opt/virtualenvs/biom"
@@ -1260,18 +1257,13 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.core.tasks.put_cloudwatch_metrics",
         "schedule": timedelta(seconds=30),
     },
-    **{
-        f"stop_expired_services_{region}": {
-            "task": "grandchallenge.components.tasks.stop_expired_services",
-            "kwargs": {
-                "app_label": "workstations",
-                "model_name": "session",
-                "region": region,
-            },
-            "options": {"queue": f"workstations-{region}"},
-            "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
-        }
-        for region in WORKSTATIONS_ACTIVE_REGIONS
+    "stop_expired_services": {
+        "task": "grandchallenge.components.tasks.stop_expired_services",
+        "kwargs": {
+            "app_label": "workstations",
+            "model_name": "session",
+        },
+        "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
     },
     **{
         f"preload_interactive_algorithms_{region}": {

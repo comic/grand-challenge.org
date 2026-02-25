@@ -5,28 +5,10 @@ from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
-from knox.models import AuthToken
 
-from grandchallenge.components.backends.docker_client import (
-    get_container_id,
-    inspect_container,
-)
-from grandchallenge.components.tasks import stop_expired_services
 from grandchallenge.workstations.models import Session, Workstation
-from tests.factories import (
-    SessionFactory,
-    UserFactory,
-    WorkstationFactory,
-    WorkstationImageFactory,
-)
-from tests.utils import recurse_callbacks
+from tests.factories import SessionFactory, UserFactory, WorkstationFactory
 from tests.workstations_tests.factories import FeedbackFactory
-
-
-def stop_all_sessions():
-    sessions = Session.objects.all()
-    for s in sessions:
-        s.stop()
 
 
 @pytest.mark.django_db
@@ -64,222 +46,6 @@ def test_session_auth_token():
     _ = s.environment
 
     assert s.auth_token.pk != old_pk
-
-
-@pytest.mark.django_db
-@pytest.mark.xfail(
-    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/rse-grand-challenge/issues/4031"
-)
-def test_session_start(
-    http_image, settings, django_capture_on_commit_callbacks
-):
-    # Execute celery tasks in place
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        wsi = WorkstationImageFactory(image__from_path=http_image)
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    with django_capture_on_commit_callbacks(execute=True):
-        s = SessionFactory(workstation_image=wsi)
-
-    try:
-        assert get_container_id(name=s.service.container_name)
-
-        s.refresh_from_db()
-        assert s.status == s.STARTED
-
-        container = inspect_container(name=s.service.container_name)
-
-        expected_labels = {
-            "job": f"{s._meta.app_label}-{s._meta.model_name}-{s.pk}",
-        }
-
-        for k, v in expected_labels.items():
-            assert container["Config"]["Labels"][k] == v
-
-        networks = container["NetworkSettings"]["Networks"]
-        assert len(networks) == 1
-
-        with django_capture_on_commit_callbacks(execute=True):
-            s.user_finished = True
-            s.save()
-
-        with pytest.raises(ObjectDoesNotExist):
-            # noinspection PyStatementEffect
-            get_container_id(name=s.service.container_name)
-    finally:
-        stop_all_sessions()
-
-
-@pytest.mark.django_db
-@pytest.mark.xfail(
-    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/rse-grand-challenge/issues/4031"
-)
-def test_correct_session_stopped(
-    http_image, settings, django_capture_on_commit_callbacks
-):
-    # Execute celery tasks in place
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        wsi = WorkstationImageFactory(image__from_path=http_image)
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    try:
-        with django_capture_on_commit_callbacks(execute=True):
-            s1, s2 = (
-                SessionFactory(workstation_image=wsi),
-                SessionFactory(workstation_image=wsi),
-            )
-
-        assert get_container_id(name=s1.service.container_name)
-        assert get_container_id(name=s2.service.container_name)
-
-        s2.refresh_from_db()
-        auth_token_pk = s2.auth_token.pk
-
-        with django_capture_on_commit_callbacks(execute=True):
-            s2.user_finished = True
-            s2.save()
-
-        assert get_container_id(name=s1.service.container_name)
-        with pytest.raises(ObjectDoesNotExist):
-            # noinspection PyStatementEffect
-            get_container_id(name=s2.service.container_name)
-
-        with pytest.raises(ObjectDoesNotExist):
-            # auth token should be deleted when the service is stopped
-            AuthToken.objects.get(pk=auth_token_pk)
-
-    finally:
-        stop_all_sessions()
-
-
-@pytest.mark.django_db
-@pytest.mark.xfail(
-    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/rse-grand-challenge/issues/4031"
-)
-def test_session_cleanup(
-    http_image, settings, django_capture_on_commit_callbacks
-):
-    # Execute celery tasks in place
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        wsi = WorkstationImageFactory(image__from_path=http_image)
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    default_region = "eu-nl-1"
-
-    try:
-        with django_capture_on_commit_callbacks(execute=True):
-            s1, s2, s3 = (
-                SessionFactory(workstation_image=wsi, region=default_region),
-                SessionFactory(
-                    workstation_image=wsi,
-                    maximum_duration=timedelta(seconds=0),
-                    region=default_region,
-                ),
-                # An expired service in a different region
-                SessionFactory(
-                    workstation_image=wsi,
-                    maximum_duration=timedelta(seconds=0),
-                    region="us-east-1",
-                ),
-            )
-
-        assert get_container_id(name=s1.service.container_name)
-        assert get_container_id(name=s2.service.container_name)
-        assert get_container_id(name=s3.service.container_name)
-
-        # Stop expired services in the default region
-        stop_expired_services(
-            app_label="workstations",
-            model_name="session",
-            region=default_region,
-        )
-
-        assert get_container_id(name=s1.service.container_name)
-        with pytest.raises(ObjectDoesNotExist):
-            # noinspection PyStatementEffect
-            get_container_id(name=s2.service.container_name)
-        assert get_container_id(name=s3.service.container_name)
-
-    finally:
-        stop_all_sessions()
-
-
-@pytest.mark.django_db
-def test_workstation_ready(
-    http_image, settings, django_capture_on_commit_callbacks
-):
-    # Execute celery tasks in place
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    # Do not execute the callbacks as the image should not be ready
-    wsi = WorkstationImageFactory(image__from_path=http_image)
-    assert wsi.is_manifest_valid is None
-    assert wsi.can_execute is False
-
-    with django_capture_on_commit_callbacks(execute=True):
-        s = SessionFactory(workstation_image=wsi)
-
-    s.refresh_from_db()
-    assert s.status == s.FAILED
-
-
-@pytest.mark.django_db
-@pytest.mark.xfail(
-    reason="Needs to be rewritten to remove dependency on docker, see https://github.com/DIAGNijmegen/rse-grand-challenge/issues/4031"
-)
-def test_session_limit(
-    http_image, settings, django_capture_on_commit_callbacks
-):
-    # Execute celery tasks in place
-    settings.WORKSTATIONS_MAXIMUM_SESSIONS = 1
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
-    with django_capture_on_commit_callbacks() as callbacks:
-        wsi = WorkstationImageFactory(image__from_path=http_image)
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
-    )
-
-    try:
-        with django_capture_on_commit_callbacks(execute=True):
-            s1 = SessionFactory(workstation_image=wsi)
-        s1.refresh_from_db()
-        assert s1.status == s1.STARTED
-
-        with django_capture_on_commit_callbacks(execute=True):
-            s2 = SessionFactory(workstation_image=wsi)
-        s2.refresh_from_db()
-        assert s2.status == s2.FAILED
-
-        s1.stop()
-
-        with django_capture_on_commit_callbacks(execute=True):
-            s3 = SessionFactory(workstation_image=wsi)
-        s3.refresh_from_db()
-        assert s3.status == s3.STARTED
-    finally:
-        stop_all_sessions()
 
 
 @pytest.mark.django_db
@@ -364,9 +130,9 @@ def test_extra_env_vars():
 
 
 @pytest.fixture
-def started_session():
+def running_session():
     return SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
         http_port=40000,
         websocket_port=40001,
@@ -374,9 +140,9 @@ def started_session():
 
 
 @pytest.mark.django_db
-def test_clean_passes_for_valid_session(started_session):
+def test_clean_passes_for_valid_session(running_session):
     session = SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
         http_port=40002,
         websocket_port=40003,
@@ -385,11 +151,11 @@ def test_clean_passes_for_valid_session(started_session):
 
 
 @pytest.mark.django_db
-def test_clean_raises_if_http_port_in_use(started_session):
+def test_clean_raises_if_http_port_in_use(running_session):
     session = SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
-        http_port=40000,  # conflicts with started_session.http_port
+        http_port=40000,  # conflicts with running_session.http_port
         websocket_port=40003,
     )
     with pytest.raises(ValidationError, match="http_port"):
@@ -397,12 +163,12 @@ def test_clean_raises_if_http_port_in_use(started_session):
 
 
 @pytest.mark.django_db
-def test_clean_raises_if_websocket_port_in_use(started_session):
+def test_clean_raises_if_websocket_port_in_use(running_session):
     session = SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
         http_port=40002,
-        websocket_port=40001,  # conflicts with started_session.websocket_port
+        websocket_port=40001,  # conflicts with running_session.websocket_port
     )
     with pytest.raises(ValidationError, match="websocket_port"):
         session.clean()
@@ -410,12 +176,12 @@ def test_clean_raises_if_websocket_port_in_use(started_session):
 
 @pytest.mark.django_db
 def test_clean_raises_if_http_port_matches_other_websocket_port(
-    started_session,
+    running_session,
 ):
     session = SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
-        http_port=40001,  # conflicts with started_session.websocket_port
+        http_port=40001,  # conflicts with running_session.websocket_port
         websocket_port=40002,
     )
     with pytest.raises(ValidationError, match="http_port"):
@@ -424,13 +190,13 @@ def test_clean_raises_if_http_port_matches_other_websocket_port(
 
 @pytest.mark.django_db
 def test_clean_raises_if_websocket_port_matches_other_http_port(
-    started_session,
+    running_session,
 ):
     session = SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
         http_port=40002,
-        websocket_port=40000,  # conflicts with started_session.http_port
+        websocket_port=40000,  # conflicts with running_session.http_port
     )
     with pytest.raises(ValidationError, match="websocket_port"):
         session.clean()
@@ -439,7 +205,7 @@ def test_clean_raises_if_websocket_port_matches_other_http_port(
 @pytest.mark.django_db
 def test_clean_raises_if_ports_identical():
     session = SessionFactory(
-        status=Session.STARTED,
+        status=Session.RUNNING,
         host_address="192.168.1.1",
         http_port=40000,
         websocket_port=40000,
@@ -449,16 +215,16 @@ def test_clean_raises_if_ports_identical():
 
 
 @pytest.mark.django_db
-def test_clean_skips_validation_if_not_started(started_session):
+def test_clean_skips_validation_if_not_started(running_session):
     session = SessionFactory(
         status=Session.QUEUED,
         host_address="192.168.1.1",
-        http_port=40000,  # would conflict if STARTED
+        http_port=40000,  # would conflict if RUNNING
         websocket_port=40001,
     )
     session.clean()  # should not raise
 
 
 @pytest.mark.django_db
-def test_clean_excludes_self(started_session):
-    started_session.clean()  # should not conflict with itself
+def test_clean_excludes_self(running_session):
+    running_session.clean()  # should not conflict with itself

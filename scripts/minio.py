@@ -131,28 +131,3 @@ def _setup_components_storage():
                 str(policy_file),
             ]
         )
-
-    subprocess.check_call(
-        [
-            "mc",
-            "admin",
-            "user",
-            "add",
-            host_alias,
-            settings.COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID,
-            settings.COMPONENTS_DOCKER_TASK_AWS_SECRET_ACCESS_KEY,
-        ]
-    )
-
-    subprocess.check_call(
-        [
-            "mc",
-            "admin",
-            "policy",
-            "attach",
-            host_alias,
-            policy_name,
-            "--user",
-            settings.COMPONENTS_DOCKER_TASK_AWS_ACCESS_KEY_ID,
-        ]
-    )

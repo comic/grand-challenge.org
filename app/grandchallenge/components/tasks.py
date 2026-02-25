@@ -36,6 +36,7 @@ from grandchallenge.cases.models import (
     Image,
     RawImageUploadSession,
 )
+from grandchallenge.components.backends.amazon_ecs import ECSTaskOrchestrator
 from grandchallenge.components.backends.exceptions import (
     CIVNotEditableException,
     ComponentException,
@@ -1052,39 +1053,168 @@ def deprovision_job(
     executor.deprovision()
 
 
-@shared_task
+@acks_late_micro_short_task(
+    retry_on=(
+        LockNotAcquiredException,
+        RetryStep,
+    )
+)
+@transaction.atomic
 def start_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+    """
+    Starts the service on ECS.
+
+    Takes jobs in the service.QUEUED state, starts them on ECS,
+    then places them in the service.STARTED state.
+    """
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    session = model.objects.get(pk=pk)
-    session.start()
+
+    with check_lock_acquired():
+        service = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if service.status != service.QUEUED:
+        raise RuntimeError("Service is not ready for starting")
+
+    if not service.workstation_image.can_execute:
+        logger.error("Workstation image was not ready to be used")
+
+        service.status = service.FAILED
+        service.full_clean()
+        service.save()
+
+        return
+
+    if (
+        model.objects.active()
+        .filter(
+            region=service.region,
+        )
+        .count()
+        >= settings.WORKSTATIONS_MAXIMUM_SESSIONS
+    ):
+        raise RetryStep("Too many sessions are running")
+
+    orchestrator = ECSTaskOrchestrator(**service.orchestrator_kwargs)
+
+    try:
+        service.task_arn = orchestrator.start(environment=service.environment)
+    except Exception as error:
+        logger.error(error, exc_info=True)
+
+        service.status = service.FAILED
+        service.full_clean()
+        service.save()
+
+        return
+    else:
+        service.status = service.STARTED
+        service.full_clean()
+        service.save()
+
+        on_commit(
+            update_service.signature(
+                kwargs=service.task_kwargs,
+            ).apply_async
+        )
 
 
-@shared_task
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
+def update_service(*, pk: uuid.UUID, app_label: str, model_name: str):
+    """
+    Update the host and ports from ECS
+
+    Takes jobs in the service.STARTED state, waits until they
+    are assigned a host and port on ECS, updates the connection information,
+    then places them in the service.RUNNING state.
+    """
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
+    with check_lock_acquired():
+        service = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if service.status != service.STARTED:
+        raise RuntimeError("Service is not ready for updating")
+
+    orchestrator = ECSTaskOrchestrator(**service.orchestrator_kwargs)
+
+    try:
+        conn_info = orchestrator.get_connection_information(
+            task_arn=service.task_arn
+        )
+    except Exception as error:
+        logger.error(error, exc_info=True)
+
+        orchestrator.stop(task_arn=service.task_arn)
+
+        if service.auth_token:
+            service.auth_token.delete()
+
+        service.status = service.FAILED
+        service.full_clean()
+        service.save()
+
+        return
+    else:
+        service.host_address = conn_info.host_address
+        service.http_port = conn_info.http_port
+        service.websocket_port = conn_info.websocket_port
+
+        service.status = service.RUNNING
+        service.full_clean()
+        service.save()
+
+
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
 def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    session = model.objects.get(pk=pk)
-    session.stop()
+
+    with check_lock_acquired():
+        service = (
+            model.objects.active().select_for_update(nowait=True).get(pk=pk)
+        )
+
+    orchestrator = ECSTaskOrchestrator(**service.orchestrator_kwargs)
+
+    if service.task_arn:
+        orchestrator.stop(task_arn=service.task_arn)
+
+    service.status = service.STOPPED
+    service.full_clean()
+    service.save()
+
+    if service.auth_token:
+        service.auth_token.delete()
 
 
-@shared_task
-def stop_expired_services(*, app_label: str, model_name: str, region: str):
+@acks_late_micro_short_task
+@transaction.atomic
+def stop_expired_services(
+    *,
+    app_label: str,
+    model_name: str,
+    **__,  # TODO remove - this is temporary for celery task migration
+):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     services_to_stop = (
-        model.objects.annotate(
+        model.objects.active()
+        .annotate(
             expires=ExpressionWrapper(
                 F("created") + F("maximum_duration"),
                 output_field=DateTimeField(),
             )
         )
-        .filter(expires__lt=now(), region=region)
-        .exclude(status=model.STOPPED)
+        .filter(expires__lt=now())
     )
 
     for service in services_to_stop:
-        service.stop()
-
-    return [str(s) for s in services_to_stop]
+        on_commit(
+            stop_service.signature(
+                kwargs=service.task_kwargs,
+            ).apply_async
+        )
 
 
 class InteractiveAlgorithm:

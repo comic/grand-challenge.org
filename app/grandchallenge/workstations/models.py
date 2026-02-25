@@ -24,8 +24,6 @@ from guardian.shortcuts import assign_perm, remove_perm
 from knox.models import AuthToken
 from pictures.models import PictureField
 
-from grandchallenge.components.backends.docker import Service
-from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.models import ComponentImage
 from grandchallenge.components.tasks import (
     preload_interactive_algorithms,
@@ -364,8 +362,7 @@ class SessionManager(models.QuerySet):
 class Session(FieldChangeMixin, UUIDModel):
     """
     Tracks who has launched workstation images. The ``WorkstationImage`` will
-    be launched as a ``Service``. The ``Session`` is responsible for starting
-    and stopping the ``Service``.
+    be launched as a ``ECSService``.
 
     Parameters
     ----------
@@ -443,6 +440,7 @@ class Session(FieldChangeMixin, UUIDModel):
         help_text="The IP address of the host this session is running on",
         editable=False,
     )
+    task_arn = models.CharField(editable=False, default="", max_length=128)
     http_port = models.PositiveIntegerField(
         null=True,
         validators=[MinValueValidator(32768), MaxValueValidator(65535)],
@@ -466,7 +464,7 @@ class Session(FieldChangeMixin, UUIDModel):
     )
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)
-    logs = models.TextField(editable=False, blank=True)
+    logs = deprecate_field(models.TextField(editable=False, blank=True))
     ping_times = models.JSONField(null=True, blank=True, default=None)
     extra_env_vars = models.JSONField(
         default=list,
@@ -494,6 +492,13 @@ class Session(FieldChangeMixin, UUIDModel):
             "app_label": self._meta.app_label,
             "model_name": self._meta.model_name,
             "pk": self.pk,
+        }
+
+    @property
+    def orchestrator_kwargs(self):
+        return {
+            "exec_image_repo_tag": self.workstation_image.original_repo_tag,
+            "region": self.region,
         }
 
     @property
@@ -530,7 +535,10 @@ class Session(FieldChangeMixin, UUIDModel):
             }
         )
 
-        if self.creator:
+        if (
+            self.creator
+            and settings.COMPONENTS_SERVICE_INCLUDE_CREATOR_AUTH_TOKEN
+        ):
             if self.auth_token:
                 self.auth_token.delete()
 
@@ -549,18 +557,6 @@ class Session(FieldChangeMixin, UUIDModel):
         return env
 
     @property
-    def service(self) -> Service:
-        """
-        Returns
-        -------
-            The service for this session, could be active or inactive.
-        """
-        return Service(
-            container_name=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
-            exec_image_repo_tag=self.workstation_image.original_repo_tag,
-        )
-
-    @property
     def workstation_url(self) -> str:
         """
         Returns
@@ -570,69 +566,6 @@ class Session(FieldChangeMixin, UUIDModel):
         return urljoin(
             self.get_absolute_url(), self.workstation_image.initial_path
         )
-
-    def start(self) -> None:
-        """
-        Starts the service for this session, ensuring that the
-        ``workstation_image`` is ready to be used and that
-        ``WORKSTATIONS_MAXIMUM_SESSIONS`` has not been reached in this region.
-
-        Raises
-        ------
-        ComponentException
-            If the service cannot be started.
-        """
-        try:
-            if not self.workstation_image.can_execute:
-                raise ComponentException("Workstation image was not ready")
-
-            if (
-                Session.objects.all()
-                .filter(
-                    status__in=[Session.RUNNING, Session.STARTED],
-                    region=self.region,
-                )
-                .count()
-                >= settings.WORKSTATIONS_MAXIMUM_SESSIONS
-            ):
-                raise ComponentException("Too many sessions are running")
-
-            self.service.start(
-                environment=self.environment,
-            )
-            self.host_address = self.service.host_address
-            self.http_port = self.service.get_port_mapping(
-                port=settings.COMPONENTS_SERVICE_CONTAINER_HTTP_PORT
-            )
-            self.websocket_port = self.service.get_port_mapping(
-                port=settings.COMPONENTS_SERVICE_CONTAINER_WEBSOCKET_PORT
-            )
-            self.update_status(status=self.STARTED)
-        except Exception:
-            self.update_status(status=self.FAILED)
-            raise
-
-    def stop(self) -> None:
-        """Stop the service for this session, cleaning up all of the containers."""
-        self.logs = self.service.logs()
-        self.service.stop_and_cleanup()
-        self.update_status(status=self.STOPPED)
-
-        if self.auth_token:
-            self.auth_token.delete()
-
-    def update_status(self, *, status: STATUS_CHOICES) -> None:
-        """
-        Updates the status of this session.
-
-        Parameters
-        ----------
-        status
-            The new status for this session.
-        """
-        self.status = status
-        self.full_clean()
-        self.save()
 
     def get_absolute_url(self):
         return reverse(
@@ -654,10 +587,15 @@ class Session(FieldChangeMixin, UUIDModel):
 
     def clean(self):
         if self.status == self.STARTED:
+            if not self.task_arn:
+                raise ValidationError(
+                    {"task_arn": "The task arn must be set if started"}
+                )
+        elif self.status == self.RUNNING:
             conflicts = Session.objects.filter(
                 host_address=self.host_address,
                 region=self.region,
-                status=self.STARTED,
+                status=self.RUNNING,
             ).exclude(pk=self.pk)
 
             used_ports = set(
@@ -692,14 +630,12 @@ class Session(FieldChangeMixin, UUIDModel):
             on_commit(
                 start_service.signature(
                     kwargs=self.task_kwargs,
-                    queue=f"workstations-{self.region}",
                 ).apply_async
             )
         elif self.user_finished and self.status != self.STOPPED:
             on_commit(
                 stop_service.signature(
                     kwargs=self.task_kwargs,
-                    queue=f"workstations-{self.region}",
                 ).apply_async
             )
 

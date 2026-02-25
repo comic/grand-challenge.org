@@ -6,11 +6,7 @@ from grandchallenge.workstations.models import Session
 
 @receiver(user_logged_out)
 def stop_users_sessions(*, user, **_):
-    users_sessions = (
-        Session.objects.all()
-        .filter(creator=user)
-        .exclude(status__in=[Session.FAILED, Session.STOPPED])
-    )
+    users_sessions = Session.objects.active().filter(creator=user)
 
     for session in users_sessions:
         session.user_finished = True
