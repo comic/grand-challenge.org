@@ -1167,7 +1167,12 @@ def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
 
 @acks_late_micro_short_task
 @transaction.atomic
-def stop_expired_services(*, app_label: str, model_name: str):
+def stop_expired_services(
+    *,
+    app_label: str,
+    model_name: str,
+    **__,  # TODO remove - this is temporary for celery task migration
+):
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     services_to_stop = (
