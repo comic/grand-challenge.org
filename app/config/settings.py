@@ -1265,13 +1265,9 @@ CELERY_BEAT_SCHEDULE = {
         },
         "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
     },
-    **{
-        f"preload_interactive_algorithms_{region}": {
-            "task": "grandchallenge.components.tasks.preload_interactive_algorithms",
-            "options": {"queue": f"workstations-{region}"},
-            "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
-        }
-        for region in WORKSTATIONS_ACTIVE_REGIONS
+    "preload_interactive_algorithms": {
+        "task": "grandchallenge.components.tasks.preload_interactive_algorithms",
+        "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
     },
 }
 

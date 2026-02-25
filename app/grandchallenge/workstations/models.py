@@ -525,7 +525,9 @@ class Session(FieldChangeMixin, UUIDModel):
                 "WORKSTATION_SENTRY_DSN": settings.WORKSTATION_SENTRY_DSN,
                 "WORKSTATION_SESSION_ID": str(self.pk),
                 "CIRRUS_KEEP_ALIVE_METHOD": "old",
-                "AWS_DEFAULT_REGION": str(self.region),
+                # The workstations should go to the main region for all AWS interactions
+                # so pass the default region here
+                "AWS_DEFAULT_REGION": settings.AWS_DEFAULT_REGION,
                 "INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS": json.dumps(
                     settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS
                 ),
