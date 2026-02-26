@@ -226,20 +226,6 @@ class ECSTaskOrchestrator:
                     },
                 },
                 "privileged": False,
-                "ulimits": [
-                    {
-                        "name": "nproc",
-                        "hardLimit": settings.COMPONENTS_SERVICE_PIDS_LIMIT,
-                        "softLimit": settings.COMPONENTS_SERVICE_PIDS_LIMIT,
-                    },
-                    {
-                        "name": "data",
-                        "softLimit": settings.COMPONENTS_SERVICE_MEMORY_LIMIT_MB
-                        * settings.MEGABYTE,
-                        "hardLimit": settings.COMPONENTS_SERVICE_MEMORY_LIMIT_MB
-                        * settings.MEGABYTE,
-                    },
-                ],
             },
         ]
 
