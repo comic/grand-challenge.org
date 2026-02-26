@@ -7,6 +7,7 @@ from grandchallenge.challenges.forms import (
     ChallengeRequestForm,
     ChallengeRequestStatusUpdateForm,
 )
+from grandchallenge.challenges.models import ChallengeRequest
 from tests.factories import (
     ChallengeFactory,
     ChallengeRequestFactory,
@@ -153,9 +154,14 @@ def test_challenge_request_new_fields_filled_from_old_fields():
 
 
 @pytest.mark.django_db
-def test_accept_challenge_request(client, challenge_reviewer):
+def test_accept_challenge_request_duplicate_shortname():
     challenge_request = ChallengeRequestFactory()
     _ = ChallengeFactory(short_name=challenge_request.short_name)
+    challenge_request.status = (
+        ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+    )
+    challenge_request.save()
+
     form = ChallengeRequestStatusUpdateForm(
         data={
             "status": challenge_request.ChallengeRequestStatusChoices.ACCEPTED
@@ -164,6 +170,74 @@ def test_accept_challenge_request(client, challenge_reviewer):
     )
     assert not form.is_valid()
     assert "There already is a challenge with this name." in str(form.errors)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "challenge_request_status,post_status,validity",
+    (
+        (  # Submit
+            ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+            ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+            True,
+        ),
+        (  # Accept
+            ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+            ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
+            True,
+        ),
+        (  # Reject
+            ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+            ChallengeRequest.ChallengeRequestStatusChoices.REJECTED,
+            True,
+        ),
+        (  # Skip submitted
+            ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+            ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
+            False,
+        ),
+        (  # Skip submitted
+            ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+            ChallengeRequest.ChallengeRequestStatusChoices.REJECTED,
+            False,
+        ),
+        (
+            ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
+            ChallengeRequest.ChallengeRequestStatusChoices.REJECTED,
+            False,
+        ),
+        (
+            ChallengeRequest.ChallengeRequestStatusChoices.REJECTED,
+            ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
+            False,
+        ),
+        (  # Cannot unsubmit a request
+            ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+            ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+            False,
+        ),
+        *(  # Same state transitions are not allowed
+            (s, s, False)
+            for s in ChallengeRequest.ChallengeRequestStatusChoices
+        ),
+    ),
+)
+def test_challenge_request_update_form(
+    challenge_request_status, post_status, validity
+):
+    challenge_request = ChallengeRequestFactory(
+        status=challenge_request_status
+    )
+
+    form = ChallengeRequestStatusUpdateForm(
+        data={"status": post_status},
+        instance=challenge_request,
+    )
+    if validity:
+        assert form.is_valid(), form.errors
+    else:
+        assert not form.is_valid(), form.errors
+        assert "status" in form.errors
 
 
 @pytest.mark.django_db

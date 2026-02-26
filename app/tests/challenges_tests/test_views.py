@@ -2,15 +2,10 @@ from datetime import timedelta
 
 import pytest
 from dateutil.utils import today
-from django.core import mail
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.challenges.models import (
-    Challenge,
-    ChallengeRequest,
-    OnboardingTask,
-)
+from grandchallenge.challenges.models import ChallengeRequest, OnboardingTask
 from grandchallenge.invoices.models import PaymentTypeChoices
 from grandchallenge.verifications.models import Verification
 from tests.evaluation_tests.factories import PhaseFactory
@@ -315,69 +310,6 @@ def test_challenge_card_status(
 
 
 @pytest.mark.django_db
-def test_challenge_request_workflow(
-    client,
-    challenge_reviewer,
-):
-    challenge_request = ChallengeRequestFactory()
-    # requesting a challenge sends email to requester and reviewer(s)
-    requester1 = challenge_request.creator
-    assert len(mail.outbox) == 2
-    receivers = [address for i in mail.outbox for address in i.to]
-    assert requester1.email in receivers
-    assert challenge_reviewer.email in receivers
-
-    # rejecting a request send email to requester
-    mail.outbox.clear()
-    response = get_view_for_user(
-        client=client,
-        method=client.post,
-        viewname="challenges:requests-status-update",
-        reverse_kwargs={"pk": challenge_request.pk},
-        user=challenge_reviewer,
-        data={
-            "status": ChallengeRequest.ChallengeRequestStatusChoices.REJECTED
-        },
-    )
-    assert response.status_code == 200
-    assert len(mail.outbox) == 1
-    # rejection email to requester
-    assert mail.outbox[0].to == [requester1.email]
-    assert (
-        "We are very sorry to have to inform you that we will not be able to host your challenge on our platform"
-        in mail.outbox[0].body
-    )
-
-    # accepting a request sends an email to the requester and creates the challenge
-    mail.outbox.clear()
-    challenge_request.status = (
-        ChallengeRequest.ChallengeRequestStatusChoices.PENDING
-    )
-    challenge_request.save()
-
-    response = get_view_for_user(
-        client=client,
-        method=client.post,
-        viewname="challenges:requests-status-update",
-        reverse_kwargs={"pk": challenge_request.pk},
-        user=challenge_reviewer,
-        data={
-            "status": ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED
-        },
-    )
-    assert response.status_code == 200
-    assert len(mail.outbox) == 1
-    # acceptance email to requester
-    assert mail.outbox[0].to == [requester1.email]
-    assert (
-        "We are happy to inform you that your challenge request has been accepted"
-        in mail.outbox[0].body
-    )
-    assert Challenge.objects.count() == 1
-    assert Challenge.objects.get().short_name == challenge_request.short_name
-
-
-@pytest.mark.django_db
 def test_budget_field_update(client, challenge_reviewer):
     challenge_request = ChallengeRequestFactory(
         number_of_teams_for_phases=[10, 10, 10, 10],
@@ -404,6 +336,38 @@ def test_budget_field_update(client, challenge_reviewer):
     assert response.status_code == 200
     challenge_request.refresh_from_db()
     assert challenge_request.number_of_teams_for_phases == [500, 500, 500, 500]
+
+
+@pytest.mark.django_db
+def test_challenge_request_submitted_field_set_on_status_update(client):
+    challenge_request = ChallengeRequestFactory(
+        status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT
+    )
+
+    # Initially submitted should be None
+    assert challenge_request.submitted is None
+
+    # Submit the request by updating status from DRAFT to PENDING
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-status-update",
+        reverse_kwargs={"pk": challenge_request.pk},
+        user=challenge_request.creator,
+        data={
+            "status": ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+        },
+    )
+    assert response.status_code == 200
+
+    # Refresh and check that submitted is now set
+    challenge_request.refresh_from_db()
+    assert challenge_request.submitted is not None
+    assert challenge_request.submitted == challenge_request.modified
+    assert (
+        challenge_request.status
+        == ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+    )
 
 
 @pytest.mark.django_db

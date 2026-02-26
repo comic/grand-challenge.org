@@ -219,6 +219,7 @@ class ChallengeRequestStatusUpdate(
     UpdateView,
 ):
     model = ChallengeRequest
+    raise_exception = True
     form_class = ChallengeRequestStatusUpdateForm
     login_url = reverse_lazy("account_login")
 
