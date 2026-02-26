@@ -44,8 +44,8 @@ RUN gem install licensee -v 9.16.1
 
 # Fetch and install crane for pushing containers
 RUN mkdir -p /opt/crane \
-    && wget https://github.com/google/go-containerregistry/releases/download/v0.19.0/go-containerregistry_Linux_x86_64.tar.gz -O /opt/crane/src.tar.gz \
-    && echo "daa629648e1d1d10fc8bde5e6ce4176cbc0cd48a32211b28c3fd806e0fa5f29b  /opt/crane/src.tar.gz" | shasum -c - || exit 1 \
+    && wget https://github.com/google/go-containerregistry/releases/download/v0.21.1/go-containerregistry_Linux_x86_64.tar.gz -O /opt/crane/src.tar.gz \
+    && echo "ffca5eafe0af8078f2c627fb852104f9d762fad1eb36c04e93ca14fce76d47d2  /opt/crane/src.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/crane/ -xzvf /opt/crane/src.tar.gz crane \
     && chmod a+x /opt/crane/crane \
     && mv /opt/crane/crane /usr/local/bin/ \
