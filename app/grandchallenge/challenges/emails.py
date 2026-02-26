@@ -13,16 +13,16 @@ from grandchallenge.subdomains.utils import reverse
 
 
 def send_challenge_requested_email_to_reviewers(challengerequest):
-    update_url = reverse(
-        "challenges:requests-list",
+    detail_url = reverse(
+        "challenges:requests-detail", kwargs={"pk": challengerequest.pk}
     )
     message = format_html(
-        "User {user} has just requested the challenge "
+        "User {user} has just submitted the challenge request "
         "{request_title}. To review the challenge, "
-        "go [here]({update_url}).",
+        "go [here]({detail_url}).",
         user=challengerequest.creator,
         request_title=challengerequest.title,
-        update_url=update_url,
+        detail_url=detail_url,
     )
     reviewers = get_users_with_perms(
         challengerequest, only_with_perms_in=["change_challengerequest"]
