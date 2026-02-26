@@ -56,7 +56,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.dispatch</span><span class="w"> </span><span class="kn">import</span> <span class="n">receiver</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.timezone</span><span class="w"> </span><span class="kn">import</span> <span class="n">now</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">django_deprecate_fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">deprecate_field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">TitleSlugDescriptionModel</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">guardian.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">assign_perm</span><span class="p">,</span> <span class="n">remove_perm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">knox.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">AuthToken</span>
@@ -292,18 +291,6 @@
     <span class="n">SHIM_IMAGE</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="n">workstation</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Workstation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">)</span>
-    <span class="n">http_port</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
-        <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
-            <span class="n">default</span><span class="o">=</span><span class="mi">8080</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">MaxValueValidator</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
-        <span class="p">),</span>
-        <span class="n">raise_on_access</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">websocket_port</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span>
-        <span class="n">models</span><span class="o">.</span><span class="n">PositiveIntegerField</span><span class="p">(</span>
-            <span class="n">default</span><span class="o">=</span><span class="mi">4114</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">MaxValueValidator</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
-        <span class="p">),</span>
-        <span class="n">raise_on_access</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span>
     <span class="n">initial_path</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
         <span class="n">default</span><span class="o">=</span><span class="s2">&quot;cirrus&quot;</span><span class="p">,</span>
@@ -540,7 +527,6 @@
     <span class="p">)</span>
     <span class="n">maximum_duration</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DurationField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">10</span><span class="p">))</span>
     <span class="n">user_finished</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">logs</span> <span class="o">=</span> <span class="n">deprecate_field</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">editable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
     <span class="n">ping_times</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span><span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
     <span class="n">extra_env_vars</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">JSONField</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
