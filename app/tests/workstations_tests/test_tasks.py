@@ -243,21 +243,9 @@ def test_update_service(mocker, settings):
             },
             service_response={
                 "tasks": [
-                    {"taskArn": "test-task-arn", "lastStatus": "RUNNING"}
-                ],
-                "failures": [],
-            },
-        )
-        ecs_stubber.add_response(
-            method="describe_tasks",
-            expected_params={
-                "cluster": "test-cluster-name",
-                "tasks": ["test-task-arn"],
-            },
-            service_response={
-                "tasks": [
                     {
                         "taskArn": "test-task-arn",
+                        "lastStatus": "RUNNING",
                         "containerInstanceArn": "test-container-instance-arn",
                         "containers": [
                             {
