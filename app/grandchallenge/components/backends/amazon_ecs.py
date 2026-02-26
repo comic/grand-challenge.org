@@ -81,9 +81,9 @@ class ECSTaskOrchestrator:
         """Get the host and ports for this service"""
 
         # The host and ports cannot be determined until the task is running
-        self._wait_for_task_running(task_arn=task_arn)
-
-        task_description = self._get_task_description(task_arn=task_arn)
+        task_description = self._get_running_task_description(
+            task_arn=task_arn
+        )
 
         host_address = self._get_host_private_ip_address(
             task_description=task_description
@@ -102,18 +102,23 @@ class ECSTaskOrchestrator:
             ],
         )
 
-    def _wait_for_task_running(self, *, task_arn):
-        waiter = self._ecs_client.get_waiter("tasks_running")
-
+    def _get_running_task_description(self, *, task_arn):
         # The task is unlikely to have started on the first attempt
         # so add a small delay here to save waiting for the longer Delay
         time.sleep(settings.COMPONENTS_SERVICE_WAITER_INITIAL_DELAY_SECONDS)
 
-        waiter.wait(
-            cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
-            tasks=[task_arn],
-            WaiterConfig={"Delay": 5, "MaxAttempts": 36},  # 3 minutes
-        )
+        task_description = self._get_task_description(task_arn=task_arn)
+
+        if task_description["lastStatus"] == "RUNNING":
+            return task_description
+        else:
+            waiter = self._ecs_client.get_waiter("tasks_running")
+            waiter.wait(
+                cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
+                tasks=[task_arn],
+                WaiterConfig={"Delay": 5, "MaxAttempts": 36},  # 3 minutes
+            )
+            return self._get_task_description(task_arn=task_arn)
 
     def _get_task_description(self, *, task_arn):
         return get(
