@@ -963,11 +963,14 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ACCEPTED = "ACPT", _("Accepted")
         REJECTED = "RJCT", _("Rejected")
         PENDING = "PEND", _("Pending")
+        DRAFT = "DRFT", _("Draft")
+
+    submitted = models.DateTimeField(null=True)
 
     status = models.CharField(
         max_length=4,
         choices=ChallengeRequestStatusChoices.choices,
-        default=ChallengeRequestStatusChoices.PENDING,
+        default=ChallengeRequestStatusChoices.DRAFT,
     )
     abstract = models.TextField(
         help_text="Provide a summary of the challenge purpose.",
@@ -1205,6 +1208,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         default=False,
     )
 
+    class Meta:
+        permissions = [
+            ("submit_challengerequest", "Can submit challenge request"),
+            ("review_challengerequest", "Can review challenge request"),
+        ]
+
     def __str__(self):
         return self.title
 
@@ -1226,11 +1235,14 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     def assign_permissions(self):
         assign_perm("view_challengerequest", self.creator, self)
+        assign_perm("change_challengerequest", self.creator, self)
+
         reviewers = Group.objects.get(
             name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
         )
         assign_perm("view_challengerequest", reviewers, self)
         assign_perm("change_challengerequest", reviewers, self)
+        assign_perm("review_challengerequest", reviewers, self)
 
     def create_challenge(self):
         challenge = Challenge(
@@ -1711,7 +1723,13 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
 
 class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
-    allowed_permissions = frozenset({"view_challengerequest"})
+    allowed_permissions = frozenset(
+        {
+            "view_challengerequest",
+            "change_challengerequest",
+            "submit_challengerequest",
+        }
+    )
 
     content_object = models.ForeignKey(
         ChallengeRequest, on_delete=models.CASCADE
@@ -1720,7 +1738,11 @@ class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
 
 class ChallengeRequestGroupObjectPermission(GroupObjectPermissionBase):
     allowed_permissions = frozenset(
-        {"view_challengerequest", "change_challengerequest"}
+        {
+            "view_challengerequest",
+            "change_challengerequest",
+            "review_challengerequest",
+        }
     )
 
     content_object = models.ForeignKey(

@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import F, Prefetch, Q
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseBadRequest
 from django.shortcuts import render
 from django.utils.html import format_html
 from django.views.generic import (
@@ -151,15 +151,12 @@ class ChallengeRequestCreate(
 ):
     model = ChallengeRequest
     form_class = ChallengeRequestForm
-    success_message = "Your request has been sent to the reviewers."
+    success_message = "A draft of your challenge request has been created!"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update({"creator": self.request.user})
         return kwargs
-
-    def get_success_url(self):
-        return reverse("challenges:requests-list")
 
 
 class ChallengeRequestList(
@@ -223,14 +220,33 @@ class ChallengeRequestStatusUpdate(
 ):
     model = ChallengeRequest
     form_class = ChallengeRequestStatusUpdateForm
-    permission_required = "change_challengerequest"
-    template_name = "challenges/challengerequest_status_form.html"
-    raise_exception = True
     login_url = reverse_lazy("account_login")
+
+    def get_required_permissions(self, request=None):
+        if (
+            self.get_object().status
+            == self.get_object().ChallengeRequestStatusChoices.PENDING
+        ):
+            return ["review_challengerequest"]
+        elif (
+            self.get_object().status
+            == self.get_object().ChallengeRequestStatusChoices.DRAFT
+        ):
+            return ["submit_challengerequest"]
+        else:
+            raise HttpResponseBadRequest()
 
     def form_valid(self, form):
         super().form_valid(form)
+
         if (
+            form.instance._orig_status
+            == form.instance.ChallengeRequestStatusChoices.DRAFT
+            and form.instance._orig_status != form.instance.status
+        ):
+            form.instance.submitted = form.instance.modified
+            form.instance.save(update_fields=["submitted"])
+        elif (
             form.instance._orig_status
             == form.instance.ChallengeRequestStatusChoices.PENDING
             and form.instance._orig_status != form.instance.status

@@ -20,6 +20,52 @@
 {% endblock %}
 
 {% block content %}
+    {% get_obj_perms request.user for object as "user_perms" %}
+    <div class="px-2 row d-flex">
+        <div class="d-flex ml-auto">
+        {% if object.status == object.ChallengeRequestStatusChoices.DRAFT %}
+            {% if 'submit_challengerequest' in user_perms %}
+                <a class="btn btn-lg btn-primary"
+                    href="#"
+                    hx-post="{% url 'challenges:requests-status-update' pk=object.pk %}"
+                    hx-target="this"
+                    hx-vals='{"status": "{{ object.ChallengeRequestStatusChoices.PENDING.value }}"}'
+                    hx-confirm="Are you sure you want to submit the request?"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'
+                >
+                    <i class="fa fa-rocket mr-2"></i>Submit for Review
+                </a>
+            {% endif %}
+        {% elif object.status == object.ChallengeRequestStatusChoices.PENDING and 'review_challengerequest' in user_perms %}
+            <a class="btn btn-lg btn-success"
+                href="#"
+                hx-post="{% url 'challenges:requests-status-update' pk=object.pk %}"
+                hx-target="this"
+                hx-vals='{"status": "{{ object.ChallengeRequestStatusChoices.ACCEPTED.value }}"}'
+                hx-confirm="Are you sure you want to ACCEPT the request? A challenge will be created!"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'
+            >
+                <i class="fa fa-thumbs-up mr-1"></i>Accept Request
+            </a>
+            <a class="btn btn-lg btn-danger"
+                href="#"
+                hx-post="{% url 'challenges:requests-status-update' pk=object.pk %}"
+                hx-target="this"
+                hx-vals='{"status": "{{ object.ChallengeRequestStatusChoices.REJECTED.value }}"}'
+                hx-confirm="Are you sure you want to REJECT the request?"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'
+            >
+                <i class="fa fa-thumbs-down mr-1"></i>Reject Request
+            </a>
+         {% elif object.status == object.ChallengeRequestStatusChoices.ACCEPTED and perms.evaluation.configure_algorithm_phase %}
+            <a class="btn btn-primary btn-lg"
+                href="{% url 'evaluation:configure-algorithm-phases' challenge_short_name=object.short_name %}"
+                title="Configure algorithm phases">
+                <i class="fas fa-edit mr-1"></i>Configure Algorithm Phases
+            </a>
+        {% endif %}
+      </div>
+    </div>
     <div class="row d-flex align-items-center ml-2">
         {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
             <div class="badge badge-success h-50 p-2 mr-1">Accepted</div>
@@ -27,6 +73,8 @@
             <div class="badge badge-danger h-50 p-2 mr-1">Rejected</div>
         {% elif object.status == object.ChallengeRequestStatusChoices.PENDING %}
             <div class="badge badge-light h-50 p-2 mr-1">Pending</div>
+        {% elif object.status == object.ChallengeRequestStatusChoices.DRAFT %}
+            <div class="badge badge-warning h-50 p-2 mr-1">Draft</div>
         {% endif %}
         <h3>[{{ object.short_name }}] {{ object.title  }}</h3>
     </div>
@@ -35,7 +83,11 @@
         <div class="col-lg-6">
             <i class="fa fa-user text-primary pr-3"></i> Challenge request from {{ object.creator|user_profile_link }}<br>
             <i class="fa fa-envelope text-primary pr-3"></i> <a target="_blank" href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a><br>
-            <i class="fa fa-calendar text-primary pr-3"></i> Submitted on <span class="badge ml-1 px-2 {% if object.created|timedifference < 8 %} badge-success {% elif object.created|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.created }}</span><br>
+            <i class="fa fa-calendar text-primary pr-3"></i> Created on <strong>{{ object.created|date:'F j, Y' }}</strong><br>
+            {% if object.submitted %}
+            <i class="fa fa-rocket text-primary pr-3"></i> Submitted on <span class="badge ml-1 px-2 {% if object.submitted|timedifference < 8 %} badge-success {% elif object.submitted|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{  object.submitted|date:'F j, Y'}}</span><br>
+            {% endif %}
+
         </div>
         <div class="col-lg-6">
             {% if object.structured_challenge_submission_doi %}
@@ -47,15 +99,13 @@
             {% if not object.structured_challenge_submission_form and not object.structured_challenge_submission_doi %}
                 <i class="fa fa-paperclip text-primary pr-3"></i> No challenge submission form available
             {% endif %}
-            {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED and perms.evaluation.configure_algorithm_phase %}
-                <a class="btn btn-primary btn-sm mt-3"
-                   href="{% url 'evaluation:configure-algorithm-phases' challenge_short_name=object.short_name %}"
-                   title="Configure algorithm phases">
-                    <i class="fas fa-edit mr-1"></i>Configure Algorithm Phases
-                </a>
-            {% endif %}
         </div>
     </div>
+    {% if object.status == object.ChallengeRequestStatusChoices.DRAFT %}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i> This challenge request is currently a draft. You can submit it for review using the button at the top of the page.
+    </div>
+    {% endif %}
     <div class="table-responsive">
         <table class="table table-hover">
         {% for field, value in fields.items %}
@@ -76,8 +126,7 @@
         </table>
     </div>
     <br>
-    {% get_obj_perms request.user for object as "user_perms" %}
-    {% if 'change_challengerequest' in user_perms %}
+    {% if 'review_challengerequest' in user_perms %}
     <div class="card card-danger border-danger">
         <div class="card-header bg-danger text-white">Reviewer Only</div>
         <div class="mt-3 card-body" id="budget">

@@ -59,27 +59,41 @@
                 {% for object in object_list %}
                     <tr>
                         <td class="text-center align-middle">
-                            <a class="btn btn-dark btn-sm" href="{% url 'challenges:requests-detail' pk=object.pk %}"><i class="fa fa-book pr-2"></i>Details</a>
+                            <a class="btn btn-dark btn-sm" href="{% url 'challenges:requests-detail' pk=object.pk %}">
+                            <i class="fa fa-book mr-1"></i>Details</a>
                         </td>
                         <td class="text-center align-middle">{{ object.short_name }}</td>
                         <td class="text-center align-middle">{{ object.creator|user_profile_link }}</td>
                         <td class="text-center align-middle" data-order="{{ object.start_date|date:"c" }}">{{ object.start_date|date:'F j, Y' }}</td>
-                        {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
-                            <td class="text-center align-middle" data-order="{{ object.created|date:"c" }}"><span class="badge p-2 badge-primary">{{ object.created|date:'F j, Y' }}</span></td>
-                            <td class="text-center align-middle"><span class="badge p-2 badge-success">Accepted</span></td>
-                        {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
-                            <td class="text-center align-middle" data-order="{{ object.created|date:"c" }}"><span class="badge p-2 badge-primary">{{ object.created|date:'F j, Y' }}</span></td>
-                            <td class="text-center align-middle"><span class="badge p-2 badge-danger">Rejected</span></td>
-                        {% else %}
-                            <td class="text-center align-middle" data-order="{{ object.created|date:"c" }}"><span class="badge p-2 {% if object.created|timedifference < 8 %} badge-success {% elif object.created|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.created|date:'F j, Y' }}</span></td>
-                            <td class="text-center align-middle">
-                            {% if perms.challenges.change_challengerequest %}
-                                <a class="btn btn-primary btn-sm" hx-get="{% url 'challenges:requests-status-update' pk=object.pk %}" hx-swap="outerHTML">Accept or decline</a>
+
+                        <!-- Submitted -->
+                        {% if object.submitted %}
+                            {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
+                                <td class="text-center align-middle" data-order="{{ object.submitted|date:"c" }}"><span class="badge p-2 badge-primary">{{ object.submitted|date:'F j, Y' }}</span></td>
+                            {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
+                                <td class="text-center align-middle" data-order="{{ object.submitted|date:"c" }}"><span class="badge p-2 badge-primary">{{ object.submitted|date:'F j, Y' }}</span></td>
+                            {% elif object.status == object.ChallengeRequestStatusChoices.PENDING %}
+                                <td class="text-center align-middle" data-order="{{ object.submitted|date:"c" }}"><span class="badge p-2 {% if object.submitted|timedifference < 8 %} badge-success {% elif object.submitted|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.submitted|date:'F j, Y' }}</span></td>
                             {% else %}
-                                <span class="badge p-2 badge-light">Pending</span>
+                                <td class="text-center align-middle" data-order="0"><span class="text-muted">Not Available</span></td>
                             {% endif %}
-                            </td>
+                        {% else %}
+                            <td class="text-center align-middle" data-order="0"><span class="text-muted">Not Available</span></td>
                         {% endif %}
+
+                        <!-- Status -->
+                        {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
+                            <td class="text-center align-middle"><span class="badge p-2 badge-success">{{ object.get_status_display }}</span></td>
+                        {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
+                            <td class="text-center align-middle"><span class="badge p-2 badge-danger">{{ object.get_status_display }}</span></td>
+                        {% elif object.status == object.ChallengeRequestStatusChoices.PENDING %}
+                            <td class="text-center align-middle"><span class="badge p-2 badge-light">{{ object.get_status_display }}</span></td>
+                        {% elif object.status == object.ChallengeRequestStatusChoices.DRAFT %}
+                            <td class="text-center align-middle"><span class="badge p-2 badge-warning">{{ object.get_status_display }}</span></td>
+                        {% else %}
+                            <td class="text-center align-middle"></td>
+                        {% endif %}
+
                         <td class="text-center align-middle"><a class="btn btn-primary btn-sm" target="_blank" href="mailto:{{ object.contact_email }}"> <i class="fas fa-envelope" aria-hidden="true"></i></a></td>
                     </tr>
                 {% endfor %}
