@@ -258,7 +258,6 @@ def test_update_service(mocker, settings):
                         ],
                     }
                 ],
-                "failures": [],
             },
         )
         ecs_stubber.add_response(
