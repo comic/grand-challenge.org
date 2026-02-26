@@ -1,6 +1,6 @@
 import pytest
 
-from grandchallenge.challenges.models import OnboardingTask
+from grandchallenge.challenges.models import ChallengeRequest, OnboardingTask
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.verifications.models import Verification
 from tests.factories import (
@@ -57,9 +57,7 @@ def test_request_challenge_only_when_verified(client):
     ],
 )
 @pytest.mark.django_db
-def test_view_and_update_challenge_request(
-    client, viewname, challenge_reviewer
-):
+def test_challenge_request_regular_user_cannot_access(client, viewname):
     challenge_request = ChallengeRequestFactory()
     user = UserFactory()
     response = get_view_for_user(
@@ -70,29 +68,95 @@ def test_view_and_update_challenge_request(
     )
     assert response.status_code == 403
 
+
+@pytest.mark.django_db
+def test_challenge_request_creator_viewing_and_updating(client):
+    challenge_request = ChallengeRequestFactory()
     response = get_view_for_user(
         client=client,
-        viewname=viewname,
+        viewname="challenges:requests-detail",
         reverse_kwargs={"pk": challenge_request.pk},
         user=challenge_request.creator,
     )
-    if "detail" in viewname:
-        assert response.status_code == 200
-        assert "Edit Budget Estimate" not in str(response.content)
-        assert "Budget estimate" not in str(response.content)
-    else:
-        assert response.status_code == 403
+    assert response.status_code == 200
+
+    # Test rendering of reviewer only sections
+    assert "Edit Budget Estimate" not in str(response.content)
+    assert "Budget estimate" not in str(response.content)
+
+    # Test that creator can update when in DRAFT status
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-status-update",
+        reverse_kwargs={"pk": challenge_request.pk},
+        user=challenge_request.creator,
+        data={"status": ChallengeRequest.ChallengeRequestStatusChoices.DRAFT},
+    )
+    assert response.status_code == 200
+
+    # Submit it so that it is no longer editable by the creator
+    challenge_request.status = (
+        ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+    )
+    challenge_request.save()
 
     response = get_view_for_user(
         client=client,
-        viewname=viewname,
+        method=client.post,
+        viewname="challenges:requests-status-update",
+        reverse_kwargs={"pk": challenge_request.pk},
+        user=challenge_request.creator,
+        data={
+            "status": ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED
+        },
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_challenge_request_reviewer_can_access_all(client, challenge_reviewer):
+    challenge_request = ChallengeRequestFactory()
+    response = get_view_for_user(
+        client=client,
+        viewname="challenges:requests-detail",
         reverse_kwargs={"pk": challenge_request.pk},
         user=challenge_reviewer,
     )
     assert response.status_code == 200
-    if "detail" in viewname:
-        assert "Edit Budget Estimate" in str(response.content)
-        assert "Budget estimate" in str(response.content)
+
+    # Test rendering of reviewer only sections
+    assert "Edit Budget Estimate" in str(response.content)
+    assert "Budget estimate" in str(response.content)
+
+    # Test that rewviewer can always update
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-status-update",
+        reverse_kwargs={"pk": challenge_request.pk},
+        user=challenge_reviewer,
+        data={"status": ChallengeRequest.ChallengeRequestStatusChoices.DRAFT},
+    )
+    assert response.status_code == 200
+
+    # Submit it
+    challenge_request.status = (
+        ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+    )
+    challenge_request.save()
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-status-update",
+        reverse_kwargs={"pk": challenge_request.pk},
+        user=challenge_reviewer,
+        data={
+            "status": ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED
+        },
+    )
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db
