@@ -1,3 +1,4 @@
+import time
 from typing import NamedTuple
 
 import boto3
@@ -103,6 +104,11 @@ class ECSTaskOrchestrator:
 
     def _wait_for_task_running(self, *, task_arn):
         waiter = self._ecs_client.get_waiter("tasks_running")
+
+        # The task is unlikely to have started on the first attempt
+        # so add a small delay here to save waiting for the longer Delay
+        time.sleep(settings.COMPONENTS_SERVICE_WAITER_INITIAL_DELAY_SECONDS)
+
         waiter.wait(
             cluster=settings.COMPONENTS_SERVICE_CLUSTER_NAME,
             tasks=[task_arn],
@@ -220,20 +226,6 @@ class ECSTaskOrchestrator:
                     },
                 },
                 "privileged": False,
-                "ulimits": [
-                    {
-                        "name": "nproc",
-                        "hardLimit": settings.COMPONENTS_SERVICE_PIDS_LIMIT,
-                        "softLimit": settings.COMPONENTS_SERVICE_PIDS_LIMIT,
-                    },
-                    {
-                        "name": "data",
-                        "softLimit": settings.COMPONENTS_SERVICE_MEMORY_LIMIT_MB
-                        * settings.MEGABYTE,
-                        "hardLimit": settings.COMPONENTS_SERVICE_MEMORY_LIMIT_MB
-                        * settings.MEGABYTE,
-                    },
-                ],
             },
         ]
 

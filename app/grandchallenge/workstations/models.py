@@ -18,7 +18,6 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
-from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from knox.models import AuthToken
@@ -234,18 +233,6 @@ class WorkstationImage(UUIDModel, ComponentImage):
     SHIM_IMAGE = False
 
     workstation = models.ForeignKey(Workstation, on_delete=models.PROTECT)
-    http_port = deprecate_field(
-        models.PositiveIntegerField(
-            default=8080, validators=[MaxValueValidator(2**16 - 1)]
-        ),
-        raise_on_access=True,
-    )
-    websocket_port = deprecate_field(
-        models.PositiveIntegerField(
-            default=4114, validators=[MaxValueValidator(2**16 - 1)]
-        ),
-        raise_on_access=True,
-    )
     initial_path = models.CharField(
         max_length=256,
         default="cirrus",
@@ -464,7 +451,6 @@ class Session(FieldChangeMixin, UUIDModel):
     )
     maximum_duration = models.DurationField(default=timedelta(minutes=10))
     user_finished = models.BooleanField(default=False)
-    logs = deprecate_field(models.TextField(editable=False, blank=True))
     ping_times = models.JSONField(null=True, blank=True, default=None)
     extra_env_vars = models.JSONField(
         default=list,

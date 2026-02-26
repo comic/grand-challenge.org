@@ -135,18 +135,6 @@ def test_start_service(mocker, settings, django_capture_on_commit_callbacks):
                             },
                         ],
                         "privileged": False,
-                        "ulimits": [
-                            {
-                                "hardLimit": 2048,
-                                "name": "nproc",
-                                "softLimit": 2048,
-                            },
-                            {
-                                "hardLimit": 8589934592,
-                                "name": "data",
-                                "softLimit": 8589934592,
-                            },
-                        ],
                     }
                 ],
                 "family": f"localhost-workstations-workstationimage-{session.workstation_image.pk}",

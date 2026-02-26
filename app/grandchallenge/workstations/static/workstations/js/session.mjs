@@ -1,5 +1,6 @@
-const timeout = 1000;
-const max_attempts = 60;
+const timeout_ms = 1000;
+const jitter_ms = 0.1 * timeout_ms;
+const max_attempts = 120;
 
 const params = new URLSearchParams(window.location.search);
 const path = decodeURIComponent(params.has("path") ? params.get("path") : "");
@@ -40,7 +41,8 @@ function handleSessionStatus(statusUrl, statusButton, status, workstationUrl) {
                 () => {
                     getSessionStatus(statusUrl, statusButton, workstationUrl);
                 },
-                Math.floor(Math.random() * timeout) + 100,
+                Math.round(Math.random() * jitter_ms - jitter_ms / 2) +
+                    timeout_ms,
             );
             break;
         case "running":
@@ -82,7 +84,8 @@ function redirectWhenReady(url, statusButton, attempts = 0) {
                     () => {
                         redirectWhenReady(url, statusButton, attempts + 1);
                     },
-                    Math.floor(Math.random() * timeout) + 100,
+                    Math.round(Math.random() * jitter_ms - jitter_ms / 2) +
+                        timeout_ms,
                 );
             }
         });
