@@ -1,4 +1,3 @@
-import os
 import zipfile
 from collections import namedtuple
 from pathlib import Path
@@ -13,7 +12,6 @@ from requests import put
 
 from grandchallenge.algorithms.models import Job
 from grandchallenge.cases.widgets import DICOMUploadWidgetSuffixes
-from grandchallenge.components.backends import docker_client
 from grandchallenge.components.forms import (
     INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
@@ -176,68 +174,15 @@ def challenge_set_with_evaluation(challenge_set):
     return eval_challenge_set(challenge_set, method)
 
 
-def docker_image(tmpdir_factory, path, label, full_path=None):
-    """Create the docker container."""
-    repo_tag = f"test-{label}:latest"
-
-    if not full_path:
-        full_path = os.path.join(
-            os.path.split(__file__)[0], path, "resources", "docker"
-        )
-
-    docker_client.build_image(path=full_path, repo_tag=repo_tag)
-
-    outfile = tmpdir_factory.mktemp("docker").join(f"{label}-latest.tar")
-    docker_client.save_image(repo_tag=repo_tag, output=outfile)
-
-    return outfile
-
-
-@pytest.fixture(scope="session")
-def algorithm_io_image(tmpdir_factory):
-    """Create the example algorithm container."""
-    return docker_image(
-        tmpdir_factory,
-        path="",
-        label="algorithm-io",
-        full_path=os.path.join(
-            os.path.split(__file__)[0], "resources", "gc_demo_algorithm"
-        ),
-    )
-
-
-@pytest.fixture(scope="session")
+@pytest.fixture
 def invoke_container_image(tmpdir_factory):
-    return docker_image(
-        tmpdir_factory,
-        path="",
-        label="invoke",
-        full_path=os.path.join(
-            os.path.split(__file__)[0], "resources", "invoke_container"
-        ),
+    return (
+        Path(__file__).parent
+        / "resources"
+        / "containers"
+        / "invoke"
+        / "invoke.tar.gz"
     )
-
-
-@pytest.fixture(scope="session")
-def alpine_images(tmpdir_factory):
-    docker_client.pull_image(repo_tag="alpine:3.16")
-    docker_client.pull_image(repo_tag="alpine:3.15")
-
-    # get all images and put them in a tar archive
-    outfile = tmpdir_factory.mktemp("alpine").join("alpine_multi.tar")
-    docker_client.save_image(repo_tag="alpine", output=outfile)
-
-    return outfile
-
-
-@pytest.fixture(scope="session")
-def root_image(tmpdir_factory):
-    docker_client.pull_image(repo_tag="alpine:3.16")
-
-    outfile = tmpdir_factory.mktemp("alpine").join("alpine.tar")
-    docker_client.save_image(repo_tag="alpine:3.16", output=outfile)
-
-    return outfile
 
 
 @pytest.fixture(scope="session")

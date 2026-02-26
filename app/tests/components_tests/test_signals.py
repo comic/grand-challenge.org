@@ -20,29 +20,25 @@ from tests.factories import WorkstationImageFactory
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "factory, lookup, object_class, storage",
+    "factory, object_class, storage",
     [
-        (AlgorithmImageFactory, "image", AlgorithmImage, protected_s3_storage),
-        (AlgorithmModelFactory, "model", AlgorithmModel, protected_s3_storage),
-        (MethodFactory, "image", Method, private_s3_storage),
+        (AlgorithmImageFactory, AlgorithmImage, protected_s3_storage),
+        (AlgorithmModelFactory, AlgorithmModel, protected_s3_storage),
+        (MethodFactory, Method, private_s3_storage),
         (
             EvaluationGroundTruthFactory,
-            "ground_truth",
             EvaluationGroundTruth,
             private_s3_storage,
         ),
         (
             WorkstationImageFactory,
-            "image",
             WorkstationImage,
             private_s3_storage,
         ),
     ],
 )
-def test_delete_linked_file(
-    algorithm_io_image, factory, lookup, object_class, storage
-):
-    factory.create_batch(2, **{f"{lookup}__from_path": algorithm_io_image})
+def test_delete_linked_file(factory, object_class, storage):
+    factory.create_batch(2)
     file_names = []
     for obj in object_class.objects.all():
         assert obj.linked_file.file is not None

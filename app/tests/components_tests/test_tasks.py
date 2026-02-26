@@ -212,7 +212,7 @@ def test_remove_inactive_container_images(django_capture_on_commit_callbacks):
 
 @pytest.mark.django_db
 def test_validate_docker_image(
-    algorithm_io_image, settings, django_capture_on_commit_callbacks
+    invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -220,7 +220,7 @@ def test_validate_docker_image(
 
     alg = AlgorithmFactory()
     image = AlgorithmImageFactory(
-        algorithm=alg, image__from_path=algorithm_io_image
+        algorithm=alg, image__from_path=invoke_container_image
     )
     assert image.is_manifest_valid is None
 
@@ -253,7 +253,7 @@ def test_validate_docker_image(
 
 @pytest.mark.django_db
 def test_upload_to_registry_and_sagemaker(
-    algorithm_io_image, settings, django_capture_on_commit_callbacks
+    invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -263,7 +263,7 @@ def test_upload_to_registry_and_sagemaker(
     image = AlgorithmImageFactory(
         algorithm=alg,
         is_manifest_valid=True,
-        image__from_path=algorithm_io_image,
+        image__from_path=invoke_container_image,
     )
     assert not image.is_in_registry
 
@@ -385,7 +385,7 @@ def test_api_method_extraction_bad_label():
 
 @pytest.mark.django_db
 def test_update_sagemaker_shim(
-    algorithm_io_image,
+    invoke_container_image,
     settings,
     django_capture_on_commit_callbacks,
     tmp_path,
@@ -413,7 +413,7 @@ def test_update_sagemaker_shim(
     image = AlgorithmImageFactory(
         algorithm=alg,
         is_manifest_valid=True,
-        image__from_path=algorithm_io_image,
+        image__from_path=invoke_container_image,
     )
     assert not image.is_in_registry
 

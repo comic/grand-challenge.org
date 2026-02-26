@@ -122,15 +122,10 @@ services:
             - type: bind
               source: ./app
               target: /app/
-            # The docker socket and pytest_cache is only needed for testing
-            - type: bind
-              source: /var/run/docker.sock
-              target: /var/run/docker.sock
+            # The pytest_cache is only needed for testing
             - type: volume
               source: pytest-cache
               target: /tmp/.pytest_cache
-        group_add:
-            - ${DOCKER_GID:?err}
         networks:
             - default
             - components
@@ -160,17 +155,6 @@ services:
             - "127.0.0.1:5000:5000"
         environment:
             REGISTRY_STORAGE_DELETE_ENABLED: "true"
-
-    flower:
-        image: mher/flower
-        environment:
-            CELERY_BROKER_URL: "redis://redis:6379/1"
-        ports:
-            - "127.0.0.1:5555:5555"
-        depends_on:
-            redis:
-                condition: service_started
-        restart: always
 
 networks:
     default:

@@ -1,9 +1,6 @@
-import gzip
 import os
-import shutil
 from contextlib import contextmanager
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -18,7 +15,6 @@ from grandchallenge.algorithms.models import (
 from grandchallenge.archives.models import Archive, ArchiveItem
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.components.backends import docker_client
 from grandchallenge.components.models import (
     ComponentInterface,
     ComponentInterfaceValue,
@@ -171,28 +167,14 @@ def _create_algorithm(*, creator, inputs, outputs, suffix):
 
 @contextmanager
 def _gc_demo_algorithm():
-    with TemporaryDirectory() as tmp_dir:
-        tmp_path = Path(tmp_dir)
-
-        repo_tag = "fixtures-algorithm-io:latest"
-        demo_algorithm_path = (
-            settings.SITE_ROOT / "tests" / "resources" / "gc_demo_algorithm"
-        )
-
-        docker_client.build_image(
-            path=str(demo_algorithm_path.absolute()), repo_tag=repo_tag
-        )
-
-        outfile = tmp_path / f"{repo_tag}.tar"
-        output_gz = f"{outfile}.gz"
-
-        docker_client.save_image(repo_tag=repo_tag, output=outfile)
-
-        with open(outfile, "rb") as f_in:
-            with gzip.open(output_gz, "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
-
-        yield from _uploaded_file(path=output_gz)
+    yield from _uploaded_file(
+        path=settings.SITE_ROOT
+        / "tests"
+        / "resources"
+        / "containers"
+        / "invoke"
+        / "invoke.tar.gz"
+    )
 
 
 @contextmanager

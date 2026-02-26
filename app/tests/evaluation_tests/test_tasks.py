@@ -1,3 +1,9 @@
+import gzip
+import io
+import json
+import os
+import tarfile
+import tempfile
 from datetime import timedelta
 from pathlib import Path
 
@@ -48,7 +54,7 @@ from tests.uploads_tests.factories import (
     create_completed_upload,
     create_upload_from_file,
 )
-from tests.utils import get_view_for_user, recurse_callbacks
+from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
 
 
@@ -173,9 +179,9 @@ def test_submission_evaluation(
 
 
 @pytest.mark.django_db
-def test_method_validation(algorithm_io_image):
+def test_method_validation(invoke_container_image):
     """The validator should set the correct sha256 and set the ready bit."""
-    method = MethodFactory(image__from_path=algorithm_io_image)
+    method = MethodFactory(image__from_path=invoke_container_image)
 
     original_sha256 = method.image_sha256
     assert method.is_manifest_valid is None
@@ -198,9 +204,9 @@ def test_method_validation(algorithm_io_image):
 
 
 @pytest.mark.django_db
-def test_container_pushing(algorithm_io_image):
+def test_container_pushing(invoke_container_image):
     method = MethodFactory(
-        image__from_path=algorithm_io_image, is_manifest_valid=True
+        image__from_path=invoke_container_image, is_manifest_valid=True
     )
 
     push_container_image(instance=method)
@@ -220,10 +226,74 @@ def test_container_pushing(algorithm_io_image):
     assert str(method.pk) in response.json()["tags"]
 
 
+@pytest.fixture
+def two_invoke_container_image(invoke_container_image):
+    # Read all files from the original archive
+    with gzip.open(invoke_container_image, "rb") as gz_in:
+        with tarfile.open(fileobj=gz_in, mode="r") as tar:
+            members = tar.getmembers()
+            files = {
+                m.name: (m, (f := tar.extractfile(m)) and f.read())
+                for m in members
+            }
+
+    manifest = json.loads(files["manifest.json"][1])
+    original_config_file = manifest[0]["Config"]
+    original_config_data = json.loads(files[original_config_file][1])
+
+    # Build two copies with different users
+    configs = {}
+    for i, user in enumerate(["0", "1000"]):
+        config = json.loads(json.dumps(original_config_data))  # deep copy
+        config["config"]["User"] = user
+        configs[f"image{i}.json"] = json.dumps(config).encode()
+
+    new_manifest = [
+        {
+            **manifest[0],
+            "Config": "image0.json",
+            "RepoTags": ["image0:latest"],
+        },
+        {
+            **manifest[0],
+            "Config": "image1.json",
+            "RepoTags": ["image1:latest"],
+        },
+    ]
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = os.path.join(tmp_dir, "two_images.tar.gz")
+        with gzip.open(tmp_path, "wb") as gz_out:
+            with tarfile.open(fileobj=gz_out, mode="w") as tar_out:
+                # Write all original files except manifest and original config
+                for name, (member, data) in files.items():
+                    if name in (original_config_file, "manifest.json"):
+                        continue
+                    if data is not None:
+                        member.size = len(data)
+                        tar_out.addfile(member, io.BytesIO(data))
+                    else:
+                        tar_out.addfile(member)
+
+                # Write two config files
+                for name, data in configs.items():
+                    info = tarfile.TarInfo(name=name)
+                    info.size = len(data)
+                    tar_out.addfile(info, io.BytesIO(data))
+
+                # Write new manifest
+                manifest_data = json.dumps(new_manifest).encode()
+                info = tarfile.TarInfo(name="manifest.json")
+                info.size = len(manifest_data)
+                tar_out.addfile(info, io.BytesIO(manifest_data))
+
+        yield tmp_path
+
+
 @pytest.mark.django_db
-def test_method_validation_invalid_dockerfile(alpine_images):
+def test_method_validation_two_images(two_invoke_container_image):
     """Uploading two images in a tar archive should fail."""
-    method = MethodFactory(image__from_path=alpine_images)
+    method = MethodFactory(image__from_path=two_invoke_container_image)
     assert method.is_manifest_valid is None
 
     validate_docker_image(
@@ -238,10 +308,44 @@ def test_method_validation_invalid_dockerfile(alpine_images):
     assert "should only have 1 image" in method.status
 
 
+@pytest.fixture
+def invoke_container_image_as_root(invoke_container_image):
+    # Read all files from the archive
+    with gzip.open(invoke_container_image, "rb") as gz_in:
+        with tarfile.open(fileobj=gz_in, mode="r") as tar:
+            members = tar.getmembers()
+            files = {
+                m.name: (m, (f := tar.extractfile(m)) and f.read())
+                for m in members
+            }
+
+    # Patch the config JSON
+    manifest = json.loads(files["manifest.json"][1])
+    config_file = manifest[0]["Config"]
+    config_data = json.loads(files[config_file][1])
+    config_data["config"]["User"] = "0"
+    files[config_file] = (
+        files[config_file][0],
+        json.dumps(config_data).encode(),
+    )
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_path = os.path.join(tmp_dir, "image.tar.gz")
+        with gzip.open(tmp_path, "wb") as gz_out:
+            with tarfile.open(fileobj=gz_out, mode="w") as tar_out:
+                for _, (member, data) in files.items():
+                    if data is not None:
+                        member.size = len(data)
+                        tar_out.addfile(member, io.BytesIO(data))
+                    else:
+                        tar_out.addfile(member)
+        yield tmp_path
+
+
 @pytest.mark.django_db
-def test_method_validation_root_dockerfile(root_image):
-    """Uploading two images in a tar archive should fail."""
-    method = MethodFactory(image__from_path=root_image)
+def test_method_validation_root_dockerfile(invoke_container_image_as_root):
+    """Uploading an image that runs as root should fail."""
+    method = MethodFactory(image__from_path=invoke_container_image_as_root)
     assert method.is_manifest_valid is None
 
     validate_docker_image(
@@ -629,7 +733,6 @@ def test_non_zip_submission_failure(
 @pytest.mark.django_db
 def test_evaluation_notifications(
     client,
-    algorithm_io_image,
     submission_file,
     settings,
     django_capture_on_commit_callbacks,
@@ -645,11 +748,11 @@ def test_evaluation_notifications(
     )
 
     # Add method and upload a submission
-    with django_capture_on_commit_callbacks() as callbacks:
-        MethodFactory(phase=phase, image__from_path=algorithm_io_image)
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    MethodFactory(
+        phase=phase,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
     )
 
     InvoiceFactory(

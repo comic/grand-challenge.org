@@ -837,7 +837,7 @@ def test_failed_job_notifications(
 
 @pytest.mark.django_db
 def test_importing_same_sha_fails(
-    settings, django_capture_on_commit_callbacks, algorithm_io_image
+    settings, django_capture_on_commit_callbacks, invoke_container_image
 ):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
@@ -846,7 +846,7 @@ def test_importing_same_sha_fails(
     alg = AlgorithmFactory()
 
     im1, im2 = AlgorithmImageFactory.create_batch(
-        2, algorithm=alg, image__from_path=algorithm_io_image
+        2, algorithm=alg, image__from_path=invoke_container_image
     )
 
     for im in [im1, im2]:
