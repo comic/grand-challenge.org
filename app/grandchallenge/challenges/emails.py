@@ -25,7 +25,7 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
         detail_url=detail_url,
     )
     reviewers = get_users_with_perms(
-        challengerequest, only_with_perms_in=["change_challengerequest"]
+        challengerequest, only_with_perms_in=["review_challengerequest"]
     )
     site = Site.objects.get_current()
     send_standard_email_batch(

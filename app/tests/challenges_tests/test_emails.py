@@ -2,6 +2,7 @@ import pytest
 from django.contrib.auth.models import Group
 from django.core import mail
 
+from grandchallenge.challenges.models import ChallengeRequest
 from tests.factories import ChallengeRequestFactory, UserFactory
 
 
@@ -14,8 +15,12 @@ def test_only_reviewers_sent_email(settings):
     ).user_set.add(reviewer)
 
     request = ChallengeRequestFactory()
+    request.status = (
+        ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+    )  # Submit it
+    request.save()
 
-    assert len(mail.outbox) == 2
+    assert len(mail.outbox) == 2, [m.subject for m in mail.outbox]
 
     reviewer_mail = [
         email

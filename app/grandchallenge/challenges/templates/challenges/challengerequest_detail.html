@@ -24,7 +24,7 @@
     <div class="px-2 row d-flex">
         <div class="d-flex ml-auto">
         {% if object.status == object.ChallengeRequestStatusChoices.DRAFT %}
-            {% if 'submit_challengerequest' in user_perms %}
+            {% if 'change_challengerequest' in user_perms %}
                 <a class="btn btn-lg btn-primary"
                     href="#"
                     hx-post="{% url 'challenges:requests-status-update' pk=object.pk %}"

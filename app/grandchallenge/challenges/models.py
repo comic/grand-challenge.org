@@ -1210,7 +1210,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     class Meta:
         permissions = [
-            ("submit_challengerequest", "Can submit challenge request"),
             ("review_challengerequest", "Can review challenge request"),
         ]
 
@@ -1230,6 +1229,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
         if adding:
             self.assign_permissions()
+        elif (
+            self._orig_status == self.ChallengeRequestStatusChoices.DRAFT
+            and self.status == self.ChallengeRequestStatusChoices.PENDING
+        ):
             send_challenge_requested_email_to_reviewers(self)
             send_challenge_requested_email_to_requester(self)
 

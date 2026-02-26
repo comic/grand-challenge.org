@@ -232,7 +232,7 @@ class ChallengeRequestStatusUpdate(
             self.get_object().status
             == self.get_object().ChallengeRequestStatusChoices.DRAFT
         ):
-            return ["submit_challengerequest"]
+            return ["change_challengerequest"]
         else:
             raise HttpResponseBadRequest()
 
