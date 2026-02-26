@@ -129,7 +129,7 @@ def test_challenge_request_reviewer_can_access_all(client, challenge_reviewer):
     assert "Edit Budget Estimate" in str(response.content)
     assert "Budget estimate" in str(response.content)
 
-    # Test that rewviewer can always update
+    # Test that reviewer can always update
     response = get_view_for_user(
         client=client,
         method=client.post,
