@@ -151,25 +151,12 @@ class ChallengeRequestCreate(
 ):
     model = ChallengeRequest
     form_class = ChallengeRequestForm
-    # TODO-challenge-request-draft, update success message
-    # success_message = "A draft of your challenge request has been created!"
-    success_message = "Your challenge request has been created!"
+    success_message = "A draft of your challenge request has been created!"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update({"creator": self.request.user})
         return kwargs
-
-    def form_valid(self, form):
-        result = super().form_valid(form)
-
-        # TODO-challenge-request-draft, remove this auto submit
-        self.object.status = (
-            ChallengeRequest.ChallengeRequestStatusChoices.PENDING
-        )
-        self.object.save()
-
-        return result
 
 
 class ChallengeRequestList(
