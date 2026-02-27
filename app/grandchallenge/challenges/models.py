@@ -1730,7 +1730,6 @@ class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
         {
             "view_challengerequest",
             "change_challengerequest",
-            "submit_challengerequest",
         }
     )
 
