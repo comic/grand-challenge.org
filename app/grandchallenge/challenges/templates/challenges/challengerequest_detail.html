@@ -23,19 +23,17 @@
     {% get_obj_perms request.user for object as "user_perms" %}
     <div class="px-2 row d-flex">
         <div class="d-flex ml-auto">
-        {% if object.status == object.ChallengeRequestStatusChoices.DRAFT %}
-            {% if 'change_challengerequest' in user_perms %}
-                <a class="btn btn-lg btn-primary"
-                    href="#"
-                    hx-post="{% url 'challenges:requests-status-update' pk=object.pk %}"
-                    hx-target="this"
-                    hx-vals='{"status": "{{ object.ChallengeRequestStatusChoices.PENDING.value }}"}'
-                    hx-confirm="Are you sure you want to submit the request?"
-                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'
-                >
-                    <i class="fa fa-rocket mr-2"></i>Submit for Review
-                </a>
-            {% endif %}
+        {% if object.status == object.ChallengeRequestStatusChoices.DRAFT and 'change_challengerequest' in user_perms %}
+            <a class="btn btn-lg btn-primary"
+                href="#"
+                hx-post="{% url 'challenges:requests-status-update' pk=object.pk %}"
+                hx-target="this"
+                hx-vals='{"status": "{{ object.ChallengeRequestStatusChoices.PENDING.value }}"}'
+                hx-confirm="Are you sure you want to submit the request?"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'
+            >
+                <i class="fa fa-rocket mr-2"></i>Submit for Review
+            </a>
         {% elif object.status == object.ChallengeRequestStatusChoices.PENDING and 'review_challengerequest' in user_perms %}
             <a class="btn btn-lg btn-success"
                 href="#"
@@ -85,9 +83,8 @@
             <i class="fa fa-envelope text-primary pr-3"></i> <a target="_blank" href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a><br>
             <i class="fa fa-calendar text-primary pr-3"></i> Created on <strong>{{ object.created|date:'F j, Y' }}</strong><br>
             {% if object.submitted %}
-            <i class="fa fa-rocket text-primary pr-3"></i> Submitted on <span class="badge ml-1 px-2 {% if object.submitted|timedifference < 8 %} badge-success {% elif object.submitted|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{  object.submitted|date:'F j, Y'}}</span><br>
+                <i class="fa fa-rocket text-primary pr-3"></i> Submitted on <span class="badge ml-1 px-2 {% if object.submitted|timedifference < 8 %} badge-success {% elif object.submitted|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{  object.submitted|date:'F j, Y'}}</span><br>
             {% endif %}
-
         </div>
         <div class="col-lg-6">
             {% if object.structured_challenge_submission_doi %}
@@ -102,9 +99,9 @@
         </div>
     </div>
     {% if object.status == object.ChallengeRequestStatusChoices.DRAFT %}
-    <div class="alert alert-warning">
-        <i class="fas fa-exclamation-triangle"></i> This challenge request is currently a draft. You can submit it for review using the button at the top of the page.
-    </div>
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle"></i> This challenge request is currently a draft. You can submit it for review using the button at the top of the page.
+        </div>
     {% endif %}
     <div class="table-responsive">
         <table class="table table-hover">

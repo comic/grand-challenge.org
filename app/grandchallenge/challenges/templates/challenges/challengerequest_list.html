@@ -60,7 +60,8 @@
                     <tr>
                         <td class="text-center align-middle">
                             <a class="btn btn-dark btn-sm" href="{% url 'challenges:requests-detail' pk=object.pk %}">
-                            <i class="fa fa-book mr-1"></i>Details</a>
+                                <i class="fa fa-book mr-1"></i>Details
+                            </a>
                         </td>
                         <td class="text-center align-middle">{{ object.short_name }}</td>
                         <td class="text-center align-middle">{{ object.creator|user_profile_link }}</td>
@@ -94,7 +95,7 @@
                             <td class="text-center align-middle"></td>
                         {% endif %}
 
-                        <td class="text-center align-middle"><a class="btn btn-primary btn-sm" target="_blank" href="mailto:{{ object.contact_email }}"> <i class="fas fa-envelope" aria-hidden="true"></i></a></td>
+                        <td class="text-center align-middle"><a class="btn btn-primary btn-sm" target="_blank" href="mailto:{{ object.contact_email }}"><i class="fas fa-envelope" aria-hidden="true"></i></a></td>
                     </tr>
                 {% endfor %}
             </tbody>
