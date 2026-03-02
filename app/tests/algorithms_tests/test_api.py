@@ -583,15 +583,12 @@ class TestJobCreationThroughAPI:
 
 
 @pytest.mark.django_db
-def test_algorithm_image_download_url(
-    client, django_capture_on_commit_callbacks, algorithm_io_image, rf
-):
+def test_algorithm_image_download_url(client, rf):
     user1, user2 = UserFactory.create_batch(2)
     group = Group.objects.create(name="test-group")
     group.user_set.add(user1)
 
-    with django_capture_on_commit_callbacks():
-        ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
+    ai = AlgorithmImageFactory()
 
     assign_perm("algorithms.download_algorithmimage", group, ai)
 
@@ -609,21 +606,18 @@ def test_algorithm_image_download_url(
     )
     assert resp.status_code == 302
     assert (
-        f"grand-challenge-protected/docker/images/algorithms/algorithmimage/{ai.pk}/algorithm-io-latest.tar"
+        f"grand-challenge-protected/docker/images/algorithms/algorithmimage/{ai.pk}/example.dat"
         in str(resp.url)
     )
 
 
 @pytest.mark.django_db
-def test_algorithm_model_download_url(
-    client, django_capture_on_commit_callbacks, algorithm_io_image, rf
-):
+def test_algorithm_model_download_url(client, rf):
     user1, user2 = UserFactory.create_batch(2)
     group = Group.objects.create(name="test-group")
     group.user_set.add(user1)
 
-    with django_capture_on_commit_callbacks():
-        model = AlgorithmModelFactory(model__from_path=algorithm_io_image)
+    model = AlgorithmModelFactory()
 
     assign_perm("algorithms.download_algorithmmodel", group, model)
 
@@ -641,6 +635,6 @@ def test_algorithm_model_download_url(
     )
     assert resp.status_code == 302
     assert (
-        f"grand-challenge-protected/models/algorithms/algorithmmodel/{model.pk}/algorithm-io-latest.tar"
+        f"grand-challenge-protected/models/algorithms/algorithmmodel/{model.pk}/example.dat"
         in str(resp.url)
     )

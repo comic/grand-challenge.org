@@ -44,8 +44,8 @@ RUN gem install licensee -v 9.16.1
 
 # Fetch and install crane for pushing containers
 RUN mkdir -p /opt/crane \
-    && wget https://github.com/google/go-containerregistry/releases/download/v0.19.0/go-containerregistry_Linux_x86_64.tar.gz -O /opt/crane/src.tar.gz \
-    && echo "daa629648e1d1d10fc8bde5e6ce4176cbc0cd48a32211b28c3fd806e0fa5f29b  /opt/crane/src.tar.gz" | shasum -c - || exit 1 \
+    && wget https://github.com/google/go-containerregistry/releases/download/v0.21.1/go-containerregistry_Linux_x86_64.tar.gz -O /opt/crane/src.tar.gz \
+    && echo "ffca5eafe0af8078f2c627fb852104f9d762fad1eb36c04e93ca14fce76d47d2  /opt/crane/src.tar.gz" | shasum -c - || exit 1 \
     && tar -C /opt/crane/ -xzvf /opt/crane/src.tar.gz crane \
     && chmod a+x /opt/crane/crane \
     && mv /opt/crane/crane /usr/local/bin/ \
@@ -66,15 +66,6 @@ RUN mkdir -p /opt/mc \
     && chmod a+x /opt/mc/mc \
     && mv /opt/mc/mc /usr/local/bin/ \
     && rm -r /opt/mc
-
-# Get the docker cli
-RUN mkdir -p /opt/docker \
-    && wget https://download.docker.com/linux/static/stable/x86_64/docker-27.1.1.tgz -O /opt/docker/docker.tgz \
-    && echo "118da6b8fc8e8b6c086ab0dd5e64ee549376c3a3f963723bbc9a46db475bf21f  /opt/docker/docker.tgz" | shasum -c - || exit 1 \
-    && tar -C /opt/docker/ -xzvf /opt/docker/docker.tgz \
-    && chmod a+x /opt/docker/docker/docker \
-    && mv /opt/docker/docker/docker /usr/local/bin/ \
-    && rm -r /opt/docker
 
 ENV PYTHONUNBUFFERED=1\
     AWS_XRAY_SDK_ENABLED=false\

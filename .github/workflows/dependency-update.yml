@@ -37,9 +37,6 @@ jobs:
                   echo "LOCK_OUTPUT<<EOF" >> $GITHUB_ENV
                   echo "$LOCK_OUTPUT" >> $GITHUB_ENV
                   echo "EOF" >> $GITHUB_ENV
-            - name: Set DOCKER_GID
-              run: |
-                  echo DOCKER_GID=`getent group docker | cut -d: -f3` > .env
             - name: Build the test container, make the docs and migrations
               run: |
                   make build_web_test

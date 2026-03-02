@@ -55,7 +55,7 @@ from tests.uploads_tests.factories import (
     UserUploadFactory,
     create_upload_from_file,
 )
-from tests.utils import get_view_for_user, recurse_callbacks
+from tests.utils import get_view_for_user
 from tests.verification_tests.factories import VerificationFactory
 
 
@@ -758,16 +758,15 @@ def test_display_set_from_job(client):
 
 @pytest.mark.django_db
 def test_create_job_with_json_file(
-    client, settings, algorithm_io_image, django_capture_on_commit_callbacks
+    client, settings, django_capture_on_commit_callbacks
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    with django_capture_on_commit_callbacks() as callbacks:
-        ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
     )
 
     editor = UserFactory()
@@ -814,16 +813,15 @@ def test_create_job_with_json_file(
 
 @pytest.mark.django_db
 def test_algorithm_job_create_with_image_input(
-    settings, client, algorithm_io_image, django_capture_on_commit_callbacks
+    settings, client, django_capture_on_commit_callbacks
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
-    with django_capture_on_commit_callbacks() as callbacks:
-        ai = AlgorithmImageFactory(image__from_path=algorithm_io_image)
-    recurse_callbacks(
-        callbacks=callbacks,
-        django_capture_on_commit_callbacks=django_capture_on_commit_callbacks,
+    ai = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
     )
 
     editor = UserFactory()
@@ -1416,7 +1414,7 @@ class TestJobCreateView:
 def test_algorithm_image_activate(
     settings,
     client,
-    algorithm_io_image,
+    invoke_container_image,
     mocker,
     django_capture_on_commit_callbacks,
 ):
@@ -1436,8 +1434,8 @@ def test_algorithm_image_activate(
         image=None,
     )
     for image in {i1, i2}:
-        with open(algorithm_io_image, "rb") as f:
-            image.image.save(algorithm_io_image, ContentFile(f.read()))
+        with open(invoke_container_image, "rb") as f:
+            image.image.save(invoke_container_image, ContentFile(f.read()))
 
     i2.is_desired_version = True
     i2.save()
