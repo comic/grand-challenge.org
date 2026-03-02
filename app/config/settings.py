@@ -937,6 +937,8 @@ CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "django-db")
 CELERY_RESULT_PERSISTENT = True
 CELERY_RESULT_EXTENDED = True
 CELERY_RESULT_EXPIRES = 0  # We handle cleanup of results ourselves
+CELERY_TASK_PROTOCOL = 1
+CELERY_TASK_SERIALIZER = "json"
 CELERY_TASK_ACKS_LATE = strtobool(
     os.environ.get("CELERY_TASK_ACKS_LATE", "False")
 )
