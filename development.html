@@ -72,12 +72,6 @@ installed alongside docker. If the docker compose cycle invocation below crashes
 </pre></div>
 </div>
 <ol class="arabic simple" start="3">
-<li><p>Set your local docker group id in your <code class="docutils literal notranslate"><span class="pre">.env</span></code> file</p></li>
-</ol>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">echo</span><span class="w"> </span><span class="nv">DOCKER_GID</span><span class="o">=</span><span class="sb">`</span>getent<span class="w"> </span>group<span class="w"> </span>docker<span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-d:<span class="w"> </span>-f3<span class="sb">`</span><span class="w"> </span>&gt;<span class="w"> </span>.env
-</pre></div>
-</div>
-<ol class="arabic simple" start="4">
 <li><p>You can then start the development site by invoking</p></li>
 </ol>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>runserver
