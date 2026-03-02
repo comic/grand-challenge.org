@@ -35,9 +35,6 @@ services:
             && minio --compat server /data
             "
         restart: always
-        networks:
-            - default
-            - components
 
     web:
         image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
@@ -126,9 +123,6 @@ services:
             - type: volume
               source: pytest-cache
               target: /tmp/.pytest_cache
-        networks:
-            - default
-            - components
 
     celery_beat:
         image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
@@ -159,9 +153,6 @@ services:
 networks:
     default:
         name: "grand-challengeorg_default"
-    components:
-        name: "grand-challengeorg_components"
-        internal: true
 
 volumes:
     pytest-cache:
