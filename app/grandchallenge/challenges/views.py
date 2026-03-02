@@ -1,3 +1,5 @@
+from functools import cached_property
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import (
@@ -6,6 +8,7 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
+from django.core.exceptions import PermissionDenied
 from django.db.models import F, Prefetch, Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
@@ -28,6 +31,7 @@ from grandchallenge.challenges.forms import (
     ChallengeRequestBudgetUpdateForm,
     ChallengeRequestForm,
     ChallengeRequestStatusUpdateForm,
+    ChallengeRequestUpdateForm,
     ChallengeUpdateForm,
 )
 from grandchallenge.challenges.models import (
@@ -176,25 +180,33 @@ class ChallengeRequestDetail(
     permission_required = "view_challengerequest"
     raise_exception = True
     login_url = reverse_lazy("account_login")
-    detail_view_fields = (
-        "title",
-        "short_name",
-        "start_date",
-        "end_date",
-        "organizers",
-        "abstract",
-        "affiliated_event",
-        "task_types",
-        "modalities",
-        "structures",
-        "challenge_setup",
-        "data_set",
-        "submission_assessment",
-        "challenge_publication",
-        "code_availability",
-        "algorithm_inputs",
-        "algorithm_outputs",
-    )
+
+    @cached_property
+    def detail_view_fields(self):
+        result = {
+            field_name
+            for field_name in (
+                "title",
+                "short_name",
+                "start_date",
+                "end_date",
+                "organizers",
+                "abstract",
+                "affiliated_event",
+                "task_types",
+                "modalities",
+                "structures",
+                "challenge_setup",
+                "data_set",
+                "submission_assessment",
+                "challenge_publication",
+                "code_availability",
+                "algorithm_inputs",
+                "algorithm_outputs",
+            )
+            if getattr(self.object, field_name) is not None
+        }
+        return result
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
@@ -206,11 +218,35 @@ class ChallengeRequestDetail(
         context.update(
             {
                 "fields": fields,
+                # Budget Estimate context
                 "num_support_years": settings.CHALLENGE_NUM_SUPPORT_YEARS,
                 "capacity_reservation_pack_size_in_euro": settings.CHALLENGE_CAPACITY_RESERVATION_PACK_SIZE_IN_EURO,
             }
         )
         return context
+
+
+class ChallengeRequestUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    UpdateView,
+):
+    model = ChallengeRequest
+    permission_required = "change_challengerequest"
+    raise_exception = True
+    form_class = ChallengeRequestUpdateForm
+    login_url = reverse_lazy("account_login")
+    template_name = "challenges/challengerequest_update_form.html"
+
+    def get_required_permissions(self, *_, **__):
+        if (
+            self.get_object().status
+            == self.get_object().ChallengeRequestStatusChoices.DRAFT
+        ):
+            return ["change_challengerequest"]
+        else:
+            raise PermissionDenied
 
 
 class ChallengeRequestStatusUpdate(
@@ -222,6 +258,20 @@ class ChallengeRequestStatusUpdate(
     raise_exception = True
     form_class = ChallengeRequestStatusUpdateForm
     login_url = reverse_lazy("account_login")
+
+    def get_required_permissions(self, *_, **__):
+        if (
+            self.get_object().status
+            == self.get_object().ChallengeRequestStatusChoices.PENDING
+        ):
+            return ["review_challengerequest"]
+        elif (
+            self.get_object().status
+            == self.get_object().ChallengeRequestStatusChoices.DRAFT
+        ):
+            return ["change_challengerequest"]
+        else:
+            raise HttpResponseBadRequest()
 
     def form_valid(self, form):
         super().form_valid(form)

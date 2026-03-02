@@ -987,14 +987,20 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     )
     start_date = models.DateField(
         help_text="Estimated start date for this challenge.",
+        null=True,
+        blank=True,
     )
     end_date = models.DateField(
         help_text="Estimated end date for this challenge. Please note that we aim to "
         "keep challenges open for submission for at least 3 years after "
         "the official end date if possible.",
+        null=True,
+        blank=True,
     )
     organizers = models.TextField(
         help_text="Provide information about the organizing team (names and affiliations)",
+        null=True,
+        blank=True,
     )
     affiliated_event = models.CharField(
         blank=True,
@@ -1013,21 +1019,31 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         max_length=255,
     )
     challenge_setup = models.TextField(
-        help_text="Describe the challenge set-up."
+        help_text="Describe the challenge set-up.",
+        null=True,
+        blank=True,
     )
     data_set = models.TextField(
-        help_text="Describe the training and test datasets you are planning to use."
+        help_text="Describe the training and test datasets you are planning to use.",
+        null=True,
+        blank=True,
     )
     submission_assessment = models.TextField(
         help_text="Define the metrics you will use to assess and rank "
-        "participants’ submissions."
+        "participants’ submissions.",
+        null=True,
+        blank=True,
     )
     challenge_publication = models.TextField(
         help_text="Please indicate if you plan to coordinate a publication "
-        "of the challenge results."
+        "of the challenge results.",
+        null=True,
+        blank=True,
     )
     code_availability = models.TextField(
-        help_text="Will the participants’ code be accessible after the challenge?"
+        help_text="Will the participants’ code be accessible after the challenge?",
+        null=True,
+        blank=True,
     )
     number_of_teams_for_phases = models.JSONField(
         help_text="Number of teams for each phase",
@@ -1181,6 +1197,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     )
     data_license = models.BooleanField(
         default=False,
+        null=True,
     )
     data_license_extra = models.CharField(
         max_length=2000,
@@ -1197,6 +1214,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         "what the input(s) reflect(s), for example, "
         "MRI scan of the brain, or chest X-ray. Grand Challenge only "
         "supports .mha and .tiff image files and json files for algorithms.",
+        null=True,
     )
     algorithm_outputs = models.TextField(
         help_text="What are the outputs to the algorithms submitted as solutions to "
@@ -1204,10 +1222,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         "Please describe in detail what the output(s) "
         "reflect(s), for example, probability of a positive PCR result, or "
         "stroke lesion segmentation. ",
+        null=True,
     )
     structured_challenge_submission_doi = IdentifierField(
         blank=True,
         help_text="The DOI, e.g., 10.5281/zenodo.6362337, or the arXiv id, e.g., 2006.12449 of your challenge submission PDF.",
+        null=True,
     )
     challenge_fee_agreement = models.BooleanField(
         blank=False,

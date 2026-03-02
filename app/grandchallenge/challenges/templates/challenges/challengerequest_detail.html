@@ -62,7 +62,10 @@
                 hx-target="this"
                 hx-headers='{"X-CSRFToken": "{{ csrf_token }}" }'
             >
-                {% if object.status == object.ChallengeRequestStatusChoices.DRAFT and 'change_challengerequest' in user_perms %}
+                {% if object.status == object.ChallengeRequestStatusChoices.DRAFT and 'change_challengerequest' in user_perms %}    
+                    <a class="btn btn-lg btn-primary" href="{% url 'challenges:requests-update' pk=object.pk%}">
+                        <i class="fa fa-edit mr-1"></i>Edit Request
+                    </a>
                     <a class="btn btn-lg btn-primary"
                         href="#"
                         hx-post="{% url 'challenges:requests-submit' pk=object.pk %}"

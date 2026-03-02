@@ -9,7 +9,6 @@ from crispy_forms.layout import (
     Submit,
 )
 from django import forms
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.forms import Textarea
 from django.urls import reverse
@@ -18,8 +17,7 @@ from django.utils.text import format_lazy
 from django_select2.forms import Select2MultipleWidget
 
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
-from grandchallenge.components.models import GPUTypeChoices
-from grandchallenge.components.schemas import get_default_gpu_type_choices
+from grandchallenge.core.forms import SaveFormInitMixin
 from grandchallenge.core.widgets import MarkdownEditorInlineWidget
 from grandchallenge.subdomains.utils import reverse_lazy
 
@@ -111,7 +109,7 @@ class ChallengeUpdateForm(forms.ModelForm):
         return cleaned_data
 
 
-general_information_items_1 = (
+general_required_information = (
     "title",
     "short_name",
     "contact_email",
@@ -119,27 +117,24 @@ general_information_items_1 = (
     "start_date",
     "end_date",
     "organizers",
-    "affiliated_event",
+    "challenge_setup",
 )
-general_information_items_2 = (
+general_information = (
+    "comments",
+    "affiliated_event",
     "task_types",
     "structures",
     "modalities",
-    "challenge_setup",
+)
+challenge_details = (
     "data_set",
     "data_license",
     "data_license_extra",
     "submission_assessment",
     "challenge_publication",
     "code_availability",
-)
-phase_1_items = (
-    "phase_1_number_of_submissions_per_team",
-    "phase_1_number_of_test_images",
-)
-phase_2_items = (
-    "phase_2_number_of_submissions_per_team",
-    "phase_2_number_of_test_images",
+    "algorithm_inputs",
+    "algorithm_outputs",
 )
 structured_challenge_submission_help_text = (
     "If you have uploaded a PDF or "
@@ -149,118 +144,69 @@ structured_challenge_submission_help_text = (
 )
 
 
-class ChallengeRequestForm(forms.ModelForm):
-    algorithm_selectable_gpu_type_choices = forms.MultipleChoiceField(
-        initial=get_default_gpu_type_choices(),
-        choices=[
-            (choice.value, choice.label)
-            for choice in [
-                GPUTypeChoices.NO_GPU,
-                GPUTypeChoices.T4,
-                GPUTypeChoices.A10G,
-            ]
-        ],
-        widget=forms.CheckboxSelectMultiple,
-        label="Selectable GPU types for algorithm jobs",
-        help_text="The GPU type choices that participants will be able to select for "
-        "their algorithm inference jobs.",
-    )
-    expected_number_of_teams = forms.IntegerField(
-        min_value=1,
-        help_text="How many teams do you expect to participate in your challenge?",
-    )
-    number_of_tasks = forms.IntegerField(
-        min_value=1,
-        help_text=(
-            "If your challenge has multiple tasks, we multiply "
-            "the phase 1 and 2 cost estimates by the number of tasks. "
-            "For that to work, please provide the average number of "
-            "test cases and the average number of submissions across "
-            "tasks for the two phases below. For examples check "
-            "<a href='https://grand-challenge.org/documentation/"
-            "create-your-own-challenge/'>here</a>."
-        ),
-    )
-    average_size_of_test_image_in_mb = forms.IntegerField(
-        min_value=1,
-        max_value=10000,
-        help_text=(
-            "Average size of a test case in MB. If you're <a href="
-            "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-            "bundling cases</a>, provide the size of the batch (not the size of a single case)."
-        ),
-    )
-    inference_time_average_minutes = forms.IntegerField(
-        min_value=5,
-        max_value=60,
-        label="Average algorithm job run time in minutes",
-        help_text=(
-            "The average time that you expect an algorithm job to take in minutes. "
-            "This time estimate should account for everything that needs to happen "
-            "for an algorithm container to process <u>one single case, including "
-            "model loading, i/o, preprocessing and inference.</u>"
-        ),
-    )
-    algorithm_maximum_settable_memory_gb = forms.IntegerField(
-        min_value=1,
-        initial=settings.ALGORITHMS_MAX_MEMORY_GB,
-        label="Maximum memory for algorithm jobs in GB",
-        help_text=(
-            "Maximum amount of main memory (DRAM) that participants will be allowed to "
-            "assign to algorithm inference jobs for submission."
-        ),
-    )
-    phase_1_number_of_submissions_per_team = forms.IntegerField(
-        min_value=1,
-        label="Expected number of submissions per team to Phase 1",
-        help_text=(
-            "How many submissions do you expect per team to this phase? "
-            "You can enforce a submission limit in the settings for each phase "
-            "to control this."
-        ),
-    )
-    phase_1_number_of_test_images = forms.IntegerField(
-        min_value=1,
-        help_text=(
-            "Number of test cases for this phase. If you're <a href="
-            "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-            "bundling cases</a>, enter the number of batches (not the number of single cases)."
-        ),
-    )
-    phase_2_number_of_submissions_per_team = forms.IntegerField(
-        min_value=1,
-        label="Expected number of submissions per team to Phase 2",
-        help_text=(
-            "How many submissions do you expect per team to this phase? "
-            "You can enforce a submission limit in the settings for each phase "
-            "to control this. Enter 0 here if you only have one phase."
-        ),
-    )
-    phase_2_number_of_test_images = forms.IntegerField(
-        min_value=1,
-        help_text=(
-            "Number of test cases for this phase. If you're <a href="
-            "'https://grand-challenge.org/documentation/create-your-own-challenge/#budget-batched-images'>"
-            "bundling cases</a>, enter the number of batches (not the number of single cases). "
-            "Enter 0 here if you only have one phase."
-        ),
-    )
-
+class ChallengeRequestForm(SaveFormInitMixin, forms.ModelForm):
     class Meta:
         model = ChallengeRequest
         fields = (
-            *general_information_items_1,
+            "title",
+            "short_name",
+            "contact_email",
+            "abstract",
+        )
+        widgets = {
+            "abstract": forms.Textarea(attrs={"rows": 3}),
+        }
+        labels = {
+            "short_name": "Acronym",
+        }
+        help_texts = {
+            "title": "The name of the planned challenge.",
+            "short_name": (
+                "Acronym of your challenge title that will be used in the URL "
+                "(e.g., https://{acronym}.grand-challenge.org/). No spaces and special "
+                "characters allowed. We prefer a single word with two digits at "
+                "the end indicating the year (e.g. LUNA26). See "
+                "<a href='https://www.grand-challenge.org/challenges' "
+                "target='_blank'>other challenges</a> for examples."
+            ),
+            "abstract": (
+                "Provide a summary of the challenge purpose. "
+                "This should include a general introduction to the "
+                "topic from both a biomedical as well as from a technical point of "
+                "view."
+            ),
+            "contact_email": (
+                "The email address that potential participants can use to contact you with questions about the challenge. "
+                "This email address will be visible on the challenge website, so please provide an address that you are comfortable sharing publicly."
+            ),
+        }
+
+    def __init__(self, creator, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.instance.creator = creator
+        self.fields["title"].required = True
+
+
+class ChallengeRequestUpdateForm(forms.ModelForm):
+    class Meta:
+        model = ChallengeRequest
+        fields = (
+            *general_required_information,
+            *general_information,
+            "challenge_fee_agreement",
             "structured_challenge_submission_form",
             "structured_challenge_submission_doi",
-            *general_information_items_2,
+            *challenge_details,
             "algorithm_inputs",
             "algorithm_outputs",
-            "challenge_fee_agreement",
-            "comments",
         )
         widgets = {
             "start_date": forms.TextInput(attrs={"type": "date"}),
             "end_date": forms.TextInput(attrs={"type": "date"}),
+            "abstract": forms.Textarea(attrs={"rows": 4}),
+            "organizers": forms.Textarea(attrs={"rows": 3}),
+            "comments": forms.Textarea(attrs={"rows": 2}),
+            "challenge_setup": forms.Textarea(attrs={"rows": 15}),
         }
         labels = {
             "short_name": "Acronym",
@@ -311,11 +257,10 @@ class ChallengeRequestForm(forms.ModelForm):
                 "link it to their algorithm</a> on Grand Challenge."
             ),
             "data_set": (
-                f"{structured_challenge_submission_help_text} Otherwise, please "
-                f"describe the training and test datasets you are planning to "
-                f"use. <br>In order to evaluate the submitted algorithms, the test dataset will need to be "
-                f"uploaded to Grand Challenge (read more about that <a href='https://grand-challenge.org/documentation/"
-                f"data-storage/' target='_blank'>here</a>)."
+                "Please describe the training and test datasets you are planning to "
+                "use. <br>In order to evaluate the submitted algorithms, the test dataset will need to be "
+                "uploaded to Grand Challenge (read more about that <a href='https://grand-challenge.org/documentation/"
+                "data-storage/' target='_blank'>here</a>)."
             ),
             "challenge_setup": (
                 "Describe the challenge set-up. How many tasks "
@@ -331,52 +276,39 @@ class ChallengeRequestForm(forms.ModelForm):
                 "data used to evaluate algorithm submissions. Read more about this <a href='"
                 "https://grand-challenge.org/documentation/data-storage/'>here</a>."
             ),
-            "submission_assessment": (
-                f"{structured_challenge_submission_help_text} Otherwise, "
-                f"please define the metrics you will use "
-                "to assess and rank participants’ submissions."
-            ),
-            "challenge_publication": (
-                f"{structured_challenge_submission_help_text} Otherwise, "
-                f"please indicate if you plan to coordinate a publication "
-                f"of the challenge results."
-            ),
         }
 
-    def __init__(self, creator, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.instance.creator = creator
-        self.fields["title"].required = True
-        self.fields["challenge_fee_agreement"].required = True
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Fieldset(
-                "",
-                Div(
-                    HTML(
-                        "<br><p>Thank you for considering to host your challenge"
-                        " on our platform! </p><p>Please use this form to tell us "
-                        "more about your planned challenge. "
-                        "The answers you provide below will help our team of "
-                        "reviewers decide whether and in what way we can "
-                        "support your challenge.</p>"
-                        "<p>Before you fill out this form, please read our <a href="
-                        "'https://grand-challenge.org/documentation/challenges/'"
-                        "target='_blank'>challenge documentation</a> and our <a href="
-                        "'https://grand-challenge.org/challenge-policy-and-pricing/'"
-                        "target='_blank'>challenge pricing policy</a>.</p><br>"
-                    ),
+                "General Information - Required",
+                *general_required_information,
+                "challenge_fee_agreement",
+                css_class="border rounded px-2 my-4",
+            ),
+            Fieldset(
+                "General Information - Optional",
+                *general_information,
+                css_class="border rounded px-2 my-4",
+            ),
+            Div(
+                HTML(
+                    "<i class='fas fa-info-circle mr-1'></i> Provide the required information by either uploading a pre-existing form OR filling the detailed challenge information below."
                 ),
-                *general_information_items_1,
+                css_class="alert alert-info",
+            ),
+            Fieldset(
+                "Structured Challenge Submission from a Pre-Existing Form",
                 Div(
                     HTML(
-                        "<p class='mb-0'>Structured challenge submission form </p>"
                         "<small class='text-muted mb-2'> Have you registered this challenge "
                         "for a conference (e.g., MICCAI, ISBI) <a href='https://www.biomedical-challenges.org/' target='_blank'> "
                         "through this website</a>? If so, please provide the DOI for your submission form, or"
                         " upload the submission PDF here. If you want to <a href='https://www.midl.io/'>organize your challenge with MIDL</a>, "
-                        "you <u>must</u> fill out the <a href='https://www.biomedical-challenges.org/'>structured submission form</a> and upload the PDF. "
-                        "If you have added a link or PDF, please fill the below text boxes with 'See structured submission form'.</small>"
+                        "you <u>must</u> fill out the <a href='https://www.biomedical-challenges.org/'>structured submission form</a> and upload the PDF."
+                        "</small>"
                     ),
                     Div(
                         "structured_challenge_submission_doi",
@@ -392,79 +324,13 @@ class ChallengeRequestForm(forms.ModelForm):
                     ),
                     css_class="container row m-0 p-0 justify-content-between",
                 ),
-                *general_information_items_2,
-                Div(
-                    "algorithm_inputs",
-                    "algorithm_outputs",
-                ),
-                Div(
-                    HTML(
-                        "<h3 class='d-flex justify-content-center'>Compute and storage cost estimation</h3><br>"
-                    ),
-                    HTML(
-                        format_html(
-                            (
-                                "<p>Challenge submissions require running algorithm "
-                                "containers on hidden test data, and hence require "
-                                "storage and compute capacity. Please review our "
-                                "<a href='{policy_link}' target='_blank'>"
-                                "challenge pricing policy</a> before continuing.</p>"
-                                "<p>The information you provide below will serve as "
-                                "a starting point for estimating the compute and "
-                                "storage costs for your challenge. "
-                                "Our team will review and, if necessary, adjust "
-                                "these estimates with you to establish a cost "
-                                "structure that aligns with your needs.</p>"
-                                "<p>If you are new to Grand Challenge, please "
-                                "<a href='{documentation_link}' target='_blank'> "
-                                "refer to our challenge documentation</a> "
-                                "for guidance. We have also prepared "
-                                "<a href='{link_to_examples}' target='_blank'> "
-                                "example budgets </a> to help you complete this "
-                                "form accurately.</p><br>"
-                            ),
-                            policy_link="https://grand-challenge.org/challenge-policy-and-pricing/",
-                            documentation_link="https://grand-challenge.org/documentation/challenge-setup/",
-                            link_to_examples="https://grand-challenge.org/documentation/create-your-own-challenge/#compute-and-storage-costs",
-                        )
-                    ),
-                    "expected_number_of_teams",
-                    "number_of_tasks",
-                    "average_size_of_test_image_in_mb",
-                    "inference_time_average_minutes",
-                    "algorithm_selectable_gpu_type_choices",
-                    "algorithm_maximum_settable_memory_gb",
-                    HTML(
-                        format_html(
-                            (
-                                "<br><p>Challenges usually consist of 2 phases: "
-                                "a <b>preliminary debug phase</b>, and "
-                                "a <b>final test phase</b>. "
-                                "The number of test cases used for these "
-                                "phases and often the amount of times that "
-                                "users can submit to them differs, which is "
-                                "why we ask for separate estimates for the two "
-                                "phases below. "
-                                "Should your challenge have multiple tasks "
-                                "and hence more than 2 phases, "
-                                "please provide the average numbers across tasks for "
-                                "each phase below and indicate the number of "
-                                "tasks above accordingly. For examples of those "
-                                "and other scenarios, have a look "
-                                "<a href='{documentation_link}' target='_blank'>"
-                                "at our example cost calculations</a>"
-                                ".</p><h4>Phase 1</h4>"
-                            ),
-                            documentation_link="https://grand-challenge.org/documentation/create-your-own-challenge/",
-                        )
-                    ),
-                    *phase_1_items,
-                    HTML("<h4>Phase 2</h4>"),
-                    *phase_2_items,
-                    css_class="border rounded px-4 pt-4 my-5",
-                ),
-                "challenge_fee_agreement",
-                "comments",
+                css_class="border rounded px-2 my-4",
+            ),
+            HTML("<h4 class='text-center'>OR</h4>"),
+            Fieldset(
+                "Detailed Challenge Information",
+                *challenge_details,
+                css_class="border rounded px-2 my-4",
             ),
             ButtonHolder(Submit("save", "Save")),
         )
@@ -485,54 +351,6 @@ class ChallengeRequestForm(forms.ModelForm):
                 "Please describe what inputs and outputs the algorithms submitted to your challenge take and produce."
             )
         return cleaned_data
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-
-        number_of_tasks = self.cleaned_data["number_of_tasks"]
-
-        instance.algorithm_selectable_gpu_type_choices_for_tasks = [
-            self.cleaned_data["algorithm_selectable_gpu_type_choices"]
-        ] * number_of_tasks
-
-        instance.algorithm_maximum_settable_memory_gb_for_tasks = [
-            self.cleaned_data["algorithm_maximum_settable_memory_gb"]
-        ] * number_of_tasks
-
-        instance.average_size_test_case_mb_for_tasks = [
-            self.cleaned_data["average_size_of_test_image_in_mb"]
-        ] * number_of_tasks
-
-        instance.inference_time_average_minutes_for_tasks = [
-            self.cleaned_data["inference_time_average_minutes"]
-        ] * number_of_tasks
-
-        instance.task_ids = list(range(1, number_of_tasks + 1))
-
-        instance.task_id_for_phases = [
-            task_id for task_id in instance.task_ids for _ in range(2)
-        ]
-
-        instance.number_of_teams_for_phases = (
-            [self.cleaned_data["expected_number_of_teams"]]
-            * 2
-            * number_of_tasks
-        )
-
-        instance.number_of_submissions_per_team_for_phases = [
-            self.cleaned_data["phase_1_number_of_submissions_per_team"],
-            self.cleaned_data["phase_2_number_of_submissions_per_team"],
-        ] * number_of_tasks
-
-        instance.number_of_test_cases_for_phases = [
-            self.cleaned_data["phase_1_number_of_test_images"],
-            self.cleaned_data["phase_2_number_of_test_images"],
-        ] * number_of_tasks
-
-        if commit:
-            instance.save()
-
-        return instance
 
 
 class ChallengeRequestStatusUpdateForm(forms.ModelForm):
