@@ -955,7 +955,6 @@ def handle_event(*, event, backend):
             error_message="An unexpected error occurred",
             **get_update_status_kwargs(executor=executor),
         )
-        raise
     else:
         job.update_status(
             status=job.EXECUTED,
