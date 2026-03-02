@@ -78,7 +78,7 @@ def test_view_and_update_challenge_request(
     )
     if "detail" in viewname:
         assert response.status_code == 200
-        assert "Edit budget fields" not in str(response.content)
+        assert "Edit Budget Estimate" not in str(response.content)
         assert "Budget estimate" not in str(response.content)
     else:
         assert response.status_code == 403
@@ -91,7 +91,7 @@ def test_view_and_update_challenge_request(
     )
     assert response.status_code == 200
     if "detail" in viewname:
-        assert "Edit budget fields" in str(response.content)
+        assert "Edit Budget Estimate" in str(response.content)
         assert "Budget estimate" in str(response.content)
 
 

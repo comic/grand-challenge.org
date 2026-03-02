@@ -25,6 +25,8 @@
             <div class="badge badge-success h-50 p-2 mr-1">Accepted</div>
         {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
             <div class="badge badge-danger h-50 p-2 mr-1">Rejected</div>
+        {% elif object.status == object.ChallengeRequestStatusChoices.PENDING %}
+            <div class="badge badge-light h-50 p-2 mr-1">Pending</div>
         {% endif %}
         <h3>[{{ object.short_name }}] {{ object.title  }}</h3>
     </div>
@@ -49,7 +51,7 @@
                 <a class="btn btn-primary btn-sm mt-3"
                    href="{% url 'evaluation:configure-algorithm-phases' challenge_short_name=object.short_name %}"
                    title="Configure algorithm phases">
-                    <i class="fas fa-edit mr-1"></i> Configure algorithm phases
+                    <i class="fas fa-edit mr-1"></i>Configure Algorithm Phases
                 </a>
             {% endif %}
         </div>
@@ -76,17 +78,20 @@
     <br>
     {% get_obj_perms request.user for object as "user_perms" %}
     {% if 'change_challengerequest' in user_perms %}
-        <div class="mt-3" id="budget">
+    <div class="card card-danger border-danger">
+        <div class="card-header bg-danger text-white">Reviewer Only</div>
+        <div class="mt-3 card-body" id="budget">
             <div class="row">
                 <div class="col-6">
                     <h2>Budget estimate</h2>
                 </div>
                 <div class="col-6 text-right">
-                    <a class="btn btn-primary" hx-get="{% url 'challenges:requests-budget-update' pk=object.pk %}" hx-swap="innerHTML" hx-target="#budget">Edit budget fields</a>
+                    <a class="btn btn-primary" hx-get="{% url 'challenges:requests-budget-update' pk=object.pk %}" hx-swap="innerHTML" hx-target="#budget"><i class="fa fa-edit mr-1"></i>Edit Budget Estimate</a>
                 </div>
             </div>
         {% include "challenges/partials/budget_table.html" with object=object %}
         </div>
+    </div>
     {% endif %}
 {% endblock %}
 
