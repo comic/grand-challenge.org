@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from celery import states
 from django.utils import timezone
 
 from grandchallenge.background_tasks.models import CeleryTaskDailyStats
@@ -19,6 +20,11 @@ def test_success_counts_and_durations(yesterday):
     TaskResultFactory(date_started=now, date_done=now + timedelta(seconds=10))
     TaskResultFactory(date_started=now, date_done=now + timedelta(seconds=20))
     TaskResultFactory(date_started=now, date_done=now + timedelta(seconds=30))
+    TaskResultFactory(
+        task_name="other",
+        date_started=now,
+        date_done=now + timedelta(seconds=30),
+    )
 
     aggregate_celery_daily_stats()
 
@@ -34,8 +40,12 @@ def test_success_counts_and_durations(yesterday):
 
 @pytest.mark.django_db
 def test_failure_counts(yesterday):
-    TaskResultFactory(status="FAILURE", date_started=None)
-    TaskResultFactory(status="FAILURE", date_started=None)
+    TaskResultFactory(
+        status=states.FAILURE, date_started=yesterday, date_done=yesterday
+    )
+    TaskResultFactory(
+        status=states.FAILURE, date_started=yesterday, date_done=yesterday
+    )
 
     aggregate_celery_daily_stats()
 
@@ -49,8 +59,18 @@ def test_failure_counts(yesterday):
 
 @pytest.mark.django_db
 def test_mixed_statuses(yesterday):
-    TaskResultFactory(status="SUCCESS")
-    TaskResultFactory(status="FAILURE", date_started=None)
+    now = timezone.now() - timedelta(days=1)
+
+    TaskResultFactory(
+        status=states.SUCCESS,
+        date_started=now,
+        date_done=now + timedelta(seconds=10),
+    )
+    TaskResultFactory(
+        status=states.FAILURE,
+        date_started=now,
+        date_done=now + timedelta(seconds=10),
+    )
 
     aggregate_celery_daily_stats()
 
@@ -64,10 +84,21 @@ def test_mixed_statuses(yesterday):
 
 @pytest.mark.django_db
 def test_multiple_tasks(yesterday):
-    TaskResultFactory(task_name="myapp.tasks.foo")
-    TaskResultFactory(task_name="myapp.tasks.bar")
     TaskResultFactory(
-        task_name="myapp.tasks.bar", status="FAILURE", date_started=None
+        task_name="myapp.tasks.foo",
+        date_started=yesterday,
+        date_done=yesterday,
+    )
+    TaskResultFactory(
+        task_name="myapp.tasks.bar",
+        date_started=yesterday,
+        date_done=yesterday,
+    )
+    TaskResultFactory(
+        task_name="myapp.tasks.bar",
+        status=states.FAILURE,
+        date_started=yesterday,
+        date_done=yesterday,
     )
 
     aggregate_celery_daily_stats()
@@ -101,8 +132,12 @@ def test_excludes_other_days():
 
 @pytest.mark.django_db
 def test_success_without_date_started_excluded_from_durations(yesterday):
-    TaskResultFactory(date_started=None)
-    TaskResultFactory()
+    now = timezone.now() - timedelta(days=1)
+
+    TaskResultFactory(date_started=now, date_done=now + timedelta(seconds=10))
+    TaskResultFactory(date_started=None, date_done=now + timedelta(seconds=20))
+    TaskResultFactory(date_started=now, date_done=None)
+    TaskResultFactory(date_started=now)
 
     aggregate_celery_daily_stats()
 
@@ -115,7 +150,7 @@ def test_success_without_date_started_excluded_from_durations(yesterday):
 
 @pytest.mark.django_db
 def test_idempotent(yesterday):
-    TaskResultFactory()
+    TaskResultFactory(date_started=yesterday, date_done=yesterday)
 
     aggregate_celery_daily_stats()
     aggregate_celery_daily_stats()
