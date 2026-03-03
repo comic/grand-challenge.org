@@ -1,4 +1,6 @@
+import functools
 import shutil
+import signal
 import sys
 import tempfile
 import time
@@ -34,6 +36,30 @@ def helpers():
             yield helpers_module
         finally:
             sys.path.remove(temp_dir)
+
+
+def timeout(seconds):
+    def decorator(func):
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            if sys.platform == "win32":
+                pytest.skip("timeout not supported on Windows")
+
+            def handler(signum, frame):
+                raise TimeoutError(f"Test timed out after {seconds}s")
+
+            signal.signal(signal.SIGALRM, handler)
+            signal.alarm(seconds)
+
+            try:
+                return func(*args, **kwargs)
+            finally:
+                signal.alarm(0)
+
+        return wrapper
+
+    return decorator
 
 
 def working_process(p):
@@ -86,7 +112,7 @@ def fail_on_prediction_2(p):
         return f"{p['pk']} result"
 
 
-@pytest.mark.timeout(4)
+@timeout(4)
 @pytest.mark.forge_integration
 def test_prediction_processing(helpers):
     predictions = [{"pk": "prediction1"}, {"pk": "prediction2"}]
@@ -96,7 +122,7 @@ def test_prediction_processing(helpers):
     assert {"prediction1 result", "prediction2 result"} == set(result)
 
 
-@pytest.mark.timeout(4)
+@timeout(4)
 @pytest.mark.forge_integration
 def test_prediction_processing_error(helpers):
     predictions = [
@@ -108,7 +134,7 @@ def test_prediction_processing_error(helpers):
         )
 
 
-@pytest.mark.timeout(4)
+@timeout(4)
 @pytest.mark.forge_integration
 def test_prediction_processing_killing_of_child_processes(helpers):
     # If something goes wrong, this test could deadlock
@@ -124,7 +150,7 @@ def test_prediction_processing_killing_of_child_processes(helpers):
     assert len(result) == len(predictions)
 
 
-@pytest.mark.timeout(4)
+@timeout(4)
 @pytest.mark.forge_integration
 def test_prediction_processing_catching_killing_of_child_processes(helpers):
     predictions = [{"pk": "prediction1"}, {"pk": "prediction2"}]
@@ -158,7 +184,7 @@ def test_prediction_processing_catching_killing_of_child_processes(helpers):
             child_stopper.terminate()
 
 
-@pytest.mark.timeout(4)
+@timeout(4)
 @pytest.mark.forge_integration
 def test_prediction_processing_canceling_processes_correctly(helpers):
     predictions = [
