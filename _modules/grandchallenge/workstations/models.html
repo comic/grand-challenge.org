@@ -719,11 +719,7 @@
         <span class="n">reader_study</span><span class="o">.</span><span class="n">workstation_sessions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">reader_study</span><span class="o">.</span><span class="n">questions_with_interactive_algorithm</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="n">on_commit</span><span class="p">(</span>
-                <span class="n">preload_interactive_algorithms</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span>
-                    <span class="n">queue</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;workstations-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">region</span><span class="si">}</span><span class="s2">&quot;</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">apply_async</span>
-            <span class="p">)</span></div>
+            <span class="n">on_commit</span><span class="p">(</span><span class="n">preload_interactive_algorithms</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span></div>
 
 
 
