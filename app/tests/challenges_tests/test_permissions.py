@@ -113,6 +113,16 @@ def test_challenge_request_creator_viewing_and_updating(client):
     )
     assert response.status_code == 403
 
+    # Creator cannot update budget at any stage
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-budget-update",
+        reverse_kwargs={"pk": challenge_request.pk},
+        user=challenge_request.creator,
+    )
+    assert response.status_code == 403
+
 
 @pytest.mark.django_db
 def test_challenge_request_reviewer_can_access_all(client, challenge_reviewer):
@@ -154,6 +164,27 @@ def test_challenge_request_reviewer_can_access_all(client, challenge_reviewer):
         user=challenge_reviewer,
         data={
             "status": ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED
+        },
+    )
+    assert response.status_code == 200
+
+    # Reviewer can update budget at any stage
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-budget-update",
+        reverse_kwargs={"pk": challenge_request.pk},
+        user=challenge_reviewer,
+        data={
+            "task_ids": "[1, 2]",
+            "algorithm_maximum_settable_memory_gb_for_tasks": "[32, 32]",
+            "algorithm_selectable_gpu_type_choices_for_tasks": '[["", "T4"],["", "A10G", "T4"]]',
+            "average_size_test_case_mb_for_tasks": "[10, 100]",
+            "inference_time_average_minutes_for_tasks": "[5, 10]",
+            "task_id_for_phases": "[1, 1, 2, 2]",
+            "number_of_teams_for_phases": "[500, 500, 500, 500]",
+            "number_of_submissions_per_team_for_phases": "[10, 1, 10, 1]",
+            "number_of_test_cases_for_phases": "[3, 100, 3, 100]",
         },
     )
     assert response.status_code == 200

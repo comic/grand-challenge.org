@@ -288,7 +288,7 @@ class ChallengeRequestBudgetUpdate(
 ):
     model = ChallengeRequest
     form_class = ChallengeRequestBudgetUpdateForm
-    permission_required = "change_challengerequest"
+    permission_required = "review_challengerequest"
     raise_exception = True
     login_url = reverse_lazy("account_login")
     template_name = "challenges/challengerequest_budget_form.html"
