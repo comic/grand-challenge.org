@@ -958,19 +958,25 @@ def submission_pdf_path(instance, filename):
     )
 
 
-class ChallengeRequest(UUIDModel, ChallengeBase):
-    class ChallengeRequestStatusChoices(models.TextChoices):
-        ACCEPTED = "ACPT", _("Accepted")
-        REJECTED = "RJCT", _("Rejected")
-        PENDING = "PEND", _("Pending")
-        DRAFT = "DRFT", _("Draft")
+class ChallengeRequestStatusChoices(models.TextChoices):
+    ACCEPTED = "ACPT", _("Accepted")
+    REJECTED = "RJCT", _("Rejected")
+    PENDING = "PEND", _("Pending")
+    DRAFT = "DRFT", _("Draft")
 
-    submitted = models.DateTimeField(null=True)
+
+class ChallengeRequest(UUIDModel, ChallengeBase):
+
+    ChallengeRequestStatusChoices = ChallengeRequestStatusChoices
 
     status = models.CharField(
         max_length=4,
-        choices=ChallengeRequestStatusChoices.choices,
+        choices=ChallengeRequestStatusChoices,
         default=ChallengeRequestStatusChoices.DRAFT,
+    )
+    submitted = models.DateTimeField(
+        null=True,
+        blank=True,
     )
     abstract = models.TextField(
         help_text="Provide a summary of the challenge purpose.",
@@ -1212,6 +1218,14 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         permissions = [
             ("review_challengerequest", "Can review challenge request"),
         ]
+        constraints = [
+            models.CheckConstraint(
+                name="submitted_or_draft",
+                condition=~Q(status=ChallengeRequestStatusChoices.DRAFT)
+                | Q(submitted__isnull=False),
+                violation_error_message="When setting the status to something else than a 'Draft', the 'Submitted' must also be set.",
+            ),
+        ]
 
     def __str__(self):
         return self.title
@@ -1225,16 +1239,21 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
+        submitting = (
+            self._orig_status == self.ChallengeRequestStatusChoices.DRAFT
+            and self.status == self.ChallengeRequestStatusChoices.PENDING
+        )
+        if submitting:
+            self.submitted = now()
+
         super().save(*args, **kwargs)
 
         if adding:
             self.assign_permissions()
-        elif (
-            self._orig_status == self.ChallengeRequestStatusChoices.DRAFT
-            and self.status == self.ChallengeRequestStatusChoices.PENDING
-        ):
+        elif submitting:
             send_challenge_requested_email_to_reviewers(self)
             send_challenge_requested_email_to_requester(self)
+            self.submitted = now()
 
     def assign_permissions(self):
         assign_perm("view_challengerequest", self.creator, self)

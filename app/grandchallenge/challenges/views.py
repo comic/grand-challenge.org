@@ -254,27 +254,17 @@ class ChallengeRequestStatusUpdate(
         super().form_valid(form)
 
         if (
-            form.instance._orig_status
-            == form.instance.ChallengeRequestStatusChoices.DRAFT
-            and form.instance._orig_status != form.instance.status
+            form.instance.status
+            == form.instance.ChallengeRequestStatusChoices.ACCEPTED
+            and form.instance._orig_status
+            != form.instance.ChallengeRequestStatusChoices.ACCEPTED
         ):
-            form.instance.submitted = form.instance.modified
-            form.instance.save(update_fields=["submitted"])
-        elif (
-            form.instance._orig_status
-            == form.instance.ChallengeRequestStatusChoices.PENDING
-            and form.instance._orig_status != form.instance.status
-        ):
-            if (
-                form.instance.status
-                == form.instance.ChallengeRequestStatusChoices.ACCEPTED
-            ):
-                challenge = form.instance.create_challenge()
-            else:
-                challenge = None
-            send_challenge_status_update_email(
-                challengerequest=form.instance, challenge=challenge
-            )
+            challenge = form.instance.create_challenge()
+        else:
+            challenge = None
+        send_challenge_status_update_email(
+            challengerequest=form.instance, challenge=challenge
+        )
 
         response = HttpResponse()
         response["HX-Refresh"] = "true"
