@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 import boto3
-from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from billiard.exceptions import SoftTimeLimitExceeded
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db import transaction
@@ -30,11 +30,14 @@ def cleanup_celery_backend():
     ).delete()
 
 
+CLOUDWATCH_METRICS_LIMIT = 1000
+
+
 @acks_late_micro_short_task(
     ignore_result=True,
     singleton=True,
     # No need to retry here as the periodic task call this again
-    ignore_errors=(LockError, SoftTimeLimitExceeded, TimeLimitExceeded),
+    ignore_errors=(LockError, SoftTimeLimitExceeded),
 )
 @transaction.atomic
 def put_cloudwatch_metrics():
@@ -44,22 +47,21 @@ def put_cloudwatch_metrics():
     client = boto3.client(
         "cloudwatch", region_name=settings.AWS_CLOUDWATCH_REGION_NAME
     )
-    metrics = _get_metrics()
 
-    for metric in metrics:
-        # Limit of 20 metrics per call, each model can have up to 11 status
-        # elements, so send individually
-        if metric["MetricData"]:
-            client.put_metric_data(
-                Namespace=metric["Namespace"], MetricData=metric["MetricData"]
-            )
+    site = Site.objects.get_current()
+    namespace = f"{site.domain}/model-tasks"
+    metric_data = _get_metrics()
+
+    for idx in range(0, len(metric_data), CLOUDWATCH_METRICS_LIMIT):
+        client.put_metric_data(
+            Namespace=namespace,
+            MetricData=metric_data[idx : idx + CLOUDWATCH_METRICS_LIMIT],
+        )
 
 
 def _get_metrics():
-    site = Site.objects.get_current()
     metric_data = []
 
-    # Create CloudWatch metrics for a choice field in a model
     models = [
         Job,
         Evaluation,
@@ -80,22 +82,19 @@ def _get_metrics():
         qs = model.objects.values(field).annotate(Count(field)).order_by(field)
         counts = {q[field]: q[f"{field}__count"] for q in qs}
 
-        metric_data.append(
-            {
-                "Namespace": f"{site.domain}/{model._meta.app_label}",
-                "MetricData": [
-                    {
-                        "MetricName": choice_to_name(c),
-                        "Value": counts.get(c, 0),
-                        "Unit": "Count",
-                    }
-                    for c in choice_to_display
-                ],
-            }
+        metric_data.extend(
+            [
+                {
+                    "MetricName": choice_to_name(c),
+                    "Dimensions": [{"Name": "Model", "Value": model.__name__}],
+                    "Value": counts.get(c, 0),
+                    "Unit": "Count",
+                }
+                for c in choice_to_display
+            ]
         )
 
     now = timezone.now()
-    component_metric_data = []
 
     for queryset in (
         AlgorithmImage.objects.filter(
@@ -120,26 +119,16 @@ def _get_metrics():
         ),
         Session.objects.filter(status=Session.QUEUED),
     ):
-        try:
-            total_seconds = (
-                now - queryset.order_by("created").first().created
-            ).total_seconds()
-        except AttributeError:
-            total_seconds = 0
-
-        component_metric_data.append(
+        oldest = queryset.order_by("created").values("created").first()
+        total_seconds = (
+            (now - oldest["created"]).total_seconds() if oldest else 0
+        )
+        metric_data.append(
             {
                 "MetricName": f"OldestActive{queryset.model.__name__}",
                 "Value": total_seconds,
                 "Unit": "Seconds",
             }
         )
-
-    metric_data.append(
-        {
-            "Namespace": f"{site.domain}/AsyncTasks",
-            "MetricData": component_metric_data,
-        }
-    )
 
     return metric_data
