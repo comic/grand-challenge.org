@@ -43,222 +43,291 @@ def test_get_metrics():
 
     assert result == [
         {
-            "Namespace": "testserver/algorithms",
-            "MetricData": [
-                {"MetricName": "JobsQueued", "Value": 0, "Unit": "Count"},
-                {"MetricName": "JobsStarted", "Value": 0, "Unit": "Count"},
-                {"MetricName": "JobsReQueued", "Value": 0, "Unit": "Count"},
-                {"MetricName": "JobsFailed", "Value": 0, "Unit": "Count"},
-                {"MetricName": "JobsSucceeded", "Value": 1, "Unit": "Count"},
-                {"MetricName": "JobsCancelled", "Value": 0, "Unit": "Count"},
-                {
-                    "MetricName": "JobsProvisioning",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {"MetricName": "JobsProvisioned", "Value": 0, "Unit": "Count"},
-                {"MetricName": "JobsExecuting", "Value": 0, "Unit": "Count"},
-                {"MetricName": "JobsExecuted", "Value": 0, "Unit": "Count"},
-                {
-                    "MetricName": "JobsParsingOutputs",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "JobsExecutingAlgorithm",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "JobsExternalExecutionInProgress",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "JobsValidatinginputs",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-            ],
+            "MetricName": "JobsQueued",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
         },
         {
-            "Namespace": "testserver/evaluation",
-            "MetricData": [
-                {
-                    "MetricName": "EvaluationsQueued",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "EvaluationsStarted",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "EvaluationsReQueued",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "EvaluationsFailed",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "EvaluationsSucceeded",
-                    "Value": 1,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "EvaluationsCancelled",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "EvaluationsProvisioning",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "EvaluationsProvisioned",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "EvaluationsExecuting",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "EvaluationsExecuted",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "EvaluationsParsingOutputs",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "EvaluationsExecutingAlgorithm",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "EvaluationsExternalExecutionInProgress",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "EvaluationsValidatinginputs",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-            ],
+            "MetricName": "JobsStarted",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
         },
         {
-            "Namespace": "testserver/workstations",
-            "MetricData": [
-                {"MetricName": "SessionsQueued", "Value": 0, "Unit": "Count"},
-                {"MetricName": "SessionsStarted", "Value": 0, "Unit": "Count"},
-                {"MetricName": "SessionsRunning", "Value": 1, "Unit": "Count"},
-                {"MetricName": "SessionsFailed", "Value": 0, "Unit": "Count"},
-                {"MetricName": "SessionsStopped", "Value": 0, "Unit": "Count"},
-            ],
+            "MetricName": "JobsReQueued",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
         },
         {
-            "Namespace": "testserver/cases",
-            "MetricData": [
-                {
-                    "MetricName": "RawImageUploadSessionsQueued",
-                    "Value": 1,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "RawImageUploadSessionsStarted",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "RawImageUploadSessionsReQueued",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "RawImageUploadSessionsFailed",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "RawImageUploadSessionsSucceeded",
-                    "Value": 1,
-                    "Unit": "Count",
-                },
-                {
-                    "MetricName": "RawImageUploadSessionsCancelled",
-                    "Value": 0,
-                    "Unit": "Count",
-                },
-            ],
+            "MetricName": "JobsFailed",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
         },
         {
-            "MetricData": [
-                {
-                    "MetricName": "PostProcessImageTasksInitialized",
-                    "Unit": "Count",
-                    "Value": 0,
-                },
-                {
-                    "MetricName": "PostProcessImageTasksCancelled",
-                    "Unit": "Count",
-                    "Value": 0,
-                },
-                {
-                    "MetricName": "PostProcessImageTasksFailed",
-                    "Unit": "Count",
-                    "Value": 0,
-                },
-                {
-                    "MetricName": "PostProcessImageTasksCompleted",
-                    "Unit": "Count",
-                    "Value": 0,
-                },
-            ],
-            "Namespace": "testserver/cases",
+            "MetricName": "JobsSucceeded",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 1,
+            "Unit": "Count",
         },
         {
-            "Namespace": "testserver/AsyncTasks",
-            "MetricData": [
-                {
-                    "MetricName": "OldestActiveAlgorithmImage",
-                    "Unit": "Seconds",
-                    "Value": 0,
-                },
-                {
-                    "MetricName": "OldestActiveMethod",
-                    "Unit": "Seconds",
-                    "Value": 0,
-                },
-                {
-                    "MetricName": "OldestActiveEvaluation",
-                    "Unit": "Seconds",
-                    "Value": 0,
-                },
-                {
-                    "MetricName": "OldestActiveJob",
-                    "Unit": "Seconds",
-                    "Value": 0,
-                },
-                {
-                    "MetricName": "OldestActiveRawImageUploadSession",
-                    "Unit": "Seconds",
-                    "Value": 0,
-                },
-                {
-                    "MetricName": "OldestActiveSession",
-                    "Unit": "Seconds",
-                    "Value": 0,
-                },
-            ],
+            "MetricName": "JobsCancelled",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
         },
+        {
+            "MetricName": "JobsProvisioning",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "JobsProvisioned",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "JobsExecuting",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "JobsExecuted",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "JobsParsingOutputs",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "JobsExecutingAlgorithm",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "JobsExternalExecutionInProgress",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "JobsValidatinginputs",
+            "Dimensions": [{"Name": "Model", "Value": "Job"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsQueued",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsStarted",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsReQueued",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsFailed",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsSucceeded",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 1,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsCancelled",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsProvisioning",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsProvisioned",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsExecuting",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsExecuted",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsParsingOutputs",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsExecutingAlgorithm",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsExternalExecutionInProgress",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EvaluationsValidatinginputs",
+            "Dimensions": [{"Name": "Model", "Value": "Evaluation"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "SessionsQueued",
+            "Dimensions": [{"Name": "Model", "Value": "Session"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "SessionsStarted",
+            "Dimensions": [{"Name": "Model", "Value": "Session"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "SessionsRunning",
+            "Dimensions": [{"Name": "Model", "Value": "Session"}],
+            "Value": 1,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "SessionsFailed",
+            "Dimensions": [{"Name": "Model", "Value": "Session"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "SessionsStopped",
+            "Dimensions": [{"Name": "Model", "Value": "Session"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "RawImageUploadSessionsQueued",
+            "Dimensions": [
+                {"Name": "Model", "Value": "RawImageUploadSession"}
+            ],
+            "Value": 1,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "RawImageUploadSessionsStarted",
+            "Dimensions": [
+                {"Name": "Model", "Value": "RawImageUploadSession"}
+            ],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "RawImageUploadSessionsReQueued",
+            "Dimensions": [
+                {"Name": "Model", "Value": "RawImageUploadSession"}
+            ],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "RawImageUploadSessionsFailed",
+            "Dimensions": [
+                {"Name": "Model", "Value": "RawImageUploadSession"}
+            ],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "RawImageUploadSessionsSucceeded",
+            "Dimensions": [
+                {"Name": "Model", "Value": "RawImageUploadSession"}
+            ],
+            "Value": 1,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "RawImageUploadSessionsCancelled",
+            "Dimensions": [
+                {"Name": "Model", "Value": "RawImageUploadSession"}
+            ],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "PostProcessImageTasksInitialized",
+            "Dimensions": [{"Name": "Model", "Value": "PostProcessImageTask"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "PostProcessImageTasksCancelled",
+            "Dimensions": [{"Name": "Model", "Value": "PostProcessImageTask"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "PostProcessImageTasksFailed",
+            "Dimensions": [{"Name": "Model", "Value": "PostProcessImageTask"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "PostProcessImageTasksCompleted",
+            "Dimensions": [{"Name": "Model", "Value": "PostProcessImageTask"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "OldestActiveAlgorithmImage",
+            "Value": 0,
+            "Unit": "Seconds",
+        },
+        {"MetricName": "OldestActiveMethod", "Value": 0, "Unit": "Seconds"},
+        {
+            "MetricName": "OldestActiveEvaluation",
+            "Value": 0,
+            "Unit": "Seconds",
+        },
+        {"MetricName": "OldestActiveJob", "Value": 0, "Unit": "Seconds"},
+        {
+            "MetricName": "OldestActiveRawImageUploadSession",
+            "Value": 0,
+            "Unit": "Seconds",
+        },
+        {"MetricName": "OldestActiveSession", "Value": 0, "Unit": "Seconds"},
     ]
