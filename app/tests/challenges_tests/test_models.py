@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
@@ -447,3 +448,38 @@ def test_discussion_forum_permissions():
     assert not participant.has_perm(
         "create_sticky_and_announcement_topic", challenge.discussion_forum
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "data,context",
+    (
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "structured_challenge_submission_doi": "10.5281/zenodo.6362337",
+            },
+            nullcontext(),
+        ),
+    ),
+)
+@pytest.mark.django_db
+def test_challenge_request_submission(data, context):
+    challenge_request = ChallengeRequest.objects.create(
+        creator=UserFactory(),
+        title="foo",
+        short_name="foo",
+        abstract="bar",
+        contact_email="test@example.test",
+        **data,
+    )
+
+    challenge_request.status = (
+        ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+    )  # submit it
+
+    with context:
+        challenge_request.clean()

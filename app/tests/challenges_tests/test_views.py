@@ -339,7 +339,7 @@ def test_budget_field_update(client, challenge_reviewer):
 
 
 @pytest.mark.django_db
-def test_challenge_request_date_check(client):
+def test_challenge_request_create(client):
     user = UserFactory()
     Verification.objects.create(user=user, is_verified=True)
 
@@ -354,70 +354,13 @@ def test_challenge_request_date_check(client):
             "short_name": "acr6789",
             "contact_email": "test@test.com",
             "abstract": "test",
-            "organizers": "test",
-            "challenge_setup": "test",
             "data_set": "test",
-            "submission_assessment": "test",
-            "challenge_publication": "test",
-            "code_availability": "test",
-            "expected_number_of_teams": 10,
-            "algorithm_inputs": "foo",
-            "algorithm_outputs": "foo",
-            "average_size_of_test_image_in_mb": 1,
-            "inference_time_average_minutes": 11,
-            "algorithm_maximum_settable_memory_gb": 32,
-            "algorithm_selectable_gpu_type_choices": ["", "T4"],
-            "number_of_tasks": 1,
-            "phase_1_number_of_submissions_per_team": 1,
-            "phase_2_number_of_submissions_per_team": 1,
-            "phase_1_number_of_test_images": 1,
-            "phase_2_number_of_test_images": 1,
-            "challenge_fee_agreement": True,
         },
     )
-    assert response.status_code == 200
-    assert response.context["form"].errors == {
-        "end_date": ["This field is required."],
-        "start_date": ["This field is required."],
-    }
+    assert response.status_code == 302
 
-    response = get_view_for_user(
-        client=client,
-        method=client.post,
-        viewname="challenges:requests-create",
-        user=user,
-        data={
-            "title": "Some title",
-            "short_name": "acr6789",
-            "contact_email": "test@test.com",
-            "abstract": "test",
-            "start_date": (now() + timedelta(days=1)).date(),
-            "end_date": now().date(),
-            "organizers": "test",
-            "challenge_setup": "test",
-            "data_set": "test",
-            "submission_assessment": "test",
-            "challenge_publication": "test",
-            "code_availability": "test",
-            "expected_number_of_teams": 10,
-            "algorithm_inputs": "foo",
-            "algorithm_outputs": "foo",
-            "average_size_of_test_image_in_mb": 1,
-            "inference_time_average_minutes": 11,
-            "algorithm_maximum_settable_memory_gb": 32,
-            "algorithm_selectable_gpu_type_choices": ["", "T4"],
-            "number_of_tasks": 1,
-            "phase_1_number_of_submissions_per_team": 1,
-            "phase_2_number_of_submissions_per_team": 1,
-            "phase_1_number_of_test_images": 1,
-            "phase_2_number_of_test_images": 1,
-            "challenge_fee_agreement": True,
-        },
-    )
-    assert response.status_code == 200
-    assert response.context["form"].errors == {
-        "__all__": ["The start date needs to be before the end date."],
-    }
+    # It exists
+    ChallengeRequest.objects.get(short_name="acr6789")
 
 
 @pytest.mark.django_db

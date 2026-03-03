@@ -293,6 +293,20 @@ class ChallengeRequestStatusUpdate(
         response["HX-Refresh"] = "true"
         return response
 
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                if field == "__all__":
+                    messages.error(self.request, error)
+                else:
+                    messages.error(
+                        self.request, f"{form.fields[field].label}: {error}"
+                    )
+
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
+        return response
+
 
 class ChallengeRequestProcess(ChallengeRequestStatusUpdate):
     permission_required = "review_challengerequest"
