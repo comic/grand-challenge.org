@@ -1,6 +1,7 @@
 import pytest
 from django.contrib.auth.models import Group
 from django.core import mail
+from django.utils.timezone import now
 
 from grandchallenge.challenges.models import Challenge, ChallengeRequest
 from tests.factories import ChallengeRequestFactory, UserFactory
@@ -45,7 +46,8 @@ def test_challenge_request_submitted_sent_email(settings):
 @pytest.mark.django_db
 def test_challenge_request_rejected_sent_email(client, challenge_reviewer):
     request = ChallengeRequestFactory(
-        status=ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+        status=ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+        submitted=now(),
     )
     mail.outbox.clear()
 
@@ -74,7 +76,8 @@ def test_challenge_request_accepted_sent_email_challenge_creation(
     client, challenge_reviewer
 ):
     request = ChallengeRequestFactory(
-        status=ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+        status=ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+        submitted=now(),
     )
     mail.outbox.clear()
 

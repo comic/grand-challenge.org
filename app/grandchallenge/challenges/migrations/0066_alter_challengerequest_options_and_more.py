@@ -50,7 +50,7 @@ class Migration(migrations.Migration):
             model_name="challengerequest",
             constraint=models.CheckConstraint(
                 condition=models.Q(
-                    models.Q(("status", "DRFT"), _negated=True),
+                    ("status", "DRFT"),
                     ("submitted__isnull", False),
                     _connector="OR",
                 ),

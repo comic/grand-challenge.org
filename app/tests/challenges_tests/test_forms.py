@@ -225,9 +225,9 @@ def test_accept_challenge_request_duplicate_shortname():
 def test_challenge_request_update_form(
     challenge_request_status, post_status, validity
 ):
-    challenge_request = ChallengeRequestFactory(
-        status=challenge_request_status
-    )
+    challenge_request = ChallengeRequestFactory()
+    challenge_request.status = challenge_request_status
+    challenge_request.save()
 
     form = ChallengeRequestStatusUpdateForm(
         data={"status": post_status},

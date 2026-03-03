@@ -1221,7 +1221,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         constraints = [
             models.CheckConstraint(
                 name="submitted_or_draft",
-                condition=~Q(status=ChallengeRequestStatusChoices.DRAFT)
+                condition=Q(status=ChallengeRequestStatusChoices.DRAFT)
                 | Q(submitted__isnull=False),
                 violation_error_message="When setting the status to something else than a 'Draft', the 'Submitted' must also be set.",
             ),
@@ -1241,7 +1241,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         adding = self._state.adding
         submitting = (
             self._orig_status == self.ChallengeRequestStatusChoices.DRAFT
-            and self.status == self.ChallengeRequestStatusChoices.PENDING
+            and self.status != self.ChallengeRequestStatusChoices.DRAFT
         )
         if submitting:
             self.submitted = now()
