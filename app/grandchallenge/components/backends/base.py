@@ -346,6 +346,8 @@ class Executor(ABC):
         self._stdout = []
         self._stderr = []
 
+        self._inference_result_skipped = False
+
         self.__s3_client = None
 
     def provision(self, *, input_civs, input_prefixes):
@@ -856,6 +858,9 @@ class Executor(ABC):
         return inference_result
 
     def _handle_completed_job(self):
+        if self._inference_result_skipped:
+            raise ComponentException(user_error(self.stderr))
+
         inference_result = self._get_inference_result()
 
         self._exec_duration = inference_result.exec_duration

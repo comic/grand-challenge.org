@@ -1,4 +1,3 @@
-import json
 import logging
 import re
 import zipfile
@@ -54,10 +53,8 @@ class ParsedLog(NamedTuple):
     source: SourceChoices
 
 
-def parse_structured_log(*, log: str) -> ParsedLog | None:
+def parse_structured_log(*, structured_log: dict) -> ParsedLog | None:
     """Parse the structured logs from SageMaker Shim"""
-    structured_log = json.loads(log.strip())
-
     message = structured_log["log"]
     source = SourceChoices(structured_log["source"])
 
