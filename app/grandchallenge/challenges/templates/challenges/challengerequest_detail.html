@@ -74,14 +74,14 @@
         {% elif object.status == object.ChallengeRequestStatusChoices.DRAFT %}
             <div class="badge badge-warning h-50 p-2 mr-1">Draft</div>
         {% endif %}
-        <h3>[{{ object.short_name }}] {{ object.title  }}</h3>
+        <h3>[{{ object.short_name }}] {{ object.title }}</h3>
     </div>
     <br>
     <div class="container-fluid row mb-4 ml-1 bg-light rounded p-3">
         <div class="col-lg-6">
             <i class="fa fa-user text-primary pr-3"></i> Challenge request from {{ object.creator|user_profile_link }}<br>
             <i class="fa fa-envelope text-primary pr-3"></i> <a target="_blank" href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a><br>
-            <i class="fa fa-calendar text-primary pr-3"></i> Created on <strong>{{ object.created|date:'F j, Y' }}</strong><br>
+            <i class="fa fa-calendar text-primary pr-3"></i> Created on {{ object.created|date:'F j, Y' }}<br>
             {% if object.submitted %}
                 <i class="fa fa-rocket text-primary pr-3"></i> Submitted on <span class="badge ml-1 px-2 {% if object.submitted|timedifference < 8 %} badge-success {% elif object.submitted|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{  object.submitted|date:'F j, Y'}}</span><br>
             {% endif %}
