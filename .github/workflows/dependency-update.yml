@@ -37,6 +37,13 @@ jobs:
                   echo "LOCK_OUTPUT<<EOF" >> $GITHUB_ENV
                   echo "$LOCK_OUTPUT" >> $GITHUB_ENV
                   echo "EOF" >> $GITHUB_ENV
+            - uses: actions/setup-node@v6
+              with:
+                node-version: 24
+            - name: Update npm lockfile
+              run: |
+                rm package-lock.json
+                npm install --package-lock-only
             - name: Build the test container, make the docs and migrations
               run: |
                   make build_web_test
