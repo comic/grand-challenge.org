@@ -86,15 +86,15 @@ push_staging: build_web_dist build_http
 	docker push $(GRAND_CHALLENGE_HTTP_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 
 migrate:
-	docker compose run --rm web python manage.py migrate
+	docker compose run --rm gc.localhost python manage.py migrate
 
 check_migrations:
-	docker compose run --rm web python manage.py makemigrations --dry-run --check
+	docker compose run --rm gc.localhost python manage.py makemigrations --dry-run --check
 
 migrations:
-	docker compose run -u $(USER_ID) --rm web python manage.py makemigrations
+	docker compose run -u $(USER_ID) --rm gc.localhost python manage.py makemigrations
 
-runserver: build_web_test build_http development_fixtures
+runserver: build_web_test development_fixtures
 	bash -c "trap 'docker compose down' EXIT; docker compose up"
 
 rundeps:
@@ -104,7 +104,7 @@ minio:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		web \
+		gc.localhost \
 		bash -c "python manage.py runscript minio"
 
 development_fixtures:
@@ -146,16 +146,16 @@ superuser:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		web \
+		gc.localhost \
 		python manage.py runscript create_superuser
 
 docpages:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
 		--rm \
-		web \
+		gc.localhost \
 		python manage.py runscript create_docpages
 
 .PHONY: docs
 docs:
-	docker compose run --rm -u $(USER_ID) web bash -c "cd docs && make html"
+	docker compose run --rm -u $(USER_ID) gc.localhost bash -c "cd docs && make html"

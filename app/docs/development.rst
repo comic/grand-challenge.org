@@ -43,8 +43,7 @@ You can also kill the server with ``CTRL+C``.
 The Development Site
 ~~~~~~~~~~~~~~~~~~~~
 
-If you follow the installation instructions above you will be able to go to https://gc.localhost to see the development site,
-this is using a self-signed certificate so you will need to accept the security warning.
+If you follow the installation instructions above you will be able to go to http://gc.localhost:8000 to see the development site.
 
 The development site will apply all migrations and add a set of fixtures to help you with developing grand-challenge.org.
 These fixtures include Archives, Reader Studies, Challenges, Algorithms and Workstations.

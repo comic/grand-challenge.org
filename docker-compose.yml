@@ -7,6 +7,23 @@ x-minio-env: &minio-env
     AWS_ACCESS_KEY_ID: minioadmin
     AWS_SECRET_ACCESS_KEY: minioadmin
     AWS_S3_ENDPOINT_URL: http://minio.localhost:9000
+    USING_MINIO: "true"
+
+x-django-env: &django-env
+    DEBUG: "true"
+    COMPRESS_OFFLINE: "false"
+    PYTHONDONTWRITEBYTECODE: 1
+    SITE_SERVER_PORT: 8000
+    DEFAULT_SCHEME: "http"
+    SECURE_SSL_REDIRECT: "false"
+    CSRF_COOKIE_SECURE: "false"
+    SESSION_COOKIE_SECURE: "false"
+    REMAP_SIGTERM: "SIGQUIT"
+    AWS_S3_URL_PROTOCOL: "http:"
+    PROTECTED_S3_CUSTOM_DOMAIN: "gc.localhost:8000/media"
+    COMPONENTS_REGISTRY_INSECURE: "true"
+    COMPONENTS_DEFAULT_BACKEND: "tests.components_tests.resources.backends.IOCopyExecutor"
+    CSP_REPORT_ONLY: "true"
 
 services:
     postgres:
@@ -36,16 +53,12 @@ services:
             "
         restart: always
 
-    web:
+    gc.localhost:
         image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
+        ports:
+            - "127.0.0.1:8000:8000"
         environment:
-            <<: [*postgres-env, *minio-env]
-            COMPONENTS_REGISTRY_INSECURE: "true"
-            COMPONENTS_DEFAULT_BACKEND: "tests.components_tests.resources.backends.IOCopyExecutor"
-            USING_MINIO: "true"
-            DEBUG: "true"
-            COMPRESS_OFFLINE: "false"
-            PYTHONDONTWRITEBYTECODE: 1
+            <<: [*postgres-env, *minio-env, *django-env]
         # Use werkzeug debugger in dev, this should never be used in production!
         # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
         command: >-
@@ -66,26 +79,8 @@ services:
               source: ./app
               target: /app/
 
-    http:
-        image: public.ecr.aws/diag-nijmegen/grand-challenge/http:latest
-        environment:
-            APP_SERVER_HOST: "web"
-            SERVER_NAME: "gc.localhost"
-            SENDFILE_STATUS: "off"
-        command: >-
-            bash -c "envsubst '$$APP_SERVER_HOST $$SERVER_NAME $$SENDFILE_STATUS' < /tmp/nginx.conf.template > /etc/nginx/nginx.conf
-            && openssl req -x509 -newkey rsa:4096 -keyout /etc/ssl/private/privkey.pem -out /etc/ssl/certs/fullchain.pem -days 365 -nodes -subj '/CN=$$SERVER_NAME'
-            && nginx -g 'daemon off;'"
-        restart: always
-        ports:
-            - "127.0.0.1:80:80"
-            - "127.0.0.1:443:443"
-        depends_on:
-            web:
-                condition: service_started
-
     redis:
-        image: redis:5.0
+        image: redis:6
         ports:
             - "127.0.0.1:6379:6379"
         command: redis-server --appendonly yes
@@ -94,22 +89,16 @@ services:
     celery_worker:
         image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
         environment:
-            <<: [*postgres-env, *minio-env]
-            REMAP_SIGTERM: "SIGQUIT"
-            COMPONENTS_REGISTRY_INSECURE: "true"
-            COMPONENTS_DEFAULT_BACKEND: "tests.components_tests.resources.backends.IOCopyExecutor"
-            USING_MINIO: "true"
-            DEBUG: "true"
-            PYTHONDONTWRITEBYTECODE: 1
+            <<: [*postgres-env, *minio-env, *django-env]
         restart: always
         command: watchfiles --filter python "celery --app config worker --loglevel info --concurrency 1 --pool prefork --queues workstations-eu-central-1,acks-late-2xlarge,acks-late-2xlarge-delay,acks-late-micro-short,acks-late-micro-short-delay" /app
         scale: 1
         hostname: "celery-worker-evaluation"
         depends_on:
-            web:
-                condition: service_started
             postgres:
                 condition: service_healthy
+            minio.localhost:
+                condition: service_started
             redis:
                 condition: service_started
             registry:
@@ -127,8 +116,7 @@ services:
     celery_beat:
         image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
         environment:
-            <<: [*postgres-env]
-            DEBUG: "true"
+            <<: [*postgres-env, *django-env]
         restart: always
         command: >-
             bash -c "
@@ -136,8 +124,6 @@ services:
             && celery --app config beat --scheduler django_celery_beat.schedulers:DatabaseScheduler --pidfile=\"/tmp/celerybeat.pid\"
             "
         depends_on:
-            web:
-                condition: service_started
             postgres:
                 condition: service_healthy
             redis:
