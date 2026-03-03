@@ -91,7 +91,7 @@ services:
         environment:
             <<: [*postgres-env, *minio-env, *django-env]
         restart: always
-        command: watchfiles --filter python "celery --app config worker --loglevel info --concurrency 1 --pool prefork --queues workstations-eu-central-1,acks-late-2xlarge,acks-late-2xlarge-delay,acks-late-micro-short,acks-late-micro-short-delay" /app
+        command: watchfiles --filter python "celery --app config worker --loglevel info --concurrency 1 --pool prefork --queues acks-late-2xlarge,acks-late-2xlarge-delay,acks-late-micro-short,acks-late-micro-short-delay" /app
         scale: 1
         hostname: "celery-worker-evaluation"
         depends_on:
