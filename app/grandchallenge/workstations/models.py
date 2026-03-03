@@ -637,11 +637,7 @@ class Session(FieldChangeMixin, UUIDModel):
         reader_study.workstation_sessions.add(self)
 
         if reader_study.questions_with_interactive_algorithm.exists():
-            on_commit(
-                preload_interactive_algorithms.signature(
-                    queue=f"workstations-{self.region}"
-                ).apply_async
-            )
+            on_commit(preload_interactive_algorithms.apply_async)
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):
