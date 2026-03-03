@@ -10,6 +10,7 @@ os.environ["PROTECTED_S3_CUSTOM_DOMAIN"] = "testserver/media"
 from config.settings import *  # noqa: F401, F403, E402, I251
 
 SESSION_COOKIE_DOMAIN = ".testserver"
+SITE_SERVER_PORT = None
 ALLOWED_HOSTS = [SESSION_COOKIE_DOMAIN]
 SECURE_SSL_REDIRECT = False
 DEFAULT_SCHEME = "https"
