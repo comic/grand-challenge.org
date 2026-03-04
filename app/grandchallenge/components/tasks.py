@@ -1625,9 +1625,10 @@ def get_object_sha256(file_field):
         ChecksumMode="ENABLED",
     )
 
-    if settings.AWS_S3_ENDPOINT_URL:
-        # The checksums are not calculated on local s3
-        return ""
-    else:
+    try:
         checksum_sha256 = response["ChecksumSHA256"]
         return f"sha256:{hexlify(b64decode(checksum_sha256)).decode('utf-8')}"
+    except KeyError:
+        # The checksums are not calculated on local s3
+        logger.error("sha256 checksum was not calculated", exc_info=True)
+        return ""

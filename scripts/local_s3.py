@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 def run():
     """Sets up the permissions on the s3 buckets"""
-    print("🔐 Setting up local s3 🔐")
+    logger.info("🔐 Setting up local s3 🔐")
 
     if not settings.DEBUG:
         raise RuntimeError("Server is not in DEBUG mode.")
@@ -27,7 +27,7 @@ def run():
     _create_buckets(client=client)
     _set_public_bucket_policy(client=client)
 
-    print("✨ Local s3 set up ✨")
+    logger.info("✨ Local s3 set up ✨")
 
 
 def _create_buckets(*, client):
