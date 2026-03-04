@@ -570,14 +570,14 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                 parsed_log = parse_structured_log(
                     log=log_event["message"].replace("\x00", "")
                 )
-                if parsed_log.inference_result_skipped is True:
-                    self._inference_result_skipped = True
                 timestamp = ms_timestamp_to_datetime(log_event["timestamp"])
             except (JSONDecodeError, KeyError, ValueError):
                 logger.warning("Could not parse log")
                 continue
 
             if parsed_log is not None:
+                if parsed_log.inference_result_skipped is True:
+                    self._inference_result_skipped = True
                 output = f"{timestamp.isoformat()} {parsed_log.message}"
                 if parsed_log.source == SourceChoices.STDOUT:
                     stdout.append(output)
