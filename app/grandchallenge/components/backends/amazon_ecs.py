@@ -174,6 +174,10 @@ class ECSTaskOrchestrator:
 
     def _register_task_definition(self):
         response = self._ecs_client.register_task_definition(
+            # DO NOT specify memory on the task. We need to take this from
+            # the container definition so that the correct amount of memory
+            # is reserved by ECS and then limited for the container,
+            # see https://docs.aws.amazon.com/AmazonECS/latest/developerguide/memory-management.html#ecs-mi-memory-calculation
             containerDefinitions=self._container_definitions,
             family=self._task_definition_family,
             requiresCompatibilities=["EC2"],
@@ -215,6 +219,7 @@ class ECSTaskOrchestrator:
                         "name": "websocket",
                     },
                 ],
+                "memory": settings.COMPONENTS_SERVICE_MAX_MEMORY_MB,
                 "memoryReservation": settings.COMPONENTS_SERVICE_MEMORY_RESERVATION_MB,
                 "dockerSecurityOptions": ["no-new-privileges"],
                 "essential": True,
