@@ -19,6 +19,7 @@ from grandchallenge.components.backends.base import InferenceResult
 from grandchallenge.components.backends.exceptions import (
     ComponentException,
     TaskCancelled,
+    UncleanExit,
 )
 from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -603,7 +604,143 @@ def test_handle_completed_job():
     assert executor.invoke_duration == timedelta(seconds=1543)
 
 
-def test_handle_time_limit_exceded(settings):
+def test_inference_result_skipped_in_log_sets_flag(settings):
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+
+    pk = uuid4()
+    executor = AmazonSageMakerTrainingExecutor(
+        job_id=f"algorithms-job-{pk}",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"itsasecret",
+        api_method=APIMethodChoices.EXEC,
+    )
+
+    assert executor._inference_result_skipped is False
+
+    with Stubber(executor._logs_client) as logs:
+        logs.add_response(
+            method="describe_log_streams",
+            service_response={
+                "logStreams": [
+                    {"logStreamName": f"localhost-A-{pk}/i-whatever"},
+                ]
+            },
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TrainingJobs",
+                "logStreamNamePrefix": f"localhost-A-{pk}",
+            },
+        )
+        logs.add_response(
+            method="get_log_events",
+            service_response={
+                "events": [
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "Could not set up model",
+                                "source": "stderr",
+                                "internal": False,
+                                "inference_result_skipped": True,
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                ],
+                "nextBackwardToken": "foo",
+            },
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TrainingJobs",
+                "logStreamName": f"localhost-A-{pk}/i-whatever",
+                "startFromHead": False,
+                "startTime": 1654767467000,
+                "endTime": 1654767481000,
+            },
+        )
+        logs.add_response(
+            method="get_log_events",
+            service_response={
+                "events": [
+                    {
+                        "message": json.dumps(
+                            {
+                                "log": "some message",
+                                "source": "stdout",
+                                "internal": False,
+                                "inference_result_skipped": False,
+                            }
+                        ),
+                        "timestamp": 1654683838000,
+                    },
+                ],
+                "nextBackwardToken": "foo",
+            },
+            expected_params={
+                "logGroupName": "/aws/sagemaker/TrainingJobs",
+                "logStreamName": f"localhost-A-{pk}/i-whatever",
+                "startFromHead": False,
+                "startTime": 1654767467000,
+                "endTime": 1654767481000,
+                "nextToken": "foo",
+            },
+        )
+        executor._set_task_logs(
+            event={
+                "TrainingStartTime": 1654767467000,
+                "TrainingEndTime": 1654767481000,
+                "ResourceConfig": {
+                    "InstanceType": "ml.m7i.large",
+                    "InstanceCount": 1,
+                },
+            }
+        )
+
+    assert executor._inference_result_skipped is True
+
+
+def test_handle_completed_job_with_inference_result_skipped():
+    pk = uuid4()
+    executor = AmazonSageMakerTrainingExecutor(
+        job_id=f"algorithms-job-{pk}",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"itsasecret",
+        api_method=APIMethodChoices.INVOKE,
+    )
+
+    executor._stderr = ["setup failed"]
+    executor._inference_result_skipped = True
+
+    with pytest.raises(ComponentException, match="setup failed"):
+        executor._handle_completed_job()
+
+
+def test_handle_completed_job_without_inference_result_skipped_missing_result():
+    pk = uuid4()
+    executor = AmazonSageMakerTrainingExecutor(
+        job_id=f"algorithms-job-{pk}",
+        exec_image_repo_tag="",
+        memory_limit=4,
+        time_limit=60,
+        requires_gpu_type=GPUTypeChoices.NO_GPU,
+        use_warm_pool=False,
+        signing_key=b"itsasecret",
+        api_method=APIMethodChoices.INVOKE,
+    )
+
+    assert executor._inference_result_skipped is False
+
+    with pytest.raises(UncleanExit):
+        executor._handle_completed_job()
+
+
+def test_handle_time_limit_exceeded(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
 
     pk = uuid4()

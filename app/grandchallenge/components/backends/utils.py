@@ -52,6 +52,7 @@ class SourceChoices(TextChoices):
 class ParsedLog(NamedTuple):
     message: str
     source: SourceChoices
+    inference_result_skipped: bool | None
 
 
 def parse_structured_log(*, log: str) -> ParsedLog | None:
@@ -60,10 +61,15 @@ def parse_structured_log(*, log: str) -> ParsedLog | None:
 
     message = structured_log["log"]
     source = SourceChoices(structured_log["source"])
+    inference_result_skipped = structured_log.get("inference_result_skipped")
 
     if structured_log["internal"] is False:
         # Defensive, in case the type of structured_log["internal"] is str
-        return ParsedLog(message=message, source=source)
+        return ParsedLog(
+            message=message,
+            source=source,
+            inference_result_skipped=inference_result_skipped,
+        )
 
 
 def safe_extract(*, src: File, dest: Path):

@@ -949,13 +949,13 @@ def handle_event(*, event, backend):
             detailed_error_message=e.message_details,
             **get_update_status_kwargs(executor=executor),
         )
-    except Exception:
+    except Exception as error:
         job.update_status(
             status=job.FAILURE,
             error_message="An unexpected error occurred",
             **get_update_status_kwargs(executor=executor),
         )
-        raise
+        logger.error(str(error), exc_info=True)
     else:
         job.update_status(
             status=job.EXECUTED,
