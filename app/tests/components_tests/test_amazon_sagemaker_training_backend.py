@@ -353,7 +353,6 @@ def test_set_task_logs(settings):
                                 "log": "hello from stdout",
                                 "source": "stdout",
                                 "internal": False,
-                                "inference_result_skipped": False,
                             }
                         ),
                         "timestamp": 1654683838000,
@@ -364,7 +363,6 @@ def test_set_task_logs(settings):
                                 "log": "hello from stderr",
                                 "source": "stderr",
                                 "internal": False,
-                                "inference_result_skipped": False,
                             }
                         ),
                         "timestamp": 1654683838000,
@@ -375,7 +373,6 @@ def test_set_task_logs(settings):
                                 "log": "internal stderr",
                                 "source": "stderr",
                                 "internal": True,
-                                "inference_result_skipped": False,
                             }
                         ),
                         "timestamp": 1654683838000,
@@ -386,7 +383,6 @@ def test_set_task_logs(settings):
                                 "log": "internal stdout",
                                 "source": "stdout",
                                 "internal": True,
-                                "inference_result_skipped": False,
                             }
                         ),
                         "timestamp": 1654683838000,
@@ -405,7 +401,6 @@ def test_set_task_logs(settings):
                                 "log": "wrong source",
                                 "source": "fdgfgsdfdg",
                                 "internal": False,
-                                "inference_result_skipped": False,
                             }
                         ),
                         "timestamp": 1654683838000,
@@ -431,7 +426,6 @@ def test_set_task_logs(settings):
                                 "log": "first message",
                                 "source": "stdout",
                                 "internal": False,
-                                "inference_result_skipped": False,
                             }
                         ),
                         "timestamp": 1654683838000,

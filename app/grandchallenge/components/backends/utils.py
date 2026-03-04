@@ -61,7 +61,7 @@ def parse_structured_log(*, log: str) -> ParsedLog | None:
 
     message = structured_log["log"]
     source = SourceChoices(structured_log["source"])
-    inference_result_skipped = structured_log["inference_result_skipped"]
+    inference_result_skipped = structured_log.get("inference_result_skipped")
 
     if structured_log["internal"] is False:
         # Defensive, in case the type of structured_log["internal"] is str
