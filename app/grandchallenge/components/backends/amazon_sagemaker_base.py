@@ -1,4 +1,3 @@
-import json
 import logging
 import re
 from abc import ABC, abstractmethod
@@ -568,14 +567,11 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
 
         for log_event in self._get_log_events(event=event):
             try:
-                structured_log = json.loads(
-                    log_event["message"].replace("\x00", "").strip()
-                )
-                if structured_log["inference_result_skipped"] is True:
-                    self._inference_result_skipped = True
                 parsed_log = parse_structured_log(
-                    structured_log=structured_log
+                    log=log_event["message"].replace("\x00", "")
                 )
+                if parsed_log.inference_result_skipped is True:
+                    self._inference_result_skipped = True
                 timestamp = ms_timestamp_to_datetime(log_event["timestamp"])
             except (JSONDecodeError, KeyError, ValueError):
                 logger.warning("Could not parse log")

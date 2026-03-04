@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 import zipfile
@@ -51,16 +52,24 @@ class SourceChoices(TextChoices):
 class ParsedLog(NamedTuple):
     message: str
     source: SourceChoices
+    inference_result_skipped: bool | None
 
 
-def parse_structured_log(*, structured_log: dict) -> ParsedLog | None:
+def parse_structured_log(*, log: str) -> ParsedLog | None:
     """Parse the structured logs from SageMaker Shim"""
+    structured_log = json.loads(log.strip())
+
     message = structured_log["log"]
     source = SourceChoices(structured_log["source"])
+    inference_result_skipped = structured_log["inference_result_skipped"]
 
     if structured_log["internal"] is False:
         # Defensive, in case the type of structured_log["internal"] is str
-        return ParsedLog(message=message, source=source)
+        return ParsedLog(
+            message=message,
+            source=source,
+            inference_result_skipped=inference_result_skipped,
+        )
 
 
 def safe_extract(*, src: File, dest: Path):
