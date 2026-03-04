@@ -65,7 +65,7 @@ class ProtectedS3Storage(S3Storage):
     def __init__(self, *args, internal=False, **kwargs):
         config = copy.deepcopy(settings.PROTECTED_S3_STORAGE_KWARGS)
 
-        # Setting a custom domain will strip the aws headers when using minio.
+        # Setting a custom domain will strip the aws headers when using local s3.
         # You can get these headers back by setting the custom_domain to None
         if internal:
             config["custom_domain"] = None
@@ -166,14 +166,14 @@ def copy_s3_object(
         name=target_key, max_length=to_field.field.max_length
     )
 
-    extra_args = {"ContentType": mimetype, "MetadataDirective": "REPLACE"}
+    extra_args = {
+        "ContentType": mimetype,
+        "MetadataDirective": "REPLACE",
+        "ChecksumAlgorithm": "SHA256",
+    }
 
     if target_bucket == settings.PUBLIC_S3_STORAGE_KWARGS["bucket_name"]:
         extra_args["CacheControl"] = settings.PUBLIC_FILE_CACHE_CONTROL
-
-    if not settings.USING_MINIO:
-        # Minio does not handle the checksum correctly
-        extra_args["ChecksumAlgorithm"] = "SHA256"
 
     target_client.copy(
         CopySource={"Bucket": src_bucket, "Key": src_key},

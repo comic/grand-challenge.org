@@ -136,7 +136,7 @@ def list_and_delete_objects_from_prefix(*, s3_client, bucket, prefix):
 
     page_iterator = paginator.paginate(
         Bucket=bucket,
-        Prefix=(prefix.lstrip("/") if settings.USING_MINIO else prefix),
+        Prefix=prefix,
     )
 
     all_errors = []
@@ -878,7 +878,7 @@ class Executor(ABC):
 
         response = self._s3_client.list_objects_v2(
             Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
-            Prefix=(prefix.lstrip("/") if settings.USING_MINIO else prefix),
+            Prefix=prefix,
         )
 
         if response.get("IsTruncated", False):

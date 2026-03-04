@@ -156,11 +156,7 @@ def test_upload_copy():
 
 
 @pytest.mark.django_db
-def test_upload_copy_sets_sha256(settings):
-    # Pretend we're talking to S3 so turn off any minio adaptations
-    # so we can check that the SHA256 is correctly requested
-    settings.USING_MINIO = False
-
+def test_upload_copy_sets_sha256():
     upload = UserUpload.objects.create(
         creator=UserFactory(), filename="test.tar.gz"
     )

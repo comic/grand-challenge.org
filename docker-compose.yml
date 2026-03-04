@@ -7,7 +7,6 @@ x-s3-env: &s3-env
     AWS_ACCESS_KEY_ID: s3admin
     AWS_SECRET_ACCESS_KEY: s3admin
     AWS_S3_ENDPOINT_URL: http://s3.localhost:8333
-    USING_MINIO: "true"
 
 x-django-env: &django-env
     DEBUG: "true"
