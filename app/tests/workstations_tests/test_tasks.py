@@ -120,6 +120,7 @@ def test_start_service(mocker, settings, django_capture_on_commit_callbacks):
                                 "awslogs-stream-prefix": "ecs",
                             },
                         },
+                        "memory": 8192,
                         "memoryReservation": 1024,
                         "name": "workstation",
                         "portMappings": [
