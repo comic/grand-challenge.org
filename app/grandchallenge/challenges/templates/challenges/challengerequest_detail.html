@@ -40,7 +40,7 @@
             <i class="fa fa-envelope text-primary pr-3"></i> <a target="_blank" href="mailto:{{ object.contact_email }}">{{ object.contact_email }}</a><br>
             <i class="fa fa-calendar text-primary pr-3"></i> Created on {{ object.created|date:'F j, Y' }}<br>
             {% if object.submitted %}
-                <i class="fa fa-rocket text-primary pr-3"></i> Submitted on <span class="badge ml-1 px-2 {% if object.submitted|timedifference < 8 %} badge-success {% elif object.submitted|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{  object.submitted|date:'F j, Y'}}</span><br>
+                <i class="fa fa-rocket text-primary pr-3"></i> Submitted on<span class="badge ml-1 px-2 {% if object.submitted|timedifference < 8 %} badge-success {% elif object.submitted|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{  object.submitted|date:'F j, Y'}}</span><br>
             {% endif %}
         </div>
         <div class="col-lg-6">
