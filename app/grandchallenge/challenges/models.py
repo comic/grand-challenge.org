@@ -958,16 +958,25 @@ def submission_pdf_path(instance, filename):
     )
 
 
+class ChallengeRequestStatusChoices(models.TextChoices):
+    ACCEPTED = "ACPT", _("Accepted")
+    REJECTED = "RJCT", _("Rejected")
+    PENDING = "PEND", _("Pending")
+    DRAFT = "DRFT", _("Draft")
+
+
 class ChallengeRequest(UUIDModel, ChallengeBase):
-    class ChallengeRequestStatusChoices(models.TextChoices):
-        ACCEPTED = "ACPT", _("Accepted")
-        REJECTED = "RJCT", _("Rejected")
-        PENDING = "PEND", _("Pending")
+
+    ChallengeRequestStatusChoices = ChallengeRequestStatusChoices
 
     status = models.CharField(
         max_length=4,
-        choices=ChallengeRequestStatusChoices.choices,
-        default=ChallengeRequestStatusChoices.PENDING,
+        choices=ChallengeRequestStatusChoices,
+        default=ChallengeRequestStatusChoices.DRAFT,
+    )
+    submitted_on = models.DateTimeField(
+        null=True,
+        blank=True,
     )
     abstract = models.TextField(
         help_text="Provide a summary of the challenge purpose.",
@@ -1205,6 +1214,19 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         default=False,
     )
 
+    class Meta:
+        permissions = [
+            ("review_challengerequest", "Can review challenge request"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                name="submitted_or_draft",
+                condition=Q(status=ChallengeRequestStatusChoices.DRAFT)
+                | Q(submitted_on__isnull=False),
+                violation_error_message="When setting the status to something other than a 'Draft', 'Submitted On' must also be set.",
+            ),
+        ]
+
     def __str__(self):
         return self.title
 
@@ -1217,20 +1239,31 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
+        submitting = (
+            self._orig_status == self.ChallengeRequestStatusChoices.DRAFT
+            and self.status != self.ChallengeRequestStatusChoices.DRAFT
+        )
+        if submitting:
+            self.submitted_on = now()
+
         super().save(*args, **kwargs)
 
         if adding:
             self.assign_permissions()
+        elif submitting:
             send_challenge_requested_email_to_reviewers(self)
             send_challenge_requested_email_to_requester(self)
 
     def assign_permissions(self):
         assign_perm("view_challengerequest", self.creator, self)
+        assign_perm("change_challengerequest", self.creator, self)
+
         reviewers = Group.objects.get(
             name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
         )
         assign_perm("view_challengerequest", reviewers, self)
         assign_perm("change_challengerequest", reviewers, self)
+        assign_perm("review_challengerequest", reviewers, self)
 
     def create_challenge(self):
         challenge = Challenge(
@@ -1711,7 +1744,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
 
 class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
-    allowed_permissions = frozenset({"view_challengerequest"})
+    allowed_permissions = frozenset(
+        {
+            "view_challengerequest",
+            "change_challengerequest",
+        }
+    )
 
     content_object = models.ForeignKey(
         ChallengeRequest, on_delete=models.CASCADE
@@ -1720,7 +1758,11 @@ class ChallengeRequestUserObjectPermission(UserObjectPermissionBase):
 
 class ChallengeRequestGroupObjectPermission(GroupObjectPermissionBase):
     allowed_permissions = frozenset(
-        {"view_challengerequest", "change_challengerequest"}
+        {
+            "view_challengerequest",
+            "change_challengerequest",
+            "review_challengerequest",
+        }
     )
 
     content_object = models.ForeignKey(

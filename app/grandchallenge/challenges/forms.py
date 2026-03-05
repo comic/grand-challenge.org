@@ -542,41 +542,33 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["status"].label = False
-        self.fields["status"].choices = [
-            c
-            for c in self.Meta.model.ChallengeRequestStatusChoices.choices
-            if c[0] != self.Meta.model.ChallengeRequestStatusChoices.PENDING
-        ]
-        self.helper = FormHelper(self)
-        self.helper.layout = Layout(
-            Div(
-                Div("status", css_class="col-lg-8 px-0 mt-3"),
-                Div(
-                    ButtonHolder(
-                        Submit("save", "Save", css_class="btn-sm mt-lg-1")
-                    ),
-                    css_class="col-lg-4 pb-0 mt-lg-3 pl-lg-2",
-                ),
-                css_class="row container m-0 p-0",
-            )
-        )
-        self.helper.attrs.update(
-            {
-                "hx-post": reverse(
-                    "challenges:requests-status-update",
-                    kwargs={"pk": self.instance.pk},
-                ),
-                # use 'this' to display form errors in place, when the form is valid,
-                # a page refresh will be triggered (by setting HX-Refresh to true)
-                "hx-target": "this",
-                "hx-swap": "outerHTML",
-            }
-        )
+
         if (
             self.instance.status
-            != self.instance.ChallengeRequestStatusChoices.PENDING
+            == self.instance.ChallengeRequestStatusChoices.DRAFT
         ):
+            self.fields["status"].choices = [
+                (
+                    self.Meta.model.ChallengeRequestStatusChoices.PENDING.value,
+                    self.Meta.model.ChallengeRequestStatusChoices.PENDING.label,
+                ),
+            ]
+        elif (
+            self.instance.status
+            == self.instance.ChallengeRequestStatusChoices.PENDING
+        ):
+            self.fields["status"].choices = [
+                (
+                    self.Meta.model.ChallengeRequestStatusChoices.ACCEPTED.value,
+                    self.Meta.model.ChallengeRequestStatusChoices.ACCEPTED.label,
+                ),
+                (
+                    self.Meta.model.ChallengeRequestStatusChoices.REJECTED.value,
+                    self.Meta.model.ChallengeRequestStatusChoices.REJECTED.label,
+                ),
+            ]
+        else:
+            self.fields["status"].choices = []
             self.fields["status"].disabled = True
 
     def clean_status(self):

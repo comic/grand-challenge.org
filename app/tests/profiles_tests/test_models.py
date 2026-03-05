@@ -5,13 +5,14 @@ from actstream.actions import follow
 from django.contrib.sites.models import Site
 from django.core import mail
 
+from grandchallenge.challenges.models import ChallengeRequest
 from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.models import (
     EmailSubscriptionTypes,
     NotificationEmailOptions,
 )
 from grandchallenge.subdomains.utils import reverse
-from tests.factories import UserFactory
+from tests.factories import ChallengeRequestFactory, UserFactory
 from tests.notifications_tests.factories import NotificationFactory
 from tests.utils import get_view_for_user
 
@@ -187,4 +188,28 @@ def test_unsubscribe_link(
     assert link == reverse(
         unsubscribe_viewname,
         kwargs={"token": user.user_profile.unsubscribe_token},
+    )
+
+
+@pytest.mark.django_db
+def test_challenge_request_submitted_field_set_on_status_update():
+    challenge_request = ChallengeRequestFactory(
+        status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT
+    )
+
+    # Initially submitted should be None
+    assert challenge_request.submitted_on is None
+
+    # Submit the request by updating status from DRAFT to PENDING
+    challenge_request.status = (
+        ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+    )
+    challenge_request.save()
+
+    # Refresh and check that submitted is now set
+    challenge_request.refresh_from_db()
+    assert challenge_request.submitted_on is not None
+    assert (
+        challenge_request.status
+        == ChallengeRequest.ChallengeRequestStatusChoices.PENDING
     )

@@ -151,15 +151,25 @@ class ChallengeRequestCreate(
 ):
     model = ChallengeRequest
     form_class = ChallengeRequestForm
-    success_message = "Your request has been sent to the reviewers."
+    # TODO-challenge-request-draft, update success message
+    # success_message = "A draft of your challenge request has been created!"
+    success_message = "Your challenge request has been created!"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update({"creator": self.request.user})
         return kwargs
 
-    def get_success_url(self):
-        return reverse("challenges:requests-list")
+    def form_valid(self, form):
+        result = super().form_valid(form)
+
+        # TODO-challenge-request-draft, remove this auto submit
+        self.object.status = (
+            ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+        )
+        self.object.save()
+
+        return result
 
 
 class ChallengeRequestList(
@@ -222,33 +232,37 @@ class ChallengeRequestStatusUpdate(
     UpdateView,
 ):
     model = ChallengeRequest
-    form_class = ChallengeRequestStatusUpdateForm
-    permission_required = "change_challengerequest"
-    template_name = "challenges/challengerequest_status_form.html"
     raise_exception = True
+    form_class = ChallengeRequestStatusUpdateForm
     login_url = reverse_lazy("account_login")
 
     def form_valid(self, form):
         super().form_valid(form)
+
         if (
-            form.instance._orig_status
-            == form.instance.ChallengeRequestStatusChoices.PENDING
-            and form.instance._orig_status != form.instance.status
+            form.instance.status
+            == form.instance.ChallengeRequestStatusChoices.ACCEPTED
+            and form.instance._orig_status
+            != form.instance.ChallengeRequestStatusChoices.ACCEPTED
         ):
-            if (
-                form.instance.status
-                == form.instance.ChallengeRequestStatusChoices.ACCEPTED
-            ):
-                challenge = form.instance.create_challenge()
-            else:
-                challenge = None
-            send_challenge_status_update_email(
-                challengerequest=form.instance, challenge=challenge
-            )
+            challenge = form.instance.create_challenge()
+        else:
+            challenge = None
+        send_challenge_status_update_email(
+            challengerequest=form.instance, challenge=challenge
+        )
 
         response = HttpResponse()
         response["HX-Refresh"] = "true"
         return response
+
+
+class ChallengeRequestProcess(ChallengeRequestStatusUpdate):
+    permission_required = "review_challengerequest"
+
+
+class ChallengeRequestSubmit(ChallengeRequestStatusUpdate):
+    permission_required = "change_challengerequest"
 
 
 class ChallengeRequestBudgetUpdate(
@@ -258,7 +272,7 @@ class ChallengeRequestBudgetUpdate(
 ):
     model = ChallengeRequest
     form_class = ChallengeRequestBudgetUpdateForm
-    permission_required = "change_challengerequest"
+    permission_required = "review_challengerequest"
     raise_exception = True
     login_url = reverse_lazy("account_login")
     template_name = "challenges/challengerequest_budget_form.html"
