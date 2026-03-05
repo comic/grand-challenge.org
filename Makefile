@@ -3,7 +3,6 @@ PYTHON_VERSION="3.13"
 LOCKFILE_HASH=$(shell shasum -a 512 uv.lock | cut -c 1-8)
 GIT_COMMIT_ID=$(shell git describe --always --dirty)
 GIT_BRANCH_NAME=$(shell git rev-parse --abbrev-ref HEAD | sed "s/[^[:alnum:]]//g")
-GRAND_CHALLENGE_HTTP_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/http
 GRAND_CHALLENGE_WEB_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web
 GRAND_CHALLENGE_WEB_TEST_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web-test
 GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=public.ecr.aws/diag-nijmegen/grand-challenge/web-base
@@ -56,12 +55,6 @@ build_web_dist:
 		-f dockerfiles/web/Dockerfile \
 		.
 
-build_http:
-	docker buildx build \
-		-t $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
-		-t $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):latest \
-		dockerfiles/http
-
 push_web_base:
 	docker push $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH)
 
@@ -72,18 +65,12 @@ push_web:
 	docker push $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 	docker push $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):latest
 
-push_http:
-	docker push $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
-	docker push $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):latest
+build: build_web_test build_web_dist
 
-build: build_web_test build_web_dist build_http
-
-push_staging: build_web_dist build_http
+push_staging: build_web_dist
 	docker tag $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
-	docker tag $(GRAND_CHALLENGE_HTTP_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) $(GRAND_CHALLENGE_HTTP_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 	aws ecr get-login-password --region $(GRAND_CHALLENGE_STAGING_REGION) --profile $(GRAND_CHALLENGE_STAGING_PROFILE) | docker login --username AWS --password-stdin $(GRAND_CHALLENGE_STAGING_ECR_HOST)
 	docker push $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
-	docker push $(GRAND_CHALLENGE_HTTP_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 
 migrate:
 	docker compose run --rm gc.localhost python manage.py migrate
