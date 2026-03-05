@@ -1223,7 +1223,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 name="submitted_or_draft",
                 condition=Q(status=ChallengeRequestStatusChoices.DRAFT)
                 | Q(submitted__isnull=False),
-                violation_error_message="When setting the status to something else than a 'Draft', the 'Submitted' must also be set.",
+                violation_error_message="When setting the status to something other than a 'Draft', 'Submitted' must also be set.",
             ),
         ]
 
