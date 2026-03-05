@@ -70,11 +70,11 @@
                         <!-- Submitted -->
                         {% if object.submitted %}
                             {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
-                                <td class="text-center align-middle" data-order="{{ object.submitted|date:"c" }}"><span class="badge p-2 badge-primary">{{ object.submitted|date:'F j, Y' }}</span></td>
+                                <td class="text-center align-middle" data-order="{{ object.submitted_on|date:"c" }}"><span class="badge p-2 badge-primary">{{ object.submitted_on|date:'F j, Y' }}</span></td>
                             {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
-                                <td class="text-center align-middle" data-order="{{ object.submitted|date:"c" }}"><span class="badge p-2 badge-primary">{{ object.submitted|date:'F j, Y' }}</span></td>
+                                <td class="text-center align-middle" data-order="{{ object.submitted_on|date:"c" }}"><span class="badge p-2 badge-primary">{{ object.submitted_on|date:'F j, Y' }}</span></td>
                             {% elif object.status == object.ChallengeRequestStatusChoices.PENDING %}
-                                <td class="text-center align-middle" data-order="{{ object.submitted|date:"c" }}"><span class="badge p-2 {% if object.submitted|timedifference < 8 %} badge-success {% elif object.submitted|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.submitted|date:'F j, Y' }}</span></td>
+                                <td class="text-center align-middle" data-order="{{ object.submitted_on|date:"c" }}"><span class="badge p-2 {% if object.submitted_on|timedifference < 8 %} badge-success {% elif object.submitted_on|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.submitted_on|date:'F j, Y' }}</span></td>
                             {% else %}
                                 <td class="text-center align-middle" data-order="0"><span class="text-muted">Not Available</span></td>
                             {% endif %}
