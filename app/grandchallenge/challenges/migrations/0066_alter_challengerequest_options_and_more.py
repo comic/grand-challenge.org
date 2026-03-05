@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="challengerequest",
-            name="submitted",
+            name="submitted_on",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AlterField(
@@ -51,11 +51,11 @@ class Migration(migrations.Migration):
             constraint=models.CheckConstraint(
                 condition=models.Q(
                     ("status", "DRFT"),
-                    ("submitted__isnull", False),
+                    ("submitted_on__isnull", False),
                     _connector="OR",
                 ),
                 name="submitted_or_draft",
-                violation_error_message="When setting the status to something else than a 'Draft', the 'Submitted' must also be set.",
+                violation_error_message="When setting the status to something other than a 'Draft', 'Submitted On' must also be set.",
             ),
         ),
     ]

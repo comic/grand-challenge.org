@@ -974,7 +974,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         choices=ChallengeRequestStatusChoices,
         default=ChallengeRequestStatusChoices.DRAFT,
     )
-    submitted = models.DateTimeField(
+    submitted_on = models.DateTimeField(
         null=True,
         blank=True,
     )
@@ -1222,8 +1222,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             models.CheckConstraint(
                 name="submitted_or_draft",
                 condition=Q(status=ChallengeRequestStatusChoices.DRAFT)
-                | Q(submitted__isnull=False),
-                violation_error_message="When setting the status to something other than a 'Draft', 'Submitted' must also be set.",
+                | Q(submitted_on__isnull=False),
+                violation_error_message="When setting the status to something other than a 'Draft', 'Submitted On' must also be set.",
             ),
         ]
 
@@ -1244,7 +1244,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             and self.status != self.ChallengeRequestStatusChoices.DRAFT
         )
         if submitting:
-            self.submitted = now()
+            self.submitted_on = now()
 
         super().save(*args, **kwargs)
 
@@ -1253,7 +1253,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         elif submitting:
             send_challenge_requested_email_to_reviewers(self)
             send_challenge_requested_email_to_requester(self)
-            self.submitted = now()
 
     def assign_permissions(self):
         assign_perm("view_challengerequest", self.creator, self)

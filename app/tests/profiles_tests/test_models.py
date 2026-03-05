@@ -198,7 +198,7 @@ def test_challenge_request_submitted_field_set_on_status_update():
     )
 
     # Initially submitted should be None
-    assert challenge_request.submitted is None
+    assert challenge_request.submitted_on is None
 
     # Submit the request by updating status from DRAFT to PENDING
     challenge_request.status = (
@@ -208,7 +208,7 @@ def test_challenge_request_submitted_field_set_on_status_update():
 
     # Refresh and check that submitted is now set
     challenge_request.refresh_from_db()
-    assert challenge_request.submitted is not None
+    assert challenge_request.submitted_on is not None
     assert (
         challenge_request.status
         == ChallengeRequest.ChallengeRequestStatusChoices.PENDING
