@@ -7,7 +7,9 @@ from django.db.models import F
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from grandchallenge.challenges.emails import send_challenge_status_update_email
+from grandchallenge.challenges.emails import (
+    send_challenge_request_processed_update_email,
+)
 from grandchallenge.challenges.models import (
     Challenge,
     ChallengeGroupObjectPermission,
@@ -140,7 +142,7 @@ class ChallengeRequestAdmin(ModelAdmin):
                     challenge = challengerequest.create_challenge()
             else:
                 challenge = None
-            send_challenge_status_update_email(
+            send_challenge_request_processed_update_email(
                 challengerequest=challengerequest, challenge=challenge
             )
 

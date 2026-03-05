@@ -37,9 +37,9 @@ from pictures.models import PictureField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.challenges.emails import (
+    send_challenge_request_processed_update_email,
     send_challenge_requested_email_to_requester,
     send_challenge_requested_email_to_reviewers,
-    send_challenge_status_update_email,
     send_email_percent_budget_consumed_alert,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
@@ -1387,7 +1387,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 challenge = self.create_challenge()
             else:
                 challenge = None
-            send_challenge_status_update_email(
+            send_challenge_request_processed_update_email(
                 challengerequest=self,
                 challenge=challenge,
             )
