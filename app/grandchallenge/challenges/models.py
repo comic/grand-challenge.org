@@ -39,6 +39,7 @@ from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_requester,
     send_challenge_requested_email_to_reviewers,
+    send_challenge_status_update_email,
     send_email_percent_budget_consumed_alert,
 )
 from grandchallenge.challenges.utils import ChallengeTypeChoices
@@ -1364,6 +1365,13 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             self._orig_status == self.ChallengeRequestStatusChoices.DRAFT
             and self.status != self.ChallengeRequestStatusChoices.DRAFT
         )
+        processing = (
+            self._orig_status == self.ChallengeRequestStatusChoices.PENDING
+            and (
+                self.status == self.ChallengeRequestStatusChoices.ACCEPTED
+                or self.status == self.ChallengeRequestStatusChoices.REJECTED
+            )
+        )
         if submitting:
             self.submitted_on = now()
 
@@ -1374,6 +1382,15 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         elif submitting:
             send_challenge_requested_email_to_reviewers(self)
             send_challenge_requested_email_to_requester(self)
+        elif processing:
+            if self.status == self.ChallengeRequestStatusChoices.ACCEPTED:
+                challenge = self.create_challenge()
+            else:
+                challenge = None
+            send_challenge_status_update_email(
+                challengerequest=self,
+                challenge=challenge,
+            )
 
     def assign_permissions(self):
         assign_perm("view_challengerequest", self.creator, self)

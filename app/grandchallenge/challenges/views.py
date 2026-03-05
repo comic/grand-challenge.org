@@ -24,7 +24,6 @@ from guardian.mixins import LoginRequiredMixin
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from grandchallenge.challenges.emails import send_challenge_status_update_email
 from grandchallenge.challenges.filters import ChallengeFilter
 from grandchallenge.challenges.forms import (
     ChallengeRequestBudgetCalculatorForm,
@@ -259,35 +258,10 @@ class ChallengeRequestStatusUpdate(
     form_class = ChallengeRequestStatusUpdateForm
     login_url = reverse_lazy("account_login")
 
-    def get_required_permissions(self, *_, **__):
-        if (
-            self.get_object().status
-            == self.get_object().ChallengeRequestStatusChoices.PENDING
-        ):
-            return ["review_challengerequest"]
-        elif (
-            self.get_object().status
-            == self.get_object().ChallengeRequestStatusChoices.DRAFT
-        ):
-            return ["change_challengerequest"]
-        else:
-            raise HttpResponseBadRequest()
-
     def form_valid(self, form):
         super().form_valid(form)
-
-        if (
-            form.instance.status
-            == form.instance.ChallengeRequestStatusChoices.ACCEPTED
-            and form.instance._orig_status
-            != form.instance.ChallengeRequestStatusChoices.ACCEPTED
-        ):
-            challenge = form.instance.create_challenge()
-        else:
-            challenge = None
-        send_challenge_status_update_email(
-            challengerequest=form.instance, challenge=challenge
-        )
+        # Handing of the state change is done in the model's save method,
+        # so we need to only refresh the page to get the updated state
 
         response = HttpResponse()
         response["HX-Refresh"] = "true"

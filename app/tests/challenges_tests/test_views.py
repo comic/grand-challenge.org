@@ -5,7 +5,7 @@ from dateutil.utils import today
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
-from grandchallenge.challenges.models import OnboardingTask
+from grandchallenge.challenges.models import ChallengeRequest, OnboardingTask
 from grandchallenge.invoices.models import PaymentTypeChoices
 from grandchallenge.verifications.models import Verification
 from tests.evaluation_tests.factories import PhaseFactory

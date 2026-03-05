@@ -335,23 +335,6 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
             ButtonHolder(Submit("save", "Save")),
         )
 
-    # def clean(self):
-    #     cleaned_data = super().clean()
-    #     start = cleaned_data.get("start_date")
-    #     end = cleaned_data.get("end_date")
-    #     if start and end and start >= end:
-    #         raise ValidationError(
-    #             "The start date needs to be before the end date."
-    #         )
-    #     if (
-    #         "algorithm_inputs" not in cleaned_data.keys()
-    #         or "algorithm_outputs" not in cleaned_data.keys()
-    #     ):
-    #         raise ValidationError(
-    #             "Please describe what inputs and outputs the algorithms submitted to your challenge take and produce."
-    #         )
-    #     return cleaned_data
-
 
 class ChallengeRequestStatusUpdateForm(forms.ModelForm):
     class Meta:
