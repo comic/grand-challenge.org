@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import F, Prefetch, Q
-from django.http import Http404, HttpResponse, HttpResponseBadRequest
+from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.utils.html import format_html
 from django.views.generic import (
@@ -236,20 +236,6 @@ class ChallengeRequestStatusUpdate(
     form_class = ChallengeRequestStatusUpdateForm
     login_url = reverse_lazy("account_login")
 
-    def get_required_permissions(self, request=None):
-        if (
-            self.get_object().status
-            == self.get_object().ChallengeRequestStatusChoices.PENDING
-        ):
-            return ["review_challengerequest"]
-        elif (
-            self.get_object().status
-            == self.get_object().ChallengeRequestStatusChoices.DRAFT
-        ):
-            return ["change_challengerequest"]
-        else:
-            raise HttpResponseBadRequest()
-
     def form_valid(self, form):
         super().form_valid(form)
 
@@ -269,6 +255,14 @@ class ChallengeRequestStatusUpdate(
         response = HttpResponse()
         response["HX-Refresh"] = "true"
         return response
+
+
+class ChallengeRequestProcess(ChallengeRequestStatusUpdate):
+    permission_required = "review_challengerequest"
+
+
+class ChallengeRequestSubmit(ChallengeRequestStatusUpdate):
+    permission_required = "change_challengerequest"
 
 
 class ChallengeRequestBudgetUpdate(

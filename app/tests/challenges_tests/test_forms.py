@@ -181,12 +181,12 @@ def test_accept_challenge_request_duplicate_shortname():
             ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
             True,
         ),
-        (  # Accept
+        (  # Process - Accept
             ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
             ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
             True,
         ),
-        (  # Reject
+        (  # Process - Reject
             ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
             ChallengeRequest.ChallengeRequestStatusChoices.REJECTED,
             True,

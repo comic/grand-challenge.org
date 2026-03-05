@@ -54,7 +54,7 @@ def test_challenge_request_rejected_sent_email(client, challenge_reviewer):
     response = get_view_for_user(
         client=client,
         method=client.post,
-        viewname="challenges:requests-status-update",
+        viewname="challenges:requests-process",
         reverse_kwargs={"pk": request.pk},
         user=challenge_reviewer,
         data={
@@ -84,7 +84,7 @@ def test_challenge_request_accepted_sent_email_challenge_creation(
     response = get_view_for_user(
         client=client,
         method=client.post,
-        viewname="challenges:requests-status-update",
+        viewname="challenges:requests-process",
         reverse_kwargs={"pk": request.pk},
         user=challenge_reviewer,
         data={

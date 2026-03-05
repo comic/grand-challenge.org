@@ -52,7 +52,8 @@ def test_request_challenge_only_when_verified(client):
     "viewname",
     [
         "challenges:requests-detail",
-        "challenges:requests-status-update",
+        "challenges:requests-process",
+        "challenges:requests-submit",
         "challenges:requests-budget-update",
     ],
 )
@@ -88,7 +89,7 @@ def test_challenge_request_creator_viewing_and_updating(client):
     response = get_view_for_user(
         client=client,
         method=client.post,
-        viewname="challenges:requests-status-update",
+        viewname="challenges:requests-submit",
         reverse_kwargs={"pk": challenge_request.pk},
         user=challenge_request.creator,
         data={"status": ChallengeRequest.ChallengeRequestStatusChoices.DRAFT},
@@ -104,7 +105,7 @@ def test_challenge_request_creator_viewing_and_updating(client):
     response = get_view_for_user(
         client=client,
         method=client.post,
-        viewname="challenges:requests-status-update",
+        viewname="challenges:requests-process",
         reverse_kwargs={"pk": challenge_request.pk},
         user=challenge_request.creator,
         data={
@@ -143,7 +144,7 @@ def test_challenge_request_reviewer_can_access_all(client, challenge_reviewer):
     response = get_view_for_user(
         client=client,
         method=client.post,
-        viewname="challenges:requests-status-update",
+        viewname="challenges:requests-submit",
         reverse_kwargs={"pk": challenge_request.pk},
         user=challenge_reviewer,
         data={"status": ChallengeRequest.ChallengeRequestStatusChoices.DRAFT},
@@ -159,7 +160,7 @@ def test_challenge_request_reviewer_can_access_all(client, challenge_reviewer):
     response = get_view_for_user(
         client=client,
         method=client.post,
-        viewname="challenges:requests-status-update",
+        viewname="challenges:requests-process",
         reverse_kwargs={"pk": challenge_request.pk},
         user=challenge_reviewer,
         data={
