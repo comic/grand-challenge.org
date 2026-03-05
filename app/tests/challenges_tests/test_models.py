@@ -1,4 +1,3 @@
-from contextlib import nullcontext
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
@@ -7,7 +6,7 @@ from actstream.actions import is_following
 from actstream.models import Action
 from dateutil.relativedelta import relativedelta
 from dateutil.utils import today
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 from django.utils.timezone import datetime, now, timedelta
 
@@ -452,8 +451,9 @@ def test_discussion_forum_permissions():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "data,context",
-    (
+    "data,expected_error",
+    [
+        # Valid submission with DOI - should pass
         (
             {
                 "start_date": datetime.now() + timedelta(days=1),
@@ -461,13 +461,89 @@ def test_discussion_forum_permissions():
                 "organizers": "foo",
                 "challenge_setup": "bar",
                 "structured_challenge_submission_doi": "10.5281/zenodo.6362337",
+                "challenge_fee_agreement": True,
             },
-            nullcontext(),
+            None,
         ),
-    ),
+        # Valid submission with all challenge details fields - should pass
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "data_set": "dataset info",
+                "data_license": True,
+                "data_license_extra": "extra license info",
+                "submission_assessment": "assessment info",
+                "challenge_publication": "publication info",
+                "code_availability": "code availability info",
+                "algorithm_inputs": "input description",
+                "algorithm_outputs": "output description",
+                "challenge_fee_agreement": True,
+            },
+            None,
+        ),
+        # Missing required fields - should fail
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "challenge_fee_agreement": True,
+            },
+            "The following fields are required to submit a challenge request: Organizers, Challenge Setup",
+        ),
+        # Start date after end date - should fail
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=10),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "structured_challenge_submission_doi": "10.5281/zenodo.6362337",
+                "challenge_fee_agreement": True,
+            },
+            "The start date needs to be before the end date",
+        ),
+        # Missing challenge details without DOI/form - should fail
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "challenge_fee_agreement": True,
+            },
+            "Either a structured challenge submission form needs to be uploaded or the following fields are required",
+        ),
+        # Missing challenge fee agreement - should fail
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "structured_challenge_submission_doi": "10.5281/zenodo.6362337",
+                "challenge_fee_agreement": False,
+            },
+            "You need to agree to the challenge fee agreement",
+        ),
+        # Only some challenge detail fields present without DOI - should fail
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "data_set": "dataset info",
+                "algorithm_inputs": "input description",
+                "challenge_fee_agreement": True,
+            },
+            "Either a structured challenge submission form needs to be uploaded or the following fields are required",
+        ),
+    ],
 )
-@pytest.mark.django_db
-def test_challenge_request_submission(data, context):
+def test_challenge_request_submission_cleaning(data, expected_error):
     challenge_request = ChallengeRequest.objects.create(
         creator=UserFactory(),
         title="foo",
@@ -477,9 +553,20 @@ def test_challenge_request_submission(data, context):
         **data,
     )
 
+    # Should not raise any validation error at this point since the request is not being submitted yet
+    challenge_request.clean()
+
     challenge_request.status = (
         ChallengeRequest.ChallengeRequestStatusChoices.PENDING
-    )  # submit it
+    )
 
-    with context:
+    if expected_error is None:
+        # Should not raise any validation error
         challenge_request.clean()
+        assert challenge_request.can_be_submitted
+    else:
+        # Should raise a ValidationError containing the expected error message
+        with pytest.raises(ValidationError) as exc_info:
+            challenge_request.clean()
+        error_messages = str(exc_info.value)
+        assert expected_error in error_messages

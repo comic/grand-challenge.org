@@ -1263,38 +1263,48 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     def clean(self):
         super().clean()
 
-        errors = []
         if (  # Submitted
             self._orig_status == self.ChallengeRequestStatusChoices.DRAFT
             and self.status == self.ChallengeRequestStatusChoices.PENDING
         ):
+            self.clean_for_submission()
 
-            try:
-                self.clean_submission_required_fields()
-            except ValidationError as e:
-                errors.extend(e)
+    @property
+    def can_be_submitted(self):
+        try:
+            self.clean_for_submission()
+        except ValidationError:
+            return False
+        else:
+            return True
 
-            try:
-                self.clean_submission_start_date()
-            except ValidationError as e:
-                errors.extend(e)
+    def clean_for_submission(self):
+        errors = []
 
-            try:
-                self.clean_submission_challenge_details()
-            except ValidationError as e:
-                errors.extend(e)
+        try:
+            self.clean_submission_required_fields()
+        except ValidationError as e:
+            errors.extend(e)
 
-            if not self.challenge_fee_agreement:
-                errors.append(
-                    ValidationError(
-                        "You need to agree to the challenge fee agreement to submit a challenge request.",
-                    )
+        try:
+            self.clean_submission_start_date()
+        except ValidationError as e:
+            errors.extend(e)
+
+        try:
+            self.clean_submission_challenge_details()
+        except ValidationError as e:
+            errors.extend(e)
+
+        if not self.challenge_fee_agreement:
+            errors.append(
+                ValidationError(
+                    "You need to agree to the challenge fee agreement to submit a challenge request.",
                 )
+            )
 
         if errors:
             raise ValidationError(errors)
-        else:
-            self.submitted = now()
 
     def clean_submission_required_fields(self):
         missing_fields = []
@@ -1312,7 +1322,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             if not getattr(self, field_name):
                 missing_fields.append(self._meta.get_field(field_name))
         if missing_fields:
-            ValidationError(
+            raise ValidationError(
                 "The following fields are required to submit a challenge request: "
                 + ", ".join(
                     field.verbose_name.title() for field in missing_fields
@@ -1320,9 +1330,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             )
 
     def clean_submission_start_date(self):
-        if self.start_date and self.start_date < today().date():
-            raise ValidationError("The start date cannot be in the past.")
-
         if (
             self.start_date
             and self.end_date
@@ -1353,7 +1360,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     missing_fields.append(self._meta.get_field(field_name))
             if missing_fields:
                 raise ValidationError(
-                    "Either a structured challenge submission form or the following fields are required to submit a challenge request: "
+                    "Either a structured challenge submission form needs to be uploaded or the following fields are required to submit a challenge request: "
                     + ", ".join(
                         field.verbose_name.title() for field in missing_fields
                     ),

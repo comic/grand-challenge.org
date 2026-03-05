@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 
 import factory
@@ -114,25 +115,25 @@ class ChallengeRequestFactory(factory.django.DjangoModelFactory):
         lambda obj: f"{obj.creator.username}@example.test"
     )
     abstract = factory.fuzzy.FuzzyText(length=100)
-    # start_date = fuzzy.FuzzyDate(
-    #     datetime.date(1970, 1, 1), end_date=datetime.date.today()
-    # )
-    # end_date = fuzzy.FuzzyDate(
-    #     datetime.date(1971, 1, 1), end_date=datetime.date.today()
-    # )
-    # task_ids = [1, 2]
-    # algorithm_maximum_settable_memory_gb_for_tasks = [32, 32]
-    # algorithm_selectable_gpu_type_choices_for_tasks = [
-    #     ["", "T4"],
-    #     ["", "A10G", "T4"],
-    # ]
-    # average_size_test_case_mb_for_tasks = [10, 100]
-    # inference_time_average_minutes_for_tasks = [5, 10]
-    # task_id_for_phases = [1, 1, 2, 2]
-    # number_of_submissions_per_team_for_phases = [10, 1, 10, 1]
-    # number_of_teams_for_phases = [10, 10, 10, 10]
-    # number_of_test_cases_for_phases = [3, 100, 3, 100]
-    # structured_challenge_submission_doi = "10.5281/zenodo.6362337"
+    start_date = factory.fuzzy.FuzzyDate(
+        datetime.date(1970, 1, 1), end_date=datetime.date.today()
+    )
+    end_date = factory.fuzzy.FuzzyDate(
+        datetime.date(1971, 1, 1), end_date=datetime.date.today()
+    )
+    task_ids = [1, 2]
+    algorithm_maximum_settable_memory_gb_for_tasks = [32, 32]
+    algorithm_selectable_gpu_type_choices_for_tasks = [
+        ["", "T4"],
+        ["", "A10G", "T4"],
+    ]
+    average_size_test_case_mb_for_tasks = [10, 100]
+    inference_time_average_minutes_for_tasks = [5, 10]
+    task_id_for_phases = [1, 1, 2, 2]
+    number_of_submissions_per_team_for_phases = [10, 1, 10, 1]
+    number_of_teams_for_phases = [10, 10, 10, 10]
+    number_of_test_cases_for_phases = [3, 100, 3, 100]
+    structured_challenge_submission_doi = "10.5281/zenodo.6362337"
 
 
 class PageFactory(factory.django.DjangoModelFactory):
