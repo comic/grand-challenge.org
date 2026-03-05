@@ -3,11 +3,10 @@ x-postgres-env: &postgres-env
     POSTGRES_USER: grandchallenge
     POSTGRES_DB: grandchallenge
 
-x-minio-env: &minio-env
-    AWS_ACCESS_KEY_ID: minioadmin
-    AWS_SECRET_ACCESS_KEY: minioadmin
-    AWS_S3_ENDPOINT_URL: http://minio.localhost:9000
-    USING_MINIO: "true"
+x-s3-env: &s3-env
+    AWS_ACCESS_KEY_ID: s3admin
+    AWS_SECRET_ACCESS_KEY: s3admin
+    AWS_S3_ENDPOINT_URL: http://s3.localhost:8333
 
 x-django-env: &django-env
     DEBUG: "true"
@@ -41,16 +40,13 @@ services:
             retries: 5
         restart: always
 
-    minio.localhost:
-        image: minio/minio
+    s3.localhost:
+        image: chrislusf/seaweedfs
         ports:
-            - "127.0.0.1:9000:9000"
-        entrypoint: "/bin/sh"
-        command: >-
-            -c "
-            mkdir -p /data/grand-challenge-private/ /data/grand-challenge-protected/ /data/grand-challenge-public/ /data/grand-challenge-uploads/ /data/grand-challenge-components-inputs/ /data/grand-challenge-components-outputs/
-            && minio --compat server /data
-            "
+            - "127.0.0.1:8333:8333"
+        environment:
+            <<: [*s3-env]
+        command: "mini"
         restart: always
 
     gc.localhost:
@@ -58,7 +54,7 @@ services:
         ports:
             - "127.0.0.1:8000:8000"
         environment:
-            <<: [*postgres-env, *minio-env, *django-env]
+            <<: [*postgres-env, *s3-env, *django-env]
         # Use werkzeug debugger in dev, this should never be used in production!
         # https://django-extensions.readthedocs.io/en/latest/runserver_plus.html
         command: >-
@@ -67,7 +63,7 @@ services:
         depends_on:
             postgres:
                 condition: service_healthy
-            minio.localhost:
+            s3.localhost:
                 condition: service_started
             redis:
                 condition: service_started
@@ -89,7 +85,7 @@ services:
     celery_worker:
         image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
         environment:
-            <<: [*postgres-env, *minio-env, *django-env]
+            <<: [*postgres-env, *s3-env, *django-env]
         restart: always
         command: watchfiles --filter python "celery --app config worker --loglevel info --concurrency 1 --pool prefork --queues acks-late-2xlarge,acks-late-2xlarge-delay,acks-late-micro-short,acks-late-micro-short-delay" /app
         scale: 1
@@ -97,7 +93,7 @@ services:
         depends_on:
             postgres:
                 condition: service_healthy
-            minio.localhost:
+            s3.localhost:
                 condition: service_started
             redis:
                 condition: service_started
@@ -116,7 +112,7 @@ services:
     celery_beat:
         image: public.ecr.aws/diag-nijmegen/grand-challenge/web-test:latest
         environment:
-            <<: [*postgres-env, *django-env]
+            <<: [*postgres-env, *s3-env, *django-env]
         restart: always
         command: >-
             bash -c "

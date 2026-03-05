@@ -49,8 +49,6 @@ _ACCELERATED_UPLOADS_CLIENT = boto3.client(
 
 
 class UserUpload(UUIDModel):
-    LIST_MAX_ITEMS = 1000
-
     class StatusChoices(models.IntegerChoices):
         PENDING = 0, "Pending"
         INITIALIZED = 1, "Initialized"
@@ -161,24 +159,14 @@ class UserUpload(UUIDModel):
     def is_completed(self):
         return self.status == self.StatusChoices.COMPLETED
 
-    def get_creators_completed_uploads(self, continuation_token=None):
-        kwargs = {
-            "Bucket": self.bucket,
-            "Prefix": self.creators_key_prefix,
-            "MaxKeys": self.LIST_MAX_ITEMS,
-        }
+    def get_creators_completed_uploads(self):
+        paginator = self._client.get_paginator("list_objects_v2")
+        objects = []
 
-        if continuation_token is not None:
-            kwargs["ContinuationToken"] = continuation_token
-
-        response = self._client.list_objects_v2(**kwargs)
-
-        objects = response.get("Contents", [])
-
-        if response["IsTruncated"]:
-            objects += self.get_creators_completed_uploads(
-                continuation_token=response["NextContinuationToken"]
-            )
+        for page in paginator.paginate(
+            Bucket=self.bucket, Prefix=self.creators_key_prefix
+        ):
+            objects.extend(page.get("Contents", []))
 
         return objects
 
@@ -244,24 +232,19 @@ class UserUpload(UUIDModel):
             },
         )
 
-    def list_parts(self, *, part_number_marker=0):
+    def list_parts(self):
         if self.status != self.StatusChoices.INITIALIZED:
             raise RuntimeError("Upload is not initialized")
 
-        response = self._client.list_parts(
+        paginator = self._client.get_paginator("list_parts")
+        parts = []
+
+        for page in paginator.paginate(
             Bucket=self.bucket,
             Key=self.key,
             UploadId=self.s3_upload_id,
-            MaxParts=self.LIST_MAX_ITEMS,
-            PartNumberMarker=part_number_marker,
-        )
-
-        parts = response.get("Parts", [])
-
-        if response["IsTruncated"]:
-            parts += self.list_parts(
-                part_number_marker=response["NextPartNumberMarker"]
-            )
+        ):
+            parts.extend(page.get("Parts", []))
 
         return parts
 

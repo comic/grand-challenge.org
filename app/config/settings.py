@@ -197,11 +197,6 @@ EVALUATION_FILES_SUBDIRECTORY = "evaluation"
 EVALUATION_SUPPLEMENTARY_FILES_SUBDIRECTORY = "evaluation-supplementary"
 COMPONENTS_FILES_SUBDIRECTORY = "components"
 
-# Minio differs from s3, we know:
-#  - Leading slashes are not respected in list_objects_v2
-#  - sha256 sums are not implemented
-USING_MINIO = strtobool(os.environ.get("USING_MINIO", "False"))
-
 # Django storages settings, see https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html
 AWS_DEFAULT_ACL = "private"
 AWS_S3_FILE_OVERWRITE = False

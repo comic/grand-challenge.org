@@ -89,35 +89,11 @@ def test_abort_multipart_upload():
 def test_list_parts():
     upload = UserUpload(creator=UserFactory.build())
     upload.create_multipart_upload()
-    url = upload.generate_presigned_url(part_number=1)
-    response = put(url, data=b"123")
-
-    parts = upload.list_parts()
-
-    assert len(parts) == 1
-    assert parts[0]["ETag"] == response.headers["ETag"]
-    assert parts[0]["Size"] == 3
-    assert parts[0]["PartNumber"] == 1
-
-
-def test_list_parts_empty():
-    upload = UserUpload(creator=UserFactory.build())
-    upload.create_multipart_upload()
-
-    parts = upload.list_parts()
-
-    assert parts == []
-
-
-def test_list_parts_truncation():
-    upload = UserUpload(creator=UserFactory.build())
-    upload.create_multipart_upload()
     presigned_urls = upload.generate_presigned_urls(part_numbers=[1, 2])
     responses = {}
     for part_number, url in presigned_urls.items():
         responses[part_number] = put(url, data=b"123")
 
-    upload.LIST_MAX_ITEMS = 1
     parts = upload.list_parts()
 
     assert len(parts) == 2
@@ -127,6 +103,15 @@ def test_list_parts_truncation():
     assert parts[1]["ETag"] == responses["2"].headers["ETag"]
     assert parts[1]["Size"] == 3
     assert parts[1]["PartNumber"] == 2
+
+
+def test_list_parts_empty():
+    upload = UserUpload(creator=UserFactory.build())
+    upload.create_multipart_upload()
+
+    parts = upload.list_parts()
+
+    assert parts == []
 
 
 @pytest.mark.django_db
@@ -156,11 +141,7 @@ def test_upload_copy():
 
 
 @pytest.mark.django_db
-def test_upload_copy_sets_sha256(settings):
-    # Pretend we're talking to S3 so turn off any minio adaptations
-    # so we can check that the SHA256 is correctly requested
-    settings.USING_MINIO = False
-
+def test_upload_copy_sets_sha256():
     upload = UserUpload.objects.create(
         creator=UserFactory(), filename="test.tar.gz"
     )
@@ -264,26 +245,21 @@ def test_size_of_creators_completed_uploads():
 
     u = UserFactory.build(pk=42)
     upload = UserUpload(creator=u)
-    upload.LIST_MAX_ITEMS = 1
     initial_upload_size = upload.size_of_creators_completed_uploads
 
     assert type(initial_upload_size) is int
 
-    upload_files_for_user(user=u, n=upload.LIST_MAX_ITEMS + 1)
+    upload_files_for_user(user=u, n=1)
     # another users files should not be considered
     upload_files_for_user(user=UserFactory.build(pk=u.pk + 1))
 
-    assert (
-        upload.size_of_creators_completed_uploads
-        == initial_upload_size + (upload.LIST_MAX_ITEMS + 1) * 3
-    )
+    assert upload.size_of_creators_completed_uploads == initial_upload_size + 3
 
 
 def test_size_incomplete():
     u = UserFactory.build(pk=42)
     upload = UserUpload(creator=u)
     upload.create_multipart_upload()
-    upload.LIST_MAX_ITEMS = 1
 
     assert upload.size == 0
 
@@ -292,7 +268,7 @@ def test_size_incomplete():
     for part in parts:
         put(presigned_urls[str(part)], data=b"123")
 
-    assert upload.size == (upload.LIST_MAX_ITEMS + 1) * 3
+    assert upload.size == 6
 
 
 def test_size_complete():
