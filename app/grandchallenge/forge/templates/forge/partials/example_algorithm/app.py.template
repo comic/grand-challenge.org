@@ -1,0 +1,11 @@
+{% load forge %}
+"""
+The following is an example algorithm inference server.
+
+Any implementation will do as long as it:
+
+1. Starts the inference server and loads the algorithm
+2. On the health endpoint indicates if the server is healthy (i.e. returns HTTP 200 OK)
+3. On the invoke endpoint invokes the algorithm for inference and returns HTTP 201 CREATED
+
+"""
