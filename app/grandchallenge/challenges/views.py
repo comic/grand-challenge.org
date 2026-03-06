@@ -219,7 +219,7 @@ class ChallengeRequestDetail(
         context.update(
             {
                 "fields": fields,
-                # Budget Estimate context
+                # Information used by the budget table for the reviewers:
                 "num_support_years": settings.CHALLENGE_NUM_SUPPORT_YEARS,
                 "capacity_reservation_pack_size_in_euro": settings.CHALLENGE_CAPACITY_RESERVATION_PACK_SIZE_IN_EURO,
             }
