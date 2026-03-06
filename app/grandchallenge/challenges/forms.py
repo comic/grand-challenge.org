@@ -188,26 +188,33 @@ class ChallengeRequestForm(SaveFormInitMixin, forms.ModelForm):
 
 
 challenge_setup_template_text = """\
-Describe the technical requirements for each phase of your challenge. This information will be used to estimate your computational and storage budget.
-
-Example format, for a single phase:
-
-# Phase 1 - Validation Phase
-- Expected total number of teams: 20
-- Number of submissions per team: 3
-
-## Test Cases Data
-- Number of test cases: 10
-- Average test case size: 100 MB
-- Average output size per case: 100 MB
+Please describe the runtime requirements, the amount of test data, and the participation limits for each phase.
+This information will be used to calculate a budget estimate. See below example.
 
 ## Runtime Requirements
 - Participant algorithm max. runtime: 5 minutes
 - Participant algorithm max. vRAM: 32 GB
-- Participant algorithm GPU types: A10G or T4
+- Participant algorithm GPU types: A10G or T4 or None
 - Evaluation method max. runtime: 42 minutes
 - Evaluation method max. vRAM: 32 GB
-- Evaluation method GPU types: A10G\
+- Evaluation method GPU types: A10G
+
+If some phases have different requirements, please detail them.
+
+## Test data
+- Total size of all test cases: 5.4 GB
+- Number of cases: 21
+- Average output size per case: 100 MB
+
+## Phase 1 - debug
+- Expected total number of teams: 20
+- Number of submissions per team: 3
+- Number of test cases: 1
+
+## Phase 2 - test
+- Expected total number of teams: 20
+- Number of submissions per team: 1
+- Number of test cases: 20\
 """
 
 
