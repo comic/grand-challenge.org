@@ -187,6 +187,30 @@ class ChallengeRequestForm(SaveFormInitMixin, forms.ModelForm):
         self.fields["title"].required = True
 
 
+challenge_setup_template_text = """\
+Describe the technical requirements for each phase of your challenge. This information will be used to estimate your computational and storage budget.
+
+Example format, for a single phase:
+
+# Phase 1 - Validation Phase
+- Expected total number of teams: 20
+- Number of submissions per team: 3
+
+## Test Cases Data
+- Number of test cases: 10
+- Average test case size: 100 MB
+- Average output size per case: 100 MB
+
+## Runtime Requirements
+- Participant algorithm max. runtime: 5 minutes
+- Participant algorithm max. vRAM: 32 GB
+- Participant algorithm GPU types: A10G or T4
+- Evaluation method max. runtime: 42 minutes
+- Evaluation method max. vRAM: 32 GB
+- Evaluation method GPU types: A10G\
+"""
+
+
 class ChallengeRequestUpdateForm(forms.ModelForm):
     class Meta:
         model = ChallengeRequest
@@ -206,7 +230,11 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
             "abstract": forms.Textarea(attrs={"rows": 4}),
             "organizers": forms.Textarea(attrs={"rows": 3}),
             "comments": forms.Textarea(attrs={"rows": 2}),
-            "challenge_setup": forms.Textarea(attrs={"rows": 15}),
+            "challenge_setup": forms.Textarea(
+                attrs={
+                    "rows": len(challenge_setup_template_text.splitlines()),
+                }
+            ),
         }
         labels = {
             "short_name": "Acronym",
@@ -217,6 +245,7 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
                 "I confirm that I have read and understood the <a href='{}'>pricing policy</a> for running a challenge.",
                 "https://grand-challenge.org/challenge-policy-and-pricing/",
             ),
+            "challenge_setup": "Challenge technical setup",
         }
         help_texts = {
             "title": "The name of the planned challenge.",
@@ -263,10 +292,11 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
                 "data-storage/' target='_blank'>here</a>)."
             ),
             "challenge_setup": (
-                "Describe the challenge set-up. How many tasks "
+                "Describe the challenge set-up from a technical stand-point. How many tasks "
                 "and <a href='https://www.grand-challenge.org/documentation/"
                 "multiple-phases-multiple-leaderboards/' target='_blank'>phases</a>"
-                " does the challenge have?"
+                " does the challenge have? Which <a href='https://grand-challenge.org/documentation/runtime-environment/' "
+                "target='_blank'>runtime environment</a> do you envision for the challenge?"
             ),
             "data_license": (
                 "In the spirit of open science, we ask that the <b>public training "
@@ -280,6 +310,10 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if not self.instance.challenge_setup:
+            self.initial["challenge_setup"] = challenge_setup_template_text
+
         self.helper = FormHelper(self)
         self.helper.layout = Layout(
             Fieldset(
@@ -334,6 +368,18 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
             ),
             ButtonHolder(Submit("save", "Save")),
         )
+
+    def clean_challenge_setup(self):
+        challenge_setup = self.cleaned_data.get("challenge_setup")
+
+        if (
+            challenge_setup
+            and challenge_setup.strip().splitlines()
+            == challenge_setup_template_text.strip().splitlines()
+        ):
+            return None
+        else:
+            return challenge_setup
 
 
 class ChallengeRequestStatusUpdateForm(forms.ModelForm):

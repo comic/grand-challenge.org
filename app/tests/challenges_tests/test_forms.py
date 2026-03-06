@@ -3,6 +3,7 @@ import pytest
 from grandchallenge.challenges.forms import (
     ChallengeRequestBudgetUpdateForm,
     ChallengeRequestStatusUpdateForm,
+    ChallengeRequestUpdateForm,
 )
 from grandchallenge.challenges.models import ChallengeRequest
 from tests.factories import ChallengeFactory, ChallengeRequestFactory
@@ -203,3 +204,51 @@ def test_budget_update_form_invalid(invalid_data, reason_invalid):
     )
 
     assert not form.is_valid(), reason_invalid
+
+
+@pytest.mark.django_db
+def test_challenge_request_challenge_setup():
+    challenge_request = ChallengeRequestFactory(challenge_setup=None)
+
+    assert not challenge_request.challenge_setup
+
+    # Not updating the placeholder should not override
+    form = ChallengeRequestUpdateForm(instance=challenge_request)
+    assert form.initial["challenge_setup"]  # Has an initial value
+
+    # Note: browsers typically replace newlines with \r\n, so we need to simulate that here to properly test the form validation
+    browser_submitted_placeholder = form.initial["challenge_setup"].replace(
+        "\n", "\r\n"
+    )
+
+    form = ChallengeRequestUpdateForm(
+        instance=challenge_request,
+        data={
+            "title": challenge_request.title,
+            "short_name": challenge_request.short_name,
+            "contact_email": challenge_request.contact_email,
+            "abstract": challenge_request.abstract,
+            "challenge_setup": browser_submitted_placeholder,
+        },
+    )
+    assert form.is_valid(), form.errors
+
+    form.save()
+    challenge_request.refresh_from_db()
+    assert not challenge_request.challenge_setup  # Is not saved
+
+    # If provided, the challenge setup SHOULD be updated
+    form = ChallengeRequestUpdateForm(
+        instance=challenge_request,
+        data={
+            "title": challenge_request.title,
+            "short_name": challenge_request.short_name,
+            "contact_email": challenge_request.contact_email,
+            "abstract": challenge_request.abstract,
+            "challenge_setup": "New challenge setup",
+        },
+    )
+    assert form.is_valid(), form.errors
+    form.save()
+    challenge_request.refresh_from_db()
+    assert challenge_request.challenge_setup == "New challenge setup"
