@@ -105,11 +105,11 @@
     {% if object.status == object.ChallengeRequestStatusChoices.DRAFT %}
         {% if object.can_be_submitted %}
         <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle"></i> This draft still needs to be submitted! You can submit it for review using the submit button above.
+            <i class="fas fa-exclamation-triangle"></i>This challenge request is currently a draft. You can submit it for review using the submit button above.
         </div>
         {% else %}
         <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle"></i> This draft needs to be submitted but is still incomplete! Edit the draft to complete the required information.
+            <i class="fas fa-exclamation-triangle"></i> This challenge request is currently a draft and cannot yet be submitted for review because it is incomplete. Edit the request to complete the required information.
         </div>
         {% endif %}
     {% endif %}
