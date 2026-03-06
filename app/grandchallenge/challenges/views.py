@@ -181,29 +181,32 @@ class ChallengeRequestDetail(
 
     @cached_property
     def detail_view_fields(self):
-        result = {
-            field_name
-            for field_name in (
-                "title",
-                "short_name",
-                "start_date",
-                "end_date",
-                "organizers",
-                "abstract",
-                "affiliated_event",
-                "task_types",
-                "modalities",
-                "structures",
-                "challenge_setup",
-                "data_set",
-                "submission_assessment",
-                "challenge_publication",
-                "code_availability",
-                "algorithm_inputs",
-                "algorithm_outputs",
-            )
-            if getattr(self.object, field_name) is not None
-        }
+        result = [
+            "title",
+            "short_name",
+            "contact_email",
+            "abstract",
+            "start_date",
+            "end_date",
+            "organizers",
+            "challenge_setup",
+            "challenge_fee_agreement",
+        ]
+        for field_name in (
+            "affiliated_event",
+            "task_types",
+            "structures",
+            "modalities",
+            "data_set",
+            "submission_assessment",
+            "challenge_publication",
+            "code_availability",
+            "algorithm_inputs",
+            "algorithm_outputs",
+        ):
+            if getattr(self.object, field_name) is not None:
+                result.append(field_name)
+
         return result
 
     def get_context_data(self, **kwargs):
