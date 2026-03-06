@@ -61,8 +61,8 @@ def {{ interface_name }}_handler():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
     model = torch.nn.Linear(10, 1).to(device)
-    input = torch.randn(1, 10).to(device)
-    output = model(input)
+    model_input = torch.randn(1, 10).to(device)
+    model_output = model(model_input)
 
     # Your model will be extracted to the `model_dir` at runtime on Grand Challenge
     # Note: when testing locally, the local `./model` directory is mounted here.
