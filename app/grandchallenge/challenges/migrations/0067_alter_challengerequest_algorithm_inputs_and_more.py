@@ -14,6 +14,15 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterField(
             model_name="challengerequest",
+            name="abstract",
+            field=models.TextField(
+                help_text="Provide a summary of the challenge purpose.",
+                null=True,
+                blank=True,
+            ),
+        ),
+        migrations.AlterField(
+            model_name="challengerequest",
             name="algorithm_inputs",
             field=models.TextField(
                 blank=True,

@@ -152,11 +152,7 @@ class ChallengeRequestForm(SaveFormInitMixin, forms.ModelForm):
             "title",
             "short_name",
             "contact_email",
-            "abstract",
         )
-        widgets = {
-            "abstract": forms.Textarea(attrs={"rows": 3}),
-        }
         labels = {
             "short_name": "Acronym",
         }
@@ -169,12 +165,6 @@ class ChallengeRequestForm(SaveFormInitMixin, forms.ModelForm):
                 "the end indicating the year (e.g. LUNA26). See "
                 "<a href='https://www.grand-challenge.org/challenges' "
                 "target='_blank'>other challenges</a> for examples."
-            ),
-            "abstract": (
-                "Provide a summary of the challenge purpose. "
-                "This should include a general introduction to the "
-                "topic from both a biomedical as well as from a technical point of "
-                "view."
             ),
             "contact_email": (
                 "The email address that potential participants can use to contact you with questions about the challenge. "
@@ -265,20 +255,7 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
                 "<a href='https://www.grand-challenge.org/challenges' "
                 "target='_blank'>other challenges</a> for examples."
             ),
-            "abstract": (
-                "Provide a summary of the challenge purpose. "
-                "This should include a general introduction to the "
-                "topic from both a biomedical as well as from a technical point of "
-                "view. From a biomedical point of view, please elaborate on the "
-                "specific task at hand, how the task is currently performed "
-                "(i.e., manual vs (semi-)automatic) and how an algorithm may improve "
-                "this task. From a technical point of view, please mention "
-                "how current state-of-the-art algorithms perform on this task "
-                "(e.g., dice coefficient for segmentation tasks) and under which "
-                "circumstances this performance was achieved (i.e., dataset size, "
-                "modality, etc.). Finally, we kindly ask you to clearly state the "
-                "envisioned technical and/or biomedical impact of the challenge."
-            ),
+            "abstract": ("Provide a summary of the challenge purpose."),
             "code_availability": (
                 "Will the participants’ code be accessible after "
                 "the challenge? <br>We strongly encourage open science. Algorithms "

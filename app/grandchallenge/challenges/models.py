@@ -994,6 +994,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     )
     abstract = models.TextField(
         help_text="Provide a summary of the challenge purpose.",
+        null=True,
+        blank=True,
     )
     contact_email = models.EmailField(
         help_text="Please provide an email that our team can use to contact "

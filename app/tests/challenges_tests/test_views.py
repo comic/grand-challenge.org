@@ -343,7 +343,6 @@ def test_challenge_request_create(client):
     user = UserFactory()
     Verification.objects.create(user=user, is_verified=True)
 
-    # start and end dates are required
     response = get_view_for_user(
         client=client,
         method=client.post,
@@ -353,8 +352,6 @@ def test_challenge_request_create(client):
             "title": "Some title",
             "short_name": "acr6789",
             "contact_email": "test@test.com",
-            "abstract": "test",
-            "data_set": "test",
         },
     )
     assert response.status_code == 302
