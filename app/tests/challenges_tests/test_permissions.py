@@ -161,7 +161,14 @@ def test_challenge_request_creator_viewing_and_updating(client):
             "abstract": challenge_request.abstract,
         },
     )
-    assert response.status_code == 403
+    assert response.status_code == 200
+    assert "Only challenge requests in draft status can be edited." in str(
+        response.context["form"].errors
+    )
+    challenge_request.refresh_from_db()
+    assert (
+        challenge_request.title == "Foo"
+    ), "Title should not have been updated due to status change"
 
 
 @pytest.mark.django_db
@@ -265,7 +272,14 @@ def test_challenge_request_reviewer_can_access_all(client, challenge_reviewer):
             "abstract": challenge_request.abstract,
         },
     )
-    assert response.status_code == 403
+    assert response.status_code == 200
+    assert "Only challenge requests in draft status can be edited." in str(
+        response.context["form"].errors
+    )
+    challenge_request.refresh_from_db()
+    assert (
+        challenge_request.title == "Foo"
+    ), "Title should not have been updated due to status change"
 
 
 @pytest.mark.django_db
