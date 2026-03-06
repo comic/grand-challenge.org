@@ -11,7 +11,8 @@
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
         <li class="breadcrumb-item"><a href="{% url 'challenges:requests-list' %}">Your Challenge Requests</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Create</li>
+        <li class="breadcrumb-item active" aria-current="page"><a href="{% url 'challenges:requests-detail' pk=object.pk %}">{{ object.title }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Update</li>
     </ol>
 {% endblock %}
 
