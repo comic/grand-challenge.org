@@ -5,6 +5,8 @@ set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 DOCKER_IMAGE_TAG="example_algorithm_{{ object.slug }}"
+CONTAINER_NAME="example_algorithm_{{ object.slug }}_container"
+PORT=37847
 
 DOCKER_NOOP_VOLUME="${DOCKER_IMAGE_TAG}-volume"
 
@@ -25,6 +27,9 @@ cleanup() {
       --entrypoint /bin/sh \
       $DOCKER_IMAGE_TAG \
       -c "chmod -R -f o+rwX /output/* || true"
+
+    docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+    echo "=+= Container stopped"
 
     # Ensure volume is removed
     docker volume rm "$DOCKER_NOOP_VOLUME" > /dev/null
@@ -56,12 +61,14 @@ docker volume create "$DOCKER_NOOP_VOLUME" > /dev/null
 
 trap cleanup EXIT
 
-run_docker_forward_pass() {
+start_docker_container() {
     local interface_dir="$1"
 
-    echo "=+= Doing a forward pass on ${interface_dir}"
+    echo "=+= Starting container"
 
     ## Note the extra arguments that are passed here:
+    # '-p ${PORT}:4743'
+    #    maps local port to container port 4743
     # '--network none'
     #    entails there is no internet connection
     # '--gpus all'
@@ -70,20 +77,83 @@ run_docker_forward_pass() {
     #   is added because on Grand Challenge this directory cannot be used to store permanent files
     # '--volume ../model:/opt/ml/model/":ro'
     #   is added to provide access to the (optional) tarball-upload locally
-    docker run --rm {% if not no_gpus %}--gpus all {% endif %}\
+    docker run -d {% if not no_gpus %}--gpus all {% endif %}\
+        --name "$CONTAINER_NAME" \
         --platform=linux/amd64 \
-        --network none \
+        -p ${PORT}:4743 \
         --volume "${INPUT_DIR}/${interface_dir}":/input:ro \
         --volume "${OUTPUT_DIR}/${interface_dir}":/output \
         --volume "$DOCKER_NOOP_VOLUME":/tmp \
         --volume "${SCRIPT_DIR}/model":/opt/ml/model:ro \
-        "$DOCKER_IMAGE_TAG"
+        "$DOCKER_IMAGE_TAG" \
+        >/dev/null
 
-  echo "=+= Wrote results to ${OUTPUT_DIR}/${interface_dir}"
+    echo "=+= Container started"
+}
+
+check_health() {
+    echo "=+= Waiting for health endpoint..."
+
+    local max_attempts=30
+    local delay=10
+
+    for ((i=1;i<=max_attempts;i++)); do
+        STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 10 \
+            http://localhost:${PORT}/health || echo "000")
+
+        echo "Health check attempt $i/$max_attempts returned $STATUS"
+
+        if [[ "$STATUS" == "200" ]]; then
+            echo "=+= API healthy"
+            return 0
+        fi
+
+        if [[ "$STATUS" == "302" ]]; then
+            echo "Health endpoint returned 302 — failing"
+            return 1
+        fi
+
+        echo "Retrying in ${delay}s"
+        sleep "$delay"
+    done
+
+    echo "Health endpoint never returned 200"
+    return 1
+}
+
+run_docker_forward_pass() {
+    local interface_dir="$1"
+
+    echo "=+= Doing a forward pass on ${interface_dir}"
+
+    echo "=+= Calling invoke endpoint"
+
+    STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+        --max-time 300 \
+        -X POST http://localhost:${PORT}/invoke || echo "000")
+
+    if [ "$STATUS" != "201" ]; then
+        echo "Invoke failed with status $STATUS"
+        exit 1
+    fi
+
+    echo "=+= Invoke completed"
+
+    echo "=+= Wrote results to ${OUTPUT_DIR}/${interface_dir}"
+}
+
+stop_docker_container() {
+    echo "=+= Stopping container"
+    docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+    echo "=+= Container stopped"
 }
 
 {% for interface_name in object.algorithm_interface_names %}
+start_docker_container "{{ interface_name }}"
+check_health
 run_docker_forward_pass "{{ interface_name }}"
+stop_docker_container
 {% endfor %}
 
 

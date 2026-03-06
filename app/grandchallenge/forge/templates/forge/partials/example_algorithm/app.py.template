@@ -9,9 +9,17 @@ Any implementation will do as long as it:
 3. On the invoke endpoint invokes the algorithm for inference and returns HTTP 201 CREATED
 
 """
+from contextlib import asynccontextmanager
 from pathlib import Path
 
+from fastapi import FastAPI, Response, status
 import torch
+import uvicorn
+
+import inference
+
+
+from uvicorn.config import LOGGING_CONFIG
 
 
 def _show_torch_cuda_info():
@@ -45,3 +53,56 @@ def init_model():
         print(f.read())
 
     return model
+
+
+MODELS = {}
+
+
+# During the lifespan of your inference server, your model should be ready
+# for invocations.It is important to load your model here, and not just
+# before running inference, to allow the inference time to be as short as
+# possible. Each invocation will have a timeout, so if your model still
+# needs to be loaded when the /invoke endpoint is called, there may not be
+# enough time for processing.
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the ML model
+    MODELS["answer_to_everything"] = init_model()
+    yield
+    # Clean up the models and release the resources
+    MODELS.clear()
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+# After starting your inference server, the health endpoint will
+# be called repeatedly until it returns a 200 response.
+# Redirect responses will not be followed and will raise an exception.
+# Any other response will be ignored.
+@app.get("/health")
+async def health():
+    try:
+        # check if the model is initialized
+        _ = MODELS["answer_to_everything"]
+        return Response(status_code=status.HTTP_200_OK)
+    except KeyError:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+
+# After the health endpoint returns a 200 response,
+# the invoke endpoint will be called (one or more times)
+# to invoke inference on the inputs in the input folder.
+# When inference is done, this endpoint should return a 201 response.
+# Any other response will raise an exception and fail.
+@app.post("/invoke")
+async def invoke():
+    model = MODELS["answer_to_everything"]
+    inference.run(model)
+    return Response(status_code=status.HTTP_201_CREATED)
+
+
+if __name__ == "__main__":
+    log_config = LOGGING_CONFIG.copy()
+    log_config["handlers"]["default"]["stream"] = "ext://sys.stdout"
+    uvicorn.run(app, host="0.0.0.0", port=4743, log_config=log_config)

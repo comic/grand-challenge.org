@@ -18,6 +18,9 @@ RUN python -m pip install \
     --no-color \
     --requirement /opt/app/requirements.txt
 
+COPY --chown=user:user app.py /opt/app/
 COPY --chown=user:user inference.py /opt/app/
 
-ENTRYPOINT ["python", "inference.py"]
+LABEL org.grand-challenge.api-method="invoke"
+
+ENTRYPOINT ["python", "app.py"]
