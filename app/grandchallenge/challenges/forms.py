@@ -317,6 +317,7 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["title"].required = True
 
         if not self.instance.challenge_setup:
             self.initial["challenge_setup"] = challenge_setup_template_text
