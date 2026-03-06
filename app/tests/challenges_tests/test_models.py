@@ -642,3 +642,28 @@ def test_challenge_request_accept_cleaning(data, expected_error):
             challenge_request.clean()
         error_messages = str(exc_info.value)
         assert expected_error in error_messages
+
+
+@pytest.mark.django_db
+def test_challenge_request_submitted_field_set_on_status_update():
+    challenge_request = ChallengeRequestFactory(
+        status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+        submitted_on=None,
+    )
+
+    # Initially submitted should be None
+    assert challenge_request.submitted_on is None
+
+    # Submit the request by updating status from DRAFT to PENDING
+    challenge_request.status = (
+        ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+    )
+    challenge_request.save()
+
+    # Refresh and check that submitted is now set
+    challenge_request.refresh_from_db()
+    assert challenge_request.submitted_on is not None
+    assert (
+        challenge_request.status
+        == ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+    )
