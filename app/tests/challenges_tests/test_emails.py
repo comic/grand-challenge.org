@@ -47,7 +47,6 @@ def test_challenge_request_submitted_sent_email(settings):
 def test_challenge_request_rejected_sent_email(client, challenge_reviewer):
     request = ChallengeRequestFactory(
         status=ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
-        submitted_on=now(),
     )
     mail.outbox.clear()
 
@@ -79,6 +78,7 @@ def test_challenge_request_accepted_sent_email_challenge_creation(
         status=ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
         submitted_on=now(),
     )
+    request.clean()
     mail.outbox.clear()
 
     response = get_view_for_user(
@@ -92,7 +92,7 @@ def test_challenge_request_accepted_sent_email_challenge_creation(
         },
     )
     assert response.status_code == 200
-    assert len(mail.outbox) == 1
+    assert len(mail.outbox) == 1, response.content
     assert mail.outbox[0].recipients() == [request.creator.email]
     assert (
         "We are happy to inform you that your challenge request has been accepted"

@@ -570,3 +570,75 @@ def test_challenge_request_submission_cleaning(data, expected_error):
             challenge_request.clean()
         error_messages = str(exc_info.value)
         assert expected_error in error_messages
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "data,expected_error",
+    (
+        (
+            {
+                "task_ids": [1, 2],
+                "algorithm_maximum_settable_memory_gb_for_tasks": [32, 32],
+                "algorithm_selectable_gpu_type_choices_for_tasks": [
+                    ["", "T4"],
+                    ["", "A10G", "T4"],
+                ],
+                "average_size_test_case_mb_for_tasks": [10, 100],
+                "inference_time_average_minutes_for_tasks": [5, 10],
+                "task_id_for_phases": [1, 1, 2, 2],
+                "number_of_submissions_per_team_for_phases": [10, 1, 10, 1],
+                "number_of_teams_for_phases": [10, 10, 10, 10],
+                "number_of_test_cases_for_phases": [3, 100, 3, 100],
+            },
+            None,
+        ),
+        (
+            {  # Note, missing task_ids
+                "algorithm_maximum_settable_memory_gb_for_tasks": [32, 32],
+                "algorithm_selectable_gpu_type_choices_for_tasks": [
+                    ["", "T4"],
+                    ["", "A10G", "T4"],
+                ],
+                "average_size_test_case_mb_for_tasks": [10, 100],
+                "inference_time_average_minutes_for_tasks": [5, 10],
+                "task_id_for_phases": [1, 1, 2, 2],
+                "number_of_submissions_per_team_for_phases": [10, 1, 10, 1],
+                "number_of_teams_for_phases": [10, 10, 10, 10],
+                "number_of_test_cases_for_phases": [3, 100, 3, 100],
+            },
+            "The following fields are required to accept a challenge request: Task Ids",
+        ),
+    ),
+)
+def test_challenge_request_accept_cleaning(data, expected_error):
+    challenge_request = ChallengeRequest.objects.create(
+        creator=UserFactory(),
+        title="foo",
+        short_name="foo",
+        abstract="bar",
+        contact_email="test@example.test",
+        start_date=datetime.now() + timedelta(days=1),
+        end_date=datetime.now() + timedelta(days=2),
+        organizers="foo",
+        challenge_setup="bar",
+        structured_challenge_submission_doi="10.5281/zenodo.6362337",
+        challenge_fee_agreement=True,
+        status=ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+        submitted_on=now(),
+        **data,
+    )
+
+    challenge_request.status = (
+        ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED
+    )
+
+    if expected_error is None:
+        # Should not raise any validation error
+        challenge_request.clean()
+    else:
+        # Should raise a ValidationError containing the expected error message
+        with pytest.raises(ValidationError) as exc_info:
+            challenge_request.clean()
+        error_messages = str(exc_info.value)
+        assert expected_error in error_messages

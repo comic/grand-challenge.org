@@ -966,6 +966,19 @@ class ChallengeRequestStatusChoices(models.TextChoices):
     DRAFT = "DRFT", _("Draft")
 
 
+budget_field_names = (
+    "task_ids",
+    "algorithm_selectable_gpu_type_choices_for_tasks",
+    "algorithm_maximum_settable_memory_gb_for_tasks",
+    "average_size_test_case_mb_for_tasks",
+    "inference_time_average_minutes_for_tasks",
+    "task_id_for_phases",
+    "number_of_teams_for_phases",
+    "number_of_submissions_per_team_for_phases",
+    "number_of_test_cases_for_phases",
+)
+
+
 class ChallengeRequest(UUIDModel, ChallengeBase):
 
     ChallengeRequestStatusChoices = ChallengeRequestStatusChoices
@@ -1263,11 +1276,11 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     def clean(self):
         super().clean()
 
-        if (  # Submitted
-            self._orig_status == self.ChallengeRequestStatusChoices.DRAFT
-            and self.status == self.ChallengeRequestStatusChoices.PENDING
-        ):
+        if self.status == self.ChallengeRequestStatusChoices.PENDING:
             self.clean_for_submission()
+        elif self.status == self.ChallengeRequestStatusChoices.ACCEPTED:
+            self.clean_for_submission()
+            self.clean_for_acceptance()
 
     @property
     def can_be_submitted(self):
@@ -1366,11 +1379,26 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                     ),
                 )
 
+    def clean_for_acceptance(self):
+        missing_fields = []
+
+        for field_name in budget_field_names:
+            if not getattr(self, field_name):
+                missing_fields.append(self._meta.get_field(field_name))
+
+        if missing_fields:
+            raise ValidationError(
+                "The following fields are required to accept a challenge request: "
+                + ", ".join(
+                    field.verbose_name.title() for field in missing_fields
+                ),
+            )
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
         submitting = (
             self._orig_status == self.ChallengeRequestStatusChoices.DRAFT
-            and self.status != self.ChallengeRequestStatusChoices.DRAFT
+            and self.status == self.ChallengeRequestStatusChoices.PENDING
         )
         processing = (
             self._orig_status == self.ChallengeRequestStatusChoices.PENDING
@@ -1386,7 +1414,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
         if adding:
             self.assign_permissions()
-        elif submitting:
+
+        if submitting:
             send_challenge_requested_email_to_reviewers(self)
             send_challenge_requested_email_to_requester(self)
         elif processing:
@@ -1436,17 +1465,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @property
     def budget_fields(self):
         budget_fields = {}
-        for field_name in (
-            "task_ids",
-            "algorithm_selectable_gpu_type_choices_for_tasks",
-            "algorithm_maximum_settable_memory_gb_for_tasks",
-            "average_size_test_case_mb_for_tasks",
-            "inference_time_average_minutes_for_tasks",
-            "task_id_for_phases",
-            "number_of_teams_for_phases",
-            "number_of_submissions_per_team_for_phases",
-            "number_of_test_cases_for_phases",
-        ):
+        for field_name in budget_field_names:
             field = self._meta.get_field(field_name)
             budget_fields[field.verbose_name] = field.value_to_string(self)
         return budget_fields

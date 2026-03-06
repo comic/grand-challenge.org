@@ -1,89 +1,11 @@
-import datetime
-
 import pytest
 
 from grandchallenge.challenges.forms import (
     ChallengeRequestBudgetUpdateForm,
-    ChallengeRequestForm,
     ChallengeRequestStatusUpdateForm,
 )
 from grandchallenge.challenges.models import ChallengeRequest
-from tests.factories import (
-    ChallengeFactory,
-    ChallengeRequestFactory,
-    UserFactory,
-)
-
-
-@pytest.mark.django_db
-def test_challenge_request_budget_fields_required():
-    user = UserFactory()
-    required_fields = [
-        "title",
-        "short_name",
-        "start_date",
-        "end_date",
-        "abstract",
-        "contact_email",
-        "organizers",
-        "challenge_setup",
-        "data_set",
-        "submission_assessment",
-        "challenge_publication",
-        "code_availability",
-        "expected_number_of_teams",
-        "number_of_tasks",
-        "challenge_fee_agreement",
-        "algorithm_inputs",
-        "algorithm_outputs",
-        "average_size_of_test_image_in_mb",
-        "inference_time_average_minutes",
-        "algorithm_selectable_gpu_type_choices",
-        "algorithm_maximum_settable_memory_gb",
-        "phase_1_number_of_submissions_per_team",
-        "phase_2_number_of_submissions_per_team",
-        "phase_1_number_of_test_images",
-        "phase_2_number_of_test_images",
-    ]
-    data = {
-        "creator": user,
-        "title": "Test request",
-        "short_name": "example1234",
-        "start_date": datetime.date.today(),
-        "end_date": datetime.date.today() + datetime.timedelta(days=1),
-        "abstract": "test",
-        "contact_email": "test@test.com",
-        "organizers": "test",
-        "challenge_setup": "test",
-        "data_set": "test",
-        "submission_assessment": "test",
-        "challenge_publication": "test",
-        "code_availability": "test",
-        "expected_number_of_teams": 10,
-        "number_of_tasks": 1,
-        "challenge_fee_agreement": True,
-        "algorithm_inputs": "foo",
-        "algorithm_outputs": "foo",
-        "average_size_of_test_image_in_mb": 1,
-        "inference_time_average_minutes": 11,
-        "algorithm_selectable_gpu_type_choices": ["", "A10G", "T4"],
-        "algorithm_maximum_settable_memory_gb": 32,
-        "phase_1_number_of_submissions_per_team": 1,
-        "phase_2_number_of_submissions_per_team": 1,
-        "phase_1_number_of_test_images": 1,
-        "phase_2_number_of_test_images": 1,
-    }
-    form = ChallengeRequestForm(data=data, creator=user)
-    assert form.is_valid(), form.errors
-
-    for required_field in required_fields:
-        incomplete_data = data.copy()
-        incomplete_data.pop(required_field)
-
-        form = ChallengeRequestForm(data=incomplete_data, creator=user)
-        assert not form.is_valid()
-        assert required_field in form.errors
-        assert form.errors[required_field] == ["This field is required."]
+from tests.factories import ChallengeFactory, ChallengeRequestFactory
 
 
 @pytest.mark.django_db
