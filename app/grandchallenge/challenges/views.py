@@ -8,7 +8,6 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import PermissionDenied
 from django.db.models import F, Prefetch, Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
@@ -237,15 +236,6 @@ class ChallengeRequestUpdate(
     form_class = ChallengeRequestUpdateForm
     login_url = reverse_lazy("account_login")
     template_name = "challenges/challengerequest_update_form.html"
-
-    def get_required_permissions(self, *_, **__):
-        if (
-            self.get_object().status
-            == self.get_object().ChallengeRequestStatusChoices.DRAFT
-        ):
-            return ["change_challengerequest"]
-        else:
-            raise PermissionDenied
 
 
 class ChallengeRequestStatusUpdate(

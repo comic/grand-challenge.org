@@ -376,6 +376,19 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
             ButtonHolder(Submit("save", "Save")),
         )
 
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if (
+            self.instance.status
+            != self.instance.ChallengeRequestStatusChoices.DRAFT
+        ):
+            raise ValidationError(
+                "Only challenge requests in draft status can be edited. Please contact support if you want to make changes to this request.",
+            )
+
+        return cleaned_data
+
     def clean_challenge_setup(self):
         challenge_setup = self.cleaned_data.get("challenge_setup")
 

@@ -252,3 +252,45 @@ def test_challenge_request_challenge_setup():
     form.save()
     challenge_request.refresh_from_db()
     assert challenge_request.challenge_setup == "New challenge setup"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "status, expected_error",
+    (
+        (ChallengeRequest.ChallengeRequestStatusChoices.DRAFT, None),
+        (
+            ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+            "Only challenge requests in draft status can be edited.",
+        ),
+        (
+            ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
+            "Only challenge requests in draft status can be edited.",
+        ),
+        (
+            ChallengeRequest.ChallengeRequestStatusChoices.REJECTED,
+            "Only challenge requests in draft status can be edited.",
+        ),
+    ),
+)
+def test_challenge_request_update_form_validity_by_status(
+    status, expected_error
+):
+    challenge_request = ChallengeRequestFactory(status=status)
+
+    form = ChallengeRequestUpdateForm(
+        instance=challenge_request,
+        data={
+            "title": challenge_request.title,
+            "short_name": challenge_request.short_name,
+            "contact_email": challenge_request.contact_email,
+            "abstract": challenge_request.abstract,
+            "challenge_setup": challenge_request.challenge_setup,
+        },
+    )
+
+    if expected_error is None:
+        assert form.is_valid(), form.errors
+    else:
+        assert not form.is_valid()
+        assert expected_error in str(form.non_field_errors())
