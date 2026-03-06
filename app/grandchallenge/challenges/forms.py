@@ -118,6 +118,7 @@ general_required_information = (
     "end_date",
     "organizers",
     "challenge_setup",
+    "challenge_fee_agreement",
 )
 general_information = (
     "comments",
@@ -224,7 +225,6 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
         fields = (
             *general_required_information,
             *general_information,
-            "challenge_fee_agreement",
             "structured_challenge_submission_form",
             "structured_challenge_submission_doi",
             *challenge_details,
@@ -326,7 +326,6 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
             Fieldset(
                 "General Information - Required",
                 *general_required_information,
-                "challenge_fee_agreement",
                 css_class="border rounded px-2 my-4",
             ),
             Fieldset(
