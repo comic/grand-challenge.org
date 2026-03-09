@@ -474,7 +474,6 @@ def test_discussion_forum_permissions():
                 "challenge_setup": "bar",
                 "data_set": "dataset info",
                 "data_license": True,
-                "data_license_extra": "extra license info",
                 "submission_assessment": "assessment info",
                 "challenge_publication": "publication info",
                 "code_availability": "code availability info",
@@ -483,6 +482,42 @@ def test_discussion_forum_permissions():
                 "challenge_fee_agreement": True,
             },
             None,
+        ),
+        # Valid submission with all challenge details fields - but data license extra is missing
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "data_set": "dataset info",
+                "data_license": True,
+                "submission_assessment": "assessment info",
+                "challenge_publication": "publication info",
+                "code_availability": "code availability info",
+                "algorithm_inputs": "input description",
+                "algorithm_outputs": "output description",
+                "challenge_fee_agreement": True,
+            },
+            None,
+        ),
+        # Missing data license extra
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "data_set": "dataset info",
+                "data_license": False,
+                "submission_assessment": "assessment info",
+                "challenge_publication": "publication info",
+                "code_availability": "code availability info",
+                "algorithm_inputs": "input description",
+                "algorithm_outputs": "output description",
+                "challenge_fee_agreement": True,
+            },
+            "the following fields are required to submit a challenge request: Data License Extra",
         ),
         # Missing required fields - should fail
         (

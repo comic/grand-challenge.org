@@ -1362,8 +1362,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             missing_fields = []
             required_fields = [
                 "data_set",
-                "data_license",
-                "data_license_extra",
                 "submission_assessment",
                 "challenge_publication",
                 "code_availability",
@@ -1373,6 +1371,14 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             for field_name in required_fields:
                 if not getattr(self, field_name):
                     missing_fields.append(self._meta.get_field(field_name))
+
+            if self.data_license is None:
+                missing_fields.append(self._meta.get_field("data_license"))
+            elif not self.data_license and not self.data_license_extra:
+                missing_fields.append(
+                    self._meta.get_field("data_license_extra")
+                )
+
             if missing_fields:
                 raise ValidationError(
                     "Either a structured challenge submission form needs to be uploaded or the following fields are required to submit a challenge request: "
