@@ -348,7 +348,7 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
             Fieldset(
                 "Detailed Challenge Information",
                 *challenge_details,
-                css_class="border rounded pt-2 px-2 my-4 bg-light-gray",
+                css_class="border rounded pt-2 px-2 my-1 bg-light-gray",
             ),
             ButtonHolder(Submit("save", "Save")),
         )
