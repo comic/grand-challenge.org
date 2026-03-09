@@ -1293,7 +1293,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         else:
             return True
 
-    def clean_for_submission(self):
+    def clean_for_submission(self):  # noqa: C901
         errors = []
 
         try:
@@ -1306,32 +1306,39 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         except ValidationError as e:
             errors.extend(e)
 
-        if not self.challenge_fee_agreement:
-            errors.append(
-                ValidationError(
-                    "You need to agree to the challenge fee agreement to submit a challenge request.",
-                )
-            )
-
         try:
             self.clean_submission_challenge_details()
         except ValidationError as e:
             errors.extend(e)
 
-        if (
-            not self.structured_challenge_submission_doi
-            and not self.structured_challenge_submission_form
-            and not self.data_license
-            and not self.data_license_extra
-        ):
-            errors.append(
-                ValidationError(
-                    "You need to explain why you are not willing/able to use a CC-BY license.",
-                )
-            )
+        try:
+            self.clean_data_license_extra()
+        except ValidationError as e:
+            errors.extend(e)
+
+        try:
+            self.clean_challenge_fee_agreement()
+        except ValidationError as e:
+            errors.extend(e)
 
         if errors:
             raise ValidationError(errors)
+
+    def clean_data_license_extra(self):
+        if (
+            not self.structured_challenge_submission_doi
+            and not self.structured_challenge_submission_form
+        ):
+            if self.data_license is False and not self.data_license_extra:
+                ValidationError(
+                    "You need to explain why you are not willing/able to use a CC-BY license.",
+                )
+
+    def clean_challenge_fee_agreement(self):
+        if not self.challenge_fee_agreement:
+            ValidationError(
+                "You need to agree to the challenge fee agreement to submit a challenge request.",
+            )
 
     def clean_submission_required_fields(self):
         missing_fields = []
