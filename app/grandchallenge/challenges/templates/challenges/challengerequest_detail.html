@@ -115,10 +115,8 @@
     {% endif %}
     <div class="table-responsive">
         <table class="table table-hover">
-        {% for field, value in fields.items %}
-            {% if value %}
-                <tr><td class="font-weight-bold">{{ field|title }}</td> <td>{{ value|linebreaks }}</td></tr>
-            {% endif %}
+        {% for label, value in fields.items %}
+            <tr><td class="font-weight-bold">{{ label|title }}</td> <td>{{ value|linebreaks }}</td></tr>
         {% endfor %}
         {% if object.data_license %}
             <tr><td class="font-weight-bold">Public data license</td> <td><i class="fas fa-check-circle text-success pr-2"></i> The organizers agree to publish their public data set under a CC-BY license.</td></tr>

@@ -217,9 +217,15 @@ class ChallengeRequestDetail(
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
         fields = {}
+        label_overrides = {
+            "challenge_setup": "Challenge technical setup",
+            "short_name": "Acronym",
+            "challenge_fee_agreement": "Read Pricing Policy",
+        }
         for field_name in self.detail_view_fields:
             field = self.object._meta.get_field(field_name)
-            fields[field.verbose_name] = field.value_to_string(self.object)
+            label = label_overrides.get(field_name, field.verbose_name)
+            fields[label] = field.value_to_string(self.object)
 
         context.update(
             {
