@@ -211,11 +211,11 @@ class ChallengeRequestDetail(
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
-        fields = {
-            field.verbose_name: field.value_to_string(self.object)
-            for field in self.object._meta.fields
-            if field.name in self.detail_view_fields
-        }
+        fields = {}
+        for field_name in self.detail_view_fields:
+            field = self.object._meta.get_field(field_name)
+            fields[field.verbose_name] = field.value_to_string(self.object)
+
         context.update(
             {
                 "fields": fields,
