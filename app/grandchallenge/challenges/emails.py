@@ -224,3 +224,26 @@ def send_onboarding_task_due_reminder(challenge, task_info):
         recipients=[*challenge.get_admins()],
         subscription_type=EmailSubscriptionTypes.SYSTEM,
     )
+
+
+def send_challenge_requests_draft_reminder(*, challenge_request):
+
+    subject = format_html(
+        "[{short_name}] Reminder: Unsubmitted Challenge Request",
+        short_name=challenge_request.short_name,
+    )
+
+    message = render_to_string(
+        "challenges/partials/challenge_request_draft_reminder_email.md",
+        context={
+            "challenge_request": challenge_request,
+        },
+    )
+
+    send_standard_email_batch(
+        site=Site.objects.get_current(),
+        subject=subject,
+        markdown_message=message,
+        recipients=[challenge_request.creator],
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
+    )

@@ -1,10 +1,18 @@
 from zoneinfo import ZoneInfo
 
 import pytest
+from django.conf import settings
 from django.core import mail
 from django.utils.timezone import datetime, timedelta
 
-from grandchallenge.challenges.models import Challenge, OnboardingTask
+from grandchallenge.challenges.emails import (
+    send_challenge_requests_draft_reminder,
+)
+from grandchallenge.challenges.models import (
+    Challenge,
+    ChallengeRequest,
+    OnboardingTask,
+)
 from grandchallenge.challenges.tasks import (
     send_onboarding_task_reminder_emails,
     update_challenge_compute_costs,
@@ -307,3 +315,50 @@ def test_challenge_onboarding_task_due_emails(
         assert expected_subject in organizer_mail.subject
     else:
         assert not any(challenge_admin.email in m.to for m in mail.outbox)
+
+
+@pytest.mark.django_db
+def test_challenge_request_draft_reminder_emails(mocker):
+    target_challenge_request = ChallengeRequestFactory(
+        title="Target",
+        status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+        created=_fixed_now
+        - settings.CHALLENGE_REQUEST_REMINDER_CUTOFF
+        - timedelta(minutes=1),
+    )
+
+    # Create decoy challenge requests that should not trigger a reminder email
+    ChallengeRequestFactory(
+        title="Not old enough",
+        short_name="test-challenge-not-old-enough",
+        status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+        created=_fixed_now - timedelta(minutes=1),
+    )
+    for status in (
+        ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+        ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
+        ChallengeRequest.ChallengeRequestStatusChoices.REJECTED,
+    ):
+        ChallengeRequestFactory(
+            title=f"Wrong status {status}",
+            short_name=f"test-challenge-{status}",
+            status=status,
+            created=_fixed_now
+            - settings.CHALLENGE_REQUEST_REMINDER_CUTOFF
+            - timedelta(minutes=1),
+        )
+
+    mail.outbox.clear()
+    mocker.patch(
+        "grandchallenge.challenges.tasks.now",
+        return_value=_fixed_now,
+    )
+
+    send_challenge_requests_draft_reminder(
+        challenge_request=target_challenge_request
+    )
+
+    assert len(mail.outbox) == 1, [m.subject for m in mail.outbox]
+    email = mail.outbox[0]
+    assert email.recipients() == [target_challenge_request.creator.email]
+    assert target_challenge_request.title in email.body
