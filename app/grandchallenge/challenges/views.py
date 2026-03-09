@@ -194,9 +194,6 @@ class ChallengeRequestDetail(
         ]
         for field_name in (
             "affiliated_event",
-            "task_types",
-            "structures",
-            "modalities",
             "data_set",
             "submission_assessment",
             "challenge_publication",
@@ -204,7 +201,15 @@ class ChallengeRequestDetail(
             "algorithm_inputs",
             "algorithm_outputs",
         ):
-            if getattr(self.object, field_name) is not None:
+            if getattr(self.object, field_name):
+                result.append(field_name)
+
+        for field_name in (
+            "task_types",
+            "structures",
+            "modalities",
+        ):
+            if getattr(self.object, field_name).exists():
                 result.append(field_name)
 
         return result
