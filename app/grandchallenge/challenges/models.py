@@ -1035,7 +1035,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         max_length=255,
     )
     challenge_setup = models.TextField(
-        help_text="Describe the challenge set-up.",
+        help_text="Describe the challenge set up.",
         null=True,
         blank=True,
     )

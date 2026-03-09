@@ -53,7 +53,7 @@ class Migration(migrations.Migration):
             name="challenge_setup",
             field=models.TextField(
                 blank=True,
-                help_text="Describe the challenge set-up.",
+                help_text="Describe the challenge set up.",
                 null=True,
             ),
         ),
