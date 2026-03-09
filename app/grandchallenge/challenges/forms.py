@@ -313,9 +313,9 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
             ),
             Div(
                 HTML(
-                    "<i class='fas fa-info-circle mr-1'></i> Provide the required information by either uploading a pre-existing form OR filling the detailed challenge information below."
+                    "<i class='fas fa-info-circle px-2'></i> Provide the required information by either uploading a pre-existing form OR filling the detailed challenge information below."
                 ),
-                css_class="alert alert-info",
+                css_class="alert alert-info py-4",
             ),
             Fieldset(
                 "Structured Challenge Submission from a Pre-Existing Form",
@@ -342,13 +342,13 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
                     ),
                     css_class="container row m-0 p-0 justify-content-between",
                 ),
-                css_class="border rounded px-2 my-4",
+                css_class="border rounded pt-2 px-2 my-4",
             ),
             HTML("<h4 class='text-center'>OR</h4>"),
             Fieldset(
                 "Detailed Challenge Information",
                 *challenge_details,
-                css_class="border rounded px-2 my-4",
+                css_class="border rounded pt-2 px-2 my-4",
             ),
             ButtonHolder(Submit("save", "Save")),
         )
