@@ -8,7 +8,7 @@
 {% load guardian_tags %}
 
 {% block title %}
-    {{ object.short_name }} - {% if object.status == object.ChallengeRequestStatusChoices.DRAFT %} DRAFT {% endif %} - {% if not perms.challenges.change_challengerequest %}Your{% endif %} Challenge Requests - {{ block.super }}
+    {{ object.short_name }} - {% if object.status == object.ChallengeRequestStatusChoices.DRAFT %}DRAFT - {% endif %}{% if not perms.challenges.change_challengerequest %}Your{% endif %} Challenge Requests - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
