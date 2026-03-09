@@ -1306,15 +1306,27 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         except ValidationError as e:
             errors.extend(e)
 
+        if not self.challenge_fee_agreement:
+            errors.append(
+                ValidationError(
+                    "You need to agree to the challenge fee agreement to submit a challenge request.",
+                )
+            )
+
         try:
             self.clean_submission_challenge_details()
         except ValidationError as e:
             errors.extend(e)
 
-        if not self.challenge_fee_agreement:
+        if (
+            not self.structured_challenge_submission_doi
+            and not self.structured_challenge_submission_form
+            and not self.data_license
+            and not self.data_license_extra
+        ):
             errors.append(
                 ValidationError(
-                    "You need to agree to the challenge fee agreement to submit a challenge request.",
+                    "You need to explain why you are not willing/able to use a CC-BY license.",
                 )
             )
 
@@ -1374,10 +1386,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
             if self.data_license is None:
                 missing_fields.append(self._meta.get_field("data_license"))
-            elif not self.data_license and not self.data_license_extra:
-                missing_fields.append(
-                    self._meta.get_field("data_license_extra")
-                )
 
             if missing_fields:
                 raise ValidationError(

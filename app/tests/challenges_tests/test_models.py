@@ -517,7 +517,7 @@ def test_discussion_forum_permissions():
                 "algorithm_outputs": "output description",
                 "challenge_fee_agreement": True,
             },
-            "the following fields are required to submit a challenge request: Data License Extra",
+            "You need to explain why you are not willing/able to use a CC-BY license.",
         ),
         # Missing required fields - should fail
         (
