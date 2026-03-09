@@ -342,13 +342,13 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
                     ),
                     css_class="container row m-0 p-0 justify-content-between",
                 ),
-                css_class="border rounded pt-2 px-2 my-4",
+                css_class="border rounded pt-2 px-2 my-4 bg-light-gray",
             ),
             HTML("<h4 class='text-center'>OR</h4>"),
             Fieldset(
                 "Detailed Challenge Information",
                 *challenge_details,
-                css_class="border rounded pt-2 px-2 my-4",
+                css_class="border rounded pt-2 px-2 my-4 bg-light-gray",
             ),
             ButtonHolder(Submit("save", "Save")),
         )
