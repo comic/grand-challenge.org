@@ -276,7 +276,7 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
                 "data-storage/' target='_blank'>here</a>)."
             ),
             "challenge_setup": (
-                "Describe the challenge set-up from a technical stand-point. How many tasks "
+                "Describe the challenge setup from a technical standpoint. How many tasks "
                 "and <a href='https://www.grand-challenge.org/documentation/"
                 "multiple-phases-multiple-leaderboards/' target='_blank'>phases</a>"
                 " does the challenge have? Which <a href='https://grand-challenge.org/documentation/runtime-environment/' "
