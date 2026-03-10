@@ -12,7 +12,9 @@ from tests.workstations_tests.factories import FeedbackFactory
 
 
 @pytest.mark.django_db
-def test_session_environ():
+def test_session_environ(settings):
+    settings.COMPONENTS_SERVICE_INCLUDE_CREATOR_AUTH_TOKEN = True
+
     s = SessionFactory()
     env = s.environment
 
@@ -23,7 +25,9 @@ def test_session_environ():
 
 
 @pytest.mark.django_db
-def test_session_auth_token():
+def test_session_auth_token(settings):
+    settings.COMPONENTS_SERVICE_INCLUDE_CREATOR_AUTH_TOKEN = True
+
     s = SessionFactory()
 
     # Calling environment should generate an auth token for the creator
