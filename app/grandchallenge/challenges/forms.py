@@ -166,10 +166,6 @@ class ChallengeRequestForm(SaveFormInitMixin, forms.ModelForm):
                 "<a href='https://www.grand-challenge.org/challenges' "
                 "target='_blank'>other challenges</a> for examples."
             ),
-            "contact_email": (
-                "The email address that potential participants can use to contact you with questions about the challenge. "
-                "This email address will be visible on the challenge website, so please provide an address that you are comfortable sharing publicly."
-            ),
         }
 
     def __init__(self, creator, *args, **kwargs):
