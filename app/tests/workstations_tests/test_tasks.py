@@ -76,7 +76,6 @@ def test_start_service(mocker, settings, django_capture_on_commit_callbacks):
     settings.COMPONENTS_SERVICE_TASK_ROLE_ARN = "test-task-role-arn"
     settings.COMPONENTS_SERVICE_LOG_GROUP_NAME = "test-log-group-name"
     settings.COMPONENTS_SERVICE_CLUSTER_NAME = "test-cluster-name"
-    settings.COMPONENTS_SERVICE_INCLUDE_CREATOR_AUTH_TOKEN = False
 
     session = SessionFactory(
         workstation_image__is_manifest_valid=True,
