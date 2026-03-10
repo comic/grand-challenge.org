@@ -998,8 +998,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         blank=True,
     )
     contact_email = models.EmailField(
-        help_text="Please provide an email that our team can use to contact "
-        "you should there be any questions about your request.",
+        help_text=(
+            "The email address that potential participants can use to contact you with questions about the challenge. "
+            "This email address will be visible on the challenge website, so please provide an address that you are comfortable sharing publicly."
+        ),
     )
     start_date = models.DateField(
         help_text="Estimated start date for this challenge.",
@@ -1035,12 +1037,23 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         max_length=255,
     )
     challenge_setup = models.TextField(
-        help_text="Describe the challenge set up.",
+        help_text=(
+            "Describe the challenge set-up from a technical stand-point. How many tasks "
+            "and <a href='https://www.grand-challenge.org/documentation/"
+            "multiple-phases-multiple-leaderboards/' target='_blank'>phases</a>"
+            " does the challenge have? Which <a href='https://grand-challenge.org/documentation/runtime-environment/' "
+            "target='_blank'>runtime environment</a> do you envision for the challenge?"
+        ),
         null=True,
         blank=True,
     )
     data_set = models.TextField(
-        help_text="Describe the training and test datasets you are planning to use.",
+        help_text=(
+            "Please describe the training and test datasets you are planning to "
+            "use. <br>In order to evaluate the submitted algorithms, the test dataset will need to be "
+            "uploaded to Grand Challenge (read more about that <a href='https://grand-challenge.org/documentation/"
+            "data-storage/' target='_blank'>here</a>)."
+        ),
         null=True,
         blank=True,
     )
@@ -1057,7 +1070,17 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         blank=True,
     )
     code_availability = models.TextField(
-        help_text="Will the participants’ code be accessible after the challenge?",
+        help_text="Will the participants’ code be accessible after "
+        "the challenge? <br>We strongly encourage open science. Algorithms "
+        "submitted as challenge solutions will therefore be stored on Grand Challenge and "
+        "we encourage organizers to incentivize an open source policy, "
+        "for example by asking participants to publish their Github repo "
+        "under an <a href='https://docs.github.com/en/repositories/managing-"
+        "your-repositorys-settings-and-features/customizing-your-repository/"
+        "licensing-a-repository' target='_blank'> open source license</a> "
+        "(e.g., Apache 2.0, MIT) and <a href='https://grand-challenge.org/"
+        "documentation/linking-a-github-repository-to-your-algorithm/'>"
+        "link it to their algorithm</a> on Grand Challenge.",
         null=True,
         blank=True,
     )
@@ -1214,6 +1237,14 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     data_license = models.BooleanField(
         default=False,
         null=True,
+        help_text=(
+            "In the spirit of open science, we ask that the <b>public training "
+            "data</b> are released under a "
+            "<a href='https://creativecommons.org/licenses/' target='_blank'>"
+            "CC-BY license</a>. Note that this does not apply to the secret test "
+            "data used to evaluate algorithm submissions. Read more about this <a href='"
+            "https://grand-challenge.org/documentation/data-storage/'>here</a>."
+        ),
     )
     data_license_extra = models.CharField(
         max_length=2000,

@@ -255,41 +255,6 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
                 "<a href='https://www.grand-challenge.org/challenges' "
                 "target='_blank'>other challenges</a> for examples."
             ),
-            "abstract": ("Provide a summary of the challenge purpose."),
-            "code_availability": (
-                "Will the participants’ code be accessible after "
-                "the challenge? <br>We strongly encourage open science. Algorithms "
-                "submitted as challenge solutions will therefore be stored on Grand Challenge and "
-                "we encourage organizers to incentivize an open source policy, "
-                "for example by asking participants to publish their Github repo "
-                "under an <a href='https://docs.github.com/en/repositories/managing-"
-                "your-repositorys-settings-and-features/customizing-your-repository/"
-                "licensing-a-repository' target='_blank'> open source license</a> "
-                "(e.g., Apache 2.0, MIT) and <a href='https://grand-challenge.org/"
-                "documentation/linking-a-github-repository-to-your-algorithm/'>"
-                "link it to their algorithm</a> on Grand Challenge."
-            ),
-            "data_set": (
-                "Please describe the training and test datasets you are planning to "
-                "use. <br>In order to evaluate the submitted algorithms, the test dataset will need to be "
-                "uploaded to Grand Challenge (read more about that <a href='https://grand-challenge.org/documentation/"
-                "data-storage/' target='_blank'>here</a>)."
-            ),
-            "challenge_setup": (
-                "Describe the challenge setup from a technical standpoint. How many tasks "
-                "and <a href='https://www.grand-challenge.org/documentation/"
-                "multiple-phases-multiple-leaderboards/' target='_blank'>phases</a>"
-                " does the challenge have? Which <a href='https://grand-challenge.org/documentation/runtime-environment/' "
-                "target='_blank'>runtime environment</a> do you envision for the challenge?"
-            ),
-            "data_license": (
-                "In the spirit of open science, we ask that the <b>public training "
-                "data</b> are released under a "
-                "<a href='https://creativecommons.org/licenses/' target='_blank'>"
-                "CC-BY license</a>. Note that this does not apply to the secret test "
-                "data used to evaluate algorithm submissions. Read more about this <a href='"
-                "https://grand-challenge.org/documentation/data-storage/'>here</a>."
-            ),
         }
 
     def __init__(self, *args, **kwargs):
