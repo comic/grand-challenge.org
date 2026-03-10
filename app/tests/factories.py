@@ -2,7 +2,7 @@ import datetime
 import hashlib
 import random
 
-import factory
+import factory.fuzzy
 from allauth.mfa.models import Authenticator
 from django.conf import settings
 from django.contrib.auth.models import Group
