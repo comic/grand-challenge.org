@@ -37,6 +37,35 @@ def assign_review_perm_to_reviewers_group(apps, schema_editor):
         )
 
 
+def assign_change_perm_to_creators(apps, schema_editor):
+    ChallengeRequest = apps.get_model(  # noqa: N806
+        "challenges", "ChallengeRequest"
+    )
+    ChallengeRequestUserObjectPermission = apps.get_model(  # noqa: N806
+        "challenges", "ChallengeRequestUserObjectPermission"
+    )
+    Permission = apps.get_model("auth", "Permission")  # noqa: N806
+
+    challenge_requests = ChallengeRequest.objects.select_related(
+        "creator"
+    ).all()
+
+    if not challenge_requests.exists():
+        return
+
+    change_permission = Permission.objects.get(
+        codename="change_challengerequest",
+        content_type__app_label="challenges",
+    )
+
+    for challenge_request in challenge_requests:
+        ChallengeRequestUserObjectPermission.objects.get_or_create(
+            content_object=challenge_request,
+            user=challenge_request.creator,
+            permission=change_permission,
+        )
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -47,5 +76,9 @@ class Migration(migrations.Migration):
         migrations.RunPython(
             assign_review_perm_to_reviewers_group,
             elidable=True,
-        )
+        ),
+        migrations.RunPython(
+            assign_change_perm_to_creators,
+            elidable=True,
+        ),
     ]
