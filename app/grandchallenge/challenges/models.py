@@ -995,7 +995,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     abstract = models.TextField(
         help_text="Provide a summary of the challenge purpose.",
         blank=True,
-        default="",
     )
     contact_email = models.EmailField(
         help_text=(
@@ -1018,13 +1017,11 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     organizers = models.TextField(
         help_text="Provide information about the organizing team (names and affiliations)",
         blank=True,
-        default="",
     )
     affiliated_event = models.CharField(
         max_length=50,
         help_text="Is this challenge part of a workshop or conference? If so, which one?",
         blank=True,
-        default="",
     )
     structured_challenge_submission_form = models.FileField(
         null=True,
@@ -1045,7 +1042,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             " does the challenge have? Which <a href='https://grand-challenge.org/documentation/runtime-environment/' "
             "target='_blank'>runtime environment</a> do you envision for the challenge?"
         ),
-        default="",
         blank=True,
     )
     data_set = models.TextField(
@@ -1055,19 +1051,16 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             "uploaded to Grand Challenge (read more about that <a href='https://grand-challenge.org/documentation/"
             "data-storage/' target='_blank'>here</a>)."
         ),
-        default="",
         blank=True,
     )
     submission_assessment = models.TextField(
         help_text="Define the metrics you will use to assess and rank "
         "participants’ submissions.",
-        default="",
         blank=True,
     )
     challenge_publication = models.TextField(
         help_text="Please indicate if you plan to coordinate a publication "
         "of the challenge results.",
-        default="",
         blank=True,
     )
     code_availability = models.TextField(
@@ -1082,7 +1075,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         "(e.g., Apache 2.0, MIT) and <a href='https://grand-challenge.org/"
         "documentation/linking-a-github-repository-to-your-algorithm/'>"
         "link it to their algorithm</a> on Grand Challenge.",
-        default="",
         blank=True,
     )
     number_of_teams_for_phases = models.JSONField(
@@ -1250,12 +1242,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     data_license_extra = models.CharField(
         max_length=2000,
         blank=True,
-        default="",
     )
     comments = models.TextField(
         help_text="If you have any comments, remarks or questions, please leave them here.",
         blank=True,
-        default="",
     )
     algorithm_inputs = models.TextField(
         help_text="What are the inputs to the algorithms submitted as solutions to "
@@ -1265,7 +1255,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         "MRI scan of the brain, or chest X-ray. Grand Challenge only "
         "supports .mha and .tiff image files and json files for algorithms.",
         blank=True,
-        default="",
     )
     algorithm_outputs = models.TextField(
         help_text="What are the outputs to the algorithms submitted as solutions to "
@@ -1274,12 +1263,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         "reflect(s), for example, probability of a positive PCR result, or "
         "stroke lesion segmentation. ",
         blank=True,
-        default="",
     )
     structured_challenge_submission_doi = IdentifierField(
         help_text="The DOI, e.g., 10.5281/zenodo.6362337, or the arXiv id, e.g., 2006.12449 of your challenge submission PDF.",
         blank=True,
-        default="",
     )
     challenge_fee_agreement = models.BooleanField(
         blank=False,
