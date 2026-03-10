@@ -46,16 +46,4 @@ class Migration(migrations.Migration):
                 max_length=4,
             ),
         ),
-        migrations.AddConstraint(
-            model_name="challengerequest",
-            constraint=models.CheckConstraint(
-                condition=models.Q(
-                    ("status", "DRFT"),
-                    ("submitted_on__isnull", False),
-                    _connector="OR",
-                ),
-                name="submitted_or_draft",
-                violation_error_message="When setting the status to something other than a 'Draft', 'Submitted On' must also be set.",
-            ),
-        ),
     ]
