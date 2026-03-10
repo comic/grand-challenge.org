@@ -180,10 +180,10 @@ This information will be used to calculate a budget estimate. See below example.
 
 ## Runtime Requirements
 - Participant algorithm max. runtime: 5 minutes
-- Participant algorithm max. vRAM: 32 GB
+- Participant algorithm max. DRAM: 32 GB
 - Participant algorithm GPU types: A10G or T4 or None
 - Evaluation method max. runtime: 42 minutes
-- Evaluation method max. vRAM: 32 GB
+- Evaluation method max. DRAM: 32 GB
 - Evaluation method GPU types: A10G
 
 If some phases have different requirements, please detail them.
