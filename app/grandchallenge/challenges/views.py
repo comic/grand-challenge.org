@@ -220,7 +220,7 @@ class ChallengeRequestDetail(
         label_overrides = {
             "challenge_setup": "Challenge technical setup",
             "short_name": "Acronym",
-            "challenge_fee_agreement": "Read Pricing Policy",
+            "challenge_fee_agreement": "Pricing Policy Agreement",
         }
         for field_name in self.detail_view_fields:
             field = self.object._meta.get_field(field_name)
