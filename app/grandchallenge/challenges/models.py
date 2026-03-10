@@ -1368,7 +1368,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     def clean_challenge_fee_agreement(self):
         if not self.challenge_fee_agreement:
             raise ValidationError(
-                "You need to agree to the challenge fee agreement to submit a challenge request.",
+                "You need to agree to the challenge pricing policy to submit a challenge request.",
             )
 
     def clean_submission_required_fields(self):
