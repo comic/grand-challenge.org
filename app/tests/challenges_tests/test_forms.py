@@ -208,7 +208,7 @@ def test_budget_update_form_invalid(invalid_data, reason_invalid):
 
 @pytest.mark.django_db
 def test_challenge_request_challenge_setup():
-    challenge_request = ChallengeRequestFactory(challenge_setup=None)
+    challenge_request = ChallengeRequestFactory(challenge_setup="")
 
     assert not challenge_request.challenge_setup
 
