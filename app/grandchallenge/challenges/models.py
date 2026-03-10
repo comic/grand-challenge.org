@@ -1361,13 +1361,13 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             and not self.structured_challenge_submission_form
         ):
             if self.data_license is False and not self.data_license_extra:
-                ValidationError(
+                raise ValidationError(
                     "You need to explain why you are not willing/able to use a CC-BY license.",
                 )
 
     def clean_challenge_fee_agreement(self):
         if not self.challenge_fee_agreement:
-            ValidationError(
+            raise ValidationError(
                 "You need to agree to the challenge fee agreement to submit a challenge request.",
             )
 
