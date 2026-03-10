@@ -335,7 +335,7 @@ class ChallengeRequestUpdateForm(forms.ModelForm):
             and challenge_setup.strip().splitlines()
             == challenge_setup_template_text.strip().splitlines()
         ):
-            return None
+            return ""
         else:
             return challenge_setup
 
