@@ -382,7 +382,9 @@ def test_session_cleanup(django_capture_on_commit_callbacks):
 
 
 @pytest.mark.django_db
-def test_related_auth_token_deleted_when_stopped():
+def test_related_auth_token_deleted_when_stopped(settings):
+    settings.COMPONENTS_SERVICE_INCLUDE_CREATOR_AUTH_TOKEN = True
+
     session = SessionFactory()
 
     _ = session.environment  # creates the auth token
