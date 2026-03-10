@@ -1324,33 +1324,20 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         else:
             return True
 
-    def clean_for_submission(self):  # noqa: C901
+    def clean_for_submission(self):
         errors = []
 
-        try:
-            self.clean_submission_required_fields()
-        except ValidationError as e:
-            errors.extend(e)
-
-        try:
-            self.clean_submission_start_date()
-        except ValidationError as e:
-            errors.extend(e)
-
-        try:
-            self.clean_submission_challenge_details()
-        except ValidationError as e:
-            errors.extend(e)
-
-        try:
-            self.clean_data_license_extra()
-        except ValidationError as e:
-            errors.extend(e)
-
-        try:
-            self.clean_challenge_fee_agreement()
-        except ValidationError as e:
-            errors.extend(e)
+        for clean_func in [
+            self.clean_submission_required_fields,
+            self.clean_submission_start_date,
+            self.clean_submission_challenge_details,
+            self.clean_data_license_extra,
+            self.clean_challenge_fee_agreement,
+        ]:
+            try:
+                clean_func()
+            except ValidationError as e:
+                errors.extend(e)
 
         if errors:
             raise ValidationError(errors)
