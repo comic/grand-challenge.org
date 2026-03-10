@@ -561,7 +561,7 @@ def test_discussion_forum_permissions():
                 "structured_challenge_submission_doi": "10.5281/zenodo.6362337",
                 "challenge_fee_agreement": False,
             },
-            "You need to agree to the challenge fee agreement",
+            "You need to agree to the challenge pricing policy to submit a challenge request",
         ),
         # Only some challenge detail fields present without DOI - should fail
         (
