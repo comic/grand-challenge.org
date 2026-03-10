@@ -994,8 +994,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     )
     abstract = models.TextField(
         help_text="Provide a summary of the challenge purpose.",
-        default="",
         blank=True,
+        default="",
     )
     contact_email = models.EmailField(
         help_text=(
@@ -1017,13 +1017,13 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     )
     organizers = models.TextField(
         help_text="Provide information about the organizing team (names and affiliations)",
-        default="",
         blank=True,
+        default="",
     )
     affiliated_event = models.CharField(
-        blank=True,
         max_length=50,
         help_text="Is this challenge part of a workshop or conference? If so, which one?",
+        blank=True,
         default="",
     )
     structured_challenge_submission_form = models.FileField(
@@ -1250,10 +1250,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     data_license_extra = models.CharField(
         max_length=2000,
         blank=True,
+        default="",
     )
     comments = models.TextField(
-        blank=True,
         help_text="If you have any comments, remarks or questions, please leave them here.",
+        blank=True,
+        default="",
     )
     algorithm_inputs = models.TextField(
         help_text="What are the inputs to the algorithms submitted as solutions to "
@@ -1262,8 +1264,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         "what the input(s) reflect(s), for example, "
         "MRI scan of the brain, or chest X-ray. Grand Challenge only "
         "supports .mha and .tiff image files and json files for algorithms.",
-        null=True,
         blank=True,
+        default="",
     )
     algorithm_outputs = models.TextField(
         help_text="What are the outputs to the algorithms submitted as solutions to "
@@ -1271,12 +1273,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         "Please describe in detail what the output(s) "
         "reflect(s), for example, probability of a positive PCR result, or "
         "stroke lesion segmentation. ",
-        null=True,
         blank=True,
+        default="",
     )
     structured_challenge_submission_doi = IdentifierField(
-        blank=True,
         help_text="The DOI, e.g., 10.5281/zenodo.6362337, or the arXiv id, e.g., 2006.12449 of your challenge submission PDF.",
+        blank=True,
         default="",
     )
     challenge_fee_agreement = models.BooleanField(
