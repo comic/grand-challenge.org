@@ -1235,7 +1235,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ],
     )
     data_license = models.BooleanField(
-        default=False,
+        default=None,
         null=True,
         help_text=(
             "In the spirit of open science, we ask that the <b>public training "
