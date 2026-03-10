@@ -6,7 +6,7 @@ from actstream.actions import is_following
 from actstream.models import Action
 from dateutil.relativedelta import relativedelta
 from dateutil.utils import today
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 from django.utils.timezone import datetime, now, timedelta
 
@@ -446,4 +446,259 @@ def test_discussion_forum_permissions():
     )
     assert not participant.has_perm(
         "create_sticky_and_announcement_topic", challenge.discussion_forum
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "data,expected_error",
+    [
+        # Valid submission with DOI - should pass
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "structured_challenge_submission_doi": "10.5281/zenodo.6362337",
+                "challenge_fee_agreement": True,
+            },
+            None,
+        ),
+        # Valid submission with all challenge details fields - should pass
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "data_set": "dataset info",
+                "data_license": True,
+                "submission_assessment": "assessment info",
+                "challenge_publication": "publication info",
+                "code_availability": "code availability info",
+                "algorithm_inputs": "input description",
+                "algorithm_outputs": "output description",
+                "challenge_fee_agreement": True,
+            },
+            None,
+        ),
+        # Valid submission with all challenge details fields - but data license extra is missing
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "data_set": "dataset info",
+                "data_license": True,
+                "submission_assessment": "assessment info",
+                "challenge_publication": "publication info",
+                "code_availability": "code availability info",
+                "algorithm_inputs": "input description",
+                "algorithm_outputs": "output description",
+                "challenge_fee_agreement": True,
+            },
+            None,
+        ),
+        # Missing data license extra
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "data_set": "dataset info",
+                "data_license": False,
+                "submission_assessment": "assessment info",
+                "challenge_publication": "publication info",
+                "code_availability": "code availability info",
+                "algorithm_inputs": "input description",
+                "algorithm_outputs": "output description",
+                "challenge_fee_agreement": True,
+            },
+            "You need to explain why you are not willing/able to use a CC-BY license.",
+        ),
+        # Missing required fields - should fail
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "challenge_fee_agreement": True,
+            },
+            "The following fields are required to submit a challenge request: Organizers, Challenge Setup",
+        ),
+        # Start date after end date - should fail
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=10),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "structured_challenge_submission_doi": "10.5281/zenodo.6362337",
+                "challenge_fee_agreement": True,
+            },
+            "The start date needs to be before the end date",
+        ),
+        # Missing challenge details without DOI/form - should fail
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "challenge_fee_agreement": True,
+            },
+            "Either a structured challenge submission form needs to be uploaded or the following fields are required",
+        ),
+        # Missing challenge fee agreement - should fail
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "structured_challenge_submission_doi": "10.5281/zenodo.6362337",
+                "challenge_fee_agreement": False,
+            },
+            "You need to agree to the challenge pricing policy to submit a challenge request",
+        ),
+        # Only some challenge detail fields present without DOI - should fail
+        (
+            {
+                "start_date": datetime.now() + timedelta(days=1),
+                "end_date": datetime.now() + timedelta(days=2),
+                "organizers": "foo",
+                "challenge_setup": "bar",
+                "data_set": "dataset info",
+                "algorithm_inputs": "input description",
+                "challenge_fee_agreement": True,
+            },
+            "Either a structured challenge submission form needs to be uploaded or the following fields are required",
+        ),
+    ],
+)
+def test_challenge_request_submission_cleaning(data, expected_error):
+    challenge_request = ChallengeRequest.objects.create(
+        creator=UserFactory(),
+        title="foo",
+        short_name="foo",
+        abstract="bar",
+        contact_email="test@example.test",
+        **data,
+    )
+
+    # Should not raise any validation error at this point since the request is not being submitted yet
+    challenge_request.clean()
+
+    challenge_request.status = (
+        ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+    )
+
+    if expected_error is None:
+        # Should not raise any validation error
+        challenge_request.clean()
+        assert challenge_request.can_be_submitted
+    else:
+        # Should raise a ValidationError containing the expected error message
+        with pytest.raises(ValidationError) as exc_info:
+            challenge_request.clean()
+        error_messages = str(exc_info.value)
+        assert expected_error in error_messages
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "data,expected_error",
+    (
+        (
+            {
+                "task_ids": [1, 2],
+                "algorithm_maximum_settable_memory_gb_for_tasks": [32, 32],
+                "algorithm_selectable_gpu_type_choices_for_tasks": [
+                    ["", "T4"],
+                    ["", "A10G", "T4"],
+                ],
+                "average_size_test_case_mb_for_tasks": [10, 100],
+                "inference_time_average_minutes_for_tasks": [5, 10],
+                "task_id_for_phases": [1, 1, 2, 2],
+                "number_of_submissions_per_team_for_phases": [10, 1, 10, 1],
+                "number_of_teams_for_phases": [10, 10, 10, 10],
+                "number_of_test_cases_for_phases": [3, 100, 3, 100],
+            },
+            None,
+        ),
+        (
+            {  # Note, missing task_ids
+                "algorithm_maximum_settable_memory_gb_for_tasks": [32, 32],
+                "algorithm_selectable_gpu_type_choices_for_tasks": [
+                    ["", "T4"],
+                    ["", "A10G", "T4"],
+                ],
+                "average_size_test_case_mb_for_tasks": [10, 100],
+                "inference_time_average_minutes_for_tasks": [5, 10],
+                "task_id_for_phases": [1, 1, 2, 2],
+                "number_of_submissions_per_team_for_phases": [10, 1, 10, 1],
+                "number_of_teams_for_phases": [10, 10, 10, 10],
+                "number_of_test_cases_for_phases": [3, 100, 3, 100],
+            },
+            "The following fields are required to accept a challenge request: Task Ids",
+        ),
+    ),
+)
+def test_challenge_request_accept_cleaning(data, expected_error):
+    challenge_request = ChallengeRequest.objects.create(
+        creator=UserFactory(),
+        title="foo",
+        short_name="foo",
+        abstract="bar",
+        contact_email="test@example.test",
+        start_date=datetime.now() + timedelta(days=1),
+        end_date=datetime.now() + timedelta(days=2),
+        organizers="foo",
+        challenge_setup="bar",
+        structured_challenge_submission_doi="10.5281/zenodo.6362337",
+        challenge_fee_agreement=True,
+        status=ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+        submitted_on=now(),
+        **data,
+    )
+
+    challenge_request.status = (
+        ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED
+    )
+
+    if expected_error is None:
+        # Should not raise any validation error
+        challenge_request.clean()
+    else:
+        # Should raise a ValidationError containing the expected error message
+        with pytest.raises(ValidationError) as exc_info:
+            challenge_request.clean()
+        error_messages = str(exc_info.value)
+        assert expected_error in error_messages
+
+
+@pytest.mark.django_db
+def test_challenge_request_submitted_field_set_on_status_update():
+    challenge_request = ChallengeRequestFactory(
+        status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+        submitted_on=None,
+    )
+
+    # Initially submitted should be None
+    assert challenge_request.submitted_on is None
+
+    # Submit the request by updating status from DRAFT to PENDING
+    challenge_request.status = (
+        ChallengeRequest.ChallengeRequestStatusChoices.PENDING
+    )
+    challenge_request.save()
+
+    # Refresh and check that submitted is now set
+    challenge_request.refresh_from_db()
+    assert challenge_request.submitted_on is not None
+    assert (
+        challenge_request.status
+        == ChallengeRequest.ChallengeRequestStatusChoices.PENDING
     )

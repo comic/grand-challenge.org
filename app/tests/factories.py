@@ -1,12 +1,12 @@
 import datetime
 import hashlib
+import random
 
-import factory
+import factory.fuzzy
 from allauth.mfa.models import Authenticator
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.utils.timezone import now
-from factory import fuzzy
 
 from grandchallenge.cases.models import Image, ImageFile, RawImageUploadSession
 from grandchallenge.challenges.models import (
@@ -112,12 +112,26 @@ class ChallengeRequestFactory(factory.django.DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)
     short_name = factory.Sequence(lambda n: f"test-challenge-{n}")
     title = factory.fuzzy.FuzzyText()
-    start_date = fuzzy.FuzzyDate(
+    contact_email = factory.LazyAttribute(
+        lambda obj: f"{obj.creator.username}@example.test"
+    )
+    abstract = factory.fuzzy.FuzzyText(length=100)
+    start_date = factory.fuzzy.FuzzyDate(
         datetime.date(1970, 1, 1), end_date=datetime.date.today()
     )
-    end_date = fuzzy.FuzzyDate(
-        datetime.date(1971, 1, 1), end_date=datetime.date.today()
+    end_date = factory.LazyAttribute(
+        lambda obj: obj.start_date
+        + datetime.timedelta(days=random.randint(1, 365))
     )
+    challenge_setup = factory.fuzzy.FuzzyText(length=100)
+    organizers = factory.fuzzy.FuzzyText(length=100)
+    challenge_fee_agreement = True
+    submitted_on = now()
+
+    # Challenge Details
+    structured_challenge_submission_doi = "10.5281/zenodo.6362337"
+
+    # Budget fields
     task_ids = [1, 2]
     algorithm_maximum_settable_memory_gb_for_tasks = [32, 32]
     algorithm_selectable_gpu_type_choices_for_tasks = [
@@ -130,7 +144,6 @@ class ChallengeRequestFactory(factory.django.DjangoModelFactory):
     number_of_submissions_per_team_for_phases = [10, 1, 10, 1]
     number_of_teams_for_phases = [10, 10, 10, 10]
     number_of_test_cases_for_phases = [3, 100, 3, 100]
-    structured_challenge_submission_doi = "10.5281/zenodo.6362337"
 
 
 class PageFactory(factory.django.DjangoModelFactory):

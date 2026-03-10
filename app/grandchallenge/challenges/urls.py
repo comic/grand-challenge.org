@@ -10,6 +10,7 @@ from grandchallenge.challenges.views import (
     ChallengeRequestList,
     ChallengeRequestProcess,
     ChallengeRequestSubmit,
+    ChallengeRequestUpdate,
     UsersChallengeList,
 )
 
@@ -38,6 +39,11 @@ urlpatterns = [
         "requests/<pk>/update/status/accept-reject/",
         ChallengeRequestProcess.as_view(),
         name="requests-process",
+    ),
+    path(
+        "requests/<pk>/update/",
+        ChallengeRequestUpdate.as_view(),
+        name="requests-update",
     ),
     path(
         "requests/<pk>/update/budget/",

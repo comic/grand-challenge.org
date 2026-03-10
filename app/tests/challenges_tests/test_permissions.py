@@ -52,8 +52,9 @@ def test_request_challenge_only_when_verified(client):
     "viewname",
     [
         "challenges:requests-detail",
-        "challenges:requests-process",
+        "challenges:requests-update",
         "challenges:requests-submit",
+        "challenges:requests-process",
         "challenges:requests-budget-update",
     ],
 )
@@ -72,7 +73,7 @@ def test_challenge_request_regular_user_cannot_access(client, viewname):
 
 @pytest.mark.django_db
 def test_challenge_request_creator_viewing_and_updating(client):
-    challenge_request = ChallengeRequestFactory()
+    challenge_request = ChallengeRequestFactory(title="Not Foo")
     response = get_view_for_user(
         client=client,
         viewname="challenges:requests-detail",
@@ -86,6 +87,27 @@ def test_challenge_request_creator_viewing_and_updating(client):
     assert "Budget estimate" not in str(response.content)
 
     # Test that creator can update when in DRAFT status
+    # Build form data with all required fields
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-update",
+        reverse_kwargs={"pk": challenge_request.pk},
+        user=challenge_request.creator,
+        data={  # Minimal data to pass validation
+            "title": "Foo",
+            "short_name": challenge_request.short_name,
+            "contact_email": challenge_request.contact_email,
+            "abstract": challenge_request.abstract,
+        },
+    )
+    assert response.status_code == 302  # Redirect on successful update
+    challenge_request.refresh_from_db()
+    assert (
+        challenge_request.title == "Foo"
+    ), "Sanity check that title was updated"
+
+    # Test that creator can submit when in DRAFT status
     response = get_view_for_user(
         client=client,
         method=client.post,
@@ -102,6 +124,7 @@ def test_challenge_request_creator_viewing_and_updating(client):
     )
     challenge_request.save()
 
+    # Can no longer update the status
     response = get_view_for_user(
         client=client,
         method=client.post,
@@ -124,10 +147,33 @@ def test_challenge_request_creator_viewing_and_updating(client):
     )
     assert response.status_code == 403
 
+    # Can no longer update the title
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-update",
+        reverse_kwargs={"pk": challenge_request.pk},
+        user=challenge_request.creator,
+        data={  # Minimal data to pass validation
+            "title": "Bar",
+            "short_name": challenge_request.short_name,
+            "contact_email": challenge_request.contact_email,
+            "abstract": challenge_request.abstract,
+        },
+    )
+    assert response.status_code == 200
+    assert "Only challenge requests in draft status can be edited." in str(
+        response.context["form"].errors
+    )
+    challenge_request.refresh_from_db()
+    assert (
+        challenge_request.title == "Foo"
+    ), "Title should not have been updated due to status change"
+
 
 @pytest.mark.django_db
 def test_challenge_request_reviewer_can_access_all(client, challenge_reviewer):
-    challenge_request = ChallengeRequestFactory()
+    challenge_request = ChallengeRequestFactory(title="Not Foo")
     response = get_view_for_user(
         client=client,
         viewname="challenges:requests-detail",
@@ -140,7 +186,28 @@ def test_challenge_request_reviewer_can_access_all(client, challenge_reviewer):
     assert "Edit Budget Estimate" in str(response.content)
     assert "Budget estimate" in str(response.content)
 
-    # Test that reviewer can always update
+    # Test that reviewer can update when in DRAFT status
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-update",
+        reverse_kwargs={"pk": challenge_request.pk},
+        user=challenge_reviewer,
+        data={  # Minimal data to pass validation
+            "title": "Foo",
+            "short_name": challenge_request.short_name,
+            "contact_email": challenge_request.contact_email,
+            "abstract": challenge_request.abstract,
+        },
+    )
+    assert response.status_code == 302  # Redirect on successful update
+    challenge_request.refresh_from_db()
+    assert (
+        challenge_request.title == "Foo"
+    ), "Sanity check that title was updated"
+
+    # Test that reviewer can also submit when in DRAFT status
     response = get_view_for_user(
         client=client,
         method=client.post,
@@ -157,6 +224,7 @@ def test_challenge_request_reviewer_can_access_all(client, challenge_reviewer):
     )
     challenge_request.save()
 
+    # Can no still update the status
     response = get_view_for_user(
         client=client,
         method=client.post,
@@ -189,6 +257,29 @@ def test_challenge_request_reviewer_can_access_all(client, challenge_reviewer):
         },
     )
     assert response.status_code == 200
+
+    # Can no longer update the title
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-update",
+        reverse_kwargs={"pk": challenge_request.pk},
+        user=challenge_reviewer,
+        data={  # Minimal data to pass validation
+            "title": "Bar",
+            "short_name": challenge_request.short_name,
+            "contact_email": challenge_request.contact_email,
+            "abstract": challenge_request.abstract,
+        },
+    )
+    assert response.status_code == 200
+    assert "Only challenge requests in draft status can be edited." in str(
+        response.context["form"].errors
+    )
+    challenge_request.refresh_from_db()
+    assert (
+        challenge_request.title == "Foo"
+    ), "Title should not have been updated due to status change"
 
 
 @pytest.mark.django_db

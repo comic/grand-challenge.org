@@ -2,18 +2,18 @@ function updateExtraField(fieldName, helpText) {
     const checkboxFieldId = `id_${fieldName}`;
     const extraFieldDiv = `div_id_${fieldName}_extra`;
     const extraFieldId = `id_${fieldName}_extra`;
-    const checkbox = document.getElementById(checkboxFieldId);
-    if (checkbox.checked) {
+
+    const select = document.getElementById(checkboxFieldId);
+    if (select.value === "true") {
         document.getElementById(extraFieldDiv).style.display = "none";
         document.getElementById(extraFieldId).required = false;
     } else {
         document.getElementById(extraFieldDiv).style.display = "block";
-        document.getElementById(extraFieldId).required = true;
         document
             .getElementById(extraFieldDiv)
             .querySelector(
                 "label",
-            ).innerHTML = `Why are you not willing/able to ${helpText}? *`;
+            ).innerHTML = `Why are you not willing/able to ${helpText}?`;
     }
 }
 

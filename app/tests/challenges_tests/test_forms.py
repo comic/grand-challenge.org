@@ -1,156 +1,12 @@
-import datetime
-
 import pytest
 
 from grandchallenge.challenges.forms import (
     ChallengeRequestBudgetUpdateForm,
-    ChallengeRequestForm,
     ChallengeRequestStatusUpdateForm,
+    ChallengeRequestUpdateForm,
 )
 from grandchallenge.challenges.models import ChallengeRequest
-from tests.factories import (
-    ChallengeFactory,
-    ChallengeRequestFactory,
-    UserFactory,
-)
-
-
-@pytest.mark.django_db
-def test_challenge_request_budget_fields_required():
-    user = UserFactory()
-    required_fields = [
-        "title",
-        "short_name",
-        "start_date",
-        "end_date",
-        "abstract",
-        "contact_email",
-        "organizers",
-        "challenge_setup",
-        "data_set",
-        "submission_assessment",
-        "challenge_publication",
-        "code_availability",
-        "expected_number_of_teams",
-        "number_of_tasks",
-        "challenge_fee_agreement",
-        "algorithm_inputs",
-        "algorithm_outputs",
-        "average_size_of_test_image_in_mb",
-        "inference_time_average_minutes",
-        "algorithm_selectable_gpu_type_choices",
-        "algorithm_maximum_settable_memory_gb",
-        "phase_1_number_of_submissions_per_team",
-        "phase_2_number_of_submissions_per_team",
-        "phase_1_number_of_test_images",
-        "phase_2_number_of_test_images",
-    ]
-    data = {
-        "creator": user,
-        "title": "Test request",
-        "short_name": "example1234",
-        "start_date": datetime.date.today(),
-        "end_date": datetime.date.today() + datetime.timedelta(days=1),
-        "abstract": "test",
-        "contact_email": "test@test.com",
-        "organizers": "test",
-        "challenge_setup": "test",
-        "data_set": "test",
-        "submission_assessment": "test",
-        "challenge_publication": "test",
-        "code_availability": "test",
-        "expected_number_of_teams": 10,
-        "number_of_tasks": 1,
-        "challenge_fee_agreement": True,
-        "algorithm_inputs": "foo",
-        "algorithm_outputs": "foo",
-        "average_size_of_test_image_in_mb": 1,
-        "inference_time_average_minutes": 11,
-        "algorithm_selectable_gpu_type_choices": ["", "A10G", "T4"],
-        "algorithm_maximum_settable_memory_gb": 32,
-        "phase_1_number_of_submissions_per_team": 1,
-        "phase_2_number_of_submissions_per_team": 1,
-        "phase_1_number_of_test_images": 1,
-        "phase_2_number_of_test_images": 1,
-    }
-    form = ChallengeRequestForm(data=data, creator=user)
-    assert form.is_valid(), form.errors
-
-    for required_field in required_fields:
-        incomplete_data = data.copy()
-        incomplete_data.pop(required_field)
-
-        form = ChallengeRequestForm(data=incomplete_data, creator=user)
-        assert not form.is_valid()
-        assert required_field in form.errors
-        assert form.errors[required_field] == ["This field is required."]
-
-
-@pytest.mark.django_db
-def test_challenge_request_new_fields_filled_from_old_fields():
-    user = UserFactory()
-    data = {
-        "creator": user,
-        "title": "Test request",
-        "short_name": "example1234",
-        "start_date": datetime.date.today(),
-        "end_date": datetime.date.today() + datetime.timedelta(days=1),
-        "abstract": "test",
-        "contact_email": "test@test.com",
-        "organizers": "test",
-        "challenge_setup": "test",
-        "data_set": "test",
-        "submission_assessment": "test",
-        "challenge_publication": "test",
-        "code_availability": "test",
-        "expected_number_of_teams": 10,
-        "number_of_tasks": 2,
-        "challenge_fee_agreement": True,
-        "algorithm_inputs": "foo",
-        "algorithm_outputs": "foo",
-        "average_size_of_test_image_in_mb": 1,
-        "inference_time_average_minutes": 11,
-        "algorithm_selectable_gpu_type_choices": ["", "A10G", "T4"],
-        "algorithm_maximum_settable_memory_gb": 32,
-        "phase_1_number_of_submissions_per_team": 10,
-        "phase_2_number_of_submissions_per_team": 1,
-        "phase_1_number_of_test_images": 3,
-        "phase_2_number_of_test_images": 300,
-    }
-    form = ChallengeRequestForm(data=data, creator=user)
-
-    assert form.is_valid(), form.errors
-
-    challenge_request = form.save()
-
-    assert (
-        challenge_request.algorithm_selectable_gpu_type_choices_for_tasks
-        == [["", "A10G", "T4"], ["", "A10G", "T4"]]
-    )
-    assert (
-        challenge_request.algorithm_maximum_settable_memory_gb_for_tasks
-        == [32, 32]
-    )
-    assert challenge_request.average_size_test_case_mb_for_tasks == [1, 1]
-    assert challenge_request.inference_time_average_minutes_for_tasks == [
-        11,
-        11,
-    ]
-    assert challenge_request.task_ids == [1, 2]
-    assert challenge_request.task_id_for_phases == [1, 1, 2, 2]
-    assert challenge_request.number_of_teams_for_phases == [10, 10, 10, 10]
-    assert challenge_request.number_of_submissions_per_team_for_phases == [
-        10,
-        1,
-        10,
-        1,
-    ]
-    assert challenge_request.number_of_test_cases_for_phases == [
-        3,
-        300,
-        3,
-        300,
-    ]
+from tests.factories import ChallengeFactory, ChallengeRequestFactory
 
 
 @pytest.mark.django_db
@@ -348,3 +204,93 @@ def test_budget_update_form_invalid(invalid_data, reason_invalid):
     )
 
     assert not form.is_valid(), reason_invalid
+
+
+@pytest.mark.django_db
+def test_challenge_request_challenge_setup():
+    challenge_request = ChallengeRequestFactory(challenge_setup="")
+
+    assert not challenge_request.challenge_setup
+
+    # Not updating the placeholder should not override
+    form = ChallengeRequestUpdateForm(instance=challenge_request)
+    assert form.initial["challenge_setup"]  # Has an initial value
+
+    # Note: browsers typically replace newlines with \r\n, so we need to simulate that here to properly test the form validation
+    browser_submitted_placeholder = form.initial["challenge_setup"].replace(
+        "\n", "\r\n"
+    )
+
+    form = ChallengeRequestUpdateForm(
+        instance=challenge_request,
+        data={
+            "title": challenge_request.title,
+            "short_name": challenge_request.short_name,
+            "contact_email": challenge_request.contact_email,
+            "abstract": challenge_request.abstract,
+            "challenge_setup": browser_submitted_placeholder,
+        },
+    )
+    assert form.is_valid(), form.errors
+
+    form.save()
+    challenge_request.refresh_from_db()
+    assert not challenge_request.challenge_setup  # Is not saved
+
+    # If provided, the challenge setup SHOULD be updated
+    form = ChallengeRequestUpdateForm(
+        instance=challenge_request,
+        data={
+            "title": challenge_request.title,
+            "short_name": challenge_request.short_name,
+            "contact_email": challenge_request.contact_email,
+            "abstract": challenge_request.abstract,
+            "challenge_setup": "New challenge setup",
+        },
+    )
+    assert form.is_valid(), form.errors
+    form.save()
+    challenge_request.refresh_from_db()
+    assert challenge_request.challenge_setup == "New challenge setup"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "status, expected_error",
+    (
+        (ChallengeRequest.ChallengeRequestStatusChoices.DRAFT, None),
+        (
+            ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+            "Only challenge requests in draft status can be edited.",
+        ),
+        (
+            ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
+            "Only challenge requests in draft status can be edited.",
+        ),
+        (
+            ChallengeRequest.ChallengeRequestStatusChoices.REJECTED,
+            "Only challenge requests in draft status can be edited.",
+        ),
+    ),
+)
+def test_challenge_request_update_form_validity_by_status(
+    status, expected_error
+):
+    challenge_request = ChallengeRequestFactory(status=status)
+
+    form = ChallengeRequestUpdateForm(
+        instance=challenge_request,
+        data={
+            "title": challenge_request.title,
+            "short_name": challenge_request.short_name,
+            "contact_email": challenge_request.contact_email,
+            "abstract": challenge_request.abstract,
+            "challenge_setup": challenge_request.challenge_setup,
+        },
+    )
+
+    if expected_error is None:
+        assert form.is_valid(), form.errors
+    else:
+        assert not form.is_valid()
+        assert expected_error in str(form.non_field_errors())

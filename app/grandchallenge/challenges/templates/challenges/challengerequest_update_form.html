@@ -11,19 +11,13 @@
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{% url 'challenges:list' %}">Challenges</a></li>
         <li class="breadcrumb-item"><a href="{% url 'challenges:requests-list' %}">Your Challenge Requests</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Create</li>
+        <li class="breadcrumb-item active" aria-current="page"><a href="{% url 'challenges:requests-detail' pk=object.pk %}">{{ object.title }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Update</li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Request a Challenge</h2>
-    <p>
-        Thank you for considering to host your challenge on our platform!
-    </p>
-
-    <p>
-        Please use this form to create a draft challenge request. You can update and save the draft before submitting it.
-    </p>
+    <h2>Update Challenge Request - {{ object.short_name }}</h2>
 
     <p>
         Your answers in the request will help our team of reviewers decide whether and in what way we can support your challenge.
@@ -38,5 +32,6 @@
 
 {% block script %}
     {{ block.super }}
+    <script type="module" src="{% static "js/challenges/challenge_request_dynamic_fields.mjs" %}"></script>
     <script type="text/javascript" src="{% static "js/unsavedform.js" %}"></script>
 {% endblock %}

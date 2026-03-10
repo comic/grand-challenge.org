@@ -37,6 +37,7 @@ from pictures.models import PictureField
 
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.challenges.emails import (
+    send_challenge_request_processed_update_email,
     send_challenge_requested_email_to_requester,
     send_challenge_requested_email_to_reviewers,
     send_email_percent_budget_consumed_alert,
@@ -965,6 +966,19 @@ class ChallengeRequestStatusChoices(models.TextChoices):
     DRAFT = "DRFT", _("Draft")
 
 
+budget_field_names = (
+    "task_ids",
+    "algorithm_selectable_gpu_type_choices_for_tasks",
+    "algorithm_maximum_settable_memory_gb_for_tasks",
+    "average_size_test_case_mb_for_tasks",
+    "inference_time_average_minutes_for_tasks",
+    "task_id_for_phases",
+    "number_of_teams_for_phases",
+    "number_of_submissions_per_team_for_phases",
+    "number_of_test_cases_for_phases",
+)
+
+
 class ChallengeRequest(UUIDModel, ChallengeBase):
 
     ChallengeRequestStatusChoices = ChallengeRequestStatusChoices
@@ -980,26 +994,34 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     )
     abstract = models.TextField(
         help_text="Provide a summary of the challenge purpose.",
+        blank=True,
     )
     contact_email = models.EmailField(
-        help_text="Please provide an email that our team can use to contact "
-        "you should there be any questions about your request.",
+        help_text=(
+            "The email address that potential participants can use to contact you with questions about the challenge. "
+            "This email address will be visible on the challenge website, so please provide an address that you are comfortable sharing publicly."
+        ),
     )
     start_date = models.DateField(
         help_text="Estimated start date for this challenge.",
+        null=True,
+        blank=True,
     )
     end_date = models.DateField(
         help_text="Estimated end date for this challenge. Please note that we aim to "
         "keep challenges open for submission for at least 3 years after "
         "the official end date if possible.",
+        null=True,
+        blank=True,
     )
     organizers = models.TextField(
         help_text="Provide information about the organizing team (names and affiliations)",
+        blank=True,
     )
     affiliated_event = models.CharField(
-        blank=True,
         max_length=50,
         help_text="Is this challenge part of a workshop or conference? If so, which one?",
+        blank=True,
     )
     structured_challenge_submission_form = models.FileField(
         null=True,
@@ -1013,21 +1035,47 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         max_length=255,
     )
     challenge_setup = models.TextField(
-        help_text="Describe the challenge set-up."
+        help_text=(
+            "Describe the challenge setup from a technical standpoint. How many tasks "
+            "and <a href='https://www.grand-challenge.org/documentation/"
+            "multiple-phases-multiple-leaderboards/' target='_blank'>phases</a>"
+            " does the challenge have? Which <a href='https://grand-challenge.org/documentation/runtime-environment/' "
+            "target='_blank'>runtime environment</a> do you envision for the challenge?"
+        ),
+        blank=True,
     )
     data_set = models.TextField(
-        help_text="Describe the training and test datasets you are planning to use."
+        help_text=(
+            "Please describe the training and test datasets you are planning to "
+            "use. <br>In order to evaluate the submitted algorithms, the test dataset will need to be "
+            "uploaded to Grand Challenge (read more about that <a href='https://grand-challenge.org/documentation/"
+            "data-storage/' target='_blank'>here</a>)."
+        ),
+        blank=True,
     )
     submission_assessment = models.TextField(
         help_text="Define the metrics you will use to assess and rank "
-        "participants’ submissions."
+        "participants’ submissions.",
+        blank=True,
     )
     challenge_publication = models.TextField(
         help_text="Please indicate if you plan to coordinate a publication "
-        "of the challenge results."
+        "of the challenge results.",
+        blank=True,
     )
     code_availability = models.TextField(
-        help_text="Will the participants’ code be accessible after the challenge?"
+        help_text="Will the participants’ code be accessible after "
+        "the challenge? <br>We strongly encourage open science. Algorithms "
+        "submitted as challenge solutions will therefore be stored on Grand Challenge and "
+        "we encourage organizers to incentivize an open source policy, "
+        "for example by asking participants to publish their Github repo "
+        "under an <a href='https://docs.github.com/en/repositories/managing-"
+        "your-repositorys-settings-and-features/customizing-your-repository/"
+        "licensing-a-repository' target='_blank'> open source license</a> "
+        "(e.g., Apache 2.0, MIT) and <a href='https://grand-challenge.org/"
+        "documentation/linking-a-github-repository-to-your-algorithm/'>"
+        "link it to their algorithm</a> on Grand Challenge.",
+        blank=True,
     )
     number_of_teams_for_phases = models.JSONField(
         help_text="Number of teams for each phase",
@@ -1180,15 +1228,24 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ],
     )
     data_license = models.BooleanField(
-        default=False,
+        default=None,
+        null=True,
+        help_text=(
+            "In the spirit of open science, we ask that the <b>public training "
+            "data</b> are released under a "
+            "<a href='https://creativecommons.org/licenses/' target='_blank'>"
+            "CC-BY license</a>. Note that this does not apply to the secret test "
+            "data used to evaluate algorithm submissions. Read more about this <a href='"
+            "https://grand-challenge.org/documentation/data-storage/'>here</a>."
+        ),
     )
     data_license_extra = models.CharField(
         max_length=2000,
         blank=True,
     )
     comments = models.TextField(
-        blank=True,
         help_text="If you have any comments, remarks or questions, please leave them here.",
+        blank=True,
     )
     algorithm_inputs = models.TextField(
         help_text="What are the inputs to the algorithms submitted as solutions to "
@@ -1197,6 +1254,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         "what the input(s) reflect(s), for example, "
         "MRI scan of the brain, or chest X-ray. Grand Challenge only "
         "supports .mha and .tiff image files and json files for algorithms.",
+        blank=True,
     )
     algorithm_outputs = models.TextField(
         help_text="What are the outputs to the algorithms submitted as solutions to "
@@ -1204,10 +1262,11 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         "Please describe in detail what the output(s) "
         "reflect(s), for example, probability of a positive PCR result, or "
         "stroke lesion segmentation. ",
+        blank=True,
     )
     structured_challenge_submission_doi = IdentifierField(
-        blank=True,
         help_text="The DOI, e.g., 10.5281/zenodo.6362337, or the arXiv id, e.g., 2006.12449 of your challenge submission PDF.",
+        blank=True,
     )
     challenge_fee_agreement = models.BooleanField(
         blank=False,
@@ -1237,11 +1296,147 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     def get_absolute_url(self):
         return reverse("challenges:requests-detail", kwargs={"pk": self.pk})
 
+    def clean(self):
+        super().clean()
+
+        if self.status == self.ChallengeRequestStatusChoices.PENDING:
+            self.clean_for_submission()
+        elif self.status == self.ChallengeRequestStatusChoices.ACCEPTED:
+            self.clean_for_submission()
+            self.clean_for_acceptance()
+
+    @property
+    def can_be_submitted(self):
+        try:
+            self.clean_for_submission()
+        except ValidationError:
+            return False
+        else:
+            return True
+
+    def clean_for_submission(self):
+        errors = []
+
+        for clean_func in [
+            self.clean_submission_required_fields,
+            self.clean_submission_start_date,
+            self.clean_submission_challenge_details,
+            self.clean_data_license_extra,
+            self.clean_challenge_fee_agreement,
+        ]:
+            try:
+                clean_func()
+            except ValidationError as e:
+                errors.extend(e)
+
+        if errors:
+            raise ValidationError(errors)
+
+    def clean_data_license_extra(self):
+        if (
+            not self.structured_challenge_submission_doi
+            and not self.structured_challenge_submission_form
+        ):
+            if self.data_license is False and not self.data_license_extra:
+                raise ValidationError(
+                    "You need to explain why you are not willing/able to use a CC-BY license.",
+                )
+
+    def clean_challenge_fee_agreement(self):
+        if not self.challenge_fee_agreement:
+            raise ValidationError(
+                "You need to agree to the challenge pricing policy to submit a challenge request.",
+            )
+
+    def clean_submission_required_fields(self):
+        missing_fields = []
+        required_fields = [
+            "title",
+            "short_name",
+            "contact_email",
+            "abstract",
+            "start_date",
+            "end_date",
+            "organizers",
+            "challenge_setup",
+        ]
+        for field_name in required_fields:
+            if not getattr(self, field_name):
+                missing_fields.append(self._meta.get_field(field_name))
+        if missing_fields:
+            raise ValidationError(
+                "The following fields are required to submit a challenge request: "
+                + ", ".join(
+                    field.verbose_name.title() for field in missing_fields
+                ),
+            )
+
+    def clean_submission_start_date(self):
+        if (
+            self.start_date
+            and self.end_date
+            and self.start_date >= self.end_date
+        ):
+            raise ValidationError(
+                "The start date needs to be before the end date.",
+            )
+
+    def clean_submission_challenge_details(self):
+        if (
+            not self.structured_challenge_submission_doi
+            and not self.structured_challenge_submission_form
+        ):
+            missing_fields = []
+            required_fields = [
+                "data_set",
+                "submission_assessment",
+                "challenge_publication",
+                "code_availability",
+                "algorithm_inputs",
+                "algorithm_outputs",
+            ]
+            for field_name in required_fields:
+                if not getattr(self, field_name):
+                    missing_fields.append(self._meta.get_field(field_name))
+
+            if self.data_license is None:
+                missing_fields.append(self._meta.get_field("data_license"))
+
+            if missing_fields:
+                raise ValidationError(
+                    "Either a structured challenge submission form needs to be uploaded or the following fields are required to submit a challenge request: "
+                    + ", ".join(
+                        field.verbose_name.title() for field in missing_fields
+                    ),
+                )
+
+    def clean_for_acceptance(self):
+        missing_fields = []
+
+        for field_name in budget_field_names:
+            if not getattr(self, field_name):
+                missing_fields.append(self._meta.get_field(field_name))
+
+        if missing_fields:
+            raise ValidationError(
+                "The following fields are required to accept a challenge request: "
+                + ", ".join(
+                    field.verbose_name.title() for field in missing_fields
+                ),
+            )
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
         submitting = (
             self._orig_status == self.ChallengeRequestStatusChoices.DRAFT
-            and self.status != self.ChallengeRequestStatusChoices.DRAFT
+            and self.status == self.ChallengeRequestStatusChoices.PENDING
+        )
+        processing = (
+            self._orig_status == self.ChallengeRequestStatusChoices.PENDING
+            and (
+                self.status == self.ChallengeRequestStatusChoices.ACCEPTED
+                or self.status == self.ChallengeRequestStatusChoices.REJECTED
+            )
         )
         if submitting:
             self.submitted_on = now()
@@ -1250,9 +1445,19 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
         if adding:
             self.assign_permissions()
-        elif submitting:
+
+        if submitting:
             send_challenge_requested_email_to_reviewers(self)
             send_challenge_requested_email_to_requester(self)
+        elif processing:
+            if self.status == self.ChallengeRequestStatusChoices.ACCEPTED:
+                challenge = self.create_challenge()
+            else:
+                challenge = None
+            send_challenge_request_processed_update_email(
+                challengerequest=self,
+                challenge=challenge,
+            )
 
     def assign_permissions(self):
         assign_perm("view_challengerequest", self.creator, self)
@@ -1291,17 +1496,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @property
     def budget_fields(self):
         budget_fields = {}
-        for field_name in (
-            "task_ids",
-            "algorithm_selectable_gpu_type_choices_for_tasks",
-            "algorithm_maximum_settable_memory_gb_for_tasks",
-            "average_size_test_case_mb_for_tasks",
-            "inference_time_average_minutes_for_tasks",
-            "task_id_for_phases",
-            "number_of_teams_for_phases",
-            "number_of_submissions_per_team_for_phases",
-            "number_of_test_cases_for_phases",
-        ):
+        for field_name in budget_field_names:
             field = self._meta.get_field(field_name)
             budget_fields[field.verbose_name] = field.value_to_string(self)
         return budget_fields

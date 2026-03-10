@@ -168,6 +168,7 @@ ul.socialaccount_providers > li {
 a[aria-expanded="true"] .fa-chevron-right {
     display: none;
 }
+
 a[aria-expanded="false"] .fa-chevron-down {
     display: none;
 }
@@ -176,9 +177,16 @@ a[aria-expanded="false"] .fa-chevron-down {
 .htmx-indicator {
     display: none;
 }
+
 .htmx-request .htmx-indicator {
     display: inline-block;
 }
+
 .htmx-request.htmx-indicator {
     display: inline-block;
+}
+
+/* Fixes a large whitespace for fieldset legends */
+fieldset > legend {
+    width: inherit;
 }

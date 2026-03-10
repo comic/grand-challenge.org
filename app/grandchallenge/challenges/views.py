@@ -1,3 +1,5 @@
+from functools import cached_property
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import (
@@ -21,13 +23,13 @@ from guardian.mixins import LoginRequiredMixin
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
-from grandchallenge.challenges.emails import send_challenge_status_update_email
 from grandchallenge.challenges.filters import ChallengeFilter
 from grandchallenge.challenges.forms import (
     ChallengeRequestBudgetCalculatorForm,
     ChallengeRequestBudgetUpdateForm,
     ChallengeRequestForm,
     ChallengeRequestStatusUpdateForm,
+    ChallengeRequestUpdateForm,
     ChallengeUpdateForm,
 )
 from grandchallenge.challenges.models import (
@@ -151,25 +153,12 @@ class ChallengeRequestCreate(
 ):
     model = ChallengeRequest
     form_class = ChallengeRequestForm
-    # TODO-challenge-request-draft, update success message
-    # success_message = "A draft of your challenge request has been created!"
-    success_message = "Your challenge request has been created!"
+    success_message = "A draft of your challenge request has been created!"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update({"creator": self.request.user})
         return kwargs
-
-    def form_valid(self, form):
-        result = super().form_valid(form)
-
-        # TODO-challenge-request-draft, remove this auto submit
-        self.object.status = (
-            ChallengeRequest.ChallengeRequestStatusChoices.PENDING
-        )
-        self.object.save()
-
-        return result
 
 
 class ChallengeRequestList(
@@ -189,41 +178,78 @@ class ChallengeRequestDetail(
     permission_required = "view_challengerequest"
     raise_exception = True
     login_url = reverse_lazy("account_login")
-    detail_view_fields = (
-        "title",
-        "short_name",
-        "start_date",
-        "end_date",
-        "organizers",
-        "abstract",
-        "affiliated_event",
-        "task_types",
-        "modalities",
-        "structures",
-        "challenge_setup",
-        "data_set",
-        "submission_assessment",
-        "challenge_publication",
-        "code_availability",
-        "algorithm_inputs",
-        "algorithm_outputs",
-    )
+
+    @cached_property
+    def detail_view_fields(self):
+        result = [
+            "title",
+            "short_name",
+            "contact_email",
+            "abstract",
+            "start_date",
+            "end_date",
+            "organizers",
+            "challenge_setup",
+            "challenge_fee_agreement",
+        ]
+        for field_name in (
+            "affiliated_event",
+            "data_set",
+            "submission_assessment",
+            "challenge_publication",
+            "code_availability",
+            "algorithm_inputs",
+            "algorithm_outputs",
+        ):
+            if getattr(self.object, field_name):
+                result.append(field_name)
+
+        for field_name in (
+            "task_types",
+            "structures",
+            "modalities",
+        ):
+            if getattr(self.object, field_name).exists():
+                result.append(field_name)
+
+        return result
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data()
-        fields = {
-            field.verbose_name: field.value_to_string(self.object)
-            for field in self.object._meta.fields
-            if field.name in self.detail_view_fields
+        fields = {}
+        label_overrides = {
+            "challenge_setup": "Challenge technical setup",
+            "short_name": "Acronym",
+            "challenge_fee_agreement": "Pricing Policy Agreement",
         }
+        for field_name in self.detail_view_fields:
+            field = self.object._meta.get_field(field_name)
+            label = label_overrides.get(field_name, field.verbose_name)
+            fields[label] = field.value_to_string(self.object)
+
         context.update(
             {
                 "fields": fields,
+                # Information used by the budget table for the reviewers:
                 "num_support_years": settings.CHALLENGE_NUM_SUPPORT_YEARS,
                 "capacity_reservation_pack_size_in_euro": settings.CHALLENGE_CAPACITY_RESERVATION_PACK_SIZE_IN_EURO,
             }
         )
         return context
+
+
+class ChallengeRequestUpdate(
+    LoginRequiredMixin,
+    ObjectPermissionRequiredMixin,
+    SuccessMessageMixin,
+    UpdateView,
+):
+    model = ChallengeRequest
+    permission_required = "change_challengerequest"
+    raise_exception = True
+    form_class = ChallengeRequestUpdateForm
+    login_url = reverse_lazy("account_login")
+    template_name = "challenges/challengerequest_update_form.html"
 
 
 class ChallengeRequestStatusUpdate(
@@ -238,19 +264,22 @@ class ChallengeRequestStatusUpdate(
 
     def form_valid(self, form):
         super().form_valid(form)
+        # Handing of the state change is done in the model's save method,
+        # so we need to only refresh the page to get the updated state
 
-        if (
-            form.instance.status
-            == form.instance.ChallengeRequestStatusChoices.ACCEPTED
-            and form.instance._orig_status
-            != form.instance.ChallengeRequestStatusChoices.ACCEPTED
-        ):
-            challenge = form.instance.create_challenge()
-        else:
-            challenge = None
-        send_challenge_status_update_email(
-            challengerequest=form.instance, challenge=challenge
-        )
+        response = HttpResponse()
+        response["HX-Refresh"] = "true"
+        return response
+
+    def form_invalid(self, form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                if field == "__all__":
+                    messages.error(self.request, error)
+                else:
+                    messages.error(
+                        self.request, f"{form.fields[field].label}: {error}"
+                    )
 
         response = HttpResponse()
         response["HX-Refresh"] = "true"

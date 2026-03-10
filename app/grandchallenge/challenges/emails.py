@@ -60,7 +60,9 @@ def send_challenge_requested_email_to_requester(challengerequest):
     )
 
 
-def send_challenge_status_update_email(challengerequest, challenge=None):
+def send_challenge_request_processed_update_email(
+    challengerequest, challenge=None
+):
     message = ""
     context = {}
     if (
