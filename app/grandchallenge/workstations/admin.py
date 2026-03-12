@@ -57,7 +57,6 @@ class SessionAdmin(admin.ModelAdmin):
         "websocket_port",
         "region",
         "ping_times",
-        "auth_token",
         "extra_env_vars",
     ]
     search_fields = [
