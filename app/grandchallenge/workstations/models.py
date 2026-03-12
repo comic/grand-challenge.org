@@ -18,6 +18,7 @@ from django.db.transaction import on_commit
 from django.dispatch import receiver
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
+from django_deprecate_fields import deprecate_field
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from knox.models import AuthToken
@@ -443,8 +444,11 @@ class Session(FieldChangeMixin, UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    auth_token = models.ForeignKey(
-        AuthToken, null=True, blank=True, on_delete=models.SET_NULL
+    auth_token = deprecate_field(
+        models.ForeignKey(
+            AuthToken, null=True, blank=True, on_delete=models.SET_NULL
+        ),
+        raise_on_access=True,
     )
     workstation_image = models.ForeignKey(
         WorkstationImage, on_delete=models.PROTECT
@@ -522,25 +526,6 @@ class Session(FieldChangeMixin, UUIDModel):
                 ),
             }
         )
-
-        if (
-            self.creator
-            and settings.COMPONENTS_SERVICE_INCLUDE_CREATOR_AUTH_TOKEN
-        ):
-            if self.auth_token:
-                self.auth_token.delete()
-
-            duration_limit = timedelta(
-                seconds=settings.WORKSTATIONS_SESSION_DURATION_LIMIT
-            ) + timedelta(minutes=settings.WORKSTATIONS_GRACE_MINUTES)
-            auth_token, token = AuthToken.objects.create(
-                user=self.creator, expiry=duration_limit
-            )
-
-            self.auth_token = auth_token
-            self.save()
-
-            env.update({"GRAND_CHALLENGE_AUTHORIZATION": f"Bearer {token}"})
 
         return env
 
