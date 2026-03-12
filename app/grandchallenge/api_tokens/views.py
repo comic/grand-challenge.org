@@ -15,9 +15,7 @@ class APITokenList(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        return qs.filter(user=self.request.user).prefetch_related(
-            "session_set"
-        )
+        return qs.filter(user=self.request.user)
 
 
 class APITokenCreate(LoginRequiredMixin, FormView):

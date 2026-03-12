@@ -38,7 +38,6 @@
                 <th>Token</th>
                 <th>Created</th>
                 <th>Expires</th>
-                <th>Description</th>
                 <th>Delete</th>
             </tr>
             </thead>
@@ -55,11 +54,6 @@
                         {% else %}
                             {{ object.expiry }}
                         {% endif %}
-                    </td>
-                    <td>
-                        {% for session in object.session_set.all %}
-                            Automatically created for <a href="{{ session.get_absolute_url }}">{{ session }}</a>
-                        {% endfor %}
                     </td>
                     <td>
                         <a class="btn btn-sm btn-danger"
