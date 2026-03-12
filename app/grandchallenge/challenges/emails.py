@@ -229,7 +229,7 @@ def send_onboarding_task_due_reminder(challenge, task_info):
 def send_challenge_requests_draft_reminder(*, challenge_request):
 
     subject = format_html(
-        "[{short_name}] Reminder: Unfinished Challenge Request",
+        "[{short_name}] Reminder: Challenge Request not yet submitted",
         short_name=challenge_request.short_name,
     )
 
