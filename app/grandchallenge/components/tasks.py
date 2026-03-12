@@ -1144,9 +1144,6 @@ def update_service(*, pk: uuid.UUID, app_label: str, model_name: str):
 
         orchestrator.stop(task_arn=service.task_arn)
 
-        if service.auth_token:
-            service.auth_token.delete()
-
         service.status = service.FAILED
         service.full_clean()
         service.save()
@@ -1180,9 +1177,6 @@ def stop_service(*, pk: uuid.UUID, app_label: str, model_name: str):
     service.status = service.STOPPED
     service.full_clean()
     service.save()
-
-    if service.auth_token:
-        service.auth_token.delete()
 
 
 @acks_late_micro_short_task

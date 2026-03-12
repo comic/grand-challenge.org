@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 import pytest
 from django.conf import settings
 from django.core import mail
@@ -12,44 +10,13 @@ from tests.workstations_tests.factories import FeedbackFactory
 
 
 @pytest.mark.django_db
-def test_session_environ(settings):
-    settings.COMPONENTS_SERVICE_INCLUDE_CREATOR_AUTH_TOKEN = True
-
+def test_session_environ():
     s = SessionFactory()
     env = s.environment
 
     assert env["GRAND_CHALLENGE_API_ROOT"] == "https://testserver/api/v1/"
-    assert "Bearer " in env["GRAND_CHALLENGE_AUTHORIZATION"]
     assert env["WORKSTATION_SESSION_ID"] == str(s.pk)
     assert "WORKSTATION_SENTRY_DSN" in env
-
-
-@pytest.mark.django_db
-def test_session_auth_token(settings):
-    settings.COMPONENTS_SERVICE_INCLUDE_CREATOR_AUTH_TOKEN = True
-
-    s = SessionFactory()
-
-    # Calling environment should generate an auth token for the creator
-    assert s.auth_token is None
-
-    _ = s.environment
-
-    expected_duration = (
-        s.created
-        + timedelta(minutes=settings.WORKSTATIONS_GRACE_MINUTES)
-        + timedelta(seconds=settings.WORKSTATIONS_SESSION_DURATION_LIMIT)
-    )
-
-    assert s.auth_token.user == s.creator
-    assert abs(s.auth_token.expiry - expected_duration) < timedelta(seconds=10)
-
-    # old tokens should be deleted
-    old_pk = s.auth_token.pk
-
-    _ = s.environment
-
-    assert s.auth_token.pk != old_pk
 
 
 @pytest.mark.django_db

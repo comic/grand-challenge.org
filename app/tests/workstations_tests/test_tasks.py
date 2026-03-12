@@ -379,22 +379,3 @@ def test_session_cleanup(django_capture_on_commit_callbacks):
         "grandchallenge.components.tasks.stop_service"
         f"(app_label='workstations', model_name='session', pk={session_to_stop.pk!r})>"
     )
-
-
-@pytest.mark.django_db
-def test_related_auth_token_deleted_when_stopped(settings):
-    settings.COMPONENTS_SERVICE_INCLUDE_CREATOR_AUTH_TOKEN = True
-
-    session = SessionFactory()
-
-    _ = session.environment  # creates the auth token
-
-    session.refresh_from_db()
-
-    assert session.auth_token
-
-    stop_service(**session.task_kwargs)
-
-    session.refresh_from_db()
-
-    assert not session.auth_token
