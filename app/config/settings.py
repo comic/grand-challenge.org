@@ -1065,6 +1065,9 @@ CHALLENGES_DEFAULT_ACTIVE_MONTHS = 12
 CHALLENGE_ONBOARDING_TASKS_OVERDUE_SOON_CUTOFF = timedelta(days=7)
 CHALLENGE_INVOICE_OVERDUE_CUTOFF = timedelta(weeks=4)
 
+CHALLENGE_REQUEST_AGE_START_REMINDER_CUTOFF = timedelta(days=14)
+CHALLENGE_REQUEST_AGE_END_REMINDER_CUTOFF = timedelta(days=31)
+
 FORGE_DISABLE_GPUS = False
 
 ###############################################################################
@@ -1201,6 +1204,10 @@ CELERY_BEAT_SCHEDULE = {
     "send_challenge_invoice_overdue_reminder_emails": {
         "task": "grandchallenge.invoices.tasks.send_challenge_invoice_overdue_reminder_emails",
         "schedule": crontab(day_of_month=1, hour=6, minute=0),
+    },
+    "send_challenge_requests_draft_reminder": {
+        "task": "grandchallenge.challenges.tasks.send_challenge_requests_draft_reminder",
+        "schedule": crontab(day_of_month=[1, 14], hour=6, minute=0),
     },
     "update_challenge_storage_size": {
         "task": "grandchallenge.challenges.tasks.update_challenge_storage_size",

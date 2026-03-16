@@ -4,8 +4,13 @@ import pytest
 from django.core import mail
 from django.utils.timezone import datetime, timedelta
 
-from grandchallenge.challenges.models import Challenge, OnboardingTask
+from grandchallenge.challenges.models import (
+    Challenge,
+    ChallengeRequest,
+    OnboardingTask,
+)
 from grandchallenge.challenges.tasks import (
+    send_challenge_request_draft_reminder_emails,
     send_onboarding_task_reminder_emails,
     update_challenge_compute_costs,
     update_challenge_results_cache,
@@ -307,3 +312,135 @@ def test_challenge_onboarding_task_due_emails(
         assert expected_subject in organizer_mail.subject
     else:
         assert not any(challenge_admin.email in m.to for m in mail.outbox)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "description, created_offsets, expected_recipients_indices",
+    [
+        (
+            "single valid request",
+            [
+                (
+                    "Target",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(days=15),
+                ),
+            ],
+            [0],  # 1 email
+        ),
+        (
+            "too young request",
+            [
+                (
+                    "Too young",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(hours=1),
+                ),
+            ],
+            [],  # 0 emails
+        ),
+        (
+            "too old request",
+            [
+                (
+                    "Too old",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(days=42),
+                ),
+            ],
+            [],  # 0 emails
+        ),
+        (
+            "wrong status request",
+            [
+                (
+                    "Wrong status",
+                    ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+                    timedelta(days=15),
+                ),
+            ],
+            [],  # 0 emails
+        ),
+        (
+            "multiple valid requests",
+            [
+                (
+                    "Target 1",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(days=15),
+                ),
+                (
+                    "Target 2",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(days=30),
+                ),
+            ],
+            [0, 1],  # 2 emails
+        ),
+        (
+            "mix of valid and invalid",
+            [
+                (
+                    "Valid",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(days=15),
+                ),
+                (
+                    "Too young",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(hours=1),
+                ),
+                (
+                    "Too old",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(days=40),
+                ),
+                (
+                    "Wrong status",
+                    ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
+                    timedelta(days=15),
+                ),
+            ],
+            [0],  # 1 email
+        ),
+    ],
+)
+def test_challenge_request_draft_reminder_emails(
+    mocker, description, created_offsets, expected_recipients_indices
+):
+    mocker.patch(
+        "grandchallenge.challenges.tasks.now",
+        return_value=_fixed_now,
+    )
+
+    requests = []
+    for title, status, offset in created_offsets:
+        challenge_request = ChallengeRequestFactory(
+            title=title,
+            status=status,
+        )
+        challenge_request.created = _fixed_now - offset
+        challenge_request.save()
+        requests.append(challenge_request)
+
+    mail.outbox.clear()
+
+    send_challenge_request_draft_reminder_emails()
+
+    expected_recipients = [
+        requests[i].creator.email for i in expected_recipients_indices
+    ]
+    assert len(mail.outbox) == len(expected_recipients), description
+
+    actual_recipients = {r for m in mail.outbox for r in m.recipients()}
+    assert actual_recipients == set(expected_recipients)
+
+    for i in expected_recipients_indices:
+        user_emails = [
+            m
+            for m in mail.outbox
+            if requests[i].creator.email in m.recipients()
+        ]
+        assert len(user_emails) == 1
+        assert requests[i].title in user_emails[0].body

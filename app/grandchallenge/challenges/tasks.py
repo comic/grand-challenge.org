@@ -3,10 +3,11 @@ import random
 import time
 from typing import NamedTuple
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.db.models import Count, Max, Min, Q
-from django.utils.timezone import datetime
+from django.utils.timezone import datetime, now
 from psycopg.errors import LockNotAvailable
 
 from grandchallenge.challenges.costs import (
@@ -15,11 +16,16 @@ from grandchallenge.challenges.costs import (
     annotate_storage_size,
 )
 from grandchallenge.challenges.emails import (
+    send_challenge_requests_draft_reminder,
     send_onboarding_task_due_reminder,
     send_onboarding_task_overdue_alert,
     send_onboarding_task_support_overdue_alert,
 )
-from grandchallenge.challenges.models import Challenge, OnboardingTask
+from grandchallenge.challenges.models import (
+    Challenge,
+    ChallengeRequest,
+    OnboardingTask,
+)
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
@@ -230,3 +236,16 @@ def send_onboarding_task_reminder_emails():
             send_onboarding_task_support_overdue_alert(
                 challenge=c, task_info=task_info
             )
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def send_challenge_request_draft_reminder_emails():
+    for c in ChallengeRequest.objects.filter(
+        status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+        created__lte=now()
+        - settings.CHALLENGE_REQUEST_AGE_START_REMINDER_CUTOFF,
+        created__gte=now()
+        - settings.CHALLENGE_REQUEST_AGE_END_REMINDER_CUTOFF,
+    ):
+        send_challenge_requests_draft_reminder(challenge_request=c)
