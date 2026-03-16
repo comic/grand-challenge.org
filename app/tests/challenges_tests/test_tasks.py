@@ -324,7 +324,7 @@ def test_challenge_onboarding_task_due_emails(
                 (
                     "Target",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=8),
+                    timedelta(days=15),
                 ),
             ],
             [0],  # 1 email
@@ -346,7 +346,7 @@ def test_challenge_onboarding_task_due_emails(
                 (
                     "Too old",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=15),
+                    timedelta(days=42),
                 ),
             ],
             [],  # 0 emails
@@ -357,7 +357,7 @@ def test_challenge_onboarding_task_due_emails(
                 (
                     "Wrong status",
                     ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
-                    timedelta(days=8),
+                    timedelta(days=15),
                 ),
             ],
             [],  # 0 emails
@@ -368,12 +368,12 @@ def test_challenge_onboarding_task_due_emails(
                 (
                     "Target 1",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=8),
+                    timedelta(days=15),
                 ),
                 (
                     "Target 2",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=10),
+                    timedelta(days=30),
                 ),
             ],
             [0, 1],  # 2 emails
@@ -384,7 +384,7 @@ def test_challenge_onboarding_task_due_emails(
                 (
                     "Valid",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=8),
+                    timedelta(days=15),
                 ),
                 (
                     "Too young",
@@ -394,12 +394,12 @@ def test_challenge_onboarding_task_due_emails(
                 (
                     "Too old",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=31),
+                    timedelta(days=40),
                 ),
                 (
                     "Wrong status",
                     ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
-                    timedelta(days=8),
+                    timedelta(days=15),
                 ),
             ],
             [0],  # 1 email
