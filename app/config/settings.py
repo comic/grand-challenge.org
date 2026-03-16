@@ -1210,7 +1210,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "send_challenge_requests_draft_reminder": {
         "task": "grandchallenge.challenges.tasks.send_challenge_requests_draft_reminder",
-        "schedule": crontab(day_of_week="mon", hour=6, minute=0),
+        "schedule": crontab(day_of_month=[1, 14], hour=6, minute=0),
     },
     "update_challenge_storage_size": {
         "task": "grandchallenge.challenges.tasks.update_challenge_storage_size",
