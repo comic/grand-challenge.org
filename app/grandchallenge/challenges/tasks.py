@@ -243,6 +243,9 @@ def send_onboarding_task_reminder_emails():
 def send_challenge_request_draft_reminder_emails():
     for c in ChallengeRequest.objects.filter(
         status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-        created__lte=now() - settings.CHALLENGE_REQUEST_REMINDER_CUTOFF,
+        created__lte=now()
+        - settings.CHALLENGE_REQUEST_AGE_START_REMINDER_CUTOFF,
+        created__gte=now()
+        - settings.CHALLENGE_REQUEST_AGE_END_REMINDER_CUTOFF,
     ):
         send_challenge_requests_draft_reminder(challenge_request=c)

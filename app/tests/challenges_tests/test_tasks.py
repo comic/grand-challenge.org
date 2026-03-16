@@ -315,51 +315,132 @@ def test_challenge_onboarding_task_due_emails(
 
 
 @pytest.mark.django_db
-def test_challenge_request_draft_reminder_emails(mocker, settings):
+@pytest.mark.parametrize(
+    "description, created_offsets, expected_recipients_indices",
+    [
+        (
+            "single valid request",
+            [
+                (
+                    "Target",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(days=8),
+                ),
+            ],
+            [0],  # 1 email
+        ),
+        (
+            "too young request",
+            [
+                (
+                    "Too young",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(hours=1),
+                ),
+            ],
+            [],  # 0 emails
+        ),
+        (
+            "too old request",
+            [
+                (
+                    "Too old",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(days=15),
+                ),
+            ],
+            [],  # 0 emails
+        ),
+        (
+            "wrong status request",
+            [
+                (
+                    "Wrong status",
+                    ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+                    timedelta(days=8),
+                ),
+            ],
+            [],  # 0 emails
+        ),
+        (
+            "multiple valid requests",
+            [
+                (
+                    "Target 1",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(days=8),
+                ),
+                (
+                    "Target 2",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(days=10),
+                ),
+            ],
+            [0, 1],  # 2 emails
+        ),
+        (
+            "mix of valid and invalid",
+            [
+                (
+                    "Valid",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(days=8),
+                ),
+                (
+                    "Too young",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(hours=1),
+                ),
+                (
+                    "Too old",
+                    ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+                    timedelta(days=31),
+                ),
+                (
+                    "Wrong status",
+                    ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
+                    timedelta(days=8),
+                ),
+            ],
+            [0],  # 1 email
+        ),
+    ],
+)
+def test_challenge_request_draft_reminder_emails(
+    mocker, description, created_offsets, expected_recipients_indices
+):
     mocker.patch(
         "grandchallenge.challenges.tasks.now",
         return_value=_fixed_now,
     )
 
-    target_challenge_request = ChallengeRequestFactory(
-        title="Target",
-        status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-    )
-    target_challenge_request.created = (
-        _fixed_now
-        - settings.CHALLENGE_REQUEST_REMINDER_CUTOFF
-        - timedelta(minutes=1)
-    )
-    target_challenge_request.save()
-
-    # Create decoy challenge requests that should not trigger a reminder email
-    too_young_challenge_request = ChallengeRequestFactory(
-        title="Not old enough",
-        short_name="test-challenge-not-old-enough",
-        status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-    )
-    too_young_challenge_request.created = _fixed_now
-    too_young_challenge_request.save()
-
-    for status in (
-        ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
-        ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
-        ChallengeRequest.ChallengeRequestStatusChoices.REJECTED,
-    ):
-        wrong_status_request = ChallengeRequestFactory(
-            title=f"Wrong status {status}",
-            short_name=f"test-challenge-{status}",
+    requests = []
+    for title, status, offset in created_offsets:
+        challenge_request = ChallengeRequestFactory(
+            title=title,
             status=status,
         )
-        wrong_status_request.created = target_challenge_request.created
-        wrong_status_request.save()
+        challenge_request.created = _fixed_now - offset
+        challenge_request.save()
+        requests.append(challenge_request)
 
     mail.outbox.clear()
 
     send_challenge_request_draft_reminder_emails()
 
-    assert len(mail.outbox) == 1, [m.subject for m in mail.outbox]
-    email = mail.outbox[0]
+    expected_recipients = [
+        requests[i].creator.email for i in expected_recipients_indices
+    ]
+    assert len(mail.outbox) == len(expected_recipients), description
 
-    assert email.recipients() == [target_challenge_request.creator.email]
-    assert target_challenge_request.title in email.body
+    actual_recipients = {r for m in mail.outbox for r in m.recipients()}
+    assert actual_recipients == set(expected_recipients)
+
+    for i in expected_recipients_indices:
+        user_emails = [
+            m
+            for m in mail.outbox
+            if requests[i].creator.email in m.recipients()
+        ]
+        assert len(user_emails) == 1
+        assert requests[i].title in user_emails[0].body
