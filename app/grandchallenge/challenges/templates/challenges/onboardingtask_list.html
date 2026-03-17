@@ -44,8 +44,7 @@
         >
             <thead class="thead-light">
             <tr>
-                <th class="text-center">Status</th>
-                <th class="nonSortable">Title</th>
+                <th>Task</th>
                 <th class="nonSortable">Description</th>
                 <th class="text-right">Due</th>
                 <th>Action</th>
@@ -55,28 +54,27 @@
                 {% for task in object_list %}
 
                 <tr>
+                    <td data-order="{{ task.complete }}" class="align-middle">
+                        {% if task.complete %}
+                            <i  class="fas fa-check-circle fa-fw text-success" title="Completed!"></i>
+                        {% elif task.is_overdue_soon %}
+                            <i class="far fa-circle fa-fw text-warning" title="Overdue soon!"></i>
+                        {% elif task.is_overdue %}
+                            <i class="far fa-circle fa-fw text-danger" title="Overdue!"></i>
+                        {% else %}
+                            <i class="far fa-circle fa-fw text-muted" title="Not yet completed"></i>
+                        {% endif %}
 
-                    <td data-order="{{ task.complete }}" class="align-middle text-center">
-                      {% if task.complete %}
-                        <i  class="fas fa-check-circle fa-fw text-success" title="Completed!"></i>
-                    {% elif task.is_overdue_soon %}
-                        <i class="far fa-circle fa-fw text-warning" title="Overdue soon!"></i>
-                    {% elif task.is_overdue %}
-                        <i class="far fa-circle fa-fw text-danger" title="Overdue!"></i>
-                    {% else %}
-                        <i class="far fa-circle fa-fw text-muted" title="Not yet completed"></i>
-                    {% endif %}
-                    </td>
-                    <td  class="align-middle">
                         {{ task.title }}
                     </td>
-                    <td class="align-middle">
+                    <td class="align-middle" >
 
                         {{ task.description }}
+
                     </td>
                     <td title="{{ task.deadline }}"
                         data-order="{{ task.deadline|date:"c" }}"
-                        class="align-middle text-nowrap text-right"
+                        class="align-middle text-right {{ task.complete|yesno:'text-muted,' }}"
                          style="{{ task.complete|yesno:'text-decoration: line-through;,' }}"
                     >
                         {{ task.deadline|naturaltime }}
@@ -99,11 +97,11 @@
                                     <button type="submit"
                                             class="btn btn-xs btn-danger"
                                             title="Mark as incomplete">
-                                         <i class="fas fa-undo fa-fw"></i> Undo Complete
+                                         <i class="fas fa-undo fa-fw"></i>
                                     </button>
                                 {% else %}
                                 <button type="submit" class="btn btn-success">
-                                <i  class="fas fa-check-circle fa-fw"></i> Mark Complete
+                                <i  class="fas fa-check-circle fa-fw"></i>
                                 </button>
                             {% endif %}
                         </form>
