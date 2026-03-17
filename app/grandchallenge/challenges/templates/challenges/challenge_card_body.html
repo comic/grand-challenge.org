@@ -3,14 +3,7 @@
 {% load humanize %}
 
 <div>
-    {% if challenge.challenge_type == 2 %}
-        <div class="badge-info badge above-stretched-link text-wrap mt-1 p-2 text-white w-100"
-             title="Algorithm submission challenge (Type 2)">
-            <i class="fa fa-sm fa-code mr-1"></i> Algorithm submission challenge
-        </div>
-    {% endif %}
-
-    <span class="badge {% if challenge.status.name == 'OPEN' %}badge-success {% elif challenge.status.name == 'OPENING_SOON' %} badge-warning {% else %} badge-danger {% endif %}mt-1 above-stretched-link text-wrap w-100 p-2" data-toggle="tooltip" data-placement="top"><i class="far fa-clock fa-fw"></i> {{ challenge.status_badge_string }}</span><br>
+    {% include "challenges/partials/challenge_status_badge.html" with challenge=challenge classes="mt-1 above-stretched-link text-wrap w-100 p-2" only %}
 
     {% if challenge.description %}
         <a href="#InfoModal"

@@ -8,6 +8,7 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db import models
 from django.db.models import F, Prefetch, Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
@@ -97,27 +98,43 @@ class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
     row_template = "challenges/challenge_users_row.html"
     search_fields = ["title", "short_name", "description"]
     columns = [
-        Column(title="Name", sort_field="short_name"),
+        Column(title="Acronym", sort_field="short_name"),
+        Column(title="Hidden", sort_field="hidden"),
+        Column(title="Your Role", sort_field="user_role_order"),
+        Column(title="Status"),
+        Column(title="Admins", sort_field="admins_count"),
         Column(title="Created", sort_field="created"),
-        Column(title="Admins", sort_field="created"),
-        Column(title="Description", sort_field="description"),
+        Column(title="Last Submission", sort_field="cached_latest_result"),
     ]
     default_sort_column = 1
 
     def get_queryset(self):
-        queryset = (
-            super()
-            .get_queryset()
-            .prefetch_related(
-                "admins_group__user_set__user_profile",
-                "admins_group__user_set__verification",
-            )
+        queryset = super().get_queryset()
+        queryset = queryset.prefetch_related(
+            "admins_group__user_set__user_profile",
+            "admins_group__user_set__verification",
+            "phase_set",
         )
+        user_groups = self.request.user.groups.all()
+
         if not self.request.user.is_superuser:
-            queryset = queryset.filter(
-                Q(participants_group__in=self.request.user.groups.all())
-                | Q(admins_group__in=self.request.user.groups.all())
-            )
+            queryset = queryset.annotate(
+                user_role_order=models.Case(
+                    models.When(
+                        admins_group__in=user_groups, then=models.Value(2)
+                    ),
+                    models.When(
+                        participants_group__in=user_groups,
+                        then=models.Value(1),
+                    ),
+                    default=models.Value(0),
+                    output_field=models.IntegerField(),
+                ),
+            ).filter(Q(user_role_order__gt=0))
+
+        queryset = queryset.annotate(
+            admins_count=models.Count("admins_group__user", distinct=True),
+        )
         return queryset
 
 

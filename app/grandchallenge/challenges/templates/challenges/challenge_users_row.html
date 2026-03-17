@@ -1,22 +1,54 @@
 {% load profiles %}
 
+{# Acronym #}
 
 <a href="{{ object.get_absolute_url }}">
-    {% firstof object.title object.short_name %}
+    {{ object.short_name }}
 </a>
+
+<split></split>
+{# Hidden #}
+
 {% if object.hidden %}
     <i class="fa fa-eye-slash text-danger"
-       title="Challenge not listed on the all challenges page"></i>
+       title="Challenge not listed on the public challenges page"></i>
+{% else %}
+    <i class="fa fa-eye text-success"
+        title="Challenge listed on public challenges page"></i>
 {% endif %}
 <split></split>
+{# Role #}
 
-{{ object.created }}
+{% if object.user_role_order == 2 %}
+    <i class="fas fa-user-tie fa-fw mr-1"></i>Admin
+{% elif  object.user_role_order == 1 %}
+    <i class="fas fa-users fa-fw mr-1"></i>Participant
+{% else %}
+ <i class="fas fa-user-secret fa-fw mr-1"></i>Other
+{% endif %}
+
 <split></split>
+{# Status #}
+
+{% include "challenges/partials/challenge_status_badge.html" with challenge=object classes="text-wrap py-2" only %}
+
+<split></split>
+{# Admins #}
 
 {% for user in object.get_admins %}
     {{ user|user_profile_link }}<br/>
 {% endfor %}
-<split></split>
 
-{{ object.description }}
 <split></split>
+{# Created #}
+
+{{ object.created|date:'F j, Y' }}
+
+<split></split>
+{# Last submission #}
+
+{% if object.cached_latest_result %}
+    {{ object.cached_latest_result|date:'F j, Y' }}
+{% else %}
+    <span class="text-muted">Not Available</span>
+{% endif %}
