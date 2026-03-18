@@ -39,12 +39,13 @@
             data-paging="false"
             data-info="false"
             data-searching="false"
-            data-order='[[0, "asc"], [2, "asc"]]'
+            data-order='[[0, "asc"], [3, "asc"]]'
             class="table table-hover table-borderless table-sm w-100"
         >
             <thead class="thead-light">
             <tr>
-                <th>Task</th>
+                <th class="text-center">Status</th>
+                <th class="nonSortable">Title</th>
                 <th class="nonSortable">Description</th>
                 <th class="text-right">Due</th>
                 <th>Action</th>
@@ -54,9 +55,9 @@
                 {% for task in object_list %}
 
                 <tr>
-                    <td data-order="{{ task.complete }}" class="align-middle">
+                    <td data-order="{{ task.complete }}" class="align-middle text-center">
                         {% if task.complete %}
-                            <i  class="fas fa-check-circle fa-fw text-success" title="Completed!"></i>
+                            <i class="fas fa-check-circle fa-fw text-success" title="Completed!"></i>
                         {% elif task.is_overdue_soon %}
                             <i class="far fa-circle fa-fw text-warning" title="Overdue soon!"></i>
                         {% elif task.is_overdue %}
@@ -64,7 +65,8 @@
                         {% else %}
                             <i class="far fa-circle fa-fw text-muted" title="Not yet completed"></i>
                         {% endif %}
-
+                    </td>
+                    <td class="align-middle">
                         {{ task.title }}
                     </td>
                     <td class="align-middle" >
