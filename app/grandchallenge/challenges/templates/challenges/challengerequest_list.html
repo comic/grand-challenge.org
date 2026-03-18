@@ -68,7 +68,7 @@
                         <td class="text-center align-middle" data-order="{{ object.start_date|date:"c" }}">{{ object.start_date|date:'F j, Y' }}</td>
 
                         <!-- Submitted -->
-                        {% if object.submitted %}
+                        {% if object.submitted_on %}
                             {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
                                 <td class="text-center align-middle" data-order="{{ object.submitted_on|date:"c" }}"><span class="badge p-2 badge-primary">{{ object.submitted_on|date:'F j, Y' }}</span></td>
                             {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
