@@ -1203,7 +1203,7 @@ def stop_expired_services(*, app_label: str, model_name: str):
         )
 
 
-class InteractiveAlgorithm:
+class InteractiveAlgorithmLambda:
     def __init__(self, *, arn, qualifier, should_be_active):
         self._arn = arn
         self._qualifier = str(qualifier)
@@ -1310,7 +1310,7 @@ def preload_interactive_algorithms():
     for lamba_function in settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS[
         "lambda_functions"
     ]:
-        interactive_algorithm = InteractiveAlgorithm(
+        interactive_algorithm = InteractiveAlgorithmLambda(
             arn=lamba_function["arn"],
             qualifier=lamba_function["version"],
             should_be_active=lamba_function["internal_name"]

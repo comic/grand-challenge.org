@@ -9,7 +9,7 @@ from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
 
 from grandchallenge.reader_studies.interactive_algorithms import (
-    InteractiveAlgorithmChoices,
+    InteractiveAlgorithmLambdaChoices,
 )
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.workstations.models import Session, Workstation
@@ -350,7 +350,7 @@ def test_session_create_reader_study(
     reader_study = ReaderStudyFactory(workstation=ws)
     QuestionFactory(
         reader_study=reader_study,
-        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+        interactive_algorithm=InteractiveAlgorithmLambdaChoices.ULS23_BASELINE,
     )
 
     reader_study.readers_group.user_set.add(user)
@@ -459,7 +459,7 @@ def test_session_create_display_set(
     reader_study = ReaderStudyFactory(workstation=ws)
     QuestionFactory(
         reader_study=reader_study,
-        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+        interactive_algorithm=InteractiveAlgorithmLambdaChoices.ULS23_BASELINE,
     )
     display_set = DisplaySetFactory(reader_study=reader_study)
 

@@ -61,7 +61,7 @@ from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.reader_studies.interactive_algorithms import (
-    InteractiveAlgorithmChoices,
+    InteractiveAlgorithmLambdaChoices,
 )
 from grandchallenge.reader_studies.metrics import accuracy_score
 from grandchallenge.subdomains.utils import reverse
@@ -1289,7 +1289,7 @@ ANSWER_TYPE_TO_INTERACTIVE_ALGORITHM = {
     AnswerType.MULTIPLE_POLYGONS: [],
     AnswerType.LINE: [],
     AnswerType.MULTIPLE_LINES: [],
-    AnswerType.MASK: [InteractiveAlgorithmChoices.ULS23_BASELINE],
+    AnswerType.MASK: [InteractiveAlgorithmLambdaChoices.ULS23_BASELINE],
     AnswerType.ANGLE: [],
     AnswerType.MULTIPLE_ANGLES: [],
     AnswerType.ELLIPSE: [],
@@ -1411,7 +1411,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         choices=QuestionWidgetKindChoices, max_length=24, blank=True
     )
     interactive_algorithm = models.CharField(
-        choices=InteractiveAlgorithmChoices.choices,
+        choices=InteractiveAlgorithmLambdaChoices.choices,
         max_length=32,
         blank=True,
         help_text="Which interactive algorithm should be used for this question?",

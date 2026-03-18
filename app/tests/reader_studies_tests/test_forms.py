@@ -58,7 +58,7 @@ from grandchallenge.reader_studies.forms import (
     ReaderStudyCreateForm,
 )
 from grandchallenge.reader_studies.interactive_algorithms import (
-    InteractiveAlgorithmChoices,
+    InteractiveAlgorithmLambdaChoices,
 )
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -2219,8 +2219,8 @@ def test_option_cannot_be_deleted():
             AnswerType.MASK,
             [
                 (
-                    InteractiveAlgorithmChoices.ULS23_BASELINE.value,
-                    InteractiveAlgorithmChoices.ULS23_BASELINE.label,
+                    InteractiveAlgorithmLambdaChoices.ULS23_BASELINE.value,
+                    InteractiveAlgorithmLambdaChoices.ULS23_BASELINE.label,
                 )
             ],
         ),
@@ -2279,7 +2279,7 @@ def test_interactive_algorithm_field_permissions():
         data={
             "question_text": "foo",
             "answer_type": Question.AnswerType.MASK,
-            "interactive_algorithm": InteractiveAlgorithmChoices.ULS23_BASELINE,
+            "interactive_algorithm": InteractiveAlgorithmLambdaChoices.ULS23_BASELINE,
         },
     )
     form.is_valid()
@@ -2291,13 +2291,13 @@ def test_interactive_algorithm_field_permissions():
         data={
             "question_text": "foo",
             "answer_type": Question.AnswerType.MASK,
-            "interactive_algorithm": InteractiveAlgorithmChoices.ULS23_BASELINE,
+            "interactive_algorithm": InteractiveAlgorithmLambdaChoices.ULS23_BASELINE,
         },
     )
     form.is_valid()
     assert (
         form.cleaned_data["interactive_algorithm"]
-        == InteractiveAlgorithmChoices.ULS23_BASELINE
+        == InteractiveAlgorithmLambdaChoices.ULS23_BASELINE
     )
 
 

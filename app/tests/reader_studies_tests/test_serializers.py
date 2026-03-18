@@ -1,7 +1,7 @@
 import pytest
 
 from grandchallenge.reader_studies.interactive_algorithms import (
-    InteractiveAlgorithmChoices,
+    InteractiveAlgorithmLambdaChoices,
 )
 from grandchallenge.reader_studies.models import QuestionWidgetKindChoices
 from grandchallenge.reader_studies.serializers import QuestionSerializer
@@ -33,7 +33,7 @@ def test_interactive_algorithm_on_question_serializer(rf):
     qu = QuestionFactory()
     serializer = QuestionSerializer(qu, context={"request": rf.get("/foo")})
     assert serializer.data["interactive_algorithms"] == []
-    qu.interactive_algorithm = InteractiveAlgorithmChoices.ULS23_BASELINE
+    qu.interactive_algorithm = InteractiveAlgorithmLambdaChoices.ULS23_BASELINE
     qu.save()
     serializer2 = QuestionSerializer(qu, context={"request": rf.get("/foo")})
     assert serializer2.data["interactive_algorithms"] == ["uls23-baseline"]

@@ -9,7 +9,7 @@ from grandchallenge.evaluation.tasks import (
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
 from grandchallenge.reader_studies.interactive_algorithms import (
-    InteractiveAlgorithmChoices,
+    InteractiveAlgorithmLambdaChoices,
 )
 from grandchallenge.utilization.models import (
     EvaluationUtilization,
@@ -128,14 +128,14 @@ def test_session_utilization_no_reader_studies():
 def test_session_utilization_interactive_algorithm():
     session = SessionFactory()
     question = QuestionFactory(
-        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+        interactive_algorithm=InteractiveAlgorithmLambdaChoices.ULS23_BASELINE,
     )
     session.reader_studies.add(question.reader_study)
 
     stop_service(**session.task_kwargs)
 
     assert session.session_utilization.interactive_algorithms == [
-        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+        InteractiveAlgorithmLambdaChoices.ULS23_BASELINE.value
     ]
 
 
@@ -144,7 +144,7 @@ def test_session_utilization_distinct_interactive_algorithms():
     session = SessionFactory()
     questions = QuestionFactory.create_batch(
         2,
-        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+        interactive_algorithm=InteractiveAlgorithmLambdaChoices.ULS23_BASELINE,
     )
     session.reader_studies.add(questions[0].reader_study)
     session.reader_studies.add(questions[1].reader_study)
@@ -152,7 +152,7 @@ def test_session_utilization_distinct_interactive_algorithms():
     stop_service(**session.task_kwargs)
 
     assert session.session_utilization.interactive_algorithms == [
-        InteractiveAlgorithmChoices.ULS23_BASELINE.value
+        InteractiveAlgorithmLambdaChoices.ULS23_BASELINE.value
     ]
 
 
@@ -170,7 +170,7 @@ def test_session_utilization_interactive_algorithms_credit_rate():
 
     session_with_interactive_alg = SessionFactory()
     question = QuestionFactory.create(
-        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+        interactive_algorithm=InteractiveAlgorithmLambdaChoices.ULS23_BASELINE,
     )
     session_with_interactive_alg.reader_studies.add(question.reader_study)
     stop_service(**session_with_interactive_alg.task_kwargs)
