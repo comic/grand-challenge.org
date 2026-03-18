@@ -57,6 +57,9 @@ from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
+from grandchallenge.reader_studies.interactive_algorithms import (
+    InteractiveAlgorithmChoices,
+)
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.utilization.models import JobUtilization
@@ -1465,3 +1468,26 @@ class OptionalHangingProtocolAlgorithm(models.Model):
 
     class Meta:
         unique_together = (("algorithm", "hanging_protocol"),)
+
+
+class InteractiveAlgorithm(UUIDModel):
+    algorithm = models.ForeignKey(
+        Algorithm,
+        on_delete=models.PROTECT,
+        related_name="interactive_algorithms",
+    )
+    interactive_algorithm_choice = models.CharField(
+        choices=InteractiveAlgorithmChoices,
+        max_length=32,
+        unique=True,
+    )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(
+                    interactive_algorithm_choice__in=InteractiveAlgorithmChoices.values
+                ),
+                name="interactive_algorithm_choice_valid",
+            )
+        ]
