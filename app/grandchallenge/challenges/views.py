@@ -225,7 +225,11 @@ class ChallengeRequestDetail(
         for field_name in self.detail_view_fields:
             field = self.object._meta.get_field(field_name)
             label = label_overrides.get(field_name, field.verbose_name)
-            fields[label] = field.value_to_string(self.object)
+            if field.many_to_many:
+                value = field.value_from_object(self.object)
+                fields[label] = ", ".join(str(val) for val in value)
+            else:
+                fields[label] = field.value_to_string(self.object)
 
         context.update(
             {
