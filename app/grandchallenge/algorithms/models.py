@@ -26,6 +26,7 @@ from grandchallenge.algorithms.tasks import update_algorithm_average_duration
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.models import (  # noqa: F401
+    APIMethodChoices,
     CIVForObjectMixin,
     ComponentImage,
     ComponentInterface,
@@ -1491,3 +1492,12 @@ class InteractiveAlgorithm(UUIDModel):
                 name="interactive_algorithm_choice_valid",
             )
         ]
+
+    def clean(self):
+        super().clean()
+        if not self.algorithm.active_image:
+            raise ValidationError("Algorithm has no active image")
+        if self.algorithm.active_image.api_method != APIMethodChoices.INVOKE:
+            raise ValidationError(
+                "Active algorithm image does not use the INVOKE api method"
+            )
