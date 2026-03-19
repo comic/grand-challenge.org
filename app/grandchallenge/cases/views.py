@@ -1,12 +1,9 @@
 import json
-from functools import reduce
-from operator import or_
 
 import boto3
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from django.conf import settings
-from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import DetailView, ListView
@@ -46,6 +43,7 @@ from grandchallenge.core.guardian import (
     ViewObjectPermissionsFilter,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
+from grandchallenge.core.validators import is_valid_uuid4
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.serving.models import Download
 from grandchallenge.subdomains.utils import reverse_lazy
@@ -253,7 +251,6 @@ class ImageSearchResultView(
     LoginRequiredMixin, ViewObjectPermissionListMixin, ListView
 ):
     template_name = "cases/image_search_result_select.html"
-    search_fields = ["pk", "name"]
     model = Image
     paginate_by = 50
 
@@ -270,13 +267,12 @@ class ImageSearchResultView(
         query = request.GET.get(
             f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{SearchWidgetSuffixes.INPUT}"
         )
-        if query:
-            q = reduce(
-                or_,
-                [Q(**{f"{f}__icontains": query}) for f in self.search_fields],
-                Q(),
-            )
-            qs = qs.filter(q).order_by("name")
+
+        if query and is_valid_uuid4(query):
+            qs = qs.filter(pk=query)
+        elif query:
+            qs = qs.filter(name__icontains=query).order_by("name")
+
         self.object_list = qs
         selected_object_pk = request.GET.get("selected-object-pk")
         kwargs.update({"selected_object_pk": selected_object_pk})

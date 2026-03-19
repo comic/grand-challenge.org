@@ -45,7 +45,7 @@ class DICOMUploadWidget(MultiWidget):
 
 class ImageSearchInputWidget(TextInput):
     def get_context(self, name, value, attrs):
-        attrs["placeholder"] = "Search by pk or image name"
+        attrs["placeholder"] = "Search by full pk or (partial) image name"
         context = super().get_context(name, value, attrs)
         css_class = context["widget"]["attrs"].get("class", "")
         # When the MultiField marks the data invalid, the is-invalid class is
