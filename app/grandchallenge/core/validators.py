@@ -1,4 +1,5 @@
 import re
+import uuid
 from functools import cache
 from pathlib import Path
 
@@ -188,3 +189,11 @@ class JSONSchemaValidator:
 
     def __ne__(self, other):
         return not (self == other)
+
+
+def is_valid_uuid4(value):
+    try:
+        uuid.UUID(value, version=4)
+    except ValueError:
+        return False
+    return True

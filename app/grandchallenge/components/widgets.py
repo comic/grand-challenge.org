@@ -18,7 +18,7 @@ class SearchWidgetSuffixes(StrEnum):
 
 class FileSearchInputWidget(TextInput):
     def get_context(self, name, value, attrs):
-        attrs["placeholder"] = "Search by pk or file name"
+        attrs["placeholder"] = "Search by full pk or (partial) file name"
         context = super().get_context(name, value, attrs)
         css_class = context["widget"]["attrs"].get("class", "")
         # When the MultiField marks the data invalid, the is-invalid class is

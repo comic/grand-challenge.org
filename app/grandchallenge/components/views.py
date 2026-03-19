@@ -1,6 +1,4 @@
 import uuid
-from functools import reduce
-from operator import or_
 
 from dal import autocomplete
 from django.contrib.auth.mixins import AccessMixin
@@ -45,6 +43,7 @@ from grandchallenge.core.guardian import (
     ViewObjectPermissionListMixin,
     filter_by_permission,
 )
+from grandchallenge.core.validators import is_valid_uuid4
 from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.reader_studies.models import ReaderStudy
 from grandchallenge.serving.models import (
@@ -479,7 +478,6 @@ class FileSearchResultView(
     LoginRequiredMixin, FileAccessRequiredMixin, ListView
 ):
     template_name = "components/file_search_result_select.html"
-    search_fields = ["pk", "file"]
     model = ComponentInterfaceValue
     paginate_by = 50
 
@@ -506,13 +504,11 @@ class FileSearchResultView(
         query = request.GET.get(
             f"{FlexibleWidgetPrefixes.SEARCH}{interface_slug}_{SearchWidgetSuffixes.INPUT}",
         )
-        if query:
-            q = reduce(
-                or_,
-                [Q(**{f"{f}__icontains": query}) for f in self.search_fields],
-                Q(),
-            )
-            qs = qs.filter(q).order_by("file")
+        if query and is_valid_uuid4(query):
+            qs = qs.filter(pk=query)
+        elif query:
+            qs = qs.filter(file__icontains=query).order_by("file")
+
         self.object_list = qs
         selected_object_pk = request.GET.get("selected-object-pk")
         kwargs.update({"selected_object_pk": selected_object_pk})
