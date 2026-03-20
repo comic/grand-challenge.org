@@ -3,6 +3,13 @@
 {% load humanize %}
 
 <div>
+    {% if challenge.challenge_type == 2 %}
+        <div class="badge-info badge above-stretched-link text-wrap mt-1 p-2 text-white w-100"
+             title="Algorithm submission challenge (Type 2)">
+            <i class="fa fa-sm fa-code mr-1"></i> Algorithm submission challenge
+        </div>
+    {% endif %}
+
     {% include "challenges/partials/challenge_status_badge.html" with challenge=challenge classes="mt-1 above-stretched-link text-wrap w-100 p-2" only %}
 
     {% if challenge.description %}
