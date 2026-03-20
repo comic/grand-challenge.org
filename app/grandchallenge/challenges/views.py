@@ -124,19 +124,18 @@ class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
         user_groups = self.request.user.groups.all()
 
         if not self.request.user.is_superuser:
-            queryset = queryset.annotate(
+            queryset = queryset.filter(
+                Q(admins_group__in=user_groups)
+                | Q(participants_group__in=user_groups)
+            ).annotate(
                 user_role_order=models.Case(
                     models.When(
                         admins_group__in=user_groups, then=models.Value(2)
                     ),
-                    models.When(
-                        participants_group__in=user_groups,
-                        then=models.Value(1),
-                    ),
-                    default=models.Value(0),
+                    default=models.Value(1),
                     output_field=models.IntegerField(),
-                ),
-            ).filter(Q(user_role_order__gt=0))
+                )
+            )
         else:
             # Speed up the query for superusers
             queryset = queryset.annotate(
