@@ -109,12 +109,21 @@ class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
     default_sort_column = 1
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        queryset = queryset.prefetch_related(
-            "admins_group__user_set__user_profile",
-            "admins_group__user_set__verification",
-            "phase_set",
+        queryset = (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                # For displaying profile of admins
+                "admins_group__user_set__user_profile",
+                "admins_group__user_set__verification",
+                # For displaying challenge status (badge)
+                "phase_set",
+            )
+            .annotate(
+                admins_count=models.Count("admins_group__user", distinct=True),
+            )
         )
+
         user_groups = self.request.user.groups.all()
 
         if not self.request.user.is_superuser:
@@ -139,9 +148,6 @@ class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
                 )
             )
 
-        queryset = queryset.annotate(
-            admins_count=models.Count("admins_group__user", distinct=True),
-        )
         return queryset
 
 
