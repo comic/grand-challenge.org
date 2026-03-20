@@ -131,6 +131,13 @@ class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
                     output_field=models.IntegerField(),
                 ),
             ).filter(Q(user_role_order__gt=0))
+        else:
+            # Speed up the query for superusers
+            queryset = queryset.annotate(
+                user_role_order=models.Value(
+                    -1, output_field=models.IntegerField()
+                )
+            )
 
         queryset = queryset.annotate(
             admins_count=models.Count("admins_group__user", distinct=True),
