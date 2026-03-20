@@ -102,7 +102,7 @@ class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
         Column(title="Hidden", sort_field="hidden"),
         Column(title="Your Role", sort_field="user_role_order"),
         Column(title="Status"),
-        Column(title="Admins", sort_field="admins_count"),
+        Column(title="Admins"),
         Column(title="Created", sort_field="created"),
         Column(title="Last Submission", sort_field="cached_latest_result"),
     ]
@@ -118,9 +118,6 @@ class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
                 "admins_group__user_set__verification",
                 # For displaying challenge status (badge)
                 "phase_set",
-            )
-            .annotate(
-                admins_count=models.Count("admins_group__user", distinct=True),
             )
         )
 
