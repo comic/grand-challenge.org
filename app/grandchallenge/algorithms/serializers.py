@@ -143,8 +143,8 @@ class JobSerializer(serializers.ModelSerializer):
         source="algorithm_image.algorithm.view_content", read_only=True
     )
 
-    exec_duration = ISODurationField(read_only=True)
-    invoke_duration = ISODurationField(read_only=True)
+    exec_duration = ISODurationField(read_only=True, allow_null=True)
+    invoke_duration = ISODurationField(read_only=True, allow_null=True)
 
     class Meta:
         model = Job
