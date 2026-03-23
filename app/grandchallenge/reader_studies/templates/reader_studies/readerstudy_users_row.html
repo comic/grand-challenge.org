@@ -1,0 +1,49 @@
+{# Title #}
+
+<a href="{{ object.get_absolute_url }}">
+    {{ object.title }}
+</a>
+
+<split></split>
+{# Public #}
+
+{% if object.public %}
+    <i class="fa fa-eye text-success"
+        title="Reader study listed on public reader studies page"></i>
+{% else %}
+    <i class="fa fa-eye-slash text-danger"
+       title="Reader study not listed on the public reader studies page"></i>
+{% endif %}
+<split></split>
+{# Role #}
+
+{% if object.user_role_order == 2 %}
+    <i class="fas fa-user-tie fa-fw mr-1"></i>Editor
+{% elif object.user_role_order == 1 %}
+    <i class="fas fa-users fa-fw mr-1"></i>Reader
+{% else %}
+    <i class="fas fa-user-secret fa-fw mr-1"></i>Other
+{% endif %}
+
+<split></split>
+{# Editors #}
+
+{% load profiles %}
+{% for user in object.editors_group.user_set.all %}
+    {{ user|user_profile_link }}<br/>
+{% endfor %}
+
+<split></split>
+{# Educational #}
+
+{% if object.is_educational %}
+    <i class="fas fa-graduation-cap text-success"
+       title="This is an educational reader study"></i>
+{% else %}
+    <i class="fas fa-times text-muted"
+       title="Not an educational reader study"></i>
+{% endif %}
+<split></split>
+{# Created #}
+
+{{ object.created|date:'F j, Y' }}

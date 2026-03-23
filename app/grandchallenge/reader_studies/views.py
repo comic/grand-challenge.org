@@ -11,6 +11,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import models
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from django.forms import Form
@@ -77,7 +78,7 @@ from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.utils import strtobool
 from grandchallenge.core.utils.query import set_seed
 from grandchallenge.core.views import PermissionRequestUpdate
-from grandchallenge.datatables.views import Column
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.reader_studies.filters import (
@@ -156,6 +157,59 @@ class ReaderStudyList(FilterMixin, ViewObjectPermissionListMixin, ListView):
             .get_queryset()
             .prefetch_related("optional_hanging_protocols")
         )
+
+
+class UsersReaderStudyList(LoginRequiredMixin, PaginatedTableListView):
+    model = ReaderStudy
+    template_name = "reader_studies/readerstudy_users_list.html"
+    row_template = "reader_studies/readerstudy_users_row.html"
+    search_fields = ["title", "slug", "description"]
+    columns = [
+        Column(title="Title", sort_field="title"),
+        Column(title="Public", sort_field="public"),
+        Column(title="Your Role", sort_field="user_role_order"),
+        Column(title="Editors"),
+        Column(title="Educational", sort_field="is_educational"),
+        Column(title="Created", sort_field="created"),
+    ]
+    default_sort_column = 0
+
+    def get_queryset(self):
+        queryset = (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                # For displaying profile of editors
+                "editors_group__user_set__user_profile",
+                "editors_group__user_set__verification",
+                "readers_group__user_set",
+            )
+        )
+
+        user_groups = self.request.user.groups.all()
+
+        if not self.request.user.is_superuser:
+            queryset = queryset.filter(
+                Q(editors_group__in=user_groups)
+                | Q(readers_group__in=user_groups)
+            ).annotate(
+                user_role_order=models.Case(
+                    models.When(
+                        editors_group__in=user_groups, then=models.Value(2)
+                    ),
+                    default=models.Value(1),
+                    output_field=models.IntegerField(),
+                )
+            )
+        else:
+            # Speed up the query for superusers
+            queryset = queryset.annotate(
+                user_role_order=models.Value(
+                    -1, output_field=models.IntegerField()
+                )
+            )
+
+        return queryset
 
 
 class ReaderStudyCreate(
