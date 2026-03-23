@@ -8,6 +8,7 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
+from django.db import models
 from django.db.models import F, Prefetch, Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
@@ -97,10 +98,13 @@ class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
     row_template = "challenges/challenge_users_row.html"
     search_fields = ["title", "short_name", "description"]
     columns = [
-        Column(title="Name", sort_field="short_name"),
+        Column(title="Acronym", sort_field="short_name"),
+        Column(title="Hidden", sort_field="hidden"),
+        Column(title="Your Role", sort_field="user_role_order"),
+        Column(title="Status"),
+        Column(title="Admins"),
         Column(title="Created", sort_field="created"),
-        Column(title="Admins", sort_field="created"),
-        Column(title="Description", sort_field="description"),
+        Column(title="Last Submission", sort_field="cached_latest_result"),
     ]
     default_sort_column = 1
 
@@ -109,15 +113,37 @@ class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
             super()
             .get_queryset()
             .prefetch_related(
+                # For displaying profile of admins
                 "admins_group__user_set__user_profile",
                 "admins_group__user_set__verification",
+                # For displaying challenge status (badge)
+                "phase_set",
             )
         )
+
+        user_groups = self.request.user.groups.all()
+
         if not self.request.user.is_superuser:
             queryset = queryset.filter(
-                Q(participants_group__in=self.request.user.groups.all())
-                | Q(admins_group__in=self.request.user.groups.all())
+                Q(admins_group__in=user_groups)
+                | Q(participants_group__in=user_groups)
+            ).annotate(
+                user_role_order=models.Case(
+                    models.When(
+                        admins_group__in=user_groups, then=models.Value(2)
+                    ),
+                    default=models.Value(1),
+                    output_field=models.IntegerField(),
+                )
             )
+        else:
+            # Speed up the query for superusers
+            queryset = queryset.annotate(
+                user_role_order=models.Value(
+                    -1, output_field=models.IntegerField()
+                )
+            )
+
         return queryset
 
 

@@ -1,0 +1,3 @@
+<span class="badge {% if challenge.status.name == 'OPEN' %} badge-success {% elif challenge.status.name == 'OPENING_SOON' %} badge-warning {% elif challenge.status.name == 'CLOSED' %} badge-danger {% else %} badge-light {% endif %} {{ classes }}">
+    <i class="far fa-clock fa-fw"></i> {{ challenge.status_badge_string }}
+</span><br>
