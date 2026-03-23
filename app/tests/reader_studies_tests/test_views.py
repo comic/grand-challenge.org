@@ -1308,7 +1308,6 @@ def test_reader_study_users_list_is_filtered(client):
         (set(), non_reader),
         ({rs1}, reader1),
         ({rs1}, editor1),
-        (set(), non_reader),
         ({rs2}, reader2),
         ({rs2}, editor2),
         ({rs1, rs2}, editor12),
