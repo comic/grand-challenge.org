@@ -398,6 +398,54 @@ def test_invalid_schema_raises_error():
             },
             nullcontext(),
         ),
+        (  # Time
+            InterfaceKindChoices.DISTANCE_MEASUREMENT,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Distance measurement",
+                "name": "test",
+                "start": [1, 2, 3],
+                "end": [4, 5, 6],
+                "time": 123,
+            },
+            nullcontext(),
+        ),
+        (  # Negative Time
+            InterfaceKindChoices.DISTANCE_MEASUREMENT,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Distance measurement",
+                "name": "test",
+                "start": [1, 2, 3],
+                "end": [4, 5, 6],
+                "time": -1,
+            },
+            pytest.raises(ValidationError),
+        ),
+        (  # Not a number Time
+            InterfaceKindChoices.DISTANCE_MEASUREMENT,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Distance measurement",
+                "name": "test",
+                "start": [1, 2, 3],
+                "end": [4, 5, 6],
+                "time": "not a number",
+            },
+            pytest.raises(ValidationError),
+        ),
+        (  # Floating time
+            InterfaceKindChoices.DISTANCE_MEASUREMENT,
+            {
+                "version": {"major": 1, "minor": 0},
+                "type": "Distance measurement",
+                "name": "test",
+                "start": [1, 2, 3],
+                "end": [4, 5, 6],
+                "time": 0.5,
+            },
+            pytest.raises(ValidationError),
+        ),
         (
             InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS,
             {
