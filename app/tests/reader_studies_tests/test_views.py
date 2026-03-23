@@ -1272,3 +1272,52 @@ def test_civset_list_view_permissions(client):
         assert obj in response.context["object_list"]
     for obj in [ob4, ob5]:
         assert obj not in response.context["object_list"]
+
+
+@pytest.mark.django_db
+def test_reader_study_users_list_is_filtered(client):
+    # Create reader study set 1
+    rs1 = ReaderStudyFactory()
+    editor1 = UserFactory()
+    rs1.add_editor(editor1)
+    reader1 = UserFactory()
+    rs1.add_reader(reader1)
+    non_reader = UserFactory()
+
+    # Create reader study set 2
+    rs2 = ReaderStudyFactory()
+    editor2 = UserFactory()
+    rs2.add_editor(editor2)
+    reader2 = UserFactory()
+    rs2.add_reader(reader2)
+
+    # Create cross-study users
+    editor12 = UserFactory()
+    rs1.add_editor(editor12)
+    rs2.add_editor(editor12)
+
+    reader12 = UserFactory()
+    rs1.add_reader(reader12)
+    rs2.add_reader(reader12)
+
+    editor1reader2 = UserFactory()
+    rs1.add_editor(editor1reader2)
+    rs2.add_reader(editor1reader2)
+
+    tests = [
+        (set(), non_reader),
+        ({rs1}, reader1),
+        ({rs1}, editor1),
+        ({rs2}, reader2),
+        ({rs2}, editor2),
+        ({rs1, rs2}, editor12),
+        ({rs1, rs2}, reader12),
+        ({rs1, rs2}, editor1reader2),
+    ]
+    for expected_reader_studies, user in tests:
+        response = get_view_for_user(
+            url=reverse("reader-studies:users-list"), client=client, user=user
+        )
+        assert expected_reader_studies == {
+            *response.context[-1]["object_list"]
+        }

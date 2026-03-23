@@ -1,0 +1,22 @@
+{% extends 'datatables/list_base.html' %}
+{% load url %}
+
+{% block title %}
+    Your Reader Studies - Reader Studies - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'reader-studies:list' %}">Reader Studies</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Your Reader Studies</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Your Reader Studies</h2>
+
+    <p>This is a list of the reader studies that you are participating in.</p>
+
+    {{ block.super }}
+{% endblock %}
