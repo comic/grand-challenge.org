@@ -432,54 +432,54 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 <dd><p>Interface kind sets.</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Interface kinds that are images:
 
-  - DICOM Image Set
   - Displacement field
+  - DICOM Image Set
   - Heat Map
-  - Segmentation
   - Image
+  - Segmentation
 
 
 Interface kinds that are files:
 
-  - Newick tree-format file
-  - CSV file
-  - BIOM format
+  - Thumbnail png
   - SQREG file
+  - PDF file
+  - Newick tree-format file
   - Thumbnail jpg
   - OBJ file
-  - Thumbnail png
   - MP4 file
+  - CSV file
+  - BIOM format
   - ZIP file
-  - PDF file
 
 
 Interface kinds that are json serializable:
 
-  - Float
-  - Multiple points
-  - Multiple angles
-  - Bool
   - Multiple lines
-  - Point
-  - Multiple 2D bounding boxes
-  - Polygon
   - Anything
-  - Multiple distance measurements
-  - Line
-  - Choice
+  - Multiple polygons
   - Chart
-  - Integer
-  - String
-  - Multiple ellipses
-  - Distance measurement
+  - Multiple choice
+  - Polygon
+  - Float
+  - Multiple angles
+  - Ellipse
+  - Line
+  - Bool
+  - Affine transform registration
   - Angle
   - Multiple three-point angles
-  - Multiple choice
+  - Distance measurement
+  - Multiple 2D bounding boxes
+  - Point
+  - Multiple distance measurements
+  - Multiple points
   - 2D bounding box
+  - Multiple ellipses
+  - Choice
   - Three-point angle
-  - Affine transform registration
-  - Multiple polygons
-  - Ellipse
+  - Integer
+  - String
 
 
 Example JSON file contents for String:
@@ -588,7 +588,7 @@ Example JSON file contents for Chart (For more examples, see https://vega.github
   }
 }
 
-Example JSON file contents for 2D bounding box (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for 2D bounding box (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Region of interest&quot;,
   &quot;type&quot;: &quot;2D bounding box&quot;,
@@ -615,13 +615,14 @@ Example JSON file contents for 2D bounding box (Optional fields: &quot;name&quot
     ]
   ],
   &quot;probability&quot;: 0.95,
+  &quot;time&quot;: 0,
   &quot;version&quot;: {
     &quot;major&quot;: 1,
     &quot;minor&quot;: 0
   }
 }
 
-Example JSON file contents for Multiple 2D bounding boxes (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Multiple 2D bounding boxes (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Regions of interest&quot;,
   &quot;type&quot;: &quot;Multiple 2D bounding boxes&quot;,
@@ -676,7 +677,8 @@ Example JSON file contents for Multiple 2D bounding boxes (Optional fields: &quo
           0.5
         ]
       ],
-      &quot;probability&quot;: 0.92
+      &quot;probability&quot;: 0.92,
+      &quot;time&quot;: 0
     }
   ],
   &quot;version&quot;: {
@@ -685,7 +687,7 @@ Example JSON file contents for Multiple 2D bounding boxes (Optional fields: &quo
   }
 }
 
-Example JSON file contents for Distance measurement (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Distance measurement (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Distance between areas&quot;,
   &quot;type&quot;: &quot;Distance measurement&quot;,
@@ -700,13 +702,14 @@ Example JSON file contents for Distance measurement (Optional fields: &quot;name
     0.5
   ],
   &quot;probability&quot;: 0.92,
+  &quot;time&quot;: 0,
   &quot;version&quot;: {
     &quot;major&quot;: 1,
     &quot;minor&quot;: 0
   }
 }
 
-Example JSON file contents for Multiple distance measurements (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Multiple distance measurements (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Distances between areas&quot;,
   &quot;type&quot;: &quot;Multiple distance measurements&quot;,
@@ -723,7 +726,8 @@ Example JSON file contents for Multiple distance measurements (Optional fields: 
         139.3,
         0.5
       ],
-      &quot;probability&quot;: 0.92
+      &quot;probability&quot;: 0.92,
+      &quot;time&quot;: 0
     },
     {
       &quot;name&quot;: &quot;Distance 2&quot;,
@@ -737,7 +741,8 @@ Example JSON file contents for Multiple distance measurements (Optional fields: 
         139.3,
         0.5
       ],
-      &quot;probability&quot;: 0.92
+      &quot;probability&quot;: 0.92,
+      &quot;time&quot;: 1
     }
   ],
   &quot;version&quot;: {
@@ -746,7 +751,7 @@ Example JSON file contents for Multiple distance measurements (Optional fields: 
   }
 }
 
-Example JSON file contents for Point (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Point (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Point of interest&quot;,
   &quot;type&quot;: &quot;Point&quot;,
@@ -756,13 +761,14 @@ Example JSON file contents for Point (Optional fields: &quot;name&quot; and &quo
     0.5
   ],
   &quot;probability&quot;: 0.92,
+  &quot;time&quot;: 0,
   &quot;version&quot;: {
     &quot;major&quot;: 1,
     &quot;minor&quot;: 0
   }
 }
 
-Example JSON file contents for Multiple points (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Multiple points (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Points of interest&quot;,
   &quot;type&quot;: &quot;Multiple points&quot;,
@@ -774,7 +780,8 @@ Example JSON file contents for Multiple points (Optional fields: &quot;name&quot
         79.8,
         0.5
       ],
-      &quot;probability&quot;: 0.92
+      &quot;probability&quot;: 0.92,
+      &quot;time&quot;: 0
     },
     {
       &quot;name&quot;: &quot;Point 2&quot;,
@@ -783,7 +790,8 @@ Example JSON file contents for Multiple points (Optional fields: &quot;name&quot
         115.5,
         0.5
       ],
-      &quot;probability&quot;: 0.92
+      &quot;probability&quot;: 0.92,
+      &quot;time&quot;: 3
     }
   ],
   &quot;version&quot;: {
@@ -792,7 +800,7 @@ Example JSON file contents for Multiple points (Optional fields: &quot;name&quot
   }
 }
 
-Example JSON file contents for Polygon (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Polygon (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Area of interest&quot;,
   &quot;type&quot;: &quot;Polygon&quot;,
@@ -821,13 +829,14 @@ Example JSON file contents for Polygon (Optional fields: &quot;name&quot; and &q
   &quot;sub_type&quot;: &quot;brush&quot;,
   &quot;groups&quot;: [],
   &quot;probability&quot;: 0.92,
+  &quot;time&quot;: 0,
   &quot;version&quot;: {
     &quot;major&quot;: 1,
     &quot;minor&quot;: 0
   }
 }
 
-Example JSON file contents for Multiple polygons (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Multiple polygons (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Areas of interest&quot;,
   &quot;type&quot;: &quot;Multiple polygons&quot;,
@@ -893,7 +902,8 @@ Example JSON file contents for Multiple polygons (Optional fields: &quot;name&qu
       ],
       &quot;sub_type&quot;: &quot;brush&quot;,
       &quot;groups&quot;: [],
-      &quot;probability&quot;: 0.92
+      &quot;probability&quot;: 0.92,
+      &quot;time&quot;: 0
     }
   ],
   &quot;version&quot;: {
@@ -902,7 +912,7 @@ Example JSON file contents for Multiple polygons (Optional fields: &quot;name&qu
   }
 }
 
-Example JSON file contents for Line (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Line (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Some annotation&quot;,
   &quot;type&quot;: &quot;Line&quot;,
@@ -965,13 +975,14 @@ Example JSON file contents for Line (Optional fields: &quot;name&quot; and &quot
     ]
   ],
   &quot;probability&quot;: 0.92,
+  &quot;time&quot;: 0,
   &quot;version&quot;: {
     &quot;major&quot;: 1,
     &quot;minor&quot;: 0
   }
 }
 
-Example JSON file contents for Multiple lines (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Multiple lines (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Some annotations&quot;,
   &quot;type&quot;: &quot;Multiple lines&quot;,
@@ -1098,7 +1109,8 @@ Example JSON file contents for Multiple lines (Optional fields: &quot;name&quot;
           ]
         ]
       ],
-      &quot;probability&quot;: 0.92
+      &quot;probability&quot;: 0.92,
+      &quot;time&quot;: 0
     }
   ],
   &quot;version&quot;: {
@@ -1107,7 +1119,7 @@ Example JSON file contents for Multiple lines (Optional fields: &quot;name&quot;
   }
 }
 
-Example JSON file contents for Angle (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Angle (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Some angle&quot;,
   &quot;type&quot;: &quot;Angle&quot;,
@@ -1138,13 +1150,14 @@ Example JSON file contents for Angle (Optional fields: &quot;name&quot; and &quo
     ]
   ],
   &quot;probability&quot;: 0.92,
+  &quot;time&quot;: 0,
   &quot;version&quot;: {
     &quot;major&quot;: 1,
     &quot;minor&quot;: 0
   }
 }
 
-Example JSON file contents for Multiple angles (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Multiple angles (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Some angles&quot;,
   &quot;type&quot;: &quot;Multiple angles&quot;,
@@ -1177,7 +1190,8 @@ Example JSON file contents for Multiple angles (Optional fields: &quot;name&quot
           ]
         ]
       ],
-      &quot;probability&quot;: 0.82
+      &quot;probability&quot;: 0.82,
+      &quot;time&quot;: 0
     },
     {
       &quot;name&quot;: &quot;Second angle&quot;,
@@ -1207,7 +1221,8 @@ Example JSON file contents for Multiple angles (Optional fields: &quot;name&quot
           ]
         ]
       ],
-      &quot;probability&quot;: 0.52
+      &quot;probability&quot;: 0.52,
+      &quot;time&quot;: 1
     },
     {
       &quot;name&quot;: &quot;Third angle&quot;,
@@ -1237,7 +1252,8 @@ Example JSON file contents for Multiple angles (Optional fields: &quot;name&quot
           ]
         ]
       ],
-      &quot;probability&quot;: 0.98
+      &quot;probability&quot;: 0.98,
+      &quot;time&quot;: 4
     }
   ],
   &quot;version&quot;: {
@@ -1246,7 +1262,7 @@ Example JSON file contents for Multiple angles (Optional fields: &quot;name&quot
   }
 }
 
-Example JSON file contents for Ellipse (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Ellipse (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Some ellipse&quot;,
   &quot;type&quot;: &quot;Ellipse&quot;,
@@ -1275,13 +1291,14 @@ Example JSON file contents for Ellipse (Optional fields: &quot;name&quot; and &q
     ]
   ],
   &quot;probability&quot;: 0.92,
+  &quot;time&quot;: 0,
   &quot;version&quot;: {
     &quot;major&quot;: 1,
     &quot;minor&quot;: 0
   }
 }
 
-Example JSON file contents for Multiple ellipses (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Multiple ellipses (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Some ellipse&quot;,
   &quot;type&quot;: &quot;Multiple ellipses&quot;,
@@ -1311,7 +1328,8 @@ Example JSON file contents for Multiple ellipses (Optional fields: &quot;name&qu
           0.5
         ]
       ],
-      &quot;probability&quot;: 0.69
+      &quot;probability&quot;: 0.69,
+      &quot;time&quot;: 2
     },
     {
       &quot;major_axis&quot;: [
@@ -1338,7 +1356,8 @@ Example JSON file contents for Multiple ellipses (Optional fields: &quot;name&qu
           0.5
         ]
       ],
-      &quot;probability&quot;: 0.92
+      &quot;probability&quot;: 0.92,
+      &quot;time&quot;: 0
     }
   ],
   &quot;version&quot;: {
@@ -1347,7 +1366,7 @@ Example JSON file contents for Multiple ellipses (Optional fields: &quot;name&qu
   }
 }
 
-Example JSON file contents for Three-point angle (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Three-point angle (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Some 3-point angle&quot;,
   &quot;type&quot;: &quot;Three-point angle&quot;,
@@ -1369,13 +1388,14 @@ Example JSON file contents for Three-point angle (Optional fields: &quot;name&qu
     ]
   ],
   &quot;probability&quot;: 0.003,
+  &quot;time&quot;: 0,
   &quot;version&quot;: {
     &quot;major&quot;: 1,
     &quot;minor&quot;: 0
   }
 }
 
-Example JSON file contents for Multiple three-point angles (Optional fields: &quot;name&quot; and &quot;probability&quot;):
+Example JSON file contents for Multiple three-point angles (Optional fields: &quot;name&quot;, &quot;probability&quot;, and &quot;time&quot;):
 {
   &quot;name&quot;: &quot;Multiple 3-point angles&quot;,
   &quot;type&quot;: &quot;Multiple three-point angles&quot;,
@@ -1399,7 +1419,8 @@ Example JSON file contents for Multiple three-point angles (Optional fields: &qu
           0.5
         ]
       ],
-      &quot;probability&quot;: 0.92
+      &quot;probability&quot;: 0.92,
+      &quot;time&quot;: 0
     },
     {
       &quot;name&quot;: &quot;second&quot;,
