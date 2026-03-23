@@ -1,0 +1,22 @@
+{% extends 'datatables/list_base.html' %}
+{% load url %}
+
+{% block title %}
+    Your Algorithms - Algorithms - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'algorithms:list' %}">Algorithms</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Your Algorithms</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Your Algorithms</h2>
+
+    <p>This is a list of the algorithms that you are participating in.</p>
+
+    {{ block.super }}
+{% endblock %}

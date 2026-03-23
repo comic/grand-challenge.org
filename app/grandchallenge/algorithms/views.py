@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Q, Window
+from django.db.models import Case, IntegerField, Q, Value, When, Window
 from django.db.models.functions import Rank
 from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
@@ -185,6 +185,51 @@ class AlgorithmList(FilterMixin, ViewObjectPermissionListMixin, ListView):
         )
 
         return context
+
+
+class UsersAlgorithmList(LoginRequiredMixin, PaginatedTableListView):
+    model = Algorithm
+    template_name = "algorithms/algorithm_users_list.html"
+    row_template = "algorithms/algorithm_users_row.html"
+    search_fields = ["title", "slug", "description"]
+    columns = [
+        Column(title="Title", sort_field="title"),
+        Column(title="Public", sort_field="public"),
+        Column(title="Your Role", sort_field="user_role_order"),
+        Column(title="Editors"),
+        Column(title="Created", sort_field="created"),
+    ]
+    default_sort_column = 4
+
+    def get_queryset(self):
+        queryset = (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                "editors_group__user_set__user_profile",
+                "editors_group__user_set__verification",
+            )
+        )
+
+        user_groups = self.request.user.groups.all()
+
+        if not self.request.user.is_superuser:
+            queryset = queryset.filter(
+                Q(editors_group__in=user_groups)
+                | Q(users_group__in=user_groups)
+            ).annotate(
+                user_role_order=Case(
+                    When(editors_group__in=user_groups, then=Value(2)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                )
+            )
+        else:
+            queryset = queryset.annotate(
+                user_role_order=Value(-1, output_field=IntegerField())
+            )
+
+        return queryset
 
 
 class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):
