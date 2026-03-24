@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -5,6 +7,7 @@ from guardian.shortcuts import get_perms, get_users_with_perms
 
 from grandchallenge.archives.models import Archive
 from grandchallenge.components.models import InterfaceKindChoices
+from grandchallenge.subdomains.utils import reverse
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import ComponentInterfaceFactory
 from tests.evaluation_tests.test_permissions import get_groups_with_set_perms
@@ -60,6 +63,21 @@ class TestArchivePermissions:
         a.save()
 
         assert "view_archive" not in get_perms(g_reg_anon, a)
+
+
+@pytest.mark.django_db
+def test_archive_logged_in_permissions(client):
+    url = reverse("archives:users-list")
+
+    # Not logged in should redirect to login
+    response = client.get(url)
+    assert response.status_code == 302
+    assert list(urlparse(response.url))[2] == settings.LOGIN_URL
+
+    # Logged in should work
+    user = UserFactory()
+    response = get_view_for_user(url=url, client=client, user=user)
+    assert response.status_code == 200
 
 
 @pytest.mark.parametrize(

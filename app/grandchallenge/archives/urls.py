@@ -20,12 +20,14 @@ from grandchallenge.archives.views import (
     ArchiveUploadersUpdate,
     ArchiveUploadSessionCreate,
     ArchiveUsersUpdate,
+    UsersArchiveList,
 )
 
 app_name = "archives"
 
 urlpatterns = [
     path("", ArchiveList.as_view(), name="list"),
+    path("mine/", UsersArchiveList.as_view(), name="users-list"),
     path("create/", ArchiveCreate.as_view(), name="create"),
     path("<slug>/", ArchiveDetail.as_view(), name="detail"),
     path("<slug>/update/", ArchiveUpdate.as_view(), name="update"),
