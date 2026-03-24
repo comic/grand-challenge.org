@@ -489,7 +489,7 @@ class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
         try:
             return self.example_value
         except ObjectDoesNotExist:
-            return INTERFACE_KIND_JSON_EXAMPLES.get(self.kind)
+            return INTERFACE_KIND_JSON_EXAMPLES.get(self.kind, MISSING)
 
     @property
     def super_kind(self):

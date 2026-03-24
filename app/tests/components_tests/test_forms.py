@@ -1,9 +1,12 @@
+import json
+
 import pytest
 from django.core.exceptions import ValidationError
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.archives.forms import ArchiveItemUpdateForm
 from grandchallenge.components.forms import (
+    INTERFACE_FORM_FIELD_PREFIX,
     FlexibleWidgetPrefixes,
     InterfaceFormFieldsMixin,
 )
@@ -16,6 +19,7 @@ from grandchallenge.uploads.models import UserUpload
 from tests.archives_tests.factories import ArchiveItemFactory
 from tests.cases_tests.factories import DICOMImageSetFactory
 from tests.components_tests.factories import (
+    ComponentInterfaceExampleValueFactory,
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
@@ -242,3 +246,52 @@ def test_interface_form_field_image_search_validates_permission():
     assert panimg_field.clean(["", str(panimg_image.pk)]) == panimg_image
     with pytest.raises(ValidationError):
         panimg_field.clean(["", str(panimg_image_no_perm.pk)])
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "value",
+    (
+        4242,
+        None,
+        False,
+    ),
+)
+def test_help_text_includes_download_link_with_example(value):
+    """Test that help_text includes a download link when socket has an example."""
+    ci = ComponentInterfaceFactory(
+        description="This is a test description",
+        kind=ComponentInterface.Kind.ANY,
+    )
+    ComponentInterfaceExampleValueFactory(interface=ci, value=value)
+
+    fields = InterfaceFormFieldsMixin().get_fields_for_interface(interface=ci)
+    field_key = f"{INTERFACE_FORM_FIELD_PREFIX}{ci.slug}"
+    field = fields[field_key]
+
+    help_text = str(field.help_text)
+    assert "This is a test description" in help_text
+    assert "Download Example" in help_text
+    assert "data:application/json;charset=utf-8," in help_text
+    assert f'download="example-{ci.slug}.json"' in help_text
+    assert json.dumps(value) in help_text
+
+
+@pytest.mark.django_db
+def test_help_text_does_not_include_download_link_without_example():
+    """Test that help_text does not include download link when interface has no example."""
+    ci = ComponentInterfaceFactory(
+        description="This is a test description",
+        kind=ComponentInterface.Kind.PDF,
+    )
+
+    fields = InterfaceFormFieldsMixin().get_fields_for_interface(
+        user=UserFactory(),  # Required for permission checks
+        interface=ci,
+    )
+    field_key = f"{FlexibleWidgetPrefixes.CHOICE}{ci.slug}"
+    field = fields[field_key]
+
+    help_text = str(field.help_text)
+    assert "This is a test description" in help_text
+    assert "Download Example" not in help_text

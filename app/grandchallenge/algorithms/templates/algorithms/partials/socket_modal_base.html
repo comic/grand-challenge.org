@@ -1,5 +1,6 @@
 {% load bleach %}
 {% load json %}
+{% load missing %}
 
 
 <a href="#socketModal-{{ socket.pk }}"
@@ -50,14 +51,23 @@
                         </dd>
                     {% endif %}
 
-                    {% if socket.json_kind_example %}
+                    {% if not socket.json_kind_example|is_missing %}
                         <dt>Example</dt>
                         <dd>
                             {% if socket.json_kind_example.extra_info %}
                                 {{ socket.json_kind_example.extra_info|md2html }}
                             {% endif %}
+                            <a href="data:text/plain;charset=utf-8,{{ socket.json_kind_example.value|json_dumps:2|urlencode }}"
+                                download="example-{{ socket.slug }}.json"
+                            >
+                                <i class="fa fa-download mr-1"></i>Download Example
+                            </a>
+                            <strong>Example JSON file contents:</strong>
                             <pre>{{ socket.json_kind_example.value|json_dumps:2 }}</pre>
+
                         </dd>
+
+
                     {% endif %}
 
                 </dl>

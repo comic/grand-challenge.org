@@ -1,5 +1,7 @@
+import json
 import logging
 from enum import StrEnum
+from urllib.parse import quote
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
@@ -19,6 +21,7 @@ from django.forms import (
 )
 from django.utils.functional import empty
 from django.utils.text import format_lazy
+from pydantic_core import MISSING
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.cases.form_fields import (
@@ -186,6 +189,19 @@ class InterfaceFormFieldsMixin:
             "disabled": disabled,
             "label": interface.title.title(),
         }
+
+        if interface.json_kind_example is not MISSING:
+            json_data = json.dumps(interface.json_kind_example.value, indent=2)
+            data_uri = (
+                f"data:application/json;charset=utf-8,{quote(json_data)}"
+            )
+
+            kwargs["help_text"] = format_lazy(
+                '{} <a href="{}" download="example-{}.json">Download Example.</a>',
+                kwargs["help_text"],
+                data_uri,
+                interface.slug,
+            )
 
         if interface.super_kind == interface.SuperKind.IMAGE:
             if interface.is_dicom_image_kind:

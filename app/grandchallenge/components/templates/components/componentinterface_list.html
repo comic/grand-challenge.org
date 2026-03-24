@@ -3,6 +3,7 @@
 {% load static %}
 {% load json %}
 {% load bleach %}
+{% load missing %}
 
 {% block title %}
     {% if object_type == object_type_options.ALGORITHM %}
@@ -80,7 +81,7 @@
                         </td>
                     {% endif %}
                     <td>
-                        {% if interface.json_kind_example %}
+                        {% if not interface.json_kind_example|is_missing %}
                             <a href="#example-value-modal-{{ interface.pk }}"
                                 data-toggle="modal"
                                 data-target="#example-value-modal-{{ interface.pk }}"
@@ -114,6 +115,12 @@
 
                                             <strong>Example JSON file contents:</strong>
                                             <pre>{{ interface.json_kind_example.value|json_dumps:2 }}</pre>
+                                            <a href="data:text/plain;charset=utf-8,{{ interface.json_kind_example.value|json_dumps:2|urlencode }}"
+                                                download="example-{{ interface.slug }}.json"
+                                                class="mb-2"
+                                            >
+                                                <i class="fa fa-download mr-1"></i>Download Example
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
