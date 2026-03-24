@@ -18,7 +18,7 @@ app_name = "challenges"
 
 urlpatterns = [
     path("", ChallengeList.as_view(), name="list"),
-    path("my-challenges/", UsersChallengeList.as_view(), name="users-list"),
+    path("mine/", UsersChallengeList.as_view(), name="users-list"),
     path("requests/", ChallengeRequestList.as_view(), name="requests-list"),
     path(
         "requests/create/",
