@@ -32,7 +32,6 @@ from grandchallenge.components.serializers import (
     HyperlinkedComponentInterfaceValueSerializer,
     convert_deserialized_civ_data,
 )
-from grandchallenge.core.drf_fields import ISODurationField
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.hanging_protocols.serializers import (
@@ -142,9 +141,6 @@ class JobSerializer(serializers.ModelSerializer):
     view_content = JSONField(
         source="algorithm_image.algorithm.view_content", read_only=True
     )
-
-    exec_duration = ISODurationField(read_only=True)
-    invoke_duration = ISODurationField(read_only=True)
 
     class Meta:
         model = Job
