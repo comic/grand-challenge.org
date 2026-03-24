@@ -187,7 +187,11 @@ class AlgorithmList(FilterMixin, ViewObjectPermissionListMixin, ListView):
         return context
 
 
-class UsersAlgorithmList(LoginRequiredMixin, PaginatedTableListView):
+class UsersAlgorithmList(
+    LoginRequiredMixin,
+    ViewObjectPermissionListMixin,
+    PaginatedTableListView,
+):
     model = Algorithm
     template_name = "algorithms/algorithm_users_list.html"
     row_template = "algorithms/algorithm_users_row.html"

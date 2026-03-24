@@ -159,7 +159,11 @@ class ReaderStudyList(FilterMixin, ViewObjectPermissionListMixin, ListView):
         )
 
 
-class UsersReaderStudyList(LoginRequiredMixin, PaginatedTableListView):
+class UsersReaderStudyList(
+    LoginRequiredMixin,
+    ViewObjectPermissionListMixin,
+    PaginatedTableListView,
+):
     model = ReaderStudy
     template_name = "reader_studies/readerstudy_users_list.html"
     row_template = "reader_studies/readerstudy_users_row.html"
