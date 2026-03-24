@@ -488,7 +488,6 @@ class AlgorithmImageUpdate(
     form_class = AlgorithmImageUpdateForm
     permission_required = "change_algorithmimage"
     raise_exception = True
-    template_name_suffix = "_update"
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
