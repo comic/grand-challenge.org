@@ -43,9 +43,7 @@ app_name = "reader-studies"
 
 urlpatterns = [
     path("", ReaderStudyList.as_view(), name="list"),
-    path(
-        "my-reader-studies/", UsersReaderStudyList.as_view(), name="users-list"
-    ),
+    path("mine/", UsersReaderStudyList.as_view(), name="users-list"),
     path("create/", ReaderStudyCreate.as_view(), name="create"),
     path("<slug:slug>/", ReaderStudyDetail.as_view(), name="detail"),
     path("<slug:slug>/update/", ReaderStudyUpdate.as_view(), name="update"),

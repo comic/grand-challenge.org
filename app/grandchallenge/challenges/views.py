@@ -92,7 +92,11 @@ class ChallengeList(FilterMixin, ListView):
         return context
 
 
-class UsersChallengeList(LoginRequiredMixin, PaginatedTableListView):
+class UsersChallengeList(
+    LoginRequiredMixin,
+    ViewObjectPermissionListMixin,
+    PaginatedTableListView,
+):
     model = Challenge
     template_name = "challenges/challenge_users_list.html"
     row_template = "challenges/challenge_users_row.html"

@@ -2472,3 +2472,49 @@ def test_algorithm_template_button_visibility(client):
         "required before a template can be downloaded."
         not in response.rendered_content
     )
+
+
+@pytest.mark.django_db
+def test_algorithm_users_list_is_filtered(client):
+    # Create algorithm set 1
+    alg1 = AlgorithmFactory()
+    editor1 = UserFactory()
+    alg1.add_editor(editor1)
+    user1 = UserFactory()
+    alg1.add_user(user1)
+
+    # Create algorithm set 2
+    alg2 = AlgorithmFactory()
+    editor2 = UserFactory()
+    alg2.add_editor(editor2)
+    user2 = UserFactory()
+    alg2.add_user(user2)
+
+    # Create cross-algorithm users
+    editor12 = UserFactory()
+    alg1.add_editor(editor12)
+    alg2.add_editor(editor12)
+
+    user12 = UserFactory()
+    alg1.add_user(user12)
+    alg2.add_user(user12)
+
+    editor1user2 = UserFactory()
+    alg1.add_editor(editor1user2)
+    alg2.add_user(editor1user2)
+
+    tests = [
+        (set(), UserFactory()),
+        ({alg1}, user1),
+        ({alg1}, editor1),
+        ({alg2}, user2),
+        ({alg2}, editor2),
+        ({alg1, alg2}, editor12),
+        ({alg1, alg2}, user12),
+        ({alg1, alg2}, editor1user2),
+    ]
+    for expected_algorithms, user in tests:
+        response = get_view_for_user(
+            url=reverse("algorithms:users-list"), client=client, user=user
+        )
+        assert expected_algorithms == {*response.context[-1]["object_list"]}

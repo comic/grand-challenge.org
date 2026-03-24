@@ -38,6 +38,7 @@ from grandchallenge.algorithms.views import (
     JobStatusDetail,
     JobUpdate,
     JobViewersUpdate,
+    UsersAlgorithmList,
     UsersUpdate,
 )
 
@@ -45,6 +46,7 @@ app_name = "algorithms"
 
 urlpatterns = [
     path("", AlgorithmList.as_view(), name="list"),
+    path("mine/", UsersAlgorithmList.as_view(), name="users-list"),
     path("create/", AlgorithmCreateRedirect.as_view(), name="create-redirect"),
     path("custom-create/", AlgorithmCreate.as_view(), name="custom-create"),
     path("<slug>/", AlgorithmDetail.as_view(), name="detail"),
