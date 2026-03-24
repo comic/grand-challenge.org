@@ -27,7 +27,6 @@ from grandchallenge.components.models import (
 from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
 )
-from grandchallenge.core.drf_fields import ISODurationField
 from grandchallenge.evaluation.models import Evaluation, Phase, Submission
 from grandchallenge.evaluation.templatetags.evaluation_extras import (
     get_jsonpath,
@@ -119,9 +118,6 @@ class EvaluationSerializer(ModelSerializer):
     outputs = SerializerMethodField()
     status = CharField(source="get_status_display", read_only=True)
     title = CharField(read_only=True)
-
-    exec_duration = ISODurationField(read_only=True)
-    invoke_duration = ISODurationField(read_only=True)
 
     class Meta:
         model = Evaluation
