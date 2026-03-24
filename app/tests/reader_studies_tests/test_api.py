@@ -2193,7 +2193,7 @@ def test_total_edit_duration(client):
         data={"answer": "bar", "last_edit_duration": "00:30"},
     )
     assert response.status_code == 200
-    assert response.json()["last_edit_duration"] == "00:00:30"
+    assert response.json()["last_edit_duration"] == "P0DT00H00M30S"
     assert response.json()["total_edit_duration"] is None
 
     Answer.objects.all().delete()
@@ -2213,8 +2213,8 @@ def test_total_edit_duration(client):
     )
 
     assert response.status_code == 201
-    assert response.json()["last_edit_duration"] == "00:00:30"
-    assert response.json()["total_edit_duration"] == "00:00:30"
+    assert response.json()["last_edit_duration"] == "P0DT00H00M30S"
+    assert response.json()["total_edit_duration"] == "P0DT00H00M30S"
 
     pk = response.json()["pk"]
 
@@ -2229,8 +2229,8 @@ def test_total_edit_duration(client):
     )
 
     assert response.status_code == 200
-    assert response.json()["last_edit_duration"] == "00:00:30"
-    assert response.json()["total_edit_duration"] == "00:01:00"
+    assert response.json()["last_edit_duration"] == "P0DT00H00M30S"
+    assert response.json()["total_edit_duration"] == "P0DT00H01M00S"
 
     response = get_view_for_user(
         viewname="api:reader-studies-answer-detail",
@@ -2257,7 +2257,7 @@ def test_total_edit_duration(client):
     )
 
     assert response.status_code == 200
-    assert response.json()["last_edit_duration"] == "00:00:30"
+    assert response.json()["last_edit_duration"] == "P0DT00H00M30S"
     assert response.json()["total_edit_duration"] is None
 
 
