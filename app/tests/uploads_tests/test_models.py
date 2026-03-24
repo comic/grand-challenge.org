@@ -232,6 +232,7 @@ def test_incomplete_deleted_with_object():
     )
 
 
+@pytest.mark.django_db
 def test_size_of_creators_completed_uploads():
     def upload_files_for_user(user, n=1):
         for _ in range(n):
@@ -243,7 +244,7 @@ def test_size_of_creators_completed_uploads():
                 parts=[{"ETag": response.headers["ETag"], "PartNumber": 1}]
             )
 
-    u = UserFactory.build(pk=42)
+    u = UserFactory()
     upload = UserUpload(creator=u)
     initial_upload_size = upload.size_of_creators_completed_uploads
 
@@ -251,7 +252,7 @@ def test_size_of_creators_completed_uploads():
 
     upload_files_for_user(user=u, n=1)
     # another users files should not be considered
-    upload_files_for_user(user=UserFactory.build(pk=u.pk + 1))
+    upload_files_for_user(user=UserFactory())
 
     assert upload.size_of_creators_completed_uploads == initial_upload_size + 3
 
