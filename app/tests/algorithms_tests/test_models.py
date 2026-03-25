@@ -1526,6 +1526,21 @@ def test_create_interactive_algorithm_choice_constraint():
 
 
 @pytest.mark.django_db
+def test_create_interactive_algorithm_unique_constraint():
+    interactive_algorithm = InteractiveAlgorithmFactory()
+    with pytest.raises(IntegrityError) as error:
+        InteractiveAlgorithmFactory(
+            interactive_algorithm_choice=interactive_algorithm.interactive_algorithm_choice
+        )
+
+    assert (
+        "duplicate key value violates unique constraint "
+        '"algorithms_interactivealgorith_interactive_algorithm_choice_key"'
+        in str(error.value)
+    )
+
+
+@pytest.mark.django_db
 def test_create_interactive_algorithm_without_image():
     interactive_algorithm = InteractiveAlgorithmFactory()
 
