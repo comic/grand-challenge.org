@@ -37,7 +37,7 @@
             This Algorithm Container Image has been removed from the platform and can no longer be used
         </div>
     {% else %}
-        {% if "change_algorithmimage" in algorithm_image_perms %}
+        {% if object.can_execute and "change_algorithmimage" in algorithm_image_perms %}
             <a class="btn btn-primary"
                href="{% url 'algorithms:image-update' slug=object.algorithm.slug pk=object.pk %}">
                 <i class="fa fa-edit"></i> Edit this algorithm image
