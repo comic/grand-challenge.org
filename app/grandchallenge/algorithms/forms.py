@@ -1162,6 +1162,14 @@ class AlgorithmInterfaceForm(SaveFormInitMixin, ModelForm):
             )
 
     def clean(self):
+        try:
+            if self._base_obj.interactive_algorithms.exists():
+                raise ValidationError(
+                    "Interfaces cannot be changed because this is an interactive algorithm."
+                )
+        except AttributeError:
+            pass
+
         cleaned_data = super().clean()
 
         # there should always be at least one input and one output,
@@ -1231,6 +1239,11 @@ class AlgorithmAlgorithmInterfaceDeleteForm(ModelForm):
         fields = []
 
     def clean(self):
+        if self.instance.algorithm.interactive_algorithms.exists():
+            raise ValidationError(
+                "Interfaces cannot be changed because this is an interactive algorithm."
+            )
+
         cleaned_data = super().clean()
         if self.instance.algorithm.interfaces.count() == 1:
             raise ValidationError(

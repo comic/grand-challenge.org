@@ -1699,6 +1699,21 @@ class TestAlgorithmInterfaceForm:
 
         assert io == new_io
 
+    @pytest.mark.django_db
+    def test_invalid_for_interactive_algorithms(self):
+        interactive_algorithm = InteractiveAlgorithmFactory()
+
+        form = AlgorithmInterfaceForm(
+            base_obj=interactive_algorithm.algorithm,
+            data={},
+        )
+
+        assert not form.is_valid()
+        assert (
+            "Interfaces cannot be changed because this is an interactive algorithm."
+            in form.errors["__all__"]
+        )
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
@@ -1750,4 +1765,25 @@ def test_algorithm_image_activate_form_non_invoke_for_interactive_algorithm():
     assert (
         "Only algorithm images that implement the invoke API can be activated because this is an interactive algorithm"
         in str(form.errors)
+    )
+
+
+@pytest.mark.django_db
+def test_interface_delete_form_invalid_for_interactive_algorithms():
+    algorithm = AlgorithmFactory()
+    interface = AlgorithmInterfaceFactory()
+    algorithm.interfaces.add(interface)
+    InteractiveAlgorithmFactory(algorithm=algorithm)
+
+    form = AlgorithmAlgorithmInterfaceDeleteForm(
+        instance=AlgorithmAlgorithmInterface.objects.filter(
+            algorithm=algorithm
+        ).first(),
+        data={},
+    )
+
+    assert not form.is_valid()
+    assert (
+        "Interfaces cannot be changed because this is an interactive algorithm."
+        in form.errors["__all__"]
     )
