@@ -41,6 +41,7 @@ from grandchallenge.core.guardian import (
     ObjectPermissionRequiredMixin,
     ViewObjectPermissionListMixin,
     ViewObjectPermissionsFilter,
+    filter_by_permission,
 )
 from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.validators import is_valid_uuid4
@@ -247,12 +248,19 @@ class RawImageUploadSessionViewSet(
     serializer_class = RawImageUploadSessionSerializer
 
 
-class ImageSearchResultView(
-    LoginRequiredMixin, ViewObjectPermissionListMixin, ListView
-):
+class ImageSearchResultView(LoginRequiredMixin, ListView):
     template_name = "cases/image_search_result_select.html"
     model = Image
     paginate_by = 50
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return filter_by_permission(
+            queryset=queryset,
+            user=self.request.user,
+            codename=f"view_{queryset.model._meta.model_name}",
+            only_consider_group_permissions=True,
+        )
 
     def get(self, request, *args, **kwargs):
         qs = self.get_queryset()

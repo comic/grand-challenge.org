@@ -144,7 +144,9 @@ class GroupObjectPermissionBase(GroupObjectPermissionBaseOrig):
         ]
 
 
-def filter_by_permission(*, queryset, user, codename):
+def filter_by_permission(
+    *, queryset, user, codename, only_consider_group_permissions=False
+):
     """
     Optimised version of get_objects_for_user
 
@@ -209,7 +211,11 @@ def filter_by_permission(*, queryset, user, codename):
         f"{user_related_query_name}__permission": permission,
     }
 
-    if group_filter_required and user_filter_required:
+    if (
+        group_filter_required
+        and user_filter_required
+        and not only_consider_group_permissions
+    ):
         pks = (
             queryset.filter(**user_filter_kwargs)
             .union(queryset.filter(**group_filter_kwargs))
@@ -219,7 +225,14 @@ def filter_by_permission(*, queryset, user, codename):
     elif group_filter_required:
         return queryset.filter(**group_filter_kwargs).distinct()
     elif user_filter_required:
-        return queryset.filter(**user_filter_kwargs)
+        if only_consider_group_permissions:
+            raise ImproperlyConfigured(
+                f"{permission.codename} is not a group level permission for this model. "
+                "Please ensure this is set in allowed_permissions on "
+                f"{dfk_group_model.__class__}."
+            )
+        else:
+            return queryset.filter(**user_filter_kwargs)
     else:
         raise ImproperlyConfigured(
             f"No filter required for filtering this queryset by {permission.codename}. "
