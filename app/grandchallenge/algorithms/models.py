@@ -916,6 +916,16 @@ class AlgorithmImage(UUIDModel, ComponentImage):
     def get_peer_images(self):
         return AlgorithmImage.objects.filter(algorithm=self.algorithm)
 
+    def mark_desired_version(self):
+        if (
+            self.algorithm.interactive_algorithms.exists()
+            and self.api_method != APIMethodChoices.INVOKE
+        ):
+            raise ValidationError(
+                "Only algorithm images that implement the invoke API can be activated because this is an interactive algorithm."
+            )
+        super().mark_desired_version()
+
 
 class AlgorithmImageUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset()

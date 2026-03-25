@@ -1580,3 +1580,22 @@ def test_create_interactive_algorithm_without_invoke_api_image():
 
     with nullcontext():
         interactive_algorithm_invoke.full_clean()
+
+
+@pytest.mark.django_db
+def test_interactive_algorithm_mark_non_invoke_image_raises_validation_error():
+    algorithm_image = AlgorithmImageFactory(
+        api_method=APIMethodChoices.EXEC,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=False,
+    )
+    InteractiveAlgorithmFactory(algorithm=algorithm_image.algorithm)
+
+    with pytest.raises(ValidationError) as error:
+        algorithm_image.mark_desired_version()
+
+    assert (
+        "Only algorithm images that implement the invoke API can be activated because this is an interactive algorithm"
+        in str(error)
+    )
