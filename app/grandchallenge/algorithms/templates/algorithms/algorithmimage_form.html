@@ -13,33 +13,41 @@
         <li class="breadcrumb-item"><a
                 href="{{ algorithm.get_absolute_url }}">{{ algorithm.title }}
         </a></li>
+        {% if object %}
+            <li class="breadcrumb-item"><a
+                    href="{{ object.get_absolute_url }}">
+                {{ object|title }}
+            </a></li>
+        {% endif %}
         <li class="breadcrumb-item active"
-            aria-current="page">Create Image
+            aria-current="page">{{ object|yesno:"Update,Create Image" }}
         </li>
     </ol>
 {% endblock %}
 
 {% block content %}
 
-    <h2>Create An Algorithm Container Image</h2>
+    <h2>{{ object|yesno:"Update,Create" }} An Algorithm Container Image</h2>
 
-    <p>
-        Upload a container image that implements all of the configured interfaces (i.e. input-output combinations):
-    </p>
-
-    {% include 'algorithms/partials/algorithminterface_table.html' with base_obj=algorithm interfaces=algorithm.interfaces.all delete_option=False %}
-
-    {% if perms.algorithms.add_algorithm %}
+    {% if not object %}
         <p>
-            To add or update interfaces for your algorithm, go <a href="{% url 'algorithms:interface-list' slug=algorithm.slug %}">here</a>.
+            Upload a container image that implements all of the configured interfaces (i.e. input-output combinations):
         </p>
-    {% else %}
-        <p>
-            To add or update interfaces for your algorithm, please <a target="_blank" href="mailto:{{ SUPPORT_EMAIL }}">contact support</a>.
-        </p>
+
+        {% include 'algorithms/partials/algorithminterface_table.html' with base_obj=algorithm interfaces=algorithm.interfaces.all delete_option=False %}
+
+        {% if perms.algorithms.add_algorithm %}
+            <p>
+                To add or update interfaces for your algorithm, go <a href="{% url 'algorithms:interface-list' slug=algorithm.slug %}">here</a>.
+            </p>
+        {% else %}
+            <p>
+                To add or update interfaces for your algorithm, please <a target="_blank" href="mailto:{{ SUPPORT_EMAIL }}">contact support</a>.
+            </p>
+        {% endif %}
+
+        <h3>Container Image Options</h3>
     {% endif %}
-
-    <h3>Container Image Options</h3>
 
     {% crispy form %}
 
