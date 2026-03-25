@@ -1,6 +1,8 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
+from enum import auto
 
+import boto3
 from actstream.actions import follow, is_following
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
@@ -9,7 +11,7 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q, Sum, TextChoices
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -18,6 +20,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm, remove_perm
 from pictures.models import PictureField
@@ -1537,3 +1540,140 @@ class InteractiveAlgorithm(UUIDModel):
             raise ValidationError(
                 "Active algorithm image does not use the INVOKE api method"
             )
+
+
+class EndpointStatusChoices(TextChoices):
+    PENDING = auto(), _("Queued")
+    PROVISIONING = auto(), _("Provisioning")
+    PROVISIONED = auto(), _("Provisioned")
+    STARTING = auto(), _("Starting")
+    RUNNING = auto(), _("Running")
+    STOPPED = auto(), _("Stopped")
+    FAILED = auto(), _("Failed")
+
+
+class Endpoint(UUIDModel):
+    StatusChoices = EndpointStatusChoices
+
+    algorithm_image = models.ForeignKey(
+        AlgorithmImage, on_delete=models.PROTECT
+    )
+    algorithm_model = models.ForeignKey(
+        AlgorithmModel, on_delete=models.PROTECT, null=True, blank=True
+    )
+    algorithm_interface = models.ForeignKey(
+        AlgorithmInterface, on_delete=models.PROTECT, null=True, blank=True
+    )
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+    max_duration = models.DurationField(default=timedelta(minutes=10))
+    status = models.CharField(
+        max_length=17,
+        choices=EndpointStatusChoices,
+        default=EndpointStatusChoices.PENDING,
+        db_index=True,
+    )
+    requires_gpu_type = models.CharField(
+        editable=False,
+        max_length=4,
+        choices=GPUTypeChoices,
+    )
+    requires_memory_gb = models.PositiveSmallIntegerField(
+        editable=False,
+    )
+
+    class Meta:
+        permissions = [("invoke_endpoint", "Can invoke the endpoint")]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(status__in=EndpointStatusChoices.values),
+                name="endpoint_status_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    requires_gpu_type__in=GPUTypeChoices.values
+                ),
+                name="endpoint_gpu_type_valid",
+            ),
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__s3_client = None
+        self.__sagemaker_client = None
+        self.__sagemaker_runtime_client = None
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        super().save(*args, **kwargs)
+
+        if adding:
+            if self.creator:
+                assign_perm("view_endpoint", self.creator, self)
+                assign_perm("invoke_endpoint", self.creator, self)
+
+    @property
+    def endpoint_name(self):
+        # Sagemaker requires names to be max 63 chars
+        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-alg-endp-{self.pk}"
+
+    @property
+    def _s3_client(self):
+        if self.__s3_client is None:
+            self.__s3_client = boto3.client(
+                "s3",
+                region_name=settings.AWS_DEFAULT_REGION,
+            )
+        return self.__s3_client
+
+    @property
+    def _sagemaker_client(self):
+        if self.__sagemaker_client is None:
+            self.__sagemaker_client = boto3.client(
+                "sagemaker",
+                region_name=settings.AWS_DEFAULT_REGION,
+            )
+        return self.__sagemaker_client
+
+    @property
+    def _sagemaker_runtime_client(self):
+        if self.__sagemaker_runtime_client is None:
+            self.__sagemaker_runtime_client = boto3.client(
+                "sagemaker-runtime",
+                region_name=settings.AWS_DEFAULT_REGION,
+            )
+        return self.__sagemaker_runtime_client
+
+    @property
+    def _auxiliary_data_prefix(self):
+        return f"/auxiliary-data/{self.pk}"
+
+    @property
+    def _algorithm_model_key(self):
+        return f"{self._auxiliary_data_prefix}/algorithm-model.tar.gz"
+
+    @property
+    def _algorithm_model_s3_uri(self):
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}{self._algorithm_model_key}"
+
+    @property
+    def _output_s3_uri(self):
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}/endpoints/{self.pk}/successes"
+
+    @property
+    def _failure_s3_uri(self):
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}/logs/{self.pk}/failures"
+
+
+class EndpointUserObjectPermission(UserObjectPermissionBase):
+    allowed_permissions = frozenset({"view_endpoint", "invoke_endpoint"})
+
+    content_object = models.ForeignKey(Endpoint, on_delete=models.CASCADE)
+
+
+class EndpointGroupObjectPermission(GroupObjectPermissionBase):
+    allowed_permissions = frozenset()
+
+    content_object = models.ForeignKey(Endpoint, on_delete=models.CASCADE)
