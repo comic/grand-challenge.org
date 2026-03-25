@@ -52,13 +52,37 @@ class ViewObjectPermissionsFilter(BaseFilterBackend):
 
     A filter backend that limits results to those where the requesting user
     has read object level permissions.
+
+    By default, this considers both group and user permissions, and ignores
+    global permissions.
+    To ignore user permissions, set `only_consider_group_permissions = True`.
+    To ignore group permissions, set `only_consider_user_permissions = True`.
     """
+
+    only_consider_group_permissions = False
+    only_consider_user_permissions = False
+
+    def get_only_consider_group_permissions(self, view):
+        if hasattr(view, "get_only_consider_group_permissions"):
+            return view.get_only_consider_group_permissions()
+        return getattr(view, "only_consider_group_permissions", False)
+
+    def get_only_consider_user_permissions(self, view):
+        if hasattr(view, "get_only_consider_user_permissions"):
+            return view.get_only_consider_user_permissions()
+        return getattr(view, "only_consider_user_permissions", False)
 
     def filter_queryset(self, request, queryset, view):
         return filter_by_permission(
             queryset=queryset,
             user=request.user,
             codename=f"view_{queryset.model._meta.model_name}",
+            only_consider_group_permissions=self.get_only_consider_group_permissions(
+                view
+            ),
+            only_consider_user_permissions=self.get_only_consider_user_permissions(
+                view
+            ),
         )
 
 
@@ -151,15 +175,60 @@ class GroupObjectPermissionBase(GroupObjectPermissionBaseOrig):
         ]
 
 
+def _apply_permission_filter(
+    *,
+    queryset,
+    group_filter_required,
+    user_filter_required,
+    group_filter_kwargs,
+    user_filter_kwargs,
+    codename,
+    dfk_group_model,
+    dfk_user_model,
+    only_consider_group_permissions,
+    only_consider_user_permissions,
+):
+    if (
+        group_filter_required
+        and user_filter_required
+        and not only_consider_group_permissions
+        and not only_consider_user_permissions
+    ):
+        pks = (
+            queryset.filter(**user_filter_kwargs)
+            .union(queryset.filter(**group_filter_kwargs))
+            .values_list("pk", flat=True)
+        )
+        return queryset.filter(pk__in=pks)
+
+    if group_filter_required and not only_consider_user_permissions:
+        return queryset.filter(**group_filter_kwargs).distinct()
+
+    if user_filter_required:
+        return queryset.filter(**user_filter_kwargs)
+
+    raise ImproperlyConfigured(
+        f"No filter required for filtering this queryset by {codename}. "
+        "Please ensure this is set in allowed_permissions on "
+        f"{dfk_group_model.__class__} or {dfk_user_model.__class__}."
+    )
+
+
 def filter_by_permission(
-    *, queryset, user, codename, only_consider_group_permissions=False
+    *,
+    queryset,
+    user,
+    codename,
+    only_consider_group_permissions=False,
+    only_consider_user_permissions=False,
 ):
     """
     Optimised version of get_objects_for_user
 
     By default, this method considers both the group and user permissions, and ignores
     global permissions. To ignore user permissions, set
-    `only_consider_group_permissions = True`
+    `only_consider_group_permissions = True`. To ignore group permissions, set
+    only_consider_user_permissions = True`.
 
     Django guardian keeps its permissions in two tables. If you are allowing
     permissions from both users and groups then get_objects_for_user
@@ -171,6 +240,11 @@ def filter_by_permission(
     """
     if user.is_superuser is True:
         return queryset
+
+    if only_consider_group_permissions and only_consider_user_permissions:
+        raise ImproperlyConfigured(
+            "You cannot set both only_consider_group_permissions and only_consider_user_permissions to True."
+        )
 
     if user.is_anonymous:
         # AnonymousUser does not work with filters
@@ -203,6 +277,11 @@ def filter_by_permission(
             f"{permission.codename} is not a group level permission for this model."
         )
 
+    if only_consider_user_permissions and not user_filter_required:
+        raise ImproperlyConfigured(
+            f"{permission.codename} is not a user level permission for this model."
+        )
+
     group_related_query_name = (
         dfk_group_model.content_object.field.related_query_name()
     )
@@ -224,27 +303,18 @@ def filter_by_permission(
         f"{user_related_query_name}__permission": permission,
     }
 
-    if (
-        group_filter_required
-        and user_filter_required
-        and not only_consider_group_permissions
-    ):
-        pks = (
-            queryset.filter(**user_filter_kwargs)
-            .union(queryset.filter(**group_filter_kwargs))
-            .values_list("pk", flat=True)
-        )
-        return queryset.filter(pk__in=pks)
-    elif group_filter_required:
-        return queryset.filter(**group_filter_kwargs).distinct()
-    elif user_filter_required:
-        return queryset.filter(**user_filter_kwargs)
-    else:
-        raise ImproperlyConfigured(
-            f"No filter required for filtering this queryset by {permission.codename}. "
-            "Please ensure this is set in allowed_permissions on "
-            f"{dfk_group_model.__class__} or {dfk_user_model.__class__}."
-        )
+    return _apply_permission_filter(
+        queryset=queryset,
+        group_filter_required=group_filter_required,
+        user_filter_required=user_filter_required,
+        group_filter_kwargs=group_filter_kwargs,
+        user_filter_kwargs=user_filter_kwargs,
+        codename=codename,
+        dfk_group_model=dfk_group_model,
+        dfk_user_model=dfk_user_model,
+        only_consider_group_permissions=only_consider_group_permissions,
+        only_consider_user_permissions=only_consider_user_permissions,
+    )
 
 
 def get_object_if_allowed(*, model, pk, user, codename):

@@ -431,7 +431,7 @@ def test_filter_by_global_permission():
     codename = "view_answer"
     perm = f"reader_studies.{codename}"
 
-    # User global permissions shouldn't count, regardless of only_consider_group_permissions
+    # User global permissions shouldn't count, regardless of only_consider_group_permissions and only_consider_user_permissions flags
     assign_perm(perm, user)
     filtered_queryset = filter_by_permission(
         queryset=queryset,
@@ -444,6 +444,13 @@ def test_filter_by_global_permission():
         user=user,
         codename=codename,
         only_consider_group_permissions=True,
+    )
+    assert filtered_queryset.count() == 0
+    filtered_queryset = filter_by_permission(
+        queryset=queryset,
+        user=user,
+        codename=codename,
+        only_consider_user_permissions=True,
     )
     assert filtered_queryset.count() == 0
 
@@ -462,6 +469,13 @@ def test_filter_by_global_permission():
         user=user,
         codename=codename,
         only_consider_group_permissions=True,
+    )
+    assert filtered_queryset.count() == 0
+    filtered_queryset = filter_by_permission(
+        queryset=queryset,
+        user=user,
+        codename=codename,
+        only_consider_user_permissions=True,
     )
     assert filtered_queryset.count() == 0
 
@@ -592,4 +606,106 @@ def test_unique_objects_returned_with_dual_access():
             queryset=queryset, user=user, codename=codename
         ).count()
         == 1
+    )
+
+
+@pytest.mark.django_db
+def test_filter_by_permission_only_consider_user_permissions():
+    user = UserFactory()
+    queryset = Answer.objects.all()
+    answer = AnswerFactory()
+    codename = "view_answer"
+
+    # No perms
+    assert (
+        filter_by_permission(
+            queryset=queryset,
+            user=user,
+            codename=codename,
+            only_consider_user_permissions=True,
+        ).count()
+        == 0
+    )
+
+    # User perm only -> visible
+    assign_perm(codename, user, answer)
+    assert (
+        filter_by_permission(
+            queryset=queryset,
+            user=user,
+            codename=codename,
+            only_consider_user_permissions=True,
+        ).count()
+        == 1
+    )
+
+    # Add group perm too -> still visible (user-only mode ignores group perm)
+    group = GroupFactory()
+    group.user_set.add(user)
+    assign_perm(codename, group, answer)
+    assert (
+        filter_by_permission(
+            queryset=queryset,
+            user=user,
+            codename=codename,
+            only_consider_user_permissions=True,
+        ).count()
+        == 1
+    )
+
+    # Remove user perm, keep group perm -> no longer visible
+    remove_perm(codename, user, answer)
+    assert (
+        filter_by_permission(
+            queryset=queryset,
+            user=user,
+            codename=codename,
+            only_consider_user_permissions=True,
+        ).count()
+        == 0
+    )
+
+
+@pytest.mark.django_db
+def test_filter_by_permission_only_consider_user_permissions_raises_on_group_only_permission():
+    user = UserFactory()
+    queryset = Answer.objects.all()
+    answer = AnswerFactory()
+    codename = "delete_answer"  # group-only for Answer
+
+    group = GroupFactory()
+    group.user_set.add(user)
+    assign_perm(codename, group, answer)
+
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        filter_by_permission(
+            queryset=queryset,
+            user=user,
+            codename=codename,
+            only_consider_user_permissions=True,
+        )
+
+    assert (
+        "delete_answer is not a user level permission for this model"
+        in str(exc_info.value)
+    )
+
+
+@pytest.mark.django_db
+def test_filter_by_permission_raises_when_both_flags_set():
+    user = UserFactory()
+    queryset = Answer.objects.all()
+
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        filter_by_permission(
+            queryset=queryset,
+            user=user,
+            codename="view_answer",
+            only_consider_user_permissions=True,
+            only_consider_group_permissions=True,
+        )
+
+    assert (
+        "You cannot set both only_consider_group_permissions and only_consider_user_permissions to True"
+        in str(exc_info.value)
     )
