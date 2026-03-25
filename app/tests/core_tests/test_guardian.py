@@ -322,8 +322,9 @@ def test_filter_by_permission_only_consider_group_permissions_raises_on_user_onl
             only_consider_group_permissions=True,
         )
 
-    assert "change_answer is not a group level permission" in str(
-        exc_info.value
+    assert (
+        "change_answer is not a group level permission for this model"
+        in str(exc_info.value)
     )
 
 
