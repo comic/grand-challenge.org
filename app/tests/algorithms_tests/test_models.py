@@ -1,4 +1,5 @@
 import json
+from contextlib import nullcontext
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -18,7 +19,11 @@ from grandchallenge.algorithms.models import (
     Job,
     get_existing_interface_for_inputs_and_outputs,
 )
-from grandchallenge.components.models import CIVData, ComponentInterface
+from grandchallenge.components.models import (
+    APIMethodChoices,
+    CIVData,
+    ComponentInterface,
+)
 from grandchallenge.components.schemas import GPUTypeChoices
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -27,6 +32,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     AlgorithmUserCreditFactory,
+    InteractiveAlgorithmFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
 from tests.cases_tests.factories import RawImageUploadSessionFactory
@@ -1505,3 +1511,57 @@ def test_algorithminterface_create():
     io = AlgorithmInterface.objects.create(inputs=inputs, outputs=outputs)
     assert list(io.inputs.all()) == inputs
     assert list(io.outputs.all()) == outputs
+
+
+@pytest.mark.django_db
+def test_create_interactive_algorithm_choice_constraint():
+    with pytest.raises(IntegrityError) as error:
+        InteractiveAlgorithmFactory(interactive_algorithm_choice="")
+
+    assert (
+        'new row for relation "algorithms_interactivealgorithm" violates '
+        'check constraint "interactive_algorithm_choice_valid"'
+        in str(error.value)
+    )
+
+
+@pytest.mark.django_db
+def test_create_interactive_algorithm_without_image():
+    interactive_algorithm = InteractiveAlgorithmFactory()
+
+    with pytest.raises(ValidationError) as error:
+        interactive_algorithm.full_clean()
+
+    assert "Algorithm has no active image" in str(error)
+
+
+@pytest.mark.django_db
+def test_create_interactive_algorithm_without_invoke_api_image():
+    algorithm_image_exec = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+        api_method=APIMethodChoices.EXEC,
+    )
+    interactive_algorithm_exec = InteractiveAlgorithmFactory.build(
+        algorithm=algorithm_image_exec.algorithm
+    )
+    algorithm_image_invoke = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+        api_method=APIMethodChoices.INVOKE,
+    )
+    interactive_algorithm_invoke = InteractiveAlgorithmFactory.build(
+        algorithm=algorithm_image_invoke.algorithm
+    )
+
+    with pytest.raises(ValidationError) as error:
+        interactive_algorithm_exec.full_clean()
+
+    assert error.value.message_dict["__all__"] == [
+        "Active algorithm image does not use the INVOKE api method"
+    ]
+
+    with nullcontext():
+        interactive_algorithm_invoke.full_clean()
