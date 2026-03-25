@@ -4,12 +4,16 @@ from guardian.shortcuts import assign_perm, remove_perm
 from grandchallenge.components.forms import FlexibleWidgetPrefixes
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.components.widgets import SearchWidgetSuffixes
+from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.cases_tests.factories import (
     DICOMImageSetFactory,
     DICOMImageSetUploadFactory,
     RawImageUploadSessionFactory,
 )
-from tests.components_tests.factories import ComponentInterfaceFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 from tests.factories import ImageFactory, UserFactory
 from tests.utils import get_view_for_user
 
@@ -104,24 +108,36 @@ class TestObjectPermissionRequiredViews:
 @pytest.mark.django_db
 def test_image_search_view(client):
     user = UserFactory()
+    archive = ArchiveFactory()
+    archive.add_user(user)
+    ai = ArchiveItemFactory(archive=archive)
+
     images = ImageFactory.create_batch(3)
     dicom_image_sets = DICOMImageSetFactory.create_batch(3)
     images_dicom = [
         ImageFactory(dicom_image_set=dicom_image_set)
         for dicom_image_set in dicom_image_sets
     ]
-    for image in (images[0], images[1], images_dicom[0], images_dicom[1]):
-        assign_perm("cases.view_image", user, image)
     images[1].name = "test.mha"
     images[1].save()
     images_dicom[1].name = "test.dcm"
     images_dicom[1].save()
+
     ci_panimg = ComponentInterfaceFactory(
         kind=ComponentInterface.Kind.PANIMG_IMAGE
     )
     ci_dicom = ComponentInterfaceFactory(
         kind=ComponentInterface.Kind.DICOM_IMAGE_SET
     )
+    for image in (images[0], images[1]):
+        # add to archive item that the user has view permission for
+        civ = ComponentInterfaceValueFactory(interface=ci_panimg, image=image)
+        ai.values.add(civ)
+
+    for image in (images_dicom[0], images_dicom[1]):
+        # add to archive item that the user has view permission for
+        civ = ComponentInterfaceValueFactory(interface=ci_dicom, image=image)
+        ai.values.add(civ)
 
     response = get_view_for_user(
         viewname="cases:image-search",

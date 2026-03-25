@@ -253,6 +253,7 @@ class ImageSearchResultView(
     template_name = "cases/image_search_result_select.html"
     model = Image
     paginate_by = 50
+    only_consider_group_permissions = True
 
     def get(self, request, *args, **kwargs):
         qs = self.get_queryset()

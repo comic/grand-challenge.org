@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import pytest
 from django.contrib.auth.models import AnonymousUser
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.http import HttpRequest
 from django.views.generic import ListView, TemplateView
 from guardian.core import ObjectPermissionChecker
@@ -210,6 +210,125 @@ def test_filter_by_permission():
 
 
 @pytest.mark.django_db
+def test_filter_by_permission_only_consider_group_permissions():
+    user = UserFactory()
+    queryset = Answer.objects.all()
+    answer = AnswerFactory()
+    codename = "view_answer"
+
+    filtered_queryset = filter_by_permission(
+        queryset=queryset, user=user, codename=codename
+    )
+    # User does not have permission to view
+    assert filtered_queryset.count() == 0
+
+    assign_perm(codename, user, answer)
+    filtered_queryset = filter_by_permission(
+        queryset=queryset, user=user, codename=codename
+    )
+    # Has user permission
+    assert filtered_queryset.count() == 1
+
+    filtered_queryset = filter_by_permission(
+        queryset=queryset,
+        user=user,
+        codename=codename,
+        only_consider_group_permissions=True,
+    )
+    # Has user permission, but those are ignored
+    assert filtered_queryset.count() == 0
+
+    group = GroupFactory()
+    group.user_set.add(user)
+    assign_perm(codename, group, answer)
+    filtered_queryset = filter_by_permission(
+        queryset=queryset,
+        user=user,
+        codename=codename,
+        only_consider_group_permissions=True,
+    )
+    # Has both user and group permission, user permissions are ignored
+    assert filtered_queryset.count() == 1
+
+    remove_perm(codename, user, answer)
+    filtered_queryset = filter_by_permission(
+        queryset=queryset,
+        user=user,
+        codename=codename,
+        only_consider_group_permissions=True,
+    )
+    # Has group permission only and only those are considered
+    assert filtered_queryset.count() == 1
+
+    remove_perm(codename, group, answer)
+    filtered_queryset = filter_by_permission(
+        queryset=queryset,
+        user=user,
+        codename=codename,
+        only_consider_group_permissions=True,
+    )
+    # Has no permission again
+    assert filtered_queryset.count() == 0
+
+    assign_perm(codename, group, answer)
+    filtered_queryset = filter_by_permission(
+        queryset=queryset,
+        user=user,
+        codename=codename,
+        only_consider_group_permissions=True,
+    )
+    # Has group permission again
+    assert filtered_queryset.count() == 1
+
+    group.user_set.remove(user)
+    filtered_queryset = filter_by_permission(
+        queryset=queryset,
+        user=user,
+        codename=codename,
+        only_consider_group_permissions=True,
+    )
+    # Has no permission again
+    assert filtered_queryset.count() == 0
+
+
+@pytest.mark.django_db
+def test_filter_by_permission_only_consider_group_permissions_raises_on_user_only_permission():
+    user = UserFactory()
+    queryset = Answer.objects.all()
+    answer = AnswerFactory()
+    codename = (
+        "change_answer"  # Allowed for user perms only, not for group perms
+    )
+
+    assign_perm(codename, user, answer)
+
+    # Sanity check: without the flag, user object permission works fine
+    assert (
+        filter_by_permission(
+            queryset=queryset,
+            user=user,
+            codename=codename,
+        ).count()
+        == 1
+    )
+
+    # With only_consider_group_permissions=True, raises error because
+    # change_answer is not in AnswerGroupObjectPermission.allowed_permissions
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        filter_by_permission(
+            queryset=queryset,
+            user=user,
+            codename=codename,
+            only_consider_group_permissions=True,
+        )
+
+    assert (
+        "change_answer is not a group level permission for this model"
+        in str(exc_info.value)
+    )
+
+
+@pytest.mark.django_db
 def test_filter_by_permission_no_user():
     user = UserFactory()
     queryset = Answer.objects.all()
@@ -312,15 +431,23 @@ def test_filter_by_global_permission():
     codename = "view_answer"
     perm = f"reader_studies.{codename}"
 
+    # User global permissions shouldn't count, regardless of only_consider_group_permissions
     assign_perm(perm, user)
     filtered_queryset = filter_by_permission(
         queryset=queryset,
         user=user,
         codename=codename,
     )
-    # User global permissions shouldn't count
+    assert filtered_queryset.count() == 0
+    filtered_queryset = filter_by_permission(
+        queryset=queryset,
+        user=user,
+        codename=codename,
+        only_consider_group_permissions=True,
+    )
     assert filtered_queryset.count() == 0
 
+    # Group global permissions shouldn't count
     group = GroupFactory()
     group.user_set.add(user)
     assign_perm(perm, group)
@@ -329,7 +456,13 @@ def test_filter_by_global_permission():
         user=user,
         codename=codename,
     )
-    # Group global permissions shouldn't count
+    assert filtered_queryset.count() == 0
+    filtered_queryset = filter_by_permission(
+        queryset=queryset,
+        user=user,
+        codename=codename,
+        only_consider_group_permissions=True,
+    )
     assert filtered_queryset.count() == 0
 
 
