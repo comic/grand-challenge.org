@@ -77,12 +77,12 @@
             <a class="dropdown-item"
                href="{% url 'profile-detail' user.username %}">
                 Signed in as <b>{{ user.username }}</b></a>
-            <div class="dropdown-divider"></div>
-            <div class="dropdown-header">Personal</div>
-            <div class="ml-1">
             <a class="dropdown-item"
                href="{% url 'profile-detail' user.username %}">
-                Profile</a>
+                Your Profile</a>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-header">Your Work</div>
+            <div class="ml-1">
             <a class="dropdown-item"
                href="{% url 'challenges:users-list' %}">
                 Challenges</a>
@@ -90,11 +90,11 @@
                href="{% url 'challenges:requests-list' %}">
                 Challenge Requests</a>
             <a class="dropdown-item"
-               href="{% url 'reader-studies:users-list' %}">
-                Reader Studies</a>
-            <a class="dropdown-item"
                href="{% url 'algorithms:users-list' %}">
                 Algorithms</a>
+            <a class="dropdown-item"
+               href="{% url 'reader-studies:users-list' %}">
+                Reader Studies</a>
             <a class="dropdown-item"
                href="{% url 'archives:users-list' %}">
                 Archives</a>

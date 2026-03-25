@@ -38,50 +38,92 @@
                         <h2 class="mb-3">{{ profile.user.username }}</h2>
                     {% endif %}
 
-                    {% if profile.user.verification.is_verified %}
-                        <span class="btn btn-sm btn-outline-success disabled mb-3" title="Verified User"><i
-                                class="fas fa-user-check"></i></span>
-                    {% endif %}
-
                     {% get_obj_perms request.user for profile as "profile_perms" %}
                     {% if "change_userprofile" in profile_perms %}
+                        <h6>Profile</h6>
                         <ul class="list-group mb-3">
                             {% if not profile.user.verification %}
                                 <a class="list-group-item list-group-item-action"
                                    href="{% url 'verifications:create' %}">
-                                    <i class="fas fa-user-check"></i>&nbsp;Request Verification
+                                    <i class="fa fa-user-check fa-fw mr-1"></i>Request Verification
+                                </a>
+                            {% elif profile.user.verification.is_verified %}
+                                <a class="list-group-item list-group-item-action text-success"
+                                   href="{% url 'verifications:detail' %}">
+                                    <i class="fa fa-user-check fa-fw mr-1"></i>Account Verified
                                 </a>
                             {% else %}
                                 <a class="list-group-item list-group-item-action"
                                    href="{% url 'verifications:detail' %}">
-                                    <i class="fas fa-user-check"></i>&nbsp;Verification Status
+                                    <i class="fa fa-user-check fa-fw mr-1"></i>Verification Status
                                 </a>
                             {% endif %}
                             <a class="list-group-item list-group-item-action"
                                href='{% url 'profile-update' %}'><i
                                     class="fa fa-edit fa-fw"></i>&nbsp;{% trans "Edit Profile" %}</a>
+                        </ul>
+                        <h6>Access</h6>
+                        <ul class="list-group mb-3">
+
                             {% if profile.user.has_usable_password %}
                                 <a class="list-group-item list-group-item-action"
                                    href='{% url 'account_change_password' %}'><i
-                                        class="fa fa-key fa-fw"></i>&nbsp;{% trans "Change Password" %}
+                                        class="fa fa-key fa-fw mr-1"></i>{% trans "Change Password" %}
                                 </a>
                             {% endif %}
                             <a class="list-group-item list-group-item-action"
-                                   href='{% url 'account_email' %}'><i
-                                        class="fa fa-envelope fa-fw"></i>&nbsp;{% trans "Change Email" %}
-                                </a>
+                                href='{% url 'account_email' %}'><i
+                                    class="fa fa-envelope fa-fw mr-1"></i>{% trans "Change Email" %}
+                            </a>
                             <a class="list-group-item list-group-item-action"
                                href='{% url 'api-tokens:list' %}'><i
-                                    class="fas fa-unlock fa-fw"></i>&nbsp;{% trans "Manage API Tokens" %}</a>
+                                    class="fas fa-unlock fa-fw mr-1"></i>{% trans "Manage API Tokens" %}</a>
                         {% if request.user|has_2fa_enabled %}
                             <a class="list-group-item list-group-item-action" href="{% url 'mfa_index' %}" title="Multi-Factor Authentication Settings"><i
-                                   class="fas fa-qrcode fa-fw"></i>{% trans "MFA Settings" %}</a>
+                                   class="fas fa-qrcode fa-fw mr-1"></i>{% trans "MFA Settings" %}</a>
                         {% else %}
                             <a class="list-group-item list-group-item-action" href="{% url 'mfa_activate_totp' %}" title="Enable Multi-Factor Authentication"><i
-                                   class="fas fa-qrcode fa-fw"></i>{% trans "Enable MFA" %}</a>
+                                   class="fas fa-qrcode fa-fw mr-1"></i>{% trans "Enable MFA" %}</a>
                         {% endif %}
                         </ul>
+                    {% else %}
+                        {% if profile.user.verification.is_verified %}
+                        <span class="btn btn-sm btn-outline-success disabled mb-3" title="Verified User"><i
+                                class="fas fa-user-check"></i></span>
+                        {% endif %}
                     {% endif %}
+
+                    <h6>Your Work</h6>
+                    <ul class="list-group mb-3">
+                        <a class="list-group-item list-group-item-action"
+                           href="{% url 'challenges:users-list' %}">
+                            Challenges
+                        </a>
+                        <a class="list-group-item list-group-item-action"
+                           href="{% url 'challenges:requests-list' %}">
+                            Challenge Requests
+                        </a>
+                        <a class="list-group-item list-group-item-action"
+                           href="{% url 'algorithms:users-list' %}">
+                            Algorithms
+                        </a>
+                        <a class="list-group-item list-group-item-action"
+                           href="{% url 'reader-studies:users-list' %}">
+                            Reader Studies
+                        </a>
+                        <a class="list-group-item list-group-item-action"
+                           href="{% url 'archives:users-list' %}">
+                            Archives
+                        </a>
+                        <a class="list-group-item list-group-item-action"
+                           href="{% url 'cases:raw-image-upload-session-list' %}">
+                            Uploads
+                        </a>
+                        <a class="list-group-item list-group-item-action"
+                           href="{% url 'cases:dicom-image-set-upload-list' %}">
+                            DICOM Uploads
+                        </a>
+                    </ul>
 
                     <ul class="list-unstyled">
                         {% if profile.country %}
@@ -99,6 +141,7 @@
                                     href="{{ profile.website }}">Website</a></li>
                         {% endif %}
                     </ul>
+
                     {% if profile.display_organizations and organizations %}
                             <h5>Organizations</h5>
                             <ul class="list-unstyled">
