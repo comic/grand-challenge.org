@@ -3,7 +3,9 @@ from pathlib import Path
 
 import pytest
 from actstream.models import Follow
+from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
+from django.test import override_settings
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
@@ -17,12 +19,16 @@ from grandchallenge.algorithms.tasks import (
 )
 from grandchallenge.archives.models import ArchiveItem
 from grandchallenge.components.models import (
+    APIMethodChoices,
     ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
-from grandchallenge.components.tasks import validate_docker_image
+from grandchallenge.components.tasks import (
+    upload_to_registry_and_sagemaker,
+    validate_docker_image,
+)
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
@@ -30,6 +36,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
+    InteractiveAlgorithmFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
@@ -904,3 +911,38 @@ def test_deactivate_old_algorithm_images(django_capture_on_commit_callbacks):
     }
 
     assert {str(callback) for callback in callbacks} == expected_callbacks
+
+
+@override_settings(task_eager_propagates=True, task_always_eager=True)
+@pytest.mark.django_db
+def test_non_invoke_api_method_image_not_marked_as_desired_version_after_import(
+    invoke_container_image, django_capture_on_commit_callbacks
+):
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        image__from_path=invoke_container_image,
+        api_method=APIMethodChoices.EXEC,
+    )
+    InteractiveAlgorithmFactory(algorithm=algorithm_image.algorithm)
+
+    assert len(mail.outbox) == 0
+
+    with django_capture_on_commit_callbacks(execute=True):
+        upload_to_registry_and_sagemaker(
+            pk=algorithm_image.pk,
+            app_label=algorithm_image._meta.app_label,
+            model_name=algorithm_image._meta.model_name,
+            mark_as_desired=True,
+        )
+
+    algorithm_image.refresh_from_db()
+    assert not algorithm_image.is_desired_version
+
+    assert len(mail.outbox) == 1
+    email = mail.outbox[0]
+
+    assert "Could not activate docker image" in email.subject
+    assert (
+        "Only algorithm images that implement the invoke API can be activated because this is an interactive algorithm"
+        in email.body
+    )

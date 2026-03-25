@@ -27,3 +27,26 @@ def send_invalid_dockerfile_email(*, container_image):
             recipients=[container_image.creator],
             subscription_type=EmailSubscriptionTypes.SYSTEM,
         )
+
+
+def send_docker_not_made_active(*, container_image, error_message):
+    container_image.refresh_from_db()
+
+    if container_image.creator:
+        message = format_html(
+            (
+                "Unfortunately we were unable to activate your [docker image]({url}).\n\n"
+                "The error message was:\n\n"
+                "{error_message}\n\n"
+            ),
+            url=container_image.get_absolute_url(),
+            error_message=error_message,
+        )
+        site = Site.objects.get_current()
+        send_standard_email_batch(
+            site=site,
+            subject="Could not activate docker image",
+            markdown_message=message,
+            recipients=[container_image.creator],
+            subscription_type=EmailSubscriptionTypes.SYSTEM,
+        )

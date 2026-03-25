@@ -41,7 +41,10 @@ from grandchallenge.components.backends.exceptions import (
     RetryTask,
     TaskCancelled,
 )
-from grandchallenge.components.emails import send_invalid_dockerfile_email
+from grandchallenge.components.emails import (
+    send_docker_not_made_active,
+    send_invalid_dockerfile_email,
+)
 from grandchallenge.components.exceptions import InstanceInUse, PriorStepFailed
 from grandchallenge.components.registry import _get_registry_auth_config
 from grandchallenge.core.celery import (
@@ -163,7 +166,12 @@ def upload_to_registry_and_sagemaker(
     instance.save()
 
     if mark_as_desired:
-        instance.mark_desired_version()
+        try:
+            instance.mark_desired_version()
+        except ValidationError as error:
+            send_docker_not_made_active(
+                container_image=instance, error_message=str(error)
+            )
 
 
 @acks_late_2xlarge_task
