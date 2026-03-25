@@ -48,6 +48,7 @@ from grandchallenge.components.forms import (
 )
 from grandchallenge.components.models import (
     RESERVED_SOCKET_SLUGS,
+    APIMethodChoices,
     ComponentInterface,
     ComponentJob,
     ImportStatusChoices,
@@ -750,6 +751,14 @@ class ImageActivateForm(Form):
 
         if algorithm_image.algorithm.image_upload_in_progress:
             raise ValidationError("Image updating already in progress.")
+
+        if (
+            algorithm_image.algorithm.interactive_algorithms.exists()
+            and algorithm_image.api_method != APIMethodChoices.INVOKE
+        ):
+            raise ValidationError(
+                "Only algorithm images that implement the invoke API can be activated because this is an interactive algorithm."
+            )
 
         return algorithm_image
 

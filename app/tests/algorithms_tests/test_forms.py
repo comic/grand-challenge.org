@@ -31,6 +31,7 @@ from grandchallenge.components.forms import (
     FlexibleWidgetPrefixes,
 )
 from grandchallenge.components.models import (
+    APIMethodChoices,
     ComponentJob,
     ImportStatusChoices,
     InterfaceKindChoices,
@@ -51,6 +52,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     AlgorithmPermissionRequestFactory,
+    InteractiveAlgorithmFactory,
 )
 from tests.algorithms_tests.utils import get_algorithm_creator
 from tests.components_tests.factories import ComponentInterfaceFactory
@@ -1725,3 +1727,27 @@ def test_algorithm_algorithm_interface_delete_form(
     assert form.is_valid() == expected_valid
     if not expected_valid:
         assert "Cannot delete the only algorithm interface" in str(form.errors)
+
+
+@pytest.mark.django_db
+def test_algorithm_image_activate_form_non_invoke_for_interactive_algorithm():
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_desired_version=False,
+        api_method=APIMethodChoices.EXEC,
+    )
+    editor = UserFactory()
+    algorithm_image.algorithm.add_editor(editor)
+    InteractiveAlgorithmFactory(algorithm=algorithm_image.algorithm)
+
+    form = ImageActivateForm(
+        algorithm=algorithm_image.algorithm,
+        user=editor,
+        data={"algorithm_image": algorithm_image},
+    )
+
+    assert not form.is_valid()
+    assert (
+        "Only algorithm images that implement the invoke API can be activated because this is an interactive algorithm"
+        in str(form.errors)
+    )
