@@ -1237,7 +1237,18 @@ class AlgorithmInterfaceCreateBase(CreateView):
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context.update({"base_obj": self.base_obj})
+        try:
+            is_interactive_algorithm = (
+                self.base_obj.interactive_algorithms.exists()
+            )
+        except AttributeError:
+            is_interactive_algorithm = False
+        context.update(
+            {
+                "base_obj": self.base_obj,
+                "is_interactive_algorithm": is_interactive_algorithm,
+            }
+        )
         return context
 
     def get_form_kwargs(self):
@@ -1284,6 +1295,7 @@ class AlgorithmInterfacesForAlgorithmList(
             {
                 "algorithm": self.algorithm,
                 "interfaces": [obj.interface for obj in self.object_list],
+                "is_interactive_algorithm": self.algorithm.interactive_algorithms.exists(),
             }
         )
         return context

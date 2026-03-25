@@ -391,7 +391,10 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
     @property
     def algorithm_interfaces_locked(self):
-        return False
+        if self.interactive_algorithms.exists():
+            return True
+        else:
+            return False
 
     def save(self, *args, **kwargs):
         adding = self._state.adding

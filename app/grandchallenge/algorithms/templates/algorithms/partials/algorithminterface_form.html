@@ -12,5 +12,10 @@
 <p>
     If you cannot find suitable inputs or outputs, please <a target="_blank" href="mailto:{{ SUPPORT_EMAIL }}">contact support</a>.
 </p>
+{% if is_interactive_algorithm %}
+    <div class="alert alert-danger">
+        Interfaces cannot be changed because this is an interactive algorithm.
+    </div>
+{% endif %}
 
 {% crispy form %}

@@ -5,9 +5,15 @@
 
 <h2>Algorithm Interfaces for {{ base_obj }}</h2>
 
+{% if is_interactive_algorithm %}
+    <div class="alert alert-info">
+        Interfaces cannot be changed because this is an interactive algorithm. Please contact support if this algorithm requires changes to its interfaces.
+    </div>
+{% endif %}
 <p>The following interfaces (i.e. input-output combinations) are configured for your {{ base_obj|verbose_name }}:</p>
 <p>
-    <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="{% if base_obj.algorithm_interfaces_locked %}Disabled because this phase is a parent or has a parent phase.{% endif %}">
+    <span class="d-inline-block" tabindex="0" data-toggle="tooltip"
+          title="{% if base_obj.algorithm_interfaces_locked %}{% if is_interactive_algorithm %}Disabled because this is an interactive algorithm{% else %}Disabled because this phase is a parent or has a parent phase.{% endif %}{% endif %}">
         <a class="btn btn-primary {% if base_obj.algorithm_interfaces_locked %} disabled {% endif %}"
            href="{{ base_obj.algorithm_interface_create_url }}"
         >
