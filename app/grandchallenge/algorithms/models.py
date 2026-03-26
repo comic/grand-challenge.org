@@ -670,6 +670,21 @@ class AlgorithmAlgorithmInterface(models.Model):
             ),
         ]
 
+    def clean(self):
+        super().clean()
+        if self.algorithm.algorithm_interfaces_locked:
+            raise ValidationError(
+                self.algorithm.algorithm_interfaces_locked_message
+            )
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.clean()
+        return super().delete(*args, **kwargs)
+
     def __str__(self):
         return str(self.interface)
 
