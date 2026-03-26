@@ -522,6 +522,7 @@ THIRD_PARTY_APPS = [
     # Notifications with overrides
     "actstream",
     "grandchallenge.notifications",
+    "lambda_tasks",
 ]
 
 LOCAL_APPS = [
@@ -974,6 +975,10 @@ if os.environ.get("BROKER_TYPE", "").lower() == "sqs":
     )
 else:
     CELERY_BROKER_URL = os.environ.get("BROKER_URL", f"{REDIS_ENDPOINT}/1")
+
+LAMBDA_TASKS_QUEUES = {
+    "default": os.environ.get("LAMBDA_TASKS_DEFAULT_QUEUE_URL"),
+}
 
 COMPONENTS_DEFAULT_BACKEND = os.environ.get(
     "COMPONENTS_DEFAULT_BACKEND",

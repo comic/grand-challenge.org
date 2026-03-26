@@ -26,6 +26,7 @@ from django.db.models import Count, DateTimeField, ExpressionWrapper, F, Q
 from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
+from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
@@ -896,6 +897,11 @@ def get_update_status_kwargs(*, executor=None):
         }
     else:
         return {}
+
+
+@lambda_task(retry_on=(RetryStep, LockNotAcquiredException))
+def handle_event_lambda(*, event: dict, backend: str):
+    return handle_event(event=event, backend=backend)
 
 
 @acks_late_micro_short_task(retry_on=(RetryStep, LockNotAcquiredException))

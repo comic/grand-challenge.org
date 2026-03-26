@@ -892,6 +892,20 @@ wheels = [
 ]
 
 [[package]]
+name = "django-lambda-tasks"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "boto3" },
+    { name = "django" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/43/ee/b1cc124f353873f46c8215d2c38cffea8489860c2e61253d0f350a9e5812/django_lambda_tasks-0.1.1.tar.gz", hash = "sha256:dc6472a6de5c9716ba53ad6a56066570d65de12d8a18bc38e739e10ce9f959d5", size = 104077, upload-time = "2026-03-26T13:35:12.651Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ac/f0/0c4484976374201fc408d6259f77c4094b809d185e8cf3643c3caf50b400/django_lambda_tasks-0.1.1-py3-none-any.whl", hash = "sha256:f782a50771a0df87630a4b07e1d392b08b935df48e6d8af342f197fd858a58af", size = 21637, upload-time = "2026-03-26T13:35:11.028Z" },
+]
+
+[[package]]
 name = "django-libsass"
 version = "0.9"
 source = { registry = "https://pypi.org/simple" }
@@ -1190,6 +1204,7 @@ dependencies = [
     { name = "django-filter" },
     { name = "django-forms-dynamic" },
     { name = "django-guardian" },
+    { name = "django-lambda-tasks" },
     { name = "django-libsass" },
     { name = "django-markdownx" },
     { name = "django-permissions-policy" },
@@ -1280,6 +1295,7 @@ requires-dist = [
     { name = "django-filter" },
     { name = "django-forms-dynamic" },
     { name = "django-guardian", specifier = "!=2.2.0" },
+    { name = "django-lambda-tasks" },
     { name = "django-libsass" },
     { name = "django-markdownx" },
     { name = "django-permissions-policy" },
