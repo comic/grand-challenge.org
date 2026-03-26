@@ -40,6 +40,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     AlgorithmPermissionRequestFactory,
+    InteractiveAlgorithmFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
@@ -2518,3 +2519,61 @@ def test_algorithm_users_list_is_filtered(client):
             url=reverse("algorithms:users-list"), client=client, user=user
         )
         assert expected_algorithms == {*response.context[-1]["object_list"]}
+
+
+@pytest.mark.django_db
+def test_interactive_algorithm_interfaces_locked(client):
+    algorithm = AlgorithmFactory()
+    editor = UserFactory()
+    algorithm.add_editor(editor)
+    assign_perm("algorithms.add_algorithm", editor)
+    interface = AlgorithmInterfaceFactory()
+    algorithm.interfaces.add(interface)
+
+    response = get_view_for_user(
+        viewname="algorithms:interface-create",
+        client=client,
+        user=editor,
+        reverse_kwargs={
+            "slug": algorithm.slug,
+        },
+    )
+
+    assert response.status_code == 200
+
+    response = get_view_for_user(
+        viewname="algorithms:interface-delete",
+        client=client,
+        user=editor,
+        reverse_kwargs={
+            "slug": algorithm.slug,
+            "interface_pk": interface.pk,
+        },
+    )
+
+    assert response.status_code == 200
+
+    InteractiveAlgorithmFactory(algorithm=algorithm)
+
+    response = get_view_for_user(
+        viewname="algorithms:interface-create",
+        client=client,
+        user=editor,
+        reverse_kwargs={
+            "slug": algorithm.slug,
+        },
+    )
+
+    assert response.status_code == 403
+
+    response = get_view_for_user(
+        viewname="algorithms:interface-delete",
+        client=client,
+        user=editor,
+        reverse_kwargs={
+            "slug": algorithm.slug,
+            "interface_pk": interface.pk,
+        },
+    )
+
+    assert response.status_code == 403
