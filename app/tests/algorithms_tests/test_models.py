@@ -1610,7 +1610,10 @@ def test_cannot_set_interface_for_interactive_algorithm():
     with pytest.raises(ValidationError) as error:
         algorithm.interfaces.set([new_interface])
 
-    assert "Cannot modify interfaces for interactive algorithms" in str(error)
+    assert (
+        "Interfaces cannot be changed because this is an interactive algorithm"
+        in str(error)
+    )
 
 
 @pytest.mark.django_db
@@ -1622,7 +1625,10 @@ def test_cannot_add_interface_for_interactive_algorithm():
     with pytest.raises(ValidationError) as error:
         algorithm.interfaces.add(new_interface)
 
-    assert "Cannot modify interfaces for interactive algorithms" in str(error)
+    assert (
+        "Interfaces cannot be changed because this is an interactive algorithm"
+        in str(error.value)
+    )
 
 
 @pytest.mark.django_db
@@ -1635,7 +1641,10 @@ def test_cannot_remove_interface_for_interactive_algorithm():
     with pytest.raises(ValidationError) as error:
         algorithm.interfaces.remove(interface)
 
-    assert "Cannot modify interfaces for interactive algorithms" in str(error)
+    assert (
+        "Interfaces cannot be changed because this is an interactive algorithm"
+        in str(error.value)
+    )
 
 
 @pytest.mark.django_db
@@ -1648,4 +1657,7 @@ def test_cannot_clear_interface_for_interactive_algorithm():
     with pytest.raises(ValidationError) as error:
         algorithm.interfaces.clear()
 
-    assert "Cannot modify interfaces for interactive algorithms" in str(error)
+    assert (
+        "Interfaces cannot be changed because this is an interactive algorithm"
+        in str(error.value)
+    )
