@@ -13,7 +13,7 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db.models import Prefetch
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
@@ -1476,6 +1476,12 @@ class AlgorithmInterfaceForPhaseDelete(
 ):
     model = PhaseAlgorithmInterface
     form_class = PhaseAlgorithmInterfaceDeleteForm
+
+    def dispatch(self, *args, **kwargs):
+        if self.phase.algorithm_interfaces_locked:
+            raise PermissionDenied
+        else:
+            return super().dispatch(*args, **kwargs)
 
     @cached_property
     def algorithm_interface(self):
