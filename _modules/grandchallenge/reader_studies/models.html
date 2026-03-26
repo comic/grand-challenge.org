@@ -99,7 +99,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.organizations.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Organization</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.publications.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Publication</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.reader_studies.interactive_algorithms</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">InteractiveAlgorithmChoices</span><span class="p">,</span>
+    <span class="n">InteractiveAlgorithmLambdaChoices</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.reader_studies.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">accuracy_score</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.subdomains.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
@@ -1387,7 +1387,7 @@
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_POLYGONS</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">LINE</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_LINES</span><span class="p">:</span> <span class="p">[],</span>
-    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">:</span> <span class="p">[</span><span class="n">InteractiveAlgorithmChoices</span><span class="o">.</span><span class="n">ULS23_BASELINE</span><span class="p">],</span>
+    <span class="n">AnswerType</span><span class="o">.</span><span class="n">MASK</span><span class="p">:</span> <span class="p">[</span><span class="n">InteractiveAlgorithmLambdaChoices</span><span class="o">.</span><span class="n">ULS23_BASELINE</span><span class="p">],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">ANGLE</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">MULTIPLE_ANGLES</span><span class="p">:</span> <span class="p">[],</span>
     <span class="n">AnswerType</span><span class="o">.</span><span class="n">ELLIPSE</span><span class="p">:</span> <span class="p">[],</span>
@@ -1520,7 +1520,7 @@
         <span class="n">choices</span><span class="o">=</span><span class="n">QuestionWidgetKindChoices</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
     <span class="n">interactive_algorithm</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
-        <span class="n">choices</span><span class="o">=</span><span class="n">InteractiveAlgorithmChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">InteractiveAlgorithmLambdaChoices</span><span class="o">.</span><span class="n">choices</span><span class="p">,</span>
         <span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Which interactive algorithm should be used for this question?&quot;</span><span class="p">,</span>
