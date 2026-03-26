@@ -30,6 +30,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
+    InteractiveAlgorithmFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
@@ -879,10 +880,15 @@ def test_deactivate_old_algorithm_images(django_capture_on_commit_callbacks):
     AlgorithmImageFactory(
         is_in_registry=True, algorithm__public=True
     )  # is public so should still work
+    algorithm_marked_interactive = AlgorithmFactory()
+    InteractiveAlgorithmFactory(algorithm=algorithm_marked_interactive)
+    AlgorithmImageFactory(
+        is_in_registry=True,
+        algorithm=algorithm_marked_interactive,
+    )  # linked to an interactive algorithm
     old_with_recent_job = AlgorithmImageFactory(is_in_registry=True)
     old_with_old_job = AlgorithmImageFactory(is_in_registry=True)
 
-    AlgorithmJobFactory(algorithm_image=old_with_recent_job, time_limit=60)
     AlgorithmJobFactory(algorithm_image=old_with_old_job, time_limit=60)
 
     # Set old image and job dates
