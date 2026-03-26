@@ -17,7 +17,7 @@ from grandchallenge.components.models import (
 from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from grandchallenge.reader_studies.interactive_algorithms import (
-    InteractiveAlgorithmChoices,
+    InteractiveAlgorithmLambdaChoices,
 )
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -923,7 +923,7 @@ def test_question_interactive_algorithms_view_permissions(client):
         user=editor_with_permission,
     )
     assert response.status_code == 200
-    assert InteractiveAlgorithmChoices.ULS23_BASELINE.value in str(
+    assert InteractiveAlgorithmLambdaChoices.ULS23_BASELINE.value in str(
         response.content
     )
 

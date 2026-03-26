@@ -26,6 +26,7 @@ from grandchallenge.algorithms.tasks import update_algorithm_average_duration
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.models import (  # noqa: F401
+    APIMethodChoices,
     CIVForObjectMixin,
     ComponentImage,
     ComponentInterface,
@@ -57,6 +58,9 @@ from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
+from grandchallenge.reader_studies.interactive_algorithms import (
+    InteractiveAlgorithmChoices,
+)
 from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.utilization.models import JobUtilization
@@ -1465,3 +1469,35 @@ class OptionalHangingProtocolAlgorithm(models.Model):
 
     class Meta:
         unique_together = (("algorithm", "hanging_protocol"),)
+
+
+class InteractiveAlgorithm(UUIDModel):
+    algorithm = models.ForeignKey(
+        Algorithm,
+        on_delete=models.PROTECT,
+        related_name="interactive_algorithms",
+    )
+    interactive_algorithm_choice = models.CharField(
+        choices=InteractiveAlgorithmChoices,
+        max_length=32,
+        unique=True,
+    )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(
+                    interactive_algorithm_choice__in=InteractiveAlgorithmChoices.values
+                ),
+                name="interactive_algorithm_choice_valid",
+            )
+        ]
+
+    def clean(self):
+        super().clean()
+        if not self.algorithm.active_image:
+            raise ValidationError("Algorithm has no active image")
+        if self.algorithm.active_image.api_method != APIMethodChoices.INVOKE:
+            raise ValidationError(
+                "Active algorithm image does not use the INVOKE api method"
+            )

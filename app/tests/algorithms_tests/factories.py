@@ -1,4 +1,5 @@
 import factory
+from faker import Faker
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -7,9 +8,13 @@ from grandchallenge.algorithms.models import (
     AlgorithmModel,
     AlgorithmPermissionRequest,
     AlgorithmUserCredit,
+    InteractiveAlgorithm,
     Job,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.reader_studies.interactive_algorithms import (
+    InteractiveAlgorithmChoices,
+)
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -104,3 +109,13 @@ class AlgorithmInterfaceFactory(factory.django.DjangoModelFactory):
         if not outputs:
             outputs = [ComponentInterfaceFactory()]
         return manager.create(*args, inputs=inputs, outputs=outputs, **kwargs)
+
+
+class InteractiveAlgorithmFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = InteractiveAlgorithm
+
+    algorithm = factory.SubFactory(AlgorithmFactory)
+    interactive_algorithm_choice = Faker().random_element(
+        InteractiveAlgorithmChoices
+    )

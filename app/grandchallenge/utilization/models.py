@@ -8,7 +8,7 @@ from django.db.models import Avg
 from grandchallenge.core.models import UUIDModel
 from grandchallenge.core.validators import JSONValidator
 from grandchallenge.reader_studies.interactive_algorithms import (
-    InteractiveAlgorithmChoices,
+    InteractiveAlgorithmLambdaChoices,
 )
 
 
@@ -42,7 +42,7 @@ class SessionUtilization(UUIDModel):
                     "$schema": "http://json-schema.org/draft-07/schema",
                     "type": "array",
                     "items": {
-                        "enum": InteractiveAlgorithmChoices.values,
+                        "enum": InteractiveAlgorithmLambdaChoices.values,
                         "type": "string",
                     },
                     "uniqueItems": True,

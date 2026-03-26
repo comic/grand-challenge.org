@@ -20,6 +20,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     AlgorithmUserCredit,
     AlgorithmUserObjectPermission,
+    InteractiveAlgorithm,
     Job,
     JobGroupObjectPermission,
     JobUserObjectPermission,
@@ -348,6 +349,7 @@ class AlgorithmImageAdmin(ComponentImageAdmin):
     readonly_fields = (*ComponentImageAdmin.readonly_fields, "algorithm")
 
 
+admin.site.register(InteractiveAlgorithm, ModelAdmin)
 admin.site.register(AlgorithmUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(AlgorithmGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(

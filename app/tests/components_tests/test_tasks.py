@@ -46,7 +46,7 @@ from grandchallenge.components.tasks import (
 from grandchallenge.core.celery import _retry, acks_late_micro_short_task
 from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.interactive_algorithms import (
-    InteractiveAlgorithmChoices,
+    InteractiveAlgorithmLambdaChoices,
 )
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstations.models import WorkstationImage
@@ -1252,7 +1252,7 @@ def test_preload_interactive_algorithms(settings):
     reader_study = ReaderStudyFactory()
     QuestionFactory(
         reader_study=reader_study,
-        interactive_algorithm=InteractiveAlgorithmChoices.ULS23_BASELINE,
+        interactive_algorithm=InteractiveAlgorithmLambdaChoices.ULS23_BASELINE,
     )
 
     other_session = SessionFactory(region="other")
@@ -1265,7 +1265,7 @@ def test_preload_interactive_algorithms(settings):
     session.save()
 
     with patch(
-        "grandchallenge.components.tasks.InteractiveAlgorithm"
+        "grandchallenge.components.tasks.InteractiveAlgorithmLambda"
     ) as mock_interactive_algorithm:
         mock_instance = mock_interactive_algorithm.return_value
         mock_instance.consolidate.return_value = "mocked_consolidation_result"
@@ -1286,7 +1286,7 @@ def test_preload_interactive_algorithms(settings):
     session.save()
 
     with patch(
-        "grandchallenge.components.tasks.InteractiveAlgorithm"
+        "grandchallenge.components.tasks.InteractiveAlgorithmLambda"
     ) as mock_interactive_algorithm:
         mock_instance = mock_interactive_algorithm.return_value
         mock_instance.consolidate.return_value = "mocked_consolidation_result"

@@ -11,7 +11,7 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.reader_studies.interactive_algorithms import (
-    InteractiveAlgorithmChoices,
+    InteractiveAlgorithmLambdaChoices,
 )
 from grandchallenge.reader_studies.models import (
     Answer,
@@ -1137,7 +1137,7 @@ def test_empty_answer_confirmation_validation(
     (
         (
             AnswerType.MASK,
-            InteractiveAlgorithmChoices.ULS23_BASELINE,
+            InteractiveAlgorithmLambdaChoices.ULS23_BASELINE,
             nullcontext(),
         ),
         *[
@@ -1147,7 +1147,7 @@ def test_empty_answer_confirmation_validation(
         *[
             (
                 answer_type,
-                InteractiveAlgorithmChoices.ULS23_BASELINE,
+                InteractiveAlgorithmLambdaChoices.ULS23_BASELINE,
                 pytest.raises(ValidationError),
             )
             for answer_type in AnswerType.values
