@@ -2,17 +2,19 @@
 {% load humanize %}
 
 {% block title %}
-    Uploads - {{ block.super }}
+    Image Uploads - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item active" aria-current="page">Uploads</li>
+        <li class="breadcrumb-item active" aria-current="page">Your Image Uploads</li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>Upload Sessions</h2>
+    <h2>Your Image Uploads</h2>
+
+    <p>This is a list of the images that you've uploaded. The images are processed before they are available on the platform.</p>
 
     {{ block.super }}
 {% endblock %}

@@ -12,16 +12,17 @@
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
-                href="{% url 'cases:raw-image-upload-session-list' %}">Uploads</a>
+                href="{% url 'cases:raw-image-upload-session-list' %}">Your Image Uploads</a>
         </li>
         <li class="breadcrumb-item active"
-            aria-current="page">{{ object.pk }}</li>
+            aria-current="page">{{ object.pk }}
+        </li>
     </ol>
 {% endblock %}
 
 {% block content %}
 
-    <h2>Upload Session</h2>
+    <h2>Image Upload</h2>
 
     {% if object.error_message %}
         <div class="alert alert-danger">
