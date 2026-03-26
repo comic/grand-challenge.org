@@ -1228,12 +1228,6 @@ class AlgorithmInterfaceCreateBase(CreateView):
     form_class = AlgorithmInterfaceForm
     success_message = "Algorithm interface successfully added"
 
-    def dispatch(self, *args, **kwargs):
-        if self.base_obj.algorithm_interfaces_locked:
-            raise PermissionDenied
-        else:
-            return super().dispatch(*args, **kwargs)
-
     def get_success_url(self):
         raise NotImplementedError
 
@@ -1252,8 +1246,21 @@ class AlgorithmInterfaceCreateBase(CreateView):
         return kwargs
 
 
+class AlgorithmInterfacesLockedMixin(AccessMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if self.algorithm.algorithm_interfaces_locked:
+            messages.error(
+                request,
+                self.algorithm.algorithm_interfaces_locked_message,
+            )
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
 class AlgorithmInterfaceForAlgorithmCreate(
-    AlgorithmInterfacePermissionMixin, AlgorithmInterfaceCreateBase
+    AlgorithmInterfacePermissionMixin,
+    AlgorithmInterfacesLockedMixin,
+    AlgorithmInterfaceCreateBase,
 ):
     @property
     def base_obj(self):
@@ -1296,16 +1303,12 @@ class AlgorithmInterfacesForAlgorithmList(
 
 
 class AlgorithmInterfaceForAlgorithmDelete(
-    AlgorithmInterfacePermissionMixin, DeleteView
+    AlgorithmInterfacePermissionMixin,
+    AlgorithmInterfacesLockedMixin,
+    DeleteView,
 ):
     model = AlgorithmAlgorithmInterface
     form_class = AlgorithmAlgorithmInterfaceDeleteForm
-
-    def dispatch(self, *args, **kwargs):
-        if self.algorithm.algorithm_interfaces_locked:
-            raise PermissionDenied
-        else:
-            return super().dispatch(*args, **kwargs)
 
     @cached_property
     def algorithm_interface(self):
