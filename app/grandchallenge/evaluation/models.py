@@ -914,6 +914,10 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         else:
             return False
 
+    @property
+    def algorithm_interfaces_locked_message(self):
+        return "Disabled because this phase is a parent or has a parent phase."
+
     @cached_property
     def valid_metrics(self):
         return (

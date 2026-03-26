@@ -396,6 +396,14 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         else:
             return False
 
+    @property
+    def algorithm_interfaces_locked_message(self):
+        return (
+            "Interfaces cannot be changed because this is an interactive algorithm. "
+            "Please contact support if this algorithm requires changes to its "
+            "interfaces."
+        )
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
