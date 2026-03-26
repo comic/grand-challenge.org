@@ -141,8 +141,6 @@ def prevent_interfaces_update_for_interactive_algorithms(
 ):
     if (
         action in {"pre_add", "pre_remove", "pre_clear"}
-        and instance.interactive_algorithms.exists()
+        and instance.algorithm_interfaces_locked
     ):
-        raise ValidationError(
-            "Cannot modify interfaces for interactive algorithms."
-        )
+        raise ValidationError(instance.algorithm_interfaces_locked_message)
