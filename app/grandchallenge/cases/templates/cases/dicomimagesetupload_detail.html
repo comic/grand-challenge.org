@@ -12,16 +12,17 @@
 {% block breadcrumbs %}
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a
-                href="{% url 'cases:dicom-image-set-upload-list' %}">DICOM Uploads</a>
+                href="{% url 'cases:dicom-image-set-upload-list' %}">Your DICOM Image Uploads</a>
         </li>
         <li class="breadcrumb-item active"
-            aria-current="page">{{ object.pk }}</li>
+            aria-current="page">{{ object.pk }}
+        </li>
     </ol>
 {% endblock %}
 
 {% block content %}
 
-    <h2>DICOM Image Set Upload</h2>
+    <h2>DICOM Image Upload</h2>
 
     {% if object.error_message %}
         <div class="alert alert-danger">

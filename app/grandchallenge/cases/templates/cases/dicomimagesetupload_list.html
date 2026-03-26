@@ -2,17 +2,19 @@
 {% load humanize %}
 
 {% block title %}
-    DICOM Uploads - {{ block.super }}
+    DICOM Image Uploads - {{ block.super }}
 {% endblock %}
 
 {% block breadcrumbs %}
     <ol class="breadcrumb">
-        <li class="breadcrumb-item active" aria-current="page">DICOM Uploads</li>
+        <li class="breadcrumb-item active" aria-current="page">Your DICOM Image Uploads</li>
     </ol>
 {% endblock %}
 
 {% block content %}
-    <h2>DICOM Image Set Uploads</h2>
+    <h2>Your DICOM Image Uploads</h2>
+
+    <p>This is a list of the DICOM image sets that you've uploaded. The images are processed before they are available on the platform.</p>
 
     {{ block.super }}
 {% endblock %}
