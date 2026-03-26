@@ -1536,3 +1536,74 @@ def test_archive_items_list_view_permissions(
         assert obj in response.context["object_list"]
     for obj in [ob4, ob5]:
         assert obj not in response.context["object_list"]
+
+
+@pytest.mark.django_db
+def test_archive_list_is_filtered(client):
+    # Create first archive with its users
+    archive1 = ArchiveFactory()
+    editor1 = UserFactory()
+    archive1.add_editor(editor1)
+    uploader1 = UserFactory()
+    archive1.add_uploader(uploader1)
+    uploader1_1 = UserFactory()
+    archive1.add_uploader(uploader1_1)
+    user1 = UserFactory()
+    archive1.add_user(user1)
+    user1_1 = UserFactory()
+    archive1.add_user(user1_1)
+    non_member = UserFactory()
+
+    # Create second archive with its users
+    archive2 = ArchiveFactory()
+    editor2 = UserFactory()
+    archive2.add_editor(editor2)
+    uploader2 = UserFactory()
+    archive2.add_uploader(uploader2)
+    uploader2_1 = UserFactory()
+    archive2.add_uploader(uploader2_1)
+    user2 = UserFactory()
+    archive2.add_user(user2)
+    user2_1 = UserFactory()
+    archive2.add_user(user2_1)
+
+    # Create users shared between both archives
+    editor12 = UserFactory()
+    archive1.add_editor(editor12)
+    archive2.add_editor(editor12)
+    uploader12 = UserFactory()
+    archive1.add_uploader(uploader12)
+    archive2.add_uploader(uploader12)
+    user12 = UserFactory()
+    archive1.add_user(user12)
+    archive2.add_user(user12)
+    editor1uploader2 = UserFactory()
+    archive1.add_editor(editor1uploader2)
+    archive2.add_uploader(editor1uploader2)
+    editor1user2 = UserFactory()
+    archive1.add_editor(editor1user2)
+    archive2.add_user(editor1user2)
+
+    tests = [
+        (set(), non_member),
+        ({archive1}, editor1),
+        ({archive1}, uploader1),
+        ({archive1}, uploader1_1),
+        ({archive1}, user1),
+        ({archive1}, user1_1),
+        ({archive2}, editor2),
+        ({archive2}, uploader2),
+        ({archive2}, uploader2_1),
+        ({archive2}, user2),
+        ({archive2}, user2_1),
+        ({archive1, archive2}, editor12),
+        ({archive1, archive2}, uploader12),
+        ({archive1, archive2}, user12),
+        ({archive1, archive2}, editor1uploader2),
+        ({archive1, archive2}, editor1user2),
+    ]
+    for expected_archives, user in tests:
+        response = get_view_for_user(
+            url=reverse("archives:users-list"), client=client, user=user
+        )
+        assert expected_archives == {*response.context[-1]["object_list"]}

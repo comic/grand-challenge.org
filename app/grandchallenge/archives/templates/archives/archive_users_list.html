@@ -1,0 +1,22 @@
+{% extends 'datatables/list_base.html' %}
+{% load url %}
+
+{% block title %}
+    Your Archives - Archives - {{ block.super }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'archives:list' %}">Archives</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Your Archives</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Your Archives</h2>
+
+    <p>This is a list of the archives that you have access to.</p>
+
+    {{ block.super }}
+{% endblock %}

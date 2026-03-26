@@ -1,0 +1,53 @@
+{% load profiles %}
+
+{# Title #}
+
+<a href="{{ object.get_absolute_url }}">
+    {{ object.title }}
+</a>
+
+<split></split>
+{# Public #}
+
+{% if object.public %}
+    <i class="fa fa-eye text-success"
+       title="Archive is public"></i>
+{% else %}
+    <i class="fa fa-eye-slash text-danger"
+        title="Archive is not public"></i>
+{% endif %}
+<split></split>
+{# Role #}
+
+{% if object.user_role_order == 3 %}
+    <i class="fas fa-user-tie fa-fw mr-1"></i>Editor
+{% elif object.user_role_order == 2 %}
+    <i class="fas fa-upload fa-fw mr-1"></i>Uploader
+{% elif object.user_role_order == 1 %}
+    <i class="fas fa-user fa-fw mr-1"></i>User
+{% else %}
+    <i class="fas fa-user-secret fa-fw mr-1"></i>Other
+{% endif %}
+
+<split></split>
+{# Editors #}
+
+{% for user in object.editors_group.user_set.all %}
+    {{ user|user_profile_link }}<br/>
+{% endfor %}
+
+<split></split>
+{# Created #}
+
+{{ object.created|date:'F j, Y' }}
+
+<split></split>
+{# Linked Challenge Phases #}
+
+{% for phase in object.phase_set.all %}
+    <a href="{{ phase.challenge.get_absolute_url }}">
+        {{ phase.challenge.short_name }} - {{ phase.title }}
+    </a><br/>
+{% empty %}
+    <span class="text-muted">None</span>
+{% endfor %}

@@ -2,6 +2,8 @@ from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import models
+from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -66,6 +68,7 @@ from grandchallenge.core.renderers import PaginatedCSVRenderer
 from grandchallenge.core.templatetags.bleach import clean
 from grandchallenge.core.templatetags.random_encode import random_encode
 from grandchallenge.core.views import PermissionRequestUpdate
+from grandchallenge.datatables.views import Column, PaginatedTableListView
 from grandchallenge.groups.forms import EditorsForm
 from grandchallenge.groups.views import UserGroupUpdateMixin
 from grandchallenge.reader_studies.models import DisplaySet, ReaderStudy
@@ -99,6 +102,68 @@ class ArchiveList(FilterMixin, ViewObjectPermissionListMixin, ListView):
         )
 
         return context
+
+
+class UsersArchiveList(
+    LoginRequiredMixin,
+    ViewObjectPermissionListMixin,
+    PaginatedTableListView,
+):
+    model = Archive
+    template_name = "archives/archive_users_list.html"
+    row_template = "archives/archive_users_row.html"
+    search_fields = ["title", "slug", "description"]
+    columns = [
+        Column(title="Title", sort_field="title"),
+        Column(title="Public", sort_field="public"),
+        Column(title="Your Role", sort_field="user_role_order"),
+        Column(title="Editors"),
+        Column(title="Created", sort_field="created"),
+        Column(title="Linked Challenge Phases"),
+    ]
+    default_sort_column = 4
+
+    def get_queryset(self):
+        queryset = (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                # For displaying profile of editors
+                "editors_group__user_set__user_profile",
+                "editors_group__user_set__verification",
+                # For displaying linked challenge phases
+                "phase_set__challenge",
+            )
+        )
+
+        user_groups = self.request.user.groups.all()
+
+        if not self.request.user.is_superuser:
+            queryset = queryset.filter(
+                Q(editors_group__in=user_groups)
+                | Q(uploaders_group__in=user_groups)
+                | Q(users_group__in=user_groups)
+            ).annotate(
+                user_role_order=models.Case(
+                    models.When(
+                        editors_group__in=user_groups, then=models.Value(3)
+                    ),
+                    models.When(
+                        uploaders_group__in=user_groups, then=models.Value(2)
+                    ),
+                    default=models.Value(1),
+                    output_field=models.IntegerField(),
+                )
+            )
+        else:
+            # Speed up the query for superusers
+            queryset = queryset.annotate(
+                user_role_order=models.Value(
+                    -1, output_field=models.IntegerField()
+                )
+            )
+
+        return queryset
 
 
 class ArchiveCreate(PermissionRequiredMixin, UserFormKwargsMixin, CreateView):
