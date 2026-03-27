@@ -1,8 +1,9 @@
+from django.core.exceptions import ValidationError
 from django.db.models.signals import m2m_changed, pre_delete
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import Algorithm, Job
 from grandchallenge.cases.models import Image
 
 
@@ -132,3 +133,14 @@ def update_view_image_permissions_on_job_deletion(*_, instance: Job, **__):
         # We cannot remove image permissions directly as the groups
         # may have permissions through another object
         image.update_viewer_groups_permissions(exclude_jobs=jobs)
+
+
+@receiver(m2m_changed, sender=Algorithm.interfaces.through)
+def prevent_interfaces_update_for_interactive_algorithms(
+    *_, instance, action, **__
+):
+    if (
+        action in {"pre_add", "pre_remove", "pre_clear"}
+        and instance.algorithm_interfaces_locked
+    ):
+        raise ValidationError(instance.algorithm_interfaces_locked_message)

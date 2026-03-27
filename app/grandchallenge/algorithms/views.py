@@ -1246,8 +1246,21 @@ class AlgorithmInterfaceCreateBase(CreateView):
         return kwargs
 
 
+class AlgorithmInterfacesLockedMixin(AccessMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if self.algorithm.algorithm_interfaces_locked:
+            messages.error(
+                request,
+                self.algorithm.algorithm_interfaces_locked_message,
+            )
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
 class AlgorithmInterfaceForAlgorithmCreate(
-    AlgorithmInterfacePermissionMixin, AlgorithmInterfaceCreateBase
+    AlgorithmInterfacePermissionMixin,
+    AlgorithmInterfacesLockedMixin,
+    AlgorithmInterfaceCreateBase,
 ):
     @property
     def base_obj(self):
@@ -1290,7 +1303,9 @@ class AlgorithmInterfacesForAlgorithmList(
 
 
 class AlgorithmInterfaceForAlgorithmDelete(
-    AlgorithmInterfacePermissionMixin, DeleteView
+    AlgorithmInterfacePermissionMixin,
+    AlgorithmInterfacesLockedMixin,
+    DeleteView,
 ):
     model = AlgorithmAlgorithmInterface
     form_class = AlgorithmAlgorithmInterfaceDeleteForm

@@ -391,7 +391,18 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
     @property
     def algorithm_interfaces_locked(self):
-        return False
+        if self.interactive_algorithms.exists():
+            return True
+        else:
+            return False
+
+    @property
+    def algorithm_interfaces_locked_message(self):
+        return (
+            "Interfaces cannot be changed because this is an interactive algorithm. "
+            "Please contact support if this algorithm requires changes to its "
+            "interfaces."
+        )
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
@@ -666,6 +677,21 @@ class AlgorithmAlgorithmInterface(models.Model):
                 name="unique_algorithm_interface_combination",
             ),
         ]
+
+    def clean(self):
+        super().clean()
+        if self.algorithm.algorithm_interfaces_locked:
+            raise ValidationError(
+                self.algorithm.algorithm_interfaces_locked_message
+            )
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        self.clean()
+        return super().delete(*args, **kwargs)
 
     def __str__(self):
         return str(self.interface)

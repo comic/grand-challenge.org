@@ -33,7 +33,7 @@
                     {% if delete_option %}
                         <td class="align-middle">
                             <span class="d-inline-block" tabindex="0" data-toggle="tooltip"
-                                  title="{% if base_obj.algorithm_interfaces_locked %}Disabled because this phase is a parent or has a parent phase.{% endif %}">
+                                  title="{% if base_obj.algorithm_interfaces_locked %}{{ base_obj.algorithm_interfaces_locked_message }}{% endif %}">
                                 <a class="btn btn-sm btn-danger m-0 {% if base_obj.algorithm_interfaces_locked %} disabled {% endif %}"
                                    href="{% url base_obj.algorithm_interface_delete_viewname slug=base_obj.slug interface_pk=interface.pk %}"
                                 >

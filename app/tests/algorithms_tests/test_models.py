@@ -1599,3 +1599,65 @@ def test_interactive_algorithm_mark_non_invoke_image_raises_validation_error():
         "Only algorithm images that implement the invoke API can be activated because this is an interactive algorithm"
         in str(error)
     )
+
+
+@pytest.mark.django_db
+def test_cannot_set_interface_for_interactive_algorithm():
+    algorithm = AlgorithmFactory()
+    new_interface = AlgorithmInterfaceFactory()
+    InteractiveAlgorithmFactory(algorithm=algorithm)
+
+    with pytest.raises(ValidationError) as error:
+        algorithm.interfaces.set([new_interface])
+
+    assert (
+        "Interfaces cannot be changed because this is an interactive algorithm"
+        in str(error)
+    )
+
+
+@pytest.mark.django_db
+def test_cannot_add_interface_for_interactive_algorithm():
+    algorithm = AlgorithmFactory()
+    new_interface = AlgorithmInterfaceFactory()
+    InteractiveAlgorithmFactory(algorithm=algorithm)
+
+    with pytest.raises(ValidationError) as error:
+        algorithm.interfaces.add(new_interface)
+
+    assert (
+        "Interfaces cannot be changed because this is an interactive algorithm"
+        in str(error.value)
+    )
+
+
+@pytest.mark.django_db
+def test_cannot_remove_interface_for_interactive_algorithm():
+    algorithm = AlgorithmFactory()
+    interface = AlgorithmInterfaceFactory()
+    algorithm.interfaces.add(interface)
+    InteractiveAlgorithmFactory(algorithm=algorithm)
+
+    with pytest.raises(ValidationError) as error:
+        algorithm.interfaces.remove(interface)
+
+    assert (
+        "Interfaces cannot be changed because this is an interactive algorithm"
+        in str(error.value)
+    )
+
+
+@pytest.mark.django_db
+def test_cannot_clear_interface_for_interactive_algorithm():
+    algorithm = AlgorithmFactory()
+    interface = AlgorithmInterfaceFactory()
+    algorithm.interfaces.add(interface)
+    InteractiveAlgorithmFactory(algorithm=algorithm)
+
+    with pytest.raises(ValidationError) as error:
+        algorithm.interfaces.clear()
+
+    assert (
+        "Interfaces cannot be changed because this is an interactive algorithm"
+        in str(error.value)
+    )
