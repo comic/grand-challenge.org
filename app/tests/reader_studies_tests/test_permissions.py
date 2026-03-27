@@ -290,14 +290,17 @@ def test_api_rs_answer_list_permissions(client):
         AnswerFactory(question=q2, creator=rs_set.reader2, answer=""),
     )
 
+    # the list view uses group permissions only
+    # readers get view permissions to their own answers through direct user perms
+    # this means that they cannot use the list view
     tests = (
         (None, 200, []),
         (rs_set.creator, 200, []),
         (rs_set.editor1, 200, [a1.pk, a11.pk]),
-        (rs_set.reader1, 200, [a1.pk]),
-        (reader11, 200, [a11.pk]),
+        (rs_set.reader1, 200, []),
+        (reader11, 200, []),
         (rs_set.editor2, 200, [a2.pk]),
-        (rs_set.reader2, 200, [a2.pk]),
+        (rs_set.reader2, 200, []),
         (rs_set.u, 200, []),
     )
 

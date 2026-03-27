@@ -1226,10 +1226,11 @@ class AnswerViewSet(
     )
 
     def get_only_consider_group_permissions(self):
-        return self.action != "mine"
+        # for list and retrieve
+        return self.action not in ("mine", "update", "partial_update")
 
     def get_only_consider_user_permissions(self):
-        return self.action == "mine"
+        return self.action in ("mine", "update", "partial_update")
 
     def perform_create(self, serializer):
         last_edit_duration = serializer.validated_data.get(
