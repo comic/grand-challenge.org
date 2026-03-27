@@ -1226,8 +1226,7 @@ class AnswerViewSet(
     )
 
     def get_only_consider_group_permissions(self):
-        # for list and retrieve
-        return self.action not in ("mine", "update", "partial_update")
+        return self.action in ("list", "delete")
 
     def get_only_consider_user_permissions(self):
         return self.action in ("mine", "update", "partial_update")
