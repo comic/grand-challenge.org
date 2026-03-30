@@ -20,6 +20,9 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     AlgorithmUserCredit,
     AlgorithmUserObjectPermission,
+    Endpoint,
+    EndpointGroupObjectPermission,
+    EndpointUserObjectPermission,
     InteractiveAlgorithm,
     Job,
     JobGroupObjectPermission,
@@ -349,6 +352,39 @@ class AlgorithmImageAdmin(ComponentImageAdmin):
     readonly_fields = (*ComponentImageAdmin.readonly_fields, "algorithm")
 
 
+@admin.register(Endpoint)
+class EndpointAdmin(admin.ModelAdmin):
+    ordering = ("-created",)
+    list_display = (
+        "pk",
+        "created",
+        "algorithm",
+        "creator",
+        "max_duration",
+        "requires_gpu_type",
+        "requires_memory_gb",
+        "status",
+    )
+    list_select_related = ("algorithm_image__algorithm",)
+    list_filter = ("status",)
+    search_fields = (
+        "creator__username",
+        "pk",
+        "algorithm_image__algorithm__slug",
+        "algorithm_image__pk",
+    )
+
+    @staticmethod
+    def algorithm(obj):
+        return obj.algorithm_image.algorithm
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 admin.site.register(InteractiveAlgorithm, ModelAdmin)
 admin.site.register(AlgorithmUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(AlgorithmGroupObjectPermission, GroupObjectPermissionAdmin)
@@ -366,3 +402,5 @@ admin.site.register(
 admin.site.register(
     AlgorithmModelGroupObjectPermission, GroupObjectPermissionAdmin
 )
+admin.site.register(EndpointUserObjectPermission, UserObjectPermissionAdmin)
+admin.site.register(EndpointGroupObjectPermission, GroupObjectPermissionAdmin)
