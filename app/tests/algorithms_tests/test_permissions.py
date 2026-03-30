@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group
 from guardian.shortcuts import (
     assign_perm,
     get_group_perms,
+    get_groups_with_perms,
     get_perms,
     get_users_with_perms,
 )
@@ -23,6 +24,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
+    EndpointFactory,
 )
 from tests.algorithms_tests.utils import TwoAlgorithms
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
@@ -518,3 +520,13 @@ class TestJobPermissions:
         )
         # The viewers group should not exist for system jobs
         assert job.viewers is None
+
+
+@pytest.mark.django_db
+def test_endpoint_permissions():
+    endpoint = EndpointFactory()
+
+    assert get_groups_with_perms(endpoint).count() == 0
+    assert get_users_with_set_perms(endpoint, with_group_users=False) == {
+        endpoint.creator: {"view_endpoint", "invoke_endpoint"},
+    }

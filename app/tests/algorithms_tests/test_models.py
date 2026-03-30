@@ -32,6 +32,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     AlgorithmUserCreditFactory,
+    EndpointFactory,
     InteractiveAlgorithmFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
@@ -1661,3 +1662,52 @@ def test_cannot_clear_interface_for_interactive_algorithm():
         "Interfaces cannot be changed because this is an interactive algorithm"
         in str(error.value)
     )
+
+
+@pytest.mark.django_db
+class TestEndpointProperties:
+    def test_endpoint_name_format(self, settings):
+        settings.COMPONENTS_REGISTRY_PREFIX = "rumc-gcorg-p"
+        endpoint = EndpointFactory()
+
+        assert endpoint.endpoint_name == (
+            f"rumc-gcorg-p-alg-endp-{endpoint.pk}"
+        )
+        assert len(endpoint.endpoint_name) <= 63
+
+    def test_algorithm_model_key(self):
+        endpoint = EndpointFactory()
+
+        assert endpoint._algorithm_model_key == (
+            f"/auxiliary-data/{endpoint.pk}/algorithm-model.tar.gz"
+        )
+
+    def test_algorithm_model_s3_uri(self, settings):
+        settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = (
+            "interactive-algorithms-io"
+        )
+        endpoint = EndpointFactory()
+
+        assert endpoint._algorithm_model_s3_uri == (
+            f"s3://interactive-algorithms-io/auxiliary-data/{endpoint.pk}/algorithm-model.tar.gz"
+        )
+
+    def test_output_s3_uri(self, settings):
+        settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = (
+            "interactive-algorithms-io"
+        )
+        endpoint = EndpointFactory()
+
+        assert endpoint._output_s3_uri == (
+            f"s3://interactive-algorithms-io/endpoints/{endpoint.pk}/successes"
+        )
+
+    def test_failure_s3_uri(self, settings):
+        settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = (
+            "interactive-algorithms-io"
+        )
+        endpoint = EndpointFactory()
+
+        assert endpoint._failure_s3_uri == (
+            f"s3://interactive-algorithms-io/logs/{endpoint.pk}/failures"
+        )
