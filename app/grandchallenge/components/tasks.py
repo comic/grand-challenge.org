@@ -899,13 +899,16 @@ def get_update_status_kwargs(*, executor=None):
         return {}
 
 
-@lambda_task(retry_on=(RetryStep, LockNotAcquiredException))
+@acks_late_micro_short_task(
+    name="grandchallenge.components.tasks.handle_event",
+    retry_on=(RetryStep, LockNotAcquiredException),
+)
+@transaction.atomic
 def handle_event_lambda(*, event: dict, backend: str):
     return handle_event(event=event, backend=backend)
 
 
-@acks_late_micro_short_task(retry_on=(RetryStep, LockNotAcquiredException))
-@transaction.atomic
+@lambda_task(retry_on=(RetryStep, LockNotAcquiredException))
 def handle_event(*, event, backend):
     """
     Receives events when tasks have stops and determines what to do next.

@@ -7,7 +7,6 @@ import re
 from datetime import timedelta
 
 from django.conf import settings
-from django.db.transaction import on_commit
 from django.utils.timezone import now
 
 from grandchallenge.components.backends.amazon_sagemaker_base import (
@@ -117,20 +116,16 @@ class IOCopyExecutor(Executor):
 
         self._handle_completed_job()
 
-        on_commit(
-            handle_event.signature(
-                kwargs={
-                    "event": {
-                        "_job_id": self._job_id,
-                        "_stdout": self._stdout,
-                        "_stderr": self._stderr,
-                        "_exec_duration_seconds": self._exec_duration.total_seconds(),
-                        "_invoke_duration_seconds": self._invoke_duration.total_seconds(),
-                        "__start_time": self.__start_time,
-                    },
-                    "backend": f"{self.__class__.__module__}.{self.__class__.__qualname__}",
-                }
-            ).apply_async
+        handle_event.execute_on_commit(
+            event={
+                "_job_id": self._job_id,
+                "_stdout": self._stdout,
+                "_stderr": self._stderr,
+                "_exec_duration_seconds": self._exec_duration.total_seconds(),
+                "_invoke_duration_seconds": self._invoke_duration.total_seconds(),
+                "__start_time": self.__start_time,
+            },
+            backend=f"{self.__class__.__module__}.{self.__class__.__qualname__}",
         )
 
     def handle_event(self, *, event):

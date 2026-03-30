@@ -67,6 +67,7 @@ class AcksLateTaskDecorator:
         self,
         func=None,
         *,
+        name=None,
         ignore_result=False,
         retry_on=(),
         delayed_retry=True,
@@ -92,6 +93,7 @@ class AcksLateTaskDecorator:
             # Called as @decorator(**extra_kwargs)
             return lambda func: self._decorator(
                 func=func,
+                name=name,
                 ignore_result=ignore_result,
                 retry_on=retry_on,
                 delayed_retry=delayed_retry,
@@ -102,6 +104,7 @@ class AcksLateTaskDecorator:
             # Called as @decorator or @decorator(func)
             return self._decorator(
                 func=func,
+                name=name,
                 ignore_result=ignore_result,
                 retry_on=retry_on,
                 delayed_retry=delayed_retry,
@@ -113,6 +116,7 @@ class AcksLateTaskDecorator:
         self,
         *,
         func,
+        name,
         ignore_result,
         retry_on,
         delayed_retry,
@@ -163,6 +167,7 @@ class AcksLateTaskDecorator:
                     raise error
 
         task_func = shared_task(
+            name=name,
             acks_late=True,
             reject_on_worker_lost=True,
             queue=self.queue,
