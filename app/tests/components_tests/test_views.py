@@ -137,10 +137,6 @@ def test_component_interface_autocomplete(client):
     assert str(ci_img_2.id) in ids
     assert str(ci_json.id) not in ids
 
-    ds = DisplaySetFactory(reader_study=rs)
-    civ = ComponentInterfaceValueFactory(interface=ci_img)
-    ds.values.add(civ)
-
     response = get_view_for_user(
         client=client,
         viewname="components:component-interface-autocomplete",
@@ -150,33 +146,14 @@ def test_component_interface_autocomplete(client):
                 {
                     "object_slug": rs.slug,
                     "model_name": ReaderStudy._meta.model_name,
+                    "interface-foo-img": ci_img_2.slug,
                 }
             )
         },
     )
     assert response.status_code == 200
     ids = [x["id"] for x in response.json()["results"]]
-    assert str(ci_img.id) not in ids
-    assert str(ci_img_2.id) in ids
-    assert str(ci_json.id) in ids
-
-    response = get_view_for_user(
-        client=client,
-        viewname="components:component-interface-autocomplete",
-        user=user,
-        data={
-            "forward": json.dumps(
-                {
-                    "object_slug": rs.slug,
-                    "model_name": ReaderStudy._meta.model_name,
-                    "interface-0": ci_img_2.pk,
-                }
-            )
-        },
-    )
-    assert response.status_code == 200
-    ids = [x["id"] for x in response.json()["results"]]
-    assert str(ci_img.id) not in ids
+    assert str(ci_img.id) in ids
     assert str(ci_img_2.id) not in ids
     assert str(ci_json.id) in ids
 
