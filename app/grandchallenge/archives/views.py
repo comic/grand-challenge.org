@@ -136,20 +136,24 @@ class UsersArchiveList(
             )
         )
 
-        user_groups = self.request.user.groups.all()
-
         if not self.request.user.is_superuser:
+            user_group_pks = list(
+                self.request.user.groups.values_list("pk", flat=True)
+            )
+
             queryset = queryset.filter(
-                Q(editors_group__in=user_groups)
-                | Q(uploaders_group__in=user_groups)
-                | Q(users_group__in=user_groups)
+                Q(editors_group__pk__in=user_group_pks)
+                | Q(uploaders_group__pk__in=user_group_pks)
+                | Q(users_group__pk__in=user_group_pks)
             ).annotate(
                 user_role_order=models.Case(
                     models.When(
-                        editors_group__in=user_groups, then=models.Value(3)
+                        editors_group__pk__in=user_group_pks,
+                        then=models.Value(3),
                     ),
                     models.When(
-                        uploaders_group__in=user_groups, then=models.Value(2)
+                        uploaders_group__pk__in=user_group_pks,
+                        then=models.Value(2),
                     ),
                     default=models.Value(1),
                     output_field=models.IntegerField(),
