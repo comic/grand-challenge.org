@@ -32,33 +32,51 @@ htmx.onLoad(elem => {
     const dalForwardConfScripts = document.querySelectorAll(
         ".dal-forward-conf script",
     );
-    for (const script of dalForwardConfScripts) {
-        script.textContent = "";
-    }
-    let vals = [];
-    const selectOptions = document.querySelectorAll(
-        'select:disabled[name^="interface"] option:checked',
-    );
-    for (const option of selectOptions) {
-        vals.push(option.value);
-    }
 
-    if (vals.length) {
-        vals = vals.map(
-            val =>
-                `{"type": "const", "dst": "interface-${val}", "val": "${val}"}`,
-        );
+    // Forward unique interface slugs from label elements on the page
+    const forwards = [];
+    const interfaceFieldMarker = JSON.parse(
+        document.getElementById("interfaceFormFieldPrefix").textContent,
+    );
+    const labels = document.querySelectorAll(
+        `label[for*="${interfaceFieldMarker}"]`,
+    );
+
+    const uniqueInterfaceSlugs = [
+        ...new Set(
+            Array.from(labels).map(label => {
+                const forAttr = label.htmlFor;
+                const markerIndex = forAttr.indexOf(interfaceFieldMarker);
+                const start = markerIndex + interfaceFieldMarker.length;
+                return forAttr.slice(start);
+            }),
+        ),
+    ];
+
+    for (const interfaceSlug of uniqueInterfaceSlugs) {
+        forwards.push({
+            type: "const",
+            dst: `interface_${interfaceSlug}`,
+            val: interfaceSlug,
+        });
     }
 
     const objectSlug = document.getElementById("objectSlug").dataset.objectSlug;
     const modelName = document.getElementById("modelName").dataset.modelName;
-    vals.push(
-        `{"type": "const", "dst": "object_slug", "val": "${objectSlug}"}`,
-        `{"type": "const", "dst": "model_name", "val": "${modelName}"}`,
-    );
+    forwards.push({
+        type: "const",
+        dst: "object_slug",
+        val: objectSlug,
+    });
+    forwards.push({
+        type: "const",
+        dst: "model_name",
+        val: modelName,
+    });
 
+    const config = JSON.stringify(forwards);
     for (const script of dalForwardConfScripts) {
-        script.textContent = `[${vals.join(", ")}]`;
+        script.textContent = config;
     }
 });
 

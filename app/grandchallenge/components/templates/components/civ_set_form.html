@@ -86,6 +86,7 @@
 {% block script %}
     {{ block.super }}
     {{ form_media }}
+    {{ interface_form_field_prefix|json_script:"interfaceFormFieldPrefix" }}
     <script type="module" src="{% static 'components/js/create_extra_interfaces.mjs' %}"></script>
     <script type="module" src="{% static 'components/js/autocomplete_htmx.mjs' %}"></script>
     <script type="module" src="{% static "components/js/htmx/enable-me.mjs" %}"></script>
