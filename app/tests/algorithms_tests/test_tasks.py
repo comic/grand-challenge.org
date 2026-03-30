@@ -429,6 +429,7 @@ def test_algorithm(client, settings, django_capture_on_commit_callbacks):
 
 
 @pytest.mark.django_db
+@override_settings(LAMBDA_TASKS_EAGER=True)
 def test_algorithm_with_invalid_output(
     client, settings, django_capture_on_commit_callbacks
 ):
