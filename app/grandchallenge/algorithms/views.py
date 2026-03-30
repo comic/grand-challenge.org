@@ -9,7 +9,8 @@ from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Case, IntegerField, Q, Value, When, Window
+from django.db import models
+from django.db.models import IntegerField, Q, Value, Window
 from django.db.models.functions import Rank
 from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
@@ -215,17 +216,22 @@ class UsersAlgorithmList(
             )
         )
 
-        user_groups = self.request.user.groups.all()
-
         if not self.request.user.is_superuser:
+            user_group_pks = list(
+                self.request.user.groups.values_list("pk", flat=True)
+            )
+
             queryset = queryset.filter(
-                Q(editors_group__in=user_groups)
-                | Q(users_group__in=user_groups)
+                Q(editors_group__pk__in=user_group_pks)
+                | Q(users_group__pk__in=user_group_pks)
             ).annotate(
-                user_role_order=Case(
-                    When(editors_group__in=user_groups, then=Value(2)),
-                    default=Value(1),
-                    output_field=IntegerField(),
+                user_role_order=models.Case(
+                    models.When(
+                        editors_group__pk__in=user_group_pks,
+                        then=models.Value(3),
+                    ),
+                    default=models.Value(1),
+                    output_field=models.IntegerField(),
                 )
             )
         else:
