@@ -125,16 +125,19 @@ class UsersChallengeList(
             )
         )
 
-        user_groups = self.request.user.groups.all()
-
         if not self.request.user.is_superuser:
+            user_group_pks = list(
+                self.request.user.groups.values_list("pk", flat=True)
+            )
+
             queryset = queryset.filter(
-                Q(admins_group__in=user_groups)
-                | Q(participants_group__in=user_groups)
+                Q(admins_group__pk__in=user_group_pks)
+                | Q(participants_group__pk__in=user_group_pks)
             ).annotate(
                 user_role_order=models.Case(
                     models.When(
-                        admins_group__in=user_groups, then=models.Value(2)
+                        admins_group__pk__in=user_group_pks,
+                        then=models.Value(2),
                     ),
                     default=models.Value(1),
                     output_field=models.IntegerField(),
