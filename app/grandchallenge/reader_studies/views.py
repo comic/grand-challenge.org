@@ -190,16 +190,18 @@ class UsersReaderStudyList(
             )
         )
 
-        user_groups = self.request.user.groups.all()
-
         if not self.request.user.is_superuser:
+            user_group_pks = list(
+                self.request.user.groups.values_list("pk", flat=True)
+            )
             queryset = queryset.filter(
-                Q(editors_group__in=user_groups)
-                | Q(readers_group__in=user_groups)
+                Q(editors_group__pk__in=user_group_pks)
+                | Q(readers_group__pk__in=user_group_pks)
             ).annotate(
                 user_role_order=models.Case(
                     models.When(
-                        editors_group__in=user_groups, then=models.Value(2)
+                        editors_group__pk__in=user_group_pks,
+                        then=models.Value(3),
                     ),
                     default=models.Value(1),
                     output_field=models.IntegerField(),
