@@ -904,12 +904,12 @@ def get_update_status_kwargs(*, executor=None):
     retry_on=(RetryStep, LockNotAcquiredException),
 )
 @transaction.atomic
-def handle_event_lambda(*, event: dict, backend: str):
+def handle_event_celery(*, event, backend):
     return handle_event(event=event, backend=backend)
 
 
 @lambda_task(retry_on=(RetryStep, LockNotAcquiredException))
-def handle_event(*, event, backend):
+def handle_event(*, event: dict, backend: str):
     """
     Receives events when tasks have stops and determines what to do next.
     In the case of transient failure the job could be scheduled again

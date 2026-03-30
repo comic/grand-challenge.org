@@ -12,6 +12,7 @@ import requests
 from actstream.actions import unfollow
 from django.conf import settings
 from django.core.cache import cache
+from django.test import override_settings
 from django.utils.html import format_html
 from django.utils.timezone import now
 from redis.exceptions import LockError
@@ -59,6 +60,7 @@ from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.mark.django_db
+@override_settings(LAMBDA_TASKS_EAGER=True)
 def test_submission_evaluation(
     submission_file,
     settings,
@@ -731,6 +733,7 @@ def test_non_zip_submission_failure(
 
 
 @pytest.mark.django_db
+@override_settings(LAMBDA_TASKS_EAGER=True)
 def test_evaluation_notifications(
     client,
     submission_file,

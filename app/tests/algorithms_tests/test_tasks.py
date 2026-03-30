@@ -282,6 +282,7 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
 
 
 @pytest.mark.django_db
+@override_settings(LAMBDA_TASKS_EAGER=True)
 def test_algorithm(client, settings, django_capture_on_commit_callbacks):
     # Override the celery settings
     settings.task_eager_propagates = (True,)
