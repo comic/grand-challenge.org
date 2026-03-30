@@ -905,6 +905,7 @@ def get_update_status_kwargs(*, executor=None):
 )
 @transaction.atomic
 def handle_event_celery(*, event, backend):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
     return handle_event(event=event, backend=backend)
 
 
