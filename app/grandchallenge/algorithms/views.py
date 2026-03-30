@@ -228,7 +228,7 @@ class UsersAlgorithmList(
                 user_role_order=models.Case(
                     models.When(
                         editors_group__pk__in=user_group_pks,
-                        then=models.Value(3),
+                        then=models.Value(2),
                     ),
                     default=models.Value(1),
                     output_field=models.IntegerField(),
