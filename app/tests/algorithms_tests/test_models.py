@@ -1516,7 +1516,7 @@ def test_algorithminterface_create():
 
 
 @pytest.mark.django_db
-def test_create_interactive_algorithm_choice_constraint():
+def test_create_algorithm_implementation_choice_constraint():
     with pytest.raises(IntegrityError) as error:
         ReaderStudyAlgorithmImplementationFactory(algorithm_choice="")
 
@@ -1527,11 +1527,11 @@ def test_create_interactive_algorithm_choice_constraint():
 
 
 @pytest.mark.django_db
-def test_create_interactive_algorithm_unique_constraint():
-    interactive_algorithm = ReaderStudyAlgorithmImplementationFactory()
+def test_create_algorithm_implementation_unique_constraint():
+    algorithm_implementation = ReaderStudyAlgorithmImplementationFactory()
     with pytest.raises(IntegrityError) as error:
         ReaderStudyAlgorithmImplementationFactory(
-            algorithm_choice=interactive_algorithm.algorithm_choice
+            algorithm_choice=algorithm_implementation.algorithm_choice
         )
 
     assert (
@@ -1542,24 +1542,24 @@ def test_create_interactive_algorithm_unique_constraint():
 
 
 @pytest.mark.django_db
-def test_create_interactive_algorithm_without_image():
-    interactive_algorithm = ReaderStudyAlgorithmImplementationFactory()
+def test_create_algorithm_implementation_without_image():
+    algorithm_implementation = ReaderStudyAlgorithmImplementationFactory()
 
     with pytest.raises(ValidationError) as error:
-        interactive_algorithm.full_clean()
+        algorithm_implementation.full_clean()
 
     assert "Algorithm has no active image" in str(error)
 
 
 @pytest.mark.django_db
-def test_create_interactive_algorithm_without_invoke_api_image():
+def test_create_algorithm_implementation_without_invoke_api_image():
     algorithm_image_exec = AlgorithmImageFactory(
         is_manifest_valid=True,
         is_in_registry=True,
         is_desired_version=True,
         api_method=APIMethodChoices.EXEC,
     )
-    interactive_algorithm_exec = (
+    algorithm_implimentation_exec = (
         ReaderStudyAlgorithmImplementationFactory.build(
             algorithm=algorithm_image_exec.algorithm
         )
@@ -1570,25 +1570,25 @@ def test_create_interactive_algorithm_without_invoke_api_image():
         is_desired_version=True,
         api_method=APIMethodChoices.INVOKE,
     )
-    interactive_algorithm_invoke = (
+    algorithm_implementation_invoke = (
         ReaderStudyAlgorithmImplementationFactory.build(
             algorithm=algorithm_image_invoke.algorithm
         )
     )
 
     with pytest.raises(ValidationError) as error:
-        interactive_algorithm_exec.full_clean()
+        algorithm_implimentation_exec.full_clean()
 
     assert error.value.message_dict["__all__"] == [
         "Active algorithm image does not use the INVOKE api method"
     ]
 
     with nullcontext():
-        interactive_algorithm_invoke.full_clean()
+        algorithm_implementation_invoke.full_clean()
 
 
 @pytest.mark.django_db
-def test_interactive_algorithm_mark_non_invoke_image_raises_validation_error():
+def test_algorithm_implementation_mark_non_invoke_image_raises_validation_error():
     algorithm_image = AlgorithmImageFactory(
         api_method=APIMethodChoices.EXEC,
         is_manifest_valid=True,
@@ -1609,7 +1609,7 @@ def test_interactive_algorithm_mark_non_invoke_image_raises_validation_error():
 
 
 @pytest.mark.django_db
-def test_cannot_set_interface_for_interactive_algorithm():
+def test_cannot_set_interface_for_algorithm_implementation():
     algorithm = AlgorithmFactory()
     new_interface = AlgorithmInterfaceFactory()
     ReaderStudyAlgorithmImplementationFactory(algorithm=algorithm)
@@ -1624,7 +1624,7 @@ def test_cannot_set_interface_for_interactive_algorithm():
 
 
 @pytest.mark.django_db
-def test_cannot_add_interface_for_interactive_algorithm():
+def test_cannot_add_interface_for_algorithm_implementation():
     algorithm = AlgorithmFactory()
     new_interface = AlgorithmInterfaceFactory()
     ReaderStudyAlgorithmImplementationFactory(algorithm=algorithm)
@@ -1639,7 +1639,7 @@ def test_cannot_add_interface_for_interactive_algorithm():
 
 
 @pytest.mark.django_db
-def test_cannot_remove_interface_for_interactive_algorithm():
+def test_cannot_remove_interface_for_algorithm_implementation():
     algorithm = AlgorithmFactory()
     interface = AlgorithmInterfaceFactory()
     algorithm.interfaces.add(interface)
@@ -1655,7 +1655,7 @@ def test_cannot_remove_interface_for_interactive_algorithm():
 
 
 @pytest.mark.django_db
-def test_cannot_clear_interface_for_interactive_algorithm():
+def test_cannot_clear_interface_for_algorithm_implementation():
     algorithm = AlgorithmFactory()
     interface = AlgorithmInterfaceFactory()
     algorithm.interfaces.add(interface)

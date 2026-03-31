@@ -886,14 +886,14 @@ def test_deactivate_old_algorithm_images(django_capture_on_commit_callbacks):
     AlgorithmImageFactory(
         is_in_registry=True, algorithm__public=True
     )  # is public so should still work
-    algorithm_marked_interactive = AlgorithmFactory()
+    algorithm_as_implementation = AlgorithmFactory()
     ReaderStudyAlgorithmImplementationFactory(
-        algorithm=algorithm_marked_interactive
+        algorithm=algorithm_as_implementation
     )
     AlgorithmImageFactory(
         is_in_registry=True,
-        algorithm=algorithm_marked_interactive,
-    )  # linked to an interactive algorithm
+        algorithm=algorithm_as_implementation,
+    )  # linked to a reader study algorithm implementation
     old_with_recent_job = AlgorithmImageFactory(is_in_registry=True)
     old_with_old_job = AlgorithmImageFactory(is_in_registry=True)
 

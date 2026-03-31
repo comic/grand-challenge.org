@@ -1730,7 +1730,7 @@ def test_algorithm_algorithm_interface_delete_form(
 
 
 @pytest.mark.django_db
-def test_algorithm_image_activate_form_non_invoke_for_interactive_algorithm():
+def test_algorithm_image_activate_form_non_invoke_for_algorithm_implementation():
     algorithm_image = AlgorithmImageFactory(
         is_manifest_valid=True,
         is_desired_version=False,

@@ -2522,7 +2522,7 @@ def test_algorithm_users_list_is_filtered(client):
 
 
 @pytest.mark.django_db
-def test_interactive_algorithm_interfaces_locked(client):
+def test_algorithm_implementation_interfaces_locked(client):
     algorithm = AlgorithmFactory()
     editor = UserFactory()
     algorithm.add_editor(editor)
