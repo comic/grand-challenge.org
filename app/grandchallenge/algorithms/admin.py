@@ -354,7 +354,6 @@ class AlgorithmImageAdmin(ComponentImageAdmin):
 
 @admin.register(Endpoint)
 class EndpointAdmin(admin.ModelAdmin):
-    ordering = ("-created",)
     list_display = (
         "pk",
         "created",

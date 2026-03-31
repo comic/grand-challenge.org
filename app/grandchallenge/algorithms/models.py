@@ -1591,6 +1591,7 @@ class Endpoint(UUIDModel):
 
     class Meta:
         permissions = [("invoke_endpoint", "Can invoke the endpoint")]
+        ordering = ("-created",)
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(status__in=EndpointStatusChoices.values),
