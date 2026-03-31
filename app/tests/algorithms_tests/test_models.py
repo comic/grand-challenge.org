@@ -1767,3 +1767,67 @@ def test_endpoint_deprovision_auxiliary_data(settings):
         endpoint.deprovision_auxiliary_data()
 
         stubber.assert_no_pending_responses()
+
+
+def test_endpoint_model_environment(settings):
+    settings.COMPONENTS_INPUT_BUCKET_NAME = "test_components_input_bucket"
+    endpoint = EndpointFactory.build()
+
+    assert endpoint._model_environment == {
+        "LOG_LEVEL": "INFO",
+        "PYTHONUNBUFFERED": "1",
+        "no_proxy": "amazonaws.com",
+        "GRAND_CHALLENGE_COMPONENT_API_METHOD": endpoint.algorithm_image.api_method,
+        "GRAND_CHALLENGE_COMPONENT_MODEL": f"s3://test_components_input_bucket/{endpoint._algorithm_model_key}",
+    }
+
+    endpoint = EndpointFactory.build(algorithm_model=None)
+
+    assert "GRAND_CHALLENGE_COMPONENT_MODEL" not in endpoint._model_environment
+
+
+def test_endpoint_create_model(settings):
+    settings.ALGORITHM_ENDPOINTS_EXECUTION_ROLE_ARN = "test_execution_role_arn"
+    settings.ALGORITHM_ENDPOINTS_SECURITY_GROUP_ID = "test_security_group_id"
+    settings.ALGORITHM_ENDPOINTS_SUBNETS = ["test_subnet1", "test_subnet2"]
+    endpoint = EndpointFactory.build()
+
+    with Stubber(endpoint._sagemaker_client) as stubber:
+        stubber.add_response(
+            method="create_model",
+            service_response={"ModelArn": "some_model_arn_for_testing"},
+            expected_params={
+                "ModelName": endpoint.endpoint_name,
+                "ExecutionRoleArn": "test_execution_role_arn",
+                "PrimaryContainer": {
+                    "Image": str(endpoint.algorithm_image.image),
+                    "Environment": endpoint._model_environment,
+                    "Mode": "SingleModel",
+                },
+                "VpcConfig": {
+                    "SecurityGroupIds": ["test_security_group_id"],
+                    "Subnets": ["test_subnet1", "test_subnet2"],
+                },
+            },
+        )
+
+        endpoint.create_model()
+
+        stubber.assert_no_pending_responses()
+
+
+def test_endpoint_delete_model():
+    endpoint = EndpointFactory.build()
+
+    with Stubber(endpoint._sagemaker_client) as stubber:
+        stubber.add_response(
+            method="delete_model",
+            service_response={},
+            expected_params={
+                "ModelName": endpoint.endpoint_name,
+            },
+        )
+
+        endpoint.delete_model()
+
+        stubber.assert_no_pending_responses()

@@ -1712,6 +1712,43 @@ class Endpoint(UUIDModel):
             prefix=self._auxiliary_data_prefix,
         )
 
+    @property
+    def _model_environment(self):
+        env = {
+            "LOG_LEVEL": "INFO",
+            "PYTHONUNBUFFERED": "1",
+            "no_proxy": "amazonaws.com",
+            "GRAND_CHALLENGE_COMPONENT_API_METHOD": self.algorithm_image.api_method,
+        }
+
+        if self.algorithm_model:
+            env["GRAND_CHALLENGE_COMPONENT_MODEL"] = (
+                f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}"
+                f"/{self._algorithm_model_key}"
+            )
+
+        return env
+
+    def create_model(self):
+        self._sagemaker_client.create_model(
+            ModelName=self.endpoint_name,
+            ExecutionRoleArn=settings.ALGORITHM_ENDPOINTS_EXECUTION_ROLE_ARN,
+            PrimaryContainer={
+                "Image": str(self.algorithm_image.image),
+                "Environment": self._model_environment,
+                "Mode": "SingleModel",
+            },
+            VpcConfig={
+                "SecurityGroupIds": [
+                    settings.ALGORITHM_ENDPOINTS_SECURITY_GROUP_ID
+                ],
+                "Subnets": settings.ALGORITHM_ENDPOINTS_SUBNETS,
+            },
+        )
+
+    def delete_model(self):
+        self._sagemaker_client.delete_model(ModelName=self.endpoint_name)
+
 
 class EndpointUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset({"invoke_endpoint"})
