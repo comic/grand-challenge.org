@@ -271,7 +271,7 @@ def test_help_text_includes_download_link_with_example(value):
 
     help_text = str(field.help_text)
     assert "This is a test description" in help_text
-    assert "Download Example" in help_text
+    assert "Download an example" in help_text
     assert "data:application/json;charset=utf-8," in help_text
     assert f'download="example-{ci.slug}.json"' in help_text
     assert json.dumps(value) in help_text
@@ -294,4 +294,4 @@ def test_help_text_does_not_include_download_link_without_example():
 
     help_text = str(field.help_text)
     assert "This is a test description" in help_text
-    assert "Download Example" not in help_text
+    assert "Download an example" not in help_text
