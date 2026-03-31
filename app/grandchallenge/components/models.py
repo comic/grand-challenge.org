@@ -486,6 +486,7 @@ class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
 
     @property
     def has_json_kind_example(self):
+        """Whether this socket has an example value for json kinds. This also accounts for example values with None or False values."""
         try:
             self.example_value
             return True
