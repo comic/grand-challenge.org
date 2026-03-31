@@ -148,5 +148,4 @@ def prevent_interfaces_update_for_interactive_algorithms(
 
 @receiver(post_delete, sender=Endpoint)
 def delete_endpoint_groups(*_, instance, **__):
-    instance.editors_group.delete()
-    instance.users_group.delete()
+    instance.viewers_group.delete()

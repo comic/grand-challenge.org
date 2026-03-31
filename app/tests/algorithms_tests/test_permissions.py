@@ -524,19 +524,16 @@ class TestJobPermissions:
 @pytest.mark.django_db
 def test_endpoint_permissions():
     endpoint = EndpointFactory()
-    editors_group = endpoint.editors_group
-    users_group = endpoint.users_group
+    viewers_group = endpoint.viewers_group
 
     assert get_groups_with_set_perms(endpoint) == {
-        editors_group: {"change_endpoint", "view_endpoint", "invoke_endpoint"},
-        users_group: {"view_endpoint", "invoke_endpoint"},
+        viewers_group: {"view_endpoint"},
     }
-    assert get_users_with_perms(endpoint, with_group_users=False).count() == 0
+    assert get_users_with_set_perms(endpoint, with_group_users=False) == {
+        endpoint.creator: {"invoke_endpoint"},
+    }
 
     endpoint.delete()
 
     with pytest.raises(Group.DoesNotExist):
-        editors_group.refresh_from_db()
-
-    with pytest.raises(Group.DoesNotExist):
-        users_group.refresh_from_db()
+        viewers_group.refresh_from_db()
