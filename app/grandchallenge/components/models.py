@@ -485,11 +485,19 @@ class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
         ]
 
     @property
+    def has_json_kind_example(self):
+        try:
+            self.example_value
+            return True
+        except ObjectDoesNotExist:
+            return self.kind in INTERFACE_KIND_JSON_EXAMPLES
+
+    @property
     def json_kind_example(self):
         try:
             return self.example_value
         except ObjectDoesNotExist:
-            return INTERFACE_KIND_JSON_EXAMPLES.get(self.kind, MISSING)
+            return INTERFACE_KIND_JSON_EXAMPLES[self.kind]
 
     @property
     def super_kind(self):
@@ -717,7 +725,9 @@ class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
             slug=self.slug,
             relative_path=self.relative_path,
             example_value=(
-                self.json_kind_example.value if self.is_json_kind else MISSING
+                self.json_kind_example.value
+                if self.has_json_kind_example
+                else MISSING
             ),
             is_image_kind=self.is_image_kind,
             is_panimg_kind=self.is_panimg_kind,

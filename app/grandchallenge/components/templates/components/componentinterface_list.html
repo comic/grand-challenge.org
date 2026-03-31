@@ -3,7 +3,6 @@
 {% load static %}
 {% load json %}
 {% load bleach %}
-{% load missing %}
 
 {% block title %}
     {% if object_type == object_type_options.ALGORITHM %}
@@ -81,7 +80,7 @@
                         </td>
                     {% endif %}
                     <td>
-                        {% if not interface.json_kind_example|is_missing %}
+                        {% if interface.has_json_kind_example %}
                             <a href="#example-value-modal-{{ interface.pk }}"
                                 data-toggle="modal"
                                 data-target="#example-value-modal-{{ interface.pk }}"

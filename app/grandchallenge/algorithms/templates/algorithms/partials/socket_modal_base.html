@@ -1,6 +1,5 @@
 {% load bleach %}
 {% load json %}
-{% load missing %}
 
 
 <a href="#socketModal-{{ socket.pk }}"
@@ -51,7 +50,7 @@
                         </dd>
                     {% endif %}
 
-                    {% if not socket.json_kind_example|is_missing %}
+                    {% if socket.has_json_kind_example %}
                         <dt>Example</dt>
                         <dd>
                             {% if socket.json_kind_example.extra_info %}

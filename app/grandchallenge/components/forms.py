@@ -21,7 +21,6 @@ from django.forms import (
 )
 from django.utils.functional import empty
 from django.utils.text import format_lazy
-from pydantic_core import MISSING
 
 from grandchallenge.algorithms.models import AlgorithmImage
 from grandchallenge.cases.form_fields import (
@@ -190,7 +189,7 @@ class InterfaceFormFieldsMixin:
             "label": interface.title.title(),
         }
 
-        if interface.json_kind_example is not MISSING:
+        if interface.has_json_kind_example:
             json_data = json.dumps(interface.json_kind_example.value, indent=2)
             data_uri = (
                 f"data:application/json;charset=utf-8,{quote(json_data)}"
