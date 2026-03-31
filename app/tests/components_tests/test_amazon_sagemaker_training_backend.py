@@ -9,7 +9,6 @@ import botocore
 import pytest
 from botocore.stub import Stubber
 from dateutil.tz import tzlocal
-from django.conf import settings
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.components.backends.amazon_sagemaker_training import (
@@ -94,7 +93,7 @@ def test_instance_type_incompatible(memory_limit, requires_gpu_type):
         ("E", "evaluation", "evaluation"),
     ),
 )
-def test_get_job_params_match(key, model_name, app_label):
+def test_get_job_params_match(key, model_name, app_label, settings):
     pk = uuid4()
     event = {
         "TrainingJobName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-{key}-{pk}-00"
@@ -140,7 +139,7 @@ def test_invocation_prefix():
         (Evaluation, "method", Method, "E"),
     ),
 )
-def test_transform_job_name(model, container, container_model, key):
+def test_transform_job_name(model, container, container_model, key, settings):
     j = model(pk=uuid4(), time_limit=60)
     setattr(j, container, container_model(pk=uuid4()))
     executor = AmazonSageMakerTrainingExecutor(**j.executor_kwargs)
@@ -559,7 +558,7 @@ def test_set_runtime_metrics(settings):
     }
 
 
-def test_handle_completed_job():
+def test_handle_completed_job(settings):
     pk = uuid4()
     executor = AmazonSageMakerTrainingExecutor(
         job_id=f"algorithms-job-{pk}",

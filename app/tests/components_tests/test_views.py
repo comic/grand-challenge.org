@@ -2,7 +2,6 @@ import json
 
 import factory.django
 import pytest
-from django.conf import settings
 from factory.fuzzy import FuzzyChoice
 
 from grandchallenge.archives.models import Archive, ArchiveItem
@@ -39,7 +38,7 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 class TestComponentInterfaceListView:
-    def test_login_required(self, client):
+    def test_login_required(self, client, settings):
         def _get_view(user, context):
             return get_view_for_user(
                 client=client,

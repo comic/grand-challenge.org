@@ -1,5 +1,4 @@
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import get_groups_with_perms, get_users_with_perms
 
@@ -181,7 +180,7 @@ def test_submission_permissions():
 
 @pytest.mark.parametrize("hidden_challenge", [True, False])
 @pytest.mark.django_db
-def test_published_evaluation_permissions(hidden_challenge):
+def test_published_evaluation_permissions(hidden_challenge, settings):
     """
     Challenge admins can change and view published evaluations.
 
@@ -234,7 +233,7 @@ def test_unpublished_evaluation_permissions(hidden_challenge):
 
 @pytest.mark.parametrize("hidden_challenge", [True, False])
 @pytest.mark.django_db
-def test_unpublishing_results_removes_permissions(hidden_challenge):
+def test_unpublishing_results_removes_permissions(hidden_challenge, settings):
     """
     If an evaluation is unpublished then the view permission should be
     removed.

@@ -4,7 +4,6 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 from botocore.stub import Stubber
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.base import ContentFile
@@ -1157,7 +1156,7 @@ def test_time_limit_unchangable():
 
 @pytest.mark.django_db
 class TestAlgorithmUserCreditValidation:
-    def test_anonymous_user_validation(self):
+    def test_anonymous_user_validation(self, settings):
         """Test that credits cannot be assigned to anonymous users"""
         anonymous_user = get_user_model().objects.get(
             username=settings.ANONYMOUS_USER_NAME

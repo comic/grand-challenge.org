@@ -1,5 +1,4 @@
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.utils import get_anonymous_user
 
@@ -13,7 +12,7 @@ TEST_DOI = "10.1002/mrm.25227"
 
 
 @pytest.mark.django_db
-def test_publication_creation(client, mocker):
+def test_publication_creation(client, settings, mocker):
     user1 = UserFactory()
     user2 = get_anonymous_user()
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)

@@ -1,5 +1,4 @@
 import pytest
-from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
@@ -74,7 +73,7 @@ def test_staff_email_for_new_feedback():
 
 
 @pytest.mark.django_db
-def test_extra_env_vars():
+def test_extra_env_vars(settings):
     session = Session(
         extra_env_vars=[
             {"name": "TEST", "value": "12345"},

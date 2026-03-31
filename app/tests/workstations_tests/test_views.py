@@ -631,7 +631,7 @@ def test_debug_session_create(client):
 
 
 @pytest.mark.django_db
-def test_session_redirect(client):
+def test_session_redirect(client, settings):
     user = UserFactory()
     default_workstation = Workstation.objects.get(
         slug=settings.DEFAULT_WORKSTATION_SLUG
@@ -841,7 +841,7 @@ def test_workstation_group_update(client, two_workstation_sets, new_user):
 
 
 @pytest.mark.django_db
-def test_workstation_image(rf):
+def test_workstation_image(rf, settings):
     request = rf.get("/")
     view = SessionCreate()
     view.setup(request)

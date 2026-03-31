@@ -2,7 +2,6 @@ from urllib.parse import quote
 
 import pytest
 from botocore.stub import Stubber
-from django.conf import settings
 from requests import put
 
 from grandchallenge.uploads.models import UserUpload
@@ -55,7 +54,7 @@ def test_create_multipart_upload():
     assert upload.key == f"uploads/{user.pk}/{upload.pk}"
 
 
-def test_generate_presigned_urls():
+def test_generate_presigned_urls(settings):
     upload = UserUpload(creator=UserFactory.build())
     upload.create_multipart_upload()
 

@@ -7,7 +7,6 @@ from typing import NamedTuple
 from unittest.mock import patch
 
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.files.base import ContentFile
@@ -989,7 +988,7 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
 
 
 @pytest.mark.django_db
-def test_create_algorithm_for_phase_presets(client):
+def test_create_algorithm_for_phase_presets(client, settings):
     phase = PhaseFactory(challenge__logo=ImageField(filename="test.jpeg"))
     admin = UserFactory()
     phase.challenge.add_admin(admin)

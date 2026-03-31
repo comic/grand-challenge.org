@@ -1,8 +1,6 @@
 import pytest
 from actstream.actions import follow
 from actstream.models import Follow
-from django.conf import settings
-from django.db import connection, reset_queries
 
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.notifications.models import Notification
@@ -16,7 +14,7 @@ from tests.notifications_tests.factories import NotificationFactory
 
 
 @pytest.mark.django_db
-def test_notification_list_view_num_queries(client, django_assert_num_queries):
+def test_notification_list_view_num_queries(django_assert_num_queries):
     user1 = UserFactory()
     phase = PhaseFactory()
     eval = EvaluationFactory(
@@ -54,32 +52,28 @@ def test_notification_list_view_num_queries(client, django_assert_num_queries):
         ).all()
     )
 
-    try:
-        settings.DEBUG = True
-        notifications[0].target
+    with django_assert_num_queries(2):
         # when the generic foreign keys have not been prefetched, accessing the
         # action target, result in two db calls
-        assert len(connection.queries) == 2
-        reset_queries()
-        notifications_with_prefetched_fks[0].target
+        _ = notifications[0].target
+
+    with django_assert_num_queries(0):
         # when gfks have been prefetched, accessing the action target
         # no longer requires any db calls
-        assert len(connection.queries) == 0
+        _ = notifications_with_prefetched_fks[0].target
+
+    with django_assert_num_queries(5):
         # related objects of the generic foreign keys have also been prefetched
-        notifications[0].action_object.submission.phase.challenge
-        assert len(connection.queries) == 5
-        reset_queries()
-        notifications_with_prefetched_fks[
+        _ = notifications[0].action_object.submission.phase.challenge
+
+    with django_assert_num_queries(0):
+        _ = notifications_with_prefetched_fks[
             0
         ].action_object.submission.phase.challenge
-        assert len(connection.queries) == 0
-    finally:
-        settings.DEBUG = False
-        reset_queries()
 
 
 @pytest.mark.django_db
-def test_follow_list_view_num_queries():
+def test_follow_list_view_num_queries(django_assert_num_queries):
     user1 = UserFactory()
     f = ForumFactory()
     follow(user=user1, obj=f)
@@ -89,13 +83,8 @@ def test_follow_list_view_num_queries():
         Follow.objects.select_related("user", "content_type").all()
     )
 
-    try:
-        settings.DEBUG = True
-        follows[0].follow_object
-        assert len(connection.queries) == 2
-        reset_queries()
-        follows_with_prefetched_gfks[0].follow_object
-        assert len(connection.queries) == 0
-    finally:
-        settings.DEBUG = False
-        reset_queries()
+    with django_assert_num_queries(2):
+        _ = follows[0].follow_object
+
+    with django_assert_num_queries(0):
+        _ = follows_with_prefetched_gfks[0].follow_object

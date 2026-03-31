@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 import pytest
 from allauth.account.models import EmailAddress
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.utils.crypto import get_random_string
@@ -92,7 +91,7 @@ def test_require_mfa_not_on_allowed_urls(
 
 
 @pytest.mark.django_db
-def test_email_after_2fa_login_for_staff(client):
+def test_email_after_2fa_login_for_staff(client, settings):
     password = get_random_string(32)
 
     staff_user = UserFactory(is_staff=True, password=password)
@@ -122,7 +121,7 @@ def test_email_after_2fa_login_for_staff(client):
 
 
 @pytest.mark.django_db
-def test_no_email_after_2fa_login_for_non_staff(client):
+def test_no_email_after_2fa_login_for_non_staff(client, settings):
     password = get_random_string(32)
 
     user = UserFactory(password=password)

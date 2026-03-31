@@ -1,5 +1,4 @@
 import pytest
-from django.conf import settings
 from django.contrib.messages import get_messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import reverse
@@ -11,7 +10,7 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("view", ("list", "create"))
-def test_logged_in_views(client, view):
+def test_logged_in_views(client, settings, view):
     viewname = f"api-tokens:{view}"
 
     response = get_view_for_user(client=client, viewname=viewname, user=None)

@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import get_perms
 
@@ -11,12 +10,12 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-def test_workstation_creators_group_exists():
+def test_workstation_creators_group_exists(settings):
     assert Group.objects.get(name=settings.WORKSTATIONS_CREATORS_GROUP_NAME)
 
 
 @pytest.mark.django_db
-def test_create_view_permission(client):
+def test_create_view_permission(client, settings):
     u = UserFactory()
     g = Group.objects.get(name=settings.WORKSTATIONS_CREATORS_GROUP_NAME)
 
@@ -164,7 +163,7 @@ def test_session_detail_user_permissions(client, two_workstation_sets):
     ],
 )
 def test_workstation_redirect_permissions(
-    client, two_workstation_sets, viewname
+    client, settings, two_workstation_sets, viewname
 ):
     # Make ws1 the default
     Workstation.objects.get(slug=settings.DEFAULT_WORKSTATION_SLUG).delete()
@@ -325,7 +324,7 @@ def test_session_api_patch_permissions(client, two_workstation_sets):
 
 
 @pytest.mark.django_db
-def test_public_group_permissions():
+def test_public_group_permissions(settings):
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )

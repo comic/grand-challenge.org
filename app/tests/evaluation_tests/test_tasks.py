@@ -10,7 +10,6 @@ from pathlib import Path
 import pytest
 import requests
 from actstream.actions import unfollow
-from django.conf import settings
 from django.core.cache import cache
 from django.utils.html import format_html
 from django.utils.timezone import now
@@ -205,7 +204,7 @@ def test_method_validation(invoke_container_image):
 
 
 @pytest.mark.django_db
-def test_container_pushing(invoke_container_image):
+def test_container_pushing(invoke_container_image, settings):
     method = MethodFactory(
         image__from_path=invoke_container_image, is_manifest_valid=True
     )
