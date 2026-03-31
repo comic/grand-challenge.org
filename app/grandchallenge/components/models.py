@@ -6,6 +6,7 @@ from enum import Enum, StrEnum
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from urllib.parse import quote
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import signature
@@ -29,6 +30,7 @@ from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
 from django.template.defaultfilters import truncatewords
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
@@ -499,6 +501,19 @@ class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
             return self.example_value
         except ObjectDoesNotExist:
             return INTERFACE_KIND_JSON_EXAMPLES[self.kind]
+
+    @property
+    def json_kind_example_download_link(self):
+        if self.has_json_kind_example:
+            json_data = json.dumps(self.json_kind_example.value, indent=2)
+            data_uri = (
+                f"data:application/json;charset=utf-8,{quote(json_data)}"
+            )
+            return format_html(
+                '<a href="{data_uri}" download="example-{interface_slug}.json">Download an example.</a>',
+                data_uri=data_uri,
+                interface_slug=self.slug,
+            )
 
     @property
     def super_kind(self):

@@ -1,7 +1,5 @@
-import json
 import logging
 from enum import StrEnum
-from urllib.parse import quote
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Layout, Submit
@@ -20,6 +18,7 @@ from django.forms import (
     ModelMultipleChoiceField,
 )
 from django.utils.functional import empty
+from django.utils.html import format_html
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
@@ -190,16 +189,10 @@ class InterfaceFormFieldsMixin:
         }
 
         if interface.has_json_kind_example:
-            json_data = json.dumps(interface.json_kind_example.value, indent=2)
-            data_uri = (
-                f"data:application/json;charset=utf-8,{quote(json_data)}"
-            )
-
-            kwargs["help_text"] = format_lazy(
-                '{} <a href="{}" download="example-{}.json">Download Example.</a>',
-                kwargs["help_text"],
-                data_uri,
-                interface.slug,
+            kwargs["help_text"] = format_html(
+                "{help_text} {download_link}",
+                help_text=kwargs["help_text"],
+                download_link=interface.json_kind_example_download_link,
             )
 
         if interface.super_kind == interface.SuperKind.IMAGE:

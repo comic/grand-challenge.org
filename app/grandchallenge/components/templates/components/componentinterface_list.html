@@ -114,11 +114,7 @@
 
                                             <strong>Example JSON file contents:</strong>
                                             <pre>{{ interface.json_kind_example.value|json_dumps:2 }}</pre>
-                                            <a href="data:text/plain;charset=utf-8,{{ interface.json_kind_example.value|json_dumps:2|urlencode }}"
-                                                download="example-{{ interface.slug }}.json"
-                                            >
-                                                <i class="fa fa-download mr-1"></i>Download Example
-                                            </a>
+                                            {{ interface.json_kind_example_download_link }}
                                         </div>
                                     </div>
                                 </div>
