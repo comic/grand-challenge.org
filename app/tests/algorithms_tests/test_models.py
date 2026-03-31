@@ -3,6 +3,7 @@ from contextlib import nullcontext
 from datetime import datetime, timedelta, timezone
 
 import pytest
+from botocore.stub import Stubber
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -1711,3 +1712,58 @@ class TestEndpointProperties:
         assert endpoint._failure_s3_uri == (
             f"s3://interactive-algorithms-io/logs/{endpoint.pk}/failures"
         )
+
+
+@pytest.mark.django_db
+def test_endpoint_provision_auxiliary_data(settings):
+    settings.PROTECTED_S3_STORAGE_KWARGS = {
+        "bucket_name": "from_protected_storage"
+    }
+    settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = "to_endpoint_io"
+    endpoint = EndpointFactory()
+
+    with Stubber(endpoint._s3_client) as stubber:
+        stubber.add_response(
+            method="head_object",
+            service_response={"ContentLength": 3},
+            expected_params={
+                "Bucket": "from_protected_storage",
+                "Key": str(endpoint.algorithm_model.model),
+            },
+        )
+        stubber.add_response(
+            method="copy_object",
+            service_response={},
+            expected_params={
+                "CopySource": {
+                    "Bucket": "from_protected_storage",
+                    "Key": str(endpoint.algorithm_model.model),
+                },
+                "Bucket": "to_endpoint_io",
+                "Key": endpoint._algorithm_model_key,
+            },
+        )
+
+        endpoint.provision_auxiliary_data()
+
+        stubber.assert_no_pending_responses()
+
+
+@pytest.mark.django_db
+def test_endpoint_deprovision_auxiliary_data(settings):
+    settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = "endpoint_io"
+    endpoint = EndpointFactory()
+
+    with Stubber(endpoint._s3_client) as stubber:
+        stubber.add_response(
+            method="list_objects_v2",
+            service_response={},
+            expected_params={
+                "Bucket": "endpoint_io",
+                "Prefix": endpoint._auxiliary_data_prefix,
+            },
+        )
+
+        endpoint.deprovision_auxiliary_data()
+
+        stubber.assert_no_pending_responses()

@@ -28,6 +28,9 @@ from pictures.models import PictureField
 from grandchallenge.algorithms.tasks import update_algorithm_average_duration
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.charts.specs import stacked_bar
+from grandchallenge.components.backends.base import (
+    list_and_delete_objects_from_prefix,
+)
 from grandchallenge.components.models import (  # noqa: F401
     APIMethodChoices,
     CIVForObjectMixin,
@@ -1688,6 +1691,26 @@ class Endpoint(UUIDModel):
     @property
     def _failure_s3_uri(self):
         return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}/logs/{self.pk}/failures"
+
+    def provision_auxiliary_data(self):
+        if self.algorithm_model:
+            self._s3_client.copy(
+                CopySource={
+                    "Bucket": settings.PROTECTED_S3_STORAGE_KWARGS[
+                        "bucket_name"
+                    ],
+                    "Key": str(self.algorithm_model.model),
+                },
+                Bucket=settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME,
+                Key=self._algorithm_model_key,
+            )
+
+    def deprovision_auxiliary_data(self):
+        list_and_delete_objects_from_prefix(
+            s3_client=self._s3_client,
+            bucket=settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME,
+            prefix=self._auxiliary_data_prefix,
+        )
 
 
 class EndpointUserObjectPermission(UserObjectPermissionBase):
