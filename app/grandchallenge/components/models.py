@@ -506,12 +506,9 @@ class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
     def json_kind_example_download_link(self):
         if self.has_json_kind_example:
             json_data = json.dumps(self.json_kind_example.value, indent=2)
-            data_uri = (
-                f"data:application/json;charset=utf-8,{quote(json_data)}"
-            )
             return format_html(
-                '<a href="{data_uri}" download="example-{interface_slug}.json">Download an example.</a>',
-                data_uri=data_uri,
+                '<a href="data:application/json;charset=utf-8,{quoted_data}" download="example-{interface_slug}.json">Download an example.</a>',
+                quoted_data=quote(json_data),
                 interface_slug=self.slug,
             )
 
