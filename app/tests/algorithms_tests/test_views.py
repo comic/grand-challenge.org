@@ -845,51 +845,52 @@ def test_algorithm_job_create_with_image_input(
     assign_perm("cases.view_image", editor, image2)
 
     civ = ComponentInterfaceValueFactory(interface=ci, image=image1)
+
     with django_capture_on_commit_callbacks(execute=True):
-        with django_capture_on_commit_callbacks(execute=True):
-            response = get_view_for_user(
-                viewname="algorithms:job-create",
-                client=client,
-                method=client.post,
-                reverse_kwargs={
-                    "slug": ai.algorithm.slug,
-                    "interface_pk": interface.pk,
-                },
-                user=editor,
-                follow=True,
-                data={
-                    **get_interface_form_data(
-                        interface_slug=ci.slug,
-                        data=image1.pk,
-                        existing_data=True,
-                    )
-                },
-            )
+        response = get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "slug": ai.algorithm.slug,
+                "interface_pk": interface.pk,
+            },
+            user=editor,
+            follow=True,
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci.slug,
+                    data=image1.pk,
+                    existing_data=True,
+                )
+            },
+        )
+
     assert response.status_code == 200
     assert str(Job.objects.get().inputs.first().image.pk) == str(image1.pk)
     # same civ reused
     assert Job.objects.get().inputs.first() == civ
 
     with django_capture_on_commit_callbacks(execute=True):
-        with django_capture_on_commit_callbacks(execute=True):
-            response = get_view_for_user(
-                viewname="algorithms:job-create",
-                client=client,
-                method=client.post,
-                reverse_kwargs={
-                    "slug": ai.algorithm.slug,
-                    "interface_pk": interface.pk,
-                },
-                user=editor,
-                follow=True,
-                data={
-                    **get_interface_form_data(
-                        interface_slug=ci.slug,
-                        data=image2.pk,
-                        existing_data=True,
-                    )
-                },
-            )
+        response = get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "slug": ai.algorithm.slug,
+                "interface_pk": interface.pk,
+            },
+            user=editor,
+            follow=True,
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci.slug,
+                    data=image2.pk,
+                    existing_data=True,
+                )
+            },
+        )
+
     assert response.status_code == 200
     assert str(Job.objects.last().inputs.first().image.pk) == str(image2.pk)
     assert Job.objects.last().inputs.first() != civ
@@ -898,24 +899,25 @@ def test_algorithm_job_create_with_image_input(
         file_path=RESOURCE_PATH / "image10x10x10.mha",
         creator=editor,
     )
+
     with django_capture_on_commit_callbacks(execute=True):
-        with django_capture_on_commit_callbacks(execute=True):
-            response = get_view_for_user(
-                viewname="algorithms:job-create",
-                client=client,
-                method=client.post,
-                reverse_kwargs={
-                    "slug": ai.algorithm.slug,
-                    "interface_pk": interface.pk,
-                },
-                user=editor,
-                follow=True,
-                data={
-                    **get_interface_form_data(
-                        interface_slug=ci.slug, data=upload.pk
-                    )
-                },
-            )
+        response = get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "slug": ai.algorithm.slug,
+                "interface_pk": interface.pk,
+            },
+            user=editor,
+            follow=True,
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci.slug, data=upload.pk
+                )
+            },
+        )
+
     assert response.status_code == 200
     assert Job.objects.last().inputs.first().image.name == "image10x10x10.mha"
     assert Job.objects.last().inputs.first() != civ

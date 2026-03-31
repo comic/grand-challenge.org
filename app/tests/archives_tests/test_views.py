@@ -1011,22 +1011,22 @@ def test_archive_item_add_file(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
-        with django_capture_on_commit_callbacks(execute=True):
-            response = get_view_for_user(
-                viewname="archives:item-edit",
-                client=client,
-                method=client.post,
-                reverse_kwargs={
-                    "pk": item.pk,
-                    "slug": archive.slug,
-                },
-                user=editor,
-                data={
-                    **get_interface_form_data(
-                        interface_slug=ci.slug, data=upload.pk
-                    )
-                },
-            )
+        response = get_view_for_user(
+            viewname="archives:item-edit",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "pk": item.pk,
+                "slug": archive.slug,
+            },
+            user=editor,
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci.slug, data=upload.pk
+                )
+            },
+        )
+
     assert not UserUpload.objects.filter(pk=upload.pk).exists()
     assert response.status_code == 302
     assert "test" in ArchiveItem.objects.get().values.first().file.name
@@ -1053,35 +1053,7 @@ def test_archive_item_add_json_file(
         upload = create_upload_from_file(
             creator=editor, file_path=Path(file.name)
         )
-        with django_capture_on_commit_callbacks(execute=True):
-            with django_capture_on_commit_callbacks(execute=True):
-                response = get_view_for_user(
-                    viewname="archives:item-edit",
-                    client=client,
-                    method=client.post,
-                    reverse_kwargs={
-                        "pk": item.pk,
-                        "slug": archive.slug,
-                    },
-                    user=editor,
-                    data={
-                        **get_interface_form_data(
-                            interface_slug=ci.slug, data=upload.pk
-                        )
-                    },
-                )
-        assert response.status_code == 302
-        assert file.name.split("/")[-1] in item.values.first().file.name
-        assert not UserUpload.objects.filter(pk=upload.pk).exists()
 
-    item2 = ArchiveItemFactory(archive=archive)
-    civ = ComponentInterfaceValueFactory(
-        interface=ci, file=ContentFile(b'{"new":"bar"}', name="test.json")
-    )
-    item2.values.add(civ)
-
-    # selecting an existing file is also possible
-    with django_capture_on_commit_callbacks(execute=True):
         with django_capture_on_commit_callbacks(execute=True):
             response = get_view_for_user(
                 viewname="archives:item-edit",
@@ -1094,12 +1066,40 @@ def test_archive_item_add_json_file(
                 user=editor,
                 data={
                     **get_interface_form_data(
-                        interface_slug=ci.slug,
-                        data=civ.pk,
-                        existing_data=True,
+                        interface_slug=ci.slug, data=upload.pk
                     )
                 },
             )
+
+        assert response.status_code == 302
+        assert file.name.split("/")[-1] in item.values.first().file.name
+        assert not UserUpload.objects.filter(pk=upload.pk).exists()
+
+    item2 = ArchiveItemFactory(archive=archive)
+    civ = ComponentInterfaceValueFactory(
+        interface=ci, file=ContentFile(b'{"new":"bar"}', name="test.json")
+    )
+    item2.values.add(civ)
+
+    # selecting an existing file is also possible
+    response = get_view_for_user(
+        viewname="archives:item-edit",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "pk": item.pk,
+            "slug": archive.slug,
+        },
+        user=editor,
+        data={
+            **get_interface_form_data(
+                interface_slug=ci.slug,
+                data=civ.pk,
+                existing_data=True,
+            )
+        },
+    )
+
     assert response.status_code == 302
 
 

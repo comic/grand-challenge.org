@@ -21,7 +21,11 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
+from tests.evaluation_tests.factories import (
+    EvaluationFactory,
+    MethodFactory,
+    PhaseFactory,
+)
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import get_view_for_user
 
@@ -45,11 +49,14 @@ def generate_claimable_evaluation():
     )
     ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
     interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+
     for phase in [p1, p2]:
         phase.algorithm_interfaces.set([interface])
+
     p2.external_evaluation = True
     p2.parent = p1
     p2.save()
+
     ai = AlgorithmImageFactory(
         algorithm=AlgorithmFactory(),
         is_manifest_valid=True,
@@ -58,10 +65,17 @@ def generate_claimable_evaluation():
     )
     ai.algorithm.interfaces.set([interface])
 
+    method = MethodFactory(
+        phase=p2,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+
     eval = EvaluationFactory(
         submission__algorithm_image=ai,
         submission__phase=p2,
-        method=None,
+        method=method,
         time_limit=60,
     )
 
@@ -93,7 +107,9 @@ def claimed_external_evaluation(client, claimable_external_evaluation):
         reverse_kwargs={"pk": claimable_external_evaluation.evaluation.pk},
         content_type="application/json",
     )
+
     claimable_external_evaluation.evaluation.refresh_from_db()
+
     return ExternalEvaluationSet(
         evaluation=claimable_external_evaluation.evaluation,
         admin=claimable_external_evaluation.admin,
@@ -437,7 +453,9 @@ class TestUpdateExternalEvaluation:
         assert response.json() == {
             "status": "The evaluation was not updated in time."
         }
+
         claimed_eval.refresh_from_db()
+
         assert claimed_eval.status == Evaluation.CANCELLED
         assert (
             claimed_eval.evaluation_utilization.compute_cost_euro_millicents
