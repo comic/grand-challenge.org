@@ -169,8 +169,8 @@ class TestJobCreationThroughAPI:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         # configure multiple inputs
         interface = AlgorithmInterfaceFactory(
@@ -278,8 +278,8 @@ class TestJobCreationThroughAPI:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         # configure multiple inputs
         interface = AlgorithmInterfaceFactory(
@@ -340,8 +340,8 @@ class TestJobCreationThroughAPI:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         # configure multiple inputs
         interface = AlgorithmInterfaceFactory(
@@ -409,8 +409,8 @@ class TestJobCreationThroughAPI:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         # configure file input
         interface = AlgorithmInterfaceFactory(
@@ -463,8 +463,8 @@ class TestJobCreationThroughAPI:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         interface = AlgorithmInterfaceFactory(
             inputs=[algorithm_with_multiple_inputs.ci_json_in_db_with_schema],
@@ -499,8 +499,8 @@ class TestJobCreationThroughAPI:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         interface = AlgorithmInterfaceFactory(
             inputs=[algorithm_with_multiple_inputs.ci_img_upload],
@@ -550,8 +550,8 @@ class TestJobCreationThroughAPI:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         ci1, ci2 = ComponentInterfaceFactory.create_batch(
             2, kind=InterfaceKindChoices.PANIMG_SEGMENTATION

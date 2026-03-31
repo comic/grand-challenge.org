@@ -762,8 +762,8 @@ def test_create_job_with_json_file(
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     ai = AlgorithmImageFactory(
         is_manifest_valid=True,
@@ -815,12 +815,12 @@ def test_create_job_with_json_file(
 
 @pytest.mark.django_db
 def test_algorithm_job_create_with_image_input(
-    settings, client, django_capture_on_commit_callbacks
+    client, settings, django_capture_on_commit_callbacks
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     ai = AlgorithmImageFactory(
         is_manifest_valid=True,
@@ -984,8 +984,8 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         # configure multiple inputs
         interface = AlgorithmInterfaceFactory(
@@ -1096,8 +1096,8 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         # configure multiple inputs
         interface = AlgorithmInterfaceFactory(
@@ -1175,8 +1175,8 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         # configure multiple inputs
         interface = AlgorithmInterfaceFactory(
@@ -1244,8 +1244,8 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         # configure file input
         interface = AlgorithmInterfaceFactory(
@@ -1297,8 +1297,8 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         interface = AlgorithmInterfaceFactory(
             inputs=[algorithm_with_multiple_inputs.ci_json_in_db_with_schema],
@@ -1332,8 +1332,8 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         interface = AlgorithmInterfaceFactory(
             inputs=[algorithm_with_multiple_inputs.ci_img_upload],
@@ -1379,8 +1379,8 @@ class TestJobCreateView:
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         # configure multiple inputs
         ci1, ci2 = ComponentInterfaceFactory.create_batch(
@@ -1437,8 +1437,8 @@ class TestJobCreateView:
 
 @pytest.mark.django_db
 def test_algorithm_image_activate(
-    settings,
     client,
+    settings,
     invoke_container_image,
     mocker,
     django_capture_on_commit_callbacks,
@@ -1447,8 +1447,8 @@ def test_algorithm_image_activate(
         AlgorithmImage, "calculate_size_in_registry", lambda x: 100
     )
 
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     alg = AlgorithmFactory()
     i1, i2 = AlgorithmImageFactory.create_batch(

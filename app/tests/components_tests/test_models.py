@@ -1445,8 +1445,8 @@ def test_remove_container_image_from_registry(
     django_capture_on_commit_callbacks,
     mocker,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     mock_remove_tag_from_registry = mocker.patch(
         # remove_tag_from_registry is only implemented for ECR
@@ -1511,8 +1511,8 @@ def test_delete_container_image(
     django_capture_on_commit_callbacks,
     mocker,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     mock_remove_tag_from_registry = mocker.patch(
         # remove_tag_from_registry is only implemented for ECR

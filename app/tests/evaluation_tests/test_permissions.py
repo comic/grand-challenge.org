@@ -59,7 +59,12 @@ def test_phase_permissions():
 
 
 @pytest.mark.django_db
-def test_hiding_phase_updates_perms(django_capture_on_commit_callbacks):
+def test_hiding_phase_updates_perms(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
         submission__phase__public=True,
@@ -85,9 +90,6 @@ def test_hiding_phase_updates_perms(django_capture_on_commit_callbacks):
     }
     assert e.submission.creator.has_perm("view_submission", e.submission)
 
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
     with django_capture_on_commit_callbacks(execute=True):
         e.submission.phase.public = False
         e.submission.phase.save()
@@ -104,7 +106,12 @@ def test_hiding_phase_updates_perms(django_capture_on_commit_callbacks):
 
 
 @pytest.mark.django_db
-def test_unhiding_phase_updates_perms(django_capture_on_commit_callbacks):
+def test_unhiding_phase_updates_perms(
+    settings, django_capture_on_commit_callbacks
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
         submission__phase__public=False,
@@ -126,9 +133,6 @@ def test_unhiding_phase_updates_perms(django_capture_on_commit_callbacks):
     assert get_groups_with_set_perms(e.submission) == {
         e.submission.phase.challenge.admins_group: {"view_submission"},
     }
-
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
 
     with django_capture_on_commit_callbacks(execute=True):
         e.submission.phase.public = True
@@ -273,6 +277,10 @@ def test_hiding_challenge_updates_perms(
     settings, django_capture_on_commit_callbacks
 ):
     """If a challenge is hidden then the viewer group should be updated"""
+
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
         submission__phase__challenge__hidden=False,
@@ -292,9 +300,6 @@ def test_hiding_challenge_updates_perms(
         all_users: {"view_evaluation"},
     }
 
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-
     with django_capture_on_commit_callbacks(execute=True):
         e.submission.phase.challenge.hidden = True
         e.submission.phase.challenge.save()
@@ -313,6 +318,9 @@ def test_unhiding_challenge_updates_perms(
     settings, django_capture_on_commit_callbacks
 ):
     """If a challenge is unhidden then the viewer group should be updated"""
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     e: Evaluation = EvaluationFactory(
         submission__phase__auto_publish_new_results=True,
         submission__phase__challenge__hidden=True,
@@ -331,9 +339,6 @@ def test_unhiding_challenge_updates_perms(
         },
         participants: {"view_evaluation"},
     }
-
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
 
     with django_capture_on_commit_callbacks(execute=True):
         e.submission.phase.challenge.hidden = False

@@ -214,8 +214,8 @@ def test_remove_inactive_container_images(django_capture_on_commit_callbacks):
 def test_validate_docker_image(
     invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     alg = AlgorithmFactory()
     image = AlgorithmImageFactory(
@@ -254,8 +254,8 @@ def test_validate_docker_image(
 def test_upload_to_registry_and_sagemaker(
     invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     alg = AlgorithmFactory()
     image = AlgorithmImageFactory(
@@ -294,8 +294,8 @@ def test_upload_to_registry_and_sagemaker(
 def test_api_method_extraction(
     invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     alg = AlgorithmFactory()
     image = AlgorithmImageFactory(
@@ -389,8 +389,8 @@ def test_update_sagemaker_shim(
     tmp_path,
     mocker,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     mock_remove_tag_from_registry = mocker.patch(
         # remove_tag_from_registry is only implemented for ECR
@@ -487,8 +487,8 @@ def test_add_image_to_object(
     object_factory,
     factory_kwargs,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     obj = object_factory(**factory_kwargs)
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
@@ -530,8 +530,8 @@ def test_add_image_to_object_updates_upload_session_on_validation_fail(
     object_factory,
     factory_kwargs,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     obj = object_factory(**factory_kwargs)
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
@@ -565,8 +565,8 @@ def test_add_image_to_object_marks_job_as_failed_on_validation_fail(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     job = AlgorithmJobFactory(time_limit=10)
     us = RawImageUploadSessionFactory(status=RawImageUploadSession.SUCCESS)
@@ -614,8 +614,8 @@ def test_add_dicom_image_set_to_object(
     object_factory,
     factory_kwargs,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     obj = object_factory(**factory_kwargs)
     upload = DICOMImageSetUploadFactory(
@@ -660,8 +660,8 @@ def test_add_dicom_image_set_to_object_updates_upload_on_validation_fail(
     object_factory,
     factory_kwargs,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     obj = object_factory(**factory_kwargs)
     # create upload without resulting dicom image set and image.
@@ -699,8 +699,8 @@ def test_add_dicom_image_set_to_object_marks_job_as_failed_on_validation_fail(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     obj = AlgorithmJobFactory(time_limit=10)
     # create upload without resulting dicom image set and image.
@@ -751,8 +751,8 @@ def test_add_dicom_image_set_to_object_sends_notification_on_validation_fail(
     object_factory,
     factory_kwargs,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     obj = object_factory(**factory_kwargs)
     # create upload without resulting dicom image set and image.
@@ -811,8 +811,8 @@ def test_task_add_image_to_object_handles_deleted_object(
     factory_kwargs,
     context,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     obj = object_factory(**factory_kwargs)
     obj.delete()
@@ -868,8 +868,8 @@ def test_task_add_file_to_object_handles_deleted_object(
     factory_kwargs,
     context,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     obj = object_factory(**factory_kwargs)
     obj.delete()
@@ -914,8 +914,8 @@ def test_add_file_to_object(
     object_factory,
     factory_kwargs,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     creator = UserFactory()
     obj = object_factory(**factory_kwargs)
@@ -967,8 +967,8 @@ def test_add_file_to_object_sends_notification_on_validation_fail(
     django_capture_on_commit_callbacks,
     object_factory,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     creator = UserFactory()
     obj = object_factory()
@@ -1031,8 +1031,8 @@ def test_add_file_to_object_updates_job_on_validation_fail(
     upload_data,
     expected_error_message,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     creator = UserFactory()
     obj = AlgorithmJobFactory(time_limit=10)
@@ -1095,8 +1095,8 @@ def test_add_file_to_object_validates_kinds(
     django_capture_on_commit_callbacks,
     mocker,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     creator = UserFactory()
     obj = AlgorithmJobFactory(time_limit=10)
@@ -1175,8 +1175,8 @@ def test_get_image_config_and_sha256(container_image_file):
 def test_assign_tarball_from_upload(
     settings, factory, related_factory, related_model_lookup, field_to_copy
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     user = UserFactory()
     base_obj = related_factory()

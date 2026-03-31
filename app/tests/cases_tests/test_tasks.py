@@ -129,8 +129,8 @@ def test_no_post_processing_mha(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     filename = "image10x10x10.mha"
 
@@ -151,8 +151,8 @@ def test_post_processing(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     filename = "valid_tiff.tif"
 
@@ -559,8 +559,8 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
     django_capture_on_commit_callbacks,
     mocker,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     obj = AlgorithmJobFactory(time_limit=10)
     ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.DICOM_IMAGE_SET)

@@ -1296,8 +1296,8 @@ def test_assign_answer_image(
     error,
     django_capture_on_commit_callbacks,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
@@ -1358,8 +1358,8 @@ def test_assign_answer_image(
 @pytest.mark.django_db
 @pytest.mark.parametrize("answer_type", ("MASK",))
 def test_upload_session_owned_by_answer_creator(client, settings, answer_type):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     rs = ReaderStudyFactory()
     editor, reader = UserFactory(), UserFactory()
@@ -1389,8 +1389,8 @@ def test_upload_session_owned_by_answer_creator(client, settings, answer_type):
 
 @pytest.mark.django_db
 def test_question_accepts_image_type_answers(client, settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     rs = ReaderStudyFactory()
     reader = UserFactory()
@@ -1440,8 +1440,8 @@ def test_display_set_extended_schema(client):
 
 @pytest.mark.django_db
 def test_display_set_list_filters(client, settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     r1 = UserFactory()
     r2 = UserFactory()
@@ -1588,8 +1588,8 @@ def test_display_set_list_filters(client, settings):
 
 @pytest.mark.django_db
 def test_display_set_shuffling(client, settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     r1, r2 = UserFactory(), UserFactory()
 
@@ -1679,8 +1679,8 @@ def test_display_set_shuffling(client, settings):
 def test_display_set_add_and_edit(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     r1, r2 = UserFactory(), UserFactory()
 
@@ -1885,8 +1885,9 @@ def test_display_set_add_and_edit(
 def test_display_set_update_with_image_user_uploads(
     client, settings, django_capture_on_commit_callbacks, mocker
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2, creator=user)
     uploads[1].filename += "a"
@@ -2272,8 +2273,8 @@ def test_display_set_filterset_fields_is_only_reader_study():
 
 @pytest.mark.django_db
 def test_query_unanswered_display_sets_for_another_user(client, settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     editor, r1, r2 = UserFactory.create_batch(3)
     rs = ReaderStudyFactory()

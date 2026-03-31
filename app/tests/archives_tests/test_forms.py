@@ -303,8 +303,8 @@ def test_archive_item_update_permissions(client):
 
 @pytest.mark.django_db
 def test_archive_items_to_reader_study_update_form(client, settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     archive = ArchiveFactory()
     rs = ReaderStudyFactory()

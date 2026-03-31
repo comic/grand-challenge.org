@@ -93,8 +93,8 @@ def test_archive_logged_in_permissions(client):
 def test_api_archive_item_update_permissions(
     client, settings, add_to_group, status, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     archive = ArchiveFactory()
     user = UserFactory()

@@ -69,8 +69,8 @@ def test_get_receivers(factory, action):
 
 @pytest.mark.django_db
 def test_email_content(settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     email = EmailFactory(subject="Test email", body="Test content")
     u1, u2 = UserFactory.create_batch(2)

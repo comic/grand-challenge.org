@@ -191,8 +191,8 @@ def test_algorithm_job_post_serializer_validations(
 def test_algorithm_job_post_serializer_create(
     rf, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     # setup
     user = UserFactory()
@@ -275,8 +275,8 @@ def test_algorithm_job_post_serializer_create(
 def test_algorithm_job_post_serializer_create_with_image_user_uploads(
     request, settings, django_capture_on_commit_callbacks, mocker
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2, creator=user)

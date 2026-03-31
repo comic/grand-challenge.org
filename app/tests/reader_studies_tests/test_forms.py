@@ -887,14 +887,14 @@ def reader_study_with_optional_fields():
 
 
 def copy_reader_study_with_optional_field(
-    settings,
     client,
+    settings,
     django_capture_on_commit_callbacks,
     reader_study,
     field_name,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     admin = UserFactory()
     reader_study.add_editor(admin)
@@ -1208,8 +1208,8 @@ def test_reader_study_delete(client):
 
 @pytest.mark.django_db
 def test_reader_study_add_ground_truth_csv(client, settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     rs = ReaderStudyFactory()
     q = QuestionFactory(
@@ -1401,8 +1401,8 @@ def test_reader_study_add_ground_truth_csv(client, settings):
 
 @pytest.mark.django_db
 def test_reader_study_add_ground_truth_ds(client, settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     rs = ReaderStudyFactory()
     QuestionFactory(
@@ -2304,8 +2304,8 @@ def test_interactive_algorithm_field_permissions():
 def test_answers_from_ground_truth_form(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     rs = ReaderStudyFactory()
 
@@ -2404,8 +2404,8 @@ def test_answers_from_ground_truth_form(
 def test_ground_truth_from_answers_form(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     rs = ReaderStudyFactory()
 

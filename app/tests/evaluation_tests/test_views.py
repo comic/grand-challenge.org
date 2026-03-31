@@ -2391,8 +2391,8 @@ class TestSubmissionCreationWithExtraInputs:
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         # configure multiple additional evaluation inputs
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
@@ -2510,8 +2510,8 @@ class TestSubmissionCreationWithExtraInputs:
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         # configure multiple inputs
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
@@ -2588,8 +2588,8 @@ class TestSubmissionCreationWithExtraInputs:
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         # configure file input
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
@@ -2648,8 +2648,8 @@ class TestSubmissionCreationWithExtraInputs:
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
@@ -2687,8 +2687,8 @@ class TestSubmissionCreationWithExtraInputs:
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
@@ -2779,8 +2779,8 @@ def test_parent_phase_algorithm_interfaces_locked(client):
 def test_reschedule_evaluation_with_additional_inputs(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     # create phase with inputs
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
@@ -2987,8 +2987,8 @@ def test_create_evaluation_blocked_if_failed_jobs_exist(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
 
@@ -3065,8 +3065,8 @@ def test_create_evaluation_blocked_if_failed_jobs_exist(
 def test_reschedule_evaluation_blocked_if_failed_jobs_with_complete_inputs_exist(
     settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
 
