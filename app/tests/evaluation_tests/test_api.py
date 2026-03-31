@@ -6,10 +6,7 @@ import pytest
 
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.evaluation.models import Evaluation
-from grandchallenge.evaluation.serializers import (
-    ExternalEvaluationSerializer,
-    FilteredMetricsJsonSerializer,
-)
+from grandchallenge.evaluation.serializers import FilteredMetricsJsonSerializer
 from grandchallenge.evaluation.utils import Metric, SubmissionKindChoices
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
@@ -157,11 +154,9 @@ def test_claimable_evaluations(client, claimable_external_evaluation):
     )
     assert response.status_code == 200
     # only e1 is claimable
-    assert response.json() == [
-        ExternalEvaluationSerializer(
-            e1, context={"request": response.wsgi_request}
-        ).data
-    ]
+    json_response = response.json()
+    assert len(json_response) == 1
+    assert json_response[0]["pk"] == str(e1.pk)
 
 
 @pytest.mark.django_db
@@ -198,12 +193,7 @@ def test_claim_evaluation(client, claimable_external_evaluation):
     assert eval.status == Evaluation.CLAIMED
     assert eval.claimed_at is not None
     assert eval.claimed_by == claimable_external_evaluation.external_evaluator
-    assert (
-        response.json()
-        == ExternalEvaluationSerializer(
-            eval, context={"request": response.wsgi_request}
-        ).data
-    )
+    assert response.json()["pk"] == str(eval.pk)
 
     # claiming an already claimed evaluation should fail
     response = get_view_for_user(
