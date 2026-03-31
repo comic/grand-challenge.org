@@ -758,10 +758,11 @@ def test_display_set_from_job(client):
 
 
 @pytest.mark.django_db
-@override_settings(LAMBDA_TASKS_EAGER=True)
 def test_create_job_with_json_file(
     client, settings, django_capture_on_commit_callbacks
 ):
+    settings.LAMBDA_TASKS_EAGER = True
+
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -814,10 +815,11 @@ def test_create_job_with_json_file(
 
 
 @pytest.mark.django_db
-@override_settings(LAMBDA_TASKS_EAGER=True)
 def test_algorithm_job_create_with_image_input(
     settings, client, django_capture_on_commit_callbacks
 ):
+    settings.LAMBDA_TASKS_EAGER = True
+
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 

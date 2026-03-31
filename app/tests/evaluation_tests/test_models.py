@@ -6,7 +6,6 @@ from typing import NamedTuple
 import pytest
 from django.core import mail
 from django.core.exceptions import ValidationError
-from django.test import override_settings
 from django.utils import timezone
 from django.utils.timezone import now
 
@@ -223,10 +222,11 @@ def test_create_algorithm_jobs_for_evaluation_sets_gpu_and_memory():
 
 
 @pytest.mark.django_db
-@override_settings(LAMBDA_TASKS_EAGER=True)
 def test_create_evaluation_uniqueness_checks(
     django_capture_on_commit_callbacks, settings, algorithm_submission
 ):
+    settings.LAMBDA_TASKS_EAGER = True
+
     # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
