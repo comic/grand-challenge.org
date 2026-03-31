@@ -1,6 +1,4 @@
 import pytest
-from django.conf import settings
-from django.test import Client
 
 from tests.factories import TeamFactory, TeamMemberFactory
 from tests.utils import (
@@ -10,84 +8,6 @@ from tests.utils import (
     validate_admin_or_participant_view,
     validate_open_view,
 )
-
-
-def validate_owner_or_admin_view(
-    *, two_challenge_set, client: Client, **kwargs
-):
-    """
-    Assert that a view is only accessible to administrators or participants
-    of that particular challenge.
-    """
-    # No user
-    assert_viewname_redirect(
-        redirect_url=settings.LOGIN_URL,
-        challenge=two_challenge_set.challenge_set_1.challenge,
-        client=client,
-        **kwargs,
-    )
-    tests = [
-        (403, two_challenge_set.challenge_set_1.non_participant),
-        (200, two_challenge_set.challenge_set_1.participant),
-        (403, two_challenge_set.challenge_set_1.participant1),
-        (200, two_challenge_set.challenge_set_1.creator),
-        (200, two_challenge_set.challenge_set_1.admin),
-        (403, two_challenge_set.challenge_set_2.non_participant),
-        (403, two_challenge_set.challenge_set_2.participant),
-        (403, two_challenge_set.challenge_set_2.participant1),
-        (403, two_challenge_set.challenge_set_2.creator),
-        (403, two_challenge_set.challenge_set_2.admin),
-        (200, two_challenge_set.admin12),
-        (403, two_challenge_set.participant12),
-        (200, two_challenge_set.admin1participant2),
-    ]
-    for test in tests:
-        assert_viewname_status(
-            code=test[0],
-            challenge=two_challenge_set.challenge_set_1.challenge,
-            client=client,
-            user=test[1],
-            **kwargs,
-        )
-
-
-def validate_member_owner_or_admin_view(
-    *, two_challenge_set, client: Client, **kwargs
-):
-    """
-    Assert that a view is only accessible to administrators or participants
-    of that particular challenge.
-    """
-    # No user
-    assert_viewname_redirect(
-        redirect_url=settings.LOGIN_URL,
-        challenge=two_challenge_set.challenge_set_1.challenge,
-        client=client,
-        **kwargs,
-    )
-    tests = [
-        (403, two_challenge_set.challenge_set_1.non_participant),
-        (200, two_challenge_set.challenge_set_1.participant),
-        (200, two_challenge_set.challenge_set_1.participant1),
-        (200, two_challenge_set.challenge_set_1.creator),
-        (200, two_challenge_set.challenge_set_1.admin),
-        (403, two_challenge_set.challenge_set_2.non_participant),
-        (403, two_challenge_set.challenge_set_2.participant),
-        (403, two_challenge_set.challenge_set_2.participant1),
-        (403, two_challenge_set.challenge_set_2.creator),
-        (403, two_challenge_set.challenge_set_2.admin),
-        (200, two_challenge_set.admin12),
-        (403, two_challenge_set.participant12),
-        (200, two_challenge_set.admin1participant2),
-    ]
-    for test in tests:
-        assert_viewname_status(
-            code=test[0],
-            challenge=two_challenge_set.challenge_set_1.challenge,
-            client=client,
-            user=test[1],
-            **kwargs,
-        )
 
 
 @pytest.mark.django_db
@@ -126,7 +46,9 @@ def test_open_views(client, challenge_set):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("view", ["teams:update", "teams:delete"])
-def test_team_update_delete_permissions(client, two_challenge_sets, view):
+def test_team_update_delete_permissions(
+    client, two_challenge_sets, view, settings
+):
     team = TeamFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
         owner=two_challenge_sets.challenge_set_1.participant,
@@ -135,16 +57,44 @@ def test_team_update_delete_permissions(client, two_challenge_sets, view):
         challenge=two_challenge_sets.challenge_set_1.challenge,
         owner=two_challenge_sets.challenge_set_1.participant1,
     )
-    validate_owner_or_admin_view(
+
+    # No user
+    assert_viewname_redirect(
+        redirect_url=settings.LOGIN_URL,
+        challenge=two_challenge_sets.challenge_set_1.challenge,
+        client=client,
         viewname=view,
         reverse_kwargs={"pk": team.pk},
-        two_challenge_set=two_challenge_sets,
-        client=client,
     )
+
+    tests = [
+        (403, two_challenge_sets.challenge_set_1.non_participant),
+        (200, two_challenge_sets.challenge_set_1.participant),
+        (403, two_challenge_sets.challenge_set_1.participant1),
+        (200, two_challenge_sets.challenge_set_1.creator),
+        (200, two_challenge_sets.challenge_set_1.admin),
+        (403, two_challenge_sets.challenge_set_2.non_participant),
+        (403, two_challenge_sets.challenge_set_2.participant),
+        (403, two_challenge_sets.challenge_set_2.participant1),
+        (403, two_challenge_sets.challenge_set_2.creator),
+        (403, two_challenge_sets.challenge_set_2.admin),
+        (200, two_challenge_sets.admin12),
+        (403, two_challenge_sets.participant12),
+        (200, two_challenge_sets.admin1participant2),
+    ]
+    for test in tests:
+        assert_viewname_status(
+            code=test[0],
+            challenge=two_challenge_sets.challenge_set_1.challenge,
+            client=client,
+            user=test[1],
+            viewname=view,
+            reverse_kwargs={"pk": team.pk},
+        )
 
 
 @pytest.mark.django_db
-def test_team_member_delete_permissions(client, two_challenge_sets):
+def test_team_member_delete_permissions(client, two_challenge_sets, settings):
     team = TeamFactory(
         challenge=two_challenge_sets.challenge_set_1.challenge,
         owner=two_challenge_sets.challenge_set_1.participant,
@@ -152,12 +102,40 @@ def test_team_member_delete_permissions(client, two_challenge_sets):
     team_member = TeamMemberFactory(
         team=team, user=two_challenge_sets.challenge_set_1.participant1
     )
-    validate_member_owner_or_admin_view(
+
+    # No user
+    assert_viewname_redirect(
+        redirect_url=settings.LOGIN_URL,
+        challenge=two_challenge_sets.challenge_set_1.challenge,
+        client=client,
         viewname="teams:member-delete",
         reverse_kwargs={"pk": team_member.pk},
-        two_challenge_set=two_challenge_sets,
-        client=client,
     )
+
+    tests = [
+        (403, two_challenge_sets.challenge_set_1.non_participant),
+        (200, two_challenge_sets.challenge_set_1.participant),
+        (200, two_challenge_sets.challenge_set_1.participant1),
+        (200, two_challenge_sets.challenge_set_1.creator),
+        (200, two_challenge_sets.challenge_set_1.admin),
+        (403, two_challenge_sets.challenge_set_2.non_participant),
+        (403, two_challenge_sets.challenge_set_2.participant),
+        (403, two_challenge_sets.challenge_set_2.participant1),
+        (403, two_challenge_sets.challenge_set_2.creator),
+        (403, two_challenge_sets.challenge_set_2.admin),
+        (200, two_challenge_sets.admin12),
+        (403, two_challenge_sets.participant12),
+        (200, two_challenge_sets.admin1participant2),
+    ]
+    for test in tests:
+        assert_viewname_status(
+            code=test[0],
+            challenge=two_challenge_sets.challenge_set_1.challenge,
+            client=client,
+            user=test[1],
+            viewname="teams:member-delete",
+            reverse_kwargs={"pk": team_member.pk},
+        )
 
 
 @pytest.mark.django_db

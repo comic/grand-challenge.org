@@ -311,7 +311,7 @@ def uploaded_image():
 
 
 @pytest.fixture
-def challenge_reviewer():
+def challenge_reviewer(settings):
     user = UserFactory()
     reviewers = Group.objects.get(
         name=settings.CHALLENGES_REVIEWERS_GROUP_NAME

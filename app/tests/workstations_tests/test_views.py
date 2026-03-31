@@ -2,7 +2,6 @@ import json
 from urllib.parse import quote_plus
 
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import Group
 from django.http import Http404
 from django.utils.text import slugify
@@ -35,7 +34,7 @@ from tests.verification_tests.factories import VerificationFactory
 
 
 @pytest.fixture
-def workstation_creator():
+def workstation_creator(settings):
     u = UserFactory()
     g = Group.objects.get(name=settings.WORKSTATIONS_CREATORS_GROUP_NAME)
     g.user_set.add(u)
