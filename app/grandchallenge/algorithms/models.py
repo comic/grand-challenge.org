@@ -1692,6 +1692,23 @@ class Endpoint(UUIDModel):
     def _failure_s3_uri(self):
         return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}/logs/{self.pk}/failures"
 
+    @property
+    def _model_environment(self):
+        env = {
+            "LOG_LEVEL": "INFO",
+            "PYTHONUNBUFFERED": "1",
+            "no_proxy": "amazonaws.com",
+            "GRAND_CHALLENGE_COMPONENT_API_METHOD": self.algorithm_image.api_method,
+        }
+
+        if self.algorithm_model:
+            env["GRAND_CHALLENGE_COMPONENT_MODEL"] = (
+                f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}"
+                f"/{self._algorithm_model_key}"
+            )
+
+        return env
+
     def provision_auxiliary_data(self):
         if self.algorithm_model:
             self._s3_client.copy(
@@ -1711,23 +1728,6 @@ class Endpoint(UUIDModel):
             bucket=settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME,
             prefix=self._auxiliary_data_prefix,
         )
-
-    @property
-    def _model_environment(self):
-        env = {
-            "LOG_LEVEL": "INFO",
-            "PYTHONUNBUFFERED": "1",
-            "no_proxy": "amazonaws.com",
-            "GRAND_CHALLENGE_COMPONENT_API_METHOD": self.algorithm_image.api_method,
-        }
-
-        if self.algorithm_model:
-            env["GRAND_CHALLENGE_COMPONENT_MODEL"] = (
-                f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}"
-                f"/{self._algorithm_model_key}"
-            )
-
-        return env
 
     def create_model(self):
         self._sagemaker_client.create_model(
