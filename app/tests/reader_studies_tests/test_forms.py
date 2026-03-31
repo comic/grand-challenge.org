@@ -643,6 +643,8 @@ question_non_copy_fields = {
     "created",
     "modified",
     "reader_study",
+    "algorithms",  # TODO: need to implement copying m2m fields
+    "questionreaderstudyalgorithmimplementation",
 }
 
 
@@ -1121,7 +1123,13 @@ def test_reader_study_copy_question_options(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "field_name",
-    question_non_copy_fields.difference(["questiongroupobjectpermission"]),
+    question_non_copy_fields.difference(
+        [
+            "questiongroupobjectpermission",
+            "algorithms",
+            "questionreaderstudyalgorithmimplementation",
+        ]
+    ),
 )
 def test_reader_study_copy_questions_non_copy_fields(
     reader_study_with_question, copied_question, field_name

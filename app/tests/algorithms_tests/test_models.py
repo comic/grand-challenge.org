@@ -34,7 +34,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmModelFactory,
     AlgorithmUserCreditFactory,
     EndpointFactory,
-    InteractiveAlgorithmFactory,
+    ReaderStudyAlgorithmImplementationFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
 from tests.cases_tests.factories import RawImageUploadSessionFactory
@@ -1518,33 +1518,32 @@ def test_algorithminterface_create():
 @pytest.mark.django_db
 def test_create_interactive_algorithm_choice_constraint():
     with pytest.raises(IntegrityError) as error:
-        InteractiveAlgorithmFactory(interactive_algorithm_choice="")
+        ReaderStudyAlgorithmImplementationFactory(algorithm_choice="")
 
     assert (
-        'new row for relation "algorithms_interactivealgorithm" violates '
-        'check constraint "interactive_algorithm_choice_valid"'
-        in str(error.value)
+        'new row for relation "reader_studies_readerstudyalgorithmimplementation" violates '
+        'check constraint "algorithm_choice_valid"' in str(error.value)
     )
 
 
 @pytest.mark.django_db
 def test_create_interactive_algorithm_unique_constraint():
-    interactive_algorithm = InteractiveAlgorithmFactory()
+    interactive_algorithm = ReaderStudyAlgorithmImplementationFactory()
     with pytest.raises(IntegrityError) as error:
-        InteractiveAlgorithmFactory(
-            interactive_algorithm_choice=interactive_algorithm.interactive_algorithm_choice
+        ReaderStudyAlgorithmImplementationFactory(
+            algorithm_choice=interactive_algorithm.algorithm_choice
         )
 
     assert (
         "duplicate key value violates unique constraint "
-        '"algorithms_interactivealgorith_interactive_algorithm_choice_key"'
+        '"reader_studies_readerstudyalgorithmimpleme_algorithm_choice_key"'
         in str(error.value)
     )
 
 
 @pytest.mark.django_db
 def test_create_interactive_algorithm_without_image():
-    interactive_algorithm = InteractiveAlgorithmFactory()
+    interactive_algorithm = ReaderStudyAlgorithmImplementationFactory()
 
     with pytest.raises(ValidationError) as error:
         interactive_algorithm.full_clean()
@@ -1560,8 +1559,10 @@ def test_create_interactive_algorithm_without_invoke_api_image():
         is_desired_version=True,
         api_method=APIMethodChoices.EXEC,
     )
-    interactive_algorithm_exec = InteractiveAlgorithmFactory.build(
-        algorithm=algorithm_image_exec.algorithm
+    interactive_algorithm_exec = (
+        ReaderStudyAlgorithmImplementationFactory.build(
+            algorithm=algorithm_image_exec.algorithm
+        )
     )
     algorithm_image_invoke = AlgorithmImageFactory(
         is_manifest_valid=True,
@@ -1569,8 +1570,10 @@ def test_create_interactive_algorithm_without_invoke_api_image():
         is_desired_version=True,
         api_method=APIMethodChoices.INVOKE,
     )
-    interactive_algorithm_invoke = InteractiveAlgorithmFactory.build(
-        algorithm=algorithm_image_invoke.algorithm
+    interactive_algorithm_invoke = (
+        ReaderStudyAlgorithmImplementationFactory.build(
+            algorithm=algorithm_image_invoke.algorithm
+        )
     )
 
     with pytest.raises(ValidationError) as error:
@@ -1592,13 +1595,15 @@ def test_interactive_algorithm_mark_non_invoke_image_raises_validation_error():
         is_in_registry=True,
         is_desired_version=False,
     )
-    InteractiveAlgorithmFactory(algorithm=algorithm_image.algorithm)
+    ReaderStudyAlgorithmImplementationFactory(
+        algorithm=algorithm_image.algorithm
+    )
 
     with pytest.raises(ValidationError) as error:
         algorithm_image.mark_desired_version()
 
     assert (
-        "Only algorithm images that implement the invoke API can be activated because this is an interactive algorithm"
+        "Only algorithm images that implement the invoke API can be activated because this is an implementation of a reader study algorithm"
         in str(error)
     )
 
@@ -1607,13 +1612,13 @@ def test_interactive_algorithm_mark_non_invoke_image_raises_validation_error():
 def test_cannot_set_interface_for_interactive_algorithm():
     algorithm = AlgorithmFactory()
     new_interface = AlgorithmInterfaceFactory()
-    InteractiveAlgorithmFactory(algorithm=algorithm)
+    ReaderStudyAlgorithmImplementationFactory(algorithm=algorithm)
 
     with pytest.raises(ValidationError) as error:
         algorithm.interfaces.set([new_interface])
 
     assert (
-        "Interfaces cannot be changed because this is an interactive algorithm"
+        "Interfaces cannot be changed because this is an implementation of a reader study algorithm"
         in str(error)
     )
 
@@ -1622,13 +1627,13 @@ def test_cannot_set_interface_for_interactive_algorithm():
 def test_cannot_add_interface_for_interactive_algorithm():
     algorithm = AlgorithmFactory()
     new_interface = AlgorithmInterfaceFactory()
-    InteractiveAlgorithmFactory(algorithm=algorithm)
+    ReaderStudyAlgorithmImplementationFactory(algorithm=algorithm)
 
     with pytest.raises(ValidationError) as error:
         algorithm.interfaces.add(new_interface)
 
     assert (
-        "Interfaces cannot be changed because this is an interactive algorithm"
+        "Interfaces cannot be changed because this is an implementation of a reader study algorithm"
         in str(error.value)
     )
 
@@ -1638,13 +1643,13 @@ def test_cannot_remove_interface_for_interactive_algorithm():
     algorithm = AlgorithmFactory()
     interface = AlgorithmInterfaceFactory()
     algorithm.interfaces.add(interface)
-    InteractiveAlgorithmFactory(algorithm=algorithm)
+    ReaderStudyAlgorithmImplementationFactory(algorithm=algorithm)
 
     with pytest.raises(ValidationError) as error:
         algorithm.interfaces.remove(interface)
 
     assert (
-        "Interfaces cannot be changed because this is an interactive algorithm"
+        "Interfaces cannot be changed because this is an implementation of a reader study algorithm"
         in str(error.value)
     )
 
@@ -1654,13 +1659,13 @@ def test_cannot_clear_interface_for_interactive_algorithm():
     algorithm = AlgorithmFactory()
     interface = AlgorithmInterfaceFactory()
     algorithm.interfaces.add(interface)
-    InteractiveAlgorithmFactory(algorithm=algorithm)
+    ReaderStudyAlgorithmImplementationFactory(algorithm=algorithm)
 
     with pytest.raises(ValidationError) as error:
         algorithm.interfaces.clear()
 
     assert (
-        "Interfaces cannot be changed because this is an interactive algorithm"
+        "Interfaces cannot be changed because this is an implementation of a reader study algorithm"
         in str(error.value)
     )
 

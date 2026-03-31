@@ -10,7 +10,6 @@ from django.db.transaction import on_commit
 from django.utils.timezone import now
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
-from grandchallenge.algorithms.models import AlgorithmModel, Job
 from grandchallenge.algorithms.tasks import create_algorithm_jobs
 from grandchallenge.components.models import (
     ComponentInterface,
@@ -32,6 +31,7 @@ logger = get_task_logger(__name__)
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def check_prerequisites_for_evaluation_execution(*, evaluation_pk):
+    from grandchallenge.algorithms.models import Job
     from grandchallenge.evaluation.models import (
         Evaluation,
         get_archive_items_for_interfaces,
@@ -220,6 +220,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
     first_run
         Whether this is the first run of create_algorithm_jobs_for_evaluation
     """
+    from grandchallenge.algorithms.models import Job
     from grandchallenge.evaluation.models import Evaluation
 
     with check_lock_acquired():
@@ -356,6 +357,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
 )
 @transaction.atomic
 def handle_failed_jobs(*, evaluation_pk):
+    from grandchallenge.algorithms.models import Job
     from grandchallenge.evaluation.models import Evaluation
 
     with check_lock_acquired():
@@ -400,6 +402,7 @@ def set_evaluation_inputs(*, evaluation_pk):
     evaluation_pk
         The primary key of the evaluation.Evaluation object
     """
+    from grandchallenge.algorithms.models import AlgorithmModel, Job
     from grandchallenge.evaluation.models import Evaluation
 
     with check_lock_acquired():

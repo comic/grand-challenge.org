@@ -36,7 +36,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
-    InteractiveAlgorithmFactory,
+    ReaderStudyAlgorithmImplementationFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
@@ -887,7 +887,9 @@ def test_deactivate_old_algorithm_images(django_capture_on_commit_callbacks):
         is_in_registry=True, algorithm__public=True
     )  # is public so should still work
     algorithm_marked_interactive = AlgorithmFactory()
-    InteractiveAlgorithmFactory(algorithm=algorithm_marked_interactive)
+    ReaderStudyAlgorithmImplementationFactory(
+        algorithm=algorithm_marked_interactive
+    )
     AlgorithmImageFactory(
         is_in_registry=True,
         algorithm=algorithm_marked_interactive,
@@ -928,7 +930,9 @@ def test_non_invoke_api_method_image_not_marked_as_desired_version_after_import(
         image__from_path=invoke_container_image,
         api_method=APIMethodChoices.EXEC,
     )
-    InteractiveAlgorithmFactory(algorithm=algorithm_image.algorithm)
+    ReaderStudyAlgorithmImplementationFactory(
+        algorithm=algorithm_image.algorithm
+    )
 
     assert len(mail.outbox) == 0
 
@@ -948,6 +952,6 @@ def test_non_invoke_api_method_image_not_marked_as_desired_version_after_import(
 
     assert "Could not activate docker image" in email.subject
     assert (
-        "Only algorithm images that implement the invoke API can be activated because this is an interactive algorithm"
+        "Only algorithm images that implement the invoke API can be activated because this is an implementation of a reader study algorithm"
         in email.body
     )

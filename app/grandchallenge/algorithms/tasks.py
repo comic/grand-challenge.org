@@ -312,7 +312,7 @@ def deactivate_old_algorithm_images():
         most_recent_job__lt=timezone.now() - relativedelta(years=1),
         algorithm__public=False,
         is_in_registry=True,
-        algorithm__interactive_algorithms__isnull=True,
+        algorithm__reader_study_algorithm_implementations__isnull=True,
     )
 
     for image in images_to_remove:

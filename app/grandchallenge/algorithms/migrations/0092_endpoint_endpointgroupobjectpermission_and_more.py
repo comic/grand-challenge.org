@@ -11,7 +11,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("algorithms", "0092_interactivealgorithm"),
+        (
+            "algorithms",
+            "0091_remove_algorithmimage_storage_cost_per_year_usd_millicents",
+        ),
         ("auth", "0012_alter_user_first_name_max_length"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]

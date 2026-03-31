@@ -753,11 +753,11 @@ class ImageActivateForm(Form):
             raise ValidationError("Image updating already in progress.")
 
         if (
-            algorithm_image.algorithm.interactive_algorithms.exists()
+            algorithm_image.algorithm.reader_study_algorithm_implementations.exists()
             and algorithm_image.api_method != APIMethodChoices.INVOKE
         ):
             raise ValidationError(
-                "Only algorithm images that implement the invoke API can be activated because this is an interactive algorithm."
+                "Only algorithm images that implement the invoke API can be activated because this is an implementation of a reader study algorithm."
             )
 
         return algorithm_image

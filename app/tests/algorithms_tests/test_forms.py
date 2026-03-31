@@ -52,7 +52,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     AlgorithmPermissionRequestFactory,
-    InteractiveAlgorithmFactory,
+    ReaderStudyAlgorithmImplementationFactory,
 )
 from tests.algorithms_tests.utils import get_algorithm_creator
 from tests.components_tests.factories import ComponentInterfaceFactory
@@ -1738,7 +1738,9 @@ def test_algorithm_image_activate_form_non_invoke_for_interactive_algorithm():
     )
     editor = UserFactory()
     algorithm_image.algorithm.add_editor(editor)
-    InteractiveAlgorithmFactory(algorithm=algorithm_image.algorithm)
+    ReaderStudyAlgorithmImplementationFactory(
+        algorithm=algorithm_image.algorithm
+    )
 
     form = ImageActivateForm(
         algorithm=algorithm_image.algorithm,
@@ -1748,6 +1750,6 @@ def test_algorithm_image_activate_form_non_invoke_for_interactive_algorithm():
 
     assert not form.is_valid()
     assert (
-        "Only algorithm images that implement the invoke API can be activated because this is an interactive algorithm"
+        "Only algorithm images that implement the invoke API can be activated because this is an implementation of a reader study algorithm"
         in str(form.errors)
     )
