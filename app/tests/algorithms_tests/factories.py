@@ -8,6 +8,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmModel,
     AlgorithmPermissionRequest,
     AlgorithmUserCredit,
+    Endpoint,
     InteractiveAlgorithm,
     Job,
 )
@@ -119,3 +120,14 @@ class InteractiveAlgorithmFactory(factory.django.DjangoModelFactory):
     interactive_algorithm_choice = Faker().random_element(
         InteractiveAlgorithmChoices
     )
+
+
+class EndpointFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Endpoint
+
+    creator = factory.SubFactory(UserFactory)
+    algorithm_image = factory.SubFactory(AlgorithmImageFactory)
+    algorithm_model = factory.SubFactory(AlgorithmModelFactory)
+    requires_gpu_type = GPUTypeChoices.NO_GPU
+    requires_memory_gb = 4

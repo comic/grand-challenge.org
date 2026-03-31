@@ -1,9 +1,9 @@
 from django.core.exceptions import ValidationError
-from django.db.models.signals import m2m_changed, pre_delete
+from django.db.models.signals import m2m_changed, post_delete, pre_delete
 from django.dispatch import receiver
 from guardian.shortcuts import assign_perm, remove_perm
 
-from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.algorithms.models import Algorithm, Endpoint, Job
 from grandchallenge.cases.models import Image
 
 
@@ -144,3 +144,8 @@ def prevent_interfaces_update_for_interactive_algorithms(
         and instance.algorithm_interfaces_locked
     ):
         raise ValidationError(instance.algorithm_interfaces_locked_message)
+
+
+@receiver(post_delete, sender=Endpoint)
+def delete_endpoint_groups(*_, instance, **__):
+    instance.viewers_group.delete()
