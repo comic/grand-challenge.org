@@ -7,11 +7,9 @@ from typing import NamedTuple
 from unittest.mock import patch
 
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.files.base import ContentFile
-from django.test import override_settings
 from django.utils import timezone
 from factory.django import ImageField
 from guardian.shortcuts import assign_perm, remove_perm
@@ -990,7 +988,7 @@ def test_create_algorithm_for_phase_permission(client, uploaded_image):
 
 
 @pytest.mark.django_db
-def test_create_algorithm_for_phase_presets(client):
+def test_create_algorithm_for_phase_presets(client, settings):
     phase = PhaseFactory(challenge__logo=ImageField(filename="test.jpeg"))
     admin = UserFactory()
     phase.challenge.add_admin(admin)
@@ -2385,13 +2383,16 @@ class TestSubmissionCreationWithExtraInputs:
         )
         return [civ1, civ2, civ3, civ4, civ5]
 
-    @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_submission_with_multiple_inputs(
         self,
         client,
+        settings,
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
+
         # configure multiple additional evaluation inputs
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
@@ -2501,13 +2502,16 @@ class TestSubmissionCreationWithExtraInputs:
             in file_inputs[0].name
         )
 
-    @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_existing_inputs(
         self,
         client,
+        settings,
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
+
         # configure multiple inputs
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
@@ -2576,13 +2580,16 @@ class TestSubmissionCreationWithExtraInputs:
         for civ in [civ1, civ2, civ3, civ4, civ5]:
             assert civ in eval.inputs.all()
 
-    @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_faulty_file_input(
         self,
         client,
+        settings,
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
+
         # configure file input
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
@@ -2633,13 +2640,16 @@ class TestSubmissionCreationWithExtraInputs:
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == old_civ_count
 
-    @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_faulty_json_input(
         self,
         client,
+        settings,
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
+
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
                 algorithm_phase_with_multiple_inputs.ci_json_in_db_with_schema,
@@ -2669,13 +2679,16 @@ class TestSubmissionCreationWithExtraInputs:
         assert Evaluation.objects.count() == 0
         assert ComponentInterfaceValue.objects.count() == old_civ_count
 
-    @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_faulty_image_input(
         self,
         client,
+        settings,
         django_capture_on_commit_callbacks,
         algorithm_phase_with_multiple_inputs,
     ):
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
+
         algorithm_phase_with_multiple_inputs.phase.additional_evaluation_inputs.set(
             [
                 algorithm_phase_with_multiple_inputs.ci_img_upload,
@@ -2765,8 +2778,8 @@ def test_parent_phase_algorithm_interfaces_locked(client):
 def test_reschedule_evaluation_with_additional_inputs(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     # create phase with inputs
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
@@ -2973,9 +2986,8 @@ def test_create_evaluation_blocked_if_failed_jobs_exist(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
 
@@ -3052,9 +3064,8 @@ def test_create_evaluation_blocked_if_failed_jobs_exist(
 def test_reschedule_evaluation_blocked_if_failed_jobs_with_complete_inputs_exist(
     settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     phase = PhaseFactory(submission_kind=SubmissionKindChoices.ALGORITHM)
 

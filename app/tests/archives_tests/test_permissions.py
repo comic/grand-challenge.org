@@ -1,7 +1,6 @@
 from urllib.parse import urlparse
 
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import get_perms, get_users_with_perms
 
@@ -18,7 +17,7 @@ from tests.utils import get_view_for_user
 @pytest.mark.django_db
 class TestArchivePermissions:
     @pytest.mark.parametrize("public", (True, False))
-    def test_archive_permissions(self, public):
+    def test_archive_permissions(self, public, settings):
         a: Archive = ArchiveFactory(public=public)
 
         expected_perms = {
@@ -46,7 +45,7 @@ class TestArchivePermissions:
         assert get_users_with_perms(a, with_group_users=False).count() == 0
 
     @pytest.mark.django_db
-    def test_visible_to_public_group_permissions(self):
+    def test_visible_to_public_group_permissions(self, settings):
         g_reg_anon = Group.objects.get(
             name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
         )
@@ -66,7 +65,7 @@ class TestArchivePermissions:
 
 
 @pytest.mark.django_db
-def test_archive_logged_in_permissions(client):
+def test_archive_logged_in_permissions(client, settings):
     url = reverse("archives:users-list")
 
     # Not logged in should redirect to login
@@ -93,9 +92,8 @@ def test_archive_logged_in_permissions(client):
 def test_api_archive_item_update_permissions(
     client, settings, add_to_group, status, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     archive = ArchiveFactory()
     user = UserFactory()

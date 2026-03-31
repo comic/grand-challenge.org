@@ -1,5 +1,4 @@
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm, get_perms
 
@@ -442,7 +441,7 @@ def test_workstation_changes(client):
 
 
 @pytest.mark.django_db
-def test_visible_to_public_group_permissions():
+def test_visible_to_public_group_permissions(settings):
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )

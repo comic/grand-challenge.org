@@ -1,5 +1,4 @@
 import pytest
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from guardian.utils import get_anonymous_user
@@ -8,7 +7,7 @@ from tests.factories import UserFactory
 
 
 @pytest.mark.django_db
-def test_new_user_added_to_groups():
+def test_new_user_added_to_groups(settings):
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
@@ -20,7 +19,7 @@ def test_new_user_added_to_groups():
 
 
 @pytest.mark.django_db
-def test_anon_user_membership():
+def test_anon_user_membership(settings):
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
@@ -32,7 +31,7 @@ def test_anon_user_membership():
 
 
 @pytest.mark.django_db
-def test_group_sizes():
+def test_group_sizes(settings):
     g_reg = Group.objects.get(name=settings.REGISTERED_USERS_GROUP_NAME)
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME

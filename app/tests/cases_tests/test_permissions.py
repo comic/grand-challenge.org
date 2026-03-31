@@ -1,5 +1,4 @@
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import get_perms
 
@@ -14,7 +13,7 @@ from tests.reader_studies_tests.factories import (
 
 
 @pytest.mark.django_db
-def test_image_permission_with_public_job():
+def test_image_permission_with_public_job(settings):
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )
@@ -41,7 +40,7 @@ def test_image_permission_with_public_job():
 
 
 @pytest.mark.django_db
-def test_image_permission_with_non_public_job():
+def test_image_permission_with_non_public_job(settings):
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )
@@ -68,7 +67,7 @@ def test_image_permission_with_non_public_job():
 
 
 @pytest.mark.django_db
-def test_add_image_to_public_result():
+def test_add_image_to_public_result(settings):
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )
@@ -105,7 +104,7 @@ def test_add_image_to_public_result():
 
 
 @pytest.mark.django_db
-def test_used_by_other_public_result_permissions():
+def test_used_by_other_public_result_permissions(settings):
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )
@@ -144,7 +143,7 @@ def test_used_by_other_public_result_permissions():
 
 
 @pytest.mark.django_db
-def test_change_job_image():
+def test_change_job_image(settings):
     g_reg_anon = Group.objects.get(
         name=settings.REGISTERED_AND_ANON_USERS_GROUP_NAME
     )

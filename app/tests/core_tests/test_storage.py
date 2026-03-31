@@ -1,9 +1,7 @@
-import copy
 import importlib
 from datetime import datetime
 
 import pytest
-from django.conf import settings as dj_settings
 from django.core.exceptions import ImproperlyConfigured
 
 import grandchallenge.core.storage
@@ -20,30 +18,6 @@ def test_invalid_private_kwarg(settings):
     importlib.reload(grandchallenge.core.storage)
 
 
-# Skip for now as settings unrolling does not work with a mutable setting
-@pytest.mark.skip
-def test_bucket_name_clash(settings):
-    # Deep copy as otherwise you will modify the value in settings
-    private_kwargs = copy.deepcopy(dj_settings.PRIVATE_S3_STORAGE_KWARGS)
-    protected_kwargs = copy.deepcopy(dj_settings.PROTECTED_S3_STORAGE_KWARGS)
-
-    private_kwargs["bucket_name"] = "foo"
-    protected_kwargs["bucket_name"] = "foo"
-
-    settings.PRIVATE_S3_STORAGE_KWARGS = private_kwargs
-    settings.PROTECTED_S3_STORAGE_KWARGS = protected_kwargs
-
-    with pytest.raises(ImproperlyConfigured):
-        importlib.reload(grandchallenge.core.storage)
-
-    # Revert to the original settings
-    settings.PRIVATE_S3_STORAGE_KWARGS = dj_settings.PRIVATE_S3_STORAGE_KWARGS
-    settings.PROTECTED_S3_STORAGE_KWARGS = (
-        dj_settings.PROTECTED_S3_STORAGE_KWARGS
-    )
-    importlib.reload(grandchallenge.core.storage)
-
-
 def test_s3_configs_differ():
     from grandchallenge.core.storage import (
         private_s3_storage,
@@ -53,13 +27,13 @@ def test_s3_configs_differ():
     assert private_s3_storage.bucket_name != protected_s3_storage.bucket_name
 
 
-def test_custom_domain():
+def test_custom_domain(settings):
     # By default we should get the custom domain in the url
     storage = grandchallenge.core.storage.ProtectedS3Storage()
     url = storage.url(name="foo")
 
-    assert dj_settings.PROTECTED_S3_STORAGE_KWARGS["custom_domain"] in url
-    assert dj_settings.AWS_S3_ENDPOINT_URL not in url
+    assert settings.PROTECTED_S3_STORAGE_KWARGS["custom_domain"] in url
+    assert settings.AWS_S3_ENDPOINT_URL not in url
     assert "AWSAccessKeyId" not in url
 
     # Turning off the custom domain should get us the internal endpoint url
@@ -67,8 +41,8 @@ def test_custom_domain():
     storage1 = grandchallenge.core.storage.ProtectedS3Storage(internal=True)
     url = storage1.url(name="foo")
 
-    assert dj_settings.PROTECTED_S3_STORAGE_KWARGS["custom_domain"] not in url
-    assert dj_settings.AWS_S3_ENDPOINT_URL in url
+    assert settings.PROTECTED_S3_STORAGE_KWARGS["custom_domain"] not in url
+    assert settings.AWS_S3_ENDPOINT_URL in url
     assert "AWSAccessKeyId" in url
 
 

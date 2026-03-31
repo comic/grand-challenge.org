@@ -7,7 +7,6 @@ import pytest
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
-from django.test import override_settings
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
@@ -233,10 +232,12 @@ def test_api_archive_api_detail_view(client):
 
 
 @pytest.mark.django_db
-@override_settings(task_eager_propagates=True, task_always_eager=True)
 def test_api_archive_item_allowed_sockets(
-    client, django_capture_on_commit_callbacks
+    client, settings, django_capture_on_commit_callbacks
 ):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     archive = ArchiveFactory()
     editor = UserFactory()
     archive.add_editor(editor)
@@ -311,10 +312,12 @@ def test_api_archive_item_allowed_sockets(
 
 
 @pytest.mark.django_db
-@override_settings(task_eager_propagates=True, task_always_eager=True)
 def test_api_archive_item_reserved_sockets(
-    client, django_capture_on_commit_callbacks
+    client, settings, django_capture_on_commit_callbacks
 ):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     archive = ArchiveFactory()
     editor = UserFactory()
     archive.add_editor(editor)
@@ -351,9 +354,8 @@ def test_api_archive_item_reserved_sockets(
 def test_api_archive_item_add_and_update_value(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     archive = ArchiveFactory()
     editor = UserFactory()
@@ -449,9 +451,8 @@ def test_api_archive_item_add_and_update_value(
 def test_api_archive_item_add_and_update_non_image_file(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     archive = ArchiveFactory()
     editor = UserFactory()
@@ -531,9 +532,8 @@ def test_api_archive_item_add_and_update_non_image_file(
 def test_api_archive_item_add_and_update_image(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     archive = ArchiveFactory()
     editor = UserFactory()
@@ -638,9 +638,8 @@ def test_api_archive_item_add_and_update_image(
 def test_api_archive_item_add_and_update_json_file(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     archive = ArchiveFactory()
     editor = UserFactory()
@@ -724,8 +723,9 @@ def test_api_archive_item_add_and_update_json_file(
 
 @pytest.mark.django_db
 def test_api_archive_item_create(client, settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     archive = ArchiveFactory()
     editor, user = UserFactory.create_batch(2)
     archive.add_editor(editor)
@@ -782,8 +782,9 @@ def test_api_archive_item_create(client, settings):
 def test_api_archive_item_update_with_image_user_uploads(
     client, settings, django_capture_on_commit_callbacks, mocker
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2, creator=user)
     uploads[1].filename += "a"
@@ -827,8 +828,9 @@ def test_api_archive_item_update_with_image_user_uploads(
 
 @pytest.mark.django_db
 def test_archive_items_to_reader_study_update(client, settings):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     archive = ArchiveFactory()
     rs = ReaderStudyFactory()
 
@@ -906,8 +908,9 @@ def test_archive_items_to_reader_study_update(client, settings):
 def test_archive_item_add_image(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     archive = ArchiveFactory()
     item = ArchiveItemFactory(archive=archive)
     editor = UserFactory()
@@ -995,8 +998,9 @@ def test_archive_item_add_image(
 def test_archive_item_add_file(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     archive = ArchiveFactory()
     item = ArchiveItemFactory(archive=archive)
     editor = UserFactory()
@@ -1007,6 +1011,49 @@ def test_archive_item_add_file(
     )
 
     with django_capture_on_commit_callbacks(execute=True):
+        response = get_view_for_user(
+            viewname="archives:item-edit",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "pk": item.pk,
+                "slug": archive.slug,
+            },
+            user=editor,
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci.slug, data=upload.pk
+                )
+            },
+        )
+
+    assert not UserUpload.objects.filter(pk=upload.pk).exists()
+    assert response.status_code == 302
+    assert "test" in ArchiveItem.objects.get().values.first().file.name
+
+
+@pytest.mark.django_db
+def test_archive_item_add_json_file(
+    client, settings, django_capture_on_commit_callbacks
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    archive = ArchiveFactory()
+    item = ArchiveItemFactory(archive=archive)
+    editor = UserFactory()
+    archive.add_editor(editor)
+    ci = ComponentInterfaceFactory(
+        kind=InterfaceKindChoices.ANY, store_in_database=False
+    )
+
+    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
+        json.dump('{"Foo": "bar"}', file)
+        file.seek(0)
+        upload = create_upload_from_file(
+            creator=editor, file_path=Path(file.name)
+        )
+
         with django_capture_on_commit_callbacks(execute=True):
             response = get_view_for_user(
                 viewname="archives:item-edit",
@@ -1023,48 +1070,7 @@ def test_archive_item_add_file(
                     )
                 },
             )
-    assert not UserUpload.objects.filter(pk=upload.pk).exists()
-    assert response.status_code == 302
-    assert "test" in ArchiveItem.objects.get().values.first().file.name
 
-
-@pytest.mark.django_db
-def test_archive_item_add_json_file(
-    client, settings, django_capture_on_commit_callbacks
-):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
-    archive = ArchiveFactory()
-    item = ArchiveItemFactory(archive=archive)
-    editor = UserFactory()
-    archive.add_editor(editor)
-    ci = ComponentInterfaceFactory(
-        kind=InterfaceKindChoices.ANY, store_in_database=False
-    )
-
-    with tempfile.NamedTemporaryFile(mode="w+", suffix=".json") as file:
-        json.dump('{"Foo": "bar"}', file)
-        file.seek(0)
-        upload = create_upload_from_file(
-            creator=editor, file_path=Path(file.name)
-        )
-        with django_capture_on_commit_callbacks(execute=True):
-            with django_capture_on_commit_callbacks(execute=True):
-                response = get_view_for_user(
-                    viewname="archives:item-edit",
-                    client=client,
-                    method=client.post,
-                    reverse_kwargs={
-                        "pk": item.pk,
-                        "slug": archive.slug,
-                    },
-                    user=editor,
-                    data={
-                        **get_interface_form_data(
-                            interface_slug=ci.slug, data=upload.pk
-                        )
-                    },
-                )
         assert response.status_code == 302
         assert file.name.split("/")[-1] in item.values.first().file.name
         assert not UserUpload.objects.filter(pk=upload.pk).exists()
@@ -1076,25 +1082,24 @@ def test_archive_item_add_json_file(
     item2.values.add(civ)
 
     # selecting an existing file is also possible
-    with django_capture_on_commit_callbacks(execute=True):
-        with django_capture_on_commit_callbacks(execute=True):
-            response = get_view_for_user(
-                viewname="archives:item-edit",
-                client=client,
-                method=client.post,
-                reverse_kwargs={
-                    "pk": item.pk,
-                    "slug": archive.slug,
-                },
-                user=editor,
-                data={
-                    **get_interface_form_data(
-                        interface_slug=ci.slug,
-                        data=civ.pk,
-                        existing_data=True,
-                    )
-                },
+    response = get_view_for_user(
+        viewname="archives:item-edit",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "pk": item.pk,
+            "slug": archive.slug,
+        },
+        user=editor,
+        data={
+            **get_interface_form_data(
+                interface_slug=ci.slug,
+                data=civ.pk,
+                existing_data=True,
             )
+        },
+    )
+
     assert response.status_code == 302
 
 
@@ -1102,8 +1107,9 @@ def test_archive_item_add_json_file(
 def test_archive_item_add_value(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     archive = ArchiveFactory()
     item = ArchiveItemFactory(archive=archive)
     editor = UserFactory()
@@ -1168,8 +1174,8 @@ def test_archive_item_create_permissions(client):
 def test_archive_item_create_view(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     archive = ArchiveFactory()
     editor = UserFactory()
@@ -1267,8 +1273,8 @@ def test_archive_item_create_view(
 def test_archive_item_create_view_with_empty_value(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     archive = ArchiveFactory()
     editor = UserFactory()
@@ -1448,8 +1454,8 @@ def test_archive_item_list_database_hits(
 def test_archive_item_upload_corrupt_image(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     editor = UserFactory()
     archive = ArchiveFactory()

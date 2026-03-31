@@ -71,7 +71,11 @@ def algorithm_submission():
         is_desired_version=True,
         phase__archive=ArchiveFactory(),
     )
-    algorithm_image = AlgorithmImageFactory()
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
 
     ci = ComponentInterfaceFactory()
     interface = AlgorithmInterfaceFactory(inputs=[ci])
@@ -93,14 +97,16 @@ def algorithm_submission():
 def test_algorithm_submission_creates_one_job_per_test_set_image(
     django_capture_on_commit_callbacks, settings, algorithm_submission
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.LAMBDA_TASKS_EAGER = True
+
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     s = SubmissionFactory(
         phase=algorithm_submission.method.phase,
         algorithm_image=algorithm_submission.algorithm_image,
     )
+
     eval = EvaluationFactory(
         submission=s,
         method=algorithm_submission.method,
@@ -123,9 +129,10 @@ def test_algorithm_submission_creates_one_job_per_test_set_image(
 def test_create_evaluation_is_idempotent(
     django_capture_on_commit_callbacks, settings, algorithm_submission
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.LAMBDA_TASKS_EAGER = True
+
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     s = SubmissionFactory(
         phase=algorithm_submission.method.phase,
@@ -225,9 +232,10 @@ def test_create_algorithm_jobs_for_evaluation_sets_gpu_and_memory():
 def test_create_evaluation_uniqueness_checks(
     django_capture_on_commit_callbacks, settings, algorithm_submission
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.LAMBDA_TASKS_EAGER = True
+
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     sub = SubmissionFactory(
         phase=algorithm_submission.method.phase,

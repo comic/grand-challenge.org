@@ -8,7 +8,6 @@ from unittest.mock import MagicMock
 import pytest
 from actstream.actions import is_following
 from botocore.stub import Stubber
-from django.conf import settings
 from django.core.files import File
 
 from grandchallenge.cases.models import (
@@ -78,7 +77,7 @@ def test_directory_file_destination():
 
 
 @pytest.mark.django_db
-def test_dicomimagesetupload_import_properties():
+def test_dicomimagesetupload_import_properties(settings):
     di_upload = DICOMImageSetUploadFactory()
 
     assert (

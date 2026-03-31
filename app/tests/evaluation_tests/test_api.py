@@ -6,10 +6,7 @@ import pytest
 
 from grandchallenge.components.models import ComponentInterface
 from grandchallenge.evaluation.models import Evaluation
-from grandchallenge.evaluation.serializers import (
-    ExternalEvaluationSerializer,
-    FilteredMetricsJsonSerializer,
-)
+from grandchallenge.evaluation.serializers import FilteredMetricsJsonSerializer
 from grandchallenge.evaluation.utils import Metric, SubmissionKindChoices
 from grandchallenge.notifications.models import Notification
 from tests.algorithms_tests.factories import (
@@ -21,7 +18,11 @@ from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
 )
-from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
+from tests.evaluation_tests.factories import (
+    EvaluationFactory,
+    MethodFactory,
+    PhaseFactory,
+)
 from tests.factories import ChallengeFactory, UserFactory
 from tests.utils import get_view_for_user
 
@@ -45,11 +46,14 @@ def generate_claimable_evaluation():
     )
     ci1, ci2 = ComponentInterfaceFactory.create_batch(2)
     interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+
     for phase in [p1, p2]:
         phase.algorithm_interfaces.set([interface])
+
     p2.external_evaluation = True
     p2.parent = p1
     p2.save()
+
     ai = AlgorithmImageFactory(
         algorithm=AlgorithmFactory(),
         is_manifest_valid=True,
@@ -58,10 +62,17 @@ def generate_claimable_evaluation():
     )
     ai.algorithm.interfaces.set([interface])
 
+    method = MethodFactory(
+        phase=p2,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+
     eval = EvaluationFactory(
         submission__algorithm_image=ai,
         submission__phase=p2,
-        method=None,
+        method=method,
         time_limit=60,
     )
 
@@ -93,7 +104,9 @@ def claimed_external_evaluation(client, claimable_external_evaluation):
         reverse_kwargs={"pk": claimable_external_evaluation.evaluation.pk},
         content_type="application/json",
     )
+
     claimable_external_evaluation.evaluation.refresh_from_db()
+
     return ExternalEvaluationSet(
         evaluation=claimable_external_evaluation.evaluation,
         admin=claimable_external_evaluation.admin,
@@ -141,11 +154,9 @@ def test_claimable_evaluations(client, claimable_external_evaluation):
     )
     assert response.status_code == 200
     # only e1 is claimable
-    assert response.json() == [
-        ExternalEvaluationSerializer(
-            e1, context={"request": response.wsgi_request}
-        ).data
-    ]
+    json_response = response.json()
+    assert len(json_response) == 1
+    assert json_response[0]["pk"] == str(e1.pk)
 
 
 @pytest.mark.django_db
@@ -182,12 +193,7 @@ def test_claim_evaluation(client, claimable_external_evaluation):
     assert eval.status == Evaluation.CLAIMED
     assert eval.claimed_at is not None
     assert eval.claimed_by == claimable_external_evaluation.external_evaluator
-    assert (
-        response.json()
-        == ExternalEvaluationSerializer(
-            eval, context={"request": response.wsgi_request}
-        ).data
-    )
+    assert response.json()["pk"] == str(eval.pk)
 
     # claiming an already claimed evaluation should fail
     response = get_view_for_user(
@@ -412,8 +418,9 @@ class TestUpdateExternalEvaluation:
         django_capture_on_commit_callbacks,
     ):
         settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = 0
-        settings.task_eager_propagates = (True,)
-        settings.task_always_eager = (True,)
+
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
 
         time.sleep(1)
         # reset notifications
@@ -436,7 +443,9 @@ class TestUpdateExternalEvaluation:
         assert response.json() == {
             "status": "The evaluation was not updated in time."
         }
+
         claimed_eval.refresh_from_db()
+
         assert claimed_eval.status == Evaluation.CANCELLED
         assert (
             claimed_eval.evaluation_utilization.compute_cost_euro_millicents

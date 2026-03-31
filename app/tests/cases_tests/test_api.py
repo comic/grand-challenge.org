@@ -375,9 +375,8 @@ def test_archive_upload_session_create(client, obj, factory):
 def test_session_with_user_upload_to_archive(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     user = UserFactory()
     archive = ArchiveFactory()
@@ -466,9 +465,8 @@ def test_session_with_user_duplicate_upload(client):
 def test_user_upload_to_archive_item_with_new_interface(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     user = UserFactory()
     archive = ArchiveFactory()
@@ -515,9 +513,8 @@ def test_user_upload_to_archive_item_with_new_interface(
 def test_user_upload_to_archive_item_with_existing_interface(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     user = UserFactory()
     archive = ArchiveFactory()
@@ -559,9 +556,8 @@ def test_user_upload_to_archive_item_with_existing_interface(
 def test_user_upload_to_archive_item_without_interface(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     user = UserFactory()
     archive = ArchiveFactory()
@@ -598,9 +594,8 @@ def test_user_upload_to_archive_item_without_interface(
 def test_user_upload_to_display_set_without_interface(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     user = UserFactory()
     rs = ReaderStudyFactory()

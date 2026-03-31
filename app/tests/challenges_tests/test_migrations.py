@@ -2,7 +2,6 @@ import importlib
 
 import pytest
 from django.apps import apps
-from django.conf import settings
 from django.contrib.auth.models import Group
 from guardian.shortcuts import get_group_perms, get_user_perms, remove_perm
 
@@ -15,7 +14,7 @@ _migration = importlib.import_module(
 
 
 @pytest.mark.django_db
-def test_assign_review_perm_to_reviewers_group():
+def test_assign_review_perm_to_reviewers_group(settings):
     challenge_request = ChallengeRequestFactory()
     reviewers_group = Group.objects.get(
         name=settings.CHALLENGES_REVIEWERS_GROUP_NAME

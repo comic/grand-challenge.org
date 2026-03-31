@@ -1,7 +1,6 @@
 from itertools import chain
 
 import pytest
-from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db.models import BLANK_CHOICE_DASH
 from django.urls import URLPattern, URLResolver
@@ -476,7 +475,7 @@ def test_create_page_with_same_title(client, two_challenge_sets):
 
 
 @pytest.mark.django_db
-def test_challenge_statistics_page_permissions(client):
+def test_challenge_statistics_page_permissions(client, settings):
     challenge = ChallengeFactory()
     user = UserFactory()
 

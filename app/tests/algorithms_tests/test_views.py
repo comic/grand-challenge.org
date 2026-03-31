@@ -9,7 +9,6 @@ from unittest.mock import patch
 import pytest
 from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
-from django.test import override_settings
 from django.utils import timezone
 from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
@@ -761,8 +760,10 @@ def test_display_set_from_job(client):
 def test_create_job_with_json_file(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.LAMBDA_TASKS_EAGER = True
+
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     ai = AlgorithmImageFactory(
         is_manifest_valid=True,
@@ -814,10 +815,12 @@ def test_create_job_with_json_file(
 
 @pytest.mark.django_db
 def test_algorithm_job_create_with_image_input(
-    settings, client, django_capture_on_commit_callbacks
+    client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.LAMBDA_TASKS_EAGER = True
+
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     ai = AlgorithmImageFactory(
         is_manifest_valid=True,
@@ -842,51 +845,52 @@ def test_algorithm_job_create_with_image_input(
     assign_perm("cases.view_image", editor, image2)
 
     civ = ComponentInterfaceValueFactory(interface=ci, image=image1)
+
     with django_capture_on_commit_callbacks(execute=True):
-        with django_capture_on_commit_callbacks(execute=True):
-            response = get_view_for_user(
-                viewname="algorithms:job-create",
-                client=client,
-                method=client.post,
-                reverse_kwargs={
-                    "slug": ai.algorithm.slug,
-                    "interface_pk": interface.pk,
-                },
-                user=editor,
-                follow=True,
-                data={
-                    **get_interface_form_data(
-                        interface_slug=ci.slug,
-                        data=image1.pk,
-                        existing_data=True,
-                    )
-                },
-            )
+        response = get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "slug": ai.algorithm.slug,
+                "interface_pk": interface.pk,
+            },
+            user=editor,
+            follow=True,
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci.slug,
+                    data=image1.pk,
+                    existing_data=True,
+                )
+            },
+        )
+
     assert response.status_code == 200
     assert str(Job.objects.get().inputs.first().image.pk) == str(image1.pk)
     # same civ reused
     assert Job.objects.get().inputs.first() == civ
 
     with django_capture_on_commit_callbacks(execute=True):
-        with django_capture_on_commit_callbacks(execute=True):
-            response = get_view_for_user(
-                viewname="algorithms:job-create",
-                client=client,
-                method=client.post,
-                reverse_kwargs={
-                    "slug": ai.algorithm.slug,
-                    "interface_pk": interface.pk,
-                },
-                user=editor,
-                follow=True,
-                data={
-                    **get_interface_form_data(
-                        interface_slug=ci.slug,
-                        data=image2.pk,
-                        existing_data=True,
-                    )
-                },
-            )
+        response = get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "slug": ai.algorithm.slug,
+                "interface_pk": interface.pk,
+            },
+            user=editor,
+            follow=True,
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci.slug,
+                    data=image2.pk,
+                    existing_data=True,
+                )
+            },
+        )
+
     assert response.status_code == 200
     assert str(Job.objects.last().inputs.first().image.pk) == str(image2.pk)
     assert Job.objects.last().inputs.first() != civ
@@ -895,24 +899,25 @@ def test_algorithm_job_create_with_image_input(
         file_path=RESOURCE_PATH / "image10x10x10.mha",
         creator=editor,
     )
+
     with django_capture_on_commit_callbacks(execute=True):
-        with django_capture_on_commit_callbacks(execute=True):
-            response = get_view_for_user(
-                viewname="algorithms:job-create",
-                client=client,
-                method=client.post,
-                reverse_kwargs={
-                    "slug": ai.algorithm.slug,
-                    "interface_pk": interface.pk,
-                },
-                user=editor,
-                follow=True,
-                data={
-                    **get_interface_form_data(
-                        interface_slug=ci.slug, data=upload.pk
-                    )
-                },
-            )
+        response = get_view_for_user(
+            viewname="algorithms:job-create",
+            client=client,
+            method=client.post,
+            reverse_kwargs={
+                "slug": ai.algorithm.slug,
+                "interface_pk": interface.pk,
+            },
+            user=editor,
+            follow=True,
+            data={
+                **get_interface_form_data(
+                    interface_slug=ci.slug, data=upload.pk
+                )
+            },
+        )
+
     assert response.status_code == 200
     assert Job.objects.last().inputs.first().image.name == "image10x10x10.mha"
     assert Job.objects.last().inputs.first() != civ
@@ -974,13 +979,16 @@ class TestJobCreateView:
         )
         return [civ1, civ2, civ3, civ4, civ5]
 
-    @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_multiple_new_inputs(
         self,
         client,
+        settings,
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
+
         # configure multiple inputs
         interface = AlgorithmInterfaceFactory(
             inputs=[
@@ -1083,13 +1091,16 @@ class TestJobCreateView:
             in file_inputs[0].name
         )
 
-    @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_existing_inputs(
         self,
         client,
+        settings,
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
+
         # configure multiple inputs
         interface = AlgorithmInterfaceFactory(
             inputs=[
@@ -1159,13 +1170,16 @@ class TestJobCreateView:
         for civ in [civ1, civ2, civ3, civ4, civ5]:
             assert civ in job.inputs.all()
 
-    @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_is_idempotent(
         self,
         client,
+        settings,
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
+
         # configure multiple inputs
         interface = AlgorithmInterfaceFactory(
             inputs=[
@@ -1225,13 +1239,16 @@ class TestJobCreateView:
         # and no new job because there already is a job with these inputs
         assert Job.objects.count() == 1
 
-    @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_faulty_file_input(
         self,
         client,
+        settings,
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
+
         # configure file input
         interface = AlgorithmInterfaceFactory(
             inputs=[algorithm_with_multiple_inputs.ci_json_file],
@@ -1275,13 +1292,16 @@ class TestJobCreateView:
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == 0
 
-    @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_faulty_json_input(
         self,
         client,
+        settings,
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
+
         interface = AlgorithmInterfaceFactory(
             inputs=[algorithm_with_multiple_inputs.ci_json_in_db_with_schema],
             outputs=[ComponentInterfaceFactory()],
@@ -1307,13 +1327,16 @@ class TestJobCreateView:
         assert Job.objects.count() == 0
         assert ComponentInterfaceValue.objects.count() == 0
 
-    @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_faulty_image_input(
         self,
         client,
+        settings,
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
+
         interface = AlgorithmInterfaceFactory(
             inputs=[algorithm_with_multiple_inputs.ci_img_upload],
             outputs=[ComponentInterfaceFactory()],
@@ -1351,13 +1374,16 @@ class TestJobCreateView:
         # and no CIVs should have been created
         assert ComponentInterfaceValue.objects.count() == 0
 
-    @override_settings(task_eager_propagates=True, task_always_eager=True)
     def test_create_job_with_multiple_faulty_existing_image_inputs(
         self,
         client,
+        settings,
         django_capture_on_commit_callbacks,
         algorithm_with_multiple_inputs,
     ):
+        settings.CELERY_TASK_ALWAYS_EAGER = True
+        settings.CELERY_TASK_EAGER_PROPAGATES = True
+
         # configure multiple inputs
         ci1, ci2 = ComponentInterfaceFactory.create_batch(
             2, kind=InterfaceKindChoices.PANIMG_SEGMENTATION
@@ -1413,8 +1439,8 @@ class TestJobCreateView:
 
 @pytest.mark.django_db
 def test_algorithm_image_activate(
-    settings,
     client,
+    settings,
     invoke_container_image,
     mocker,
     django_capture_on_commit_callbacks,
@@ -1423,8 +1449,8 @@ def test_algorithm_image_activate(
         AlgorithmImage, "calculate_size_in_registry", lambda x: 100
     )
 
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     alg = AlgorithmFactory()
     i1, i2 = AlgorithmImageFactory.create_batch(

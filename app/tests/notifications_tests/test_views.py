@@ -1,7 +1,6 @@
 import pytest
 from actstream.actions import is_following, unfollow
 from actstream.models import Follow
-from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 
@@ -17,7 +16,7 @@ from tests.utils import get_view_for_user
 
 
 @pytest.mark.django_db
-def test_logged_in_view(client):
+def test_logged_in_view(client, settings):
     viewname = "notifications:list"
     response = get_view_for_user(client=client, viewname=viewname, user=None)
     assert response.status_code == 302

@@ -1,5 +1,4 @@
 import pytest
-from django.test import Client
 
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.components.forms import (
@@ -17,14 +16,13 @@ from tests.utils import get_view_for_user
 
 @pytest.mark.django_db
 def test_upload_some_images(
-    client: Client,
-    challenge_set,
+    client,
     settings,
+    challenge_set,
     django_capture_on_commit_callbacks,
 ):
-    # Override the celery settings
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     user = UserFactory()
 

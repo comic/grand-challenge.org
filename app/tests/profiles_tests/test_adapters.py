@@ -1,5 +1,4 @@
 import pytest
-from django.conf import settings
 
 from grandchallenge.profiles.models import (
     BannedEmailAddress,
@@ -47,7 +46,7 @@ def test_password_can_be_reset_with_verification(client):
 
 
 @pytest.mark.django_db
-def test_password_can_be_reset_with_banned_domain(client):
+def test_password_can_be_reset_with_banned_domain(client, settings):
     # User has legacy account from banned domain
     user = UserFactory(email=f"test@{[*settings.DISALLOWED_EMAIL_DOMAINS][0]}")
 

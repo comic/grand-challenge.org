@@ -2,7 +2,6 @@ import io
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
-from django.test import override_settings
 from guardian.shortcuts import assign_perm
 from pytest_django.asserts import assertContains, assertNotContains
 from requests import put
@@ -431,8 +430,8 @@ def test_display_set_detail_permissions(client):
 def test_display_set_update(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     user = UserFactory()
     rs = ReaderStudyFactory()
@@ -620,8 +619,8 @@ def test_display_set_update(
 def test_add_display_set_to_reader_study(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     u1, u2 = UserFactory.create_batch(2)
     rs = ReaderStudyFactory()
@@ -726,8 +725,8 @@ def test_add_display_set_to_reader_study(
 def test_add_display_set_to_reader_study_with_empty_value(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     editor = UserFactory()
     reader_study = ReaderStudyFactory()
@@ -932,8 +931,8 @@ def test_question_interactive_algorithms_view_permissions(client):
 def test_display_set_upload_corrupt_image(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.task_eager_propagates = (True,)
-    settings.task_always_eager = (True,)
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
     editor = UserFactory()
     rs = ReaderStudyFactory()
@@ -1007,10 +1006,12 @@ def test_ground_truth_views(client, viewname):
 
 
 @pytest.mark.django_db
-@override_settings(task_eager_propagates=True, task_always_eager=True)
 def test_ground_truth_from_answers_workflow(
-    client, django_capture_on_commit_callbacks
+    client, settings, django_capture_on_commit_callbacks
 ):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     rs = ReaderStudyFactory(is_educational=True)
 
     editor, reader, a_user = UserFactory.create_batch(3)

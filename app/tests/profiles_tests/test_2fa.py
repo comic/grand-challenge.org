@@ -2,10 +2,8 @@ from http import HTTPStatus
 
 import pytest
 from allauth.account.models import EmailAddress
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
-from django.test import override_settings
 from django.utils.crypto import get_random_string
 from django.utils.http import int_to_base36
 
@@ -93,7 +91,7 @@ def test_require_mfa_not_on_allowed_urls(
 
 
 @pytest.mark.django_db
-def test_email_after_2fa_login_for_staff(client):
+def test_email_after_2fa_login_for_staff(client, settings):
     password = get_random_string(32)
 
     staff_user = UserFactory(is_staff=True, password=password)
@@ -123,7 +121,7 @@ def test_email_after_2fa_login_for_staff(client):
 
 
 @pytest.mark.django_db
-def test_no_email_after_2fa_login_for_non_staff(client):
+def test_no_email_after_2fa_login_for_non_staff(client, settings):
     password = get_random_string(32)
 
     user = UserFactory(password=password)
@@ -184,9 +182,10 @@ def test_allowed_urls():
     }
 
 
-@override_settings(SOCIALACCOUNT_AUTO_SIGNUP=True)
 @pytest.mark.django_db
-def test_2fa_for_for_staff_users_with_social_login(client):
+def test_2fa_for_for_staff_users_with_social_login(client, settings):
+    settings.SOCIALACCOUNT_AUTO_SIGNUP = True
+
     social_username = "dummy_user"
 
     resp = client.post(reverse("dummy_login"))

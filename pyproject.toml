@@ -65,6 +65,7 @@ dependencies = [
     "isort",
     "panimg-models",
     "psutil",
+    "django-lambda-tasks",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"
