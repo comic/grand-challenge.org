@@ -2,7 +2,6 @@ import logging
 from datetime import datetime, timedelta
 from enum import auto
 
-import boto3
 from actstream.actions import follow, is_following
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
@@ -28,6 +27,9 @@ from pictures.models import PictureField
 from grandchallenge.algorithms.tasks import update_algorithm_average_duration
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.charts.specs import stacked_bar
+from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
+    EndpointOrchestrator,
+)
 from grandchallenge.components.backends.base import (
     list_and_delete_objects_from_prefix,
 )
@@ -1612,51 +1614,16 @@ class Endpoint(UUIDModel):
         return f"{settings.COMPONENTS_REGISTRY_PREFIX}-alg-endp-{self.pk}"
 
     @property
-    def _s3_client(self):
-        if self.__s3_client is None:
-            self.__s3_client = boto3.client(
-                "s3",
-                region_name=settings.AWS_DEFAULT_REGION,
-            )
-        return self.__s3_client
-
-    @property
-    def _sagemaker_client(self):
-        if self.__sagemaker_client is None:
-            self.__sagemaker_client = boto3.client(
-                "sagemaker",
-                region_name=settings.AWS_DEFAULT_REGION,
-            )
-        return self.__sagemaker_client
-
-    @property
-    def _sagemaker_runtime_client(self):
-        if self.__sagemaker_runtime_client is None:
-            self.__sagemaker_runtime_client = boto3.client(
-                "sagemaker-runtime",
-                region_name=settings.AWS_DEFAULT_REGION,
-            )
-        return self.__sagemaker_runtime_client
-
-    @property
-    def _auxiliary_data_prefix(self):
-        return f"/auxiliary-data/{self.pk}"
-
-    @property
-    def _algorithm_model_key(self):
-        return f"{self._auxiliary_data_prefix}/algorithm-model.tar.gz"
-
-    @property
-    def _algorithm_model_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}{self._algorithm_model_key}"
-
-    @property
-    def _output_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}/endpoints/{self.pk}/successes"
-
-    @property
-    def _failure_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}/logs/{self.pk}/failures"
+    def orchestrator(self):
+        return EndpointOrchestrator(
+            endpoint_id=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
+            exec_image_repo_tag=self.algorithm_image.shimmed_repo_tag,
+            time_limit_seconds=self.max_duration.total_seconds(),
+            requires_gpu_type=self.requires_gpu_type,
+            requires_memory_gb=self.requires_memory_gb,
+            api_method=self.algorithm_image.api_method,
+            algorithm_model=self.algorithm_model,
+        )
 
     def provision_auxiliary_data(self):
         if self.algorithm_model:

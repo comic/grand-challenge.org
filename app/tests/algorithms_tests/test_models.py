@@ -1669,62 +1669,23 @@ def test_cannot_clear_interface_for_algorithm_implementation():
     )
 
 
-@pytest.mark.django_db
 class TestEndpointProperties:
     def test_endpoint_name_format(self, settings):
         settings.COMPONENTS_REGISTRY_PREFIX = "rumc-gcorg-p"
-        endpoint = EndpointFactory()
+        endpoint = EndpointFactory.build()
 
         assert endpoint.endpoint_name == (
             f"rumc-gcorg-p-alg-endp-{endpoint.pk}"
         )
         assert len(endpoint.endpoint_name) <= 63
 
-    def test_algorithm_model_key(self):
-        endpoint = EndpointFactory()
 
-        assert endpoint._algorithm_model_key == (
-            f"/auxiliary-data/{endpoint.pk}/algorithm-model.tar.gz"
-        )
-
-    def test_algorithm_model_s3_uri(self, settings):
-        settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = (
-            "interactive-algorithms-io"
-        )
-        endpoint = EndpointFactory()
-
-        assert endpoint._algorithm_model_s3_uri == (
-            f"s3://interactive-algorithms-io/auxiliary-data/{endpoint.pk}/algorithm-model.tar.gz"
-        )
-
-    def test_output_s3_uri(self, settings):
-        settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = (
-            "interactive-algorithms-io"
-        )
-        endpoint = EndpointFactory()
-
-        assert endpoint._output_s3_uri == (
-            f"s3://interactive-algorithms-io/endpoints/{endpoint.pk}/successes"
-        )
-
-    def test_failure_s3_uri(self, settings):
-        settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = (
-            "interactive-algorithms-io"
-        )
-        endpoint = EndpointFactory()
-
-        assert endpoint._failure_s3_uri == (
-            f"s3://interactive-algorithms-io/logs/{endpoint.pk}/failures"
-        )
-
-
-@pytest.mark.django_db
 def test_endpoint_provision_auxiliary_data(settings):
     settings.PROTECTED_S3_STORAGE_KWARGS = {
         "bucket_name": "from_protected_storage"
     }
     settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = "to_endpoint_io"
-    endpoint = EndpointFactory()
+    endpoint = EndpointFactory.build()
 
     with Stubber(endpoint._s3_client) as stubber:
         stubber.add_response(
@@ -1753,10 +1714,9 @@ def test_endpoint_provision_auxiliary_data(settings):
         stubber.assert_no_pending_responses()
 
 
-@pytest.mark.django_db
 def test_endpoint_deprovision_auxiliary_data(settings):
     settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = "endpoint_io"
-    endpoint = EndpointFactory()
+    endpoint = EndpointFactory.build()
 
     with Stubber(endpoint._s3_client) as stubber:
         stubber.add_response(
