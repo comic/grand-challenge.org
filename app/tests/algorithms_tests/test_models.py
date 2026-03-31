@@ -1712,6 +1712,25 @@ class TestEndpointProperties:
             f"s3://interactive-algorithms-io/logs/{endpoint.pk}/failures"
         )
 
+    def test_endpoint_model_environment(self, settings):
+        settings.COMPONENTS_INPUT_BUCKET_NAME = "test_components_input_bucket"
+        endpoint = EndpointFactory.build()
+
+        assert endpoint._model_environment == {
+            "LOG_LEVEL": "INFO",
+            "PYTHONUNBUFFERED": "1",
+            "no_proxy": "amazonaws.com",
+            "GRAND_CHALLENGE_COMPONENT_API_METHOD": endpoint.algorithm_image.api_method,
+            "GRAND_CHALLENGE_COMPONENT_MODEL": f"s3://test_components_input_bucket/{endpoint._algorithm_model_key}",
+        }
+
+        endpoint = EndpointFactory.build(algorithm_model=None)
+
+        assert (
+            "GRAND_CHALLENGE_COMPONENT_MODEL"
+            not in endpoint._model_environment
+        )
+
 
 def test_endpoint_provision_auxiliary_data(settings):
     settings.PROTECTED_S3_STORAGE_KWARGS = {
@@ -1764,23 +1783,6 @@ def test_endpoint_deprovision_auxiliary_data(settings):
         endpoint.deprovision_auxiliary_data()
 
         stubber.assert_no_pending_responses()
-
-
-def test_endpoint_model_environment(settings):
-    settings.COMPONENTS_INPUT_BUCKET_NAME = "test_components_input_bucket"
-    endpoint = EndpointFactory.build()
-
-    assert endpoint._model_environment == {
-        "LOG_LEVEL": "INFO",
-        "PYTHONUNBUFFERED": "1",
-        "no_proxy": "amazonaws.com",
-        "GRAND_CHALLENGE_COMPONENT_API_METHOD": endpoint.algorithm_image.api_method,
-        "GRAND_CHALLENGE_COMPONENT_MODEL": f"s3://test_components_input_bucket/{endpoint._algorithm_model_key}",
-    }
-
-    endpoint = EndpointFactory.build(algorithm_model=None)
-
-    assert "GRAND_CHALLENGE_COMPONENT_MODEL" not in endpoint._model_environment
 
 
 def test_endpoint_create_model(settings):
