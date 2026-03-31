@@ -5,7 +5,6 @@ import pytest
 from actstream.models import Follow
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
-from django.test import override_settings
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
@@ -285,7 +284,6 @@ def test_jobs_workflow(django_capture_on_commit_callbacks):
 def test_algorithm(client, settings, django_capture_on_commit_callbacks):
     settings.LAMBDA_TASKS_EAGER = True
 
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -435,7 +433,6 @@ def test_algorithm_with_invalid_output(
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -510,7 +507,6 @@ def test_algorithm_with_invalid_output(
 
 @pytest.mark.django_db
 def test_execute_algorithm_job_for_missing_inputs(settings):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -545,7 +541,6 @@ def test_execute_algorithm_job_for_missing_inputs(settings):
 def test_execute_algorithm_job_sets_on_failed_jobs(
     settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -774,7 +769,6 @@ class TestJobCreation:
 def test_failed_job_notifications(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -850,7 +844,6 @@ def test_failed_job_notifications(
 def test_importing_same_sha_fails(
     settings, django_capture_on_commit_callbacks, invoke_container_image
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -922,11 +915,13 @@ def test_deactivate_old_algorithm_images(django_capture_on_commit_callbacks):
     assert {str(callback) for callback in callbacks} == expected_callbacks
 
 
-@override_settings(task_eager_propagates=True, task_always_eager=True)
 @pytest.mark.django_db
 def test_non_invoke_api_method_image_not_marked_as_desired_version_after_import(
-    invoke_container_image, django_capture_on_commit_callbacks
+    settings, invoke_container_image, django_capture_on_commit_callbacks
 ):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     algorithm_image = AlgorithmImageFactory(
         is_manifest_valid=True,
         image__from_path=invoke_container_image,

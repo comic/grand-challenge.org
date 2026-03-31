@@ -412,6 +412,7 @@ class TestUpdateExternalEvaluation:
         django_capture_on_commit_callbacks,
     ):
         settings.EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = 0
+
         settings.task_eager_propagates = (True,)
         settings.task_always_eager = (True,)
 

@@ -320,7 +320,6 @@ def test_one_click_unsubscribe_user_mismatch(
     new_subscription_preference,
     django_capture_on_commit_callbacks,
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 

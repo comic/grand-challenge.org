@@ -191,7 +191,6 @@ def test_algorithm_job_post_serializer_validations(
 def test_algorithm_job_post_serializer_create(
     rf, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -278,6 +277,7 @@ def test_algorithm_job_post_serializer_create_with_image_user_uploads(
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2, creator=user)
     uploads[1].filename += "a"

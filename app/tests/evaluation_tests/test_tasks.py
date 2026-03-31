@@ -67,7 +67,6 @@ def test_submission_evaluation(
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -670,7 +669,6 @@ def test_non_zip_submission_failure(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -741,7 +739,6 @@ def test_evaluation_notifications(
 ):
     settings.LAMBDA_TASKS_EAGER = True
 
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -870,7 +867,6 @@ def test_cache_lock():
 
 @pytest.mark.django_db
 def test_cancel_external_evaluations_past_timeout(settings):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 

@@ -5,7 +5,6 @@ from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
-from django.test import override_settings
 from django.utils.crypto import get_random_string
 from django.utils.http import int_to_base36
 
@@ -184,9 +183,10 @@ def test_allowed_urls():
     }
 
 
-@override_settings(SOCIALACCOUNT_AUTO_SIGNUP=True)
 @pytest.mark.django_db
-def test_2fa_for_for_staff_users_with_social_login(client):
+def test_2fa_for_for_staff_users_with_social_login(client, settings):
+    settings.SOCIALACCOUNT_AUTO_SIGNUP = True
+
     social_username = "dummy_user"
 
     resp = client.post(reverse("dummy_login"))

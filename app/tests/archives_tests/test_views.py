@@ -7,7 +7,6 @@ import pytest
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
-from django.test import override_settings
 from guardian.shortcuts import assign_perm, remove_perm
 from requests import put
 
@@ -233,10 +232,12 @@ def test_api_archive_api_detail_view(client):
 
 
 @pytest.mark.django_db
-@override_settings(task_eager_propagates=True, task_always_eager=True)
 def test_api_archive_item_allowed_sockets(
-    client, django_capture_on_commit_callbacks
+    client, settings, django_capture_on_commit_callbacks
 ):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     archive = ArchiveFactory()
     editor = UserFactory()
     archive.add_editor(editor)
@@ -311,10 +312,12 @@ def test_api_archive_item_allowed_sockets(
 
 
 @pytest.mark.django_db
-@override_settings(task_eager_propagates=True, task_always_eager=True)
 def test_api_archive_item_reserved_sockets(
-    client, django_capture_on_commit_callbacks
+    client, settings, django_capture_on_commit_callbacks
 ):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     archive = ArchiveFactory()
     editor = UserFactory()
     archive.add_editor(editor)
@@ -351,7 +354,6 @@ def test_api_archive_item_reserved_sockets(
 def test_api_archive_item_add_and_update_value(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -449,7 +451,6 @@ def test_api_archive_item_add_and_update_value(
 def test_api_archive_item_add_and_update_non_image_file(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -531,7 +532,6 @@ def test_api_archive_item_add_and_update_non_image_file(
 def test_api_archive_item_add_and_update_image(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -638,7 +638,6 @@ def test_api_archive_item_add_and_update_image(
 def test_api_archive_item_add_and_update_json_file(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -726,6 +725,7 @@ def test_api_archive_item_add_and_update_json_file(
 def test_api_archive_item_create(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
     archive = ArchiveFactory()
     editor, user = UserFactory.create_batch(2)
     archive.add_editor(editor)
@@ -784,6 +784,7 @@ def test_api_archive_item_update_with_image_user_uploads(
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
     user = UserFactory()
     uploads = UserUploadFactory.create_batch(2, creator=user)
     uploads[1].filename += "a"
@@ -829,6 +830,7 @@ def test_api_archive_item_update_with_image_user_uploads(
 def test_archive_items_to_reader_study_update(client, settings):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
     archive = ArchiveFactory()
     rs = ReaderStudyFactory()
 
@@ -908,6 +910,7 @@ def test_archive_item_add_image(
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
     archive = ArchiveFactory()
     item = ArchiveItemFactory(archive=archive)
     editor = UserFactory()
@@ -997,6 +1000,7 @@ def test_archive_item_add_file(
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
     archive = ArchiveFactory()
     item = ArchiveItemFactory(archive=archive)
     editor = UserFactory()
@@ -1034,6 +1038,7 @@ def test_archive_item_add_json_file(
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
     archive = ArchiveFactory()
     item = ArchiveItemFactory(archive=archive)
     editor = UserFactory()
@@ -1104,6 +1109,7 @@ def test_archive_item_add_value(
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
     archive = ArchiveFactory()
     item = ArchiveItemFactory(archive=archive)
     editor = UserFactory()

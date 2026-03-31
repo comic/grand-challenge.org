@@ -1298,6 +1298,7 @@ def test_assign_answer_image(
 ):
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
+
     rs = ReaderStudyFactory()
     ds = DisplaySetFactory(reader_study=rs)
     editor, reader = UserFactory(), UserFactory()

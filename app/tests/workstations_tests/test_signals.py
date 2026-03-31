@@ -7,7 +7,6 @@ from tests.factories import SessionFactory, UserFactory
 def test_session_stopped_on_user_logout(
     client, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 

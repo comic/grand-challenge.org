@@ -214,7 +214,6 @@ def test_remove_inactive_container_images(django_capture_on_commit_callbacks):
 def test_validate_docker_image(
     invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -255,7 +254,6 @@ def test_validate_docker_image(
 def test_upload_to_registry_and_sagemaker(
     invoke_container_image, settings, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -391,7 +389,6 @@ def test_update_sagemaker_shim(
     tmp_path,
     mocker,
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -1178,7 +1175,6 @@ def test_get_image_config_and_sha256(container_image_file):
 def test_assign_tarball_from_upload(
     settings, factory, related_factory, related_model_lookup, field_to_copy
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 

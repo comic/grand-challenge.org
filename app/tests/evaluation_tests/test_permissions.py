@@ -85,7 +85,6 @@ def test_hiding_phase_updates_perms(django_capture_on_commit_callbacks):
     }
     assert e.submission.creator.has_perm("view_submission", e.submission)
 
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -128,7 +127,6 @@ def test_unhiding_phase_updates_perms(django_capture_on_commit_callbacks):
         e.submission.phase.challenge.admins_group: {"view_submission"},
     }
 
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -294,7 +292,6 @@ def test_hiding_challenge_updates_perms(
         all_users: {"view_evaluation"},
     }
 
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -335,7 +332,6 @@ def test_unhiding_challenge_updates_perms(
         participants: {"view_evaluation"},
     }
 
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 

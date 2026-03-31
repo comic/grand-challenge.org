@@ -69,7 +69,6 @@ def test_get_receivers(factory, action):
 
 @pytest.mark.django_db
 def test_email_content(settings):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 

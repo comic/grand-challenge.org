@@ -1445,7 +1445,6 @@ def test_remove_container_image_from_registry(
     django_capture_on_commit_callbacks,
     mocker,
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
@@ -1512,7 +1511,6 @@ def test_delete_container_image(
     django_capture_on_commit_callbacks,
     mocker,
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 

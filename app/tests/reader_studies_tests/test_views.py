@@ -2,7 +2,6 @@ import io
 
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
-from django.test import override_settings
 from guardian.shortcuts import assign_perm
 from pytest_django.asserts import assertContains, assertNotContains
 from requests import put
@@ -1007,10 +1006,12 @@ def test_ground_truth_views(client, viewname):
 
 
 @pytest.mark.django_db
-@override_settings(task_eager_propagates=True, task_always_eager=True)
 def test_ground_truth_from_answers_workflow(
-    client, django_capture_on_commit_callbacks
+    client, settings, django_capture_on_commit_callbacks
 ):
+    settings.task_eager_propagates = (True,)
+    settings.task_always_eager = (True,)
+
     rs = ReaderStudyFactory(is_educational=True)
 
     editor, reader, a_user = UserFactory.create_batch(3)

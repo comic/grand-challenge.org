@@ -93,7 +93,6 @@ def test_archive_logged_in_permissions(client):
 def test_api_archive_item_update_permissions(
     client, settings, add_to_group, status, django_capture_on_commit_callbacks
 ):
-    # Override the celery settings
     settings.task_eager_propagates = (True,)
     settings.task_always_eager = (True,)
 
