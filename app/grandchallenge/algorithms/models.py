@@ -1572,7 +1572,6 @@ class Endpoint(UUIDModel):
         max_length=17,
         choices=EndpointStatusChoices,
         default=EndpointStatusChoices.PENDING,
-        db_index=True,
     )
     requires_gpu_type = models.CharField(
         editable=False,
@@ -1592,6 +1591,10 @@ class Endpoint(UUIDModel):
     class Meta:
         permissions = [("invoke_endpoint", "Can invoke the endpoint")]
         ordering = ("-created",)
+        indexes = (
+            models.Index(fields=["status", "created"]),
+            models.Index(fields=["created"]),
+        )
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(status__in=EndpointStatusChoices.values),
