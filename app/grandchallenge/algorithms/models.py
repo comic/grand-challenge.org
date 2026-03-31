@@ -1582,6 +1582,18 @@ class Endpoint(UUIDModel):
     requires_memory_gb = models.PositiveSmallIntegerField(
         editable=False,
     )
+    editors_group = models.OneToOneField(
+        Group,
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="editors_of_endpoint",
+    )
+    users_group = models.OneToOneField(
+        Group,
+        on_delete=models.PROTECT,
+        editable=False,
+        related_name="users_of_endpoint",
+    )
 
     class Meta:
         permissions = [("invoke_endpoint", "Can invoke the endpoint")]
@@ -1607,12 +1619,30 @@ class Endpoint(UUIDModel):
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
+        if adding:
+            self.create_groups()
+
         super().save(*args, **kwargs)
 
         if adding:
+            self.assign_permissions()
             if self.creator:
-                assign_perm("view_endpoint", self.creator, self)
-                assign_perm("invoke_endpoint", self.creator, self)
+                self.editors_group.user_set.add(self.creator)
+
+    def create_groups(self):
+        self.editors_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_editors"
+        )
+        self.users_group = Group.objects.create(
+            name=f"{self._meta.app_label}_{self._meta.model_name}_{self.pk}_users"
+        )
+
+    def assign_permissions(self):
+        assign_perm("view_endpoint", self.editors_group, self)
+        assign_perm("view_endpoint", self.users_group, self)
+        assign_perm("invoke_endpoint", self.editors_group, self)
+        assign_perm("invoke_endpoint", self.users_group, self)
+        assign_perm("change_endpoint", self.editors_group, self)
 
     @property
     def endpoint_name(self):
@@ -1668,12 +1698,14 @@ class Endpoint(UUIDModel):
 
 
 class EndpointUserObjectPermission(UserObjectPermissionBase):
-    allowed_permissions = frozenset({"view_endpoint", "invoke_endpoint"})
+    allowed_permissions = frozenset()
 
     content_object = models.ForeignKey(Endpoint, on_delete=models.CASCADE)
 
 
 class EndpointGroupObjectPermission(GroupObjectPermissionBase):
-    allowed_permissions = frozenset()
+    allowed_permissions = frozenset(
+        {"change_endpoint", "view_endpoint", "invoke_endpoint"}
+    )
 
     content_object = models.ForeignKey(Endpoint, on_delete=models.CASCADE)
