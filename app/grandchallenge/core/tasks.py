@@ -11,7 +11,7 @@ from django.utils.timezone import now
 from django_celery_results.models import TaskResult
 from redis.exceptions import LockError
 
-from grandchallenge.algorithms.models import AlgorithmImage, Job
+from grandchallenge.algorithms.models import AlgorithmImage, Endpoint, Job
 from grandchallenge.cases.models import (
     PostProcessImageTask,
     RawImageUploadSession,
@@ -68,6 +68,7 @@ def _get_metrics():
         Session,
         RawImageUploadSession,
         PostProcessImageTask,
+        Endpoint,
     ]
     field = "status"
 
@@ -118,6 +119,7 @@ def _get_metrics():
             ]
         ),
         Session.objects.filter(status=Session.QUEUED),
+        Endpoint.objects.filter(status=Endpoint.StatusChoices.PENDING),
     ):
         oldest = queryset.order_by("created").values("created").first()
         total_seconds = (

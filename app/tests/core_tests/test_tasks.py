@@ -313,6 +313,48 @@ def test_get_metrics():
             "Unit": "Count",
         },
         {
+            "MetricName": "EndpointsQueued",
+            "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EndpointsProvisioning",
+            "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EndpointsProvisioned",
+            "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EndpointsStarting",
+            "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EndpointsRunning",
+            "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EndpointsStopped",
+            "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
+            "MetricName": "EndpointsFailed",
+            "Dimensions": [{"Name": "Model", "Value": "Endpoint"}],
+            "Value": 0,
+            "Unit": "Count",
+        },
+        {
             "MetricName": "OldestActiveAlgorithmImage",
             "Value": 0,
             "Unit": "Seconds",
@@ -330,4 +372,5 @@ def test_get_metrics():
             "Unit": "Seconds",
         },
         {"MetricName": "OldestActiveSession", "Value": 0, "Unit": "Seconds"},
+        {"MetricName": "OldestActiveEndpoint", "Value": 0, "Unit": "Seconds"},
     ]
