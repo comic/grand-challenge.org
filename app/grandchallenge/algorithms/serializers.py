@@ -19,6 +19,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmImage,
     AlgorithmInterface,
     AlgorithmModel,
+    Endpoint,
     Job,
     annotate_input_output_counts,
 )
@@ -115,6 +116,19 @@ class AlgorithmModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = AlgorithmModel
         fields = ["pk", "algorithm", "created", "import_status", "model"]
+
+
+class EndpointSerializer(serializers.ModelSerializer):
+    algorithm = HyperlinkedRelatedField(
+        source="algorithm_image.algorithm",
+        view_name="api:algorithm-detail",
+        read_only=True,
+    )
+    status = CharField(source="get_status_display", read_only=True)
+
+    class Meta:
+        model = Endpoint
+        fields = ["pk", "algorithm", "status"]
 
 
 class JobSerializer(serializers.ModelSerializer):

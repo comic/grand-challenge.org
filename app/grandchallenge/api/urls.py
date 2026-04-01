@@ -5,6 +5,7 @@ from rest_framework import routers
 from grandchallenge.algorithms.views import (
     AlgorithmImageViewSet,
     AlgorithmViewSet,
+    EndpointViewSet,
     JobViewSet,
 )
 from grandchallenge.api.views import GCAPIView
@@ -46,6 +47,9 @@ router.register(
     r"algorithms/images", AlgorithmImageViewSet, basename="algorithms-image"
 )
 router.register(r"algorithms/jobs", JobViewSet, basename="algorithms-job")
+router.register(
+    r"algorithms/endpoints", EndpointViewSet, basename="algorithms-endpoint"
+)
 router.register(r"algorithms", AlgorithmViewSet, basename="algorithm")
 
 # Archives

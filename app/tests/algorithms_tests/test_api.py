@@ -1,4 +1,5 @@
 import json
+import uuid
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -6,8 +7,9 @@ import pytest
 from django.contrib.auth.models import Group
 from guardian.shortcuts import assign_perm
 from requests import put
+from rest_framework import status
 
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import Endpoint, Job
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmModelSerializer,
@@ -22,6 +24,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
+    EndpointFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
 from tests.cases_tests.factories import (
@@ -658,3 +661,148 @@ def test_algorithm_model_download_url(client, rf):
         f"grand-challenge-protected/models/algorithms/algorithmmodel/{model.pk}/example.dat"
         in str(resp.url)
     )
+
+
+@pytest.mark.django_db
+class TestEndpointList:
+    url = "/api/v1/algorithms/endpoints/"
+
+    def test_anonymous_returns_empty_list(self, client):
+        EndpointFactory()
+        response = client.get(self.url)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 0
+
+    def test_authenticated_user_sees_nothing_without_permissions(self, client):
+        user = UserFactory()
+        client.force_login(user=user)
+        response = client.get(self.url)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 0
+
+    def test_creator_can_list_own_endpoint(self, client):
+        endpoint = EndpointFactory()
+        client.force_login(user=endpoint.creator)
+        response = client.get(self.url)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["pk"] == str(endpoint.pk)
+
+    def test_viewer_group_member_can_list_endpoint(self, client):
+        endpoint = EndpointFactory()
+        user = UserFactory()
+        endpoint.viewers_group.user_set.add(user)
+        client.force_login(user=user)
+        response = client.get(self.url)
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 1
+
+    def test_user_only_sees_permitted_endpoints(self, client):
+        user = UserFactory()
+        visible = EndpointFactory()
+        EndpointFactory()  # not visible
+        visible.viewers_group.user_set.add(user)
+        client.force_login(user=user)
+        response = client.get(self.url)
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["pk"] == str(visible.pk)
+
+    def test_filter_by_algorithm(self, client):
+        e1 = EndpointFactory()
+        EndpointFactory(creator=e1.creator)
+        client.force_login(user=e1.creator)
+        algorithm = e1.algorithm_image.algorithm
+        response = client.get(self.url, {"algorithm": str(algorithm.pk)})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 1
+        assert response.data["results"][0][
+            "algorithm"
+        ] == algorithm.api_url.replace("https://", "http://")
+
+    def test_filter_by_status(self, client):
+        endpoint = EndpointFactory(status=Endpoint.StatusChoices.RUNNING)
+        EndpointFactory(
+            status=Endpoint.StatusChoices.PENDING, creator=endpoint.creator
+        )
+        client.force_login(user=endpoint.creator)
+        response = client.get(self.url, {"status": "Running"})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["pk"] == str(endpoint.pk)
+
+    def test_filter_by_status_invalid(self, client):
+        endpoint = EndpointFactory()
+        client.force_login(user=endpoint.creator)
+        response = client.get(self.url, {"status": "nonsense"})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 0
+
+
+@pytest.mark.django_db
+class TestEndpointDetail:
+    def get_url(self, pk):
+        return f"/api/v1/algorithms/endpoints/{pk}/"
+
+    def test_anonymous_returns_empty_for_existing(self, client):
+        endpoint = EndpointFactory()
+        response = client.get(self.get_url(endpoint.pk))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_no_permission_returns_404(self, client):
+        user = UserFactory()
+        endpoint = EndpointFactory()
+        client.force_login(user=user)
+        response = client.get(self.get_url(endpoint.pk))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_creator_can_retrieve(self, client):
+        endpoint = EndpointFactory()
+        client.force_login(user=endpoint.creator)
+        response = client.get(self.get_url(endpoint.pk))
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["pk"] == str(endpoint.pk)
+
+    def test_viewer_group_member_can_retrieve(self, client):
+        user = UserFactory()
+        endpoint = EndpointFactory()
+        endpoint.viewers_group.user_set.add(user)
+        client.force_login(user=user)
+        response = client.get(self.get_url(endpoint.pk))
+        assert response.status_code == status.HTTP_200_OK
+
+    def test_nonexistent_returns_404(self, client):
+        user = UserFactory()
+        client.force_login(user=user)
+        response = client.get(self.get_url(uuid.uuid4()))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+class TestEndpointReadOnly:
+    """Verify the viewset rejects write methods."""
+
+    url = "/api/v1/algorithms/endpoints/"
+
+    def test_post_not_allowed(self, client):
+        endpoint = EndpointFactory()
+        client.force_login(user=endpoint.creator)
+        response = client.post(self.url, data={})
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_put_not_allowed(self, client):
+        endpoint = EndpointFactory()
+        client.force_login(user=endpoint.creator)
+        response = client.put(f"{self.url}{endpoint.pk}/", data={})
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_patch_not_allowed(self, client):
+        endpoint = EndpointFactory()
+        client.force_login(user=endpoint.creator)
+        response = client.patch(f"{self.url}{endpoint.pk}/", data={})
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_delete_not_allowed(self, client):
+        endpoint = EndpointFactory()
+        client.force_login(user=endpoint.creator)
+        response = client.delete(f"{self.url}{endpoint.pk}/")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
