@@ -1644,3 +1644,47 @@ def get_object_sha256(file_field):
         # The checksums are not calculated on local s3
         logger.error("sha256 checksum was not calculated", exc_info=True)
         return ""
+
+
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
+def start_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
+    """
+    Starts the endpoint on Sagemaker.
+
+    Takes endpoints in the endpoint.QUEUED state, starts them on Sagemaker,
+    then places them in the service.RUNNING state.
+    """
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
+    with check_lock_acquired():
+        endpoint = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if endpoint.status != endpoint.StatusChoices.QUEUED:
+        logger.info("Nothing to do: endpoint was not in the expected state")
+        return
+
+    orchestrator = endpoint.orchestrator
+
+    try:
+        orchestrator.provision_auxiliary_data()
+        orchestrator.create_sagemaker_model()
+        orchestrator.create_endpoint_config()
+        orchestrator.create_endpoint()
+    except Exception:
+        logger.error("Could not start endpoint", exc_info=True)
+        endpoint.update_status(
+            status=endpoint.StatusChoices.FAILED,
+            error_message="An unexpected error occurred",
+        )
+
+        try:
+            orchestrator.clean_up_resources()
+        except Exception:
+            logger.error(
+                "Error(s) occurred while cleaning up endpoint resources",
+                exc_info=True,
+            )
+
+    else:
+        endpoint.update_status(status=endpoint.StatusChoices.RUNNING)

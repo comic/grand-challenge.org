@@ -1,5 +1,10 @@
+import pytest
+from botocore.exceptions import ClientError
 from botocore.stub import Stubber
 
+from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
+    EndpointOrchestrator,
+)
 from grandchallenge.components.schemas import GPUTypeChoices
 from tests.algorithms_tests.factories import EndpointFactory
 
@@ -292,3 +297,112 @@ def test_endpoint_delete_endpoint(settings):
         orchestrator.delete_endpoint()
 
         stubber.assert_no_pending_responses()
+
+
+def test_endpoint_orchestrator_clean_up_resources(mocker):
+    orchestrator = EndpointFactory.build().orchestrator
+
+    mock_clean_up_methods = [
+        mocker.patch.object(
+            EndpointOrchestrator,
+            method_name,
+        )
+        for method_name in [
+            "delete_endpoint",
+            "delete_endpoint_config",
+            "delete_sagemaker_model",
+            "deprovision_auxiliary_data",
+        ]
+    ]
+
+    orchestrator.clean_up_resources()
+
+    for mock_method in mock_clean_up_methods:
+        mock_method.assert_called_once()
+
+
+def test_endpoint_orchestrator_clean_up_resources_handle_exceptions(mocker):
+    orchestrator = EndpointFactory.build().orchestrator
+    method_names = [
+        "delete_endpoint",
+        "delete_endpoint_config",
+        "delete_sagemaker_model",
+        "deprovision_auxiliary_data",
+    ]
+    mock_clean_up_methods = [
+        mocker.patch.object(
+            EndpointOrchestrator,
+            method_name,
+            side_effect=Exception(method_name),
+        )
+        for method_name in method_names
+    ]
+
+    with pytest.raises(
+        ExceptionGroup,
+        match=r"Error\(s\) occurred while cleaning up endpoint resources",
+    ) as errors:
+        orchestrator.clean_up_resources()
+
+    for method_name in method_names:
+        assert errors.group_contains(Exception, match=method_name)
+
+    # assert all called
+    for mock_method in mock_clean_up_methods:
+        mock_method.assert_called_once()
+
+
+def test_endpoint_orchestrator_clean_up_resources_ignored_errors(mocker):
+    orchestrator = EndpointFactory.build().orchestrator
+
+    mock_clean_up_methods = [
+        mocker.patch.object(
+            EndpointOrchestrator,
+            "delete_endpoint",
+            side_effect=ClientError(
+                {
+                    "Error": {
+                        "Code": "ValidationException",
+                        "Message": 'Could not find endpoint "foobar".',
+                    }
+                },
+                "DeleteEndpoint",
+            ),
+        ),
+        mocker.patch.object(
+            EndpointOrchestrator,
+            "delete_endpoint_config",
+            side_effect=ClientError(
+                {
+                    "Error": {
+                        "Code": "ValidationException",
+                        "Message": 'Could not find endpoint configuration "foobar".',
+                    }
+                },
+                "DeleteEndpointConfig",
+            ),
+        ),
+        mocker.patch.object(
+            EndpointOrchestrator,
+            "delete_sagemaker_model",
+            side_effect=ClientError(
+                {
+                    "Error": {
+                        "Code": "ValidationException",
+                        "Message": 'Could not find model "foobar".',
+                    }
+                },
+                "DeleteModel",
+            ),
+        ),
+        mocker.patch.object(
+            EndpointOrchestrator,
+            "deprovision_auxiliary_data",
+        ),
+    ]
+
+    orchestrator.clean_up_resources()
+
+    # assert all called
+    for mock_method in mock_clean_up_methods:
+        mock_method.assert_called_once()

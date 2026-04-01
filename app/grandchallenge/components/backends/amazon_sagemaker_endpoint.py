@@ -1,4 +1,5 @@
 import boto3
+from botocore.exceptions import ClientError
 from django.conf import settings
 
 from grandchallenge.components.backends.amazon_sagemaker_training import (
@@ -181,3 +182,48 @@ class EndpointOrchestrator:
         self._sagemaker_client.delete_endpoint(
             EndpointName=self._endpoint_name
         )
+
+    def clean_up_resources(self):
+        errors = []
+
+        def attempt(method, error_note):
+            try:
+                method()
+            except Exception as error:
+                if (
+                    isinstance(error, ClientError)
+                    and error.response["Error"]["Code"]
+                    == "ValidationException"
+                    and "Could not find" in error.response["Error"]["Message"]
+                ):
+                    pass  # Nothing to clean up
+                else:
+                    error.add_note(error_note)
+                    errors.append(error)
+
+        attempt(
+            self.delete_endpoint,
+            "Occurred while attempting to delete endpoint",
+        )
+        attempt(
+            self.delete_endpoint_config,
+            "Occurred while attempting to delete endpoint configuration",
+        )
+        attempt(
+            self.delete_sagemaker_model,
+            "Occurred while attempting to delete model",
+        )
+
+        try:
+            self.deprovision_auxiliary_data()
+        except Exception as error:
+            error.add_note(
+                "Occurred while attempting to delete auxiliary data"
+            )
+            errors.append(error)
+
+        if errors:
+            raise ExceptionGroup(
+                "Error(s) occurred while cleaning up endpoint resources",
+                errors,
+            )

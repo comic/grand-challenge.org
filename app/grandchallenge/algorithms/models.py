@@ -1511,10 +1511,7 @@ class OptionalHangingProtocolAlgorithm(models.Model):
 
 
 class EndpointStatusChoices(TextChoices):
-    PENDING = auto(), _("Queued")
-    PROVISIONING = auto(), _("Provisioning")
-    PROVISIONED = auto(), _("Provisioned")
-    STARTING = auto(), _("Starting")
+    QUEUED = auto(), _("Queued")
     RUNNING = auto(), _("Running")
     STOPPED = auto(), _("Stopped")
     FAILED = auto(), _("Failed")
@@ -1522,10 +1519,7 @@ class EndpointStatusChoices(TextChoices):
     @classmethod
     def get_active_choices(cls):
         return {
-            cls.PENDING,
-            cls.PROVISIONING,
-            cls.PROVISIONED,
-            cls.STARTING,
+            cls.QUEUED,
             cls.RUNNING,
         }
 
@@ -1549,8 +1543,9 @@ class Endpoint(UUIDModel):
     status = models.CharField(
         max_length=17,
         choices=EndpointStatusChoices,
-        default=EndpointStatusChoices.PENDING,
+        default=EndpointStatusChoices.QUEUED,
     )
+    error_message = models.CharField(max_length=1024, default="")
     requires_gpu_type = models.CharField(
         editable=False,
         max_length=4,
@@ -1621,6 +1616,14 @@ class Endpoint(UUIDModel):
         return f"{settings.COMPONENTS_REGISTRY_PREFIX}-alg-endp-{self.pk}"
 
     @property
+    def task_kwargs(self):
+        return {
+            "app_label": self._meta.app_label,
+            "model_name": self._meta.model_name,
+            "pk": self.pk,
+        }
+
+    @property
     def orchestrator(self):
         try:
             extra_kwargs = {"algorithm_model": self.algorithm_model.model}
@@ -1636,6 +1639,19 @@ class Endpoint(UUIDModel):
             api_method=self.algorithm_image.api_method,
             **extra_kwargs,
         )
+
+    def update_status(
+        self,
+        *,
+        status,
+        error_message="",
+    ):
+        self.status = status
+
+        if error_message:
+            self.error_message = error_message[:1024]
+
+        self.save()
 
 
 class EndpointUserObjectPermission(UserObjectPermissionBase):
