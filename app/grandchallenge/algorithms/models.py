@@ -30,9 +30,6 @@ from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
     EndpointOrchestrator,
 )
-from grandchallenge.components.backends.base import (
-    list_and_delete_objects_from_prefix,
-)
 from grandchallenge.components.models import (  # noqa: F401
     APIMethodChoices,
     CIVForObjectMixin,
@@ -1623,28 +1620,6 @@ class Endpoint(UUIDModel):
             requires_memory_gb=self.requires_memory_gb,
             api_method=self.algorithm_image.api_method,
             algorithm_model=self.algorithm_model,
-        )
-
-    # TODO: move to orchestrator
-    def provision_auxiliary_data(self):
-        if self.algorithm_model:
-            self._s3_client.copy(
-                CopySource={
-                    "Bucket": settings.PROTECTED_S3_STORAGE_KWARGS[
-                        "bucket_name"
-                    ],
-                    "Key": str(self.algorithm_model.model),
-                },
-                Bucket=settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME,
-                Key=self._algorithm_model_key,
-            )
-
-    # TODO: move to orchestrator
-    def deprovision_auxiliary_data(self):
-        list_and_delete_objects_from_prefix(
-            s3_client=self._s3_client,
-            bucket=settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME,
-            prefix=self._auxiliary_data_prefix,
         )
 
 
