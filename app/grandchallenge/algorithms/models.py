@@ -1520,6 +1520,16 @@ class EndpointStatusChoices(TextChoices):
     STOPPED = auto(), _("Stopped")
     FAILED = auto(), _("Failed")
 
+    @classmethod
+    def get_active_choices(cls):
+        return {
+            cls.PENDING,
+            cls.PROVISIONING,
+            cls.PROVISIONED,
+            cls.STARTING,
+            cls.RUNNING,
+        }
+
 
 class Endpoint(UUIDModel):
     StatusChoices = EndpointStatusChoices
@@ -1536,7 +1546,7 @@ class Endpoint(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    max_duration = models.DurationField(default=timedelta(minutes=10))
+    maximum_duration = models.DurationField(default=timedelta(minutes=10))
     status = models.CharField(
         max_length=17,
         choices=EndpointStatusChoices,

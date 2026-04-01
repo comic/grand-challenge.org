@@ -1,10 +1,22 @@
+from datetime import timedelta
+
 import pytest
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 
+from grandchallenge.algorithms.models import EndpointStatusChoices
 from grandchallenge.workstations.models import Session, Workstation
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    EndpointFactory,
+    ReaderStudyAlgorithmImplementationFactory,
+)
 from tests.factories import SessionFactory, UserFactory, WorkstationFactory
+from tests.reader_studies_tests.factories import (
+    QuestionFactory,
+    ReaderStudyFactory,
+)
 from tests.workstations_tests.factories import FeedbackFactory
 
 
@@ -198,3 +210,78 @@ def test_clean_skips_validation_if_not_started(running_session):
 @pytest.mark.django_db
 def test_clean_excludes_self(running_session):
     running_session.clean()  # should not conflict with itself
+
+
+@pytest.mark.django_db
+def test_session_updates_correct_endpoints():
+    user = UserFactory()
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    implementation = ReaderStudyAlgorithmImplementationFactory(
+        algorithm=algorithm_image.algorithm
+    )
+    reader_study = ReaderStudyFactory()
+    question = QuestionFactory(reader_study=reader_study)
+    question.algorithms.add(implementation)
+
+    session = SessionFactory(creator=user)
+    reader_study.workstation_sessions.add(session)
+
+    user_implementation_endpoint = EndpointFactory(
+        creator=user, algorithm_image=algorithm_image
+    )
+    other_user_implementation_endpoint = EndpointFactory(
+        algorithm_image=algorithm_image
+    )
+    users_other_endpoint = EndpointFactory(creator=user)
+    other_endpoint = EndpointFactory()
+
+    user_implementation_endpoint_inactive = EndpointFactory(
+        creator=user,
+        algorithm_image=algorithm_image,
+        status=EndpointStatusChoices.STOPPED,
+    )
+    other_user_implementation_endpoint_inactive = EndpointFactory(
+        algorithm_image=algorithm_image, status=EndpointStatusChoices.STOPPED
+    )
+    users_other_endpoint_inactive = EndpointFactory(
+        creator=user, status=EndpointStatusChoices.STOPPED
+    )
+    other_endpoint_inactive = EndpointFactory(
+        status=EndpointStatusChoices.STOPPED
+    )
+
+    new_duration = timedelta(minutes=1337)
+
+    session.maximum_duration = new_duration
+    session.save()
+
+    user_implementation_endpoint.refresh_from_db()
+    other_user_implementation_endpoint.refresh_from_db()
+    users_other_endpoint.refresh_from_db()
+    other_endpoint.refresh_from_db()
+    user_implementation_endpoint_inactive.refresh_from_db()
+    other_user_implementation_endpoint_inactive.refresh_from_db()
+    users_other_endpoint_inactive.refresh_from_db()
+    other_endpoint_inactive.refresh_from_db()
+
+    assert user_implementation_endpoint.maximum_duration == new_duration
+    assert other_user_implementation_endpoint.maximum_duration == timedelta(
+        minutes=10
+    )
+    assert users_other_endpoint.maximum_duration == timedelta(minutes=10)
+    assert other_endpoint.maximum_duration == timedelta(minutes=10)
+    assert user_implementation_endpoint_inactive.maximum_duration == timedelta(
+        minutes=10
+    )
+    assert (
+        other_user_implementation_endpoint_inactive.maximum_duration
+        == timedelta(minutes=10)
+    )
+    assert users_other_endpoint_inactive.maximum_duration == timedelta(
+        minutes=10
+    )
+    assert other_endpoint_inactive.maximum_duration == timedelta(minutes=10)
