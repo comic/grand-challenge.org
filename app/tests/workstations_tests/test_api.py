@@ -5,8 +5,17 @@ import pytest
 from django.utils.timezone import now
 
 from grandchallenge.workstations.models import Feedback
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    EndpointFactory,
+    ReaderStudyAlgorithmImplementationFactory,
+)
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import SessionFactory, UserFactory, WorkstationFactory
+from tests.reader_studies_tests.factories import (
+    QuestionFactory,
+    ReaderStudyFactory,
+)
 from tests.utils import get_view_for_user
 from tests.workstations_tests.factories import FeedbackFactory
 
@@ -100,6 +109,48 @@ def test_session_update_extends_timeout(client):
     s.refresh_from_db()
     # Just check that it changed from the default
     assert s.maximum_duration != timedelta(minutes=10)
+
+
+@pytest.mark.django_db
+def test_session_update_extends_timeout_of_endpoint(client):
+    user = UserFactory()
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    implementation = ReaderStudyAlgorithmImplementationFactory(
+        algorithm=algorithm_image.algorithm
+    )
+    reader_study = ReaderStudyFactory()
+    question = QuestionFactory(reader_study=reader_study)
+    question.algorithms.add(implementation)
+
+    session = SessionFactory(creator=user)
+    reader_study.workstation_sessions.add(session)
+
+    endpoint = EndpointFactory(creator=user, algorithm_image=algorithm_image)
+
+    assert session.maximum_duration == timedelta(minutes=10)
+    assert endpoint.maximum_duration == timedelta(minutes=10)
+
+    response = get_view_for_user(
+        client=client,
+        method=client.patch,
+        viewname="api:session-keep-alive",
+        reverse_kwargs={"pk": session.pk},
+        user=user,
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+
+    session.refresh_from_db()
+    endpoint.refresh_from_db()
+    # Just check that it changed from the default
+    assert session.maximum_duration != timedelta(minutes=10)
+    assert endpoint.maximum_duration != timedelta(minutes=10)
+    assert session.maximum_duration == endpoint.maximum_duration
 
 
 @pytest.mark.django_db

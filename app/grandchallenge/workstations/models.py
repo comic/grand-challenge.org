@@ -618,11 +618,25 @@ class Session(FieldChangeMixin, UUIDModel):
                 duration=now() - self.created,
             )
 
+        if self.has_changed("maximum_duration"):
+            self.handle_maximum_duration_changed()
+
     def handle_reader_study_switching(self, *, reader_study):
         reader_study.workstation_sessions.add(self)
 
         if reader_study.questions_with_interactive_algorithm.exists():
             on_commit(preload_interactive_algorithms.apply_async)
+
+    def handle_maximum_duration_changed(self):
+        from grandchallenge.algorithms.models import Endpoint
+
+        for endpoint in Endpoint.objects.filter(
+            creator=self.creator,
+            algorithm_image__algorithm__reader_study_algorithm_implementations__questions__reader_study__workstation_sessions=self,
+            status__in=Endpoint.StatusChoices.get_active_choices(),
+        ).distinct():
+            endpoint.maximum_duration = self.maximum_duration
+            endpoint.save()
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):

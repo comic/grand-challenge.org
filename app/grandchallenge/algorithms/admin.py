@@ -358,7 +358,7 @@ class EndpointAdmin(admin.ModelAdmin):
         "created",
         "algorithm",
         "creator",
-        "max_duration",
+        "maximum_duration",
         "requires_gpu_type",
         "requires_memory_gb",
         "status",
