@@ -276,13 +276,10 @@ def filter_by_permission(  # noqa  C901
             .values_list("pk", flat=True)
         )
         return queryset.filter(pk__in=pks)
-
     elif group_filter_required and not only_consider_user_permissions:
         return queryset.filter(**group_filter_kwargs).distinct()
-
     elif user_filter_required:
         return queryset.filter(**user_filter_kwargs)
-    
     else:
         raise ImproperlyConfigured(
             f"No filter required for filtering this queryset by {codename}. "
