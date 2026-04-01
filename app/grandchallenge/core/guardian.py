@@ -175,7 +175,7 @@ class GroupObjectPermissionBase(GroupObjectPermissionBaseOrig):
         ]
 
 
-def filter_by_permission( # noqa  C901
+def filter_by_permission(  # noqa  C901
     *,
     queryset,
     user,
@@ -277,17 +277,18 @@ def filter_by_permission( # noqa  C901
         )
         return queryset.filter(pk__in=pks)
 
-    if group_filter_required and not only_consider_user_permissions:
+    elif group_filter_required and not only_consider_user_permissions:
         return queryset.filter(**group_filter_kwargs).distinct()
 
-    if user_filter_required:
+    elif user_filter_required:
         return queryset.filter(**user_filter_kwargs)
-
-    raise ImproperlyConfigured(
-        f"No filter required for filtering this queryset by {codename}. "
-        "Please ensure this is set in allowed_permissions on "
-        f"{dfk_group_model.__class__} or {dfk_user_model.__class__}."
-    )
+    
+    else:
+        raise ImproperlyConfigured(
+            f"No filter required for filtering this queryset by {codename}. "
+            "Please ensure this is set in allowed_permissions on "
+            f"{dfk_group_model.__class__} or {dfk_user_model.__class__}."
+        )
 
 
 def get_object_if_allowed(*, model, pk, user, codename):
