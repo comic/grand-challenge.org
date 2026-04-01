@@ -30,6 +30,7 @@ class EndpointOrchestrator:
             algorithm_model=algorithm_model,
         )
         self._endpoint_name = endpoint_name
+        self._exec_image_repo_tag = exec_image_repo_tag
 
         self.__sagemaker_runtime_client = None
 
@@ -90,6 +91,26 @@ class EndpointOrchestrator:
             return self._instance_type.nvme_volume_size
         else:
             return 30
+
+    def create_sagemaker_model(self):
+        self._sagemaker_client.create_model(
+            ModelName=self._endpoint_name,
+            ExecutionRoleArn=settings.ALGORITHM_ENDPOINTS_EXECUTION_ROLE_ARN,
+            PrimaryContainer={
+                "Image": self._exec_image_repo_tag,
+                "Environment": self._model_environment,
+                "Mode": "SingleModel",
+            },
+            VpcConfig={
+                "SecurityGroupIds": [
+                    settings.ALGORITHM_ENDPOINTS_SECURITY_GROUP_ID
+                ],
+                "Subnets": settings.ALGORITHM_ENDPOINTS_SUBNETS,
+            },
+        )
+
+    def delete_sagemaker_model(self):
+        self._sagemaker_client.delete_model(ModelName=self._endpoint_name)
 
     def create_endpoint_config(self):
         self._sagemaker_client.create_endpoint_config(

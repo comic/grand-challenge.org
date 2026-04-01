@@ -87,6 +87,57 @@ class TestEndpointOrchestratorProperties:
         )
 
 
+def test_endpoint_create_sagemaker_model(settings):
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+    settings.ALGORITHM_ENDPOINTS_EXECUTION_ROLE_ARN = "test_execution_role_arn"
+    settings.ALGORITHM_ENDPOINTS_SECURITY_GROUP_ID = "test_security_group_id"
+    settings.ALGORITHM_ENDPOINTS_SUBNETS = ["test_subnet1", "test_subnet2"]
+    endpoint = EndpointFactory.build()
+    orchestrator = endpoint.orchestrator
+
+    with Stubber(orchestrator._sagemaker_client) as stubber:
+        stubber.add_response(
+            method="create_model",
+            service_response={"ModelArn": "some_model_arn_for_testing"},
+            expected_params={
+                "ModelName": endpoint.endpoint_name,
+                "ExecutionRoleArn": "test_execution_role_arn",
+                "PrimaryContainer": {
+                    "Image": str(endpoint.algorithm_image.shimmed_repo_tag),
+                    "Environment": orchestrator._model_environment,
+                    "Mode": "SingleModel",
+                },
+                "VpcConfig": {
+                    "SecurityGroupIds": ["test_security_group_id"],
+                    "Subnets": ["test_subnet1", "test_subnet2"],
+                },
+            },
+        )
+
+        orchestrator.create_sagemaker_model()
+
+        stubber.assert_no_pending_responses()
+
+
+def test_endpoint_delete_sagemaker_model(settings):
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+    endpoint = EndpointFactory.build()
+    orchestrator = endpoint.orchestrator
+
+    with Stubber(orchestrator._sagemaker_client) as stubber:
+        stubber.add_response(
+            method="delete_model",
+            service_response={},
+            expected_params={
+                "ModelName": endpoint.endpoint_name,
+            },
+        )
+
+        orchestrator.delete_sagemaker_model()
+
+        stubber.assert_no_pending_responses()
+
+
 def test_endpoint_create_endpoint_config(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
     endpoint = EndpointFactory.build()
