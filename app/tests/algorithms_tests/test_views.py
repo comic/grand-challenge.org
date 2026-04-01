@@ -39,7 +39,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     AlgorithmPermissionRequestFactory,
-    InteractiveAlgorithmFactory,
+    ReaderStudyAlgorithmImplementationFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
 from tests.components_tests.factories import (
@@ -2548,7 +2548,7 @@ def test_algorithm_users_list_is_filtered(client):
 
 
 @pytest.mark.django_db
-def test_interactive_algorithm_interfaces_locked(client):
+def test_algorithm_implementation_interfaces_locked(client):
     algorithm = AlgorithmFactory()
     editor = UserFactory()
     algorithm.add_editor(editor)
@@ -2579,7 +2579,7 @@ def test_interactive_algorithm_interfaces_locked(client):
 
     assert response.status_code == 200
 
-    InteractiveAlgorithmFactory(algorithm=algorithm)
+    ReaderStudyAlgorithmImplementationFactory(algorithm=algorithm)
 
     response = get_view_for_user(
         viewname="algorithms:interface-create",

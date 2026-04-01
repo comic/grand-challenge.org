@@ -9,12 +9,12 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     AlgorithmUserCredit,
     Endpoint,
-    InteractiveAlgorithm,
     Job,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
-from grandchallenge.reader_studies.interactive_algorithms import (
-    InteractiveAlgorithmChoices,
+from grandchallenge.reader_studies.models import (
+    ReaderStudyAlgorithmChoices,
+    ReaderStudyAlgorithmImplementation,
 )
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -112,14 +112,14 @@ class AlgorithmInterfaceFactory(factory.django.DjangoModelFactory):
         return manager.create(*args, inputs=inputs, outputs=outputs, **kwargs)
 
 
-class InteractiveAlgorithmFactory(factory.django.DjangoModelFactory):
+class ReaderStudyAlgorithmImplementationFactory(
+    factory.django.DjangoModelFactory
+):
     class Meta:
-        model = InteractiveAlgorithm
+        model = ReaderStudyAlgorithmImplementation
 
     algorithm = factory.SubFactory(AlgorithmFactory)
-    interactive_algorithm_choice = Faker().random_element(
-        InteractiveAlgorithmChoices
-    )
+    algorithm_choice = Faker().random_element(ReaderStudyAlgorithmChoices)
 
 
 class EndpointFactory(factory.django.DjangoModelFactory):

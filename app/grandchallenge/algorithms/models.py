@@ -64,10 +64,6 @@ from grandchallenge.hanging_protocols.models import HangingProtocolMixin
 from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
-from grandchallenge.reader_studies.interactive_algorithms import (
-    InteractiveAlgorithmChoices,
-)
-from grandchallenge.reader_studies.models import DisplaySet
 from grandchallenge.subdomains.utils import reverse
 from grandchallenge.utilization.models import JobUtilization
 from grandchallenge.workstations.models import Workstation
@@ -397,7 +393,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
 
     @property
     def algorithm_interfaces_locked(self):
-        if self.interactive_algorithms.exists():
+        if self.reader_study_algorithm_implementations.exists():
             return True
         else:
             return False
@@ -405,7 +401,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
     @property
     def algorithm_interfaces_locked_message(self):
         return (
-            "Interfaces cannot be changed because this is an interactive algorithm. "
+            "Interfaces cannot be changed because this is an implementation of a reader study algorithm. "
             "Please contact support if this algorithm requires changes to its "
             "interfaces."
         )
@@ -950,11 +946,11 @@ class AlgorithmImage(UUIDModel, ComponentImage):
 
     def mark_desired_version(self):
         if (
-            self.algorithm.interactive_algorithms.exists()
+            self.algorithm.reader_study_algorithm_implementations.exists()
             and self.api_method != APIMethodChoices.INVOKE
         ):
             raise ValidationError(
-                "Only algorithm images that implement the invoke API can be activated because this is an interactive algorithm."
+                "Only algorithm images that implement the invoke API can be activated because this is an implementation of a reader study algorithm."
             )
         super().mark_desired_version()
 
@@ -1385,6 +1381,8 @@ class Job(CIVForObjectMixin, ComponentJob):
 
     def get_or_create_display_set(self, *, reader_study):
         """Get or create a display set from this job for a reader study"""
+        from grandchallenge.reader_studies.models import DisplaySet
+
         if self.status != self.SUCCESS:
             raise RuntimeError(
                 "Display sets can only be created from successful jobs"
@@ -1511,38 +1509,6 @@ class OptionalHangingProtocolAlgorithm(models.Model):
 
     class Meta:
         unique_together = (("algorithm", "hanging_protocol"),)
-
-
-class InteractiveAlgorithm(UUIDModel):
-    algorithm = models.ForeignKey(
-        Algorithm,
-        on_delete=models.PROTECT,
-        related_name="interactive_algorithms",
-    )
-    interactive_algorithm_choice = models.CharField(
-        choices=InteractiveAlgorithmChoices,
-        max_length=32,
-        unique=True,
-    )
-
-    class Meta:
-        constraints = [
-            models.CheckConstraint(
-                condition=models.Q(
-                    interactive_algorithm_choice__in=InteractiveAlgorithmChoices.values
-                ),
-                name="interactive_algorithm_choice_valid",
-            )
-        ]
-
-    def clean(self):
-        super().clean()
-        if not self.algorithm.active_image:
-            raise ValidationError("Algorithm has no active image")
-        if self.algorithm.active_image.api_method != APIMethodChoices.INVOKE:
-            raise ValidationError(
-                "Active algorithm image does not use the INVOKE api method"
-            )
 
 
 class EndpointStatusChoices(TextChoices):

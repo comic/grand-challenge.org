@@ -23,7 +23,6 @@ from grandchallenge.algorithms.models import (
     Endpoint,
     EndpointGroupObjectPermission,
     EndpointUserObjectPermission,
-    InteractiveAlgorithm,
     Job,
     JobGroupObjectPermission,
     JobUserObjectPermission,
@@ -384,7 +383,6 @@ class EndpointAdmin(admin.ModelAdmin):
         return False
 
 
-admin.site.register(InteractiveAlgorithm, ModelAdmin)
 admin.site.register(AlgorithmUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(AlgorithmGroupObjectPermission, GroupObjectPermissionAdmin)
 admin.site.register(

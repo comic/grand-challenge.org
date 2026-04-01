@@ -22,8 +22,10 @@ from guardian.shortcuts import assign_perm, remove_perm
 from pictures.models import PictureField
 from referencing.exceptions import Unresolvable
 
+from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
+    APIMethodChoices,
     CIVForObjectMixin,
     CIVSetObjectPermissionsMixin,
     CIVSetStringRepresentationMixin,
@@ -1353,6 +1355,44 @@ IMAGE_PORT_TO_VIEWPORT_NAME = {
 }
 
 
+class ReaderStudyAlgorithmChoices(models.TextChoices):
+    ULS23_BASELINE = "uls23-baseline", "ULS23 Baseline"
+
+
+class ReaderStudyAlgorithmImplementation(UUIDModel):
+    algorithm = models.ForeignKey(
+        Algorithm,
+        on_delete=models.PROTECT,
+        related_name="reader_study_algorithm_implementations",
+    )
+    algorithm_choice = models.CharField(
+        choices=ReaderStudyAlgorithmChoices,
+        max_length=32,
+        unique=True,
+    )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(
+                    algorithm_choice__in=ReaderStudyAlgorithmChoices.values
+                ),
+                name="algorithm_choice_valid",
+            )
+        ]
+
+    def clean(self):
+        super().clean()
+
+        if not self.algorithm.active_image:
+            raise ValidationError("Algorithm has no active image")
+
+        if self.algorithm.active_image.api_method != APIMethodChoices.INVOKE:
+            raise ValidationError(
+                "Active algorithm image does not use the INVOKE api method"
+            )
+
+
 class Question(UUIDModel, OverlaySegmentsMixin):
     AnswerType = AnswerType
     ImagePort = ImagePort
@@ -1415,6 +1455,11 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         max_length=32,
         blank=True,
         help_text="Which interactive algorithm should be used for this question?",
+    )
+    algorithms = models.ManyToManyField(
+        to=ReaderStudyAlgorithmImplementation,
+        related_name="questions",
+        through="reader_studies.QuestionReaderStudyAlgorithmImplementation",
     )
     answer_max_value = models.SmallIntegerField(
         null=True,
@@ -1871,6 +1916,16 @@ class QuestionGroupObjectPermission(GroupObjectPermissionBase):
     allowed_permissions = frozenset({"view_question"})
 
     content_object = models.ForeignKey(Question, on_delete=models.CASCADE)
+
+
+class QuestionReaderStudyAlgorithmImplementation(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    algorithm_implementation = models.ForeignKey(
+        ReaderStudyAlgorithmImplementation, on_delete=models.CASCADE
+    )
+
+    class Meta:
+        unique_together = (("question", "algorithm_implementation"),)
 
 
 class CategoricalOption(models.Model):
