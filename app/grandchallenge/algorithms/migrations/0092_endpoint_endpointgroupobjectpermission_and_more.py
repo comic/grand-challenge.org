@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
                 ("created", models.DateTimeField(auto_now_add=True)),
                 ("modified", models.DateTimeField(auto_now=True)),
                 (
-                    "max_duration",
+                    "maximum_duration",
                     models.DurationField(
                         default=datetime.timedelta(seconds=600)
                     ),
