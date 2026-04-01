@@ -175,46 +175,7 @@ class GroupObjectPermissionBase(GroupObjectPermissionBaseOrig):
         ]
 
 
-def _apply_permission_filter(
-    *,
-    queryset,
-    group_filter_required,
-    user_filter_required,
-    group_filter_kwargs,
-    user_filter_kwargs,
-    codename,
-    dfk_group_model,
-    dfk_user_model,
-    only_consider_group_permissions,
-    only_consider_user_permissions,
-):
-    if (
-        group_filter_required
-        and user_filter_required
-        and not only_consider_group_permissions
-        and not only_consider_user_permissions
-    ):
-        pks = (
-            queryset.filter(**user_filter_kwargs)
-            .union(queryset.filter(**group_filter_kwargs))
-            .values_list("pk", flat=True)
-        )
-        return queryset.filter(pk__in=pks)
-
-    if group_filter_required and not only_consider_user_permissions:
-        return queryset.filter(**group_filter_kwargs).distinct()
-
-    if user_filter_required:
-        return queryset.filter(**user_filter_kwargs)
-
-    raise ImproperlyConfigured(
-        f"No filter required for filtering this queryset by {codename}. "
-        "Please ensure this is set in allowed_permissions on "
-        f"{dfk_group_model.__class__} or {dfk_user_model.__class__}."
-    )
-
-
-def filter_by_permission(
+def filter_by_permission( # noqa  C901
     *,
     queryset,
     user,
@@ -303,17 +264,29 @@ def filter_by_permission(
         f"{user_related_query_name}__permission": permission,
     }
 
-    return _apply_permission_filter(
-        queryset=queryset,
-        group_filter_required=group_filter_required,
-        user_filter_required=user_filter_required,
-        group_filter_kwargs=group_filter_kwargs,
-        user_filter_kwargs=user_filter_kwargs,
-        codename=codename,
-        dfk_group_model=dfk_group_model,
-        dfk_user_model=dfk_user_model,
-        only_consider_group_permissions=only_consider_group_permissions,
-        only_consider_user_permissions=only_consider_user_permissions,
+    if (
+        group_filter_required
+        and user_filter_required
+        and not only_consider_group_permissions
+        and not only_consider_user_permissions
+    ):
+        pks = (
+            queryset.filter(**user_filter_kwargs)
+            .union(queryset.filter(**group_filter_kwargs))
+            .values_list("pk", flat=True)
+        )
+        return queryset.filter(pk__in=pks)
+
+    if group_filter_required and not only_consider_user_permissions:
+        return queryset.filter(**group_filter_kwargs).distinct()
+
+    if user_filter_required:
+        return queryset.filter(**user_filter_kwargs)
+
+    raise ImproperlyConfigured(
+        f"No filter required for filtering this queryset by {codename}. "
+        "Please ensure this is set in allowed_permissions on "
+        f"{dfk_group_model.__class__} or {dfk_user_model.__class__}."
     )
 
 

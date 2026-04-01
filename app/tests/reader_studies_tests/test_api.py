@@ -226,7 +226,7 @@ def test_answer_update(client):
         data={"answer": False},
         content_type="application/json",
     )
-    assert response.status_code == 404
+    assert response.status_code == 403
 
     answer.refresh_from_db()
     assert answer.answer is False
