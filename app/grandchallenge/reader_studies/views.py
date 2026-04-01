@@ -696,17 +696,41 @@ class ReaderStudyCopy(
             for editor in reader_study.editors_group.user_set.all():
                 rs.add_editor(editor)
         if form.cleaned_data["copy_questions"]:
-            for question in reader_study.questions.all():
-                q = Question.objects.create(
+            question_many_to_many_fields = {
+                field.name
+                for field in Question._meta.get_fields()
+                if field.many_to_many
+            }
+            question_many_to_many_fields_to_copy = {
+                field
+                for field in Question.copy_fields
+                if field in question_many_to_many_fields
+            }
+            question_other_fields_to_copy = {
+                field
+                for field in Question.copy_fields
+                if field not in question_many_to_many_fields
+            }
+
+            for old_question in reader_study.questions.all():
+                new_question = Question.objects.create(
                     reader_study=rs,
                     **{
-                        field: getattr(question, field)
-                        for field in Question.copy_fields
+                        field: getattr(old_question, field)
+                        for field in question_other_fields_to_copy
                     },
                 )
-                for option in question.options.all():
+
+                for field in question_many_to_many_fields_to_copy:
+                    getattr(new_question, field).set(
+                        getattr(old_question, field).all()
+                    )
+
+                for option in old_question.options.all():
                     CategoricalOption.objects.create(
-                        question=q, title=option.title, default=option.default
+                        question=new_question,
+                        title=option.title,
+                        default=option.default,
                     )
         rs.save()
         self.reader_study = rs

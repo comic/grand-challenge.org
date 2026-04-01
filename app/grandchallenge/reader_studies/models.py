@@ -1531,6 +1531,7 @@ class Question(UUIDModel, OverlaySegmentsMixin):
         "overlay_segments",
         "widget",
         "interactive_algorithm",
+        "algorithms",
         "answer_max_value",
         "answer_min_value",
         "answer_step_size",

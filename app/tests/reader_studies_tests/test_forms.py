@@ -74,6 +74,9 @@ from grandchallenge.uploads.widgets import (
     UserUploadSingleWidget,
 )
 from grandchallenge.workstation_configs.models import LookUpTable
+from tests.algorithms_tests.factories import (
+    ReaderStudyAlgorithmImplementationFactory,
+)
 from tests.anatomy_tests.factories import BodyStructureFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
@@ -642,7 +645,6 @@ question_non_copy_fields = {
     "created",
     "modified",
     "reader_study",
-    "algorithms",  # TODO: need to implement copying m2m fields
     "questionreaderstudyalgorithmimplementation",
 }
 
@@ -1045,6 +1047,7 @@ def reader_study_with_question():
         empty_answer_confirmation=True,
         empty_answer_confirmation_label="test",
     )
+    question.algorithms.add(ReaderStudyAlgorithmImplementationFactory())
     CategoricalOptionFactory(question=question, title="option1")
     AnswerFactory(question=question)
     return rs
