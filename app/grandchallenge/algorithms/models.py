@@ -1625,6 +1625,7 @@ class Endpoint(UUIDModel):
             algorithm_model=self.algorithm_model,
         )
 
+    # TODO: move to orchestrator
     def provision_auxiliary_data(self):
         if self.algorithm_model:
             self._s3_client.copy(
@@ -1638,6 +1639,7 @@ class Endpoint(UUIDModel):
                 Key=self._algorithm_model_key,
             )
 
+    # TODO: move to orchestrator
     def deprovision_auxiliary_data(self):
         list_and_delete_objects_from_prefix(
             s3_client=self._s3_client,
