@@ -282,7 +282,7 @@ def filter_by_permission(  # noqa  C901
         return queryset.filter(**user_filter_kwargs)
     else:
         raise ImproperlyConfigured(
-            f"No filter required for filtering this queryset by {codename}. "
+            f"No filter required for filtering this queryset by {permission.codename}. "
             "Please ensure this is set in allowed_permissions on "
             f"{dfk_group_model.__class__} or {dfk_user_model.__class__}."
         )
