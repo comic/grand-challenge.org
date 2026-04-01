@@ -42,16 +42,12 @@ htmx.onLoad(elem => {
         `label[for*="${interfaceFieldMarker}"]`,
     );
 
-    const uniqueInterfaceSlugs = [
-        ...new Set(
-            Array.from(labels).map(label => {
-                const forAttr = label.htmlFor;
-                const markerIndex = forAttr.indexOf(interfaceFieldMarker);
-                const start = markerIndex + interfaceFieldMarker.length;
-                return forAttr.slice(start);
-            }),
-        ),
-    ];
+    const slugs = [];
+    for (const label of labels) {
+        const slug = label.htmlFor.split(interfaceFieldMarker)[1];
+        slugs.push(slug);
+    }
+    const uniqueInterfaceSlugs = [...new Set(slugs)];
 
     for (const interfaceSlug of uniqueInterfaceSlugs) {
         forwards.push({
