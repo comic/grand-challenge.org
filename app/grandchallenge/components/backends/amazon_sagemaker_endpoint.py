@@ -19,7 +19,7 @@ class EndpointOrchestrator:
         requires_gpu_type,
         requires_memory_gb,
         api_method,
-        algorithm_model_file,
+        algorithm_model_file=None,
     ):
         self._executor = AmazonSageMakerTrainingExecutor(
             job_id=endpoint_id,
@@ -30,6 +30,7 @@ class EndpointOrchestrator:
             use_warm_pool=False,
             signing_key=b"",  # TODO add signing key to endpoint model
             api_method=api_method,
+            algorithm_model=algorithm_model_file,
         )
         self._endpoint_name = endpoint_name
         self._exec_image_repo_tag = exec_image_repo_tag
