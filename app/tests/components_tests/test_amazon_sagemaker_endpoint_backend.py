@@ -87,6 +87,60 @@ class TestEndpointOrchestratorProperties:
         )
 
 
+def test_endpoint_provision_auxiliary_data(settings):
+    settings.PROTECTED_S3_STORAGE_KWARGS = {
+        "bucket_name": "from_protected_storage"
+    }
+    settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = "to_endpoint_io"
+    endpoint = EndpointFactory.build()
+    orchestrator = endpoint.orchestrator
+
+    with Stubber(orchestrator._s3_client) as stubber:
+        stubber.add_response(
+            method="head_object",
+            service_response={"ContentLength": 3},
+            expected_params={
+                "Bucket": "from_protected_storage",
+                "Key": str(endpoint.algorithm_model.model),
+            },
+        )
+        stubber.add_response(
+            method="copy_object",
+            service_response={},
+            expected_params={
+                "CopySource": {
+                    "Bucket": "from_protected_storage",
+                    "Key": str(endpoint.algorithm_model.model),
+                },
+                "Bucket": "to_endpoint_io",
+                "Key": orchestrator._algorithm_model_key,
+            },
+        )
+
+        orchestrator.provision_auxiliary_data()
+
+        stubber.assert_no_pending_responses()
+
+
+def test_endpoint_deprovision_auxiliary_data(settings):
+    settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = "endpoint_io"
+    orchestrator = EndpointFactory.build().orchestrator
+
+    with Stubber(orchestrator._s3_client) as stubber:
+        stubber.add_response(
+            method="list_objects_v2",
+            service_response={},
+            expected_params={
+                "Bucket": "endpoint_io",
+                "Prefix": orchestrator._auxiliary_data_prefix,
+            },
+        )
+
+        orchestrator.deprovision_auxiliary_data()
+
+        stubber.assert_no_pending_responses()
+
+
 def test_endpoint_create_sagemaker_model(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
     settings.ALGORITHM_ENDPOINTS_EXECUTION_ROLE_ARN = "test_execution_role_arn"

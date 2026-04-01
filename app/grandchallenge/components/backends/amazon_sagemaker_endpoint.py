@@ -4,6 +4,9 @@ from django.conf import settings
 from grandchallenge.components.backends.amazon_sagemaker_training import (
     AmazonSageMakerTrainingExecutor,
 )
+from grandchallenge.components.backends.base import (
+    list_and_delete_objects_from_prefix,
+)
 
 
 class EndpointOrchestrator:
@@ -16,7 +19,7 @@ class EndpointOrchestrator:
         requires_gpu_type,
         requires_memory_gb,
         api_method,
-        algorithm_model,
+        algorithm_model_file,
     ):
         self._executor = AmazonSageMakerTrainingExecutor(
             job_id=endpoint_id,
@@ -27,10 +30,10 @@ class EndpointOrchestrator:
             use_warm_pool=False,
             signing_key=b"",  # TODO add signing key to endpoint model
             api_method=api_method,
-            algorithm_model=algorithm_model,
         )
         self._endpoint_name = endpoint_name
         self._exec_image_repo_tag = exec_image_repo_tag
+        self._algorithm_model_file = algorithm_model_file
 
         self.__sagemaker_runtime_client = None
 
@@ -91,6 +94,26 @@ class EndpointOrchestrator:
             return self._instance_type.nvme_volume_size
         else:
             return 30
+
+    def provision_auxiliary_data(self):
+        if self._algorithm_model_file:
+            self._s3_client.copy(
+                CopySource={
+                    "Bucket": settings.PROTECTED_S3_STORAGE_KWARGS[
+                        "bucket_name"
+                    ],
+                    "Key": str(self._algorithm_model_file),
+                },
+                Bucket=settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME,
+                Key=self._algorithm_model_key,
+            )
+
+    def deprovision_auxiliary_data(self):
+        list_and_delete_objects_from_prefix(
+            s3_client=self._s3_client,
+            bucket=settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME,
+            prefix=self._auxiliary_data_prefix,
+        )
 
     def create_sagemaker_model(self):
         self._sagemaker_client.create_model(
