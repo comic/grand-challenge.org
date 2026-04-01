@@ -36,7 +36,11 @@ from rest_framework.mixins import (
 from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 
-from grandchallenge.algorithms.filters import AlgorithmFilter, JobViewsetFilter
+from grandchallenge.algorithms.filters import (
+    AlgorithmFilter,
+    EndpointFilter,
+    JobViewsetFilter,
+)
 from grandchallenge.algorithms.forms import (
     AlgorithmAlgorithmInterfaceDeleteForm,
     AlgorithmDescriptionForm,
@@ -66,11 +70,13 @@ from grandchallenge.algorithms.models import (
     AlgorithmInterface,
     AlgorithmModel,
     AlgorithmPermissionRequest,
+    Endpoint,
     Job,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
+    EndpointSerializer,
     HyperlinkedJobSerializer,
     JobPostSerializer,
 )
@@ -909,6 +915,14 @@ class JobViewSet(
             return JobPostSerializer
         else:
             return HyperlinkedJobSerializer
+
+
+class EndpointViewSet(ReadOnlyModelViewSet):
+    queryset = Endpoint.objects.all()
+    serializer_class = EndpointSerializer
+    permission_classes = [DjangoObjectPermissions]
+    filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
+    filterset_class = EndpointFilter
 
 
 class AlgorithmPermissionRequestCreate(

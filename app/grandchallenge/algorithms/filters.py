@@ -1,8 +1,31 @@
 from django_filters import BooleanFilter, FilterSet, filters
 
-from grandchallenge.algorithms.models import Algorithm, Job
+from grandchallenge.algorithms.models import Algorithm, Endpoint, Job
 from grandchallenge.cases.models import Image
 from grandchallenge.core.filters import TitleDescriptionModalityStructureFilter
+
+
+class EndpointFilter(FilterSet):
+    algorithm = filters.ModelChoiceFilter(
+        field_name="algorithm_image__algorithm",
+        queryset=Algorithm.objects.all(),
+    )
+    status = filters.CharFilter(method="filter_status")
+
+    class Meta:
+        model = Endpoint
+        fields = ["algorithm", "status"]
+
+    def filter_status(self, queryset, name, value):
+        display_to_value = {
+            label.lower(): db_value
+            for db_value, label in Endpoint.StatusChoices.choices
+        }
+
+        try:
+            return queryset.filter(status=display_to_value[value.lower()])
+        except KeyError:
+            return queryset.none()
 
 
 class JobViewsetFilter(FilterSet):
