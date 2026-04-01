@@ -1225,6 +1225,12 @@ class AnswerViewSet(
         PaginatedCSVRenderer,
     )
 
+    def get_only_consider_group_permissions(self):
+        return self.action == "list"
+
+    def get_only_consider_user_permissions(self):
+        return self.action == "mine"
+
     def perform_create(self, serializer):
         last_edit_duration = serializer.validated_data.get(
             "last_edit_duration"

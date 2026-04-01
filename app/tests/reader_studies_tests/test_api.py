@@ -133,9 +133,6 @@ def test_answer_update(client):
     ds = DisplaySetFactory(reader_study=rs)
     ds.values.add(civ)
 
-    rs.display_sets.add()
-    rs.save()
-
     reader = UserFactory()
     rs.add_reader(reader)
 
