@@ -60,8 +60,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pictures.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">PictureField</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">referencing.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">Unresolvable</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.algorithms.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Algorithm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.anatomy.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">BodyStructure</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.components.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">APIMethodChoices</span><span class="p">,</span>
     <span class="n">CIVForObjectMixin</span><span class="p">,</span>
     <span class="n">CIVSetObjectPermissionsMixin</span><span class="p">,</span>
     <span class="n">CIVSetStringRepresentationMixin</span><span class="p">,</span>
@@ -1454,6 +1456,53 @@
 <span class="p">}</span>
 
 
+<div class="viewcode-block" id="ReaderStudyAlgorithmChoices">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyAlgorithmChoices">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReaderStudyAlgorithmChoices</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+    <span class="n">ULS23_BASELINE</span> <span class="o">=</span> <span class="s2">&quot;uls23-baseline&quot;</span><span class="p">,</span> <span class="s2">&quot;ULS23 Baseline&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ReaderStudyAlgorithmImplementation">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyAlgorithmImplementation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReaderStudyAlgorithmImplementation</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">):</span>
+    <span class="n">algorithm</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">Algorithm</span><span class="p">,</span>
+        <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">PROTECT</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;reader_study_algorithm_implementations&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">algorithm_choice</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span>
+        <span class="n">choices</span><span class="o">=</span><span class="n">ReaderStudyAlgorithmChoices</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">models</span><span class="o">.</span><span class="n">CheckConstraint</span><span class="p">(</span>
+                <span class="n">condition</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Q</span><span class="p">(</span>
+                    <span class="n">algorithm_choice__in</span><span class="o">=</span><span class="n">ReaderStudyAlgorithmChoices</span><span class="o">.</span><span class="n">values</span>
+                <span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;algorithm_choice_valid&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+
+<div class="viewcode-block" id="ReaderStudyAlgorithmImplementation.clean">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyAlgorithmImplementation.clean">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">active_image</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Algorithm has no active image&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">active_image</span><span class="o">.</span><span class="n">api_method</span> <span class="o">!=</span> <span class="n">APIMethodChoices</span><span class="o">.</span><span class="n">INVOKE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="s2">&quot;Active algorithm image does not use the INVOKE api method&quot;</span>
+            <span class="p">)</span></div>
+</div>
+
+
+
 <div class="viewcode-block" id="Question">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.Question">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Question</span><span class="p">(</span><span class="n">UUIDModel</span><span class="p">,</span> <span class="n">OverlaySegmentsMixin</span><span class="p">):</span>
@@ -1524,6 +1573,11 @@
         <span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;Which interactive algorithm should be used for this question?&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">algorithms</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span>
+        <span class="n">to</span><span class="o">=</span><span class="n">ReaderStudyAlgorithmImplementation</span><span class="p">,</span>
+        <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;questions&quot;</span><span class="p">,</span>
+        <span class="n">through</span><span class="o">=</span><span class="s2">&quot;reader_studies.QuestionReaderStudyAlgorithmImplementation&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">answer_max_value</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">SmallIntegerField</span><span class="p">(</span>
         <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -1998,6 +2052,19 @@
     <span class="n">allowed_permissions</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;view_question&quot;</span><span class="p">})</span>
 
     <span class="n">content_object</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="QuestionReaderStudyAlgorithmImplementation">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.QuestionReaderStudyAlgorithmImplementation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuestionReaderStudyAlgorithmImplementation</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">question</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Question</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">)</span>
+    <span class="n">algorithm_implementation</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span>
+        <span class="n">ReaderStudyAlgorithmImplementation</span><span class="p">,</span> <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span>
+    <span class="p">)</span>
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s2">&quot;question&quot;</span><span class="p">,</span> <span class="s2">&quot;algorithm_implementation&quot;</span><span class="p">),)</span></div>
 
 
 
