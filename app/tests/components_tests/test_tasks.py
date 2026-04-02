@@ -1514,9 +1514,7 @@ def test_start_endpoint_wrong_state_raises(mocker):
 
 @pytest.mark.parametrize("method_with_error", start_endpoint_method_names)
 @pytest.mark.django_db
-def test_start_endpoint_failure(
-    mocker, method_with_error, django_capture_on_commit_callbacks
-):
+def test_start_endpoint_failure(mocker, method_with_error):
     endpoint = EndpointFactory()
     for method_name in start_endpoint_method_names:
         if method_name == method_with_error:
@@ -1528,36 +1526,34 @@ def test_start_endpoint_failure(
             method_name,
             **kwargs,
         )
-    mock_deprovision_task_signature = mocker.patch(
-        "grandchallenge.components.tasks.deprovision_endpoint.signature",
+    mock_deprovision_method = mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
     )
 
-    with django_capture_on_commit_callbacks(execute=True):
-        start_endpoint(**endpoint.task_kwargs)
-
+    start_endpoint(**endpoint.task_kwargs)
     endpoint.refresh_from_db()
 
     assert endpoint.status == endpoint.StatusChoices.FAILED
     assert endpoint.error_message == "An unexpected error occurred"
-    mock_deprovision_task_signature.return_value.apply_async.assert_called_once()
+    mock_deprovision_method.assert_called_once()
 
 
 @pytest.mark.django_db
-def test_stop_endpoint(mocker, django_capture_on_commit_callbacks):
+def test_stop_endpoint(mocker):
     endpoint = EndpointFactory()
-    mock_deprovision_task_signature = mocker.patch(
-        "grandchallenge.components.tasks.deprovision_endpoint.signature",
+    mock_deprovision_method = mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
     )
 
     assert endpoint.status in endpoint.StatusChoices.get_active_choices()
 
-    with django_capture_on_commit_callbacks(execute=True):
-        stop_endpoint(**endpoint.task_kwargs)
-
+    stop_endpoint(**endpoint.task_kwargs)
     endpoint.refresh_from_db()
 
     assert endpoint.status == endpoint.StatusChoices.STOPPED
-    mock_deprovision_task_signature.return_value.apply_async.assert_called_once()
+    mock_deprovision_method.assert_called_once()
 
 
 @pytest.mark.django_db
