@@ -1545,7 +1545,9 @@ class Endpoint(UUIDModel):
         choices=EndpointStatusChoices,
         default=EndpointStatusChoices.QUEUED,
     )
-    error_message = models.CharField(max_length=1024, default="")
+    error_message = models.CharField(
+        max_length=1024, default="", editable=False
+    )
     requires_gpu_type = models.CharField(
         editable=False,
         max_length=4,
