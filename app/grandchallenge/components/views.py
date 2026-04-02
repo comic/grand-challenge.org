@@ -130,14 +130,8 @@ class ComponentInterfaceAutocomplete(
                 ComponentInterface.objects.all()
                 .filter(**extra_filter_kwargs)
                 .exclude(
-                    slug__in={
-                        *obj.linked_component_interfaces.values_list(
-                            "slug", flat=True
-                        ),
-                        *RESERVED_SOCKET_SLUGS,
-                    }
+                    slug__in=[*RESERVED_SOCKET_SLUGS, *self.forwarded.values()]
                 )
-                .exclude(pk__in=self.forwarded.values())
             )
 
         if self.q:
@@ -232,6 +226,7 @@ class CIVSetFormMixin:
                 "form_url": self.form_url,
                 "new_interface_url": self.new_interface_url,
                 "return_url": self.return_url,
+                "interface_form_field_prefix": INTERFACE_FORM_FIELD_PREFIX,
             }
         )
         return context
