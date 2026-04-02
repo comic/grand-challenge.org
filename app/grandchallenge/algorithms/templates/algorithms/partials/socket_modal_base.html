@@ -50,12 +50,14 @@
                         </dd>
                     {% endif %}
 
-                    {% if socket.json_kind_example %}
+                    {% if socket.has_json_kind_example %}
                         <dt>Example</dt>
                         <dd>
                             {% if socket.json_kind_example.extra_info %}
                                 {{ socket.json_kind_example.extra_info|md2html }}
                             {% endif %}
+                            {{ socket.json_kind_example_download_link }}
+                            <strong>Example JSON file contents:</strong>
                             <pre>{{ socket.json_kind_example.value|json_dumps:2 }}</pre>
                         </dd>
                     {% endif %}

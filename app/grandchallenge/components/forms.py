@@ -18,6 +18,7 @@ from django.forms import (
     ModelMultipleChoiceField,
 )
 from django.utils.functional import empty
+from django.utils.html import format_html
 from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.models import AlgorithmImage
@@ -186,6 +187,13 @@ class InterfaceFormFieldsMixin:
             "disabled": disabled,
             "label": interface.title.title(),
         }
+
+        if interface.has_json_kind_example:
+            kwargs["help_text"] = format_html(
+                "{help_text} {download_link}",
+                help_text=kwargs["help_text"],
+                download_link=interface.json_kind_example_download_link,
+            )
 
         if interface.super_kind == interface.SuperKind.IMAGE:
             if interface.is_dicom_image_kind:

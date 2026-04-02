@@ -6,6 +6,7 @@ from enum import Enum, StrEnum
 from json import JSONDecodeError
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from urllib.parse import quote
 
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from celery import signature
@@ -29,6 +30,7 @@ from django.db.transaction import on_commit
 from django.forms import ModelChoiceField
 from django.template.defaultfilters import truncatewords
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
@@ -485,11 +487,31 @@ class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
         ]
 
     @property
+    def has_json_kind_example(self):
+        """Whether this socket has an example value for json kinds. This also accounts for example values with None or False values."""
+        try:
+            _ = self.json_kind_example
+        except KeyError:
+            return False
+        else:
+            return True
+
+    @property
     def json_kind_example(self):
         try:
             return self.example_value
         except ObjectDoesNotExist:
-            return INTERFACE_KIND_JSON_EXAMPLES.get(self.kind)
+            return INTERFACE_KIND_JSON_EXAMPLES[self.kind]
+
+    @property
+    def json_kind_example_download_link(self):
+        if self.has_json_kind_example:
+            json_data = json.dumps(self.json_kind_example.value, indent=2)
+            return format_html(
+                '<a href="data:application/json;charset=utf-8,{quoted_data}" download="example-{interface_slug}.json">Download an example.</a>',
+                quoted_data=quote(json_data),
+                interface_slug=self.slug,
+            )
 
     @property
     def super_kind(self):
@@ -717,7 +739,9 @@ class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
             slug=self.slug,
             relative_path=self.relative_path,
             example_value=(
-                self.json_kind_example.value if self.is_json_kind else MISSING
+                self.json_kind_example.value
+                if self.has_json_kind_example
+                else MISSING
             ),
             is_image_kind=self.is_image_kind,
             is_panimg_kind=self.is_panimg_kind,
