@@ -630,11 +630,14 @@ class Session(FieldChangeMixin, UUIDModel):
     def handle_maximum_duration_changed(self):
         from grandchallenge.algorithms.models import Endpoint
 
-        for endpoint in Endpoint.objects.filter(
-            creator=self.creator,
-            algorithm_image__algorithm__reader_study_algorithm_implementations__questions__reader_study__workstation_sessions=self,
-            status__in=Endpoint.StatusChoices.get_active_choices(),
-        ).distinct():
+        for endpoint in (
+            Endpoint.objects.active()
+            .filter(
+                creator=self.creator,
+                algorithm_image__algorithm__reader_study_algorithm_implementations__questions__reader_study__workstation_sessions=self,
+            )
+            .distinct()
+        ):
             endpoint.maximum_duration = self.maximum_duration
             endpoint.save()
 
