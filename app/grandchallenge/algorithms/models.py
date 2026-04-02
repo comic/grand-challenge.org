@@ -1653,6 +1653,7 @@ class Endpoint(UUIDModel):
         if error_message:
             self.error_message = error_message[:1024]
 
+        self.full_clean()
         self.save()
 
 
