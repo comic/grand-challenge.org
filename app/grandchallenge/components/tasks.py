@@ -1661,8 +1661,9 @@ def start_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
         endpoint = model.objects.select_for_update(nowait=True).get(pk=pk)
 
     if endpoint.status != endpoint.StatusChoices.QUEUED:
-        logger.info("Nothing to do: endpoint was not in the expected state")
-        return
+        raise RuntimeError(
+            "Endpoint is not in the expected state for starting"
+        )
 
     orchestrator = endpoint.orchestrator
 

@@ -12,7 +12,11 @@ from django.core.files.base import ContentFile
 from django.utils.timezone import now
 from requests import put
 
-from grandchallenge.algorithms.models import AlgorithmImage, Job
+from grandchallenge.algorithms.models import (
+    AlgorithmImage,
+    EndpointStatusChoices,
+    Job,
+)
 from grandchallenge.cases.models import (
     DICOMImageSetUploadStatusChoices,
     RawImageUploadSession,
@@ -1484,11 +1488,22 @@ def test_start_endpoint(mocker):
         mock_method.assert_called_once()
     assert endpoint.status == endpoint.StatusChoices.RUNNING
 
-    # Check idempotency
-    for mock_method in mock_start_methods:
-        mock_method.reset_mock()
 
-    start_endpoint(**endpoint.task_kwargs)
+@pytest.mark.django_db
+def test_start_endpoint_wrong_state_raises(mocker):
+    endpoint = EndpointFactory(status=EndpointStatusChoices.RUNNING)
+    mock_start_methods = [
+        mocker.patch.object(
+            EndpointOrchestrator,
+            method_name,
+        )
+        for method_name in start_endpoint_method_names
+    ]
+
+    assert endpoint.status != endpoint.StatusChoices.QUEUED
+
+    with pytest.raises(RuntimeError, match="not in the expected state"):
+        start_endpoint(**endpoint.task_kwargs)
 
     for mock_method in mock_start_methods:
         mock_method.assert_not_called()
