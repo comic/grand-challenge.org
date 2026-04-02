@@ -1646,7 +1646,7 @@ def get_object_sha256(file_field):
         return ""
 
 
-@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
 @transaction.atomic
 def start_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
     """
