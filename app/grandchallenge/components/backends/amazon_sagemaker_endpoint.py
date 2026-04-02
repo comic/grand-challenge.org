@@ -187,10 +187,9 @@ class EndpointOrchestrator:
         def attempt(method):
             try:
                 method()
-            except Exception as error:
+            except ClientError as error:
                 if (
-                    isinstance(error, ClientError)
-                    and error.response["Error"]["Code"]
+                    error.response["Error"]["Code"]
                     == "ValidationException"
                     and "Could not find" in error.response["Error"]["Message"]
                 ):
