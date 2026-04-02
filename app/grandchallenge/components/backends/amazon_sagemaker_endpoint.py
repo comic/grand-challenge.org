@@ -15,26 +15,26 @@ class EndpointOrchestrator:
         endpoint_name,
         endpoint_id,
         exec_image_repo_tag,
-        time_limit_seconds,
+        time_limit,
         requires_gpu_type,
-        requires_memory_gb,
+        memory_limit,
         api_method,
-        algorithm_model_file=None,
+        algorithm_model=None,
     ):
         self._executor = AmazonSageMakerTrainingExecutor(
             job_id=endpoint_id,
             exec_image_repo_tag=exec_image_repo_tag,
-            memory_limit=requires_memory_gb,
-            time_limit=time_limit_seconds,
+            memory_limit=memory_limit,
+            time_limit=time_limit,
             requires_gpu_type=requires_gpu_type,
             use_warm_pool=False,
             signing_key=b"",  # TODO add signing key to endpoint model
             api_method=api_method,
-            algorithm_model=algorithm_model_file,
+            algorithm_model=algorithm_model,
         )
         self._endpoint_name = endpoint_name
         self._exec_image_repo_tag = exec_image_repo_tag
-        self._algorithm_model_file = algorithm_model_file
+        self._algorithm_model = algorithm_model
 
         self.__sagemaker_runtime_client = None
 
@@ -97,13 +97,13 @@ class EndpointOrchestrator:
             return 30
 
     def provision_auxiliary_data(self):
-        if self._algorithm_model_file:
+        if self._algorithm_model:
             self._s3_client.copy(
                 CopySource={
                     "Bucket": settings.PROTECTED_S3_STORAGE_KWARGS[
                         "bucket_name"
                     ],
-                    "Key": str(self._algorithm_model_file),
+                    "Key": str(self._algorithm_model),
                 },
                 Bucket=settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME,
                 Key=self._algorithm_model_key,
