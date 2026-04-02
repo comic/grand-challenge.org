@@ -1540,6 +1540,30 @@ def test_start_endpoint_failure(mocker, method_with_error):
 
 
 @pytest.mark.django_db
+def test_start_endpoint_deprovision_failure_raises(mocker):
+    endpoint = EndpointFactory()
+    mocker.patch.object(
+        EndpointOrchestrator,
+        start_endpoint_method_names[0],
+        side_effect=Exception,
+    )
+    mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
+        side_effect=Exception("error during deprovision"),
+    )
+    initial_status = endpoint.status
+
+    # assert failure during deprovision is raised
+    with pytest.raises(Exception, match="error during deprovision"):
+        start_endpoint(**endpoint.task_kwargs)
+
+    endpoint.refresh_from_db()
+
+    assert endpoint.status == initial_status
+
+
+@pytest.mark.django_db
 def test_stop_endpoint(mocker):
     endpoint = EndpointFactory()
     mock_deprovision_method = mocker.patch.object(
@@ -1554,6 +1578,25 @@ def test_stop_endpoint(mocker):
 
     assert endpoint.status == endpoint.StatusChoices.STOPPED
     mock_deprovision_method.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_stop_endpoint_deprovision_failure_raises(mocker):
+    endpoint = EndpointFactory()
+    mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
+        side_effect=Exception("error during deprovision"),
+    )
+    initial_status = endpoint.status
+
+    # assert failure during deprovision is raised
+    with pytest.raises(Exception, match="error during deprovision"):
+        stop_endpoint(**endpoint.task_kwargs)
+
+    endpoint.refresh_from_db()
+
+    assert endpoint.status == initial_status
 
 
 @pytest.mark.django_db
