@@ -46,12 +46,12 @@ class TestEndpointOrchestratorProperties:
             f"s3://interactive-algorithms-io/io/algorithms/endpoint/{endpoint.pk}/failures"
         )
 
-    def test_endpoint_model_environment(self, settings):
+    def test_endpoint_invocation_environment(self, settings):
         settings.COMPONENTS_INPUT_BUCKET_NAME = "test_components_input_bucket"
         endpoint = EndpointFactory.build()
         orchestrator = endpoint.orchestrator
 
-        assert orchestrator._model_environment == {
+        assert orchestrator.invocation_environment == {
             "LOG_LEVEL": "INFO",
             "PYTHONUNBUFFERED": "1",
             "no_proxy": "amazonaws.com",
@@ -65,7 +65,7 @@ class TestEndpointOrchestratorProperties:
 
         assert (
             "GRAND_CHALLENGE_COMPONENT_MODEL"
-            not in orchestrator._model_environment
+            not in orchestrator.invocation_environment
         )
 
     def test_required_volume_size_gb(self):
@@ -104,7 +104,7 @@ def test_endpoint_create_sagemaker_model(settings):
                 "ExecutionRoleArn": "test_execution_role_arn",
                 "PrimaryContainer": {
                     "Image": str(endpoint.algorithm_image.shimmed_repo_tag),
-                    "Environment": orchestrator._model_environment,
+                    "Environment": orchestrator.invocation_environment,
                     "Mode": "SingleModel",
                 },
                 "VpcConfig": {

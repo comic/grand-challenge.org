@@ -76,7 +76,7 @@ class EndpointOrchestrator:
         return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}{self._io_prefix}/failures"
 
     @property
-    def _model_environment(self):
+    def invocation_environment(self):
         return self._executor.invocation_environment
 
     @property
@@ -98,7 +98,7 @@ class EndpointOrchestrator:
             ExecutionRoleArn=settings.ALGORITHM_ENDPOINTS_EXECUTION_ROLE_ARN,
             PrimaryContainer={
                 "Image": self._exec_image_repo_tag,
-                "Environment": self._model_environment,
+                "Environment": self.invocation_environment,
                 "Mode": "SingleModel",
             },
             VpcConfig={
