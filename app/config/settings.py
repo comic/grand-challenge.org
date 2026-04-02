@@ -1296,6 +1296,14 @@ CELERY_BEAT_SCHEDULE = {
         },
         "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
     },
+    "stop_expired_endpoints": {
+        "task": "grandchallenge.components.tasks.stop_expired_endpoints",
+        "kwargs": {
+            "app_label": "algorithms",
+            "model_name": "endpoint",
+        },
+        "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),
+    },
     "preload_interactive_algorithms": {
         "task": "grandchallenge.components.tasks.preload_interactive_algorithms",
         "schedule": timedelta(minutes=WORKSTATIONS_GRACE_MINUTES),

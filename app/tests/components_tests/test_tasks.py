@@ -1,6 +1,7 @@
 import json
 import uuid
 from contextlib import nullcontext
+from datetime import timedelta
 from pathlib import Path
 from unittest.mock import call, patch
 
@@ -49,6 +50,7 @@ from grandchallenge.components.tasks import (
     remove_inactive_container_images,
     start_endpoint,
     stop_endpoint,
+    stop_expired_endpoints,
     update_container_image_shim,
     upload_to_registry_and_sagemaker,
     validate_docker_image,
@@ -1617,3 +1619,26 @@ def test_stop_endpoint_wrong_state_raises(mocker):
 
     assert endpoint.status == initial_status
     mock_update_status_method.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_stop_expired_endpoints(mocker, django_capture_on_commit_callbacks):
+    EndpointFactory(status=EndpointStatusChoices.RUNNING)
+    endpoint_to_stop = EndpointFactory(
+        status=EndpointStatusChoices.RUNNING,
+        maximum_duration=timedelta(seconds=0),
+    )
+    EndpointFactory(
+        status=EndpointStatusChoices.STOPPED,
+        maximum_duration=timedelta(seconds=0),
+    )
+    mock_signature = mocker.patch(
+        "grandchallenge.components.tasks.stop_endpoint.signature"
+    )
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        stop_expired_endpoints(app_label="algorithms", model_name="endpoint")
+
+    assert len(callbacks) == 1
+    mock_signature.assert_called_once_with(**endpoint_to_stop.task_kwargs)
+    mock_signature.return_value.apply_async.assert_called_once()
