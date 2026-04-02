@@ -14,36 +14,36 @@ class TestEndpointOrchestratorProperties:
         )
 
     def test_algorithm_model_s3_uri(self, settings):
-        settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = (
-            "interactive-algorithms-io"
+        settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = (
+            "algorithm-endpoints-input"
         )
         endpoint = EndpointFactory.build()
         orchestrator = endpoint.orchestrator
 
         assert orchestrator._algorithm_model_s3_uri == (
-            f"s3://interactive-algorithms-io/auxiliary-data/algorithms/endpoint/{endpoint.pk}/algorithm-model.tar.gz"
+            f"s3://algorithm-endpoints-input/auxiliary-data/algorithms/endpoint/{endpoint.pk}/algorithm-model.tar.gz"
         )
 
     def test_output_s3_uri(self, settings):
-        settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = (
-            "interactive-algorithms-io"
+        settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = (
+            "algorithm-endpoints-input"
         )
         endpoint = EndpointFactory.build()
         orchestrator = endpoint.orchestrator
 
         assert orchestrator._output_s3_uri == (
-            f"s3://interactive-algorithms-io/io/algorithms/endpoint/{endpoint.pk}/successes"
+            f"s3://algorithm-endpoints-input/io/algorithms/endpoint/{endpoint.pk}/successes"
         )
 
     def test_failure_s3_uri(self, settings):
-        settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = (
-            "interactive-algorithms-io"
+        settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = (
+            "algorithm-endpoints-input"
         )
         endpoint = EndpointFactory.build()
         orchestrator = endpoint.orchestrator
 
         assert orchestrator._failure_s3_uri == (
-            f"s3://interactive-algorithms-io/io/algorithms/endpoint/{endpoint.pk}/failures"
+            f"s3://algorithm-endpoints-input/io/algorithms/endpoint/{endpoint.pk}/failures"
         )
 
     def test_endpoint_invocation_environment(self, settings):
@@ -91,7 +91,7 @@ def test_endpoint_provision_auxiliary_data(settings):
     settings.PROTECTED_S3_STORAGE_KWARGS = {
         "bucket_name": "from_protected_storage"
     }
-    settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = "to_endpoint_io"
+    settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = "to_endpoint_input"
     endpoint = EndpointFactory.build()
     orchestrator = endpoint.orchestrator
 
@@ -112,7 +112,7 @@ def test_endpoint_provision_auxiliary_data(settings):
                     "Bucket": "from_protected_storage",
                     "Key": str(endpoint.algorithm_model.model),
                 },
-                "Bucket": "to_endpoint_io",
+                "Bucket": "to_endpoint_input",
                 "Key": orchestrator._algorithm_model_key,
             },
         )
@@ -123,7 +123,7 @@ def test_endpoint_provision_auxiliary_data(settings):
 
 
 def test_endpoint_deprovision_auxiliary_data(settings):
-    settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = "endpoint_io"
+    settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = "endpoint_io"
     orchestrator = EndpointFactory.build().orchestrator
 
     with Stubber(orchestrator._s3_client) as stubber:

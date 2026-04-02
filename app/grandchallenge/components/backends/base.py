@@ -126,7 +126,8 @@ def list_and_delete_objects_from_prefix(*, s3_client, bucket, prefix):
         settings.COMPONENTS_OUTPUT_BUCKET_NAME,
         settings.COMPONENTS_INPUT_BUCKET_NAME,
         settings.AWS_HEALTH_IMAGING_BUCKET_NAME,
-        settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME,
+        settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
+        settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
     }:
         # Guard against deleting something unexpected
         raise RuntimeError(

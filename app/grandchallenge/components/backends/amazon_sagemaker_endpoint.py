@@ -69,15 +69,15 @@ class EndpointOrchestrator:
 
     @property
     def _algorithm_model_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}{self._algorithm_model_key}"
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}{self._algorithm_model_key}"
 
     @property
     def _output_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}{self._io_prefix}/successes"
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}{self._io_prefix}/successes"
 
     @property
     def _failure_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}{self._io_prefix}/failures"
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}{self._io_prefix}/failures"
 
     @property
     def invocation_environment(self):
@@ -105,14 +105,14 @@ class EndpointOrchestrator:
                     ],
                     "Key": str(self._algorithm_model),
                 },
-                Bucket=settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME,
+                Bucket=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
                 Key=self._algorithm_model_key,
             )
 
     def deprovision_auxiliary_data(self):
         list_and_delete_objects_from_prefix(
             s3_client=self._s3_client,
-            bucket=settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME,
+            bucket=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
             prefix=self._auxiliary_data_prefix,
         )
 
