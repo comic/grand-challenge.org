@@ -4,6 +4,9 @@ from django.conf import settings
 from grandchallenge.components.backends.amazon_sagemaker_training import (
     AmazonSageMakerTrainingExecutor,
 )
+from grandchallenge.components.backends.base import (
+    list_and_delete_objects_from_prefix,
+)
 
 
 class EndpointOrchestrator:
@@ -12,17 +15,17 @@ class EndpointOrchestrator:
         endpoint_name,
         endpoint_id,
         exec_image_repo_tag,
-        time_limit_seconds,
+        time_limit,
         requires_gpu_type,
-        requires_memory_gb,
+        memory_limit,
         api_method,
-        algorithm_model,
+        algorithm_model=None,
     ):
         self._executor = AmazonSageMakerTrainingExecutor(
             job_id=endpoint_id,
             exec_image_repo_tag=exec_image_repo_tag,
-            memory_limit=requires_memory_gb,
-            time_limit=time_limit_seconds,
+            memory_limit=memory_limit,
+            time_limit=time_limit,
             requires_gpu_type=requires_gpu_type,
             use_warm_pool=False,
             signing_key=b"",  # TODO add signing key to endpoint model
@@ -31,6 +34,7 @@ class EndpointOrchestrator:
         )
         self._endpoint_name = endpoint_name
         self._exec_image_repo_tag = exec_image_repo_tag
+        self._algorithm_model = algorithm_model
 
         self.__sagemaker_runtime_client = None
 
@@ -65,15 +69,15 @@ class EndpointOrchestrator:
 
     @property
     def _algorithm_model_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}{self._algorithm_model_key}"
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}{self._algorithm_model_key}"
 
     @property
     def _output_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}{self._io_prefix}/successes"
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}{self._io_prefix}/successes"
 
     @property
     def _failure_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_IO_BUCKET_NAME}{self._io_prefix}/failures"
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}{self._io_prefix}/failures"
 
     @property
     def invocation_environment(self):
@@ -91,6 +95,26 @@ class EndpointOrchestrator:
             return self._instance_type.nvme_volume_size
         else:
             return 30
+
+    def provision_auxiliary_data(self):
+        if self._algorithm_model:
+            self._s3_client.copy(
+                CopySource={
+                    "Bucket": settings.PROTECTED_S3_STORAGE_KWARGS[
+                        "bucket_name"
+                    ],
+                    "Key": str(self._algorithm_model),
+                },
+                Bucket=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
+                Key=self._algorithm_model_key,
+            )
+
+    def deprovision_auxiliary_data(self):
+        list_and_delete_objects_from_prefix(
+            s3_client=self._s3_client,
+            bucket=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
+            prefix=self._auxiliary_data_prefix,
+        )
 
     def create_sagemaker_model(self):
         self._sagemaker_client.create_model(

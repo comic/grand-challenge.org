@@ -1622,15 +1622,19 @@ class Endpoint(UUIDModel):
 
     @property
     def orchestrator(self):
+        try:
+            extra_kwargs = {"algorithm_model": self.algorithm_model.model}
+        except AttributeError:
+            extra_kwargs = {}
         return EndpointOrchestrator(
             endpoint_name=self.endpoint_name,
             endpoint_id=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             exec_image_repo_tag=self.algorithm_image.shimmed_repo_tag,
-            time_limit_seconds=self.maximum_duration.total_seconds(),
+            time_limit=self.maximum_duration.total_seconds(),
             requires_gpu_type=self.requires_gpu_type,
-            requires_memory_gb=self.requires_memory_gb,
+            memory_limit=self.requires_memory_gb,
             api_method=self.algorithm_image.api_method,
-            algorithm_model=self.algorithm_model,
+            **extra_kwargs,
         )
 
 

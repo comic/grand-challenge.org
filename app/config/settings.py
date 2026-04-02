@@ -1162,8 +1162,13 @@ ALGORITHM_ENDPOINTS_SECURITY_GROUP_ID = os.environ.get(
 ALGORITHM_ENDPOINTS_SUBNETS = json.loads(
     os.environ.get("ALGORITHM_ENDPOINTS_SUBNETS", "null")
 )
-ALGORITHM_ENDPOINTS_IO_BUCKET_NAME = os.environ.get(
-    "ALGORITHM_ENDPOINTS_IO_BUCKET_NAME"
+ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = os.environ.get(
+    "ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME",
+    "grand-challenge-algorithm-endpoints-inputs",
+)
+ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME = os.environ.get(
+    "ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME",
+    "grand-challenge-algorithm-endpoints-outputs",
 )
 
 EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
