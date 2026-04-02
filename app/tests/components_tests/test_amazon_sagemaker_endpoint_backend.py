@@ -299,63 +299,56 @@ def test_endpoint_delete_endpoint(settings):
         stubber.assert_no_pending_responses()
 
 
-def test_endpoint_orchestrator_clean_up_resources(mocker):
+deprovision_endpoint_method_names = [
+    "delete_endpoint",
+    "delete_endpoint_config",
+    "delete_sagemaker_model",
+    "deprovision_auxiliary_data",
+]
+
+
+def test_endpoint_orchestrator_deprovision(mocker):
     orchestrator = EndpointFactory.build().orchestrator
 
-    mock_clean_up_methods = [
+    mock_deprovision_methods = [
         mocker.patch.object(
             EndpointOrchestrator,
             method_name,
         )
-        for method_name in [
-            "delete_endpoint",
-            "delete_endpoint_config",
-            "delete_sagemaker_model",
-            "deprovision_auxiliary_data",
-        ]
+        for method_name in deprovision_endpoint_method_names
     ]
 
-    orchestrator.clean_up_resources()
+    orchestrator.deprovision()
 
-    for mock_method in mock_clean_up_methods:
+    for mock_method in mock_deprovision_methods:
         mock_method.assert_called_once()
 
 
-def test_endpoint_orchestrator_clean_up_resources_handle_exceptions(mocker):
+@pytest.mark.parametrize(
+    "method_with_error", deprovision_endpoint_method_names
+)
+def test_endpoint_orchestrator_deprovision_errors(mocker, method_with_error):
     orchestrator = EndpointFactory.build().orchestrator
-    method_names = [
-        "delete_endpoint",
-        "delete_endpoint_config",
-        "delete_sagemaker_model",
-        "deprovision_auxiliary_data",
-    ]
-    mock_clean_up_methods = [
+    for method_name in deprovision_endpoint_method_names:
+        if method_name == method_with_error:
+            kwargs = {"side_effect": Exception("test error")}
+        else:
+            kwargs = {}
         mocker.patch.object(
             EndpointOrchestrator,
             method_name,
-            side_effect=Exception(method_name),
+            **kwargs,
         )
-        for method_name in method_names
-    ]
 
-    with pytest.raises(
-        ExceptionGroup,
-        match=r"Error\(s\) occurred while cleaning up endpoint resources",
-    ) as errors:
-        orchestrator.clean_up_resources()
-
-    for method_name in method_names:
-        assert errors.group_contains(Exception, match=method_name)
-
-    # assert all called
-    for mock_method in mock_clean_up_methods:
-        mock_method.assert_called_once()
+    # assert error is not ignored
+    with pytest.raises(Exception, match="test error"):
+        orchestrator.deprovision()
 
 
-def test_endpoint_orchestrator_clean_up_resources_ignored_errors(mocker):
+def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
     orchestrator = EndpointFactory.build().orchestrator
 
-    mock_clean_up_methods = [
+    mock_deprovision_methods = [
         mocker.patch.object(
             EndpointOrchestrator,
             "delete_endpoint",
@@ -401,8 +394,8 @@ def test_endpoint_orchestrator_clean_up_resources_ignored_errors(mocker):
         ),
     ]
 
-    orchestrator.clean_up_resources()
+    orchestrator.deprovision()
 
     # assert all called
-    for mock_method in mock_clean_up_methods:
+    for mock_method in mock_deprovision_methods:
         mock_method.assert_called_once()

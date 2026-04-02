@@ -1497,7 +1497,9 @@ def test_start_endpoint(mocker):
 
 @pytest.mark.parametrize("method_with_error", start_endpoint_method_names)
 @pytest.mark.django_db
-def test_start_endpoint_failure(mocker, method_with_error):
+def test_start_endpoint_failure(
+    mocker, method_with_error, django_capture_on_commit_callbacks
+):
     endpoint = EndpointFactory()
     for method_name in start_endpoint_method_names:
         if method_name == method_with_error:
@@ -1509,14 +1511,15 @@ def test_start_endpoint_failure(mocker, method_with_error):
             method_name,
             **kwargs,
         )
-    mock_clean_method = mocker.patch.object(
-        EndpointOrchestrator,
-        "clean_up_resources",
+    mock_deprovision_task_signature = mocker.patch(
+        "grandchallenge.components.tasks.deprovision_endpoint.signature",
     )
 
-    start_endpoint(**endpoint.task_kwargs)
+    with django_capture_on_commit_callbacks(execute=True):
+        start_endpoint(**endpoint.task_kwargs)
+
     endpoint.refresh_from_db()
 
     assert endpoint.status == endpoint.StatusChoices.FAILED
     assert endpoint.error_message == "An unexpected error occurred"
-    mock_clean_method.assert_called_once()
+    mock_deprovision_task_signature.return_value.apply_async.assert_called_once()

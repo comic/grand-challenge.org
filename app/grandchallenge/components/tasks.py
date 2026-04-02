@@ -1678,13 +1678,18 @@ def start_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
             error_message="An unexpected error occurred",
         )
 
-        try:
-            orchestrator.clean_up_resources()
-        except Exception:
-            logger.error(
-                "Error(s) occurred while cleaning up endpoint resources",
-                exc_info=True,
-            )
+        on_commit(
+            deprovision_endpoint.signature(**endpoint.task_kwargs).apply_async
+        )
 
     else:
         endpoint.update_status(status=endpoint.StatusChoices.RUNNING)
+
+
+@acks_late_micro_short_task
+def deprovision_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+    endpoint = model.objects.get(pk=pk)
+
+    orchestrator = endpoint.orchestrator
+    orchestrator.deprovision()

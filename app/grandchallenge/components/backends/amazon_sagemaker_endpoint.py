@@ -183,10 +183,8 @@ class EndpointOrchestrator:
             EndpointName=self._endpoint_name
         )
 
-    def clean_up_resources(self):
-        errors = []
-
-        def attempt(method, error_note):
+    def deprovision(self):
+        def attempt(method):
             try:
                 method()
             except Exception as error:
@@ -198,32 +196,10 @@ class EndpointOrchestrator:
                 ):
                     pass  # Nothing to clean up
                 else:
-                    error.add_note(error_note)
-                    errors.append(error)
+                    raise
 
-        attempt(
-            self.delete_endpoint,
-            "Occurred while attempting to delete endpoint",
-        )
-        attempt(
-            self.delete_endpoint_config,
-            "Occurred while attempting to delete endpoint configuration",
-        )
-        attempt(
-            self.delete_sagemaker_model,
-            "Occurred while attempting to delete model",
-        )
+        attempt(self.delete_endpoint)
+        attempt(self.delete_endpoint_config)
+        attempt(self.delete_sagemaker_model)
 
-        try:
-            self.deprovision_auxiliary_data()
-        except Exception as error:
-            error.add_note(
-                "Occurred while attempting to delete auxiliary data"
-            )
-            errors.append(error)
-
-        if errors:
-            raise ExceptionGroup(
-                "Error(s) occurred while cleaning up endpoint resources",
-                errors,
-            )
+        self.deprovision_auxiliary_data()
