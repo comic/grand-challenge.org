@@ -14,6 +14,7 @@ from requests import put
 
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
+    Endpoint,
     EndpointStatusChoices,
     Job,
 )
@@ -47,6 +48,7 @@ from grandchallenge.components.tasks import (
     remove_container_image_from_registry,
     remove_inactive_container_images,
     start_endpoint,
+    stop_endpoint,
     update_container_image_shim,
     upload_to_registry_and_sagemaker,
     validate_docker_image,
@@ -1538,3 +1540,41 @@ def test_start_endpoint_failure(
     assert endpoint.status == endpoint.StatusChoices.FAILED
     assert endpoint.error_message == "An unexpected error occurred"
     mock_deprovision_task_signature.return_value.apply_async.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_stop_endpoint(mocker, django_capture_on_commit_callbacks):
+    endpoint = EndpointFactory()
+    mock_deprovision_task_signature = mocker.patch(
+        "grandchallenge.components.tasks.deprovision_endpoint.signature",
+    )
+
+    assert endpoint.status in endpoint.StatusChoices.get_active_choices()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        stop_endpoint(**endpoint.task_kwargs)
+
+    endpoint.refresh_from_db()
+
+    assert endpoint.status == endpoint.StatusChoices.STOPPED
+    mock_deprovision_task_signature.return_value.apply_async.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_stop_endpoint_wrong_state_raises(mocker):
+    endpoint = EndpointFactory(status=EndpointStatusChoices.FAILED)
+    mock_update_status_method = mocker.patch.object(
+        Endpoint,
+        "update_status",
+    )
+    initial_status = endpoint.status
+
+    assert initial_status not in endpoint.StatusChoices.get_active_choices()
+
+    with pytest.raises(Endpoint.DoesNotExist):
+        stop_endpoint(**endpoint.task_kwargs)
+
+    endpoint.refresh_from_db()
+
+    assert endpoint.status == initial_status
+    mock_update_status_method.assert_not_called()

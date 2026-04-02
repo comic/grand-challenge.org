@@ -1694,3 +1694,24 @@ def deprovision_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     orchestrator = endpoint.orchestrator
     orchestrator.deprovision()
+
+
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
+def stop_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
+    with check_lock_acquired():
+        endpoint = (
+            model.objects.active().select_for_update(nowait=True).get(pk=pk)
+        )
+
+    try:
+        endpoint.update_status(status=endpoint.StatusChoices.STOPPED)
+    except Exception:
+        logger.error("Could not stop endpoint", exc_info=True)
+        raise
+    finally:
+        on_commit(
+            deprovision_endpoint.signature(**endpoint.task_kwargs).apply_async
+        )
