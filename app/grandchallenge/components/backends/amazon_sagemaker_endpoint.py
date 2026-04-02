@@ -189,8 +189,7 @@ class EndpointOrchestrator:
                 method()
             except ClientError as error:
                 if (
-                    error.response["Error"]["Code"]
-                    == "ValidationException"
+                    error.response["Error"]["Code"] == "ValidationException"
                     and "Could not find" in error.response["Error"]["Message"]
                 ):
                     pass  # Nothing to clean up
