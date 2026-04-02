@@ -12,10 +12,17 @@ from django.core.files.base import ContentFile
 from django.utils.timezone import now
 from requests import put
 
-from grandchallenge.algorithms.models import AlgorithmImage, Job
+from grandchallenge.algorithms.models import (
+    AlgorithmImage,
+    EndpointStatusChoices,
+    Job,
+)
 from grandchallenge.cases.models import (
     DICOMImageSetUploadStatusChoices,
     RawImageUploadSession,
+)
+from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
+    EndpointOrchestrator,
 )
 from grandchallenge.components.exceptions import InstanceInUse
 from grandchallenge.components.models import (
@@ -39,6 +46,7 @@ from grandchallenge.components.tasks import (
     preload_interactive_algorithms,
     remove_container_image_from_registry,
     remove_inactive_container_images,
+    start_endpoint,
     update_container_image_shim,
     upload_to_registry_and_sagemaker,
     validate_docker_image,
@@ -55,6 +63,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmJobFactory,
     AlgorithmModelFactory,
+    EndpointFactory,
 )
 from tests.archives_tests.factories import ArchiveItemFactory
 from tests.cases_tests.factories import (
@@ -1449,3 +1458,83 @@ def test_workstation_image_protected_from_deletion():
 
     workstation.refresh_from_db()
     assert workstation.is_removed is True
+
+
+start_endpoint_method_names = [
+    "provision_auxiliary_data",
+    "create_sagemaker_model",
+    "create_endpoint_config",
+    "create_endpoint",
+]
+
+
+@pytest.mark.django_db
+def test_start_endpoint(mocker):
+    endpoint = EndpointFactory()
+    mock_start_methods = [
+        mocker.patch.object(
+            EndpointOrchestrator,
+            method_name,
+        )
+        for method_name in start_endpoint_method_names
+    ]
+
+    assert endpoint.status != endpoint.StatusChoices.RUNNING
+
+    start_endpoint(**endpoint.task_kwargs)
+    endpoint.refresh_from_db()
+
+    for mock_method in mock_start_methods:
+        mock_method.assert_called_once()
+    assert endpoint.status == endpoint.StatusChoices.RUNNING
+
+
+@pytest.mark.django_db
+def test_start_endpoint_wrong_state_raises(mocker):
+    endpoint = EndpointFactory(status=EndpointStatusChoices.RUNNING)
+    mock_start_methods = [
+        mocker.patch.object(
+            EndpointOrchestrator,
+            method_name,
+        )
+        for method_name in start_endpoint_method_names
+    ]
+
+    assert endpoint.status != endpoint.StatusChoices.QUEUED
+
+    with pytest.raises(RuntimeError, match="not in the expected state"):
+        start_endpoint(**endpoint.task_kwargs)
+
+    for mock_method in mock_start_methods:
+        mock_method.assert_not_called()
+    assert endpoint.status == endpoint.StatusChoices.RUNNING
+
+
+@pytest.mark.parametrize("method_with_error", start_endpoint_method_names)
+@pytest.mark.django_db
+def test_start_endpoint_failure(
+    mocker, method_with_error, django_capture_on_commit_callbacks
+):
+    endpoint = EndpointFactory()
+    for method_name in start_endpoint_method_names:
+        if method_name == method_with_error:
+            kwargs = {"side_effect": Exception}
+        else:
+            kwargs = {}
+        mocker.patch.object(
+            EndpointOrchestrator,
+            method_name,
+            **kwargs,
+        )
+    mock_deprovision_task_signature = mocker.patch(
+        "grandchallenge.components.tasks.deprovision_endpoint.signature",
+    )
+
+    with django_capture_on_commit_callbacks(execute=True):
+        start_endpoint(**endpoint.task_kwargs)
+
+    endpoint.refresh_from_db()
+
+    assert endpoint.status == endpoint.StatusChoices.FAILED
+    assert endpoint.error_message == "An unexpected error occurred"
+    mock_deprovision_task_signature.return_value.apply_async.assert_called_once()

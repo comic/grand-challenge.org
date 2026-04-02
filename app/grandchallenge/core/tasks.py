@@ -119,7 +119,7 @@ def _get_metrics():
             ]
         ),
         Session.objects.filter(status=Session.QUEUED),
-        Endpoint.objects.filter(status=Endpoint.StatusChoices.PENDING),
+        Endpoint.objects.filter(status=Endpoint.StatusChoices.QUEUED),
     ):
         oldest = queryset.order_by("created").values("created").first()
         total_seconds = (

@@ -1,5 +1,10 @@
+import pytest
+from botocore.exceptions import ClientError
 from botocore.stub import Stubber
 
+from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
+    EndpointOrchestrator,
+)
 from grandchallenge.components.schemas import GPUTypeChoices
 from tests.algorithms_tests.factories import EndpointFactory
 
@@ -292,3 +297,105 @@ def test_endpoint_delete_endpoint(settings):
         orchestrator.delete_endpoint()
 
         stubber.assert_no_pending_responses()
+
+
+deprovision_endpoint_method_names = [
+    "delete_endpoint",
+    "delete_endpoint_config",
+    "delete_sagemaker_model",
+    "deprovision_auxiliary_data",
+]
+
+
+def test_endpoint_orchestrator_deprovision(mocker):
+    orchestrator = EndpointFactory.build().orchestrator
+
+    mock_deprovision_methods = [
+        mocker.patch.object(
+            EndpointOrchestrator,
+            method_name,
+        )
+        for method_name in deprovision_endpoint_method_names
+    ]
+
+    orchestrator.deprovision()
+
+    for mock_method in mock_deprovision_methods:
+        mock_method.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "method_with_error", deprovision_endpoint_method_names
+)
+def test_endpoint_orchestrator_deprovision_errors(mocker, method_with_error):
+    orchestrator = EndpointFactory.build().orchestrator
+    for method_name in deprovision_endpoint_method_names:
+        if method_name == method_with_error:
+            kwargs = {"side_effect": Exception("test error")}
+        else:
+            kwargs = {}
+        mocker.patch.object(
+            EndpointOrchestrator,
+            method_name,
+            **kwargs,
+        )
+
+    # assert error is not ignored
+    with pytest.raises(Exception, match="test error"):
+        orchestrator.deprovision()
+
+
+def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
+    orchestrator = EndpointFactory.build().orchestrator
+
+    mock_deprovision_methods = [
+        mocker.patch.object(
+            EndpointOrchestrator,
+            "delete_endpoint",
+            side_effect=ClientError(
+                {
+                    "Error": {
+                        "Code": "ValidationException",
+                        "Message": 'Could not find endpoint "foobar".',
+                    }
+                },
+                "DeleteEndpoint",
+            ),
+        ),
+        mocker.patch.object(
+            EndpointOrchestrator,
+            "delete_endpoint_config",
+            side_effect=ClientError(
+                {
+                    "Error": {
+                        "Code": "ValidationException",
+                        "Message": 'Could not find endpoint configuration "foobar".',
+                    }
+                },
+                "DeleteEndpointConfig",
+            ),
+        ),
+        mocker.patch.object(
+            EndpointOrchestrator,
+            "delete_sagemaker_model",
+            side_effect=ClientError(
+                {
+                    "Error": {
+                        "Code": "ValidationException",
+                        "Message": 'Could not find model "foobar".',
+                    }
+                },
+                "DeleteModel",
+            ),
+        ),
+        mocker.patch.object(
+            EndpointOrchestrator,
+            "deprovision_auxiliary_data",
+        ),
+    ]
+
+    orchestrator.deprovision()
+
+    # assert all called
+    for mock_method in mock_deprovision_methods:
+        mock_method.assert_called_once()

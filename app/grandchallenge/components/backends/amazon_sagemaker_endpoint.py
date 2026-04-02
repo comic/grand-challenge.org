@@ -1,4 +1,5 @@
 import boto3
+from botocore.exceptions import ClientError
 from django.conf import settings
 
 from grandchallenge.components.backends.amazon_sagemaker_training import (
@@ -181,3 +182,22 @@ class EndpointOrchestrator:
         self._sagemaker_client.delete_endpoint(
             EndpointName=self._endpoint_name
         )
+
+    def deprovision(self):
+        def attempt(method):
+            try:
+                method()
+            except ClientError as error:
+                if (
+                    error.response["Error"]["Code"] == "ValidationException"
+                    and "Could not find" in error.response["Error"]["Message"]
+                ):
+                    pass  # Nothing to clean up
+                else:
+                    raise
+
+        attempt(self.delete_endpoint)
+        attempt(self.delete_endpoint_config)
+        attempt(self.delete_sagemaker_model)
+
+        self.deprovision_auxiliary_data()
