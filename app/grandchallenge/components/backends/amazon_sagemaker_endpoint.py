@@ -9,6 +9,7 @@ from grandchallenge.components.backends.amazon_sagemaker_training import (
 class EndpointOrchestrator:
     def __init__(
         self,
+        endpoint_name,
         endpoint_id,
         exec_image_repo_tag,
         time_limit_seconds,
@@ -28,8 +29,17 @@ class EndpointOrchestrator:
             api_method=api_method,
             algorithm_model=algorithm_model,
         )
+        self._endpoint_name = endpoint_name
 
         self.__sagemaker_runtime_client = None
+
+    @property
+    def _s3_client(self):
+        return self._executor._s3_client
+
+    @property
+    def _sagemaker_client(self):
+        return self._executor._sagemaker_client
 
     @property
     def _sagemaker_runtime_client(self):
@@ -67,3 +77,62 @@ class EndpointOrchestrator:
     @property
     def _model_environment(self):
         return self._executor.invocation_environment
+
+    @property
+    def _instance_type(self):
+        return self._executor._instance_type
+
+    @property
+    def _required_volume_size_gb(self):
+        if self._instance_type.nvme_volume_size:
+            # This setting has no practical effect as the instances
+            # do not get an EBS volume
+            return self._instance_type.nvme_volume_size
+        else:
+            return 30
+
+    def create_endpoint_config(self):
+        self._sagemaker_client.create_endpoint_config(
+            EndpointConfigName=self._endpoint_name,
+            AsyncInferenceConfig={
+                "ClientConfig": {
+                    "MaxConcurrentInvocationsPerInstance": 1,
+                },
+                "OutputConfig": {
+                    "S3FailurePath": self._failure_s3_uri,
+                    "S3OutputPath": self._output_s3_uri,
+                },
+            },
+            ProductionVariants=[
+                {
+                    "VariantName": self._endpoint_name,
+                    "ContainerStartupHealthCheckTimeoutInSeconds": 300,
+                    "InitialInstanceCount": 1,
+                    "InitialVariantWeight": 1,
+                    "InstanceType": self._instance_type.name,
+                    "ManagedInstanceScaling": {
+                        "MaxInstanceCount": 1,
+                        "MinInstanceCount": 1,
+                        "Status": "ENABLED",
+                    },
+                    "ModelName": self._endpoint_name,
+                    "VolumeSizeInGB": self._required_volume_size_gb,
+                }
+            ],
+        )
+
+    def delete_endpoint_config(self):
+        self._sagemaker_client.delete_endpoint_config(
+            EndpointConfigName=self._endpoint_name
+        )
+
+    def create_endpoint(self):
+        self._sagemaker_client.create_endpoint(
+            EndpointName=self._endpoint_name,
+            EndpointConfigName=self._endpoint_name,
+        )
+
+    def delete_endpoint(self):
+        self._sagemaker_client.delete_endpoint(
+            EndpointName=self._endpoint_name
+        )
