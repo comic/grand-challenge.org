@@ -1706,12 +1706,5 @@ def stop_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
             model.objects.active().select_for_update(nowait=True).get(pk=pk)
         )
 
-    try:
-        endpoint.update_status(status=endpoint.StatusChoices.STOPPED)
-    except Exception:
-        logger.error("Could not stop endpoint", exc_info=True)
-        raise
-    finally:
-        on_commit(
-            deprovision_endpoint.signature(**endpoint.task_kwargs).apply_async
-        )
+    endpoint.orchestrator.deprovision()
+    endpoint.update_status(status=endpoint.StatusChoices.STOPPED)
