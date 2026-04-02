@@ -722,7 +722,7 @@ class TestEndpointList:
     def test_filter_by_status(self, client):
         endpoint = EndpointFactory(status=Endpoint.StatusChoices.RUNNING)
         EndpointFactory(
-            status=Endpoint.StatusChoices.PENDING, creator=endpoint.creator
+            status=Endpoint.StatusChoices.QUEUED, creator=endpoint.creator
         )
         client.force_login(user=endpoint.creator)
         response = client.get(self.url, {"status": "Running"})
