@@ -490,10 +490,11 @@ class ComponentInterface(FieldChangeMixin, OverlaySegmentsMixin):
     def has_json_kind_example(self):
         """Whether this socket has an example value for json kinds. This also accounts for example values with None or False values."""
         try:
-            self.example_value
+            _ = self.json_kind_example
+        except KeyError:
+            return False
+        else:
             return True
-        except ObjectDoesNotExist:
-            return self.kind in INTERFACE_KIND_JSON_EXAMPLES
 
     @property
     def json_kind_example(self):
