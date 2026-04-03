@@ -463,12 +463,12 @@ class Executor(ABC):
 
         if self._algorithm_model:
             env["GRAND_CHALLENGE_COMPONENT_MODEL"] = (
-                f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}{self._algorithm_model_key}"
+                f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._algorithm_model_key}"
             )
 
         if self._ground_truth:
             env["GRAND_CHALLENGE_COMPONENT_GROUND_TRUTH"] = (
-                f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}{self._ground_truth_key}"
+                f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._ground_truth_key}"
             )
 
         return env

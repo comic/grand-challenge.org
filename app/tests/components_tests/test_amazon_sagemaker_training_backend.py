@@ -23,6 +23,10 @@ from grandchallenge.components.backends.exceptions import (
 from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.evaluation.models import Evaluation, Method
+from tests.algorithms_tests.factories import (
+    AlgorithmJobFactory,
+    AlgorithmModelFactory,
+)
 
 
 @pytest.mark.parametrize(
@@ -161,23 +165,21 @@ def test_transform_job_name(model, container, container_model, key, settings):
     assert job_params.attempt == 0
 
 
+@pytest.mark.django_db
 def test_invocation_json(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
     settings.COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN = (
         "arn:aws:iam::123456789012:role/service-role/ExecutionRole"
     )
 
-    pk = uuid4()
-    executor = AmazonSageMakerTrainingExecutor(
-        job_id=f"algorithms-job-{pk}",
-        exec_image_repo_tag="",
-        algorithm_model=None,
-        memory_limit=4,
+    job = AlgorithmJobFactory(
         time_limit=60,
-        requires_gpu_type=GPUTypeChoices.NO_GPU,
-        use_warm_pool=False,
         signing_key=b"totallysecret",
-        api_method=APIMethodChoices.EXEC,
+    )
+    job.algorithm_model = AlgorithmModelFactory()
+
+    executor = job.get_executor(
+        backend="grandchallenge.components.backends.amazon_sagemaker_training.AmazonSageMakerTrainingExecutor"
     )
 
     with Stubber(executor._sagemaker_client) as s:
@@ -188,16 +190,16 @@ def test_invocation_json(settings):
                 "TrainingJobName": executor._sagemaker_job_name,
                 "AlgorithmSpecification": {
                     "TrainingInputMode": "File",
-                    "TrainingImage": "",
+                    "TrainingImage": executor._exec_image_repo_tag,
                     "ContainerArguments": [
                         "invoke",
                         "--file",
-                        f"s3://grand-challenge-components-inputs//invocations/algorithms/job/{pk}/invocation.json",
+                        f"s3://grand-challenge-components-inputs//invocations/algorithms/job/{job.pk}-00/invocation.json",
                     ],
                 },
                 "RoleArn": settings.COMPONENTS_AMAZON_SAGEMAKER_EXECUTION_ROLE_ARN,
                 "OutputDataConfig": {
-                    "S3OutputPath": f"s3://grand-challenge-components-outputs//training-outputs/algorithms/job/{pk}"
+                    "S3OutputPath": f"s3://grand-challenge-components-outputs//training-outputs/algorithms/job/{job.pk}-00"
                 },
                 "ResourceConfig": {
                     "VolumeSizeInGB": 30,
@@ -213,6 +215,7 @@ def test_invocation_json(settings):
                     "GRAND_CHALLENGE_COMPONENT_MAX_MEMORY_MB": "7168",
                     "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX": "746f74616c6c79736563726574",
                     "GRAND_CHALLENGE_COMPONENT_API_METHOD": "exec",
+                    "GRAND_CHALLENGE_COMPONENT_MODEL": f"s3://grand-challenge-components-inputs//auxiliary-data/algorithms/job/{job.pk}-00/algorithm-model.tar.gz",
                 },
                 "VpcConfig": {
                     "SecurityGroupIds": [
@@ -230,24 +233,29 @@ def test_invocation_json(settings):
         executor._s3_client.download_fileobj(
             Fileobj=fileobj,
             Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
-            Key=executor._invocation_key,
+            Key=f"/invocations/algorithms/job/{job.pk}-00/invocation.json",
         )
         fileobj.seek(0)
         result = json.loads(fileobj.read().decode("utf-8"))
+
+    assert executor._s3_client.head_object(
+        Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+        Key=f"/auxiliary-data/algorithms/job/{job.pk}-00/algorithm-model.tar.gz",
+    )
 
     assert result == [
         {
             "inputs": [
                 {
-                    "bucket_key": f"/io/algorithms/job/{pk}/inputs.json",
+                    "bucket_key": f"/io/algorithms/job/{job.pk}-00/inputs.json",
                     "bucket_name": "grand-challenge-components-inputs",
                     "decompress": False,
                     "relative_path": "inputs.json",
                 },
             ],
             "output_bucket_name": "grand-challenge-components-outputs",
-            "output_prefix": f"/io/algorithms/job/{pk}",
-            "pk": f"algorithms-job-{pk}",
+            "output_prefix": f"/io/algorithms/job/{job.pk}-00",
+            "pk": f"algorithms-job-{job.pk}-00",
             "timeout": "PT1M",
         }
     ]
