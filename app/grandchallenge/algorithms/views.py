@@ -221,17 +221,17 @@ class UsersAlgorithmList(
             )
         )
 
-        user_groups = self.request.user.groups.all()
-
         if not self.request.user.is_superuser:
-            queryset = queryset.filter(
-                Q(editors_group__in=user_groups)
-                | Q(users_group__in=user_groups)
-            ).annotate(
-                user_role_order=Case(
-                    When(editors_group__in=user_groups, then=Value(2)),
-                    default=Value(1),
-                    output_field=IntegerField(),
+            queryset = (
+                queryset.with_user_roles(user=self.request.user)
+                .exclude(user_is_editor=False, user_is_user=False)
+                .annotate(
+                    user_role_order=Case(
+                        When(user_is_editor=True, then=Value(2)),
+                        When(user_is_user=True, then=Value(1)),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    )
                 )
             )
         else:
