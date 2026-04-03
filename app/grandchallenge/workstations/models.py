@@ -28,6 +28,7 @@ from grandchallenge.components.models import ComponentImage
 from grandchallenge.components.tasks import (
     preload_interactive_algorithms,
     start_service,
+    stop_endpoint,
     stop_service,
 )
 from grandchallenge.core.guardian import (
@@ -613,10 +614,7 @@ class Session(FieldChangeMixin, UUIDModel):
             )
 
         if self.has_changed("status") and self.status == self.STOPPED:
-            SessionUtilization.objects.create(
-                session=self,
-                duration=now() - self.created,
-            )
+            self.handle_session_stopped()
 
         if self.has_changed("maximum_duration"):
             self.handle_maximum_duration_changed()
@@ -627,19 +625,36 @@ class Session(FieldChangeMixin, UUIDModel):
         if reader_study.questions_with_interactive_algorithm.exists():
             on_commit(preload_interactive_algorithms.apply_async)
 
-    def handle_maximum_duration_changed(self):
+    @property
+    def associated_endpoints(self):
         from grandchallenge.algorithms.models import Endpoint
 
-        for endpoint in (
+        return (
             Endpoint.objects.active()
             .filter(
                 creator=self.creator,
                 algorithm_image__algorithm__reader_study_algorithm_implementations__questions__reader_study__workstation_sessions=self,
             )
             .distinct()
-        ):
+        )
+
+    def handle_maximum_duration_changed(self):
+        for endpoint in self.associated_endpoints:
             endpoint.maximum_duration = self.maximum_duration
             endpoint.save()
+
+    def handle_session_stopped(self):
+        SessionUtilization.objects.create(
+            session=self,
+            duration=now() - self.created,
+        )
+
+        for endpoint in self.associated_endpoints:
+            on_commit(
+                stop_endpoint.signature(
+                    kwargs=endpoint.task_kwargs,
+                ).apply_async
+            )
 
 
 class SessionUserObjectPermission(UserObjectPermissionBase):
