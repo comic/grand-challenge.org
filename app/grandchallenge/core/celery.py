@@ -166,6 +166,8 @@ class AcksLateTaskDecorator:
                 else:
                     raise error
 
+        wrapper._is_acks_late_task = True
+
         task_func = shared_task(
             name=name,
             acks_late=True,
@@ -174,12 +176,15 @@ class AcksLateTaskDecorator:
             ignore_result=ignore_result,
         )(wrapper)
 
-        task_func._is_acks_late_task = True
         return task_func
 
     @classmethod
-    def is_acks_late_task(cls, func):
-        return getattr(func, "_is_acks_late_task", False)
+    def is_wrapping(cls, func):
+        try:
+            wrapper = func.__wrapped__
+            return wrapper._is_acks_late_task
+        except AttributeError:
+            return False
 
 
 # For idempotent tasks that take a long time (<7200s)
