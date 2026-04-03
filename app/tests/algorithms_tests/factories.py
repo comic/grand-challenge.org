@@ -1,5 +1,4 @@
 import factory
-from faker import Faker
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -13,7 +12,7 @@ from grandchallenge.algorithms.models import (
 )
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.reader_studies.models import (
-    ReaderStudyAlgorithmChoices,
+    ReaderStudyAlgorithm,
     ReaderStudyAlgorithmImplementation,
 )
 from tests.components_tests.factories import (
@@ -112,6 +111,11 @@ class AlgorithmInterfaceFactory(factory.django.DjangoModelFactory):
         return manager.create(*args, inputs=inputs, outputs=outputs, **kwargs)
 
 
+class ReaderStudyAlgorithmFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = ReaderStudyAlgorithm
+
+
 class ReaderStudyAlgorithmImplementationFactory(
     factory.django.DjangoModelFactory
 ):
@@ -119,7 +123,7 @@ class ReaderStudyAlgorithmImplementationFactory(
         model = ReaderStudyAlgorithmImplementation
 
     algorithm = factory.SubFactory(AlgorithmFactory)
-    algorithm_choice = Faker().random_element(ReaderStudyAlgorithmChoices)
+    reader_study_algorithm = factory.SubFactory(ReaderStudyAlgorithmFactory)
 
 
 class EndpointFactory(factory.django.DjangoModelFactory):

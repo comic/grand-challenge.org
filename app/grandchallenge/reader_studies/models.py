@@ -22,7 +22,7 @@ from guardian.shortcuts import assign_perm, remove_perm
 from pictures.models import PictureField
 from referencing.exceptions import Unresolvable
 
-from grandchallenge.algorithms.models import Algorithm
+from grandchallenge.algorithms.models import Algorithm, AlgorithmInterface
 from grandchallenge.anatomy.models import BodyStructure
 from grandchallenge.components.models import (
     APIMethodChoices,
@@ -1355,8 +1355,23 @@ IMAGE_PORT_TO_VIEWPORT_NAME = {
 }
 
 
-class ReaderStudyAlgorithmChoices(models.TextChoices):
-    ULS23_BASELINE = "uls23-baseline", "ULS23 Baseline"
+class ReaderStudyAlgorithm(UUIDModel, TitleSlugDescriptionModel):
+    interfaces = models.ManyToManyField(
+        to=AlgorithmInterface,
+        related_name="reader_study_algorithms",
+        through="ReaderStudyAlgorithmAlgorithmInterface",
+    )
+
+
+class ReaderStudyAlgorithmAlgorithmInterface(models.Model):
+    reader_study_algorithm = models.ForeignKey(
+        ReaderStudyAlgorithm,
+        on_delete=models.CASCADE,
+    )
+    algorithm_interface = models.ForeignKey(
+        AlgorithmInterface,
+        on_delete=models.CASCADE,
+    )
 
 
 class ReaderStudyAlgorithmImplementation(UUIDModel):
@@ -1365,21 +1380,11 @@ class ReaderStudyAlgorithmImplementation(UUIDModel):
         on_delete=models.PROTECT,
         related_name="reader_study_algorithm_implementations",
     )
-    algorithm_choice = models.CharField(
-        choices=ReaderStudyAlgorithmChoices,
-        max_length=32,
-        unique=True,
+    reader_study_algorithm = models.ForeignKey(
+        ReaderStudyAlgorithm,
+        on_delete=models.PROTECT,
+        related_name="reader_study_algorithm_implementations",
     )
-
-    class Meta:
-        constraints = [
-            models.CheckConstraint(
-                condition=models.Q(
-                    algorithm_choice__in=ReaderStudyAlgorithmChoices.values
-                ),
-                name="algorithm_choice_valid",
-            )
-        ]
 
     def clean(self):
         super().clean()

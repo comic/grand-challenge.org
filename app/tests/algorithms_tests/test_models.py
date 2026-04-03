@@ -1514,32 +1514,6 @@ def test_algorithminterface_create():
 
 
 @pytest.mark.django_db
-def test_create_algorithm_implementation_choice_constraint():
-    with pytest.raises(IntegrityError) as error:
-        ReaderStudyAlgorithmImplementationFactory(algorithm_choice="")
-
-    assert (
-        'new row for relation "reader_studies_readerstudyalgorithmimplementation" violates '
-        'check constraint "algorithm_choice_valid"' in str(error.value)
-    )
-
-
-@pytest.mark.django_db
-def test_create_algorithm_implementation_unique_constraint():
-    algorithm_implementation = ReaderStudyAlgorithmImplementationFactory()
-    with pytest.raises(IntegrityError) as error:
-        ReaderStudyAlgorithmImplementationFactory(
-            algorithm_choice=algorithm_implementation.algorithm_choice
-        )
-
-    assert (
-        "duplicate key value violates unique constraint "
-        '"reader_studies_readerstudyalgorithmimpleme_algorithm_choice_key"'
-        in str(error.value)
-    )
-
-
-@pytest.mark.django_db
 def test_create_algorithm_implementation_without_image():
     algorithm_implementation = ReaderStudyAlgorithmImplementationFactory()
 
