@@ -70,15 +70,15 @@ class EndpointOrchestrator:
 
     @property
     def _algorithm_model_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}{self._algorithm_model_key}"
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}/{self._algorithm_model_key}"
 
     @property
     def _output_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}{self._io_prefix}/successes"
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}/{self._io_prefix}/successes"
 
     @property
     def _failure_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}{self._io_prefix}/failures"
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}/{self._io_prefix}/failures"
 
     @property
     def invocation_environment(self):

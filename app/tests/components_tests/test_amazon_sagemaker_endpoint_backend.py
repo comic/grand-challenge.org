@@ -26,7 +26,7 @@ class TestEndpointOrchestratorProperties:
         orchestrator = endpoint.orchestrator
 
         assert orchestrator._algorithm_model_s3_uri == (
-            f"s3://algorithm-endpoints-input/auxiliary-data/algorithms/endpoint/{endpoint.pk}/algorithm-model.tar.gz"
+            f"s3://algorithm-endpoints-input//auxiliary-data/algorithms/endpoint/{endpoint.pk}/algorithm-model.tar.gz"
         )
 
     def test_output_s3_uri(self, settings):
@@ -37,7 +37,7 @@ class TestEndpointOrchestratorProperties:
         orchestrator = endpoint.orchestrator
 
         assert orchestrator._output_s3_uri == (
-            f"s3://algorithm-endpoints-input/io/algorithms/endpoint/{endpoint.pk}/successes"
+            f"s3://algorithm-endpoints-input//io/algorithms/endpoint/{endpoint.pk}/successes"
         )
 
     def test_failure_s3_uri(self, settings):
@@ -48,7 +48,7 @@ class TestEndpointOrchestratorProperties:
         orchestrator = endpoint.orchestrator
 
         assert orchestrator._failure_s3_uri == (
-            f"s3://algorithm-endpoints-input/io/algorithms/endpoint/{endpoint.pk}/failures"
+            f"s3://algorithm-endpoints-input//io/algorithms/endpoint/{endpoint.pk}/failures"
         )
 
     def test_endpoint_invocation_environment(self, settings):
@@ -63,7 +63,7 @@ class TestEndpointOrchestratorProperties:
             "GRAND_CHALLENGE_COMPONENT_MAX_MEMORY_MB": "7168",
             "GRAND_CHALLENGE_COMPONENT_SIGNING_KEY_HEX": "",
             "GRAND_CHALLENGE_COMPONENT_API_METHOD": endpoint.algorithm_image.api_method,
-            "GRAND_CHALLENGE_COMPONENT_MODEL": f"s3://test_components_input_bucket/auxiliary-data/algorithms/endpoint/{endpoint.pk}/algorithm-model.tar.gz",
+            "GRAND_CHALLENGE_COMPONENT_MODEL": f"s3://test_components_input_bucket//auxiliary-data/algorithms/endpoint/{endpoint.pk}/algorithm-model.tar.gz",
         }
 
         orchestrator = EndpointFactory.build(algorithm_model=None).orchestrator
