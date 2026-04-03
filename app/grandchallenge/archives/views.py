@@ -3,7 +3,6 @@ from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models
-from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -136,23 +135,27 @@ class UsersArchiveList(
             )
         )
 
-        user_groups = self.request.user.groups.all()
-
         if not self.request.user.is_superuser:
-            queryset = queryset.filter(
-                Q(editors_group__in=user_groups)
-                | Q(uploaders_group__in=user_groups)
-                | Q(users_group__in=user_groups)
-            ).annotate(
-                user_role_order=models.Case(
-                    models.When(
-                        editors_group__in=user_groups, then=models.Value(3)
-                    ),
-                    models.When(
-                        uploaders_group__in=user_groups, then=models.Value(2)
-                    ),
-                    default=models.Value(1),
-                    output_field=models.IntegerField(),
+            queryset = (
+                queryset.with_user_roles(self.request.user)
+                .exclude(
+                    user_is_editor=False,
+                    user_is_uploader=False,
+                    user_is_user=False,
+                )
+                .annotate(
+                    user_role_order=models.Case(
+                        models.When(
+                            user_is_editor=True,
+                            then=models.Value(3),
+                        ),
+                        models.When(
+                            user_is_uploader=True,
+                            then=models.Value(2),
+                        ),
+                        default=models.Value(1),
+                        output_field=models.IntegerField(),
+                    )
                 )
             )
         else:
