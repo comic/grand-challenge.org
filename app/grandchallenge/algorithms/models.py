@@ -42,6 +42,7 @@ from grandchallenge.components.models import (  # noqa: F401
     Tarball,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.components.tasks import start_endpoint
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
@@ -1634,6 +1635,11 @@ class Endpoint(UUIDModel):
             self.assign_permissions()
             if self.creator:
                 self.viewers_group.user_set.add(self.creator)
+            on_commit(
+                start_endpoint.signature(
+                    kwargs=self.task_kwargs,
+                ).apply_async
+            )
 
     def create_groups(self):
         self.viewers_group = Group.objects.create(
