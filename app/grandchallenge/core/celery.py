@@ -174,7 +174,12 @@ class AcksLateTaskDecorator:
             ignore_result=ignore_result,
         )(wrapper)
 
+        task_func._is_acks_late_task = True
         return task_func
+
+    @classmethod
+    def is_acks_late_task(cls, func):
+        return getattr(func, "_is_acks_late_task", False)
 
 
 # For idempotent tasks that take a long time (<7200s)
