@@ -17,6 +17,7 @@ from grandchallenge.reader_studies.models import (
     QuestionGroupObjectPermission,
     QuestionUserObjectPermission,
     ReaderStudy,
+    ReaderStudyAlgorithm,
     ReaderStudyAlgorithmImplementation,
     ReaderStudyGroupObjectPermission,
     ReaderStudyPermissionRequest,
@@ -119,6 +120,7 @@ admin.site.register(ReaderStudyUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(
     ReaderStudyGroupObjectPermission, GroupObjectPermissionAdmin
 )
+admin.site.register(ReaderStudyAlgorithm, admin.ModelAdmin)
 admin.site.register(ReaderStudyAlgorithmImplementation, admin.ModelAdmin)
 admin.site.register(QuestionUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(QuestionGroupObjectPermission, GroupObjectPermissionAdmin)
