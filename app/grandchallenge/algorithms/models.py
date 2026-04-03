@@ -1540,9 +1540,6 @@ class Endpoint(UUIDModel):
     algorithm_model = models.ForeignKey(
         AlgorithmModel, on_delete=models.PROTECT, null=True, blank=True
     )
-    algorithm_interface = models.ForeignKey(
-        AlgorithmInterface, on_delete=models.PROTECT, null=True, blank=True
-    )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
