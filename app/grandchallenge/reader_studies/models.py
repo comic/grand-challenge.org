@@ -180,6 +180,25 @@ CASE_TEXT_SCHEMA = {
 }
 
 
+class ReaderStudySet(models.QuerySet):
+    def with_user_roles(self, user):
+        User = get_user_model()  # noqa: N806
+        return self.annotate(
+            user_is_editor=models.Exists(
+                User.objects.filter(
+                    groups=models.OuterRef("editors_group"),
+                    pk=user.pk,
+                )
+            ),
+            user_is_reader=models.Exists(
+                User.objects.filter(
+                    groups=models.OuterRef("readers_group"),
+                    pk=user.pk,
+                )
+            ),
+        )
+
+
 class ReaderStudy(
     UUIDModel,
     TitleSlugDescriptionModel,
@@ -376,6 +395,8 @@ class ReaderStudy(
         blank=True,
         help_text="The maximum number of credits that may be consumed for this reader study. Leave blank to allow unlimited usage.",
     )
+
+    objects = ReaderStudySet.as_manager()
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         verbose_name_plural = "reader studies"
