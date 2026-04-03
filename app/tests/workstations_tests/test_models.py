@@ -1,5 +1,4 @@
 from datetime import timedelta
-from unittest.mock import PropertyMock
 
 import pytest
 from django.core import mail
@@ -214,7 +213,7 @@ def test_clean_excludes_self(running_session):
 
 
 @pytest.mark.django_db
-def test_session_associated_endpoints():
+def test_session_updates_correct_endpoints():
     user = UserFactory()
     algorithm_image = AlgorithmImageFactory(
         is_manifest_valid=True,
@@ -255,58 +254,34 @@ def test_session_associated_endpoints():
         status=EndpointStatusChoices.STOPPED
     )
 
-    associated_endpoints = session.associated_endpoints
-
-    assert user_implementation_endpoint in associated_endpoints
-    assert other_user_implementation_endpoint not in associated_endpoints
-    assert users_other_endpoint not in associated_endpoints
-    assert other_endpoint not in associated_endpoints
-    assert user_implementation_endpoint_inactive not in associated_endpoints
-    assert (
-        other_user_implementation_endpoint_inactive not in associated_endpoints
-    )
-    assert users_other_endpoint_inactive not in associated_endpoints
-    assert other_endpoint_inactive not in associated_endpoints
-
-
-@pytest.mark.django_db
-def test_session_maximum_duration_change_updates_endpoints(mocker):
-    session = SessionFactory()
-    endpoint = EndpointFactory()
     new_duration = timedelta(minutes=1337)
-    mocker.patch.object(
-        Session,
-        "associated_endpoints",
-        new_callable=PropertyMock,
-        return_value=[endpoint],
-    )
 
     session.maximum_duration = new_duration
     session.save()
 
-    assert endpoint.maximum_duration == new_duration
+    user_implementation_endpoint.refresh_from_db()
+    other_user_implementation_endpoint.refresh_from_db()
+    users_other_endpoint.refresh_from_db()
+    other_endpoint.refresh_from_db()
+    user_implementation_endpoint_inactive.refresh_from_db()
+    other_user_implementation_endpoint_inactive.refresh_from_db()
+    users_other_endpoint_inactive.refresh_from_db()
+    other_endpoint_inactive.refresh_from_db()
 
-
-@pytest.mark.django_db
-def test_session_schedules_stop_endpoint(
-    mocker, django_capture_on_commit_callbacks
-):
-    session = SessionFactory()
-    endpoint = EndpointFactory()
-    mocker.patch.object(
-        Session,
-        "associated_endpoints",
-        new_callable=PropertyMock,
-        return_value=[endpoint],
+    assert user_implementation_endpoint.maximum_duration == new_duration
+    assert other_user_implementation_endpoint.maximum_duration == timedelta(
+        minutes=10
     )
-    mock_signature = mocker.patch(
-        "grandchallenge.components.tasks.stop_endpoint.signature"
+    assert users_other_endpoint.maximum_duration == timedelta(minutes=10)
+    assert other_endpoint.maximum_duration == timedelta(minutes=10)
+    assert user_implementation_endpoint_inactive.maximum_duration == timedelta(
+        minutes=10
     )
-
-    with django_capture_on_commit_callbacks(execute=True) as callbacks:
-        session.status = Session.STOPPED
-        session.save()
-
-    assert len(callbacks) == 1
-    mock_signature.assert_called_once_with(kwargs=endpoint.task_kwargs)
-    mock_signature.return_value.apply_async.assert_called_once()
+    assert (
+        other_user_implementation_endpoint_inactive.maximum_duration
+        == timedelta(minutes=10)
+    )
+    assert users_other_endpoint_inactive.maximum_duration == timedelta(
+        minutes=10
+    )
+    assert other_endpoint_inactive.maximum_duration == timedelta(minutes=10)
