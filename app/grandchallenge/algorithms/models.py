@@ -1524,6 +1524,13 @@ class EndpointStatusChoices(TextChoices):
         }
 
 
+class EndpointManager(models.QuerySet):
+    def active(self):
+        return self.filter(
+            status__in=EndpointStatusChoices.get_active_choices()
+        )
+
+
 class Endpoint(UUIDModel):
     StatusChoices = EndpointStatusChoices
 
@@ -1562,6 +1569,8 @@ class Endpoint(UUIDModel):
         editable=False,
         related_name="viewers_of_endpoint",
     )
+
+    objects = EndpointManager.as_manager()
 
     class Meta:
         permissions = [("invoke_endpoint", "Can invoke the endpoint")]

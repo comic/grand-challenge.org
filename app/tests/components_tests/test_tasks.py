@@ -14,6 +14,7 @@ from requests import put
 
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
+    Endpoint,
     EndpointStatusChoices,
     Job,
 )
@@ -47,6 +48,7 @@ from grandchallenge.components.tasks import (
     remove_container_image_from_registry,
     remove_inactive_container_images,
     start_endpoint,
+    stop_endpoint,
     update_container_image_shim,
     upload_to_registry_and_sagemaker,
     validate_docker_image,
@@ -1512,9 +1514,7 @@ def test_start_endpoint_wrong_state_raises(mocker):
 
 @pytest.mark.parametrize("method_with_error", start_endpoint_method_names)
 @pytest.mark.django_db
-def test_start_endpoint_failure(
-    mocker, method_with_error, django_capture_on_commit_callbacks
-):
+def test_start_endpoint_failure(mocker, method_with_error):
     endpoint = EndpointFactory()
     for method_name in start_endpoint_method_names:
         if method_name == method_with_error:
@@ -1526,15 +1526,94 @@ def test_start_endpoint_failure(
             method_name,
             **kwargs,
         )
-    mock_deprovision_task_signature = mocker.patch(
-        "grandchallenge.components.tasks.deprovision_endpoint.signature",
+    mock_deprovision_method = mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
     )
 
-    with django_capture_on_commit_callbacks(execute=True):
-        start_endpoint(**endpoint.task_kwargs)
-
+    start_endpoint(**endpoint.task_kwargs)
     endpoint.refresh_from_db()
 
     assert endpoint.status == endpoint.StatusChoices.FAILED
     assert endpoint.error_message == "An unexpected error occurred"
-    mock_deprovision_task_signature.return_value.apply_async.assert_called_once()
+    mock_deprovision_method.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_start_endpoint_deprovision_failure_raises(mocker):
+    endpoint = EndpointFactory()
+    mocker.patch.object(
+        EndpointOrchestrator,
+        start_endpoint_method_names[0],
+        side_effect=Exception,
+    )
+    mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
+        side_effect=Exception("error during deprovision"),
+    )
+    initial_status = endpoint.status
+
+    # assert failure during deprovision is raised
+    with pytest.raises(Exception, match="error during deprovision"):
+        start_endpoint(**endpoint.task_kwargs)
+
+    endpoint.refresh_from_db()
+
+    assert endpoint.status == initial_status
+
+
+@pytest.mark.django_db
+def test_stop_endpoint(mocker):
+    endpoint = EndpointFactory()
+    mock_deprovision_method = mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
+    )
+
+    assert endpoint.status in endpoint.StatusChoices.get_active_choices()
+
+    stop_endpoint(**endpoint.task_kwargs)
+    endpoint.refresh_from_db()
+
+    assert endpoint.status == endpoint.StatusChoices.STOPPED
+    mock_deprovision_method.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_stop_endpoint_deprovision_failure_raises(mocker):
+    endpoint = EndpointFactory()
+    mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
+        side_effect=Exception("error during deprovision"),
+    )
+    initial_status = endpoint.status
+
+    # assert failure during deprovision is raised
+    with pytest.raises(Exception, match="error during deprovision"):
+        stop_endpoint(**endpoint.task_kwargs)
+
+    endpoint.refresh_from_db()
+
+    assert endpoint.status == initial_status
+
+
+@pytest.mark.django_db
+def test_stop_endpoint_wrong_state_raises(mocker):
+    endpoint = EndpointFactory(status=EndpointStatusChoices.FAILED)
+    mock_update_status_method = mocker.patch.object(
+        Endpoint,
+        "update_status",
+    )
+    initial_status = endpoint.status
+
+    assert initial_status not in endpoint.StatusChoices.get_active_choices()
+
+    with pytest.raises(Endpoint.DoesNotExist):
+        stop_endpoint(**endpoint.task_kwargs)
+
+    endpoint.refresh_from_db()
+
+    assert endpoint.status == initial_status
+    mock_update_status_method.assert_not_called()

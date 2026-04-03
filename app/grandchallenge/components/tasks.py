@@ -1674,23 +1674,25 @@ def start_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
         orchestrator.create_endpoint()
     except Exception:
         logger.error("Could not start endpoint", exc_info=True)
+        orchestrator.deprovision()
         endpoint.update_status(
             status=endpoint.StatusChoices.FAILED,
             error_message="An unexpected error occurred",
-        )
-
-        on_commit(
-            deprovision_endpoint.signature(**endpoint.task_kwargs).apply_async
         )
 
     else:
         endpoint.update_status(status=endpoint.StatusChoices.RUNNING)
 
 
-@acks_late_micro_short_task
-def deprovision_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
+def stop_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
     model = apps.get_model(app_label=app_label, model_name=model_name)
-    endpoint = model.objects.get(pk=pk)
 
-    orchestrator = endpoint.orchestrator
-    orchestrator.deprovision()
+    with check_lock_acquired():
+        endpoint = (
+            model.objects.active().select_for_update(nowait=True).get(pk=pk)
+        )
+
+    endpoint.orchestrator.deprovision()
+    endpoint.update_status(status=endpoint.StatusChoices.STOPPED)
