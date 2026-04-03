@@ -32,6 +32,9 @@ class PaymentTypeChoices(models.TextChoices):
 
 
 class InvoiceQuerySet(models.QuerySet):
+    def delete(self):
+        raise ValidationError("Invoices cannot be deleted.")
+
     def with_due_date(self):
         return self.annotate(
             due_date=Cast(
@@ -245,6 +248,9 @@ class Invoice(models.Model, FieldChangeMixin):
             ),
         ]
 
+    def delete(self, *args, **kwargs):
+        raise ValidationError("Invoices cannot be deleted.")
+
     @property
     def total_amount_euros(self):
         try:
@@ -265,6 +271,7 @@ class Invoice(models.Model, FieldChangeMixin):
     def clean(self):
         if (
             not self._state.adding
+            and self.payment_type != PaymentTypeChoices.COMPLIMENTARY
             and self.payment_status != PaymentStatusChoices.INITIALIZED
         ):
             # Assert total amount unchanged

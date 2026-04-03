@@ -57,6 +57,10 @@ class InvoiceAdmin(admin.ModelAdmin):
     autocomplete_fields = ("challenge",)
     readonly_fields = ["invoice_request_text"]
 
+    def has_delete_permission(self, request, obj=None):
+        # invoices cannot be deleted
+        return False
+
     def invoice_request_text(self, obj):
         required = {
             "Amount": f"{obj.total_amount_euros} Euro",
