@@ -7,6 +7,7 @@ from django.http import Http404
 from django.utils.text import slugify
 from guardian.shortcuts import assign_perm, remove_perm
 
+from grandchallenge.algorithms.models import Endpoint
 from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmLambdaChoices,
 )
@@ -16,6 +17,10 @@ from grandchallenge.workstations.templatetags.workstations import (
     get_workstation_path_and_query_string,
 )
 from grandchallenge.workstations.views import SessionCreate
+from tests.algorithms_tests.factories import (
+    AlgorithmImageFactory,
+    ReaderStudyAlgorithmImplementationFactory,
+)
 from tests.factories import (
     ImageFactory,
     SessionFactory,
@@ -410,6 +415,56 @@ def test_session_create_reader_study_no_algorithm(
         "grandchallenge.components.tasks.stop_service",
     ]
     assert reader_study.workstation_sessions.count() == 1
+
+
+@pytest.mark.django_db
+def test_session_create_reader_study_with_algorithm_implementation(
+    client, django_capture_on_commit_callbacks
+):
+    user = UserFactory()
+    ws = WorkstationFactory()
+    WorkstationImageFactory(
+        workstation=ws,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    reader_study = ReaderStudyFactory(workstation=ws)
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    implementation = ReaderStudyAlgorithmImplementationFactory(
+        algorithm=algorithm_image.algorithm
+    )
+    question = QuestionFactory(reader_study=reader_study)
+    question.algorithms.add(implementation)
+
+    reader_study.readers_group.user_set.add(user)
+
+    path, _ = get_workstation_path_and_query_string(reader_study=reader_study)
+
+    assert Endpoint.objects.count() == 0
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            viewname="workstations:workstation-session-create-nested",
+            reverse_kwargs={"slug": ws.slug, "workstation_path": path},
+            user=user,
+            data={"region": "eu-central-1"},
+        )
+
+    assert response.status_code == 302
+    assert [c.__self__.name for c in callbacks] == [
+        "grandchallenge.components.tasks.start_service",
+        "grandchallenge.components.tasks.start_endpoint",
+        "grandchallenge.components.tasks.stop_service",
+    ]
+    assert reader_study.workstation_sessions.count() == 1
+    assert Endpoint.objects.count() == 1
 
 
 @pytest.mark.django_db

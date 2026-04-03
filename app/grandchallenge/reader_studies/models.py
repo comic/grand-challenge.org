@@ -895,6 +895,10 @@ class ReaderStudy(
     def questions_with_interactive_algorithm(self):
         return self.questions.exclude(interactive_algorithm="")
 
+    @property
+    def questions_with_algorithm_implementations(self):
+        return self.questions.exclude(algorithms__isnull=True)
+
 
 class ReaderStudyUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset()
