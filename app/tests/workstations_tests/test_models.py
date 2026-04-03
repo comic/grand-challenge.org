@@ -6,6 +6,9 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 
 from grandchallenge.algorithms.models import EndpointStatusChoices
+from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
+    EndpointOrchestrator,
+)
 from grandchallenge.workstations.models import Session, Workstation
 from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
@@ -285,3 +288,60 @@ def test_session_updates_correct_endpoints():
         minutes=10
     )
     assert other_endpoint_inactive.maximum_duration == timedelta(minutes=10)
+
+
+@pytest.mark.django_db
+def test_session_stopped_schedules_stop_for_correct_endpoints(
+    settings, django_capture_on_commit_callbacks, mocker
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    user = UserFactory()
+    algorithm_image = AlgorithmImageFactory(
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    implementation = ReaderStudyAlgorithmImplementationFactory(
+        algorithm=algorithm_image.algorithm
+    )
+    reader_study = ReaderStudyFactory()
+    question = QuestionFactory(reader_study=reader_study)
+    question.algorithms.add(implementation)
+
+    session = SessionFactory(creator=user)
+    reader_study.workstation_sessions.add(session)
+
+    user_implementation_endpoint = EndpointFactory(
+        creator=user, algorithm_image=algorithm_image
+    )
+    other_user_implementation_endpoint = EndpointFactory(
+        algorithm_image=algorithm_image
+    )
+    users_other_endpoint = EndpointFactory(creator=user)
+    other_endpoint = EndpointFactory()
+
+    mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
+    )
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        session.status = Session.STOPPED
+        session.save()
+
+    assert len(callbacks) == 1
+
+    user_implementation_endpoint.refresh_from_db()
+    other_user_implementation_endpoint.refresh_from_db()
+    users_other_endpoint.refresh_from_db()
+    other_endpoint.refresh_from_db()
+
+    assert user_implementation_endpoint.status == EndpointStatusChoices.STOPPED
+    assert (
+        other_user_implementation_endpoint.status
+        != EndpointStatusChoices.STOPPED
+    )
+    assert users_other_endpoint.status != EndpointStatusChoices.STOPPED
+    assert other_endpoint.status != EndpointStatusChoices.STOPPED
