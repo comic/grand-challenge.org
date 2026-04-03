@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.invoices.models import (
+    Invoice,
     PaymentStatusChoices,
     PaymentTypeChoices,
 )
@@ -398,9 +399,13 @@ def test_payment_type_non_complimentary_requires_details(
     "payment_status",
     set(PaymentStatusChoices).difference([PaymentStatusChoices.INITIALIZED]),
 )
+@pytest.mark.parametrize(
+    "payment_type", (PaymentTypeChoices.PREPAID, PaymentTypeChoices.POSTPAID)
+)
 @pytest.mark.django_db
-def test_total_amount_cannot_change(payment_status):
+def test_total_amount_cannot_change(payment_status, payment_type):
     invoice = InvoiceFactory(
+        payment_type=payment_type,
         payment_status=payment_status,
         support_costs_euros=0,
         compute_costs_euros=1,
@@ -427,3 +432,31 @@ def test_total_amount_can_change_for_initialized_payment_status():
     invoice.support_costs_euros = 1
     with nullcontext():
         invoice.clean()
+
+
+@pytest.mark.django_db
+def test_total_amount_can_change_for_complimentary_invoices():
+    invoice = InvoiceFactory(
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=2,
+    )
+    invoice.support_costs_euros = 1
+    with nullcontext():
+        invoice.clean()
+
+
+@pytest.mark.django_db
+def test_invoices_cannot_be_deleted():
+    invoice = InvoiceFactory()
+
+    with pytest.raises(ValidationError):
+        invoice.delete()
+
+    assert Invoice.objects.filter(pk=invoice.pk).exists()
+
+    with pytest.raises(ValidationError):
+        Invoice.objects.filter(pk=invoice.pk).delete()
+
+    assert Invoice.objects.filter(pk=invoice.pk).exists()
