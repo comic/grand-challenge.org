@@ -86,6 +86,38 @@
                                    class="fas fa-qrcode fa-fw mr-1"></i>{% trans "Enable MFA" %}</a>
                         {% endif %}
                         </ul>
+
+                        <h6>Your Work</h6>
+                        <ul class="list-group mb-3">
+                            <a class="list-group-item list-group-item-action"
+                            href="{% url 'challenges:users-list' %}">
+                                Challenges
+                            </a>
+                            <a class="list-group-item list-group-item-action"
+                            href="{% url 'challenges:requests-list' %}">
+                                Challenge Requests
+                            </a>
+                            <a class="list-group-item list-group-item-action"
+                            href="{% url 'algorithms:users-list' %}">
+                                Algorithms
+                            </a>
+                            <a class="list-group-item list-group-item-action"
+                            href="{% url 'reader-studies:users-list' %}">
+                                Reader Studies
+                            </a>
+                            <a class="list-group-item list-group-item-action"
+                            href="{% url 'archives:users-list' %}">
+                                Archives
+                            </a>
+                            <a class="list-group-item list-group-item-action"
+                            href="{% url 'cases:raw-image-upload-session-list' %}">
+                                Image Uploads
+                            </a>
+                            <a class="list-group-item list-group-item-action"
+                            href="{% url 'cases:dicom-image-set-upload-list' %}">
+                                DICOM Image Uploads
+                            </a>
+                        </ul>
                     {% else %}
                         {% if profile.user.verification.is_verified %}
                         <span class="btn btn-sm btn-outline-success disabled mb-3" title="Verified User"><i
@@ -93,37 +125,6 @@
                         {% endif %}
                     {% endif %}
 
-                    <h6>Your Work</h6>
-                    <ul class="list-group mb-3">
-                        <a class="list-group-item list-group-item-action"
-                           href="{% url 'challenges:users-list' %}">
-                            Challenges
-                        </a>
-                        <a class="list-group-item list-group-item-action"
-                           href="{% url 'challenges:requests-list' %}">
-                            Challenge Requests
-                        </a>
-                        <a class="list-group-item list-group-item-action"
-                           href="{% url 'algorithms:users-list' %}">
-                            Algorithms
-                        </a>
-                        <a class="list-group-item list-group-item-action"
-                           href="{% url 'reader-studies:users-list' %}">
-                            Reader Studies
-                        </a>
-                        <a class="list-group-item list-group-item-action"
-                           href="{% url 'archives:users-list' %}">
-                            Archives
-                        </a>
-                        <a class="list-group-item list-group-item-action"
-                           href="{% url 'cases:raw-image-upload-session-list' %}">
-                            Image Uploads
-                        </a>
-                        <a class="list-group-item list-group-item-action"
-                           href="{% url 'cases:dicom-image-set-upload-list' %}">
-                            DICOM Image Uploads
-                        </a>
-                    </ul>
 
                     <ul class="list-unstyled">
                         {% if profile.country %}
