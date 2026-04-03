@@ -1696,3 +1696,27 @@ def stop_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     endpoint.orchestrator.deprovision()
     endpoint.update_status(status=endpoint.StatusChoices.STOPPED)
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def stop_expired_endpoints(*, app_label: str, model_name: str):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
+    endpoints_to_stop = (
+        model.objects.active()
+        .annotate(
+            expires=ExpressionWrapper(
+                F("created") + F("maximum_duration"),
+                output_field=DateTimeField(),
+            )
+        )
+        .filter(expires__lt=now())
+    )
+
+    for endpoint in endpoints_to_stop:
+        on_commit(
+            stop_endpoint.signature(
+                **endpoint.task_kwargs,
+            ).apply_async
+        )
