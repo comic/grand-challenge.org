@@ -1389,12 +1389,35 @@ class ReaderStudyAlgorithmImplementation(UUIDModel):
     def clean(self):
         super().clean()
 
+        errors = []
+
+        for clean_method in [
+            self.clean_algorithm_image,
+            self.clean_interfaces,
+        ]:
+            try:
+                clean_method()
+            except ValidationError as e:
+                errors.extend(e)
+
+        if errors:
+            raise ValidationError(errors)
+
+    def clean_algorithm_image(self):
         if not self.algorithm.active_image:
             raise ValidationError("Algorithm has no active image")
 
         if self.algorithm.active_image.api_method != APIMethodChoices.INVOKE:
             raise ValidationError(
                 "Active algorithm image does not use the INVOKE api method"
+            )
+
+    def clean_interfaces(self):
+        if self.reader_study_algorithm.interfaces.exclude(
+            pk__in=self.algorithm.interfaces.values("pk")
+        ).exists():
+            raise ValidationError(
+                "The algorithm does not have all the required interfaces"
             )
 
 

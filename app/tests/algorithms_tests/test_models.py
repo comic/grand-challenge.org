@@ -32,6 +32,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmModelFactory,
     AlgorithmUserCreditFactory,
     EndpointFactory,
+    ReaderStudyAlgorithmFactory,
     ReaderStudyAlgorithmImplementationFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
@@ -1531,10 +1532,8 @@ def test_create_algorithm_implementation_without_invoke_api_image():
         is_desired_version=True,
         api_method=APIMethodChoices.EXEC,
     )
-    algorithm_implimentation_exec = (
-        ReaderStudyAlgorithmImplementationFactory.build(
-            algorithm=algorithm_image_exec.algorithm
-        )
+    algorithm_implimentation_exec = ReaderStudyAlgorithmImplementationFactory(
+        algorithm=algorithm_image_exec.algorithm
     )
     algorithm_image_invoke = AlgorithmImageFactory(
         is_manifest_valid=True,
@@ -1543,7 +1542,7 @@ def test_create_algorithm_implementation_without_invoke_api_image():
         api_method=APIMethodChoices.INVOKE,
     )
     algorithm_implementation_invoke = (
-        ReaderStudyAlgorithmImplementationFactory.build(
+        ReaderStudyAlgorithmImplementationFactory(
             algorithm=algorithm_image_invoke.algorithm
         )
     )
@@ -1557,6 +1556,23 @@ def test_create_algorithm_implementation_without_invoke_api_image():
 
     with nullcontext():
         algorithm_implementation_invoke.full_clean()
+
+
+@pytest.mark.django_db
+def test_create_algorithm_implementation_interfaces_validation():
+    reader_study_algorithm = ReaderStudyAlgorithmFactory()
+    reader_study_algorithm.interfaces.add(AlgorithmInterfaceFactory())
+    algorithm_implementation = ReaderStudyAlgorithmImplementationFactory(
+        reader_study_algorithm=reader_study_algorithm,
+    )
+
+    with pytest.raises(ValidationError) as error:
+        algorithm_implementation.full_clean()
+
+    assert (
+        "The algorithm does not have all the required interfaces"
+        in error.value.message_dict["__all__"]
+    )
 
 
 @pytest.mark.django_db
