@@ -31,6 +31,7 @@ from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.timezone import now, timedelta
 from django.utils.translation import gettext_lazy as _
+from guardian.compat import get_user_model
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
 from pictures.models import PictureField
@@ -147,6 +148,23 @@ class ChallengeSet(models.QuerySet):
                 F("approved_compute_costs_euro_millicents")
                 - F("compute_cost_euro_millicents"),
                 output_field=models.BigIntegerField(),
+            ),
+        )
+
+    def with_user_roles(self, user):
+        User = get_user_model()  # noqa: N806
+        return self.annotate(
+            user_is_admin=models.Exists(
+                User.objects.filter(
+                    groups=models.OuterRef("admins_group"),
+                    pk=user.pk,
+                )
+            ),
+            user_is_participant=models.Exists(
+                User.objects.filter(
+                    groups=models.OuterRef("participants_group"),
+                    pk=user.pk,
+                )
             ),
         )
 

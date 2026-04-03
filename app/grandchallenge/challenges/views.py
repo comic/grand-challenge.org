@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db import models
-from django.db.models import F, Prefetch, Q
+from django.db.models import F, Prefetch
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.utils.html import format_html
@@ -125,19 +125,16 @@ class UsersChallengeList(
             )
         )
 
-        user_groups = self.request.user.groups.all()
-
         if not self.request.user.is_superuser:
-            queryset = queryset.filter(
-                Q(admins_group__in=user_groups)
-                | Q(participants_group__in=user_groups)
-            ).annotate(
-                user_role_order=models.Case(
-                    models.When(
-                        admins_group__in=user_groups, then=models.Value(2)
-                    ),
-                    default=models.Value(1),
-                    output_field=models.IntegerField(),
+            queryset = (
+                queryset.with_user_roles(self.request.user)
+                .exclude(user_is_admin=False, user_is_participant=False)
+                .annotate(
+                    user_role_order=models.Case(
+                        models.When(user_is_admin=True, then=models.Value(2)),
+                        default=models.Value(1),
+                        output_field=models.IntegerField(),
+                    )
                 )
             )
         else:
