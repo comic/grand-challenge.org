@@ -38,23 +38,23 @@ from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
 
 
-class ArchiveSet(models.QuerySet):
-    def with_user_roles(self, user):
+class ArchiveQuerySet(models.QuerySet):
+    def with_user_roles(self, *, user):
         User = get_user_model()  # noqa: N806
         return self.annotate(
-            user_is_editor=models.Exists(
+            user_is_archive_editor=models.Exists(
                 User.objects.filter(
                     groups=models.OuterRef("editors_group"),
                     pk=user.pk,
                 )
             ),
-            user_is_uploader=models.Exists(
+            user_is_archive_uploader=models.Exists(
                 User.objects.filter(
                     groups=models.OuterRef("uploaders_group"),
                     pk=user.pk,
                 )
             ),
-            user_is_user=models.Exists(
+            user_is_archive_user=models.Exists(
                 User.objects.filter(
                     groups=models.OuterRef("users_group"),
                     pk=user.pk,
@@ -166,7 +166,7 @@ class Archive(
         related_name="archives",
     )
 
-    objects = ArchiveSet.as_manager()
+    objects = ArchiveQuerySet.as_manager()
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)

@@ -127,11 +127,16 @@ class UsersChallengeList(
 
         if not self.request.user.is_superuser:
             queryset = (
-                queryset.with_user_roles(self.request.user)
-                .exclude(user_is_admin=False, user_is_participant=False)
+                queryset.with_user_roles(user=self.request.user)
+                .exclude(
+                    user_is_challenge_admin=False,
+                    user_is_challenge_participant=False,
+                )
                 .annotate(
                     user_role_order=models.Case(
-                        models.When(user_is_admin=True, then=models.Value(2)),
+                        models.When(
+                            user_is_challenge_admin=True, then=models.Value(2)
+                        ),
                         default=models.Value(1),
                         output_field=models.IntegerField(),
                     )

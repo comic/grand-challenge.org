@@ -137,20 +137,20 @@ class UsersArchiveList(
 
         if not self.request.user.is_superuser:
             queryset = (
-                queryset.with_user_roles(self.request.user)
+                queryset.with_user_roles(user=self.request.user)
                 .exclude(
-                    user_is_editor=False,
-                    user_is_uploader=False,
-                    user_is_user=False,
+                    user_is_archive_editor=False,
+                    user_is_archive_uploader=False,
+                    user_is_archive_user=False,
                 )
                 .annotate(
                     user_role_order=models.Case(
                         models.When(
-                            user_is_editor=True,
+                            user_is_archive_editor=True,
                             then=models.Value(3),
                         ),
                         models.When(
-                            user_is_uploader=True,
+                            user_is_archive_uploader=True,
                             then=models.Value(2),
                         ),
                         default=models.Value(1),

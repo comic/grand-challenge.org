@@ -224,11 +224,14 @@ class UsersAlgorithmList(
         if not self.request.user.is_superuser:
             queryset = (
                 queryset.with_user_roles(user=self.request.user)
-                .exclude(user_is_editor=False, user_is_user=False)
+                .exclude(
+                    user_is_algorithm_editor=False,
+                    user_is_algorithm_user=False,
+                )
                 .annotate(
                     user_role_order=Case(
-                        When(user_is_editor=True, then=Value(2)),
-                        When(user_is_user=True, then=Value(1)),
+                        When(user_is_algorithm_editor=True, then=Value(2)),
+                        When(user_is_algorithm_user=True, then=Value(1)),
                         default=Value(0),
                         output_field=IntegerField(),
                     )

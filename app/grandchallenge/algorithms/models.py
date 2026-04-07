@@ -170,17 +170,17 @@ def get_existing_interface_for_inputs_and_outputs(
         return None
 
 
-class AlgorithmSet(models.QuerySet):
-    def with_user_roles(self, user):
+class AlgorithmQuerySet(models.QuerySet):
+    def with_user_roles(self, *, user):
         User = get_user_model()  # noqa: N806
         return self.annotate(
-            user_is_editor=models.Exists(
+            user_is_algorithm_editor=models.Exists(
                 User.objects.filter(
                     groups=models.OuterRef("editors_group"),
                     pk=user.pk,
                 )
             ),
-            user_is_user=models.Exists(
+            user_is_algorithm_user=models.Exists(
                 User.objects.filter(
                     groups=models.OuterRef("users_group"),
                     pk=user.pk,
@@ -388,7 +388,7 @@ class Algorithm(UUIDModel, TitleSlugDescriptionModel, HangingProtocolMixin):
         help_text="Add internal notes such as the deployed version number, code and data locations, etc. Only visible to editors.",
     )
 
-    objects = AlgorithmSet.as_manager()
+    objects = AlgorithmQuerySet.as_manager()
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)

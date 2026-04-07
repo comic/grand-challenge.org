@@ -192,11 +192,17 @@ class UsersReaderStudyList(
 
         if not self.request.user.is_superuser:
             queryset = (
-                queryset.with_user_roles(self.request.user)
-                .exclude(user_is_editor=False, user_is_reader=False)
+                queryset.with_user_roles(user=self.request.user)
+                .exclude(
+                    user_is_readerstudy_editor=False,
+                    user_is_readerstudy_reader=False,
+                )
                 .annotate(
                     user_role_order=models.Case(
-                        models.When(user_is_editor=True, then=models.Value(2)),
+                        models.When(
+                            user_is_readerstudy_editor=True,
+                            then=models.Value(2),
+                        ),
                         default=models.Value(1),
                         output_field=models.IntegerField(),
                     )

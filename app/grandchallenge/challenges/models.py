@@ -90,7 +90,7 @@ from grandchallenge.task_categories.models import TaskType
 logger = logging.getLogger(__name__)
 
 
-class ChallengeSet(models.QuerySet):
+class ChallengeQuerySet(models.QuerySet):
     def with_available_compute(self):
         return self.annotate(
             complimentary_compute_costs_euros=(
@@ -151,16 +151,16 @@ class ChallengeSet(models.QuerySet):
             ),
         )
 
-    def with_user_roles(self, user):
+    def with_user_roles(self, *, user):
         User = get_user_model()  # noqa: N806
         return self.annotate(
-            user_is_admin=models.Exists(
+            user_is_challenge_admin=models.Exists(
                 User.objects.filter(
                     groups=models.OuterRef("admins_group"),
                     pk=user.pk,
                 )
             ),
-            user_is_participant=models.Exists(
+            user_is_challenge_participant=models.Exists(
                 User.objects.filter(
                     groups=models.OuterRef("participants_group"),
                     pk=user.pk,
@@ -485,7 +485,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         help_text="The number of bytes stored in the registry",
     )
 
-    objects = ChallengeSet.as_manager()
+    objects = ChallengeQuerySet.as_manager()
 
     class Meta:
         verbose_name = "challenge"
