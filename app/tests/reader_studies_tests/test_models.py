@@ -1298,13 +1298,16 @@ def test_reader_study_queryset_with_user_roles_multiple_reader_studies():
     reader_study1 = ReaderStudyFactory()
     reader_study2 = ReaderStudyFactory()
     reader_study3 = ReaderStudyFactory()
+    reader_study4 = ReaderStudyFactory()
     user = UserFactory()
 
     reader_study2.add_reader(user)
     reader_study3.add_editor(user)
+    reader_study4.add_reader(user)
+    reader_study4.add_editor(user)
 
     qs = ReaderStudy.objects.with_user_roles(user=user)
-    assert qs.count() == 3
+    assert qs.count() == 4
     result = {rs.pk: rs for rs in qs}
 
     # Non-member
@@ -1318,3 +1321,7 @@ def test_reader_study_queryset_with_user_roles_multiple_reader_studies():
     # Editor
     assert result[reader_study3.pk].user_is_reader_study_editor is True
     assert result[reader_study3.pk].user_is_reader_study_reader is False
+
+    # Both
+    assert result[reader_study4.pk].user_is_reader_study_editor is True
+    assert result[reader_study4.pk].user_is_reader_study_reader is True

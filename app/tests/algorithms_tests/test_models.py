@@ -1711,13 +1711,16 @@ def test_algorithm_queryset_with_user_roles_multiple_algorithms():
     algorithm1 = AlgorithmFactory()
     algorithm2 = AlgorithmFactory()
     algorithm3 = AlgorithmFactory()
+    algorithm4 = AlgorithmFactory()
     user = UserFactory()
 
     algorithm2.add_user(user)
     algorithm3.add_editor(user)
+    algorithm4.add_user(user)
+    algorithm4.add_editor(user)
 
     qs = Algorithm.objects.with_user_roles(user=user)
-    assert qs.count() == 3
+    assert qs.count() == 4
     result = {alg.pk: alg for alg in qs}
 
     # Anom
@@ -1731,3 +1734,7 @@ def test_algorithm_queryset_with_user_roles_multiple_algorithms():
     # Editor
     assert result[algorithm3.pk].user_is_algorithm_editor is True
     assert result[algorithm3.pk].user_is_algorithm_user is False
+
+    # Both
+    assert result[algorithm4.pk].user_is_algorithm_editor is True
+    assert result[algorithm4.pk].user_is_algorithm_user is True

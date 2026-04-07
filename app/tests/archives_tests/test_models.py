@@ -173,14 +173,18 @@ def test_archive_queryset_with_user_roles_multiple_archives():
     archive2 = ArchiveFactory()
     archive3 = ArchiveFactory()
     archive4 = ArchiveFactory()
+    archive5 = ArchiveFactory()
     user = UserFactory()
 
     archive2.add_user(user)
     archive3.add_uploader(user)
     archive4.add_editor(user)
+    archive5.add_user(user)
+    archive5.add_uploader(user)
+    archive5.add_editor(user)
 
     qs = Archive.objects.with_user_roles(user=user)
-    assert qs.count() == 4
+    assert qs.count() == 5
 
     result = {a.pk: a for a in qs}
 
@@ -203,3 +207,8 @@ def test_archive_queryset_with_user_roles_multiple_archives():
     assert result[archive4.pk].user_is_archive_editor is True
     assert result[archive4.pk].user_is_archive_uploader is False
     assert result[archive4.pk].user_is_archive_user is False
+
+    # All
+    assert result[archive5.pk].user_is_archive_editor is True
+    assert result[archive5.pk].user_is_archive_uploader is True
+    assert result[archive5.pk].user_is_archive_user is True

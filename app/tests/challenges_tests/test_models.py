@@ -738,13 +738,16 @@ def test_challenge_queryset_with_user_roles_multiple_challenges():
     challenge1 = ChallengeFactory()
     challenge2 = ChallengeFactory()
     challenge3 = ChallengeFactory()
+    challenge4 = ChallengeFactory()
     user = UserFactory()
 
     challenge2.add_participant(user)
     challenge3.add_admin(user)
+    challenge4.add_participant(user)
+    challenge4.add_admin(user)
 
     qs = Challenge.objects.with_user_roles(user=user)
-    assert qs.count() == 3
+    assert qs.count() == 4
     result = {ch.pk: ch for ch in qs}
 
     # Non-member
@@ -758,3 +761,7 @@ def test_challenge_queryset_with_user_roles_multiple_challenges():
     # Editor
     assert result[challenge3.pk].user_is_challenge_admin is True
     assert result[challenge3.pk].user_is_challenge_participant is False
+
+    # Both
+    assert result[challenge4.pk].user_is_challenge_admin is True
+    assert result[challenge4.pk].user_is_challenge_participant is True
