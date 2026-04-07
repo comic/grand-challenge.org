@@ -1640,5 +1640,5 @@ def test_stop_expired_endpoints(mocker, django_capture_on_commit_callbacks):
         stop_expired_endpoints(app_label="algorithms", model_name="endpoint")
 
     assert len(callbacks) == 1
-    mock_signature.assert_called_once_with(**endpoint_to_stop.task_kwargs)
+    mock_signature.assert_called_once_with(kwargs=endpoint_to_stop.task_kwargs)
     mock_signature.return_value.apply_async.assert_called_once()
