@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import models
 from django.forms.utils import ErrorList
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -115,7 +114,14 @@ class UsersArchiveList(
     columns = [
         Column(title="Title", sort_field="title"),
         Column(title="Public", sort_field="public"),
-        Column(title="Your Role", sort_field="user_role_order"),
+        Column(
+            title="Your Role",
+            sort_field=(
+                "user_is_archive_editor",
+                "user_is_archive_uploader",
+                "user_is_archive_user",
+            ),
+        ),
         Column(title="Editors"),
         Column(title="Created", sort_field="created"),
         Column(title="Linked Challenge Phases"),
@@ -138,24 +144,6 @@ class UsersArchiveList(
                 user_is_archive_editor=False,
                 user_is_archive_uploader=False,
                 user_is_archive_user=False,
-            )
-            .annotate(
-                user_role_order=models.Case(
-                    models.When(
-                        user_is_archive_editor=True,
-                        then=models.Value(3),
-                    ),
-                    models.When(
-                        user_is_archive_uploader=True,
-                        then=models.Value(2),
-                    ),
-                    models.When(
-                        user_is_archive_user=True,
-                        then=models.Value(1),
-                    ),
-                    default=models.Value(0),
-                    output_field=models.IntegerField(),
-                )
             )
         )
 

@@ -8,7 +8,6 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db import models
 from django.db.models import F, Prefetch
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
@@ -104,7 +103,13 @@ class UsersChallengeList(
     columns = [
         Column(title="Acronym", sort_field="short_name"),
         Column(title="Hidden", sort_field="hidden"),
-        Column(title="Your Role", sort_field="user_role_order"),
+        Column(
+            title="Your Role",
+            sort_field=(
+                "user_is_challenge_admin",
+                "user_is_challenge_participant",
+            ),
+        ),
         Column(title="Status"),
         Column(title="Admins"),
         Column(title="Created", sort_field="created"),
@@ -127,19 +132,6 @@ class UsersChallengeList(
             .exclude(
                 user_is_challenge_admin=False,
                 user_is_challenge_participant=False,
-            )
-            .annotate(
-                user_role_order=models.Case(
-                    models.When(
-                        user_is_challenge_admin=True, then=models.Value(2)
-                    ),
-                    models.When(
-                        user_is_challenge_participant=True,
-                        then=models.Value(1),
-                    ),
-                    default=models.Value(0),
-                    output_field=models.IntegerField(),
-                )
             )
         )
 

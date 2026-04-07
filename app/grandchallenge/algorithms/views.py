@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import AccessMixin, PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Case, IntegerField, Q, Value, When, Window
+from django.db.models import Q, Window
 from django.db.models.functions import Rank
 from django.db.transaction import on_commit
 from django.forms.utils import ErrorList
@@ -205,7 +205,10 @@ class UsersAlgorithmList(
     columns = [
         Column(title="Title", sort_field="title"),
         Column(title="Public", sort_field="public"),
-        Column(title="Your Role", sort_field="user_role_order"),
+        Column(
+            title="Your Role",
+            sort_field=("user_is_algorithm_editor", "user_is_algorithm_user"),
+        ),
         Column(title="Editors"),
         Column(title="Created", sort_field="created"),
     ]
@@ -223,14 +226,6 @@ class UsersAlgorithmList(
             .exclude(
                 user_is_algorithm_editor=False,
                 user_is_algorithm_user=False,
-            )
-            .annotate(
-                user_role_order=Case(
-                    When(user_is_algorithm_editor=True, then=Value(2)),
-                    When(user_is_algorithm_user=True, then=Value(1)),
-                    default=Value(0),
-                    output_field=IntegerField(),
-                )
             )
         )
 
