@@ -11,7 +11,6 @@ from django.contrib.auth.mixins import (
 )
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import models
 from django.db.models import Count, Q
 from django.db.transaction import on_commit
 from django.forms import Form
@@ -171,7 +170,13 @@ class UsersReaderStudyList(
     columns = [
         Column(title="Title", sort_field="title"),
         Column(title="Public", sort_field="public"),
-        Column(title="Your Role", sort_field="user_role_order"),
+        Column(
+            title="Your Role",
+            sort_field=(
+                "user_is_reader_study_editor",
+                "user_is_reader_study_reader",
+            ),
+        ),
         Column(title="Editors"),
         Column(title="Educational", sort_field="is_educational"),
         Column(title="Created", sort_field="created"),
@@ -179,7 +184,7 @@ class UsersReaderStudyList(
     default_sort_column = 5
 
     def get_queryset(self):
-        queryset = (
+        return (
             super()
             .get_queryset()
             .prefetch_related(
@@ -188,35 +193,12 @@ class UsersReaderStudyList(
                 "editors_group__user_set__verification",
                 "readers_group__user_set",
             )
+            .with_user_roles(user=self.request.user)
+            .exclude(
+                user_is_reader_study_editor=False,
+                user_is_reader_study_reader=False,
+            )
         )
-
-        if not self.request.user.is_superuser:
-            queryset = (
-                queryset.with_user_roles(user=self.request.user)
-                .exclude(
-                    user_is_reader_study_editor=False,
-                    user_is_reader_study_reader=False,
-                )
-                .annotate(
-                    user_role_order=models.Case(
-                        models.When(
-                            user_is_reader_study_editor=True,
-                            then=models.Value(2),
-                        ),
-                        default=models.Value(1),
-                        output_field=models.IntegerField(),
-                    )
-                )
-            )
-        else:
-            # Speed up the query for superusers
-            queryset = queryset.annotate(
-                user_role_order=models.Value(
-                    -1, output_field=models.IntegerField()
-                )
-            )
-
-        return queryset
 
 
 class ReaderStudyCreate(
