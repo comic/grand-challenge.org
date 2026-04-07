@@ -212,37 +212,27 @@ class UsersAlgorithmList(
     default_sort_column = 4
 
     def get_queryset(self):
-        queryset = (
+        return (
             super()
             .get_queryset()
             .prefetch_related(
                 "editors_group__user_set__user_profile",
                 "editors_group__user_set__verification",
             )
+            .with_user_roles(user=self.request.user)
+            .exclude(
+                user_is_algorithm_editor=False,
+                user_is_algorithm_user=False,
+            )
+            .annotate(
+                user_role_order=Case(
+                    When(user_is_algorithm_editor=True, then=Value(2)),
+                    When(user_is_algorithm_user=True, then=Value(1)),
+                    default=Value(0),
+                    output_field=IntegerField(),
+                )
+            )
         )
-
-        if not self.request.user.is_superuser:
-            queryset = (
-                queryset.with_user_roles(user=self.request.user)
-                .exclude(
-                    user_is_algorithm_editor=False,
-                    user_is_algorithm_user=False,
-                )
-                .annotate(
-                    user_role_order=Case(
-                        When(user_is_algorithm_editor=True, then=Value(2)),
-                        When(user_is_algorithm_user=True, then=Value(1)),
-                        default=Value(0),
-                        output_field=IntegerField(),
-                    )
-                )
-            )
-        else:
-            queryset = queryset.annotate(
-                user_role_order=Value(-1, output_field=IntegerField())
-            )
-
-        return queryset
 
 
 class AlgorithmDetail(ObjectPermissionRequiredMixin, DetailView):

@@ -179,7 +179,7 @@ class UsersReaderStudyList(
     default_sort_column = 5
 
     def get_queryset(self):
-        queryset = (
+        return (
             super()
             .get_queryset()
             .prefetch_related(
@@ -188,35 +188,22 @@ class UsersReaderStudyList(
                 "editors_group__user_set__verification",
                 "readers_group__user_set",
             )
+            .with_user_roles(user=self.request.user)
+            .exclude(
+                user_is_reader_study_editor=False,
+                user_is_reader_study_reader=False,
+            )
+            .annotate(
+                user_role_order=models.Case(
+                    models.When(
+                        user_is_reader_study_editor=True,
+                        then=models.Value(2),
+                    ),
+                    default=models.Value(1),
+                    output_field=models.IntegerField(),
+                )
+            )
         )
-
-        if not self.request.user.is_superuser:
-            queryset = (
-                queryset.with_user_roles(user=self.request.user)
-                .exclude(
-                    user_is_reader_study_editor=False,
-                    user_is_reader_study_reader=False,
-                )
-                .annotate(
-                    user_role_order=models.Case(
-                        models.When(
-                            user_is_reader_study_editor=True,
-                            then=models.Value(2),
-                        ),
-                        default=models.Value(1),
-                        output_field=models.IntegerField(),
-                    )
-                )
-            )
-        else:
-            # Speed up the query for superusers
-            queryset = queryset.annotate(
-                user_role_order=models.Value(
-                    -1, output_field=models.IntegerField()
-                )
-            )
-
-        return queryset
 
 
 class ReaderStudyCreate(

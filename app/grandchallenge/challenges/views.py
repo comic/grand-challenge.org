@@ -113,7 +113,7 @@ class UsersChallengeList(
     default_sort_column = 1
 
     def get_queryset(self):
-        queryset = (
+        return (
             super()
             .get_queryset()
             .prefetch_related(
@@ -123,34 +123,21 @@ class UsersChallengeList(
                 # For displaying challenge status (badge)
                 "phase_set",
             )
+            .with_user_roles(user=self.request.user)
+            .exclude(
+                user_is_challenge_admin=False,
+                user_is_challenge_participant=False,
+            )
+            .annotate(
+                user_role_order=models.Case(
+                    models.When(
+                        user_is_challenge_admin=True, then=models.Value(2)
+                    ),
+                    default=models.Value(1),
+                    output_field=models.IntegerField(),
+                )
+            )
         )
-
-        if not self.request.user.is_superuser:
-            queryset = (
-                queryset.with_user_roles(user=self.request.user)
-                .exclude(
-                    user_is_challenge_admin=False,
-                    user_is_challenge_participant=False,
-                )
-                .annotate(
-                    user_role_order=models.Case(
-                        models.When(
-                            user_is_challenge_admin=True, then=models.Value(2)
-                        ),
-                        default=models.Value(1),
-                        output_field=models.IntegerField(),
-                    )
-                )
-            )
-        else:
-            # Speed up the query for superusers
-            queryset = queryset.annotate(
-                user_role_order=models.Value(
-                    -1, output_field=models.IntegerField()
-                )
-            )
-
-        return queryset
 
 
 class ChallengeUpdate(
