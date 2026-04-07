@@ -218,6 +218,28 @@
 <span class="p">}</span>
 
 
+<div class="viewcode-block" id="ReaderStudyQuerySet">
+<a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudyQuerySet">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ReaderStudyQuerySet</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">QuerySet</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_user_roles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="n">User</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span>  <span class="c1"># noqa: N806</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="n">user_is_reader_study_editor</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span>
+                <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">groups</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">OuterRef</span><span class="p">(</span><span class="s2">&quot;editors_group&quot;</span><span class="p">),</span>
+                    <span class="n">pk</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">user_is_reader_study_reader</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span>
+                <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                    <span class="n">groups</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">OuterRef</span><span class="p">(</span><span class="s2">&quot;readers_group&quot;</span><span class="p">),</span>
+                    <span class="n">pk</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="ReaderStudy">
 <a class="viewcode-back" href="../../../reader-studies.html#grandchallenge.reader_studies.models.ReaderStudy">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ReaderStudy</span><span class="p">(</span>
@@ -416,6 +438,8 @@
         <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">help_text</span><span class="o">=</span><span class="s2">&quot;The maximum number of credits that may be consumed for this reader study. Leave blank to allow unlimited usage.&quot;</span><span class="p">,</span>
     <span class="p">)</span>
+
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">ReaderStudyQuerySet</span><span class="o">.</span><span class="n">as_manager</span><span class="p">()</span>
 
     <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">(</span><span class="n">UUIDModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">,</span> <span class="n">TitleSlugDescriptionModel</span><span class="o">.</span><span class="n">Meta</span><span class="p">):</span>
         <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s2">&quot;reader studies&quot;</span>
