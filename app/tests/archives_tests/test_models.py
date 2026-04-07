@@ -180,6 +180,8 @@ def test_archive_queryset_with_user_roles_multiple_archives():
     archive4.add_editor(user)
 
     qs = Archive.objects.with_user_roles(user=user)
+    assert qs.count() == 4
+
     result = {a.pk: a for a in qs}
 
     # Non-member

@@ -744,6 +744,7 @@ def test_challenge_queryset_with_user_roles_multiple_challenges():
     challenge3.add_admin(user)
 
     qs = Challenge.objects.with_user_roles(user=user)
+    assert qs.count() == 3
     result = {ch.pk: ch for ch in qs}
 
     # Non-member

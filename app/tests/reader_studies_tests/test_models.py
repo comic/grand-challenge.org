@@ -1304,6 +1304,7 @@ def test_reader_study_queryset_with_user_roles_multiple_reader_studies():
     reader_study3.add_editor(user)
 
     qs = ReaderStudy.objects.with_user_roles(user=user)
+    assert qs.count() == 3
     result = {rs.pk: rs for rs in qs}
 
     # Non-member

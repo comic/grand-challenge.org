@@ -1717,6 +1717,7 @@ def test_algorithm_queryset_with_user_roles_multiple_algorithms():
     algorithm3.add_editor(user)
 
     qs = Algorithm.objects.with_user_roles(user=user)
+    assert qs.count() == 3
     result = {alg.pk: alg for alg in qs}
 
     # Anom
