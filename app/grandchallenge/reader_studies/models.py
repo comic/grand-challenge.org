@@ -184,13 +184,13 @@ class ReaderStudyQuerySet(models.QuerySet):
     def with_user_roles(self, *, user):
         User = get_user_model()  # noqa: N806
         return self.annotate(
-            user_is_readerstudy_editor=models.Exists(
+            user_is_reader_study_editor=models.Exists(
                 User.objects.filter(
                     groups=models.OuterRef("editors_group"),
                     pk=user.pk,
                 )
             ),
-            user_is_readerstudy_reader=models.Exists(
+            user_is_reader_study_reader=models.Exists(
                 User.objects.filter(
                     groups=models.OuterRef("readers_group"),
                     pk=user.pk,

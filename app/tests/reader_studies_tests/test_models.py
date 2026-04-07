@@ -1262,3 +1262,58 @@ def test_reader_study_not_launchable_when_max_credits_consumed():
     assert reader_study.session_utilizations.first().credits_consumed == 500
     assert reader_study.credits_consumed == 500
     assert not reader_study.is_launchable
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "reader_study_editor",
+    (True, False),
+    ids=["editor", "not_editor"],
+)
+@pytest.mark.parametrize(
+    "reader_study_reader",
+    (True, False),
+    ids=["reader", "not_reader"],
+)
+def test_reader_study_queryset_with_user_roles(
+    reader_study_editor, reader_study_reader
+):
+    reader_study = ReaderStudyFactory()
+    user = UserFactory()
+
+    if reader_study_editor:
+        reader_study.add_editor(user)
+    if reader_study_reader:
+        reader_study.add_reader(user)
+
+    qs = ReaderStudy.objects.with_user_roles(user=user)
+    result = qs.get(pk=reader_study.pk)
+
+    assert result.user_is_reader_study_editor is reader_study_editor
+    assert result.user_is_reader_study_reader is reader_study_reader
+
+
+@pytest.mark.django_db
+def test_reader_study_queryset_with_user_roles_multiple_reader_studies():
+    reader_study1 = ReaderStudyFactory()
+    reader_study2 = ReaderStudyFactory()
+    reader_study3 = ReaderStudyFactory()
+    user = UserFactory()
+
+    reader_study2.add_reader(user)
+    reader_study3.add_editor(user)
+
+    qs = ReaderStudy.objects.with_user_roles(user=user)
+    result = {rs.pk: rs for rs in qs}
+
+    # Non-member
+    assert result[reader_study1.pk].user_is_reader_study_editor is False
+    assert result[reader_study1.pk].user_is_reader_study_reader is False
+
+    # Reader
+    assert result[reader_study2.pk].user_is_reader_study_editor is False
+    assert result[reader_study2.pk].user_is_reader_study_reader is True
+
+    # Editor
+    assert result[reader_study3.pk].user_is_reader_study_editor is True
+    assert result[reader_study3.pk].user_is_reader_study_reader is False

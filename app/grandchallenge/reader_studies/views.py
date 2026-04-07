@@ -194,13 +194,13 @@ class UsersReaderStudyList(
             queryset = (
                 queryset.with_user_roles(user=self.request.user)
                 .exclude(
-                    user_is_readerstudy_editor=False,
-                    user_is_readerstudy_reader=False,
+                    user_is_reader_study_editor=False,
+                    user_is_reader_study_reader=False,
                 )
                 .annotate(
                     user_role_order=models.Case(
                         models.When(
-                            user_is_readerstudy_editor=True,
+                            user_is_reader_study_editor=True,
                             then=models.Value(2),
                         ),
                         default=models.Value(1),

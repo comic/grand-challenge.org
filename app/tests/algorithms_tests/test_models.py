@@ -1677,3 +1677,56 @@ class TestEndpointProperties:
             f"rumc-gcorg-p-alg-endp-{endpoint.pk}"
         )
         assert len(endpoint.endpoint_name) <= 63
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "algorithm_editor",
+    (True, False),
+    ids=["editor", "not_editor"],
+)
+@pytest.mark.parametrize(
+    "algorithm_user",
+    (True, False),
+    ids=["user", "not_user"],
+)
+def test_algorithm_queryset_with_user_roles(algorithm_editor, algorithm_user):
+    algorithm = AlgorithmFactory()
+    user = UserFactory()
+
+    if algorithm_editor:
+        algorithm.add_editor(user)
+    if algorithm_user:
+        algorithm.add_user(user)
+
+    qs = Algorithm.objects.with_user_roles(user=user)
+    result = qs.get(pk=algorithm.pk)
+
+    assert result.user_is_algorithm_editor is algorithm_editor
+    assert result.user_is_algorithm_user is algorithm_user
+
+
+@pytest.mark.django_db
+def test_algorithm_queryset_with_user_roles_multiple_algorithms():
+    algorithm1 = AlgorithmFactory()
+    algorithm2 = AlgorithmFactory()
+    algorithm3 = AlgorithmFactory()
+    user = UserFactory()
+
+    algorithm2.add_user(user)
+    algorithm3.add_editor(user)
+
+    qs = Algorithm.objects.with_user_roles(user=user)
+    result = {alg.pk: alg for alg in qs}
+
+    # Anom
+    assert result[algorithm1.pk].user_is_algorithm_editor is False
+    assert result[algorithm1.pk].user_is_algorithm_user is False
+
+    # User
+    assert result[algorithm2.pk].user_is_algorithm_editor is False
+    assert result[algorithm2.pk].user_is_algorithm_user is True
+
+    # Editor
+    assert result[algorithm3.pk].user_is_algorithm_editor is True
+    assert result[algorithm3.pk].user_is_algorithm_user is False

@@ -1,6 +1,7 @@
 import pytest
 from django.db import IntegrityError, transaction
 
+from grandchallenge.archives.models import Archive
 from tests.algorithms_tests.factories import AlgorithmInterfaceFactory
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import (
@@ -8,6 +9,7 @@ from tests.components_tests.factories import (
     ComponentInterfaceValueFactory,
 )
 from tests.evaluation_tests.factories import PhaseFactory
+from tests.factories import UserFactory
 
 
 @pytest.mark.django_db
@@ -126,3 +128,76 @@ def test_archive_allowed_socket_slugs():
     phase.algorithm_interfaces.set([int1, int2])
 
     assert archive.allowed_socket_slugs == {ci1.slug, ci2.slug, ci3.slug}
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "archive_editor",
+    (True, False),
+    ids=["editor", "not_editor"],
+)
+@pytest.mark.parametrize(
+    "archive_uploader",
+    (True, False),
+    ids=["uploader", "not_uploader"],
+)
+@pytest.mark.parametrize(
+    "archive_user",
+    (True, False),
+    ids=["user", "not_user"],
+)
+def test_archive_queryset_with_user_roles(
+    archive_editor, archive_uploader, archive_user
+):
+    archive = ArchiveFactory()
+    user = UserFactory()
+
+    if archive_editor:
+        archive.add_editor(user)
+    if archive_uploader:
+        archive.add_uploader(user)
+    if archive_user:
+        archive.add_user(user)
+
+    qs = Archive.objects.with_user_roles(user=user)
+    result = qs.get(pk=archive.pk)
+
+    assert result.user_is_archive_editor is archive_editor
+    assert result.user_is_archive_uploader is archive_uploader
+    assert result.user_is_archive_user is archive_user
+
+
+@pytest.mark.django_db
+def test_archive_queryset_with_user_roles_multiple_archives():
+    archive1 = ArchiveFactory()
+    archive2 = ArchiveFactory()
+    archive3 = ArchiveFactory()
+    archive4 = ArchiveFactory()
+    user = UserFactory()
+
+    archive2.add_user(user)
+    archive3.add_uploader(user)
+    archive4.add_editor(user)
+
+    qs = Archive.objects.with_user_roles(user=user)
+    result = {a.pk: a for a in qs}
+
+    # Non-member
+    assert result[archive1.pk].user_is_archive_editor is False
+    assert result[archive1.pk].user_is_archive_uploader is False
+    assert result[archive1.pk].user_is_archive_user is False
+
+    # User
+    assert result[archive2.pk].user_is_archive_editor is False
+    assert result[archive2.pk].user_is_archive_uploader is False
+    assert result[archive2.pk].user_is_archive_user is True
+
+    # Uploader
+    assert result[archive3.pk].user_is_archive_editor is False
+    assert result[archive3.pk].user_is_archive_uploader is True
+    assert result[archive3.pk].user_is_archive_user is False
+
+    # Editor
+    assert result[archive4.pk].user_is_archive_editor is True
+    assert result[archive4.pk].user_is_archive_uploader is False
+    assert result[archive4.pk].user_is_archive_user is False
