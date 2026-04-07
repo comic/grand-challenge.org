@@ -199,7 +199,11 @@ class UsersReaderStudyList(
                         user_is_reader_study_editor=True,
                         then=models.Value(2),
                     ),
-                    default=models.Value(1),
+                    models.When(
+                        user_is_reader_study_reader=True,
+                        then=models.Value(1),
+                    ),
+                    default=models.Value(0),
                     output_field=models.IntegerField(),
                 )
             )

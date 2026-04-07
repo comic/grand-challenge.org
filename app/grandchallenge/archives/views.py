@@ -149,7 +149,11 @@ class UsersArchiveList(
                         user_is_archive_uploader=True,
                         then=models.Value(2),
                     ),
-                    default=models.Value(1),
+                    models.When(
+                        user_is_archive_user=True,
+                        then=models.Value(1),
+                    ),
+                    default=models.Value(0),
                     output_field=models.IntegerField(),
                 )
             )

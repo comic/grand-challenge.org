@@ -19,14 +19,12 @@
 <split></split>
 {# Role #}
 
-{% if object.user_role_order == 3 %}
+{% if object.user_is_archive_editor %}
     <i class="fas fa-user-tie fa-fw mr-1"></i>Editor
-{% elif object.user_role_order == 2 %}
+{% elif object.user_is_archive_uploader %}
     <i class="fas fa-upload fa-fw mr-1"></i>Uploader
-{% elif object.user_role_order == 1 %}
+{% elif object.user_is_archive_user %}
     <i class="fas fa-user fa-fw mr-1"></i>User
-{% else %}
-    <i class="fas fa-user-secret fa-fw mr-1"></i>Other
 {% endif %}
 
 <split></split>
