@@ -52,7 +52,10 @@ class PaginatedTableListView(ListView):
 
         prefix = "-" if direction == "desc" else ""
 
-        return f"{prefix}{order_by}"
+        if isinstance(order_by, str):
+            return (f"{prefix}{order_by}",)
+        else:
+            return (f"{prefix}{field}" for field in order_by[::-1])
 
     def draw_response(self, *, request):
         start = int(request.POST.get("start", 0))
@@ -107,15 +110,17 @@ class PaginatedTableListView(ListView):
                 Q(),
             )
             queryset = queryset.filter(q)
+
         if order_by:
-            queryset = queryset.order_by(order_by)
+            queryset = queryset.order_by(*order_by)
+
         return queryset.distinct()
 
 
 @dataclass
 class Column:
     title: str
-    sort_field: str = ""
+    sort_field: str | tuple = ""
     classes: tuple[str, ...] = ()
     identifier: str = ""
 

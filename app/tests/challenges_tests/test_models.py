@@ -702,3 +702,66 @@ def test_challenge_request_submitted_field_set_on_status_update():
         challenge_request.status
         == ChallengeRequest.ChallengeRequestStatusChoices.PENDING
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "challenge_admin",
+    (True, False),
+    ids=["admin", "not_admin"],
+)
+@pytest.mark.parametrize(
+    "challenge_participant",
+    (True, False),
+    ids=["participant", "not_participant"],
+)
+def test_challenge_queryset_with_user_roles(
+    challenge_admin, challenge_participant
+):
+    challenge = ChallengeFactory()
+    user = UserFactory()
+
+    if challenge_admin:
+        challenge.add_admin(user)
+    if challenge_participant:
+        challenge.add_participant(user)
+
+    qs = Challenge.objects.with_user_roles(user=user)
+    result = qs.get(pk=challenge.pk)
+
+    assert result.user_is_challenge_admin is challenge_admin
+    assert result.user_is_challenge_participant is challenge_participant
+
+
+@pytest.mark.django_db
+def test_challenge_queryset_with_user_roles_multiple_challenges():
+    challenge1 = ChallengeFactory()
+    challenge2 = ChallengeFactory()
+    challenge3 = ChallengeFactory()
+    challenge4 = ChallengeFactory()
+    user = UserFactory()
+
+    challenge2.add_participant(user)
+    challenge3.add_admin(user)
+    challenge4.add_participant(user)
+    challenge4.add_admin(user)
+
+    qs = Challenge.objects.with_user_roles(user=user)
+    assert qs.count() == 4
+    result = {ch.pk: ch for ch in qs}
+
+    # Non-member
+    assert result[challenge1.pk].user_is_challenge_admin is False
+    assert result[challenge1.pk].user_is_challenge_participant is False
+
+    # Participant
+    assert result[challenge2.pk].user_is_challenge_admin is False
+    assert result[challenge2.pk].user_is_challenge_participant is True
+
+    # Editor
+    assert result[challenge3.pk].user_is_challenge_admin is True
+    assert result[challenge3.pk].user_is_challenge_participant is False
+
+    # Both
+    assert result[challenge4.pk].user_is_challenge_admin is True
+    assert result[challenge4.pk].user_is_challenge_participant is True

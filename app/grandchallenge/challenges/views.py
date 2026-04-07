@@ -8,8 +8,7 @@ from django.contrib.auth.mixins import (
     UserPassesTestMixin,
 )
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db import models
-from django.db.models import F, Prefetch, Q
+from django.db.models import F, Prefetch
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.utils.html import format_html
@@ -104,7 +103,13 @@ class UsersChallengeList(
     columns = [
         Column(title="Acronym", sort_field="short_name"),
         Column(title="Hidden", sort_field="hidden"),
-        Column(title="Your Role", sort_field="user_role_order"),
+        Column(
+            title="Your Role",
+            sort_field=(
+                "user_is_challenge_admin",
+                "user_is_challenge_participant",
+            ),
+        ),
         Column(title="Status"),
         Column(title="Admins"),
         Column(title="Created", sort_field="created"),
@@ -113,7 +118,7 @@ class UsersChallengeList(
     default_sort_column = 1
 
     def get_queryset(self):
-        queryset = (
+        return (
             super()
             .get_queryset()
             .prefetch_related(
@@ -123,32 +128,12 @@ class UsersChallengeList(
                 # For displaying challenge status (badge)
                 "phase_set",
             )
+            .with_user_roles(user=self.request.user)
+            .exclude(
+                user_is_challenge_admin=False,
+                user_is_challenge_participant=False,
+            )
         )
-
-        user_groups = self.request.user.groups.all()
-
-        if not self.request.user.is_superuser:
-            queryset = queryset.filter(
-                Q(admins_group__in=user_groups)
-                | Q(participants_group__in=user_groups)
-            ).annotate(
-                user_role_order=models.Case(
-                    models.When(
-                        admins_group__in=user_groups, then=models.Value(2)
-                    ),
-                    default=models.Value(1),
-                    output_field=models.IntegerField(),
-                )
-            )
-        else:
-            # Speed up the query for superusers
-            queryset = queryset.annotate(
-                user_role_order=models.Value(
-                    -1, output_field=models.IntegerField()
-                )
-            )
-
-        return queryset
 
 
 class ChallengeUpdate(

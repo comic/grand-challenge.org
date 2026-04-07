@@ -19,12 +19,10 @@
 <split></split>
 {# Role #}
 
-{% if object.user_role_order == 2 %}
+{% if object.user_is_challenge_admin %}
     <i class="fas fa-user-tie fa-fw mr-1"></i>Admin
-{% elif  object.user_role_order == 1 %}
+{% elif  object.user_is_challenge_participant %}
     <i class="fas fa-users fa-fw mr-1"></i>Participant
-{% else %}
- <i class="fas fa-user-secret fa-fw mr-1"></i>Other
 {% endif %}
 
 <split></split>

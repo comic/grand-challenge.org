@@ -2,8 +2,6 @@ from django.conf import settings
 from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import models
-from django.db.models import Q
 from django.forms.utils import ErrorList
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -116,7 +114,14 @@ class UsersArchiveList(
     columns = [
         Column(title="Title", sort_field="title"),
         Column(title="Public", sort_field="public"),
-        Column(title="Your Role", sort_field="user_role_order"),
+        Column(
+            title="Your Role",
+            sort_field=(
+                "user_is_archive_editor",
+                "user_is_archive_uploader",
+                "user_is_archive_user",
+            ),
+        ),
         Column(title="Editors"),
         Column(title="Created", sort_field="created"),
         Column(title="Linked Challenge Phases"),
@@ -124,7 +129,7 @@ class UsersArchiveList(
     default_sort_column = 4
 
     def get_queryset(self):
-        queryset = (
+        return (
             super()
             .get_queryset()
             .prefetch_related(
@@ -134,36 +139,13 @@ class UsersArchiveList(
                 # For displaying linked challenge phases
                 "phase_set__challenge",
             )
+            .with_user_roles(user=self.request.user)
+            .exclude(
+                user_is_archive_editor=False,
+                user_is_archive_uploader=False,
+                user_is_archive_user=False,
+            )
         )
-
-        user_groups = self.request.user.groups.all()
-
-        if not self.request.user.is_superuser:
-            queryset = queryset.filter(
-                Q(editors_group__in=user_groups)
-                | Q(uploaders_group__in=user_groups)
-                | Q(users_group__in=user_groups)
-            ).annotate(
-                user_role_order=models.Case(
-                    models.When(
-                        editors_group__in=user_groups, then=models.Value(3)
-                    ),
-                    models.When(
-                        uploaders_group__in=user_groups, then=models.Value(2)
-                    ),
-                    default=models.Value(1),
-                    output_field=models.IntegerField(),
-                )
-            )
-        else:
-            # Speed up the query for superusers
-            queryset = queryset.annotate(
-                user_role_order=models.Value(
-                    -1, output_field=models.IntegerField()
-                )
-            )
-
-        return queryset
 
 
 class ArchiveCreate(PermissionRequiredMixin, UserFormKwargsMixin, CreateView):

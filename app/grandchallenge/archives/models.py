@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Q
 from django.utils.functional import cached_property
 from django_extensions.db.models import TitleSlugDescriptionModel
+from guardian.compat import get_user_model
 from guardian.shortcuts import assign_perm, remove_perm
 from pictures.models import PictureField
 
@@ -35,6 +36,31 @@ from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
+
+
+class ArchiveQuerySet(models.QuerySet):
+    def with_user_roles(self, *, user):
+        User = get_user_model()  # noqa: N806
+        return self.annotate(
+            user_is_archive_editor=models.Exists(
+                User.objects.filter(
+                    groups=models.OuterRef("editors_group"),
+                    pk=user.pk,
+                )
+            ),
+            user_is_archive_uploader=models.Exists(
+                User.objects.filter(
+                    groups=models.OuterRef("uploaders_group"),
+                    pk=user.pk,
+                )
+            ),
+            user_is_archive_user=models.Exists(
+                User.objects.filter(
+                    groups=models.OuterRef("users_group"),
+                    pk=user.pk,
+                )
+            ),
+        )
 
 
 class Archive(
@@ -139,6 +165,8 @@ class Archive(
         help_text="The organizations associated with this archive",
         related_name="archives",
     )
+
+    objects = ArchiveQuerySet.as_manager()
 
     class Meta(UUIDModel.Meta, TitleSlugDescriptionModel.Meta):
         ordering = ("created",)
