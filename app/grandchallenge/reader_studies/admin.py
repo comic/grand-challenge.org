@@ -18,7 +18,6 @@ from grandchallenge.reader_studies.models import (
     QuestionUserObjectPermission,
     ReaderStudy,
     ReaderStudyAlgorithm,
-    ReaderStudyAlgorithmAlgorithmInterface,
     ReaderStudyAlgorithmImplementation,
     ReaderStudyGroupObjectPermission,
     ReaderStudyPermissionRequest,
@@ -117,19 +116,11 @@ class CategoricalOptionAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "question", "default")
 
 
-class ReaderStudyAlgorithmAlgorithmInterfaceInLine(admin.TabularInline):
-    model = ReaderStudyAlgorithmAlgorithmInterface
-
-
-@admin.register(ReaderStudyAlgorithm)
-class ReaderStudyAlgorithmAdmin(admin.ModelAdmin):
-    inlines = [ReaderStudyAlgorithmAlgorithmInterfaceInLine]
-
-
 admin.site.register(ReaderStudyUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(
     ReaderStudyGroupObjectPermission, GroupObjectPermissionAdmin
 )
+admin.site.register(ReaderStudyAlgorithm, admin.ModelAdmin)
 admin.site.register(ReaderStudyAlgorithmImplementation, admin.ModelAdmin)
 admin.site.register(QuestionUserObjectPermission, UserObjectPermissionAdmin)
 admin.site.register(QuestionGroupObjectPermission, GroupObjectPermissionAdmin)
