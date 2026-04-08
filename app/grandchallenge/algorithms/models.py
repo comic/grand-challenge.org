@@ -147,10 +147,16 @@ class AlgorithmInterfaceInput(models.Model):
     input = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
     interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = (("input", "interface"),)
+
 
 class AlgorithmInterfaceOutput(models.Model):
     output = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
     interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (("output", "interface"),)
 
 
 def get_existing_interface_for_inputs_and_outputs(

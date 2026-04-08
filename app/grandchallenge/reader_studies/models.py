@@ -1373,6 +1373,9 @@ class ReaderStudyAlgorithmAlgorithmInterface(models.Model):
         on_delete=models.CASCADE,
     )
 
+    class Meta:
+        unique_together = (("reader_study_algorithm", "algorithm_interface"),)
+
 
 class ReaderStudyAlgorithmImplementation(UUIDModel):
     algorithm = models.ForeignKey(
