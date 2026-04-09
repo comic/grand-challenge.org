@@ -982,6 +982,7 @@ class ChallengeRequestStatusChoices(models.TextChoices):
     REJECTED = "RJCT", _("Rejected")
     PENDING = "PEND", _("Pending")
     DRAFT = "DRFT", _("Draft")
+    CANCELLED = "CNCL", _("Cancelled")
 
 
 budget_field_names = (
@@ -1454,6 +1455,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             and (
                 self.status == self.ChallengeRequestStatusChoices.ACCEPTED
                 or self.status == self.ChallengeRequestStatusChoices.REJECTED
+                or self.status == self.ChallengeRequestStatusChoices.CANCELLED
             )
         )
         if submitting:

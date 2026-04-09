@@ -69,9 +69,7 @@
 
                         <!-- Submitted -->
                         {% if object.submitted_on %}
-                            {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED %}
-                                <td class="text-center align-middle" data-order="{{ object.submitted_on|date:"c" }}"><span class="badge p-2 badge-primary">{{ object.submitted_on|date:'F j, Y' }}</span></td>
-                            {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
+                            {% if object.status == object.ChallengeRequestStatusChoices.ACCEPTED or object.status == object.ChallengeRequestStatusChoices.REJECTED or object.status == object.ChallengeRequestStatusChoices.CANCELLED %}
                                 <td class="text-center align-middle" data-order="{{ object.submitted_on|date:"c" }}"><span class="badge p-2 badge-primary">{{ object.submitted_on|date:'F j, Y' }}</span></td>
                             {% elif object.status == object.ChallengeRequestStatusChoices.PENDING %}
                                 <td class="text-center align-middle" data-order="{{ object.submitted_on|date:"c" }}"><span class="badge p-2 {% if object.submitted_on|timedifference < 8 %} badge-success {% elif object.submitted_on|timedifference < 15 %} badge-warning {% else %} badge-danger {% endif %}">{{ object.submitted_on|date:'F j, Y' }}</span></td>
@@ -87,6 +85,8 @@
                             <td class="text-center align-middle"><span class="badge p-2 badge-success">{{ object.get_status_display }}</span></td>
                         {% elif object.status == object.ChallengeRequestStatusChoices.REJECTED %}
                             <td class="text-center align-middle"><span class="badge p-2 badge-danger">{{ object.get_status_display }}</span></td>
+                        {% elif object.status == object.ChallengeRequestStatusChoices.CANCELLED %}
+                            <td class="text-center align-middle"><span class="badge p-2 badge-dark">{{ object.get_status_display }}</span></td>
                         {% elif object.status == object.ChallengeRequestStatusChoices.PENDING %}
                             <td class="text-center align-middle"><span class="badge p-2 badge-light">{{ object.get_status_display }}</span></td>
                         {% elif object.status == object.ChallengeRequestStatusChoices.DRAFT %}

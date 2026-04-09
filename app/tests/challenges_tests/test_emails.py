@@ -100,3 +100,35 @@ def test_challenge_request_accepted_sent_email_challenge_creation(
     )
     assert Challenge.objects.count() == 1
     assert Challenge.objects.get().short_name == request.short_name
+
+
+@pytest.mark.django_db
+def test_challenge_request_cancelled_email(client, challenge_reviewer):
+    request = ChallengeRequestFactory(
+        status=ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
+        title="Some title",
+        short_name="ABC_123",
+        submitted_on=now(),
+    )
+    request.clean()
+    mail.outbox.clear()
+
+    response = get_view_for_user(
+        client=client,
+        method=client.post,
+        viewname="challenges:requests-process",
+        reverse_kwargs={"pk": request.pk},
+        user=challenge_reviewer,
+        data={
+            "status": ChallengeRequest.ChallengeRequestStatusChoices.CANCELLED
+        },
+    )
+    assert response.status_code == 200
+    assert len(mail.outbox) == 1, response.content
+    assert mail.outbox[0].recipients() == [request.creator.email]
+    assert (
+        f'This it to inform you that we have cancelled your challenge request with the title "[{request.short_name}] {request.title}"'
+        in mail.outbox[0].body
+    )
+    # no challenge gets created
+    assert Challenge.objects.count() == 0
