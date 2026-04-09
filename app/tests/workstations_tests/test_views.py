@@ -1121,3 +1121,96 @@ def test_workstation_image_move(client):
 
     assert old_workstation.active_image == replace_image
     assert new_workstation.active_image == move_image
+
+
+@pytest.mark.django_db
+def test_session_switch_reader_study_updates_endpoint_utilizations(
+    client, django_capture_on_commit_callbacks
+):
+    user = UserFactory()
+    ws = WorkstationFactory()
+    WorkstationImageFactory(
+        workstation=ws,
+        is_manifest_valid=True,
+        is_in_registry=True,
+        is_desired_version=True,
+    )
+    reader_study_with_endpoints = ReaderStudyFactory(workstation=ws)
+    for _ in range(2):
+        algorithm_image = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+        )
+        implementation = ReaderStudyAlgorithmImplementationFactory(
+            algorithm=algorithm_image.algorithm
+        )
+        question = QuestionFactory(reader_study=reader_study_with_endpoints)
+        question.algorithms.add(implementation)
+    reader_study_with_endpoints.readers_group.user_set.add(user)
+
+    reader_study_without_endpoint = ReaderStudyFactory(workstation=ws)
+    reader_study_without_endpoint.readers_group.user_set.add(user)
+
+    assert Endpoint.objects.count() == 0
+
+    path, _ = get_workstation_path_and_query_string(
+        reader_study=reader_study_with_endpoints
+    )
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            viewname="workstations:workstation-session-create-nested",
+            reverse_kwargs={"slug": ws.slug, "workstation_path": path},
+            user=user,
+            data={"region": "eu-central-1"},
+        )
+
+    assert response.status_code == 302
+    assert [c.__self__.name for c in callbacks] == [
+        "grandchallenge.components.tasks.start_service",
+        "grandchallenge.components.tasks.start_endpoint",
+        "grandchallenge.components.tasks.start_endpoint",
+        "grandchallenge.components.tasks.stop_service",
+    ]
+    assert reader_study_with_endpoints.workstation_sessions.count() == 1
+    assert Endpoint.objects.count() == 2
+
+    endpoints = Endpoint.objects.all()
+
+    for endpoint in endpoints:
+        assert endpoint.endpoint_utilization.reader_studies.count() == 1
+        assert (
+            endpoint.endpoint_utilization.reader_studies.first()
+            == reader_study_with_endpoints
+        )
+
+    path, _ = get_workstation_path_and_query_string(
+        reader_study=reader_study_without_endpoint
+    )
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        response = get_view_for_user(
+            client=client,
+            method=client.post,
+            viewname="workstations:workstation-session-create-nested",
+            reverse_kwargs={"slug": ws.slug, "workstation_path": path},
+            user=user,
+            data={"region": "eu-central-1"},
+        )
+
+    assert response.status_code == 302
+    assert [c.__self__.name for c in callbacks] == [
+        "grandchallenge.components.tasks.stop_service",
+    ]
+    assert reader_study_without_endpoint.workstation_sessions.count() == 1
+    assert Endpoint.objects.count() == 2
+
+    for endpoint in endpoints:
+        assert endpoint.endpoint_utilization.reader_studies.count() == 2
+        assert set(endpoint.endpoint_utilization.reader_studies.all()) == {
+            reader_study_with_endpoints,
+            reader_study_without_endpoint,
+        }
