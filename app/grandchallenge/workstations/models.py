@@ -625,7 +625,32 @@ class Session(FieldChangeMixin, UUIDModel):
         if reader_study.questions_with_interactive_algorithm.exists():
             on_commit(preload_interactive_algorithms.apply_async)
 
-    @property
+        self.create_reader_study_endpoints(reader_study=reader_study)
+
+    def create_reader_study_endpoints(self, *, reader_study):
+        from grandchallenge.algorithms.models import Algorithm, Endpoint
+
+        algorithms = Algorithm.objects.filter(
+            reader_study_algorithm_implementations__questions__reader_study=reader_study
+        ).distinct()
+        for algorithm in algorithms:
+            if self.associated_endpoints.filter(
+                algorithm_image=algorithm.active_image,
+                algorithm_model=algorithm.active_model,
+            ).exists():
+                continue
+            else:
+                endpoint = Endpoint(
+                    creator=self.creator,
+                    algorithm_image=algorithm.active_image,
+                    algorithm_model=algorithm.active_model,
+                    requires_gpu_type=algorithm.job_requires_gpu_type,
+                    requires_memory_gb=algorithm.job_requires_memory_gb,
+                )
+                endpoint.full_clean()
+                endpoint.save()
+
+    @cached_property
     def associated_endpoints(self):
         from grandchallenge.algorithms.models import Endpoint
 
