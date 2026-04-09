@@ -146,9 +146,12 @@ class EndpointUtilization(UUIDModel):
     @property
     def credits_consumed(self):
         euro_millicents_per_credit = 10
-        return ceil(
-            self.compute_cost_euro_millicents / euro_millicents_per_credit
-        )
+        if self.compute_cost_euro_millicents is None:
+            return 0
+        else:
+            return ceil(
+                self.compute_cost_euro_millicents / euro_millicents_per_credit
+            )
 
 
 class EndpointUtilizationReaderStudy(models.Model):
