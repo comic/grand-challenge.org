@@ -139,7 +139,6 @@ class EndpointUtilization(UUIDModel):
 
         if adding:
             self.creator = self.endpoint.creator
-            self.algorithm_image = self.endpoint.algorithm_image
             self.algorithm = self.endpoint.algorithm_image.algorithm
 
         super().save(*args, **kwargs)
