@@ -1303,6 +1303,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 | Q(submitted_on__isnull=False),
                 violation_error_message="When setting the status to something other than a 'Draft', 'Submitted On' must also be set.",
             ),
+            models.CheckConstraint(
+                condition=Q(status__in=ChallengeRequestStatusChoices.values),
+                name="status_in_choices",
+            ),
         ]
 
     def __str__(self):
