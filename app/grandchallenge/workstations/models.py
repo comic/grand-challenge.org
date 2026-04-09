@@ -626,7 +626,7 @@ class Session(FieldChangeMixin, UUIDModel):
             on_commit(preload_interactive_algorithms.apply_async)
 
         self.create_reader_study_endpoints(reader_study=reader_study)
-        self.update_reader_studies_on_associated_endpoints(
+        self.update_reader_studies_on_associated_endpoint_utilizations(
             reader_study=reader_study
         )
 
