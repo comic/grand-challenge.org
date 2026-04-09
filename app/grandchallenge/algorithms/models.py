@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, timedelta
-from enum import auto
 
 from actstream.actions import follow, is_following
 from dateutil.relativedelta import relativedelta
@@ -1539,10 +1538,10 @@ class OptionalHangingProtocolAlgorithm(models.Model):
 
 
 class EndpointStatusChoices(TextChoices):
-    QUEUED = auto(), _("Queued")
-    RUNNING = auto(), _("Running")
-    STOPPED = auto(), _("Stopped")
-    FAILED = auto(), _("Failed")
+    QUEUED = "QUEUED", _("Queued")
+    RUNNING = "RUNNING", _("Running")
+    STOPPED = "STOPPED", _("Stopped")
+    FAILED = "FAILED", _("Failed")
 
     @classmethod
     def get_active_choices(cls):
