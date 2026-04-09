@@ -105,6 +105,65 @@ class SessionUtilizationReaderStudy(models.Model):
         ]
 
 
+class EndpointUtilization(UUIDModel):
+    endpoint = models.OneToOneField(
+        "algorithms.Endpoint",
+        related_name="endpoint_utilization",
+        null=True,
+        on_delete=models.SET_NULL,
+    )
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+    algorithm = models.ForeignKey(
+        "algorithms.Algorithm", null=True, on_delete=models.SET_NULL
+    )
+    duration = models.DurationField(null=True)
+    compute_cost_euro_millicents = models.PositiveIntegerField(null=True)
+    reader_studies = models.ManyToManyField(
+        to="reader_studies.ReaderStudy",
+        through="EndpointUtilizationReaderStudy",
+        related_name="endpoint_utilizations",
+        blank=True,
+        help_text="Reader studies that used this endpoint",
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["created"]),
+            models.Index(fields=["creator", "algorithm"]),
+        ]
+
+    def save(self, *args, **kwargs) -> None:
+        adding = self._state.adding
+
+        if adding:
+            self.creator = self.endpoint.creator
+            self.algorithm_image = self.endpoint.algorithm_image
+            self.algorithm = self.endpoint.algorithm_image.algorithm
+
+        super().save(*args, **kwargs)
+
+    @property
+    def credits_consumed(self):
+        euro_millicents_per_credit = 10
+        return ceil(
+            self.compute_cost_euro_millicents / euro_millicents_per_credit
+        )
+
+
+class EndpointUtilizationReaderStudy(models.Model):
+    endpoint_utilization = models.ForeignKey(
+        EndpointUtilization, on_delete=models.CASCADE
+    )
+    reader_study = models.ForeignKey(
+        "reader_studies.ReaderStudy", on_delete=models.CASCADE
+    )
+
+    class Meta:
+        unique_together = (("endpoint_utilization", "reader_study"),)
+
+
 class ComponentJobUtilizationManager(models.QuerySet):
     def average_duration(self):
         """Calculate the average duration that completed jobs ran for"""
