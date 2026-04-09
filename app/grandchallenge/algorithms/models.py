@@ -147,10 +147,16 @@ class AlgorithmInterfaceInput(models.Model):
     input = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
     interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = (("input", "interface"),)
+
 
 class AlgorithmInterfaceOutput(models.Model):
     output = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)
     interface = models.ForeignKey(AlgorithmInterface, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (("output", "interface"),)
 
 
 def get_existing_interface_for_inputs_and_outputs(
@@ -1560,9 +1566,6 @@ class Endpoint(UUIDModel):
     )
     algorithm_model = models.ForeignKey(
         AlgorithmModel, on_delete=models.PROTECT, null=True, blank=True
-    )
-    algorithm_interface = models.ForeignKey(
-        AlgorithmInterface, on_delete=models.PROTECT, null=True, blank=True
     )
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL

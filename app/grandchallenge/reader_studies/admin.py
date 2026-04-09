@@ -17,6 +17,8 @@ from grandchallenge.reader_studies.models import (
     QuestionGroupObjectPermission,
     QuestionUserObjectPermission,
     ReaderStudy,
+    ReaderStudyAlgorithm,
+    ReaderStudyAlgorithmAlgorithmInterface,
     ReaderStudyAlgorithmImplementation,
     ReaderStudyGroupObjectPermission,
     ReaderStudyPermissionRequest,
@@ -113,6 +115,16 @@ class DisplaySetAdmin(admin.ModelAdmin):
 @admin.register(CategoricalOption)
 class CategoricalOptionAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "question", "default")
+
+
+class ReaderStudyAlgorithmAlgorithmInterfaceInLine(admin.TabularInline):
+    model = ReaderStudyAlgorithmAlgorithmInterface
+    autocomplete_fields = ["algorithm_interface"]
+
+
+@admin.register(ReaderStudyAlgorithm)
+class ReaderStudyAlgorithmAdmin(admin.ModelAdmin):
+    inlines = [ReaderStudyAlgorithmAlgorithmInterfaceInLine]
 
 
 admin.site.register(ReaderStudyUserObjectPermission, UserObjectPermissionAdmin)
