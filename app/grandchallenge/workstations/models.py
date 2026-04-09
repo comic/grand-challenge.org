@@ -633,12 +633,22 @@ class Session(FieldChangeMixin, UUIDModel):
         algorithms = Algorithm.objects.filter(
             reader_study_algorithm_implementations__questions__reader_study=reader_study
         ).distinct()
-        active_endpoints_algorithm_images = (
-            self.associated_endpoints.values_list("algorithm_image", flat=True)
+        active_endpoints_images_and_models = set(
+            self.associated_endpoints.values_list(
+                "algorithm_image", "algorithm_model"
+            )
         )
         for algorithm in algorithms:
             algorithm_image = algorithm.active_image
-            if algorithm_image in active_endpoints_algorithm_images:
+            algorithm_model = algorithm.active_model
+            try:
+                model_pk = algorithm_model.pk
+            except AttributeError:
+                model_pk = None
+            if (
+                algorithm_image.pk,
+                model_pk,
+            ) in active_endpoints_images_and_models:
                 continue
             else:
                 endpoint = Endpoint(
