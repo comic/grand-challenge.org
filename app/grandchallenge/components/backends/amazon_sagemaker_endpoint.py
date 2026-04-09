@@ -74,15 +74,21 @@ class EndpointOrchestrator:
 
     @property
     def _output_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}/{self._io_prefix}/successes"
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME}/{self._io_prefix}/successes"
 
     @property
     def _failure_s3_uri(self):
-        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}/{self._io_prefix}/failures"
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME}/{self._io_prefix}/failures"
 
     @property
     def invocation_environment(self):
-        return self._executor.invocation_environment
+        env = self._executor.invocation_environment
+
+        if self._algorithm_model:
+            env["GRAND_CHALLENGE_COMPONENT_MODEL"] = (
+                self._algorithm_model_s3_uri
+            )
+        return env
 
     @property
     def _instance_type(self):

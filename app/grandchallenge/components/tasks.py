@@ -1717,6 +1717,6 @@ def stop_expired_endpoints(*, app_label: str, model_name: str):
     for endpoint in endpoints_to_stop:
         on_commit(
             stop_endpoint.signature(
-                **endpoint.task_kwargs,
+                kwargs=endpoint.task_kwargs,
             ).apply_async
         )
