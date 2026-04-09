@@ -1622,7 +1622,12 @@ def test_stop_endpoint_wrong_state_raises(mocker):
 
 
 @pytest.mark.django_db
-def test_stop_expired_endpoints(mocker, django_capture_on_commit_callbacks):
+def test_stop_expired_endpoints(
+    settings, mocker, django_capture_on_commit_callbacks
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
     EndpointFactory(status=EndpointStatusChoices.RUNNING)
     endpoint_to_stop = EndpointFactory(
         status=EndpointStatusChoices.RUNNING,
@@ -1632,13 +1637,16 @@ def test_stop_expired_endpoints(mocker, django_capture_on_commit_callbacks):
         status=EndpointStatusChoices.STOPPED,
         maximum_duration=timedelta(seconds=0),
     )
-    mock_signature = mocker.patch(
-        "grandchallenge.components.tasks.stop_endpoint.signature"
+    mock_deprovision = mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
     )
 
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         stop_expired_endpoints(app_label="algorithms", model_name="endpoint")
 
+    endpoint_to_stop.refresh_from_db()
+
     assert len(callbacks) == 1
-    mock_signature.assert_called_once_with(kwargs=endpoint_to_stop.task_kwargs)
-    mock_signature.return_value.apply_async.assert_called_once()
+    mock_deprovision.assert_called_once()
+    assert endpoint_to_stop.status == EndpointStatusChoices.STOPPED
