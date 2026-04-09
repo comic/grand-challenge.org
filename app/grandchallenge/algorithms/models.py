@@ -142,6 +142,9 @@ class AlgorithmInterface(UUIDModel):
     def delete(self, *args, **kwargs):
         raise ValidationError("AlgorithmInterfaces cannot be deleted.")
 
+    def __str__(self):
+        return f"Inputs: {[socket.title for socket in self.inputs.all()]}. Outputs: {[socket.title for socket in self.outputs.all()]}"
+
 
 class AlgorithmInterfaceInput(models.Model):
     input = models.ForeignKey(ComponentInterface, on_delete=models.CASCADE)

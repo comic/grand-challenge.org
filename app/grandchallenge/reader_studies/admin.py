@@ -119,6 +119,7 @@ class CategoricalOptionAdmin(admin.ModelAdmin):
 
 class ReaderStudyAlgorithmAlgorithmInterfaceInLine(admin.TabularInline):
     model = ReaderStudyAlgorithmAlgorithmInterface
+    autocomplete_fields = ["algorithm_interface"]
 
 
 @admin.register(ReaderStudyAlgorithm)
