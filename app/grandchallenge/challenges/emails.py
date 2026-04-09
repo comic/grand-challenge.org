@@ -82,6 +82,21 @@ def send_challenge_request_processed_update_email(
             "challenges/partials/challenge_request_rejection_email.md",
             context,
         )
+    elif (
+        challengerequest.status
+        == challengerequest.ChallengeRequestStatusChoices.CANCELLED
+    ):
+        context.update(
+            {
+                "short_name": challengerequest.short_name,
+                "title": challengerequest.title,
+            }
+        )
+        message = render_to_string(
+            "challenges/partials/challenge_request_cancellation_email.md",
+            context,
+        )
+
     site = Site.objects.get_current()
     send_standard_email_batch(
         site=site,

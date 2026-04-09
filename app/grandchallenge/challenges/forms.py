@@ -371,6 +371,10 @@ class ChallengeRequestStatusUpdateForm(forms.ModelForm):
                     self.Meta.model.ChallengeRequestStatusChoices.REJECTED.value,
                     self.Meta.model.ChallengeRequestStatusChoices.REJECTED.label,
                 ),
+                (
+                    self.Meta.model.ChallengeRequestStatusChoices.CANCELLED.value,
+                    self.Meta.model.ChallengeRequestStatusChoices.CANCELLED.label,
+                ),
             ]
         else:
             self.fields["status"].choices = []

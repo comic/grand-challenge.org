@@ -982,6 +982,7 @@ class ChallengeRequestStatusChoices(models.TextChoices):
     REJECTED = "RJCT", _("Rejected")
     PENDING = "PEND", _("Pending")
     DRAFT = "DRFT", _("Draft")
+    CANCELLED = "CNCL", _("Cancelled")
 
 
 budget_field_names = (
@@ -1302,6 +1303,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 | Q(submitted_on__isnull=False),
                 violation_error_message="When setting the status to something other than a 'Draft', 'Submitted On' must also be set.",
             ),
+            models.CheckConstraint(
+                condition=Q(status__in=ChallengeRequestStatusChoices.values),
+                name="status_in_choices",
+            ),
         ]
 
     def __str__(self):
@@ -1454,6 +1459,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             and (
                 self.status == self.ChallengeRequestStatusChoices.ACCEPTED
                 or self.status == self.ChallengeRequestStatusChoices.REJECTED
+                or self.status == self.ChallengeRequestStatusChoices.CANCELLED
             )
         )
         if submitting:

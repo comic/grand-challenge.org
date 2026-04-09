@@ -91,6 +91,14 @@
                     >
                         <i class="fa fa-thumbs-down mr-1"></i>Reject Request
                     </a>
+                    <a class="btn btn-danger"
+                        href="#"
+                        hx-post="{% url 'challenges:requests-process' pk=object.pk %}"
+                        hx-vals='{"status": "{{ object.ChallengeRequestStatusChoices.CANCELLED.value }}"}'
+                        hx-confirm="Are you sure you want to CANCEL the request?"
+                    >
+                        <i class="fa fa-times-circle mr-1"></i>Cancel Request
+                    </a>
                 {% elif object.status == object.ChallengeRequestStatusChoices.ACCEPTED and perms.evaluation.configure_algorithm_phase %}
                     <a class="btn btn-primary"
                         href="{% url 'evaluation:configure-algorithm-phases' challenge_short_name=object.short_name %}"
