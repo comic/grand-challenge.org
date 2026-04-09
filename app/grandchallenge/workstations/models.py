@@ -626,6 +626,9 @@ class Session(FieldChangeMixin, UUIDModel):
             on_commit(preload_interactive_algorithms.apply_async)
 
         self.create_reader_study_endpoints(reader_study=reader_study)
+        self.update_reader_studies_on_associated_endpoints(
+            reader_study=reader_study
+        )
 
     def create_reader_study_endpoints(self, *, reader_study):
         from grandchallenge.algorithms.models import Algorithm, Endpoint
@@ -649,6 +652,12 @@ class Session(FieldChangeMixin, UUIDModel):
                 )
                 endpoint.full_clean()
                 endpoint.save()
+
+    def update_reader_studies_on_associated_endpoint_utilizations(
+        self, *, reader_study
+    ):
+        for endpoint in self.associated_endpoints:
+            endpoint.endpoint_utilization.reader_studies.add(reader_study)
 
     @cached_property
     def associated_endpoints(self):

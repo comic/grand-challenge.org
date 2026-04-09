@@ -30,6 +30,7 @@ from grandchallenge.charts.specs import stacked_bar
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
     EndpointOrchestrator,
 )
+from grandchallenge.components.backends.base import duration_to_millicents
 from grandchallenge.components.models import (  # noqa: F401
     APIMethodChoices,
     CIVForObjectMixin,
@@ -47,7 +48,7 @@ from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
 )
-from grandchallenge.core.models import RequestBase, UUIDModel
+from grandchallenge.core.models import FieldChangeMixin, RequestBase, UUIDModel
 from grandchallenge.core.storage import (
     get_logo_path,
     get_social_image_path,
@@ -65,7 +66,10 @@ from grandchallenge.modalities.models import ImagingModality
 from grandchallenge.organizations.models import Organization
 from grandchallenge.publications.models import Publication
 from grandchallenge.subdomains.utils import reverse
-from grandchallenge.utilization.models import JobUtilization
+from grandchallenge.utilization.models import (
+    EndpointUtilization,
+    JobUtilization,
+)
 from grandchallenge.workstations.models import Workstation
 from grandchallenge.workstations.utils import reassign_workstation_permissions
 
@@ -1559,7 +1563,7 @@ class EndpointManager(models.QuerySet):
         )
 
 
-class Endpoint(UUIDModel):
+class Endpoint(FieldChangeMixin, UUIDModel):
     StatusChoices = EndpointStatusChoices
 
     algorithm_image = models.ForeignKey(
@@ -1640,6 +1644,13 @@ class Endpoint(UUIDModel):
                     kwargs=self.task_kwargs,
                 ).apply_async
             )
+            EndpointUtilization.objects.create(endpoint=self)
+
+        if (
+            self.has_changed("status")
+            and self.status == EndpointStatusChoices.STOPPED
+        ):
+            self.handle_endpoint_stopped()
 
     def create_groups(self):
         self.viewers_group = Group.objects.create(
@@ -1694,6 +1705,18 @@ class Endpoint(UUIDModel):
 
         self.full_clean()
         self.save()
+
+    def handle_endpoint_stopped(self):
+        self.endpoint_utilization.duration = now() - self.created
+        self.endpoint_utilization.compute_costs_euro_millicents = (
+            duration_to_millicents(
+                duration=self.endpoint_utilization.duration,
+                usd_cents_per_hour=self.orchestrator.usd_cents_per_hour,
+            )
+        )
+        self.endpoint_utilization.save(
+            update_fields=["duration", "compute_cost_euro_millicents"]
+        )
 
 
 class EndpointUserObjectPermission(UserObjectPermissionBase):

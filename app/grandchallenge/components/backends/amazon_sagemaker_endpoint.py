@@ -95,6 +95,10 @@ class EndpointOrchestrator:
         return self._executor._instance_type
 
     @property
+    def usd_cents_per_hour(self):
+        return self._executor.usd_cents_per_hour
+
+    @property
     def _required_volume_size_gb(self):
         if self._instance_type.nvme_volume_size:
             # This setting has no practical effect as the instances
