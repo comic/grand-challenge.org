@@ -121,6 +121,21 @@ class ReaderStudyAlgorithmAlgorithmInterfaceInLine(admin.TabularInline):
     model = ReaderStudyAlgorithmAlgorithmInterface
     autocomplete_fields = ["algorithm_interface"]
 
+    def has_add_permission(self, request, obj=None):
+        if obj and obj.algorithm_interfaces_locked:
+            return False
+        return super().has_add_permission(request, obj)
+
+    def has_change_permission(self, request, obj=None):
+        if obj and obj.algorithm_interfaces_locked:
+            return False
+        return super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.algorithm_interfaces_locked:
+            return False
+        return super().has_delete_permission(request, obj)
+
 
 @admin.register(ReaderStudyAlgorithm)
 class ReaderStudyAlgorithmAdmin(admin.ModelAdmin):
