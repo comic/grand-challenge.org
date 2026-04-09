@@ -633,27 +633,16 @@ class Session(FieldChangeMixin, UUIDModel):
         algorithms = Algorithm.objects.filter(
             reader_study_algorithm_implementations__questions__reader_study=reader_study
         ).distinct()
-        active_endpoints_images_and_models = set(
-            self.associated_endpoints.values_list(
-                "algorithm_image", "algorithm_model"
-            )
-        )
         for algorithm in algorithms:
-            algorithm_image = algorithm.active_image
-            algorithm_model = algorithm.active_model
-            try:
-                model_pk = algorithm_model.pk
-            except AttributeError:
-                model_pk = None
-            if (
-                algorithm_image.pk,
-                model_pk,
-            ) in active_endpoints_images_and_models:
+            if self.associated_endpoints.filter(
+                algorithm_image=algorithm.active_image,
+                algorithm_model=algorithm.active_model,
+            ).exists():
                 continue
             else:
                 endpoint = Endpoint(
                     creator=self.creator,
-                    algorithm_image=algorithm_image,
+                    algorithm_image=algorithm.active_image,
                     algorithm_model=algorithm.active_model,
                     requires_gpu_type=algorithm.job_requires_gpu_type,
                     requires_memory_gb=algorithm.job_requires_memory_gb,
