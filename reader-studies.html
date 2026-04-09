@@ -883,27 +883,95 @@ non-SQL backends), respectively. Normally, they should not be set.</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyAlgorithmChoices">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyAlgorithmChoices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyAlgorithmChoices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyAlgorithmChoices" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyAlgorithmImplementation">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyAlgorithmImplementation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm_choice</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyAlgorithmImplementation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyAlgorithmImplementation" title="Link to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyAlgorithm">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyAlgorithm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slug</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyAlgorithm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyAlgorithm" title="Link to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>title</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v6.0)"><em>CharField</em></a>) – Title</p></li>
+<li><p><strong>description</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.TextField" title="(in Django v6.0)"><em>TextField</em></a>) – Description</p></li>
+<li><p><strong>slug</strong> (<em>AutoSlugField</em>) – Slug</p></li>
 <li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v6.0)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
 <li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v6.0)"><em>DateTimeField</em></a>) – Created</p></li>
 <li><p><strong>modified</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v6.0)"><em>DateTimeField</em></a>) – Modified</p></li>
-<li><p><strong>algorithm_choice</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.CharField" title="(in Django v6.0)"><em>CharField</em></a>) – Algorithm choice</p></li>
 </ul>
 </dd>
 </dl>
 <p>Relationship fields:</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>algorithm</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v6.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">Algorithm</span></code>) – Algorithm (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">reader_study_algorithm_implementations</span></code>)</p>
+<dd class="field-odd"><p><strong>interfaces</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ManyToManyField" title="(in Django v6.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ManyToManyField</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">AlgorithmInterface</span></code>) – Interfaces (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">reader_study_algorithms</span></code>)</p>
+</dd>
+</dl>
+<p>Reverse relationships:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>readerstudyalgorithmalgorithminterface</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v6.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyAlgorithmAlgorithmInterface" title="grandchallenge.reader_studies.models.ReaderStudyAlgorithmAlgorithmInterface"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudyAlgorithmAlgorithmInterface</span></code></a>) – All reader study algorithm algorithm interfaces of this reader study algorithm (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">reader_study_algorithm</span></code>)</p></li>
+<li><p><strong>reader_study_algorithm_implementations</strong> (Reverse <a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v6.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> from <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyAlgorithmImplementation" title="grandchallenge.reader_studies.models.ReaderStudyAlgorithmImplementation"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudyAlgorithmImplementation</span></code></a>) – All reader study algorithm implementations of this reader study algorithm (related name of <code class="xref py py-attr docutils literal notranslate"><span class="pre">reader_study_algorithm</span></code>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyAlgorithm.DoesNotExist">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyAlgorithm.DoesNotExist" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyAlgorithm.MultipleObjectsReturned">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyAlgorithm.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyAlgorithmAlgorithmInterface">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyAlgorithmAlgorithmInterface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study_algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm_interface</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyAlgorithmAlgorithmInterface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyAlgorithmAlgorithmInterface" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.AutoField" title="(in Django v6.0)"><em>AutoField</em></a>) – Primary key: ID</p>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reader_study_algorithm</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v6.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyAlgorithm" title="grandchallenge.reader_studies.models.ReaderStudyAlgorithm"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudyAlgorithm</span></code></a>) – Reader study algorithm (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudyalgorithmalgorithminterface</span></code>)</p></li>
+<li><p><strong>algorithm_interface</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v6.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">AlgorithmInterface</span></code>) – Algorithm interface (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">readerstudyalgorithmalgorithminterface</span></code>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyAlgorithmAlgorithmInterface.DoesNotExist">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DoesNotExist</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyAlgorithmAlgorithmInterface.DoesNotExist" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyAlgorithmAlgorithmInterface.MultipleObjectsReturned">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MultipleObjectsReturned</span></span><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyAlgorithmAlgorithmInterface.MultipleObjectsReturned" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="grandchallenge.reader_studies.models.ReaderStudyAlgorithmImplementation">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">grandchallenge.reader_studies.models.</span></span><span class="sig-name descname"><span class="pre">ReaderStudyAlgorithmImplementation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">created</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">modified</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reader_study_algorithm</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/grandchallenge/reader_studies/models.html#ReaderStudyAlgorithmImplementation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#grandchallenge.reader_studies.models.ReaderStudyAlgorithmImplementation" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>id</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.UUIDField" title="(in Django v6.0)"><em>UUIDField</em></a>) – Primary key: Id</p></li>
+<li><p><strong>created</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v6.0)"><em>DateTimeField</em></a>) – Created</p></li>
+<li><p><strong>modified</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.DateTimeField" title="(in Django v6.0)"><em>DateTimeField</em></a>) – Modified</p></li>
+</ul>
+</dd>
+</dl>
+<p>Relationship fields:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>algorithm</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v6.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <code class="xref py py-class docutils literal notranslate"><span class="pre">Algorithm</span></code>) – Algorithm (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">reader_study_algorithm_implementations</span></code>)</p></li>
+<li><p><strong>reader_study_algorithm</strong> (<a class="reference external" href="https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.ForeignKey" title="(in Django v6.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ForeignKey</span></code></a> to <a class="reference internal" href="#grandchallenge.reader_studies.models.ReaderStudyAlgorithm" title="grandchallenge.reader_studies.models.ReaderStudyAlgorithm"><code class="xref py py-class docutils literal notranslate"><span class="pre">ReaderStudyAlgorithm</span></code></a>) – Reader study algorithm (related name: <code class="xref py py-attr docutils literal notranslate"><span class="pre">reader_study_algorithm_implementations</span></code>)</p></li>
+</ul>
 </dd>
 </dl>
 <p>Reverse relationships:</p>
