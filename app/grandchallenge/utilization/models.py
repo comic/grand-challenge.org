@@ -131,7 +131,6 @@ class EndpointUtilization(UUIDModel):
     class Meta:
         indexes = [
             models.Index(fields=["created"]),
-            models.Index(fields=["creator", "algorithm"]),
         ]
 
     def save(self, *args, **kwargs) -> None:
