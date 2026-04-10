@@ -1708,7 +1708,7 @@ class Endpoint(FieldChangeMixin, UUIDModel):
 
     def handle_endpoint_stopped(self):
         self.endpoint_utilization.duration = now() - self.created
-        self.endpoint_utilization.compute_costs_euro_millicents = (
+        self.endpoint_utilization.compute_cost_euro_millicents = (
             duration_to_millicents(
                 duration=self.endpoint_utilization.duration,
                 usd_cents_per_hour=self.orchestrator.usd_cents_per_hour,

@@ -208,30 +208,25 @@ def test_endpoint_utilization_created_on_endpoint_sets_properties():
 
 
 @pytest.mark.django_db
-def test_endpoint_utilization_duration(mocker):
+def test_endpoint_utilization_duration_and_cost_set_on_endpoint_stop(mocker):
     fixed_now = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-    endpoint = EndpointFactory()
-    endpoint.created = fixed_now - timedelta(minutes=5)
-    endpoint.save()
-
     mocker.patch(
         "grandchallenge.algorithms.models.now",
         return_value=fixed_now,
     )
+    endpoint = EndpointFactory()
+    endpoint.created = fixed_now - timedelta(minutes=5)
+    endpoint.save()
+    endpoint_utilization = endpoint.endpoint_utilization
+
+    assert endpoint_utilization.duration is None
+    assert endpoint_utilization.compute_cost_euro_millicents is None
 
     endpoint.status = EndpointStatusChoices.STOPPED
     endpoint.save()
 
     assert endpoint.endpoint_utilization.duration == timedelta(minutes=5)
-
-
-@pytest.mark.django_db
-def test_endpoint_utilization_duration_updated_on_endpoint_stop():
-    endpoint = EndpointFactory()
-    endpoint_utilization = endpoint.endpoint_utilization
-
-    assert endpoint_utilization.creator == endpoint.creator
-    assert endpoint_utilization.algorithm == endpoint.algorithm_image.algorithm
+    assert endpoint.endpoint_utilization.compute_cost_euro_millicents == 933
 
 
 @pytest.mark.django_db
