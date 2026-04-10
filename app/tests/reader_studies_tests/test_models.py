@@ -1274,11 +1274,19 @@ def test_reader_study_session_credits_consumed_divided():
     )
     session_utilization.reader_studies.set(reader_studies)
 
+    other_session_utilization = SessionUtilizationFactory(
+        duration=timedelta(hours=2)
+    )
+    other_session_utilization.reader_studies.set(reader_studies[:2])
+
     assert session_utilization.reader_studies.count() == 3
     assert session_utilization.credits_consumed == 1500
+    assert other_session_utilization.reader_studies.count() == 2
+    assert other_session_utilization.credits_consumed == 1000
 
-    for reader_study in reader_studies:
-        assert reader_study.credits_consumed == 500
+    assert reader_studies[0].credits_consumed == 1000
+    assert reader_studies[1].credits_consumed == 1000
+    assert reader_studies[2].credits_consumed == 500
 
 
 @pytest.mark.django_db
@@ -1290,11 +1298,19 @@ def test_reader_study_endpoint_credits_consumed_divided():
     endpoint_utilization.compute_cost_euro_millicents = 6000
     endpoint_utilization.save()
 
+    other_endpoint_utilization = EndpointFactory().endpoint_utilization
+    other_endpoint_utilization.reader_studies.set(reader_studies[:2])
+    other_endpoint_utilization.compute_cost_euro_millicents = 4000
+    other_endpoint_utilization.save()
+
     assert endpoint_utilization.reader_studies.count() == 3
     assert endpoint_utilization.credits_consumed == 600
+    assert other_endpoint_utilization.reader_studies.count() == 2
+    assert other_endpoint_utilization.credits_consumed == 400
 
-    for reader_study in reader_studies:
-        assert reader_study.credits_consumed == 200
+    assert reader_studies[0].credits_consumed == 400
+    assert reader_studies[1].credits_consumed == 400
+    assert reader_studies[2].credits_consumed == 200
 
 
 @pytest.mark.django_db
