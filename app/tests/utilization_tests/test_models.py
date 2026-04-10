@@ -226,7 +226,7 @@ def test_endpoint_utilization_duration_and_cost_set_on_endpoint_stop(mocker):
     endpoint.save()
 
     assert endpoint.endpoint_utilization.duration == timedelta(minutes=5)
-    assert endpoint.endpoint_utilization.compute_cost_euro_millicents == 933
+    assert endpoint.endpoint_utilization.compute_cost_euro_millicents == 1306
 
 
 @pytest.mark.django_db

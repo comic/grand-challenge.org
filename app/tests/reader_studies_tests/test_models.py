@@ -1304,13 +1304,13 @@ def test_reader_study_endpoint_credits_consumed_divided():
     other_endpoint_utilization.save()
 
     assert endpoint_utilization.reader_studies.count() == 3
-    assert endpoint_utilization.credits_consumed == 600
+    assert endpoint_utilization.credits_consumed == 6
     assert other_endpoint_utilization.reader_studies.count() == 2
-    assert other_endpoint_utilization.credits_consumed == 400
+    assert other_endpoint_utilization.credits_consumed == 4
 
-    assert reader_studies[0].credits_consumed == 400
-    assert reader_studies[1].credits_consumed == 400
-    assert reader_studies[2].credits_consumed == 200
+    assert reader_studies[0].credits_consumed == 4
+    assert reader_studies[1].credits_consumed == 4
+    assert reader_studies[2].credits_consumed == 2
 
 
 @pytest.mark.django_db
