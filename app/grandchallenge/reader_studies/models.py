@@ -1383,6 +1383,13 @@ class ReaderStudyAlgorithm(UUIDModel, TitleSlugDescriptionModel):
         through="ReaderStudyAlgorithmAlgorithmInterface",
     )
 
+    @property
+    def algorithm_interfaces_locked(self):
+        if self.reader_study_algorithm_implementations.exists():
+            return True
+        else:
+            return False
+
 
 class ReaderStudyAlgorithmAlgorithmInterface(models.Model):
     reader_study_algorithm = models.ForeignKey(
