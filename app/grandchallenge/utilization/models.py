@@ -144,7 +144,7 @@ class EndpointUtilization(UUIDModel):
 
     @property
     def credits_consumed(self):
-        euro_millicents_per_credit = 10
+        euro_millicents_per_credit = 1000
         if self.compute_cost_euro_millicents is None:
             return 0
         else:
