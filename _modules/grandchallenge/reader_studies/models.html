@@ -1487,7 +1487,14 @@
         <span class="n">to</span><span class="o">=</span><span class="n">AlgorithmInterface</span><span class="p">,</span>
         <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;reader_study_algorithms&quot;</span><span class="p">,</span>
         <span class="n">through</span><span class="o">=</span><span class="s2">&quot;ReaderStudyAlgorithmAlgorithmInterface&quot;</span><span class="p">,</span>
-    <span class="p">)</span></div>
+    <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">algorithm_interfaces_locked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">reader_study_algorithm_implementations</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
 
 
 
