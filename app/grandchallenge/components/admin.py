@@ -8,7 +8,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
     ComponentJob,
 )
-from grandchallenge.components.tasks import deprovision_job
+from grandchallenge.components.tasks import deprovision_job, stop_endpoint
 from grandchallenge.evaluation.models import Evaluation
 
 
@@ -191,3 +191,11 @@ def cancel_jobs(modeladmin, request, queryset):
 def deprovision_jobs(modeladmin, request, queryset):
     for job in queryset:
         deprovision_job.execute_on_commit(**job.task_kwargs)
+
+
+@admin.action(
+    description="Stop endpoints",
+)
+def stop_endpoints(modeladmin, request, queryset):
+    for endpoint in queryset:
+        stop_endpoint.execute_on_commit(**endpoint.task_kwargs)

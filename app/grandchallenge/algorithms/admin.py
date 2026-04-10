@@ -33,6 +33,7 @@ from grandchallenge.components.admin import (
     cancel_jobs,
     deprovision_jobs,
     requeue_jobs,
+    stop_endpoints,
 )
 from grandchallenge.core.admin import (
     GroupObjectPermissionAdmin,
@@ -381,6 +382,7 @@ class EndpointAdmin(admin.ModelAdmin):
         "requires_memory_gb",
         "viewers_group",
     )
+    actions = (stop_endpoints,)
 
     @staticmethod
     def algorithm(obj):
