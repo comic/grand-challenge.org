@@ -878,11 +878,15 @@ class ReaderStudy(
     @property
     def credits_consumed(self):
         total = 0
-        for session in self.session_utilizations.all():
-            total += session.credits_consumed / session.reader_studies.count()
-        for endpoint in self.endpoint_utilizations.all():
+        for session_utilization in self.session_utilizations.all():
             total += (
-                endpoint.credits_consumed / endpoint.reader_studies.count()
+                session_utilization.credits_consumed
+                / session_utilization.reader_studies.count()
+            )
+        for endpoint_utilization in self.endpoint_utilizations.all():
+            total += (
+                endpoint_utilization.credits_consumed
+                / endpoint_utilization.reader_studies.count()
             )
         return ceil(total)
 
