@@ -708,6 +708,9 @@
             <span class="n">on_commit</span><span class="p">(</span><span class="n">preload_interactive_algorithms</span><span class="o">.</span><span class="n">apply_async</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">create_reader_study_endpoints</span><span class="p">(</span><span class="n">reader_study</span><span class="o">=</span><span class="n">reader_study</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_reader_studies_on_associated_endpoint_utilizations</span><span class="p">(</span>
+            <span class="n">reader_study</span><span class="o">=</span><span class="n">reader_study</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">create_reader_study_endpoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">reader_study</span><span class="p">):</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.algorithms.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Algorithm</span><span class="p">,</span> <span class="n">Endpoint</span>
@@ -731,6 +734,12 @@
                 <span class="p">)</span>
                 <span class="n">endpoint</span><span class="o">.</span><span class="n">full_clean</span><span class="p">()</span>
                 <span class="n">endpoint</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_reader_studies_on_associated_endpoint_utilizations</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">reader_study</span>
+    <span class="p">):</span>
+        <span class="k">for</span> <span class="n">endpoint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">associated_endpoints</span><span class="p">:</span>
+            <span class="n">endpoint</span><span class="o">.</span><span class="n">endpoint_utilization</span><span class="o">.</span><span class="n">reader_studies</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">reader_study</span><span class="p">)</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">associated_endpoints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
