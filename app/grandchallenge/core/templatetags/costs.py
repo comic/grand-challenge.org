@@ -1,5 +1,6 @@
 from django import template
 from django.conf import settings
+from django.utils.safestring import mark_safe
 
 register = template.Library()
 
@@ -7,7 +8,7 @@ register = template.Library()
 @register.filter
 def euro(value):
     try:
-        return f"€ {value:,.2f}"
+        return mark_safe(f"€&nbsp;{value:,.2f}")
     except ValueError:
         return ""
 
@@ -15,7 +16,7 @@ def euro(value):
 @register.filter
 def euro_no_cents(value):
     try:
-        return f"€ {value:,.0f}"
+        return mark_safe(f"€&nbsp;{value:,.0f}")
     except ValueError:
         return ""
 

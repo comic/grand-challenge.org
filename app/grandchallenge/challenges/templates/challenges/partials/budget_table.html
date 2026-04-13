@@ -231,11 +231,11 @@ Based on the following information:
         <tbody>
             <tr>
                 <td>Compute</td>
-                <td class="text-right">€ {{ object.capacity_reservation_compute_euros|floatformat:0 }}</td>
+                <td class="text-right">{{ object.capacity_reservation_compute_euros|euro_no_cents }}</td>
             </tr>
             <tr>
                 <td>Storage</td>
-                <td class="text-right">€ {{ object.capacity_reservation_storage_euros|floatformat:0 }}</td>
+                <td class="text-right">{{ object.capacity_reservation_storage_euros|euro_no_cents }}</td>
             </tr>
         </tbody>
     </table>
