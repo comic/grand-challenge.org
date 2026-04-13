@@ -166,11 +166,6 @@ class EndpointOrchestrator:
                     "InitialInstanceCount": 1,
                     "InitialVariantWeight": 1,
                     "InstanceType": self._instance_type.name,
-                    "ManagedInstanceScaling": {
-                        "MaxInstanceCount": 1,
-                        "MinInstanceCount": 1,
-                        "Status": "ENABLED",
-                    },
                     "ModelName": self._endpoint_name,
                     "VolumeSizeInGB": self._required_volume_size_gb,
                 }

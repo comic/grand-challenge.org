@@ -226,11 +226,6 @@ def test_endpoint_create_endpoint_config(settings):
                         "InitialInstanceCount": 1,
                         "InitialVariantWeight": 1,
                         "InstanceType": orchestrator._instance_type.name,
-                        "ManagedInstanceScaling": {
-                            "MaxInstanceCount": 1,
-                            "MinInstanceCount": 1,
-                            "Status": "ENABLED",
-                        },
                         "ModelName": endpoint.endpoint_name,
                         "VolumeSizeInGB": orchestrator._required_volume_size_gb,
                     }
