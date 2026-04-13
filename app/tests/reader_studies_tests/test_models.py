@@ -20,6 +20,7 @@ from grandchallenge.reader_studies.models import (
     QuestionWidgetKindChoices,
     ReaderStudy,
 )
+from tests.algorithms_tests.factories import EndpointFactory
 from tests.components_tests.factories import (
     ComponentInterfaceFactory,
     ComponentInterfaceValueFactory,
@@ -1262,6 +1263,54 @@ def test_reader_study_not_launchable_when_max_credits_consumed():
     assert reader_study.session_utilizations.first().credits_consumed == 500
     assert reader_study.credits_consumed == 500
     assert not reader_study.is_launchable
+
+
+@pytest.mark.django_db
+def test_reader_study_session_credits_consumed_divided():
+    reader_studies = ReaderStudyFactory.create_batch(3)
+
+    session_utilization = SessionUtilizationFactory(
+        duration=timedelta(hours=3)
+    )
+    session_utilization.reader_studies.set(reader_studies)
+
+    other_session_utilization = SessionUtilizationFactory(
+        duration=timedelta(hours=2)
+    )
+    other_session_utilization.reader_studies.set(reader_studies[:2])
+
+    assert session_utilization.reader_studies.count() == 3
+    assert session_utilization.credits_consumed == 1500
+    assert other_session_utilization.reader_studies.count() == 2
+    assert other_session_utilization.credits_consumed == 1000
+
+    assert reader_studies[0].credits_consumed == 1000
+    assert reader_studies[1].credits_consumed == 1000
+    assert reader_studies[2].credits_consumed == 500
+
+
+@pytest.mark.django_db
+def test_reader_study_endpoint_credits_consumed_divided():
+    reader_studies = ReaderStudyFactory.create_batch(3)
+
+    endpoint_utilization = EndpointFactory().endpoint_utilization
+    endpoint_utilization.reader_studies.set(reader_studies)
+    endpoint_utilization.compute_cost_euro_millicents = 6000
+    endpoint_utilization.save()
+
+    other_endpoint_utilization = EndpointFactory().endpoint_utilization
+    other_endpoint_utilization.reader_studies.set(reader_studies[:2])
+    other_endpoint_utilization.compute_cost_euro_millicents = 4000
+    other_endpoint_utilization.save()
+
+    assert endpoint_utilization.reader_studies.count() == 3
+    assert endpoint_utilization.credits_consumed == 6
+    assert other_endpoint_utilization.reader_studies.count() == 2
+    assert other_endpoint_utilization.credits_consumed == 4
+
+    assert reader_studies[0].credits_consumed == 4
+    assert reader_studies[1].credits_consumed == 4
+    assert reader_studies[2].credits_consumed == 2
 
 
 @pytest.mark.django_db

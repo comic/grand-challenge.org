@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from grandchallenge.algorithms.models import EndpointStatusChoices
 from grandchallenge.components.tasks import stop_service
 from grandchallenge.evaluation.models import Evaluation
 from grandchallenge.evaluation.tasks import (
@@ -12,6 +13,7 @@ from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmLambdaChoices,
 )
 from grandchallenge.utilization.models import (
+    EndpointUtilization,
     EvaluationUtilization,
     JobUtilization,
     SessionUtilization,
@@ -21,6 +23,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
+    EndpointFactory,
 )
 from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
@@ -179,6 +182,51 @@ def test_session_utilization_interactive_algorithms_credit_rate():
         session_with_interactive_alg.session_utilization.credits_per_hour
         == 1000
     )
+
+
+@pytest.mark.django_db
+def test_endpoint_utilization_created_on_endpoint_creation():
+
+    assert EndpointUtilization.objects.count() == 0
+
+    endpoint = EndpointFactory()
+
+    assert EndpointUtilization.objects.count() == 1
+
+    endpoint_utilization = EndpointUtilization.objects.first()
+
+    assert endpoint_utilization.endpoint == endpoint
+
+
+@pytest.mark.django_db
+def test_endpoint_utilization_created_on_endpoint_sets_properties():
+    endpoint = EndpointFactory()
+    endpoint_utilization = endpoint.endpoint_utilization
+
+    assert endpoint_utilization.creator == endpoint.creator
+    assert endpoint_utilization.algorithm == endpoint.algorithm_image.algorithm
+
+
+@pytest.mark.django_db
+def test_endpoint_utilization_duration_and_cost_set_on_endpoint_stop(mocker):
+    fixed_now = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    mocker.patch(
+        "grandchallenge.algorithms.models.now",
+        return_value=fixed_now,
+    )
+    endpoint = EndpointFactory()
+    endpoint.created = fixed_now - timedelta(minutes=5)
+    endpoint.save()
+    endpoint_utilization = endpoint.endpoint_utilization
+
+    assert endpoint_utilization.duration is None
+    assert endpoint_utilization.compute_cost_euro_millicents is None
+
+    endpoint.status = EndpointStatusChoices.STOPPED
+    endpoint.save()
+
+    assert endpoint.endpoint_utilization.duration == timedelta(minutes=5)
+    assert endpoint.endpoint_utilization.compute_cost_euro_millicents == 1306
 
 
 @pytest.mark.django_db

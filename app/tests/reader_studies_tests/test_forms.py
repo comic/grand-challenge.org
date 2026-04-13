@@ -75,6 +75,7 @@ from grandchallenge.uploads.widgets import (
 )
 from grandchallenge.workstation_configs.models import LookUpTable
 from tests.algorithms_tests.factories import (
+    EndpointFactory,
     ReaderStudyAlgorithmImplementationFactory,
 )
 from tests.anatomy_tests.factories import BodyStructureFactory
@@ -599,6 +600,8 @@ reader_study_non_copy_fields = {
     "optionalhangingprotocolreaderstudy",
     "session_utilizations",
     "sessionutilizationreaderstudy",
+    "endpoint_utilizations",
+    "endpointutilizationreaderstudy",
     "title",
     "description",
     "slug",
@@ -766,6 +769,7 @@ def reader_study_with_fields():
     rs.structures.set([BodyStructureFactory()])
     rs.organizations.set([OrganizationFactory()])
     rs.session_utilizations.set([SessionUtilizationFactory()])
+    rs.endpoint_utilizations.set([EndpointFactory().endpoint_utilization])
     ReaderStudyPermissionRequestFactory(reader_study=rs)
     reader = UserFactory()
     rs.add_reader(reader)

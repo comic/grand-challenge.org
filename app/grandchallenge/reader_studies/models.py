@@ -13,7 +13,15 @@ from django.core.validators import (
     StepValueValidator,
 )
 from django.db import models
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import (
+    Avg,
+    Count,
+    IntegerField,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+)
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.utils.functional import cached_property
@@ -67,6 +75,10 @@ from grandchallenge.reader_studies.interactive_algorithms import (
 )
 from grandchallenge.reader_studies.metrics import accuracy_score
 from grandchallenge.subdomains.utils import reverse
+from grandchallenge.utilization.models import (
+    EndpointUtilization,
+    SessionUtilization,
+)
 from grandchallenge.workstations.templatetags.workstations import (
     get_workstation_path_and_query_string,
 )
@@ -878,10 +890,37 @@ class ReaderStudy(
     @property
     def credits_consumed(self):
         total = 0
-        for session in self.session_utilizations.annotate(
-            num=Count("reader_studies")
-        ):
-            total += session.credits_consumed / session.num
+
+        session_utilizations = self.session_utilizations.annotate(
+            reader_studies_count=Subquery(
+                SessionUtilization.objects.filter(pk=OuterRef("pk"))
+                .annotate(count=Count("reader_studies"))
+                .values("count"),
+                output_field=IntegerField(),
+            )
+        )
+
+        total += sum(
+            session_utilization.credits_consumed
+            / session_utilization.reader_studies_count
+            for session_utilization in session_utilizations
+        )
+
+        endpoint_utilizations = self.endpoint_utilizations.annotate(
+            reader_studies_count=Subquery(
+                EndpointUtilization.objects.filter(pk=OuterRef("pk"))
+                .annotate(count=Count("reader_studies"))
+                .values("count"),
+                output_field=IntegerField(),
+            )
+        )
+
+        total += sum(
+            endpoint_utilization.credits_consumed
+            / endpoint_utilization.reader_studies_count
+            for endpoint_utilization in endpoint_utilizations
+        )
+
         return ceil(total)
 
     @property
