@@ -171,7 +171,7 @@ class UsersReaderStudyList(
         Column(title="Title", sort_field="title"),
         Column(title="Public", sort_field="public"),
         Column(
-            title="Your Role",
+            title="Your Role(s)",
             sort_field=(
                 "user_is_reader_study_editor",
                 "user_is_reader_study_reader",

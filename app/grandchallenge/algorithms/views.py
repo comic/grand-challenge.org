@@ -206,7 +206,7 @@ class UsersAlgorithmList(
         Column(title="Title", sort_field="title"),
         Column(title="Public", sort_field="public"),
         Column(
-            title="Your Role",
+            title="Your Role(s)",
             sort_field=("user_is_algorithm_editor", "user_is_algorithm_user"),
         ),
         Column(title="Editors"),
