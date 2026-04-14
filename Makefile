@@ -129,6 +129,13 @@ component_interface_value_fixtures:
 		celery_worker \
 		python manage.py runscript component_interface_value_fixtures
 
+notification_fixtures:
+	docker compose run \
+		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
+		--rm \
+		gc.localhost \
+		python manage.py runscript notification_fixtures
+
 superuser:
 	docker compose run \
 		-v $(shell readlink -f ./scripts/):/app/scripts:ro \
