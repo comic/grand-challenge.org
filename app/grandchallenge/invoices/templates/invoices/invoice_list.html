@@ -63,7 +63,7 @@
                                 <i class="fas fa-exclamation-triangle text-warning" title="Invoice is due."></i>
                             {% endif %}
                         </td>
-                        <td>{{ invoice.total_amount_euros|euro_no_cents }}</td>
+                        <td>{{ invoice.total_amount_euros|euro:0 }}</td>
                         <td>{{ invoice.get_payment_type_display }}</td>
                         <td>
                             {% if invoice.payment_type == invoice.PaymentTypeChoices.COMPLIMENTARY %}

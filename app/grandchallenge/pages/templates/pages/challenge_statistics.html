@@ -81,9 +81,9 @@
                         <tr>
                             <td>{{ invoice.internal_invoice_number }}</td>
                             <td data-order="{{ invoice.issued_on|date:"c" }}">{{ invoice.issued_on }}</td>
-                            <td>{{ invoice.support_costs_euros|euro_no_cents }}</td>
-                            <td>{{ invoice.compute_costs_euros|euro_no_cents }}</td>
-                            <td>{{ invoice.storage_costs_euros|euro_no_cents }}</td>
+                            <td>{{ invoice.support_costs_euros|euro:0 }}</td>
+                            <td>{{ invoice.compute_costs_euros|euro:0 }}</td>
+                            <td>{{ invoice.storage_costs_euros|euro:0 }}</td>
                             <td>{{ invoice.external_reference }}</td>
                             <td>{{ invoice.get_payment_type_display }}</td>
                             <td>
