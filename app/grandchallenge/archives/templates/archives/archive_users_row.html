@@ -20,11 +20,15 @@
 {# Role #}
 
 {% if object.user_is_archive_editor %}
-    <i class="fas fa-user-tie fa-fw mr-1"></i>Editor
-{% elif object.user_is_archive_uploader %}
-    <i class="fas fa-upload fa-fw mr-1"></i>Uploader
-{% elif object.user_is_archive_user %}
-    <i class="fas fa-user fa-fw mr-1"></i>User
+    <i class="fas fa-user-tie fa-fw mr-1"></i>Editor<br/>
+{% endif %}
+
+{% if object.user_is_archive_uploader %}
+    <i class="fas fa-upload fa-fw mr-1"></i>Uploader<br/>
+{% endif %}
+
+{% if object.user_is_archive_user %}
+    <i class="fas fa-user fa-fw mr-1"></i>User<br/>
 {% endif %}
 
 <split></split>

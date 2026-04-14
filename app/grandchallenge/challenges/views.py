@@ -104,7 +104,7 @@ class UsersChallengeList(
         Column(title="Acronym", sort_field="short_name"),
         Column(title="Hidden", sort_field="hidden"),
         Column(
-            title="Your Role",
+            title="Your Role(s)",
             sort_field=(
                 "user_is_challenge_admin",
                 "user_is_challenge_participant",
