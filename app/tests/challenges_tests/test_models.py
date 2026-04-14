@@ -144,7 +144,7 @@ def test_is_active_until_set():
                 number_of_submissions_per_team_for_phases=[10],
                 number_of_test_cases_for_phases=[100],
             ),
-            709.07,
+            706.27,
             6000,
         ),
         (
@@ -159,7 +159,7 @@ def test_is_active_until_set():
                 number_of_submissions_per_team_for_phases=[10],
                 number_of_test_cases_for_phases=[100],
             ),
-            2361.98,
+            2353.06,
             7500,
         ),
         (
@@ -176,7 +176,7 @@ def test_is_active_until_set():
                 number_of_submissions_per_team_for_phases=[10],
                 number_of_test_cases_for_phases=[100],
             ),
-            3555.5,
+            3553.30,
             9000,
         ),
         (
@@ -194,7 +194,7 @@ def test_is_active_until_set():
                 number_of_teams_for_phases=[3, 3, 3, 3],
                 number_of_test_cases_for_phases=[3, 100, 3, 100],
             ),
-            363.97,
+            363.23,
             6000,
         ),
     ],
@@ -259,22 +259,30 @@ def test_challenge_request_budget_calculation(settings):
     costs_for_phases = [
         {
             # "name": "Phase 1",
-            "compute_time": timedelta(minutes=10) * 10 * 100 * 100,
-            "compute_costs_euros": 19581.10,
-            "data_storage_size_gb": 100 * 100 / 1024,
-            "data_storage_costs_euros": 6.57,
-            "compute_and_storage_costs_euros": 19587.67,
+            "compute_costs_euros_per_hour": 1.17,
+            "compute_time_hours": 16667,
+            "compute_costs_euros": 19500.39,
+            "data_storage_size_gb": 10,
+            "data_storage_costs_euros": 6.70,
+            "compute_and_storage_costs_euros": 19507.09,
         },
         {
             # "name": "Phase 2",
-            "compute_time": timedelta(minutes=10) * 10 * 10 * 500,
-            "compute_costs_euros": 9790.55,
-            "data_storage_size_gb": 500 * 100 / 1024,
-            "data_storage_costs_euros": 32.82,
-            "compute_and_storage_costs_euros": 9823.37,
+            "compute_costs_euros_per_hour": 1.17,
+            "compute_time_hours": 8333,
+            "compute_costs_euros": 9749.61,
+            "data_storage_size_gb": 49,
+            "data_storage_costs_euros": 32.83,
+            "compute_and_storage_costs_euros": 9782.44,
         },
     ]
+    assert challenge_request.storage_costs_euros_per_gb == 0.67
     for i_phase in range(2):
+        assert (
+            costs_for_phases[i_phase]["compute_and_storage_costs_euros"]
+            == costs_for_phases[i_phase]["compute_costs_euros"]
+            + costs_for_phases[i_phase]["data_storage_costs_euros"]
+        )
         for k, v in costs_for_phases[i_phase].items():
             assert (
                 pytest.approx(
@@ -284,12 +292,42 @@ def test_challenge_request_budget_calculation(settings):
                 == v
             )
     assert challenge_request.total_docker_storage_size_gb == 6 * 10 * 100
-    assert challenge_request.total_docker_storage_costs_euros == 4032.05
     assert (
         pytest.approx(
-            challenge_request.total_compute_and_storage_costs_euros, abs=0.01
+            challenge_request.total_docker_storage_costs_euros,
+            abs=0.01,
         )
-        == 33443.09
+        == 4020.00
+    )
+    assert (
+        pytest.approx(
+            challenge_request.compute_costs_euros_for_tasks[0],
+            abs=0.01,
+        )
+        == 29250.00
+    )
+    assert (
+        pytest.approx(
+            challenge_request.storage_costs_euros_for_tasks[0],
+            abs=0.01,
+        )
+        == 4059.53
+    )
+    assert (
+        pytest.approx(
+            challenge_request.total_compute_and_storage_costs_euros,
+            abs=0.01,
+        )
+        == pytest.approx(
+            challenge_request.compute_and_storage_costs_euros_for_tasks[0],
+            abs=0.01,
+        )
+        == pytest.approx(
+            challenge_request.compute_costs_euros_for_tasks[0]
+            + challenge_request.storage_costs_euros_for_tasks[0],
+            abs=0.01,
+        )
+        == 33309.53
     )
 
     for i_phase in range(2):
@@ -302,7 +340,7 @@ def test_challenge_request_budget_calculation(settings):
         )
 
     assert (
-        pytest.approx(challenge_request.total_compute_and_storage_costs_euros)
+        challenge_request.total_compute_and_storage_costs_euros
         == challenge_request.compute_and_storage_costs_euros_for_phases[0]
         + challenge_request.compute_and_storage_costs_euros_for_phases[1]
         + challenge_request.total_docker_storage_costs_euros
