@@ -122,10 +122,10 @@ Based on the following information:
                     {% for phase in task.costs_for_phases_in_task %}
                         <tr>
                             <td>Compute phase {{ forloop.counter }}</td>
-                            <td>{{ phase.number_of_submissions_per_team }} submission{{ phase.number_of_submissions_per_team|pluralize }}
-                                times {{ phase.number_of_teams }} team{{ phase.number_of_teams|pluralize }}
-                                times {{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }}
-                                times {{ task.inference_time_average_minutes }} minutes average job time per case</td>
+                            <td>{{ task.inference_time_average_minutes }} minutes average job time per case,
+                                {{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }} per submission,
+                                {{ phase.number_of_submissions_per_team }} submission{{ phase.number_of_submissions_per_team|pluralize }} per team,
+                                {{ phase.number_of_teams }} team{{ phase.number_of_teams|pluralize }}</td>
                             <td class="text-right">{{ task.compute_costs_euros_per_hour|euro }}</td>
                             <td>{{ phase.compute_time|total_hours|floatformat }}</td>
                             <td>Hours</td>
@@ -133,7 +133,9 @@ Based on the following information:
                         </tr>
                         <tr>
                             <td>Data storage phase {{ forloop.counter }}</td>
-                            <td>{{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }}, average size {{ task.average_size_test_case_mb }} MB, for 5 years</td>
+                            <td>{{ task.average_size_test_case_mb }} MB average size per case,
+                                {{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }},
+                                for {{ num_support_years }} year{{ num_support_years|pluralize }}</td>
                             <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
                             <td>{{ phase.data_storage_size_gb|floatformat }}</td>
                             <td>GB</td>
@@ -154,9 +156,10 @@ Based on the following information:
 
                     <tr class="table-light">
                         <td>Container storage task {{ task_id }}</td>
-                        <td>{{ task.number_of_docker_images_per_team }} unique submission{{ task.number_of_docker_images_per_team|pluralize }}
-                            times {{ task.number_of_teams }} team{{ task.number_of_teams|pluralize }}
-                            times {{ object.average_algorithm_container_size_in_gb }} GB per container, for 5 years</td>
+                        <td>{{ object.average_algorithm_container_size_in_gb }} GB per submission,
+                            {{ task.number_of_docker_images_per_team }} unique submission{{ task.number_of_docker_images_per_team|pluralize }} per team,
+                            {{ task.number_of_teams }} team{{ task.number_of_teams|pluralize }},
+                            for {{ num_support_years }} year{{ num_support_years|pluralize }}</td>
                         <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
                         <td>{{ task.docker_storage_size_gb|floatformat }}</td>
                         <td>GB</td>
