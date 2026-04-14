@@ -1,5 +1,6 @@
 import pytest
-from django.utils.safestring import SafeString, mark_safe
+from django.utils.safestring import mark_safe  # noqa I251: fine for tests
+from django.utils.safestring import SafeString
 
 from grandchallenge.core.templatetags.bleach import md2html
 from grandchallenge.core.utils.tag_substitutions import TagSubstitution

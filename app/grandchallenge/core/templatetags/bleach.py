@@ -3,7 +3,7 @@ from bleach.css_sanitizer import CSSSanitizer
 from django import template
 from django.conf import settings
 from django.template.loader import render_to_string
-from django.utils.safestring import SafeString, mark_safe
+from django.utils.safestring import SafeString
 from markdown import markdown as render_markdown
 from markdown.extensions.toc import TocExtension
 
@@ -30,6 +30,10 @@ def clean(html: str, *, no_tags=False):
         ),
         protocols=settings.BLEACH_ALLOWED_PROTOCOLS,
         strip=settings.BLEACH_STRIP,
+    )
+
+    from django.utils.safestring import (  # noqa I251: we're sure that the strings are safe here as they have been cleaned
+        mark_safe,
     )
 
     return mark_safe(cleaned_html)
