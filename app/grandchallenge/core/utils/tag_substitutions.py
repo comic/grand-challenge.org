@@ -4,7 +4,7 @@ from collections.abc import Callable
 from re import Match
 
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.safestring import SafeString, mark_safe
+from django.utils.safestring import SafeString
 
 
 class TagSubstitution:
@@ -95,6 +95,10 @@ class TagSubstitution:
         out = re.sub(self.pattern, subrepl, s)
 
         if input_and_replacement_safe:
+            from django.utils.safestring import (  # noqa I251: we're sure that the strings are safe here as they were both already safe
+                mark_safe,
+            )
+
             out = mark_safe(out)
 
         return out
