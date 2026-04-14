@@ -370,7 +370,11 @@ class ChallengeRequestBudgetCalculator(
         return render(
             self.request,
             "challenges/partials/budget_table.html",
-            {"object": challenge_request},
+            {
+                "object": challenge_request,
+                "num_support_years": settings.CHALLENGE_NUM_SUPPORT_YEARS,
+                "capacity_reservation_pack_size_in_euro": settings.CHALLENGE_CAPACITY_RESERVATION_PACK_SIZE_IN_EURO,
+            },
         )
 
     def form_invalid(self, form):
