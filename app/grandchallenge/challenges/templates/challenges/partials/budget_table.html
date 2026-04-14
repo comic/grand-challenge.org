@@ -69,20 +69,20 @@ Based on the following information:
                     Base cost
                 </td>
                 <td><small class="text-dark">This covers a contribution towards platform maintenance, development and support.</small></td>
-                <td class="text-right">{{ object.base_cost_euros|euro_no_cents }}</td>
+                <td class="text-right">{{ object.base_cost_euros|euro }}</td>
                 <td>1</td>
                 <td>Challenge</td>
-                <td class="text-right font-weight-bold">{{ object.base_cost_euros|euro_no_cents }}</td>
+                <td class="text-right font-weight-bold">{{ object.base_cost_euros|euro:0 }}</td>
             </tr>
             <tr>
                 <td class="font-weight-bold">
                     Capacity reservation
                 </td>
                 <td><small class="text-dark">Capacity reservation units for compute and storage costs.</small></td>
-                <td class="text-right">{{ capacity_reservation_pack_size_in_euro|euro_no_cents }}</td>
+                <td class="text-right">{{ capacity_reservation_pack_size_in_euro|euro:0 }}</td>
                 <td>{{ object.capacity_reservation_units }}</td>
                 <td>Units</td>
-                <td class="text-right font-weight-bold">{{ object.capacity_reservation_euros|euro_no_cents }}</td>
+                <td class="text-right font-weight-bold">{{ object.capacity_reservation_euros|euro:0 }}</td>
             </tr>
             <tr class="table-info">
                 <td class="font-weight-bold">
@@ -92,7 +92,7 @@ Based on the following information:
                 <td></td>
                 <td></td>
                 <td></td>
-                <td class="text-right font-weight-bold">{{ object.total_challenge_price|euro_no_cents }}</td>
+                <td class="text-right font-weight-bold">{{ object.total_challenge_price|euro:0 }}</td>
             </tr>
         </tbody>
     </table>
@@ -214,7 +214,7 @@ Based on the following information:
             <tr class="table-info">
                 <td class="font-weight-bold">Capacity reservation</td>
                 <td>Required capacity reservation units</td>
-                <td class="text-right">{{ capacity_reservation_pack_size_in_euro|euro_no_cents }}</td>
+                <td class="text-right">{{ capacity_reservation_pack_size_in_euro|euro:0 }}</td>
                 <td>{{ object.capacity_reservation_units }}</td>
                 <td>Units</td>
                 <td class="text-right font-weight-bold">{{ object.capacity_reservation_euros|euro }}</td>
@@ -231,11 +231,11 @@ Based on the following information:
         <tbody>
             <tr>
                 <td>Compute</td>
-                <td class="text-right">€ {{ object.capacity_reservation_compute_euros|floatformat:0 }}</td>
+                <td class="text-right">{{ object.capacity_reservation_compute_euros|euro:0 }}</td>
             </tr>
             <tr>
                 <td>Storage</td>
-                <td class="text-right">€ {{ object.capacity_reservation_storage_euros|floatformat:0 }}</td>
+                <td class="text-right">{{ object.capacity_reservation_storage_euros|euro:0 }}</td>
             </tr>
         </tbody>
     </table>

@@ -1,21 +1,14 @@
 from django import template
 from django.conf import settings
+from django.utils.html import format_html
 
 register = template.Library()
 
 
 @register.filter
-def euro(value):
+def euro(value, decimal_places=2):
     try:
-        return f"€ {value:,.2f}"
-    except ValueError:
-        return ""
-
-
-@register.filter
-def euro_no_cents(value):
-    try:
-        return f"€ {value:,.0f}"
+        return format_html("€&nbsp;{}", f"{value:,.{decimal_places}f}")
     except ValueError:
         return ""
 
