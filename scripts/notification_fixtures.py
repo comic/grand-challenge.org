@@ -6,12 +6,22 @@ from django.contrib.auth import get_user_model
 from django.db.models.signals import pre_save
 from django.utils import timezone
 
-from grandchallenge.algorithms.models import Algorithm, AlgorithmPermissionRequest
+from grandchallenge.algorithms.models import (
+    Algorithm,
+    AlgorithmPermissionRequest,
+)
 from grandchallenge.cases.models import RawImageUploadSession
 from grandchallenge.challenges.models import Challenge
-from grandchallenge.discussion_forums.models import Forum, ForumPost, ForumTopic
+from grandchallenge.discussion_forums.models import (
+    Forum,
+    ForumPost,
+    ForumTopic,
+)
 from grandchallenge.evaluation.models import Evaluation, Phase, Submission
-from grandchallenge.notifications.models import Notification, NotificationTypeChoices
+from grandchallenge.notifications.models import (
+    Notification,
+    NotificationTypeChoices,
+)
 from grandchallenge.notifications.signals import disallow_spam
 from grandchallenge.participants.models import RegistrationRequest
 
@@ -25,96 +35,126 @@ def run():
             "Skipping this command, server is not in DEBUG mode."
         )
 
-    User = get_user_model()
+    demo, demop = _get_users()
+    challenge = _get_challenge()
+    algorithm = _get_algorithm()
 
+    # Clean up any previously created fixture notifications so the
+    # script is idempotent.
+    Notification.objects.filter(user__username__in=["demo", "demop"]).delete()
+
+    notifications = []
+    notifications += _create_forum_notifications(demo, demop)
+    notifications += _create_access_request_notifications(
+        demo, demop, challenge, algorithm
+    )
+    notifications += _create_request_update_notifications(
+        demop, challenge, algorithm
+    )
+    notifications += _create_admin_notifications(demo, challenge)
+    notifications += _create_evaluation_notifications(demo, demop, challenge)
+    notifications += _create_job_notifications(demo, demop, algorithm)
+    notifications += _create_import_and_validation_notifications(demo)
+
+    # Mark some as read for visual variety
+    for n in random.sample(notifications, k=min(4, len(notifications))):
+        Notification.objects.filter(pk=n.pk).update(read=True)
+
+    print(
+        f"✨ Created {len(notifications)} notifications for users "
+        f"demo and demop ✨"
+    )
+
+
+def _get_users():
+    user_model = get_user_model()
     try:
-        demo = User.objects.get(username="demo")
-        demop = User.objects.get(username="demop")
-    except User.DoesNotExist:
+        demo = user_model.objects.get(username="demo")
+        demop = user_model.objects.get(username="demop")
+    except user_model.DoesNotExist:
         raise RuntimeError(
             "Run development_fixtures first to create the required users."
         )
+    return demo, demop
 
+
+def _get_challenge():
     challenge = Challenge.objects.filter(short_name="demo").first()
     if challenge is None:
         raise RuntimeError(
             "Run development_fixtures first to create the demo challenge."
         )
+    return challenge
 
+
+def _get_algorithm():
     algorithm = Algorithm.objects.first()
     if algorithm is None:
         raise RuntimeError(
             "Run development_fixtures first to create an algorithm."
         )
+    return algorithm
 
+
+def _create_forum_notifications(demo, demop):
     notifications = []
-
-    # Clean up any previously created fixture notifications so the
-    # script is idempotent.
-    Notification.objects.filter(
-        user__username__in=["demo", "demop"]
-    ).delete()
-
-    # ── FORUM_POST ──────────────────────────────────────────────────
     forum = Forum.objects.first()
-    if forum:
-        topic = ForumTopic.objects.filter(forum=forum).first()
-        if topic is None:
-            # Temporarily disconnect the spam guard so fixture users
-            # (whose accounts are brand-new) can create forum objects.
-            pre_save.disconnect(disallow_spam, sender=ForumTopic)
-            try:
-                topic = ForumTopic.objects.create(
-                    forum=forum,
-                    creator=demop,
-                    subject="Example discussion topic",
-                )
-            finally:
-                pre_save.connect(disallow_spam, sender=ForumTopic)
-        post = ForumPost.objects.filter(topic=topic).first()
-        if post is None:
-            pre_save.disconnect(disallow_spam, sender=ForumPost)
-            pre_save.disconnect(disallow_spam, sender=ForumTopic)
-            try:
-                post = ForumPost.objects.create(
-                    topic=topic,
-                    creator=demop,
-                    content="This is an example post.",
-                )
-            finally:
-                pre_save.connect(disallow_spam, sender=ForumPost)
-                pre_save.connect(disallow_spam, sender=ForumTopic)
-        notifications.append(
-            _create(
-                user=demo,
-                kind=NotificationTypeChoices.FORUM_POST,
-                actor=demop,
-                message="posted",
-                action_object=topic,
-                target=forum,
-                minutes_ago=5,
-            )
-        )
-    else:
+    if not forum:
         print("  ⚠ Skipping FORUM_POST — no forum found")
+        return notifications
 
-    # ── FORUM_POST_REPLY ────────────────────────────────────────────
-    if forum and topic:
-        notifications.append(
-            _create(
-                user=demo,
-                kind=NotificationTypeChoices.FORUM_POST_REPLY,
-                actor=demop,
-                message="replied to",
-                target=topic,
-                minutes_ago=12,
+    topic = ForumTopic.objects.filter(forum=forum).first()
+    if topic is None:
+        pre_save.disconnect(disallow_spam, sender=ForumTopic)
+        try:
+            topic = ForumTopic.objects.create(
+                forum=forum,
+                creator=demop,
+                subject="Example discussion topic",
             )
-        )
-    else:
-        print("  ⚠ Skipping FORUM_POST_REPLY — no forum/topic found")
+        finally:
+            pre_save.connect(disallow_spam, sender=ForumTopic)
 
-    # ── ACCESS_REQUEST (challenge target) ───────────────────────────
+    post = ForumPost.objects.filter(topic=topic).first()
+    if post is None:
+        pre_save.disconnect(disallow_spam, sender=ForumPost)
+        pre_save.disconnect(disallow_spam, sender=ForumTopic)
+        try:
+            post = ForumPost.objects.create(
+                topic=topic,
+                creator=demop,
+                content="This is an example post.",
+            )
+        finally:
+            pre_save.connect(disallow_spam, sender=ForumPost)
+            pre_save.connect(disallow_spam, sender=ForumTopic)
+
     notifications.append(
+        _create(
+            user=demo,
+            kind=NotificationTypeChoices.FORUM_POST,
+            actor=demop,
+            message="posted",
+            action_object=topic,
+            target=forum,
+            minutes_ago=5,
+        )
+    )
+    notifications.append(
+        _create(
+            user=demo,
+            kind=NotificationTypeChoices.FORUM_POST_REPLY,
+            actor=demop,
+            message="replied to",
+            target=topic,
+            minutes_ago=12,
+        )
+    )
+    return notifications
+
+
+def _create_access_request_notifications(demo, demop, challenge, algorithm):
+    return [
         _create(
             user=demo,
             kind=NotificationTypeChoices.ACCESS_REQUEST,
@@ -122,11 +162,7 @@ def run():
             message="requested access to",
             target=challenge,
             minutes_ago=60 * 3,
-        )
-    )
-
-    # ── ACCESS_REQUEST (algorithm target) ────────────────────────────
-    notifications.append(
+        ),
         _create(
             user=demo,
             kind=NotificationTypeChoices.ACCESS_REQUEST,
@@ -134,10 +170,11 @@ def run():
             message="requested access to",
             target=algorithm,
             minutes_ago=60 * 24,
-        )
-    )
+        ),
+    ]
 
-    # ── REQUEST_UPDATE (RegistrationRequest target — accepted) ──────
+
+def _create_request_update_notifications(demop, challenge, algorithm):
     reg_request = RegistrationRequest.objects.filter(
         challenge=challenge,
     ).first()
@@ -148,17 +185,7 @@ def run():
             status=RegistrationRequest.ACCEPTED,
         )
         RegistrationRequest.objects.bulk_create([reg_request])
-    notifications.append(
-        _create(
-            user=demop,
-            kind=NotificationTypeChoices.REQUEST_UPDATE,
-            message="was accepted",
-            target=reg_request,
-            minutes_ago=60 * 24 * 14,
-        )
-    )
 
-    # ── REQUEST_UPDATE (AlgorithmPermissionRequest target — rejected)
     alg_perm = AlgorithmPermissionRequest.objects.filter(
         algorithm=algorithm,
         user=demop,
@@ -170,18 +197,27 @@ def run():
             status=AlgorithmPermissionRequest.REJECTED,
         )
         AlgorithmPermissionRequest.objects.bulk_create([alg_perm])
-    notifications.append(
+
+    return [
+        _create(
+            user=demop,
+            kind=NotificationTypeChoices.REQUEST_UPDATE,
+            message="was accepted",
+            target=reg_request,
+            minutes_ago=60 * 24 * 14,
+        ),
         _create(
             user=demop,
             kind=NotificationTypeChoices.REQUEST_UPDATE,
             message="was rejected",
             target=alg_perm,
             minutes_ago=60 * 24 * 2,
-        )
-    )
+        ),
+    ]
 
-    # ── NEW_ADMIN ───────────────────────────────────────────────────
-    notifications.append(
+
+def _create_admin_notifications(demo, challenge):
+    return [
         _create(
             user=demo,
             kind=NotificationTypeChoices.NEW_ADMIN,
@@ -189,68 +225,72 @@ def run():
             target=challenge,
             action_object=demo,
             minutes_ago=60 * 24 * 7,
-        )
-    )
+        ),
+    ]
 
-    # ── EVALUATION_STATUS (actor == user, failed with error) ────────
+
+def _create_evaluation_notifications(demo, demop, challenge):
+    notifications = []
     phase = Phase.objects.filter(challenge=challenge).first()
     submission = Submission.objects.filter(phase=phase).first()
     evaluation = Evaluation.objects.filter(submission=submission).first()
-    if evaluation:
-        notifications.append(
-            _create(
-                user=evaluation.submission.creator,
-                kind=NotificationTypeChoices.EVALUATION_STATUS,
-                actor=evaluation.submission.creator,
-                message="failed",
-                action_object=evaluation,
-                target=phase,
-                minutes_ago=45,
-            )
-        )
 
-        # ── EVALUATION_STATUS (actor != user, failed) ──────────────
-        notifications.append(
-            _create(
-                user=demo,
-                kind=NotificationTypeChoices.EVALUATION_STATUS,
-                actor=demop,
-                message="failed",
-                action_object=evaluation,
-                target=phase,
-                minutes_ago=60 * 2,
-            )
+    if not evaluation:
+        print(
+            "  ⚠ Skipping EVALUATION_STATUS / MISSING_METHOD"
+            " — no evaluation found"
         )
+        return notifications
 
-        # ── EVALUATION_STATUS (actor != user, succeeded) ───────────
-        notifications.append(
-            _create(
-                user=demo,
-                kind=NotificationTypeChoices.EVALUATION_STATUS,
-                actor=demop,
-                message="succeeded",
-                action_object=evaluation,
-                target=phase,
-                minutes_ago=60 * 5,
-            )
-        )
-
-        # ── MISSING_METHOD ─────────────────────────────────────────
-        notifications.append(
-            _create(
-                user=demo,
-                kind=NotificationTypeChoices.MISSING_METHOD,
-                actor=demop,
-                action_object=submission,
-                target=phase,
-                minutes_ago=60 * 24 * 3,
-            )
-        )
-    else:
-        print("  ⚠ Skipping EVALUATION_STATUS / MISSING_METHOD — no evaluation found")
-
-    # ── JOB_STATUS (with actor != user) ─────────────────────────────
+    creator = evaluation.submission.creator
     notifications.append(
+        _create(
+            user=creator,
+            kind=NotificationTypeChoices.EVALUATION_STATUS,
+            actor=creator,
+            message="failed",
+            action_object=evaluation,
+            target=phase,
+            minutes_ago=45,
+        )
+    )
+    notifications.append(
+        _create(
+            user=demo,
+            kind=NotificationTypeChoices.EVALUATION_STATUS,
+            actor=demop,
+            message="failed",
+            action_object=evaluation,
+            target=phase,
+            minutes_ago=60 * 2,
+        )
+    )
+    notifications.append(
+        _create(
+            user=demo,
+            kind=NotificationTypeChoices.EVALUATION_STATUS,
+            actor=demop,
+            message="succeeded",
+            action_object=evaluation,
+            target=phase,
+            minutes_ago=60 * 5,
+        )
+    )
+    notifications.append(
+        _create(
+            user=demo,
+            kind=NotificationTypeChoices.MISSING_METHOD,
+            actor=demop,
+            action_object=submission,
+            target=phase,
+            minutes_ago=60 * 24 * 3,
+        )
+    )
+    return notifications
+
+
+def _create_job_notifications(demo, demop, algorithm):
+    return [
         _create(
             user=demo,
             kind=NotificationTypeChoices.JOB_STATUS,
@@ -261,11 +301,7 @@ def run():
             ),
             description="/",
             minutes_ago=30,
-        )
-    )
-
-    # ── JOB_STATUS (actor == user) ──────────────────────────────────
-    notifications.append(
+        ),
         _create(
             user=demo,
             kind=NotificationTypeChoices.JOB_STATUS,
@@ -275,14 +311,16 @@ def run():
             ),
             description="/",
             minutes_ago=60 * 48,
-        )
-    )
+        ),
+    ]
 
-    # ── IMAGE_IMPORT_STATUS ─────────────────────────────────────────
+
+def _create_import_and_validation_notifications(demo):
     upload_session = RawImageUploadSession.objects.first()
     if upload_session is None:
         upload_session = RawImageUploadSession.objects.create(creator=demo)
-    notifications.append(
+
+    return [
         _create(
             user=demo,
             kind=NotificationTypeChoices.IMAGE_IMPORT_STATUS,
@@ -292,11 +330,7 @@ def run():
                 "with error: 1 file could not be imported."
             ),
             minutes_ago=60 * 24 * 30,
-        )
-    )
-
-    # ── FILE_COPY_STATUS ────────────────────────────────────────────
-    notifications.append(
+        ),
         _create(
             user=demo,
             kind=NotificationTypeChoices.FILE_COPY_STATUS,
@@ -307,11 +341,7 @@ def run():
             ),
             context_class="danger",
             minutes_ago=10,
-        )
-    )
-
-    # ── CIV_VALIDATION ──────────────────────────────────────────────
-    notifications.append(
+        ),
         _create(
             user=demo,
             kind=NotificationTypeChoices.CIV_VALIDATION,
@@ -322,44 +352,34 @@ def run():
             ),
             context_class="warning",
             minutes_ago=60 * 24 * 60,
-        )
-    )
-
-    # ── CIV_VALIDATION (long message) ──────────────────────────────
-    notifications.append(
+        ),
         _create(
             user=demo,
             kind=NotificationTypeChoices.CIV_VALIDATION,
             actor=demo,
             description=(
-                "Component interface value validation failed for interface "
-                "'Generic Overlay' (slug: generic-overlay): The uploaded file "
-                "could not be decoded. Please ensure that the file is a valid "
-                "image in one of the supported formats (MHA, MHD, TIFF, or "
-                "NIFTI). The following errors were encountered during "
-                "validation: (1) The file header could not be parsed — this "
-                "usually indicates a corrupted or truncated upload. "
-                "(2) The pixel data dimensions (expected 512×512×3) do not "
-                "match the declared shape in the metadata. (3) The voxel "
-                "spacing values are missing or invalid, which is required "
-                "for spatial normalization. Please re-export the file from "
-                "your source application and try uploading again. If the "
-                "problem persists, contact support with the upload session "
-                "ID and the original file for further investigation."
+                "Component interface value validation failed for "
+                "interface 'Generic Overlay' (slug: generic-overlay):"
+                " The uploaded file could not be decoded. Please "
+                "ensure that the file is a valid image in one of the"
+                " supported formats (MHA, MHD, TIFF, or NIFTI). The"
+                " following errors were encountered during "
+                "validation: (1) The file header could not be parsed"
+                " — this usually indicates a corrupted or truncated "
+                "upload. (2) The pixel data dimensions (expected "
+                "512×512×3) do not match the declared shape in the "
+                "metadata. (3) The voxel spacing values are missing "
+                "or invalid, which is required for spatial "
+                "normalization. Please re-export the file from your "
+                "source application and try uploading again. If the "
+                "problem persists, contact support with the upload "
+                "session ID and the original file for further "
+                "investigation."
             ),
             context_class="warning",
             minutes_ago=60 * 6,
-        )
-    )
-
-    # Mark some as read for visual variety
-    for n in random.sample(notifications, k=min(4, len(notifications))):
-        Notification.objects.filter(pk=n.pk).update(read=True)
-
-    print(
-        f"✨ Created {len(notifications)} notifications for users "
-        f"demo and demop ✨"
-    )
+        ),
+    ]
 
 
 def _create(
