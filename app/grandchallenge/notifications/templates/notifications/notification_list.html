@@ -49,6 +49,11 @@
                             {% print_notification notification=object user=request.user as current_notification %}
                             {{ current_notification }}
                         </div>
+                        <div class="py-2 pr-3 text-nowrap text-muted small align-self-center">
+                            <time datetime="{{ object.created|date:'c' }}" title="{{ object.created }}">
+                                {{ object.created|naturaltime }}
+                            </time>
+                        </div>
                     </div>
                 </li>
                 {% empty %}

@@ -3,7 +3,6 @@ from actstream.models import Follow, followers
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.contrib.sites.models import Site
 from django.db import models
 from django.utils.html import format_html
@@ -246,7 +245,7 @@ class Notification(UUIDModel):
     def print_notification(self, user):  # noqa: C901
         if self.type == NotificationTypeChoices.FORUM_POST:
             return format_html(
-                "{profile_link} {message} {action_object} in {target} {time}.",
+                "{profile_link} {message} {action_object} in {target}.",
                 profile_link=user_profile_link(self.actor),
                 message=self.message,
                 action_object=format_html(
@@ -259,11 +258,10 @@ class Notification(UUIDModel):
                     self.target.get_absolute_url(),
                     self.target,
                 ),
-                time=naturaltime(self.created),
             )
         elif self.type == NotificationTypeChoices.FORUM_POST_REPLY:
             return format_html(
-                "{profile_link} {message} {target} {time}.",
+                "{profile_link} {message} {target}.",
                 profile_link=user_profile_link(self.actor),
                 message=self.message,
                 target=format_html(
@@ -271,7 +269,6 @@ class Notification(UUIDModel):
                     self.target.get_absolute_url(),
                     self.target.subject,
                 ),
-                time=naturaltime(self.created),
             )
         elif self.type == NotificationTypeChoices.ACCESS_REQUEST:
             if self.target_content_type.model == "challenge":
@@ -288,7 +285,7 @@ class Notification(UUIDModel):
             else:
                 notification_addition = ""
             return format_html(
-                "{profile_link} {message} {target} {time}. {addition}",
+                "{profile_link} {message} {target}. {addition}",
                 profile_link=user_profile_link(self.actor),
                 message=self.message,
                 target=format_html(
@@ -296,7 +293,6 @@ class Notification(UUIDModel):
                     self.target.get_absolute_url(),
                     self.target,
                 ),
-                time=naturaltime(self.created),
                 addition=notification_addition,
             )
         elif self.type == NotificationTypeChoices.REQUEST_UPDATE:
@@ -307,25 +303,23 @@ class Notification(UUIDModel):
                 target_url = self.target.base_object.get_absolute_url()
                 target_name = self.target.object_name
             return format_html(
-                "Your registration request for {target} {message} {time}.",
+                "Your registration request for {target} {message}.",
                 target=format_html(
                     '<a href="{url}">{name}</a>',
                     url=target_url,
                     name=target_name,
                 ),
                 message=self.message,
-                time=naturaltime(self.created),
             )
         elif self.type == NotificationTypeChoices.NEW_ADMIN:
             return format_html(
-                "You were {message} {target} {time}.",
+                "You were {message} {target}.",
                 message=self.message,
                 target=format_html(
                     '<a href="{}">{}</a>',
                     self.target.get_absolute_url(),
                     self.target,
                 ),
-                time=naturaltime(self.created),
             )
         elif (
             self.type == NotificationTypeChoices.EVALUATION_STATUS
@@ -341,7 +335,7 @@ class Notification(UUIDModel):
                 error_message = ""
 
             return format_html(
-                "Your {action_object} to {target} {message} {time}. {error}",
+                "Your {action_object} to {target} {message}. {error}",
                 action_object=format_html(
                     '<a href="{}">{}</a>',
                     self.action_object.submission.get_absolute_url(),
@@ -353,7 +347,6 @@ class Notification(UUIDModel):
                     self.target.challenge.short_name,
                 ),
                 message=self.message,
-                time=naturaltime(self.created),
                 error=error_message,
             )
         elif (
@@ -370,7 +363,7 @@ class Notification(UUIDModel):
             else:
                 error_message = ""
             return format_html(
-                "The {action_object} from {user_profile} to {target} {message} {time}. {error}",
+                "The {action_object} from {user_profile} to {target} {message}. {error}",
                 action_object=format_html(
                     '<a href="{}">{}</a>',
                     self.action_object.submission.get_absolute_url(),
@@ -385,7 +378,6 @@ class Notification(UUIDModel):
                     self.target.challenge.short_name,
                 ),
                 message=self.message,
-                time=naturaltime(self.created),
                 error=error_message,
             )
         elif (
@@ -394,7 +386,7 @@ class Notification(UUIDModel):
             and self.message == "succeeded"
         ):
             return format_html(
-                "There is a new {action_object} for {target} from {user_profile} {time}.",
+                "There is a new {action_object} for {target} from {user_profile}.",
                 action_object=format_html(
                     '<a href="{}">{}</a>',
                     self.action_object.submission.get_absolute_url(),
@@ -406,11 +398,10 @@ class Notification(UUIDModel):
                     self.target.challenge.short_name,
                 ),
                 user_profile=user_profile_link(self.actor),
-                time=naturaltime(self.created),
             )
         elif self.type == NotificationTypeChoices.MISSING_METHOD:
             return format_html(
-                "The {action_object} from {user_profile} {time} could not be evaluated because "
+                "The {action_object} from {user_profile} could not be evaluated because "
                 "there is no valid evaluation method for {target}.",
                 action_object=format_html(
                     '<a href="{}">{}</a>',
@@ -418,7 +409,6 @@ class Notification(UUIDModel):
                     "submission",
                 ),
                 user_profile=user_profile_link(self.actor),
-                time=naturaltime(self.created),
                 target=format_html(
                     '<a href="{}">{}</a>',
                     self.target.get_absolute_url(),
@@ -431,9 +421,8 @@ class Notification(UUIDModel):
             else:
                 addition = ""
             return format_html(
-                "{message} {time}. {addition} {description}",
+                "{message}. {addition} {description}",
                 message=self.message,
-                time=naturaltime(self.created),
                 addition=addition,
                 description=format_html(
                     '<span class="text-truncate font-italic text-muted align-middle '
@@ -444,14 +433,13 @@ class Notification(UUIDModel):
             )
         elif self.type == NotificationTypeChoices.IMAGE_IMPORT_STATUS:
             return format_html(
-                "Your {action_object} from {time} failed "
+                "Your {action_object} failed "
                 "with the following error: {message}",
                 action_object=format_html(
                     '<a href="{}">{}</a>',
                     self.action_object.get_absolute_url(),
                     "upload",
                 ),
-                time=naturaltime(self.created),
                 message=self.description,
             )
         elif self.type in [
