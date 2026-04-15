@@ -1,7 +1,6 @@
 {% load url %}
 {% load naturaldelta %}
 {% load costs %}
-{% load timedelta %}
 
 <p>
 Based on the following information:
@@ -69,7 +68,7 @@ Based on the following information:
                     Base cost
                 </td>
                 <td><small class="text-dark">This covers a contribution towards platform maintenance, development and support.</small></td>
-                <td class="text-right">{{ object.base_cost_euros|euro }}</td>
+                <td class="text-right">{{ object.base_cost_euros|euro:0 }}</td>
                 <td>1</td>
                 <td>Challenge</td>
                 <td class="text-right font-weight-bold">{{ object.base_cost_euros|euro:0 }}</td>
@@ -122,20 +121,22 @@ Based on the following information:
                     {% for phase in task.costs_for_phases_in_task %}
                         <tr>
                             <td>Compute phase {{ forloop.counter }}</td>
-                            <td>{{ phase.number_of_submissions_per_team }} submission{{ phase.number_of_submissions_per_team|pluralize }}
-                                times {{ phase.number_of_teams }} team{{ phase.number_of_teams|pluralize }}
-                                times {{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }}
-                                times {{ task.inference_time_average_minutes }} minutes average job time per case</td>
+                            <td>{{ task.inference_time_average_minutes }} minutes average job time per case,
+                                {{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }} per submission,
+                                {{ phase.number_of_submissions_per_team }} submission{{ phase.number_of_submissions_per_team|pluralize }} per team,
+                                {{ phase.number_of_teams }} team{{ phase.number_of_teams|pluralize }}</td>
                             <td class="text-right">{{ task.compute_costs_euros_per_hour|euro }}</td>
-                            <td>{{ phase.compute_time|total_hours|floatformat }}</td>
+                            <td>{{ phase.compute_time_hours }}</td>
                             <td>Hours</td>
                             <td class="text-right">{{ phase.compute_costs_euros|euro }}</td>
                         </tr>
                         <tr>
                             <td>Data storage phase {{ forloop.counter }}</td>
-                            <td>{{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }}, average size {{ task.average_size_test_case_mb }} MB, for 5 years</td>
+                            <td>{{ task.average_size_test_case_mb }} MB average size per case,
+                                {{ phase.number_of_test_cases }} case{{ phase.number_of_test_cases|pluralize }},
+                                for {{ num_support_years }} year{{ num_support_years|pluralize }}</td>
                             <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
-                            <td>{{ phase.data_storage_size_gb|floatformat }}</td>
+                            <td>{{ phase.data_storage_size_gb }}</td>
                             <td>GB</td>
                             <td class="text-right">{{ phase.data_storage_costs_euros|euro }}</td>
                         </tr>
@@ -154,13 +155,17 @@ Based on the following information:
 
                     <tr class="table-light">
                         <td>Container storage task {{ task_id }}</td>
-                        <td>{{ task.number_of_docker_images_per_team }} unique submission{{ task.number_of_docker_images_per_team|pluralize }}
-                            times {{ task.number_of_teams }} team{{ task.number_of_teams|pluralize }}
-                            times {{ object.average_algorithm_container_size_in_gb }} GB per container, for 5 years</td>
+                        <td>{{ object.average_algorithm_container_size_in_gb }} GB per submission,
+                            {{ task.number_of_docker_images_per_team }} unique submission{{ task.number_of_docker_images_per_team|pluralize }} per team,
+                            {{ task.number_of_teams }} team{{ task.number_of_teams|pluralize }},
+                            for {{ num_support_years }} year{{ num_support_years|pluralize }}</td>
                         <td class="text-right">{{ object.storage_costs_euros_per_gb|euro }}</td>
-                        <td>{{ task.docker_storage_size_gb|floatformat }}</td>
+                        <td>{{ task.docker_storage_size_gb }}</td>
                         <td>GB</td>
                         <td class="text-right">{{ task.docker_storage_costs_euros|euro }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="6">&nbsp;</td>
                     </tr>
 
                     <tr>
@@ -231,11 +236,11 @@ Based on the following information:
         <tbody>
             <tr>
                 <td>Compute</td>
-                <td class="text-right">{{ object.capacity_reservation_compute_euros|euro:0 }}</td>
+                <td class="text-right">{{ object.capacity_reservation_compute_euros|floatformat:0 }}</td>
             </tr>
             <tr>
                 <td>Storage</td>
-                <td class="text-right">{{ object.capacity_reservation_storage_euros|euro:0 }}</td>
+                <td class="text-right">{{ object.capacity_reservation_storage_euros|floatformat:0 }}</td>
             </tr>
         </tbody>
     </table>

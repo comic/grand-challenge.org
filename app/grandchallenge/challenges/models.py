@@ -1581,9 +1581,13 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
 
     @cached_property
-    def compute_time_for_phases(self):
+    def compute_time_hours_for_phases(self):
         return [
-            n_jobs * datetime.timedelta(minutes=average_minutes)
+            round(
+                n_jobs
+                * datetime.timedelta(minutes=average_minutes).total_seconds()
+                / 3600
+            )
             for n_jobs, average_minutes in zip(
                 self.number_of_algorithm_jobs_for_phases,
                 self.inference_time_average_minutes_for_phases,
@@ -1593,12 +1597,12 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @property
     def total_compute_time(self):
-        return sum(self.compute_time_for_phases, timedelta(0))
+        return timedelta(hours=sum(self.compute_time_hours_for_phases))
 
     @cached_property
     def data_storage_size_gb_for_phases(self):
         return [
-            n_images * image_mb * settings.MEGABYTE / settings.GIGABYTE
+            round(n_images * image_mb * settings.MEGABYTE / settings.GIGABYTE)
             for n_images, image_mb in zip(
                 self.number_of_test_cases_for_phases,
                 self.average_size_test_case_mb_for_phases,
@@ -1638,8 +1642,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @property
     def docker_storage_size_gb_for_tasks(self):
         return [
-            self.average_algorithm_container_size_in_gb
-            * number_of_docker_images
+            round(
+                self.average_algorithm_container_size_in_gb
+                * number_of_docker_images
+            )
             for number_of_docker_images in self.number_of_docker_images_for_tasks
         ]
 
@@ -1664,10 +1670,6 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @property
     def total_data_and_docker_storage_bytes(self):
         return self.total_data_and_docker_storage_gb * settings.GIGABYTE
-
-    @staticmethod
-    def round_to_cents(euros):
-        return math.ceil(euros * 100) / 100
 
     @cached_property
     def compute_costs_euros_per_hour_for_tasks(self):
@@ -1697,9 +1699,10 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             usd_cents_per_hour = max(
                 executor.usd_cents_per_hour for executor in executors
             )
-            costs_for_tasks.append(
-                usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR / 100
+            euros_per_hour = round(
+                usd_cents_per_hour * settings.COMPONENTS_USD_TO_EUR / 100, 2
             )
+            costs_for_tasks.append(euros_per_hour)
         return costs_for_tasks
 
     @cached_property
@@ -1711,7 +1714,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @property
     def storage_costs_euros_per_gb(self):
-        return (
+        return round(
             settings.CHALLENGE_NUM_SUPPORT_YEARS
             * settings.COMPONENTS_S3_USD_MILLICENTS_PER_YEAR_PER_TB_EXCLUDING_TAX
             * (1 + settings.COMPONENTS_TAX_RATE)
@@ -1719,19 +1722,16 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             / 1000
             / 100
             / settings.TERABYTE
-            * settings.GIGABYTE
+            * settings.GIGABYTE,
+            2,
         )
 
     @cached_property
     def compute_costs_euros_for_phases(self):
         return [
-            self.round_to_cents(
-                compute_costs_euros_per_hour
-                * compute_time.total_seconds()
-                / 3600
-            )
-            for compute_time, compute_costs_euros_per_hour in zip(
-                self.compute_time_for_phases,
+            compute_costs_euros_per_hour * compute_time_hours
+            for compute_time_hours, compute_costs_euros_per_hour in zip(
+                self.compute_time_hours_for_phases,
                 self.compute_costs_euros_per_hour_for_phases,
                 strict=True,
             )
@@ -1740,7 +1740,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @cached_property
     def data_storage_costs_euros_for_phases(self):
         return [
-            self.round_to_cents(self.storage_costs_euros_per_gb * size_gb)
+            self.storage_costs_euros_per_gb * size_gb
             for size_gb in self.data_storage_size_gb_for_phases
         ]
 
@@ -1788,7 +1788,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
     @property
     def docker_storage_costs_euros_for_tasks(self):
         return [
-            self.round_to_cents(self.storage_costs_euros_per_gb * size_gb)
+            self.storage_costs_euros_per_gb * size_gb
             for size_gb in self.docker_storage_size_gb_for_tasks
         ]
 
@@ -1922,7 +1922,9 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
                 "number_of_test_cases": self.number_of_test_cases_for_phases[
                     phase_index
                 ],
-                "compute_time": self.compute_time_for_phases[phase_index],
+                "compute_time_hours": self.compute_time_hours_for_phases[
+                    phase_index
+                ],
                 "data_storage_size_gb": self.data_storage_size_gb_for_phases[
                     phase_index
                 ],
