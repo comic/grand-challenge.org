@@ -437,13 +437,12 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         if self._requires_gpu_type == GPUTypeChoices.NO_GPU:
             n_gpu = 0
         else:
-            # For now only use a single gpu
             n_gpu = 1
 
         compatible_instances = [
             instance
             for instance in INSTANCE_OPTIONS
-            if instance.gpus == n_gpu
+            if instance.gpus >= n_gpu
             and instance.gpu_type == self._requires_gpu_type
             and instance.memory >= self._memory_limit
         ]
