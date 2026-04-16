@@ -4,7 +4,10 @@ from django.urls.converters import get_converters
 
 from grandchallenge.core.views import healthcheck
 from grandchallenge.serving.urls import PrefixConverter
-from grandchallenge.serving.views import serve_images
+from grandchallenge.serving.views import (
+    serve_component_interface_value,
+    serve_images,
+)
 from grandchallenge.workstations.views import SessionDetail, session_proxy
 
 handler403 = "grandchallenge.core.views.handler403"
@@ -35,5 +38,17 @@ urlpatterns = [
     path(
         f"media/{settings.IMAGE_FILES_SUBDIRECTORY}/<prefix:pa>/<prefix:pb>/<uuid:pk>/<path:path>",
         serve_images,
+    ),
+    path(
+        (
+            f"media/"
+            f"{settings.COMPONENTS_FILES_SUBDIRECTORY}/"
+            f"componentinterfacevalue/"
+            f"<prefix:pa>/"
+            f"<prefix:pb>/"
+            f"<int:component_interface_value_pk>/"
+            f"<path:path>"
+        ),
+        serve_component_interface_value,
     ),
 ]
