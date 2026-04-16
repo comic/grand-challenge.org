@@ -63,7 +63,7 @@ class Migration(migrations.Migration):
                             ("", "No GPU"),
                             (
                                 "A100",
-                                "NVIDIA A100 Tensor Core GPU (40-80 GiB VRAM)",
+                                "NVIDIA A100 Tensor Core GPU (40 GiB VRAM)",
                             ),
                             (
                                 "A10G",

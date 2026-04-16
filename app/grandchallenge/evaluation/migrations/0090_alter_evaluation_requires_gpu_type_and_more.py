@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ("", "No GPU"),
-                    ("A100", "NVIDIA A100 Tensor Core GPU (40-80 GiB VRAM)"),
+                    ("A100", "NVIDIA A100 Tensor Core GPU (40 GiB VRAM)"),
                     ("A10G", "NVIDIA A10G Tensor Core GPU (24 GiB VRAM)"),
                     ("V100", "NVIDIA V100 Tensor Core GPU (16 GiB VRAM)"),
                     ("K80", "NVIDIA K80 GPU (12 GiB VRAM)"),
@@ -58,7 +58,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 choices=[
                     ("", "No GPU"),
-                    ("A100", "NVIDIA A100 Tensor Core GPU (40-80 GiB VRAM)"),
+                    ("A100", "NVIDIA A100 Tensor Core GPU (40 GiB VRAM)"),
                     ("A10G", "NVIDIA A10G Tensor Core GPU (24 GiB VRAM)"),
                     ("V100", "NVIDIA V100 Tensor Core GPU (16 GiB VRAM)"),
                     ("K80", "NVIDIA K80 GPU (12 GiB VRAM)"),
@@ -83,7 +83,7 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[
                     ("", "No GPU"),
-                    ("A100", "NVIDIA A100 Tensor Core GPU (40-80 GiB VRAM)"),
+                    ("A100", "NVIDIA A100 Tensor Core GPU (40 GiB VRAM)"),
                     ("A10G", "NVIDIA A10G Tensor Core GPU (24 GiB VRAM)"),
                     ("V100", "NVIDIA V100 Tensor Core GPU (16 GiB VRAM)"),
                     ("K80", "NVIDIA K80 GPU (12 GiB VRAM)"),
