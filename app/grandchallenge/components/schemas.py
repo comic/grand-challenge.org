@@ -681,7 +681,7 @@ class GPUTypeChoices(TextChoices):
     # A100 are p4d instances, 40 GiB only as p4de (80 GiB) unavailable in Ireland
     A100 = "A100", _("NVIDIA A100 Tensor Core GPU (40 GiB VRAM)")
     A10G = "A10G", _("NVIDIA A10G Tensor Core GPU (24 GiB VRAM)")
-    # A100 are p3 instances, 16 GiB only as p3dn (32 GiB) unavailable in Ireland
+    # V100 are p3 instances, 16 GiB only as p3dn (32 GiB) unavailable in Ireland
     V100 = "V100", _("NVIDIA V100 Tensor Core GPU (16 GiB VRAM)")
     K80 = "K80", _("NVIDIA K80 GPU (12 GiB VRAM)")
     T4 = "T4", _("NVIDIA T4 Tensor Core GPU (16 GiB VRAM)")
