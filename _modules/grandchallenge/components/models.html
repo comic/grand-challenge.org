@@ -73,7 +73,6 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.text</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_valid_filename</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django.utils.translation</span><span class="w"> </span><span class="kn">import</span> <span class="n">gettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">django_extensions.db.fields</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoSlugField</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">panimg_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MAXIMUM_SEGMENTS_LENGTH</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_core</span><span class="w"> </span><span class="kn">import</span> <span class="n">MISSING</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.cases.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -399,9 +398,9 @@
             <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="s2">&quot;Image segments could not be determined, ensure the voxel values &quot;</span>
                 <span class="s2">&quot;are integers and that it contains no more than &quot;</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">MAXIMUM_SEGMENTS_LENGTH</span><span class="si">}</span><span class="s2"> segments. Ensure the image has the &quot;</span>
-                <span class="s2">&quot;minimum and maximum voxel values set as tags if the image is a TIFF &quot;</span>
-                <span class="s2">&quot;file.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">overlay_segments_allowed_values</span><span class="p">)</span><span class="si">}</span><span class="s2"> segments. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Ensure the image has the minimum and maximum voxel values set &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;as tags if the image is a TIFF file.&quot;</span>
             <span class="p">)</span>
 
         <span class="n">invalid_values</span> <span class="o">=</span> <span class="p">(</span>
