@@ -35,7 +35,6 @@ from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
-from panimg_models import MAXIMUM_SEGMENTS_LENGTH
 from pydantic_core import MISSING
 
 from grandchallenge.cases.models import (
@@ -347,9 +346,9 @@ class OverlaySegmentsMixin(models.Model):
             raise ValidationError(
                 "Image segments could not be determined, ensure the voxel values "
                 "are integers and that it contains no more than "
-                f"{MAXIMUM_SEGMENTS_LENGTH} segments. Ensure the image has the "
-                "minimum and maximum voxel values set as tags if the image is a TIFF "
-                "file."
+                f"{len(self.overlay_segments_allowed_values)} segments. "
+                f"Ensure the image has the minimum and maximum voxel values set "
+                f"as tags if the image is a TIFF file."
             )
 
         invalid_values = (

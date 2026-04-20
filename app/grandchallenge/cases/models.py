@@ -26,7 +26,7 @@ from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
 from grand_challenge_dicom_de_identifier.deidentifier import DicomDeidentifier
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
-from panimg_models import MAXIMUM_SEGMENTS_LENGTH, ColorSpace, ImageType
+from panimg_models import ColorSpace, ImageType
 from pydantic import ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 from pydantic.dataclasses import dataclass
@@ -62,7 +62,7 @@ SEGMENTS_SCHEMA = {
     "items": {
         "$id": "#/items",
         "type": "integer",
-        "maxItems": MAXIMUM_SEGMENTS_LENGTH,
+        "maxItems": 255,
     },
     "uniqueItems": True,
 }
