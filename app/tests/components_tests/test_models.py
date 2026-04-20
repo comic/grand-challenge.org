@@ -8,7 +8,6 @@ import pytest
 from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.files.base import ContentFile
-from panimg_models import MAXIMUM_SEGMENTS_LENGTH
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import Image
@@ -1208,7 +1207,7 @@ def test_validate_voxel_values():
     error_msg = (
         "Image segments could not be determined, ensure the voxel values "
         "are integers and that it contains no more than "
-        f"{MAXIMUM_SEGMENTS_LENGTH} segments. Ensure the image has the "
+        "1 segments. Ensure the image has the "
         "minimum and maximum voxel values set as tags if the image is a TIFF "
         "file."
     )

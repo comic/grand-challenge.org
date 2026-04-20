@@ -9,8 +9,8 @@ from django.db import models
 from django.db.models import PositiveSmallIntegerField
 from django_extensions.db.models import TitleSlugDescriptionModel
 from guardian.shortcuts import assign_perm
-from panimg_models import MAXIMUM_SEGMENTS_LENGTH
 
+from grandchallenge.cases.models import SEGMENTS_SCHEMA
 from grandchallenge.core.fields import HexColorField
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
@@ -41,7 +41,7 @@ OVERLAY_SEGMENTS_SCHEMA = {
         ],
         "required": ["voxel_value", "name", "visible"],
         "additionalProperties": False,
-        "maxItems": MAXIMUM_SEGMENTS_LENGTH,
+        "maxItems": SEGMENTS_SCHEMA["items"]["maxItems"],
         "properties": {
             "voxel_value": {
                 "$id": "#/items/properties/voxel_value",
