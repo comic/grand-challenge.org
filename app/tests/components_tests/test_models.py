@@ -1204,17 +1204,16 @@ def test_validate_voxel_values():
     ci.overlay_segments = [{"name": "s1", "visible": True, "voxel_value": 1}]
     ci.save()
 
-    error_msg = (
+    im = ImageFactory(segments=None)
+    with pytest.raises(ValidationError) as e:
+        ci._validate_voxel_values(im)
+    assert e.value.message == (
         "Image segments could not be determined, ensure the voxel values "
         "are integers and that it contains no more than "
         "2 segments. Ensure the image has the "
         "minimum and maximum voxel values set as tags if the image is a TIFF "
         "file."
     )
-    im = ImageFactory(segments=None)
-    with pytest.raises(ValidationError) as e:
-        ci._validate_voxel_values(im)
-    assert e.value.message == error_msg
 
     im = ImageFactory(segments=[0, 1, 2])
     with pytest.raises(ValidationError) as e:
@@ -1239,7 +1238,14 @@ def test_validate_voxel_values():
     ]
     with pytest.raises(ValidationError) as e:
         ci._validate_voxel_values(im)
-    assert e.value.message == error_msg
+    assert e.value.message == (
+        "Image segments could not be determined, ensure the voxel values "
+        "are integers and that it contains no more than "
+        "3 segments. Ensure the image has the "
+        "minimum and maximum voxel values set as tags if the image is a TIFF "
+        "file."
+    )
+
     im = ImageFactoryWithImageFileTiff(segments=[1, 2, 3])
     ci.overlay_segments = [
         {"name": "s1", "visible": True, "voxel_value": 1},
@@ -1251,6 +1257,7 @@ def test_validate_voxel_values():
         "The valid voxel values for this segmentation are: {0, 1, 3}. "
         "This segmentation is invalid as it contains the voxel values: {2}."
     )
+
     ci.overlay_segments = [
         {"name": "s1", "visible": True, "voxel_value": 1},
         {"name": "s2", "visible": True, "voxel_value": 2},
