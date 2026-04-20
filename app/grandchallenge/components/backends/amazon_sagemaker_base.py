@@ -709,9 +709,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             ):
                 raise RetryTask("Retrying due to internal server error")
             else:
-                raise ComponentException(
-                    "Algorithm container image would not start"
-                )
+                raise ComponentException("Container image would not start")
         elif failure_reason in (
             "ClientError: Please use an instance type with more memory, "
             "or reduce the size of job data processed on an instance.",
