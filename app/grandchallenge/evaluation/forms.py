@@ -293,12 +293,9 @@ class SubmissionForm(
         widget=UserUploadSingleWidget(
             allowed_file_types=[
                 "application/zip",
-                "application/x-zip-compressed",
                 "application/csv",
-                "application/vnd.ms-excel",
                 "text/csv",
                 "text/plain",
-                "application/json",
             ]
         ),
         label="Predictions File",
