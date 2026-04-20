@@ -19,7 +19,7 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
     message = format_html(
         "User {user} has just submitted the challenge request "
         "{request_title}. To review the challenge, "
-        "go [here]({detail_url}).",
+        "go here: {detail_url}.",
         user=challengerequest.creator,
         request_title=challengerequest.title,
         detail_url=detail_url,
@@ -34,6 +34,10 @@ def send_challenge_requested_email_to_reviewers(challengerequest):
         markdown_message=message,
         recipients=reviewers,
         subscription_type=EmailSubscriptionTypes.SYSTEM,
+    )
+    mail_managers(
+        subject="New Challenge Requested",
+        message=message,
     )
 
 

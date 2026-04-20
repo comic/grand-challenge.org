@@ -11,6 +11,8 @@ from tests.utils import get_view_for_user
 @pytest.mark.django_db
 def test_challenge_request_submitted_sent_email(settings):
     reviewer = UserFactory()
+    staff_user = UserFactory(is_staff=True)
+    settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
 
     Group.objects.get(
         name=settings.CHALLENGES_REVIEWERS_GROUP_NAME
@@ -22,7 +24,7 @@ def test_challenge_request_submitted_sent_email(settings):
     )  # Submit it
     request.save()
 
-    assert len(mail.outbox) == 2, [m.subject for m in mail.outbox]
+    assert len(mail.outbox) == 3, [m.subject for m in mail.outbox]
 
     reviewer_mail = [
         email
@@ -31,6 +33,14 @@ def test_challenge_request_submitted_sent_email(settings):
     ]
     assert len(reviewer_mail) == 1
     assert reviewer_mail[0].subject == "[testserver] New Challenge Requested"
+
+    manager_mail = [
+        email
+        for email in mail.outbox
+        if email.recipients() == [staff_user.email]
+    ]
+    assert len(manager_mail) == 1
+    assert manager_mail[0].subject == "[Django] New Challenge Requested"
 
     creator_mail = [
         email
