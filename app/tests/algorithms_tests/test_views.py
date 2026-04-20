@@ -1430,7 +1430,7 @@ class TestJobCreateView:
             "One or more of the inputs failed validation." == job.error_message
         )
         assert (
-            "Image segments could not be determined, ensure the voxel values are integers and that it contains no more than 64 segments"
+            "Image segments could not be determined, ensure the voxel values are integers and that it contains no more than 2 segments"
             in str(job.detailed_error_message)
         )
         # and no CIVs should have been created

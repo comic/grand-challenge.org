@@ -598,7 +598,7 @@ class TestJobCreationThroughAPI:
         # no job is created, because validation of existing images happens on the serializer
         assert Job.objects.count() == 0
         assert (
-            "Image segments could not be determined, ensure the voxel values are integers and that it contains no more than 64 segments"
+            "Image segments could not be determined, ensure the voxel values are integers and that it contains no more than 2 segments"
             in str(response.content)
         )
         # and no CIVs should have been created

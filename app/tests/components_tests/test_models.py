@@ -1207,7 +1207,7 @@ def test_validate_voxel_values():
     error_msg = (
         "Image segments could not be determined, ensure the voxel values "
         "are integers and that it contains no more than "
-        "1 segments. Ensure the image has the "
+        "2 segments. Ensure the image has the "
         "minimum and maximum voxel values set as tags if the image is a TIFF "
         "file."
     )
