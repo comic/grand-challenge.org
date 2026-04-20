@@ -879,10 +879,10 @@ INTERFACE_KIND_JSON_EXAMPLES = {
                 [130.8, 73.1, 0.5],
             ],
             "probability": 0.95,
-            "time": 0,
+            "time_index": 0,
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.MULTIPLE_TWO_D_BOUNDING_BOXES: ComponentInterfaceExampleValue(
         value={
@@ -908,12 +908,12 @@ INTERFACE_KIND_JSON_EXAMPLES = {
                         [92.6, 95.5, 0.5],
                     ],
                     "probability": 0.92,
-                    "time": 0,
+                    "time_index": 0,
                 },
             ],
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.DISTANCE_MEASUREMENT: ComponentInterfaceExampleValue(
         value={
@@ -922,10 +922,10 @@ INTERFACE_KIND_JSON_EXAMPLES = {
             "start": [59.8, 78.8, 0.5],
             "end": [69.4, 143.8, 0.5],
             "probability": 0.92,
-            "time": 0,
+            "time_index": 0,
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.MULTIPLE_DISTANCE_MEASUREMENTS: ComponentInterfaceExampleValue(
         value={
@@ -937,19 +937,19 @@ INTERFACE_KIND_JSON_EXAMPLES = {
                     "start": [49.7, 103.3, 0.5],
                     "end": [55.1, 139.3, 0.5],
                     "probability": 0.92,
-                    "time": 0,
+                    "time_index": 0,
                 },
                 {
                     "name": "Distance 2",
                     "start": [49.7, 103.3, 0.5],
                     "end": [55.1, 139.3, 0.5],
                     "probability": 0.92,
-                    "time": 1,
+                    "time_index": 1,
                 },
             ],
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.POINT: ComponentInterfaceExampleValue(
         value={
@@ -957,10 +957,10 @@ INTERFACE_KIND_JSON_EXAMPLES = {
             "type": "Point",
             "point": [152.1, 111.0, 0.5],
             "probability": 0.92,
-            "time": 0,
+            "time_index": 0,
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.MULTIPLE_POINTS: ComponentInterfaceExampleValue(
         value={
@@ -971,18 +971,18 @@ INTERFACE_KIND_JSON_EXAMPLES = {
                     "name": "Point 1",
                     "point": [96.0, 79.8, 0.5],
                     "probability": 0.92,
-                    "time": 0,
+                    "time_index": 0,
                 },
                 {
                     "name": "Point 2",
                     "point": [130.1, 115.5, 0.5],
                     "probability": 0.92,
-                    "time": 3,
+                    "time_index": 3,
                 },
             ],
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.POLYGON: ComponentInterfaceExampleValue(
         value={
@@ -997,10 +997,10 @@ INTERFACE_KIND_JSON_EXAMPLES = {
             "sub_type": "brush",
             "groups": [],
             "probability": 0.92,
-            "time": 0,
+            "time_index": 0,
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.MULTIPLE_POLYGONS: ComponentInterfaceExampleValue(
         value={
@@ -1031,12 +1031,12 @@ INTERFACE_KIND_JSON_EXAMPLES = {
                     "sub_type": "brush",
                     "groups": [],
                     "probability": 0.92,
-                    "time": 0,
+                    "time_index": 0,
                 },
             ],
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.LINE: ComponentInterfaceExampleValue(
         value={
@@ -1048,10 +1048,10 @@ INTERFACE_KIND_JSON_EXAMPLES = {
                 [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
             ],
             "probability": 0.92,
-            "time": 0,
+            "time_index": 0,
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.MULTIPLE_LINES: ComponentInterfaceExampleValue(
         value={
@@ -1075,12 +1075,12 @@ INTERFACE_KIND_JSON_EXAMPLES = {
                         [[5, 6, 7], [8, 9, 10], [1, 0, 10], [2, 4, 2]],
                     ],
                     "probability": 0.92,
-                    "time": 0,
+                    "time_index": 0,
                 },
             ],
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.ANGLE: ComponentInterfaceExampleValue(
         value={
@@ -1091,10 +1091,10 @@ INTERFACE_KIND_JSON_EXAMPLES = {
                 [[180, 25, 0.5], [190, 15, 0.5]],
             ],
             "probability": 0.92,
-            "time": 0,
+            "time_index": 0,
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.MULTIPLE_ANGLES: ComponentInterfaceExampleValue(
         value={
@@ -1108,7 +1108,7 @@ INTERFACE_KIND_JSON_EXAMPLES = {
                         [[70, 25, 0.5], [85, 65, 0.5]],
                     ],
                     "probability": 0.82,
-                    "time": 0,
+                    "time_index": 0,
                 },
                 {
                     "name": "Second angle",
@@ -1117,7 +1117,7 @@ INTERFACE_KIND_JSON_EXAMPLES = {
                         [[140, 40, 0.5], [180, 75, 0.5]],
                     ],
                     "probability": 0.52,
-                    "time": 1,
+                    "time_index": 1,
                 },
                 {
                     "name": "Third angle",
@@ -1126,12 +1126,12 @@ INTERFACE_KIND_JSON_EXAMPLES = {
                         [[180, 200, 0.5], [210, 200, 0.5]],
                     ],
                     "probability": 0.98,
-                    "time": 4,
+                    "time_index": 4,
                 },
             ],
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.ELLIPSE: ComponentInterfaceExampleValue(
         value={
@@ -1140,10 +1140,10 @@ INTERFACE_KIND_JSON_EXAMPLES = {
             "major_axis": [[-10, 606, 0.5], [39, 559, 0.5]],
             "minor_axis": [[2, 570, 0.5], [26, 595, 0.5]],
             "probability": 0.92,
-            "time": 0,
+            "time_index": 0,
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.MULTIPLE_ELLIPSES: ComponentInterfaceExampleValue(
         value={
@@ -1154,18 +1154,18 @@ INTERFACE_KIND_JSON_EXAMPLES = {
                     "major_axis": [[-44, 535, 0.5], [-112, 494, 0.5]],
                     "minor_axis": [[-88, 532, 0.5], [-68, 497, 0.5]],
                     "probability": 0.69,
-                    "time": 2,
+                    "time_index": 2,
                 },
                 {
                     "major_axis": [[-17, 459, 0.5], [-94, 436, 0.5]],
                     "minor_axis": [[-61, 467, 0.5], [-50, 428, 0.5]],
                     "probability": 0.92,
-                    "time": 0,
+                    "time_index": 0,
                 },
             ],
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.THREE_POINT_ANGLE: ComponentInterfaceExampleValue(
         value={
@@ -1173,10 +1173,10 @@ INTERFACE_KIND_JSON_EXAMPLES = {
             "type": "Three-point angle",
             "angle": [[177, 493, 0.5], [22, 489, 0.5], [112, 353, 0.5]],
             "probability": 0.003,
-            "time": 0,
+            "time_index": 0,
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.MULTIPLE_THREE_POINT_ANGLES: ComponentInterfaceExampleValue(
         value={
@@ -1191,7 +1191,7 @@ INTERFACE_KIND_JSON_EXAMPLES = {
                         [334, 281, 0.5],
                     ],
                     "probability": 0.92,
-                    "time": 0,
+                    "time_index": 0,
                 },
                 {
                     "name": "second",
@@ -1205,7 +1205,7 @@ INTERFACE_KIND_JSON_EXAMPLES = {
             ],
             "version": {"major": 1, "minor": 0},
         },
-        extra_info='Optional fields: "name", "probability", and "time"',
+        extra_info='Optional fields: "name", "probability", and "time_index"',
     ),
     InterfaceKindChoices.AFFINE_TRANSFORM_REGISTRATION: ComponentInterfaceExampleValue(
         value={

@@ -46,6 +46,8 @@ from tests.algorithms_tests.factories import (
         (1536, GPUTypeChoices.NO_GPU, "ml.r7i.48xlarge"),
         (10, GPUTypeChoices.V100, "ml.p3.2xlarge"),
         (30, GPUTypeChoices.V100, "ml.p3.2xlarge"),
+        (10, GPUTypeChoices.A100, "ml.p4d.24xlarge"),
+        (100, GPUTypeChoices.V100, "ml.p3.8xlarge"),
     ),
 )
 def test_instance_type(memory_limit, expected_type, requires_gpu_type):
@@ -66,12 +68,8 @@ def test_instance_type(memory_limit, expected_type, requires_gpu_type):
 @pytest.mark.parametrize(
     "memory_limit,requires_gpu_type",
     (
-        (13370, ""),  # Total memory unavailable
-        (10, GPUTypeChoices.A100),  # GPU type not supported
-        (
-            100,
-            GPUTypeChoices.V100,
-        ),  # Amount of memory only available with multi GPU
+        (13370, GPUTypeChoices.NO_GPU),
+        (13370, GPUTypeChoices.T4),
     ),
 )
 def test_instance_type_incompatible(memory_limit, requires_gpu_type):

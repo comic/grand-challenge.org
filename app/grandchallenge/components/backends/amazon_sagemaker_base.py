@@ -437,13 +437,12 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         if self._requires_gpu_type == GPUTypeChoices.NO_GPU:
             n_gpu = 0
         else:
-            # For now only use a single gpu
             n_gpu = 1
 
         compatible_instances = [
             instance
             for instance in INSTANCE_OPTIONS
-            if instance.gpus == n_gpu
+            if instance.gpus >= n_gpu
             and instance.gpu_type == self._requires_gpu_type
             and instance.memory >= self._memory_limit
         ]
@@ -710,9 +709,7 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
             ):
                 raise RetryTask("Retrying due to internal server error")
             else:
-                raise ComponentException(
-                    "Algorithm container image would not start"
-                )
+                raise ComponentException("Container image would not start")
         elif failure_reason in (
             "ClientError: Please use an instance type with more memory, "
             "or reduce the size of job data processed on an instance.",
