@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                             "$schema": "http://json-schema.org/draft-07/schema",
                             "items": {
                                 "maximum": 10000,
-                                "minimum": 1,
+                                "minimum": 0,
                                 "type": "integer",
                             },
                             "type": "array",

@@ -71,8 +71,8 @@ def test_assign_change_perm_to_creators():
     "task_ids, expected",
     [
         ([], []),
-        ([1], [1]),
-        ([1, 2], [1, 1]),
+        ([1], [0]),
+        ([1, 2, 3], [0, 0, 0]),
     ],
 )
 def test_set_average_size_job_output_mb_for_tasks(task_ids, expected):

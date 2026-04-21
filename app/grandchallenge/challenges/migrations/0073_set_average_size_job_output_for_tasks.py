@@ -8,7 +8,7 @@ def set_average_size_job_output_mb_for_tasks(apps, schema_editor):
 
     for challenge_request in ChallengeRequest.objects.all():
         challenge_request.average_size_job_output_mb_for_tasks = [
-            1 for _ in challenge_request.task_ids
+            0 for _ in challenge_request.task_ids
         ]
         challenge_request.save()
 
