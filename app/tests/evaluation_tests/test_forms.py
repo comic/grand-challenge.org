@@ -1251,6 +1251,7 @@ def test_configure_algorithm_phases_form_challenge_request_multiple_tasks():
         algorithm_maximum_settable_memory_gb=32,
         algorithm_selectable_gpu_type_choices=["", "T4"],
         average_size_test_case_mb_for_tasks=[592, 323],
+        average_size_job_output_mb_for_tasks=[1, 1],
         inference_time_average_minutes_for_tasks=[33, 12],
         task_id_for_phases=[1, 1, 2, 2],
         number_of_submissions_per_team_for_phases=[7, 1, 7, 1],
