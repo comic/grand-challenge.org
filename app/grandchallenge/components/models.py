@@ -72,9 +72,9 @@ from grandchallenge.core.error_handlers import (
     FallbackCIVValidationErrorHandler,
     JobCIVErrorHandler,
     RawImageUploadSessionErrorHandler,
-    SystemErrorMessages,
     UserUploadCIVErrorHandler,
 )
+from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     private_s3_storage,
