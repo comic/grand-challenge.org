@@ -607,7 +607,7 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
     assert (
         di_upload.error_message
-        == f"Image validation for socket {ci.title} failed with error: {SystemErrorMessages.UNEXPECTED_ERROR}"
+        == f"Image validation for socket {ci.title} failed with error: {SystemErrorMessages.UNEXPECTED_ERROR.label}"
     )
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     assert obj.status == obj.CANCELLED
