@@ -2,23 +2,12 @@ import copy
 import logging
 from abc import ABC, abstractmethod
 
-from django.db import models
-
 from grandchallenge.notifications.models import (
     Notification,
     NotificationTypeChoices,
 )
 
 logger = logging.getLogger(__name__)
-
-
-class SystemErrorMessages(models.TextChoices):
-    UNEXPECTED_ERROR = "UNEXP", "An unexpected error occurred"
-    TIME_LIMIT_EXCEEDED = "TME", "Time limit exceeded"
-    MEMORY_LIMIT_EXCEEDED = (
-        "MLE",
-        "The container was killed as it exceeded its memory limit",
-    )
 
 
 class ErrorHandler(ABC):

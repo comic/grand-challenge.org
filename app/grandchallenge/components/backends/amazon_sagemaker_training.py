@@ -11,7 +11,7 @@ from grandchallenge.components.backends.exceptions import (
     ComponentException,
     TaskCancelled,
 )
-from grandchallenge.core.error_handlers import SystemErrorMessages
+from grandchallenge.core.error_messages import SystemErrorMessages
 
 
 class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
@@ -141,9 +141,7 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
 
         # See https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_DescribeTrainingJob.html#sagemaker-DescribeTrainingJob-response-SecondaryStatus
         if secondary_status == "MaxRuntimeExceeded":
-            raise ComponentException(
-                SystemErrorMessages.TIME_LIMIT_EXCEEDED.label
-            )
+            raise ComponentException(SystemErrorMessages.TIME_LIMIT_EXCEEDED)
         elif secondary_status == "Stopped":
             raise TaskCancelled
         else:

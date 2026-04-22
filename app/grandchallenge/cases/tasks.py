@@ -42,7 +42,7 @@ from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
-from grandchallenge.core.error_handlers import SystemErrorMessages
+from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.uploads.models import UserUpload
@@ -199,9 +199,7 @@ def build_images(  # noqa:C901
                 ),
             )
         else:
-            _handle_error(
-                error_message=SystemErrorMessages.UNEXPECTED_ERROR.label
-            )
+            _handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
             logger.error(error, exc_info=True)
         return
     except DuplicateFilesException:
@@ -212,12 +210,10 @@ def build_images(  # noqa:C901
         )
         return
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
-        _handle_error(
-            error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED.label
-        )
+        _handle_error(error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED)
         return
     except Exception as error:
-        _handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR.label)
+        _handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
         logger.error(error, exc_info=True)
         return
 
@@ -546,9 +542,7 @@ def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk):
         upload.handle_error(error_message=error.justification)
     except Exception as error:
         logger.error(error, exc_info=True)
-        upload.handle_error(
-            error_message=SystemErrorMessages.UNEXPECTED_ERROR.label
-        )
+        upload.handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
     else:
         upload.status = DICOMImageSetUploadStatusChoices.STARTED
         upload.save()
@@ -636,13 +630,11 @@ def handle_health_imaging_import_job_event(*, event):
         else:
             logger.error(error, exc_info=True)
             upload.handle_error(
-                error_message=SystemErrorMessages.UNEXPECTED_ERROR.label
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR
             )
     except Exception as error:
         logger.error(error, exc_info=True)
-        upload.handle_error(
-            error_message=SystemErrorMessages.UNEXPECTED_ERROR.label
-        )
+        upload.handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
 
 
 @acks_late_micro_short_task(retry_on=(RetryStep,))

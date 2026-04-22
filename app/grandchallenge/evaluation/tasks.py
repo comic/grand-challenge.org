@@ -21,7 +21,7 @@ from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
-from grandchallenge.core.error_handlers import SystemErrorMessages
+from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.core.validators import get_file_mimetype
@@ -197,7 +197,7 @@ def prepare_and_execute_evaluation(*, evaluation_pk):
     else:
         evaluation.update_status(
             status=Evaluation.FAILURE,
-            error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
         logger.error("No algorithm or predictions file found")
 

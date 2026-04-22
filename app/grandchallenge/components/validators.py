@@ -7,7 +7,7 @@ from django.utils._os import safe_join
 
 from grandchallenge.components import VALIDATION_SCRIPT_DIR
 from grandchallenge.components.utils.virtualenvs import run_script_in_venv
-from grandchallenge.core.error_handlers import SystemErrorMessages
+from grandchallenge.core.error_messages import SystemErrorMessages
 
 
 def validate_safe_path(value):

@@ -22,7 +22,7 @@ from grandchallenge.components.backends.exceptions import (
 )
 from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.components.schemas import GPUTypeChoices
-from grandchallenge.core.error_handlers import SystemErrorMessages
+from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.evaluation.models import Evaluation, Method
 from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
@@ -769,7 +769,7 @@ def test_handle_time_limit_exceeded(settings):
             }
         )
 
-    assert SystemErrorMessages.TIME_LIMIT_EXCEEDED.label in str(error)
+    assert SystemErrorMessages.TIME_LIMIT_EXCEEDED in str(error)
 
 
 def test_handle_stopped_event(settings):

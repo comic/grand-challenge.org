@@ -2831,7 +2831,7 @@ class CIVForObjectMixin:
             error_handler = self.get_error_handler()
             error_handler.handle_error(
                 interface=interface,
-                error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
                 user=user,
             )
             raise e

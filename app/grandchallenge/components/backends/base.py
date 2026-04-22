@@ -51,7 +51,7 @@ from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.serializers import (
     ComponentInterfaceValueSerializer,
 )
-from grandchallenge.core.error_handlers import SystemErrorMessages
+from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.utils.error_messages import (
     format_validation_error_message,
 )
@@ -875,9 +875,7 @@ class Executor(ABC):
             # Job's a good un
             return
         elif users_process_exit_code == 137:
-            raise ComponentException(
-                SystemErrorMessages.MEMORY_LIMIT_EXCEEDED.label
-            )
+            raise ComponentException(SystemErrorMessages.MEMORY_LIMIT_EXCEEDED)
         else:
             raise ComponentException(user_error(self.stderr))
 

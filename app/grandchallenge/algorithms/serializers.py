@@ -33,7 +33,7 @@ from grandchallenge.components.serializers import (
     HyperlinkedComponentInterfaceValueSerializer,
     convert_deserialized_civ_data,
 )
-from grandchallenge.core.error_handlers import SystemErrorMessages
+from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.hanging_protocols.serializers import (
@@ -298,7 +298,7 @@ class JobPostSerializer(JobSerializer):
             else:
                 error_handler = job.get_error_handler()
                 error_handler.handle_error(
-                    error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
+                    error_message=SystemErrorMessages.UNEXPECTED_ERROR,
                 )
                 logger.error(e, exc_info=True)
 

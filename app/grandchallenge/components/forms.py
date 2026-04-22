@@ -49,7 +49,7 @@ from grandchallenge.components.widgets import (
     SearchSelect,
     SourceSelect,
 )
-from grandchallenge.core.error_handlers import SystemErrorMessages
+from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.forms import SaveFormInitMixin, UserMixin
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.core.templatetags.bleach import clean
@@ -545,7 +545,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
         except CIVNotEditableException as e:
             error_handler = self.instance.get_error_handler()
             error_handler.handle_error(
-                error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
                 user=self.user,
             )
             logger.error(e, exc_info=True)

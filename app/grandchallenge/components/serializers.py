@@ -19,7 +19,7 @@ from grandchallenge.components.models import (
     ComponentInterfaceValue,
 )
 from grandchallenge.components.templatetags.civ import sort_civs
-from grandchallenge.core.error_handlers import SystemErrorMessages
+from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.guardian import filter_by_permission
 from grandchallenge.uploads.models import UserUpload
 from grandchallenge.workstation_configs.serializers import (
@@ -384,7 +384,7 @@ class CIVSetPostSerializerMixin:
         except CIVNotEditableException as e:
             error_handler = instance.get_error_handler()
             error_handler.handle_error(
-                error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
                 user=request.user,
             )
             logger.error(e, exc_info=True)
