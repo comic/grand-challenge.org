@@ -672,7 +672,7 @@ class JobCreate(
             else:
                 error_handler = self.object.get_error_handler()
                 error_handler.handle_error(
-                    error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+                    error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
                 )
                 logger.error(e, exc_info=True)
 

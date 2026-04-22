@@ -1538,7 +1538,7 @@ def test_start_endpoint_failure(mocker, method_with_error):
     endpoint.refresh_from_db()
 
     assert endpoint.status == endpoint.StatusChoices.FAILED
-    assert endpoint.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+    assert endpoint.error_message == SystemErrorMessages.UNEXPECTED_ERROR.label
     mock_deprovision_method.assert_called_once()
 
 

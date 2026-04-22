@@ -769,7 +769,7 @@ def test_handle_time_limit_exceeded(settings):
             }
         )
 
-    assert SystemErrorMessages.TIME_LIMIT_EXCEEDED in str(error)
+    assert SystemErrorMessages.TIME_LIMIT_EXCEEDED.label in str(error)
 
 
 def test_handle_stopped_event(settings):

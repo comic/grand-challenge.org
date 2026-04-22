@@ -384,7 +384,7 @@ class CIVSetPostSerializerMixin:
         except CIVNotEditableException as e:
             error_handler = instance.get_error_handler()
             error_handler.handle_error(
-                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
                 user=request.user,
             )
             logger.error(e, exc_info=True)

@@ -812,7 +812,7 @@ def provision_job(
     except Exception:
         job.update_status(
             status=job.FAILURE,
-            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
         )
         logger.error("Could not provision job", exc_info=True)
     else:
@@ -874,14 +874,14 @@ def execute_job(
             status=job.FAILURE,
             stdout=executor.stdout,
             stderr=executor.stderr,
-            error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED,
+            error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED.label,
         )
     except Exception:
         job.update_status(
             status=job.FAILURE,
             stdout=executor.stdout,
             stderr=executor.stderr,
-            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
         )
         raise
 
@@ -972,7 +972,7 @@ def handle_event(*, event: dict, backend: str):
     except Exception as error:
         job.update_status(
             status=job.FAILURE,
-            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
             **get_update_status_kwargs(executor=executor),
         )
         logger.error(str(error), exc_info=True)
@@ -1017,7 +1017,7 @@ def parse_job_outputs(
     except Exception:
         job.update_status(
             status=job.FAILURE,
-            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
         )
         logger.error("Could not parse outputs", exc_info=True)
     else:
@@ -1465,7 +1465,7 @@ def add_image_to_object(  # noqa: C901
         except Exception as e:
             error_handler.handle_error(
                 interface=interface,
-                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
                 user=upload.creator,
             )
             logger.error(e, exc_info=True)
@@ -1481,7 +1481,7 @@ def add_image_to_object(  # noqa: C901
         else:
             error_handler.handle_error(
                 interface=interface,
-                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
                 user=upload.creator,
             )
             logger.error(e, exc_info=True)
@@ -1552,7 +1552,7 @@ def add_file_to_object(
     except Exception as e:
         error_handler.handle_error(
             interface=interface,
-            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
             user=user_upload.creator,
         )
         logger.error(e, exc_info=True)
@@ -1568,7 +1568,7 @@ def add_file_to_object(
         else:
             error_handler.handle_error(
                 interface=interface,
-                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
                 user=user_upload.creator,
             )
             logger.error(e, exc_info=True)
@@ -1680,7 +1680,7 @@ def start_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
         orchestrator.deprovision()
         endpoint.update_status(
             status=endpoint.StatusChoices.FAILED,
-            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
         )
 
     else:

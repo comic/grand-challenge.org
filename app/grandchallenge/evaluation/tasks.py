@@ -197,7 +197,7 @@ def prepare_and_execute_evaluation(*, evaluation_pk):
     else:
         evaluation.update_status(
             status=Evaluation.FAILURE,
-            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
         )
         logger.error("No algorithm or predictions file found")
 

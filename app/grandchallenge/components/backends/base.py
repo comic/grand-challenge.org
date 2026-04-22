@@ -875,7 +875,9 @@ class Executor(ABC):
             # Job's a good un
             return
         elif users_process_exit_code == 137:
-            raise ComponentException(SystemErrorMessages.MEMORY_LIMIT_EXCEEDED)
+            raise ComponentException(
+                SystemErrorMessages.MEMORY_LIMIT_EXCEEDED.label
+            )
         else:
             raise ComponentException(user_error(self.stderr))
 

@@ -545,7 +545,7 @@ class MultipleCIVForm(InterfaceFormFieldsMixin, Form):
         except CIVNotEditableException as e:
             error_handler = self.instance.get_error_handler()
             error_handler.handle_error(
-                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR.label,
                 user=self.user,
             )
             logger.error(e, exc_info=True)

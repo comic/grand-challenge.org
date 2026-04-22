@@ -13,10 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 class SystemErrorMessages(models.TextChoices):
-    UNEXPECTED_ERROR = "An unexpected error occurred"
-    TIME_LIMIT_EXCEEDED = "Time limit exceeded"
+    UNEXPECTED_ERROR = "UNEXP", "An unexpected error occurred"
+    TIME_LIMIT_EXCEEDED = "TME", "Time limit exceeded"
     MEMORY_LIMIT_EXCEEDED = (
-        "The container was killed as it exceeded its memory limit"
+        "MLE",
+        "The container was killed as it exceeded its memory limit",
     )
 
 

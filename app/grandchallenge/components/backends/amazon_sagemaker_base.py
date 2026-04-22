@@ -728,12 +728,16 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                 # Requires investigation
                 logger.error(f"SageMaker OOM {users_process_exit_code=}")
 
-            raise ComponentException(SystemErrorMessages.MEMORY_LIMIT_EXCEEDED)
+            raise ComponentException(
+                SystemErrorMessages.MEMORY_LIMIT_EXCEEDED.label
+            )
         else:
             # Requires investigation
             logger.error(f"SageMaker Job failed: {failure_reason}")
 
-            raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
+            raise ComponentException(
+                SystemErrorMessages.UNEXPECTED_ERROR.label
+            )
 
     def _stop_running_jobs(self):
         try:

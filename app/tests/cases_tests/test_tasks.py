@@ -287,7 +287,9 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
     di_upload.refresh_from_db()
     # upload gets marked as failed
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
-    assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+    assert (
+        di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR.label
+    )
     mocked_delete_input_files.assert_called_once()
 
 
@@ -327,7 +329,9 @@ def test_error_in_start_dicom_import_job(
 
     di_upload.refresh_from_db()
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
-    assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+    assert (
+        di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR.label
+    )
     mock_delete_input_files.assert_called_once()
 
 
@@ -468,7 +472,9 @@ def test_handle_health_imaging_import_job_event_failed_status(
 
     mock_delete_input_files.assert_called_once()
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
-    assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+    assert (
+        di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR.label
+    )
 
 
 @pytest.mark.django_db
@@ -502,7 +508,9 @@ def test_handle_health_imaging_import_job_event_invalid_status(
 
     mock_delete_input_files.assert_called_once()
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
-    assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+    assert (
+        di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR.label
+    )
 
 
 @pytest.mark.django_db
@@ -546,7 +554,9 @@ def test_handle_health_imaging_import_job_event_invalid_import(
 
     mock_delete_input_files.assert_called_once()
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
-    assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+    assert (
+        di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR.label
+    )
 
 
 @acks_late_micro_short_task
@@ -602,7 +612,7 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     assert obj.status == obj.CANCELLED
     assert obj.error_message == "One or more of the inputs failed validation."
-    assert SystemErrorMessages.UNEXPECTED_ERROR in str(
+    assert SystemErrorMessages.UNEXPECTED_ERROR.label in str(
         obj.detailed_error_message
     )
     assert "some_async_task" not in str(callbacks)

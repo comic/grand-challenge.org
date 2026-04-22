@@ -251,7 +251,9 @@ def test_soft_time_limit(settings, django_capture_on_commit_callbacks, mocker):
 
     session.refresh_from_db()
     assert session.status == session.FAILURE
-    assert session.error_message == SystemErrorMessages.TIME_LIMIT_EXCEEDED
+    assert (
+        session.error_message == SystemErrorMessages.TIME_LIMIT_EXCEEDED.label
+    )
 
 
 @pytest.mark.django_db

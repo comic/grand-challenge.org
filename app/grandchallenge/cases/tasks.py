@@ -199,7 +199,9 @@ def build_images(  # noqa:C901
                 ),
             )
         else:
-            _handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
+            _handle_error(
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR.label
+            )
             logger.error(error, exc_info=True)
         return
     except DuplicateFilesException:
@@ -210,10 +212,12 @@ def build_images(  # noqa:C901
         )
         return
     except (SoftTimeLimitExceeded, TimeLimitExceeded):
-        _handle_error(error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED)
+        _handle_error(
+            error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED.label
+        )
         return
     except Exception as error:
-        _handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
+        _handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR.label)
         logger.error(error, exc_info=True)
         return
 
@@ -542,7 +546,9 @@ def import_dicom_to_health_imaging(*, dicom_imageset_upload_pk):
         upload.handle_error(error_message=error.justification)
     except Exception as error:
         logger.error(error, exc_info=True)
-        upload.handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
+        upload.handle_error(
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR.label
+        )
     else:
         upload.status = DICOMImageSetUploadStatusChoices.STARTED
         upload.save()
@@ -630,11 +636,13 @@ def handle_health_imaging_import_job_event(*, event):
         else:
             logger.error(error, exc_info=True)
             upload.handle_error(
-                error_message=SystemErrorMessages.UNEXPECTED_ERROR
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR.label
             )
     except Exception as error:
         logger.error(error, exc_info=True)
-        upload.handle_error(error_message=SystemErrorMessages.UNEXPECTED_ERROR)
+        upload.handle_error(
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR.label
+        )
 
 
 @acks_late_micro_short_task(retry_on=(RetryStep,))

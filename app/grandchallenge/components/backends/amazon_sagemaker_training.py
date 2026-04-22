@@ -141,7 +141,9 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
 
         # See https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_DescribeTrainingJob.html#sagemaker-DescribeTrainingJob-response-SecondaryStatus
         if secondary_status == "MaxRuntimeExceeded":
-            raise ComponentException(SystemErrorMessages.TIME_LIMIT_EXCEEDED)
+            raise ComponentException(
+                SystemErrorMessages.TIME_LIMIT_EXCEEDED.label
+            )
         elif secondary_status == "Stopped":
             raise TaskCancelled
         else:
