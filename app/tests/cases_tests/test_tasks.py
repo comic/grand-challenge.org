@@ -32,6 +32,7 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.core.celery import acks_late_micro_short_task
+from grandchallenge.core.error_handlers import SystemErrorMessages
 from grandchallenge.core.storage import protected_s3_storage
 from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.cases_tests import RESOURCE_PATH
@@ -286,7 +287,7 @@ def test_start_dicom_import_job_does_not_run_when_deid_fails(
     di_upload.refresh_from_db()
     # upload gets marked as failed
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
-    assert di_upload.error_message == "An unexpected error occurred"
+    assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
     mocked_delete_input_files.assert_called_once()
 
 
@@ -326,7 +327,7 @@ def test_error_in_start_dicom_import_job(
 
     di_upload.refresh_from_db()
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
-    assert di_upload.error_message == "An unexpected error occurred"
+    assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
     mock_delete_input_files.assert_called_once()
 
 
@@ -467,7 +468,7 @@ def test_handle_health_imaging_import_job_event_failed_status(
 
     mock_delete_input_files.assert_called_once()
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
-    assert di_upload.error_message == "An unexpected error occurred"
+    assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
 
 
 @pytest.mark.django_db
@@ -501,7 +502,7 @@ def test_handle_health_imaging_import_job_event_invalid_status(
 
     mock_delete_input_files.assert_called_once()
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
-    assert di_upload.error_message == "An unexpected error occurred"
+    assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
 
 
 @pytest.mark.django_db
@@ -545,7 +546,7 @@ def test_handle_health_imaging_import_job_event_invalid_import(
 
     mock_delete_input_files.assert_called_once()
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
-    assert di_upload.error_message == "An unexpected error occurred"
+    assert di_upload.error_message == SystemErrorMessages.UNEXPECTED_ERROR
 
 
 @acks_late_micro_short_task
@@ -596,10 +597,12 @@ def test_handle_health_imaging_import_job_event_marks_job_as_failed_on_validatio
     assert di_upload.status == DICOMImageSetUploadStatusChoices.FAILED
     assert (
         di_upload.error_message
-        == f"Image validation for socket {ci.title} failed with error: An unexpected error occurred"
+        == f"Image validation for socket {ci.title} failed with error: {SystemErrorMessages.UNEXPECTED_ERROR}"
     )
     assert ComponentInterfaceValue.objects.filter(interface=ci).count() == 0
     assert obj.status == obj.CANCELLED
     assert obj.error_message == "One or more of the inputs failed validation."
-    assert "An unexpected error occurred" in str(obj.detailed_error_message)
+    assert SystemErrorMessages.UNEXPECTED_ERROR in str(
+        obj.detailed_error_message
+    )
     assert "some_async_task" not in str(callbacks)

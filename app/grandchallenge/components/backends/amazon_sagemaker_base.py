@@ -26,6 +26,7 @@ from grandchallenge.components.backends.utils import (
     parse_structured_log,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.core.error_handlers import SystemErrorMessages
 from grandchallenge.evaluation.utils import get
 
 logger = logging.getLogger(__name__)
@@ -727,14 +728,12 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
                 # Requires investigation
                 logger.error(f"SageMaker OOM {users_process_exit_code=}")
 
-            raise ComponentException(
-                "The container was killed as it exceeded its memory limit"
-            )
+            raise ComponentException(SystemErrorMessages.MEMORY_LIMIT_EXCEEDED)
         else:
             # Requires investigation
             logger.error(f"SageMaker Job failed: {failure_reason}")
 
-            raise ComponentException("An unexpected error occurred")
+            raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
 
     def _stop_running_jobs(self):
         try:

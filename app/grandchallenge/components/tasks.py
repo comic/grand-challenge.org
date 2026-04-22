@@ -53,6 +53,7 @@ from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
+from grandchallenge.core.error_handlers import SystemErrorMessages
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.core.utils.error_messages import (
@@ -810,7 +811,8 @@ def provision_job(
         )
     except Exception:
         job.update_status(
-            status=job.FAILURE, error_message="An unexpected error occurred"
+            status=job.FAILURE,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
         logger.error("Could not provision job", exc_info=True)
     else:
@@ -872,14 +874,14 @@ def execute_job(
             status=job.FAILURE,
             stdout=executor.stdout,
             stderr=executor.stderr,
-            error_message="Time limit exceeded",
+            error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED,
         )
     except Exception:
         job.update_status(
             status=job.FAILURE,
             stdout=executor.stdout,
             stderr=executor.stderr,
-            error_message="An unexpected error occurred",
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
         raise
 
@@ -970,7 +972,7 @@ def handle_event(*, event: dict, backend: str):
     except Exception as error:
         job.update_status(
             status=job.FAILURE,
-            error_message="An unexpected error occurred",
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
             **get_update_status_kwargs(executor=executor),
         )
         logger.error(str(error), exc_info=True)
@@ -1014,7 +1016,8 @@ def parse_job_outputs(
         )
     except Exception:
         job.update_status(
-            status=job.FAILURE, error_message="An unexpected error occurred"
+            status=job.FAILURE,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
         logger.error("Could not parse outputs", exc_info=True)
     else:
@@ -1462,7 +1465,7 @@ def add_image_to_object(  # noqa: C901
         except Exception as e:
             error_handler.handle_error(
                 interface=interface,
-                error_message="An unexpected error occurred",
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
                 user=upload.creator,
             )
             logger.error(e, exc_info=True)
@@ -1478,7 +1481,7 @@ def add_image_to_object(  # noqa: C901
         else:
             error_handler.handle_error(
                 interface=interface,
-                error_message="An unexpected error occurred",
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
                 user=upload.creator,
             )
             logger.error(e, exc_info=True)
@@ -1549,7 +1552,7 @@ def add_file_to_object(
     except Exception as e:
         error_handler.handle_error(
             interface=interface,
-            error_message="An unexpected error occurred",
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
             user=user_upload.creator,
         )
         logger.error(e, exc_info=True)
@@ -1565,7 +1568,7 @@ def add_file_to_object(
         else:
             error_handler.handle_error(
                 interface=interface,
-                error_message="An unexpected error occurred",
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
                 user=user_upload.creator,
             )
             logger.error(e, exc_info=True)
@@ -1677,7 +1680,7 @@ def start_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
         orchestrator.deprovision()
         endpoint.update_status(
             status=endpoint.StatusChoices.FAILED,
-            error_message="An unexpected error occurred",
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
         )
 
     else:

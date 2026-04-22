@@ -7,6 +7,7 @@ from django.utils._os import safe_join
 
 from grandchallenge.components import VALIDATION_SCRIPT_DIR
 from grandchallenge.components.utils.virtualenvs import run_script_in_venv
+from grandchallenge.core.error_handlers import SystemErrorMessages
 
 
 def validate_safe_path(value):
@@ -54,7 +55,9 @@ def validate_newick_tree_format(*, file):
                     error_message or "Does not appear to be a newick tree"
                 )
         else:
-            raise RuntimeError(f"An unexpected error occurred: {e.stderr}")
+            raise RuntimeError(
+                f"{SystemErrorMessages.UNEXPECTED_ERROR}: {e.stderr}"
+            )
 
 
 def validate_biom_format(*, file):
@@ -77,4 +80,6 @@ def validate_biom_format(*, file):
                     error_message or "Does not appear to be a BIOM-format file"
                 )
         else:
-            raise RuntimeError(f"An unexpected error occurred: {e.stderr}")
+            raise RuntimeError(
+                f"{SystemErrorMessages.UNEXPECTED_ERROR}: {e.stderr}"
+            )
