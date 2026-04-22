@@ -88,6 +88,7 @@ from grandchallenge.components.models import (
     InterfaceKinds,
 )
 from grandchallenge.components.tasks import upload_to_registry_and_sagemaker
+from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.filters import FilterMixin
 from grandchallenge.core.forms import UserFormKwargsMixin
 from grandchallenge.core.guardian import (
@@ -671,7 +672,7 @@ class JobCreate(
             else:
                 error_handler = self.object.get_error_handler()
                 error_handler.handle_error(
-                    error_message="An unexpected error occurred",
+                    error_message=SystemErrorMessages.UNEXPECTED_ERROR,
                 )
                 logger.error(e, exc_info=True)
 

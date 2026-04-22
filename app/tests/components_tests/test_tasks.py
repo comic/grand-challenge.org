@@ -56,6 +56,7 @@ from grandchallenge.components.tasks import (
     validate_docker_image,
 )
 from grandchallenge.core.celery import _retry, acks_late_micro_short_task
+from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.notifications.models import Notification
 from grandchallenge.reader_studies.interactive_algorithms import (
     InteractiveAlgorithmLambdaChoices,
@@ -1537,7 +1538,7 @@ def test_start_endpoint_failure(mocker, method_with_error):
     endpoint.refresh_from_db()
 
     assert endpoint.status == endpoint.StatusChoices.FAILED
-    assert endpoint.error_message == "An unexpected error occurred"
+    assert endpoint.error_message == SystemErrorMessages.UNEXPECTED_ERROR
     mock_deprovision_method.assert_called_once()
 
 

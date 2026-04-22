@@ -8,6 +8,7 @@ from billiard.exceptions import SoftTimeLimitExceeded
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.tasks import check_compressed_and_extract
+from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.notifications.models import Notification
 from tests.cases_tests import RESOURCE_PATH
 from tests.factories import UploadSessionFactory
@@ -250,7 +251,7 @@ def test_soft_time_limit(settings, django_capture_on_commit_callbacks, mocker):
 
     session.refresh_from_db()
     assert session.status == session.FAILURE
-    assert session.error_message == "Time limit exceeded"
+    assert session.error_message == SystemErrorMessages.TIME_LIMIT_EXCEEDED
 
 
 @pytest.mark.django_db

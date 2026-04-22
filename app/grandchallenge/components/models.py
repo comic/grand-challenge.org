@@ -74,6 +74,7 @@ from grandchallenge.core.error_handlers import (
     RawImageUploadSessionErrorHandler,
     UserUploadCIVErrorHandler,
 )
+from grandchallenge.core.error_messages import SystemErrorMessages
 from grandchallenge.core.models import FieldChangeMixin, UUIDModel
 from grandchallenge.core.storage import (
     private_s3_storage,
@@ -2830,7 +2831,7 @@ class CIVForObjectMixin:
             error_handler = self.get_error_handler()
             error_handler.handle_error(
                 interface=interface,
-                error_message="An unexpected error occurred",
+                error_message=SystemErrorMessages.UNEXPECTED_ERROR,
                 user=user,
             )
             raise e
