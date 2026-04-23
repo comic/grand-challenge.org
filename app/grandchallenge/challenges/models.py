@@ -1265,7 +1265,7 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ],
     )
     average_size_job_output_mb_for_tasks = models.JSONField(
-        help_text="Average size of the output in MB, for each task.",
+        help_text="Average size of the output per job in MB,, for each task.",
         default=list,
         validators=[
             JSONValidator(

@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             name="average_size_job_output_mb_for_tasks",
             field=models.JSONField(
                 default=list,
-                help_text="Average size of the output in MB, for each task.",
+                help_text="Average size of the output per job in MB,, for each task.",
                 validators=[
                     grandchallenge.core.validators.JSONValidator(
                         schema={
