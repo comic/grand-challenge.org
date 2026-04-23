@@ -1752,8 +1752,8 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
         ]
         return [
             round(
-                input_size_mb
-                + output_size_mb * (settings.MEGABYTE / settings.GIGABYTE)
+                (input_size_mb + output_size_mb)
+                * (settings.MEGABYTE / settings.GIGABYTE)
             )
             for input_size_mb, output_size_mb in zip(
                 input_size_mb_for_phases,
