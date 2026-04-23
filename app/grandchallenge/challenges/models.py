@@ -1733,17 +1733,17 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
 
     @cached_property
     def data_storage_size_gb_for_phases(self):
-        input_size_gb_for_phases = [
-            n_images * image_mb * settings.MEGABYTE / settings.GIGABYTE
-            for n_images, image_mb in zip(
+        input_size_mb_for_phases = [
+            n_images * input_mb
+            for n_images, input_mb in zip(
                 self.number_of_test_cases_for_phases,
                 self.average_size_test_case_mb_for_phases,
                 strict=True,
             )
         ]
 
-        output_size_gb_for_phases = [
-            n_jobs * output_mb * settings.MEGABYTE / settings.GIGABYTE
+        output_size_mb_for_phases = [
+            n_jobs * output_mb
             for n_jobs, output_mb in zip(
                 self.number_of_algorithm_jobs_for_phases,
                 self.average_size_job_output_mb_for_phases,
@@ -1751,10 +1751,13 @@ class ChallengeRequest(UUIDModel, ChallengeBase):
             )
         ]
         return [
-            round(input_size_gb + output_size_gb)
-            for input_size_gb, output_size_gb in zip(
-                input_size_gb_for_phases,
-                output_size_gb_for_phases,
+            round(
+                input_size_mb
+                + output_size_mb * (settings.MEGABYTE / settings.GIGABYTE)
+            )
+            for input_size_mb, output_size_mb in zip(
+                input_size_mb_for_phases,
+                output_size_mb_for_phases,
                 strict=True,
             )
         ]
