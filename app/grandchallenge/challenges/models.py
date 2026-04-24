@@ -92,13 +92,15 @@ logger = logging.getLogger(__name__)
 
 class ChallengeQuerySet(models.QuerySet):
     def with_available_compute(self):
+        _now = now()
         return self.annotate(
             complimentary_compute_costs_euros=(
                 Sum(
                     "invoices__compute_costs_euros",
                     filter=Q(
                         invoices__payment_type=PaymentTypeChoices.COMPLIMENTARY
-                    ),
+                    )
+                    & ~Q(invoices__expires_on__lte=_now),
                     output_field=models.PositiveBigIntegerField(),
                     default=0,
                 )
@@ -109,7 +111,8 @@ class ChallengeQuerySet(models.QuerySet):
                     filter=Q(
                         invoices__payment_type=PaymentTypeChoices.PREPAID,
                         invoices__payment_status=PaymentStatusChoices.PAID,
-                    ),
+                    )
+                    & ~Q(invoices__expires_on__lte=_now),
                     output_field=models.PositiveBigIntegerField(),
                     default=0,
                 )
@@ -125,7 +128,8 @@ class ChallengeQuerySet(models.QuerySet):
                             )
                             & ~Q(
                                 invoices__payment_status=PaymentStatusChoices.CANCELLED
-                            ),
+                            )
+                            & ~Q(invoices__expires_on__lte=_now),
                             output_field=models.PositiveBigIntegerField(),
                             default=0,
                         ),

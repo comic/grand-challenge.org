@@ -1,10 +1,11 @@
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Count, ExpressionWrapper, F, Q
 from django.db.models.functions import Cast
 from django.db.transaction import on_commit
-from django.utils.timezone import now, timedelta
+from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
 from grandchallenge.core.guardian import (
@@ -88,7 +89,7 @@ class Invoice(models.Model, FieldChangeMixin):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
-    expires_on = models.DateTimeField(
+    expires_on = models.DateField(
         help_text="The date when the invoice expires",
     )
     issued_on = models.DateField(
@@ -291,9 +292,8 @@ class Invoice(models.Model, FieldChangeMixin):
         if adding:
             self.created = now()
             if not self.expires_on:
-                self.expires_on = self.created + timedelta(
-                    days=365
-                    * settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS
+                self.expires_on = self.created.date() + relativedelta(
+                    years=settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS
                 )
         super().save(*args, **kwargs)
         if adding:

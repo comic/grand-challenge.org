@@ -2,8 +2,9 @@ from contextlib import nullcontext
 from zoneinfo import ZoneInfo
 
 import pytest
+from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
-from django.utils.timezone import datetime, timedelta
+from django.utils.timezone import datetime, now
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.invoices.models import (
@@ -501,20 +502,21 @@ def test_invoice_expires_on_is_autoset(settings, mocker):
         return_value=fixed_now,
     )
     invoice = InvoiceFactory()
-    assert invoice.expires_on == fixed_now + timedelta(days=365 * 2)
+    assert invoice.expires_on == fixed_now.date() + relativedelta(years=2)
 
 
 @pytest.mark.django_db
-def test_invoice_expires_on_can_be_set_manually(settings, mocker):
-    a_date = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+def test_invoice_expires_on_can_be_set_manually():
+    a_date = now().date()
 
     invoice = InvoiceFactory(expires_on=a_date)
     assert invoice.expires_on == a_date, "Can be set at creation"
 
-    new_date = a_date + timedelta(days=1)
+    new_date = a_date + relativedelta(years=1)
     invoice.expires_on = new_date
     invoice.save()
     invoice.refresh_from_db()
+
     assert invoice.expires_on == new_date, "Can be updated manually"
 
 
@@ -526,7 +528,7 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_prepaid(
 
     fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
     mocker.patch(
-        "grandchallenge.invoices.models.now",
+        "grandchallenge.challenges.models.now",
         return_value=fixed_now,
     )
 
@@ -535,6 +537,7 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_prepaid(
         support_costs_euros=0,
         compute_costs_euros=1,
         storage_costs_euros=0,
+        expires_on=fixed_now + relativedelta(years=1),
         payment_status=PaymentStatusChoices.PAID,
         payment_type=PaymentTypeChoices.PREPAID,
     )
@@ -543,6 +546,7 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_prepaid(
         support_costs_euros=0,
         compute_costs_euros=2,
         storage_costs_euros=0,
+        expires_on=fixed_now + relativedelta(years=1),
         payment_status=PaymentStatusChoices.PAID,
         payment_type=PaymentTypeChoices.PREPAID,
     )
@@ -553,7 +557,7 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_prepaid(
         == (1 + 2) * 1000 * 100
     )
 
-    invoice.expires_on = fixed_now - timedelta(days=1)
+    invoice.expires_on = fixed_now - relativedelta(years=1)
     invoice.save()
 
     challenge = Challenge.objects.with_available_compute().get(pk=challenge.pk)
@@ -579,6 +583,7 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_postpaid(
         support_costs_euros=0,
         compute_costs_euros=1,
         storage_costs_euros=0,
+        expires_on=fixed_now + relativedelta(years=1),
         payment_status=PaymentStatusChoices.INITIALIZED,
         payment_type=PaymentTypeChoices.POSTPAID,
     )
@@ -587,6 +592,7 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_postpaid(
         support_costs_euros=0,
         compute_costs_euros=2,
         storage_costs_euros=0,
+        expires_on=fixed_now + relativedelta(years=1),
         payment_status=PaymentStatusChoices.PAID,
         payment_type=PaymentTypeChoices.PREPAID,
     )
@@ -595,6 +601,7 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_postpaid(
         support_costs_euros=0,
         compute_costs_euros=4,
         storage_costs_euros=0,
+        expires_on=fixed_now + relativedelta(years=1),
         payment_status=PaymentStatusChoices.INITIALIZED,
         payment_type=PaymentTypeChoices.POSTPAID,
     )
@@ -605,7 +612,7 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_postpaid(
         == (1 + 2 + 4) * 1000 * 100
     )
 
-    invoice.expires_on = fixed_now - timedelta(days=1)
+    invoice.expires_on = fixed_now - relativedelta(years=1)
     invoice.save()
 
     challenge = Challenge.objects.with_available_compute().get(pk=challenge.pk)
@@ -621,7 +628,7 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_compl(mocker):
 
     fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
     mocker.patch(
-        "grandchallenge.invoices.models.now",
+        "grandchallenge.challenges.models.now",
         return_value=fixed_now,
     )
 
@@ -630,6 +637,7 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_compl(mocker):
         support_costs_euros=0,
         compute_costs_euros=1,
         storage_costs_euros=0,
+        expires_on=fixed_now + relativedelta(years=1),
         payment_status=PaymentStatusChoices.INITIALIZED,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
@@ -638,6 +646,7 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_compl(mocker):
         support_costs_euros=0,
         compute_costs_euros=2,
         storage_costs_euros=0,
+        expires_on=fixed_now + relativedelta(years=1),
         payment_status=PaymentStatusChoices.INITIALIZED,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
     )
@@ -648,7 +657,7 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_compl(mocker):
         == (1 + 2) * 1000 * 100
     )
 
-    invoice.expires_on = fixed_now - timedelta(days=1)
+    invoice.expires_on = fixed_now - relativedelta(years=1)
     invoice.save()
 
     challenge = Challenge.objects.with_available_compute().get(pk=challenge.pk)
