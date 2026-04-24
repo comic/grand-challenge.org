@@ -91,6 +91,7 @@ class Invoice(models.Model, FieldChangeMixin):
 
     expires_on = models.DateField(
         help_text="The date when the invoice expires",
+        blank=True,
     )
     issued_on = models.DateField(
         help_text="The date when the invoice was issued (required for issued invoices)",
