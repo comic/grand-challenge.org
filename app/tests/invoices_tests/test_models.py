@@ -587,16 +587,18 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_postpaid(
         payment_status=PaymentStatusChoices.INITIALIZED,
         payment_type=PaymentTypeChoices.POSTPAID,
     )
-    InvoiceFactory(
-        challenge=challenge,
-        support_costs_euros=0,
-        compute_costs_euros=2,
-        storage_costs_euros=0,
-        expires_on=fixed_now + relativedelta(years=1),
-        payment_status=PaymentStatusChoices.PAID,
-        payment_type=PaymentTypeChoices.PREPAID,
+    paid_prepaid_invoice = (
+        InvoiceFactory(  # One paid is required for prepaid to count
+            challenge=challenge,
+            support_costs_euros=0,
+            compute_costs_euros=2,
+            storage_costs_euros=0,
+            expires_on=fixed_now + relativedelta(years=1),
+            payment_status=PaymentStatusChoices.PAID,
+            payment_type=PaymentTypeChoices.PREPAID,
+        )
     )
-    InvoiceFactory(  # One paid is required for prepaid to count
+    InvoiceFactory(
         challenge=challenge,
         support_costs_euros=0,
         compute_costs_euros=4,
@@ -620,6 +622,13 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_postpaid(
         challenge.approved_compute_costs_euro_millicents
         == (2 + 4) * 1000 * 100
     ), "Expired is excluded"
+
+    paid_prepaid_invoice.expires_on = fixed_now - relativedelta(years=1)
+    paid_prepaid_invoice.save()
+    challenge = Challenge.objects.with_available_compute().get(pk=challenge.pk)
+    assert (
+        challenge.approved_compute_costs_euro_millicents == (4) * 1000 * 100
+    ), "Expired paid prepaid should not affect postpaid approved compute costs"
 
 
 @pytest.mark.django_db
