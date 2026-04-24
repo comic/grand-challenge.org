@@ -38,6 +38,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_display = (
         "challenge",
         "issued_on",
+        "expires_on",
         "internal_invoice_number",
         "internal_client_number",
         "contact_email",

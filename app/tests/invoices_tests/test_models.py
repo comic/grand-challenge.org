@@ -1,7 +1,9 @@
 from contextlib import nullcontext
+from zoneinfo import ZoneInfo
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.utils.timezone import datetime, timedelta
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.invoices.models import (
@@ -297,6 +299,29 @@ def test_approved_compute_costs_postpaid_with_cancelled_invoice():
 
 
 @pytest.mark.django_db
+def test_compute_costs_prepaid_with_expired_invoice():
+
+    challenge = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.CANCELLED,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_type=PaymentTypeChoices.POSTPAID,
+    )
+
+    challenge = Challenge.objects.with_available_compute().first()
+    assert challenge.approved_compute_costs_euro_millicents == 0 * 1000 * 100
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "payment_status, required_field_name, field_value, expected_error_message",
     (
@@ -460,3 +485,172 @@ def test_invoices_cannot_be_deleted():
         Invoice.objects.filter(pk=invoice.pk).delete()
 
     assert Invoice.objects.filter(pk=invoice.pk).exists()
+
+
+@pytest.mark.django_db
+def test_invoice_expires_on_is_autoset(settings, mocker):
+    assert settings.CHALLENGE_INVOICES_EXPIRE_AFTER_YEARS, "Setting exists"
+
+    settings.CHALLENGE_INVOICES_EXPIRE_AFTER_YEARS = 2
+
+    fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+    mocker.patch(
+        "grandchallenge.challenges.models.now",
+        result=fixed_now,
+    )
+    invoice = InvoiceFactory()
+    assert invoice.expires_on == fixed_now + timedelta(days=365 * 2)
+
+
+@pytest.mark.django_db
+def test_invoice_expires_on_can_be_set_manually(settings, mocker):
+    a_date = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+    invoice = InvoiceFactory(expires_on=a_date)
+
+    assert invoice.expires_on == a_date, "Can be set at creation"
+
+    invoice.expires_on = a_date + timedelta(days=1)
+    invoice.save()
+    invoice.refresh_from_db()
+    assert invoice.expires_on == a_date + timedelta(
+        days=1
+    ), "Can be updated manually"
+
+
+@pytest.mark.django_db
+def test_approved_compute_costs_euro_millicents_expired_invoices_prepaid(
+    mocker,
+):
+    challenge = ChallengeFactory()
+
+    fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+    mocker.patch(
+        "grandchallenge.challenges.models.now",
+        result=fixed_now,
+    )
+
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+        payment_type=PaymentTypeChoices.PREPAID,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=2,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+        payment_type=PaymentTypeChoices.PREPAID,
+    )
+
+    challenge = Challenge.objects.with_available_compute().get(pk=challenge.pk)
+    assert (
+        challenge.approved_compute_costs_euro_millicents
+        == (1 + 2) * 1000 * 100
+    )
+
+    invoice.expires_on = fixed_now - timedelta(days=1)
+    invoice.save()
+
+    challenge = Challenge.objects.with_available_compute().get(pk=challenge.pk)
+    assert (
+        challenge.approved_compute_costs_euro_millicents == (2) * 1000 * 100
+    ), "Expired is excluded"
+
+
+@pytest.mark.django_db
+def test_approved_compute_costs_euro_millicents_expired_invoices_postpaid(
+    mocker,
+):
+    challenge = ChallengeFactory()
+
+    fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+    mocker.patch(
+        "grandchallenge.challenges.models.now",
+        result=fixed_now,
+    )
+
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.INITIALIZED,
+        payment_type=PaymentTypeChoices.POSTPAID,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=2,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.PAID,
+        payment_type=PaymentTypeChoices.PREPAID,
+    )
+    InvoiceFactory(  # One paid is required for prepaid to count
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=4,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.INITIALIZED,
+        payment_type=PaymentTypeChoices.POSTPAID,
+    )
+
+    challenge = Challenge.objects.with_available_compute().get(pk=challenge.pk)
+    assert (
+        challenge.approved_compute_costs_euro_millicents
+        == (1 + 2 + 4) * 1000 * 100
+    )
+
+    invoice.expires_on = fixed_now - timedelta(days=1)
+    invoice.save()
+
+    challenge = Challenge.objects.with_available_compute().get(pk=challenge.pk)
+    assert (
+        challenge.approved_compute_costs_euro_millicents
+        == (2 + 4) * 1000 * 100
+    ), "Expired is excluded"
+
+
+@pytest.mark.django_db
+def test_approved_compute_costs_euro_millicents_expired_invoices_compl(mocker):
+    challenge = ChallengeFactory()
+
+    fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+    mocker.patch(
+        "grandchallenge.challenges.models.now",
+        result=fixed_now,
+    )
+
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.INITIALIZED,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=2,
+        storage_costs_euros=0,
+        payment_status=PaymentStatusChoices.INITIALIZED,
+        payment_type=PaymentTypeChoices.COMPLIMENTARY,
+    )
+
+    challenge = Challenge.objects.with_available_compute().get(pk=challenge.pk)
+    assert (
+        challenge.approved_compute_costs_euro_millicents
+        == (1 + 2) * 1000 * 100
+    )
+
+    invoice.expires_on = fixed_now - timedelta(days=1)
+    invoice.save()
+
+    challenge = Challenge.objects.with_available_compute().get(pk=challenge.pk)
+    assert (
+        challenge.approved_compute_costs_euro_millicents == (2) * 1000 * 100
+    ), "Expired is excluded"
