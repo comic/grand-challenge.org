@@ -14,8 +14,10 @@ from django.db.models import (
     BooleanField,
     Case,
     Count,
+    Exists,
     ExpressionWrapper,
     F,
+    OuterRef,
     Q,
     Sum,
     Value,
@@ -93,17 +95,7 @@ logger = logging.getLogger(__name__)
 
 class ChallengeQuerySet(models.QuerySet):
     def with_available_compute(self):
-        challenges_with_prepaid_paid_invoices = (
-            Invoice.objects.filter(
-                payment_type=PaymentTypeChoices.PREPAID,
-                payment_status=PaymentStatusChoices.PAID,
-            )
-            .values_list("challenge_id", flat=True)
-            .distinct()
-        )
-
         _now = now()
-
         return self.annotate(
             complimentary_compute_costs_euros=(
                 Sum(
@@ -131,7 +123,13 @@ class ChallengeQuerySet(models.QuerySet):
             postpaid_compute_costs_euros_if_anything_paid=(
                 Case(
                     When(
-                        pk__in=challenges_with_prepaid_paid_invoices,
+                        Exists(
+                            Invoice.objects.filter(
+                                challenge=OuterRef("pk"),
+                                payment_type=PaymentTypeChoices.PREPAID,
+                                payment_status=PaymentStatusChoices.PAID,
+                            )
+                        ),
                         then=Sum(
                             "invoices__compute_costs_euros",
                             filter=Q(
