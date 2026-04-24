@@ -489,14 +489,16 @@ def test_invoices_cannot_be_deleted():
 
 @pytest.mark.django_db
 def test_invoice_expires_on_is_autoset(settings, mocker):
-    assert settings.CHALLENGE_INVOICES_EXPIRE_AFTER_YEARS, "Setting exists"
+    assert (
+        settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS
+    ), "Setting exists"
 
-    settings.CHALLENGE_INVOICES_EXPIRE_AFTER_YEARS = 2
+    settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS = 2
 
     fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
     mocker.patch(
-        "grandchallenge.challenges.models.now",
-        result=fixed_now,
+        "grandchallenge.invoices.models.now",
+        return_value=fixed_now,
     )
     invoice = InvoiceFactory()
     assert invoice.expires_on == fixed_now + timedelta(days=365 * 2)
@@ -505,16 +507,15 @@ def test_invoice_expires_on_is_autoset(settings, mocker):
 @pytest.mark.django_db
 def test_invoice_expires_on_can_be_set_manually(settings, mocker):
     a_date = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
-    invoice = InvoiceFactory(expires_on=a_date)
 
+    invoice = InvoiceFactory(expires_on=a_date)
     assert invoice.expires_on == a_date, "Can be set at creation"
 
-    invoice.expires_on = a_date + timedelta(days=1)
+    new_date = a_date + timedelta(days=1)
+    invoice.expires_on = new_date
     invoice.save()
     invoice.refresh_from_db()
-    assert invoice.expires_on == a_date + timedelta(
-        days=1
-    ), "Can be updated manually"
+    assert invoice.expires_on == new_date, "Can be updated manually"
 
 
 @pytest.mark.django_db
@@ -525,8 +526,8 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_prepaid(
 
     fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
     mocker.patch(
-        "grandchallenge.challenges.models.now",
-        result=fixed_now,
+        "grandchallenge.invoices.models.now",
+        return_value=fixed_now,
     )
 
     invoice = InvoiceFactory(
@@ -570,7 +571,7 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_postpaid(
     fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
     mocker.patch(
         "grandchallenge.challenges.models.now",
-        result=fixed_now,
+        return_value=fixed_now,
     )
 
     invoice = InvoiceFactory(
@@ -620,8 +621,8 @@ def test_approved_compute_costs_euro_millicents_expired_invoices_compl(mocker):
 
     fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
     mocker.patch(
-        "grandchallenge.challenges.models.now",
-        result=fixed_now,
+        "grandchallenge.invoices.models.now",
+        return_value=fixed_now,
     )
 
     invoice = InvoiceFactory(

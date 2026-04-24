@@ -88,13 +88,13 @@ class Invoice(models.Model, FieldChangeMixin):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
+    expires_on = models.DateTimeField(
+        help_text="The date when the invoice expires",
+    )
     issued_on = models.DateField(
         help_text="The date when the invoice was issued (required for issued invoices)",
         blank=True,
         null=True,
-    )
-    expires_on = models.DateField(
-        help_text="The date when the invoice expires",
     )
     paid_on = models.DateField(
         help_text="The date when the invoice was paid (required for paid invoices)",
@@ -288,14 +288,16 @@ class Invoice(models.Model, FieldChangeMixin):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
+        if adding:
+            self.created = now()
+            if not self.expires_on:
+                self.expires_on = self.created + timedelta(
+                    days=365
+                    * settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS
+                )
         super().save(*args, **kwargs)
         if adding:
             self.assign_permissions()
-            if not self.expires_on:
-                self.expires_on = self.created + timedelta(
-                    days=365 * settings.CHALLENGE_INVOICES_EXPIRE_AFTER_YEARS
-                )
-                super().save(update_fields=["expires_on"])
         if (
             self.payment_type != PaymentTypeChoices.COMPLIMENTARY
             and (self.has_changed("payment_status") or adding)

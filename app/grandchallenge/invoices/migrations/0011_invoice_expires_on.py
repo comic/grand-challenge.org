@@ -8,7 +8,7 @@ def set_expires_on(apps, schema_editor):
     Invoice = apps.get_model("invoices", "Invoice")  # noqa: N806
     for invoice in Invoice.objects.filter(expires_on__isnull=True):
         invoice.expires_on = invoice.created + timedelta(
-            days=365 * settings.CHALLENGE_INVOICES_EXPIRE_AFTER_YEARS
+            days=365 * settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS
         )
         invoice.save(update_fields=["expires_on"])
 
@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="invoice",
             name="expires_on",
-            field=models.DateField(
+            field=models.DateTimeField(
                 help_text="The date when the invoice expires", null=True
             ),
         ),
@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="invoice",
             name="expires_on",
-            field=models.DateField(
+            field=models.DateTimeField(
                 help_text="The date when the invoice expires"
             ),
         ),
