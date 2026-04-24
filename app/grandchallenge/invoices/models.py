@@ -73,6 +73,18 @@ class InvoiceQuerySet(models.QuerySet):
             ),
         )
 
+    def with_expired_status(self):
+        today = now().date()
+
+        return self.annotate(
+            is_expired=ExpressionWrapper(
+                Q(
+                    expires_on__lt=today,
+                ),
+                output_field=models.BooleanField(),
+            ),
+        )
+
     @property
     def status_aggregates(self):
         return self.aggregate(
