@@ -521,6 +521,22 @@ def test_invoice_expires_on_can_be_set_manually():
 
 
 @pytest.mark.django_db
+def test_invoice_expires_on_throws_validation_error():
+
+    invoice = InvoiceFactory()
+    assert invoice.expires_on, "Sanity"
+
+    invoice.expires_on = None
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert (
+        "The expiry date may not be empty when updating an invoice."
+        == e.value.messages[0]
+    )
+
+
+@pytest.mark.django_db
 def test_approved_compute_costs_euro_millicents_expired_invoices_prepaid(
     mocker,
 ):
