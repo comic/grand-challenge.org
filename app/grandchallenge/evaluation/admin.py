@@ -238,7 +238,7 @@ class EvaluationGroundTruthAdmin(admin.ModelAdmin):
     readonly_fields = (
         "creator",
         "phase",
-        "sha256",
+        "checksum",
         "size_in_storage",
         "ground_truth",
     )

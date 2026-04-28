@@ -75,9 +75,9 @@
             <dd>{{ object.ground_truth.size|naturalsize }}</dd>
         {% endif %}
 
-        {% if object.sha256 %}
-            <dt>SHA256</dt>
-            <dd>{{ object.sha256 }}</dd>
+        {% if object.checksum %}
+            <dt>Checksum</dt>
+            <dd>{{ object.checksum }}</dd>
         {% endif %}
 
         <dt>Import Status</dt>
