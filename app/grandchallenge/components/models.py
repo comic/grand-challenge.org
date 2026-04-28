@@ -2901,7 +2901,7 @@ class Tarball(UUIDModel):
         on_delete=models.SET_NULL,
         validators=[validate_gzip_mimetype],
     )
-    sha256 = models.CharField(editable=False, max_length=71)
+    checksum = models.CharField(editable=False, max_length=71)
     size_in_storage = models.PositiveBigIntegerField(
         editable=False,
         default=0,

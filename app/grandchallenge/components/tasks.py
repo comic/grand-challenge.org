@@ -1607,7 +1607,7 @@ def assign_tarball_from_upload(
     checksum = get_object_checksum(getattr(current_tarball, field_to_copy))
 
     if (
-        TarballModel.objects.filter(sha256=checksum)
+        TarballModel.objects.filter(checksum=checksum)
         .exclude(pk=current_tarball.pk)
         .exists()
     ):
@@ -1620,7 +1620,7 @@ def assign_tarball_from_upload(
 
         return
 
-    current_tarball.sha256 = checksum
+    current_tarball.checksum = checksum
     current_tarball.size_in_storage = getattr(
         current_tarball, field_to_copy
     ).size

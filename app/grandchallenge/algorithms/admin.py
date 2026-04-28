@@ -280,7 +280,7 @@ class AlgorithmModelAdmin(admin.ModelAdmin):
     readonly_fields = (
         "creator",
         "algorithm",
-        "sha256",
+        "checksum",
         "size_in_storage",
         "user_upload",
         "import_status",

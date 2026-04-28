@@ -490,7 +490,7 @@ class SubmissionForm(
 
         if algorithm.active_model:
             extra_submission_filter = {
-                "algorithm_model__sha256": algorithm.active_model.sha256
+                "algorithm_model__checksum": algorithm.active_model.checksum
             }
         else:
             extra_submission_filter = {"algorithm_model__isnull": True}
