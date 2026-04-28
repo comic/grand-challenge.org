@@ -1728,3 +1728,56 @@ class EndpointGroupObjectPermission(GroupObjectPermissionBase):
     allowed_permissions = frozenset({"view_endpoint"})
 
     content_object = models.ForeignKey(Endpoint, on_delete=models.CASCADE)
+
+
+class InvocationStatusChoices(TextChoices):
+    QUEUED = "QUEUED", _("Queued")
+    PROVISIONED = "PROVISIONED", _("Provisioned")
+    EXECUTING = "EXECUTING", _("Executing")
+    EXECUTED = "EXECUTED", _("Executed")
+    FAILURE = "FAILURE", _("Failure")
+    SUCCESS = "SUCCESS", _("Success")
+    CANCELLED = "CANCELLED", _("Cancelled")
+
+
+class Invocation(UUIDModel):
+    StatusChoices = InvocationStatusChoices
+
+    endpoint = models.ForeignKey(Endpoint, on_delete=models.PROTECT)
+    status = models.CharField(
+        max_length=11,
+        choices=InvocationStatusChoices,
+        default=InvocationStatusChoices.QUEUED,
+    )
+    time_limit = models.PositiveIntegerField(
+        help_text="Time limit for the invocation in seconds",
+        validators=[
+            MaxValueValidator(
+                limit_value=settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION
+            ),
+        ],
+    )
+    invoke_duration = models.DurationField(
+        null=True,
+        default=None,
+        blank=True,
+        help_text=(
+            "The duration of the invocation, if measured. "
+            "Excludes data validation, container pulling, model downloading, "
+            "data downloading and data uploading times. "
+            "Potentially excludes model loading time, depending on the "
+            "users implementation. "
+            "Includes input data loading time, "
+            "processing time, output data writing time and "
+            "any delays from shared hardware issues."
+        ),
+    )
+    error_message = models.CharField(max_length=1024, default="", blank=True)
+    inputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="algorithms_endpoints_as_input",
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="algorithms_endpoints_as_output",
+    )
