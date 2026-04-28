@@ -66,4 +66,4 @@ class EvaluationGroundTruthFactory(factory.django.DjangoModelFactory):
     phase = factory.SubFactory(PhaseFactory)
     creator = factory.SubFactory(UserFactory)
     ground_truth = factory.django.FileField()
-    sha256 = factory.sequence(lambda n: hash_sha256(f"ground_truth{n}"))
+    checksum = factory.sequence(lambda n: hash_sha256(f"ground_truth{n}"))

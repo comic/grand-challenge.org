@@ -53,7 +53,7 @@ class AlgorithmModelFactory(factory.django.DjangoModelFactory):
     algorithm = factory.SubFactory(AlgorithmFactory)
     creator = factory.SubFactory(UserFactory)
     model = factory.django.FileField()
-    sha256 = factory.sequence(lambda n: hash_sha256(f"image{n}"))
+    checksum = factory.sequence(lambda n: hash_sha256(f"image{n}"))
 
 
 class AlgorithmJobFactory(factory.django.DjangoModelFactory):
