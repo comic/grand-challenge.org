@@ -1604,14 +1604,15 @@ def assign_tarball_from_upload(
         to_field=getattr(current_tarball, field_to_copy)
     )
 
-    sha256 = get_object_sha256(getattr(current_tarball, field_to_copy))
+    checksum = get_object_checksum(getattr(current_tarball, field_to_copy))
+
     if (
-        TarballModel.objects.filter(sha256=sha256)
+        TarballModel.objects.filter(sha256=checksum)
         .exclude(pk=current_tarball.pk)
         .exists()
     ):
         current_tarball.import_status = ImportStatusChoices.FAILED
-        current_tarball.status = f"{TarballModel._meta.verbose_name} with this sha256 already exists."
+        current_tarball.status = f"{TarballModel._meta.verbose_name} with this checksum already exists."
         current_tarball.save()
 
         getattr(current_tarball, field_to_copy).delete()
@@ -1619,7 +1620,7 @@ def assign_tarball_from_upload(
 
         return
 
-    current_tarball.sha256 = sha256
+    current_tarball.sha256 = checksum
     current_tarball.size_in_storage = getattr(
         current_tarball, field_to_copy
     ).size
@@ -1633,7 +1634,7 @@ def assign_tarball_from_upload(
     current_tarball.mark_desired_version(peer_tarballs=peer_tarballs)
 
 
-def get_object_sha256(file_field):
+def get_object_checksum(file_field):
     response = file_field.storage.connection.meta.client.head_object(
         Bucket=file_field.storage.bucket.name,
         Key=file_field.name,
@@ -1641,11 +1642,11 @@ def get_object_sha256(file_field):
     )
 
     try:
-        checksum_sha256 = response["ChecksumSHA256"]
-        return f"sha256:{hexlify(b64decode(checksum_sha256)).decode('utf-8')}"
+        checksum = response["ChecksumCRC64NVME"]
+        return f"crc64nvme:{hexlify(b64decode(checksum)).decode('utf-8')}"
     except KeyError:
         # The checksums are not calculated on local s3
-        logger.error("sha256 checksum was not calculated", exc_info=True)
+        logger.error("checksum was not calculated", exc_info=True)
         return ""
 
 
