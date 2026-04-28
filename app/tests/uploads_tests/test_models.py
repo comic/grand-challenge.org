@@ -177,7 +177,7 @@ def test_upload_copy_sets_sha256():
                 "Key": f"models/algorithms/algorithmmodel/{am.pk}/test.tar.gz",
                 # We rely on ChecksumAlgorithm being set so that the checksum is calculated
                 # This is used to identify multiple versions of the same file
-                "ChecksumAlgorithm": "SHA256",
+                "ChecksumAlgorithm": "CRC64NVME",
                 "MetadataDirective": "REPLACE",
             },
         )

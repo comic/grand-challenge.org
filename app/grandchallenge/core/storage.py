@@ -169,7 +169,7 @@ def copy_s3_object(
     extra_args = {
         "ContentType": mimetype,
         "MetadataDirective": "REPLACE",
-        "ChecksumAlgorithm": "SHA256",
+        "ChecksumAlgorithm": "CRC64NVME",
     }
 
     if target_bucket == settings.PUBLIC_S3_STORAGE_KWARGS["bucket_name"]:
