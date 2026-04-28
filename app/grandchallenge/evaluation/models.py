@@ -44,6 +44,7 @@ from grandchallenge.components.schemas import (
     GPUTypeChoices,
     get_default_gpu_type_choices,
 )
+from grandchallenge.core.error_messages import EvaluationErrorMessages
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
@@ -1713,7 +1714,7 @@ class Submission(FieldChangeMixin, UUIDModel):
             if not self.has_matching_algorithm_interfaces:
                 evaluation.update_status(
                     status=Evaluation.CANCELLED,
-                    error_message="The algorithm interfaces do not match those defined for the phase.",
+                    error_message=EvaluationErrorMessages.INTERFACE_MISMATCH,
                 )
 
         if additional_inputs:

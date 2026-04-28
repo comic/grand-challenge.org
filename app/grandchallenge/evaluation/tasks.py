@@ -21,7 +21,10 @@ from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
     acks_late_micro_short_task,
 )
-from grandchallenge.core.error_messages import SystemErrorMessages
+from grandchallenge.core.error_messages import (
+    EvaluationErrorMessages,
+    SystemErrorMessages,
+)
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.core.validators import get_file_mimetype
@@ -91,9 +94,7 @@ def check_prerequisites_for_evaluation_execution(*, evaluation_pk):
     if any(jobs.values()):
         evaluation.update_status(
             status=Evaluation.CANCELLED,
-            error_message="There are non-successful jobs for this submission. "
-            "These need to be handled first before you can "
-            "re-evaluate. Please contact support.",
+            error_message=EvaluationErrorMessages.UNSUCCESSFUL_JOBS,
         )
         return
     else:
@@ -171,8 +172,8 @@ def prepare_and_execute_evaluation(*, evaluation_pk):
         else:
             evaluation.update_status(
                 status=Evaluation.FAILURE,
-                stderr=f"{mimetype} files are not supported.",
-                error_message=f"{mimetype} files are not supported.",
+                stderr=f"{mimetype} {EvaluationErrorMessages.UNSUPPORTED_INPUT}",
+                error_message=f"{mimetype} {EvaluationErrorMessages.UNSUPPORTED_INPUT}",
             )
             return
 
@@ -369,7 +370,7 @@ def handle_failed_jobs(*, evaluation_pk):
     if evaluation.status != evaluation.FAILURE:
         evaluation.update_status(
             status=evaluation.FAILURE,
-            error_message="The algorithm failed on one or more cases.",
+            error_message=EvaluationErrorMessages.ALGORITHM_FAILURE,
         )
 
     # Cancel any pending jobs for this algorithm image,

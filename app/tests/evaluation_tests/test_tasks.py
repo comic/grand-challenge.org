@@ -21,6 +21,7 @@ from grandchallenge.components.tasks import (
     push_container_image,
     validate_docker_image,
 )
+from grandchallenge.core.error_messages import EvaluationErrorMessages
 from grandchallenge.evaluation.models import Evaluation, Method, Submission
 from grandchallenge.evaluation.tasks import (
     cancel_external_evaluations_past_timeout,
@@ -724,7 +725,7 @@ def test_non_zip_submission_failure(
     assert len(submission.evaluation_set.all()) == 1
     evaluation = submission.evaluation_set.first()
     assert evaluation.error_message.endswith(
-        "7z-compressed files are not supported."
+        f"7z-compressed {EvaluationErrorMessages.UNSUPPORTED_INPUT}"
     )
     assert evaluation.status == evaluation.FAILURE
 
