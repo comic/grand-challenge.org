@@ -129,7 +129,6 @@ jobs:
               run: |
                 aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/diag-nijmegen
                 make push_web_base
-                make push_web
                 make push_web_test_base
             - name: Create Summary
               run: |
