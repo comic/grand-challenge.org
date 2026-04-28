@@ -15,4 +15,4 @@ class EvaluationErrorMessages(StrEnum):
     INTERFACE_MISMATCH = (
         "The algorithm interfaces do not match those defined for the phase."
     )
-    UNSUPPORTED_INPUT = "files are not supported."
+    UNSUPPORTED_INPUT = "Input file type is not supported"

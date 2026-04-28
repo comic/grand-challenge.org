@@ -724,9 +724,7 @@ def test_non_zip_submission_failure(
     # The evaluation method should return the correct answer
     assert len(submission.evaluation_set.all()) == 1
     evaluation = submission.evaluation_set.first()
-    assert evaluation.error_message.endswith(
-        f"7z-compressed {EvaluationErrorMessages.UNSUPPORTED_INPUT}"
-    )
+    assert evaluation.error_message == EvaluationErrorMessages.UNSUPPORTED_INPUT
     assert evaluation.status == evaluation.FAILURE
 
 
