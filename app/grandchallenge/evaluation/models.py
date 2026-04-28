@@ -1946,16 +1946,6 @@ class EvaluationManager(ComponentJobManager):
 
 class EvaluationActionMessageBuilder:
 
-    HANDLERS = {
-        SystemErrorMessages.UNEXPECTED_ERROR: "_handle_unexpected",
-        SystemErrorMessages.MEMORY_LIMIT_EXCEEDED: "_handle_resource_limit",
-        SystemErrorMessages.TIME_LIMIT_EXCEEDED: "_handle_resource_limit",
-        EvaluationErrorMessages.ALGORITHM_FAILURE: "_handle_algorithm_failure",
-        EvaluationErrorMessages.UNSUCCESSFUL_JOBS: "_handle_reevaluation_blocker",
-        EvaluationErrorMessages.INTERFACE_MISMATCH: "_handle_reevaluation_blocker",
-        EvaluationErrorMessages.UNSUPPORTED_INPUT: "_handle_invalid_input",
-    }
-
     def __init__(self, *, evaluation, user):
         self.evaluation = evaluation
         self.phase = evaluation.submission.phase
@@ -1975,11 +1965,43 @@ class EvaluationActionMessageBuilder:
         if not self.evaluation.error_message:
             return
 
-        for error_message, handler_name in self.HANDLERS.items():
-            if error_message in self.evaluation.error_message:
-                return getattr(self, handler_name)()
-
-        return self._handle_custom()
+        if (
+            SystemErrorMessages.UNEXPECTED_ERROR
+            in self.evaluation.error_message
+        ):
+            return self._handle_unexpected()
+        elif (
+            SystemErrorMessages.MEMORY_LIMIT_EXCEEDED
+            in self.evaluation.error_message
+        ):
+            return self._handle_resource_limit()
+        elif (
+            SystemErrorMessages.TIME_LIMIT_EXCEEDED
+            in self.evaluation.error_message
+        ):
+            return self._handle_resource_limit()
+        elif (
+            EvaluationErrorMessages.ALGORITHM_FAILURE
+            in self.evaluation.error_message
+        ):
+            return self._handle_algorithm_failure()
+        elif (
+            EvaluationErrorMessages.UNSUCCESSFUL_JOBS
+            in self.evaluation.error_message
+        ):
+            return self._handle_reevaluation_blocker()
+        elif (
+            EvaluationErrorMessages.INTERFACE_MISMATCH
+            in self.evaluation.error_message
+        ):
+            return self._handle_reevaluation_blocker()
+        elif (
+            EvaluationErrorMessages.UNSUPPORTED_INPUT
+            in self.evaluation.error_message
+        ):
+            return self._handle_invalid_input()
+        else:
+            return self._handle_custom()
 
     @property
     def support_contact_message(self):
@@ -2028,30 +2050,33 @@ class EvaluationActionMessageBuilder:
         )
 
     def _handle_resource_limit(self):
-        if self.is_algorithm_phase:
-            if self.is_admin:
+        if self.is_admin:
+            if self.is_algorithm_phase:
                 return format_html(
                     "{icon} The participant's algorithm ran successfully but your evaluation "
                     "method failed, please {logs_message}.",
                     icon=self.exclamation_mark,
                     logs_message=self.evaluation_logs_message,
                 )
-            return format_html(
-                "Your algorithm ran successfully, but the scoring failed. "
-                "If you would like more information, {contact_message}.",
-                contact_message=self.organiser_contact_message,
-            )
-        if self.is_admin:
-            return format_html(
-                "{icon} Your evaluation method failed, please {logs_message}.",
-                icon=self.exclamation_mark,
-                logs_message=self.evaluation_logs_message,
-            )
-        return format_html(
-            "The scoring of your submission failed. "
-            "If you would like more information, {contact_message}.",
-            contact_message=self.organiser_contact_message,
-        )
+            else:
+                return format_html(
+                    "{icon} Your evaluation method failed, please {logs_message}.",
+                    icon=self.exclamation_mark,
+                    logs_message=self.evaluation_logs_message,
+                )
+        else:
+            if self.is_algorithm_phase:
+                return format_html(
+                    "Your algorithm ran successfully, but the scoring failed. "
+                    "If you would like more information, {contact_message}.",
+                    contact_message=self.organiser_contact_message,
+                )
+            else:
+                return format_html(
+                    "The scoring of your submission failed. "
+                    "If you would like more information, {contact_message}.",
+                    contact_message=self.organiser_contact_message,
+                )
 
     def _handle_algorithm_failure(self):
         if self.is_admin:
@@ -2062,27 +2087,30 @@ class EvaluationActionMessageBuilder:
                         label="review their algorithm logs"
                     ),
                 )
-            return format_html(
-                "{icon} The participant's algorithm failed and they cannot read their logs. "
-                "Please {logs_message} and inform the participant about what to do.",
-                icon=self.exclamation_mark,
-                logs_message=self.algorithm_logs_message(
-                    label="inspect the algorithm logs"
-                ),
-            )
-        if self.open_logs:
-            return format_html(
-                "{icon} Please {logs_message} and re-submit.",
-                icon=self.exclamation_mark,
-                logs_message=self.algorithm_logs_message(
-                    label="review your algorithm logs"
-                ),
-            )
-        return format_html(
-            "{icon} Please {contact_message} for more information.",
-            icon=self.exclamation_mark,
-            contact_message=self.organiser_contact_message,
-        )
+            else:
+                return format_html(
+                    "{icon} The participant's algorithm failed and they cannot read their logs. "
+                    "Please {logs_message} and inform the participant about what to do.",
+                    icon=self.exclamation_mark,
+                    logs_message=self.algorithm_logs_message(
+                        label="inspect the algorithm logs"
+                    ),
+                )
+        else:
+            if self.open_logs:
+                return format_html(
+                    "{icon} Please {logs_message} and re-submit.",
+                    icon=self.exclamation_mark,
+                    logs_message=self.algorithm_logs_message(
+                        label="review your algorithm logs"
+                    ),
+                )
+            else:
+                return format_html(
+                    "{icon} Please {contact_message} for more information.",
+                    icon=self.exclamation_mark,
+                    contact_message=self.organiser_contact_message,
+                )
 
     def _handle_custom(self):
         if self.is_admin:
@@ -2092,20 +2120,23 @@ class EvaluationActionMessageBuilder:
                     "method failed. Please {logs_message} if necessary.",
                     logs_message=self.evaluation_logs_message,
                 )
-            return format_html(
-                "Your evaluation method failed. Please {logs_message} if necessary.",
-                logs_message=self.evaluation_logs_message,
-            )
-        if self.is_algorithm_phase:
-            return format_html(
-                "Your algorithm ran successfully, but the scoring failed. "
-                "If you would like more information, {contact_message}.",
-                contact_message=self.organiser_contact_message,
-            )
-        return format_html(
-            "If you would like more information, {contact_message}.",
-            contact_message=self.organiser_contact_message,
-        )
+            else:
+                return format_html(
+                    "Your evaluation method failed. Please {logs_message} if necessary.",
+                    logs_message=self.evaluation_logs_message,
+                )
+        else:
+            if self.is_algorithm_phase:
+                return format_html(
+                    "Your algorithm ran successfully, but the scoring failed. "
+                    "If you would like more information, {contact_message}.",
+                    contact_message=self.organiser_contact_message,
+                )
+            else:
+                return format_html(
+                    "If you would like more information, {contact_message}.",
+                    contact_message=self.organiser_contact_message,
+                )
 
     def _handle_reevaluation_blocker(self):
         if self.is_admin:
@@ -2114,26 +2145,23 @@ class EvaluationActionMessageBuilder:
                 icon=self.exclamation_mark,
                 contact_message=self.support_contact_message,
             )
-        return format_html(
-            "Re-evaluation of your submission is blocked. "
-            "If you would like more information, {contact_message}.",
-            contact_message=self.organiser_contact_message,
-        )
+        else:
+            return format_html(
+                "Re-evaluation of your submission is blocked. "
+                "If you would like more information, {contact_message}.",
+                contact_message=self.organiser_contact_message,
+            )
 
     def _handle_invalid_input(self):
         if self.is_admin:
             return format_html(
                 "The participant needs to resubmit with the correct input format."
             )
-        return format_html(
-            "{icon} Please make sure your submission is in the correct format and resubmit.",
-            icon=self.exclamation_mark,
-        )
-
-    def build_action_message(self, *, user):
-        return EvaluationActionMessageBuilder(
-            evaluation=self, user=user
-        ).build()
+        else:
+            return format_html(
+                "{icon} Please make sure your submission is in the correct format and resubmit.",
+                icon=self.exclamation_mark,
+            )
 
 
 class Evaluation(CIVForObjectMixin, ComponentJob):
