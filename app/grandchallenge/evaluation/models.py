@@ -44,7 +44,10 @@ from grandchallenge.components.schemas import (
     GPUTypeChoices,
     get_default_gpu_type_choices,
 )
-from grandchallenge.core.error_messages import EvaluationErrorMessages
+from grandchallenge.core.error_messages import (
+    EvaluationErrorMessages,
+    SystemErrorMessages,
+)
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
@@ -1941,6 +1944,198 @@ class EvaluationManager(ComponentJobManager):
         return existing_evaluations
 
 
+class EvaluationActionMessageBuilder:
+
+    HANDLERS = {
+        SystemErrorMessages.UNEXPECTED_ERROR: "_handle_unexpected",
+        SystemErrorMessages.MEMORY_LIMIT_EXCEEDED: "_handle_resource_limit",
+        SystemErrorMessages.TIME_LIMIT_EXCEEDED: "_handle_resource_limit",
+        EvaluationErrorMessages.ALGORITHM_FAILURE: "_handle_algorithm_failure",
+        EvaluationErrorMessages.UNSUCCESSFUL_JOBS: "_handle_reevaluation_blocker",
+        EvaluationErrorMessages.INTERFACE_MISMATCH: "_handle_reevaluation_blocker",
+        EvaluationErrorMessages.UNSUPPORTED_INPUT: "_handle_invalid_input",
+    }
+
+    def __init__(self, *, evaluation, user):
+        self.evaluation = evaluation
+        self.phase = evaluation.submission.phase
+        self.is_admin = self.phase.challenge.is_admin(user)
+        self.is_algorithm_phase = (
+            self.phase.submission_kind == SubmissionKindChoices.ALGORITHM
+        )
+        self.open_logs = self.phase.give_algorithm_editors_job_view_permissions
+
+    def build(self):
+        if self.evaluation.status not in (
+            Evaluation.FAILURE,
+            Evaluation.CANCELLED,
+        ):
+            return
+
+        if not self.evaluation.error_message:
+            return
+
+        for error_message, handler_name in self.HANDLERS.items():
+            if error_message in self.evaluation.error_message:
+                return getattr(self, handler_name)()
+
+        return self._handle_custom()
+
+    @property
+    def support_contact_message(self):
+        return format_html(
+            "<a href='mailto:{email}'>contact grand challenge support</a>",
+            email=settings.SUPPORT_EMAIL,
+        )
+
+    @property
+    def organiser_contact_message(self):
+        return format_html(
+            "<a href='mailto:{email}'>please contact the challenge organisers</a>",
+            email=self.phase.challenge.contact_email,
+        )
+
+    @property
+    def evaluation_logs_message(self):
+        return format_html(
+            "<a href={url}>inspect the evaluation logs</a>",
+            url=self.evaluation.get_absolute_url(),
+        )
+
+    @property
+    def exclamation_mark(self):
+        return format_html(
+            '<i class="fas fa-exclamation-triangle fa-fw text-warning pr-1"></i>'
+        )
+
+    def algorithm_logs_message(self, label):
+        return format_html(
+            "<a href={url}>{label}</a>",
+            url=reverse(
+                "algorithms:job-list",
+                kwargs={
+                    "slug": self.evaluation.submission.algorithm_image.algorithm.slug
+                },
+            ),
+            label=label,
+        )
+
+    def _handle_unexpected(self):
+        return format_html(
+            "The site administrators are investigating this issue. "
+            "If you would like more information, {contact_message}.",
+            contact_message=self.support_contact_message,
+        )
+
+    def _handle_resource_limit(self):
+        if self.is_algorithm_phase:
+            if self.is_admin:
+                return format_html(
+                    "{icon} The participant's algorithm ran successfully but your evaluation "
+                    "method failed, please {logs_message}.",
+                    icon=self.exclamation_mark,
+                    logs_message=self.evaluation_logs_message,
+                )
+            return format_html(
+                "Your algorithm ran successfully, but the scoring failed. "
+                "If you would like more information, {contact_message}.",
+                contact_message=self.organiser_contact_message,
+            )
+        if self.is_admin:
+            return format_html(
+                "{icon} Your evaluation method failed, please {logs_message}.",
+                icon=self.exclamation_mark,
+                logs_message=self.evaluation_logs_message,
+            )
+        return format_html(
+            "The scoring of your submission failed. "
+            "If you would like more information, {contact_message}.",
+            contact_message=self.organiser_contact_message,
+        )
+
+    def _handle_algorithm_failure(self):
+        if self.is_admin:
+            if self.open_logs:
+                return format_html(
+                    "The challenge participant can {logs_message} and re-submit.",
+                    logs_message=self.algorithm_logs_message(
+                        label="review their algorithm logs"
+                    ),
+                )
+            return format_html(
+                "{icon} The participant's algorithm failed and they cannot read their logs. "
+                "Please {logs_message} and inform the participant about what to do.",
+                icon=self.exclamation_mark,
+                logs_message=self.algorithm_logs_message(
+                    label="inspect the algorithm logs"
+                ),
+            )
+        if self.open_logs:
+            return format_html(
+                "{icon} Please {logs_message} and re-submit.",
+                icon=self.exclamation_mark,
+                logs_message=self.algorithm_logs_message(
+                    label="review your algorithm logs"
+                ),
+            )
+        return format_html(
+            "{icon} Please {contact_message} for more information.",
+            icon=self.exclamation_mark,
+            contact_message=self.organiser_contact_message,
+        )
+
+    def _handle_custom(self):
+        if self.is_admin:
+            if self.is_algorithm_phase:
+                return format_html(
+                    "The participant's algorithm ran successfully but your evaluation "
+                    "method failed. Please {logs_message} if necessary.",
+                    logs_message=self.evaluation_logs_message,
+                )
+            return format_html(
+                "Your evaluation method failed. Please {logs_message} if necessary.",
+                logs_message=self.evaluation_logs_message,
+            )
+        if self.is_algorithm_phase:
+            return format_html(
+                "Your algorithm ran successfully, but the scoring failed. "
+                "If you would like more information, {contact_message}.",
+                contact_message=self.organiser_contact_message,
+            )
+        return format_html(
+            "If you would like more information, {contact_message}.",
+            contact_message=self.organiser_contact_message,
+        )
+
+    def _handle_reevaluation_blocker(self):
+        if self.is_admin:
+            return format_html(
+                "{icon} Please {contact_message}.",
+                icon=self.exclamation_mark,
+                contact_message=self.support_contact_message,
+            )
+        return format_html(
+            "Re-evaluation of your submission is blocked. "
+            "If you would like more information, {contact_message}.",
+            contact_message=self.organiser_contact_message,
+        )
+
+    def _handle_invalid_input(self):
+        if self.is_admin:
+            return format_html(
+                "The participant needs to resubmit with the correct input format."
+            )
+        return format_html(
+            "{icon} Please make sure your submission is in the correct format and resubmit.",
+            icon=self.exclamation_mark,
+        )
+
+    def build_action_message(self, *, user):
+        return EvaluationActionMessageBuilder(
+            evaluation=self, user=user
+        ).build()
+
+
 class Evaluation(CIVForObjectMixin, ComponentJob):
     """Stores information about an evaluation for a given submission."""
 
@@ -2251,6 +2446,7 @@ class EvaluationUserObjectPermission(UserObjectPermissionBase):
 
 
 class EvaluationGroupObjectPermission(GroupObjectPermissionBase):
+
     allowed_permissions = frozenset(
         {"change_evaluation", "view_evaluation", "claim_evaluation"}
     )
