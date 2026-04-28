@@ -1235,7 +1235,7 @@ def test_assign_tarball_from_upload(
     obj2.refresh_from_db()
     assert not obj2.is_desired_version
     assert obj2.import_status == ImportStatusChoices.FAILED
-    assert "with this sha256 already exists." in obj2.status
+    assert "with this checksum already exists." in obj2.status
     assert not obj2.user_upload
     with pytest.raises(ValueError):
         getattr(obj2, field_to_copy).file
