@@ -65,7 +65,7 @@ dependencies = [
     "isort",
     "panimg-models",
     "psutil",
-    "django-lambda-tasks", # For django-lambda-tasks, see https://docs.aws.amazon.com/lambda/latest/dg/python-image.html#python-image-clients
+    "django-lambda-tasks",
 ]
 name = "grand-challenge.org"
 version = "0.1.0"
