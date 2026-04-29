@@ -27,3 +27,12 @@ ARG COMMIT_ID=unknown
 ENV COMMIT_ID=$COMMIT_ID
 
 RUN python manage.py collectstatic --noinput && python manage.py compress --force
+
+####################
+# Lambda Container #
+####################
+
+FROM --platform=linux/amd64 dist AS dist-lambda
+
+ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]
+CMD [ "lambda_tasks.handler.handler" ]
