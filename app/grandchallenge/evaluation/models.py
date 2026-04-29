@@ -1966,38 +1966,38 @@ class EvaluationActionMessageBuilder:
             return
 
         if (
-            SystemErrorMessages.UNEXPECTED_ERROR
-            == self.evaluation.error_message
+            self.evaluation.error_message
+            == SystemErrorMessages.UNEXPECTED_ERROR
         ):
             return self._handle_unexpected()
         elif (
-            SystemErrorMessages.MEMORY_LIMIT_EXCEEDED
-            == self.evaluation.error_message
+            self.evaluation.error_message
+            == SystemErrorMessages.MEMORY_LIMIT_EXCEEDED
         ):
             return self._handle_resource_limit()
         elif (
-            SystemErrorMessages.TIME_LIMIT_EXCEEDED
-            == self.evaluation.error_message
+            self.evaluation.error_message
+            == SystemErrorMessages.TIME_LIMIT_EXCEEDED
         ):
             return self._handle_resource_limit()
         elif (
-            EvaluationErrorMessages.ALGORITHM_FAILURE
-            == self.evaluation.error_message
+            self.evaluation.error_message
+            == EvaluationErrorMessages.ALGORITHM_FAILURE
         ):
             return self._handle_algorithm_failure()
         elif (
-            EvaluationErrorMessages.UNSUCCESSFUL_JOBS
-            == self.evaluation.error_message
+            self.evaluation.error_message
+            == EvaluationErrorMessages.UNSUCCESSFUL_JOBS
         ):
             return self._handle_reevaluation_blocker()
         elif (
-            EvaluationErrorMessages.INTERFACE_MISMATCH
-            == self.evaluation.error_message
+            self.evaluation.error_message
+            == EvaluationErrorMessages.INTERFACE_MISMATCH
         ):
             return self._handle_reevaluation_blocker()
         elif (
-            EvaluationErrorMessages.UNSUPPORTED_INPUT
-            == self.evaluation.error_message
+            self.evaluation.error_message
+            == EvaluationErrorMessages.UNSUPPORTED_INPUT
         ):
             return self._handle_invalid_input()
         else:
