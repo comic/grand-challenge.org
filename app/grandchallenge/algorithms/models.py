@@ -1781,3 +1781,12 @@ class Invocation(UUIDModel):
         to=ComponentInterfaceValue,
         related_name="algorithms_endpoints_as_output",
     )
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if adding:
+            if self.endpoint.status != self.endpoint.StatusChoices.RUNNING:
+                raise ValidationError("Endpoint is not running")
+
+        super().save(*args, **kwargs)
