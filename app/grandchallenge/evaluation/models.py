@@ -1967,37 +1967,37 @@ class EvaluationActionMessageBuilder:
 
         if (
             SystemErrorMessages.UNEXPECTED_ERROR
-            in self.evaluation.error_message
+            == self.evaluation.error_message
         ):
             return self._handle_unexpected()
         elif (
             SystemErrorMessages.MEMORY_LIMIT_EXCEEDED
-            in self.evaluation.error_message
+            == self.evaluation.error_message
         ):
             return self._handle_resource_limit()
         elif (
             SystemErrorMessages.TIME_LIMIT_EXCEEDED
-            in self.evaluation.error_message
+            == self.evaluation.error_message
         ):
             return self._handle_resource_limit()
         elif (
             EvaluationErrorMessages.ALGORITHM_FAILURE
-            in self.evaluation.error_message
+            == self.evaluation.error_message
         ):
             return self._handle_algorithm_failure()
         elif (
             EvaluationErrorMessages.UNSUCCESSFUL_JOBS
-            in self.evaluation.error_message
+            == self.evaluation.error_message
         ):
             return self._handle_reevaluation_blocker()
         elif (
             EvaluationErrorMessages.INTERFACE_MISMATCH
-            in self.evaluation.error_message
+            == self.evaluation.error_message
         ):
             return self._handle_reevaluation_blocker()
         elif (
             EvaluationErrorMessages.UNSUPPORTED_INPUT
-            in self.evaluation.error_message
+            == self.evaluation.error_message
         ):
             return self._handle_invalid_input()
         else:
