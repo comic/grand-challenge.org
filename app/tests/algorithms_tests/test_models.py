@@ -1732,6 +1732,16 @@ def test_algorithm_queryset_with_user_roles_multiple_algorithms():
     assert result[algorithm4.pk].user_is_algorithm_user is True
 
 
+def test_invocation_inference_id_format(settings):
+    settings.COMPONENTS_REGISTRY_PREFIX = "rumc-gcorg-p"
+    invocation = InvocationFactory.build()
+
+    assert invocation.inference_id == (
+        f"rumc-gcorg-p-alg-endp-invoc-{invocation.pk}"
+    )
+    assert len(invocation.inference_id) <= 64
+
+
 @pytest.mark.django_db
 def test_cannot_create_invocation_for_non_running_endpoint():
     endpoint = EndpointFactory()

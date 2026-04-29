@@ -1790,3 +1790,10 @@ class Invocation(UUIDModel):
                 raise ValidationError("Endpoint is not running")
 
         super().save(*args, **kwargs)
+
+    @property
+    def inference_id(self):
+        # Sagemaker requires this to be max 64 chars
+        return (
+            f"{settings.COMPONENTS_REGISTRY_PREFIX}-alg-endp-invoc-{self.pk}"
+        )
