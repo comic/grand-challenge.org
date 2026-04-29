@@ -8,6 +8,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     AlgorithmUserCredit,
     Endpoint,
+    EndpointStatusChoices,
     Invocation,
     Job,
 )
@@ -142,5 +143,7 @@ class InvocationFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Invocation
 
-    endpoint = factory.SubFactory(EndpointFactory)
+    endpoint = factory.SubFactory(
+        EndpointFactory, status=EndpointStatusChoices.RUNNING
+    )
     time_limit = 60
