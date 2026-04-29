@@ -23,6 +23,7 @@ from grandchallenge.components.models import (
     InterfaceKindChoices,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
+from grandchallenge.core.error_messages import EvaluationErrorMessages
 from grandchallenge.core.templatetags.remove_whitespace import oxford_comma
 from grandchallenge.evaluation.models import (
     CombinedLeaderboard,
@@ -2066,7 +2067,7 @@ def test_phase_archive_info_permissions(client):
 )
 @pytest.mark.django_db
 def test_algorithm_interface_for_phase_view_permission(client, viewname):
-    (participant, admin, user, user_with_perm) = UserFactory.create_batch(4)
+    participant, admin, user, user_with_perm = UserFactory.create_batch(4)
     assign_perm("evaluation.configure_algorithm_phase", user_with_perm)
 
     prediction_phase = PhaseFactory(submission_kind=SubmissionKindChoices.CSV)
@@ -2109,7 +2110,7 @@ def test_algorithm_interface_for_phase_view_permission(client, viewname):
 
 @pytest.mark.django_db
 def test_algorithm_interface_for_phase_delete_permission(client):
-    (participant, admin, user, user_with_perm) = UserFactory.create_batch(4)
+    participant, admin, user, user_with_perm = UserFactory.create_batch(4)
     assign_perm("evaluation.configure_algorithm_phase", user_with_perm)
     prediction_phase = PhaseFactory(submission_kind=SubmissionKindChoices.CSV)
     algorithm_phase = PhaseFactory(
@@ -2960,9 +2961,8 @@ def test_create_evaluation_requires_matching_algorithm_interfaces(
 
     assert eval.status == status
     if status == Evaluation.CANCELLED:
-        assert (
-            "The algorithm interfaces do not match those defined for the phase."
-            in str(eval.error_message)
+        assert EvaluationErrorMessages.INTERFACE_MISMATCH in str(
+            eval.error_message
         )
 
 
@@ -3054,9 +3054,8 @@ def test_create_evaluation_blocked_if_failed_jobs_exist(
     eval = Evaluation.objects.order_by("created").last()
     assert eval.status == status
     if status == Evaluation.CANCELLED:
-        assert (
-            "There are non-successful jobs for this submission. These need to be handled first before you can re-evaluate. Please contact support."
-            in str(eval.error_message)
+        assert EvaluationErrorMessages.UNSUCCESSFUL_JOBS in str(
+            eval.error_message
         )
 
 

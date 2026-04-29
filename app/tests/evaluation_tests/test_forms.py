@@ -41,6 +41,7 @@ from grandchallenge.components.widgets import (
     FileSearchMultiWidget,
     SourceSelect,
 )
+from grandchallenge.core.error_messages import EvaluationErrorMessages
 from grandchallenge.evaluation.forms import (
     AlgorithmInterfaceForPhaseCopyForm,
     ConfigureAlgorithmPhasesForm,
@@ -1532,10 +1533,7 @@ def test_reschedule_evaluation_requires_matching_algorithm_interfaces(
 
     assert form.is_valid() == form_valid
     if not form_valid:
-        assert (
-            "The algorithm interfaces do not match those defined for the phase."
-            in str(form.errors)
-        )
+        assert EvaluationErrorMessages.INTERFACE_MISMATCH in str(form.errors)
 
 
 @pytest.mark.django_db

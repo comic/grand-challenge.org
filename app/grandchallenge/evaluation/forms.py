@@ -32,6 +32,7 @@ from grandchallenge.components.forms import (
 from grandchallenge.components.models import ImportStatusChoices
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import assign_tarball_from_upload
+from grandchallenge.core.error_messages import EvaluationErrorMessages
 from grandchallenge.core.forms import (
     PhaseMixin,
     SaveFormInitMixin,
@@ -721,8 +722,7 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
                 "submission"
             ].has_matching_algorithm_interfaces:
                 raise ValidationError(
-                    "The algorithm interfaces do not match those "
-                    "defined for the phase."
+                    EvaluationErrorMessages.INTERFACE_MISMATCH,
                 )
 
             if (

@@ -4,6 +4,7 @@ from datetime import timedelta
 from typing import NamedTuple
 
 import pytest
+from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -22,6 +23,7 @@ from grandchallenge.evaluation.models import (
     SUBMISSION_WINDOW_PARENT_VALIDATION_TEXT,
     CombinedLeaderboard,
     Evaluation,
+    EvaluationActionMessageBuilder,
     Method,
     Phase,
     PhaseAdditionalEvaluationInput,
@@ -2513,3 +2515,298 @@ def test_method_cannot_be_added_to_external_phase():
         method.full_clean()
 
     assert "You cannot add a method to an external evaluation." in str(e)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("is_admin", [True, False])
+@pytest.mark.parametrize(
+    "submission_kind",
+    [SubmissionKindChoices.ALGORITHM, SubmissionKindChoices.CSV],
+)
+@pytest.mark.parametrize("open_logs", [True, False])
+def test_handle_unexpected(is_admin, submission_kind, open_logs):
+    user = UserFactory()
+
+    phase = PhaseFactory(
+        submission_kind=submission_kind,
+        give_algorithm_editors_job_view_permissions=open_logs,
+    )
+    if is_admin:
+        phase.challenge.add_admin(user)
+    else:
+        phase.challenge.add_participant(user)
+
+    eval = EvaluationFactory(time_limit=10, submission__phase=phase)
+
+    builder = EvaluationActionMessageBuilder(evaluation=eval, user=user)
+    result = builder._handle_unexpected()
+    assert (
+        "The site administrators are investigating this issue. If you would like more information,"
+        in result
+    )
+    assert settings.SUPPORT_EMAIL in result
+
+
+@pytest.mark.parametrize(
+    "is_admin,submission_kind,open_logs,expected_message",
+    [
+        (
+            True,
+            SubmissionKindChoices.ALGORITHM,
+            True,
+            "The participant's algorithm ran successfully but your evaluation method failed",
+        ),
+        (
+            True,
+            SubmissionKindChoices.CSV,
+            True,
+            "Your evaluation method failed",
+        ),
+        (
+            False,
+            SubmissionKindChoices.ALGORITHM,
+            True,
+            "Your algorithm ran successfully, but the scoring failed. If you would like more information, ",
+        ),
+        (
+            False,
+            SubmissionKindChoices.CSV,
+            True,
+            "The scoring of your submission failed. If you would like more information, ",
+        ),
+        (
+            True,
+            SubmissionKindChoices.ALGORITHM,
+            False,
+            "The participant's algorithm ran successfully but your evaluation method failed",
+        ),
+        (
+            True,
+            SubmissionKindChoices.CSV,
+            False,
+            "Your evaluation method failed",
+        ),
+        (
+            False,
+            SubmissionKindChoices.ALGORITHM,
+            False,
+            "Your algorithm ran successfully, but the scoring failed. If you would like more information, ",
+        ),
+        (
+            False,
+            SubmissionKindChoices.CSV,
+            False,
+            "The scoring of your submission failed. If you would like more information, ",
+        ),
+    ],
+)
+@pytest.mark.django_db
+def test_handle_resource_limit(
+    is_admin, submission_kind, open_logs, expected_message
+):
+    user = UserFactory()
+
+    phase = PhaseFactory(
+        submission_kind=submission_kind,
+        give_algorithm_editors_job_view_permissions=open_logs,
+    )
+    if is_admin:
+        phase.challenge.add_admin(user)
+    else:
+        phase.challenge.add_participant(user)
+
+    eval = EvaluationFactory(time_limit=10, submission__phase=phase)
+
+    builder = EvaluationActionMessageBuilder(evaluation=eval, user=user)
+
+    result = builder._handle_resource_limit()
+    assert expected_message in result
+
+
+@pytest.mark.parametrize(
+    "is_admin,open_logs,expected_message",
+    [
+        (
+            True,
+            True,
+            "The challenge participant can",
+        ),
+        (
+            False,
+            True,
+            "review your algorithm logs",
+        ),
+        (
+            True,
+            False,
+            "The participant's algorithm failed and they cannot read their logs",
+        ),
+        (
+            False,
+            False,
+            "please contact the challenge organisers",
+        ),
+    ],
+)
+@pytest.mark.django_db
+def test_handle_algorithm_failure(is_admin, open_logs, expected_message):
+    user = UserFactory()
+
+    phase = PhaseFactory(
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        give_algorithm_editors_job_view_permissions=open_logs,
+    )
+    if is_admin:
+        phase.challenge.add_admin(user)
+    else:
+        phase.challenge.add_participant(user)
+
+    ai = AlgorithmImageFactory()
+
+    eval = EvaluationFactory(
+        time_limit=10, submission__phase=phase, submission__algorithm_image=ai
+    )
+
+    builder = EvaluationActionMessageBuilder(evaluation=eval, user=user)
+
+    result = builder._handle_algorithm_failure()
+    assert expected_message in result
+
+
+@pytest.mark.parametrize(
+    "is_admin,submission_kind,open_logs,expected_message",
+    [
+        (
+            True,
+            SubmissionKindChoices.ALGORITHM,
+            True,
+            "The participant's algorithm ran successfully but your evaluation method failed.",
+        ),
+        (
+            True,
+            SubmissionKindChoices.CSV,
+            False,
+            "Your evaluation method failed",
+        ),
+        (
+            False,
+            SubmissionKindChoices.ALGORITHM,
+            True,
+            "Your algorithm ran successfully, but the scoring failed.",
+        ),
+        (
+            False,
+            SubmissionKindChoices.CSV,
+            False,
+            "If you would like more information,",
+        ),
+        (
+            True,
+            SubmissionKindChoices.ALGORITHM,
+            False,
+            "The participant's algorithm ran successfully but your evaluation method failed",
+        ),
+        (
+            False,
+            SubmissionKindChoices.ALGORITHM,
+            False,
+            "Your algorithm ran successfully, but the scoring failed.",
+        ),
+    ],
+)
+@pytest.mark.django_db
+def test_handle_custom(is_admin, submission_kind, open_logs, expected_message):
+    user = UserFactory()
+
+    phase = PhaseFactory(
+        submission_kind=submission_kind,
+        give_algorithm_editors_job_view_permissions=open_logs,
+    )
+    if is_admin:
+        phase.challenge.add_admin(user)
+    else:
+        phase.challenge.add_participant(user)
+
+    eval = EvaluationFactory(time_limit=10, submission__phase=phase)
+
+    builder = EvaluationActionMessageBuilder(evaluation=eval, user=user)
+
+    result = builder._handle_custom()
+    assert expected_message in result
+
+
+@pytest.mark.parametrize(
+    "is_admin,open_logs,expected_message",
+    [
+        (
+            True,
+            True,
+            "contact grand challenge support",
+        ),
+        (
+            False,
+            True,
+            "please contact the challenge organisers",
+        ),
+        (
+            True,
+            False,
+            "contact grand challenge support",
+        ),
+        (
+            False,
+            False,
+            "please contact the challenge organisers",
+        ),
+    ],
+)
+@pytest.mark.django_db
+def test_reevaluation_blocker(is_admin, open_logs, expected_message):
+    user = UserFactory()
+
+    phase = PhaseFactory(
+        submission_kind=SubmissionKindChoices.ALGORITHM,
+        give_algorithm_editors_job_view_permissions=open_logs,
+    )
+    if is_admin:
+        phase.challenge.add_admin(user)
+    else:
+        phase.challenge.add_participant(user)
+
+    eval = EvaluationFactory(time_limit=10, submission__phase=phase)
+
+    builder = EvaluationActionMessageBuilder(evaluation=eval, user=user)
+
+    result = builder._handle_reevaluation_blocker()
+    assert expected_message in result
+
+
+@pytest.mark.parametrize(
+    "is_admin, expected_message",
+    [
+        (
+            True,
+            "The participant needs to resubmit with the correct input format.",
+        ),
+        (
+            False,
+            "Please make sure your submission is in the correct format and resubmit.",
+        ),
+    ],
+)
+@pytest.mark.django_db
+def test_invalid_input(is_admin, expected_message):
+    user = UserFactory()
+
+    phase = PhaseFactory()
+    if is_admin:
+        phase.challenge.add_admin(user)
+    else:
+        phase.challenge.add_participant(user)
+
+    eval = EvaluationFactory(time_limit=10, submission__phase=phase)
+
+    builder = EvaluationActionMessageBuilder(evaluation=eval, user=user)
+
+    result = builder._handle_invalid_input()
+    assert expected_message in result
