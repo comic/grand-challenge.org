@@ -87,8 +87,10 @@ build: build_web_test build_web_dist build_web_lambda
 
 push_staging: build_web_dist build_web_lambda
 	docker tag $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
+	docker tag $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):lambda-$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):lambda-$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 	aws ecr get-login-password --region $(GRAND_CHALLENGE_STAGING_REGION) --profile $(GRAND_CHALLENGE_STAGING_PROFILE) | docker login --username AWS --password-stdin $(GRAND_CHALLENGE_STAGING_ECR_HOST)
 	docker push $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
+	docker push $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):lambda-$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 
 migrate:
 	docker compose run --rm gc.localhost python manage.py migrate
