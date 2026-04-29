@@ -120,6 +120,7 @@ jobs:
               run: |
                 aws ecr get-login-password --region ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_REGION }} | docker login --username AWS --password-stdin ${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_HOST }}
                 GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI=${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI }} make push_web_private
+                GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI=${{ secrets.GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI }} make push_web_lambda
             - name: Configure AWS credentials for ECR Public
               uses: aws-actions/configure-aws-credentials@v6
               with:
