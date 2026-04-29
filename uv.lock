@@ -913,17 +913,18 @@ wheels = [
 
 [[package]]
 name = "django-lambda-tasks"
-version = "0.1.4"
+version = "0.1.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "awslambdaric" },
     { name = "boto3" },
     { name = "django" },
     { name = "pydantic" },
     { name = "redis" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d9/7d/b09b86beacba9fa5a8c091d5ec4b0ebce8699b04b4037dd794dcc37565b1/django_lambda_tasks-0.1.4.tar.gz", hash = "sha256:e0448d472a7c5d64f0f2aeeec87b00604c287b5c1cc60654bb58f788cb47b21d", size = 122620, upload-time = "2026-04-08T15:38:56.589Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b0/67/d15e9d3ef4780be6200762cd21fb2028ad4db908888444a2571a011ec4a6/django_lambda_tasks-0.1.5.tar.gz", hash = "sha256:1b4aa039b29ab4813dfe9cf0c91cc90e2602ba8abededb241e67d10c96e8f609", size = 123419, upload-time = "2026-04-29T09:54:12.801Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8e/41/2769bec63b4fe1d1ed115600b0ee8e09489716dfe772d8163e5d45f73c5e/django_lambda_tasks-0.1.4-py3-none-any.whl", hash = "sha256:b5c34cfba03fd73175e7a76ce00405459710c4046fa0e6af9014030e3950ada0", size = 23832, upload-time = "2026-04-08T15:38:55.224Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/67/f12ba88b2cd8b0f6f12f7cb5e96bae3a385b79535678d0f602c901c970fa/django_lambda_tasks-0.1.5-py3-none-any.whl", hash = "sha256:d9d770aa7d3c811ed7df1b9ac9f532aff523e1687a1c0057bb42750f8a2393e9", size = 23843, upload-time = "2026-04-29T09:54:11.639Z" },
 ]
 
 [[package]]
@@ -1199,7 +1200,6 @@ source = { virtual = "." }
 dependencies = [
     { name = "aioboto3" },
     { name = "aws-xray-sdk" },
-    { name = "awslambdaric" },
     { name = "beautifulsoup4" },
     { name = "black" },
     { name = "bleach", extra = ["css"] },
@@ -1291,7 +1291,6 @@ dev = [
 requires-dist = [
     { name = "aioboto3" },
     { name = "aws-xray-sdk" },
-    { name = "awslambdaric" },
     { name = "beautifulsoup4" },
     { name = "black" },
     { name = "bleach", extras = ["css"] },
