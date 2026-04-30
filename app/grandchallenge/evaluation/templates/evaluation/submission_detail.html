@@ -3,6 +3,7 @@
 {% load humanize %}
 {% load static %}
 {% load evaluation_extras %}
+{% load copy_to_clipboard %}
 {% load user_profile_link from profiles %}
 
 {% block title %}
@@ -123,12 +124,12 @@
             <tbody>
             {% for evaluation in object.evaluation_set.all %}
                 <tr>
-                    <td>{{ evaluation.pk }}</td>
+                    <td>{{ evaluation.pk|copy_button }}</td>
                     <td data-order="{{ evaluation.created|date:"c" }}">{{ evaluation.created }}</td>
                     <td data-order="{{ evaluation.modified|date:"c" }}">{{ evaluation.modified }}</td>
                     {% if "change_challenge" in challenge_perms %}
                         <td>
-                            <a href="{{ evaluation.method.get_absolute_url }}">{{ evaluation.method.pk|split_first:"-" }}</a>
+                            {{ evaluation.method.pk|copy_button:evaluation.method.get_absolute_url }}
                         </td>
                     {% endif %}
                     <td>
