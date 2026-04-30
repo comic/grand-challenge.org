@@ -1762,7 +1762,7 @@ class Invocation(UUIDModel):
         default=None,
         blank=True,
         help_text=(
-            "The duration of the invocation, if measured. "
+            "The duration of the invocation. "
             "Excludes data validation, container pulling, model downloading, "
             "data downloading and data uploading times. "
             "Potentially excludes model loading time, depending on the "
@@ -1775,11 +1775,11 @@ class Invocation(UUIDModel):
     error_message = models.CharField(max_length=1024, default="", blank=True)
     inputs = models.ManyToManyField(
         to=ComponentInterfaceValue,
-        related_name="algorithms_endpoints_as_input",
+        related_name="algorithms_invocations_as_input",
     )
     outputs = models.ManyToManyField(
         to=ComponentInterfaceValue,
-        related_name="algorithms_endpoints_as_output",
+        related_name="algorithms_invocations_as_output",
     )
 
     class Meta:
