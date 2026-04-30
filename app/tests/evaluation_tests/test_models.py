@@ -2810,3 +2810,52 @@ def test_invalid_input(is_admin, expected_message):
 
     result = builder._handle_invalid_input()
     assert expected_message in result
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "status,published,rank,expected_classes,expected_title_fragment",
+    [
+        (
+            Evaluation.SUCCESS,
+            True,
+            1,
+            "fas fa-eye text-success",
+            "published on the leaderboard",
+        ),
+        (
+            Evaluation.SUCCESS,
+            True,
+            0,
+            "fas fa-eye text-warning",
+            "not visible on the leaderboard",
+        ),
+        (
+            Evaluation.SUCCESS,
+            False,
+            0,
+            "fas fa-hourglass-half text-warning",
+            "under review",
+        ),
+        (
+            Evaluation.FAILURE,
+            False,
+            0,
+            "fas fa-eye-slash text-danger",
+            "no result for this submission",
+        ),
+    ],
+)
+def test_visibility_icon(
+    status, published, rank, expected_classes, expected_title_fragment
+):
+    evaluation = EvaluationFactory(
+        status=status,
+        published=published,
+        rank=rank,
+        time_limit=10,
+        submission__phase__auto_publish_new_results=published,
+    )
+    icon = evaluation.visibility_icon
+    assert expected_classes in icon
+    assert expected_title_fragment in icon

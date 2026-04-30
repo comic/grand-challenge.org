@@ -65,20 +65,24 @@
             </dd>
         {% endif %}
 
-        {% if object.supplementary_url %}
-            <dt>Supplementary URL ({{ object.phase.supplementary_url_label }})</dt>
-            <dd>
-                <a href="{{ object.supplementary_url }}" target="_blank">
-                    <i class="fas fa-link"></i> {{ object.supplementary_url }}
-                </a>
-            </dd>
+        {% if object.phase.show_supplementary_url or "change_challenge" in challenge_perms %}
+            {% if object.supplementary_url %}
+                <dt>Supplementary URL ({{ object.phase.supplementary_url_label }})</dt>
+                <dd>
+                    <a href="{{ object.supplementary_url }}" target="_blank">
+                        <i class="fas fa-link"></i> {{ object.supplementary_url }}
+                    </a>
+                </dd>
+            {% endif %}
         {% endif %}
 
-        {% if object.supplementary_file %}
-            <dt>Supplementary File ({{ object.phase.supplementary_file_label }})</dt>
-            <dd>
-                <a href="{{ object.supplementary_file.url }}"><i class="fa fa-file"></i> {{ object.supplementary_file.name }}</a>
-            </dd>
+        {% if object.phase.show_supplementary_file_link or "change_challenge" in challenge_perms %}
+            {% if object.supplementary_file %}
+                <dt>Supplementary File ({{ object.phase.supplementary_file_label }})</dt>
+                <dd>
+                    <a href="{{ object.supplementary_file.url }}"><i class="fa fa-file"></i> {{ object.supplementary_file.name }}</a>
+                </dd>
+            {% endif %}
         {% endif %}
 
         {% if object.predictions_file %}
@@ -124,7 +128,7 @@
                     <td data-order="{{ evaluation.modified|date:"c" }}">{{ evaluation.modified }}</td>
                     {% if "change_challenge" in challenge_perms %}
                         <td>
-                            <a href="{{ evaluation.method.get_absolute_url }}">{{ evaluation.method.id|split_first:"-" }}</a>
+                            <a href="{{ evaluation.method.get_absolute_url }}">{{ evaluation.method.pk|split_first:"-" }}</a>
                         </td>
                     {% endif %}
                     <td>

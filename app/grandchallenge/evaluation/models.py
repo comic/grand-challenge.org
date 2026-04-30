@@ -2475,21 +2475,23 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     def visibility_icon(self):
         if self.status == self.SUCCESS:
             if self.published and self.rank > 0:
-                return format_html(
-                    '<i class="fas fa-eye text-success" title="This result is published on the leaderboard."></i>'
-                )
+                classes = "fas fa-eye text-success"
+                title = "This result is published on the leaderboard."
             elif self.published:
-                return format_html(
-                    '<i class="fas fa-eye text-warning" title="This result is not visible on the leaderboard yet because it has not been ranked yet or the ranking failed."></i>'
-                )
+                classes = "fas fa-eye text-warning"
+                title = "This result is not visible on the leaderboard yet because it has not been ranked yet or the ranking failed."
             else:
-                return format_html(
-                    '<i class="fas fa-hourglass-half text-warning" title="This result is under review by the challenge admins."></i>'
-                )
+                classes = "fas fa-hourglass-half text-warning"
+                title = "This result is under review by the challenge admins."
         else:
-            return format_html(
-                '<i class="fas fa-eye-slash text-danger" title="There is no result for this submission."></i>'
-            )
+            classes = "fas fa-eye-slash text-danger"
+            title = "There is no result for this submission."
+
+        return format_html(
+            '<i class="{classes}" title="{title}"></i>',
+            classes=classes,
+            title=title,
+        )
 
 
 class EvaluationUserObjectPermission(UserObjectPermissionBase):
