@@ -2107,7 +2107,7 @@ class EvaluationActionMessageBuilder:
                 )
             else:
                 return format_html(
-                    "{icon} Please {contact_message} for more information.",
+                    "{icon} {contact_message} for more information.",
                     icon=self.exclamation_mark,
                     contact_message=self.organiser_contact_message,
                 )
@@ -2465,6 +2465,33 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
     @property
     def utilization(self):
         return self.evaluation_utilization
+
+    def build_action_message(self, *, user):
+        return EvaluationActionMessageBuilder(
+            evaluation=self, user=user
+        ).build()
+
+    @property
+    def visibility_icon(self):
+        if self.status == self.SUCCESS:
+            if self.published and self.rank > 0:
+                classes = "fas fa-eye text-success"
+                title = "This result is published on the leaderboard."
+            elif self.published:
+                classes = "fas fa-eye text-warning"
+                title = "This result is not visible on the leaderboard yet because it has not been ranked yet or the ranking failed."
+            else:
+                classes = "fas fa-hourglass-half text-warning"
+                title = "This result is under review by the challenge admins."
+        else:
+            classes = "fas fa-eye-slash text-danger"
+            title = "There is no result for this submission."
+
+        return format_html(
+            '<i class="{classes}" title="{title}"></i>',
+            classes=classes,
+            title=title,
+        )
 
 
 class EvaluationUserObjectPermission(UserObjectPermissionBase):

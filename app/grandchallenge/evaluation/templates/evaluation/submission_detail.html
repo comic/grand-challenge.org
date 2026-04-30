@@ -2,6 +2,7 @@
 {% load url %}
 {% load humanize %}
 {% load static %}
+{% load evaluation_extras %}
 {% load user_profile_link from profiles %}
 
 {% block title %}
@@ -32,6 +33,8 @@
     <h2>Submission {{ object.pk }}</h2>
 
     <dl>
+        <dt>Submission Id</dt>
+        <dd>{{ object.pk }}</dd>
 
         <dt>Challenge</dt>
         <dd>
@@ -55,6 +58,40 @@
                 </a></dd>
         {% endif %}
 
+        {% if object.comment %}
+            <dt>Comment</dt>
+            <dd>
+                {{ object.comment }}
+            </dd>
+        {% endif %}
+
+        {% if object.phase.show_supplementary_url or "change_challenge" in challenge_perms %}
+            {% if object.supplementary_url %}
+                <dt>Supplementary URL ({{ object.phase.supplementary_url_label }})</dt>
+                <dd>
+                    <a href="{{ object.supplementary_url }}" target="_blank">
+                        <i class="fas fa-link"></i> {{ object.supplementary_url }}
+                    </a>
+                </dd>
+            {% endif %}
+        {% endif %}
+
+        {% if object.phase.show_supplementary_file_link or "change_challenge" in challenge_perms %}
+            {% if object.supplementary_file %}
+                <dt>Supplementary File ({{ object.phase.supplementary_file_label }})</dt>
+                <dd>
+                    <a href="{{ object.supplementary_file.url }}"><i class="fa fa-file"></i> {{ object.supplementary_file.name }}</a>
+                </dd>
+            {% endif %}
+        {% endif %}
+
+        {% if object.predictions_file %}
+            <dt>Submission File</dt>
+            <dd>
+                <a href="{{ object.predictions_file.url }}"><i class="fa fa-download"></i> {{ object.predictions_file.name }}</a>
+            </dd>
+        {% endif %}
+
     </dl>
 
     <h3>Evaluations for this submission</h3>
@@ -66,34 +103,85 @@
             data-length-change="false"
             data-filter="false"
             data-info="false"
+            data-order='[[1, "asc"]]'
             class="table table-hover table-borderless table-sm w-100"
         >
             <thead class="thead-light">
             <tr>
+                <th>Evaluation Id</th>
                 <th>Created</th>
                 <th>Updated</th>
-                <th>Evaluation</th>
-                <th>Method</th>
+                {% if "change_challenge" in challenge_perms %}
+                    <th>Method</th>
+                {% endif %}
                 <th>Status</th>
-                <th>Result</th>
+                <th>Visibility</th>
+                <th class="nonSortable">Details</th>
+                <th class="nonSortable">Possible next step(s)</th>
             </tr>
             </thead>
             <tbody>
             {% for evaluation in object.evaluation_set.all %}
                 <tr>
+                    <td>{{ evaluation.pk }}</td>
                     <td data-order="{{ evaluation.created|date:"c" }}">{{ evaluation.created }}</td>
                     <td data-order="{{ evaluation.modified|date:"c" }}">{{ evaluation.modified }}</td>
-                    <td><a href="{{ evaluation.get_absolute_url }}">{{ evaluation.id }}</a>
-                    </td>
-                    <td>
-                        <a href="{{ evaluation.method.get_absolute_url }}">{{ evaluation.method.id }}</a>
-                    </td>
+                    {% if "change_challenge" in challenge_perms %}
+                        <td>
+                            <a href="{{ evaluation.method.get_absolute_url }}">{{ evaluation.method.pk|split_first:"-" }}</a>
+                        </td>
+                    {% endif %}
                     <td>
                         {% include 'evaluation/evaluation_status_detail.html' with object=evaluation %}
                     </td>
                     <td>
+                        {{ evaluation.visibility_icon }}
+                    </td>
+                    <td>
                         {% if evaluation.status == evaluation.SUCCESS %}
-                            <a href="{{ evaluation.get_absolute_url }}">Result</a>
+                            {% if evaluation.published %}
+                                <a href="{{ evaluation.get_absolute_url }}"><i class="fas fa-info-circle mr-1"></i></a>View public result
+                            {% elif "change_challenge" in challenge_perms %}
+                                <a href="{{ evaluation.get_absolute_url }}"><i class="fas fa-info-circle mr-1"></i></a>View private result
+                            {% else %}
+                                Evaluation is under review by the challenge admins.
+                            {% endif %}
+                        {% elif evaluation.status == evaluation.FAILURE or evaluaton.status == evaluation.CANCELLED %}
+                            {% if "change_challenge" in challenge_perms %}
+                                <a href="{{ evaluation.get_absolute_url }}" title="View evaluation details"><i class="fas fa-info-circle mr-1"></i></a>
+                            {% endif %}
+                            {{ evaluation.error_message }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if evaluation.status == evaluation.SUCCESS %}
+                            {% if "change_challenge" in challenge_perms %}
+                                {% if evaluation.published %}
+                                    <form method="post"
+                                        action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=evaluation.pk %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="published"
+                                            value="false">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-eye-slash"></i>
+                                            Hide this result
+                                        </button>
+                                    </form>
+                                {% else %}
+                                    <form method="post"
+                                        action="{% url 'evaluation:update' challenge_short_name=challenge.short_name pk=evaluation.pk %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="published"
+                                            value="true">
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-eye"></i>
+                                            Publish this result
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% endif %}
+                        {% elif evaluation.status == evaluation.FAILURE or evaluation.status == evaluation.CANCELLED %}
+                            {{ evaluation|get_action_message:request.user }}
                         {% endif %}
                     </td>
                 </tr>
@@ -103,63 +191,14 @@
     </div>
 
     {% if "change_challenge" in challenge_perms %}
-        <div class="card card-danger border-danger">
-            <div class="card-header bg-danger text-white">Submission Admin</div>
-
-            <div class="card-body">
-                <dl>
-
-                    <dt>Comment</dt>
-                    <dd>
-                        {% if object.comment %}
-                            {{ object.comment }}
-                        {% else %}
-                            No comment provided.
-                        {% endif %}
-                    </dd>
-
-                    <dt>Supplementary URL ({{ object.phase.supplementary_url_label }})</dt>
-                    <dd>
-                        {% if object.supplementary_url %}
-                            <a href="{{ object.supplementary_url }}" target="_blank">
-                                <i class="fas fa-link"></i> {{ object.supplementary_url }}
-                            </a>
-                        {% else %}
-                            No supplementary URL provided.
-                        {% endif %}
-                    </dd>
-
-                    <dt>Supplementary File ({{ object.phase.supplementary_file_label }})</dt>
-                    <dd>
-                        {% if object.supplementary_file %}
-                            <a href="{{ object.supplementary_file.url }}">
-                                <i class="fa fa-file"></i> {{ object.supplementary_file.name }}
-                            </a>
-                        {% else %}
-                            No supplementary file provided.
-                        {% endif %}
-                    </dd>
-
-                    <dt>Submission File</dt>
-                    <dd>
-                        {% if object.predictions_file %}
-                            <a href="{{ object.predictions_file.url }}">
-                                <i class="fa fa-download"></i> {{ object.predictions_file.name }}
-                            </a>
-                        {% else %}
-                            No submission file provided.
-                        {% endif %}
-                    </dd>
-
-                </dl>
-            </div>
-
-            {% with object.phase.additional_evaluation_inputs.all as additional_inputs_required %}
-
-                {% if not object.phase.external_evaluation and not object.is_evaluated_with_active_image_and_ground_truth or additional_inputs_required %}
+        {% with object.phase.additional_evaluation_inputs.all as additional_inputs_required %}
+            {% if not object.phase.external_evaluation and not object.is_evaluated_with_active_image_and_ground_truth or additional_inputs_required %}
+                <div class="card card-danger border-danger">
+                    <div class="card-header bg-danger text-white">Submission Admin</div>
                     <div class="card-body">
                         <h4 class="card-title">Re-Evaluate Submission with
-                            {% if not object.is_evaluated_with_active_image_and_ground_truth %} Active Method and Active Ground Truth {% endif %}
+                            {% if not object.is_evaluated_with_active_image_and_ground_truth %} Active Method and Active
+                                Ground Truth {% endif %}
                             {% if additional_inputs_required %}
                                 {% if not object.is_evaluated_with_active_image_and_ground_truth %} and {% endif %}
                                 different inputs
@@ -171,7 +210,7 @@
                             This submission has
                             {% if not object.is_evaluated_with_active_image_and_ground_truth %} not {% endif %}
                             been evaluated with the active evaluation method and active ground truth for this phase
-                            {% if additional_inputs_required %}, and can be re-evaluated with different inputs {% endif %}.
+                            {% if additional_inputs_required %}, and can be re-evaluated with different inputs{% endif %}.
                             {% if challenge.available_compute_euro_millicents <= 0 %}
                                 However, an evaluation cannot be created as this challenge has exceeded its budget.
                             {% endif %}
@@ -180,7 +219,7 @@
                         {% if challenge.available_compute_euro_millicents > 0 %}
                             {% if additional_inputs_required %}
                                 <a class="btn btn-sm btn-primary"
-                                    href="{% url 'evaluation:evaluation-create' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">
+                                   href="{% url 'evaluation:evaluation-create' challenge_short_name=challenge.short_name slug=object.phase.slug pk=object.pk %}">
                                     Re-Evaluate with different inputs
                                     {% if not object.is_evaluated_with_active_image_and_ground_truth %}
                                         and with the Active Method and Active Ground Truth
@@ -198,8 +237,8 @@
                             {% endif %}
                         {% endif %}
                     </div>
-                {% endif %}
-            {% endwith %}
-        </div>
+                </div>
+            {% endif %}
+        {% endwith %}
     {% endif %}
 {% endblock %}
