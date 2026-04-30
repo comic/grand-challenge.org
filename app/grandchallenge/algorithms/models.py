@@ -1782,6 +1782,19 @@ class Invocation(UUIDModel):
         related_name="algorithms_endpoints_as_output",
     )
 
+    class Meta:
+        ordering = ("-created",)
+        indexes = (
+            models.Index(fields=["status", "created"]),
+            models.Index(fields=["created"]),
+        )
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(status__in=InvocationStatusChoices.values),
+                name="invocation_status_valid",
+            ),
+        ]
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
 
