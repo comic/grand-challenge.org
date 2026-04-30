@@ -99,6 +99,7 @@
             data-length-change="false"
             data-filter="false"
             data-info="false"
+            data-order='[[1, "asc"]]'
             class="table table-hover table-borderless table-sm w-100"
         >
             <thead class="thead-light">
@@ -111,8 +112,8 @@
                 {% endif %}
                 <th>Status</th>
                 <th>Visibility</th>
-                <th>Details</th>
-                <th>Possible next step(s)</th>
+                <th class="nonSortable">Details</th>
+                <th class="nonSortable">Possible next step(s)</th>
             </tr>
             </thead>
             <tbody>
