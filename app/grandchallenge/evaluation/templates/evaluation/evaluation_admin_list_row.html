@@ -5,11 +5,11 @@
 {% load copy_button %}
 
 
-{{ object.submission.id|copy_button:object.submission.get_absolute_url }}
+{{ object.submission.id|copy_pk_button:object.submission.get_absolute_url }}
 
 <split></split>
 
-{{ object.id|copy_button:object.get_absolute_url }}
+{{ object.id|copy_pk_button:object.get_absolute_url }}
 
 <split></split>
 

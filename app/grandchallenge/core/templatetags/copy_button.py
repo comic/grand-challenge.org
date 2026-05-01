@@ -1,3 +1,5 @@
+import uuid
+
 from django import template
 from django.utils.html import format_html
 
@@ -9,9 +11,15 @@ register = template.Library()
 
 
 @register.filter
-def copy_button(value, link=None):
+def copy_pk_button(value, link=None):
+    try:
+        uuid.UUID(str(value))
+    except (ValueError, AttributeError):
+        return ""
+
     button = format_html(
         "<button "
+        'type="button"'
         'class="btn btn-link text-dark p-0 m-0 mr-1 copy-btn shadow-none" '
         'data-copy="{}" '
         'data-placement="left" '
