@@ -34,5 +34,5 @@ RUN python manage.py collectstatic --noinput && GRAND_CHALLENGE_USE_LOC_MEM_CACH
 
 FROM --platform=linux/amd64 dist AS dist-lambda
 
-ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]
+ENTRYPOINT [ "python", "-m", "awslambdaric" ]
 CMD [ "lambda_tasks.handler.handler" ]
