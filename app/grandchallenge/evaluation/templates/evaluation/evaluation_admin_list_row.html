@@ -2,13 +2,14 @@
 {% load user_profile_link from profiles %}
 {% load url %}
 {% load civ %}
+{% load copy_button %}
 
 
-<a href="{{ object.submission.get_absolute_url }}">{{ object.submission.id|split_first:"-" }}</a>
+{{ object.submission.id|copy_button:object.submission.get_absolute_url }}
 
 <split></split>
 
-<a href="{{ object.get_absolute_url }}">{{ object.id|split_first:"-" }}</a>
+{{ object.id|copy_button:object.get_absolute_url }}
 
 <split></split>
 
