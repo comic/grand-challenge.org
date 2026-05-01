@@ -2291,7 +2291,7 @@ def test_evaluation_details_error_message(client):
 
 
 @pytest.mark.django_db
-def test_submission_list_row_template_ajax_renders(client):
+def test_submission_list_row_template_ajax_renders_for_challenge_admin(client):
     editor = UserFactory()
 
     phase = PhaseFactory()
@@ -2318,8 +2318,42 @@ def test_submission_list_row_template_ajax_renders(client):
 
     assert response.status_code == 200
     assert response_content["recordsTotal"] == 1
+    assert len(response_content["data"][0]) == 6
+    assert phase.title in response_content["data"][0][2]
+
+
+@pytest.mark.django_db
+def test_submission_list_row_template_ajax_renders_for_challenge_participant(
+    client,
+):
+    user = UserFactory()
+
+    phase = PhaseFactory()
+    phase.challenge.add_participant(user)
+    SubmissionFactory(phase=phase, creator=user)
+
+    headers = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
+
+    response = get_view_for_user(
+        viewname="evaluation:submission-list",
+        client=client,
+        method=client.post,
+        reverse_kwargs={
+            "challenge_short_name": phase.challenge.short_name,
+        },
+        user=user,
+        data={
+            "draw": "1",
+            "length": "25",
+        },
+        **headers,
+    )
+    response_content = json.loads(response.content.decode("utf-8"))
+
+    assert response.status_code == 200
+    assert response_content["recordsTotal"] == 1
     assert len(response_content["data"][0]) == 5
-    assert phase.title in response_content["data"][0][1]
+    assert phase.title in response_content["data"][0][2]
 
 
 @pytest.mark.django_db

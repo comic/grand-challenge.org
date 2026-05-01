@@ -1,18 +1,19 @@
 {% load profiles %}
 
+<a href="{{ object.get_absolute_url }}" title="View submission details"><i class="fas fa-info-circle"></i></a>
+
+<split></split>
+
 {{ object.created }}
 
 <split></split>
 
 {{ object.phase.title }}
 
-<split></split>
-
-{{ object.creator|user_profile_link }}
-
-<split></split>
-
-{{ object.comment }}
+{% if "change_challenge" in challenge_perms %}
+    <split></split>
+    {{ object.creator|user_profile_link }}
+{% endif %}
 
 <split></split>
 
@@ -20,15 +21,6 @@
     {% for evaluation in object.evaluation_set.all %}
         <li>
             {% include 'evaluation/evaluation_status_detail.html' with object=evaluation %}
-            {% if evaluation.status == evaluation.SUCCESS %}
-                {% if evaluation.published %}
-                    <a href="{{ evaluation.get_absolute_url }}">Result</a>
-                {% else %}
-                    Evaluation is under review by the challenge admins.
-                {% endif %}
-            {% elif evaluation.status == evaluation.FAILURE %}
-                {% firstof evaluation.error_message evaluation.get_status_display %}
-            {% endif %}
         </li>
     {% empty %}
         <li>
@@ -38,3 +30,7 @@
         </li>
     {% endfor %}
 </ul>
+
+<split></split>
+
+{{ object.comment }}

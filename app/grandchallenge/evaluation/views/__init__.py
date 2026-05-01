@@ -412,15 +412,29 @@ class SubmissionList(
         "comment",
     ]
 
-    columns = [
-        Column(title="Created", sort_field="created"),
-        Column(title="Phase", sort_field="phase__title"),
-        Column(title="User", sort_field="creator__username"),
-        Column(title="Comment", sort_field="comment"),
-        Column(title="Evaluations"),
-    ]
+    default_sort_column = 1
 
-    default_sort_column = 0
+    @property
+    def columns(self):
+        columns = [
+            Column(title=""),
+            Column(title="Created", sort_field="created"),
+            Column(title="Phase", sort_field="phase__title"),
+        ]
+
+        if self.request.challenge.is_admin(self.request.user):
+            columns.extend(
+                [Column(title="User", sort_field="creator__username")]
+            )
+
+        columns.extend(
+            [
+                Column(title="Evaluations"),
+                Column(title="Comment", sort_field="comment"),
+            ]
+        )
+
+        return columns
 
     def get_queryset(self):
         queryset = super().get_queryset()
