@@ -26,8 +26,6 @@ COPY --chown=django:django ./app/ /app/
 ARG COMMIT_ID=unknown
 ENV COMMIT_ID=$COMMIT_ID
 
-RUN python manage.py collectstatic --noinput && python manage.py compress --force
-
 ####################
 # Lambda Container #
 ####################

@@ -21,7 +21,7 @@ build_web_test:
 			-f dockerfiles/web-base/Dockerfile \
 			.; \
 	}
-	docker buildx build\
+	docker buildx build \
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
 		--build-arg LOCKFILE_HASH=$(LOCKFILE_HASH) \
@@ -42,13 +42,12 @@ build_web_dist:
 			-f dockerfiles/web-base/Dockerfile \
 			.; \
 	}
-	DOCKER_BUILDKIT=0 docker build \
+	docker buildx build \
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
 		--build-arg LOCKFILE_HASH=$(LOCKFILE_HASH) \
 		--build-arg GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI) \
 		--build-arg GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI) \
-		--network grand-challengeorg_default \
 		--target dist \
 		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
 		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):latest \
@@ -56,14 +55,14 @@ build_web_dist:
 		.
 
 build_web_lambda:
-	DOCKER_BUILDKIT=0 docker build \
+	docker buildx build \
 		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
 		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
 		--build-arg LOCKFILE_HASH=$(LOCKFILE_HASH) \
 		--build-arg GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI) \
 		--build-arg GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI) \
-		--network grand-challengeorg_default \
 		--target dist-lambda \
+		--provenance=false \
 		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):lambda-$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
 		-f dockerfiles/web/Dockerfile \
 		-t docker-image:test \
