@@ -103,7 +103,6 @@
 {% block script %}
     {% include "grandchallenge/partials/script.html" %}
     {% include "timezones/partials/detect_timezone.html" %}
-    <script src="{% static "js/copy_to_clipboard.js" %}"></script>
 
     {% if request.user.is_authenticated and request.user.user_profile.receive_newsletter == None %}
         <script type="module" src="{% static 'js/newsletter_modal.mjs' %}"></script>
