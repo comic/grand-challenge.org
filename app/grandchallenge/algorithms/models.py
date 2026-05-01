@@ -1728,3 +1728,85 @@ class EndpointGroupObjectPermission(GroupObjectPermissionBase):
     allowed_permissions = frozenset({"view_endpoint"})
 
     content_object = models.ForeignKey(Endpoint, on_delete=models.CASCADE)
+
+
+class InvocationStatusChoices(TextChoices):
+    QUEUED = "QUEUED", _("Queued")
+    PROVISIONED = "PROVISIONED", _("Provisioned")
+    EXECUTING = "EXECUTING", _("Executing")
+    EXECUTED = "EXECUTED", _("Executed")
+    FAILURE = "FAILURE", _("Failure")
+    SUCCESS = "SUCCESS", _("Success")
+    CANCELLED = "CANCELLED", _("Cancelled")
+
+
+class Invocation(UUIDModel):
+    StatusChoices = InvocationStatusChoices
+
+    endpoint = models.ForeignKey(Endpoint, on_delete=models.PROTECT)
+    status = models.CharField(
+        max_length=11,
+        choices=InvocationStatusChoices,
+        default=InvocationStatusChoices.QUEUED,
+    )
+    time_limit = models.PositiveIntegerField(
+        help_text="Time limit for the invocation in seconds",
+        validators=[
+            MaxValueValidator(
+                limit_value=settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION
+            ),
+        ],
+    )
+    invoke_duration = models.DurationField(
+        null=True,
+        default=None,
+        blank=True,
+        help_text=(
+            "The duration of the invocation. "
+            "Excludes data validation, container pulling, model downloading, "
+            "data downloading and data uploading times. "
+            "Potentially excludes model loading time, depending on the "
+            "users implementation. "
+            "Includes input data loading time, "
+            "processing time, output data writing time and "
+            "any delays from shared hardware issues."
+        ),
+    )
+    error_message = models.CharField(max_length=1024, default="", blank=True)
+    inputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="algorithms_invocations_as_input",
+    )
+    outputs = models.ManyToManyField(
+        to=ComponentInterfaceValue,
+        related_name="algorithms_invocations_as_output",
+    )
+
+    class Meta:
+        ordering = ("-created",)
+        indexes = (
+            models.Index(fields=["status", "created"]),
+            models.Index(fields=["created"]),
+        )
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(status__in=InvocationStatusChoices.values),
+                name="invocation_status_valid",
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        adding = self._state.adding
+
+        if adding:
+            if self.endpoint.status != self.endpoint.StatusChoices.RUNNING:
+                raise ValidationError("Endpoint is not running")
+
+        super().save(*args, **kwargs)
+
+    @property
+    def inference_id(self):
+        # Sagemaker requires this to be max 64 chars
+        return (
+            f"{settings.COMPONENTS_REGISTRY_PREFIX}-alg-endp-invoc-{self.pk}"
+        )

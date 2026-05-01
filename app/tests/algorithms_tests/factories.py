@@ -8,6 +8,8 @@ from grandchallenge.algorithms.models import (
     AlgorithmPermissionRequest,
     AlgorithmUserCredit,
     Endpoint,
+    EndpointStatusChoices,
+    Invocation,
     Job,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -135,3 +137,13 @@ class EndpointFactory(factory.django.DjangoModelFactory):
     algorithm_model = factory.SubFactory(AlgorithmModelFactory)
     requires_gpu_type = GPUTypeChoices.NO_GPU
     requires_memory_gb = 4
+
+
+class InvocationFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Invocation
+
+    endpoint = factory.SubFactory(
+        EndpointFactory, status=EndpointStatusChoices.RUNNING
+    )
+    time_limit = 60

@@ -23,6 +23,7 @@ from grandchallenge.algorithms.models import (
     Endpoint,
     EndpointGroupObjectPermission,
     EndpointUserObjectPermission,
+    Invocation,
     Job,
     JobGroupObjectPermission,
     JobUserObjectPermission,
@@ -375,6 +376,29 @@ class EndpointAdmin(admin.ModelAdmin):
     @staticmethod
     def algorithm(obj):
         return obj.algorithm_image.algorithm
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Invocation)
+class InvocationAdmin(admin.ModelAdmin):
+    list_display = (
+        "pk",
+        "created",
+        "endpoint",
+        "time_limit",
+        "invoke_duration",
+        "status",
+    )
+    list_filter = ("status",)
+    search_fields = (
+        "pk",
+        "endpoint__pk",
+    )
 
     def has_add_permission(self, request, obj=None):
         return False
