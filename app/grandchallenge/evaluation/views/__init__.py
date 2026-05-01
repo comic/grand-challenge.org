@@ -560,21 +560,6 @@ class EvaluationAdminList(
     row_template = "evaluation/evaluation_admin_list_row.html"
     login_url = reverse_lazy("account_login")
     raise_exception = True
-    columns = [
-        Column(title="Submission ID", sort_field="submission__id"),
-        Column(title="Evaluation ID", sort_field="id"),
-        Column(title="Evaluation Created", sort_field="created"),
-        Column(title="User", sort_field="submission__creator__username"),
-        Column(title="Inputs"),
-        Column(title="Status", sort_field="status"),
-        Column(title="Hide/Publish", sort_field="published"),
-        Column(
-            title="Algorithm Results",
-            sort_field="submission__algorithm_image__algorithm__title",
-        ),
-        Column(title="Position", sort_field="rank"),
-        Column(title="Comment", sort_field="submission__comment"),
-    ]
     search_fields = [
         "submission__id",
         "id",
@@ -584,6 +569,54 @@ class EvaluationAdminList(
         "submission__comment",
     ]
     default_sort_column = 2
+
+    @property
+    def columns(self):
+        columns = [
+            Column(title="Submission ID", sort_field="submission__id"),
+            Column(title="Evaluation ID", sort_field="id"),
+            Column(title="Evaluation Created", sort_field="created"),
+            Column(title="User", sort_field="submission__creator__username"),
+        ]
+
+        if self.phase.additional_evaluation_inputs.exists():
+            columns.extend(
+                [
+                    Column(
+                        title="Inputs",
+                    )
+                ]
+            )
+
+        columns.extend(
+            [
+                Column(title="Status", sort_field="status"),
+                Column(title="Hide/Publish", sort_field="published"),
+            ]
+        )
+
+        if self.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
+            columns.extend(
+                [
+                    Column(
+                        title="Algorithm Results",
+                        sort_field="submission__algorithm_image__algorithm__title",
+                    )
+                ]
+            )
+
+        columns.extend(
+            [
+                Column(title="Position", sort_field="rank"),
+            ]
+        )
+
+        if self.phase.allow_submission_comments:
+            columns.extend(
+                [Column(title="Comment", sort_field="submission__comment")]
+            )
+
+        return columns
 
     def get_permission_object(self):
         return self.request.challenge

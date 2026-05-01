@@ -2020,7 +2020,7 @@ class EvaluationActionMessageBuilder:
     @property
     def evaluation_logs_message(self):
         return format_html(
-            "<a href={url}>inspect the evaluation logs</a>",
+            "<a href={url}#logs>inspect the evaluation logs</a>",
             url=self.evaluation.get_absolute_url(),
         )
 

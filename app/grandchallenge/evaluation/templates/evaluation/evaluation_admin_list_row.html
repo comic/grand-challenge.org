@@ -27,15 +27,17 @@
 
 <split></split>
 
-{% for input in object.additional_inputs.all|sort_civs %}
-    <dd>
-        {% include 'components/partials/civ.html' with object=input display_inline=True only %}
-    </dd>
-{% empty %}
-    <span class="text-muted">Empty</span>
-{% endfor %}
+{% if phase.additional_evaluation_inputs.all %}
+    {% for input in object.additional_inputs.all|sort_civs %}
+        <dd>
+            {% include 'components/partials/civ.html' with object=input display_inline=True only %}
+        </dd>
+    {% empty %}
+        <span class="text-muted">Empty</span>
+    {% endfor %}
+    <split></split>
+{% endif %}
 
-<split></split>
 
 {% include 'evaluation/evaluation_status_detail.html' %}
 
@@ -49,15 +51,15 @@
             <input type="hidden" name="published"
                    value="false">
             <button type="submit"
-                    class="btn btn-xs btn-danger">
-                Hide Result
+                    class="btn btn-sm btn-danger">
+                Hide
             </button>
         {% else %}
             <input type="hidden" name="published"
                    value="true">
             <button type="submit"
-                    class="btn btn-xs btn-primary">
-                Publish Result
+                    class="btn btn-sm btn-primary">
+                Publish
             </button>
         {% endif %}
     </form>
@@ -67,9 +69,8 @@
 
 {% if object.submission.phase.submission_kind == object.submission.phase.SubmissionKindChoices.ALGORITHM and object.submission.algorithm_image %}
     <a href="{% url 'algorithms:job-list' slug=object.submission.algorithm_image.algorithm.slug %}">{{ object.submission.algorithm_image.algorithm.title }}</a>
+    <split></split>
 {% endif %}
-
-<split></split>
 
 {% if object.rank > 0 %}
     {{ object.rank }}
@@ -82,4 +83,6 @@
 
 <split></split>
 
-{{ object.submission.comment }}
+{% if object.allow_submission_comments %}
+    {{ object.submission.comment }}
+{% endif %}
