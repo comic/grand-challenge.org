@@ -299,13 +299,20 @@ AWS_HEALTH_IMAGING_IMPORT_ROLE_ARN = os.environ.get(
 ##############################################################################
 REDIS_ENDPOINT = os.environ.get("REDIS_ENDPOINT", "redis://redis:6379")
 
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"{REDIS_ENDPOINT}/0",
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+if strtobool(os.environ.get("GRAND_CHALLENGE_USE_LOC_MEM_CACHE", "false")):
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"{REDIS_ENDPOINT}/0",
+            "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+        }
+    }
 
 ROOT_URLCONF = "config.urls.root"
 CHALLENGE_SUBDOMAIN_URL_CONF = "config.urls.challenge_subdomain"
