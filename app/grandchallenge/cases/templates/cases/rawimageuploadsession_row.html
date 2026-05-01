@@ -1,7 +1,7 @@
 {% load humanize %}
 {% load copy_button %}
 
-{{ object.pk|copy_pk_button:object.get_absolute_url }}
+{{ object.pk|copy_button:object.get_absolute_url }}
 <split></split>
 
 {{ object.created|naturaltime }}

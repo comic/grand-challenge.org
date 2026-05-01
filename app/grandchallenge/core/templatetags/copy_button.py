@@ -7,7 +7,7 @@ register = template.Library()
 
 @register.filter
 @stringfilter
-def copy_pk_button(value, link=None):
+def copy_button(value, link=None):
     button = format_html(
         "<button "
         'type="button"'
