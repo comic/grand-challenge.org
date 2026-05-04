@@ -56,9 +56,8 @@
                             {% if socket.json_kind_example.extra_info %}
                                 {{ socket.json_kind_example.extra_info|md2html }}
                             {% endif %}
+                            <pre class="mb-0">{{ socket.json_kind_example.value|json_dumps:2 }}</pre>
                             {{ socket.json_kind_example_download_link }}
-                            <strong>Example JSON file contents:</strong>
-                            <pre>{{ socket.json_kind_example.value|json_dumps:2 }}</pre>
                         </dd>
                     {% endif %}
 
