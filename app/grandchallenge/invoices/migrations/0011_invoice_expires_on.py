@@ -32,12 +32,4 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.RunPython(set_expires_on, elidable=True),
-        migrations.AlterField(
-            model_name="invoice",
-            name="expires_on",
-            field=models.DateField(
-                help_text="The date when the invoice expires",
-                blank=True,
-            ),
-        ),
     ]
