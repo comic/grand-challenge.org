@@ -14,10 +14,8 @@ from django.db.models import (
     BooleanField,
     Case,
     Count,
-    Exists,
     ExpressionWrapper,
     F,
-    OuterRef,
     Q,
     Sum,
     Value,
@@ -78,7 +76,6 @@ from grandchallenge.evaluation.utils import (
 from grandchallenge.forge.models import ForgeChallenge
 from grandchallenge.incentives.models import Incentive
 from grandchallenge.invoices.models import (
-    Invoice,
     PaymentStatusChoices,
     PaymentTypeChoices,
 )
@@ -101,9 +98,9 @@ class ChallengeQuerySet(models.QuerySet):
                 Sum(
                     "invoices__compute_costs_euros",
                     filter=Q(
-                        invoices__payment_type=PaymentTypeChoices.COMPLIMENTARY,
-                        invoices__expires_on__gt=_now,
-                    ),
+                        invoices__payment_type=PaymentTypeChoices.COMPLIMENTARY
+                    )
+                    & ~Q(invoices__expires_on__lte=_now),
                     output_field=models.PositiveBigIntegerField(),
                     default=0,
                 )
@@ -114,8 +111,8 @@ class ChallengeQuerySet(models.QuerySet):
                     filter=Q(
                         invoices__payment_type=PaymentTypeChoices.PREPAID,
                         invoices__payment_status=PaymentStatusChoices.PAID,
-                        invoices__expires_on__gt=_now,
-                    ),
+                    )
+                    & ~Q(invoices__expires_on__lte=_now),
                     output_field=models.PositiveBigIntegerField(),
                     default=0,
                 )
@@ -123,22 +120,16 @@ class ChallengeQuerySet(models.QuerySet):
             postpaid_compute_costs_euros_if_anything_paid=(
                 Case(
                     When(
-                        Exists(
-                            Invoice.objects.filter(
-                                challenge=OuterRef("pk"),
-                                payment_type=PaymentTypeChoices.PREPAID,
-                                payment_status=PaymentStatusChoices.PAID,
-                            )
-                        ),
+                        prepaid_compute_costs_euros__gt=0,
                         then=Sum(
                             "invoices__compute_costs_euros",
                             filter=Q(
-                                invoices__payment_type=PaymentTypeChoices.POSTPAID,
-                                invoices__expires_on__gt=_now,
+                                invoices__payment_type=PaymentTypeChoices.POSTPAID
                             )
                             & ~Q(
                                 invoices__payment_status=PaymentStatusChoices.CANCELLED
-                            ),
+                            )
+                            & ~Q(invoices__expires_on__lte=_now),
                             output_field=models.PositiveBigIntegerField(),
                             default=0,
                         ),
