@@ -1828,6 +1828,14 @@ class Invocation(UUIDModel):
         )
 
     @property
+    def task_kwargs(self):
+        return {
+            "app_label": self._meta.app_label,
+            "model_name": self._meta.model_name,
+            "pk": self.pk,
+        }
+
+    @property
     def orchestrator_kwargs(self):
         kwargs = self.endpoint.orchestrator_kwargs
         kwargs["invocation_id"] = (
@@ -1839,3 +1847,30 @@ class Invocation(UUIDModel):
     @property
     def orchestrator(self):
         return EndpointOrchestrator(**self.orchestrator_kwargs)
+
+    @cached_property
+    def inputs_complete(self):
+        # check if all inputs are present and if they all have a value
+        # interfaces that do not require a value will be considered complete regardless
+        return {
+            civ.interface
+            for civ in self.inputs.all()
+            if civ.has_value or not civ.interface.value_required
+        } == {*self.algorithm_interface.inputs.all()}
+
+    def update_status(
+        self,
+        *,
+        status: InvocationStatusChoices,
+        error_message="",
+        invoke_duration=None,
+    ):
+        self.status = status
+
+        if error_message:
+            self.error_message = error_message[:1024]
+
+        if invoke_duration is not None:
+            self.invoke_duration = invoke_duration
+
+        self.save()

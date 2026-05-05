@@ -214,3 +214,6 @@ class EndpointOrchestrator:
         attempt(self.delete_sagemaker_model)
 
         self.deprovision_auxiliary_data()
+
+    def provision_invocation_input_data(self, *, input_civs):
+        self._executor.provision(input_civs=input_civs, input_prefixes={})
