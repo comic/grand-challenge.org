@@ -15,6 +15,7 @@ from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 from django.utils._os import safe_join
 from django.utils.timezone import now
+from sentry_sdk.integrations.aws_lambda import AwsLambdaIntegration
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import ignore_logger
@@ -844,7 +845,11 @@ WORKSTATION_SENTRY_DSN = os.environ.get("WORKSTATION_SENTRY_DSN", "")
 if SENTRY_DSN:
     sentry_sdk.init(
         dsn=SENTRY_DSN,
-        integrations=[DjangoIntegration(), CeleryIntegration()],
+        integrations=[
+            DjangoIntegration(),
+            AwsLambdaIntegration(),
+            CeleryIntegration(),
+        ],
         release=COMMIT_ID,
         traces_sample_rate=float(
             os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.0")
