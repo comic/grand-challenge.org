@@ -775,8 +775,6 @@ def test_failed_job_notifications(
     creator = UserFactory()
     editor = UserFactory()
 
-    algorithm_interface = AlgorithmInterfaceFactory()
-
     # Create the algorithm image
     ai = AlgorithmImageFactory()
     ai.algorithm.add_editor(editor)
@@ -784,7 +782,6 @@ def test_failed_job_notifications(
     job = Job.objects.create(
         creator=creator,
         algorithm_image=ai,
-        algorithm_interface=algorithm_interface,
         input_civ_set=[],
         time_limit=ai.algorithm.time_limit,
         requires_gpu_type=ai.algorithm.job_requires_gpu_type,
@@ -826,7 +823,6 @@ def test_failed_job_notifications(
     job = Job.objects.create(
         creator=creator,
         algorithm_image=ai,
-        algorithm_interface=algorithm_interface,
         input_civ_set=[],
         time_limit=ai.algorithm.time_limit,
         requires_gpu_type=ai.algorithm.job_requires_gpu_type,

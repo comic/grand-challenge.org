@@ -1670,13 +1670,6 @@ class TestEndpointProperties:
         )
         assert len(endpoint.endpoint_name) <= 63
 
-    def test_signing_key_properties(self):
-        endpoints = EndpointFactory.build_batch(2)
-
-        assert len(endpoints[0].signing_key) == 32
-        assert isinstance(endpoints[0].signing_key, bytes)
-        assert endpoints[0].signing_key != endpoints[1].signing_key
-
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(

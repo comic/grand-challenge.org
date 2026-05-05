@@ -1,5 +1,4 @@
 import logging
-import secrets
 from datetime import datetime, timedelta
 
 from actstream.actions import follow, is_following
@@ -1584,13 +1583,6 @@ class Endpoint(FieldChangeMixin, UUIDModel):
     error_message = models.CharField(
         max_length=1024, default="", editable=False
     )
-    signing_key = models.BinaryField(
-        max_length=32,
-        default=secrets.token_bytes,
-        unique=True,
-        editable=False,
-        help_text="The key used to sign the inference result file",
-    )
     requires_gpu_type = models.CharField(
         editable=False,
         max_length=4,
@@ -1695,7 +1687,6 @@ class Endpoint(FieldChangeMixin, UUIDModel):
             time_limit=self.maximum_duration.total_seconds(),
             requires_gpu_type=self.requires_gpu_type,
             memory_limit=self.requires_memory_gb,
-            signing_key=self.signing_key,
             api_method=self.algorithm_image.api_method,
             **extra_kwargs,
         )
@@ -1740,13 +1731,12 @@ class EndpointGroupObjectPermission(GroupObjectPermissionBase):
 
 
 class InvocationStatusChoices(TextChoices):
-    VALIDATING_INPUTS = "VALIDATING_INPUTS", _("Validating inputs")
     QUEUED = "QUEUED", _("Queued")
     PROVISIONED = "PROVISIONED", _("Provisioned")
     EXECUTING = "EXECUTING", _("Executing")
     EXECUTED = "EXECUTED", _("Executed")
-    FAILURE = "FAILURE", _("Failed")
-    SUCCESS = "SUCCESS", _("Succeeded")
+    FAILURE = "FAILURE", _("Failure")
+    SUCCESS = "SUCCESS", _("Success")
     CANCELLED = "CANCELLED", _("Cancelled")
 
 
@@ -1755,7 +1745,7 @@ class Invocation(UUIDModel):
 
     endpoint = models.ForeignKey(Endpoint, on_delete=models.PROTECT)
     status = models.CharField(
-        max_length=17,
+        max_length=11,
         choices=InvocationStatusChoices,
         default=InvocationStatusChoices.QUEUED,
     )
@@ -1783,9 +1773,6 @@ class Invocation(UUIDModel):
         ),
     )
     error_message = models.CharField(max_length=1024, default="", blank=True)
-    algorithm_interface = models.ForeignKey(
-        AlgorithmInterface, on_delete=models.PROTECT
-    )
     inputs = models.ManyToManyField(
         to=ComponentInterfaceValue,
         related_name="algorithms_invocations_as_input",
