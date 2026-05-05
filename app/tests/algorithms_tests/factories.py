@@ -146,4 +146,5 @@ class InvocationFactory(factory.django.DjangoModelFactory):
     endpoint = factory.SubFactory(
         EndpointFactory, status=EndpointStatusChoices.RUNNING
     )
+    algorithm_interface = factory.SubFactory(AlgorithmInterfaceFactory)
     time_limit = 60

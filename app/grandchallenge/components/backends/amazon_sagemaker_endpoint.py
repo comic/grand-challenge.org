@@ -20,6 +20,7 @@ class EndpointOrchestrator:
         requires_gpu_type,
         memory_limit,
         api_method,
+        signing_key,
         algorithm_model=None,
     ):
         self._executor = AmazonSageMakerTrainingExecutor(
@@ -29,7 +30,7 @@ class EndpointOrchestrator:
             time_limit=time_limit,
             requires_gpu_type=requires_gpu_type,
             use_warm_pool=False,
-            signing_key=b"",  # TODO add signing key to endpoint model
+            signing_key=signing_key,
             api_method=api_method,
             algorithm_model=algorithm_model,
         )
