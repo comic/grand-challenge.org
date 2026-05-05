@@ -6,7 +6,7 @@ from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
     EndpointOrchestrator,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
-from tests.algorithms_tests.factories import EndpointFactory
+from tests.algorithms_tests.factories import EndpointFactory, InvocationFactory
 
 
 class TestEndpointOrchestratorProperties:
@@ -417,3 +417,9 @@ def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
     # assert all called
     for mock_method in mock_deprovision_methods:
         mock_method.assert_called_once()
+
+
+def test_endpoint_orchestrator_auxiliary_data_tasks_empty():
+    orchestrator = InvocationFactory.build().orchestrator
+
+    assert orchestrator._executor._auxiliary_data_provisioning_tasks == []
