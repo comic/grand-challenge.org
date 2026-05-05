@@ -1683,22 +1683,25 @@ class Endpoint(FieldChangeMixin, UUIDModel):
         }
 
     @property
-    def orchestrator(self):
+    def orchestrator_kwargs(self):
+        kwargs = {
+            "endpoint_name": self.endpoint_name,
+            "endpoint_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
+            "exec_image_repo_tag": self.algorithm_image.shimmed_repo_tag,
+            "requires_gpu_type": self.requires_gpu_type,
+            "memory_limit": self.requires_memory_gb,
+            "signing_key": self.signing_key,
+            "api_method": self.algorithm_image.api_method,
+        }
         try:
-            extra_kwargs = {"algorithm_model": self.algorithm_model.model}
+            kwargs["algorithm_model"] = self.algorithm_model.model
         except AttributeError:
-            extra_kwargs = {}
-        return EndpointOrchestrator(
-            endpoint_name=self.endpoint_name,
-            endpoint_id=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
-            exec_image_repo_tag=self.algorithm_image.shimmed_repo_tag,
-            time_limit=self.maximum_duration.total_seconds(),
-            requires_gpu_type=self.requires_gpu_type,
-            memory_limit=self.requires_memory_gb,
-            signing_key=self.signing_key,
-            api_method=self.algorithm_image.api_method,
-            **extra_kwargs,
-        )
+            pass
+        return kwargs
+
+    @property
+    def orchestrator(self):
+        return EndpointOrchestrator(**self.orchestrator_kwargs)
 
     def update_status(
         self,
@@ -1823,3 +1826,16 @@ class Invocation(UUIDModel):
         return (
             f"{settings.COMPONENTS_REGISTRY_PREFIX}-alg-endp-invoc-{self.pk}"
         )
+
+    @property
+    def orchestrator_kwargs(self):
+        kwargs = self.endpoint.orchestrator_kwargs
+        kwargs["invocation_id"] = (
+            f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}"
+        )
+        kwargs["time_limit"] = self.time_limit
+        return kwargs
+
+    @property
+    def orchestrator(self):
+        return EndpointOrchestrator(**self.orchestrator_kwargs)
