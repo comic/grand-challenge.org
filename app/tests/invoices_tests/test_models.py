@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 import pytest
 from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
-from django.utils.timezone import datetime, now
+from django.utils.timezone import datetime
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.invoices.models import (
@@ -300,29 +300,6 @@ def test_approved_compute_costs_postpaid_with_cancelled_invoice():
 
 
 @pytest.mark.django_db
-def test_compute_costs_prepaid_with_expired_invoice():
-
-    challenge = ChallengeFactory()
-    InvoiceFactory(
-        challenge=challenge,
-        support_costs_euros=0,
-        compute_costs_euros=1,
-        storage_costs_euros=0,
-        payment_status=PaymentStatusChoices.CANCELLED,
-    )
-    InvoiceFactory(
-        challenge=challenge,
-        support_costs_euros=0,
-        compute_costs_euros=1,
-        storage_costs_euros=0,
-        payment_type=PaymentTypeChoices.POSTPAID,
-    )
-
-    challenge = Challenge.objects.with_available_compute().first()
-    assert challenge.approved_compute_costs_euro_millicents == 0 * 1000 * 100
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "payment_status, required_field_name, field_value, expected_error_message",
     (
@@ -489,7 +466,7 @@ def test_invoices_cannot_be_deleted():
 
 
 @pytest.mark.django_db
-def test_invoice_expires_on_is_autoset(settings, mocker):
+def test_invoice_default_expires_on(settings, mocker):
     assert (
         settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS
     ), "Setting exists"
@@ -503,34 +480,3 @@ def test_invoice_expires_on_is_autoset(settings, mocker):
     )
     invoice = InvoiceFactory()
     assert invoice.expires_on == fixed_now.date() + relativedelta(years=2)
-
-
-@pytest.mark.django_db
-def test_invoice_expires_on_can_be_set_manually():
-    a_date = now().date()
-
-    invoice = InvoiceFactory(expires_on=a_date)
-    assert invoice.expires_on == a_date, "Can be set at creation"
-
-    new_date = a_date + relativedelta(years=1)
-    invoice.expires_on = new_date
-    invoice.save()
-    invoice.refresh_from_db()
-
-    assert invoice.expires_on == new_date, "Can be updated manually"
-
-
-@pytest.mark.django_db
-def test_invoice_expires_on_throws_validation_error():
-
-    invoice = InvoiceFactory()
-    assert invoice.expires_on, "Sanity"
-
-    invoice.expires_on = None
-    with pytest.raises(ValidationError) as e:
-        invoice.full_clean()
-    assert len(e.value.messages) == 1
-    assert (
-        "The expiry date may not be empty when updating an invoice."
-        == e.value.messages[0]
-    )

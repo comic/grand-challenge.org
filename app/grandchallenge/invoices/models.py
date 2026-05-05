@@ -101,10 +101,13 @@ class Invoice(models.Model, FieldChangeMixin):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
+    def default_expiry(self):
+        return now().date() + relativedelta(
+            years=settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS
+        )
+
     expires_on = models.DateField(
-        help_text="The date when the invoice expires",
-        blank=True,
-        null=True,
+        help_text="The date when the invoice expires", default=default_expiry
     )
     issued_on = models.DateField(
         help_text="The date when the invoice was issued (required for issued invoices)",
@@ -308,12 +311,6 @@ class Invoice(models.Model, FieldChangeMixin):
 
     def save(self, *args, **kwargs):
         adding = self._state.adding
-        if not self.expires_on:
-            if adding:
-                self.created = now()
-            self.expires_on = self.created.date() + relativedelta(
-                years=settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS
-            )
         super().save(*args, **kwargs)
         if adding:
             self.assign_permissions()
