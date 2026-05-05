@@ -95,19 +95,21 @@ class InvoiceQuerySet(models.QuerySet):
         )
 
 
+def default_invoice_expiry():
+    return now().date() + relativedelta(
+        years=settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS
+    )
+
+
 class Invoice(models.Model, FieldChangeMixin):
     objects = InvoiceQuerySet.as_manager()
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
-    def default_expiry(self):
-        return now().date() + relativedelta(
-            years=settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS
-        )
-
     expires_on = models.DateField(
-        help_text="The date when the invoice expires", default=default_expiry
+        help_text="The date when the invoice expires",
+        default=default_invoice_expiry,
     )
     issued_on = models.DateField(
         help_text="The date when the invoice was issued (required for issued invoices)",

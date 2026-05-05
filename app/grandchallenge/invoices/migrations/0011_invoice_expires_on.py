@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             model_name="invoice",
             name="expires_on",
             field=models.DateField(
-                default=grandchallenge.invoices.models.Invoice.default_expiry,
+                default=grandchallenge.invoices.models.default_invoice_expiry,
                 help_text="The date when the invoice expires",
             ),
         ),
