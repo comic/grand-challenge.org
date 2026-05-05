@@ -43,10 +43,7 @@ from grandchallenge.components.models import (  # noqa: F401
     Tarball,
 )
 from grandchallenge.components.schemas import GPUTypeChoices
-from grandchallenge.components.tasks import (
-    provision_invocation_input_data,
-    start_endpoint,
-)
+from grandchallenge.components.tasks import start_endpoint
 from grandchallenge.core.guardian import (
     GroupObjectPermissionBase,
     UserObjectPermissionBase,
@@ -1820,12 +1817,6 @@ class Invocation(UUIDModel):
         if adding:
             if self.endpoint.status != self.endpoint.StatusChoices.RUNNING:
                 raise ValidationError("Endpoint is not running")
-
-            on_commit(
-                provision_invocation_input_data.signature(
-                    kwargs=self.task_kwargs
-                ).apply_async
-            )
 
         super().save(*args, **kwargs)
 
