@@ -95,6 +95,25 @@ class TestEndpointOrchestratorProperties:
             == orchestrator._instance_type.nvme_volume_size
         )
 
+    def test_buckets_names_on_executor(self, settings):
+        settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = (
+            "algorithm-endpoints-input"
+        )
+        settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME = (
+            "algorithm-endpoints-output"
+        )
+        endpoint = EndpointFactory.build()
+        orchestrator = endpoint.orchestrator
+
+        assert (
+            orchestrator._executor._input_bucket_name
+            == "algorithm-endpoints-input"
+        )
+        assert (
+            orchestrator._executor._output_bucket_name
+            == "algorithm-endpoints-output"
+        )
+
 
 def test_endpoint_provision_auxiliary_data(settings):
     settings.PROTECTED_S3_STORAGE_KWARGS = {
