@@ -1757,3 +1757,18 @@ def test_cannot_create_invocation_for_non_running_endpoint():
 
     with pytest.raises(ValidationError, match="Endpoint is not running"):
         InvocationFactory(endpoint=endpoint)
+
+
+@pytest.mark.django_db
+def test_provision_invocation_input_data_called_on_invocation_creation(
+    django_capture_on_commit_callbacks,
+):
+    endpoint = EndpointFactory(status=EndpointStatusChoices.RUNNING)
+    with django_capture_on_commit_callbacks() as callbacks:
+        InvocationFactory(endpoint=endpoint)
+
+    assert len(callbacks) == 1
+    assert (
+        "grandchallenge.components.tasks.provision_invocation_input_data"
+        in str(callbacks[0])
+    )
