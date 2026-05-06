@@ -1,8 +1,8 @@
 from contextlib import nullcontext
+from datetime import date
 from zoneinfo import ZoneInfo
 
 import pytest
-from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ValidationError
 from django.utils.timezone import datetime
 
@@ -479,4 +479,4 @@ def test_invoice_default_expires_on(settings, mocker):
         return_value=fixed_now,
     )
     invoice = InvoiceFactory()
-    assert invoice.expires_on == fixed_now.date() + relativedelta(years=2)
+    assert invoice.expires_on == date(2027, 3, 1)
