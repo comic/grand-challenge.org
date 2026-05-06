@@ -1775,4 +1775,49 @@ def provision_invocation_input_data(
     else:
         invocation.update_status(status=invocation.StatusChoices.PROVISIONED)
 
-        # TODO: create invoke_endpoint task and register to be called here
+        on_commit(
+            invoke_endpoint.signature(
+                kwargs=invocation.task_kwargs,
+            ).apply_async
+        )
+
+
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
+def invoke_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
+    with check_lock_acquired():
+        invocation = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if invocation.status == invocation.StatusChoices.CANCELLED:
+        # Nothing to do
+        return
+    elif invocation.status != invocation.StatusChoices.PROVISIONED:
+        raise RuntimeError(
+            "Invocation is not in the expected state for execution"
+        )
+
+    if invocation.endpoint.status != invocation.endpoint.StatusChoices.RUNNING:
+        raise RuntimeError("Endpoint is not running")
+
+    orchestrator = invocation.orchestrator
+
+    try:
+        orchestrator.invoke_endpoint(inference_id=invocation.inference_id)
+    except Exception:
+        logger.error("Could not invoke endpoint", exc_info=True)
+
+        on_commit(
+            stop_endpoint.signature(
+                kwargs=invocation.endpoint.task_kwargs,
+            ).apply_async
+        )
+
+        invocation.update_status(
+            status=invocation.StatusChoices.FAILURE,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+        )
+
+    else:
+        invocation.update_status(status=invocation.StatusChoices.EXECUTING)

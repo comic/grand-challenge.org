@@ -84,6 +84,14 @@ class EndpointOrchestrator:
         return f"s3://{settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME}/{self._io_prefix}/failures"
 
     @property
+    def _invocation_key(self):
+        return self._executor._invocation_key
+
+    @property
+    def _invocation_s3_uri(self):
+        return f"s3://{settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME}/{self._invocation_key}"
+
+    @property
     def invocation_environment(self):
         env = self._executor.invocation_environment
 
@@ -212,3 +220,11 @@ class EndpointOrchestrator:
 
     def provision_invocation_input_data(self, *, input_civs):
         self._executor.provision(input_civs=input_civs, input_prefixes={})
+
+    def invoke_endpoint(self, *, inference_id):
+        self._sagemaker_runtime_client.invoke_endpoint_async(
+            EndpointName=self._endpoint_name,
+            ContentType="application/json",
+            InputLocation=self._invocation_s3_uri,
+            InferenceId=inference_id,
+        )
