@@ -1683,22 +1683,25 @@ class Endpoint(FieldChangeMixin, UUIDModel):
         }
 
     @property
-    def orchestrator(self):
+    def orchestrator_kwargs(self):
+        kwargs = {
+            "endpoint_name": self.endpoint_name,
+            "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
+            "exec_image_repo_tag": self.algorithm_image.shimmed_repo_tag,
+            "requires_gpu_type": self.requires_gpu_type,
+            "memory_limit": self.requires_memory_gb,
+            "signing_key": self.signing_key,
+            "api_method": self.algorithm_image.api_method,
+        }
         try:
-            extra_kwargs = {"algorithm_model": self.algorithm_model.model}
+            kwargs["algorithm_model"] = self.algorithm_model.model
         except AttributeError:
-            extra_kwargs = {}
-        return EndpointOrchestrator(
-            endpoint_name=self.endpoint_name,
-            endpoint_id=f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
-            exec_image_repo_tag=self.algorithm_image.shimmed_repo_tag,
-            time_limit=self.maximum_duration.total_seconds(),
-            requires_gpu_type=self.requires_gpu_type,
-            memory_limit=self.requires_memory_gb,
-            signing_key=self.signing_key,
-            api_method=self.algorithm_image.api_method,
-            **extra_kwargs,
-        )
+            pass
+        return kwargs
+
+    @property
+    def orchestrator(self):
+        return EndpointOrchestrator(**self.orchestrator_kwargs)
 
     def update_status(
         self,
@@ -1823,3 +1826,51 @@ class Invocation(UUIDModel):
         return (
             f"{settings.COMPONENTS_REGISTRY_PREFIX}-alg-endp-invoc-{self.pk}"
         )
+
+    @property
+    def task_kwargs(self):
+        return {
+            "app_label": self._meta.app_label,
+            "model_name": self._meta.model_name,
+            "pk": self.pk,
+        }
+
+    @property
+    def orchestrator_kwargs(self):
+        kwargs = self.endpoint.orchestrator_kwargs
+        kwargs["job_id"] = (
+            f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}"
+        )
+        kwargs["time_limit"] = self.time_limit
+        return kwargs
+
+    @property
+    def orchestrator(self):
+        return EndpointOrchestrator(**self.orchestrator_kwargs)
+
+    @cached_property
+    def inputs_complete(self):
+        # check if all inputs are present and if they all have a value
+        # interfaces that do not require a value will be considered complete regardless
+        return {
+            civ.interface
+            for civ in self.inputs.all()
+            if civ.has_value or not civ.interface.value_required
+        } == {*self.algorithm_interface.inputs.all()}
+
+    def update_status(
+        self,
+        *,
+        status: InvocationStatusChoices,
+        error_message="",
+        invoke_duration=None,
+    ):
+        self.status = status
+
+        if error_message:
+            self.error_message = error_message[:1024]
+
+        if invoke_duration is not None:
+            self.invoke_duration = invoke_duration
+
+        self.save()

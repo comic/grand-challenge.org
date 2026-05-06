@@ -14,17 +14,17 @@ class EndpointOrchestrator:
     def __init__(
         self,
         endpoint_name,
-        endpoint_id,
+        job_id,
         exec_image_repo_tag,
-        time_limit,
         requires_gpu_type,
         memory_limit,
         api_method,
         signing_key,
+        time_limit=settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION,
         algorithm_model=None,
     ):
         self._executor = AmazonSageMakerTrainingExecutor(
-            job_id=endpoint_id,
+            job_id=job_id,
             exec_image_repo_tag=exec_image_repo_tag,
             memory_limit=memory_limit,
             time_limit=time_limit,
@@ -32,7 +32,9 @@ class EndpointOrchestrator:
             use_warm_pool=False,
             signing_key=signing_key,
             api_method=api_method,
-            algorithm_model=algorithm_model,
+            algorithm_model=None,
+            input_bucket_name=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
+            output_bucket_name=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
         )
         self._endpoint_name = endpoint_name
         self._exec_image_repo_tag = exec_image_repo_tag
@@ -207,3 +209,6 @@ class EndpointOrchestrator:
         attempt(self.delete_sagemaker_model)
 
         self.deprovision_auxiliary_data()
+
+    def provision_invocation_input_data(self, *, input_civs):
+        self._executor.provision(input_civs=input_civs, input_prefixes={})

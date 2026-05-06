@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from botocore.exceptions import ClientError
 from botocore.stub import Stubber
@@ -5,8 +7,14 @@ from botocore.stub import Stubber
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
     EndpointOrchestrator,
 )
+from grandchallenge.components.backends.base import s3_upload_content
+from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.components.schemas import GPUTypeChoices
-from tests.algorithms_tests.factories import EndpointFactory
+from tests.algorithms_tests.factories import EndpointFactory, InvocationFactory
+from tests.components_tests.factories import (
+    ComponentInterfaceFactory,
+    ComponentInterfaceValueFactory,
+)
 
 
 class TestEndpointOrchestratorProperties:
@@ -93,6 +101,25 @@ class TestEndpointOrchestratorProperties:
         assert (
             orchestrator._required_volume_size_gb
             == orchestrator._instance_type.nvme_volume_size
+        )
+
+    def test_buckets_names_on_executor(self, settings):
+        settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = (
+            "algorithm-endpoints-input"
+        )
+        settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME = (
+            "algorithm-endpoints-output"
+        )
+        endpoint = EndpointFactory.build()
+        orchestrator = endpoint.orchestrator
+
+        assert (
+            orchestrator._executor._input_bucket_name
+            == "algorithm-endpoints-input"
+        )
+        assert (
+            orchestrator._executor._output_bucket_name
+            == "algorithm-endpoints-output"
         )
 
 
@@ -398,3 +425,133 @@ def test_endpoint_orchestrator_deprovision_ignored_errors(mocker):
     # assert all called
     for mock_method in mock_deprovision_methods:
         mock_method.assert_called_once()
+
+
+def test_endpoint_orchestrator_auxiliary_data_tasks_empty():
+    orchestrator = InvocationFactory.build().orchestrator
+
+    assert orchestrator._executor._auxiliary_data_provisioning_tasks == []
+
+
+@pytest.mark.django_db
+def test_endpoint_orchestrator_provision_invocation_input_data_tasks(
+    mocker, settings
+):
+    settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = (
+        "algorithm-endpoints-input"
+    )
+    settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME = (
+        "algorithm-endpoints-output"
+    )
+    invocation = InvocationFactory(time_limit=42)
+    ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.INTEGER)
+    civ = ComponentInterfaceValueFactory(interface=ci, value=42)
+    invocation.inputs.add(civ)
+    orchestrator = invocation.orchestrator
+
+    expected_inputs_json = [
+        {
+            "value": 42,
+            "file": None,
+            "pk": civ.pk,
+            "image": None,
+            "interface": {
+                "kind": "Integer",
+                "super_kind": "Value",
+                "look_up_table": None,
+                "title": ci.title,
+                "description": "",
+                "slug": ci.slug,
+                "pk": ci.pk,
+                "default_value": None,
+                "relative_path": ci.relative_path,
+                "overlay_segments": [],
+            },
+            "socket": {
+                "kind": "Integer",
+                "super_kind": "Value",
+                "look_up_table": None,
+                "title": ci.title,
+                "description": "",
+                "slug": ci.slug,
+                "pk": ci.pk,
+                "default_value": None,
+                "relative_path": ci.relative_path,
+                "overlay_segments": [],
+            },
+        },
+    ]
+    expected_invocation_json = {
+        "pk": f"algorithms-invocation-{invocation.pk}",
+        "inputs": [
+            {
+                "relative_path": f"{ci.relative_path}",
+                "bucket_name": "algorithm-endpoints-input",
+                "bucket_key": f"/io/algorithms/invocation/{invocation.pk}/{ci.relative_path}",
+                "decompress": False,
+            },
+            {
+                "relative_path": "inputs.json",
+                "bucket_name": "algorithm-endpoints-input",
+                "bucket_key": f"/io/algorithms/invocation/{invocation.pk}/inputs.json",
+                "decompress": False,
+            },
+        ],
+        "output_bucket_name": "algorithm-endpoints-output",
+        "output_prefix": f"/io/algorithms/invocation/{invocation.pk}",
+        "timeout": "PT42S",
+    }
+
+    mock_provision = mocker.patch.object(orchestrator._executor, "_provision")
+
+    orchestrator.provision_invocation_input_data(input_civs=[civ])
+
+    mock_provision.assert_called_once()
+
+    mock_call = mock_provision.mock_calls[0]
+    _, _, mock_call_kwargs = mock_call
+    provisioning_tasks = mock_call_kwargs["tasks"]
+
+    assert len(provisioning_tasks) == 3
+
+    copy_civ_task = provisioning_tasks[0]
+    upload_inputs_json_task = provisioning_tasks[1]
+    create_invocation_json_task = provisioning_tasks[2]
+
+    assert copy_civ_task.func == s3_upload_content
+    assert copy_civ_task.keywords["bucket"] == "algorithm-endpoints-input"
+    assert (
+        copy_civ_task.keywords["key"]
+        == f"/io/algorithms/invocation/{invocation.pk}/{ci.relative_path}"
+    )
+    assert copy_civ_task.keywords["content"] == b"42"
+
+    assert upload_inputs_json_task.func == s3_upload_content
+    assert (
+        upload_inputs_json_task.keywords["bucket"]
+        == "algorithm-endpoints-input"
+    )
+    assert (
+        upload_inputs_json_task.keywords["key"]
+        == f"/io/algorithms/invocation/{invocation.pk}/inputs.json"
+    )
+
+    inputs_json = json.loads(upload_inputs_json_task.keywords["content"])
+
+    assert inputs_json == expected_inputs_json
+
+    assert create_invocation_json_task.func == s3_upload_content
+    assert (
+        create_invocation_json_task.keywords["bucket"]
+        == "algorithm-endpoints-input"
+    )
+    assert (
+        create_invocation_json_task.keywords["key"]
+        == f"/invocations/algorithms/invocation/{invocation.pk}/invocation.json"
+    )
+
+    invocation_json = json.loads(
+        create_invocation_json_task.keywords["content"]
+    )
+
+    assert invocation_json == [expected_invocation_json]

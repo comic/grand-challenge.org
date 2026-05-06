@@ -1724,3 +1724,55 @@ def stop_expired_endpoints(*, app_label: str, model_name: str):
                 kwargs=endpoint.task_kwargs,
             ).apply_async
         )
+
+
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
+def provision_invocation_input_data(
+    *, pk: uuid.UUID, app_label: str, model_name: str
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
+    with check_lock_acquired():
+        invocation = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if invocation.status == invocation.StatusChoices.CANCELLED:
+        # Nothing to do
+        return
+    elif (
+        not invocation.inputs_complete
+        or invocation.status != invocation.StatusChoices.QUEUED
+    ):
+        raise RuntimeError("Invocation is not ready for provisioning")
+
+    if invocation.endpoint.status != invocation.endpoint.StatusChoices.RUNNING:
+        raise RuntimeError("Endpoint is not running")
+
+    orchestrator = invocation.orchestrator
+
+    try:
+        orchestrator.provision_invocation_input_data(
+            input_civs=invocation.inputs.prefetch_related(
+                "interface", "image__files"
+            ).all(),
+        )
+    except Exception:
+        logger.error(
+            "Could not provision endpoint for invocation", exc_info=True
+        )
+
+        on_commit(
+            stop_endpoint.signature(
+                kwargs=invocation.endpoint.task_kwargs,
+            ).apply_async
+        )
+
+        invocation.update_status(
+            status=invocation.StatusChoices.FAILURE,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+        )
+
+    else:
+        invocation.update_status(status=invocation.StatusChoices.PROVISIONED)
+
+        # TODO: create invoke_endpoint task and register to be called here

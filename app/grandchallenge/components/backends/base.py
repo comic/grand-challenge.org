@@ -328,6 +328,8 @@ class Executor(ABC):
         api_method: APIMethodChoices,
         algorithm_model=None,
         ground_truth=None,
+        input_bucket_name=settings.COMPONENTS_INPUT_BUCKET_NAME,
+        output_bucket_name=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -350,6 +352,9 @@ class Executor(ABC):
         self._stderr = []
 
         self._inference_result_skipped = False
+
+        self._input_bucket_name = input_bucket_name
+        self._output_bucket_name = output_bucket_name
 
         self.__s3_client = None
 
@@ -390,15 +395,15 @@ class Executor(ABC):
 
     def deprovision(self):
         self._delete_objects(
-            bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            bucket=self._input_bucket_name,
             prefix=self._io_prefix,
         )
         self._delete_objects(
-            bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            bucket=self._output_bucket_name,
             prefix=self._io_prefix,
         )
         self._delete_objects(
-            bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+            bucket=self._input_bucket_name,
             prefix=self._auxiliary_data_prefix,
         )
 
@@ -464,12 +469,12 @@ class Executor(ABC):
 
         if self._algorithm_model:
             env["GRAND_CHALLENGE_COMPONENT_MODEL"] = (
-                f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._algorithm_model_key}"
+                f"s3://{self._input_bucket_name}/{self._algorithm_model_key}"
             )
 
         if self._ground_truth:
             env["GRAND_CHALLENGE_COMPONENT_GROUND_TRUTH"] = (
-                f"s3://{settings.COMPONENTS_INPUT_BUCKET_NAME}/{self._ground_truth_key}"
+                f"s3://{self._input_bucket_name}/{self._ground_truth_key}"
             )
 
         return env
@@ -560,7 +565,7 @@ class Executor(ABC):
     def _get_input_prefix_size_bytes(self, *, prefix):
         paginator = self._s3_client.get_paginator("list_objects_v2")
         pages = paginator.paginate(
-            Bucket=settings.COMPONENTS_INPUT_BUCKET_NAME, Prefix=prefix
+            Bucket=self._input_bucket_name, Prefix=prefix
         )
 
         total_size = 0
@@ -610,7 +615,7 @@ class Executor(ABC):
                                 civ_provisioning_task.key, self._io_prefix
                             )
                         ),
-                        bucket_name=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                        bucket_name=self._input_bucket_name,
                         bucket_key=civ_provisioning_task.key,
                         decompress=civ.decompress,
                     )
@@ -723,7 +728,7 @@ class Executor(ABC):
                     InferenceTask(
                         pk=self._job_id,
                         inputs=invocation_inputs,
-                        output_bucket_name=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                        output_bucket_name=self._output_bucket_name,
                         output_prefix=self._io_prefix,
                         timeout=self._time_limit,
                     )
@@ -769,8 +774,8 @@ class Executor(ABC):
             ),
         )
 
-    @staticmethod
     def _get_copy_sop_instance_task(
+        self,
         *,
         medical_imaging_auth,
         unsigned_request,
@@ -781,32 +786,30 @@ class Executor(ABC):
                 s3_sign_request_then_stream,
                 request=unsigned_request,
                 signer=medical_imaging_auth,
-                bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                bucket=self._input_bucket_name,
                 key=target_key,
             ),
             key=target_key,
         )
 
-    @staticmethod
-    def _get_copy_input_object_task(*, src, target_key):
+    def _get_copy_input_object_task(self, *, src, target_key):
         return CIVProvisioningTask(
             task=functools.partial(
                 s3_copy,
                 source_bucket=src.storage.bucket.name,
                 source_key=src.name,
-                target_bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                target_bucket=self._input_bucket_name,
                 target_key=target_key,
             ),
             key=target_key,
         )
 
-    @staticmethod
-    def _get_upload_input_content_task(*, content, key):
+    def _get_upload_input_content_task(self, *, content, key):
         return CIVProvisioningTask(
             task=functools.partial(
                 s3_upload_content,
                 content=content,
-                bucket=settings.COMPONENTS_INPUT_BUCKET_NAME,
+                bucket=self._input_bucket_name,
                 key=key,
             ),
             key=key,
@@ -815,7 +818,7 @@ class Executor(ABC):
     def _get_inference_result(self):
         try:
             response = self._s3_client.get_object(
-                Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                Bucket=self._output_bucket_name,
                 Key=self._inference_result_key,
             )
         except botocore.exceptions.ClientError as error:
@@ -883,7 +886,7 @@ class Executor(ABC):
         prefix = safe_join(self._io_prefix, interface.relative_path)
 
         response = self._s3_client.list_objects_v2(
-            Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+            Bucket=self._output_bucket_name,
             Prefix=prefix,
         )
 
@@ -961,13 +964,13 @@ class Executor(ABC):
 
             logger.info(
                 f"Downloading {file['Key']} to {dest} from "
-                f"{settings.COMPONENTS_OUTPUT_BUCKET_NAME}"
+                f"{self._output_bucket_name}"
             )
 
             Path(dest).parent.mkdir(parents=True, exist_ok=True)
             self._s3_client.download_file(
                 Filename=dest,
-                Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                Bucket=self._output_bucket_name,
                 Key=file["Key"],
             )
 
@@ -978,7 +981,7 @@ class Executor(ABC):
             with io.BytesIO() as fileobj:
                 self._s3_client.download_fileobj(
                     Fileobj=fileobj,
-                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                    Bucket=self._output_bucket_name,
                     Key=key,
                 )
                 fileobj.seek(0)
@@ -1016,7 +1019,7 @@ class Executor(ABC):
             with SpooledTemporaryFile(max_size=MAX_SPOOL_SIZE) as fileobj:
                 self._s3_client.download_fileobj(
                     Fileobj=fileobj,
-                    Bucket=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+                    Bucket=self._output_bucket_name,
                     Key=key,
                 )
                 fileobj.seek(0)
