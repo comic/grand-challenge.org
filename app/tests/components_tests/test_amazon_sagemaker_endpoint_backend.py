@@ -59,6 +59,17 @@ class TestEndpointOrchestratorProperties:
             f"s3://algorithm-endpoints-output//io/algorithms/endpoint/{endpoint.pk}/failures"
         )
 
+    def test_invocation_s3_uri(self, settings):
+        settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = (
+            "algorithm-endpoints-input"
+        )
+        invocation = InvocationFactory.build()
+        orchestrator = invocation.orchestrator
+
+        assert orchestrator._invocation_s3_uri == (
+            f"s3://algorithm-endpoints-input//invocations/algorithms/invocation/{invocation.pk}/invocation.json"
+        )
+
     def test_endpoint_invocation_environment(self, settings):
         settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME = (
             "algorithm-endpoints-input"
@@ -555,3 +566,26 @@ def test_endpoint_orchestrator_provision_invocation_input_data_tasks(
     )
 
     assert invocation_json == [expected_invocation_json]
+
+
+def test_invocation_invoke_endpoint(settings):
+    settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+    invocation = InvocationFactory.build(time_limit=42)
+    orchestrator = invocation.orchestrator
+
+    with Stubber(orchestrator._sagemaker_runtime_client) as stubber:
+        stubber.add_response(
+            method="invoke_endpoint_async",
+            service_response={"InferenceId": invocation.inference_id},
+            expected_params={
+                "EndpointName": invocation.endpoint.endpoint_name,
+                "ContentType": "application/json",
+                "InputLocation": orchestrator._invocation_s3_uri,
+                "InferenceId": invocation.inference_id,
+                "InvocationTimeoutSeconds": 42,
+            },
+        )
+
+        orchestrator.invoke_endpoint(inference_id=invocation.inference_id)
+
+        stubber.assert_no_pending_responses()
