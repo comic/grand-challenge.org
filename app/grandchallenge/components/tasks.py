@@ -1761,12 +1761,6 @@ def provision_invocation_input_data(
             "Could not provision endpoint for invocation", exc_info=True
         )
 
-        on_commit(
-            stop_endpoint.signature(
-                kwargs=invocation.endpoint.task_kwargs,
-            ).apply_async
-        )
-
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
@@ -1807,12 +1801,6 @@ def invoke_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
         orchestrator.invoke_endpoint(inference_id=invocation.inference_id)
     except Exception:
         logger.error("Could not invoke endpoint", exc_info=True)
-
-        on_commit(
-            stop_endpoint.signature(
-                kwargs=invocation.endpoint.task_kwargs,
-            ).apply_async
-        )
 
         invocation.update_status(
             status=invocation.StatusChoices.FAILURE,
