@@ -1686,7 +1686,7 @@ class Endpoint(FieldChangeMixin, UUIDModel):
     def orchestrator_kwargs(self):
         kwargs = {
             "endpoint_name": self.endpoint_name,
-            "endpoint_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
+            "job_id": f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}",
             "exec_image_repo_tag": self.algorithm_image.shimmed_repo_tag,
             "requires_gpu_type": self.requires_gpu_type,
             "memory_limit": self.requires_memory_gb,
@@ -1838,7 +1838,7 @@ class Invocation(UUIDModel):
     @property
     def orchestrator_kwargs(self):
         kwargs = self.endpoint.orchestrator_kwargs
-        kwargs["invocation_id"] = (
+        kwargs["job_id"] = (
             f"{self._meta.app_label}-{self._meta.model_name}-{self.pk}"
         )
         kwargs["time_limit"] = self.time_limit

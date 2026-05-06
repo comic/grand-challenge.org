@@ -14,20 +14,15 @@ class EndpointOrchestrator:
     def __init__(
         self,
         endpoint_name,
-        endpoint_id,
+        job_id,
         exec_image_repo_tag,
         requires_gpu_type,
         memory_limit,
         api_method,
         signing_key,
-        invocation_id=None,
         time_limit=settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION,
         algorithm_model=None,
     ):
-        if invocation_id:
-            job_id = invocation_id
-        else:
-            job_id = endpoint_id
         self._executor = AmazonSageMakerTrainingExecutor(
             job_id=job_id,
             exec_image_repo_tag=exec_image_repo_tag,
