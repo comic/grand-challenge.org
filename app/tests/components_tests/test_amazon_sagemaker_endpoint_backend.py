@@ -570,7 +570,7 @@ def test_endpoint_orchestrator_provision_invocation_input_data_tasks(
 
 def test_invocation_invoke_endpoint(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
-    invocation = InvocationFactory.build()
+    invocation = InvocationFactory.build(time_limit=42)
     orchestrator = invocation.orchestrator
 
     with Stubber(orchestrator._sagemaker_runtime_client) as stubber:
@@ -582,6 +582,7 @@ def test_invocation_invoke_endpoint(settings):
                 "ContentType": "application/json",
                 "InputLocation": orchestrator._invocation_s3_uri,
                 "InferenceId": invocation.inference_id,
+                "InvocationTimeoutSeconds": 42,
             },
         )
 

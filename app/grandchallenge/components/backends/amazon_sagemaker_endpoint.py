@@ -118,6 +118,10 @@ class EndpointOrchestrator:
         else:
             return 30
 
+    @property
+    def _time_limit(self):
+        return self._executor._time_limit
+
     def provision_auxiliary_data(self):
         if self._algorithm_model:
             self._s3_client.copy(
@@ -227,4 +231,5 @@ class EndpointOrchestrator:
             ContentType="application/json",
             InputLocation=self._invocation_s3_uri,
             InferenceId=inference_id,
+            InvocationTimeoutSeconds=int(self._time_limit.total_seconds()),
         )
