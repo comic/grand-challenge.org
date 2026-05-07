@@ -10,7 +10,7 @@ register = template.Library()
 def copy_button(value, link=None):
     button = format_html(
         "<button "
-        'type="button"'
+        'type="button" '
         'class="btn btn-link text-dark p-0 m-0 mr-1 copy-btn shadow-none" '
         'data-copy="{value}" '
         'data-placement="left" '

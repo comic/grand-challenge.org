@@ -12,14 +12,26 @@ document.addEventListener("click", e => {
     }
     clearTimeout(activeTimers[id]);
 
-    navigator.clipboard.writeText(id).then(() => {
-        $(btn)
-            .tooltip({ trigger: "manual" })
-            .attr("data-original-title", "Copied to clipboard!")
-            .tooltip("show");
+    navigator.clipboard
+        .writeText(id)
+        .then(() => {
+            $(btn)
+                .tooltip({ trigger: "manual" })
+                .attr("data-original-title", "Copied to clipboard!")
+                .tooltip("show");
 
-        activeTimers[id] = setTimeout(() => {
-            $(btn).attr("title", originalTitles[id]).tooltip("hide");
-        }, 2000);
-    });
+            activeTimers[id] = setTimeout(() => {
+                $(btn).attr("title", originalTitles[id]).tooltip("hide");
+            }, 2000);
+        })
+        .catch(() => {
+            $(btn)
+                .tooltip({ trigger: "manual" })
+                .attr("data-original-title", "Copy failed!")
+                .tooltip("show");
+
+            activeTimers[id] = setTimeout(() => {
+                $(btn).attr("title", originalTitles[id]).tooltip("hide");
+            }, 2000);
+        });
 });
