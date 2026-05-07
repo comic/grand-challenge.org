@@ -8,7 +8,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from urllib.parse import quote
 
-from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from billiard.exceptions import SoftTimeLimitExceeded
 from celery import signature
 from django import forms
 from django.conf import settings
@@ -1564,7 +1564,6 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
         except (
             MemoryError,
             SoftTimeLimitExceeded,
-            TimeLimitExceeded,
         ) as error:
             raise ValidationError(
                 "The file was too large to process, "
