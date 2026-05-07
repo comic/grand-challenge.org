@@ -306,11 +306,6 @@ class Invoice(models.Model, FieldChangeMixin):
                     "The total amount may not change. (You may only redistribute costs.)"
                 )
 
-        if self.pk and not self.expires_on:
-            raise ValidationError(
-                "The expiry date may not be empty when updating an invoice."
-            )
-
     def save(self, *args, **kwargs):
         adding = self._state.adding
         super().save(*args, **kwargs)
