@@ -37,6 +37,7 @@ from django.utils.module_loading import import_string
 from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.fields import AutoSlugField
+from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from pydantic_core import MISSING
 
 from grandchallenge.cases.models import (
@@ -1566,6 +1567,7 @@ class ComponentInterfaceValue(models.Model, FieldChangeMixin):
         except (
             MemoryError,
             CelerySoftTimeLimitExceeded,
+            SoftTimeLimitExceeded,
         ) as error:
             raise ValidationError(
                 "The file was too large to process, "

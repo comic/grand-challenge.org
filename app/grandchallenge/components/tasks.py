@@ -29,6 +29,7 @@ from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
@@ -871,7 +872,10 @@ def execute_job(
             error_message=str(e),
             detailed_error_message=e.message_details,
         )
-    except CelerySoftTimeLimitExceeded:
+    except (
+        CelerySoftTimeLimitExceeded,
+        SoftTimeLimitExceeded,
+    ):
         job.update_status(
             status=job.FAILURE,
             stdout=executor.stdout,

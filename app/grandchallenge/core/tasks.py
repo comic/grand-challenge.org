@@ -42,7 +42,11 @@ CLOUDWATCH_METRICS_LIMIT = 1000
     ignore_result=True,
     singleton=True,
     # No need to retry here as the periodic task call this again
-    ignore_errors=(LockError, CelerySoftTimeLimitExceeded),
+    ignore_errors=(
+        LockError,
+        CelerySoftTimeLimitExceeded,
+        SoftTimeLimitExceeded,
+    ),
 )
 @transaction.atomic
 def put_cloudwatch_metrics_celery():

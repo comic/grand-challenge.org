@@ -10,6 +10,7 @@ from billiard.exceptions import (
 )
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.files.base import ContentFile
+from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
 from grandchallenge.algorithms.models import AlgorithmImage, Job
 from grandchallenge.cases.models import Image
@@ -1825,6 +1826,11 @@ def test_component_interface_value_manager():
         ),
         (
             CelerySoftTimeLimitExceeded,
+            ValidationError,
+            "The file was too large",
+        ),
+        (
+            SoftTimeLimitExceeded,
             ValidationError,
             "The file was too large",
         ),

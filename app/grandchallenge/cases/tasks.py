@@ -26,6 +26,7 @@ from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from panimg_models import ImageBuilderOptions, PanImgResult
 
 from grandchallenge.cases.models import (
@@ -212,7 +213,10 @@ def build_images(  # noqa:C901
             ),
         )
         return
-    except CelerySoftTimeLimitExceeded:
+    except (
+        CelerySoftTimeLimitExceeded,
+        SoftTimeLimitExceeded,
+    ):
         _handle_error(error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED)
         return
     except Exception as error:
