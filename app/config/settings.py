@@ -1302,10 +1302,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.evaluation.tasks.cancel_external_evaluations_past_timeout",
         "schedule": timedelta(hours=1),
     },
-    "push_metrics_to_cloudwatch": {
-        "task": "grandchallenge.core.tasks.put_cloudwatch_metrics",
-        "schedule": timedelta(seconds=30),
-    },
     "stop_expired_services": {
         "task": "grandchallenge.components.tasks.stop_expired_services",
         "kwargs": {

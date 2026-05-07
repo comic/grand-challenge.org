@@ -1,7 +1,9 @@
 from datetime import timedelta
 
 import boto3
-from billiard.exceptions import SoftTimeLimitExceeded
+from billiard.exceptions import (
+    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
+)
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.db import transaction
@@ -9,6 +11,8 @@ from django.db.models import Count
 from django.utils import timezone
 from django.utils.timezone import now
 from django_celery_results.models import TaskResult
+from lambda_tasks.decorators import lambda_task
+from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from redis.exceptions import LockError
 
 from grandchallenge.algorithms.models import AlgorithmImage, Endpoint, Job
@@ -34,12 +38,23 @@ CLOUDWATCH_METRICS_LIMIT = 1000
 
 
 @acks_late_micro_short_task(
+    name=f"{__name__}.put_cloudwatch_metrics",
     ignore_result=True,
+    singleton=True,
+    # No need to retry here as the periodic task call this again
+    ignore_errors=(LockError, CelerySoftTimeLimitExceeded),
+)
+@transaction.atomic
+def put_cloudwatch_metrics_celery():
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return put_cloudwatch_metrics()
+
+
+@lambda_task(
     singleton=True,
     # No need to retry here as the periodic task call this again
     ignore_errors=(LockError, SoftTimeLimitExceeded),
 )
-@transaction.atomic
 def put_cloudwatch_metrics():
     if not settings.PUSH_CLOUDWATCH_METRICS:
         return
