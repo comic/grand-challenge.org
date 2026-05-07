@@ -23,6 +23,7 @@ from django.utils._os import safe_join
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
+from lambda_tasks.decorators import lambda_task
 from panimg_models import ImageBuilderOptions, PanImgResult
 
 from grandchallenge.cases.models import (
@@ -576,9 +577,18 @@ def handle_dicom_import_error(
     )
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException, RetryStep))
+@acks_late_micro_short_task(
+    name=f"{__name__}.handle_health_imaging_import_job_event",
+    retry_on=(LockNotAcquiredException, RetryStep),
+)
 @transaction.atomic
-def handle_health_imaging_import_job_event(*, event):
+def handle_health_imaging_import_job_event_celery(*, event):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return handle_health_imaging_import_job_event(event=event)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException, RetryStep))
+def handle_health_imaging_import_job_event(*, event: dict):
     job_name = event["jobName"]
     prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
     pattern = rf"^{prefix_regex}\-(?P<pk>{UUID4_REGEX})$"

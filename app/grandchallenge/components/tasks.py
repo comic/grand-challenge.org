@@ -901,16 +901,6 @@ def get_update_status_kwargs(*, executor=None):
         return {}
 
 
-@acks_late_micro_short_task(
-    name="grandchallenge.components.tasks.handle_event",
-    retry_on=(RetryStep, LockNotAcquiredException),
-)
-@transaction.atomic
-def handle_event_celery(*, event, backend):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return handle_event(event=event, backend=backend)
-
-
 @lambda_task(retry_on=(RetryStep, LockNotAcquiredException))
 def handle_event(*, event: dict, backend: str):
     """
