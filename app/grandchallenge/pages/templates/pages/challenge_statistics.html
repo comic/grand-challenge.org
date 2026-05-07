@@ -68,6 +68,7 @@
                     <tr>
                         <th>Number</th>
                         <th>Issued on</th>
+                        <th>Expires on</th>
                         <th>Support Costs</th>
                         <th>Compute Costs</th>
                         <th>Storage Costs</th>
@@ -77,38 +78,39 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for invoice in challenge.invoices.with_overdue_status %}
+                    {% for invoice in challenge.invoices.with_expired_status.with_overdue_status %}
                         <tr>
                             <td>{{ invoice.internal_invoice_number }}</td>
                             <td data-order="{{ invoice.issued_on|date:"c" }}">{{ invoice.issued_on }}</td>
+                            <td data-order="{{ invoice.expires_on|date:"c" }}">{{ invoice.expires_on }}</td>
                             <td>{{ invoice.support_costs_euros|euro:0 }}</td>
                             <td>{{ invoice.compute_costs_euros|euro:0 }}</td>
                             <td>{{ invoice.storage_costs_euros|euro:0 }}</td>
                             <td>{{ invoice.external_reference }}</td>
                             <td>{{ invoice.get_payment_type_display }}</td>
                             <td>
-                                {% if invoice.payment_type == invoice.PaymentTypeChoices.COMPLIMENTARY %}
-                                    -
-                                {% else %}
+                                {% if invoice.is_expired %}
+                                    <span class="badge badge-secondary">
+                                        Expired
+                                    </span>
+                                {% elif invoice.is_due %}
+                                    <span class="badge badge-warning">
+                                        Due
+                                    </span>
+                                {% elif invoice.is_overdue %}
+                                    <span class="badge badge-danger">
+                                        Overdue
+                                    </span>
+                                {% elif invoice.payment_type != invoice.PaymentTypeChoices.COMPLIMENTARY %}
                                     <span class="badge
-                                            {% if invoice.payment_status == invoice.PaymentStatusChoices.PAID %}
-                                                badge-success
-                                            {% elif invoice.is_overdue %}
-                                                badge-danger
-                                            {% elif invoice.payment_status == invoice.PaymentStatusChoices.ISSUED %}
-                                                badge-warning
-                                            {% elif invoice.payment_status == invoice.PaymentStatusChoices.CANCELLED %}
-                                                badge-dark
-                                            {% else %}
-                                                badge-info
-                                            {% endif %}">
-                                        {% if invoice.is_due %}
-                                            Due
-                                        {% elif invoice.is_overdue %}
-                                            Overdue
+                                        {% if invoice.payment_status == invoice.PaymentStatusChoices.PAID %}
+                                            badge-success
+                                        {% elif invoice.payment_status == invoice.PaymentStatusChoices.CANCELLED %}
+                                            badge-dark
                                         {% else %}
-                                            {{ invoice.get_payment_status_display }}
-                                        {% endif %}
+                                            badge-info
+                                        {% endif %}">
+                                        {{ invoice.get_payment_status_display }}
                                     </span>
                                 {% endif %}
                             </td>

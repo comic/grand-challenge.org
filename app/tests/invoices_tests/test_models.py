@@ -1,7 +1,10 @@
 from contextlib import nullcontext
+from datetime import date
+from zoneinfo import ZoneInfo
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.utils.timezone import datetime
 
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.invoices.models import (
@@ -460,3 +463,20 @@ def test_invoices_cannot_be_deleted():
         Invoice.objects.filter(pk=invoice.pk).delete()
 
     assert Invoice.objects.filter(pk=invoice.pk).exists()
+
+
+@pytest.mark.django_db
+def test_invoice_default_expires_on(settings, mocker):
+    assert (
+        settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS
+    ), "Setting exists"
+
+    settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS = 2
+
+    fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+    mocker.patch(
+        "grandchallenge.invoices.models.now",
+        return_value=fixed_now,
+    )
+    invoice = InvoiceFactory()
+    assert invoice.expires_on == date(2027, 3, 1)

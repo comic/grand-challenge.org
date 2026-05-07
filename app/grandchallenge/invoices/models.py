@@ -1,3 +1,4 @@
+from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -72,6 +73,18 @@ class InvoiceQuerySet(models.QuerySet):
             ),
         )
 
+    def with_expired_status(self):
+        today = now().date()
+
+        return self.annotate(
+            is_expired=ExpressionWrapper(
+                Q(
+                    expires_on__lt=today,
+                ),
+                output_field=models.BooleanField(),
+            ),
+        )
+
     @property
     def status_aggregates(self):
         return self.aggregate(
@@ -82,12 +95,22 @@ class InvoiceQuerySet(models.QuerySet):
         )
 
 
+def default_invoice_expiry():
+    return now().date() + relativedelta(
+        years=settings.CHALLENGE_INVOICES_DEFAULT_EXPIRE_AFTER_YEARS
+    )
+
+
 class Invoice(models.Model, FieldChangeMixin):
     objects = InvoiceQuerySet.as_manager()
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
+    expires_on = models.DateField(
+        help_text="The date when the invoice expires",
+        default=default_invoice_expiry,
+    )
     issued_on = models.DateField(
         help_text="The date when the invoice was issued (required for issued invoices)",
         blank=True,
