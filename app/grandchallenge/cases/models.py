@@ -8,7 +8,9 @@ from urllib.parse import urlparse
 
 import boto3
 from actstream.actions import follow
-from billiard.exceptions import SoftTimeLimitExceeded
+from billiard.exceptions import (
+    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
+)
 from botocore.awsrequest import AWSRequest
 from botocore.exceptions import ClientError
 from celery import signature
@@ -657,7 +659,7 @@ class Image(UUIDModel):
             try:
                 for job in job_queryset:
                     expected_groups.update(job.viewer_groups.all())
-            except SoftTimeLimitExceeded as error:
+            except CelerySoftTimeLimitExceeded as error:
                 logger.error(error, exc_info=True)
                 raise
 

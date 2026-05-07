@@ -4,7 +4,9 @@ from pathlib import Path
 
 import pytest
 from actstream.actions import is_following
-from billiard.exceptions import SoftTimeLimitExceeded
+from billiard.exceptions import (
+    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
+)
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.tasks import check_compressed_and_extract
@@ -243,7 +245,7 @@ def test_soft_time_limit(settings, django_capture_on_commit_callbacks, mocker):
 
     mocker.patch(
         "grandchallenge.cases.tasks._handle_raw_files",
-        side_effect=SoftTimeLimitExceeded(),
+        side_effect=CelerySoftTimeLimitExceeded(),
     )
 
     with django_capture_on_commit_callbacks(execute=True):

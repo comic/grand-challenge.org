@@ -13,7 +13,9 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import boto3
-from billiard.exceptions import SoftTimeLimitExceeded
+from billiard.exceptions import (
+    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
+)
 from celery import signature
 from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
@@ -869,7 +871,7 @@ def execute_job(
             error_message=str(e),
             detailed_error_message=e.message_details,
         )
-    except SoftTimeLimitExceeded:
+    except CelerySoftTimeLimitExceeded:
         job.update_status(
             status=job.FAILURE,
             stdout=executor.stdout,

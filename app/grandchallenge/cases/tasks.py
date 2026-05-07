@@ -9,7 +9,9 @@ from tempfile import TemporaryDirectory
 
 import boto3
 import botocore.exceptions
-from billiard.exceptions import SoftTimeLimitExceeded
+from billiard.exceptions import (
+    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
+)
 from botocore.exceptions import ClientError
 from celery import signature
 from celery.utils.log import get_task_logger
@@ -210,7 +212,7 @@ def build_images(  # noqa:C901
             ),
         )
         return
-    except SoftTimeLimitExceeded:
+    except CelerySoftTimeLimitExceeded:
         _handle_error(error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED)
         return
     except Exception as error:
