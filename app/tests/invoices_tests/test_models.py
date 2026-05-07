@@ -1,8 +1,9 @@
 from contextlib import nullcontext
-from datetime import date
+from datetime import date, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
+from dateutil.utils import today
 from django.core.exceptions import ValidationError
 from django.utils.timezone import datetime
 
@@ -496,15 +497,10 @@ def test_follow_up_on_required_for_postpaid():
 
 
 @pytest.mark.django_db
-def test_follow_up_on_before_expires_on(mocker):
-    fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
-    mocker.patch(
-        "grandchallenge.invoices.models.now",
-        return_value=fixed_now,
-    )
+def test_follow_up_on_before_expires_on():
     invoice = InvoiceFactory()
-    invoice.follow_up_on = date(2025, 12, 31)
-    invoice.expires_on = date(2025, 12, 31)
+    invoice.follow_up_on = today() + timedelta(days=30)
+    invoice.expires_on = today() + timedelta(days=20)
     with pytest.raises(ValidationError) as e:
         invoice.full_clean()
     assert len(e.value.messages) == 1
@@ -514,14 +510,9 @@ def test_follow_up_on_before_expires_on(mocker):
 
 
 @pytest.mark.django_db
-def test_follow_up_on_not_more_than_year_in_future(mocker):
-    fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
-    mocker.patch(
-        "grandchallenge.invoices.models.now",
-        return_value=fixed_now,
-    )
+def test_follow_up_on_not_more_than_year_in_future():
     invoice = InvoiceFactory()
-    invoice.follow_up_on = date(2027, 12, 31)
+    invoice.follow_up_on = today() + timedelta(days=2 * 365)
     with pytest.raises(ValidationError) as e:
         invoice.full_clean()
     assert len(e.value.messages) == 1
@@ -532,14 +523,9 @@ def test_follow_up_on_not_more_than_year_in_future(mocker):
 
 
 @pytest.mark.django_db
-def test_follow_up_on_not_in_past(mocker):
-    fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
-    mocker.patch(
-        "grandchallenge.invoices.models.now",
-        return_value=fixed_now,
-    )
+def test_follow_up_on_not_in_past():
     invoice = InvoiceFactory()
-    invoice.follow_up_on = date(2024, 12, 31)
+    invoice.follow_up_on = today() - timedelta(days=2)
     with pytest.raises(ValidationError) as e:
         invoice.full_clean()
     assert len(e.value.messages) == 1

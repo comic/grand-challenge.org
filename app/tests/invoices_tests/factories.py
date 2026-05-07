@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 import factory
+from dateutil.utils import today
 
 from grandchallenge.invoices.models import Invoice
 from tests.factories import ChallengeFactory
@@ -6,6 +9,7 @@ from tests.factories import ChallengeFactory
 
 class InvoiceFactory(factory.django.DjangoModelFactory):
     challenge = factory.SubFactory(ChallengeFactory)
+    payment_type = Invoice.PaymentTypeChoices.PREPAID
     support_costs_euros = 0
     compute_costs_euros = 0
     storage_costs_euros = 0
@@ -18,6 +22,13 @@ class InvoiceFactory(factory.django.DjangoModelFactory):
     contact_email = factory.Faker("email")
     billing_address = factory.Faker("address")
     vat_number = factory.Faker("vin")
+    follow_up_on = factory.LazyAttribute(
+        lambda o: (
+            today() + timedelta(days=30)
+            if o.payment_type == Invoice.PaymentTypeChoices.POSTPAID
+            else None
+        )
+    )
 
     class Meta:
         model = Invoice
