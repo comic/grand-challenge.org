@@ -54,20 +54,6 @@ build_web_dist:
 		-f dockerfiles/web/Dockerfile \
 		.
 
-build_web_lambda:
-	docker buildx build \
-		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
-		--build-arg COMMIT_ID=$(GIT_COMMIT_ID) \
-		--build-arg LOCKFILE_HASH=$(LOCKFILE_HASH) \
-		--build-arg GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_TEST_BASE_REPOSITORY_URI) \
-		--build-arg GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI=$(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI) \
-		--target dist-lambda \
-		--provenance=false \
-		-t $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):lambda-$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) \
-		-f dockerfiles/web/Dockerfile \
-		-t docker-image:test \
-		.
-
 push_web_base:
 	docker push $(GRAND_CHALLENGE_WEB_BASE_REPOSITORY_URI):$(PYTHON_VERSION)-$(LOCKFILE_HASH)
 
@@ -78,18 +64,12 @@ push_web_private:
 	docker tag $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 	docker push $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 
-push_web_lambda:
-	docker tag $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):lambda-$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):lambda-$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
-	docker push $(GRAND_CHALLENGE_PRIVATE_REPOSITORY_WEB_URI):lambda-$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
+build: build_web_test build_web_dist
 
-build: build_web_test build_web_dist build_web_lambda
-
-push_staging: build_web_dist build_web_lambda
+push_staging: build_web_dist
 	docker tag $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
-	docker tag $(GRAND_CHALLENGE_WEB_REPOSITORY_URI):lambda-$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH) $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):lambda-$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 	aws ecr get-login-password --region $(GRAND_CHALLENGE_STAGING_REGION) --profile $(GRAND_CHALLENGE_STAGING_PROFILE) | docker login --username AWS --password-stdin $(GRAND_CHALLENGE_STAGING_ECR_HOST)
 	docker push $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
-	docker push $(GRAND_CHALLENGE_WEB_STAGING_REPOSITORY_URI):lambda-$(GIT_COMMIT_ID)-$(GIT_BRANCH_NAME)-$(LOCKFILE_HASH)
 
 migrate:
 	docker compose run --rm gc.localhost python manage.py migrate
