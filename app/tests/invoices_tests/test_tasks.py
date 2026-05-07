@@ -1,13 +1,16 @@
 from zoneinfo import ZoneInfo
 
 import pytest
+from dateutil.utils import today
 from django.core import mail
+from django.utils.formats import date_format
 from django.utils.timezone import datetime, timedelta
 
 from grandchallenge.invoices.models import Invoice
 from grandchallenge.invoices.tasks import (
     send_challenge_invoice_issued_notification_emails,
     send_challenge_invoice_overdue_reminder_emails,
+    send_post_paid_invoice_follow_up_emails,
 )
 from tests.factories import ChallengeFactory, UserFactory
 from tests.invoices_tests.factories import InvoiceFactory
@@ -387,3 +390,46 @@ def test_challenge_invoice_issued_notification_emails_on_create(
     assert expected_subject in contact_person_mail.subject
     assert "Dear John Doe" in contact_person_mail.body
     assert expected_body in contact_person_mail.body
+
+
+@pytest.mark.django_db
+def test_send_post_paid_invoice_follow_up_emails():
+    challenge = ChallengeFactory()
+    challenge_admin = challenge.creator
+    contact_email = "contact_person@example.com"
+
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        support_costs_euros=0,
+        compute_costs_euros=10,
+        storage_costs_euros=0,
+        payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+        payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+        follow_up_on=today() + timedelta(days=1),
+        contact_email=contact_email,
+        contact_name="John Doe",
+        billing_address="Some Street 12, 12345 SomeCity, SomeCountry",
+        vat_number="12345",
+    )
+
+    send_post_paid_invoice_follow_up_emails()
+
+    expected_subject = (
+        "[{challenge_name}] Post-paid invoice date approaching".format(
+            challenge_name=challenge.short_name,
+        )
+    )
+
+    # challenge admin and invoice contact person are emailed
+    assert len(mail.outbox) == 2
+    for email in mail.outbox:
+        assert expected_subject in email.subject
+        assert date_format(invoice.follow_up_on, "N jS Y") in email.body
+        assert invoice.billing_address in email.body
+        assert invoice.contact_name in email.body
+        assert invoice.contact_email in email.body
+        assert invoice.vat_number in email.body
+
+    recipient_emails = [email.to[0] for email in mail.outbox]
+    assert challenge_admin.email in recipient_emails
+    assert contact_email in recipient_emails

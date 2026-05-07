@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.mail import mail_managers
 from django.template.loader import render_to_string
+from django.utils.formats import date_format
 from django.utils.html import format_html
 
 from grandchallenge.emails.emails import send_standard_email_batch
@@ -82,6 +83,33 @@ def send_challenge_invoice_issued_notification(invoice):
         "invoices/partials/challenge_invoice_issued_notification_email.md",
         context={
             "invoice": invoice,
+        },
+    )
+    recipients = get_challenge_invoice_recipients(invoice)
+
+    send_standard_email_batch(
+        site=Site.objects.get_current(),
+        subject=subject,
+        markdown_message=message,
+        recipients=recipients,
+        subscription_type=EmailSubscriptionTypes.SYSTEM,
+    )
+
+
+def send_postpaid_invoice_follow_up_date_approaching_email(invoice):
+    subject = format_html(
+        "[{challenge_name}] Post-paid invoice date approaching",
+        challenge_name=invoice.challenge.short_name,
+    )
+    message = render_to_string(
+        "invoices/partials/post_paid_invoice_follow_up_email.md",
+        context={
+            "challenge_name": invoice.challenge.short_name,
+            "follow_up_on_date": date_format(invoice.follow_up_on, "N jS Y"),
+            "billing_address": invoice.billing_address,
+            "contact_name": invoice.contact_name,
+            "contact_email": invoice.contact_email,
+            "vat_number": invoice.vat_number,
         },
     )
     recipients = get_challenge_invoice_recipients(invoice)
