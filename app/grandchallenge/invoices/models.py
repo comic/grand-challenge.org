@@ -1,9 +1,11 @@
+from datetime import timedelta
+
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Count, ExpressionWrapper, F, Q
-from django.db.models.functions import Cast
+from django.db.models.functions import Cast, Now
 from django.db.transaction import on_commit
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
@@ -122,9 +124,14 @@ class Invoice(models.Model, FieldChangeMixin):
         null=True,
     )
     last_checked_on = models.DateField(
-        help_text="The date when the invoice status was last checked",
+        help_text="The date when the status of issued invoices was last checked",
         blank=True,
         null=True,
+    )
+    follow_up_on = models.DateField(
+        help_text="The date when a post-paid invoice will be issued if necessary (required for post-paid invoices).",
+        null=True,
+        blank=True,
     )
 
     challenge = models.ForeignKey(
@@ -268,6 +275,30 @@ class Invoice(models.Model, FieldChangeMixin):
                 condition=Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
                 | ~Q(vat_number=""),
                 violation_error_message="VAT number is required for non-complimentary invoices.",
+            ),
+            models.CheckConstraint(
+                name="follow_up_on_required_for_post_paid",
+                condition=~Q(payment_type=PaymentTypeChoices.POSTPAID)
+                | Q(follow_up_on__isnull=False),
+                violation_error_message="Follow-up date is required for post-paid invoices.",
+            ),
+            models.CheckConstraint(
+                name="follow_up_on_before_expires_on",
+                condition=Q(follow_up_on__isnull=True)
+                | Q(follow_up_on__lt=F("expires_on")),
+                violation_error_message="Follow-up date must be before the expiry date.",
+            ),
+            models.CheckConstraint(
+                name="follow_up_on_not_more_than_a_year_in_future",
+                condition=Q(follow_up_on__isnull=True)
+                | Q(follow_up_on__lte=Now() + timedelta(days=365)),
+                violation_error_message="Follow-up date cannot be more than a year into the future.",
+            ),
+            models.CheckConstraint(
+                name="follow_up_on_not_in_past",
+                condition=Q(follow_up_on__isnull=True)
+                | Q(follow_up_on__gte=Now()),
+                violation_error_message="Follow-up date cannot be in the past.",
             ),
         ]
 

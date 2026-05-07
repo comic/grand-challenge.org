@@ -480,3 +480,67 @@ def test_invoice_default_expires_on(settings, mocker):
     )
     invoice = InvoiceFactory()
     assert invoice.expires_on == date(2027, 3, 1)
+
+
+@pytest.mark.django_db
+def test_follow_up_on_required_for_postpaid():
+    invoice = InvoiceFactory()
+    invoice.payment_type = PaymentTypeChoices.POSTPAID
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert (
+        "Follow-up date is required for post-paid invoices."
+        == e.value.messages[0]
+    )
+
+
+@pytest.mark.django_db
+def test_follow_up_on_before_expires_on(mocker):
+    fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+    mocker.patch(
+        "grandchallenge.invoices.models.now",
+        return_value=fixed_now,
+    )
+    invoice = InvoiceFactory()
+    invoice.follow_up_on = date(2025, 12, 31)
+    invoice.expires_on = date(2025, 12, 31)
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert (
+        "Follow-up date must be before the expiry date." == e.value.messages[0]
+    )
+
+
+@pytest.mark.django_db
+def test_follow_up_on_not_more_than_year_in_future(mocker):
+    fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+    mocker.patch(
+        "grandchallenge.invoices.models.now",
+        return_value=fixed_now,
+    )
+    invoice = InvoiceFactory()
+    invoice.follow_up_on = date(2027, 12, 31)
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert (
+        "Follow-up date cannot be more than a year into the future."
+        == e.value.messages[0]
+    )
+
+
+@pytest.mark.django_db
+def test_follow_up_on_not_in_past(mocker):
+    fixed_now = datetime(2025, 3, 1, 12, 0, 0, tzinfo=ZoneInfo("UTC"))
+    mocker.patch(
+        "grandchallenge.invoices.models.now",
+        return_value=fixed_now,
+    )
+    invoice = InvoiceFactory()
+    invoice.follow_up_on = date(2024, 12, 31)
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert "Follow-up date cannot be in the past." == e.value.messages[0]
