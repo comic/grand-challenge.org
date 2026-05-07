@@ -77,11 +77,6 @@
 
 
 <span class="nd">@register</span><span class="o">.</span><span class="n">filter</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">split_first</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="n">character</span><span class="p">):</span>
-    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">character</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-
-
-<span class="nd">@register</span><span class="o">.</span><span class="n">filter</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_action_message</span><span class="p">(</span><span class="n">evaluation</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">evaluation</span><span class="o">.</span><span class="n">build_action_message</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">)</span>
 </pre></div>
