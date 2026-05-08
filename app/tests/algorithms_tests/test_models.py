@@ -1739,12 +1739,13 @@ def test_algorithm_queryset_with_user_roles_multiple_algorithms():
     assert result[algorithm4.pk].user_is_algorithm_user is True
 
 
-def test_invocation_inference_id_format(settings):
-    settings.COMPONENTS_REGISTRY_PREFIX = "rumc-gcorg-p"
+@pytest.mark.parametrize("prefix", ("rumc-gcorg-p", "rumc-gc-s-1802"))
+def test_invocation_inference_id_format(settings, prefix):
+    settings.COMPONENTS_REGISTRY_PREFIX = prefix
     invocation = InvocationFactory.build()
 
     assert invocation.inference_id == (
-        f"rumc-gcorg-p-alg-endp-invoc-{invocation.pk}"
+        f"{prefix}-alg-endp-inv-{invocation.pk}"
     )
     assert len(invocation.inference_id) <= 64
 

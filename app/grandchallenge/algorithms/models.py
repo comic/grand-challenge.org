@@ -1823,9 +1823,7 @@ class Invocation(UUIDModel):
     @property
     def inference_id(self):
         # Sagemaker requires this to be max 64 chars
-        return (
-            f"{settings.COMPONENTS_REGISTRY_PREFIX}-alg-endp-invoc-{self.pk}"
-        )
+        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-alg-endp-inv-{self.pk}"
 
     @property
     def task_kwargs(self):
