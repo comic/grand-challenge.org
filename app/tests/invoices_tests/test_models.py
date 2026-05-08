@@ -484,6 +484,13 @@ def test_invoice_default_expires_on(settings, mocker):
 
 
 @pytest.mark.django_db
+def test_follow_up_on_valid():
+    invoice = InvoiceFactory()
+    invoice.follow_up_on = today() + timedelta(days=30)
+    invoice.full_clean()
+
+
+@pytest.mark.django_db
 def test_follow_up_on_before_expires_on():
     invoice = InvoiceFactory()
     invoice.follow_up_on = today() + timedelta(days=30)
