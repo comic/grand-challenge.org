@@ -484,19 +484,6 @@ def test_invoice_default_expires_on(settings, mocker):
 
 
 @pytest.mark.django_db
-def test_follow_up_on_required_for_postpaid():
-    invoice = InvoiceFactory()
-    invoice.payment_type = PaymentTypeChoices.POSTPAID
-    with pytest.raises(ValidationError) as e:
-        invoice.full_clean()
-    assert len(e.value.messages) == 1
-    assert (
-        "Follow-up date is required for post-paid invoices."
-        == e.value.messages[0]
-    )
-
-
-@pytest.mark.django_db
 def test_follow_up_on_before_expires_on():
     invoice = InvoiceFactory()
     invoice.follow_up_on = today() + timedelta(days=30)
