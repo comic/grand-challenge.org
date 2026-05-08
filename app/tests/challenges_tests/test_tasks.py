@@ -4,6 +4,7 @@ import pytest
 from django.core import mail
 from django.utils.timezone import datetime, timedelta
 
+from grandchallenge.algorithms.models import Job
 from grandchallenge.challenges.models import (
     Challenge,
     ChallengeRequest,
@@ -16,6 +17,9 @@ from grandchallenge.challenges.tasks import (
     update_challenge_results_cache,
 )
 from grandchallenge.invoices.models import PaymentStatusChoices
+from grandchallenge.utilization.models import JobWarmPoolUtilization
+from grandchallenge.utilization.tasks import create_job_warm_pool_utilizations
+from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import (
     ChallengeFactory,
@@ -444,3 +448,64 @@ def test_challenge_request_draft_reminder_emails(
         ]
         assert len(user_emails) == 1
         assert requests[i].title in user_emails[0].body
+
+
+@pytest.mark.django_db
+def test_update_challenge_compute_costs_no_utilization():
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(challenge=challenge)
+
+    assert invoice.utilized_compute_cost_euro_millicents == 0
+    update_challenge_compute_costs()
+    invoice.refresh_from_db()
+    assert invoice.utilized_compute_cost_euro_millicents == 0
+
+
+@pytest.mark.django_db
+def test_update_challenge_compute_costs(settings):
+
+    settings.COMPONENTS_DEFAULT_BACKEND = (
+        "tests.utilization_tests.test_tasks.UtilizationExecutor"
+    )
+
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(challenge=challenge)
+    phase = PhaseFactory(challenge=challenge)
+
+    evaluation = EvaluationFactory(
+        submission__phase=phase,
+        time_limit=60,
+    )
+
+    job = AlgorithmJobFactory(
+        status=Job.SUCCESS,
+        use_warm_pool=True,
+        time_limit=60,
+    )
+
+    job_utilization = job.job_utilization
+    job_utilization.phase = phase
+    job_utilization.challenge = challenge
+    job_utilization.invoice = invoice
+    job_utilization.compute_cost_euro_millicents = 1
+    job_utilization.save()
+
+    evaluation_utilization = evaluation.evaluation_utilization
+    evaluation_utilization.phase = phase
+    evaluation_utilization.challenge = challenge
+    evaluation_utilization.invoice = invoice
+    evaluation_utilization.compute_cost_euro_millicents = 2
+    evaluation_utilization.save()
+
+    assert not JobWarmPoolUtilization.objects.exists()
+    create_job_warm_pool_utilizations()
+    job_warm_pool_utilization = JobWarmPoolUtilization.objects.get()
+    job_warm_pool_utilization.compute_cost_euro_millicents = 4
+    job_warm_pool_utilization.save()
+
+    assert invoice.utilized_compute_cost_euro_millicents == 0
+
+    update_challenge_compute_costs()
+
+    invoice.refresh_from_db()
+    assert invoice.utilized_compute_cost_euro_millicents == 1 + 2 + 4

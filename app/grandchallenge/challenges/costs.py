@@ -1,5 +1,6 @@
 from django.contrib.auth.models import Permission
-from django.db.models import Sum
+from django.db.models import Sum, Value
+from django.db.models.functions import Coalesce
 
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
@@ -13,6 +14,7 @@ from grandchallenge.evaluation.models import (
     EvaluationGroundTruth,
     Method,
 )
+from grandchallenge.invoices.models import Invoice
 from grandchallenge.utilization.models import (
     EvaluationUtilization,
     JobUtilization,
@@ -21,22 +23,41 @@ from grandchallenge.utilization.models import (
 
 
 def annotate_compute_costs(*, challenge):
-    algorithm_job_utilizations = JobUtilization.objects.filter(
-        challenge=challenge
-    )
-    job_warm_pool_utilizations = JobWarmPoolUtilization.objects.filter(
-        challenge=challenge
-    )
-    evaluation_job_utilizations = EvaluationUtilization.objects.filter(
-        challenge=challenge
+    annotated_invoices = challenge.invoices.annotate(
+        algorithm_job_costs=Coalesce(
+            Sum("job_utilizations__compute_cost_euro_millicents"),
+            Value(0),
+        ),
+        job_warm_pool_costs=Coalesce(
+            Sum("job_warm_pool_utilizations__compute_cost_euro_millicents"),
+            Value(0),
+        ),
+        evaluation_job_costs=Coalesce(
+            Sum("evaluation_utilizations__compute_cost_euro_millicents"),
+            Value(0),
+        ),
     )
 
-    update_compute_cost_euro_millicents(
-        obj=challenge,
-        algorithm_job_utilizations=algorithm_job_utilizations,
-        job_warm_pool_utilizations=job_warm_pool_utilizations,
-        evaluation_job_utilizations=evaluation_job_utilizations,
+    for invoice in annotated_invoices:
+        invoice.utilized_compute_cost_euro_millicents = sum(
+            [
+                invoice.algorithm_job_costs,
+                invoice.job_warm_pool_costs,
+                invoice.evaluation_job_costs,
+            ]
+        )
+
+    Invoice.objects.bulk_update(
+        annotated_invoices,
+        fields=["utilized_compute_cost_euro_millicents"],
     )
+
+    # TODO remove this once the with_available_compute() queryset method is removed and we can annotate the challenges with the compute costs directly
+    challenge.compute_cost_euro_millicents = sum(
+        invoice.utilized_compute_cost_euro_millicents
+        for invoice in annotated_invoices
+    )
+    challenge.save(update_fields=["compute_cost_euro_millicents"])
 
 
 def annotate_job_duration_and_compute_costs(*, phase):
