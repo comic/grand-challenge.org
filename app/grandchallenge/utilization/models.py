@@ -177,6 +177,9 @@ class ComponentJobUtilization(UUIDModel):
     creator = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
+    invoice = models.ForeignKey(
+        "invoices.Invoice", null=True, on_delete=models.PROTECT
+    )
     phase = models.ForeignKey(
         "evaluation.Phase", null=True, on_delete=models.SET_NULL
     )
