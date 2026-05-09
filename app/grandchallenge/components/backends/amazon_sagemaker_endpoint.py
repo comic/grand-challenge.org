@@ -287,6 +287,8 @@ class EndpointOrchestrator:
 
         if invocation_status == "Completed":
             self._handle_completed_invocation()
+        elif invocation_status == "Expired":
+            self._handle_expired_invocation(event=event)
         elif invocation_status == "Failed":
             self._handle_failed_invocation(event=event)
         else:
@@ -294,6 +296,12 @@ class EndpointOrchestrator:
 
     def _handle_completed_invocation(self):
         self._executor._handle_completed_job()
+
+    def _handle_expired_invocation(self, *, event):
+        # Requires investigation
+        logger.info(event)
+        logger.error("Endpoint invocation expired")
+        raise ComponentException(SystemErrorMessages.TIME_LIMIT_EXCEEDED)
 
     def _handle_failed_invocation(self, *, event):
         # Requires investigation
