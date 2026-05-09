@@ -721,19 +721,25 @@ class Executor(ABC):
                 f"Unknown interface super kind: {civ.interface.super_kind}"
             )
 
+    def _get_inference_task(self, *, invocation_inputs):
+        return InferenceTask(
+            pk=self._job_id,
+            inputs=invocation_inputs,
+            output_bucket_name=self._output_bucket_name,
+            output_prefix=self._io_prefix,
+            timeout=self._time_limit,
+        )
+
+    @staticmethod
+    def _get_invocation_json(*, inference_task):
+        return to_json([inference_task])
+
     def _get_create_invocation_json_task(self, *, invocation_inputs):
+        inference_task = self._get_inference_task(
+            invocation_inputs=invocation_inputs
+        )
         return self._get_upload_input_content_task(
-            content=to_json(
-                [
-                    InferenceTask(
-                        pk=self._job_id,
-                        inputs=invocation_inputs,
-                        output_bucket_name=self._output_bucket_name,
-                        output_prefix=self._io_prefix,
-                        timeout=self._time_limit,
-                    )
-                ]
-            ),
+            content=self._get_invocation_json(inference_task=inference_task),
             key=self._invocation_key,
         )
 
