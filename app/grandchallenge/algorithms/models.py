@@ -1581,6 +1581,9 @@ class Endpoint(FieldChangeMixin, UUIDModel):
         choices=EndpointStatusChoices,
         default=EndpointStatusChoices.QUEUED,
     )
+    stdout = models.TextField(editable=False)
+    stderr = models.TextField(editable=False)
+    runtime_metrics = models.JSONField(default=dict, editable=False)
     error_message = models.CharField(
         max_length=1024, default="", editable=False
     )
@@ -1773,7 +1776,7 @@ class Invocation(UUIDModel):
     invoke_duration = models.DurationField(
         null=True,
         default=None,
-        blank=True,
+        editable=False,
         help_text=(
             "The duration of the invocation. "
             "Excludes data validation, container pulling, model downloading, "
@@ -1785,7 +1788,11 @@ class Invocation(UUIDModel):
             "any delays from shared hardware issues."
         ),
     )
-    error_message = models.CharField(max_length=1024, default="", blank=True)
+    stdout = models.TextField(editable=False)
+    stderr = models.TextField(editable=False)
+    runtime_metrics = models.JSONField(default=dict, editable=False)
+    error_message = models.CharField(max_length=1024, editable=False)
+    detailed_error_message = models.JSONField(default=dict, editable=False)
     algorithm_interface = models.ForeignKey(
         AlgorithmInterface, on_delete=models.PROTECT
     )

@@ -372,6 +372,15 @@ class EndpointAdmin(admin.ModelAdmin):
         "algorithm_image__algorithm__slug",
         "algorithm_image__pk",
     )
+    readonly_fields = (
+        "stdout",
+        "stderr",
+        "runtime_metrics",
+        "error_message",
+        "requires_gpu_type",
+        "requires_memory_gb",
+        "viewers_group",
+    )
 
     @staticmethod
     def algorithm(obj):
@@ -398,6 +407,14 @@ class InvocationAdmin(admin.ModelAdmin):
     search_fields = (
         "pk",
         "endpoint__pk",
+    )
+    readonly_fields = (
+        "invoke_duration",
+        "stdout",
+        "stderr",
+        "runtime_metrics",
+        "error_message",
+        "detailed_error_message",
     )
 
     def has_add_permission(self, request, obj=None):
