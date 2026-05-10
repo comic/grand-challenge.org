@@ -4,7 +4,17 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Count, ExpressionWrapper, F, Q
+from django.db.models import (
+    Case,
+    Count,
+    Exists,
+    ExpressionWrapper,
+    F,
+    OuterRef,
+    Q,
+    Value,
+    When,
+)
 from django.db.models.functions import Cast, Now
 from django.db.transaction import on_commit
 from django.utils.timezone import now
@@ -94,6 +104,68 @@ class InvoiceQuerySet(models.QuerySet):
                 "is_overdue", filter=Q(is_overdue=True), distinct=True
             ),
             num_is_due=Count("is_due", filter=Q(is_due=True), distinct=True),
+        )
+
+    def with_approved_compute(self):
+
+        # Subquery to check if there's a paid prepaid invoice for this challenge
+        paid_prepaid_exists = Invoice.objects.filter(
+            challenge=OuterRef("challenge"),
+            payment_type=PaymentTypeChoices.PREPAID,
+            payment_status=PaymentStatusChoices.PAID,
+        )
+
+        self = self.with_expired_status()
+
+        # Calculate approved compute based on payment type, status, and expiry
+        approved_compute = Case(
+            When(
+                payment_status=PaymentStatusChoices.CANCELLED,
+                then=Value(0),
+            ),
+            When(
+                is_expired=True,
+                then=Case(
+                    When(
+                        payment_type=PaymentTypeChoices.COMPLIMENTARY,
+                        then=F("utilized_compute_cost_euro_millicents"),
+                    ),
+                    When(
+                        payment_type=PaymentTypeChoices.POSTPAID,
+                        then=F("utilized_compute_cost_euro_millicents"),
+                    ),
+                    When(
+                        payment_type=PaymentTypeChoices.PREPAID,
+                        payment_status=PaymentStatusChoices.PAID,
+                        then=F("utilized_compute_cost_euro_millicents"),
+                    ),
+                    default=Value(0),
+                    output_field=models.PositiveIntegerField(),
+                ),
+            ),
+            When(
+                payment_type=PaymentTypeChoices.COMPLIMENTARY,
+                then=F("compute_costs_euros") * 1000 * 100,
+            ),
+            When(
+                payment_type=PaymentTypeChoices.PREPAID,
+                payment_status=PaymentStatusChoices.PAID,
+                then=F("compute_costs_euros") * 1000 * 100,
+            ),
+            When(
+                Q(payment_type=PaymentTypeChoices.POSTPAID)
+                & (
+                    Q(Exists(paid_prepaid_exists))
+                    | Q(payment_status=PaymentStatusChoices.PAID)
+                ),
+                then=F("compute_costs_euros") * 1000 * 100,
+            ),
+            default=Value(0),
+            output_field=models.PositiveIntegerField(),
+        )
+
+        return self.annotate(
+            approved_compute_euros_millicents=approved_compute,
         )
 
 
