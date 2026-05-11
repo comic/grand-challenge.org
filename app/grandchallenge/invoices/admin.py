@@ -39,6 +39,7 @@ class InvoiceAdmin(admin.ModelAdmin):
         "challenge",
         "issued_on",
         "expires_on",
+        "follow_up_on",
         "internal_invoice_number",
         "internal_client_number",
         "contact_email",

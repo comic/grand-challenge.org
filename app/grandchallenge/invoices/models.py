@@ -277,12 +277,6 @@ class Invoice(models.Model, FieldChangeMixin):
                 violation_error_message="VAT number is required for non-complimentary invoices.",
             ),
             models.CheckConstraint(
-                name="follow_up_on_required_for_post_paid",
-                condition=~Q(payment_type=PaymentTypeChoices.POSTPAID)
-                | Q(follow_up_on__isnull=False),
-                violation_error_message="Follow-up date is required for post-paid invoices.",
-            ),
-            models.CheckConstraint(
                 name="follow_up_on_before_expires_on",
                 condition=Q(follow_up_on__isnull=True)
                 | Q(follow_up_on__lt=F("expires_on")),
@@ -293,12 +287,6 @@ class Invoice(models.Model, FieldChangeMixin):
                 condition=Q(follow_up_on__isnull=True)
                 | Q(follow_up_on__lte=Now() + timedelta(days=365)),
                 violation_error_message="Follow-up date cannot be more than a year into the future.",
-            ),
-            models.CheckConstraint(
-                name="follow_up_on_not_in_past",
-                condition=Q(follow_up_on__isnull=True)
-                | Q(follow_up_on__gte=Now()),
-                violation_error_message="Follow-up date cannot be in the past.",
             ),
         ]
 

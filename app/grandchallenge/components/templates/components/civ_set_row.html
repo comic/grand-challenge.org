@@ -5,6 +5,7 @@
 {% load meta_attr %}
 {% load guardian_tags %}
 {% load civ %}
+{% load copy_button %}
 
 {% get_obj_perms request.user for object as "object_perms" checker %}
 
@@ -33,7 +34,7 @@
 
 <split></split>
 
-<span class="text-nowrap">{{ object.pk }}</span>
+{{ object.pk|copy_button }}
 <split></split>
 
 {{ object.title }}

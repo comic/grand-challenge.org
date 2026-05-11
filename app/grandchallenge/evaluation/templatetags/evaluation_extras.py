@@ -36,10 +36,5 @@ def get_key(obj: dict, key):
 
 
 @register.filter
-def split_first(object, character):
-    return str(object).split(character, 1)[0]
-
-
-@register.filter
 def get_action_message(evaluation, user):
     return evaluation.build_action_message(user=user)
