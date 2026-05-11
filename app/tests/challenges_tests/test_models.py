@@ -16,6 +16,7 @@ from grandchallenge.challenges.models import (
     OnboardingTask,
 )
 from grandchallenge.discussion_forums.models import ForumTopicKindChoices
+from grandchallenge.invoices.models import Invoice, PaymentTypeChoices
 from grandchallenge.notifications.models import Notification
 from tests.discussion_forums_tests.factories import ForumTopicFactory
 from tests.factories import (
@@ -24,6 +25,7 @@ from tests.factories import (
     OnboardingTaskFactory,
     UserFactory,
 )
+from tests.invoices_tests.factories import InvoiceFactory
 from tests.organizations_tests.factories import OrganizationFactory
 
 
@@ -803,3 +805,90 @@ def test_challenge_queryset_with_user_roles_multiple_challenges():
     # Both
     assert result[challenge4.pk].user_is_challenge_admin is True
     assert result[challenge4.pk].user_is_challenge_participant is True
+
+
+@pytest.mark.django_db
+def test_get_invoice_for_utilization():
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=1,
+        utilized_compute_cost_euro_millicents=0,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    assert challenge.get_invoice_for_utlization() == invoice
+
+
+@pytest.mark.django_db
+def test_get_invoice_for_utilization_no_invoice():
+    challenge = ChallengeFactory()
+    assert challenge.get_invoice_for_utlization() is None
+
+
+@pytest.mark.django_db
+def test_get_invoice_for_utilization_ignores_expired():
+    challenge = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=1,
+        utilized_compute_cost_euro_millicents=0,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+        expires_on=now() - timedelta(days=2),
+    )
+    assert challenge.get_invoice_for_utlization() is None
+
+
+@pytest.mark.django_db
+def test_get_invoice_for_utilization_ignores_negative_balance():
+    challenge = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=1,
+        utilized_compute_cost_euro_millicents=1 * 1000 * 100,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    assert challenge.get_invoice_for_utlization() is None
+
+
+@pytest.mark.django_db
+def test_get_invoice_for_utilization_ignores_zero_balance():
+    challenge = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=1,
+        utilized_compute_cost_euro_millicents=2 * 1000 * 100,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    assert challenge.get_invoice_for_utlization() is None
+
+
+@pytest.mark.django_db
+def test_get_invoice_for_utilization_order_by_expiry():
+    challenge = ChallengeFactory()
+    invoice0 = InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=1,
+        utilized_compute_cost_euro_millicents=0,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    invoice1 = InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=1,
+        utilized_compute_cost_euro_millicents=0,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    assert challenge.get_invoice_for_utlization() == invoice0
+
+    invoice1.expires_on = now() + timedelta(10)
+    invoice1.save()
+    assert challenge.get_invoice_for_utlization() == invoice1
+
+    invoice0.expires_on = now() + timedelta(20)
+    invoice0.save()
+    assert challenge.get_invoice_for_utlization() == invoice0
