@@ -116,16 +116,12 @@ class InvoiceQuerySet(models.QuerySet):
             payment_status=PaymentStatusChoices.PAID,
         )
 
-        qs = self.with_expired_status().annotate(
-            compute_costs_diff_euros_millicents=ExpressionWrapper(
-                F("compute_costs_euros") * 100_000
-                - F("compute_costs_utilized_euros_millicents"),
-                output_field=models.PositiveIntegerField(),
-            ),
-        )
+        qs = self.with_expired_status()
 
         neg_utilized = F("compute_costs_utilized_euros_millicents") * -1
-        diff = F("compute_costs_diff_euros_millicents")
+        diff = F("compute_costs_euros") * 100_000 - F(
+            "compute_costs_utilized_euros_millicents"
+        )
         capped_diff = Least(diff, Value(0))
 
         # Calculate compute balance based on payment type, status, and expiry
