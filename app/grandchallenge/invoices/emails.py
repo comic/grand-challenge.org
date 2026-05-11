@@ -105,7 +105,7 @@ def send_postpaid_invoice_follow_up_date_approaching_email(invoice):
         "invoices/partials/post_paid_invoice_follow_up_email.md",
         context={
             "challenge_name": invoice.challenge.short_name,
-            "follow_up_on_date": date_format(invoice.follow_up_on, "N jS Y"),
+            "follow_up_on_date": date_format(invoice.follow_up_on, "F jS Y"),
             "billing_address": invoice.billing_address,
             "contact_name": invoice.contact_name,
             "contact_email": invoice.contact_email,

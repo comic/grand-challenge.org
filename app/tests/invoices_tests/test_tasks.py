@@ -424,7 +424,7 @@ def test_send_post_paid_invoice_follow_up_emails():
     assert len(mail.outbox) == 2
     for email in mail.outbox:
         assert expected_subject in email.subject
-        assert date_format(invoice.follow_up_on, "N jS Y") in email.body
+        assert date_format(invoice.follow_up_on, "F jS Y") in email.body
         assert invoice.billing_address in email.body
         assert invoice.contact_name in email.body
         assert invoice.contact_email in email.body
