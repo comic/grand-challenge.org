@@ -6,7 +6,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("invoices", "0012_migrate_invoice_expires_on"),
+        (
+            "invoices",
+            "0013_invoice_follow_up_on_alter_invoice_last_checked_on_and_more",
+        ),
     ]
 
     operations = [
