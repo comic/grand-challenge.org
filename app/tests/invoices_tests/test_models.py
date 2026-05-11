@@ -514,13 +514,3 @@ def test_follow_up_on_not_more_than_year_in_future():
         "Follow-up date cannot be more than a year into the future."
         == e.value.messages[0]
     )
-
-
-@pytest.mark.django_db
-def test_follow_up_on_not_in_past():
-    invoice = InvoiceFactory()
-    invoice.follow_up_on = today() - timedelta(days=2)
-    with pytest.raises(ValidationError) as e:
-        invoice.full_clean()
-    assert len(e.value.messages) == 1
-    assert "Follow-up date cannot be in the past." == e.value.messages[0]

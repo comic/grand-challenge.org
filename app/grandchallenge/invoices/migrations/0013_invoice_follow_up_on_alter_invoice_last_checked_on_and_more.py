@@ -64,19 +64,4 @@ class Migration(migrations.Migration):
                 violation_error_message="Follow-up date cannot be more than a year into the future.",
             ),
         ),
-        migrations.AddConstraint(
-            model_name="invoice",
-            constraint=models.CheckConstraint(
-                condition=models.Q(
-                    ("follow_up_on__isnull", True),
-                    (
-                        "follow_up_on__gte",
-                        django.db.models.functions.datetime.Now(),
-                    ),
-                    _connector="OR",
-                ),
-                name="follow_up_on_not_in_past",
-                violation_error_message="Follow-up date cannot be in the past.",
-            ),
-        ),
     ]
