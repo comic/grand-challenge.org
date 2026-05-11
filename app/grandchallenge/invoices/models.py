@@ -111,7 +111,7 @@ class InvoiceQuerySet(models.QuerySet):
         # Subquery to check if there's a paid prepaid invoice for this challenge
         paid_prepaid_exists = Invoice.objects.filter(
             challenge=OuterRef("challenge"),
-            compute_costs_euro__gt=0,
+            compute_costs_euros__gt=0,
             payment_type=PaymentTypeChoices.PREPAID,
             payment_status=PaymentStatusChoices.PAID,
         )
