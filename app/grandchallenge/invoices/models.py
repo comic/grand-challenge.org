@@ -118,7 +118,7 @@ class InvoiceQuerySet(models.QuerySet):
 
         qs = self.with_expired_status()
 
-        neg_utilized = F("compute_costs_utilized_euros_millicents") * -1
+        neg_utilized_costs = F("compute_costs_utilized_euros_millicents") * -1
         diff = F("compute_costs_euros") * 100_000 - F(
             "compute_costs_utilized_euros_millicents"
         )
@@ -128,7 +128,7 @@ class InvoiceQuerySet(models.QuerySet):
         compute_costs_balance_euros_millicents = Case(
             When(
                 payment_status=PaymentStatusChoices.CANCELLED,
-                then=neg_utilized,
+                then=neg_utilized_costs,
             ),
             When(
                 is_expired=True,
@@ -147,11 +147,14 @@ class InvoiceQuerySet(models.QuerySet):
                         payment_status=PaymentStatusChoices.PAID,
                         then=capped_diff,
                     ),
-                    default=neg_utilized,
+                    default=neg_utilized_costs,
                     output_field=models.PositiveIntegerField(),
                 ),
             ),
-            When(payment_type=PaymentTypeChoices.COMPLIMENTARY, then=diff),
+            When(
+                payment_type=PaymentTypeChoices.COMPLIMENTARY,
+                then=diff,
+            ),
             When(
                 payment_type=PaymentTypeChoices.PREPAID,
                 payment_status=PaymentStatusChoices.PAID,
@@ -163,7 +166,7 @@ class InvoiceQuerySet(models.QuerySet):
                 payment_type=PaymentTypeChoices.POSTPAID,
                 then=diff,
             ),
-            default=neg_utilized,
+            default=neg_utilized_costs,
             output_field=models.PositiveIntegerField(),
         )
 
