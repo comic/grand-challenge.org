@@ -245,6 +245,7 @@ class JobWarmPoolUtilization(ComponentJobUtilization):
     def save(self, *args, **kwargs) -> None:
         if self._state.adding:
             self.creator_id = self.job.job_utilization.creator_id
+            self.invoice_id = self.job.job_utilization.invoice_id
             self.phase_id = self.job.job_utilization.phase_id
             self.challenge_id = self.job.job_utilization.challenge_id
             self.archive_id = self.job.job_utilization.archive_id
