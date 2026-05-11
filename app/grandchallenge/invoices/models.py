@@ -15,7 +15,7 @@ from django.db.models import (
     Value,
     When,
 )
-from django.db.models.functions import Cast, Now
+from django.db.models.functions import Cast, Least, Now
 from django.db.transaction import on_commit
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
@@ -106,7 +106,7 @@ class InvoiceQuerySet(models.QuerySet):
             num_is_due=Count("is_due", filter=Q(is_due=True), distinct=True),
         )
 
-    def with_approved_compute(self):
+    def with_compute_balance(self):
 
         # Subquery to check if there's a paid prepaid invoice for this challenge
         paid_prepaid_exists = Invoice.objects.filter(
@@ -116,57 +116,63 @@ class InvoiceQuerySet(models.QuerySet):
             payment_status=PaymentStatusChoices.PAID,
         )
 
-        self = self.with_expired_status()
+        qs = self.with_expired_status().annotate(
+            compute_costs_diff_euros_millicents=ExpressionWrapper(
+                F("compute_costs_euros") * 100_000
+                - F("compute_costs_utilized_euros_millicents"),
+                output_field=models.PositiveIntegerField(),
+            ),
+        )
 
-        # Calculate approved compute based on payment type, status, and expiry
-        approved_compute = Case(
+        neg_utilized = F("compute_costs_utilized_euros_millicents") * -1
+        diff = F("compute_costs_diff_euros_millicents")
+        capped_diff = Least(diff, Value(0))
+
+        # Calculate compute balance based on payment type, status, and expiry
+        compute_costs_balance_euros_millicents = Case(
             When(
                 payment_status=PaymentStatusChoices.CANCELLED,
-                then=Value(0),
+                then=neg_utilized,
             ),
             When(
                 is_expired=True,
                 then=Case(
+                    # Cap at zero on expiry: approved invoices can't go positive
                     When(
                         payment_type=PaymentTypeChoices.COMPLIMENTARY,
-                        then=F("utilized_compute_cost_euro_millicents"),
+                        then=capped_diff,
                     ),
                     When(
                         payment_type=PaymentTypeChoices.POSTPAID,
-                        then=F("utilized_compute_cost_euro_millicents"),
+                        then=capped_diff,
                     ),
                     When(
                         payment_type=PaymentTypeChoices.PREPAID,
                         payment_status=PaymentStatusChoices.PAID,
-                        then=F("utilized_compute_cost_euro_millicents"),
+                        then=capped_diff,
                     ),
-                    default=Value(0),
+                    default=neg_utilized,
                     output_field=models.PositiveIntegerField(),
                 ),
             ),
-            When(
-                payment_type=PaymentTypeChoices.COMPLIMENTARY,
-                then=F("compute_costs_euros") * 1000 * 100,
-            ),
+            When(payment_type=PaymentTypeChoices.COMPLIMENTARY, then=diff),
             When(
                 payment_type=PaymentTypeChoices.PREPAID,
                 payment_status=PaymentStatusChoices.PAID,
-                then=F("compute_costs_euros") * 1000 * 100,
+                then=diff,
             ),
             When(
-                Q(payment_type=PaymentTypeChoices.POSTPAID)
-                & (
-                    Q(Exists(paid_prepaid_exists))
-                    | Q(payment_status=PaymentStatusChoices.PAID)
-                ),
-                then=F("compute_costs_euros") * 1000 * 100,
+                Q(Exists(paid_prepaid_exists))
+                | Q(payment_status=PaymentStatusChoices.PAID),
+                payment_type=PaymentTypeChoices.POSTPAID,
+                then=diff,
             ),
-            default=Value(0),
+            default=neg_utilized,
             output_field=models.PositiveIntegerField(),
         )
 
-        return self.annotate(
-            approved_compute_euros_millicents=approved_compute,
+        return qs.annotate(
+            compute_costs_balance_euros_millicents=compute_costs_balance_euros_millicents,
         )
 
 
@@ -219,7 +225,7 @@ class Invoice(models.Model, FieldChangeMixin):
     compute_costs_euros = models.PositiveIntegerField(
         help_text="The capacity reservation in Euros"
     )
-    utilized_compute_cost_euro_millicents = models.PositiveIntegerField(
+    compute_costs_utilized_euros_millicents = models.PositiveIntegerField(
         help_text="The utilized compute costs in Euro millicents (cached from utilizations)",
         default=0,
     )

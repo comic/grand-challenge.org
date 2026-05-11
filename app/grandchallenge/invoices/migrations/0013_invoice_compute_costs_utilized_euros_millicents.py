@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="invoice",
-            name="utilized_compute_cost_euro_millicents",
+            name="compute_costs_utilized_euros_millicents",
             field=models.PositiveIntegerField(
                 default=0,
                 help_text="The utilized compute costs in Euro millicents (cached from utilizations)",
