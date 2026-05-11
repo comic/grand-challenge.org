@@ -1,8 +1,9 @@
 from contextlib import nullcontext
-from datetime import date
+from datetime import date, timedelta
 from zoneinfo import ZoneInfo
 
 import pytest
+from dateutil.utils import today
 from django.core.exceptions import ValidationError
 from django.utils.timezone import datetime
 
@@ -480,3 +481,36 @@ def test_invoice_default_expires_on(settings, mocker):
     )
     invoice = InvoiceFactory()
     assert invoice.expires_on == date(2027, 3, 1)
+
+
+@pytest.mark.django_db
+def test_follow_up_on_valid():
+    invoice = InvoiceFactory()
+    invoice.follow_up_on = today() + timedelta(days=30)
+    invoice.full_clean()
+
+
+@pytest.mark.django_db
+def test_follow_up_on_before_expires_on():
+    invoice = InvoiceFactory()
+    invoice.follow_up_on = today() + timedelta(days=30)
+    invoice.expires_on = today() + timedelta(days=20)
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert (
+        "Follow-up date must be before the expiry date." == e.value.messages[0]
+    )
+
+
+@pytest.mark.django_db
+def test_follow_up_on_not_more_than_year_in_future():
+    invoice = InvoiceFactory()
+    invoice.follow_up_on = today() + timedelta(days=2 * 365)
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert (
+        "Follow-up date cannot be more than a year into the future."
+        == e.value.messages[0]
+    )
