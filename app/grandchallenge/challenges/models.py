@@ -485,18 +485,15 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         help_text="The number of bytes stored in the registry",
     )
 
-    def get_invoice_for_utlization(self):
-        invoices = self.invoices.with_compute_balance()
-
-        filtered_invoices = invoices.exclude(
-            is_expired=True,
-        ).exclude(
-            balance_compute_euros_millicents__lte=0,
+    def get_invoice_for_utilization(self):
+        return (
+            self.invoices.with_compute_balance()
+            .exclude(
+                compute_costs_balance_euros_millicents__lte=0,
+            )
+            .order_by("expires_on", "created")
+            .first()
         )
-
-        ordered_invoices = filtered_invoices.order_by("expires_on", "created")
-
-        return ordered_invoices.first()
 
     objects = ChallengeQuerySet.as_manager()
 

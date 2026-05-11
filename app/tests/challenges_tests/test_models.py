@@ -813,31 +813,17 @@ def test_get_invoice_for_utilization():
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        utilized_compute_cost_euro_millicents=0,
+        compute_costs_utilized_euros_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
-    assert challenge.get_invoice_for_utlization() == invoice
+    assert challenge.get_invoice_for_utilization() == invoice
 
 
 @pytest.mark.django_db
 def test_get_invoice_for_utilization_no_invoice():
     challenge = ChallengeFactory()
-    assert challenge.get_invoice_for_utlization() is None
-
-
-@pytest.mark.django_db
-def test_get_invoice_for_utilization_ignores_expired():
-    challenge = ChallengeFactory()
-    InvoiceFactory(
-        challenge=challenge,
-        compute_costs_euros=1,
-        utilized_compute_cost_euro_millicents=0,
-        payment_type=PaymentTypeChoices.PREPAID,
-        payment_status=Invoice.PaymentStatusChoices.PAID,
-        expires_on=now() - timedelta(days=2),
-    )
-    assert challenge.get_invoice_for_utlization() is None
+    assert challenge.get_invoice_for_utilization() is None
 
 
 @pytest.mark.django_db
@@ -846,11 +832,11 @@ def test_get_invoice_for_utilization_ignores_negative_balance():
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        utilized_compute_cost_euro_millicents=1 * 1000 * 100,
+        compute_costs_utilized_euros_millicents=2 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
-    assert challenge.get_invoice_for_utlization() is None
+    assert challenge.get_invoice_for_utilization() is None
 
 
 @pytest.mark.django_db
@@ -859,36 +845,45 @@ def test_get_invoice_for_utilization_ignores_zero_balance():
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        utilized_compute_cost_euro_millicents=2 * 1000 * 100,
+        compute_costs_utilized_euros_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
-    assert challenge.get_invoice_for_utlization() is None
+    assert challenge.get_invoice_for_utilization() is None
 
 
 @pytest.mark.django_db
 def test_get_invoice_for_utilization_order_by_expiry():
     challenge = ChallengeFactory()
+
+    _fixed_now = now()
+
     invoice0 = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        utilized_compute_cost_euro_millicents=0,
+        compute_costs_utilized_euros_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
+        expires_on=_fixed_now + timedelta(10),
     )
     invoice1 = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        utilized_compute_cost_euro_millicents=0,
+        compute_costs_utilized_euros_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
+        expires_on=_fixed_now + timedelta(10),
     )
-    assert challenge.get_invoice_for_utlization() == invoice0
 
-    invoice1.expires_on = now() + timedelta(10)
+    # All things being equal, use created time to determine order, so invoice0 should be returned as it was created first
+    assert challenge.get_invoice_for_utilization() == invoice0
+
+    invoice1.expires_on = _fixed_now + timedelta(5)
     invoice1.save()
-    assert challenge.get_invoice_for_utlization() == invoice1
+    assert invoice1.expires_on < invoice0.expires_on, "Sanity"
+    assert challenge.get_invoice_for_utilization() == invoice1
 
-    invoice0.expires_on = now() + timedelta(20)
+    invoice0.expires_on = _fixed_now + timedelta(4)
     invoice0.save()
-    assert challenge.get_invoice_for_utlization() == invoice0
+    assert invoice0.expires_on < invoice1.expires_on, "Sanity"
+    assert challenge.get_invoice_for_utilization() == invoice0
