@@ -148,7 +148,7 @@ class InvoiceQuerySet(models.QuerySet):
                         then=capped_diff,
                     ),
                     default=neg_utilized_costs,
-                    output_field=models.PositiveIntegerField(),
+                    output_field=models.BigIntegerField(),
                 ),
             ),
             When(
@@ -167,7 +167,7 @@ class InvoiceQuerySet(models.QuerySet):
                 then=diff,
             ),
             default=neg_utilized_costs,
-            output_field=models.PositiveIntegerField(),
+            output_field=models.BigIntegerField(),
         )
 
         return qs.annotate(
