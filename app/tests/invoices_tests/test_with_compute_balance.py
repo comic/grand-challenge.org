@@ -342,6 +342,7 @@ def test_postpaid_utilized_but_expired():
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=now() - timedelta(days=2),
+        follow_up_on=now() - timedelta(days=3),
     )
 
     invoice = challenge.invoices.with_compute_balance().get(
@@ -391,6 +392,7 @@ def test_postpaid_overutilized_but_expired():
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=now() - timedelta(days=2),
+        follow_up_on=now() - timedelta(days=3),
     )
     invoice = challenge.invoices.with_compute_balance().get(
         pk=postpaid_invoice.pk
