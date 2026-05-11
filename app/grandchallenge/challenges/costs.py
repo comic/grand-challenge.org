@@ -52,6 +52,14 @@ def annotate_compute_costs(*, challenge):
         fields=["compute_costs_utilized_euros_millicents"],
     )
 
+    # TODO: Remove below once we remove compute_cost_euro_millicents from Challenge (and associated checks)
+    challenge.update(
+        compute_cost_euro_millicents=sum(
+            invoice.compute_costs_utilized_euros_millicents
+            for invoice in annotated_invoices
+        )
+    )
+
 
 def annotate_job_duration_and_compute_costs(*, phase):
     algorithm_job_utilizations = JobUtilization.objects.filter(phase=phase)
