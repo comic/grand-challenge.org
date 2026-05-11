@@ -391,14 +391,14 @@ def test_challenge_invoice_issued_notification_emails_on_create(
 
 
 @pytest.mark.django_db
-def test_send_open_invoices_email(mocker, settings):
+def test_send_open_invoices_email(settings):
     staff_user = UserFactory(is_staff=True)
     settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
 
     i1 = InvoiceFactory(
         payment_type=Invoice.PaymentTypeChoices.POSTPAID,
         payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
-        follow_up_on=now().date() + timedelta(days=1),
+        follow_up_on=now().date() - timedelta(days=1),
     )
     i2 = InvoiceFactory(
         payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
@@ -417,11 +417,6 @@ def test_send_open_invoices_email(mocker, settings):
         follow_up_on=now().date() + timedelta(days=30),
     )
 
-    now_in_future = now() + timedelta(days=2)
-    mocker.patch(
-        "grandchallenge.invoices.tasks.now",
-        return_value=now_in_future,
-    )
     send_open_invoices_email()
 
     assert len(mail.outbox) == 1
