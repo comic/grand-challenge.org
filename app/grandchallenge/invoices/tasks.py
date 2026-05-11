@@ -1,4 +1,7 @@
+from django.core.mail import mail_managers
 from django.db import transaction
+from django.template.loader import render_to_string
+from django.utils.timezone import now
 
 from grandchallenge.core.celery import (
     acks_late_2xlarge_task,
@@ -29,3 +32,42 @@ def send_challenge_invoice_issued_notification_emails(*, pk):
 
     invoice = Invoice.objects.get(pk=pk)
     send_challenge_invoice_issued_notification(invoice)
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def send_open_invoices_email():
+    from grandchallenge.invoices.models import Invoice
+
+    subject = "Invoices to check"
+
+    post_paid_invoices_to_follow_up = Invoice.objects.filter(
+        payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+        payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+        follow_up_on__lte=now().date(),
+    )
+    initialized_prepaid_invoices = Invoice.objects.filter(
+        payment_type=Invoice.PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+    )
+    requested_invoices = Invoice.objects.filter(
+        payment_status=Invoice.PaymentStatusChoices.REQUESTED,
+    )
+    issued_invoices = Invoice.objects.filter(
+        payment_status=Invoice.PaymentStatusChoices.ISSUED,
+    )
+
+    message = render_to_string(
+        "invoices/partials/open_invoices_email.md",
+        context={
+            "post_paid_invoices_to_follow_up": post_paid_invoices_to_follow_up,
+            "initialized_prepaid_invoices": initialized_prepaid_invoices,
+            "requested_invoices": requested_invoices,
+            "issued_invoices": issued_invoices,
+        },
+    )
+
+    mail_managers(
+        subject=subject,
+        message=message,
+    )

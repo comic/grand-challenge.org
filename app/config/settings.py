@@ -1242,6 +1242,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.send_onboarding_task_reminder_emails",
         "schedule": crontab(day_of_week="mon", hour=6, minute=0),
     },
+    "send_open_invoices_email": {
+        "task": "grandchallenge.invoices.tasks.send_open_invoices_email",
+        "schedule": crontab(day_of_week="wed", hour=6, minute=0),
+    },
     "send_challenge_invoice_overdue_reminder_emails": {
         "task": "grandchallenge.invoices.tasks.send_challenge_invoice_overdue_reminder_emails",
         "schedule": crontab(day_of_month=1, hour=6, minute=0),
