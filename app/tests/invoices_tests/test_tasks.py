@@ -1,3 +1,4 @@
+from unittest.mock import MagicMock, call
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -393,7 +394,7 @@ def test_challenge_invoice_issued_notification_emails_on_create(
 
 
 @pytest.mark.django_db
-def test_send_post_paid_invoice_follow_up_emails():
+def test_send_post_paid_invoice_follow_up_emails_content():
     challenge = ChallengeFactory()
     challenge_admin = challenge.creator
     contact_email = "contact_person@example.com"
@@ -433,3 +434,59 @@ def test_send_post_paid_invoice_follow_up_emails():
     recipient_emails = [email.to[0] for email in mail.outbox]
     assert challenge_admin.email in recipient_emails
     assert contact_email in recipient_emails
+
+
+@pytest.mark.django_db
+def test_send_post_paid_invoice_follow_up_emails_queryset(mocker):
+    challenge = ChallengeFactory()
+
+    postpaid_relevant = InvoiceFactory(
+        challenge=challenge,
+        payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+        payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+        follow_up_on=today() + timedelta(days=1),
+    )
+    # create a bunch of other invoices that should not trigger an email
+    InvoiceFactory(
+        challenge=challenge,
+        payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+        payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+        follow_up_on=today() + timedelta(days=50),
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+        payment_status=Invoice.PaymentStatusChoices.REQUESTED,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+        payment_status=Invoice.PaymentStatusChoices.ISSUED,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_type=Invoice.PaymentTypeChoices.PREPAID,
+    )
+    InvoiceFactory(
+        challenge=challenge,
+        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
+    )
+
+    mock_method = mocker.patch(
+        "grandchallenge.invoices.tasks.send_postpaid_invoice_follow_up_date_approaching_email",
+        return_value=MagicMock(),
+    )
+
+    send_post_paid_invoice_follow_up_emails()
+
+    assert mock_method.call_count == 1
+    mock_method.assert_has_calls(
+        [
+            call(postpaid_relevant),
+        ],
+    )
