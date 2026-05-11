@@ -411,7 +411,12 @@ def test_send_open_invoices_email(settings):
         payment_status=Invoice.PaymentStatusChoices.ISSUED,
     )
     i5 = InvoiceFactory(payment_status=Invoice.PaymentStatusChoices.PAID)
-    i6 = InvoiceFactory(
+    i6 = InvoiceFactory(payment_status=Invoice.PaymentStatusChoices.CANCELLED)
+    i7 = InvoiceFactory(
+        payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
+    )
+    i8 = InvoiceFactory(
         payment_type=Invoice.PaymentTypeChoices.POSTPAID,
         payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
         follow_up_on=now().date() + timedelta(days=30),
@@ -429,3 +434,18 @@ def test_send_open_invoices_email(settings):
     assert str(i4) in mail.outbox[0].body
     assert str(i5) not in mail.outbox[0].body
     assert str(i6) not in mail.outbox[0].body
+    assert str(i7) not in mail.outbox[0].body
+    assert str(i8) not in mail.outbox[0].body
+
+
+@pytest.mark.django_db
+def test_send_open_invoices_email_not_sent_when_no_invoices(settings):
+    staff_user = UserFactory(is_staff=True)
+    settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
+
+    InvoiceFactory(payment_status=Invoice.PaymentStatusChoices.PAID)
+    InvoiceFactory(payment_status=Invoice.PaymentStatusChoices.CANCELLED)
+
+    send_open_invoices_email()
+
+    assert len(mail.outbox) == 0

@@ -57,6 +57,15 @@ def send_open_invoices_email():
         payment_status=Invoice.PaymentStatusChoices.ISSUED,
     )
 
+    # Only send email if there is at least one invoice in any category
+    if not (
+        post_paid_invoices_to_follow_up.exists()
+        or initialized_prepaid_invoices.exists()
+        or requested_invoices.exists()
+        or issued_invoices.exists()
+    ):
+        return
+
     message = render_to_string(
         "invoices/partials/open_invoices_email.md",
         context={
