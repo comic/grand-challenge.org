@@ -1581,6 +1581,9 @@ class Endpoint(FieldChangeMixin, UUIDModel):
         choices=EndpointStatusChoices,
         default=EndpointStatusChoices.QUEUED,
     )
+    stdout = models.TextField(default="", editable=False)
+    stderr = models.TextField(default="", editable=False)
+    runtime_metrics = models.JSONField(default=dict, editable=False)
     error_message = models.CharField(
         max_length=1024, default="", editable=False
     )
@@ -1672,7 +1675,7 @@ class Endpoint(FieldChangeMixin, UUIDModel):
     @property
     def endpoint_name(self):
         # Sagemaker requires names to be max 63 chars
-        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-alg-endp-{self.pk}"
+        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{self.pk}"
 
     @property
     def task_kwargs(self):
@@ -1773,7 +1776,7 @@ class Invocation(UUIDModel):
     invoke_duration = models.DurationField(
         null=True,
         default=None,
-        blank=True,
+        editable=False,
         help_text=(
             "The duration of the invocation. "
             "Excludes data validation, container pulling, model downloading, "
@@ -1785,7 +1788,13 @@ class Invocation(UUIDModel):
             "any delays from shared hardware issues."
         ),
     )
-    error_message = models.CharField(max_length=1024, default="", blank=True)
+    stdout = models.TextField(default="", editable=False)
+    stderr = models.TextField(default="", editable=False)
+    runtime_metrics = models.JSONField(default=dict, editable=False)
+    error_message = models.CharField(
+        max_length=1024, default="", editable=False
+    )
+    detailed_error_message = models.JSONField(default=dict, editable=False)
     algorithm_interface = models.ForeignKey(
         AlgorithmInterface, on_delete=models.PROTECT
     )
@@ -1823,9 +1832,7 @@ class Invocation(UUIDModel):
     @property
     def inference_id(self):
         # Sagemaker requires this to be max 64 chars
-        return (
-            f"{settings.COMPONENTS_REGISTRY_PREFIX}-alg-endp-invoc-{self.pk}"
-        )
+        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{self.pk}"
 
     @property
     def task_kwargs(self):
