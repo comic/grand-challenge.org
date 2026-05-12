@@ -10,6 +10,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models import ProtectedError
 from django.utils.timezone import datetime, now, timedelta
 
+from grandchallenge.challenges.exceptions import InsufficientBudgetError
 from grandchallenge.challenges.models import (
     Challenge,
     ChallengeRequest,
@@ -823,7 +824,11 @@ def test_get_invoice_for_utilization():
 @pytest.mark.django_db
 def test_get_invoice_for_utilization_no_invoice():
     challenge = ChallengeFactory()
-    assert challenge.get_invoice_for_utilization() is None
+    with pytest.raises(
+        InsufficientBudgetError,
+        match="This challenge has no available budget.",
+    ):
+        challenge.get_invoice_for_utilization()
 
 
 @pytest.mark.django_db
@@ -836,7 +841,11 @@ def test_get_invoice_for_utilization_ignores_negative_balance():
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
-    assert challenge.get_invoice_for_utilization() is None
+    with pytest.raises(
+        InsufficientBudgetError,
+        match="This challenge has no available budget.",
+    ):
+        challenge.get_invoice_for_utilization()
 
 
 @pytest.mark.django_db
@@ -849,7 +858,11 @@ def test_get_invoice_for_utilization_ignores_zero_balance():
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
-    assert challenge.get_invoice_for_utilization() is None
+    with pytest.raises(
+        InsufficientBudgetError,
+        match="This challenge has no available budget.",
+    ):
+        challenge.get_invoice_for_utilization()
 
 
 @pytest.mark.django_db

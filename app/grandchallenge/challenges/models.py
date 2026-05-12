@@ -46,6 +46,7 @@ from grandchallenge.challenges.emails import (
     send_challenge_requested_email_to_reviewers,
     send_email_percent_budget_consumed_alert,
 )
+from grandchallenge.challenges.exceptions import InsufficientBudgetError
 from grandchallenge.challenges.utils import ChallengeTypeChoices
 from grandchallenge.components.models import APIMethodChoices
 from grandchallenge.components.schemas import GPUTypeChoices
@@ -505,13 +506,29 @@ class Challenge(ChallengeBase, FieldChangeMixin):
     )
 
     def get_invoice_for_utilization(self):
-        return (
-            self.invoices.with_compute_balance()
-            .filter(
-                compute_costs_balance_euros_millicents__gt=0,
+        # Circular imports
+
+        invoices = self.invoices.with_compute_balance().order_by(
+            "expires_on", "created"
+        )
+
+        # sum in Python to prevent multiple trips on the database
+        challenge_compute_costs_balance = sum(
+            invoice.compute_costs_balance_euros_millicents
+            for invoice in invoices
+        )
+        if challenge_compute_costs_balance <= 0:
+            raise InsufficientBudgetError(
+                "This challenge has no available budget."
             )
-            .order_by("expires_on", "created")
-            .first()
+
+        for invoice in invoices:
+            if invoice.compute_costs_balance_euros_millicents > 0:
+                return invoice
+
+        # Defensive catch for if the total balance somehow does not add up
+        raise InsufficientBudgetError(
+            "Unexpected: this challenge has no available budget in any invoice despite a positive total balance."
         )
 
     objects = ChallengeQuerySet.as_manager()
