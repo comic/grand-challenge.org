@@ -1665,9 +1665,7 @@ class TestEndpointProperties:
         settings.COMPONENTS_REGISTRY_PREFIX = "rumc-gcorg-p"
         endpoint = EndpointFactory.build()
 
-        assert endpoint.endpoint_name == (
-            f"rumc-gcorg-p-alg-endp-{endpoint.pk}"
-        )
+        assert endpoint.endpoint_name == (f"rumc-gcorg-p-AE-{endpoint.pk}")
         assert len(endpoint.endpoint_name) <= 63
 
     def test_signing_key_properties(self):
@@ -1744,9 +1742,7 @@ def test_invocation_inference_id_format(settings, prefix):
     settings.COMPONENTS_REGISTRY_PREFIX = prefix
     invocation = InvocationFactory.build()
 
-    assert invocation.inference_id == (
-        f"{prefix}-alg-endp-inv-{invocation.pk}"
-    )
+    assert invocation.inference_id == (f"{prefix}-AEI-{invocation.pk}")
     assert len(invocation.inference_id) <= 64
 
 

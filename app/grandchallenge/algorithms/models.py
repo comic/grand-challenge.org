@@ -1675,7 +1675,7 @@ class Endpoint(FieldChangeMixin, UUIDModel):
     @property
     def endpoint_name(self):
         # Sagemaker requires names to be max 63 chars
-        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-alg-endp-{self.pk}"
+        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{self.pk}"
 
     @property
     def task_kwargs(self):
@@ -1832,7 +1832,7 @@ class Invocation(UUIDModel):
     @property
     def inference_id(self):
         # Sagemaker requires this to be max 64 chars
-        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-alg-endp-inv-{self.pk}"
+        return f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{self.pk}"
 
     @property
     def task_kwargs(self):
