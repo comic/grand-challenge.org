@@ -1808,11 +1808,12 @@ def invoke_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
-def handle_endpoint_invocation_event(*, event: dict):
+def handle_endpoint_invocation_event(*, event_message: str):
     from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
         EndpointOrchestrator,
     )
 
+    event = json.loads(event_message)
     inference_id = EndpointOrchestrator.get_inference_id(event=event)
     invocation_params = EndpointOrchestrator.get_invocation_params(
         inference_id=inference_id
