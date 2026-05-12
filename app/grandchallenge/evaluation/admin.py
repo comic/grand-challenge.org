@@ -130,7 +130,22 @@ def reevaluate_submissions(modeladmin, request, queryset):
                 messages.WARNING,
             )
         else:
-            submission.create_evaluation(additional_inputs=None)
+            invoice = submission.phase.challenge.get_invoice_for_utilization()
+            if invoice is None:
+                modeladmin.message_user(
+                    request,
+                    f"Submission {submission.pk} cannot be reevaluated because "
+                    f"the challenge does not have an invoice with available "
+                    f"balance for evaluation utilization. Please reschedule "
+                    f"after ensuring that the challenge has an invoice with "
+                    f"available balance.",
+                    messages.WARNING,
+                )
+            else:
+                submission.create_evaluation(
+                    additional_inputs=None,
+                    invoice=invoice,
+                )
 
 
 @admin.register(Submission)
