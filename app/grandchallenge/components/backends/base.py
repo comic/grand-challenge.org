@@ -330,6 +330,7 @@ class Executor(ABC):
         ground_truth=None,
         input_bucket_name=settings.COMPONENTS_INPUT_BUCKET_NAME,
         output_bucket_name=settings.COMPONENTS_OUTPUT_BUCKET_NAME,
+        use_task_list=True,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -345,6 +346,9 @@ class Executor(ABC):
         self._api_method = api_method
         self._algorithm_model = algorithm_model
         self._ground_truth = ground_truth
+        self._input_bucket_name = input_bucket_name
+        self._output_bucket_name = output_bucket_name
+        self._use_task_list = use_task_list
 
         self._exec_duration = None
         self._invoke_duration = None
@@ -352,9 +356,6 @@ class Executor(ABC):
         self._stderr = []
 
         self._inference_result_skipped = False
-
-        self._input_bucket_name = input_bucket_name
-        self._output_bucket_name = output_bucket_name
 
         self.__s3_client = None
 
@@ -721,8 +722,8 @@ class Executor(ABC):
                 f"Unknown interface super kind: {civ.interface.super_kind}"
             )
 
-    def _get_inference_task(self, *, invocation_inputs):
-        return InferenceTask(
+    def _get_create_invocation_json_task(self, *, invocation_inputs):
+        inference_task = InferenceTask(
             pk=self._job_id,
             inputs=invocation_inputs,
             output_bucket_name=self._output_bucket_name,
@@ -730,16 +731,13 @@ class Executor(ABC):
             timeout=self._time_limit,
         )
 
-    @staticmethod
-    def _get_invocation_json(*, inference_task):
-        return to_json([inference_task])
+        if self._use_task_list:
+            content = to_json([inference_task])
+        else:
+            content = to_json(inference_task)
 
-    def _get_create_invocation_json_task(self, *, invocation_inputs):
-        inference_task = self._get_inference_task(
-            invocation_inputs=invocation_inputs
-        )
         return self._get_upload_input_content_task(
-            content=self._get_invocation_json(inference_task=inference_task),
+            content=content,
             key=self._invocation_key,
         )
 

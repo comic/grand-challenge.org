@@ -1,7 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
 from django.conf import settings
-from pydantic_core import to_json
 
 from grandchallenge.components.backends.amazon_sagemaker_training import (
     AmazonSageMakerTrainingExecutor,
@@ -36,6 +35,7 @@ class EndpointOrchestrator:
             algorithm_model=None,
             input_bucket_name=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
             output_bucket_name=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
+            use_task_list=False,
         )
         self._endpoint_name = endpoint_name
         self._exec_image_repo_tag = exec_image_repo_tag
@@ -224,12 +224,7 @@ class EndpointOrchestrator:
         self.deprovision_auxiliary_data()
 
     def provision_invocation_input_data(self, *, input_civs):
-        self._executor._get_invocation_json = self._get_invocation_json
         self._executor.provision(input_civs=input_civs, input_prefixes={})
-
-    @staticmethod
-    def _get_invocation_json(*, inference_task):
-        return to_json(inference_task)
 
     def invoke_endpoint(self, *, inference_id):
         self._sagemaker_runtime_client.invoke_endpoint_async(
