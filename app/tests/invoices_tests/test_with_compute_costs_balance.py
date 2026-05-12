@@ -25,6 +25,10 @@ def test_prepaid_no_utilization_positive_balance():
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
+========
+    (invoice,) = challenge.get_invoices_with_costs_balance()
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     assert invoice.compute_costs_balance_euros_millicents == 2 * 1000 * 100
 
 
@@ -38,6 +42,11 @@ def test_prepaid_utilization_positive_balance():
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
+========
+
+    (invoice,) = challenge.get_invoices_with_costs_balance()
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     assert invoice.compute_costs_balance_euros_millicents == 1 * 1000 * 100
 
 
@@ -68,6 +77,11 @@ def test_prepaid_no_utilization_zero_balance(payment_status, expires_on):
         payment_status=payment_status,
         expires_on=expires_on,
     )
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
+========
+
+    (invoice,) = challenge.get_invoices_with_costs_balance()
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     assert invoice.compute_costs_balance_euros_millicents == 0
 
 
@@ -90,6 +104,11 @@ def test_prepaid_overutilization_negative_balance(payment_status):
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=payment_status,
     )
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
+========
+
+    (invoice,) = challenge.get_invoices_with_costs_balance()
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     assert invoice.compute_costs_balance_euros_millicents == -3 * 1000 * 100
 
 
@@ -104,6 +123,11 @@ def test_prepaid_utilization_expired_zero_balance():
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=now().date() - timedelta(days=2),
     )
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
+========
+
+    (invoice,) = challenge.get_invoices_with_costs_balance()
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     assert invoice.compute_costs_balance_euros_millicents == 0
 
 
@@ -118,6 +142,11 @@ def test_prepaid_overutilization_expired_negative_balance():
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=now().date() - timedelta(days=2),  # Expired
     )
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
+========
+
+    (invoice,) = challenge.get_invoices_with_costs_balance()
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     assert invoice.compute_costs_balance_euros_millicents == -2 * 1000 * 100
 
 
@@ -157,9 +186,17 @@ def test_postpaid_no_utilization(
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=postpaid_payment_status,
     )
+
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
     assert (
         postpaid_invoice.compute_costs_balance_euros_millicents
         == 2 * 1000 * 100
+========
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_costs_balance()
+        if i.pk == postpaid_invoice.pk
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     )
 
 
@@ -257,7 +294,16 @@ def test_postpaid_postpaid_status_interaction_zero_balance(
         payment_status=postpaid_payment_status,
     )
 
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
     assert postpaid_invoice.compute_costs_balance_euros_millicents == 0
+========
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_costs_balance()
+        if i.pk == postpaid_invoice.pk
+    )
+    assert invoice.compute_costs_balance_euros_millicents == 0
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
 
 
 @pytest.mark.django_db
@@ -279,9 +325,16 @@ def test_postpaid_with_expired_paid_prepaid():
         payment_status=PaymentStatusChoices.INITIALIZED,
     )
 
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
     assert (
         postpaid_invoice.compute_costs_balance_euros_millicents
         == 2 * 1000 * 100
+========
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_costs_balance()
+        if i.pk == postpaid_invoice.pk
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     )
 
 
@@ -303,9 +356,16 @@ def test_postpaid_utilized():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
     assert (
         postpaid_invoice.compute_costs_balance_euros_millicents
         == 3 * 1000 * 100
+========
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_costs_balance()
+        if i.pk == postpaid_invoice.pk
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     )
 
 
@@ -329,7 +389,16 @@ def test_postpaid_utilized_but_expired():
         follow_up_on=now() - timedelta(days=3),
     )
 
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
     assert postpaid_invoice.compute_costs_balance_euros_millicents == 0
+========
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_costs_balance()
+        if i.pk == postpaid_invoice.pk
+    )
+    assert invoice.compute_costs_balance_euros_millicents == 0
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
 
 
 @pytest.mark.django_db
@@ -350,9 +419,16 @@ def test_postpaid_overutilized():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
     assert (
         postpaid_invoice.compute_costs_balance_euros_millicents
         == -2 * 1000 * 100
+========
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_costs_balance()
+        if i.pk == postpaid_invoice.pk
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     )
 
 
@@ -375,10 +451,16 @@ def test_postpaid_overutilized_but_expired():
         expires_on=now().date() - timedelta(days=2),
         follow_up_on=now() - timedelta(days=3),
     )
-
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
     assert (
         postpaid_invoice.compute_costs_balance_euros_millicents
         == -2 * 1000 * 100
+========
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_costs_balance()
+        if i.pk == postpaid_invoice.pk
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     )
 
 
@@ -406,6 +488,11 @@ def test_complimentary_no_utilization_positive_balance(payment_status):
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=payment_status,
     )
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
+========
+
+    (invoice,) = challenge.get_invoices_with_costs_balance()
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     assert invoice.compute_costs_balance_euros_millicents == 1 * 1000 * 100
 
 
@@ -419,6 +506,11 @@ def test_complimentary_cancelled():
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=PaymentStatusChoices.CANCELLED,
     )
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
+========
+
+    (invoice,) = challenge.get_invoices_with_costs_balance()
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     assert invoice.compute_costs_balance_euros_millicents == 0
 
 
@@ -441,6 +533,11 @@ def test_complimentary_utilized(payment_status):
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=payment_status,
     )
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
+========
+
+    (invoice,) = challenge.get_invoices_with_costs_balance()
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     assert invoice.compute_costs_balance_euros_millicents == 3 * 1000 * 100
 
 
@@ -464,6 +561,11 @@ def test_complimentary_utilized_but_expired(payment_status):
         payment_status=payment_status,
         expires_on=now().date() - timedelta(days=2),
     )
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
+========
+
+    (invoice,) = challenge.get_invoices_with_costs_balance()
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
     assert invoice.compute_costs_balance_euros_millicents == 0
 
 
@@ -511,8 +613,13 @@ def test_multiple_challenges_do_not_mix_prepaid():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
+<<<<<<<< HEAD:app/tests/invoices_tests/test_compute_costs_balance.py
     postpaid_invoice = Invoice.objects.get(pk=postpaid_invoice.pk)
     assert (
         postpaid_invoice.compute_costs_balance_euros_millicents
         == 1 * 1000 * 100
     )
+========
+    (invoice,) = challenge.get_invoices_with_costs_balance()
+    assert invoice.compute_costs_balance_euros_millicents == -2 * 1000 * 100
+>>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
