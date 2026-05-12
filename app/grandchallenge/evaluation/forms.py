@@ -24,7 +24,7 @@ from django.utils.text import format_lazy
 
 from grandchallenge.algorithms.forms import UserAlgorithmsForPhaseMixin
 from grandchallenge.algorithms.models import Job
-from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.exceptions import InsufficientBudgetError
 from grandchallenge.components.forms import (
     AdditionalInputsMixin,
     ContainerImageForm,
@@ -655,7 +655,7 @@ class SubmissionForm(
         instance = super().save(*args, **kwargs)
 
         instance.create_evaluation(
-            additional_inputs=self.cleaned_data["additional_inputs"]
+            additional_inputs=self.cleaned_data["additional_inputs"],
         )
 
         return instance
@@ -741,17 +741,16 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
                     "Please wait for the other evaluation to complete."
                 )
 
-        # Fetch from the db to get the cost annotations
-        challenge = (
-            Challenge.objects.filter(
-                pk=cleaned_data["submission"].phase.challenge.pk
+        try:
+            invoice = cleaned_data[
+                "submission"
+            ].phase.challenge.get_invoice_for_utilization()
+        except InsufficientBudgetError as e:
+            raise ValidationError(
+                f"{e.reason} Please contact the challenge organizers."
             )
-            .with_available_compute()
-            .get()
-        )
-
-        if challenge.available_compute_euro_millicents <= 0:
-            raise ValidationError("This challenge has exceeded its budget")
+        else:
+            cleaned_data["invoice"] = invoice
 
         if Evaluation.objects.get_evaluations_with_same_inputs(
             inputs=cleaned_data["additional_inputs"],
