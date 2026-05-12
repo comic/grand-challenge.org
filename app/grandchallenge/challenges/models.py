@@ -519,7 +519,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
         if challenge_compute_costs_balance <= 0:
             raise InsufficientBudgetError(
-                "This challenge has no available budget."
+                reason="This challenge has no available budget."
             )
 
         for invoice in invoices:
@@ -528,7 +528,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
 
         # Defensive catch for if the total balance somehow does not add up
         raise InsufficientBudgetError(
-            "Unexpected: this challenge has no available budget in any invoice despite a positive total balance."
+            reason="Unexpected: this challenge has no available budget in any invoice despite a positive total balance."
         )
 
     objects = ChallengeQuerySet.as_manager()

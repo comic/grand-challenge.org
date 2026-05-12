@@ -207,8 +207,7 @@ def test_reevaluate_submission_missing_invoice(rf):
     assert len(messages) == 1
     assert (
         messages[0]
-        == f"Submission {submission.pk} cannot be reevaluated because the challenge does not"
-        " have an invoice with available balance for evaluation utilization. Please reschedule after ensuring that the challenge has an invoice with available balance."
+        == f"Submission {submission.pk} cannot be reevaluated. This challenge has no available budget."
     )
 
 
