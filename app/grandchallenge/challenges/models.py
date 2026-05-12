@@ -937,6 +937,67 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             payment_status=PaymentStatusChoices.PAID,
         ).exists()
 
+    def get_invoices_with_compute_balance(self):
+        invoices = self.invoices.with_expired_status()
+
+        paid_prepaid_exists = any(
+            invoice.compute_costs_euros > 0
+            and invoice.payment_type == PaymentTypeChoices.PREPAID
+            and invoice.payment_status == PaymentStatusChoices.PAID
+            for invoice in invoices
+        )
+
+        for invoice in invoices:
+            balance = 0
+            negative_utilization_costs = (
+                -1 * invoice.compute_costs_utilized_euros_millicents
+            )
+
+            if invoice.payment_status == PaymentStatusChoices.CANCELLED:
+                balance = negative_utilization_costs
+            else:
+                compute_costs_diff_euro_millicents = (
+                    invoice.compute_costs_euros * 1000 * 100
+                    - invoice.compute_costs_utilized_euros_millicents
+                )
+
+                if invoice.is_expired:
+                    if invoice.payment_type in (
+                        PaymentTypeChoices.COMPLIMENTARY,
+                        PaymentTypeChoices.POSTPAID,
+                    ) or (
+                        invoice.payment_type == PaymentTypeChoices.PREPAID
+                        and invoice.payment_status == PaymentStatusChoices.PAID
+                    ):
+                        balance = min(compute_costs_diff_euro_millicents, 0)
+                    else:
+                        balance = negative_utilization_costs
+                else:
+                    if (
+                        invoice.payment_type
+                        == PaymentTypeChoices.COMPLIMENTARY
+                    ):
+                        balance = compute_costs_diff_euro_millicents
+                    elif (
+                        invoice.payment_type == PaymentTypeChoices.PREPAID
+                        and invoice.payment_status == PaymentStatusChoices.PAID
+                    ):
+                        balance = compute_costs_diff_euro_millicents
+                    elif (
+                        invoice.payment_type == PaymentTypeChoices.POSTPAID
+                        and (
+                            paid_prepaid_exists
+                            or invoice.payment_status
+                            == PaymentStatusChoices.PAID
+                        )
+                    ):
+                        balance = compute_costs_diff_euro_millicents
+                    else:
+                        balance = negative_utilization_costs
+
+            invoice.compute_costs_balance_euros_millicents = balance
+            yield invoice
+
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset()
