@@ -18,29 +18,26 @@ from tests.invoices_tests.factories import InvoiceFactory
 @pytest.mark.django_db
 def test_prepaid_no_utilization_positive_balance():
     challenge = ChallengeFactory()
-    InvoiceFactory(
+    invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=2,
         compute_costs_utilized_euros_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
-    (invoice,) = challenge.get_invoices_with_costs_balance()
     assert invoice.compute_costs_balance_euros_millicents == 2 * 1000 * 100
 
 
 @pytest.mark.django_db
 def test_prepaid_utilization_positive_balance():
     challenge = ChallengeFactory()
-    InvoiceFactory(
+    invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=2,
         compute_costs_utilized_euros_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
-
-    (invoice,) = challenge.get_invoices_with_costs_balance()
     assert invoice.compute_costs_balance_euros_millicents == 1 * 1000 * 100
 
 
@@ -63,7 +60,7 @@ def test_prepaid_utilization_positive_balance():
 )
 def test_prepaid_no_utilization_zero_balance(payment_status, expires_on):
     challenge = ChallengeFactory()
-    InvoiceFactory(
+    invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
         compute_costs_utilized_euros_millicents=0,
@@ -71,8 +68,6 @@ def test_prepaid_no_utilization_zero_balance(payment_status, expires_on):
         payment_status=payment_status,
         expires_on=expires_on,
     )
-
-    (invoice,) = challenge.get_invoices_with_costs_balance()
     assert invoice.compute_costs_balance_euros_millicents == 0
 
 
@@ -88,47 +83,41 @@ def test_prepaid_no_utilization_zero_balance(payment_status, expires_on):
 )
 def test_prepaid_overutilization_negative_balance(payment_status):
     challenge = ChallengeFactory()
-    InvoiceFactory(
+    invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
         compute_costs_utilized_euros_millicents=3 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=payment_status,
     )
-
-    (invoice,) = challenge.get_invoices_with_costs_balance()
     assert invoice.compute_costs_balance_euros_millicents == -3 * 1000 * 100
 
 
 @pytest.mark.django_db
 def test_prepaid_utilization_expired_zero_balance():
     challenge = ChallengeFactory()
-    InvoiceFactory(
+    invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=4,
         compute_costs_utilized_euros_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
-        expires_on=now() - timedelta(days=2),
+        expires_on=now().date() - timedelta(days=2),
     )
-
-    (invoice,) = challenge.get_invoices_with_costs_balance()
     assert invoice.compute_costs_balance_euros_millicents == 0
 
 
 @pytest.mark.django_db
 def test_prepaid_overutilization_expired_negative_balance():
     challenge = ChallengeFactory()
-    InvoiceFactory(
+    invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
         compute_costs_utilized_euros_millicents=3 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
-        expires_on=now() - timedelta(days=2),  # Expired
+        expires_on=now().date() - timedelta(days=2),  # Expired
     )
-
-    (invoice,) = challenge.get_invoices_with_costs_balance()
     assert invoice.compute_costs_balance_euros_millicents == -2 * 1000 * 100
 
 
@@ -169,12 +158,10 @@ def test_postpaid_no_utilization(
         payment_status=postpaid_payment_status,
     )
 
-    invoice = next(
-        i
-        for i in challenge.get_invoices_with_costs_balance()
-        if i.pk == postpaid_invoice.pk
+    assert (
+        postpaid_invoice.compute_costs_balance_euros_millicents
+        == 2 * 1000 * 100
     )
-    assert invoice.compute_costs_balance_euros_millicents == 2 * 1000 * 100
 
 
 @pytest.mark.django_db
@@ -271,12 +258,7 @@ def test_postpaid_postpaid_status_interaction_zero_balance(
         payment_status=postpaid_payment_status,
     )
 
-    invoice = next(
-        i
-        for i in challenge.get_invoices_with_costs_balance()
-        if i.pk == postpaid_invoice.pk
-    )
-    assert invoice.compute_costs_balance_euros_millicents == 0
+    assert postpaid_invoice.compute_costs_balance_euros_millicents == 0
 
 
 @pytest.mark.django_db
@@ -288,7 +270,7 @@ def test_postpaid_with_expired_paid_prepaid():
         compute_costs_utilized_euros_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
-        expires_on=now() - timedelta(days=2),
+        expires_on=now().date() - timedelta(days=2),
     )
     postpaid_invoice = InvoiceFactory(
         challenge=challenge,
@@ -298,12 +280,10 @@ def test_postpaid_with_expired_paid_prepaid():
         payment_status=PaymentStatusChoices.INITIALIZED,
     )
 
-    invoice = next(
-        i
-        for i in challenge.get_invoices_with_costs_balance()
-        if i.pk == postpaid_invoice.pk
+    assert (
+        postpaid_invoice.compute_costs_balance_euros_millicents
+        == 2 * 1000 * 100
     )
-    assert invoice.compute_costs_balance_euros_millicents == 2 * 1000 * 100
 
 
 @pytest.mark.django_db
@@ -324,12 +304,10 @@ def test_postpaid_utilized():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
-    invoice = next(
-        i
-        for i in challenge.get_invoices_with_costs_balance()
-        if i.pk == postpaid_invoice.pk
+    assert (
+        postpaid_invoice.compute_costs_balance_euros_millicents
+        == 3 * 1000 * 100
     )
-    assert invoice.compute_costs_balance_euros_millicents == 3 * 1000 * 100
 
 
 @pytest.mark.django_db
@@ -348,16 +326,11 @@ def test_postpaid_utilized_but_expired():
         compute_costs_utilized_euros_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
-        expires_on=now() - timedelta(days=2),
+        expires_on=now().date() - timedelta(days=2),
         follow_up_on=now() - timedelta(days=3),
     )
 
-    invoice = next(
-        i
-        for i in challenge.get_invoices_with_costs_balance()
-        if i.pk == postpaid_invoice.pk
-    )
-    assert invoice.compute_costs_balance_euros_millicents == 0
+    assert postpaid_invoice.compute_costs_balance_euros_millicents == 0
 
 
 @pytest.mark.django_db
@@ -378,12 +351,10 @@ def test_postpaid_overutilized():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
-    invoice = next(
-        i
-        for i in challenge.get_invoices_with_costs_balance()
-        if i.pk == postpaid_invoice.pk
+    assert (
+        postpaid_invoice.compute_costs_balance_euros_millicents
+        == -2 * 1000 * 100
     )
-    assert invoice.compute_costs_balance_euros_millicents == -2 * 1000 * 100
 
 
 @pytest.mark.django_db
@@ -402,15 +373,13 @@ def test_postpaid_overutilized_but_expired():
         compute_costs_utilized_euros_millicents=3 * 1000 * 100,
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
-        expires_on=now() - timedelta(days=2),
+        expires_on=now().date() - timedelta(days=2),
         follow_up_on=now() - timedelta(days=3),
     )
-    invoice = next(
-        i
-        for i in challenge.get_invoices_with_costs_balance()
-        if i.pk == postpaid_invoice.pk
+    assert (
+        postpaid_invoice.compute_costs_balance_euros_millicents
+        == -2 * 1000 * 100
     )
-    assert invoice.compute_costs_balance_euros_millicents == -2 * 1000 * 100
 
 
 ##########
@@ -430,30 +399,26 @@ def test_postpaid_overutilized_but_expired():
 )
 def test_complimentary_no_utilization_positive_balance(payment_status):
     challenge = ChallengeFactory()
-    InvoiceFactory(
+    invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
         compute_costs_utilized_euros_millicents=0,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=payment_status,
     )
-
-    (invoice,) = challenge.get_invoices_with_costs_balance()
     assert invoice.compute_costs_balance_euros_millicents == 1 * 1000 * 100
 
 
 @pytest.mark.django_db
 def test_complimentary_cancelled():
     challenge = ChallengeFactory()
-    InvoiceFactory(
+    invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
         compute_costs_utilized_euros_millicents=0,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=PaymentStatusChoices.CANCELLED,
     )
-
-    (invoice,) = challenge.get_invoices_with_costs_balance()
     assert invoice.compute_costs_balance_euros_millicents == 0
 
 
@@ -469,15 +434,13 @@ def test_complimentary_cancelled():
 )
 def test_complimentary_utilized(payment_status):
     challenge = ChallengeFactory()
-    InvoiceFactory(
+    invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=4,
         compute_costs_utilized_euros_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=payment_status,
     )
-
-    (invoice,) = challenge.get_invoices_with_costs_balance()
     assert invoice.compute_costs_balance_euros_millicents == 3 * 1000 * 100
 
 
@@ -493,32 +456,28 @@ def test_complimentary_utilized(payment_status):
 )
 def test_complimentary_utilized_but_expired(payment_status):
     challenge = ChallengeFactory()
-    InvoiceFactory(
+    invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=4,
         compute_costs_utilized_euros_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=payment_status,
-        expires_on=now() - timedelta(days=2),
+        expires_on=now().date() - timedelta(days=2),
     )
-
-    (invoice,) = challenge.get_invoices_with_costs_balance()
     assert invoice.compute_costs_balance_euros_millicents == 0
 
 
 @pytest.mark.django_db
 def test_complimentary_overutilized_but_expired():
     challenge = ChallengeFactory()
-    InvoiceFactory(
+    invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
         compute_costs_utilized_euros_millicents=3 * 1000 * 100,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=PaymentStatusChoices.PAID,
-        expires_on=now() - timedelta(days=2),
+        expires_on=now().date() - timedelta(days=2),
     )
-
-    (invoice,) = challenge.get_invoices_with_costs_balance()
     assert invoice.compute_costs_balance_euros_millicents == -2 * 1000 * 100
 
 
@@ -541,11 +500,6 @@ def test_multiple_challenges_do_not_mix_prepaid():
         payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
         follow_up_on=now() - timedelta(days=3),
     )
-    postpaid_invoice = next(
-        i
-        for i in challenge_without_prepaid.get_invoices_with_costs_balance()
-        if i.pk == postpaid_invoice.pk
-    )
     assert postpaid_invoice.compute_costs_balance_euros_millicents == 0
 
     # Add prepaid
@@ -557,11 +511,7 @@ def test_multiple_challenges_do_not_mix_prepaid():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
-    postpaid_invoice = next(
-        i
-        for i in challenge_without_prepaid.get_invoices_with_costs_balance()
-        if i.pk == postpaid_invoice.pk
-    )
+    postpaid_invoice = Invoice.objects.get(pk=postpaid_invoice.pk)
     assert (
         postpaid_invoice.compute_costs_balance_euros_millicents
         == 1 * 1000 * 100

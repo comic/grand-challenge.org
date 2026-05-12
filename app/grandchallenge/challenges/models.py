@@ -929,56 +929,13 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             url=self.get_absolute_url(),
         )
 
-    def get_invoices_with_costs_balance(self):
-        invoices = self.invoices.with_expired_status()
-        has_paid_prepaid_invoice = any(
-            invoice.compute_costs_euros > 0
-            and invoice.payment_type == PaymentTypeChoices.PREPAID
-            and invoice.payment_status == PaymentStatusChoices.PAID
-            for invoice in invoices
-        )
-        for invoice in invoices:
-            invoice.compute_costs_balance_euros_millicents = (
-                self._get_invoice_compute_costs_balance(
-                    invoice=invoice,
-                    has_paid_prepaid_invoice=has_paid_prepaid_invoice,
-                )
-            )
-        return invoices
-
-    @staticmethod
-    def _get_invoice_compute_costs_balance(
-        *, invoice, has_paid_prepaid_invoice
-    ):
-        utilized = invoice.compute_costs_utilized_euros_millicents
-        diff = invoice.compute_costs_euros * 1000 * 100 - utilized
-
-        if invoice.payment_status == PaymentStatusChoices.CANCELLED:
-            return -utilized
-
-        is_eligible = (
-            invoice.payment_type == PaymentTypeChoices.COMPLIMENTARY
-            or (
-                invoice.payment_type == PaymentTypeChoices.PREPAID
-                and invoice.payment_status == PaymentStatusChoices.PAID
-            )
-            or (
-                invoice.payment_type == PaymentTypeChoices.POSTPAID
-                and (
-                    has_paid_prepaid_invoice
-                    or invoice.payment_status == PaymentStatusChoices.PAID
-                )
-            )
-        )
-
-        if not is_eligible:
-            return -utilized
-        elif invoice.is_expired:
-            # If the invoice is expired we cap the balance at 0 or below.
-            # Meaning the challenge cannot use more compute from this invoice.
-            return min(diff, 0)
-        else:
-            return diff
+    @cached_property
+    def has_paid_prepaid_invoice(self):
+        return self.invoices.filter(
+            compute_costs_euros__gt=0,
+            payment_type=PaymentTypeChoices.PREPAID,
+            payment_status=PaymentStatusChoices.PAID,
+        ).exists()
 
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):
