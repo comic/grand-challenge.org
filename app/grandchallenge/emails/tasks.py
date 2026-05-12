@@ -2,7 +2,9 @@ import time
 from datetime import timedelta
 
 import boto3
-from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from billiard.exceptions import (
+    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
+)
 from botocore.exceptions import BotoCoreError, ClientError
 from celery.utils.log import get_task_logger
 from django.conf import settings
@@ -12,6 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.utils.timezone import now
+from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from redis.exceptions import LockError
 
 from grandchallenge.core.celery import acks_late_micro_short_task
@@ -76,7 +79,10 @@ def get_receivers(action):
 
 
 @acks_late_micro_short_task(
-    retry_on=(SoftTimeLimitExceeded, TimeLimitExceeded),
+    retry_on=(
+        CelerySoftTimeLimitExceeded,
+        SoftTimeLimitExceeded,
+    ),
     singleton=True,
 )
 def send_bulk_email(*, action, email_pk):
@@ -120,7 +126,11 @@ def send_bulk_email(*, action, email_pk):
     ignore_result=True,
     singleton=True,
     # No need to retry here as the periodic task call this again
-    ignore_errors=(LockError, SoftTimeLimitExceeded, TimeLimitExceeded),
+    ignore_errors=(
+        LockError,
+        CelerySoftTimeLimitExceeded,
+        SoftTimeLimitExceeded,
+    ),
 )
 def send_raw_emails():
     if settings.DEBUG:

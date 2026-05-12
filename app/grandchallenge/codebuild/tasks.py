@@ -1,6 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.transaction import on_commit
+from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.algorithms.models import Algorithm, AlgorithmImage
 from grandchallenge.core.celery import (
@@ -34,9 +35,17 @@ def create_codebuild_build(*, pk):
     Build.objects.create(webhook_message=ghwm, algorithm_image=algorithm_image)
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.handle_completed_build_event")
 @transaction.atomic
-def handle_completed_build_event(*, build_arn, build_status):
+def handle_completed_build_event_celery(*, build_arn, build_status):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return handle_completed_build_event(
+        build_arn=build_arn, build_status=build_status
+    )
+
+
+@lambda_task
+def handle_completed_build_event(*, build_arn: str, build_status: str):
     from grandchallenge.codebuild.models import Build
 
     build_id = build_arn.split("/")[-1]

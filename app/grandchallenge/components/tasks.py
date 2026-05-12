@@ -13,7 +13,9 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 import boto3
-from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from billiard.exceptions import (
+    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
+)
 from celery import signature
 from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
@@ -27,6 +29,7 @@ from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
 from grandchallenge.cases.models import (
     DICOMImageSetUpload,
@@ -869,7 +872,10 @@ def execute_job(
             error_message=str(e),
             detailed_error_message=e.message_details,
         )
-    except (SoftTimeLimitExceeded, TimeLimitExceeded):
+    except (
+        CelerySoftTimeLimitExceeded,
+        SoftTimeLimitExceeded,
+    ):
         job.update_status(
             status=job.FAILURE,
             stdout=executor.stdout,
@@ -899,16 +905,6 @@ def get_update_status_kwargs(*, executor=None):
         }
     else:
         return {}
-
-
-@acks_late_micro_short_task(
-    name="grandchallenge.components.tasks.handle_event",
-    retry_on=(RetryStep, LockNotAcquiredException),
-)
-@transaction.atomic
-def handle_event_celery(*, event, backend):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return handle_event(event=event, backend=backend)
 
 
 @lambda_task(retry_on=(RetryStep, LockNotAcquiredException))
