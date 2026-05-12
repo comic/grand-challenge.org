@@ -952,7 +952,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
                     has_paid_prepaid_invoice=has_paid_prepaid_invoice,
                 )
             )
-            yield invoice
+        return invoices
 
     @staticmethod
     def _get_invoice_compute_costs_balance(
