@@ -1699,7 +1699,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
         choices=STATUS_CHOICES, default=PENDING, db_index=True
     )
     attempt = models.PositiveSmallIntegerField(editable=False, default=0)
-    stdout = models.TextField()
+    stdout = models.TextField(default="")
     stderr = models.TextField(default="")
     exec_duration = models.DurationField(
         null=True,

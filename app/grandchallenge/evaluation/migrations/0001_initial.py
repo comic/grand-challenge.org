@@ -605,7 +605,7 @@ class Migration(migrations.Migration):
                         default=0,
                     ),
                 ),
-                ("stdout", models.TextField()),
+                ("stdout", models.TextField(default="")),
                 ("stderr", models.TextField(default="")),
                 (
                     "error_message",
@@ -671,7 +671,7 @@ class Migration(migrations.Migration):
                         default=0,
                     ),
                 ),
-                ("stdout", models.TextField()),
+                ("stdout", models.TextField(default="")),
                 ("stderr", models.TextField(default="")),
                 (
                     "error_message",
