@@ -565,7 +565,7 @@ def test_endpoint_orchestrator_provision_invocation_input_data_tasks(
         create_invocation_json_task.keywords["content"]
     )
 
-    assert invocation_json == [expected_invocation_json]
+    assert invocation_json == expected_invocation_json
 
 
 def test_invocation_invoke_endpoint(settings):
