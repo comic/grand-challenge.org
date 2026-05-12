@@ -622,4 +622,49 @@ def test_multiple_challenges_do_not_mix_prepaid():
 ========
     (invoice,) = challenge.get_invoices_with_costs_balance()
     assert invoice.compute_costs_balance_euros_millicents == -2 * 1000 * 100
->>>>>>>> 90c33bc4a (Refactor computation for readability):app/tests/invoices_tests/test_with_compute_costs_balance.py
+
+
+@pytest.mark.django_db
+def test_multiple_challenges_do_not_mix_prepaid():
+    challenge_with_prepaid = ChallengeFactory()
+    InvoiceFactory(
+        challenge=challenge_with_prepaid,
+        compute_costs_euros=2,
+        compute_costs_utilized_euros_millicents=0,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    challenge_without_prepaid = ChallengeFactory()
+    postpaid_invoice = InvoiceFactory(
+        challenge=challenge_without_prepaid,
+        compute_costs_euros=1,
+        compute_costs_utilized_euros_millicents=0,
+        payment_type=PaymentTypeChoices.POSTPAID,
+        payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+        follow_up_on=now() - timedelta(days=3),
+    )
+    postpaid_invoice = next(
+        i
+        for i in challenge_without_prepaid.get_invoices_with_costs_balance()
+        if i.pk == postpaid_invoice.pk
+    )
+    assert postpaid_invoice.compute_costs_balance_euros_millicents == 0
+
+    # Add prepaid
+    InvoiceFactory(
+        challenge=challenge_without_prepaid,
+        compute_costs_euros=2,
+        compute_costs_utilized_euros_millicents=0,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+
+    postpaid_invoice = next(
+        i
+        for i in challenge_without_prepaid.get_invoices_with_costs_balance()
+        if i.pk == postpaid_invoice.pk
+    )
+    assert (
+        postpaid_invoice.compute_costs_balance_euros_millicents
+        == 1 * 1000 * 100
+    )
