@@ -26,7 +26,7 @@ def test_prepaid_no_utilization_positive_balance():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
-    invoice = challenge.invoices.with_compute_balance().get()
+    (invoice,) = challenge.get_invoices_with_compute_balance()
     assert invoice.compute_costs_balance_euros_millicents == 2 * 1000 * 100
 
 
@@ -41,7 +41,7 @@ def test_prepaid_utilization_positive_balance():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
-    invoice = challenge.invoices.with_compute_balance().get()
+    (invoice,) = challenge.get_invoices_with_compute_balance()
     assert invoice.compute_costs_balance_euros_millicents == 1 * 1000 * 100
 
 
@@ -73,7 +73,7 @@ def test_prepaid_no_utilization_zero_balance(payment_status, expires_on):
         expires_on=expires_on,
     )
 
-    invoice = challenge.invoices.with_compute_balance().get()
+    (invoice,) = challenge.get_invoices_with_compute_balance()
     assert invoice.compute_costs_balance_euros_millicents == 0
 
 
@@ -97,7 +97,7 @@ def test_prepaid_overutilization_negative_balance(payment_status):
         payment_status=payment_status,
     )
 
-    invoice = challenge.invoices.with_compute_balance().get()
+    (invoice,) = challenge.get_invoices_with_compute_balance()
     assert invoice.compute_costs_balance_euros_millicents == -3 * 1000 * 100
 
 
@@ -113,7 +113,7 @@ def test_prepaid_utilization_expired_zero_balance():
         expires_on=now() - timedelta(days=2),
     )
 
-    invoice = challenge.invoices.with_compute_balance().get()
+    (invoice,) = challenge.get_invoices_with_compute_balance()
     assert invoice.compute_costs_balance_euros_millicents == 0
 
 
@@ -129,7 +129,7 @@ def test_prepaid_overutilization_expired_negative_balance():
         expires_on=now() - timedelta(days=2),  # Expired
     )
 
-    invoice = challenge.invoices.with_compute_balance().get()
+    (invoice,) = challenge.get_invoices_with_compute_balance()
     assert invoice.compute_costs_balance_euros_millicents == -2 * 1000 * 100
 
 
@@ -170,8 +170,10 @@ def test_postpaid_no_utilization(
         payment_status=postpaid_payment_status,
     )
 
-    invoice = challenge.invoices.with_compute_balance().get(
-        pk=postpaid_invoice.pk
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_compute_balance()
+        if i.pk == postpaid_invoice.pk
     )
     assert invoice.compute_costs_balance_euros_millicents == 2 * 1000 * 100
 
@@ -270,8 +272,10 @@ def test_postpaid_postpaid_status_interaction_zero_balance(
         payment_status=postpaid_payment_status,
     )
 
-    invoice = challenge.invoices.with_compute_balance().get(
-        pk=postpaid_invoice.pk
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_compute_balance()
+        if i.pk == postpaid_invoice.pk
     )
     assert invoice.compute_costs_balance_euros_millicents == 0
 
@@ -295,8 +299,10 @@ def test_postpaid_with_expired_paid_prepaid():
         payment_status=PaymentStatusChoices.INITIALIZED,
     )
 
-    invoice = challenge.invoices.with_compute_balance().get(
-        pk=postpaid_invoice.pk
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_compute_balance()
+        if i.pk == postpaid_invoice.pk
     )
     assert invoice.compute_costs_balance_euros_millicents == 2 * 1000 * 100
 
@@ -319,8 +325,10 @@ def test_postpaid_utilized():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
-    invoice = challenge.invoices.with_compute_balance().get(
-        pk=postpaid_invoice.pk
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_compute_balance()
+        if i.pk == postpaid_invoice.pk
     )
     assert invoice.compute_costs_balance_euros_millicents == 3 * 1000 * 100
 
@@ -345,8 +353,10 @@ def test_postpaid_utilized_but_expired():
         follow_up_on=now() - timedelta(days=3),
     )
 
-    invoice = challenge.invoices.with_compute_balance().get(
-        pk=postpaid_invoice.pk
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_compute_balance()
+        if i.pk == postpaid_invoice.pk
     )
     assert invoice.compute_costs_balance_euros_millicents == 0
 
@@ -369,8 +379,10 @@ def test_postpaid_overutilized():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
-    invoice = challenge.invoices.with_compute_balance().get(
-        pk=postpaid_invoice.pk
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_compute_balance()
+        if i.pk == postpaid_invoice.pk
     )
     assert invoice.compute_costs_balance_euros_millicents == -2 * 1000 * 100
 
@@ -394,8 +406,10 @@ def test_postpaid_overutilized_but_expired():
         expires_on=now() - timedelta(days=2),
         follow_up_on=now() - timedelta(days=3),
     )
-    invoice = challenge.invoices.with_compute_balance().get(
-        pk=postpaid_invoice.pk
+    invoice = next(
+        i
+        for i in challenge.get_invoices_with_compute_balance()
+        if i.pk == postpaid_invoice.pk
     )
     assert invoice.compute_costs_balance_euros_millicents == -2 * 1000 * 100
 
@@ -425,7 +439,7 @@ def test_complimentary_no_utilization_positive_balance(payment_status):
         payment_status=payment_status,
     )
 
-    invoice = challenge.invoices.with_compute_balance().get()
+    (invoice,) = challenge.get_invoices_with_compute_balance()
     assert invoice.compute_costs_balance_euros_millicents == 1 * 1000 * 100
 
 
@@ -440,7 +454,7 @@ def test_complimentary_cancelled():
         payment_status=PaymentStatusChoices.CANCELLED,
     )
 
-    invoice = challenge.invoices.with_compute_balance().get()
+    (invoice,) = challenge.get_invoices_with_compute_balance()
     assert invoice.compute_costs_balance_euros_millicents == 0
 
 
@@ -464,7 +478,7 @@ def test_complimentary_utilized(payment_status):
         payment_status=payment_status,
     )
 
-    invoice = challenge.invoices.with_compute_balance().get()
+    (invoice,) = challenge.get_invoices_with_compute_balance()
     assert invoice.compute_costs_balance_euros_millicents == 3 * 1000 * 100
 
 
@@ -489,7 +503,7 @@ def test_complimentary_utilized_but_expired(payment_status):
         expires_on=now() - timedelta(days=2),
     )
 
-    invoice = challenge.invoices.with_compute_balance().get()
+    (invoice,) = challenge.get_invoices_with_compute_balance()
     assert invoice.compute_costs_balance_euros_millicents == 0
 
 
@@ -505,5 +519,5 @@ def test_complimentary_overutilized_but_expired():
         expires_on=now() - timedelta(days=2),
     )
 
-    invoice = challenge.invoices.with_compute_balance().get()
+    (invoice,) = challenge.get_invoices_with_compute_balance()
     assert invoice.compute_costs_balance_euros_millicents == -2 * 1000 * 100
