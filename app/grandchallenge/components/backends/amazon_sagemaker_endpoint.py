@@ -193,6 +193,10 @@ class EndpointOrchestrator:
                 "OutputConfig": {
                     "S3FailurePath": self._failure_s3_uri,
                     "S3OutputPath": self._output_s3_uri,
+                    "NotificationConfig": {
+                        "SuccessTopic": settings.ALGORITHM_ENDPOINTS_SNS_TOPIC_ARN,
+                        "ErrorTopic": settings.ALGORITHM_ENDPOINTS_SNS_TOPIC_ARN,
+                    },
                 },
             },
             ProductionVariants=[
