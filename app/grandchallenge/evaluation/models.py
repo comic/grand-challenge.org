@@ -1651,7 +1651,7 @@ class Submission(FieldChangeMixin, UUIDModel):
                     send_action=False,
                 )
 
-    def create_evaluation(self, *, additional_inputs):
+    def create_evaluation(self, *, additional_inputs, invoice):
         if (
             self.phase.additional_evaluation_inputs.exists()
             and not additional_inputs
@@ -1711,6 +1711,7 @@ class Submission(FieldChangeMixin, UUIDModel):
                 requires_gpu_type=self.phase.evaluation_requires_gpu_type,
                 requires_memory_gb=self.phase.evaluation_requires_memory_gb,
                 status=Evaluation.VALIDATING_INPUTS,
+                utilization_invoice=invoice,
             )
 
         if self.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
@@ -1875,6 +1876,14 @@ class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
 
 
 class EvaluationManager(ComponentJobManager):
+    def create(self, *args, utilization_invoice=None, **kwargs):
+        evaluation = super().create(*args, **kwargs)
+        if utilization_invoice is not None:
+            utilization = evaluation.evaluation_utilization
+            utilization.invoice = utilization_invoice
+            utilization.save()
+        return evaluation
+
     def get_evaluations_with_same_inputs(
         self,
         *,
