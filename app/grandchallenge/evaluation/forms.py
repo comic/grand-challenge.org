@@ -471,6 +471,15 @@ class SubmissionForm(
                 "You must confirm that you want to submit to this phase."
             )
 
+        try:
+            invoice = self._phase.challenge.get_invoice_for_utilization()
+        except InsufficientBudgetError:
+            raise ValidationError(
+                "Challenge has insufficient budget. Please contact the challenge organizers."
+            )
+        else:
+            cleaned_data["invoice"] = invoice
+
         return cleaned_data
 
     def clean_phase(self):
@@ -656,6 +665,7 @@ class SubmissionForm(
 
         instance.create_evaluation(
             additional_inputs=self.cleaned_data["additional_inputs"],
+            invoice=self.cleaned_data["invoice"],
         )
 
         return instance
@@ -745,9 +755,9 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
             invoice = cleaned_data[
                 "submission"
             ].phase.challenge.get_invoice_for_utilization()
-        except InsufficientBudgetError as e:
+        except InsufficientBudgetError:
             raise ValidationError(
-                f"{e.reason} Please contact the challenge organizers."
+                "Challenge has insufficient budget. Please contact the challenge organizers."
             )
         else:
             cleaned_data["invoice"] = invoice

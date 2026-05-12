@@ -824,10 +824,7 @@ def test_get_invoice_for_utilization():
 @pytest.mark.django_db
 def test_get_invoice_for_utilization_no_invoice():
     challenge = ChallengeFactory()
-    with pytest.raises(
-        InsufficientBudgetError,
-        match="This challenge has no available budget.",
-    ):
+    with pytest.raises(InsufficientBudgetError):
         challenge.get_invoice_for_utilization()
 
 
@@ -841,10 +838,7 @@ def test_get_invoice_for_utilization_ignores_negative_balance():
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
-    with pytest.raises(
-        InsufficientBudgetError,
-        match="This challenge has no available budget.",
-    ):
+    with pytest.raises(InsufficientBudgetError):
         challenge.get_invoice_for_utilization()
 
 
@@ -858,10 +852,7 @@ def test_get_invoice_for_utilization_ignores_zero_balance():
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
-    with pytest.raises(
-        InsufficientBudgetError,
-        match="This challenge has no available budget.",
-    ):
+    with pytest.raises(InsufficientBudgetError):
         challenge.get_invoice_for_utilization()
 
 
