@@ -894,14 +894,13 @@ def test_get_invoice_for_utilization_order_by_expiry():
 
 
 @pytest.mark.django_db
-def test_challenge_with_compute_balance_no_invoice():
+def test_challenge_compute_costs_balance_euros_millicents_no_invoice():
     challenge = ChallengeFactory()
-    challenge = Challenge.objects.with_compute_balance().get(pk=challenge.pk)
     assert challenge.compute_costs_balance_euros_millicents == 0
 
 
 @pytest.mark.django_db
-def test_challenge_with_compute_balance():
+def test_challenge_compute_costs_balance_euros_millicents():
     challenge = ChallengeFactory()
     InvoiceFactory(
         challenge=challenge,
@@ -912,10 +911,9 @@ def test_challenge_with_compute_balance():
     )
     InvoiceFactory(
         challenge=challenge,
-        compute_costs_euros=1,
+        compute_costs_euros=2,
         compute_costs_utilized_euros_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
-    challenge = Challenge.objects.with_compute_balance().get(pk=challenge.pk)
-    assert challenge.compute_costs_balance_euros_millicents == 2 * 1000 * 100
+    assert challenge.compute_costs_balance_euros_millicents == 3 * 1000 * 100
