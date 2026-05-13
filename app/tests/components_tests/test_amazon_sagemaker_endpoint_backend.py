@@ -249,6 +249,7 @@ def test_endpoint_delete_sagemaker_model(settings):
 
 def test_endpoint_create_endpoint_config(settings):
     settings.COMPONENTS_AMAZON_ECR_REGION = "us-east-1"
+    settings.ALGORITHM_ENDPOINTS_SNS_TOPIC_ARN = "some_sns_arn"
     endpoint = EndpointFactory.build()
     orchestrator = endpoint.orchestrator
 
@@ -265,6 +266,10 @@ def test_endpoint_create_endpoint_config(settings):
                     "OutputConfig": {
                         "S3FailurePath": orchestrator._failure_s3_uri,
                         "S3OutputPath": orchestrator._output_s3_uri,
+                        "NotificationConfig": {
+                            "SuccessTopic": settings.ALGORITHM_ENDPOINTS_SNS_TOPIC_ARN,
+                            "ErrorTopic": settings.ALGORITHM_ENDPOINTS_SNS_TOPIC_ARN,
+                        },
                     },
                 },
                 "ProductionVariants": [
