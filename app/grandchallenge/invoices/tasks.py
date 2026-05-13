@@ -42,7 +42,7 @@ def send_post_paid_invoice_follow_up_emails():
     invoices = Invoice.objects.filter(
         payment_type=Invoice.PaymentTypeChoices.POSTPAID,
         payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
-        follow_up_on__lte=now().date() + relativedelta(weeks=4),
+        follow_up_on__lte=now().date() + relativedelta(months=1, days=1),
     )
     for invoice in invoices:
         send_postpaid_invoice_follow_up_date_approaching_email(invoice)
