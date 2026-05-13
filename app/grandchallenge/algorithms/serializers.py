@@ -20,6 +20,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmInterface,
     AlgorithmModel,
     Endpoint,
+    Invocation,
     Job,
     annotate_input_output_counts,
 )
@@ -326,3 +327,36 @@ class JobPostSerializer(JobSerializer):
                 f"following input combinations: "
                 f"{oxford_comma([f'Interface {n}: {oxford_comma(interface.inputs.all())}' for n, interface in enumerate(self._algorithm.interfaces.all(), start=1)])}"
             )
+
+
+class HyperlinkedInvocationSerializer(serializers.ModelSerializer):
+    """Serializer with hyperlinks for use in public API"""
+
+    endpoint = HyperlinkedRelatedField(
+        queryset=Endpoint.objects.none(),
+        view_name="api:endpoint-detail",
+        required=True,
+    )
+    inputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
+    outputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
+    status = CharField(source="get_status_display", read_only=True)
+
+    class Meta:
+        model = Invocation
+        fields = ["pk", "endpoint", "inputs", "outputs", "status"]
+
+
+class InvocationPostSerializer(serializers.ModelSerializer):
+
+    endpoint = HyperlinkedRelatedField(
+        queryset=Endpoint.objects.none(),
+        view_name="api:endpoint-detail",
+        required=True,
+    )
+    inputs = ComponentInterfaceValueSerializer(many=True)
+    outputs = ComponentInterfaceValueSerializer(many=True)
+    status = CharField(source="get_status_display", read_only=True)
+
+    class Meta:
+        model = Invocation
+        fields = ["pk", "endpoint", "inputs", "outputs", "status"]
