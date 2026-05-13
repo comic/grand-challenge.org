@@ -505,30 +505,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         help_text="The number of bytes stored in the registry",
     )
 
-    def get_invoice_for_utilization(self):
-        # Circular imports
-
-        invoices = self.invoices.with_compute_balance().order_by(
-            "expires_on", "created"
-        )
-
-        # sum in Python to prevent multiple trips on the database
-        challenge_compute_costs_balance = sum(
-            invoice.compute_costs_balance_euros_millicents
-            for invoice in invoices
-        )
-        if challenge_compute_costs_balance <= 0:
-            raise InsufficientBudgetError
-
-        for invoice in invoices:
-            if invoice.compute_costs_balance_euros_millicents > 0:
-                return invoice
-
-        # Defensive catch for if the total balance somehow does not add up
-        raise ValueError(
-            "Unexpected: this challenge has no available budget in any invoice despite a positive total balance."
-        )
-
     objects = ChallengeQuerySet.as_manager()
 
     class Meta:
@@ -973,56 +949,27 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             url=self.get_absolute_url(),
         )
 
-    def get_invoices_with_costs_balance(self):
-        invoices = self.invoices.with_expired_status()
-        has_paid_prepaid_invoice = any(
-            invoice.compute_costs_euros > 0
-            and invoice.payment_type == PaymentTypeChoices.PREPAID
-            and invoice.payment_status == PaymentStatusChoices.PAID
-            for invoice in invoices
-        )
-        for invoice in invoices:
-            invoice.compute_costs_balance_euros_millicents = (
-                self._get_invoice_compute_costs_balance(
-                    invoice=invoice,
-                    has_paid_prepaid_invoice=has_paid_prepaid_invoice,
-                )
-            )
-            yield invoice
-
-    @staticmethod
-    def _get_invoice_compute_costs_balance(
-        *, invoice, has_paid_prepaid_invoice
-    ):
-        utilized = invoice.compute_costs_utilized_euros_millicents
-        diff = invoice.compute_costs_euros * 1000 * 100 - utilized
-
-        if invoice.payment_status == PaymentStatusChoices.CANCELLED:
-            return -utilized
-
-        is_eligible = (
-            invoice.payment_type == PaymentTypeChoices.COMPLIMENTARY
-            or (
-                invoice.payment_type == PaymentTypeChoices.PREPAID
-                and invoice.payment_status == PaymentStatusChoices.PAID
-            )
-            or (
-                invoice.payment_type == PaymentTypeChoices.POSTPAID
-                and (
-                    has_paid_prepaid_invoice
-                    or invoice.payment_status == PaymentStatusChoices.PAID
-                )
-            )
+    @cached_property
+    def compute_costs_balance_euros_millicents(self):
+        return sum(
+            invoice.compute_costs_balance_euros_millicents
+            for invoice in self.invoices
         )
 
-        if not is_eligible:
-            return -utilized
-        elif invoice.is_expired:
-            # If the invoice is expired we cap the balance at 0 or below.
-            # Meaning the challenge cannot use more compute from this invoice.
-            return min(diff, 0)
-        else:
-            return diff
+    def get_invoice_for_utilization(self):
+        if self.compute_costs_balance_euros_millicents <= 0:
+            raise InsufficientBudgetError
+
+        for invoice in sorted(
+            self.invoices, key=lambda i: (i.expires_on, i.created)
+        ):
+            if invoice.compute_costs_balance_euros_millicents > 0:
+                return invoice
+
+        # Defensive catch for if the total balance somehow does not add up
+        raise ValueError(
+            "Unexpected: this challenge has no available budget in any invoice despite a positive total balance."
+        )
 
     @cached_property
     def has_paid_prepaid_invoice(self):
