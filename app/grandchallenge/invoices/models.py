@@ -107,7 +107,7 @@ class InvoiceQuerySet(models.QuerySet):
             | Q(
                 payment_type=Invoice.PaymentTypeChoices.POSTPAID,
                 payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
-                follow_up_on__lt=now().date(),
+                follow_up_on__lte=now().date(),
             )
         )
 
