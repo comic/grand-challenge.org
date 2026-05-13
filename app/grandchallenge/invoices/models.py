@@ -307,30 +307,32 @@ class Invoice(models.Model, FieldChangeMixin):
     def is_expired(self):
         return self.expires_on < now().date()
 
+    @property
+    def budget_is_utilizable(self):
+        if self.payment_status == PaymentStatusChoices.CANCELLED:
+            return False
+        else:
+            return (
+                self.payment_type == PaymentTypeChoices.COMPLIMENTARY
+                or (
+                    self.payment_type == PaymentTypeChoices.PREPAID
+                    and self.payment_status == PaymentStatusChoices.PAID
+                )
+                or (
+                    self.payment_type == PaymentTypeChoices.POSTPAID
+                    and (
+                        self.challenge.has_paid_prepaid_invoice
+                        or self.payment_status == PaymentStatusChoices.PAID
+                    )
+                )
+            )
+
     @cached_property
     def compute_costs_balance_euros_millicents(self):
         utilized = self.compute_costs_utilized_euros_millicents
         diff = self.compute_costs_euros * 1000 * 100 - utilized
 
-        if self.payment_status == PaymentStatusChoices.CANCELLED:
-            return -utilized
-
-        is_eligible = (
-            self.payment_type == PaymentTypeChoices.COMPLIMENTARY
-            or (
-                self.payment_type == PaymentTypeChoices.PREPAID
-                and self.payment_status == PaymentStatusChoices.PAID
-            )
-            or (
-                self.payment_type == PaymentTypeChoices.POSTPAID
-                and (
-                    self.challenge.has_paid_prepaid_invoice
-                    or self.payment_status == PaymentStatusChoices.PAID
-                )
-            )
-        )
-
-        if not is_eligible:
+        if not self.budget_is_utilizable:
             return -utilized
         elif self.is_expired:
             # If the invoice is expired we cap the balance at 0 or below.
