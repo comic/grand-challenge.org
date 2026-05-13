@@ -1242,6 +1242,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.send_onboarding_task_reminder_emails",
         "schedule": crontab(day_of_week="mon", hour=6, minute=0),
     },
+    "send_open_invoices_email": {
+        "task": "grandchallenge.invoices.tasks.send_open_invoices_email",
+        "schedule": crontab(day_of_week="wed", hour=6, minute=0),
+    },
     "send_challenge_invoice_overdue_reminder_emails": {
         "task": "grandchallenge.invoices.tasks.send_challenge_invoice_overdue_reminder_emails",
         "schedule": crontab(day_of_month=1, hour=6, minute=0),
@@ -1305,10 +1309,6 @@ CELERY_BEAT_SCHEDULE = {
     "cancel_external_evaluations_past_timeout": {
         "task": "grandchallenge.evaluation.tasks.cancel_external_evaluations_past_timeout",
         "schedule": timedelta(hours=1),
-    },
-    "push_metrics_to_cloudwatch": {
-        "task": "grandchallenge.core.tasks.put_cloudwatch_metrics",
-        "schedule": timedelta(seconds=30),
     },
     "stop_expired_services": {
         "task": "grandchallenge.components.tasks.stop_expired_services",

@@ -1,6 +1,8 @@
 from datetime import timedelta
 
-from billiard.exceptions import SoftTimeLimitExceeded
+from billiard.exceptions import (
+    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
+)
 from django.db import transaction
 from django.db.models import (
     Avg,
@@ -13,6 +15,7 @@ from django.db.models import (
 )
 from django.utils import timezone
 from django_celery_results.models import TaskResult
+from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
 from grandchallenge.background_tasks.models import CeleryTaskDailyStats
 from grandchallenge.core.celery import acks_late_micro_short_task
@@ -21,7 +24,10 @@ from grandchallenge.core.celery import acks_late_micro_short_task
 @acks_late_micro_short_task(
     singleton=True,
     # No need to retry here as the periodic task call this again
-    ignore_errors=(SoftTimeLimitExceeded,),
+    ignore_errors=(
+        CelerySoftTimeLimitExceeded,
+        SoftTimeLimitExceeded,
+    ),
 )
 @transaction.atomic
 def aggregate_celery_daily_stats():

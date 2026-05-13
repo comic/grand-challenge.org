@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 from actstream.actions import is_following
-from billiard.exceptions import SoftTimeLimitExceeded
+from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
 from grandchallenge.cases.models import Image, RawImageUploadSession
 from grandchallenge.cases.tasks import check_compressed_and_extract

@@ -33,6 +33,19 @@ class OverdueListFilter(admin.SimpleListFilter):
         return queryset
 
 
+class ToCheckFilter(admin.SimpleListFilter):
+    title = "to check"
+    parameter_name = "to_check"
+
+    def lookups(self, request, model_admin):
+        return [("1", "Yes")]
+
+    def queryset(self, request, queryset):
+        if self.value() == "1":
+            return queryset.to_check()
+        return queryset
+
+
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
     list_display = (
@@ -52,6 +65,7 @@ class InvoiceAdmin(admin.ModelAdmin):
     )
     list_filter = (
         OverdueListFilter,
+        ToCheckFilter,
         "payment_status",
         "payment_type",
         "challenge__short_name",

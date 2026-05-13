@@ -35,6 +35,7 @@ class EndpointOrchestrator:
             algorithm_model=None,
             input_bucket_name=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
             output_bucket_name=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
+            use_task_list=False,
         )
         self._endpoint_name = endpoint_name
         self._exec_image_repo_tag = exec_image_repo_tag

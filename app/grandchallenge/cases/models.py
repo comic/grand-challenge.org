@@ -8,7 +8,9 @@ from urllib.parse import urlparse
 
 import boto3
 from actstream.actions import follow
-from billiard.exceptions import SoftTimeLimitExceeded
+from billiard.exceptions import (
+    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
+)
 from botocore.awsrequest import AWSRequest
 from botocore.exceptions import ClientError
 from celery import signature
@@ -26,6 +28,7 @@ from django.utils.text import get_valid_filename
 from django.utils.translation import gettext_lazy as _
 from grand_challenge_dicom_de_identifier.deidentifier import DicomDeidentifier
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
+from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from panimg_models import ColorSpace, ImageType
 from pydantic import ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
@@ -657,7 +660,10 @@ class Image(UUIDModel):
             try:
                 for job in job_queryset:
                     expected_groups.update(job.viewer_groups.all())
-            except SoftTimeLimitExceeded as error:
+            except (
+                CelerySoftTimeLimitExceeded,
+                SoftTimeLimitExceeded,
+            ) as error:
                 logger.error(error, exc_info=True)
                 raise
 

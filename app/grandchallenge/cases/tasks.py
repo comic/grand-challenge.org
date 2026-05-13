@@ -9,7 +9,9 @@ from tempfile import TemporaryDirectory
 
 import boto3
 import botocore.exceptions
-from billiard.exceptions import SoftTimeLimitExceeded, TimeLimitExceeded
+from billiard.exceptions import (
+    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
+)
 from botocore.exceptions import ClientError
 from celery import signature
 from celery.utils.log import get_task_logger
@@ -23,6 +25,8 @@ from django.utils._os import safe_join
 from grand_challenge_dicom_de_identifier.exceptions import (
     RejectedDICOMFileError,
 )
+from lambda_tasks.decorators import lambda_task
+from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from panimg_models import ImageBuilderOptions, PanImgResult
 
 from grandchallenge.cases.models import (
@@ -209,7 +213,10 @@ def build_images(  # noqa:C901
             ),
         )
         return
-    except (SoftTimeLimitExceeded, TimeLimitExceeded):
+    except (
+        CelerySoftTimeLimitExceeded,
+        SoftTimeLimitExceeded,
+    ):
         _handle_error(error_message=SystemErrorMessages.TIME_LIMIT_EXCEEDED)
         return
     except Exception as error:
@@ -576,9 +583,18 @@ def handle_dicom_import_error(
     )
 
 
-@acks_late_micro_short_task(retry_on=(LockNotAcquiredException, RetryStep))
+@acks_late_micro_short_task(
+    name=f"{__name__}.handle_health_imaging_import_job_event",
+    retry_on=(LockNotAcquiredException, RetryStep),
+)
 @transaction.atomic
-def handle_health_imaging_import_job_event(*, event):
+def handle_health_imaging_import_job_event_celery(*, event):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return handle_health_imaging_import_job_event(event=event)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException, RetryStep))
+def handle_health_imaging_import_job_event(*, event: dict):
     job_name = event["jobName"]
     prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
     pattern = rf"^{prefix_regex}\-(?P<pk>{UUID4_REGEX})$"
