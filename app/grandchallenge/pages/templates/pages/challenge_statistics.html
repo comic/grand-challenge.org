@@ -78,7 +78,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for invoice in challenge.invoices.with_expired_status.with_overdue_status %}
+                    {% for invoice in challenge.invoices.with_overdue_status %}
                         <tr>
                             <td>{{ invoice.internal_invoice_number }}</td>
                             <td data-order="{{ invoice.issued_on|date:"c" }}">{{ invoice.issued_on }}</td>

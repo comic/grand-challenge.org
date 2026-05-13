@@ -1,4 +1,5 @@
 from datetime import timedelta
+from functools import cached_property
 
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
@@ -70,18 +71,6 @@ class InvoiceQuerySet(models.QuerySet):
                     payment_status=Invoice.PaymentStatusChoices.ISSUED,
                     due_date__gte=today,
                     issued_on__lte=today,
-                ),
-                output_field=models.BooleanField(),
-            ),
-        )
-
-    def with_expired_status(self):
-        today = now().date()
-
-        return self.annotate(
-            is_expired=ExpressionWrapper(
-                Q(
-                    expires_on__lt=today,
                 ),
                 output_field=models.BooleanField(),
             ),
@@ -160,6 +149,10 @@ class Invoice(models.Model, FieldChangeMixin):
     )
     compute_costs_euros = models.PositiveIntegerField(
         help_text="The capacity reservation in Euros"
+    )
+    compute_costs_utilized_euros_millicents = models.PositiveIntegerField(
+        help_text="The utilized compute costs in Euro millicents (cached from utilizations)",
+        default=0,
     )
     storage_costs_euros = models.PositiveIntegerField(
         help_text="The storage costs in Euros"
@@ -324,6 +317,44 @@ class Invoice(models.Model, FieldChangeMixin):
         state = super()._current_state
         state["total_amount_euros"] = self.total_amount_euros
         return state
+
+    @cached_property
+    def is_expired(self):
+        return self.expires_on < now().date()
+
+    @property
+    def is_budget_authorized(self):
+        if self.payment_status == PaymentStatusChoices.CANCELLED:
+            return False
+        else:
+            return (
+                self.payment_type == PaymentTypeChoices.COMPLIMENTARY
+                or (
+                    self.payment_type == PaymentTypeChoices.PREPAID
+                    and self.payment_status == PaymentStatusChoices.PAID
+                )
+                or (
+                    self.payment_type == PaymentTypeChoices.POSTPAID
+                    and (
+                        self.challenge.has_paid_prepaid_invoice
+                        or self.payment_status == PaymentStatusChoices.PAID
+                    )
+                )
+            )
+
+    @cached_property
+    def compute_costs_balance_euros_millicents(self):
+        utilized = self.compute_costs_utilized_euros_millicents
+        diff = self.compute_costs_euros * 1000 * 100 - utilized
+
+        if not self.is_budget_authorized:
+            return -utilized
+        elif self.is_expired:
+            # If the invoice is expired we cap the balance at 0 or below.
+            # Meaning the challenge cannot use more compute from this invoice.
+            return min(diff, 0)
+        else:
+            return diff
 
     def clean(self):
         if (
