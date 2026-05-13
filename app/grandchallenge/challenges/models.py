@@ -950,34 +950,42 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         )
 
     @cached_property
-    def compute_costs_balance_euros_millicents(self):
-        return sum(
-            invoice.compute_costs_balance_euros_millicents
-            for invoice in self.invoices
-        )
-
-    def get_invoice_for_utilization(self):
-        if self.compute_costs_balance_euros_millicents <= 0:
-            raise InsufficientBudgetError
-
-        for invoice in sorted(
-            self.invoices, key=lambda i: (i.expires_on, i.created)
-        ):
-            if invoice.compute_costs_balance_euros_millicents > 0:
-                return invoice
-
-        # Defensive catch for if the total balance somehow does not add up
-        raise ValueError(
-            "Unexpected: this challenge has no available budget in any invoice despite a positive total balance."
-        )
-
-    @cached_property
     def has_paid_prepaid_invoice(self):
         return self.invoices.filter(
             compute_costs_euros__gt=0,
             payment_type=PaymentTypeChoices.PREPAID,
             payment_status=PaymentStatusChoices.PAID,
         ).exists()
+
+    @cached_property
+    def compute_costs_balance_euros_millicents(self):
+        return self._get_compute_costs_balance_euros_millicents(
+            invoices=self.invoices.all()
+        )
+
+    def _get_compute_costs_balance_euros_millicents(self, *, invoices):
+        return sum(
+            invoice.compute_costs_balance_euros_millicents
+            for invoice in invoices
+        )
+
+    def get_invoice_for_utilization(self):
+        invoices = self.invoices.order_by("expires_on", "created")
+
+        if (
+            self._get_compute_costs_balance_euros_millicents(invoices=invoices)
+            <= 0
+        ):
+            raise InsufficientBudgetError
+
+        for invoice in invoices:
+            if invoice.compute_costs_balance_euros_millicents > 0:
+                return invoice
+
+        # Defensive catch
+        raise ValueError(
+            "Unexpected: this challenge has no available budget in any invoice despite a positive total balance."
+        )
 
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):
