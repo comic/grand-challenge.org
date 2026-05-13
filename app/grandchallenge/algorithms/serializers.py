@@ -353,10 +353,22 @@ class InvocationPostSerializer(serializers.ModelSerializer):
         view_name="api:endpoint-detail",
         required=True,
     )
-    inputs = ComponentInterfaceValueSerializer(many=True)
-    outputs = ComponentInterfaceValueSerializer(many=True)
-    status = CharField(source="get_status_display", read_only=True)
 
     class Meta:
         model = Invocation
-        fields = ["pk", "endpoint", "inputs", "outputs", "status"]
+        fields = ["pk", "endpoint", "inputs", "status"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["inputs"] = ComponentInterfaceValuePostSerializer(
+            many=True, context=self.context
+        )
+
+        if "request" in self.context:
+            user = self.context["request"].user
+
+            self.fields["endpoint"].queryset = filter_by_permission(
+                queryset=Endpoint.objects.all(),
+                user=user,
+                codename="invoke_endpoint",
+            )
