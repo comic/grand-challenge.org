@@ -308,7 +308,7 @@ class Invoice(models.Model, FieldChangeMixin):
         return self.expires_on < now().date()
 
     @property
-    def budget_is_utilizable(self):
+    def is_budget_active(self):
         if self.payment_status == PaymentStatusChoices.CANCELLED:
             return False
         else:
@@ -332,7 +332,7 @@ class Invoice(models.Model, FieldChangeMixin):
         utilized = self.compute_costs_utilized_euros_millicents
         diff = self.compute_costs_euros * 1000 * 100 - utilized
 
-        if not self.budget_is_utilizable:
+        if not self.is_budget_active:
             return -utilized
         elif self.is_expired:
             # If the invoice is expired we cap the balance at 0 or below.
