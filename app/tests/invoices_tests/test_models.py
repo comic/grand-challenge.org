@@ -514,3 +514,21 @@ def test_follow_up_on_not_more_than_year_in_future():
         "Follow-up date cannot be more than a year into the future."
         == e.value.messages[0]
     )
+
+
+@pytest.mark.django_db
+def test_follow_up_on_required_for_initialized_postpaid():
+    invoice = InvoiceFactory()
+    invoice.payment_type = PaymentTypeChoices.POSTPAID
+    invoice.payment_status = PaymentStatusChoices.INITIALIZED
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert (
+        "Follow-up date is required for initialized post-paid invoices."
+        == e.value.messages[0]
+    )
+
+    # post-paid invoices in other states are fine without a follow-up date
+    invoice2 = InvoiceFactory(payment_type=PaymentTypeChoices.POSTPAID)
+    invoice2.full_clean()
