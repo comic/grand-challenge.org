@@ -305,7 +305,7 @@ class EndpointOrchestrator:
         # Requires investigation
         logger.info(event)
         logger.error("Endpoint invocation expired")
-        raise ComponentException(SystemErrorMessages.TIME_LIMIT_EXCEEDED)
+        raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
 
     def _handle_failed_invocation(self, *, event):
         # Requires investigation
