@@ -270,7 +270,7 @@ class EndpointOrchestrator:
     @staticmethod
     def get_invocation_params(*, inference_id):
         prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
-        pattern = rf"^{prefix_regex}\-alg-endp-inv\-(?P<pk>{UUID4_REGEX})$"
+        pattern = rf"^{prefix_regex}\-AEI\-(?P<pk>{UUID4_REGEX})$"
 
         result = re.match(pattern, inference_id)
 
