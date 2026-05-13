@@ -1870,12 +1870,19 @@ class Invocation(UUIDModel):
         *,
         status: InvocationStatusChoices,
         error_message="",
+        detailed_error_message=None,
         invoke_duration=None,
     ):
         self.status = status
 
         if error_message:
             self.error_message = error_message[:1024]
+
+        if detailed_error_message:
+            self.detailed_error_message = {
+                str(key): value
+                for key, value in detailed_error_message.items()
+            }
 
         if invoke_duration is not None:
             self.invoke_duration = invoke_duration
