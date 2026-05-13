@@ -394,6 +394,7 @@ def test_challenge_invoice_issued_notification_emails_on_create(
     assert expected_body in contact_person_mail.body
 
 
+@pytest.mark.django_db
 def test_send_open_invoices_email(settings):
     staff_user = UserFactory(is_staff=True)
     settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
