@@ -1876,14 +1876,6 @@ class EvaluationGroundTruthGroupObjectPermission(GroupObjectPermissionBase):
 
 
 class EvaluationManager(ComponentJobManager):
-    def create(self, *args, utilization_invoice=None, **kwargs):
-        evaluation = super().create(*args, **kwargs)
-        if utilization_invoice is not None:
-            utilization = evaluation.evaluation_utilization
-            utilization.invoice = utilization_invoice
-            utilization.save()
-        return evaluation
-
     def get_evaluations_with_same_inputs(
         self,
         *,
@@ -2468,8 +2460,8 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
             },
         )
 
-    def create_utilization(self):
-        EvaluationUtilization.objects.create(evaluation=self)
+    def create_utilization(self, *, invoice):
+        EvaluationUtilization.objects.create(evaluation=self, invoice=invoice)
 
     @property
     def utilization(self):

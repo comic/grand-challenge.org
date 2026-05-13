@@ -1661,6 +1661,11 @@ class ComponentJobManager(models.QuerySet):
 
         return existing_civs
 
+    def create(self, *args, utilization_invoice=None, **kwargs):
+        component_job = super().create(*args, **kwargs)
+        component_job.create_utilization(invoice=utilization_invoice)
+        return component_job
+
 
 class ComponentJob(FieldChangeMixin, UUIDModel):
     # The job statuses come directly from celery.result.AsyncResult.status:
@@ -1817,9 +1822,6 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
                     raise ValueError(f"{field} cannot be changed")
 
         super().save()
-
-        if adding:
-            self.create_utilization()
 
     def update_status(  # noqa:C901
         self,
@@ -2032,7 +2034,7 @@ class ComponentJob(FieldChangeMixin, UUIDModel):
             ],
         )
 
-    def create_utilization(self):
+    def create_utilization(self, *, invoice):
         raise NotImplementedError
 
     @property
