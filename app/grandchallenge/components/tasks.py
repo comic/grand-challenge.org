@@ -29,6 +29,7 @@ from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.logging import task_logger
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
 from grandchallenge.cases.models import (
@@ -1854,7 +1855,7 @@ def handle_endpoint_invocation_event(*, event_message: str):
             error_message=SystemErrorMessages.UNEXPECTED_ERROR,
             # TODO: set stdout, stderr and runtime metrics
         )
-        logger.error(str(error), exc_info=True)
+        task_logger.error(str(error), exc_info=True)
     else:
         invocation.update_status(
             status=invocation.StatusChoices.EXECUTED,

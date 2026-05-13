@@ -6,6 +6,7 @@ from uuid import UUID
 import boto3
 from botocore.exceptions import ClientError
 from django.conf import settings
+from lambda_tasks.logging import task_logger
 
 from grandchallenge.components.backends.amazon_sagemaker_training import (
     AmazonSageMakerTrainingExecutor,
@@ -303,12 +304,12 @@ class EndpointOrchestrator:
 
     def _handle_expired_invocation(self, *, event):
         # Requires investigation
-        logger.info(event)
-        logger.error("Endpoint invocation expired")
+        task_logger.info(event)
+        task_logger.error("Endpoint invocation expired")
         raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
 
     def _handle_failed_invocation(self, *, event):
         # Requires investigation
-        logger.info(event)
-        logger.error("Endpoint invocation failed")
+        task_logger.info(event)
+        task_logger.error("Endpoint invocation failed")
         raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
