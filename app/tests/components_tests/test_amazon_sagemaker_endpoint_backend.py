@@ -1,4 +1,9 @@
+import hashlib
+import hmac
+import io
 import json
+from datetime import timedelta
+from uuid import uuid4
 
 import pytest
 from botocore.exceptions import ClientError
@@ -7,7 +12,10 @@ from botocore.stub import Stubber
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
     EndpointOrchestrator,
 )
-from grandchallenge.components.backends.base import s3_upload_content
+from grandchallenge.components.backends.base import (
+    InferenceResult,
+    s3_upload_content,
+)
 from grandchallenge.components.models import InterfaceKindChoices
 from grandchallenge.components.schemas import GPUTypeChoices
 from tests.algorithms_tests.factories import EndpointFactory, InvocationFactory
@@ -589,3 +597,52 @@ def test_invocation_invoke_endpoint(settings):
         orchestrator.invoke_endpoint(inference_id=invocation.inference_id)
 
         stubber.assert_no_pending_responses()
+
+
+def test_get_invocation_params_match(settings):
+    pk = uuid4()
+    event = {"inferenceId": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{pk}"}
+    inference_id = EndpointOrchestrator.get_inference_id(event=event)
+    invocation_params = EndpointOrchestrator.get_invocation_params(
+        inference_id=inference_id
+    )
+
+    assert invocation_params.pk == str(pk)
+    assert invocation_params.model_name == "invocation"
+    assert invocation_params.app_label == "algorithms"
+
+
+def test_handle_completed_invocation(settings):
+    invocation = InvocationFactory.build(endpoint__signing_key=b"itsasecret")
+    orchestrator = invocation.orchestrator
+    inference_result = InferenceResult(
+        pk=f"algorithms-invocation-{invocation.pk}",
+        return_code=0,
+        exec_duration=None,
+        invoke_duration=timedelta(seconds=12),
+        outputs=[],
+        sagemaker_shim_version="0.7.0",
+    )
+    inference_result_content = inference_result.model_dump_json().encode(
+        "utf-8"
+    )
+    signature = hmac.new(
+        key=b"itsasecret",
+        msg=inference_result_content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    orchestrator._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(inference_result_content),
+        Bucket=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
+        Key=orchestrator._executor._inference_result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
+
+    assert orchestrator.invoke_duration is None
+
+    assert orchestrator._handle_completed_invocation() is None
+
+    # The duration should be set from the result object
+    assert orchestrator.invoke_duration == timedelta(seconds=12)
