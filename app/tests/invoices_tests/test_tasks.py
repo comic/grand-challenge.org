@@ -2,12 +2,13 @@ from zoneinfo import ZoneInfo
 
 import pytest
 from django.core import mail
-from django.utils.timezone import datetime, timedelta
+from django.utils.timezone import datetime, now, timedelta
 
 from grandchallenge.invoices.models import Invoice
 from grandchallenge.invoices.tasks import (
     send_challenge_invoice_issued_notification_emails,
     send_challenge_invoice_overdue_reminder_emails,
+    send_open_invoices_email,
 )
 from tests.factories import ChallengeFactory, UserFactory
 from tests.invoices_tests.factories import InvoiceFactory
@@ -387,3 +388,64 @@ def test_challenge_invoice_issued_notification_emails_on_create(
     assert expected_subject in contact_person_mail.subject
     assert "Dear John Doe" in contact_person_mail.body
     assert expected_body in contact_person_mail.body
+
+
+@pytest.mark.django_db
+def test_send_open_invoices_email(settings):
+    staff_user = UserFactory(is_staff=True)
+    settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
+
+    i1 = InvoiceFactory(
+        payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+        payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+        follow_up_on=now().date() - timedelta(days=1),
+    )
+    i2 = InvoiceFactory(
+        payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+        payment_type=Invoice.PaymentTypeChoices.PREPAID,
+    )
+    i3 = InvoiceFactory(
+        payment_status=Invoice.PaymentStatusChoices.REQUESTED,
+    )
+    i4 = InvoiceFactory(
+        payment_status=Invoice.PaymentStatusChoices.ISSUED,
+    )
+    i5 = InvoiceFactory(payment_status=Invoice.PaymentStatusChoices.PAID)
+    i6 = InvoiceFactory(payment_status=Invoice.PaymentStatusChoices.CANCELLED)
+    i7 = InvoiceFactory(
+        payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
+    )
+    i8 = InvoiceFactory(
+        payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+        payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+        follow_up_on=now().date() + timedelta(days=30),
+    )
+
+    send_open_invoices_email()
+
+    assert len(mail.outbox) == 1
+
+    assert "Invoices to check" in mail.outbox[0].subject
+    assert mail.outbox[0].to == [staff_user.email]
+    assert str(i1) in mail.outbox[0].body
+    assert str(i2) in mail.outbox[0].body
+    assert str(i3) in mail.outbox[0].body
+    assert str(i4) in mail.outbox[0].body
+    assert str(i5) not in mail.outbox[0].body
+    assert str(i6) not in mail.outbox[0].body
+    assert str(i7) not in mail.outbox[0].body
+    assert str(i8) not in mail.outbox[0].body
+
+
+@pytest.mark.django_db
+def test_send_open_invoices_email_not_sent_when_no_invoices(settings):
+    staff_user = UserFactory(is_staff=True)
+    settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
+
+    InvoiceFactory(payment_status=Invoice.PaymentStatusChoices.PAID)
+    InvoiceFactory(payment_status=Invoice.PaymentStatusChoices.CANCELLED)
+
+    send_open_invoices_email()
+
+    assert len(mail.outbox) == 0

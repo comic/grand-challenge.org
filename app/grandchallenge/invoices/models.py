@@ -96,6 +96,21 @@ class InvoiceQuerySet(models.QuerySet):
             num_is_due=Count("is_due", filter=Q(is_due=True), distinct=True),
         )
 
+    def to_check(self):
+        return self.filter(
+            Q(payment_status=Invoice.PaymentStatusChoices.REQUESTED)
+            | Q(payment_status=Invoice.PaymentStatusChoices.ISSUED)
+            | Q(
+                payment_type=Invoice.PaymentTypeChoices.PREPAID,
+                payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+            )
+            | Q(
+                payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+                payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+                follow_up_on__lte=now().date(),
+            )
+        )
+
 
 def default_invoice_expiry():
     return now().date() + relativedelta(
