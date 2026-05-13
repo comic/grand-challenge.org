@@ -1807,35 +1807,6 @@ def invoke_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
         invocation.update_status(status=invocation.StatusChoices.EXECUTING)
 
 
-@lambda_task
-def handle_endpoint_invocation_s3_event(*, event: dict):
-    logger.info(event)
-
-    s3_client = boto3.client(
-        "s3",
-        endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-    )
-
-    bucket_name = event["bucket"]["name"]
-    obj_key = event["object"]["key"]
-
-    obj = s3_client.get_object(Bucket=bucket_name, Key=obj_key)
-    job_id = json.load(obj["Body"])["pk"]
-
-    inference_id = f"{settings.COMPONENTS_REGISTRY_PREFIX}-{job_id.replace("algorithms-invocation", "alg-endp-inv")}"
-
-    endpoint_invocation_event = {
-        "invocationStatus": "Completed",
-        "inferenceId": inference_id,
-        "eventSource": "aws:sagemaker",
-        "eventName": "InferenceResult",
-    }
-
-    handle_endpoint_invocation_event.execute_on_commit(
-        event=endpoint_invocation_event
-    )
-
-
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def handle_endpoint_invocation_event(*, event: dict):
     from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
