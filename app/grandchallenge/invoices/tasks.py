@@ -1,3 +1,4 @@
+from dateutil.relativedelta import relativedelta
 from django.core.mail import mail_managers
 from django.db import transaction
 from django.template.loader import render_to_string
@@ -10,6 +11,7 @@ from grandchallenge.core.celery import (
 from grandchallenge.invoices.emails import (
     send_challenge_invoice_issued_notification,
     send_challenge_invoice_overdue_reminder,
+    send_postpaid_invoice_follow_up_date_approaching_email,
 )
 
 
@@ -80,3 +82,17 @@ def send_open_invoices_email():
         subject=subject,
         message=message,
     )
+
+
+@acks_late_micro_short_task
+@transaction.atomic
+def send_post_paid_invoice_follow_up_emails():
+    from grandchallenge.invoices.models import Invoice
+
+    invoices = Invoice.objects.filter(
+        payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+        payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+        follow_up_on__lte=now().date() + relativedelta(months=1, days=1),
+    )
+    for invoice in invoices:
+        send_postpaid_invoice_follow_up_date_approaching_email(invoice)
