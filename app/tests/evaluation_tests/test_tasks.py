@@ -29,7 +29,7 @@ from grandchallenge.evaluation.tasks import (
     set_evaluation_inputs,
 )
 from grandchallenge.evaluation.utils import SubmissionKindChoices
-from grandchallenge.invoices.models import PaymentTypeChoices
+from grandchallenge.invoices.models import Invoice, PaymentTypeChoices
 from grandchallenge.notifications.models import Notification
 from grandchallenge.profiles.templatetags.profiles import user_profile_link
 from tests.algorithms_tests.factories import (
@@ -47,6 +47,7 @@ from tests.evaluation_tests.factories import (
     EvaluationFactory,
     MethodFactory,
     PhaseFactory,
+    SubmissionFactory,
 )
 from tests.factories import ChallengeFactory, UserFactory
 from tests.invoices_tests.factories import InvoiceFactory
@@ -1077,3 +1078,129 @@ def test_evaluation_order_without_title():
     expected_civ = civs[0]
 
     assert {*job.inputs.all()} == {expected_civ}
+
+
+@pytest.mark.django_db
+def test_create_algorithm_jobs_for_evaluation_invoice_workflow():
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    submission = SubmissionFactory(phase__archive=archive, algorithm_image=ai)
+    challenge = submission.phase.challenge
+    invoice = InvoiceFactory.create_valid(challenge=challenge)
+    evaluation = EvaluationFactory(
+        submission=submission,
+        time_limit=ai.algorithm.time_limit,
+        status=Evaluation.PENDING,
+        utilization_invoice=invoice,
+    )
+
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
+
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.add(ComponentInterfaceValueFactory(interface=input_ci))
+
+    create_algorithm_jobs_for_evaluation(
+        evaluation_pk=evaluation.pk, first_run=True
+    )
+
+    assert Job.objects.count() == 1, "Sanity: creates jobs"
+    job = Job.objects.get()
+    assert job.utilization.invoice == invoice
+    assert job.status == Job.PENDING
+
+
+@pytest.mark.django_db
+def test_create_algorithm_jobs_for_evaluation_invoice_workflow_no_valid_invoice(
+    mocker,
+):
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    submission = SubmissionFactory(phase__archive=archive, algorithm_image=ai)
+    challenge = submission.phase.challenge
+
+    invoice = InvoiceFactory.create_valid(challenge=challenge)
+    invoice.payment_status = Invoice.PaymentStatusChoices.CANCELLED
+    invoice.save()
+
+    evaluation = EvaluationFactory(
+        submission=submission,
+        time_limit=ai.algorithm.time_limit,
+        status=Evaluation.PENDING,
+        utilization_invoice=invoice,
+    )
+
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
+
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.add(ComponentInterfaceValueFactory(interface=input_ci))
+
+    # Cheap check if on_failure is called
+    on_failure = mocker.patch(
+        "grandchallenge.algorithms.models.Job.execute_task_on_failure"
+    )
+
+    create_algorithm_jobs_for_evaluation(
+        evaluation_pk=evaluation.pk, first_run=True
+    )
+
+    # Job should now be in failed state
+    assert Job.objects.count() == 1, "Sanity: creates jobs"
+    job = Job.objects.get()
+    assert job.utilization.invoice is None
+    assert job.status == Job.FAILURE
+    assert (
+        job.error_message
+        == "Job cannot be executed. The challenge has insufficient budget to run this job."
+    )
+    assert (
+        on_failure.called
+    ), "Sanity: there is a follow-up task for failed jobs"
+
+
+@pytest.mark.django_db
+def test_create_algorithm_jobs_for_evaluation_invoice_workflow_job_different_invoice():
+    ai = AlgorithmImageFactory()
+    archive = ArchiveFactory()
+    submission = SubmissionFactory(phase__archive=archive, algorithm_image=ai)
+    challenge = submission.phase.challenge
+
+    invoice = InvoiceFactory.create_valid(
+        challenge=challenge,
+    )
+    invoice.payment_status = Invoice.PaymentStatusChoices.CANCELLED
+    invoice.save()
+
+    evaluation = EvaluationFactory(
+        submission=submission,
+        time_limit=ai.algorithm.time_limit,
+        status=Evaluation.PENDING,
+        utilization_invoice=invoice,
+    )
+
+    input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
+    interface = AlgorithmInterfaceFactory(inputs=[input_ci])
+    ai.algorithm.interfaces.set([interface])
+
+    evaluation.submission.phase.algorithm_interfaces.set([interface])
+
+    archive_item = ArchiveItemFactory(archive=archive)
+    archive_item.values.add(ComponentInterfaceValueFactory(interface=input_ci))
+
+    new_invoice = InvoiceFactory.create_valid(challenge=challenge)
+
+    create_algorithm_jobs_for_evaluation(
+        evaluation_pk=evaluation.pk, first_run=True
+    )
+
+    assert Job.objects.count() == 1, "Sanity: creates jobs"
+    job = Job.objects.get()
+    assert job.utilization.invoice == new_invoice
+    assert job.status == Job.PENDING
