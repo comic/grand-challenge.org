@@ -829,7 +829,7 @@ def test_active_invoice_no_invoice():
 
 
 @pytest.mark.django_db
-def test_active_invoice_ignores_negative_balance():
+def test_active_invoice_raises_on_negative_balance():
     challenge = ChallengeFactory()
     InvoiceFactory(
         challenge=challenge,
@@ -843,7 +843,7 @@ def test_active_invoice_ignores_negative_balance():
 
 
 @pytest.mark.django_db
-def test_active_invoice_ignores_zero_balance():
+def test_active_invoice_raises_on_zero_balance():
     challenge = ChallengeFactory()
     InvoiceFactory(
         challenge=challenge,
@@ -857,7 +857,7 @@ def test_active_invoice_ignores_zero_balance():
 
 
 @pytest.mark.django_db
-def test_active_invoice_order_by_expiry():
+def test_active_invoice_orders_by_expiry():
     challenge = ChallengeFactory()
 
     _fixed_now = now()
