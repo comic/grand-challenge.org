@@ -809,7 +809,7 @@ def test_challenge_queryset_with_user_roles_multiple_challenges():
 
 
 @pytest.mark.django_db
-def test_get_invoice_for_utilization():
+def test_active_invoice():
     challenge = ChallengeFactory()
     invoice = InvoiceFactory(
         challenge=challenge,
@@ -818,18 +818,18 @@ def test_get_invoice_for_utilization():
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
-    assert challenge.get_invoice_for_utilization() == invoice
+    assert challenge.active_invoice == invoice
 
 
 @pytest.mark.django_db
-def test_get_invoice_for_utilization_no_invoice():
+def test_active_invoice_no_invoice():
     challenge = ChallengeFactory()
     with pytest.raises(InsufficientBudgetError):
-        challenge.get_invoice_for_utilization()
+        challenge.active_invoice
 
 
 @pytest.mark.django_db
-def test_get_invoice_for_utilization_ignores_negative_balance():
+def test_active_invoice_ignores_negative_balance():
     challenge = ChallengeFactory()
     InvoiceFactory(
         challenge=challenge,
@@ -839,11 +839,11 @@ def test_get_invoice_for_utilization_ignores_negative_balance():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
     with pytest.raises(InsufficientBudgetError):
-        challenge.get_invoice_for_utilization()
+        challenge.active_invoice
 
 
 @pytest.mark.django_db
-def test_get_invoice_for_utilization_ignores_zero_balance():
+def test_active_invoice_ignores_zero_balance():
     challenge = ChallengeFactory()
     InvoiceFactory(
         challenge=challenge,
@@ -853,11 +853,11 @@ def test_get_invoice_for_utilization_ignores_zero_balance():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
     with pytest.raises(InsufficientBudgetError):
-        challenge.get_invoice_for_utilization()
+        challenge.active_invoice
 
 
 @pytest.mark.django_db
-def test_get_invoice_for_utilization_order_by_expiry():
+def test_active_invoice_order_by_expiry():
     challenge = ChallengeFactory()
 
     _fixed_now = now()
@@ -879,18 +879,20 @@ def test_get_invoice_for_utilization_order_by_expiry():
         expires_on=_fixed_now + timedelta(10),
     )
 
-    # All things being equal, use created time to determine order, so invoice0 should be returned as it was created first
-    assert challenge.get_invoice_for_utilization() == invoice0
+    # All things being equal, use created time to determine order, so invoice0 should be active as it was created first
+    assert challenge.active_invoice == invoice0
 
     invoice1.expires_on = _fixed_now + timedelta(5)
     invoice1.save()
     assert invoice1.expires_on < invoice0.expires_on, "Sanity"
-    assert challenge.get_invoice_for_utilization() == invoice1
+    del challenge.active_invoice
+    assert challenge.active_invoice == invoice1
 
     invoice0.expires_on = _fixed_now + timedelta(4)
     invoice0.save()
     assert invoice0.expires_on < invoice1.expires_on, "Sanity"
-    assert challenge.get_invoice_for_utilization() == invoice0
+    del challenge.active_invoice
+    assert challenge.active_invoice == invoice0
 
 
 @pytest.mark.django_db

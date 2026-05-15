@@ -969,7 +969,8 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             for invoice in invoices
         )
 
-    def get_invoice_for_utilization(self):
+    @cached_property
+    def active_invoice(self):
         invoices = self.invoices.order_by("expires_on", "created")
 
         if (
