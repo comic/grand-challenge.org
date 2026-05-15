@@ -1691,14 +1691,12 @@ def test_handle_endpoint_invocation_completed_event(settings):
             "Metadata": {"signature_hmac_sha256": signature},
         },
     )
-    event_message = (
-        "{"
-        f'"invocationStatus": "Completed",'
-        f'"inferenceId": "{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{invocation.pk}"'
-        "}"
-    )
+    event = {
+        "invocationStatus": "Completed",
+        "inferenceId": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{invocation.pk}",
+    }
 
-    handle_endpoint_invocation_event(event_message=event_message)
+    handle_endpoint_invocation_event(event=event)
     invocation.refresh_from_db()
 
     assert invocation.status == invocation.StatusChoices.EXECUTED
@@ -1711,14 +1709,12 @@ def test_handle_endpoint_invocation_failure_events(settings, status):
     invocation = InvocationFactory(
         status=InvocationStatusChoices.EXECUTING,
     )
-    event_message = (
-        "{"
-        f'"invocationStatus": "{status}",'
-        f'"inferenceId": "{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{invocation.pk}"'
-        "}"
-    )
+    event = {
+        "invocationStatus": f"{status}",
+        "inferenceId": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{invocation.pk}",
+    }
 
-    handle_endpoint_invocation_event(event_message=event_message)
+    handle_endpoint_invocation_event(event=event)
     invocation.refresh_from_db()
 
     assert invocation.status == InvocationStatusChoices.FAILURE
@@ -1730,14 +1726,12 @@ def test_handle_endpoint_invocation_invalid_events(settings):
     invocation = InvocationFactory(
         status=InvocationStatusChoices.EXECUTING,
     )
-    event_message = (
-        "{"
-        f'"invocationStatus": "some invalid status",'
-        f'"inferenceId": "{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{invocation.pk}"'
-        "}"
-    )
+    event = {
+        "invocationStatus": "some invalid status",
+        "inferenceId": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{invocation.pk}",
+    }
 
-    handle_endpoint_invocation_event(event_message=event_message)
+    handle_endpoint_invocation_event(event=event)
     invocation.refresh_from_db()
 
     assert invocation.status == InvocationStatusChoices.FAILURE
