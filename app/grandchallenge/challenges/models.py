@@ -16,14 +16,11 @@ from django.db.models import (
     Count,
     ExpressionWrapper,
     F,
-    OuterRef,
     Q,
-    Subquery,
     Sum,
     Value,
     When,
 )
-from django.db.models.functions import Coalesce
 from django.db.models.signals import post_delete
 from django.db.transaction import on_commit
 from django.dispatch import receiver
@@ -80,7 +77,6 @@ from grandchallenge.evaluation.utils import (
 from grandchallenge.forge.models import ForgeChallenge
 from grandchallenge.incentives.models import Incentive
 from grandchallenge.invoices.models import (
-    Invoice,
     PaymentStatusChoices,
     PaymentTypeChoices,
 )
@@ -96,21 +92,6 @@ logger = logging.getLogger(__name__)
 
 
 class ChallengeQuerySet(models.QuerySet):
-    def with_compute_balance(self):
-        invoice_balance = (
-            Invoice.objects.filter(challenge=OuterRef("pk"))
-            .with_compute_balance()
-            .values("challenge_id")
-            .annotate(total=Sum("compute_costs_balance_euros_millicents"))
-            .values("total")
-        )
-        return self.annotate(
-            compute_costs_balance_euros_millicents=Coalesce(
-                Subquery(invoice_balance),
-                Value(0),
-            )
-        )
-
     def with_available_compute(self):
         return self.annotate(
             complimentary_compute_costs_euros=(
