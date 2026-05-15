@@ -885,13 +885,11 @@ def test_active_invoice_order_by_expiry():
     invoice1.expires_on = _fixed_now + timedelta(5)
     invoice1.save()
     assert invoice1.expires_on < invoice0.expires_on, "Sanity"
-    del challenge.active_invoice
     assert challenge.active_invoice == invoice1
 
     invoice0.expires_on = _fixed_now + timedelta(4)
     invoice0.save()
     assert invoice0.expires_on < invoice1.expires_on, "Sanity"
-    del challenge.active_invoice
     assert challenge.active_invoice == invoice0
 
 
