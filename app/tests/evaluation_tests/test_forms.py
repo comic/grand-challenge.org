@@ -962,7 +962,6 @@ class TestSubmissionForm:
         # Remove funds
         invoice.payment_status = PaymentStatusChoices.CANCELLED
         invoice.save()
-        del p.challenge.active_invoice
 
         form = SubmissionForm(
             user=user,

@@ -188,7 +188,6 @@ def test_rescheduling_external_evaluation_not_possible(rf):
 @pytest.mark.django_db
 def test_reevaluate_submission_missing_invoice(rf):
     submission = SubmissionFactory()
-    # invoice = InvoiceFactory.create_valid(challenge=submission.phase.challenge)
 
     modeladmin = SubmissionAdmin(Submission, AdminSite)
     request = rf.get("/foo")
