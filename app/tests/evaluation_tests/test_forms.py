@@ -902,6 +902,79 @@ class TestSubmissionForm:
             in str(form.errors)
         )
 
+    def test_insufficient_funds(self):
+        user = UserFactory()
+        VerificationFactory(user=user, is_verified=True)
+        alg = AlgorithmFactory()
+        alg.add_editor(user=user)
+        ci1 = ComponentInterfaceFactory()
+        ci2 = ComponentInterfaceFactory()
+        interface = AlgorithmInterfaceFactory(inputs=[ci1], outputs=[ci2])
+        alg.interfaces.set([interface])
+        archive = ArchiveFactory()
+        p = PhaseFactory(
+            submission_kind=SubmissionKindChoices.ALGORITHM,
+            submissions_limit_per_user_per_period=10,
+            archive=archive,
+        )
+        p.algorithm_interfaces.set([interface])
+        civ = ComponentInterfaceValueFactory(interface=ci1)
+        i = ArchiveItemFactory(archive=p.archive)
+        i.values.add(civ)
+
+        invoice = InvoiceFactory(
+            challenge=p.challenge,
+            compute_costs_euros=10,
+            payment_type=PaymentTypeChoices.COMPLIMENTARY,
+        )
+
+        # Fetch from the db to get the cost annotations
+        p = Phase.objects.get(pk=p.pk)
+
+        ai = AlgorithmImageFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            algorithm=alg,
+        )
+        AlgorithmJobFactory(
+            algorithm_image=ai,
+            algorithm_interface=interface,
+            status=4,
+            time_limit=ai.algorithm.time_limit,
+        )
+        MethodFactory(
+            is_manifest_valid=True,
+            is_in_registry=True,
+            is_desired_version=True,
+            phase=p,
+        )
+
+        form = SubmissionForm(
+            user=user,
+            phase=p,
+            data={"algorithm": alg, "creator": user, "phase": p},
+        )
+
+        assert form.errors == {}
+        assert form.is_valid()
+
+        # Remove funds
+        invoice.payment_status = PaymentStatusChoices.CANCELLED
+        invoice.save()
+        del p.challenge.active_invoice
+
+        form = SubmissionForm(
+            user=user,
+            phase=p,
+            data={"algorithm": alg, "creator": user, "phase": p},
+        )
+        assert not form.is_valid()
+        assert (
+            "Challenge has insufficient budget. Please contact the challenge organizers."
+            in str(form.errors)
+        )
+
 
 @pytest.mark.django_db
 class TestSubmissionFormOptions:
