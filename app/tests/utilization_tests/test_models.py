@@ -29,6 +29,7 @@ from tests.archives_tests.factories import ArchiveFactory, ArchiveItemFactory
 from tests.components_tests.factories import ComponentInterfaceValueFactory
 from tests.evaluation_tests.factories import EvaluationFactory, PhaseFactory
 from tests.factories import SessionFactory
+from tests.invoices_tests.factories import InvoiceFactory
 from tests.reader_studies_tests.factories import (
     QuestionFactory,
     ReaderStudyFactory,
@@ -323,6 +324,7 @@ def test_job_utilization_created_on_jobs_for_evaluation_sets_properties():
         archive=archive,
         submission_kind=SubmissionKindChoices.ALGORITHM,
     )
+    InvoiceFactory.create_valid(challenge=phase.challenge)
 
     evaluation = EvaluationFactory(
         time_limit=60,

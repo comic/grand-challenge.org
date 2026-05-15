@@ -6,7 +6,7 @@ from typing import NamedTuple
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from django.db.models import Count, Max, Min, Q
+from django.db.models import Count, Max, Min, Q, Sum
 from django.utils.timezone import datetime, now
 from psycopg.errors import LockNotAvailable
 
@@ -113,16 +113,20 @@ def update_challenge_compute_costs():
         with transaction.atomic():
             annotate_compute_costs(invoice=invoice)
 
-            # TODO: remove this once compute_cost_euro_millicents is removed or deprecated
-            challenge = Challenge.objects.get(pk=invoice.challenge_id)
-            challenge.compute_cost_euro_millicents = (
-                challenge.compute_costs_balance_euros_millicents
-            )
-
             @retry_with_backoff(exceptions=(LockNotAvailable,))
             def save_invoice():
                 invoice.save(
                     update_fields=("compute_costs_utilized_euros_millicents",)
+                )
+
+                # TODO: remove this once compute_cost_euro_millicents is removed or deprecated
+                challenge = Challenge.objects.with_available_compute().get(
+                    pk=invoice.challenge_id
+                )
+                challenge.compute_cost_euro_millicents = (
+                    Invoice.objects.filter(challenge=challenge.pk).aggregate(
+                        total=Sum("compute_costs_utilized_euros_millicents")
+                    )["total"]
                 )
                 challenge.save(update_fields=("compute_cost_euro_millicents",))
 

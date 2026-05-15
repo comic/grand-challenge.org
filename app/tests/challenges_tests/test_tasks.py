@@ -80,7 +80,7 @@ def test_challenge_budget_alert_email(settings):
     challenge.add_admin(challenge_admin)
     staff_user = UserFactory(is_staff=True)
     settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
-    InvoiceFactory(
+    invoice = InvoiceFactory(
         challenge=challenge,
         support_costs_euros=0,
         compute_costs_euros=10,
@@ -91,9 +91,10 @@ def test_challenge_budget_alert_email(settings):
     evaluation = EvaluationFactory(
         submission__phase=phase,
         time_limit=60,
+        utilization_invoice=invoice,
     )
 
-    evaluation.utilization.compute_cost_euro_millicents = 500000
+    evaluation.utilization.compute_cost_euro_millicents = 5 * 1000 * 100
     evaluation.utilization.save()
     update_challenge_compute_costs()
 
@@ -103,8 +104,9 @@ def test_challenge_budget_alert_email(settings):
     evaluation = EvaluationFactory(
         submission__phase=phase,
         time_limit=60,
+        utilization_invoice=invoice,
     )
-    evaluation.utilization.compute_cost_euro_millicents = 300000
+    evaluation.utilization.compute_cost_euro_millicents = 3 * 1000 * 100
     evaluation.utilization.save()
     update_challenge_compute_costs()
 
@@ -133,6 +135,7 @@ def test_challenge_budget_alert_email(settings):
     evaluation = EvaluationFactory(
         submission__phase=phase,
         time_limit=60,
+        utilization_invoice=invoice,
     )
     evaluation.utilization.compute_cost_euro_millicents = 100000
     evaluation.utilization.save()
@@ -144,6 +147,7 @@ def test_challenge_budget_alert_email(settings):
     evaluation = EvaluationFactory(
         submission__phase=phase,
         time_limit=60,
+        utilization_invoice=invoice,
     )
     evaluation.utilization.compute_cost_euro_millicents = 1
     evaluation.utilization.save()
@@ -169,7 +173,7 @@ def test_challenge_budget_alert_two_thresholds_one_email(settings):
     challenge.add_admin(challenge_admin)
     staff_user = UserFactory(is_staff=True)
     settings.MANAGERS = [(staff_user.last_name, staff_user.email)]
-    InvoiceFactory(
+    invoice = InvoiceFactory(
         challenge=challenge,
         support_costs_euros=0,
         compute_costs_euros=10,
@@ -180,6 +184,7 @@ def test_challenge_budget_alert_two_thresholds_one_email(settings):
     evaluation = EvaluationFactory(
         submission__phase=phase,
         time_limit=60,
+        utilization_invoice=invoice,
     )
     evaluation.utilization.compute_cost_euro_millicents = 950000
     evaluation.utilization.save()
@@ -203,9 +208,11 @@ def test_challenge_budget_alert_two_thresholds_one_email(settings):
 def test_challenge_budget_alert_no_budget():
     challenge = ChallengeFactory()
     phase = PhaseFactory(challenge=challenge)
+    invoice = InvoiceFactory(challenge=challenge)
     evaluation = EvaluationFactory(
         submission__phase=phase,
         time_limit=60,
+        utilization_invoice=invoice,
     )
     evaluation.utilization.compute_cost_euro_millicents = 1
     evaluation.utilization.save()
