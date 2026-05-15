@@ -22,43 +22,22 @@ from grandchallenge.utilization.models import (
 )
 
 
-def annotate_compute_costs(*, challenge):
-    annotated_invoices = challenge.invoices.annotate(
-        algorithm_job_costs=Coalesce(
+def annotate_compute_costs(*, invoice):
+    result = Invoice.objects.filter(pk=invoice.pk).aggregate(
+        total=Coalesce(
             Sum("job_utilizations__compute_cost_euro_millicents"),
             Value(0),
-        ),
-        job_warm_pool_costs=Coalesce(
+        )
+        + Coalesce(
             Sum("job_warm_pool_utilizations__compute_cost_euro_millicents"),
             Value(0),
-        ),
-        evaluation_job_costs=Coalesce(
+        )
+        + Coalesce(
             Sum("evaluation_utilizations__compute_cost_euro_millicents"),
             Value(0),
-        ),
-    )
-
-    for invoice in annotated_invoices:
-        invoice.compute_costs_utilized_euros_millicents = sum(
-            [
-                invoice.algorithm_job_costs,
-                invoice.job_warm_pool_costs,
-                invoice.evaluation_job_costs,
-            ]
-        )
-
-    Invoice.objects.bulk_update(
-        annotated_invoices,
-        fields=["compute_costs_utilized_euros_millicents"],
-    )
-
-    # TODO: Remove below once we remove compute_cost_euro_millicents from Challenge (and associated checks)
-    challenge.update(
-        compute_cost_euro_millicents=sum(
-            invoice.compute_costs_utilized_euros_millicents
-            for invoice in annotated_invoices
         )
     )
+    invoice.compute_costs_utilized_euros_millicents = result["total"]
 
 
 def annotate_job_duration_and_compute_costs(*, phase):

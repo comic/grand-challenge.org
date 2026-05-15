@@ -31,6 +31,7 @@ from grandchallenge.core.celery import (
     acks_late_micro_short_task,
 )
 from grandchallenge.evaluation.models import Evaluation, Phase
+from grandchallenge.invoices.models import Invoice
 
 
 @acks_late_2xlarge_task
@@ -78,7 +79,13 @@ def update_challenge_results_cache():
     )
 
 
-def retry_with_backoff(exceptions, max_attempts=5, base_delay=1, max_delay=10):
+def retry_with_backoff(
+    *,
+    exceptions,
+    max_attempts=5,
+    base_delay=1,
+    max_delay=10,
+):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -102,23 +109,30 @@ def retry_with_backoff(exceptions, max_attempts=5, base_delay=1, max_delay=10):
 
 @acks_late_2xlarge_task
 def update_challenge_compute_costs():
-    for challenge in Challenge.objects.with_available_compute().iterator(
-        chunk_size=1000
-    ):
+    for invoice in Invoice.objects.iterator(chunk_size=1000):
         with transaction.atomic():
-            annotate_compute_costs(challenge=challenge)
+            annotate_compute_costs(invoice=invoice)
 
-            @retry_with_backoff((LockNotAvailable,))
-            def save_challenge():
+            # TODO: remove this once compute_cost_euro_millicents is removed or deprecated
+            challenge = Challenge.objects.get(pk=invoice.challenge_id)
+            challenge.compute_cost_euro_millicents = (
+                challenge.compute_costs_balance_euros_millicents
+            )
+
+            @retry_with_backoff(exceptions=(LockNotAvailable,))
+            def save_invoice():
+                invoice.save(
+                    update_fields=("compute_costs_utilized_euros_millicents",)
+                )
                 challenge.save(update_fields=("compute_cost_euro_millicents",))
 
-            save_challenge()
+            save_invoice()
 
     for phase in Phase.objects.iterator(chunk_size=1000):
         with transaction.atomic():
             annotate_job_duration_and_compute_costs(phase=phase)
 
-            @retry_with_backoff((LockNotAvailable,))
+            @retry_with_backoff(exceptions=(LockNotAvailable,))
             def save_phase():
                 phase.save(
                     skip_calculate_ranks=True,
@@ -137,7 +151,7 @@ def update_challenge_storage_size():
         with transaction.atomic():
             annotate_storage_size(challenge=challenge)
 
-            @retry_with_backoff((LockNotAvailable,))
+            @retry_with_backoff(exceptions=(LockNotAvailable,))
             def save_challenge():
                 challenge.save(
                     update_fields=(
