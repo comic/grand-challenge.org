@@ -964,11 +964,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             if invoice.compute_costs_balance_euros_millicents > 0:
                 return invoice
 
-        # Defensive catch
-        raise ValueError(
-            "Unexpected: this challenge has no available budget in any invoice despite a positive total balance."
-        )
-
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset()
