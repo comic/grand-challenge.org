@@ -334,7 +334,7 @@ class HyperlinkedInvocationSerializer(serializers.ModelSerializer):
 
     endpoint = HyperlinkedRelatedField(
         queryset=Endpoint.objects.none(),
-        view_name="api:endpoint-detail",
+        view_name="api:algorithms-endpoint-detail",
         required=True,
     )
     inputs = HyperlinkedComponentInterfaceValueSerializer(many=True)
@@ -350,7 +350,7 @@ class InvocationPostSerializer(serializers.ModelSerializer):
 
     endpoint = HyperlinkedRelatedField(
         queryset=Endpoint.objects.none(),
-        view_name="api:endpoint-detail",
+        view_name="api:algorithms-endpoint-detail",
         required=True,
     )
 
@@ -368,7 +368,9 @@ class InvocationPostSerializer(serializers.ModelSerializer):
             user = self.context["request"].user
 
             self.fields["endpoint"].queryset = filter_by_permission(
-                queryset=Endpoint.objects.all(),
+                queryset=Endpoint.objects.filter(
+                    status=Endpoint.StatusChoices.RUNNING
+                ),
                 user=user,
                 codename="invoke_endpoint",
             )

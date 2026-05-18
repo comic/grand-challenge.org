@@ -1734,7 +1734,9 @@ class Endpoint(FieldChangeMixin, UUIDModel):
 
     @property
     def api_url(self) -> str:
-        return reverse("api:endpoint-detail", kwargs={"pk": self.pk})
+        return reverse(
+            "api:algorithms-endpoint-detail", kwargs={"pk": self.pk}
+        )
 
 
 class EndpointUserObjectPermission(UserObjectPermissionBase):
