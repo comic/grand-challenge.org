@@ -483,6 +483,10 @@ def test_update_challenge_compute_costs(settings):
         submission__phase=phase,
         time_limit=60,
     )
+    evaluation_utilization = evaluation.evaluation_utilization
+    evaluation_utilization.invoice = invoice
+    evaluation_utilization.compute_cost_euro_millicents = 1
+    evaluation_utilization.save()
 
     job = AlgorithmJobFactory(
         status=Job.SUCCESS,
@@ -494,25 +498,31 @@ def test_update_challenge_compute_costs(settings):
     job_utilization.phase = phase
     job_utilization.challenge = challenge
     job_utilization.invoice = invoice
-    job_utilization.compute_cost_euro_millicents = 1
+    job_utilization.compute_cost_euro_millicents = 2
     job_utilization.save()
 
-    evaluation_utilization = evaluation.evaluation_utilization
-    evaluation_utilization.phase = phase
-    evaluation_utilization.challenge = challenge
-    evaluation_utilization.invoice = invoice
-    evaluation_utilization.compute_cost_euro_millicents = 2
-    evaluation_utilization.save()
+    job2 = AlgorithmJobFactory(
+        status=Job.SUCCESS,
+        use_warm_pool=True,
+        time_limit=60,
+    )
+
+    job2_utilization = job2.job_utilization
+    job2_utilization.phase = phase
+    job2_utilization.challenge = challenge
+    job2_utilization.invoice = invoice
+    job2_utilization.compute_cost_euro_millicents = 4
+    job2_utilization.save()
 
     assert not JobWarmPoolUtilization.objects.exists()
     create_job_warm_pool_utilizations()
-    job_warm_pool_utilization = JobWarmPoolUtilization.objects.get()
-    job_warm_pool_utilization.compute_cost_euro_millicents = 4
-    job_warm_pool_utilization.save()
+    for job_warm_pool_utilization in JobWarmPoolUtilization.objects.all():
+        job_warm_pool_utilization.compute_cost_euro_millicents = 8
+        job_warm_pool_utilization.save()
 
     assert invoice.compute_costs_utilized_euros_millicents == 0
 
     update_challenge_compute_costs()
 
     invoice.refresh_from_db()
-    assert invoice.compute_costs_utilized_euros_millicents == 1 + 2 + 4
+    assert invoice.compute_costs_utilized_euros_millicents == 1 + 2 + 4 + 8 + 8

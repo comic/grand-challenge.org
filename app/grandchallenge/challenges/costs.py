@@ -1,6 +1,5 @@
 from django.contrib.auth.models import Permission
-from django.db.models import Sum, Value
-from django.db.models.functions import Coalesce
+from django.db.models import Sum
 
 from grandchallenge.algorithms.models import (
     AlgorithmImage,
@@ -14,7 +13,6 @@ from grandchallenge.evaluation.models import (
     EvaluationGroundTruth,
     Method,
 )
-from grandchallenge.invoices.models import Invoice
 from grandchallenge.utilization.models import (
     EvaluationUtilization,
     JobUtilization,
@@ -23,21 +21,23 @@ from grandchallenge.utilization.models import (
 
 
 def annotate_compute_costs(*, invoice):
-    result = Invoice.objects.filter(pk=invoice.pk).aggregate(
-        total=Coalesce(
-            Sum("job_utilizations__compute_cost_euro_millicents"),
-            Value(0),
-        )
-        + Coalesce(
-            Sum("job_warm_pool_utilizations__compute_cost_euro_millicents"),
-            Value(0),
-        )
-        + Coalesce(
-            Sum("evaluation_utilizations__compute_cost_euro_millicents"),
-            Value(0),
-        )
+    algorithm_job_utilizations = JobUtilization.objects.filter(
+        invoice=invoice,
     )
-    invoice.compute_costs_utilized_euros_millicents = result["total"]
+    job_warm_pool_utilizations = JobWarmPoolUtilization.objects.filter(
+        invoice=invoice,
+    )
+    evaluation_job_utilizations = EvaluationUtilization.objects.filter(
+        invoice=invoice,
+    )
+
+    update_compute_cost_euro_millicents(
+        obj=invoice,
+        obj_field="compute_costs_utilized_euros_millicents",
+        algorithm_job_utilizations=algorithm_job_utilizations,
+        job_warm_pool_utilizations=job_warm_pool_utilizations,
+        evaluation_job_utilizations=evaluation_job_utilizations,
+    )
 
 
 def annotate_job_duration_and_compute_costs(*, phase):
@@ -55,6 +55,7 @@ def annotate_job_duration_and_compute_costs(*, phase):
 
     update_compute_cost_euro_millicents(
         obj=phase,
+        obj_field="compute_cost_euro_millicents",
         algorithm_job_utilizations=algorithm_job_utilizations,
         job_warm_pool_utilizations=job_warm_pool_utilizations,
         evaluation_job_utilizations=evaluation_job_utilizations,
@@ -64,6 +65,7 @@ def annotate_job_duration_and_compute_costs(*, phase):
 def update_compute_cost_euro_millicents(
     *,
     obj,
+    obj_field,
     algorithm_job_utilizations,
     job_warm_pool_utilizations,
     evaluation_job_utilizations,
@@ -80,8 +82,10 @@ def update_compute_cost_euro_millicents(
 
     items = [algorithm_job_costs, job_warm_pool_costs, evaluation_costs]
 
-    obj.compute_cost_euro_millicents = sum(
-        item["compute_cost_euro_millicents__sum"] or 0 for item in items
+    setattr(
+        obj,
+        obj_field,
+        sum(item["compute_cost_euro_millicents__sum"] or 0 for item in items),
     )
 
 
