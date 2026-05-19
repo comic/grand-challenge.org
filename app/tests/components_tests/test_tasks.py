@@ -51,6 +51,7 @@ from grandchallenge.components.tasks import (
     encode_b64j,
     execute_job,
     handle_endpoint_invocation_event,
+    parse_endpoint_invocation_outputs,
     preload_interactive_algorithms,
     remove_container_image_from_registry,
     remove_inactive_container_images,
@@ -1763,3 +1764,32 @@ def test_handle_endpoint_invocation_wrong_state_ignored(
 
     mock_handle_event.assert_not_called()
     assert invocation.status == status
+
+
+@pytest.mark.django_db
+def test_parse_endpoint_invocation_outputs(settings):
+    socket = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    invocation = InvocationFactory(
+        status=InvocationStatusChoices.EXECUTED,
+        algorithm_interface__outputs=[socket],
+    )
+    orchestrator = invocation.orchestrator
+    content = json.dumps("test output content").encode("utf-8")
+    orchestrator._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(content),
+        Bucket=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
+        Key=f"{orchestrator._io_prefix}/{socket.relative_path}",
+    )
+
+    assert invocation.outputs.count() == 0
+
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    invocation.refresh_from_db()
+
+    assert invocation.error_message == ""
+    assert invocation.status == InvocationStatusChoices.SUCCESS
+    assert invocation.outputs.count() == 1
+
+    civ = invocation.outputs.first()
+
+    assert civ.value == "test output content"
