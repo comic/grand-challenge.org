@@ -79,13 +79,7 @@ def update_challenge_results_cache():
     )
 
 
-def retry_with_backoff(
-    *,
-    exceptions,
-    max_attempts=5,
-    base_delay=1,
-    max_delay=10,
-):
+def retry_with_backoff(exceptions, max_attempts=5, base_delay=1, max_delay=10):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -113,7 +107,7 @@ def update_challenge_compute_costs():
         with transaction.atomic():
             annotate_compute_costs(invoice=invoice)
 
-            @retry_with_backoff(exceptions=(LockNotAvailable,))
+            @retry_with_backoff((LockNotAvailable,))
             def save_invoice():
                 invoice.save(
                     update_fields=("compute_costs_utilized_euros_millicents",)
@@ -136,7 +130,7 @@ def update_challenge_compute_costs():
         with transaction.atomic():
             annotate_job_duration_and_compute_costs(phase=phase)
 
-            @retry_with_backoff(exceptions=(LockNotAvailable,))
+            @retry_with_backoff((LockNotAvailable,))
             def save_phase():
                 phase.save(
                     skip_calculate_ranks=True,
@@ -155,7 +149,7 @@ def update_challenge_storage_size():
         with transaction.atomic():
             annotate_storage_size(challenge=challenge)
 
-            @retry_with_backoff(exceptions=(LockNotAvailable,))
+            @retry_with_backoff((LockNotAvailable,))
             def save_challenge():
                 challenge.save(
                     update_fields=(
