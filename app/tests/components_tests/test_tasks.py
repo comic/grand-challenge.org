@@ -1793,3 +1793,63 @@ def test_parse_endpoint_invocation_outputs(settings):
     civ = invocation.outputs.first()
 
     assert civ.value == "test output content"
+
+
+@pytest.mark.django_db
+def test_parse_endpoint_invocation_outputs_failure(mocker):
+    invocation = InvocationFactory(
+        status=InvocationStatusChoices.EXECUTED,
+    )
+    mocker.patch.object(
+        EndpointOrchestrator,
+        "get_outputs",
+        side_effect=Exception,
+    )
+
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+
+    invocation.refresh_from_db()
+
+    assert invocation.status == InvocationStatusChoices.FAILURE
+    assert invocation.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+
+
+@pytest.mark.parametrize(
+    "status",
+    set(InvocationStatusChoices).difference(
+        [InvocationStatusChoices.EXECUTED, InvocationStatusChoices.CANCELLED]
+    ),
+)
+@pytest.mark.django_db
+def test_parse_endpoint_invocation_outputs_wrong_state_raises(mocker, status):
+    invocation = InvocationFactory(status=status)
+    mock_get_outputs = mocker.patch.object(
+        EndpointOrchestrator,
+        "get_outputs",
+    )
+
+    with pytest.raises(
+        RuntimeError, match="Invocation is not ready for output parsing"
+    ):
+        parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    invocation.refresh_from_db()
+
+    mock_get_outputs.assert_not_called()
+    assert invocation.status == status
+    assert invocation.outputs.count() == 0
+
+
+@pytest.mark.django_db
+def test_parse_endpoint_invocation_outputs_cancelled_skipped(mocker):
+    invocation = InvocationFactory(status=InvocationStatusChoices.CANCELLED)
+    mock_get_outputs = mocker.patch.object(
+        EndpointOrchestrator,
+        "get_outputs",
+    )
+
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    invocation.refresh_from_db()
+
+    mock_get_outputs.assert_not_called()
+    assert invocation.status == InvocationStatusChoices.CANCELLED
+    assert invocation.outputs.count() == 0
