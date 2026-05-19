@@ -1857,7 +1857,11 @@ def handle_endpoint_invocation_event(*, event: dict):
             invoke_duration=orchestrator.invoke_duration,
             # TODO: set stdout, stderr and runtime metrics
         )
-        # TODO: add and register parse outputs task
+        on_commit(
+            parse_endpoint_invocation_outputs.signature(
+                kwargs=invocation.task_kwargs,
+            ).apply_async
+        )
 
 
 @acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
