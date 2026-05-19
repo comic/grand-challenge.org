@@ -755,7 +755,7 @@ class EvaluationForm(SaveFormInitMixin, AdditionalInputsMixin, forms.Form):
             invoice = cleaned_data["submission"].phase.challenge.active_invoice
         except InsufficientBudgetError:
             raise ValidationError(
-                "Challenge has insufficient budget. Please contact the challenge organizers."
+                "Challenge has insufficient budget. Please contact support to add more funds."
             )
         else:
             cleaned_data["invoice"] = invoice
