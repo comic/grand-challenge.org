@@ -2954,7 +2954,7 @@ def test_reschedule_evaluation_with_additional_inputs(
 
     assert response.status_code == 200
     assert (
-        "Challenge has insufficient budget. Please contact the challenge organizers."
+        "Challenge has insufficient budget. Please contact support to add more funds."
         in str(response.content)
     )
     assert Evaluation.objects.count() == evaluation_count
