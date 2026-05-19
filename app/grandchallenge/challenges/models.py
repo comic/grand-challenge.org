@@ -938,26 +938,16 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             payment_status=PaymentStatusChoices.PAID,
         ).exists()
 
-    @cached_property
-    def compute_costs_balance_euros_millicents(self):
-        return self._get_compute_costs_balance_euros_millicents(
-            invoices=self.invoices.all()
-        )
-
-    def _get_compute_costs_balance_euros_millicents(self, *, invoices):
-        return sum(
-            invoice.compute_costs_balance_euros_millicents
-            for invoice in invoices
-        )
-
     @property
     def active_invoice(self):
         invoices = self.invoices.order_by("expires_on", "created")
 
-        if (
-            self._get_compute_costs_balance_euros_millicents(invoices=invoices)
-            <= 0
-        ):
+        total_balance = sum(
+            invoice.compute_costs_balance_euros_millicents
+            for invoice in invoices
+        )
+
+        if total_balance <= 0:
             raise InsufficientBudgetError
 
         for invoice in invoices:
