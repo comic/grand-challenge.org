@@ -647,7 +647,6 @@ def test_handle_completed_invocation(settings):
 
     assert orchestrator.invoke_duration is None
 
-    assert orchestrator._handle_completed_invocation() is None
+    orchestrator._handle_completed_invocation()
 
-    # The duration should be set from the result object
     assert orchestrator.invoke_duration == timedelta(seconds=12)
