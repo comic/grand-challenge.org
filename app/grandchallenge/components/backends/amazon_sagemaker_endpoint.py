@@ -36,6 +36,17 @@ class AmazonSageMakerEndpointExecutor(AmazonSageMakerTrainingExecutor):
     def _sagemaker_job_name(self):
         return self.__endpoint_name
 
+    @property
+    def _log_group_name(self):
+        # Hardcoded by AWS
+        return "/aws/sagemaker/Endpoints"
+
+    def _get_start_time(self, *, event):
+        return event.get("receivedTime")
+
+    def _get_end_time(self, *, event):
+        return event.get("eventTime")
+
 
 class EndpointOrchestrator:
     def __init__(
@@ -63,9 +74,6 @@ class EndpointOrchestrator:
             input_bucket_name=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
             output_bucket_name=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
             use_task_list=False,
-            log_group_name="/aws/sagemaker/Endpoints",  # Hardcoded by AWS
-            start_time_key="receivedTime",
-            end_time_key="eventTime",
             endpoint_name=endpoint_name,
         )
         self._endpoint_name = endpoint_name
