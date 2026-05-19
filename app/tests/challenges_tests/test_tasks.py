@@ -91,9 +91,9 @@ def test_challenge_budget_alert_email(settings):
     evaluation = EvaluationFactory(
         submission__phase=phase,
         time_limit=60,
-        utilization_invoice=invoice,
     )
 
+    evaluation.utilization.invoice = invoice
     evaluation.utilization.compute_cost_euro_millicents = 5 * 1000 * 100
     evaluation.utilization.save()
     update_challenge_compute_costs()
@@ -104,8 +104,8 @@ def test_challenge_budget_alert_email(settings):
     evaluation = EvaluationFactory(
         submission__phase=phase,
         time_limit=60,
-        utilization_invoice=invoice,
     )
+    evaluation.utilization.invoice = invoice
     evaluation.utilization.compute_cost_euro_millicents = 3 * 1000 * 100
     evaluation.utilization.save()
     update_challenge_compute_costs()
@@ -135,8 +135,8 @@ def test_challenge_budget_alert_email(settings):
     evaluation = EvaluationFactory(
         submission__phase=phase,
         time_limit=60,
-        utilization_invoice=invoice,
     )
+    evaluation.utilization.invoice = invoice
     evaluation.utilization.compute_cost_euro_millicents = 100000
     evaluation.utilization.save()
     update_challenge_compute_costs()
@@ -147,8 +147,8 @@ def test_challenge_budget_alert_email(settings):
     evaluation = EvaluationFactory(
         submission__phase=phase,
         time_limit=60,
-        utilization_invoice=invoice,
     )
+    evaluation.utilization.invoice = invoice
     evaluation.utilization.compute_cost_euro_millicents = 1
     evaluation.utilization.save()
     update_challenge_compute_costs()
@@ -184,8 +184,8 @@ def test_challenge_budget_alert_two_thresholds_one_email(settings):
     evaluation = EvaluationFactory(
         submission__phase=phase,
         time_limit=60,
-        utilization_invoice=invoice,
     )
+    evaluation.utilization.invoice = invoice
     evaluation.utilization.compute_cost_euro_millicents = 950000
     evaluation.utilization.save()
     update_challenge_compute_costs()
@@ -212,8 +212,8 @@ def test_challenge_budget_alert_no_budget():
     evaluation = EvaluationFactory(
         submission__phase=phase,
         time_limit=60,
-        utilization_invoice=invoice,
     )
+    evaluation.utilization.invoice = invoice
     evaluation.utilization.compute_cost_euro_millicents = 1
     evaluation.utilization.save()
     assert len(mail.outbox) == 0

@@ -1439,8 +1439,8 @@ class Job(CIVForObjectMixin, ComponentJob):
 
         return display_set
 
-    def create_utilization(self, *, invoice):
-        JobUtilization.objects.create(job=self, invoice=invoice)
+    def create_utilization(self):
+        JobUtilization.objects.create(job=self)
 
     @property
     def utilization(self):

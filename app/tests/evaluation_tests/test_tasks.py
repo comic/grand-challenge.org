@@ -1091,9 +1091,9 @@ def test_create_algorithm_jobs_for_evaluation_invoice_workflow():
         submission=submission,
         time_limit=ai.algorithm.time_limit,
         status=Evaluation.PENDING,
-        utilization_invoice=invoice,
     )
-
+    evaluation.utilization.invoice = invoice
+    evaluation.utilization.save()
     input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     interface = AlgorithmInterfaceFactory(inputs=[input_ci])
     ai.algorithm.interfaces.set([interface])
@@ -1130,8 +1130,9 @@ def test_create_algorithm_jobs_for_evaluation_invoice_workflow_no_valid_invoice(
         submission=submission,
         time_limit=ai.algorithm.time_limit,
         status=Evaluation.PENDING,
-        utilization_invoice=invoice,
     )
+    evaluation.utilization.invoice = invoice
+    evaluation.utilization.save()
 
     input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     interface = AlgorithmInterfaceFactory(inputs=[input_ci])
@@ -1182,8 +1183,9 @@ def test_create_algorithm_jobs_for_evaluation_invoice_workflow_job_different_inv
         submission=submission,
         time_limit=ai.algorithm.time_limit,
         status=Evaluation.PENDING,
-        utilization_invoice=invoice,
     )
+    evaluation.utilization.invoice = invoice
+    evaluation.utilization.save()
 
     input_ci = ComponentInterfaceFactory(kind=InterfaceKindChoices.BOOL)
     interface = AlgorithmInterfaceFactory(inputs=[input_ci])

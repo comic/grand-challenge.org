@@ -1711,8 +1711,9 @@ class Submission(FieldChangeMixin, UUIDModel):
                 requires_gpu_type=self.phase.evaluation_requires_gpu_type,
                 requires_memory_gb=self.phase.evaluation_requires_memory_gb,
                 status=Evaluation.VALIDATING_INPUTS,
-                utilization_invoice=invoice,
             )
+            evaluation.utilization.invoice = invoice
+            evaluation.utilization.save()
 
         if self.phase.submission_kind == SubmissionKindChoices.ALGORITHM:
             if not self.has_matching_algorithm_interfaces:
@@ -2460,8 +2461,8 @@ class Evaluation(CIVForObjectMixin, ComponentJob):
             },
         )
 
-    def create_utilization(self, *, invoice):
-        EvaluationUtilization.objects.create(evaluation=self, invoice=invoice)
+    def create_utilization(self):
+        EvaluationUtilization.objects.create(evaluation=self)
 
     @property
     def utilization(self):
