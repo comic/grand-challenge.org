@@ -674,7 +674,7 @@ def test_set_invocation_logs(settings):
                 ]
             },
             expected_params={
-                "logGroupName": "/aws/sagemaker/Endpoints",
+                "logGroupName": f"/aws/sagemaker/Endpoints/localhost-AE-{endpoint.pk}",
                 "logStreamNamePrefix": f"localhost-AE-{endpoint.pk}",
             },
         )
@@ -770,7 +770,7 @@ def test_set_invocation_logs(settings):
                 "nextBackwardToken": "foo",
             },
             expected_params={
-                "logGroupName": "/aws/sagemaker/Endpoints",
+                "logGroupName": f"/aws/sagemaker/Endpoints/localhost-AE-{endpoint.pk}",
                 "logStreamName": f"localhost-AE-{endpoint.pk}/i-whatever",
                 "startFromHead": False,
                 "startTime": 1654767467000,
@@ -796,7 +796,7 @@ def test_set_invocation_logs(settings):
                 "nextBackwardToken": "foo",
             },
             expected_params={
-                "logGroupName": "/aws/sagemaker/Endpoints",
+                "logGroupName": f"/aws/sagemaker/Endpoints/localhost-AE-{endpoint.pk}",
                 "logStreamName": f"localhost-AE-{endpoint.pk}/i-whatever",
                 "startFromHead": False,
                 "startTime": 1654767467000,

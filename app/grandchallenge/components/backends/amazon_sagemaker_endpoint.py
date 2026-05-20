@@ -39,7 +39,7 @@ class AmazonSageMakerEndpointExecutor(AmazonSageMakerTrainingExecutor):
     @property
     def _log_group_name(self):
         # Hardcoded by AWS
-        return "/aws/sagemaker/Endpoints"
+        return f"/aws/sagemaker/Endpoints/{self.__endpoint_name}"
 
     def _get_start_time(self, *, event):
         return event.get("receivedTime")
