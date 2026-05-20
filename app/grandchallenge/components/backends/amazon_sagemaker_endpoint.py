@@ -1,5 +1,6 @@
 import logging
 import re
+from datetime import datetime
 from typing import NamedTuple
 from uuid import UUID
 
@@ -42,10 +43,15 @@ class AmazonSageMakerEndpointExecutor(AmazonSageMakerTrainingExecutor):
         return f"/aws/sagemaker/Endpoints/{self.__endpoint_name}"
 
     def _get_start_time(self, *, event):
-        return event.get("receivedTime")
+        return int(
+            datetime.fromisoformat(event.get("receivedTime")).timestamp()
+            * 1000
+        )
 
     def _get_end_time(self, *, event):
-        return event.get("eventTime")
+        return int(
+            datetime.fromisoformat(event.get("eventTime")).timestamp() * 1000
+        )
 
 
 class EndpointOrchestrator:
