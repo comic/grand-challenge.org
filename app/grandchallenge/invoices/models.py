@@ -360,7 +360,7 @@ class Invoice(models.Model, FieldChangeMixin):
         if (
             not self._state.adding
             and self.payment_type != PaymentTypeChoices.COMPLIMENTARY
-            and self._initial_state["payment_status"]
+            and self.initial_value("payment_status")
             != PaymentStatusChoices.INITIALIZED
         ):
             # Assert total amount unchanged
