@@ -316,7 +316,9 @@ class EndpointOrchestrator:
             ContentType="application/json",
             InputLocation=self._invocation_s3_uri,
             InferenceId=inference_id,
-            InvocationTimeoutSeconds=int(self._time_limit.total_seconds()),
+            InvocationTimeoutSeconds=int(
+                self._time_limit.total_seconds() + 10
+            ),  # Add buffer time to upload invocation result
         )
 
     @staticmethod
