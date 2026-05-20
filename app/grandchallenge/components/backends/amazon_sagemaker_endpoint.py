@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import NamedTuple
 from uuid import UUID
 
@@ -54,9 +54,10 @@ class AmazonSageMakerEndpointExecutor(AmazonSageMakerTrainingExecutor):
         )
 
     def _get_end_time(self, *, event):
-        return int(
-            datetime.fromisoformat(event.get("eventTime")).timestamp() * 1000
-        )
+        event_time = datetime.fromisoformat(event.get("eventTime"))
+        # Add buffer time to allow logs to complete
+        log_end_time = event_time + timedelta(seconds=10)
+        return int(log_end_time.timestamp() * 1000)
 
     @property
     def runtime_setup_result_key(self):
