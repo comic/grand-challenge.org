@@ -1829,13 +1829,9 @@ def handle_endpoint_invocation_event(*, event: dict):
             pk=invocation_params.pk
         )
 
-    if invocation.status == invocation.StatusChoices.CANCELLED:
+    if invocation.status != invocation.StatusChoices.EXECUTING:
         # Nothing to do
         return
-    elif invocation.status != invocation.StatusChoices.EXECUTING:
-        raise RuntimeError(
-            "Invocation is not in the expected state for handling events"
-        )
 
     orchestrator = invocation.orchestrator
 

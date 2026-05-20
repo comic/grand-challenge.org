@@ -1741,34 +1741,14 @@ def test_handle_endpoint_invocation_invalid_events(settings):
 @pytest.mark.parametrize(
     "status",
     set(InvocationStatusChoices).difference(
-        [InvocationStatusChoices.EXECUTING, InvocationStatusChoices.CANCELLED]
+        [InvocationStatusChoices.EXECUTING]
     ),
 )
 @pytest.mark.django_db
-def test_handle_endpoint_invocation_wrong_state_raises(
+def test_handle_endpoint_invocation_wrong_state_ignored(
     mocker, settings, status
 ):
     invocation = InvocationFactory(status=status)
-    event = {
-        "invocationStatus": "Completed",
-        "inferenceId": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{invocation.pk}",
-    }
-    mock_handle_event = mocker.patch.object(
-        EndpointOrchestrator,
-        "handle_event",
-    )
-
-    with pytest.raises(RuntimeError, match="not in the expected state"):
-        handle_endpoint_invocation_event(event=event)
-    invocation.refresh_from_db()
-
-    mock_handle_event.assert_not_called()
-    assert invocation.status == status
-
-
-@pytest.mark.django_db
-def test_handle_endpoint_invocation_cancelled_skipped(mocker, settings):
-    invocation = InvocationFactory(status=InvocationStatusChoices.CANCELLED)
     event = {
         "invocationStatus": "Completed",
         "inferenceId": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{invocation.pk}",
@@ -1782,4 +1762,4 @@ def test_handle_endpoint_invocation_cancelled_skipped(mocker, settings):
     invocation.refresh_from_db()
 
     mock_handle_event.assert_not_called()
-    assert invocation.status == InvocationStatusChoices.CANCELLED
+    assert invocation.status == status
