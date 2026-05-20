@@ -4,9 +4,10 @@ import pytest
 from guardian.shortcuts import assign_perm
 from rest_framework.exceptions import ErrorDetail
 
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import Endpoint, Job
 from grandchallenge.algorithms.serializers import (
     HyperlinkedJobSerializer,
+    InvocationPostSerializer,
     JobPostSerializer,
 )
 from grandchallenge.cases.models import RawImageUploadSession
@@ -16,6 +17,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmImageFactory,
     AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
+    EndpointFactory,
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
@@ -583,6 +585,93 @@ def test_validate_inputs_on_job_serializer(inputs, interface, rf):
         assert not serializer.is_valid()
         assert (
             "The set of inputs provided does not match any of the algorithm's interfaces."
+            in str(serializer.errors)
+        )
+        assert "algorithm_interface" not in serializer.validated_data
+
+
+@pytest.mark.parametrize(
+    "inputs, interface",
+    (
+        ([1], 1),  # matches interface 1 of algorithm
+        ([1, 2], 2),  # matches interface 2 of algorithm
+        ([3, 4, 5], 3),  # matches interface 3 of algorithm
+        ([4], None),  # matches interface 4, but not configured for algorithm
+        (
+            [1, 2, 3],
+            None,
+        ),  # matches interface 5, but not configured for algorithm
+        ([2], None),  # matches no interface (implements part of interface 2)
+        (
+            [1, 3, 4],
+            None,
+        ),  # matches no interface (implements interface 3 and an additional input)
+    ),
+)
+@pytest.mark.django_db
+def test_input_validation_on_invocation_serializer(inputs, interface, rf):
+    user = UserFactory()
+    algorithm = AlgorithmFactory()
+    algorithm.add_editor(user)
+    ai = AlgorithmImageFactory(
+        algorithm=algorithm,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+    endpoint = EndpointFactory(
+        algorithm_image=ai, creator=user, status=Endpoint.StatusChoices.RUNNING
+    )
+
+    io1, io2, io3, io4, io5 = AlgorithmInterfaceFactory.create_batch(5)
+    ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(
+        6, kind=ComponentInterface.Kind.STRING
+    )
+
+    interfaces = [io1, io2, io3]
+    cis = [ci1, ci2, ci3, ci4, ci5, ci6]
+
+    io1.inputs.set([ci1])
+    io2.inputs.set([ci1, ci2])
+    io3.inputs.set([ci3, ci4, ci5])
+    io4.inputs.set([ci1, ci2, ci3])
+    io5.inputs.set([ci4])
+    io1.outputs.set([ci6])
+    io2.outputs.set([ci3])
+    io3.outputs.set([ci1])
+    io4.outputs.set([ci1])
+    io5.outputs.set([ci1])
+
+    algorithm.interfaces.add(io1)
+    algorithm.interfaces.add(io2)
+    algorithm.interfaces.add(io3)
+
+    algorithm_interface = interfaces[interface - 1] if interface else None
+    inputs = [cis[i - 1] for i in inputs]
+
+    invocation = {
+        "endpoint": endpoint.api_url,
+        "inputs": [
+            {"interface": int.slug, "value": "dummy"} for int in inputs
+        ],
+    }
+
+    request = rf.get("/foo")
+    request.user = user
+    serializer = InvocationPostSerializer(
+        data=invocation, context={"request": request}
+    )
+
+    if interface:
+        assert serializer.is_valid()
+        assert (
+            serializer.validated_data["algorithm_interface"]
+            == algorithm_interface
+        )
+    else:
+        assert not serializer.is_valid()
+        assert (
+            "The set of inputs provided does not match any of the endpoint's algorithm's interfaces."
             in str(serializer.errors)
         )
         assert "algorithm_interface" not in serializer.validated_data
