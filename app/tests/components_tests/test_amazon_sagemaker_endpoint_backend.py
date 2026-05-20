@@ -856,8 +856,8 @@ def test_set_invocation_logs(settings):
         )
         orchestrator._set_task_logs(
             event={
-                "receivedTime": 1654767467000,
-                "eventTime": 1654767481000,
+                "receivedTime": "2022-06-09T09:37:47.000Z",
+                "eventTime": "2022-06-09T09:38:01.000Z",
             },
         )
 
