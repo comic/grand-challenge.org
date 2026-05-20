@@ -6,18 +6,23 @@ from rest_framework.exceptions import ErrorDetail
 
 from grandchallenge.algorithms.models import Endpoint, Job
 from grandchallenge.algorithms.serializers import (
+    HyperlinkedInvocationSerializer,
     HyperlinkedJobSerializer,
     InvocationPostSerializer,
     JobPostSerializer,
 )
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKindChoices,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
     EndpointFactory,
+    InvocationFactory,
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
@@ -588,6 +593,47 @@ def test_validate_inputs_on_job_serializer(inputs, interface, rf):
             in str(serializer.errors)
         )
         assert "algorithm_interface" not in serializer.validated_data
+
+
+@pytest.mark.django_db
+def test_hyperlinked_invocation_serializer(rf):
+    invocation = InvocationFactory()
+    civ = ComponentInterfaceValueFactory(
+        interface__kind=InterfaceKindChoices.PANIMG_IMAGE, image=ImageFactory()
+    )
+    invocation.inputs.set([civ])
+    serializer = HyperlinkedInvocationSerializer(
+        invocation, context={"request": rf.get("/foo", secure=True)}
+    )
+    assert serializer.data["status"] == invocation.get_status_display()
+    assert serializer.data["endpoint"] == invocation.endpoint.api_url
+    assert serializer.data["inputs"][0]["image"] == str(
+        invocation.inputs.first().image.api_url
+    )
+
+
+@pytest.mark.django_db
+def test_invocation_post_serializer_endpoint_queryset(rf):
+    user = UserFactory()
+    endpoint_with_perm_running = EndpointFactory(
+        creator=user, status=Endpoint.StatusChoices.RUNNING
+    )
+    endpoint_with_perm_pending = EndpointFactory(creator=user)
+    endpoint_without_perm = EndpointFactory(
+        status=Endpoint.StatusChoices.RUNNING
+    )
+    request = rf.get("/foo", secure=True)
+    request.user = user
+
+    serializer = InvocationPostSerializer(
+        InvocationFactory(), context={"request": request}
+    )
+    assert endpoint_with_perm_running in serializer.fields["endpoint"].queryset
+    assert (
+        endpoint_with_perm_pending
+        not in serializer.fields["endpoint"].queryset
+    )
+    assert endpoint_without_perm not in serializer.fields["endpoint"].queryset
 
 
 @pytest.mark.parametrize(
