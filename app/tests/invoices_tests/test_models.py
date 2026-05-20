@@ -451,6 +451,26 @@ def test_total_amount_can_change_for_complimentary_invoices():
         invoice.clean()
 
 
+@pytest.mark.parametrize(
+    "payment_type", (PaymentTypeChoices.PREPAID, PaymentTypeChoices.POSTPAID)
+)
+@pytest.mark.django_db
+def test_updating_total_amount_and_status_simultaneously_is_possible(
+    payment_type,
+):
+    invoice = InvoiceFactory(
+        payment_type=payment_type,
+        payment_status=PaymentStatusChoices.INITIALIZED,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=2,
+    )
+    invoice.support_costs_euros = 2
+    invoice.payment_status = PaymentStatusChoices.REQUESTED
+    with nullcontext():
+        invoice.clean()
+
+
 @pytest.mark.django_db
 def test_invoices_cannot_be_deleted():
     invoice = InvoiceFactory()
