@@ -34,6 +34,8 @@ from grandchallenge.evaluation.models import (
     SubmissionGroupObjectPermission,
     SubmissionUserObjectPermission,
 )
+from grandchallenge.evaluation.utils import SubmissionKindChoices
+from grandchallenge.subdomains.utils import reverse
 
 
 class PhaseAdminForm(ModelForm):
@@ -100,12 +102,29 @@ class PhaseAdmin(admin.ModelAdmin):
     readonly_fields = (
         "give_algorithm_editors_job_view_permissions",
         "algorithm_interfaces",
+        "algorithm_interface_configuration_links",
     )
     form = PhaseAdminForm
 
     @admin.display(boolean=True)
     def open_for_submissions(self, instance):
         return instance.open_for_submissions
+
+    @staticmethod
+    def algorithm_interface_configuration_links(obj):
+        if obj.submission_kind != SubmissionKindChoices.ALGORITHM:
+            return "-"
+        else:
+            return format_html(
+                '<a href="{link}">{link}</a>',
+                link=reverse(
+                    "evaluation:interface-list",
+                    kwargs={
+                        "challenge_short_name": obj.challenge.short_name,
+                        "slug": obj.slug,
+                    },
+                ),
+            )
 
 
 @admin.action(
