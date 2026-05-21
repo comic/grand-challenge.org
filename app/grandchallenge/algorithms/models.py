@@ -1732,6 +1732,12 @@ class Endpoint(FieldChangeMixin, UUIDModel):
             update_fields=["duration", "compute_cost_euro_millicents"]
         )
 
+    @property
+    def api_url(self) -> str:
+        return reverse(
+            "api:algorithms-endpoint-detail", kwargs={"pk": self.pk}
+        )
+
 
 class EndpointUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset({"invoke_endpoint"})

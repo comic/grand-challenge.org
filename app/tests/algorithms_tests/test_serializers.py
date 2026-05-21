@@ -4,18 +4,25 @@ import pytest
 from guardian.shortcuts import assign_perm
 from rest_framework.exceptions import ErrorDetail
 
-from grandchallenge.algorithms.models import Job
+from grandchallenge.algorithms.models import Endpoint, Job
 from grandchallenge.algorithms.serializers import (
+    HyperlinkedInvocationSerializer,
     HyperlinkedJobSerializer,
+    InvocationPostSerializer,
     JobPostSerializer,
 )
 from grandchallenge.cases.models import RawImageUploadSession
-from grandchallenge.components.models import ComponentInterface
+from grandchallenge.components.models import (
+    ComponentInterface,
+    InterfaceKindChoices,
+)
 from tests.algorithms_tests.factories import (
     AlgorithmFactory,
     AlgorithmImageFactory,
     AlgorithmInterfaceFactory,
     AlgorithmJobFactory,
+    EndpointFactory,
+    InvocationFactory,
 )
 from tests.cases_tests.factories import RawImageUploadSessionFactory
 from tests.components_tests.factories import (
@@ -81,7 +88,7 @@ def test_algorithm_relations_on_job_serializer(rf):
             True,
             ("TestInterface 1", "TestInterface 2"),
             ("testinterface-1",),
-            "The set of inputs provided does not match any of the algorithm's interfaces.",
+            "The set of inputs provided does not match any of the allowed algorithm interfaces.",
             False,
         ),
         (
@@ -90,7 +97,7 @@ def test_algorithm_relations_on_job_serializer(rf):
             True,
             ("TestInterface 1",),
             ("testinterface-1", "testinterface-2"),
-            "The set of inputs provided does not match any of the algorithm's interfaces.",
+            "The set of inputs provided does not match any of the allowed algorithm interfaces.",
             False,
         ),
         (
@@ -582,7 +589,135 @@ def test_validate_inputs_on_job_serializer(inputs, interface, rf):
     else:
         assert not serializer.is_valid()
         assert (
-            "The set of inputs provided does not match any of the algorithm's interfaces."
+            "The set of inputs provided does not match any of the allowed algorithm interfaces."
+            in str(serializer.errors)
+        )
+        assert "algorithm_interface" not in serializer.validated_data
+
+
+@pytest.mark.django_db
+def test_hyperlinked_invocation_serializer(rf):
+    invocation = InvocationFactory()
+    civ = ComponentInterfaceValueFactory(
+        interface__kind=InterfaceKindChoices.PANIMG_IMAGE, image=ImageFactory()
+    )
+    invocation.inputs.set([civ])
+    serializer = HyperlinkedInvocationSerializer(
+        invocation, context={"request": rf.get("/foo", secure=True)}
+    )
+    assert serializer.data["status"] == invocation.get_status_display()
+    assert serializer.data["endpoint"] == invocation.endpoint.api_url
+    assert serializer.data["inputs"][0]["image"] == str(
+        invocation.inputs.first().image.api_url
+    )
+
+
+@pytest.mark.django_db
+def test_invocation_post_serializer_endpoint_queryset(rf):
+    user = UserFactory()
+    endpoint_with_perm_running = EndpointFactory(
+        creator=user, status=Endpoint.StatusChoices.RUNNING
+    )
+    endpoint_with_perm_pending = EndpointFactory(creator=user)
+    endpoint_without_perm = EndpointFactory(
+        status=Endpoint.StatusChoices.RUNNING
+    )
+    request = rf.get("/foo", secure=True)
+    request.user = user
+
+    serializer = InvocationPostSerializer(
+        InvocationFactory(), context={"request": request}
+    )
+    assert endpoint_with_perm_running in serializer.fields["endpoint"].queryset
+    assert (
+        endpoint_with_perm_pending
+        not in serializer.fields["endpoint"].queryset
+    )
+    assert endpoint_without_perm not in serializer.fields["endpoint"].queryset
+
+
+@pytest.mark.parametrize(
+    "inputs, interface",
+    (
+        ([1], 1),  # matches interface 1 of algorithm
+        ([1, 2], 2),  # matches interface 2 of algorithm
+        ([3, 4, 5], 3),  # matches interface 3 of algorithm
+        ([4], None),  # matches interface 4, but not configured for algorithm
+        (
+            [1, 2, 3],
+            None,
+        ),  # matches interface 5, but not configured for algorithm
+        ([2], None),  # matches no interface (implements part of interface 2)
+        (
+            [1, 3, 4],
+            None,
+        ),  # matches no interface (implements interface 3 and an additional input)
+    ),
+)
+@pytest.mark.django_db
+def test_input_validation_on_invocation_serializer(inputs, interface, rf):
+    user = UserFactory()
+    algorithm = AlgorithmFactory()
+    algorithm.add_editor(user)
+    ai = AlgorithmImageFactory(
+        algorithm=algorithm,
+        is_desired_version=True,
+        is_manifest_valid=True,
+        is_in_registry=True,
+    )
+    endpoint = EndpointFactory(
+        algorithm_image=ai, creator=user, status=Endpoint.StatusChoices.RUNNING
+    )
+
+    io1, io2, io3, io4, io5 = AlgorithmInterfaceFactory.create_batch(5)
+    ci1, ci2, ci3, ci4, ci5, ci6 = ComponentInterfaceFactory.create_batch(
+        6, kind=ComponentInterface.Kind.STRING
+    )
+
+    interfaces = [io1, io2, io3]
+    cis = [ci1, ci2, ci3, ci4, ci5, ci6]
+
+    io1.inputs.set([ci1])
+    io2.inputs.set([ci1, ci2])
+    io3.inputs.set([ci3, ci4, ci5])
+    io4.inputs.set([ci1, ci2, ci3])
+    io5.inputs.set([ci4])
+    io1.outputs.set([ci6])
+    io2.outputs.set([ci3])
+    io3.outputs.set([ci1])
+    io4.outputs.set([ci1])
+    io5.outputs.set([ci1])
+
+    algorithm.interfaces.add(io1)
+    algorithm.interfaces.add(io2)
+    algorithm.interfaces.add(io3)
+
+    algorithm_interface = interfaces[interface - 1] if interface else None
+    inputs = [cis[i - 1] for i in inputs]
+
+    invocation = {
+        "endpoint": endpoint.api_url,
+        "inputs": [
+            {"interface": int.slug, "value": "dummy"} for int in inputs
+        ],
+    }
+
+    request = rf.get("/foo")
+    request.user = user
+    serializer = InvocationPostSerializer(
+        data=invocation, context={"request": request}
+    )
+
+    if interface:
+        assert serializer.is_valid()
+        assert (
+            serializer.validated_data["algorithm_interface"]
+            == algorithm_interface
+        )
+    else:
+        assert not serializer.is_valid()
+        assert (
+            "The set of inputs provided does not match any of the allowed algorithm interfaces"
             in str(serializer.errors)
         )
         assert "algorithm_interface" not in serializer.validated_data
