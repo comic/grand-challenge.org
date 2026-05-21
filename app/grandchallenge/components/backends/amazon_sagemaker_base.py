@@ -561,15 +561,14 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
         else:
             raise LogStreamNotFound("Log stream not found")
 
-    def _set_task_logs(self, *, event, task=None):
+    def _set_task_logs(self, *, event):
         stdout = []
         stderr = []
 
         for log_event in self._get_log_events(event=event):
             try:
                 parsed_log = parse_structured_log(
-                    log=log_event["message"].replace("\x00", ""),
-                    task=task,
+                    log=log_event["message"].replace("\x00", "")
                 )
                 timestamp = ms_timestamp_to_datetime(log_event["timestamp"])
             except (JSONDecodeError, KeyError, ValueError):
