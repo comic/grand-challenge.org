@@ -1582,6 +1582,7 @@ class PhaseStarterKitDownload(
     View,
 ):
     permission_required = "evaluation.change_phase"
+    accept_global_perms = True
     raise_exception = True
 
     def get_permission_object(self):

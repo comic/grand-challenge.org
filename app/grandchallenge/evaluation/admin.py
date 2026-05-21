@@ -102,7 +102,8 @@ class PhaseAdmin(admin.ModelAdmin):
     readonly_fields = (
         "give_algorithm_editors_job_view_permissions",
         "algorithm_interfaces",
-        "algorithm_interface_configuration_links",
+        "algorithm_interface_configuration_link",
+        "download_starter_kit_link",
     )
     form = PhaseAdminForm
 
@@ -111,7 +112,7 @@ class PhaseAdmin(admin.ModelAdmin):
         return instance.open_for_submissions
 
     @staticmethod
-    def algorithm_interface_configuration_links(obj):
+    def algorithm_interface_configuration_link(obj):
         if obj.submission_kind != SubmissionKindChoices.ALGORITHM:
             return "-"
         else:
@@ -119,6 +120,25 @@ class PhaseAdmin(admin.ModelAdmin):
                 '<a href="{link}">{link}</a>',
                 link=reverse(
                     "evaluation:interface-list",
+                    kwargs={
+                        "challenge_short_name": obj.challenge.short_name,
+                        "slug": obj.slug,
+                    },
+                ),
+            )
+
+    @staticmethod
+    def download_starter_kit_link(obj):
+        if (
+            obj.submission_kind != SubmissionKindChoices.ALGORITHM
+            or not obj.algorithm_interfaces.exists()
+        ):
+            return "-"
+        else:
+            return format_html(
+                '<a href="{link}">{link}</a>',
+                link=reverse(
+                    "evaluation:phase-starter-kit-download",
                     kwargs={
                         "challenge_short_name": obj.challenge.short_name,
                         "slug": obj.slug,
