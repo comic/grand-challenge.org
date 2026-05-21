@@ -381,7 +381,7 @@ class InvocationPostSerializer(serializers.ModelSerializer):
             )
 
     def validate(self, data):
-        endpoint = data.pop("endpoint")
+        endpoint = data["endpoint"]
         inputs = data.pop("inputs")
         data["algorithm_interface"] = (
             validate_inputs_and_return_matching_interface(
