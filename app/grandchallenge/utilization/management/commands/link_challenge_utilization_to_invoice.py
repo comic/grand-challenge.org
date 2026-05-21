@@ -30,10 +30,12 @@ class Command(BaseCommand):
                 invoice_by_challenge[inv.challenge_id] = inv
 
         missing_invoice_challenges = []
-        for challenge in Challenge.objects.all():
+        challenge_count = Challenge.objects.count()
+
+        for indx, challenge in enumerate(Challenge.objects.all()):
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Working on linking utilizations for {challenge.short_name}."
+                    f"Working on linking utilizations for {challenge.short_name} ({indx + 1}/{challenge_count})."
                 )
             )
             try:
