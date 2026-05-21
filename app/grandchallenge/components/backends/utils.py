@@ -63,15 +63,17 @@ def parse_structured_log(*, log: str, task=None) -> ParsedLog | None:
     source = SourceChoices(structured_log["source"])
     inference_result_skipped = structured_log.get("inference_result_skipped")
 
+    # Defensive, in case the type of structured_log["internal"] is str
     if structured_log["internal"] is False and (
         task is None or structured_log["task"] == task
     ):
-        # Defensive, in case the type of structured_log["internal"] is str
         return ParsedLog(
             message=message,
             source=source,
             inference_result_skipped=inference_result_skipped,
         )
+    else:
+        return None
 
 
 def safe_extract(*, src: File, dest: Path):
