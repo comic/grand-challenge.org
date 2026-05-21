@@ -349,7 +349,14 @@ class HyperlinkedInvocationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Invocation
-        fields = ["pk", "endpoint", "inputs", "outputs", "status"]
+        fields = [
+            "pk",
+            "endpoint",
+            "time_limit",
+            "inputs",
+            "outputs",
+            "status",
+        ]
 
 
 class InvocationPostSerializer(serializers.ModelSerializer):
@@ -362,12 +369,13 @@ class InvocationPostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Invocation
-        fields = ["endpoint", "time_limit", "inputs"]
+        fields = ["pk", "endpoint", "time_limit", "inputs", "status"]
         extra_kwargs = {
             "time_limit": {
                 "default": settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION,
             }
         }
+        read_only_fields = ["status"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
