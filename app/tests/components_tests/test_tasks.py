@@ -1,3 +1,6 @@
+import hashlib
+import hmac
+import io
 import json
 import uuid
 from contextlib import nullcontext
@@ -17,6 +20,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmImage,
     Endpoint,
     EndpointStatusChoices,
+    InvocationStatusChoices,
     Job,
 )
 from grandchallenge.cases.models import (
@@ -26,6 +30,7 @@ from grandchallenge.cases.models import (
 from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
     EndpointOrchestrator,
 )
+from grandchallenge.components.backends.base import InferenceResult
 from grandchallenge.components.exceptions import InstanceInUse
 from grandchallenge.components.models import (
     APIMethodChoices,
@@ -45,6 +50,7 @@ from grandchallenge.components.tasks import (
     delete_container_image,
     encode_b64j,
     execute_job,
+    handle_endpoint_invocation_event,
     preload_interactive_algorithms,
     remove_container_image_from_registry,
     remove_inactive_container_images,
@@ -69,6 +75,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     EndpointFactory,
+    InvocationFactory,
 )
 from tests.archives_tests.factories import ArchiveItemFactory
 from tests.cases_tests.factories import (
@@ -1651,3 +1658,108 @@ def test_stop_expired_endpoints(
     assert len(callbacks) == 1
     mock_deprovision.assert_called_once()
     assert endpoint_to_stop.status == EndpointStatusChoices.STOPPED
+
+
+@pytest.mark.django_db
+def test_handle_endpoint_invocation_completed_event(settings):
+    invocation = InvocationFactory(
+        status=InvocationStatusChoices.EXECUTING,
+        endpoint__signing_key=b"itsasecret",
+    )
+    orchestrator = invocation.orchestrator
+    inference_result = InferenceResult(
+        pk=f"algorithms-invocation-{invocation.pk}",
+        return_code=0,
+        exec_duration=None,
+        invoke_duration=timedelta(seconds=12),
+        outputs=[],
+        sagemaker_shim_version="0.7.0",
+    )
+    inference_result_content = inference_result.model_dump_json().encode(
+        "utf-8"
+    )
+    signature = hmac.new(
+        key=b"itsasecret",
+        msg=inference_result_content,
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+    orchestrator._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(inference_result_content),
+        Bucket=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
+        Key=orchestrator._executor._inference_result_key,
+        ExtraArgs={
+            "Metadata": {"signature_hmac_sha256": signature},
+        },
+    )
+    event = {
+        "invocationStatus": "Completed",
+        "inferenceId": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{invocation.pk}",
+    }
+
+    handle_endpoint_invocation_event(event=event)
+    invocation.refresh_from_db()
+
+    assert invocation.status == invocation.StatusChoices.EXECUTED
+    assert invocation.invoke_duration == timedelta(seconds=12)
+
+
+@pytest.mark.parametrize("status", ("Failed", "Expired"))
+@pytest.mark.django_db
+def test_handle_endpoint_invocation_failure_events(settings, status):
+    invocation = InvocationFactory(
+        status=InvocationStatusChoices.EXECUTING,
+    )
+    event = {
+        "invocationStatus": f"{status}",
+        "inferenceId": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{invocation.pk}",
+    }
+
+    handle_endpoint_invocation_event(event=event)
+    invocation.refresh_from_db()
+
+    assert invocation.status == InvocationStatusChoices.FAILURE
+    assert invocation.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+
+
+@pytest.mark.django_db
+def test_handle_endpoint_invocation_invalid_events(settings):
+    invocation = InvocationFactory(
+        status=InvocationStatusChoices.EXECUTING,
+    )
+    event = {
+        "invocationStatus": "some invalid status",
+        "inferenceId": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{invocation.pk}",
+    }
+
+    handle_endpoint_invocation_event(event=event)
+    invocation.refresh_from_db()
+
+    assert invocation.status == InvocationStatusChoices.FAILURE
+    assert invocation.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+
+
+@pytest.mark.parametrize(
+    "status",
+    set(InvocationStatusChoices).difference(
+        [InvocationStatusChoices.EXECUTING]
+    ),
+)
+@pytest.mark.django_db
+def test_handle_endpoint_invocation_wrong_state_ignored(
+    mocker, settings, status
+):
+    invocation = InvocationFactory(status=status)
+    event = {
+        "invocationStatus": "Completed",
+        "inferenceId": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AEI-{invocation.pk}",
+    }
+    mock_handle_event = mocker.patch.object(
+        EndpointOrchestrator,
+        "handle_event",
+    )
+
+    handle_endpoint_invocation_event(event=event)
+    invocation.refresh_from_db()
+
+    mock_handle_event.assert_not_called()
+    assert invocation.status == status
