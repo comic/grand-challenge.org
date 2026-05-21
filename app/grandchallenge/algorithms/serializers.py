@@ -361,7 +361,12 @@ class InvocationPostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Invocation
-        fields = ["pk", "endpoint", "inputs", "status"]
+        fields = ["pk", "endpoint", "time_limit", "inputs", "status"]
+        extra_kwargs = {
+            "time_limit": {
+                "default": settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION,
+            }
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

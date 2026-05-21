@@ -724,6 +724,40 @@ def test_input_validation_on_invocation_serializer(inputs, interface, rf):
 
 
 @pytest.mark.django_db
+def test_time_limit_validation_on_invocation_post_serializer(settings):
+    serializer = InvocationPostSerializer()
+
+    assert (
+        serializer.fields["time_limit"].default
+        == settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION
+    )
+
+    serializer = InvocationPostSerializer(data={})
+    serializer.is_valid()  # run validation
+
+    assert "time_limit" not in serializer.errors
+
+    serializer = InvocationPostSerializer(
+        data={
+            "time_limit": settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION,
+        },
+    )
+    serializer.is_valid()  # run validation
+
+    assert "time_limit" not in serializer.errors
+
+    serializer = InvocationPostSerializer(
+        data={
+            "time_limit": settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION
+            + 1,
+        },
+    )
+    serializer.is_valid()  # run validation
+
+    assert "time_limit" in serializer.errors
+
+
+@pytest.mark.django_db
 def test_invocation_post_serializer_create(request):
     endpoint = EndpointFactory(status=Endpoint.StatusChoices.RUNNING)
     request.user = endpoint.creator
