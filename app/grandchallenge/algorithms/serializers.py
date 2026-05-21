@@ -21,6 +21,7 @@ from grandchallenge.algorithms.models import (
     AlgorithmModel,
     Endpoint,
     Invocation,
+    InvocationStatusChoices,
     Job,
     annotate_input_output_counts,
 )
@@ -399,3 +400,31 @@ class InvocationPostSerializer(serializers.ModelSerializer):
         )
 
         return data
+
+    def create(self, validated_data):
+        civ_data_objects = validated_data.pop("civ_data_objects", [])
+
+        invocation = Invocation.objects.create(
+            **validated_data,
+            status=InvocationStatusChoices.VALIDATING_INPUTS,
+        )
+
+        try:
+            invocation.process_civ_data_objects_and_execute_linked_task(
+                civ_data_objects=civ_data_objects,
+                user=self.context["request"].user,
+            )
+        except CIVNotEditableException as e:
+            invocation.refresh_from_db()
+            if invocation.status == invocation.StatusChoices.CANCELLED:
+                # this can happen for jobs with multiple inputs
+                # if one of them fails validation
+                pass
+            else:
+                error_handler = invocation.get_error_handler()
+                error_handler.handle_error(
+                    error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+                )
+                logger.error(e, exc_info=True)
+
+        return invocation
