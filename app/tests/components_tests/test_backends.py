@@ -24,6 +24,7 @@ from grandchallenge.components.backends.base import (
 from grandchallenge.components.backends.exceptions import ComponentException
 from grandchallenge.components.backends.utils import (
     _filter_members,
+    parse_structured_log,
     user_error,
 )
 from grandchallenge.components.models import (
@@ -867,3 +868,39 @@ def test_invocation_results_signature_verified(settings):
     )
 
     assert executor._get_inference_result() == inference_result
+
+
+def test_parse_structured_logs_filters_task():
+    log_with_task = json.dumps(
+        {
+            "log": "message with task",
+            "source": "stdout",
+            "internal": False,
+            "task": "1",
+        }
+    )
+    log_without_task = json.dumps(
+        {
+            "log": "message without task",
+            "source": "stdout",
+            "internal": False,
+            "task": None,
+        }
+    )
+
+    parsed_log = parse_structured_log(log=log_with_task, task="1")
+
+    assert parsed_log.message == "message with task"
+
+    parsed_log = parse_structured_log(log=log_without_task, task="1")
+
+    assert parsed_log is None
+
+    parsed_log = parse_structured_log(log=log_with_task, task=None)
+
+    # when `task` is None, messages with a task are __included__
+    assert parsed_log.message == "message with task"
+
+    parsed_log = parse_structured_log(log=log_without_task, task=None)
+
+    assert parsed_log.message == "message without task"
