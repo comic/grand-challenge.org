@@ -35,7 +35,7 @@ class Command(BaseCommand):
         for indx, challenge in enumerate(Challenge.objects.all()):
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Working on linking utilizations for {challenge.short_name} ({indx + 1}/{challenge_count})."
+                    f"Working on linking utilizations for {challenge.short_name!r} ({indx + 1}/{challenge_count})."
                 )
             )
             try:
@@ -43,8 +43,8 @@ class Command(BaseCommand):
             except KeyError:
                 missing_invoice_challenges.append(challenge.short_name)
                 self.stdout.write(
-                    self.style.SUCCESS(
-                        f"No invoice found for {challenge.short_name}."
+                    self.style.WARNING(
+                        f"No invoices found for {challenge.short_name!r}, skipping."
                     )
                 )
             else:
@@ -54,12 +54,16 @@ class Command(BaseCommand):
                         invoice__isnull=True,
                     ).update(invoice=invoice)
 
-        self.stdout.write(self.style.SUCCESS("Finished linking utilizations."))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Finished linking utilizations. Total challenges: {challenge_count}."
+            )
+        )
 
         if missing_invoice_challenges:
             self.stdout.write(
                 self.style.ERROR(
-                    f"No invoice found for challenges: {', '.join(missing_invoice_challenges)}."
+                    f"No invoice found for {len(missing_invoice_challenges)} challenges: {', '.join(missing_invoice_challenges)}."
                 )
             )
         else:
