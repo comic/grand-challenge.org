@@ -88,7 +88,7 @@ def test_algorithm_relations_on_job_serializer(rf):
             True,
             ("TestInterface 1", "TestInterface 2"),
             ("testinterface-1",),
-            "The set of inputs provided does not match any of the algorithm's interfaces.",
+            "The set of inputs provided does not match any of the allowed algorithm interfaces.",
             False,
         ),
         (
@@ -97,7 +97,7 @@ def test_algorithm_relations_on_job_serializer(rf):
             True,
             ("TestInterface 1",),
             ("testinterface-1", "testinterface-2"),
-            "The set of inputs provided does not match any of the algorithm's interfaces.",
+            "The set of inputs provided does not match any of the allowed algorithm interfaces.",
             False,
         ),
         (
@@ -589,7 +589,7 @@ def test_validate_inputs_on_job_serializer(inputs, interface, rf):
     else:
         assert not serializer.is_valid()
         assert (
-            "The set of inputs provided does not match any of the algorithm's interfaces."
+            "The set of inputs provided does not match any of the allowed algorithm interfaces."
             in str(serializer.errors)
         )
         assert "algorithm_interface" not in serializer.validated_data
@@ -717,7 +717,7 @@ def test_input_validation_on_invocation_serializer(inputs, interface, rf):
     else:
         assert not serializer.is_valid()
         assert (
-            "The set of inputs provided does not match any of the endpoint's algorithm's interfaces."
+            "The set of inputs provided does not match any of the allowed algorithm interfaces"
             in str(serializer.errors)
         )
         assert "algorithm_interface" not in serializer.validated_data

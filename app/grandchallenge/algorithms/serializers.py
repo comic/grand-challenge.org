@@ -176,6 +176,31 @@ class JobSerializer(serializers.ModelSerializer):
         ]
 
 
+def validate_inputs_and_return_matching_interface(
+    *, inputs, allowed_algorithm_interfaces
+):
+    """
+    Validates that the provided inputs match one of the allowed algorithm interfaces and returns the interface.
+    """
+    provided_inputs = {i["interface"] for i in inputs}
+    annotated_qs = annotate_input_output_counts(
+        allowed_algorithm_interfaces, inputs=provided_inputs
+    )
+    try:
+        interface = annotated_qs.get(
+            relevant_input_count=len(provided_inputs),
+            input_count=len(provided_inputs),
+        )
+        return interface
+    except ObjectDoesNotExist:
+        raise serializers.ValidationError(
+            f"The set of inputs provided does not match "
+            f"any of the allowed algorithm interfaces. The "
+            f"following input combinations are allowed: "
+            f"{oxford_comma([f'Interface {n}: {oxford_comma(interface.inputs.all())}' for n, interface in enumerate(allowed_algorithm_interfaces, start=1)])}"
+        )
+
+
 class HyperlinkedJobSerializer(JobSerializer):
     """Serializer with hyperlinks for use in public API"""
 
@@ -225,16 +250,16 @@ class JobPostSerializer(JobSerializer):
             )
 
     def validate(self, data):
-        self._algorithm = data.pop("algorithm")
+        algorithm = data.pop("algorithm")
         user = self.context["request"].user
 
-        if not self._algorithm.active_image:
+        if not algorithm.active_image:
             raise serializers.ValidationError(
                 "Algorithm image is not ready to be used"
             )
         data["creator"] = user
-        data["algorithm_image"] = self._algorithm.active_image
-        data["algorithm_model"] = self._algorithm.active_model
+        data["algorithm_image"] = algorithm.active_image
+        data["algorithm_model"] = algorithm.active_model
 
         jobs_limit = data["algorithm_image"].get_remaining_jobs(
             user=data["creator"]
@@ -255,7 +280,10 @@ class JobPostSerializer(JobSerializer):
 
         inputs = data.pop("inputs")
         data["algorithm_interface"] = (
-            self.validate_inputs_and_return_matching_interface(inputs=inputs)
+            validate_inputs_and_return_matching_interface(
+                inputs=inputs,
+                allowed_algorithm_interfaces=algorithm.interfaces.all(),
+            )
         )
         data["civ_data_objects"] = convert_deserialized_civ_data(
             deserialized_civ_data=inputs
@@ -305,29 +333,6 @@ class JobPostSerializer(JobSerializer):
 
         return job
 
-    def validate_inputs_and_return_matching_interface(self, *, inputs):
-        """
-        Validates that the provided inputs match one of the configured interfaces of
-        the algorithm and returns that AlgorithmInterface
-        """
-        provided_inputs = {i["interface"] for i in inputs}
-        annotated_qs = annotate_input_output_counts(
-            self._algorithm.interfaces, inputs=provided_inputs
-        )
-        try:
-            interface = annotated_qs.get(
-                relevant_input_count=len(provided_inputs),
-                input_count=len(provided_inputs),
-            )
-            return interface
-        except ObjectDoesNotExist:
-            raise serializers.ValidationError(
-                f"The set of inputs provided does not match "
-                f"any of the algorithm's interfaces. This algorithm supports the "
-                f"following input combinations: "
-                f"{oxford_comma([f'Interface {n}: {oxford_comma(interface.inputs.all())}' for n, interface in enumerate(self._algorithm.interfaces.all(), start=1)])}"
-            )
-
 
 class HyperlinkedInvocationSerializer(serializers.ModelSerializer):
     """Serializer with hyperlinks for use in public API"""
@@ -376,38 +381,16 @@ class InvocationPostSerializer(serializers.ModelSerializer):
             )
 
     def validate(self, data):
-        self._endpoint = data.pop("endpoint")
+        endpoint = data.pop("endpoint")
         inputs = data.pop("inputs")
         data["algorithm_interface"] = (
-            self.validate_inputs_and_return_matching_interface(inputs=inputs)
+            validate_inputs_and_return_matching_interface(
+                inputs=inputs,
+                allowed_algorithm_interfaces=endpoint.algorithm_image.algorithm.interfaces.all(),
+            )
         )
         data["civ_data_objects"] = convert_deserialized_civ_data(
             deserialized_civ_data=inputs
         )
 
         return data
-
-    def validate_inputs_and_return_matching_interface(self, *, inputs):
-        """
-        Validates that the provided inputs match one of the endpoint's algorithm's configured interfaces
-        """
-        provided_inputs = {i["interface"] for i in inputs}
-        allowed_algorithm_interfaces = (
-            self._endpoint.algorithm_image.algorithm.interfaces.all()
-        )
-        annotated_qs = annotate_input_output_counts(
-            allowed_algorithm_interfaces, inputs=provided_inputs
-        )
-        try:
-            interface = annotated_qs.get(
-                relevant_input_count=len(provided_inputs),
-                input_count=len(provided_inputs),
-            )
-            return interface
-        except ObjectDoesNotExist:
-            raise serializers.ValidationError(
-                f"The set of inputs provided does not match "
-                f"any of the endpoint's algorithm's interfaces. This algorithm supports the "
-                f"following input combinations: "
-                f"{oxford_comma([f'Interface {n}: {oxford_comma(interface.inputs.all())}' for n, interface in enumerate(allowed_algorithm_interfaces, start=1)])}"
-            )
