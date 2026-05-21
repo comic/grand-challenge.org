@@ -323,11 +323,6 @@ class ModelChoices(TextChoices):
 class AmazonSageMakerBaseExecutor(Executor, ABC):
     @property
     @abstractmethod
-    def _log_group_name(self):
-        pass
-
-    @property
-    @abstractmethod
     def _metric_instance_prefix(self):
         pass
 
@@ -335,13 +330,11 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     def _get_job_status(self, *, event):
         pass
 
-    @abstractmethod
     def _get_start_time(self, *, event):
-        pass
+        return event.get(self._start_time_key)
 
-    @abstractmethod
     def _get_end_time(self, *, event):
-        pass
+        return event.get(self._end_time_key)
 
     @abstractmethod
     def _get_instance_name(self, *, event):
@@ -355,8 +348,14 @@ class AmazonSageMakerBaseExecutor(Executor, ABC):
     def _stop_job_boto(self):
         pass
 
-    def __init__(self, *args, **kwargs):
+    def __init__(
+        self, *args, log_group_name, start_time_key, end_time_key, **kwargs
+    ):
         super().__init__(*args, **kwargs)
+
+        self._log_group_name = log_group_name
+        self._start_time_key = start_time_key
+        self._end_time_key = end_time_key
 
         self.__utilization_duration = None
         self.__runtime_metrics = {}

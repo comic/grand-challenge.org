@@ -27,6 +27,16 @@ class InvocationParams(NamedTuple):
     pk: UUID
 
 
+class AmazonSageMakerEndpointExecutor(AmazonSageMakerTrainingExecutor):
+    def __init__(self, *args, endpoint_name, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__endpoint_name = endpoint_name
+
+    @property
+    def _sagemaker_job_name(self):
+        return self.__endpoint_name
+
+
 class EndpointOrchestrator:
     def __init__(
         self,
@@ -40,7 +50,7 @@ class EndpointOrchestrator:
         time_limit=settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION,
         algorithm_model=None,
     ):
-        self._executor = AmazonSageMakerTrainingExecutor(
+        self._executor = AmazonSageMakerEndpointExecutor(
             job_id=job_id,
             exec_image_repo_tag=exec_image_repo_tag,
             memory_limit=memory_limit,
@@ -53,6 +63,10 @@ class EndpointOrchestrator:
             input_bucket_name=settings.ALGORITHM_ENDPOINTS_INPUT_BUCKET_NAME,
             output_bucket_name=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
             use_task_list=False,
+            log_group_name="/aws/sagemaker/Endpoints",  # Hardcoded by AWS
+            start_time_key="receivedTime",
+            end_time_key="eventTime",
+            endpoint_name=endpoint_name,
         )
         self._endpoint_name = endpoint_name
         self._exec_image_repo_tag = exec_image_repo_tag
@@ -143,6 +157,14 @@ class EndpointOrchestrator:
     @property
     def _time_limit(self):
         return self._executor._time_limit
+
+    @property
+    def stdout(self):
+        return self._executor.stdout
+
+    @property
+    def stderr(self):
+        return self._executor.stderr
 
     def provision_auxiliary_data(self):
         if self._algorithm_model:
@@ -288,7 +310,8 @@ class EndpointOrchestrator:
     def handle_event(self, *, event):
         invocation_status = self._get_invocation_status(event=event)
 
-        # TODO: set task_logs and runtime metrics
+        self._set_task_logs(event=event)
+        # TODO: set runtime metrics
 
         if invocation_status == "Completed":
             self._handle_completed_invocation()
@@ -313,3 +336,6 @@ class EndpointOrchestrator:
         task_logger.info(event)
         task_logger.error("Endpoint invocation failed")
         raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
+
+    def _set_task_logs(self, *, event):
+        self._executor._set_task_logs(event=event, task=self._executor._job_id)

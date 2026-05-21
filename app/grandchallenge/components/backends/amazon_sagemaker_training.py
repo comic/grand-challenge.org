@@ -15,10 +15,21 @@ from grandchallenge.core.error_messages import SystemErrorMessages
 
 
 class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
-    @property
-    def _log_group_name(self):
-        # Hardcoded by AWS
-        return "/aws/sagemaker/TrainingJobs"
+    def __init__(
+        self,
+        *args,
+        log_group_name="/aws/sagemaker/TrainingJobs",  # Hardcoded by AWS
+        start_time_key="TrainingStartTime",
+        end_time_key="TrainingEndTime",
+        **kwargs,
+    ):
+        super().__init__(
+            *args,
+            log_group_name=log_group_name,
+            start_time_key=start_time_key,
+            end_time_key=end_time_key,
+            **kwargs,
+        )
 
     @property
     def _metric_instance_prefix(self):
@@ -69,12 +80,6 @@ class AmazonSageMakerTrainingExecutor(AmazonSageMakerBaseExecutor):
 
     def _get_job_status(self, *, event):
         return event["TrainingJobStatus"]
-
-    def _get_start_time(self, *, event):
-        return event.get("TrainingStartTime")
-
-    def _get_end_time(self, *, event):
-        return event.get("TrainingEndTime")
 
     def _get_instance_name(self, *, event):
         return event["ResourceConfig"]["InstanceType"]
