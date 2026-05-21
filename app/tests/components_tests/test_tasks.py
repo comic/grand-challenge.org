@@ -51,6 +51,7 @@ from grandchallenge.components.tasks import (
     encode_b64j,
     execute_job,
     handle_endpoint_invocation_event,
+    parse_endpoint_invocation_outputs,
     preload_interactive_algorithms,
     remove_container_image_from_registry,
     remove_inactive_container_images,
@@ -1763,3 +1764,92 @@ def test_handle_endpoint_invocation_wrong_state_ignored(
 
     mock_handle_event.assert_not_called()
     assert invocation.status == status
+
+
+@pytest.mark.django_db
+def test_parse_endpoint_invocation_outputs(settings):
+    socket = ComponentInterfaceFactory(kind=InterfaceKindChoices.STRING)
+    invocation = InvocationFactory(
+        status=InvocationStatusChoices.EXECUTED,
+        algorithm_interface__outputs=[socket],
+    )
+    orchestrator = invocation.orchestrator
+    content = json.dumps("test output content").encode("utf-8")
+    orchestrator._s3_client.upload_fileobj(
+        Fileobj=io.BytesIO(content),
+        Bucket=settings.ALGORITHM_ENDPOINTS_OUTPUT_BUCKET_NAME,
+        Key=f"{orchestrator._io_prefix}/{socket.relative_path}",
+    )
+
+    assert invocation.outputs.count() == 0
+
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    invocation.refresh_from_db()
+
+    assert invocation.error_message == ""
+    assert invocation.status == InvocationStatusChoices.SUCCESS
+    assert invocation.outputs.count() == 1
+
+    civ = invocation.outputs.first()
+
+    assert civ.value == "test output content"
+
+
+@pytest.mark.django_db
+def test_parse_endpoint_invocation_outputs_failure(mocker):
+    invocation = InvocationFactory(
+        status=InvocationStatusChoices.EXECUTED,
+    )
+    mocker.patch.object(
+        EndpointOrchestrator,
+        "get_outputs",
+        side_effect=Exception,
+    )
+
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+
+    invocation.refresh_from_db()
+
+    assert invocation.status == InvocationStatusChoices.FAILURE
+    assert invocation.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+
+
+@pytest.mark.parametrize(
+    "status",
+    set(InvocationStatusChoices).difference(
+        [InvocationStatusChoices.EXECUTED, InvocationStatusChoices.CANCELLED]
+    ),
+)
+@pytest.mark.django_db
+def test_parse_endpoint_invocation_outputs_wrong_state_raises(mocker, status):
+    invocation = InvocationFactory(status=status)
+    mock_get_outputs = mocker.patch.object(
+        EndpointOrchestrator,
+        "get_outputs",
+    )
+
+    with pytest.raises(
+        RuntimeError, match="Invocation is not ready for output parsing"
+    ):
+        parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    invocation.refresh_from_db()
+
+    mock_get_outputs.assert_not_called()
+    assert invocation.status == status
+    assert invocation.outputs.count() == 0
+
+
+@pytest.mark.django_db
+def test_parse_endpoint_invocation_outputs_cancelled_skipped(mocker):
+    invocation = InvocationFactory(status=InvocationStatusChoices.CANCELLED)
+    mock_get_outputs = mocker.patch.object(
+        EndpointOrchestrator,
+        "get_outputs",
+    )
+
+    parse_endpoint_invocation_outputs(**invocation.task_kwargs)
+    invocation.refresh_from_db()
+
+    mock_get_outputs.assert_not_called()
+    assert invocation.status == InvocationStatusChoices.CANCELLED
+    assert invocation.outputs.count() == 0
