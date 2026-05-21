@@ -4,7 +4,7 @@ import pytest
 from guardian.shortcuts import assign_perm
 from rest_framework.exceptions import ErrorDetail
 
-from grandchallenge.algorithms.models import Endpoint, Job
+from grandchallenge.algorithms.models import Endpoint, Invocation, Job
 from grandchallenge.algorithms.serializers import (
     HyperlinkedInvocationSerializer,
     HyperlinkedJobSerializer,
@@ -721,3 +721,27 @@ def test_input_validation_on_invocation_serializer(inputs, interface, rf):
             in str(serializer.errors)
         )
         assert "algorithm_interface" not in serializer.validated_data
+
+
+@pytest.mark.django_db
+def test_invocation_post_serializer_create(request):
+    endpoint = EndpointFactory(status=Endpoint.StatusChoices.RUNNING)
+    request.user = endpoint.creator
+    socket = ComponentInterfaceFactory(kind=ComponentInterface.Kind.STRING)
+    interface = AlgorithmInterfaceFactory(inputs=[socket])
+    endpoint.algorithm_image.algorithm.interfaces.add(interface)
+
+    serializer = InvocationPostSerializer(
+        data={
+            "endpoint": endpoint.api_url,
+            "inputs": [{"interface": socket.slug, "value": "dummy"}],
+        },
+        context={"request": request},
+    )
+
+    assert serializer.is_valid()
+    serializer.create(serializer.validated_data)
+
+    invocation = Invocation.objects.get()
+
+    assert invocation.endpoint == endpoint
