@@ -23,12 +23,23 @@ def init_job_permissions(*_, **__):
     assign_perm("algorithms.add_job", g)
 
 
+def init_invocation_permissions(*_, **__):
+    from django.contrib.auth.models import Group
+    from guardian.shortcuts import assign_perm
+
+    g, _ = Group.objects.get_or_create(
+        name=settings.REGISTERED_USERS_GROUP_NAME
+    )
+    assign_perm("algorithms.add_invocation", g)
+
+
 class AlgorithmsConfig(AppConfig):
     name = "grandchallenge.algorithms"
 
     def ready(self):
         post_migrate.connect(init_algorithm_creators_group, sender=self)
         post_migrate.connect(init_job_permissions, sender=self)
+        post_migrate.connect(init_invocation_permissions, sender=self)
         # noinspection PyUnresolvedReferences
         import grandchallenge.algorithms.signals  # noqa: F401
         from grandchallenge.algorithms.models import AlgorithmImage

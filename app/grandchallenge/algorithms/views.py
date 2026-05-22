@@ -33,12 +33,17 @@ from rest_framework.mixins import (
     ListModelMixin,
     RetrieveModelMixin,
 )
-from rest_framework.permissions import DjangoObjectPermissions
+from rest_framework.permissions import (
+    DjangoModelPermissions,
+    DjangoObjectPermissions,
+)
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 
 from grandchallenge.algorithms.filters import (
     AlgorithmFilter,
     EndpointFilter,
+    EndpointObjectPermissionsFilter,
+    InvocationFilter,
     JobViewsetFilter,
 )
 from grandchallenge.algorithms.forms import (
@@ -71,13 +76,16 @@ from grandchallenge.algorithms.models import (
     AlgorithmModel,
     AlgorithmPermissionRequest,
     Endpoint,
+    Invocation,
     Job,
 )
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmSerializer,
     EndpointSerializer,
+    HyperlinkedInvocationSerializer,
     HyperlinkedJobSerializer,
+    InvocationPostSerializer,
     JobPostSerializer,
 )
 from grandchallenge.components.backends.exceptions import (
@@ -912,6 +920,21 @@ class EndpointViewSet(ReadOnlyModelViewSet):
     permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, ViewObjectPermissionsFilter]
     filterset_class = EndpointFilter
+
+
+class InvocationViewSet(
+    CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
+):
+    queryset = Invocation.objects.all()
+    permission_classes = [DjangoModelPermissions]
+    filter_backends = [DjangoFilterBackend, EndpointObjectPermissionsFilter]
+    filterset_class = InvocationFilter
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return InvocationPostSerializer
+        else:
+            return HyperlinkedInvocationSerializer
 
 
 class AlgorithmPermissionRequestCreate(
