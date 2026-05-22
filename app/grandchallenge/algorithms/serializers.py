@@ -359,11 +359,11 @@ class InvocationPostSerializer(serializers.ModelSerializer):
         view_name="api:algorithms-endpoint-detail",
         required=True,
     )
+    status = CharField(source="get_status_display", read_only=True)
 
     class Meta:
         model = Invocation
         fields = ["pk", "endpoint", "inputs", "status"]
-        read_only_fields = ["status"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
