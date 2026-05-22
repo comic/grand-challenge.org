@@ -12,6 +12,7 @@ from django.utils import timezone
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import (
+    provision_invocation_input_data,
     remove_container_image_from_registry,
 )
 from grandchallenge.core.celery import (
@@ -325,3 +326,31 @@ def deactivate_old_algorithm_images():
                 }
             ).apply_async
         )
+
+
+@acks_late_micro_short_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
+def execute_invocation_for_inputs(*, invocation_pk):
+    from grandchallenge.algorithms.models import Invocation
+
+    with check_lock_acquired():
+        invocation = Invocation.objects.select_for_update(nowait=True).get(
+            pk=invocation_pk
+        )
+
+    if not invocation.inputs_complete:
+        # Nothing to do
+        return
+
+    if invocation.status != Invocation.StatusChoices.VALIDATING_INPUTS:
+        # this task can be called multiple times with complete inputs,
+        # and might have been queued for execution already, so ignore
+        return
+
+    invocation.update_status(status=Invocation.StatusChoices.QUEUED)
+
+    on_commit(
+        provision_invocation_input_data.signature(
+            kwargs=invocation.task_kwargs
+        ).apply_async
+    )

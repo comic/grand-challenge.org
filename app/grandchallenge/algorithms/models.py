@@ -1762,7 +1762,7 @@ class InvocationStatusChoices(TextChoices):
     CANCELLED = "CANCELLED", _("Cancelled")
 
 
-class Invocation(UUIDModel):
+class Invocation(CIVForObjectMixin, UUIDModel):
     StatusChoices = InvocationStatusChoices
 
     endpoint = models.ForeignKey(Endpoint, on_delete=models.PROTECT)
@@ -1861,6 +1861,13 @@ class Invocation(UUIDModel):
     def orchestrator(self):
         return EndpointOrchestrator(**self.orchestrator_kwargs)
 
+    @property
+    def is_editable(self):
+        if self.status == InvocationStatusChoices.VALIDATING_INPUTS:
+            return True
+        else:
+            return False
+
     @cached_property
     def inputs_complete(self):
         # check if all inputs are present and if they all have a value
@@ -1894,3 +1901,31 @@ class Invocation(UUIDModel):
             self.invoke_duration = invoke_duration
 
         self.save()
+
+    def add_civ(self, *, civ):
+        super().add_civ(civ=civ)
+        return self.inputs.add(civ)
+
+    def remove_civ(self, *, civ):
+        super().remove_civ(civ=civ)
+        return self.inputs.remove(civ)
+
+    def get_civ_for_interface(self, interface):
+        return self.inputs.get(interface=interface)
+
+    def process_civ_data_objects_and_execute_linked_task(
+        self, *, civ_data_objects, user, linked_task=None
+    ):
+        from grandchallenge.algorithms.tasks import (
+            execute_invocation_for_inputs,
+        )
+
+        linked_task = execute_invocation_for_inputs.signature(
+            kwargs={"invocation_pk": str(self.pk)}, immutable=True
+        )
+
+        return super().process_civ_data_objects_and_execute_linked_task(
+            civ_data_objects=civ_data_objects,
+            user=user,
+            linked_task=linked_task,
+        )

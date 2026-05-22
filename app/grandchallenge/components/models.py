@@ -73,6 +73,7 @@ from grandchallenge.core.error_handlers import (
     DICOMImageSetUploadErrorHandler,
     EvaluationCIVErrorHandler,
     FallbackCIVValidationErrorHandler,
+    InvocationCIVErrorHandler,
     JobCIVErrorHandler,
     RawImageUploadSessionErrorHandler,
     UserUploadCIVErrorHandler,
@@ -2841,7 +2842,7 @@ class CIVForObjectMixin:
 
     def get_error_handler(self, *, linked_object=None):
         # local imports to prevent circular dependency
-        from grandchallenge.algorithms.models import Job
+        from grandchallenge.algorithms.models import Invocation, Job
         from grandchallenge.archives.models import ArchiveItem
         from grandchallenge.evaluation.models import Evaluation
         from grandchallenge.reader_studies.models import DisplaySet
@@ -2860,6 +2861,8 @@ class CIVForObjectMixin:
             return JobCIVErrorHandler(job=self)
         elif isinstance(self, Evaluation):
             return EvaluationCIVErrorHandler(job=self)
+        elif isinstance(self, Invocation):
+            return InvocationCIVErrorHandler(invocation=self)
         elif linked_object and isinstance(linked_object, UserUpload):
             return UserUploadCIVErrorHandler(
                 user_upload=linked_object,

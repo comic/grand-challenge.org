@@ -4,7 +4,7 @@ import pytest
 from guardian.shortcuts import assign_perm
 from rest_framework.exceptions import ErrorDetail
 
-from grandchallenge.algorithms.models import Endpoint, Job
+from grandchallenge.algorithms.models import Endpoint, Invocation, Job
 from grandchallenge.algorithms.serializers import (
     HyperlinkedInvocationSerializer,
     HyperlinkedJobSerializer,
@@ -721,3 +721,60 @@ def test_input_validation_on_invocation_serializer(inputs, interface, rf):
             in str(serializer.errors)
         )
         assert "algorithm_interface" not in serializer.validated_data
+
+
+@pytest.mark.django_db
+def test_invocation_post_serializer_create(
+    request, settings, django_capture_on_commit_callbacks
+):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
+
+    user = UserFactory()
+    request.user = user
+    endpoint = EndpointFactory.create(
+        creator=user,
+        status=Endpoint.StatusChoices.RUNNING,
+    )
+    ci_string = ComponentInterfaceFactory.create(
+        kind=ComponentInterface.Kind.STRING
+    )
+    ci_img1, ci_img2 = ComponentInterfaceFactory.create_batch(
+        2, kind=ComponentInterface.Kind.PANIMG_IMAGE
+    )
+    interface = AlgorithmInterfaceFactory(inputs=[ci_string, ci_img2, ci_img1])
+    endpoint.algorithm_image.algorithm.interfaces.add(interface)
+    upload = RawImageUploadSessionFactory(creator=user)
+    image1, image2 = ImageFactory.create_batch(2)
+    for im in [image1, image2]:
+        assign_perm("view_image", user, im)
+    upload.image_set.set([image1])
+
+    serializer = InvocationPostSerializer(
+        data={
+            "endpoint": endpoint.api_url,
+            "inputs": [
+                {"interface": ci_string.slug, "value": "foo"},
+                {"interface": ci_img1.slug, "upload_session": upload.api_url},
+                {"interface": ci_img2.slug, "image": image2.api_url},
+            ],
+        },
+        context={"request": request},
+    )
+
+    assert serializer.is_valid(), serializer.errors
+
+    # fake successful upload
+    upload.status = RawImageUploadSession.SUCCESS
+    upload.save()
+
+    with django_capture_on_commit_callbacks(execute=True):
+        serializer.create(serializer.validated_data)
+
+    assert Invocation.objects.count() == 1
+
+    invocation = Invocation.objects.get()
+
+    assert invocation.endpoint == endpoint
+    assert invocation.algorithm_interface == interface
+    assert invocation.inputs.count() == 3
