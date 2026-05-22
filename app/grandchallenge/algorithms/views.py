@@ -42,8 +42,8 @@ from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from grandchallenge.algorithms.filters import (
     AlgorithmFilter,
     EndpointFilter,
-    EndpointObjectPermissionsFilter,
     InvocationFilter,
+    InvocationObjectPermissionsFilter,
     JobViewsetFilter,
 )
 from grandchallenge.algorithms.forms import (
@@ -927,7 +927,7 @@ class InvocationViewSet(
 ):
     queryset = Invocation.objects.all()
     permission_classes = [DjangoModelPermissions]
-    filter_backends = [DjangoFilterBackend, EndpointObjectPermissionsFilter]
+    filter_backends = [DjangoFilterBackend, InvocationObjectPermissionsFilter]
     filterset_class = InvocationFilter
 
     def get_serializer_class(self):

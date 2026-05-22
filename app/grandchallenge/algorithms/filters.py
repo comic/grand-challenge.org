@@ -35,7 +35,7 @@ class EndpointFilter(FilterSet):
             return queryset.none()
 
 
-class EndpointObjectPermissionsFilter(BaseFilterBackend):
+class InvocationObjectPermissionsFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         endpoints = filter_by_permission(
             queryset=Endpoint.objects.all(),
