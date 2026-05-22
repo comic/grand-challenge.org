@@ -185,7 +185,8 @@ def test_challenge_onboarding_task_due_emails(
                 (
                     "Target",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=15),
+                    _fixed_now - timedelta(days=15),
+                    0,
                 ),
             ],
             [0],  # 1 email
@@ -196,18 +197,20 @@ def test_challenge_onboarding_task_due_emails(
                 (
                     "Too young",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(hours=1),
+                    _fixed_now - timedelta(hours=1),
+                    0,
                 ),
             ],
             [],  # 0 emails
         ),
         (
-            "too old request",
+            "too many reminders",
             [
                 (
-                    "Too old",
+                    "Too many",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=42),
+                    _fixed_now - timedelta(days=15),
+                    3,
                 ),
             ],
             [],  # 0 emails
@@ -216,9 +219,10 @@ def test_challenge_onboarding_task_due_emails(
             "wrong status request",
             [
                 (
-                    "Wrong status",
+                    "Target",
                     ChallengeRequest.ChallengeRequestStatusChoices.PENDING,
-                    timedelta(days=15),
+                    _fixed_now - timedelta(days=15),
+                    0,
                 ),
             ],
             [],  # 0 emails
@@ -229,12 +233,14 @@ def test_challenge_onboarding_task_due_emails(
                 (
                     "Target 1",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=15),
+                    _fixed_now - timedelta(days=15),
+                    0,
                 ),
                 (
                     "Target 2",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=30),
+                    _fixed_now - timedelta(days=15),
+                    0,
                 ),
             ],
             [0, 1],  # 2 emails
@@ -245,22 +251,26 @@ def test_challenge_onboarding_task_due_emails(
                 (
                     "Valid",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=15),
+                    _fixed_now - timedelta(days=15),
+                    0,
                 ),
                 (
                     "Too young",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(hours=1),
+                    _fixed_now - timedelta(hours=1),
+                    0,
                 ),
                 (
-                    "Too old",
+                    "Too many reminders",
                     ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
-                    timedelta(days=40),
+                    _fixed_now - timedelta(days=40),
+                    3,
                 ),
                 (
                     "Wrong status",
                     ChallengeRequest.ChallengeRequestStatusChoices.ACCEPTED,
-                    timedelta(days=15),
+                    _fixed_now - timedelta(days=15),
+                    0,
                 ),
             ],
             [0],  # 1 email
@@ -268,20 +278,26 @@ def test_challenge_onboarding_task_due_emails(
     ],
 )
 def test_challenge_request_draft_reminder_emails(
-    mocker, description, created_offsets, expected_recipients_indices
+    mocker, settings, description, created_offsets, expected_recipients_indices
 ):
+    settings.CHALLENGE_REQUEST_AGE_START_DRAFT_REMINDER_CUTOFF = timedelta(
+        days=7
+    )
+    settings.CHALLENGE_REQUEST_MAX_DRAFT_REMINDERS = 2
+
     mocker.patch(
         "grandchallenge.challenges.tasks.now",
         return_value=_fixed_now,
     )
 
     requests = []
-    for title, status, offset in created_offsets:
+    for title, status, fixed_created, reminders_sent in created_offsets:
         challenge_request = ChallengeRequestFactory(
             title=title,
             status=status,
+            draft_reminder_count=reminders_sent,
         )
-        challenge_request.created = _fixed_now - offset
+        challenge_request.created = fixed_created
         challenge_request.save()
         requests.append(challenge_request)
 
@@ -387,3 +403,33 @@ def test_update_challenge_compute_costs(
 
     invoice.refresh_from_db()
     assert invoice.compute_cost_euro_millicents == 1 + 2 + 4 + 8 + 8
+
+
+@pytest.mark.django_db
+def test_challenge_request_draft_reminder_emails_increments_counter(
+    mocker, settings
+):
+    settings.CHALLENGE_REQUEST_AGE_START_DRAFT_REMINDER_CUTOFF = timedelta(
+        days=7
+    )
+    settings.CHALLENGE_REQUEST_MAX_DRAFT_REMINDERS = 2
+
+    mocker.patch(
+        "grandchallenge.challenges.tasks.now",
+        return_value=_fixed_now,
+    )
+
+    challenge_request = ChallengeRequestFactory(
+        title="Target",
+        status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
+        draft_reminder_count=1,
+    )
+    challenge_request.created = _fixed_now - timedelta(days=15)
+    challenge_request.save()
+
+    mail.outbox.clear()
+
+    send_challenge_request_draft_reminder_emails()
+    assert len(mail.outbox) == 1
+    challenge_request.refresh_from_db()
+    assert challenge_request.draft_reminder_count == 2

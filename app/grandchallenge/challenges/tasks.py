@@ -231,8 +231,9 @@ def send_challenge_request_draft_reminder_emails():
     for c in ChallengeRequest.objects.filter(
         status=ChallengeRequest.ChallengeRequestStatusChoices.DRAFT,
         created__lte=now()
-        - settings.CHALLENGE_REQUEST_AGE_START_REMINDER_CUTOFF,
-        created__gte=now()
-        - settings.CHALLENGE_REQUEST_AGE_END_REMINDER_CUTOFF,
+        - settings.CHALLENGE_REQUEST_AGE_START_DRAFT_REMINDER_CUTOFF,
+        draft_reminder_count__lt=settings.CHALLENGE_REQUEST_MAX_DRAFT_REMINDERS,
     ):
         send_challenge_requests_draft_reminder(challenge_request=c)
+        c.draft_reminder_count += 1
+        c.save(update_fields=["draft_reminder_count"])
