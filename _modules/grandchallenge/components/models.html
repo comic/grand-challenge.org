@@ -111,6 +111,7 @@
     <span class="n">DICOMImageSetUploadErrorHandler</span><span class="p">,</span>
     <span class="n">EvaluationCIVErrorHandler</span><span class="p">,</span>
     <span class="n">FallbackCIVValidationErrorHandler</span><span class="p">,</span>
+    <span class="n">InvocationCIVErrorHandler</span><span class="p">,</span>
     <span class="n">JobCIVErrorHandler</span><span class="p">,</span>
     <span class="n">RawImageUploadSessionErrorHandler</span><span class="p">,</span>
     <span class="n">UserUploadCIVErrorHandler</span><span class="p">,</span>
@@ -2945,7 +2946,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_error_handler</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">linked_object</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="c1"># local imports to prevent circular dependency</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.algorithms.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Job</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.algorithms.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Invocation</span><span class="p">,</span> <span class="n">Job</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.archives.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArchiveItem</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.evaluation.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Evaluation</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">grandchallenge.reader_studies.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">DisplaySet</span>
@@ -2964,6 +2965,8 @@
             <span class="k">return</span> <span class="n">JobCIVErrorHandler</span><span class="p">(</span><span class="n">job</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Evaluation</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">EvaluationCIVErrorHandler</span><span class="p">(</span><span class="n">job</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Invocation</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">InvocationCIVErrorHandler</span><span class="p">(</span><span class="n">invocation</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">linked_object</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">linked_object</span><span class="p">,</span> <span class="n">UserUpload</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">UserUploadCIVErrorHandler</span><span class="p">(</span>
                 <span class="n">user_upload</span><span class="o">=</span><span class="n">linked_object</span><span class="p">,</span>
