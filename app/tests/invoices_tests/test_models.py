@@ -451,6 +451,26 @@ def test_total_amount_can_change_for_complimentary_invoices():
         invoice.clean()
 
 
+@pytest.mark.parametrize(
+    "payment_type", (PaymentTypeChoices.PREPAID, PaymentTypeChoices.POSTPAID)
+)
+@pytest.mark.django_db
+def test_updating_total_amount_and_status_simultaneously_is_possible(
+    payment_type,
+):
+    invoice = InvoiceFactory(
+        payment_type=payment_type,
+        payment_status=PaymentStatusChoices.INITIALIZED,
+        support_costs_euros=0,
+        compute_costs_euros=1,
+        storage_costs_euros=2,
+    )
+    invoice.support_costs_euros = 2
+    invoice.payment_status = PaymentStatusChoices.REQUESTED
+    with nullcontext():
+        invoice.clean()
+
+
 @pytest.mark.django_db
 def test_invoices_cannot_be_deleted():
     invoice = InvoiceFactory()
@@ -514,3 +534,21 @@ def test_follow_up_on_not_more_than_year_in_future():
         "Follow-up date cannot be more than a year into the future."
         == e.value.messages[0]
     )
+
+
+@pytest.mark.django_db
+def test_follow_up_on_required_for_initialized_postpaid():
+    invoice = InvoiceFactory()
+    invoice.payment_type = PaymentTypeChoices.POSTPAID
+    invoice.payment_status = PaymentStatusChoices.INITIALIZED
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert (
+        "Follow-up date is required for initialized post-paid invoices."
+        == e.value.messages[0]
+    )
+
+    # post-paid invoices in other states are fine without a follow-up date
+    invoice2 = InvoiceFactory(payment_type=PaymentTypeChoices.POSTPAID)
+    invoice2.full_clean()

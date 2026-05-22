@@ -86,6 +86,41 @@ class EvaluationCIVErrorHandler(ComponentJobCIVErrorHandler):
         )
 
 
+class InvocationCIVErrorHandler(ErrorHandler):
+    """
+    Error handler for CIV validation errors on invocation creation.
+    Handle_error() updates an algorithm endpoint invocation.
+    """
+
+    def __init__(self, *args, invocation, **kwargs):
+        from grandchallenge.algorithms.models import Invocation
+
+        if not invocation or not isinstance(invocation, Invocation):
+            raise RuntimeError(
+                "You need to provide an Invocation instance to this error handler."
+            )
+
+        super().__init__(*args, **kwargs)
+        self._invocation = invocation
+
+    def handle_error(self, *, error_message, interface=None, user=None):
+        if interface:
+            detailed_error_message = copy.deepcopy(
+                self._invocation.detailed_error_message
+            )
+            detailed_error_message[interface.title] = error_message
+            self._invocation.update_status(
+                status=self._invocation.StatusChoices.CANCELLED,
+                error_message="One or more of the inputs failed validation.",
+                detailed_error_message=detailed_error_message,
+            )
+        else:
+            self._invocation.update_status(
+                status=self._invocation.StatusChoices.CANCELLED,
+                error_message=error_message,
+            )
+
+
 class RawImageUploadSessionErrorHandler(ErrorHandler):
     """
     Error handler for image imports and image validation.

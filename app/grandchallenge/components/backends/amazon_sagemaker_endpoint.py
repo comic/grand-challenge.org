@@ -1,6 +1,12 @@
+import logging
+import re
+from typing import NamedTuple
+from uuid import UUID
+
 import boto3
 from botocore.exceptions import ClientError
 from django.conf import settings
+from lambda_tasks.logging import task_logger
 
 from grandchallenge.components.backends.amazon_sagemaker_training import (
     AmazonSageMakerTrainingExecutor,
@@ -8,6 +14,17 @@ from grandchallenge.components.backends.amazon_sagemaker_training import (
 from grandchallenge.components.backends.base import (
     list_and_delete_objects_from_prefix,
 )
+from grandchallenge.components.backends.exceptions import ComponentException
+from grandchallenge.components.backends.utils import UUID4_REGEX
+from grandchallenge.core.error_messages import SystemErrorMessages
+
+logger = logging.getLogger(__name__)
+
+
+class InvocationParams(NamedTuple):
+    app_label: str
+    model_name: str
+    pk: UUID
 
 
 class EndpointOrchestrator:
@@ -107,6 +124,10 @@ class EndpointOrchestrator:
         return self._executor._instance_type
 
     @property
+    def invoke_duration(self):
+        return self._executor.invoke_duration
+
+    @property
     def usd_cents_per_hour(self):
         return self._executor.usd_cents_per_hour
 
@@ -173,6 +194,10 @@ class EndpointOrchestrator:
                 "OutputConfig": {
                     "S3FailurePath": self._failure_s3_uri,
                     "S3OutputPath": self._output_s3_uri,
+                    "NotificationConfig": {
+                        "SuccessTopic": settings.ALGORITHM_ENDPOINTS_SNS_TOPIC_ARN,
+                        "ErrorTopic": settings.ALGORITHM_ENDPOINTS_SNS_TOPIC_ARN,
+                    },
                 },
             },
             ProductionVariants=[
@@ -234,3 +259,60 @@ class EndpointOrchestrator:
             InferenceId=inference_id,
             InvocationTimeoutSeconds=int(self._time_limit.total_seconds()),
         )
+
+    @staticmethod
+    def get_inference_id(*, event):
+        return event["inferenceId"]
+
+    @staticmethod
+    def _get_invocation_status(*, event):
+        return event["invocationStatus"]
+
+    @staticmethod
+    def get_invocation_params(*, inference_id):
+        prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
+        pattern = rf"^{prefix_regex}\-AEI\-(?P<pk>{UUID4_REGEX})$"
+
+        result = re.match(pattern, inference_id)
+
+        if result is None:
+            raise ValueError("Invalid inference id")
+        else:
+            pk = result.group("pk")
+            return InvocationParams(
+                app_label="algorithms",
+                model_name="invocation",
+                pk=pk,
+            )
+
+    def handle_event(self, *, event):
+        invocation_status = self._get_invocation_status(event=event)
+
+        # TODO: set task_logs and runtime metrics
+
+        if invocation_status == "Completed":
+            self._handle_completed_invocation()
+        elif invocation_status == "Expired":
+            self._handle_expired_invocation(event=event)
+        elif invocation_status == "Failed":
+            self._handle_failed_invocation(event=event)
+        else:
+            raise ValueError("Invalid invocation status")
+
+    def _handle_completed_invocation(self):
+        self._executor._handle_completed_job()
+
+    def _handle_expired_invocation(self, *, event):
+        # Requires investigation
+        task_logger.info(event)
+        task_logger.error("Endpoint invocation expired")
+        raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
+
+    def _handle_failed_invocation(self, *, event):
+        # Requires investigation
+        task_logger.info(event)
+        task_logger.error("Endpoint invocation failed")
+        raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
+
+    def get_outputs(self, *, output_interfaces):
+        return self._executor.get_outputs(output_interfaces=output_interfaces)

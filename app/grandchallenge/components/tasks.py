@@ -29,6 +29,7 @@ from django.db.transaction import on_commit
 from django.utils.module_loading import import_string
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.logging import task_logger
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
 from grandchallenge.cases.models import (
@@ -1805,3 +1806,101 @@ def invoke_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
 
     else:
         invocation.update_status(status=invocation.StatusChoices.EXECUTING)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def handle_endpoint_invocation_event(*, event: dict):
+    from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
+        EndpointOrchestrator,
+    )
+
+    inference_id = EndpointOrchestrator.get_inference_id(event=event)
+    invocation_params = EndpointOrchestrator.get_invocation_params(
+        inference_id=inference_id
+    )
+
+    model = apps.get_model(
+        app_label=invocation_params.app_label,
+        model_name=invocation_params.model_name,
+    )
+
+    with check_lock_acquired():
+        invocation = model.objects.select_for_update(nowait=True).get(
+            pk=invocation_params.pk
+        )
+
+    if invocation.status != invocation.StatusChoices.EXECUTING:
+        # Nothing to do
+        return
+
+    orchestrator = invocation.orchestrator
+
+    try:
+        orchestrator.handle_event(event=event)
+    except ComponentException as error:
+        invocation.update_status(
+            status=invocation.StatusChoices.FAILURE,
+            error_message=str(error),
+            detailed_error_message=error.message_details,
+            # TODO: set stdout, stderr and runtime metrics
+        )
+    except Exception as error:
+        invocation.update_status(
+            status=invocation.StatusChoices.FAILURE,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+            # TODO: set stdout, stderr and runtime metrics
+        )
+        task_logger.error(str(error), exc_info=True)
+    else:
+        invocation.update_status(
+            status=invocation.StatusChoices.EXECUTED,
+            invoke_duration=orchestrator.invoke_duration,
+            # TODO: set stdout, stderr and runtime metrics
+        )
+        on_commit(
+            parse_endpoint_invocation_outputs.signature(
+                kwargs=invocation.task_kwargs,
+            ).apply_async
+        )
+
+
+@acks_late_2xlarge_task(retry_on=(LockNotAcquiredException,))
+@transaction.atomic
+def parse_endpoint_invocation_outputs(
+    *, pk: uuid.UUID, app_label: str, model_name: str
+):
+    model = apps.get_model(app_label=app_label, model_name=model_name)
+
+    with check_lock_acquired():
+        invocation = model.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if invocation.status == invocation.StatusChoices.CANCELLED:
+        # Nothing to do
+        return
+    elif invocation.status != invocation.StatusChoices.EXECUTED:
+        raise RuntimeError("Invocation is not ready for output parsing")
+
+    if invocation.outputs.exists():
+        raise RuntimeError("Invocation already has outputs")
+
+    orchestrator = invocation.orchestrator
+
+    try:
+        outputs = orchestrator.get_outputs(
+            output_interfaces=invocation.algorithm_interface.outputs.all()
+        )
+    except ComponentException as error:
+        invocation.update_status(
+            status=invocation.StatusChoices.FAILURE,
+            error_message=str(error),
+            detailed_error_message=error.message_details,
+        )
+    except Exception:
+        invocation.update_status(
+            status=invocation.StatusChoices.FAILURE,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+        )
+        logger.error("Could not parse invocation outputs", exc_info=True)
+    else:
+        invocation.outputs.add(*outputs)
+        invocation.update_status(status=invocation.StatusChoices.SUCCESS)

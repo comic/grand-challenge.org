@@ -296,6 +296,13 @@ class Invoice(models.Model, FieldChangeMixin):
                 | Q(follow_up_on__lte=Now() + timedelta(days=365)),
                 violation_error_message="Follow-up date cannot be more than a year into the future.",
             ),
+            models.CheckConstraint(
+                name="follow_up_on_required_for_initialized_post_paid",
+                condition=~Q(payment_type=PaymentTypeChoices.POSTPAID)
+                | ~Q(payment_status=PaymentStatusChoices.INITIALIZED)
+                | Q(follow_up_on__isnull=False),
+                violation_error_message="Follow-up date is required for initialized post-paid invoices.",
+            ),
         ]
 
     def delete(self, *args, **kwargs):
@@ -360,7 +367,8 @@ class Invoice(models.Model, FieldChangeMixin):
         if (
             not self._state.adding
             and self.payment_type != PaymentTypeChoices.COMPLIMENTARY
-            and self.payment_status != PaymentStatusChoices.INITIALIZED
+            and self.initial_value("payment_status")
+            != PaymentStatusChoices.INITIALIZED
         ):
             # Assert total amount unchanged
             if (
