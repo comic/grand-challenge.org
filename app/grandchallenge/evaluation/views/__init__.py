@@ -1576,16 +1576,12 @@ class PhaseStarterKitDetail(
         return self.phase
 
 
-class PhaseStarterKitDownload(
-    CachedPhaseMixin,
-    ObjectPermissionRequiredMixin,
-    View,
-):
-    permission_required = "evaluation.change_phase"
-    raise_exception = True
-
-    def get_permission_object(self):
-        return self.phase
+class PhaseStarterKitDownload(UserPassesTestMixin, CachedPhaseMixin, View):
+    def test_func(self):
+        return (
+            self.request.user.has_perm("evaluation.change_phase", self.phase)
+            or self.request.user.is_staff
+        )
 
     def get(self, *_, **__):
         phase = self.phase
