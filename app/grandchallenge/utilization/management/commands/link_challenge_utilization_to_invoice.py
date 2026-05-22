@@ -31,6 +31,7 @@ class Command(BaseCommand):
 
         missing_invoice_challenges = []
         challenge_count = Challenge.objects.count()
+        update_occured = False
 
         for indx, challenge in enumerate(Challenge.objects.all()):
             prefix = f"[{challenge.short_name}]"
@@ -60,21 +61,36 @@ class Command(BaseCommand):
                                 f"{prefix} {rows_updated} {model.__name__} updated."
                             )
                         )
+                        update_occured = True
+
             self.stdout.write(
                 self.style.SUCCESS(
                     f"{prefix} Finished linking utilizations ({indx + 1}/{challenge_count})."
                 )
             )
 
-        self.stdout.write(self.style.SUCCESS("Finished linking utilizations."))
-
-        if missing_invoice_challenges:
+        if update_occured:
             self.stdout.write(
                 self.style.ERROR(
-                    f"No invoice found for {len(missing_invoice_challenges)} challenges: {', '.join(missing_invoice_challenges)}."
+                    "Overall: some utilizations were linked to invoices."
                 )
             )
         else:
             self.stdout.write(
-                self.style.SUCCESS("All challenges had an invoice to link to.")
+                self.style.SUCCESS(
+                    "Overall: no utilizations were linked to invoices."
+                )
+            )
+
+        if missing_invoice_challenges:
+            self.stdout.write(
+                self.style.ERROR(
+                    f"Overall: no invoice found for {len(missing_invoice_challenges)} challenges: {', '.join(missing_invoice_challenges)}."
+                )
+            )
+        else:
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "Overall: all challenges had an invoice to link to."
+                )
             )
