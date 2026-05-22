@@ -402,6 +402,7 @@ class InvocationPostSerializer(serializers.ModelSerializer):
 
         invocation = Invocation.objects.create(
             **validated_data,
+            time_limit=settings.ALGORITHM_ENDPOINTS_MAXIMUM_INVOCATION_DURATION,
             status=InvocationStatusChoices.VALIDATING_INPUTS,
         )
 
