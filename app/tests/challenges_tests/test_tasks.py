@@ -225,6 +225,7 @@ def test_challenge_request_draft_reminder_emails(
     status,
     expected_email,
 ):
+    # Overwrite settings so the test is not dependent on the actual settings values
     settings.CHALLENGE_REQUEST_AGE_START_DRAFT_REMINDER_CUTOFF = timedelta(
         days=7
     )
