@@ -33,9 +33,10 @@ class Command(BaseCommand):
         challenge_count = Challenge.objects.count()
 
         for indx, challenge in enumerate(Challenge.objects.all()):
+            prefix = f"[{challenge.short_name}]"
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Working on linking utilizations for {challenge.short_name!r} ({indx + 1}/{challenge_count})."
+                    f"{prefix} Working on linking utilizations for ({indx + 1}/{challenge_count})."
                 )
             )
             try:
@@ -44,21 +45,28 @@ class Command(BaseCommand):
                 missing_invoice_challenges.append(challenge.short_name)
                 self.stdout.write(
                     self.style.WARNING(
-                        f"No invoices found for {challenge.short_name!r}, skipping."
+                        f"{prefix} No invoices found, skipping."
                     )
                 )
             else:
                 for model in CHALLENGE_UTILIZATION_MODELS:
-                    model.objects.filter(
+                    rows_updated = model.objects.filter(
                         challenge=challenge,
                         invoice__isnull=True,
                     ).update(invoice=invoice)
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Finished linking utilizations. Total challenges: {challenge_count}."
+                    if rows_updated:
+                        self.stdout.write(
+                            self.style.WARNING(
+                                f"{prefix} {rows_updated} {model.__name__} updated."
+                            )
+                        )
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"{prefix} Finished linking utilizations ({indx + 1}/{challenge_count})."
+                )
             )
-        )
+
+        self.stdout.write(self.style.SUCCESS("Finished linking utilizations."))
 
         if missing_invoice_challenges:
             self.stdout.write(
