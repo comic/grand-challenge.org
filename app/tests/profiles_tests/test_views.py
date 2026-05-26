@@ -377,7 +377,7 @@ def test_notification_email_choice_after_user_signup(client):
             "receive_newsletter": False,
             "only_account": True,
             "password1": "ENwfuftURoZgFdq",
-            "password2": "ENwfuftURoZgFdq   ",
+            "password2": "ENwfuftURoZgFdq",
             "notification_email_choice": NotificationEmailOptions.DISABLED,
         },
     )
@@ -410,7 +410,7 @@ def test_policies_must_be_accepted(client):
             "only_account": True,
             "accept_policy_0": False,
             "password1": "ENwfuftURoZgFdq",
-            "password2": "ENwfuftURoZgFdq   ",
+            "password2": "ENwfuftURoZgFdq",
             "notification_email_choice": NotificationEmailOptions.DISABLED,
         },
     )
@@ -439,7 +439,7 @@ def test_policies_must_be_accepted(client):
             "accept_policy_0": True,
             "accept_policy_1": True,
             "password1": "ENwfuftURoZgFdq",
-            "password2": "ENwfuftURoZgFdq   ",
+            "password2": "ENwfuftURoZgFdq",
             "notification_email_choice": NotificationEmailOptions.DISABLED,
         },
     )
@@ -499,7 +499,7 @@ def test_signup_form_validation(
             "receive_newsletter": False,
             "only_account": True,
             "password1": "ENwfuftURoZgFdq",
-            "password2": "ENwfuftURoZgFdq   ",
+            "password2": "ENwfuftURoZgFdq",
             "notification_email_choice": NotificationEmailOptions.DISABLED,
         },
     )
