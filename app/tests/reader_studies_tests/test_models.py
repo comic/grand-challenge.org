@@ -1249,10 +1249,10 @@ def test_answer_score_calculation():
 
 
 @pytest.mark.django_db
-def test_reader_study_not_launchable_when_max_credits_consumed():
+def test_reader_study_out_of_budget_when_max_credits_consumed():
     reader_study = ReaderStudyFactory(max_credits=100)
 
-    assert reader_study.is_launchable
+    assert reader_study.has_budget
 
     session_utilization = SessionUtilizationFactory(
         duration=timedelta(hours=1)
@@ -1262,7 +1262,7 @@ def test_reader_study_not_launchable_when_max_credits_consumed():
     assert reader_study.session_utilizations.count() == 1
     assert reader_study.session_utilizations.first().credits_consumed == 500
     assert reader_study.credits_consumed == 500
-    assert not reader_study.is_launchable
+    assert not reader_study.has_budget
 
 
 @pytest.mark.django_db

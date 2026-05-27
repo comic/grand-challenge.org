@@ -1196,14 +1196,14 @@ def test_leaderboard_user_visibility(client):
 
 
 @pytest.mark.django_db
-def test_reader_study_launch_disabled_when_not_launchable(client):
+def test_reader_study_launch_disabled_when_out_of_budget(client):
     reader_study = ReaderStudyFactory()
 
     editor, reader = UserFactory.create_batch(2)
     reader_study.add_editor(editor)
     reader_study.add_reader(reader)
 
-    assert reader_study.is_launchable
+    assert reader_study.has_budget
 
     for usr in [reader, editor]:
         response = get_view_for_user(
@@ -1219,7 +1219,7 @@ def test_reader_study_launch_disabled_when_not_launchable(client):
     reader_study.max_credits = 0
     reader_study.save()
 
-    assert not reader_study.is_launchable
+    assert not reader_study.has_budget
 
     for usr in [reader, editor]:
         response = get_view_for_user(

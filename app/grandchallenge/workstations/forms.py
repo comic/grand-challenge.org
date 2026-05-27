@@ -68,8 +68,10 @@ class SessionForm(ModelForm):
         self.fields["ping_times"].required = False
 
     def clean(self):
-        if self.__reader_study and not self.__reader_study.is_launchable:
-            raise ValidationError("Reader study cannot be launched.")
+        if self.__reader_study and not self.__reader_study.has_budget:
+            raise ValidationError(
+                "Reader study is out of budget and cannot be launched."
+            )
         return super().clean()
 
     class Meta:
@@ -98,8 +100,10 @@ class DebugSessionForm(SaveFormInitMixin, ModelForm):
         ]
 
     def clean(self):
-        if self.__reader_study and not self.__reader_study.is_launchable:
-            raise ValidationError("Reader study cannot be launched.")
+        if self.__reader_study and not self.__reader_study.has_budget:
+            raise ValidationError(
+                "Reader study is out of budget and cannot be launched."
+            )
 
         cleaned_data = super().clean()
 

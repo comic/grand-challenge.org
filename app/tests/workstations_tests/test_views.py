@@ -616,7 +616,7 @@ def test_session_create_reader_study_with_algorithm_implementation_skip_active_e
 
 
 @pytest.mark.django_db
-def test_session_create_reader_study_not_launchable(client):
+def test_session_create_reader_study_out_of_budget(client):
     user = UserFactory()
     ws = WorkstationFactory()
     WorkstationImageFactory(
@@ -630,7 +630,7 @@ def test_session_create_reader_study_not_launchable(client):
     reader_study.readers_group.user_set.add(user)
     path, _ = get_workstation_path_and_query_string(reader_study=reader_study)
 
-    assert not reader_study.is_launchable
+    assert not reader_study.has_budget
     assert Session.objects.count() == 0
 
     response = get_view_for_user(

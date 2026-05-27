@@ -924,7 +924,7 @@ class ReaderStudy(
         return ceil(total)
 
     @property
-    def is_launchable(self):
+    def has_budget(self):
         return (
             self.max_credits is None
             or self.credits_consumed < self.max_credits

@@ -54,10 +54,10 @@
                     <div class="col-6 col-md-3 p-1">
                         <div class="d-flex justify-content-md-end justify-content-start align-items-center">
                             <button class="btn btn-primary"
-                                    {% if reader_study.is_launchable %}
+                                    {% if reader_study.has_budget %}
                                         {% workstation_session_control_data workstation=reader_study.workstation context_object=reader_study reader_study=reader_study user=user.obj %}
                                     {% else %}
-                                        disabled title="Reader study cannot be launched"
+                                    disabled title="Reader study is out of budget and cannot be launched"
                                     {% endif %}
                             >
                                 <i class="fa fa-eye"></i> View User's Answers
@@ -81,7 +81,7 @@
                     </div>
                 </div>
             </li>
-        {% empty %}
+            {% empty %}
             <li class="list-group-item">
                 No-one has answered any questions in this reader study.
             </li>
@@ -110,7 +110,8 @@
                             data-dismiss="modal">Cancel
                     </button>
                     <button type="button" class="btn btn-danger"
-                            id="proceed" data-baseurl="{{ reader_study.get_absolute_url }}" data-csrf="{{ csrf_token }}">
+                            id="proceed" data-baseurl="{{ reader_study.get_absolute_url }}"
+                            data-csrf="{{ csrf_token }}">
                         <i class="fa fa-trash"></i> <span class="modal-action"></span>
                     </button>
                 </div>
