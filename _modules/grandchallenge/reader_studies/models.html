@@ -997,7 +997,7 @@
         <span class="k">return</span> <span class="n">ceil</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">is_launchable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_budget</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">max_credits</span> <span class="ow">is</span> <span class="kc">None</span>
             <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">credits_consumed</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_credits</span>
