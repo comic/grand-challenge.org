@@ -51,12 +51,12 @@
                             {% get_ground_truth object entry.id question as ground_truth %}
                             <td>{{ ground_truth }}</td>
                         {% endfor %}
-                        <td data-order="{{ object.is_launchable }}">
+                        <td data-order="{{ object.has_budget }}">
                             <button class="btn btn-primary badge badge-primary"
-                                    {% if object.is_launchable %}
+                                    {% if object.has_budget %}
                                         {% workstation_session_control_data workstation=object.workstation context_object=object display_set=entry reader_study=object %} title="Open in viewer"
                                     {% else %}
-                                        disabled title="Reader study cannot be launched"
+                                        disabled title="Reader study is out of budget and cannot be launched"
                                     {% endif %}
                             >
                                 <i class="fa fa-eye"></i>
