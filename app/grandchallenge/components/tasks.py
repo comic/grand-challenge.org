@@ -1307,8 +1307,16 @@ class InteractiveAlgorithmLambda:
 @acks_late_micro_short_task
 @transaction.atomic
 def preload_interactive_algorithms():
-    from grandchallenge.reader_studies.models import Question
+    from grandchallenge.reader_studies.models import Question, ReaderStudy
     from grandchallenge.workstations.models import Session
+
+    reader_studies_out_of_budget = [
+        rs.pk
+        for rs in ReaderStudy.objects.exclude(max_credits__isnull=True).only(
+            "pk", "max_credits"
+        )
+        if not rs.has_budget
+    ]
 
     active_interactive_algorithms = (
         Question.objects.filter(
@@ -1318,6 +1326,7 @@ def preload_interactive_algorithms():
                 Session.RUNNING,
             ],
         )
+        .exclude(reader_study__pk__in=reader_studies_out_of_budget)
         .exclude(interactive_algorithm="")
         .values_list("interactive_algorithm", flat=True)
         .distinct()

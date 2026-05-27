@@ -109,6 +109,7 @@ from tests.uploads_tests.factories import (
     UserUploadFactory,
     create_upload_from_file,
 )
+from tests.utilization_tests.factories import SessionUtilizationFactory
 
 
 @pytest.mark.django_db
@@ -1317,6 +1318,58 @@ def test_preload_interactive_algorithms(settings):
             arn=arn,
             qualifier="1",
             should_be_active=True,
+        )
+
+        assert mock_instance.consolidate.call_count == 1
+
+
+@pytest.mark.django_db
+def test_preload_interactive_algorithms_excludes_reader_studies_without_budget(
+    settings,
+):
+    arn = f"arn:aws:lambda:eu-central-1:1234567890:function:org-proj-e-uls23-baseline-{uuid.uuid4()}"
+
+    settings.INTERACTIVE_ALGORITHMS_LAMBDA_FUNCTIONS = {
+        "io_bucket_name": "org-proj-e-some-bucket",
+        "lambda_functions": [
+            {
+                # Add a uuid to avoid cache key clashes in testing
+                "arn": arn,
+                "internal_name": "uls23-baseline",
+                "minimum_duration": 1,
+                "timeout": 60,
+                "version": "1",
+            }
+        ],
+    }
+
+    rs_with_exhausted_credit = ReaderStudyFactory(max_credits=100)
+    session_utilization = SessionUtilizationFactory(
+        duration=timedelta(hours=1)
+    )
+    session_utilization.reader_studies.add(rs_with_exhausted_credit)
+
+    QuestionFactory(
+        reader_study=rs_with_exhausted_credit,
+        interactive_algorithm=InteractiveAlgorithmLambdaChoices.ULS23_BASELINE,
+    )
+
+    assert not rs_with_exhausted_credit.has_budget
+
+    with patch(
+        "grandchallenge.components.tasks.InteractiveAlgorithmLambda"
+    ) as mock_interactive_algorithm:
+        mock_instance = mock_interactive_algorithm.return_value
+        mock_instance.consolidate.return_value = "mocked_consolidation_result"
+
+        assert preload_interactive_algorithms() == {
+            "uls23-baseline": "mocked_consolidation_result"
+        }
+
+        mock_interactive_algorithm.assert_any_call(
+            arn=arn,
+            qualifier="1",
+            should_be_active=False,
         )
 
         assert mock_instance.consolidate.call_count == 1
