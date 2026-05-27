@@ -101,7 +101,9 @@ class DebugSessionForm(SaveFormInitMixin, ModelForm):
 
     def clean(self):
         if self.__reader_study and not self.__reader_study.has_budget:
-            raise ValidationError("Reader study cannot be launched.")
+            raise ValidationError(
+                "Reader study is out of budget and cannot be launched."
+            )
 
         cleaned_data = super().clean()
 
