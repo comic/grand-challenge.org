@@ -33,10 +33,7 @@ from rest_framework.mixins import (
     ListModelMixin,
     RetrieveModelMixin,
 )
-from rest_framework.permissions import (
-    DjangoModelPermissions,
-    DjangoObjectPermissions,
-)
+from rest_framework.permissions import DjangoObjectPermissions
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 
 from grandchallenge.algorithms.filters import (
@@ -926,7 +923,7 @@ class InvocationViewSet(
     CreateModelMixin, RetrieveModelMixin, ListModelMixin, GenericViewSet
 ):
     queryset = Invocation.objects.all()
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [DjangoObjectPermissions]
     filter_backends = [DjangoFilterBackend, InvocationObjectPermissionsFilter]
     filterset_class = InvocationFilter
 
