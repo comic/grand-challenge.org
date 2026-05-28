@@ -79,8 +79,7 @@ from tests.reader_studies_tests.factories import (
 def test_notification_sent_on_new_topic(
     kind, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     u = UserFactory()
     f = ForumFactory()
@@ -120,8 +119,7 @@ def test_notification_sent_on_new_topic(
 def test_notification_sent_on_new_post(
     kind, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     u = UserFactory()
     f = ForumFactory()
@@ -165,8 +163,7 @@ def test_notification_sent_on_new_post(
 
 @pytest.mark.django_db
 def test_follow_if_post_in_topic(settings, django_capture_on_commit_callbacks):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     u = UserFactory()
     f = ForumFactory()
@@ -185,8 +182,7 @@ def test_notification_created_for_target_followers_on_action_creation(
     settings,
     django_capture_on_commit_callbacks,
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     u = UserFactory()
     f = ForumFactory()

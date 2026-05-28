@@ -221,8 +221,7 @@ def test_forum_subscribe_and_unsubscribe(client):
 def test_topic_subscribe_and_unsubscribe(
     client, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     admin = UserFactory()
     user = UserFactory()
