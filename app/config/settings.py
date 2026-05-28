@@ -1229,18 +1229,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
         "schedule": crontab(hour=3, minute=0),
     },
-    "send_new_unread_direct_messages_emails": {
-        "task": "grandchallenge.direct_messages.tasks.send_new_unread_direct_messages_emails",
-        "schedule": crontab(hour=3, minute=30),
-    },
-    "send_unread_notification_emails": {
-        "task": "grandchallenge.notifications.tasks.send_unread_notification_emails",
-        "schedule": crontab(hour=4, minute=0),
-    },
-    "update_site_statistics": {
-        "task": "grandchallenge.statistics.tasks.update_site_statistics_cache",
-        "schedule": crontab(hour=5, minute=30),
-    },
     "send_onboarding_task_reminder_emails": {
         "task": "grandchallenge.challenges.tasks.send_onboarding_task_reminder_emails",
         "schedule": crontab(day_of_week="mon", hour=6, minute=0),
@@ -1291,10 +1279,6 @@ CELERY_BEAT_SCHEDULE = {
     },
     "cleanup_sent_raw_emails": {
         "task": "grandchallenge.emails.tasks.cleanup_sent_raw_emails",
-        "schedule": timedelta(hours=1),
-    },
-    "cleanup_celery_backend": {
-        "task": "grandchallenge.core.tasks.cleanup_celery_backend",
         "schedule": timedelta(hours=1),
     },
     "logout_privileged_users": {

@@ -94,8 +94,7 @@ def test_participants_follow_forum(group):
 def test_non_posters_notified(
     group, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     p = UserFactory()
     u = UserFactory()

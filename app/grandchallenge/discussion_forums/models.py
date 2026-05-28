@@ -5,7 +5,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import models
-from django.db.transaction import on_commit
 from django_extensions.db.fields import AutoSlugField
 from guardian.shortcuts import assign_perm, remove_perm
 from guardian.utils import get_anonymous_user
@@ -123,14 +122,10 @@ class ForumTopic(FieldChangeMixin, UUIDModel):
         if adding:
             self.assign_permissions()
             self.last_post_on = self.created
-            on_commit(
-                create_forum_notifications.signature(
-                    kwargs={
-                        "object_pk": self.pk,
-                        "app_label": self._meta.app_label,
-                        "model_name": self._meta.object_name,
-                    }
-                ).apply_async
+            create_forum_notifications.execute_on_commit(
+                object_pk=self.pk,
+                app_label=self._meta.app_label,
+                model_name=self._meta.object_name,
             )
 
         if self.has_changed("is_locked"):
@@ -264,14 +259,10 @@ class ForumPost(UUIDModel):
             self.assign_permissions()
             self.topic.mark_as_read(user=self.creator)
             if not self.is_alone:
-                on_commit(
-                    create_forum_notifications.signature(
-                        kwargs={
-                            "object_pk": self.pk,
-                            "app_label": self._meta.app_label,
-                            "model_name": self._meta.object_name,
-                        }
-                    ).apply_async
+                create_forum_notifications.execute_on_commit(
+                    object_pk=self.pk,
+                    app_label=self._meta.app_label,
+                    model_name=self._meta.object_name,
                 )
 
         self.topic.last_post = self

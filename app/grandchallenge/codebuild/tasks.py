@@ -35,15 +35,6 @@ def create_codebuild_build(*, pk):
     Build.objects.create(webhook_message=ghwm, algorithm_image=algorithm_image)
 
 
-@acks_late_micro_short_task(name=f"{__name__}.handle_completed_build_event")
-@transaction.atomic
-def handle_completed_build_event_celery(*, build_arn, build_status):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return handle_completed_build_event(
-        build_arn=build_arn, build_status=build_status
-    )
-
-
 @lambda_task
 def handle_completed_build_event(*, build_arn: str, build_status: str):
     from grandchallenge.codebuild.models import Build
