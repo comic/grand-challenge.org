@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.db.models import Count, Sum
 from django.utils.timezone import now
+from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.algorithms.models import (
     Algorithm,
@@ -29,7 +30,13 @@ from grandchallenge.utilization.models import (
 from grandchallenge.workstations.models import Session, WorkstationImage
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.update_site_statistics_cache")
+def update_site_statistics_cache_celery():
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_site_statistics_cache()
+
+
+@lambda_task
 def update_site_statistics_cache():
     public_challenges = Challenge.objects.filter(hidden=False)
 
