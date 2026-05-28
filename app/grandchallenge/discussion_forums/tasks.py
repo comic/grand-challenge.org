@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from actstream.actions import follow
 from celery.utils.log import get_task_logger
 from django.apps import apps
@@ -26,7 +28,7 @@ def create_forum_notifications_celery(**kwargs):
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
 def create_forum_notifications(
-    *, object_pk: str, app_label: str, model_name: str
+    *, object_pk: str | UUID, app_label: str, model_name: str
 ):
     from grandchallenge.discussion_forums.models import (
         ForumPost,
