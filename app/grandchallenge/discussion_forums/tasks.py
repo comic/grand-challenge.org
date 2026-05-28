@@ -25,7 +25,9 @@ def create_forum_notifications_celery(**kwargs):
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
-def create_forum_notifications(*, object_pk, app_label, model_name):
+def create_forum_notifications(
+    *, object_pk: str, app_label: str, model_name: str
+):
     from grandchallenge.discussion_forums.models import (
         ForumPost,
         ForumTopic,
