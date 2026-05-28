@@ -9,12 +9,18 @@ from guardian.shortcuts import assign_perm
 from requests import put
 from rest_framework import status
 
-from grandchallenge.algorithms.models import Endpoint, Job
+from grandchallenge.algorithms.models import (
+    Endpoint,
+    EndpointStatusChoices,
+    InvocationStatusChoices,
+    Job,
+)
 from grandchallenge.algorithms.serializers import (
     AlgorithmImageSerializer,
     AlgorithmModelSerializer,
 )
 from grandchallenge.components.models import (
+    ComponentInterface,
     ComponentInterfaceValue,
     InterfaceKindChoices,
 )
@@ -25,6 +31,7 @@ from tests.algorithms_tests.factories import (
     AlgorithmJobFactory,
     AlgorithmModelFactory,
     EndpointFactory,
+    InvocationFactory,
 )
 from tests.cases_tests import RESOURCE_PATH
 from tests.cases_tests.factories import (
@@ -674,6 +681,7 @@ class TestEndpointList:
         assert response.data["count"] == 0
 
     def test_authenticated_user_sees_nothing_without_permissions(self, client):
+        EndpointFactory()
         user = UserFactory()
         client.force_login(user=user)
         response = client.get(self.url)
@@ -805,4 +813,292 @@ class TestEndpointReadOnly:
         endpoint = EndpointFactory()
         client.force_login(user=endpoint.creator)
         response = client.delete(f"{self.url}{endpoint.pk}/")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+class TestInvocationList:
+    url = "/api/v1/algorithms/invocations/"
+
+    def test_anonymous_returns_empty_list(self, client):
+        InvocationFactory()
+
+        response = client.get(self.url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 0
+
+    def test_authenticated_user_sees_nothing_without_permissions(self, client):
+        InvocationFactory()
+        user = UserFactory()
+
+        client.force_login(user=user)
+        response = client.get(self.url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 0
+
+    def test_endpoint_creator_can_list_invocation(self, client):
+        invocation = InvocationFactory()
+
+        client.force_login(user=invocation.endpoint.creator)
+        response = client.get(self.url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["pk"] == str(invocation.pk)
+
+    def test_endpoint_viewer_group_member_can_list_invocation(self, client):
+        invocation = InvocationFactory()
+        user = UserFactory()
+        invocation.endpoint.viewers_group.user_set.add(user)
+
+        client.force_login(user=user)
+        response = client.get(self.url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["pk"] == str(invocation.pk)
+
+    def test_user_only_sees_invocations_from_permitted_endpoints(self, client):
+        user = UserFactory()
+        visible = InvocationFactory()
+        InvocationFactory()  # not visible
+        visible.endpoint.viewers_group.user_set.add(user)
+
+        client.force_login(user=user)
+        response = client.get(self.url)
+
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["pk"] == str(visible.pk)
+
+    def test_filter_by_status(self, client):
+        invocation = InvocationFactory(
+            status=InvocationStatusChoices.EXECUTING
+        )
+        InvocationFactory(
+            endpoint=invocation.endpoint,
+            status=InvocationStatusChoices.QUEUED,
+        )
+
+        client.force_login(user=invocation.endpoint.creator)
+        response = client.get(self.url, {"status": "Executing"})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 1
+        assert response.data["results"][0]["pk"] == str(invocation.pk)
+
+    def test_filter_by_status_invalid(self, client):
+        invocation = InvocationFactory()
+
+        client.force_login(user=invocation.endpoint.creator)
+        response = client.get(self.url, {"status": "nonsense"})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["count"] == 0
+
+
+@pytest.mark.django_db
+class TestInvocationDetail:
+    url = "/api/v1/algorithms/invocations/"
+
+    def get_url(self, pk):
+        return f"{self.url}{pk}/"
+
+    def test_anonymous_returns_empty_for_existing(self, client):
+        invocation = InvocationFactory()
+
+        response = client.get(self.get_url(invocation.pk))
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_no_permission_returns_404(self, client):
+        user = UserFactory()
+        invocation = InvocationFactory()
+
+        client.force_login(user=user)
+        response = client.get(self.get_url(invocation.pk))
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_endpoint_creator_can_retrieve(self, client):
+        invocation = InvocationFactory()
+
+        client.force_login(user=invocation.endpoint.creator)
+        response = client.get(self.get_url(invocation.pk))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["pk"] == str(invocation.pk)
+
+    def test_endpoint_viewer_group_member_can_retrieve(self, client):
+        user = UserFactory()
+        invocation = InvocationFactory()
+        invocation.endpoint.viewers_group.user_set.add(user)
+
+        client.force_login(user=user)
+        response = client.get(self.get_url(invocation.pk))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["pk"] == str(invocation.pk)
+
+    def test_nonexistent_returns_404(self, client):
+        user = UserFactory()
+
+        client.force_login(user=user)
+        response = client.get(self.get_url(uuid.uuid4()))
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+class TestInvocationCreate:
+    url = "/api/v1/algorithms/invocations/"
+
+    def get_url(self, pk):
+        return f"{self.url}{pk}/"
+
+    def test_anonymous_returns_not_authenticated(self, client):
+        response = client.post(self.url, data={})
+        assert (
+            response.status_code == status.HTTP_401_UNAUTHORIZED
+        ), response.data
+
+    def test_no_permission_returns_400(self, client):
+        user = UserFactory()
+        endpoint = EndpointFactory(
+            status=EndpointStatusChoices.RUNNING,
+        )
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"endpoint": endpoint.api_url})
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), response.data
+        assert response.data["endpoint"][0].code == "does_not_exist"
+
+    def test_endpoint_creator_can_create_invocation(self, client):
+        user = UserFactory()
+        endpoint = EndpointFactory(
+            creator=user,
+            status=EndpointStatusChoices.RUNNING,
+        )
+        ci_string = ComponentInterfaceFactory(
+            kind=ComponentInterface.Kind.STRING
+        )
+        interface = AlgorithmInterfaceFactory(inputs=[ci_string])
+        endpoint.algorithm_image.algorithm.interfaces.add(interface)
+
+        client.force_login(user=user)
+        response = client.post(
+            self.url,
+            content_type="application/json",
+            data={
+                "endpoint": endpoint.api_url,
+                "inputs": [
+                    {"interface": ci_string.slug, "value": "foo"},
+                ],
+            },
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED, response.data
+
+    def test_can_only_create_invocation_for_permitted_endpoints(self, client):
+        user = UserFactory()
+        EndpointFactory(
+            creator=user,
+            status=EndpointStatusChoices.RUNNING,
+        )
+        endpoint = EndpointFactory(status=EndpointStatusChoices.RUNNING)
+        ci_string = ComponentInterfaceFactory(
+            kind=ComponentInterface.Kind.STRING
+        )
+        interface = AlgorithmInterfaceFactory(inputs=[ci_string])
+        endpoint.algorithm_image.algorithm.interfaces.add(interface)
+
+        client.force_login(user=user)
+        response = client.post(
+            self.url,
+            content_type="application/json",
+            data={
+                "endpoint": endpoint.api_url,
+                "inputs": [
+                    {"interface": ci_string.slug, "value": "foo"},
+                ],
+            },
+        )
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), response.data
+        assert response.data["endpoint"][0].code == "does_not_exist"
+
+    def test_can_only_create_invocation_for_running_endpoints(self, client):
+        user = UserFactory()
+        endpoint = EndpointFactory(
+            creator=user,
+            status=EndpointStatusChoices.QUEUED,
+        )
+        ci_string = ComponentInterfaceFactory(
+            kind=ComponentInterface.Kind.STRING
+        )
+        interface = AlgorithmInterfaceFactory(inputs=[ci_string])
+        endpoint.algorithm_image.algorithm.interfaces.add(interface)
+
+        client.force_login(user=user)
+        response = client.post(
+            self.url,
+            content_type="application/json",
+            data={
+                "endpoint": endpoint.api_url,
+                "inputs": [
+                    {"interface": ci_string.slug, "value": "foo"},
+                ],
+            },
+        )
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), response.data
+        assert response.data["endpoint"][0].code == "does_not_exist"
+
+    def test_endpoint_viewer_group_member_cannot_create_invocation(
+        self, client
+    ):
+        user = UserFactory()
+        endpoint = EndpointFactory(status=EndpointStatusChoices.RUNNING)
+        endpoint.viewers_group.user_set.add(user)
+
+        client.force_login(user=user)
+        response = client.post(self.url, data={"endpoint": endpoint.api_url})
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), response.data
+        assert response.data["endpoint"][0].code == "does_not_exist"
+
+
+@pytest.mark.django_db
+class TestInvocationReadCreateOnly:
+    url = "/api/v1/algorithms/invocations/"
+
+    def get_url(self, pk):
+        return f"{self.url}{pk}/"
+
+    def test_put_not_allowed(self, client):
+        invocation = InvocationFactory()
+        client.force_login(user=invocation.endpoint.creator)
+        response = client.put(self.get_url(invocation.pk), data={})
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_patch_not_allowed(self, client):
+        invocation = InvocationFactory()
+        client.force_login(user=invocation.endpoint.creator)
+        response = client.patch(self.get_url(invocation.pk), data={})
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_delete_not_allowed(self, client):
+        invocation = InvocationFactory()
+        client.force_login(user=invocation.endpoint.creator)
+        response = client.delete(self.get_url(invocation.pk))
         assert response.status_code == status.HTTP_403_FORBIDDEN

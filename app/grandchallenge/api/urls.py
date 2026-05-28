@@ -6,6 +6,7 @@ from grandchallenge.algorithms.views import (
     AlgorithmImageViewSet,
     AlgorithmViewSet,
     EndpointViewSet,
+    InvocationViewSet,
     JobViewSet,
 )
 from grandchallenge.api.views import GCAPIView
@@ -49,6 +50,11 @@ router.register(
 router.register(r"algorithms/jobs", JobViewSet, basename="algorithms-job")
 router.register(
     r"algorithms/endpoints", EndpointViewSet, basename="algorithms-endpoint"
+)
+router.register(
+    r"algorithms/invocations",
+    InvocationViewSet,
+    basename="algorithms-invocation",
 )
 router.register(r"algorithms", AlgorithmViewSet, basename="algorithm")
 
