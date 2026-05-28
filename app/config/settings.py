@@ -1293,10 +1293,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.emails.tasks.cleanup_sent_raw_emails",
         "schedule": timedelta(hours=1),
     },
-    "cleanup_celery_backend": {
-        "task": "grandchallenge.core.tasks.cleanup_celery_backend",
-        "schedule": timedelta(hours=1),
-    },
     "logout_privileged_users": {
         "task": "grandchallenge.browser_sessions.tasks.logout_privileged_users",
         "schedule": timedelta(hours=1),

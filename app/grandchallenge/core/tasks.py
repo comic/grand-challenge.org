@@ -22,8 +22,14 @@ from grandchallenge.evaluation.models import Evaluation, Method
 from grandchallenge.workstations.models import Session
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.cleanup_celery_backend")
 @transaction.atomic
+def cleanup_celery_backend_celery():
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return cleanup_celery_backend()
+
+
+@lambda_task
 def cleanup_celery_backend():
     """Cleanup the Celery backend."""
     TaskResult.objects.filter(date_created__lt=now() - timedelta(days=7)).only(
