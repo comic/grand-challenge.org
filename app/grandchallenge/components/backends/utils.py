@@ -55,7 +55,7 @@ class ParsedLog(NamedTuple):
     inference_result_skipped: bool | None
 
 
-def parse_structured_log(*, log: str) -> ParsedLog | None:
+def parse_structured_log(*, log: str, task=None) -> ParsedLog | None:
     """Parse the structured logs from SageMaker Shim"""
     structured_log = json.loads(log.strip())
 
@@ -63,13 +63,17 @@ def parse_structured_log(*, log: str) -> ParsedLog | None:
     source = SourceChoices(structured_log["source"])
     inference_result_skipped = structured_log.get("inference_result_skipped")
 
-    if structured_log["internal"] is False:
-        # Defensive, in case the type of structured_log["internal"] is str
+    # Defensive, in case the type of structured_log["internal"] is str
+    if structured_log["internal"] is False and (
+        task is None or structured_log["task"] == task
+    ):
         return ParsedLog(
             message=message,
             source=source,
             inference_result_skipped=inference_result_skipped,
         )
+    else:
+        return None
 
 
 def safe_extract(*, src: File, dest: Path):
