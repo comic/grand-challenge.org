@@ -20,6 +20,7 @@ logger = get_task_logger(__name__)
 )
 @transaction.atomic
 def create_forum_notifications_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
     return create_forum_notifications(**kwargs)
 
 

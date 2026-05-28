@@ -1,5 +1,6 @@
 from django.contrib.sites.models import Site
 from django.db.models import Count, F, Q
+from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.profiles.models import (
@@ -8,7 +9,13 @@ from grandchallenge.profiles.models import (
 )
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.send_unread_notification_emails")
+def send_unread_notification_emails_celery():
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return send_unread_notification_emails()
+
+
+@lambda_task
 def send_unread_notification_emails():
     site = Site.objects.get_current()
 
