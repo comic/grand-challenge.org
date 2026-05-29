@@ -33,7 +33,6 @@ def annotate_compute_costs(*, invoice):
 
     update_compute_cost_euro_millicents(
         obj=invoice,
-        obj_field="compute_cost_euro_millicents",
         algorithm_job_utilizations=algorithm_job_utilizations,
         job_warm_pool_utilizations=job_warm_pool_utilizations,
         evaluation_job_utilizations=evaluation_job_utilizations,
@@ -55,7 +54,6 @@ def annotate_job_duration_and_compute_costs(*, phase):
 
     update_compute_cost_euro_millicents(
         obj=phase,
-        obj_field="compute_cost_euro_millicents",
         algorithm_job_utilizations=algorithm_job_utilizations,
         job_warm_pool_utilizations=job_warm_pool_utilizations,
         evaluation_job_utilizations=evaluation_job_utilizations,
@@ -65,7 +63,6 @@ def annotate_job_duration_and_compute_costs(*, phase):
 def update_compute_cost_euro_millicents(
     *,
     obj,
-    obj_field,
     algorithm_job_utilizations,
     job_warm_pool_utilizations,
     evaluation_job_utilizations,
@@ -82,10 +79,8 @@ def update_compute_cost_euro_millicents(
 
     items = [algorithm_job_costs, job_warm_pool_costs, evaluation_costs]
 
-    setattr(
-        obj,
-        obj_field,
-        sum(item["compute_cost_euro_millicents__sum"] or 0 for item in items),
+    obj.compute_cost_euro_millicents = sum(
+        item["compute_cost_euro_millicents__sum"] or 0 for item in items
     )
 
 
