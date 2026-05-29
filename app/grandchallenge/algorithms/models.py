@@ -1544,6 +1544,7 @@ class OptionalHangingProtocolAlgorithm(models.Model):
 
 class EndpointStatusChoices(TextChoices):
     QUEUED = "QUEUED", _("Queued")
+    STARTING = "STARTING", _("Starting")
     RUNNING = "RUNNING", _("Running")
     STOPPED = "STOPPED", _("Stopped")
     FAILED = "FAILED", _("Failed")
@@ -1552,6 +1553,7 @@ class EndpointStatusChoices(TextChoices):
     def get_active_choices(cls):
         return {
             cls.QUEUED,
+            cls.STARTING,
             cls.RUNNING,
         }
 
