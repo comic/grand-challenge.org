@@ -150,7 +150,7 @@ class Invoice(models.Model, FieldChangeMixin):
     compute_costs_euros = models.PositiveIntegerField(
         help_text="The capacity reservation in Euros"
     )
-    compute_costs_utilized_euros_millicents = models.PositiveIntegerField(
+    compute_cost_euro_millicents = models.PositiveIntegerField(
         help_text="The utilized compute costs in Euro millicents (cached from utilizations)",
         default=0,
     )
@@ -351,7 +351,7 @@ class Invoice(models.Model, FieldChangeMixin):
 
     @cached_property
     def compute_costs_balance_euros_millicents(self):
-        utilized = self.compute_costs_utilized_euros_millicents
+        utilized = self.compute_cost_euro_millicents
         diff = self.compute_costs_euros * 1000 * 100 - utilized
 
         if not self.is_budget_authorized:

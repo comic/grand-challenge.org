@@ -21,7 +21,7 @@ def test_prepaid_no_utilization_positive_balance():
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=2,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
@@ -34,7 +34,7 @@ def test_prepaid_utilization_positive_balance():
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=2,
-        compute_costs_utilized_euros_millicents=1 * 1000 * 100,
+        compute_cost_euro_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
@@ -63,7 +63,7 @@ def test_prepaid_no_utilization_zero_balance(payment_status, expires_on):
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=payment_status,
         expires_on=expires_on,
@@ -86,7 +86,7 @@ def test_prepaid_overutilization_negative_balance(payment_status):
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=3 * 1000 * 100,
+        compute_cost_euro_millicents=3 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=payment_status,
     )
@@ -99,7 +99,7 @@ def test_prepaid_utilization_expired_zero_balance():
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=4,
-        compute_costs_utilized_euros_millicents=1 * 1000 * 100,
+        compute_cost_euro_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=now().date() - timedelta(days=2),
@@ -113,7 +113,7 @@ def test_prepaid_overutilization_expired_negative_balance():
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=3 * 1000 * 100,
+        compute_cost_euro_millicents=3 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=now().date() - timedelta(days=2),  # Expired
@@ -146,14 +146,14 @@ def test_postpaid_no_utilization(
         InvoiceFactory(
             challenge=challenge,
             compute_costs_euros=1,
-            compute_costs_utilized_euros_millicents=0,
+            compute_cost_euro_millicents=0,
             payment_type=PaymentTypeChoices.PREPAID,
             payment_status=prepaid_payment_status,
         )
     postpaid_invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=2,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=postpaid_payment_status,
     )
@@ -246,14 +246,14 @@ def test_postpaid_postpaid_status_interaction_zero_balance(
         InvoiceFactory(
             challenge=challenge,
             compute_costs_euros=1,
-            compute_costs_utilized_euros_millicents=0,
+            compute_cost_euro_millicents=0,
             payment_type=PaymentTypeChoices.PREPAID,
             payment_status=prepaid_payment_status,
         )
     postpaid_invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=2,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=postpaid_payment_status,
     )
@@ -267,7 +267,7 @@ def test_postpaid_with_expired_paid_prepaid():
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=now().date() - timedelta(days=2),
@@ -275,7 +275,7 @@ def test_postpaid_with_expired_paid_prepaid():
     postpaid_invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=2,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=PaymentStatusChoices.INITIALIZED,
     )
@@ -292,14 +292,14 @@ def test_postpaid_utilized():
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
     postpaid_invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=4,
-        compute_costs_utilized_euros_millicents=1 * 1000 * 100,
+        compute_cost_euro_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
@@ -316,14 +316,14 @@ def test_postpaid_utilized_but_expired():
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
     postpaid_invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=4,
-        compute_costs_utilized_euros_millicents=1 * 1000 * 100,
+        compute_cost_euro_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=now().date() - timedelta(days=2),
@@ -339,14 +339,14 @@ def test_postpaid_overutilized():
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
     postpaid_invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=3 * 1000 * 100,
+        compute_cost_euro_millicents=3 * 1000 * 100,
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
@@ -363,14 +363,14 @@ def test_postpaid_overutilized_but_expired():
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
     postpaid_invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=3 * 1000 * 100,
+        compute_cost_euro_millicents=3 * 1000 * 100,
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=now().date() - timedelta(days=2),
@@ -402,7 +402,7 @@ def test_complimentary_no_utilization_positive_balance(payment_status):
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=payment_status,
     )
@@ -415,7 +415,7 @@ def test_complimentary_cancelled():
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=PaymentStatusChoices.CANCELLED,
     )
@@ -437,7 +437,7 @@ def test_complimentary_utilized(payment_status):
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=4,
-        compute_costs_utilized_euros_millicents=1 * 1000 * 100,
+        compute_cost_euro_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=payment_status,
     )
@@ -459,7 +459,7 @@ def test_complimentary_utilized_but_expired(payment_status):
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=4,
-        compute_costs_utilized_euros_millicents=1 * 1000 * 100,
+        compute_cost_euro_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=payment_status,
         expires_on=now().date() - timedelta(days=2),
@@ -473,7 +473,7 @@ def test_complimentary_overutilized_but_expired():
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=3 * 1000 * 100,
+        compute_cost_euro_millicents=3 * 1000 * 100,
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=PaymentStatusChoices.PAID,
         expires_on=now().date() - timedelta(days=2),
@@ -487,7 +487,7 @@ def test_multiple_challenges_do_not_mix_prepaid():
     InvoiceFactory(
         challenge=challenge_with_prepaid,
         compute_costs_euros=2,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
@@ -495,7 +495,7 @@ def test_multiple_challenges_do_not_mix_prepaid():
     postpaid_invoice = InvoiceFactory(
         challenge=challenge_without_prepaid,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
         follow_up_on=now() - timedelta(days=3),
@@ -506,7 +506,7 @@ def test_multiple_challenges_do_not_mix_prepaid():
     InvoiceFactory(
         challenge=challenge_without_prepaid,
         compute_costs_euros=2,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
