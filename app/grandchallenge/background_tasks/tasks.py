@@ -1,9 +1,5 @@
 from datetime import timedelta
 
-from billiard.exceptions import (
-    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
-)
-from django.db import transaction
 from django.db.models import (
     Avg,
     Count,
@@ -19,31 +15,12 @@ from lambda_tasks.decorators import lambda_task
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
 from grandchallenge.background_tasks.models import CeleryTaskDailyStats
-from grandchallenge.core.celery import acks_late_micro_short_task
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.aggregate_celery_daily_stats",
-    singleton=True,
-    # No need to retry here as the periodic task call this again
-    ignore_errors=(
-        CelerySoftTimeLimitExceeded,
-        SoftTimeLimitExceeded,
-    ),
-)
-@transaction.atomic
-def aggregate_celery_daily_stats_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return aggregate_celery_daily_stats(**kwargs)
 
 
 @lambda_task(
     singleton=True,
     # No need to retry here as the periodic task call this again
-    ignore_errors=(
-        CelerySoftTimeLimitExceeded,
-        SoftTimeLimitExceeded,
-    ),
+    ignore_errors=(SoftTimeLimitExceeded,),
 )
 def aggregate_celery_daily_stats():
     yesterday = (timezone.now() - timedelta(days=1)).date()
