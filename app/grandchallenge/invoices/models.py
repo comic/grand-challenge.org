@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Count, Exists, ExpressionWrapper, F, OuterRef, Q
 from django.db.models.functions import Cast, Now
+from django.utils.html import format_html
 from django.utils.timezone import now
 from guardian.shortcuts import assign_perm
 
@@ -365,6 +366,58 @@ class Invoice(models.Model, FieldChangeMixin):
         state = super()._current_state
         state["total_amount_euros"] = self.total_amount_euros
         return state
+
+    def get_status_badge(self):
+        return format_html(
+            '<span class="badge badge-{badge_class}">{text}</span>',
+            badge_class=self._status_badge_class,
+            text=self._status_badge_text,
+        )
+
+    @property
+    def _status_badge_text(self):
+        payment_type = self.payment_type
+        payment_status = self.payment_status
+
+        if self.is_expired:
+            return "Expired"
+        elif (
+            payment_type == PaymentTypeChoices.COMPLIMENTARY
+            and payment_status != PaymentStatusChoices.CANCELLED
+        ):
+            return "Paid"
+        elif payment_type == PaymentTypeChoices.PREPAID and payment_status in (
+            PaymentStatusChoices.INITIALIZED,
+            PaymentStatusChoices.REQUESTED,
+        ):
+            return "Initialized"
+        elif (
+            payment_type == PaymentTypeChoices.POSTPAID
+            and payment_status
+            in (
+                PaymentStatusChoices.INITIALIZED,
+                PaymentStatusChoices.REQUESTED,
+            )
+        ):
+            return "Reserved"
+        else:
+            return self.get_payment_status_display()
+
+    @property
+    def _status_badge_class(self):
+        payment_type = self.payment_type
+        payment_status = self.payment_status
+
+        if payment_status == PaymentStatusChoices.CANCELLED or self.is_expired:
+            return "danger"
+        elif payment_type == PaymentTypeChoices.COMPLIMENTARY:
+            return "success"
+        elif payment_status == PaymentStatusChoices.PAID:
+            return "success"
+        elif payment_type == PaymentTypeChoices.POSTPAID:
+            return "success"
+        else:
+            return "info"
 
     @cached_property
     def is_expired(self):

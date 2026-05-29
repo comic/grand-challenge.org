@@ -4,8 +4,9 @@ from zoneinfo import ZoneInfo
 
 import pytest
 from dateutil.utils import today
+from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.utils.timezone import datetime
+from django.utils.timezone import datetime, now
 
 from grandchallenge.invoices.models import (
     Invoice,
@@ -303,3 +304,183 @@ def test_follow_up_on_required_for_initialized_postpaid():
     # post-paid invoices in other states are fine without a follow-up date
     invoice2 = InvoiceFactory(payment_type=PaymentTypeChoices.POSTPAID)
     invoice2.full_clean()
+
+
+@pytest.mark.parametrize(
+    "invoice_kwargs, badge",
+    (
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+            ),
+            '<span class="badge badge-info">Initialized</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.REQUESTED,
+            ),
+            '<span class="badge badge-info">Initialized</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.ISSUED,
+                issued_on=now() + timedelta(days=1),
+            ),
+            '<span class="badge badge-info">Invoice Issued</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.CANCELLED,
+            ),
+            '<span class="badge badge-danger">Cancelled</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.PAID,
+            ),
+            '<span class="badge badge-success">Paid</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+                expires_on=now().date() - timedelta(days=7),
+                follow_up_on=now().date() - timedelta(days=30),
+            ),
+            '<span class="badge badge-danger">Expired</span>',
+        ),
+    ),
+)
+def test_prepaid_invoice_status_badge(invoice_kwargs, badge):
+    invoice = InvoiceFactory.build(
+        payment_type=Invoice.PaymentTypeChoices.PREPAID,
+        **invoice_kwargs,
+    )
+    assert invoice.get_status_badge() == badge
+
+
+@pytest.mark.parametrize(
+    "invoice_kwargs, badge",
+    (
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+            ),
+            '<span class="badge badge-success">Reserved</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.REQUESTED,
+            ),
+            '<span class="badge badge-success">Reserved</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.ISSUED,
+                issued_on=now() + timedelta(days=1),
+            ),
+            '<span class="badge badge-success">Invoice Issued</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.CANCELLED,
+            ),
+            '<span class="badge badge-danger">Cancelled</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.PAID,
+            ),
+            '<span class="badge badge-success">Paid</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+                expires_on=now().date() - timedelta(days=7),
+                follow_up_on=now().date() - timedelta(days=30),
+            ),
+            '<span class="badge badge-danger">Expired</span>',
+        ),
+    ),
+)
+def test_postpaid_invoice_status_badge(invoice_kwargs, badge):
+    invoice = InvoiceFactory.build(
+        payment_type=Invoice.PaymentTypeChoices.POSTPAID,
+        **invoice_kwargs,
+    )
+    assert invoice.get_status_badge() == badge
+
+
+@pytest.mark.parametrize(
+    "invoice_kwargs, badge",
+    (
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+            ),
+            '<span class="badge badge-success">Paid</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.REQUESTED,
+            ),
+            '<span class="badge badge-success">Paid</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.ISSUED,
+            ),
+            '<span class="badge badge-success">Paid</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.CANCELLED,
+            ),
+            '<span class="badge badge-danger">Cancelled</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.PAID,
+            ),
+            '<span class="badge badge-success">Paid</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
+                expires_on=now().date() - timedelta(days=7),
+                follow_up_on=now().date() - timedelta(days=30),
+            ),
+            '<span class="badge badge-danger">Expired</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.ISSUED,
+                issued_on=now()
+                - settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF
+                - timedelta(days=1),
+            ),
+            '<span class="badge badge-success">Paid</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.ISSUED,
+                issued_on=now()
+                - settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF
+                - timedelta(days=1),
+            ),
+            '<span class="badge badge-success">Paid</span>',
+        ),
+        (
+            dict(
+                payment_status=Invoice.PaymentStatusChoices.ISSUED,
+                issued_on=now() - settings.CHALLENGE_INVOICE_OVERDUE_CUTOFF,
+            ),
+            '<span class="badge badge-success">Paid</span>',
+        ),
+    ),
+)
+def test_complimentary_invoice_status_badge(invoice_kwargs, badge):
+    invoice = InvoiceFactory.build(
+        payment_type=Invoice.PaymentTypeChoices.COMPLIMENTARY,
+        **invoice_kwargs,
+    )
+    assert invoice.get_status_badge() == badge
