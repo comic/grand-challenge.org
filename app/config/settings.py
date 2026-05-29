@@ -1197,10 +1197,6 @@ EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
 )
 
 CELERY_BEAT_SCHEDULE = {
-    "update_publication_metadata": {
-        "task": "grandchallenge.publications.tasks.update_publication_metadata",
-        "schedule": crontab(hour=0, minute=30),
-    },
     "remove_inactive_container_images": {
         "task": "grandchallenge.components.tasks.remove_inactive_container_images",
         "schedule": crontab(hour=1, minute=0),
