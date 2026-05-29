@@ -1,4 +1,5 @@
 from celery.utils.log import get_task_logger
+from lambda_tasks.decorators import lambda_task
 from requests.exceptions import RequestException
 
 from grandchallenge.core.celery import acks_late_2xlarge_task
@@ -7,7 +8,13 @@ from grandchallenge.publications.models import Publication
 logger = get_task_logger(__name__)
 
 
-@acks_late_2xlarge_task
+@acks_late_2xlarge_task(name=f"{__name__}.update_publication_metadata")
+def update_publication_metadata_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return update_publication_metadata(**kwargs)
+
+
+@lambda_task
 def update_publication_metadata():
     pks_to_delete = []
 

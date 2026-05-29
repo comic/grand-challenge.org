@@ -1197,14 +1197,6 @@ EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
 )
 
 CELERY_BEAT_SCHEDULE = {
-    "refresh_expiring_user_tokens": {
-        "task": "grandchallenge.github.tasks.refresh_expiring_user_tokens",
-        "schedule": crontab(hour=0, minute=15),
-    },
-    "update_publication_metadata": {
-        "task": "grandchallenge.publications.tasks.update_publication_metadata",
-        "schedule": crontab(hour=0, minute=30),
-    },
     "remove_inactive_container_images": {
         "task": "grandchallenge.components.tasks.remove_inactive_container_images",
         "schedule": crontab(hour=1, minute=0),
@@ -1220,10 +1212,6 @@ CELERY_BEAT_SCHEDULE = {
     "deactivate_old_algorithm_images": {
         "task": "grandchallenge.algorithms.tasks.deactivate_old_algorithm_images",
         "schedule": crontab(hour=2, minute=30),
-    },
-    "aggregate_celery_daily_stats": {
-        "task": "grandchallenge.background_tasks.tasks.aggregate_celery_daily_stats",
-        "schedule": crontab(hour=2, minute=45),
     },
     "update_associated_challenges": {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
@@ -1261,28 +1249,8 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.update_challenge_compute_costs",
         "schedule": crontab(minute=45),
     },
-    "delete_users_who_dont_login": {
-        "task": "grandchallenge.profiles.tasks.delete_users_who_dont_login",
-        "schedule": timedelta(hours=1),
-    },
-    "delete_old_user_uploads": {
-        "task": "grandchallenge.uploads.tasks.delete_old_user_uploads",
-        "schedule": timedelta(hours=1),
-    },
-    "clear_sessions": {
-        "task": "grandchallenge.browser_sessions.tasks.clear_sessions",
-        "schedule": timedelta(hours=1),
-    },
-    "cleanup_expired_tokens": {
-        "task": "grandchallenge.github.tasks.cleanup_expired_tokens",
-        "schedule": timedelta(hours=1),
-    },
     "cleanup_sent_raw_emails": {
         "task": "grandchallenge.emails.tasks.cleanup_sent_raw_emails",
-        "schedule": timedelta(hours=1),
-    },
-    "logout_privileged_users": {
-        "task": "grandchallenge.browser_sessions.tasks.logout_privileged_users",
         "schedule": timedelta(hours=1),
     },
     "update_challenge_results_cache": {

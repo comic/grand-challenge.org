@@ -3,7 +3,6 @@ from datetime import timedelta
 import boto3
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.db import transaction
 from django.db.models import Count
 from django.utils import timezone
 from django.utils.timezone import now
@@ -17,16 +16,8 @@ from grandchallenge.cases.models import (
     PostProcessImageTask,
     RawImageUploadSession,
 )
-from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.evaluation.models import Evaluation, Method
 from grandchallenge.workstations.models import Session
-
-
-@acks_late_micro_short_task(name=f"{__name__}.cleanup_celery_backend")
-@transaction.atomic
-def cleanup_celery_backend_celery():
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return cleanup_celery_backend()
 
 
 @lambda_task
