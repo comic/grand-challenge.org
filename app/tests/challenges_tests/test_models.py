@@ -814,7 +814,7 @@ def test_active_invoice():
     invoice = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
@@ -834,7 +834,7 @@ def test_active_invoice_raises_on_negative_balance():
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=2 * 1000 * 100,
+        compute_cost_euro_millicents=2 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
@@ -848,7 +848,7 @@ def test_active_invoice_raises_on_zero_balance():
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=1 * 1000 * 100,
+        compute_cost_euro_millicents=1 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
@@ -865,7 +865,7 @@ def test_active_invoice_orders_by_expiry():
     invoice0 = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=_fixed_now + timedelta(10),
@@ -873,7 +873,7 @@ def test_active_invoice_orders_by_expiry():
     invoice1 = InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=_fixed_now + timedelta(10),
@@ -900,14 +900,14 @@ def test_active_invoice_takes_overall_balance_into_account():
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=0,
+        compute_cost_euro_millicents=0,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
     InvoiceFactory(
         challenge=challenge,
         compute_costs_euros=1,
-        compute_costs_utilized_euros_millicents=1000 * 1000 * 100,
+        compute_cost_euro_millicents=1000 * 1000 * 100,
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )

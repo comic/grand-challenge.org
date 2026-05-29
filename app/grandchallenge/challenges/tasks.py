@@ -109,9 +109,7 @@ def update_challenge_compute_costs():
 
             @retry_with_backoff((LockNotAvailable,))
             def save_invoice():
-                invoice.save(
-                    update_fields=("compute_costs_utilized_euros_millicents",)
-                )
+                invoice.save(update_fields=("compute_cost_euro_millicents",))
 
                 # TODO: remove this once compute_cost_euro_millicents is removed or deprecated
                 challenge = Challenge.objects.with_available_compute().get(
@@ -119,7 +117,7 @@ def update_challenge_compute_costs():
                 )
                 challenge.compute_cost_euro_millicents = (
                     Invoice.objects.filter(challenge=challenge.pk).aggregate(
-                        total=Sum("compute_costs_utilized_euros_millicents")
+                        total=Sum("compute_cost_euro_millicents")
                     )["total"]
                 )
                 challenge.save(update_fields=("compute_cost_euro_millicents",))

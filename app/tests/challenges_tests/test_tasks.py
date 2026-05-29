@@ -462,10 +462,10 @@ def test_update_challenge_compute_costs_no_utilization():
     challenge = ChallengeFactory()
     invoice = InvoiceFactory(challenge=challenge)
 
-    assert invoice.compute_costs_utilized_euros_millicents == 0
+    assert invoice.compute_cost_euro_millicents == 0
     update_challenge_compute_costs()
     invoice.refresh_from_db()
-    assert invoice.compute_costs_utilized_euros_millicents == 0
+    assert invoice.compute_cost_euro_millicents == 0
 
 
 @pytest.mark.django_db
@@ -520,9 +520,9 @@ def test_update_challenge_compute_costs(settings):
         job_warm_pool_utilization.compute_cost_euro_millicents = 8
         job_warm_pool_utilization.save()
 
-    assert invoice.compute_costs_utilized_euros_millicents == 0
+    assert invoice.compute_cost_euro_millicents == 0
 
     update_challenge_compute_costs()
 
     invoice.refresh_from_db()
-    assert invoice.compute_costs_utilized_euros_millicents == 1 + 2 + 4 + 8 + 8
+    assert invoice.compute_cost_euro_millicents == 1 + 2 + 4 + 8 + 8

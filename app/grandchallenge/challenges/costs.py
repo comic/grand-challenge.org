@@ -33,7 +33,7 @@ def annotate_compute_costs(*, invoice):
 
     update_compute_cost_euro_millicents(
         obj=invoice,
-        obj_field="compute_costs_utilized_euros_millicents",
+        obj_field="compute_cost_euro_millicents",
         algorithm_job_utilizations=algorithm_job_utilizations,
         job_warm_pool_utilizations=job_warm_pool_utilizations,
         evaluation_job_utilizations=evaluation_job_utilizations,
