@@ -943,7 +943,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
         invoices = self.invoices.order_by("expires_on", "created")
 
         total_balance = sum(
-            invoice.compute_costs_balance_euros_millicents
+            invoice.balance_compute_cost_euro_millicents
             for invoice in invoices
         )
 
@@ -951,7 +951,7 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             raise InsufficientBudgetError
 
         for invoice in invoices:
-            if invoice.compute_costs_balance_euros_millicents > 0:
+            if invoice.balance_compute_cost_euro_millicents > 0:
                 return invoice
 
 

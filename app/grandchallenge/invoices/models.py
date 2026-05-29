@@ -350,7 +350,7 @@ class Invoice(models.Model, FieldChangeMixin):
             )
 
     @cached_property
-    def compute_costs_balance_euros_millicents(self):
+    def balance_compute_cost_euro_millicents(self):
         utilized = self.compute_cost_euro_millicents
         diff = self.compute_costs_euros * 1000 * 100 - utilized
 
