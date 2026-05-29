@@ -222,8 +222,7 @@ class TestConfirmEmailForm:
     def test_user_can_not_verify_other_token(
         self, client, settings, django_capture_on_commit_callbacks
     ):
-        settings.CELERY_TASK_ALWAYS_EAGER = True
-        settings.CELERY_TASK_EAGER_PROPAGATES = True
+        settings.LAMBDA_TASKS_EAGER = True
 
         u1 = UserFactory()
         v1 = VerificationFactory(user=u1)

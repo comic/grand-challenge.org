@@ -37,8 +37,7 @@ from tests.verification_tests.factories import (
 
 @pytest.mark.django_db
 def test_deactivate_users(settings, django_capture_on_commit_callbacks):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     users = UserFactory.create_batch(5)
 

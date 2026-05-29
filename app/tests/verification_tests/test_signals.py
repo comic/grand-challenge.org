@@ -12,8 +12,7 @@ from tests.factories import UserFactory
 def test_auto_deactivate(
     auto_deactivate, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     vus = VerificationUserSet.objects.create(auto_deactivate=auto_deactivate)
     u = UserFactory()
@@ -34,8 +33,7 @@ def test_auto_deactivate(
 def test_auto_deactivate_reverse(
     auto_deactivate, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     vus = VerificationUserSet.objects.create(auto_deactivate=auto_deactivate)
     u = UserFactory()
@@ -56,8 +54,7 @@ def test_auto_deactivate_reverse(
 def test_auto_deactivate_set(
     auto_deactivate, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     vus = VerificationUserSet.objects.create(auto_deactivate=auto_deactivate)
     u = UserFactory()
@@ -78,8 +75,7 @@ def test_auto_deactivate_set(
 def test_auto_deactivate_reverse_set(
     auto_deactivate, settings, django_capture_on_commit_callbacks
 ):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     vus = VerificationUserSet.objects.create(auto_deactivate=auto_deactivate)
     u = UserFactory()
