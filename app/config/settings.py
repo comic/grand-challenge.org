@@ -1213,10 +1213,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.algorithms.tasks.deactivate_old_algorithm_images",
         "schedule": crontab(hour=2, minute=30),
     },
-    "aggregate_celery_daily_stats": {
-        "task": "grandchallenge.background_tasks.tasks.aggregate_celery_daily_stats",
-        "schedule": crontab(hour=2, minute=45),
-    },
     "update_associated_challenges": {
         "task": "grandchallenge.algorithms.tasks.update_associated_challenges",
         "schedule": crontab(hour=3, minute=0),

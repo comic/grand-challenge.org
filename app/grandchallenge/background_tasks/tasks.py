@@ -15,6 +15,7 @@ from django.db.models import (
 )
 from django.utils import timezone
 from django_celery_results.models import TaskResult
+from lambda_tasks.decorators import lambda_task
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 
 from grandchallenge.background_tasks.models import CeleryTaskDailyStats
@@ -22,6 +23,7 @@ from grandchallenge.core.celery import acks_late_micro_short_task
 
 
 @acks_late_micro_short_task(
+    name=f"{__name__}.aggregate_celery_daily_stats",
     singleton=True,
     # No need to retry here as the periodic task call this again
     ignore_errors=(
@@ -30,6 +32,18 @@ from grandchallenge.core.celery import acks_late_micro_short_task
     ),
 )
 @transaction.atomic
+def aggregate_celery_daily_stats_celery(**kwargs):
+    return aggregate_celery_daily_stats(**kwargs)
+
+
+@lambda_task(
+    singleton=True,
+    # No need to retry here as the periodic task call this again
+    ignore_errors=(
+        CelerySoftTimeLimitExceeded,
+        SoftTimeLimitExceeded,
+    ),
+)
 def aggregate_celery_daily_stats():
     yesterday = (timezone.now() - timedelta(days=1)).date()
 
