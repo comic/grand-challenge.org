@@ -1249,10 +1249,6 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.update_challenge_compute_costs",
         "schedule": crontab(minute=45),
     },
-    "delete_old_user_uploads": {
-        "task": "grandchallenge.uploads.tasks.delete_old_user_uploads",
-        "schedule": timedelta(hours=1),
-    },
     "cleanup_sent_raw_emails": {
         "task": "grandchallenge.emails.tasks.cleanup_sent_raw_emails",
         "schedule": timedelta(hours=1),
