@@ -1253,16 +1253,8 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.uploads.tasks.delete_old_user_uploads",
         "schedule": timedelta(hours=1),
     },
-    "clear_sessions": {
-        "task": "grandchallenge.browser_sessions.tasks.clear_sessions",
-        "schedule": timedelta(hours=1),
-    },
     "cleanup_sent_raw_emails": {
         "task": "grandchallenge.emails.tasks.cleanup_sent_raw_emails",
-        "schedule": timedelta(hours=1),
-    },
-    "logout_privileged_users": {
-        "task": "grandchallenge.browser_sessions.tasks.logout_privileged_users",
         "schedule": timedelta(hours=1),
     },
     "update_challenge_results_cache": {
