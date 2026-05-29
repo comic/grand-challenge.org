@@ -13,6 +13,7 @@ from grandchallenge.invoices.models import (
     PaymentStatusChoices,
     PaymentTypeChoices,
 )
+from tests.algorithms_tests.factories import AlgorithmJobFactory
 from tests.factories import ChallengeFactory
 from tests.invoices_tests.factories import InvoiceFactory
 
@@ -552,3 +553,35 @@ def test_follow_up_on_required_for_initialized_postpaid():
     # post-paid invoices in other states are fine without a follow-up date
     invoice2 = InvoiceFactory(payment_type=PaymentTypeChoices.POSTPAID)
     invoice2.full_clean()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "payment_status",
+    (
+        PaymentStatusChoices.INITIALIZED,
+        PaymentStatusChoices.REQUESTED,
+        PaymentStatusChoices.ISSUED,
+        PaymentStatusChoices.CANCELLED,
+    ),
+)
+def test_cancelling_invoice_with_utilization(payment_status):
+    invoice = InvoiceFactory(
+        payment_type=PaymentTypeChoices.POSTPAID,
+        payment_status=PaymentStatusChoices.PAID,
+    )
+
+    invoice.payment_status = payment_status
+    invoice.full_clean()  # should be fine without utilizations
+
+    job = AlgorithmJobFactory()
+    job.utilization.invoice = invoice
+    job.utilization.save()
+
+    with pytest.raises(ValidationError) as e:
+        invoice.full_clean()
+    assert len(e.value.messages) == 1
+    assert (
+        "Cannot deactivate an invoice that has linked utilizations."
+        == e.value.messages[0]
+    )

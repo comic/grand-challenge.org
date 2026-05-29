@@ -379,6 +379,18 @@ class Invoice(models.Model, FieldChangeMixin):
                     "The total amount may not change. (You may only redistribute costs.)"
                 )
 
+        if not self.is_budget_authorized:
+            if any(
+                [
+                    self.job_utilizations.exists(),
+                    self.evaluation_utilizations.exists(),
+                    self.job_warm_pool_utilizations.exists(),
+                ]
+            ):
+                raise ValidationError(
+                    "Cannot deactivate an invoice that has linked utilizations."
+                )
+
     def save(self, *args, **kwargs):
         adding = self._state.adding
         super().save(*args, **kwargs)
