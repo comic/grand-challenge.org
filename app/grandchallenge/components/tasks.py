@@ -1682,6 +1682,52 @@ def start_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
         )
 
     else:
+        endpoint.update_status(status=endpoint.StatusChoices.STARTING)
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def handle_endpoint_status_event(*, event: dict):
+    from grandchallenge.components.backends.amazon_sagemaker_endpoint import (
+        EndpointOrchestrator,
+    )
+
+    endpoint_name = EndpointOrchestrator.get_endpoint_name(event=event)
+    params = EndpointOrchestrator.get_endpoint_params(
+        endpoint_name=endpoint_name
+    )
+
+    model = apps.get_model(
+        app_label=params.app_label,
+        model_name=params.model_name,
+    )
+
+    with check_lock_acquired():
+        endpoint = model.objects.select_for_update(nowait=True).get(
+            pk=params.pk
+        )
+
+    if endpoint.status != endpoint.StatusChoices.STARTING:
+        # Nothing to do
+        return
+
+    orchestrator = endpoint.orchestrator
+
+    try:
+        orchestrator.handle_status_event(event=event)
+    except ComponentException as error:
+        orchestrator.deprovision()
+        endpoint.update_status(
+            status=endpoint.StatusChoices.FAILED,
+            error_message=str(error),
+        )
+    except Exception:
+        logger.error("Could not start endpoint", exc_info=True)
+        orchestrator.deprovision()
+        endpoint.update_status(
+            status=endpoint.StatusChoices.FAILED,
+            error_message=SystemErrorMessages.UNEXPECTED_ERROR,
+        )
+    else:
         endpoint.update_status(status=endpoint.StatusChoices.RUNNING)
 
 

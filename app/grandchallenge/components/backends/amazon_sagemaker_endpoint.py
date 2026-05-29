@@ -21,7 +21,7 @@ from grandchallenge.core.error_messages import SystemErrorMessages
 logger = logging.getLogger(__name__)
 
 
-class InvocationParams(NamedTuple):
+class ObjectParams(NamedTuple):
     app_label: str
     model_name: str
     pk: UUID
@@ -248,6 +248,44 @@ class EndpointOrchestrator:
 
         self.deprovision_auxiliary_data()
 
+    @staticmethod
+    def get_endpoint_name(*, event):
+        return event["EndpointName"]
+
+    @staticmethod
+    def _get_endpoint_status(*, event):
+        return event["EndpointStatus"]
+
+    @staticmethod
+    def get_endpoint_params(*, endpoint_name):
+        prefix_regex = re.escape(settings.COMPONENTS_REGISTRY_PREFIX)
+        pattern = rf"^{prefix_regex}\-AE\-(?P<pk>{UUID4_REGEX})$"
+
+        result = re.match(pattern, endpoint_name)
+
+        if result is None:
+            raise ValueError("Invalid endpoint name")
+        else:
+            pk = result.group("pk")
+            return ObjectParams(
+                app_label="algorithms",
+                model_name="endpoint",
+                pk=pk,
+            )
+
+    def handle_status_event(self, *, event):
+        endpoint_status = self._get_endpoint_status(event=event)
+
+        if endpoint_status == "IN_SERVICE":
+            return
+        elif endpoint_status == "FAILED":
+            # Requires investigation
+            task_logger.info(event)
+            task_logger.error("Starting endpoint failed")
+            raise ComponentException(SystemErrorMessages.UNEXPECTED_ERROR)
+        else:
+            raise ValueError("Invalid endpoint status")
+
     def provision_invocation_input_data(self, *, input_civs):
         self._executor.provision(input_civs=input_civs, input_prefixes={})
 
@@ -279,7 +317,7 @@ class EndpointOrchestrator:
             raise ValueError("Invalid inference id")
         else:
             pk = result.group("pk")
-            return InvocationParams(
+            return ObjectParams(
                 app_label="algorithms",
                 model_name="invocation",
                 pk=pk,
