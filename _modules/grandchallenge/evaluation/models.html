@@ -1128,9 +1128,8 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">handle_submission_limit_avoidance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
-        <span class="n">on_commit</span><span class="p">(</span>
-            <span class="n">deactivate_user</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;user_pk&quot;</span><span class="p">:</span> <span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">})</span><span class="o">.</span><span class="n">apply_async</span>
-        <span class="p">)</span>
+        <span class="n">deactivate_user</span><span class="o">.</span><span class="n">execute_on_commit</span><span class="p">(</span><span class="n">user_pk</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+
         <span class="n">mail_managers</span><span class="p">(</span>
             <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;Suspected submission limit avoidance&quot;</span><span class="p">,</span>
             <span class="n">message</span><span class="o">=</span><span class="n">format_html</span><span class="p">(</span>
