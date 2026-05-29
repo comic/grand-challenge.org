@@ -940,19 +940,10 @@ class Challenge(ChallengeBase, FieldChangeMixin):
 
     @property
     def active_invoice(self):
-        invoices = self.invoices.order_by("expires_on", "created")
-
-        total_balance = sum(
-            invoice.balance_compute_cost_euro_millicents
-            for invoice in invoices
-        )
-
-        if total_balance <= 0:
-            raise InsufficientBudgetError
-
-        for invoice in invoices:
+        for invoice in self.invoices.order_by("expires_on", "created", "pk"):
             if invoice.balance_compute_cost_euro_millicents > 0:
                 return invoice
+        raise InsufficientBudgetError
 
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):

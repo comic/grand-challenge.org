@@ -894,7 +894,7 @@ def test_active_invoice_orders_by_expiry():
 
 
 @pytest.mark.django_db
-def test_active_invoice_takes_overall_balance_into_account():
+def test_active_invoice_ignores_overall_balance():
     challenge = ChallengeFactory()
 
     InvoiceFactory(
@@ -912,5 +912,4 @@ def test_active_invoice_takes_overall_balance_into_account():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
-    with pytest.raises(InsufficientBudgetError):
-        challenge.active_invoice
+    challenge.active_invoice
