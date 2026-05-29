@@ -10,7 +10,6 @@ from django.db.transaction import on_commit
 from django.utils import timezone
 
 from grandchallenge.algorithms.exceptions import TooManyJobsScheduled
-from grandchallenge.challenges.exceptions import InsufficientBudgetError
 from grandchallenge.components.schemas import GPUTypeChoices
 from grandchallenge.components.tasks import (
     provision_invocation_input_data,
@@ -82,6 +81,7 @@ def create_algorithm_jobs(
     task_on_failure=None,
     job_utilization_phase=None,
     job_utilization_challenge=None,
+    job_utilization_invoice=None,
 ):
     """
     Creates algorithm jobs for sets of component interface values
@@ -166,28 +166,16 @@ def create_algorithm_jobs(
                 input_civ_set=ai.values.all(),
                 use_warm_pool=use_warm_pool,
             )
-            jobs.append(
-                job
-            )  # Keep track of created jobs, even if utilization setup has failed
-
-            if job_utilization_challenge is not None:
-                try:
-                    job.utilization.invoice = (
-                        job_utilization_challenge.active_invoice
-                    )
-                except InsufficientBudgetError:
-                    job.update_status(
-                        status=Job.FAILURE,
-                        error_message="Job cannot be executed. The challenge has insufficient budget to run this job.",
-                    )
-                    break
 
             job.utilization.archive = ai.archive
             job.utilization.phase = job_utilization_phase
             job.utilization.challenge = job_utilization_challenge
+            job.utilization.invoice = job_utilization_invoice
             job.utilization.save()
 
             job.execute()
+
+            jobs.append(job)
 
     return jobs
 

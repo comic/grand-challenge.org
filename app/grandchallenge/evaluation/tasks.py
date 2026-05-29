@@ -333,6 +333,7 @@ def create_algorithm_jobs_for_evaluation(*, evaluation_pk, first_run):
             requires_memory_gb=evaluation.submission.algorithm_requires_memory_gb,
             job_utilization_phase=evaluation.submission.phase,
             job_utilization_challenge=evaluation.submission.phase.challenge,
+            job_utilization_invoice=evaluation.utilization.invoice,
         )
     except TooManyJobsScheduled:
         if not first_run:
