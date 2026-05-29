@@ -95,5 +95,5 @@ def test_refresh_expiring_user_tokens(django_capture_on_commit_callbacks):
     assert len(callbacks) == 1
     assert (
         repr(callbacks[0])
-        == f"<bound method Signature.apply_async of grandchallenge.github.tasks.refresh_user_token(pk={t3.pk})>"
+        == f"<bound method SQSLambdaTask._execute of SQSLambdaTask(message=SQSLambdaTaskMessage(task_name='grandchallenge.github.tasks.refresh_user_token', kwargs={{'pk': {t3.pk}}}, n_retries=0), delay=0, queue='default')>"
     )

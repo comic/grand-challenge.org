@@ -1197,10 +1197,6 @@ EXTERNAL_EVALUATION_TIMEOUT_IN_SECONDS = int(
 )
 
 CELERY_BEAT_SCHEDULE = {
-    "refresh_expiring_user_tokens": {
-        "task": "grandchallenge.github.tasks.refresh_expiring_user_tokens",
-        "schedule": crontab(hour=0, minute=15),
-    },
     "update_publication_metadata": {
         "task": "grandchallenge.publications.tasks.update_publication_metadata",
         "schedule": crontab(hour=0, minute=30),
@@ -1271,10 +1267,6 @@ CELERY_BEAT_SCHEDULE = {
     },
     "clear_sessions": {
         "task": "grandchallenge.browser_sessions.tasks.clear_sessions",
-        "schedule": timedelta(hours=1),
-    },
-    "cleanup_expired_tokens": {
-        "task": "grandchallenge.github.tasks.cleanup_expired_tokens",
         "schedule": timedelta(hours=1),
     },
     "cleanup_sent_raw_emails": {

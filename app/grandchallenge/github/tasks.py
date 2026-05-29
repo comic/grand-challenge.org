@@ -16,6 +16,7 @@ from django.core import files
 from django.db import transaction
 from django.db.transaction import on_commit
 from django.utils.timezone import now
+from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.algorithms.models import Algorithm
 from grandchallenge.codebuild.tasks import create_codebuild_build
@@ -179,8 +180,13 @@ def unlink_algorithm(*, pk):
         )
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.cleanup_expired_tokens")
 @transaction.atomic
+def cleanup_expired_tokens_celery(**kwargs):
+    return cleanup_expired_tokens(**kwargs)
+
+
+@lambda_task
 def cleanup_expired_tokens():
     from grandchallenge.github.models import GitHubUserToken
 
@@ -189,8 +195,13 @@ def cleanup_expired_tokens():
     ).delete()
 
 
-@acks_late_micro_short_task
-def refresh_user_token(*, pk):
+@acks_late_micro_short_task(name=f"{__name__}.refresh_user_token")
+def refresh_user_token_celery(**kwargs):
+    return refresh_user_token(**kwargs)
+
+
+@lambda_task
+def refresh_user_token(*, pk: int):
     from grandchallenge.github.models import GitHubUserToken
 
     token = GitHubUserToken.objects.get(pk=pk)
@@ -204,7 +215,12 @@ def refresh_user_token(*, pk):
     token.save()
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.refresh_expiring_user_tokens")
+def refresh_expiring_user_tokens_celery(**kwargs):
+    return refresh_expiring_user_tokens(**kwargs)
+
+
+@lambda_task
 def refresh_expiring_user_tokens():
     """Refresh user tokens expiring in the next 1 to 28 days"""
     from grandchallenge.github.models import GitHubUserToken
@@ -214,6 +230,4 @@ def refresh_expiring_user_tokens():
         refresh_token_expires__lt=now() + timedelta(days=28),
     )
     for token in queryset.iterator():
-        on_commit(
-            refresh_user_token.signature(kwargs={"pk": token.pk}).apply_async
-        )
+        refresh_user_token.execute_on_commit(pk=token.pk)
