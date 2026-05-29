@@ -1665,7 +1665,7 @@ def test_stop_expired_endpoints(
 @pytest.mark.django_db
 def test_handle_endpoint_status_in_service_event(settings):
     endpoint = EndpointFactory(
-        status=EndpointStatusChoices.STARTING,
+        status=EndpointStatusChoices.STARTED,
     )
     event = {
         "EndpointName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{endpoint.pk}",
@@ -1681,7 +1681,7 @@ def test_handle_endpoint_status_in_service_event(settings):
 @pytest.mark.django_db
 def test_handle_endpoint_status_failed_events(settings, mocker):
     endpoint = EndpointFactory(
-        status=EndpointStatusChoices.STARTING,
+        status=EndpointStatusChoices.STARTED,
     )
     event = {
         "EndpointName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{endpoint.pk}",
@@ -1703,7 +1703,7 @@ def test_handle_endpoint_status_failed_events(settings, mocker):
 @pytest.mark.django_db
 def test_handle_endpoint_status_invalid_events(settings, mocker):
     endpoint = EndpointFactory(
-        status=EndpointStatusChoices.STARTING,
+        status=EndpointStatusChoices.STARTED,
     )
     event = {
         "EndpointName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{endpoint.pk}",
@@ -1724,7 +1724,7 @@ def test_handle_endpoint_status_invalid_events(settings, mocker):
 
 @pytest.mark.parametrize(
     "status",
-    set(EndpointStatusChoices).difference([EndpointStatusChoices.STARTING]),
+    set(EndpointStatusChoices).difference([EndpointStatusChoices.STARTED]),
 )
 @pytest.mark.django_db
 def test_handle_endpoint_status_wrong_state_ignored(mocker, settings, status):

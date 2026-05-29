@@ -1682,7 +1682,7 @@ def start_endpoint(*, pk: uuid.UUID, app_label: str, model_name: str):
         )
 
     else:
-        endpoint.update_status(status=endpoint.StatusChoices.STARTING)
+        endpoint.update_status(status=endpoint.StatusChoices.STARTED)
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
@@ -1706,7 +1706,7 @@ def handle_endpoint_status_event(*, event: dict):
             pk=params.pk
         )
 
-    if endpoint.status != endpoint.StatusChoices.STARTING:
+    if endpoint.status != endpoint.StatusChoices.STARTED:
         # Nothing to do
         return
 
