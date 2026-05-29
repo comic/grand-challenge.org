@@ -183,6 +183,7 @@ def unlink_algorithm(*, pk):
 @acks_late_micro_short_task(name=f"{__name__}.cleanup_expired_tokens")
 @transaction.atomic
 def cleanup_expired_tokens_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
     return cleanup_expired_tokens(**kwargs)
 
 
@@ -197,6 +198,7 @@ def cleanup_expired_tokens():
 
 @acks_late_micro_short_task(name=f"{__name__}.refresh_user_token")
 def refresh_user_token_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
     return refresh_user_token(**kwargs)
 
 
@@ -217,6 +219,7 @@ def refresh_user_token(*, pk: int):
 
 @acks_late_micro_short_task(name=f"{__name__}.refresh_expiring_user_tokens")
 def refresh_expiring_user_tokens_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
     return refresh_expiring_user_tokens(**kwargs)
 
 

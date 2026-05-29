@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from django.db.transaction import on_commit
 from django.template.defaultfilters import linebreaksbr
 from django.template.loader import render_to_string
 from django.utils.timezone import now
@@ -140,9 +139,7 @@ def deactivate_vus_users(modeladmin, request, queryset):
     )
 
     for user in users:
-        on_commit(
-            deactivate_user.signature(kwargs={"user_pk": user.pk}).apply_async
-        )
+        deactivate_user.execute_on_commit(user_pk=user.pk)
 
 
 @admin.register(VerificationUserSet)

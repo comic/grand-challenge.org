@@ -1079,9 +1079,8 @@ class Phase(FieldChangeMixin, HangingProtocolMixin, UUIDModel):
         )
 
     def handle_submission_limit_avoidance(self, *, user):
-        on_commit(
-            deactivate_user.signature(kwargs={"user_pk": user.pk}).apply_async
-        )
+        deactivate_user.execute_on_commit(user_pk=user.pk)
+
         mail_managers(
             subject="Suspected submission limit avoidance",
             message=format_html(

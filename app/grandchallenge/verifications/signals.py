@@ -76,11 +76,8 @@ def auto_disable_user_in_verification_user_set(
             and verification_user_set.auto_deactivate
         ):
             for user in users:
-                on_commit(
-                    deactivate_user.signature(
-                        kwargs={"user_pk": user.pk}
-                    ).apply_async
-                )
+                deactivate_user.execute_on_commit(user_pk=user.pk)
+
                 mail_managers(
                     subject="User automatically deactivated",
                     message=format_html(

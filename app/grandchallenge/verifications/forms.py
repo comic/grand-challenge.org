@@ -4,7 +4,6 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.mail import mail_managers
-from django.db.transaction import on_commit
 from django.forms import CheckboxInput
 from django.utils.html import format_html
 
@@ -131,11 +130,7 @@ class ConfirmEmailForm(SaveFormInitMixin, forms.Form):
         token = self.cleaned_data["token"]
 
         if not hasattr(self.user, "verification"):
-            on_commit(
-                deactivate_user.signature(
-                    kwargs={"user_pk": self.user.pk}
-                ).apply_async
-            )
+            deactivate_user.execute_on_commit(user_pk=self.user.pk)
 
             mail_managers(
                 subject="User automatically deactivated",

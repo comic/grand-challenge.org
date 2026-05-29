@@ -10,6 +10,7 @@ logger = get_task_logger(__name__)
 
 @acks_late_2xlarge_task(name=f"{__name__}.update_publication_metadata")
 def update_publication_metadata_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
     return update_publication_metadata(**kwargs)
 
 

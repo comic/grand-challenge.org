@@ -5,14 +5,21 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils.timezone import now
+from lambda_tasks.decorators import lambda_task
 
 from grandchallenge.browser_sessions.models import BrowserSession
 from grandchallenge.core.celery import acks_late_micro_short_task
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.deactivate_user")
 @transaction.atomic
-def deactivate_user(*, user_pk):
+def deactivate_user_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return deactivate_user(**kwargs)
+
+
+@lambda_task
+def deactivate_user(*, user_pk: int):
     user = (
         get_user_model().objects.select_related("verification").get(pk=user_pk)
     )
@@ -30,8 +37,14 @@ def deactivate_user(*, user_pk):
     BrowserSession.objects.filter(user=user).delete()
 
 
-@acks_late_micro_short_task
+@acks_late_micro_short_task(name=f"{__name__}.delete_users_who_dont_login")
 @transaction.atomic
+def delete_users_who_dont_login_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
+    return delete_users_who_dont_login(**kwargs)
+
+
+@lambda_task
 def delete_users_who_dont_login():
     """Remove users who do not sign in after USER_LOGIN_TIMEOUT_DAYS"""
     get_user_model().objects.exclude(

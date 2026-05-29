@@ -33,6 +33,7 @@ from grandchallenge.core.celery import acks_late_micro_short_task
 )
 @transaction.atomic
 def aggregate_celery_daily_stats_celery(**kwargs):
+    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
     return aggregate_celery_daily_stats(**kwargs)
 
 
