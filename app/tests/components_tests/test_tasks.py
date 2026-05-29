@@ -1500,7 +1500,7 @@ def test_start_endpoint(mocker):
 
     for mock_method in mock_start_methods:
         mock_method.assert_called_once()
-    assert endpoint.status == endpoint.StatusChoices.RUNNING
+    assert endpoint.status == endpoint.StatusChoices.STARTED
 
 
 @pytest.mark.django_db
