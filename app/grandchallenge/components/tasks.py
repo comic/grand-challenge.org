@@ -1312,9 +1312,12 @@ def preload_interactive_algorithms():
 
     reader_studies_out_of_budget = [
         rs.pk
-        for rs in ReaderStudy.objects.exclude(max_credits__isnull=True).only(
-            "pk", "max_credits"
+        for rs in ReaderStudy.objects.exclude(max_credits__isnull=True)
+        .prefetch_related(
+            "session_utilizations__reader_studies",
+            "endpoint_utilizations__reader_studies",
         )
+        .only("pk", "max_credits")
         if not rs.has_budget
     ]
 
