@@ -1,29 +1,15 @@
 from uuid import UUID
 
 from actstream.actions import follow
-from celery.utils.log import get_task_logger
 from django.apps import apps
-from django.db import transaction
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.logging import task_logger
 
-from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.notifications.models import (
     Notification,
     NotificationTypeChoices,
 )
-
-logger = get_task_logger(__name__)
-
-
-@acks_late_micro_short_task(
-    name=f"{__name__}.create_forum_notifications",
-    retry_on=(LockNotAcquiredException,),
-)
-@transaction.atomic
-def create_forum_notifications_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return create_forum_notifications(**kwargs)
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
@@ -39,7 +25,7 @@ def create_forum_notifications(
     model = apps.get_model(app_label=app_label, model_name=model_name)
 
     if model not in (ForumPost, ForumTopic):
-        logger.error(
+        task_logger.error(
             f"Forum notifications can only be created for posts or topics, not for {model}"
         )
         return

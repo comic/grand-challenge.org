@@ -15,7 +15,6 @@ from grandchallenge.archives.models import Archive
 from grandchallenge.cases.models import Image, ImageFile
 from grandchallenge.challenges.models import Challenge
 from grandchallenge.components.models import ComponentInterfaceValue
-from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.evaluation.models import (
     EvaluationGroundTruth,
     Method,
@@ -28,12 +27,6 @@ from grandchallenge.utilization.models import (
     JobWarmPoolUtilization,
 )
 from grandchallenge.workstations.models import Session, WorkstationImage
-
-
-@acks_late_micro_short_task(name=f"{__name__}.update_site_statistics_cache")
-def update_site_statistics_cache_celery():
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return update_site_statistics_cache()
 
 
 @lambda_task
