@@ -13,7 +13,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from django.conf import settings
 from django.core import files
-from django.db import transaction
 from django.db.transaction import on_commit
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
@@ -180,13 +179,6 @@ def unlink_algorithm(*, pk):
         )
 
 
-@acks_late_micro_short_task(name=f"{__name__}.cleanup_expired_tokens")
-@transaction.atomic
-def cleanup_expired_tokens_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return cleanup_expired_tokens(**kwargs)
-
-
 @lambda_task
 def cleanup_expired_tokens():
     from grandchallenge.github.models import GitHubUserToken
@@ -194,12 +186,6 @@ def cleanup_expired_tokens():
     GitHubUserToken.objects.filter(refresh_token_expires__lt=now()).only(
         "pk"
     ).delete()
-
-
-@acks_late_micro_short_task(name=f"{__name__}.refresh_user_token")
-def refresh_user_token_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return refresh_user_token(**kwargs)
 
 
 @lambda_task
@@ -215,12 +201,6 @@ def refresh_user_token(*, pk: int):
         return
 
     token.save()
-
-
-@acks_late_micro_short_task(name=f"{__name__}.refresh_expiring_user_tokens")
-def refresh_expiring_user_tokens_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return refresh_expiring_user_tokens(**kwargs)
 
 
 @lambda_task
