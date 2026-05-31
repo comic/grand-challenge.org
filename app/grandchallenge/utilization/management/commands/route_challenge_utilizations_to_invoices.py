@@ -3,6 +3,7 @@ from typing import DefaultDict
 from django.core.management.base import BaseCommand
 
 from grandchallenge.challenges.models import Challenge
+from grandchallenge.challenges.tasks import update_challenge_compute_costs
 from grandchallenge.invoices.models import Invoice
 from grandchallenge.utilization.models import (
     EvaluationUtilization,
@@ -24,14 +25,7 @@ class NoAuthorizedInvoiceError(Exception):
     pass
 
 
-# TODO: test compute_cost_euro_millicents on util on None
-# TODO: test non-challenge linked utilizations
-# TODO: sort utilizations on created?
-
-# TODO: call the task that updates utilization prior to this command, to ensure we have the latest compute costs on the invoices.
-
-
-class InvoiceBooker:
+class ChallengeInvoiceRouter:
     def __init__(self, *, invoices):
         # Only select authorized budget; explicitly not filtered on invoices with a positive balance
         # as we'll overcharge the last invoice if we run out of budget, but at least we'll link to an invoice.
@@ -42,10 +36,10 @@ class InvoiceBooker:
         if not self.__authorized_invoices:
             raise NoAuthorizedInvoiceError
 
-    def book_to_invoice(self, *, utilization):
+    def route(self, *, utilization):
         invoice = self.__select_invoice(utilization=utilization)
         invoice.compute_cost_euro_millicents += (
-            utilization.compute_cost_euro_millicents
+            utilization.compute_cost_euro_millicents or 0
         )
         utilization.invoice = invoice
 
@@ -58,17 +52,21 @@ class InvoiceBooker:
 
             if (
                 remaining_budget_millicents > 0
-                and utilization.created <= invoice.expires_on
+                and utilization.created.date() <= invoice.expires_on
             ):
                 return invoice
         else:
             return self.__authorized_invoices[-1]
 
 
-class InvoiceBookerManager:
+class UtilizationRouter:
     def __init__(self):
         self.challenge_ids_without_authorized_invoices = set()
-        self.__bookers = {}
+        self.__challenge_routers = {}
+
+        # Final update of compute costs to ensure we have the latest information on the invoices
+        # before we start routing utilizations to them.
+        update_challenge_compute_costs()
 
         # Preload invoices for all challenges to avoid hitting the database for each challenge.
         invoices = Invoice.objects.order_by(
@@ -79,31 +77,33 @@ class InvoiceBookerManager:
         for invoice in invoices:
             self.__challenge_to_invoices[invoice.challenge_id].append(invoice)
 
-    def book_to_invoice(self, *, utilization):
+    def route(self, *, utilization):
         challenge_id = utilization.challenge_id
 
         if challenge_id in self.challenge_ids_without_authorized_invoices:
             return  # Short circuit: we know it is hopeless.
 
-        if challenge_id not in self.__bookers:
+        if challenge_id not in self.__challenge_routers:
             invoices = self.__challenge_to_invoices.get(challenge_id, [])
             try:
-                self.__bookers[challenge_id] = InvoiceBooker(invoices=invoices)
+                self.__challenge_routers[challenge_id] = (
+                    ChallengeInvoiceRouter(invoices=invoices)
+                )
             except NoAuthorizedInvoiceError:
                 self.challenge_ids_without_authorized_invoices.add(
                     challenge_id
                 )
                 return
 
-        self.__bookers[challenge_id].book_to_invoice(utilization=utilization)
+        self.__challenge_routers[challenge_id].route(utilization=utilization)
 
 
 class Command(BaseCommand):
-    help = "Links challenge utilizations to invoices"
+    help = "Routes challenge utilizations to invoices"
 
     def handle(self, *_, **__):
 
-        booker_manager = InvoiceBookerManager()
+        utilization_router = UtilizationRouter()
 
         for model in CHALLENGE_UTILIZATION_MODELS:
             self.stdout.write(
@@ -111,11 +111,6 @@ class Command(BaseCommand):
                     f"Progress: started working on {model.__name__}"
                 )
             )
-
-            queryset = model.objects.filter(
-                invoice__isnull=True,
-                challenge__isnull=False,
-            ).order_by("created")
 
             updated = 0
             objects_to_update = []
@@ -135,13 +130,19 @@ class Command(BaseCommand):
                     )
                 )
 
+            queryset = model.objects.filter(
+                invoice__isnull=True,
+                challenge__isnull=False,
+            ).order_by("created")
+
             # Iterate over the queryset and push bulk updates in batches to avoid overloading the memory
             # at the Python and the database level, respectively.
             objects_to_update = []
             for utilization in queryset.iterator(chunk_size=ITER_BATCH_SIZE):
-                booker_manager.book_to_invoice(utilization=utilization)
-                objects_to_update.append(utilization)
 
+                utilization_router.route(utilization=utilization)
+
+                objects_to_update.append(utilization)
                 if len(objects_to_update) >= ITER_BATCH_SIZE:
                     push_bulk_update()
 
@@ -155,19 +156,20 @@ class Command(BaseCommand):
                 )
             )
 
-        if booker_manager.challenge_ids_without_authorized_invoices:
+        if utilization_router.challenge_ids_without_authorized_invoices:
             challenges = Challenge.objects.filter(
-                pk__in=booker_manager.challenge_ids_without_authorized_invoices
+                pk__in=utilization_router.challenge_ids_without_authorized_invoices
             ).values_list("short_name", flat=True)
 
             self.stdout.write(
                 self.style.ERROR(
-                    f"Final Report: no authorized invoice found for {len(challenges)} challenges: {', '.join(challenges)}."
+                    f"Final Report: no authorized invoice found for "
+                    f"{len(challenges)} challenge{'s' if len(challenges) != 1 else ''}: {', '.join(challenges)}."
                 )
             )
         else:
             self.stdout.write(
                 self.style.SUCCESS(
-                    "Final Report: all challenges had an authorized invoice to link to."
+                    "Final Report: all challenges had an authorized invoice to route to."
                 )
             )
