@@ -87,6 +87,7 @@ class JobUtilizationAdmin(admin.ModelAdmin):
         "creator",
         "duration",
         "compute_cost_euro_millicents",
+        "invoice",
         "phase",
         "challenge",
         "algorithm_image",
@@ -95,6 +96,7 @@ class JobUtilizationAdmin(admin.ModelAdmin):
     list_select_related = (
         "job",
         "creator",
+        "invoice",
         "phase",
         "challenge",
         "algorithm_image",
@@ -109,6 +111,7 @@ class JobUtilizationAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         "creator",
+        "invoice",
         "phase",
         "challenge",
         "archive",
@@ -130,6 +133,7 @@ class JobWarmPoolUtilizationAdmin(admin.ModelAdmin):
         "creator",
         "duration",
         "compute_cost_euro_millicents",
+        "invoice",
         "phase",
         "challenge",
         "algorithm_image",
@@ -138,6 +142,7 @@ class JobWarmPoolUtilizationAdmin(admin.ModelAdmin):
     list_select_related = (
         "job",
         "creator",
+        "invoice",
         "phase",
         "challenge",
         "algorithm_image",
@@ -152,6 +157,7 @@ class JobWarmPoolUtilizationAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         "creator",
+        "invoice",
         "phase",
         "challenge",
         "archive",
@@ -175,6 +181,7 @@ class EvaluationUtilizationAdmin(admin.ModelAdmin):
         "creator",
         "duration",
         "compute_cost_euro_millicents",
+        "invoice",
         "phase",
         "challenge",
         "algorithm_image",
@@ -183,6 +190,7 @@ class EvaluationUtilizationAdmin(admin.ModelAdmin):
     list_select_related = (
         "evaluation",
         "creator",
+        "invoice",
         "phase",
         "challenge",
         "algorithm_image",
@@ -197,6 +205,7 @@ class EvaluationUtilizationAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         "creator",
+        "invoice",
         "phase",
         "challenge",
         "archive",
