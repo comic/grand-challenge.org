@@ -16,6 +16,7 @@ from django.db.models import (
     Count,
     ExpressionWrapper,
     F,
+    Prefetch,
     Q,
     Sum,
     Value,
@@ -76,6 +77,7 @@ from grandchallenge.evaluation.utils import (
 from grandchallenge.forge.models import ForgeChallenge
 from grandchallenge.incentives.models import Incentive
 from grandchallenge.invoices.models import (
+    Invoice,
     PaymentStatusChoices,
     PaymentTypeChoices,
 )
@@ -149,6 +151,14 @@ class ChallengeQuerySet(models.QuerySet):
                 - F("compute_cost_euro_millicents"),
                 output_field=models.BigIntegerField(),
             ),
+        )
+
+    def with_invoices_with_budget_authorization(self):
+        return self.prefetch_related(
+            Prefetch(
+                "invoices",
+                queryset=Invoice.objects.with_budget_authorization(),
+            )
         )
 
     def with_user_roles(self, *, user):
@@ -840,6 +850,14 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             )
         else:
             return None
+
+    @cached_property
+    def available_compute_euro_millicents_via_invoices(self):
+        return sum(
+            invoice.available_compute_cost_euro_millicents
+            for invoice in self.invoices.all()
+            if invoice.available_compute_cost_euro_millicents > 0
+        )
 
     def send_alert_if_budget_consumed_warning_threshold_exceeded(self):
         for percent_threshold in sorted(

@@ -39,6 +39,7 @@
                     <th>Approved Compute Costs</th>
                     <th>Total Compute Costs Incurred</th>
                     <th>Available Compute Costs</th>
+                     <th>Available Compute Costs (via Invoices)</th>
                     <th>Object Storage Costs per Year</th>
                     <th>Registry Storage Costs per Year</th>
                 </tr>
@@ -56,6 +57,7 @@
                         <td>{{ challenge.approved_compute_costs_euro_millicents|millicents_to_euro }}</td>
                         <td>{{ challenge.compute_cost_euro_millicents|millicents_to_euro }}</td>
                         <td class="{% if challenge.available_compute_euro_millicents <= 0 %}text-danger{% endif %}">{{ challenge.available_compute_euro_millicents|millicents_to_euro }}</td>
+                        <td>{{ challenge.available_compute_euro_millicents_via_invoices|millicents_to_euro }}</td>
                         <td>{{ challenge.size_in_storage|storage_bytes_to_euro_per_year }}</td>
                         <td>{{ challenge.size_in_registry|registry_bytes_to_euro_per_year }}</td>
                     </tr>
