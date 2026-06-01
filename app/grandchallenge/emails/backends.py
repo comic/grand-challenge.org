@@ -3,7 +3,7 @@ from django.core.mail.backends.base import BaseEmailBackend
 from grandchallenge.emails.models import RawEmail
 
 
-class CelerySESBackend(BaseEmailBackend):
+class RawEmailSESBackend(BaseEmailBackend):
     def send_messages(self, email_messages):
         raw_emails = RawEmail.objects.bulk_create(
             [

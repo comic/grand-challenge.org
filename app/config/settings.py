@@ -98,7 +98,7 @@ DATABASES = {
     }
 }
 
-EMAIL_BACKEND = "grandchallenge.emails.backends.CelerySESBackend"
+EMAIL_BACKEND = "grandchallenge.emails.backends.RawEmailSESBackend"
 EMAILS_MAX_SENT_PER_MINUTE = int(
     os.environ.get("EMAILS_MAX_SENT_PER_MINUTE", "600")
 )
