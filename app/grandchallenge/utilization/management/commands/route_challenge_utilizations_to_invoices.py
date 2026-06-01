@@ -133,27 +133,6 @@ class Command(BaseCommand):
             updated = 0
             objects_to_update = []
 
-            def bulk_update():
-                nonlocal updated
-                nonlocal objects_to_update
-
-                # Note. First flush the invoice with the utilization-cost tally
-                # The otherway around, something might update the invoice in the meantime with
-                # utilizations that are already in the tally
-                utilization_router.flush_invoice_compute_costs()
-
-                updated += model.objects.bulk_update(
-                    objs=objects_to_update,
-                    fields=["invoice"],
-                    batch_size=UPDATE_BATCH_SIZE,
-                )
-                objects_to_update = []
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f"Progress: {updated} {model.__name__} updated."
-                    )
-                )
-
             queryset = model.objects.filter(
                 invoice__isnull=True,
                 challenge__isnull=False,
@@ -170,11 +149,30 @@ class Command(BaseCommand):
 
                 objects_to_update.append(utilization)
                 if len(objects_to_update) >= ITER_BATCH_SIZE:
-                    bulk_update()
+                    # Note. First flush the invoice with the utilization-cost tally
+                    # The otherway around, something might update the invoice in the meantime with
+                    # utilizations that are already in the tally
+                    utilization_router.flush_invoice_compute_costs()
+                    updated += model.objects.bulk_update(
+                        objs=objects_to_update,
+                        fields=["invoice"],
+                        batch_size=UPDATE_BATCH_SIZE,
+                    )
+                    objects_to_update = []
+                    self.stdout.write(
+                        self.style.SUCCESS(
+                            f"Progress: {updated} {model.__name__} updated."
+                        )
+                    )
 
             # Handle remaining objects
             if objects_to_update:
-                bulk_update()
+                utilization_router.flush_invoice_compute_costs()
+                updated += model.objects.bulk_update(
+                    objs=objects_to_update,
+                    fields=["invoice"],
+                    batch_size=UPDATE_BATCH_SIZE,
+                )
 
             self.stdout.write(
                 self.style.SUCCESS(
