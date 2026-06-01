@@ -13,7 +13,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from django.conf import settings
 from django.core import files
-from django.db.transaction import on_commit
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 
@@ -109,12 +108,6 @@ def save_zipfile(ghwm, tmpdirname):
     return temp_file
 
 
-def build_repo(ghwm_pk):
-    on_commit(
-        create_codebuild_build.signature(kwargs={"pk": ghwm_pk}).apply_async
-    )
-
-
 @acks_late_2xlarge_task
 def get_zipfile(*, pk):
     from grandchallenge.github.models import GitHubWebhookMessage
@@ -156,7 +149,7 @@ def get_zipfile(*, pk):
             ghwm.clone_status = GitHubWebhookMessage.CloneStatusChoices.SUCCESS
             ghwm.save()
 
-            build_repo(ghwm.pk)
+            create_codebuild_build.execute_on_commit(pk=ghwm.pk)
 
         except Exception as e:
             ghwm.stdout = str(getattr(e, "stdout", ""))
