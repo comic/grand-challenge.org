@@ -7,12 +7,22 @@ from grandchallenge.browser_sessions.models import BrowserSession
 
 @lambda_task
 def logout_privileged_users():
-    BrowserSession.objects.filter(
-        user__is_staff=True,
-        created__lt=now() - settings.SESSION_PRIVILEGED_USER_TIMEOUT,
-    ).only("pk").delete()
+    deleted_count, _ = (
+        BrowserSession.objects.filter(
+            user__is_staff=True,
+            created__lt=now() - settings.SESSION_PRIVILEGED_USER_TIMEOUT,
+        )
+        .only("pk")
+        .delete()
+    )
+    return deleted_count
 
 
 @lambda_task
 def clear_sessions():
-    BrowserSession.objects.filter(expire_date__lt=now()).only("pk").delete()
+    deleted_count, _ = (
+        BrowserSession.objects.filter(expire_date__lt=now())
+        .only("pk")
+        .delete()
+    )
+    return deleted_count

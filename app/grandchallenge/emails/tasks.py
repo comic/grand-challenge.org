@@ -182,7 +182,12 @@ def send_raw_email(*, pk: str | UUID):
 
 @lambda_task
 def cleanup_sent_raw_emails():
-    RawEmail.objects.filter(
-        status=RawEmail.RawEmailStatusChoices.SUCCEEDED,
-        created__lt=now() - timedelta(days=7),
-    ).only("pk").delete()
+    deleted_count, _ = (
+        RawEmail.objects.filter(
+            status=RawEmail.RawEmailStatusChoices.SUCCEEDED,
+            created__lt=now() - timedelta(days=7),
+        )
+        .only("pk")
+        .delete()
+    )
+    return deleted_count

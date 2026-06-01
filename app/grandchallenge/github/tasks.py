@@ -176,9 +176,12 @@ def unlink_algorithm(*, pk):
 def cleanup_expired_tokens():
     from grandchallenge.github.models import GitHubUserToken
 
-    GitHubUserToken.objects.filter(refresh_token_expires__lt=now()).only(
-        "pk"
-    ).delete()
+    deleted_count, _ = (
+        GitHubUserToken.objects.filter(refresh_token_expires__lt=now())
+        .only("pk")
+        .delete()
+    )
+    return deleted_count
 
 
 @lambda_task
