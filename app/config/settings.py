@@ -1375,6 +1375,7 @@ DISALLOWED_EMAIL_DOMAINS = {
     "edumail.edu.pl",
     "zorrag.com",
     "sis.hust.edu.vn",
+    "st.neu.edu.vn",
     *blocklist,
 }
 
