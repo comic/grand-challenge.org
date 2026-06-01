@@ -61,8 +61,6 @@ def select_invoice(*, utilization, invoices):
 
 
 def update_invoice_compute_costs(*, invoices):
-    invoices_to_update = []
-
     for invoice in invoices:
         diff = (
             invoice.compute_cost_euro_millicents
@@ -72,10 +70,9 @@ def update_invoice_compute_costs(*, invoices):
         invoice.compute_cost_euro_millicents = (
             F("compute_cost_euro_millicents") + diff
         )
-        invoices_to_update.append(invoice)
 
     Invoice.objects.bulk_update(
-        invoices_to_update,
+        invoices,
         fields=["compute_cost_euro_millicents"],
     )
 
@@ -123,9 +120,6 @@ class Command(BaseCommand):
                 objects_to_update.append(utilization)
 
                 if len(objects_to_update) >= ITER_BATCH_SIZE:
-                    # Note. First flush the invoice with the utilization-cost tally
-                    # The otherway around, something might update the invoice in the meantime with
-                    # utilizations that are already in the tally
                     update_invoice_compute_costs(
                         invoices=(
                             invoice
