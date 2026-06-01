@@ -161,6 +161,6 @@ class Command(BaseCommand):
         else:
             self.stdout.write(
                 self.style.SUCCESS(
-                    "Final Report: all challenges had an authorized invoice to route to."
+                    "Final Report: all utilizations had an authorized invoice to route to."
                 )
             )
