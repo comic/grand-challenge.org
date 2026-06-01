@@ -234,15 +234,11 @@ def test_answer_update(client):
 
 @pytest.mark.django_db
 def test_answer_creation_blocked_when_rs_out_of_budget(client):
-    # im = ImageFactory()
-    # civ = ComponentInterfaceValueFactory(image=im)
     rs = ReaderStudyFactory(max_credits=0)
-    ds = DisplaySetFactory(reader_study=rs)
-    # ds.values.add(civ)
     reader, editor = UserFactory.create_batch(2)
     rs.add_reader(reader)
     rs.add_editor(editor)
-
+    ds = DisplaySetFactory(reader_study=rs)
     q = QuestionFactory(reader_study=rs, answer_type=Question.AnswerType.BOOL)
 
     assert not rs.has_budget
