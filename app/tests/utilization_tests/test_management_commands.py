@@ -23,7 +23,6 @@ def test_links_job_utilization_to_authorized_invoice():
         compute_costs_euros=100,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
-    assert invoice.is_budget_authorized
 
     job = AlgorithmJobFactory()
     job.utilization.challenge = challenge
@@ -50,6 +49,12 @@ def test_does_not_link_job_utilization_without_authorized_invoice():
     job.utilization.challenge = challenge
     job.utilization.compute_cost_euro_millicents = 1
     job.utilization.save()
+
+    assert (
+        not Invoice.objects.with_budget_authorization()
+        .filter(is_budget_authorized=True)
+        .exists()
+    )
 
     out = StringIO()
     call_command("route_challenge_utilizations_to_invoices", stdout=out)

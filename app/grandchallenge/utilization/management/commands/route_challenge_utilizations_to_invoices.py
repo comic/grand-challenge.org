@@ -1,5 +1,3 @@
-from typing import DefaultDict
-
 from django.core.management.base import BaseCommand
 
 from grandchallenge.challenges.models import Challenge
@@ -26,25 +24,54 @@ class NoAuthorizedInvoiceError(Exception):
 
 
 class ChallengeInvoiceRouter:
-    def __init__(self, *, invoices):
+    def __init__(self):
+        # Final update of compute costs to ensure we have the latest information on the invoices
+        # before we start routing utilizations to them.
+        update_challenge_compute_costs()
+
+        # Preload invoices for all challenges to avoid hitting the database for each challenge.
         # Only select authorized budget; explicitly not filtered on invoices with a positive balance
         # as we'll overcharge the last invoice if we run out of budget, but at least we'll link to an invoice.
-        self.__authorized_invoices = [
-            invoice for invoice in invoices if invoice.is_budget_authorized
-        ]
+        invoices = (
+            Invoice.objects.with_budget_authorization()
+            .exclude(is_budget_authorized=False)
+            .order_by("expires_on", "created")
+            .select_related("challenge")
+        )
 
-        if not self.__authorized_invoices:
-            raise NoAuthorizedInvoiceError
+        self.__challenge_to_authorized_invoices = {}
+        for invoice in invoices:
+            if (
+                invoice.challenge_id
+                not in self.__challenge_to_authorized_invoices
+            ):
+                self.__challenge_to_authorized_invoices[
+                    invoice.challenge_id
+                ] = []
+            self.__challenge_to_authorized_invoices[
+                invoice.challenge_id
+            ].append(invoice)
 
     def route(self, *, utilization):
-        invoice = self.__select_invoice(utilization=utilization)
+        challenge_id = utilization.challenge_id
+
+        try:
+            authorized_invoices = self.__challenge_to_authorized_invoices[
+                challenge_id
+            ]
+        except KeyError:
+            raise NoAuthorizedInvoiceError
+
+        invoice = self.__select_invoice(
+            utilization=utilization, invoices=authorized_invoices
+        )
         invoice.compute_cost_euro_millicents += (
             utilization.compute_cost_euro_millicents or 0
         )
         utilization.invoice = invoice
 
-    def __select_invoice(self, *, utilization):
-        for invoice in self.__authorized_invoices[:-1]:
+    def __select_invoice(self, *, utilization, invoices):
+        for invoice in invoices[:-1]:
             remaining_budget_millicents = (
                 invoice.compute_costs_euros * 1000 * 100
                 - invoice.compute_cost_euro_millicents
@@ -56,46 +83,7 @@ class ChallengeInvoiceRouter:
             ):
                 return invoice
         else:
-            return self.__authorized_invoices[-1]
-
-
-class UtilizationRouter:
-    def __init__(self):
-        self.challenge_ids_without_authorized_invoices = set()
-        self.__challenge_routers = {}
-
-        # Final update of compute costs to ensure we have the latest information on the invoices
-        # before we start routing utilizations to them.
-        update_challenge_compute_costs()
-
-        # Preload invoices for all challenges to avoid hitting the database for each challenge.
-        invoices = Invoice.objects.order_by(
-            "expires_on", "created"
-        ).select_related("challenge")
-
-        self.__challenge_to_invoices = DefaultDict(list)
-        for invoice in invoices:
-            self.__challenge_to_invoices[invoice.challenge_id].append(invoice)
-
-    def route(self, *, utilization):
-        challenge_id = utilization.challenge_id
-
-        if challenge_id in self.challenge_ids_without_authorized_invoices:
-            return  # Short circuit: we know it is hopeless.
-
-        if challenge_id not in self.__challenge_routers:
-            invoices = self.__challenge_to_invoices.get(challenge_id, [])
-            try:
-                self.__challenge_routers[challenge_id] = (
-                    ChallengeInvoiceRouter(invoices=invoices)
-                )
-            except NoAuthorizedInvoiceError:
-                self.challenge_ids_without_authorized_invoices.add(
-                    challenge_id
-                )
-                return
-
-        self.__challenge_routers[challenge_id].route(utilization=utilization)
+            return invoices[-1]
 
 
 class Command(BaseCommand):
@@ -103,7 +91,8 @@ class Command(BaseCommand):
 
     def handle(self, *_, **__):
 
-        utilization_router = UtilizationRouter()
+        utilization_router = ChallengeInvoiceRouter()
+        missing_invoice_challenges = set()
 
         for model in CHALLENGE_UTILIZATION_MODELS:
             self.stdout.write(
@@ -139,8 +128,10 @@ class Command(BaseCommand):
             # at the Python and the database level, respectively.
             objects_to_update = []
             for utilization in queryset.iterator(chunk_size=ITER_BATCH_SIZE):
-
-                utilization_router.route(utilization=utilization)
+                try:
+                    utilization_router.route(utilization=utilization)
+                except NoAuthorizedInvoiceError:
+                    missing_invoice_challenges.add(utilization.challenge_id)
 
                 objects_to_update.append(utilization)
                 if len(objects_to_update) >= ITER_BATCH_SIZE:
@@ -156,9 +147,9 @@ class Command(BaseCommand):
                 )
             )
 
-        if utilization_router.challenge_ids_without_authorized_invoices:
+        if missing_invoice_challenges:
             challenges = Challenge.objects.filter(
-                pk__in=utilization_router.challenge_ids_without_authorized_invoices
+                pk__in=missing_invoice_challenges
             ).values_list("short_name", flat=True)
 
             self.stdout.write(
