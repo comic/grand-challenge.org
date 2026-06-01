@@ -1,6 +1,7 @@
 from typing import DefaultDict
 
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from django.db.models import F
 
 from grandchallenge.challenges.models import Challenge
@@ -120,14 +121,15 @@ class Command(BaseCommand):
                 objects_to_update.append(utilization)
 
                 if len(objects_to_update) >= ITER_BATCH_SIZE:
-                    update_invoice_compute_costs(
-                        invoices=(
-                            invoice
-                            for invoices in invoices_map.values()
-                            for invoice in invoices
-                        ),
-                    )
-                    invoices_map = get_invoice_map()
+                    with transaction.atomic():
+                        update_invoice_compute_costs(
+                            invoices=[
+                                invoice
+                                for invoices in invoices_map.values()
+                                for invoice in invoices
+                            ],
+                        )
+                        invoices_map = get_invoice_map()
 
                     updated += model.objects.bulk_update(
                         objs=objects_to_update,
@@ -144,11 +146,11 @@ class Command(BaseCommand):
             # Handle remaining objects
             if objects_to_update:
                 update_invoice_compute_costs(
-                    invoices=(
+                    invoices=[
                         invoice
                         for invoices in invoices_map.values()
                         for invoice in invoices
-                    ),
+                    ],
                 )
                 model.objects.bulk_update(
                     objs=objects_to_update,
