@@ -133,7 +133,7 @@ def get_max_emails_per_minute():
 @acks_late_micro_short_task(
     name=f"{__name__}.send_raw_emails",
     singleton=True,
-    # No need to retry here as the periodic task call this again
+    # No need to retry here as the periodic task calls this again
     ignore_errors=(
         LockError,
         CelerySoftTimeLimitExceeded,
@@ -146,7 +146,11 @@ def send_raw_emails_celery(**kwargs):
     return send_raw_emails(**kwargs)
 
 
-@lambda_task(singleton=True)
+@lambda_task(
+    singleton=True,
+    # No need to retry here as the periodic task calls this again
+    ignore_errors=(LockError,),
+)
 def send_raw_emails():
     max_emails_per_minute = get_max_emails_per_minute()
     emails_in_flight = RawEmail.objects.filter(
