@@ -13,6 +13,7 @@ from grandchallenge.emails.tasks import (
     cleanup_sent_raw_emails,
     get_receivers,
     send_bulk_email,
+    send_raw_email,
     send_raw_emails,
 )
 from grandchallenge.emails.utils import SendActionChoices
@@ -363,7 +364,7 @@ def test_cleanup_sent_raw_emails():
 
 
 @pytest.mark.django_db
-def test_send_raw_emails(settings):
+def test_send_raw_emails(settings, django_capture_on_commit_callbacks):
     settings.DEBUG = True  # Do not connect to SQS
 
     e1, e2 = RawEmailFactory.create_batch(2)
@@ -371,16 +372,36 @@ def test_send_raw_emails(settings):
     e1.status = e1.RawEmailStatusChoices.SUCCEEDED
     e1.save()
 
-    send_raw_emails()
+    with django_capture_on_commit_callbacks() as callbacks:
+        send_raw_emails()
 
     e2.refresh_from_db()
 
-    assert e2.status == e2.RawEmailStatusChoices.SUCCEEDED
+    assert e2.status == e2.RawEmailStatusChoices.QUEUED
     assert (
         RawEmail.objects.filter(
             status=e2.RawEmailStatusChoices.INITIALIZED
         ).count()
         == 0
     )
+    assert len(callbacks) == 1
+    assert (
+        repr(callbacks[0])
+        == f"<bound method SQSLambdaTask._execute of SQSLambdaTask(message=SQSLambdaTaskMessage(task_name='grandchallenge.emails.tasks.send_raw_email', kwargs={{'pk': UUID('{e2.pk}')}}, n_retries=0), delay=0, queue='default')>"
+    )
 
-    # TODO test that only one email was sent
+
+@pytest.mark.django_db
+def test_send_raw_email(settings):
+    settings.DEBUG = True  # Do not connect to SQS
+
+    raw_email = RawEmailFactory()
+
+    raw_email.status = raw_email.RawEmailStatusChoices.QUEUED
+    raw_email.save()
+
+    send_raw_email(pk=raw_email.pk)
+
+    raw_email.refresh_from_db()
+
+    assert raw_email.status == raw_email.RawEmailStatusChoices.SUCCEEDED

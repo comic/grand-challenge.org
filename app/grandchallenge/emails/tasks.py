@@ -1,11 +1,11 @@
 import time
 from datetime import timedelta
+from uuid import UUID
 
 import boto3
 from billiard.exceptions import (
     SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
 )
-from botocore.exceptions import BotoCoreError, ClientError
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -14,10 +14,13 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.utils.timezone import now
+from lambda_tasks.decorators import lambda_task
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from redis.exceptions import LockError
 
 from grandchallenge.core.celery import acks_late_micro_short_task
+from grandchallenge.core.exceptions import LockNotAcquiredException
+from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.emails.models import Email, RawEmail
 from grandchallenge.emails.utils import SendActionChoices
@@ -134,7 +137,6 @@ def send_bulk_email(*, action, email_pk):
 )
 def send_raw_emails():
     if settings.DEBUG:
-        client = None
         min_send_duration = timedelta(seconds=1)
     else:
         client = boto3.client("ses", region_name=settings.AWS_SES_REGION_NAME)
@@ -148,29 +150,43 @@ def send_raw_emails():
     ).iterator():
         start = now()
 
-        try:
-            if settings.DEBUG:
-                response = {"MessageId": "debug"}
-            else:
-                response = client.send_raw_email(
-                    RawMessage={"Data": raw_email.message}
-                )
-        except (ClientError, BotoCoreError) as error:
-            raw_email.status = RawEmail.RawEmailStatusChoices.FAILED
-            raw_email.save()
-            logger.error(f"Error sending raw email {raw_email.pk}: {error}")
-            continue
-        else:
-            raw_email.status = RawEmail.RawEmailStatusChoices.SUCCEEDED
-            raw_email.save()
-            logger.info(
-                f"Sent raw email {raw_email.pk}: {response['MessageId']}"
-            )
+        send_raw_email.execute_on_commit(pk=raw_email.pk)
+        raw_email.status = RawEmail.RawEmailStatusChoices.QUEUED
+        raw_email.save()
 
         elapsed = now() - start
 
         if elapsed < min_send_duration:
             time.sleep((min_send_duration - elapsed).total_seconds())
+
+
+@lambda_task(retry_on=(LockNotAcquiredException,))
+def send_raw_email(*, pk: str | UUID):
+    with check_lock_acquired():
+        raw_email = RawEmail.objects.select_for_update(nowait=True).get(pk=pk)
+
+    if raw_email.status != RawEmail.RawEmailStatusChoices.QUEUED:
+        logger.error(f"Raw Email status is {raw_email.status}")
+        return
+
+    try:
+        if settings.DEBUG:
+            response = {"MessageId": "debug"}
+        else:
+            client = boto3.client(
+                "ses", region_name=settings.AWS_SES_REGION_NAME
+            )
+            response = client.send_raw_email(
+                RawMessage={"Data": raw_email.message}
+            )
+    except Exception as error:
+        raw_email.status = RawEmail.RawEmailStatusChoices.FAILED
+        raw_email.save()
+        logger.error(error, exc_info=True)
+    else:
+        raw_email.status = RawEmail.RawEmailStatusChoices.SUCCEEDED
+        raw_email.save()
+        return response["MessageId"]
 
 
 @acks_late_micro_short_task
