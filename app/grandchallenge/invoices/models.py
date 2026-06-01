@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Count, ExpressionWrapper, F, Q
+from django.db.models import Count, Exists, ExpressionWrapper, F, OuterRef, Q
 from django.db.models.functions import Cast, Now
 from django.db.transaction import on_commit
 from django.utils.timezone import now
@@ -83,6 +83,38 @@ class InvoiceQuerySet(models.QuerySet):
                 "is_overdue", filter=Q(is_overdue=True), distinct=True
             ),
             num_is_due=Count("is_due", filter=Q(is_due=True), distinct=True),
+        )
+
+    def with_budget_authorization(self):
+
+        has_paid_prepaid_invoice = Exists(
+            Invoice.objects.filter(
+                challenge_id=OuterRef("challenge_id"),
+                compute_costs_euros__gt=0,
+                payment_type=PaymentTypeChoices.PREPAID,
+                payment_status=PaymentStatusChoices.PAID,
+            )
+        )
+
+        return self.annotate(
+            is_budget_authorized=ExpressionWrapper(
+                ~Q(payment_status=PaymentStatusChoices.CANCELLED)
+                & (
+                    Q(payment_type=PaymentTypeChoices.COMPLIMENTARY)
+                    | Q(
+                        payment_type=PaymentTypeChoices.PREPAID,
+                        payment_status=PaymentStatusChoices.PAID,
+                    )
+                    | (
+                        Q(payment_type=PaymentTypeChoices.POSTPAID)
+                        & (
+                            Q(payment_status=PaymentStatusChoices.PAID)
+                            | has_paid_prepaid_invoice
+                        )
+                    )
+                ),
+                output_field=models.BooleanField(),
+            )
         )
 
     def to_check(self):
@@ -328,26 +360,6 @@ class Invoice(models.Model, FieldChangeMixin):
     @cached_property
     def is_expired(self):
         return self.expires_on < now().date()
-
-    @property
-    def is_budget_authorized(self):
-        if self.payment_status == PaymentStatusChoices.CANCELLED:
-            return False
-        else:
-            return (
-                self.payment_type == PaymentTypeChoices.COMPLIMENTARY
-                or (
-                    self.payment_type == PaymentTypeChoices.PREPAID
-                    and self.payment_status == PaymentStatusChoices.PAID
-                )
-                or (
-                    self.payment_type == PaymentTypeChoices.POSTPAID
-                    and (
-                        self.challenge.has_paid_prepaid_invoice
-                        or self.payment_status == PaymentStatusChoices.PAID
-                    )
-                )
-            )
 
     @cached_property
     def available_compute_cost_euro_millicents(self):

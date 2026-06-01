@@ -929,14 +929,6 @@ class Challenge(ChallengeBase, FieldChangeMixin):
             url=self.get_absolute_url(),
         )
 
-    @cached_property
-    def has_paid_prepaid_invoice(self):
-        return self.invoices.filter(
-            compute_costs_euros__gt=0,
-            payment_type=PaymentTypeChoices.PREPAID,
-            payment_status=PaymentStatusChoices.PAID,
-        ).exists()
-
 
 class ChallengeUserObjectPermission(UserObjectPermissionBase):
     allowed_permissions = frozenset()

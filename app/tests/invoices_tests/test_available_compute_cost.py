@@ -12,6 +12,22 @@ from tests.factories import ChallengeFactory
 from tests.invoices_tests.factories import InvoiceFactory
 
 
+@pytest.mark.django_db
+def test_budget_authorization_errors_out_early():
+    challenge = ChallengeFactory()
+    invoice = InvoiceFactory(
+        challenge=challenge,
+        compute_costs_euros=2,
+        compute_cost_euro_millicents=0,
+        payment_type=PaymentTypeChoices.PREPAID,
+        payment_status=Invoice.PaymentStatusChoices.PAID,
+    )
+    with pytest.raises(
+        AttributeError, match="no attribute 'is_budget_authorized'"
+    ):
+        invoice.available_compute_cost_euro_millicents
+
+
 ##########
 # PREPAID
 #########
@@ -25,6 +41,7 @@ def test_prepaid_no_utilization_positive_balance():
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 2 * 1000 * 100
 
 
@@ -38,6 +55,7 @@ def test_prepaid_utilization_positive_balance():
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 1 * 1000 * 100
 
 
@@ -68,6 +86,7 @@ def test_prepaid_no_utilization_zero_balance(payment_status, expires_on):
         payment_status=payment_status,
         expires_on=expires_on,
     )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 0
 
 
@@ -90,6 +109,7 @@ def test_prepaid_overutilization_negative_balance(payment_status):
         payment_type=PaymentTypeChoices.PREPAID,
         payment_status=payment_status,
     )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == -3 * 1000 * 100
 
 
@@ -104,6 +124,7 @@ def test_prepaid_utilization_expired_zero_balance():
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=now().date() - timedelta(days=2),
     )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 0
 
 
@@ -118,6 +139,7 @@ def test_prepaid_overutilization_expired_negative_balance():
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=now().date() - timedelta(days=2),  # Expired
     )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == -2 * 1000 * 100
 
 
@@ -158,6 +180,9 @@ def test_postpaid_no_utilization(
         payment_status=postpaid_payment_status,
     )
 
+    postpaid_invoice = Invoice.objects.with_budget_authorization().get(
+        pk=postpaid_invoice.pk
+    )
     assert (
         postpaid_invoice.available_compute_cost_euro_millicents
         == 2 * 1000 * 100
@@ -258,6 +283,9 @@ def test_postpaid_postpaid_status_interaction_zero_balance(
         payment_status=postpaid_payment_status,
     )
 
+    postpaid_invoice = Invoice.objects.with_budget_authorization().get(
+        pk=postpaid_invoice.pk
+    )
     assert postpaid_invoice.available_compute_cost_euro_millicents == 0
 
 
@@ -279,7 +307,9 @@ def test_postpaid_with_expired_paid_prepaid():
         payment_type=PaymentTypeChoices.POSTPAID,
         payment_status=PaymentStatusChoices.INITIALIZED,
     )
-
+    postpaid_invoice = Invoice.objects.with_budget_authorization().get(
+        pk=postpaid_invoice.pk
+    )
     assert (
         postpaid_invoice.available_compute_cost_euro_millicents
         == 2 * 1000 * 100
@@ -304,6 +334,9 @@ def test_postpaid_utilized():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
+    postpaid_invoice = Invoice.objects.with_budget_authorization().get(
+        pk=postpaid_invoice.pk
+    )
     assert (
         postpaid_invoice.available_compute_cost_euro_millicents
         == 3 * 1000 * 100
@@ -330,6 +363,9 @@ def test_postpaid_utilized_but_expired():
         follow_up_on=now() - timedelta(days=3),
     )
 
+    postpaid_invoice = Invoice.objects.with_budget_authorization().get(
+        pk=postpaid_invoice.pk
+    )
     assert postpaid_invoice.available_compute_cost_euro_millicents == 0
 
 
@@ -351,6 +387,9 @@ def test_postpaid_overutilized():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
+    postpaid_invoice = Invoice.objects.with_budget_authorization().get(
+        pk=postpaid_invoice.pk
+    )
     assert (
         postpaid_invoice.available_compute_cost_euro_millicents
         == -2 * 1000 * 100
@@ -375,6 +414,9 @@ def test_postpaid_overutilized_but_expired():
         payment_status=Invoice.PaymentStatusChoices.PAID,
         expires_on=now().date() - timedelta(days=2),
         follow_up_on=now() - timedelta(days=3),
+    )
+    postpaid_invoice = Invoice.objects.with_budget_authorization().get(
+        pk=postpaid_invoice.pk
     )
     assert (
         postpaid_invoice.available_compute_cost_euro_millicents
@@ -406,6 +448,7 @@ def test_complimentary_no_utilization_positive_balance(payment_status):
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=payment_status,
     )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 1 * 1000 * 100
 
 
@@ -419,6 +462,7 @@ def test_complimentary_cancelled():
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=PaymentStatusChoices.CANCELLED,
     )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 0
 
 
@@ -441,6 +485,7 @@ def test_complimentary_utilized(payment_status):
         payment_type=PaymentTypeChoices.COMPLIMENTARY,
         payment_status=payment_status,
     )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 3 * 1000 * 100
 
 
@@ -464,6 +509,7 @@ def test_complimentary_utilized_but_expired(payment_status):
         payment_status=payment_status,
         expires_on=now().date() - timedelta(days=2),
     )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == 0
 
 
@@ -478,6 +524,7 @@ def test_complimentary_overutilized_but_expired():
         payment_status=PaymentStatusChoices.PAID,
         expires_on=now().date() - timedelta(days=2),
     )
+    invoice = Invoice.objects.with_budget_authorization().get(pk=invoice.pk)
     assert invoice.available_compute_cost_euro_millicents == -2 * 1000 * 100
 
 
@@ -500,6 +547,9 @@ def test_multiple_challenges_do_not_mix_prepaid():
         payment_status=Invoice.PaymentStatusChoices.INITIALIZED,
         follow_up_on=now() - timedelta(days=3),
     )
+    postpaid_invoice = Invoice.objects.with_budget_authorization().get(
+        pk=postpaid_invoice.pk
+    )
     assert postpaid_invoice.available_compute_cost_euro_millicents == 0
 
     # Add prepaid
@@ -511,7 +561,9 @@ def test_multiple_challenges_do_not_mix_prepaid():
         payment_status=Invoice.PaymentStatusChoices.PAID,
     )
 
-    postpaid_invoice = Invoice.objects.get(pk=postpaid_invoice.pk)
+    postpaid_invoice = Invoice.objects.with_budget_authorization().get(
+        pk=postpaid_invoice.pk
+    )
     assert (
         postpaid_invoice.available_compute_cost_euro_millicents
         == 1 * 1000 * 100
