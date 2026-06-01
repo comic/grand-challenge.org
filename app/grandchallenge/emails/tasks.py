@@ -2,21 +2,15 @@ from datetime import timedelta
 from uuid import UUID
 
 import boto3
-from billiard.exceptions import (
-    SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
-)
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
 from django.core.paginator import Paginator
-from django.db import transaction
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
 from lambda_tasks.logging import task_logger
-from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from redis.exceptions import LockError
 
-from grandchallenge.core.celery import acks_late_micro_short_task
 from grandchallenge.core.exceptions import LockNotAcquiredException
 from grandchallenge.core.utils.query import check_lock_acquired
 from grandchallenge.emails.emails import send_standard_email_batch
@@ -130,22 +124,6 @@ def get_max_emails_per_minute():
     )
 
 
-@acks_late_micro_short_task(
-    name=f"{__name__}.send_raw_emails",
-    singleton=True,
-    # No need to retry here as the periodic task calls this again
-    ignore_errors=(
-        LockError,
-        CelerySoftTimeLimitExceeded,
-        SoftTimeLimitExceeded,
-    ),
-)
-@transaction.atomic
-def send_raw_emails_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return send_raw_emails(**kwargs)
-
-
 @lambda_task(
     singleton=True,
     # No need to retry here as the periodic task calls this again
@@ -200,13 +178,6 @@ def send_raw_email(*, pk: str | UUID):
         raw_email.status = RawEmail.RawEmailStatusChoices.SUCCEEDED
         raw_email.save()
         return response["MessageId"]
-
-
-@acks_late_micro_short_task(name=f"{__name__}.cleanup_sent_raw_emails")
-@transaction.atomic
-def cleanup_sent_raw_emails_celery(**kwargs):
-    # TODO: 4408 Remove, this is still here to handle existing tasks on SQS
-    return cleanup_sent_raw_emails(**kwargs)
 
 
 @lambda_task
