@@ -98,7 +98,10 @@ DATABASES = {
     }
 }
 
-EMAIL_BACKEND = "grandchallenge.emails.backends.CelerySESBackend"
+EMAIL_BACKEND = "grandchallenge.emails.backends.RawEmailSESBackend"
+EMAILS_MAX_SENT_PER_MINUTE = int(
+    os.environ.get("EMAILS_MAX_SENT_PER_MINUTE", "600")
+)
 SUPPORT_EMAIL = os.environ.get("SUPPORT_EMAIL", "grandchallenge@localhost")
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL", "grandchallenge@localhost"
@@ -1249,17 +1252,9 @@ CELERY_BEAT_SCHEDULE = {
         "task": "grandchallenge.challenges.tasks.update_challenge_compute_costs",
         "schedule": crontab(minute=45),
     },
-    "cleanup_sent_raw_emails": {
-        "task": "grandchallenge.emails.tasks.cleanup_sent_raw_emails",
-        "schedule": timedelta(hours=1),
-    },
     "update_challenge_results_cache": {
         "task": "grandchallenge.challenges.tasks.update_challenge_results_cache",
         "schedule": timedelta(minutes=5),
-    },
-    "send_raw_emails": {
-        "task": "grandchallenge.emails.tasks.send_raw_emails",
-        "schedule": timedelta(seconds=30),
     },
     "cancel_external_evaluations_past_timeout": {
         "task": "grandchallenge.evaluation.tasks.cancel_external_evaluations_past_timeout",
