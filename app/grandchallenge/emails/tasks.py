@@ -1,4 +1,3 @@
-import time
 from datetime import timedelta
 from uuid import UUID
 
@@ -125,8 +124,12 @@ def send_bulk_email(*, action, email_pk):
     email.save()
 
 
+def get_max_emails_per_minute():
+    client = boto3.client("ses", region_name=settings.AWS_SES_REGION_NAME)
+    return 60 * int(client.get_send_quota()["MaxSendRate"])
+
+
 @acks_late_micro_short_task(
-    ignore_result=True,
     singleton=True,
     # No need to retry here as the periodic task call this again
     ignore_errors=(
@@ -135,29 +138,18 @@ def send_bulk_email(*, action, email_pk):
         SoftTimeLimitExceeded,
     ),
 )
+@transaction.atomic
 def send_raw_emails():
-    if settings.DEBUG:
-        min_send_duration = timedelta(seconds=1)
-    else:
-        client = boto3.client("ses", region_name=settings.AWS_SES_REGION_NAME)
-        min_send_duration = timedelta(
-            seconds=1 / int(client.get_send_quota()["MaxSendRate"])
-        )
+    max_emails_per_minute = get_max_emails_per_minute()
 
-    # Transaction and locking unnecessary here as a cache lock is being used
-    for raw_email in RawEmail.objects.filter(
+    raw_emails = RawEmail.objects.select_for_update(skip_locked=True).filter(
         status=RawEmail.RawEmailStatusChoices.INITIALIZED,
-    ).iterator():
-        start = now()
+    )[:max_emails_per_minute]
 
+    for raw_email in raw_emails:
         send_raw_email.execute_on_commit(pk=raw_email.pk)
         raw_email.status = RawEmail.RawEmailStatusChoices.QUEUED
         raw_email.save()
-
-        elapsed = now() - start
-
-        if elapsed < min_send_duration:
-            time.sleep((min_send_duration - elapsed).total_seconds())
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))

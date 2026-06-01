@@ -8,7 +8,7 @@ from grandchallenge.emails.emails import (
     create_email_object,
     send_standard_email_batch,
 )
-from grandchallenge.emails.models import RawEmail
+from grandchallenge.emails.models import RawEmail, RawEmailStatusChoices
 from grandchallenge.emails.tasks import (
     cleanup_sent_raw_emails,
     get_receivers,
@@ -364,8 +364,11 @@ def test_cleanup_sent_raw_emails():
 
 
 @pytest.mark.django_db
-def test_send_raw_emails(settings, django_capture_on_commit_callbacks):
-    settings.DEBUG = True  # Do not connect to SQS
+def test_send_raw_emails(mocker, django_capture_on_commit_callbacks):
+    mocker.patch(
+        "grandchallenge.emails.tasks.get_max_emails_per_minute",
+        return_value=5,
+    )
 
     e1, e2 = RawEmailFactory.create_batch(2)
 
@@ -389,6 +392,31 @@ def test_send_raw_emails(settings, django_capture_on_commit_callbacks):
         repr(callbacks[0])
         == f"<bound method SQSLambdaTask._execute of SQSLambdaTask(message=SQSLambdaTaskMessage(task_name='grandchallenge.emails.tasks.send_raw_email', kwargs={{'pk': UUID('{e2.pk}')}}, n_retries=0), delay=0, queue='default')>"
     )
+
+
+@pytest.mark.django_db
+def test_send_raw_emails_limited(mocker, django_capture_on_commit_callbacks):
+    mocker.patch(
+        "grandchallenge.emails.tasks.get_max_emails_per_minute",
+        return_value=2,
+    )
+
+    RawEmailFactory.create_batch(3)
+
+    with django_capture_on_commit_callbacks() as callbacks:
+        send_raw_emails()
+
+    assert (
+        RawEmail.objects.filter(
+            status=RawEmailStatusChoices.INITIALIZED
+        ).count()
+        == 1
+    )
+    assert (
+        RawEmail.objects.filter(status=RawEmailStatusChoices.QUEUED).count()
+        == 2
+    )
+    assert len(callbacks) == 2
 
 
 @pytest.mark.django_db
