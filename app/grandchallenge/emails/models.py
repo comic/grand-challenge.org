@@ -48,10 +48,40 @@ class Email(models.Model):
         return reverse("emails:detail", kwargs={"pk": self.pk})
 
 
+class RawEmailStatusChoices(models.TextChoices):
+    INITIALIZED = "INITIALIZED", "Initialized"
+    QUEUED = "QUEUED", "Queued"
+    SUCCEEDED = "SUCCEEDED", "Succeeded"
+    FAILED = "FAILED", "Failed"
+
+
 class RawEmail(UUIDModel):
+    RawEmailStatusChoices = RawEmailStatusChoices
+
     message = models.TextField(editable=False)
-    errored = models.BooleanField(default=False)
-    sent_at = models.DateTimeField(blank=True, null=True)
+    status = models.CharField(
+        max_length=11,
+        choices=RawEmailStatusChoices,
+        default=RawEmailStatusChoices.INITIALIZED,
+    )
 
     class Meta:
         ordering = ("-created",)
+        indexes = [
+            models.Index(
+                fields=[
+                    "status",
+                ]
+            ),
+            models.Index(
+                fields=[
+                    "-created",
+                ]
+            ),
+        ]
+        constraints = (
+            models.CheckConstraint(
+                condition=models.Q(status__in=RawEmailStatusChoices.values),
+                name="%(app_label)s_%(class)s_status_in_choices",
+            ),
+        )

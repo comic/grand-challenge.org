@@ -144,7 +144,7 @@ def send_raw_emails():
 
     # Transaction and locking unnecessary here as a cache lock is being used
     for raw_email in RawEmail.objects.filter(
-        sent_at__isnull=True, errored=False
+        status=RawEmail.RawEmailStatusChoices.INITIALIZED,
     ).iterator():
         start = now()
 
@@ -156,12 +156,12 @@ def send_raw_emails():
                     RawMessage={"Data": raw_email.message}
                 )
         except (ClientError, BotoCoreError) as error:
-            raw_email.errored = True
+            raw_email.status = RawEmail.RawEmailStatusChoices.FAILED
             raw_email.save()
             logger.error(f"Error sending raw email {raw_email.pk}: {error}")
             continue
         else:
-            raw_email.sent_at = now()
+            raw_email.status = RawEmail.RawEmailStatusChoices.SUCCEEDED
             raw_email.save()
             logger.info(
                 f"Sent raw email {raw_email.pk}: {response['MessageId']}"
@@ -177,7 +177,6 @@ def send_raw_emails():
 @transaction.atomic
 def cleanup_sent_raw_emails():
     RawEmail.objects.filter(
-        sent_at__isnull=False,
-        errored=False,
+        status=RawEmail.RawEmailStatusChoices.SUCCEEDED,
         created__lt=now() - timedelta(days=7),
     ).only("pk").delete()

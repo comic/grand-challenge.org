@@ -94,7 +94,7 @@ class EmailAdmin(ModelAdmin):
 
 @admin.register(RawEmail)
 class RawEmailAdmin(ModelAdmin):
-    list_display = ("pk", "created", "sent_at", "errored")
-    list_filter = ("errored",)
+    list_display = ("pk", "created", "modified", "status")
+    list_filter = ("status",)
     readonly_fields = ("created", "message")
     search_fields = ("message",)

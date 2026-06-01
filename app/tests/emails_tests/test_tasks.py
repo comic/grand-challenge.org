@@ -350,11 +350,11 @@ def test_can_email_notification_if_opted_in(opt_in_type):
 def test_cleanup_sent_raw_emails():
     e1, e2, e3 = RawEmailFactory.create_batch(3)
 
-    e1.sent_at = timezone.now()
+    e1.status = e1.RawEmailStatusChoices.SUCCEEDED
     e1.save()
 
-    e2.sent_at = timezone.now() - timezone.timedelta(days=8)
-    e2.created = e2.sent_at
+    e2.created = timezone.now() - timezone.timedelta(days=8)
+    e2.status = e2.RawEmailStatusChoices.SUCCEEDED
     e2.save()
 
     cleanup_sent_raw_emails()
@@ -366,14 +366,21 @@ def test_cleanup_sent_raw_emails():
 def test_send_raw_emails(settings):
     settings.DEBUG = True  # Do not connect to SQS
 
-    sent_at_time = timezone.now()
-
     e1, e2 = RawEmailFactory.create_batch(2)
 
-    e1.sent_at = sent_at_time
+    e1.status = e1.RawEmailStatusChoices.SUCCEEDED
     e1.save()
 
     send_raw_emails()
 
-    assert RawEmail.objects.filter(sent_at__isnull=True).count() == 0
-    assert RawEmail.objects.get(pk=e1.pk).sent_at == sent_at_time
+    e2.refresh_from_db()
+
+    assert e2.status == e2.RawEmailStatusChoices.SUCCEEDED
+    assert (
+        RawEmail.objects.filter(
+            status=e2.RawEmailStatusChoices.INITIALIZED
+        ).count()
+        == 0
+    )
+
+    # TODO test that only one email was sent
