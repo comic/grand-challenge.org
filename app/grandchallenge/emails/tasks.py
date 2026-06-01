@@ -145,10 +145,17 @@ def send_raw_emails():
         status=RawEmail.RawEmailStatusChoices.INITIALIZED,
     )[:emails_to_schedule]
 
+    n_queued = 0
+
     for raw_email in raw_emails:
         send_raw_email.execute_on_commit(pk=raw_email.pk)
+
         raw_email.status = RawEmail.RawEmailStatusChoices.QUEUED
         raw_email.save()
+
+        n_queued += 1
+
+    return n_queued
 
 
 @lambda_task(retry_on=(LockNotAcquiredException,))
