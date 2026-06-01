@@ -63,14 +63,16 @@ class ChallengeInvoiceRouter:
             raise NoAuthorizedInvoiceError
 
         invoice = self.__select_invoice(
-            utilization=utilization, invoices=authorized_invoices
+            utilization=utilization,
+            invoices=authorized_invoices,
         )
         invoice.compute_cost_euro_millicents += (
             utilization.compute_cost_euro_millicents or 0
         )
         utilization.invoice = invoice
 
-    def __select_invoice(self, *, utilization, invoices):
+    @staticmethod
+    def __select_invoice(*, utilization, invoices):
         for invoice in invoices[:-1]:
             remaining_budget_millicents = (
                 invoice.compute_costs_euros * 1000 * 100
