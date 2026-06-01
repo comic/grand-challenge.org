@@ -1,6 +1,5 @@
 from django.contrib import admin, messages
 from django.contrib.admin import ModelAdmin
-from django.db.transaction import on_commit
 from django.forms import ModelForm
 
 from grandchallenge.core.widgets import MarkdownEditorAdminWidget
@@ -13,10 +12,7 @@ def schedule_emails(modeladmin, queryset, request, action):
     emails = queryset.filter(sent=False)
     if emails:
         for email in emails:
-            send_admin_emails = send_bulk_email.signature(
-                kwargs={"action": action, "email_pk": email.pk}, immutable=True
-            )
-            on_commit(send_admin_emails.apply_async)
+            send_bulk_email.execute_on_commit(action=action, email_pk=email.pk)
     else:
         modeladmin.message_user(
             request,
@@ -33,10 +29,7 @@ class EmailAdminForm(ModelForm):
 @admin.register(Email)
 class EmailAdmin(ModelAdmin):
     list_display = ("subject", "sent", "sent_at")
-    readonly_fields = (
-        "sent_at",
-        "status_report",
-    )
+    readonly_fields = ("sent_at",)
     actions = [*SendActionChoices]
     form = EmailAdminForm
 

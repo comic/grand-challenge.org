@@ -5,15 +5,14 @@ import boto3
 from billiard.exceptions import (
     SoftTimeLimitExceeded as CelerySoftTimeLimitExceeded,
 )
-from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.utils.timezone import now
 from lambda_tasks.decorators import lambda_task
+from lambda_tasks.logging import task_logger
 from lambda_tasks.timeouts import SoftTimeLimitExceeded
 from redis.exceptions import LockError
 
@@ -24,8 +23,6 @@ from grandchallenge.emails.emails import send_standard_email_batch
 from grandchallenge.emails.models import Email, RawEmail
 from grandchallenge.emails.utils import SendActionChoices
 from grandchallenge.profiles.models import EmailSubscriptionTypes
-
-logger = get_task_logger(__name__)
 
 
 def get_receivers(action):
@@ -80,48 +77,45 @@ def get_receivers(action):
     return receivers
 
 
-@acks_late_micro_short_task(
-    retry_on=(
-        CelerySoftTimeLimitExceeded,
-        SoftTimeLimitExceeded,
-    ),
-    singleton=True,
-)
-def send_bulk_email(*, action, email_pk):
-    try:
-        email = Email.objects.filter(sent=False).get(pk=email_pk)
-    except ObjectDoesNotExist:
+@lambda_task(singleton=True)
+def send_bulk_email(
+    *, action: SendActionChoices, email_pk: int, current_page_number: int = 1
+):
+    with check_lock_acquired():
+        email = Email.objects.select_for_update(nowait=True).get(pk=email_pk)
+
+    if email.sent:
+        task_logger.error("Email has already been sent")
         return
 
     receivers = get_receivers(action=action)
     paginator = Paginator(receivers, 100)
     site = Site.objects.get_current()
 
-    if email.status_report:
-        start_page = email.status_report["last_processed_batch"]
-    else:
-        start_page = 0
+    send_standard_email_batch(
+        site=site,
+        recipients=paginator.page(current_page_number).object_list,
+        subject=email.subject,
+        markdown_message=email.body,
+        subscription_type=(
+            EmailSubscriptionTypes.SYSTEM
+            if action == SendActionChoices.STAFF
+            else EmailSubscriptionTypes.NEWSLETTER
+        ),
+    )
 
-    # Transaction and locking unnecessary here as a cache lock is being used
-    for page_nr in paginator.page_range[start_page:]:
-        send_standard_email_batch(
-            site=site,
-            recipients=paginator.page(page_nr).object_list,
-            subject=email.subject,
-            markdown_message=email.body,
-            subscription_type=(
-                EmailSubscriptionTypes.SYSTEM
-                if action == SendActionChoices.STAFF
-                else EmailSubscriptionTypes.NEWSLETTER
-            ),
-        )
-        email.status_report = {"last_processed_batch": page_nr}
+    if current_page_number >= paginator.num_pages:
+        email.sent = True
+        email.sent_at = now()
         email.save()
-
-    email.sent = True
-    email.sent_at = now()
-    email.status_report = None
-    email.save()
+        return
+    else:
+        send_bulk_email.execute_on_commit(
+            action=action,
+            email_pk=email_pk,
+            current_page_number=current_page_number + 1,
+        )
+        return
 
 
 def get_max_emails_per_minute():
@@ -148,15 +142,7 @@ def send_raw_emails_celery(**kwargs):
     return send_raw_emails(**kwargs)
 
 
-@lambda_task(
-    singleton=True,
-    # No need to retry here as the periodic task call this again
-    ignore_errors=(
-        LockError,
-        CelerySoftTimeLimitExceeded,
-        SoftTimeLimitExceeded,
-    ),
-)
+@lambda_task(singleton=True)
 def send_raw_emails():
     max_emails_per_minute = get_max_emails_per_minute()
 
@@ -176,7 +162,7 @@ def send_raw_email(*, pk: str | UUID):
         raw_email = RawEmail.objects.select_for_update(nowait=True).get(pk=pk)
 
     if raw_email.status != RawEmail.RawEmailStatusChoices.QUEUED:
-        logger.error(f"Raw Email status is {raw_email.status}")
+        task_logger.error(f"Raw Email status is {raw_email.status}")
         return
 
     try:
@@ -192,7 +178,7 @@ def send_raw_email(*, pk: str | UUID):
     except Exception as error:
         raw_email.status = RawEmail.RawEmailStatusChoices.FAILED
         raw_email.save()
-        logger.error(error, exc_info=True)
+        task_logger.error(error, exc_info=True)
     else:
         raw_email.status = RawEmail.RawEmailStatusChoices.SUCCEEDED
         raw_email.save()

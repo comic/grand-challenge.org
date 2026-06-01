@@ -70,8 +70,7 @@ def test_get_receivers(factory, action):
 
 @pytest.mark.django_db
 def test_email_content(settings):
-    settings.CELERY_TASK_ALWAYS_EAGER = True
-    settings.CELERY_TASK_EAGER_PROPAGATES = True
+    settings.LAMBDA_TASKS_EAGER = True
 
     email = EmailFactory(subject="Test email", body="Test content")
     u1, u2 = UserFactory.create_batch(2)
@@ -84,6 +83,7 @@ def test_email_content(settings):
     send_bulk_email(action=SendActionChoices.MAILING_LIST, email_pk=email.pk)
 
     assert len(mail.outbox) == 2
+
     email.refresh_from_db()
     assert email.sent
 
