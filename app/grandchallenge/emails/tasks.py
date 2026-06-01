@@ -149,10 +149,19 @@ def send_raw_emails_celery(**kwargs):
 @lambda_task(singleton=True)
 def send_raw_emails():
     max_emails_per_minute = get_max_emails_per_minute()
+    emails_in_flight = RawEmail.objects.filter(
+        status=RawEmail.RawEmailStatusChoices.QUEUED
+    ).count()
+
+    emails_to_schedule = max_emails_per_minute - emails_in_flight
+
+    if emails_to_schedule <= 0:
+        task_logger.warning("Email queue is full")
+        return
 
     raw_emails = RawEmail.objects.select_for_update(skip_locked=True).filter(
         status=RawEmail.RawEmailStatusChoices.INITIALIZED,
-    )[:max_emails_per_minute]
+    )[:emails_to_schedule]
 
     for raw_email in raw_emails:
         send_raw_email.execute_on_commit(pk=raw_email.pk)
