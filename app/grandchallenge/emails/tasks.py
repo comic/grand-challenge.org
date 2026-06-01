@@ -77,7 +77,7 @@ def get_receivers(action):
     return receivers
 
 
-@lambda_task(singleton=True)
+@lambda_task(singleton=True, retry_on=(LockNotAcquiredException,))
 def send_bulk_email(
     *,
     action: SendActionChoices,
