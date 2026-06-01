@@ -51,6 +51,7 @@ from grandchallenge.components.tasks import (
     encode_b64j,
     execute_job,
     handle_endpoint_invocation_event,
+    handle_endpoint_status_event,
     parse_endpoint_invocation_outputs,
     preload_interactive_algorithms,
     remove_container_image_from_registry,
@@ -1552,7 +1553,7 @@ def test_start_endpoint(mocker):
 
     for mock_method in mock_start_methods:
         mock_method.assert_called_once()
-    assert endpoint.status == endpoint.StatusChoices.RUNNING
+    assert endpoint.status == endpoint.StatusChoices.STARTED
 
 
 @pytest.mark.django_db
@@ -1712,6 +1713,88 @@ def test_stop_expired_endpoints(
     assert len(callbacks) == 1
     mock_deprovision.assert_called_once()
     assert endpoint_to_stop.status == EndpointStatusChoices.STOPPED
+
+
+@pytest.mark.django_db
+def test_handle_endpoint_status_in_service_event(settings):
+    endpoint = EndpointFactory(
+        status=EndpointStatusChoices.STARTED,
+    )
+    event = {
+        "EndpointName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{endpoint.pk}",
+        "EndpointStatus": "IN_SERVICE",
+    }
+
+    handle_endpoint_status_event(event=event)
+    endpoint.refresh_from_db()
+
+    assert endpoint.status == EndpointStatusChoices.RUNNING
+
+
+@pytest.mark.django_db
+def test_handle_endpoint_status_failed_events(settings, mocker):
+    endpoint = EndpointFactory(
+        status=EndpointStatusChoices.STARTED,
+    )
+    event = {
+        "EndpointName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{endpoint.pk}",
+        "EndpointStatus": "FAILED",
+    }
+    mock_deprovision = mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
+    )
+
+    handle_endpoint_status_event(event=event)
+    endpoint.refresh_from_db()
+
+    mock_deprovision.assert_called_once()
+    assert endpoint.status == EndpointStatusChoices.FAILED
+    assert endpoint.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+
+
+@pytest.mark.django_db
+def test_handle_endpoint_status_invalid_events(settings, mocker):
+    endpoint = EndpointFactory(
+        status=EndpointStatusChoices.STARTED,
+    )
+    event = {
+        "EndpointName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{endpoint.pk}",
+        "EndpointStatus": "some invalid status",
+    }
+    mock_deprovision = mocker.patch.object(
+        EndpointOrchestrator,
+        "deprovision",
+    )
+
+    handle_endpoint_status_event(event=event)
+    endpoint.refresh_from_db()
+
+    mock_deprovision.assert_called_once()
+    assert endpoint.status == EndpointStatusChoices.FAILED
+    assert endpoint.error_message == SystemErrorMessages.UNEXPECTED_ERROR
+
+
+@pytest.mark.parametrize(
+    "status",
+    set(EndpointStatusChoices).difference([EndpointStatusChoices.STARTED]),
+)
+@pytest.mark.django_db
+def test_handle_endpoint_status_wrong_state_ignored(mocker, settings, status):
+    endpoint = EndpointFactory(status=status)
+    event = {
+        "EndpointName": f"{settings.COMPONENTS_REGISTRY_PREFIX}-AE-{endpoint.pk}",
+    }
+    mock_handle_status_event = mocker.patch.object(
+        EndpointOrchestrator,
+        "handle_status_event",
+    )
+
+    handle_endpoint_status_event(event=event)
+    endpoint.refresh_from_db()
+
+    mock_handle_status_event.assert_not_called()
+    assert endpoint.status == status
 
 
 @pytest.mark.django_db
